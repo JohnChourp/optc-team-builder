@@ -4,22 +4,15 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('./saved-enemies-transfer.utils', async () => {
-  const actual = await vi.importActual<typeof import('./saved-enemies-transfer.utils')>(
-    './saved-enemies-transfer.utils',
-  );
-
-  return {
-    ...actual,
-    downloadSavedEnemiesExport: vi.fn(),
-  };
-});
-
-import { downloadSavedEnemiesExport } from './saved-enemies-transfer.utils';
 import { SavedEnemiesPage } from './saved-enemies.page';
-import { type SavedEnemy } from '../../core/models/optc.models';
+import { type CharacterListItem, type SavedEnemy } from '../../core/models/optc.models';
+import {
+  captureJsonDownloads,
+  readJsonDownloadPayload,
+  restoreJsonDownloadCapture,
+} from '../../testing/download-capture';
 
-type SavedEnemiesPagePrivateApi = SavedEnemiesPage & {
+type SavedEnemiesPagePrivateApi = {
   readImageUrlAsDataUrl: (imageUrl: string) => Promise<string>;
   resizeImageDataUrl: (imageDataUrl: string, maxDimension: number) => Promise<string>;
 };
@@ -47,6 +40,7 @@ vi.mock('@ionic/angular/standalone', () => ({
 
 describe('SavedEnemiesPage', () => {
   afterEach(() => {
+    restoreJsonDownloadCapture();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
   });
@@ -240,6 +234,40 @@ describe('SavedEnemiesPage', () => {
       requireAllSelectedClassesPerCharacter: false,
     });
     expect(page.editorOpen()).toBe(false);
+  });
+
+  it('does not save while required type or class selections are empty', async () => {
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+    page.openCreateModal();
+    page.onEnemyNameChange({ detail: { value: ' Validation Boss ' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    page.onTypeChange({ detail: { value: [] } } as unknown as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onClassChange({ detail: { value: ['Fighter'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+
+    await page.saveEnemy();
+
+    expect(userState.saveEnemy).not.toHaveBeenCalled();
+    expect(page.editorOpen()).toBe(true);
+
+    page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+    page.onClassChange({ detail: { value: [] } } as unknown as CustomEvent<{
+      value?: string[] | string | null;
+    }>);
+
+    await page.saveEnemy();
+
+    expect(userState.saveEnemy).not.toHaveBeenCalled();
+    expect(page.editorOpen()).toBe(true);
   });
 
   it('preserves duplicate ability rows when editing an enemy preset', async () => {
@@ -678,7 +706,7 @@ describe('SavedEnemiesPage', () => {
 
   it('applies the selected character image as an enemy snapshot', async () => {
     const { page } = createPage();
-    const pageWithPrivateApi = page as SavedEnemiesPagePrivateApi;
+    const pageWithPrivateApi = page as unknown as SavedEnemiesPagePrivateApi;
 
     page.openCreateModal();
     page.openCharacterImagePicker();
@@ -698,7 +726,7 @@ describe('SavedEnemiesPage', () => {
 
   it('keeps the current enemy image when character snapshot conversion fails', async () => {
     const { page } = createPage();
-    const pageWithPrivateApi = page as SavedEnemiesPagePrivateApi;
+    const pageWithPrivateApi = page as unknown as SavedEnemiesPagePrivateApi;
 
     page.openEditModal(page.savedEnemies()[0]!);
     page.openCharacterImagePicker();
@@ -728,6 +756,7 @@ describe('SavedEnemiesPage', () => {
 
   it('exports only the selected saved enemies as a saved-enemies payload', async () => {
     const { page } = createPage();
+    const downloads = captureJsonDownloads();
 
     await page.ngOnInit();
     page.onEnemySelectionChange('enemy-2', {
@@ -738,27 +767,24 @@ describe('SavedEnemiesPage', () => {
 
     page.exportSelectedEnemies();
 
-    expect(vi.mocked(downloadSavedEnemiesExport)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        schemaVersion: 1,
-        source: 'saved-enemies',
-        enemies: [expect.objectContaining({ id: 'enemy-2' })],
-      }),
-    );
+    await expect(readJsonDownloadPayload(downloads)).resolves.toMatchObject({
+      schemaVersion: 1,
+      source: 'saved-enemies',
+      enemies: [expect.objectContaining({ id: 'enemy-2' })],
+    });
   });
 
-  it('exports a single saved enemy from the card actions', () => {
+  it('exports a single saved enemy from the card actions', async () => {
     const { page } = createPage();
+    const downloads = captureJsonDownloads();
 
     page.exportEnemy(page.savedEnemies()[0]!);
 
-    expect(vi.mocked(downloadSavedEnemiesExport)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        schemaVersion: 1,
-        source: 'saved-enemies',
-        enemies: [expect.objectContaining({ id: 'enemy-1' })],
-      }),
-    );
+    await expect(readJsonDownloadPayload(downloads)).resolves.toMatchObject({
+      schemaVersion: 1,
+      source: 'saved-enemies',
+      enemies: [expect.objectContaining({ id: 'enemy-1' })],
+    });
   });
 
   it('deletes the selected enemies in bulk after confirmation', async () => {
@@ -928,6 +954,7 @@ function createPage(overrides: { savedEnemies?: SavedEnemy[] } = {}) {
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       generatedAt: '2026-03-30T10:00:00.000Z',
       sourceVersion: 'test',
       characterCount: 10,
@@ -1235,10 +1262,11 @@ function createPage(overrides: { savedEnemies?: SavedEnemy[] } = {}) {
   return { page, repository, userState };
 }
 
-function buildCharacter(id: number, name = `Character ${id}`) {
+function buildCharacter(id: number, name = `Character ${id}`): CharacterListItem {
   return {
     id,
     name,
+    isIncomplete: false,
     type: id % 2 === 0 ? 'STR' : 'DEX',
     primaryClass: 'Fighter',
     secondaryClass: 'Slasher',
@@ -1246,6 +1274,9 @@ function buildCharacter(id: number, name = `Character ${id}`) {
     stars: 6,
     cost: 55,
     combo: 4,
+    captainHpBoost: 1,
+    captainAtkBoost: 1,
+    captainAverageBoost: 1,
     stats: {
       min: { hp: 1000, atk: 500, rcv: 100 },
       max: { hp: 3500, atk: 1600, rcv: 320 },

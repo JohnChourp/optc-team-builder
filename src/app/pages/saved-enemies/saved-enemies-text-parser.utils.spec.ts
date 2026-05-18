@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { type AutoBuildAbilityCatalogItem } from '../../core/models/auto-team-builder-ability.models';
 import { parseSavedEnemyText } from './saved-enemies-text-parser.utils';
 
 describe('saved enemies text parser utils', () => {
@@ -467,7 +468,10 @@ describe('saved enemies text parser utils', () => {
   });
 });
 
-function createAbilityCatalogItem(abilityKey: string, supportsTurns: boolean) {
+function createAbilityCatalogItem(
+  abilityKey: string,
+  supportsTurns: boolean,
+): AutoBuildAbilityCatalogItem {
   return {
     key: abilityKey,
     label: abilityKey,

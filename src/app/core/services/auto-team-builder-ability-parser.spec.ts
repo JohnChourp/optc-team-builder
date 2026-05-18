@@ -5,14 +5,14 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 let analyzeBuilderAbilityText: (
   value: unknown,
-  source: 'specialText' | 'captainAbility' | 'sailorAbilities',
+  source: 'specialText' | 'superSpecialText' | 'captainAbility' | 'sailorAbilities',
 ) => Array<{
   key: string;
   label: string;
   minTurns: number | null;
   isCompleteRemoval: boolean;
   slotTokens: string[];
-  source: 'specialText' | 'captainAbility' | 'sailorAbilities';
+  source: 'specialText' | 'superSpecialText' | 'captainAbility' | 'sailorAbilities';
   coverageMode?: 'explicit' | 'selectedDebuff';
 }>;
 let extractPrimaryAbilityBranchText: (value: unknown) => string;
@@ -22,6 +22,7 @@ let enrichCharactersWithBuilderAbilities: (
     id: number;
     detail: {
       specialText: string | null;
+      superSpecialText?: string | null;
       captainAbility: string | null;
       captainAbilityVariants?: Array<{ key: string; label: string; text: string }>;
       sailorAbilities?: string[];
@@ -33,7 +34,7 @@ let enrichCharactersWithBuilderAbilities: (
       superTandemData?: Record<string, unknown> | null;
       finalTapData?: Record<string, unknown> | null;
       rushSugoSpecialData?: Record<string, unknown> | null;
-      builderAbilities: Array<Record<string, unknown>>;
+      builderAbilities: Array<Record<string, unknown> & { key?: string }>;
     };
   }>,
   options?: {
@@ -41,7 +42,18 @@ let enrichCharactersWithBuilderAbilities: (
     logger?: ((message: string) => void) | null;
     abilityCorrections?: Map<number | string, Record<string, unknown>> | null;
   },
-) => Promise<Array<Record<string, unknown> & { key: string; label: string }>>;
+) => Promise<
+  Array<
+    Record<string, unknown> & {
+      key: string;
+      label: string;
+      category: 'special' | 'crewmate' | 'potential' | 'support';
+      groupLabel: string;
+    }
+  >
+>;
+
+type ParserCharacters = Parameters<typeof enrichCharactersWithBuilderAbilities>[0];
 
 beforeAll(async () => {
   ({
@@ -336,6 +348,76 @@ describe('auto team builder ability parser', () => {
     expect(abilityKeys).not.toContain('boost_max_hp');
     expect(new Set(abilities.map((ability) => ability.source))).toEqual(
       new Set(['captainAbility']),
+    );
+  });
+
+  it('extracts Territory only from provider wording', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Applies Territory: [QCK] to the field for 3 turns.',
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'territory',
+          source: 'specialText',
+        }),
+      ]),
+    );
+    expect(
+      analyzeBuilderAbilityText(
+        'If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x instead.',
+        'captainAbility',
+      ),
+    ).not.toEqual(expect.arrayContaining([expect.objectContaining({ key: 'territory' })]));
+    expect(
+      analyzeBuilderAbilityText(
+        'If a crew member uses a special to apply Territory: [QCK] to the field, boosts ATK by 5x.',
+        'captainAbility',
+      ),
+    ).not.toEqual(expect.arrayContaining([expect.objectContaining({ key: 'territory' })]));
+  });
+
+  it('derives Super Special Territory providers from superSpecialText', async () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Applies "Territory: Crew" to the field for 1 turn.',
+        'superSpecialText',
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        key: 'territory',
+        source: 'superSpecialText',
+      }),
+    ]);
+
+    const characters = [
+      {
+        id: 456100,
+        detail: {
+          specialText: null,
+          superSpecialText: 'Applies "Territory: Crew" to the field for 1 turn.',
+          captainAbility: null,
+          sailorAbilities: [],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(characters[0]?.detail.builderAbilities).toEqual([
+      expect.objectContaining({
+        key: 'territory',
+        source: 'superSpecialText',
+      }),
+    ]);
+    expect(catalog.find((item) => item.key === 'territory')).toEqual(
+      expect.objectContaining({
+        availableSources: expect.arrayContaining(['superSpecialText']),
+        matchingCharacterIds: [456100],
+      }),
     );
   });
 
@@ -740,7 +822,7 @@ describe('auto team builder ability parser', () => {
   });
 
   it('indexes matching character ids for Special catalog entries', async () => {
-    const characters = [
+    const characters: ParserCharacters = [
       {
         id: 910001,
         detail: {
@@ -869,7 +951,7 @@ describe('auto team builder ability parser', () => {
   });
 
   it('derives captain abilities from structured captain variants without duplicate extra-drop matches', async () => {
-    const characters = [
+    const characters: ParserCharacters = [
       {
         id: 2035,
         detail: {
@@ -924,7 +1006,7 @@ describe('auto team builder ability parser', () => {
     const groupCounts = new Map<string, number>();
 
     crewmateCatalog.forEach((item) => {
-      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+      groupCounts.set(item.groupLabel, (groupCounts.get(item.groupLabel) ?? 0) + 1);
     });
 
     expect(crewmateCatalog).toHaveLength(75);
@@ -1092,7 +1174,7 @@ describe('auto team builder ability parser', () => {
     const groupCounts = new Map<string, number>();
 
     potentialCatalog.forEach((item) => {
-      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+      groupCounts.set(item.groupLabel, (groupCounts.get(item.groupLabel) ?? 0) + 1);
     });
 
     expect(potentialCatalog).toHaveLength(26);
@@ -1266,7 +1348,7 @@ describe('auto team builder ability parser', () => {
     const groupCounts = new Map<string, number>();
 
     supportCatalog.forEach((item) => {
-      groupCounts.set(item.groupLabel ?? '', (groupCounts.get(item.groupLabel ?? '') ?? 0) + 1);
+      groupCounts.set(item.groupLabel, (groupCounts.get(item.groupLabel) ?? 0) + 1);
     });
 
     expect(supportCatalog).toHaveLength(67);

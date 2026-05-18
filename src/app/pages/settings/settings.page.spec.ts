@@ -4,79 +4,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../characters/characters-favorites.utils', async () => {
-  const actual = await vi.importActual<typeof import('../characters/characters-favorites.utils')>(
-    '../characters/characters-favorites.utils',
-  );
-
-  return {
-    ...actual,
-    downloadOptcbxFavoritesExport: vi.fn(),
-  };
-});
-
-vi.mock('../character-boxes/character-boxes-transfer.utils', async () => {
-  const actual = await vi.importActual<
-    typeof import('../character-boxes/character-boxes-transfer.utils')
-  >('../character-boxes/character-boxes-transfer.utils');
-
-  return {
-    ...actual,
-    downloadCharacterBoxesExport: vi.fn(),
-  };
-});
-
-vi.mock('./favorite-ships-transfer.utils', async () => {
-  const actual = await vi.importActual<typeof import('./favorite-ships-transfer.utils')>(
-    './favorite-ships-transfer.utils',
-  );
-
-  return {
-    ...actual,
-    downloadFavoriteShipsExport: vi.fn(),
-  };
-});
-
-vi.mock('./all-data-transfer.utils', async () => {
-  const actual = await vi.importActual<typeof import('./all-data-transfer.utils')>(
-    './all-data-transfer.utils',
-  );
-
-  return {
-    ...actual,
-    downloadAllDataExport: vi.fn(),
-  };
-});
-
-vi.mock('../saved-teams/saved-teams-transfer.utils', async () => {
-  const actual = await vi.importActual<typeof import('../saved-teams/saved-teams-transfer.utils')>(
-    '../saved-teams/saved-teams-transfer.utils',
-  );
-
-  return {
-    ...actual,
-    downloadSavedTeamsExport: vi.fn(),
-  };
-});
-
-vi.mock('../saved-enemies/saved-enemies-transfer.utils', async () => {
-  const actual = await vi.importActual<
-    typeof import('../saved-enemies/saved-enemies-transfer.utils')
-  >('../saved-enemies/saved-enemies-transfer.utils');
-
-  return {
-    ...actual,
-    downloadSavedEnemiesExport: vi.fn(),
-  };
-});
-
-import { downloadAllDataExport } from './all-data-transfer.utils';
-import { downloadCharacterBoxesExport } from '../character-boxes/character-boxes-transfer.utils';
-import { downloadOptcbxFavoritesExport } from '../characters/characters-favorites.utils';
-import { downloadSavedEnemiesExport } from '../saved-enemies/saved-enemies-transfer.utils';
-import { downloadSavedTeamsExport } from '../saved-teams/saved-teams-transfer.utils';
-import { downloadFavoriteShipsExport } from './favorite-ships-transfer.utils';
 import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
+import {
+  captureJsonDownloads,
+  readJsonDownloadPayload,
+  restoreJsonDownloadCapture,
+} from '../../testing/download-capture';
 import { SettingsPage } from './settings.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -95,6 +28,7 @@ vi.mock('@ionic/angular/standalone', () => ({
 
 describe('SettingsPage', () => {
   afterEach(() => {
+    restoreJsonDownloadCapture();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
   });
@@ -171,11 +105,12 @@ describe('SettingsPage', () => {
 
   it('exports all favorites through the shared OPTCbx payload helper', async () => {
     const { page, repository } = createPage();
+    const downloads = captureJsonDownloads();
 
     await page.exportFavorites();
 
     expect(repository.getCharactersByIds).toHaveBeenCalledWith([1001, 1002]);
-    expect(vi.mocked(downloadOptcbxFavoritesExport)).toHaveBeenCalledWith({
+    await expect(readJsonDownloadPayload(downloads)).resolves.toEqual({
       characters: [
         { number: 1001, name: 'Luffy' },
         { number: 1002, name: 'Zoro' },
@@ -185,115 +120,110 @@ describe('SettingsPage', () => {
 
   it('exports all favorite ships from settings', async () => {
     const { page, repository } = createPage();
+    const downloads = captureJsonDownloads();
 
     await page.exportFavoriteShips();
 
     expect(repository.getShips).toHaveBeenCalledOnce();
-    expect(vi.mocked(downloadFavoriteShipsExport)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        schemaVersion: 1,
+    await expect(readJsonDownloadPayload(downloads)).resolves.toMatchObject({
+      schemaVersion: 1,
+      source: 'favorite-ships',
+      ships: [
+        { id: 9001, name: 'Going Merry' },
+        { id: 9002, name: 'Thousand Sunny' },
+      ],
+    });
+  });
+
+  it('exports all saved teams from offline management', async () => {
+    const { page } = createPage();
+    const downloads = captureJsonDownloads();
+
+    page.exportSavedTeams();
+
+    await expect(readJsonDownloadPayload(downloads)).resolves.toMatchObject({
+      schemaVersion: 1,
+      source: 'saved-teams',
+      teams: expect.arrayContaining([
+        expect.objectContaining({ id: 'team-1' }),
+        expect.objectContaining({ id: 'team-2' }),
+      ]),
+    });
+  });
+
+  it('exports all character boxes from offline management', async () => {
+    const { page } = createPage();
+    const downloads = captureJsonDownloads();
+
+    page.exportCharacterBoxes();
+
+    await expect(readJsonDownloadPayload(downloads)).resolves.toMatchObject({
+      schemaVersion: 1,
+      source: 'character-boxes',
+      boxes: expect.arrayContaining([
+        expect.objectContaining({ id: 'box-1' }),
+        expect.objectContaining({ id: 'box-2' }),
+      ]),
+    });
+  });
+
+  it('exports all saved enemies from offline management', async () => {
+    const { page } = createPage();
+    const downloads = captureJsonDownloads();
+
+    page.exportSavedEnemies();
+
+    await expect(readJsonDownloadPayload(downloads)).resolves.toMatchObject({
+      schemaVersion: 1,
+      source: 'saved-enemies',
+      enemies: expect.arrayContaining([
+        expect.objectContaining({ id: 'enemy-1' }),
+        expect.objectContaining({ id: 'enemy-2' }),
+      ]),
+    });
+  });
+
+  it('exports all local data through the nested bundle helper', async () => {
+    const { page, repository } = createPage();
+    const downloads = captureJsonDownloads();
+
+    await page.exportAll();
+
+    expect(repository.getCharactersByIds).toHaveBeenCalledWith([1001, 1002]);
+    expect(repository.getShips).toHaveBeenCalledOnce();
+    await expect(readJsonDownloadPayload(downloads)).resolves.toMatchObject({
+      schemaVersion: 1,
+      source: 'all-data',
+      favorites: {
+        characters: [
+          { number: 1001, name: 'Luffy' },
+          { number: 1002, name: 'Zoro' },
+        ],
+      },
+      favoriteShips: expect.objectContaining({
         source: 'favorite-ships',
         ships: [
           { id: 9001, name: 'Going Merry' },
           { id: 9002, name: 'Thousand Sunny' },
         ],
       }),
-    );
-  });
-
-  it('exports all saved teams from offline management', () => {
-    const { page } = createPage();
-
-    page.exportSavedTeams();
-
-    expect(vi.mocked(downloadSavedTeamsExport)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        schemaVersion: 1,
-        source: 'saved-teams',
-        teams: expect.arrayContaining([
-          expect.objectContaining({ id: 'team-1' }),
-          expect.objectContaining({ id: 'team-2' }),
-        ]),
-      }),
-    );
-  });
-
-  it('exports all character boxes from offline management', () => {
-    const { page } = createPage();
-
-    page.exportCharacterBoxes();
-
-    expect(vi.mocked(downloadCharacterBoxesExport)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        schemaVersion: 1,
+      characterBoxes: expect.objectContaining({
         source: 'character-boxes',
         boxes: expect.arrayContaining([
           expect.objectContaining({ id: 'box-1' }),
           expect.objectContaining({ id: 'box-2' }),
         ]),
       }),
-    );
-  });
-
-  it('exports all saved enemies from offline management', () => {
-    const { page } = createPage();
-
-    page.exportSavedEnemies();
-
-    expect(vi.mocked(downloadSavedEnemiesExport)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        schemaVersion: 1,
+      savedTeams: expect.objectContaining({
+        source: 'saved-teams',
+      }),
+      savedRumbleTeams: expect.objectContaining({
+        source: 'saved-rumble-teams',
+      }),
+      savedEnemies: expect.objectContaining({
         source: 'saved-enemies',
-        enemies: expect.arrayContaining([
-          expect.objectContaining({ id: 'enemy-1' }),
-          expect.objectContaining({ id: 'enemy-2' }),
-        ]),
       }),
-    );
-  });
-
-  it('exports all local data through the nested bundle helper', async () => {
-    const { page, repository } = createPage();
-
-    await page.exportAll();
-
-    expect(repository.getCharactersByIds).toHaveBeenCalledWith([1001, 1002]);
-    expect(repository.getShips).toHaveBeenCalledOnce();
-    expect(vi.mocked(downloadAllDataExport)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        schemaVersion: 1,
-        source: 'all-data',
-        favorites: {
-          characters: [
-            { number: 1001, name: 'Luffy' },
-            { number: 1002, name: 'Zoro' },
-          ],
-        },
-        favoriteShips: expect.objectContaining({
-          source: 'favorite-ships',
-          ships: [
-            { id: 9001, name: 'Going Merry' },
-            { id: 9002, name: 'Thousand Sunny' },
-          ],
-        }),
-        characterBoxes: expect.objectContaining({
-          source: 'character-boxes',
-          boxes: expect.arrayContaining([
-            expect.objectContaining({ id: 'box-1' }),
-            expect.objectContaining({ id: 'box-2' }),
-          ]),
-        }),
-        savedTeams: expect.objectContaining({
-          source: 'saved-teams',
-        }),
-        savedRumbleTeams: expect.objectContaining({
-          source: 'saved-rumble-teams',
-        }),
-        savedEnemies: expect.objectContaining({
-          source: 'saved-enemies',
-        }),
-      }),
-    );
+    });
   });
 
   it('imports favorites directly from offline management', async () => {
@@ -1086,6 +1016,7 @@ function createPage() {
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       packs: [],
     }),
     getCharactersByIds: vi.fn().mockImplementation(async (ids: number[]) =>

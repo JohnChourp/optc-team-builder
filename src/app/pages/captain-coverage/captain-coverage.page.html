@@ -109,6 +109,42 @@
           ></app-captain-team-condition-status>
         }
 
+        <div class="coverage-save-team">
+          <ion-input
+            [label]="t('team.save.nameLabel')"
+            labelPlacement="stacked"
+            fill="outline"
+            [value]="teamName()"
+            (ionInput)="onTeamNameChange($event)"
+          ></ion-input>
+
+          <ion-button color="warning" [disabled]="saveDisabled()" (click)="saveTeam()">
+            <ion-icon slot="start" [icon]="saveIcon"></ion-icon>
+            {{ saveButtonLabel() }}
+          </ion-button>
+        </div>
+
+        @if (currentTeamId() && !saveFeedbackError()) {
+          <section class="coverage-save-feedback coverage-save-feedback--success">
+            <ion-icon [icon]="checkIcon"></ion-icon>
+            <div>
+              <strong>{{ t('team.save.success') }}</strong>
+              <ion-button fill="clear" color="warning" [routerLink]="['/tabs/saved-teams']">
+                {{ t('team.save.viewSavedTeams') }}
+              </ion-button>
+            </div>
+          </section>
+        }
+
+        @if (saveFeedbackError()) {
+          <section class="coverage-save-feedback coverage-save-feedback--error" role="alert">
+            <ion-icon [icon]="errorIcon"></ion-icon>
+            <div>
+              <strong>{{ saveFeedbackError() }}</strong>
+            </div>
+          </section>
+        }
+
         @if (selectedCaptain(); as captain) {
           <a
             class="selected-target"
@@ -157,6 +193,17 @@
             (clearCategory)="clearAbilityFilterCategory($event)"
           ></app-ability-filter-rail>
 
+          <app-ability-requirement-picker
+            [isOpen]="captainAbilityPickerOpen()"
+            [title]="t('filters.captainAbilityTitle')"
+            [copy]="t('filters.captainAbilityCopy')"
+            [drafts]="captainAbilityDrafts()"
+            [catalogItems]="availableCaptainAbilityCatalogItems()"
+            [showCharacterCount]="false"
+            (dismiss)="closeCaptainAbilityPicker()"
+            (saveDrafts)="saveCaptainAbilityPicker($event)"
+          ></app-ability-requirement-picker>
+
           <label
             class="ability-rank-toggle"
             [class.ability-rank-toggle--active]="abilityMatchRankingEnabled()"
@@ -167,6 +214,54 @@
               [checked]="abilityMatchRankingEnabled()"
               [disabled]="abilityMatchRankingDisabled()"
               (ionChange)="onAbilityMatchRankingChange($event)"
+            ></ion-toggle>
+          </label>
+
+          <label
+            class="ability-rank-toggle"
+            [class.ability-rank-toggle--active]="requireSuperTandemPresence()"
+          >
+            <div class="ability-rank-toggle__copy">
+              <span>{{ t('filters.superTandemPresence.toggle') }}</span>
+              <small>{{ t('filters.superTandemPresence.support') }}</small>
+            </div>
+            <ion-toggle
+              justify="space-between"
+              [checked]="requireSuperTandemPresence()"
+              [disabled]="!selectedCaptainDetail()"
+              (ionChange)="onRequireSuperTandemPresenceChange($event)"
+            ></ion-toggle>
+          </label>
+
+          <label
+            class="ability-rank-toggle"
+            [class.ability-rank-toggle--active]="requireSuperTypesClassesPresence()"
+          >
+            <div class="ability-rank-toggle__copy">
+              <span>{{ t('filters.superTypesClassesPresence.toggle') }}</span>
+              <small>{{ t('filters.superTypesClassesPresence.support') }}</small>
+            </div>
+            <ion-toggle
+              justify="space-between"
+              [checked]="requireSuperTypesClassesPresence()"
+              [disabled]="!selectedCaptainDetail()"
+              (ionChange)="onRequireSuperTypesClassesPresenceChange($event)"
+            ></ion-toggle>
+          </label>
+
+          <label
+            class="ability-rank-toggle"
+            [class.ability-rank-toggle--active]="requireCaptainCoverage()"
+          >
+            <div class="ability-rank-toggle__copy">
+              <span>{{ t('filters.captainCoverage.toggle') }}</span>
+              <small>{{ captainCoverageSupportLabel() }}</small>
+            </div>
+            <ion-toggle
+              justify="space-between"
+              [checked]="requireCaptainCoverage()"
+              [disabled]="!selectedCaptainDetail()"
+              (ionChange)="onRequireCaptainCoverageChange($event)"
             ></ion-toggle>
           </label>
 
@@ -256,6 +351,31 @@
             >
               {{ t('filters.hideFavorites') }}
             </ion-button>
+
+            <div class="character-box-filter">
+              <ion-select
+                interface="popover"
+                fill="outline"
+                [placeholder]="t('filters.characterBox.placeholder')"
+                [value]="selectedCharacterBoxId() ?? ''"
+                [selectedText]="
+                  selectedCharacterBox()?.name ?? t('filters.characterBox.options.all')
+                "
+                [disabled]="!selectedCaptainDetail() || !characterBoxes().length"
+                [attr.aria-label]="t('filters.characterBox.label')"
+                (ionChange)="onCharacterBoxChange($event)"
+              >
+                <ion-select-option value="">
+                  {{ t('filters.characterBox.options.all') }}
+                </ion-select-option>
+                @for (box of characterBoxes(); track box.id) {
+                  <ion-select-option [value]="box.id">
+                    {{ box.name }} ({{ box.characterIds.length }})
+                  </ion-select-option>
+                }
+              </ion-select>
+              <small>{{ characterBoxSupportLabel() }}</small>
+            </div>
 
             <ion-searchbar
               class="coverage-search"

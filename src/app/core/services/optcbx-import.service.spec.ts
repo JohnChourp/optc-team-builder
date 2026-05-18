@@ -108,6 +108,7 @@ function createCharacter(id: number): CharacterListItem {
   return {
     id,
     name: `Character ${id}`,
+    isIncomplete: false,
     type: 'DEX',
     classes: ['Fighter'],
     primaryClass: 'Fighter',
@@ -115,6 +116,9 @@ function createCharacter(id: number): CharacterListItem {
     stars: 6,
     cost: 55,
     combo: 4,
+    captainHpBoost: 1,
+    captainAtkBoost: 1,
+    captainAverageBoost: 1,
     stats: {
       min: { hp: 1000, atk: 500, rcv: 100 },
       max: { hp: 3000, atk: 1500, rcv: 300 },

@@ -10,7 +10,10 @@ import {
   type CharacterDetailRecord,
   type CharacterListItem,
 } from '../models/optc.models';
-import { normalizeCaptainTagKey } from './captain-tag-conditions.utils';
+import {
+  normalizeCaptainTagKey,
+  parseCaptainTagConditionBranches,
+} from './captain-tag-conditions.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 
 export type CaptainCoverageChipKind = 'class' | 'tag' | 'type';
@@ -44,8 +47,8 @@ export interface CaptainCoverageResult {
 }
 
 export interface CaptainAbilityCoverageSummary {
-  captainCoverageClauses: string[];
-  fullCoverageClauses: string[];
+  firstCoverageClauses: string[];
+  secondCoverageClauses: string[];
 }
 
 export interface CaptainBoostScopeSummary {
@@ -80,9 +83,9 @@ const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates
 const FALLBACK_OTHER_SCOPE_PATTERN = /\ball other (?:characters|units|crewmates)\b/i;
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
 const BRANCH_LABEL_PATTERN =
-  /\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const CAPTAIN_BRANCH_PATTERN =
-  /\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
   'always active',
   'standard captain',
@@ -98,12 +101,22 @@ const CAPTAIN_MULTIPLIER_PATTERN =
   /\bby\s+(?:a\s+further\s+|an?\s+additional\s+|another\s+)?\d+(?:\.\d+)?x\b/i;
 const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
   /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
+const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
+const START_OF_FIGHT_EFFECT_PATTERN =
+  /\b(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure)\b/i;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
 const BOOST_TARGET_FRAGMENT_PATTERNS = [
   /\b(?:of|for)\s+([^.;]{1,220}?)\s+(?:characters|units)\b/gi,
   /\b(?:of|for)\s+(crew)\b/gi,
   /\bboosts?\s+([^.;]{1,220}?)\s+(?:characters|units)(?:'|’)?\s+(?:atk|hp)\b/gi,
   /\bboosts?\s+(crew)(?:'|’)?s?\s+(?:atk|hp)\b/gi,
+] as const;
+const SPECIAL_COOLDOWN_TARGET_FRAGMENT_PATTERNS = [
+  /\breduces?\s+Special Cooldown\s+of\s+([^.;]{1,220}?)\s+(?:characters|units)\s+by\s+\d+\s+turns?\b/gi,
+] as const;
+const TEAM_TAG_CONDITION_TARGET_FRAGMENT_PATTERNS = [
+  /\bcrew\s+has\s+\d+\s*(?:\+|or\s+more)?\s+(.{1,240}?)\s+(?:characters|units)\b/gi,
+  /\bcrew tag condition:\s+(.{1,240}?)\s+(?:characters|units)\b/gi,
 ] as const;
 
 export function summarizeCaptainAbilityCoverageText(
@@ -113,23 +126,23 @@ export function summarizeCaptainAbilityCoverageText(
 
   if (!normalizedCaptainText) {
     return {
-      captainCoverageClauses: [],
-      fullCoverageClauses: [],
+      firstCoverageClauses: [],
+      secondCoverageClauses: [],
     };
   }
 
-  const captainCoverageClauses = resolveCaptainBoostScope(
+  const firstCoverageClauses = resolveCaptainBoostScope(
     normalizedCaptainText,
     'simpleBoostScope',
   ).clauses;
-  const fullCoverageClauses = resolveCaptainBoostScope(
+  const secondCoverageClauses = resolveCaptainBoostScope(
     normalizedCaptainText,
     'fullAbilityCoverage',
   ).clauses;
 
   return {
-    captainCoverageClauses,
-    fullCoverageClauses,
+    firstCoverageClauses,
+    secondCoverageClauses,
   };
 }
 
@@ -152,7 +165,7 @@ export function resolveCaptainBoostScope(
     const normalizedClause = normalizeCoverageClause(clause);
     const allowedTypes = extractAllowedTypesFromBoostClause(normalizedClause);
     const allowedClasses = extractAllowedClassesFromBoostClause(normalizedClause);
-    const allowedCharacterTags = extractAllowedCharacterTagsFromBoostClause(normalizedClause);
+    const allowedCharacterTags = extractAllowedCharacterTagsFromCoverageClause(normalizedClause);
 
     return {
       clauses: [...scope.clauses, normalizedClause],
@@ -213,8 +226,14 @@ function resolveCaptainCoverageForText(
   options: CaptainCoverageOptions = {},
 ): CaptainCoverageResult {
   const coverageMode = options.coverageMode ?? 'fullAbilityCoverage';
-  const resolvedClauses = resolveCaptainBoostScope(captainText, coverageMode).clauses.map(
-    (clause) => resolveCaptainCoverageClause(target, clause, options),
+  const coverageClauses = [
+    ...resolveCaptainBoostScope(captainText, coverageMode).clauses,
+    ...(coverageMode === 'fullAbilityCoverage' && options.includeTeamTagClauses
+      ? extractCaptainTeamTagConditionClauses(captainText)
+      : []),
+  ];
+  const resolvedClauses = coverageClauses.map((clause) =>
+    resolveCaptainCoverageClause(target, clause, options),
   );
   const clauses = resolvedClauses;
   const targetableClauses = clauses.filter((clause) => clause.status !== 'neutral');
@@ -619,7 +638,7 @@ function resolveCaptainCoverageClause(
   const hasTypeScope = extractAllowedTypesFromBoostClause(normalizedClause).length > 0;
   const hasClassScope = extractAllowedClassesFromBoostClause(normalizedClause).length > 0;
   const hasCharacterTagScope =
-    extractAllowedCharacterTagsFromBoostClause(normalizedClause).length > 0;
+    extractAllowedCharacterTagsFromCoverageClause(normalizedClause).length > 0;
 
   matchingTypes.forEach((type) =>
     chips.push({
@@ -699,13 +718,20 @@ function extractDefaultCaptainBoostClauses(text: string): string[] {
 }
 
 function extractCaptainBoostScopeClauses(text: string, includeConditional: boolean): string[] {
-  return splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. '))
+  const boostClauses = splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. '))
     .map(stripInlineConditionalBoostRiders)
+    .map(stripBoostInsteadSuffix)
     .filter(
       (clause) =>
         (includeConditional || !isConditionalCaptainBoostClause(clause)) &&
         isCaptainBoostScopeClause(clause),
     );
+
+  if (!includeConditional) {
+    return boostClauses;
+  }
+
+  return [...boostClauses, ...extractCaptainStartOfFightCooldownTagClauses(text)];
 }
 
 function isCaptainBoostScopeClause(clause: string): boolean {
@@ -726,6 +752,71 @@ function isCaptainBoostScopeClause(clause: string): boolean {
 
 function stripInlineConditionalBoostRiders(clause: string): string {
   return normalizeCoverageClause(clause.replace(INLINE_CONDITIONAL_BOOST_RIDER_PATTERN, ''));
+}
+
+function stripBoostInsteadSuffix(clause: string): string {
+  return normalizeCoverageClause(clause.replace(BOOST_INSTEAD_SUFFIX_PATTERN, 'by $1x'));
+}
+
+function extractCaptainStartOfFightCooldownTagClauses(text: string): string[] {
+  return [
+    ...new Set(
+      splitCaptainSentences(text.replace(BRANCH_LABEL_PATTERN, '. '))
+        .filter(
+          (sentence) =>
+            START_OF_FIGHT_EFFECT_PATTERN.test(sentence) && /\bSpecial Cooldown\b/i.test(sentence),
+        )
+        .flatMap((sentence) => sentence.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR))
+        .map(stripCooldownClausePrefix)
+        .filter(isCaptainCooldownTagScopeClause),
+    ),
+  ];
+}
+
+function extractCaptainTeamTagConditionClauses(text: string): string[] {
+  return [
+    ...new Set(
+      splitCaptainSentences(text.replace(BRANCH_LABEL_PATTERN, '. '))
+        .map((sentence) => formatCaptainTeamTagConditionClause(sentence))
+        .filter((clause): clause is string => clause !== null),
+    ),
+  ];
+}
+
+function formatCaptainTeamTagConditionClause(sentence: string): string | null {
+  const labelMap = new Map<string, string>();
+
+  parseCaptainTagConditionBranches(sentence).forEach((branch) =>
+    branch.labels.forEach((label) => {
+      const normalizedLabel = normalizeCaptainTagKey(label);
+
+      if (!labelMap.has(normalizedLabel)) {
+        labelMap.set(normalizedLabel, label);
+      }
+    }),
+  );
+
+  const labels = [...labelMap.values()];
+
+  return labels.length
+    ? `crew tag condition: ${labels.map((label) => `[${label}]`).join(' / ')} characters`
+    : null;
+}
+
+function stripCooldownClausePrefix(clause: string): string {
+  const cooldownStart = clause.search(/\breduces?\s+Special Cooldown\b/i);
+
+  return normalizeCoverageClause(cooldownStart > 0 ? clause.slice(cooldownStart) : clause);
+}
+
+function isCaptainCooldownTagScopeClause(clause: string): boolean {
+  const normalizedClause = normalizeCoverageClause(clause);
+
+  return (
+    /\breduces?\s+Special Cooldown\s+of\b/i.test(normalizedClause) &&
+    /\bby\s+\d+\s+turns?\b/i.test(normalizedClause) &&
+    extractAllowedCharacterTagsFromCoverageClause(normalizedClause).length > 0
+  );
 }
 
 function splitCaptainEffectClauses(text: string): string[] {
@@ -856,15 +947,23 @@ function resolveMatchingCharacterTagScopes(
 ): string[] {
   const targetTagKeys = resolveTargetCaptainTagKeys(target, options);
 
-  return extractAllowedCharacterTagsFromBoostClause(clause).filter((tag) =>
+  return extractAllowedCharacterTagsFromCoverageClause(clause).filter((tag) =>
     targetTagKeys.includes(normalizeCaptainTagKey(tag)),
   );
 }
 
 function extractAllowedCharacterTagsFromBoostClause(clause: string): string[] {
+  return extractAllowedCharacterTagsFromFragments(extractBoostTargetFragments(clause));
+}
+
+function extractAllowedCharacterTagsFromCoverageClause(clause: string): string[] {
+  return extractAllowedCharacterTagsFromFragments(extractCoverageTargetFragments(clause));
+}
+
+function extractAllowedCharacterTagsFromFragments(fragments: readonly string[]): string[] {
   return [
     ...new Set(
-      extractBoostTargetFragments(clause)
+      fragments
         .flatMap((fragment) =>
           [...fragment.matchAll(BRACKETED_LABEL_PATTERN)].map((match) =>
             String(match[1] ?? '').trim(),
@@ -888,10 +987,40 @@ function extractAllowedCharacterTagsFromBoostClause(clause: string): string[] {
   ];
 }
 
+function extractCoverageTargetFragments(clause: string): string[] {
+  return [
+    ...new Set([
+      ...extractBoostTargetFragments(clause),
+      ...extractSpecialCooldownTargetFragments(clause),
+      ...extractTeamTagConditionTargetFragments(clause),
+    ]),
+  ];
+}
+
 function extractBoostTargetFragments(clause: string): string[] {
   return [
     ...new Set(
       BOOST_TARGET_FRAGMENT_PATTERNS.flatMap((pattern) =>
+        [...clause.matchAll(pattern)].map((match) => normalizeCoverageClause(match[1] ?? '')),
+      ).filter(Boolean),
+    ),
+  ];
+}
+
+function extractSpecialCooldownTargetFragments(clause: string): string[] {
+  return [
+    ...new Set(
+      SPECIAL_COOLDOWN_TARGET_FRAGMENT_PATTERNS.flatMap((pattern) =>
+        [...clause.matchAll(pattern)].map((match) => normalizeCoverageClause(match[1] ?? '')),
+      ).filter(Boolean),
+    ),
+  ];
+}
+
+function extractTeamTagConditionTargetFragments(clause: string): string[] {
+  return [
+    ...new Set(
+      TEAM_TAG_CONDITION_TARGET_FRAGMENT_PATTERNS.flatMap((pattern) =>
         [...clause.matchAll(pattern)].map((match) => normalizeCoverageClause(match[1] ?? '')),
       ).filter(Boolean),
     ),

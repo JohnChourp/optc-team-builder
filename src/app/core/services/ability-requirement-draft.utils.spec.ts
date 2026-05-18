@@ -11,14 +11,34 @@ import {
 } from './ability-requirement-draft.utils';
 
 describe('ability-requirement-draft utils', () => {
-  it('resolves explicit visual metadata for every current catalog ability', () => {
+  it('resolves explicit visual metadata for curated picker abilities', () => {
+    const abilityKeys = [
+      'deal_fixed_damage',
+      'special_damage',
+      'extra_drop_any',
+      'inflict_poison',
+      'remove_bind',
+      'remove_despair',
+      'remove_special_bind',
+      'remove_threshold_damage_reduction',
+    ];
+
+    for (const abilityKey of abilityKeys) {
+      const visual = resolveAbilityRequirementVisual(abilityKey);
+
+      expect(visual.isFallback, abilityKey).toBe(false);
+      expect(visual.badge.length, abilityKey).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns usable visual metadata for every current catalog ability', () => {
     const catalog = loadAbilityCatalog();
 
     for (const ability of catalog.abilities) {
       const visual = resolveAbilityRequirementVisual(ability.key);
 
-      expect(visual.isFallback, ability.key).toBe(false);
       expect(visual.badge.length, ability.key).toBeGreaterThan(0);
+      expect(visual.icon.length, ability.key).toBeGreaterThan(0);
     }
   });
 

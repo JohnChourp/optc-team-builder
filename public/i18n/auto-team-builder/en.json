@@ -14,8 +14,8 @@
       "characterTags": "team-wide character tag coverage",
       "characterNames": "required character names",
       "leaderSuperEffectScope": "leader super effect scope",
-      "captainAbilityCoverage": "full captain ability coverage",
-      "bothLeadersCaptainCoverage": "both leaders captain coverage",
+      "captainAbilityCoverage": "Second Coverage",
+      "bothLeadersCaptainCoverage": "Second Coverage from both leaders",
       "superSpecialCriteriaCoverage": "Super Special criteria coverage",
       "superTandemCriteriaCoverage": "Super Tandem criteria coverage"
     },
@@ -91,7 +91,7 @@
       "modal": {
         "eyebrow": "Requirement sources",
         "title": "Choose a requirement source",
-        "copy": "Only characters with extractable Captain, Full Coverage, Super Special, or Super Tandem roster requirements are shown.",
+        "copy": "Only characters with extractable Captain, First Coverage, Second Coverage, Super Special, or Super Tandem roster requirements are shown.",
         "support": "Apply copies ability-derived required tags and names into the relaxed filters.",
         "searchPlaceholder": "Search requirement source characters",
         "count": "{{count}} source characters",
@@ -113,17 +113,17 @@
       }
     },
     "captainAbilityCoverage": {
-      "toggle": "Require full Captain Ability coverage",
+      "toggle": "Require Second Coverage",
       "support": {
-        "simple": "Default mode filters teams by the leader's standard HP/ATK boost scope only.",
-        "full": "Every final slot, including Captain and Friend Captain, must satisfy all targetable Captain Ability clauses."
+        "simple": "Default mode filters teams by First Coverage: the leader's standard HP/ATK boost scope only.",
+        "full": "Every final slot, including Captain and Friend Captain, must satisfy Second Coverage: all targetable Captain Ability clauses."
       }
     },
     "bothLeadersCaptainCoverage": {
-      "toggle": "Require both leaders to pass Captain Ability coverage",
+      "toggle": "Require both leaders to pass Second Coverage",
       "support": {
-        "flexible": "Allow teams where only one leader fully passes, and show the warning in the result.",
-        "strict": "Captain and Friend Captain must both fully pass every slot and team-count Captain Ability condition."
+        "flexible": "Allow teams where only one leader passes Second Coverage, and show the warning in the result.",
+        "strict": "Captain and Friend Captain must both pass Second Coverage for every slot and team-count Captain Ability condition."
       }
     },
     "superSpecialCriteriaCoverage": {
@@ -635,7 +635,7 @@
     "groups": {
       "abilityRequirements": "Ability requirements",
       "burst": "Burst",
-      "captainAbilityCoverage": "Captain Ability coverage",
+      "captainAbilityCoverage": "Second Coverage",
       "characterNameRequest": "Character name request",
       "characterTagRequest": "Character tag request",
       "classCoverage": "Class coverage",
@@ -682,10 +682,10 @@
       "startsAs": "Starts as {{name}}"
     },
     "captainAbilityCoverage": {
-      "full": "Full Captain Ability coverage passed.",
+      "full": "Second Coverage passed.",
       "missingLeaderSlots": "{{leader}} misses {{slots}}.",
-      "partial": "{{matched}} / {{total}} Captain Ability slot checks covered.",
-      "pending": "Captain Ability coverage will be calculated after a successful build."
+      "partial": "{{matched}} / {{total}} Second Coverage slot checks covered.",
+      "pending": "Second Coverage will be calculated after a successful build."
     },
     "none": "None",
     "requiredAbilities": {

@@ -78,7 +78,7 @@ export const routes: Routes = [
               seo: {
                 title: 'Captain Coverage | OPTC Team Builder',
                 description:
-                  'Pick an OPTC character and find captain abilities that fully cover that character under strict type, class, cost, universal, and self-scope matching.',
+                  'Choose an OPTC Captain and find characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching.',
                 canonicalPath: 'tabs/captain-coverage',
               },
             },

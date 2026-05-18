@@ -95,6 +95,11 @@ const ABILITY_VISUALS: Record<string, Omit<AbilityRequirementVisualMeta, 'isFall
     badge: 'POI',
     tone: 'green',
   },
+  special_damage: {
+    icon: pulseOutline,
+    badge: 'DMG',
+    tone: 'orange',
+  },
   ignore_normal_attack_only: {
     icon: banOutline,
     badge: 'NAO',

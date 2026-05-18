@@ -940,6 +940,7 @@
   </ion-content>
 
   <ion-modal
+    #rumbleManualPickerModal
     [isOpen]="manualPickerOpen()"
     cssClass="rumble-manual-picker-modal"
     (didDismiss)="closeManualCharacterPicker()"
@@ -956,7 +957,9 @@
               fill="clear"
               color="light"
               [attr.aria-label]="t('manualPicker.close')"
-              (click)="closeManualCharacterPicker()"
+              (click)="
+                closeManualCharacterPicker(); rumbleManualPickerModal.dismiss(null, 'cancel')
+              "
             >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
@@ -1012,7 +1015,11 @@
 
       <ion-footer class="rumble-manual-picker-footer">
         <ion-toolbar>
-          <ion-button fill="outline" color="light" (click)="closeManualCharacterPicker()">
+          <ion-button
+            fill="outline"
+            color="light"
+            (click)="closeManualCharacterPicker(); rumbleManualPickerModal.dismiss(null, 'cancel')"
+          >
             {{ t('manualPicker.cancel') }}
           </ion-button>
         </ion-toolbar>

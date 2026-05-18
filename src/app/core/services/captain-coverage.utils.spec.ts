@@ -15,6 +15,8 @@ describe('resolveCaptainCoverage', () => {
     "Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [TND] orbs at the start of the fight, boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [INT], Slasher and Free Spirit characters by 1.35x, and makes [INT] and [TND] orbs beneficial for all characters. If crew uses a special to reduce enemies' Increased Defense, reduces the duration by 2 additional turns.";
   const zoroVsLucciCharacter2CaptainAbility =
     "Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [RCV] orbs at the start of the fight, boosts ATK of [STR], Driven and Cerebral characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [STR], Driven and Cerebral characters by 1.35x, and makes [STR] and [RCV] orbs beneficial for all characters. If crew uses a special to reduce enemies' Threshold Damage Reduction, reduces the duration by 2 additional turns.";
+  const blackbeardEmperorCaptainAbility =
+    'Launches the following effect at start of fight: reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns, reduces Special Cooldown of [QCK] and Free Spirit characters by 2 turns. Boosts ATK of [QCK] and Free Spirit characters by 6x, boosts HP of [QCK] and Free Spirit characters by 1.3x. If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x instead.';
 
   it('treats all-character captain clauses as universal coverage', () => {
     const captain = createCharacter({
@@ -227,7 +229,7 @@ describe('resolveCaptainCoverage', () => {
       characterTags: ['Straw Hat Pirates'],
     });
 
-    expect(summarizeCaptainAbilityCoverageText(captainAbility).captainCoverageClauses).toEqual([
+    expect(summarizeCaptainAbilityCoverageText(captainAbility).firstCoverageClauses).toEqual([
       'Boosts ATK of [INT], Free Spirit and Cerebral characters by 6x',
       'boosts HP of [INT], Free Spirit and Cerebral characters by 1.2x',
     ]);
@@ -237,6 +239,63 @@ describe('resolveCaptainCoverage', () => {
       hp: 1.2,
       atk: 6,
     });
+  });
+
+  it('keeps Blackbeard First Coverage at the base scope and normalizes Second Coverage wording', () => {
+    expect(summarizeCaptainAbilityCoverageText(blackbeardEmperorCaptainAbility)).toEqual({
+      firstCoverageClauses: [
+        'Boosts ATK of [QCK] and Free Spirit characters by 6x',
+        'boosts HP of [QCK] and Free Spirit characters by 1.3x',
+      ],
+      secondCoverageClauses: [
+        'Boosts ATK of [QCK] and Free Spirit characters by 6x',
+        'boosts HP of [QCK] and Free Spirit characters by 1.3x',
+        'If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x',
+        'reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns',
+      ],
+    });
+  });
+
+  it('requires Blackbeard Second Coverage targets to be Free Spirit and tag-covered', () => {
+    const captain = createCharacter({
+      id: 4561,
+      captainAbility: blackbeardEmperorCaptainAbility,
+      type: 'QCK',
+      classes: ['Free Spirit', 'Driven'],
+      characterTags: ['Blackbeard Pirates', 'Four Emperors'],
+    });
+    const freeSpiritTaggedTarget = createCharacter({
+      id: 456101,
+      type: 'DEX',
+      classes: ['Free Spirit', 'Striker'],
+      characterTags: ['Worst Generation'],
+    });
+    const freeSpiritUntaggedTarget = createCharacter({
+      id: 456102,
+      type: 'DEX',
+      classes: ['Free Spirit', 'Striker'],
+      characterTags: [],
+    });
+    const qckTaggedNonFreeSpiritTarget = createCharacter({
+      id: 456103,
+      type: 'QCK',
+      classes: ['Driven', 'Powerhouse'],
+      characterTags: ['Blackbeard Pirates'],
+    });
+
+    expect(
+      resolveCaptainCoverage(captain, qckTaggedNonFreeSpiritTarget, {
+        coverageMode: 'simpleBoostScope',
+      }).matches,
+    ).toBe(true);
+
+    expect(resolveCaptainCoverage(captain, freeSpiritTaggedTarget).matches).toBe(true);
+    expect(resolveCaptainCoverage(captain, freeSpiritUntaggedTarget).uncoveredClauses).toEqual([
+      'reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns',
+    ]);
+    expect(resolveCaptainCoverage(captain, qckTaggedNonFreeSpiritTarget).uncoveredClauses).toEqual([
+      'If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x',
+    ]);
   });
 
   it('ignores non-boost captain target clauses for coverage', () => {
@@ -262,16 +321,16 @@ describe('resolveCaptainCoverage', () => {
       zoroVsLucciCharacter2CaptainAbility,
     );
 
-    expect(character1Summary.captainCoverageClauses).toEqual([
+    expect(character1Summary.firstCoverageClauses).toEqual([
       'boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x',
       'boosts HP of [INT], Slasher and Free Spirit characters by 1.35x',
     ]);
-    expect(character1Summary.fullCoverageClauses).toEqual(character1Summary.captainCoverageClauses);
-    expect(character2Summary.captainCoverageClauses).toEqual([
+    expect(character1Summary.secondCoverageClauses).toEqual(character1Summary.firstCoverageClauses);
+    expect(character2Summary.firstCoverageClauses).toEqual([
       'boosts ATK of [STR], Driven and Cerebral characters by 5.5x',
       'boosts HP of [STR], Driven and Cerebral characters by 1.35x',
     ]);
-    expect(character2Summary.fullCoverageClauses).toEqual(character2Summary.captainCoverageClauses);
+    expect(character2Summary.secondCoverageClauses).toEqual(character2Summary.firstCoverageClauses);
   });
 
   it('matches either branch for VS dual-character captain coverage', () => {
@@ -612,6 +671,44 @@ describe('resolveCaptainCoverage', () => {
       expect.arrayContaining([
         'boosts ATK of [STR], Striker and Driven characters by 5x',
         'boosts HP of [STR], Striker and Driven characters by 1.3x',
+      ]),
+    );
+  });
+
+  it('can require full coverage candidates to match crew tag conditions', () => {
+    const captain = createCharacter({
+      id: 4549,
+      captainAbility: kidAimedDamnedPunkCaptainAbility,
+      type: 'STR',
+      classes: ['Striker', 'Driven'],
+    });
+    const taggedBoostedTarget = createCharacter({
+      id: 3005,
+      type: 'STR',
+      classes: ['Shooter', 'Free Spirit'],
+      characterTags: ['Land of Wano Arc'],
+    });
+    const untaggedBoostedTarget = createCharacter({
+      id: 3006,
+      type: 'STR',
+      classes: ['Shooter', 'Free Spirit'],
+    });
+
+    const taggedCoverage = resolveCaptainCoverage(captain, taggedBoostedTarget, {
+      includeTeamTagClauses: true,
+    });
+    const untaggedCoverage = resolveCaptainCoverage(captain, untaggedBoostedTarget, {
+      includeTeamTagClauses: true,
+    });
+
+    expect(taggedCoverage.matches).toBe(true);
+    expect(taggedCoverage.coveredClauses).toContain(
+      'crew tag condition: [Kid Pirates] / [Worst Generation] / [Land of Wano Arc] / [Egghead Arc] characters',
+    );
+    expect(untaggedCoverage.matches).toBe(false);
+    expect(untaggedCoverage.uncoveredClauses).toEqual(
+      expect.arrayContaining([
+        'crew tag condition: [Kid Pirates] / [Worst Generation] / [Land of Wano Arc] / [Egghead Arc] characters',
       ]),
     );
   });

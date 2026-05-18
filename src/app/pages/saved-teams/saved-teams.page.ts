@@ -25,6 +25,9 @@ import {
   closeOutline,
   cloudUploadOutline,
   documentTextOutline,
+  peopleOutline,
+  shieldCheckmarkOutline,
+  sparklesOutline,
 } from 'ionicons/icons';
 
 import {
@@ -118,12 +121,17 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
   public readonly editTeamName = signal('');
   public readonly editNotes = signal('');
   public readonly savingEdit = signal(false);
+  public readonly openTeamModalOpen = signal(false);
+  public readonly openingTeam = signal<SavedTeam | null>(null);
   public readonly uploadIcon = cloudUploadOutline;
   public readonly fileIcon = documentTextOutline;
   public readonly closeIcon = closeOutline;
   public readonly successIcon = checkmarkCircleOutline;
   public readonly errorIcon = alertCircleOutline;
   public readonly shipIcon = boatOutline;
+  public readonly autoBuilderIcon = sparklesOutline;
+  public readonly captainCoverageIcon = shieldCheckmarkOutline;
+  public readonly manualBuilderIcon = peopleOutline;
 
   public constructor(
     private readonly userState: UserStateService,
@@ -149,6 +157,20 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
 
   public getTeamBuilderQueryParams(team: Pick<SavedTeam, 'id'>): { teamId: string } {
     return { teamId: team.id };
+  }
+
+  public openTeamDestinationModal(team: SavedTeam): void {
+    this.openingTeam.set(team);
+    this.openTeamModalOpen.set(true);
+  }
+
+  public closeOpenTeamModal(): void {
+    this.openTeamModalOpen.set(false);
+  }
+
+  public resetOpenTeamModal(): void {
+    this.openTeamModalOpen.set(false);
+    this.openingTeam.set(null);
   }
 
   public getCharacterDetailLink(
@@ -195,6 +217,8 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     this.selectedTeamIds.set([]);
     this.editModalOpen.set(false);
     this.importModalOpen.set(false);
+    this.openTeamModalOpen.set(false);
+    this.openingTeam.set(null);
     this.resetEditState();
     this.resetImportState();
   }

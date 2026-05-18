@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "Going Merry - Fixture",
+    "thumb": null,
+    "thumbUrl": null,
+    "description": "Fixture ship for local schema tests."
+  },
+  {
+    "id": 2,
+    "name": "Thousand Sunny - Fixture",
+    "thumb": "ship_0002_t2.png",
+    "thumbUrl": "assets/offline-packs/ship-thumbnails/ship_0002_t2.png",
+    "description": "Fixture ship with an offline thumbnail path."
+  }
+]

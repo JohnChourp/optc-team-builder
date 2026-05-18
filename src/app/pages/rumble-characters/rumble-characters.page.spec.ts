@@ -166,6 +166,7 @@ function createPage(
   const favoriteIds = signal(overrides.favoriteIds ?? []);
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       characterCount: 3,
       detailCount: 3,
       rumbleCount: 3,
@@ -291,5 +292,5 @@ function createUnit(overrides: {
     },
     reasonChips: ['Rumble Data'],
     conflictKeys: [],
-  } as RumbleUnitScore;
+  } as unknown as RumbleUnitScore;
 }

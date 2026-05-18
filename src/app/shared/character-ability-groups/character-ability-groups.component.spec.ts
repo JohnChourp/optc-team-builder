@@ -1,3 +1,4 @@
+import '@angular/compiler';
 import { readFileSync } from 'node:fs';
 
 import { describe, expect, it, vi } from 'vitest';
@@ -91,6 +92,7 @@ function createComponent(): CharacterAbilityGroupsComponent {
         'characterAbilityGroups.groups.other': 'Other',
         'characterAbilityGroups.coverageModes.selectedDebuff': 'Selectable debuff',
         'characterAbilityGroups.sources.specialText': 'Special',
+        'characterAbilityGroups.sources.superSpecialText': 'Super Special',
         'characterAbilityGroups.sources.captainAbility': 'Captain',
         'characterAbilityGroups.sources.sailorAbilities': 'Crewmate',
         'characterAbilityGroups.sources.potentialAbilities': 'Potential',

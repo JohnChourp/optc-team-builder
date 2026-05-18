@@ -6,6 +6,7 @@ import initSqlJs from 'sql.js';
 
 import { enrichCharactersWithBuilderAbilities } from '../auto-team-builder-ability-parser.mjs';
 import { loadBuilderAbilityCorrections } from './builder-ability-corrections.mjs';
+import { validateDatasetIntegrity } from './dataset-integrity.mjs';
 import {
   buildAutoBuilderAbilityCatalog,
   buildManifest,
@@ -140,6 +141,12 @@ async function buildGeneratedOutputs({
     sourceVersion,
     autoBuilderAbilities,
   );
+  validateDatasetIntegrity({
+    characters: nextCharacters,
+    ships,
+    manifest,
+    autoBuilderAbilityCatalog,
+  });
   const sqlSeed = createSqlSeed(nextCharacters, ships, manifest);
 
   return {

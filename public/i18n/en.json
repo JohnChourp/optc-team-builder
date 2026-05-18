@@ -83,6 +83,7 @@
     },
     "sources": {
       "specialText": "Special",
+      "superSpecialText": "Super Special",
       "captainAbility": "Captain",
       "sailorAbilities": "Crewmate",
       "potentialAbilities": "Potential",
@@ -362,7 +363,7 @@
       },
       "captainCoverage": {
         "title": "Captain Coverage",
-        "copy": "Pick a character and find captain abilities that fully cover it under strict type, class, cost, universal, and self-scope matching."
+        "copy": "Pick a Captain and find characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching."
       },
       "autoRumble": {
         "title": "Auto Team Rumble Builder",

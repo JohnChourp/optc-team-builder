@@ -1,7 +1,8 @@
 {
   "actions": {
     "exportSingle": "Export",
-    "openBuilder": "Open in team builder"
+    "openBuilder": "Open in team builder",
+    "openTeam": "Open team"
   },
   "confirm": {
     "deleteSelected": "Delete {{count}} selected teams?",
@@ -60,6 +61,25 @@
     "warningTitle": "Import completed with warnings"
   },
   "loading": "Loading saved teams...",
+  "openTeam": {
+    "copy": "Choose where to open \"{{name}}\".",
+    "destinations": {
+      "auto": {
+        "copy": "Use these characters and ship as locked manual inputs for automatic team search.",
+        "title": "Auto Team Builder"
+      },
+      "captainCoverage": {
+        "copy": "Use slot 1 as Captain and slots 3-6 as coverage subs. Friend Captain is ignored.",
+        "title": "Captain Coverage"
+      },
+      "manual": {
+        "copy": "Open all six slots and the saved ship for direct manual editing.",
+        "title": "Manual Team Builder"
+      }
+    },
+    "eyebrow": "Open saved team",
+    "title": "Choose destination"
+  },
   "preview": {
     "ariaLabel": "Saved team character slots",
     "emptySlotAlt": "Empty slot",

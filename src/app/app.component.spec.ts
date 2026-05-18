@@ -65,7 +65,9 @@ vi.mock('@angular/core', async () => {
   return {
     ...actual,
     inject: (token: { name?: string }) => {
-      switch (token.name) {
+      const tokenName = token.name?.replace(/^_+/u, '');
+
+      switch (tokenName) {
         case 'DestroyRef':
           return {};
         case 'Router':

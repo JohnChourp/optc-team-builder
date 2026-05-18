@@ -1,5 +1,6 @@
 <ng-container *transloco="let t; scope: 'character-image-picker'; read: 'character-image-picker'">
   <ion-modal
+    #characterImagePickerModal
     [isOpen]="isOpen"
     cssClass="character-image-picker-modal"
     (didDismiss)="onModalDidDismiss()"
@@ -11,8 +12,7 @@
             <ion-button
               fill="clear"
               color="light"
-              [disabled]="applyingSelection"
-              (click)="cancel()"
+              (click)="cancel(); characterImagePickerModal.dismiss(null, 'cancel')"
             >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
@@ -281,8 +281,7 @@
             <ion-button
               fill="clear"
               color="light"
-              [disabled]="applyingSelection"
-              (click)="cancel()"
+              (click)="cancel(); characterImagePickerModal.dismiss(null, 'cancel')"
             >
               {{ 'common.actions.cancel' | transloco }}
             </ion-button>

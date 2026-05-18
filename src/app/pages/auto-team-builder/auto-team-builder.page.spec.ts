@@ -12,6 +12,7 @@ import {
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
+  type AutoTeamBuilderType,
 } from '../../core/models/auto-team-builder.models';
 import { type CharacterDetailRecord, type DatasetManifest } from '../../core/models/optc.models';
 import { AutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
@@ -324,7 +325,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('passes strict both-leader Captain Ability coverage to the builder when enabled', async () => {
+  it('passes strict both-leader Second Coverage to the builder when enabled', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
@@ -344,7 +345,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('reports partial full Captain Ability coverage and exposes result character tags', async () => {
+  it('reports partial Second Coverage and exposes result character tags', async () => {
     const { page } = await createPage();
     const captain = createCharacterRecord(200, 'DEX Captain');
     const dexSub = createCharacterRecord(202, 'DEX Sub');
@@ -367,7 +368,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     expect(page.teamSlots()[5]?.characterTags).toEqual(['Kid Pirates', 'Worst Generation']);
     expect(page.captainAbilityCoverageReportLabel()).toBe(
-      '10 / 12 Captain Ability slot checks covered.',
+      '10 / 12 Second Coverage slot checks covered.',
     );
     expect(page.captainAbilityCoverageMissingLabels()).toEqual([
       'Captain misses Sub 4.',
@@ -558,7 +559,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
   it('lets the live worker count change while a build is running without cancelling it', async () => {
     const { page, autoTeamBuilder, userState } = await createPage();
-    let resolveBuild: ((value: AutoBuildResult | null) => void) | null = null;
+    let resolveBuild!: (value: AutoBuildResult | null) => void;
 
     autoTeamBuilder.buildTeam.mockImplementation(
       () =>
@@ -587,7 +588,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     });
     expect(page.building()).toBe(true);
 
-    resolveBuild?.(null);
+    resolveBuild(null);
     await buildPromise;
 
     expect(page.building()).toBe(false);
@@ -1176,6 +1177,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         mechanicKey: 'enemy_barrier',
         category: 'enemyDefense',
         minTurns: 3,
+        requiredCharacterCount: null,
         triggerTags: [],
         responseTags: [],
         conditionTags: [],
@@ -2873,6 +2875,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         mechanicKey: 'enemy_barrier',
         category: 'enemyDefense',
         minTurns: 3,
+        requiredCharacterCount: null,
         triggerTags: [],
         responseTags: [],
         conditionTags: [],
@@ -3579,7 +3582,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     repository.searchDetailedCharacters.mockClear();
 
     await page.onTypeChange({ detail: { value: ['DEX', 'PSY'] } } as CustomEvent<{
-      value: string[];
+      value: AutoTeamBuilderType[];
     }>);
 
     expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(1, {
@@ -3711,7 +3714,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     await page.ngOnInit();
     await page.openManualPickerModal();
-    await page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{ value: string[] }>);
+    await page.onTypeChange({ detail: { value: ['DEX'] } } as CustomEvent<{
+      value: AutoTeamBuilderType[];
+    }>);
 
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
       [402, 401],
@@ -7013,7 +7018,10 @@ async function createPage(
     searchDetailedCharacters: ReturnType<typeof vi.fn>;
     searchCharacters: ReturnType<typeof vi.fn>;
   };
-  autoTeamBuilder: { buildTeam: ReturnType<typeof vi.fn> };
+  autoTeamBuilder: {
+    buildTeam: ReturnType<typeof vi.fn>;
+    resolveCaptainCoveredCandidateRecords: ReturnType<typeof vi.fn>;
+  };
   router: { navigate: ReturnType<typeof vi.fn> };
   route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   userState: {
@@ -7301,6 +7309,7 @@ async function createPage(
 
 function createManifest(): DatasetManifest {
   return {
+    schemaVersion: 1,
     generatedAt: '2026-03-25T10:00:00.000Z',
     sourceVersion: 'test',
     characterCount: 10,
@@ -7353,7 +7362,7 @@ function createShipListScrollEvent(): Event {
       clientHeight: 120,
       scrollHeight: 1000,
     },
-  } as Event;
+  } as unknown as Event;
 }
 
 function createSavedTeam(

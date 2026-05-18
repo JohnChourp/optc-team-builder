@@ -521,6 +521,7 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       characterCount: 0,
       detailCount: 0,
       rumbleCount: 0,

@@ -16,6 +16,8 @@ import {
   pruneManualCharactersCoveredByImport,
 } from './lib/manual-character-prune.mjs';
 import { loadBuilderAbilityCorrections } from './lib/builder-ability-corrections.mjs';
+import { buildCaptainAbilityCoverage } from './lib/captain-ability-coverage.mjs';
+import { validateDatasetIntegrity } from './lib/dataset-integrity.mjs';
 import {
   buildAutoBuilderAbilityCatalog,
   buildManifest,
@@ -1335,6 +1337,7 @@ export function normalizeCharacterDetail(
     characterId,
     captainAbility: normalizedCaptainAbility,
     captainAbilityVariants: normalizedCaptainAbilityVariants,
+    captainAbilityCoverage: buildCaptainAbilityCoverage(normalizedCaptainAbilityVariants),
     captainNotes: normalizedCaptainNotes,
     specialName: detail.specialName ?? null,
     specialText: normalizedSpecialText,
@@ -1704,6 +1707,13 @@ async function main() {
     autoBuilderAbilities,
   );
   const preview = buildPreviewPayload(manifest.generatedAt, characters, ships);
+
+  validateDatasetIntegrity({
+    characters,
+    ships,
+    manifest,
+    autoBuilderAbilityCatalog,
+  });
 
   await writeGeneratedDatasetFiles(
     dataDir,

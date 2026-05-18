@@ -1,5 +1,10 @@
 <ng-container *transloco="let t; scope: 'ship-picker'; read: 'ship-picker'">
-  <ion-modal [isOpen]="isOpen" cssClass="ship-picker-modal" (didDismiss)="onModalDidDismiss()">
+  <ion-modal
+    #shipPickerModal
+    [isOpen]="isOpen"
+    cssClass="ship-picker-modal"
+    (didDismiss)="onModalDidDismiss()"
+  >
     <ng-template>
       <ion-header class="ship-picker-header ion-no-border">
         <ion-toolbar>
@@ -15,7 +20,11 @@
           </div>
 
           <ion-buttons slot="end">
-            <ion-button fill="clear" color="light" (click)="cancel()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="cancel(); shipPickerModal.dismiss(null, 'cancel')"
+            >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </ion-buttons>
@@ -167,7 +176,11 @@
       <ion-footer class="ship-picker-footer">
         <ion-toolbar>
           <div class="ship-picker-footer__actions">
-            <ion-button fill="clear" color="light" (click)="cancel()">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="cancel(); shipPickerModal.dismiss(null, 'cancel')"
+            >
               {{ 'common.actions.cancel' | transloco }}
             </ion-button>
             <ion-button color="warning" [disabled]="selectedCard().isBlocked" (click)="save()">

@@ -96,6 +96,9 @@ describe('app routes', () => {
     expect(coverageRoute).toBeDefined();
     expect(coverageRoute?.loadComponent).toBeTypeOf('function');
     expect(seo?.['title']).toBe('Captain Coverage | OPTC Team Builder');
+    expect(seo?.['description']).toBe(
+      'Choose an OPTC Captain and find characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching.',
+    );
     expect(seo?.['canonicalPath']).toBe('tabs/captain-coverage');
   });
 

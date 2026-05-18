@@ -115,6 +115,7 @@
     </div>
 
     <ion-modal
+      #savedRumbleTeamEditModal
       [isOpen]="editModalOpen()"
       cssClass="saved-rumble-teams-edit-modal"
       (didDismiss)="closeEditModal()"
@@ -128,7 +129,11 @@
                 <h2>{{ t('edit.title') }}</h2>
               </div>
               <ion-buttons>
-                <ion-button fill="clear" color="light" (click)="closeEditModal()">
+                <ion-button
+                  fill="clear"
+                  color="light"
+                  (click)="closeEditModal(); savedRumbleTeamEditModal.dismiss(null, 'cancel')"
+                >
                   <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                 </ion-button>
               </ion-buttons>
@@ -161,7 +166,11 @@
 
         <ion-footer class="edit-modal-footer">
           <ion-toolbar>
-            <ion-button fill="outline" color="light" (click)="closeEditModal()">
+            <ion-button
+              fill="outline"
+              color="light"
+              (click)="closeEditModal(); savedRumbleTeamEditModal.dismiss(null, 'cancel')"
+            >
               {{ 'common.actions.cancel' | transloco }}
             </ion-button>
             <ion-button color="warning" [disabled]="savingEdit()" (click)="saveEditedRumbleTeam()">

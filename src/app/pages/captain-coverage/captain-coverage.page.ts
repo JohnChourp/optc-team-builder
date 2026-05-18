@@ -1,5 +1,5 @@
 import { Component, type OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
@@ -18,8 +18,10 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import {
+  alertCircleOutline,
   checkmarkCircleOutline,
   peopleOutline,
+  saveOutline,
   searchOutline,
   shieldCheckmarkOutline,
 } from 'ionicons/icons';
@@ -31,20 +33,24 @@ import {
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
 import { type AutoBuildCaptainAbilityCoverageMode } from '../../core/models/auto-team-builder.models';
+import { type CaptainCoverageResult } from '../../core/services/captain-coverage.utils';
 import {
-  type CaptainCoverageResult,
-  resolveCaptainCoverage,
-} from '../../core/services/captain-coverage.utils';
+  createCaptainCoverageFilterState,
+  type CaptainCoverageFilterState,
+  resolveCaptainCoverageFilterResult,
+} from '../../core/services/captain-coverage-filter.utils';
 import {
   resolveCaptainTeamConditionStatus,
   type CaptainTeamConditionStatus,
 } from '../../core/services/captain-team-condition-status.utils';
 import {
+  type CharacterBox,
   type CharacterDetailRecord,
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
   type DatasetManifest,
+  type SavedTeam,
 } from '../../core/models/optc.models';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -56,7 +62,10 @@ import {
   type AbilityRequirementDraft,
 } from '../../core/services/ability-requirement-draft.utils';
 import {
+  createCaptainAbilityDrafts,
   getAbilityCatalogItemsByCategory,
+  getCaptainAbilityCatalogItems,
+  serializeCaptainAbilityDrafts,
   serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
@@ -72,10 +81,12 @@ import {
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 
 const MAX_CAPTAIN_LOOKUP_COUNT = 12000;
 const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 5;
+const CAPTAIN_ABILITY_FILTER_CATEGORY: AbilityFilterRailCategory = 'captainAbility';
 
 type CaptainCoverageSortMode =
   | Extract<
@@ -83,7 +94,6 @@ type CaptainCoverageSortMode =
       'catalog' | 'captainAtkBoost' | 'captainAverageBoost' | 'captainHpBoost' | 'nameAsc'
     >
   | 'nameDesc';
-
 interface CaptainCoverageCardView {
   character: CharacterListItem;
   coverage: CaptainCoverageResult;
@@ -104,6 +114,7 @@ interface CaptainCoverageAbilityBadgeView {
   standalone: true,
   imports: [
     AbilityFilterRailComponent,
+    AbilityRequirementPickerComponent,
     CaptainTeamConditionStatusComponent,
     CharacterImagePickerComponent,
     IonButton,
@@ -140,6 +151,10 @@ export class CaptainCoveragePage implements OnInit {
     signal<Array<CharacterListItem | null>>(createEmptyTeamSlots());
   public readonly activeTeamSlotIndex = signal(0);
   public readonly teamPickerOpen = signal(false);
+  public readonly teamName = signal('');
+  public readonly currentTeamId = signal<string | null>(null);
+  public readonly saveUiLocked = signal(false);
+  public readonly saveFeedbackError = signal('');
   public readonly maxTotalCost = signal<number | null>(null);
   public readonly allCaptains = signal<CharacterDetailRecord[]>([]);
   public readonly loading = signal(true);
@@ -147,9 +162,14 @@ export class CaptainCoveragePage implements OnInit {
   public readonly selectedSortMode = signal<CaptainCoverageSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly abilityMatchRankingEnabled = signal(false);
+  public readonly requireCaptainCoverage = signal(true);
   public readonly requireFullCaptainAbilityCoverage = signal(false);
+  public readonly requireSuperTandemPresence = signal(false);
+  public readonly requireSuperTypesClassesPresence = signal(false);
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
+  public readonly captainAbilityPickerOpen = signal(false);
+  public readonly captainAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -159,8 +179,27 @@ export class CaptainCoveragePage implements OnInit {
   public readonly supportAbilityPickerOpen = signal(false);
   public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly favoriteIds;
+  public readonly characterBoxes;
+  public readonly selectedCharacterBoxId = signal<string | null>(null);
 
   public readonly selectedCaptain = computed(() => this.selectedTeamSlots()[0] ?? null);
+  public readonly selectedCharacterBox = computed<CharacterBox | null>(() =>
+    this.resolveCharacterBoxById(this.selectedCharacterBoxId()),
+  );
+  public readonly selectedCharacterBoxIds = computed(
+    () => this.selectedCharacterBox()?.characterIds ?? [],
+  );
+  public readonly selectedCharacterBoxFavoriteCount = computed(() => {
+    const selectedBox = this.selectedCharacterBox();
+
+    if (!selectedBox) {
+      return 0;
+    }
+
+    const favoriteIdSet = new Set(this.favoriteIds());
+
+    return selectedBox.characterIds.filter((characterId) => favoriteIdSet.has(characterId)).length;
+  });
   public readonly selectedCaptainSubtitle = computed(() => {
     const captain = this.selectedCaptain();
 
@@ -172,6 +211,9 @@ export class CaptainCoveragePage implements OnInit {
   });
   public readonly allowedCaptainIds = computed(() =>
     this.allCaptains().map((captain) => captain.id),
+  );
+  public readonly availableCaptainAbilityCatalogItems = computed(() =>
+    getCaptainAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
   );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
@@ -212,14 +254,23 @@ export class CaptainCoveragePage implements OnInit {
       'support',
     ),
   );
+  public readonly captainAbilityRequirements = computed(() =>
+    serializeCaptainAbilityDrafts(
+      this.captainAbilityDrafts(),
+      this.availableCaptainAbilityCatalogItems(),
+    ),
+  );
   public readonly selectedAbilityRequirements = computed<AutoBuildAbilityRequirement[]>(() => [
     ...this.specialAbilityRequirements(),
     ...this.crewmateAbilityRequirements(),
     ...this.potentialAbilityRequirements(),
     ...this.supportAbilityRequirements(),
   ]);
+  public readonly selectedResultAbilityRequirements = computed<AutoBuildAbilityRequirement[]>(
+    () => [...this.selectedAbilityRequirements(), ...this.captainAbilityRequirements()],
+  );
   public readonly abilityMatchRankingDisabled = computed(
-    () => this.selectedAbilityRequirements().length === 0,
+    () => this.selectedResultAbilityRequirements().length === 0,
   );
   public readonly captainAbilityCoverageMode = computed<AutoBuildCaptainAbilityCoverageMode>(() =>
     this.requireFullCaptainAbilityCoverage() ? 'fullAbilityCoverage' : 'simpleBoostScope',
@@ -229,7 +280,49 @@ export class CaptainCoveragePage implements OnInit {
       ? this.t('filters.captainAbilityCoverage.support.full')
       : this.t('filters.captainAbilityCoverage.support.simple'),
   );
+  public readonly captainCoverageSupportLabel = computed(() =>
+    this.requireCaptainCoverage()
+      ? this.t('filters.captainCoverage.support.enabled')
+      : this.t('filters.captainCoverage.support.disabled'),
+  );
+  public readonly captainCoverageFilterState = computed<CaptainCoverageFilterState>(() =>
+    createCaptainCoverageFilterState({
+      requiredAbilityRequirements: this.captainAbilityRequirements(),
+      requireSuperTandem: this.requireSuperTandemPresence(),
+      requireSuperTypesClasses: this.requireSuperTypesClassesPresence(),
+      requireCaptainCoverage: this.requireCaptainCoverage(),
+      requireFullCoverage: this.requireFullCaptainAbilityCoverage(),
+    }),
+  );
+  public readonly characterBoxSupportLabel = computed(() => {
+    const selectedBox = this.selectedCharacterBox();
+
+    if (!this.characterBoxes().length) {
+      return this.t('filters.characterBox.support.noBoxes');
+    }
+
+    if (!selectedBox) {
+      return this.t('filters.characterBox.support.all');
+    }
+
+    if (this.favoritesOnly()) {
+      return this.t('filters.characterBox.support.withFavorites', {
+        count: this.selectedCharacterBoxFavoriteCount(),
+        total: selectedBox.characterIds.length,
+      });
+    }
+
+    return this.t('filters.characterBox.support.withCount', {
+      count: selectedBox.characterIds.length,
+    });
+  });
   public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => [
+    {
+      category: CAPTAIN_ABILITY_FILTER_CATEGORY,
+      label: this.t('filters.captainAbilityEyebrow'),
+      count: this.captainAbilityDrafts().length,
+      disabled: !this.availableCaptainAbilityCatalogItems().length,
+    },
     {
       category: 'special',
       label: this.t('filters.specialEyebrow'),
@@ -265,30 +358,51 @@ export class CaptainCoveragePage implements OnInit {
 
     const normalizedSearchTerm = this.searchTerm().trim().toLowerCase();
     const favoriteIdSet = new Set(this.favoriteIds());
+    const selectedCharacterBoxIdSet = this.selectedCharacterBox()
+      ? new Set(this.selectedCharacterBoxIds())
+      : null;
     const selectedAbilityRequirements = this.selectedAbilityRequirements();
+    const captainAbilityRequirements = this.captainAbilityRequirements();
+    const captainCoverageFilterState = this.captainCoverageFilterState();
     const characterDetailsById = this.allCharacterDetailsById();
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
     const matchingCharacters = this.allCharacters()
+      .filter((character) =>
+        selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
+      )
       .map((character) => {
         const characterDetail = characterDetailsById.get(character.id);
+        const filterResult = resolveCaptainCoverageFilterResult(
+          captain,
+          {
+            character,
+            detail: characterDetail,
+          },
+          captainCoverageFilterState,
+        );
 
         return {
           character,
-          coverage: resolveCaptainCoverage(captain, character, {
-            coverageMode: this.captainAbilityCoverageMode(),
-            targetCharacterTags: characterDetail?.detail.characterTags ?? [],
-          }),
+          characterDetail,
+          coverage: filterResult.coverage,
+          matchesCaptainCoverageFilters: filterResult.matches,
         };
       })
-      .filter(({ coverage }) => coverage.matches)
+      .filter(({ matchesCaptainCoverageFilters }) => matchesCaptainCoverageFilters)
       .filter(({ character }) => !this.hasPartyConflict(character, selectedConflictKeys))
-      .map(({ character, coverage }) => {
-        const abilities = (characterDetailsById.get(character.id)?.detail.builderAbilities ?? []).filter(
-          (ability) => ability.source !== 'captainAbility',
+      .map(({ character, characterDetail, coverage }) => {
+        const detailAbilities = characterDetail?.detail.builderAbilities ?? [];
+        const abilities = detailAbilities.filter((ability) => ability.source !== 'captainAbility');
+        const captainAbilities = detailAbilities.filter(
+          (ability) => ability.source === 'captainAbility',
         );
         const abilityMatchCount = this.countMatchedAbilityRequirements(
           abilities,
           selectedAbilityRequirements,
+        );
+        const captainAbilityMatchCount = this.countMatchedAbilityRequirements(
+          captainAbilities,
+          captainAbilityRequirements,
         );
 
         return {
@@ -296,16 +410,21 @@ export class CaptainCoveragePage implements OnInit {
           coverage,
           assignableSlotIndex: this.findAssignableSubSlotIndex(character),
           abilityMatchCount,
-          selectedAbilityCount: selectedAbilityRequirements.length,
-          matchedAbilityBadges: this.buildMatchedAbilityBadges(
-            abilities,
-            selectedAbilityRequirements,
-          ),
+          captainAbilityMatchCount,
+          selectedAbilityCount:
+            selectedAbilityRequirements.length + captainAbilityRequirements.length,
+          matchedAbilityBadges: [
+            ...this.buildMatchedAbilityBadges(abilities, selectedAbilityRequirements),
+            ...this.buildMatchedAbilityBadges(captainAbilities, captainAbilityRequirements),
+          ],
         };
       })
-      .filter(({ abilityMatchCount }) =>
-        selectedAbilityRequirements.length === 0 ? true : abilityMatchCount > 0,
-      )
+      .filter(({ abilityMatchCount }) => {
+        const matchesSelectedAbilities =
+          selectedAbilityRequirements.length === 0 ? true : abilityMatchCount > 0;
+
+        return matchesSelectedAbilities;
+      })
       .filter(({ assignableSlotIndex }) => assignableSlotIndex !== null)
       .filter(({ character }) => {
         if (this.favoritesOnly()) {
@@ -331,13 +450,14 @@ export class CaptainCoveragePage implements OnInit {
           coverage,
           assignableSlotIndex,
           abilityMatchCount,
+          captainAbilityMatchCount,
           selectedAbilityCount,
           matchedAbilityBadges,
         }) => ({
           character,
           coverage,
           assignableSlotIndex,
-          abilityMatchCount,
+          abilityMatchCount: abilityMatchCount + captainAbilityMatchCount,
           selectedAbilityCount,
           matchedAbilityBadges,
           detailLink: ['/characters', String(character.id)],
@@ -347,6 +467,15 @@ export class CaptainCoveragePage implements OnInit {
   });
 
   public readonly totalMatchingCharacters = computed(() => this.resultCards().length);
+  public readonly filledTeamSlotCount = computed(
+    () => this.selectedTeamSlots().filter(Boolean).length,
+  );
+  public readonly saveDisabled = computed(
+    () => this.saveUiLocked() || this.filledTeamSlotCount() === 0,
+  );
+  public readonly saveButtonLabel = computed(() =>
+    this.saveUiLocked() ? this.t('team.save.savingLabel') : this.t('team.save.action'),
+  );
   public readonly teamBudgetCost = computed(() =>
     this.selectedTeamSlots().reduce((total, character) => total + (character?.cost ?? 0), 0),
   );
@@ -419,6 +548,8 @@ export class CaptainCoveragePage implements OnInit {
   public readonly coverageIcon = shieldCheckmarkOutline;
   public readonly targetIcon = peopleOutline;
   public readonly checkIcon = checkmarkCircleOutline;
+  public readonly errorIcon = alertCircleOutline;
+  public readonly saveIcon = saveOutline;
   public readonly searchIcon = searchOutline;
 
   public constructor(
@@ -426,16 +557,21 @@ export class CaptainCoveragePage implements OnInit {
     private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly userState: UserStateService,
     private readonly i18n: AppI18nService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
+    this.characterBoxes = this.userState.characterBoxes;
+    this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
   public async ngOnInit(): Promise<void> {
     this.loading.set(true);
 
     try {
-      const [, summary, abilityCatalog, records] = await Promise.all([
+      const [, , summary, abilityCatalog, records] = await Promise.all([
         this.userState.readyFavoriteCharacterIds(),
+        this.userState.readyCharacterBoxes(),
         this.repository.getDatasetManifest(),
         this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
         this.repository.searchDetailedCharacters({
@@ -463,9 +599,20 @@ export class CaptainCoveragePage implements OnInit {
             record.detail.captainAbility.trim().length > 0,
         ),
       );
+      this.clearMissingSelectedCharacterBox();
+      await this.applySavedTeamFromRoute();
     } finally {
       this.loading.set(false);
     }
+  }
+
+  public async ionViewWillEnter(): Promise<void> {
+    if (this.loading()) {
+      return;
+    }
+
+    this.clearMissingSelectedCharacterBox();
+    await this.applySavedTeamFromRoute();
   }
 
   public openTeamSlotPicker(index: number): void {
@@ -495,6 +642,7 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedTeamSlots.update((slots) =>
       slots.map((slot, slotIndex) => (slotIndex === index ? character : slot)),
     );
+    this.clearSavedTeamDraftState();
     this.teamPickerOpen.set(false);
 
     if (index === 0) {
@@ -514,6 +662,7 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedTeamSlots.update((slots) =>
       slots.map((slot, index) => (index === slotIndex ? card.character : slot)),
     );
+    this.clearSavedTeamDraftState();
   }
 
   public clearTeamSlot(index: number, event?: Event): void {
@@ -526,10 +675,41 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedTeamSlots.update((slots) =>
       slots.map((slot, slotIndex) => (slotIndex === index ? null : slot)),
     );
+    this.clearSavedTeamDraftState();
 
     if (index === 0) {
       this.selectedCaptainDetail.set(null);
       this.searchTerm.set('');
+    }
+  }
+
+  public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.teamName.set((event.detail.value ?? '').trimStart());
+  }
+
+  public async saveTeam(): Promise<void> {
+    if (this.saveDisabled()) {
+      return;
+    }
+
+    this.saveUiLocked.set(true);
+    this.saveFeedbackError.set('');
+
+    try {
+      const saved = await this.userState.saveTeam({
+        id: this.currentTeamId() ?? undefined,
+        name: this.teamName(),
+        notes: '',
+        shipId: null,
+        slots: this.buildSavedTeamSlots(),
+      });
+
+      this.currentTeamId.set(saved.id);
+    } catch (error) {
+      console.error(error);
+      this.saveFeedbackError.set(this.t('team.save.error'));
+    } finally {
+      this.saveUiLocked.set(false);
     }
   }
 
@@ -575,10 +755,58 @@ export class CaptainCoveragePage implements OnInit {
     this.abilityMatchRankingEnabled.set(Boolean(event.detail.checked));
   }
 
+  public onRequireCaptainCoverageChange(event: CustomEvent<{ checked?: boolean | null }>): void {
+    this.requireCaptainCoverage.set(Boolean(event.detail.checked));
+  }
+
   public onRequireFullCaptainAbilityCoverageChange(
     event: CustomEvent<{ checked?: boolean | null }>,
   ): void {
     this.requireFullCaptainAbilityCoverage.set(Boolean(event.detail.checked));
+  }
+
+  public onRequireSuperTandemPresenceChange(
+    event: CustomEvent<{ checked?: boolean | null }>,
+  ): void {
+    this.requireSuperTandemPresence.set(Boolean(event.detail.checked));
+  }
+
+  public onRequireSuperTypesClassesPresenceChange(
+    event: CustomEvent<{ checked?: boolean | null }>,
+  ): void {
+    this.requireSuperTypesClassesPresence.set(Boolean(event.detail.checked));
+  }
+
+  public onCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.selectedCharacterBoxId.set(this.normalizeCharacterBoxId(event.detail.value));
+  }
+
+  public openCaptainAbilityPicker(): void {
+    if (!this.availableCaptainAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.captainAbilityPickerOpen.set(true);
+  }
+
+  public closeCaptainAbilityPicker(): void {
+    this.captainAbilityPickerOpen.set(false);
+  }
+
+  public saveCaptainAbilityPicker(drafts: AbilityRequirementDraft[]): void {
+    const requirements = serializeCaptainAbilityDrafts(
+      drafts,
+      this.availableCaptainAbilityCatalogItems(),
+    );
+
+    this.captainAbilityDrafts.set(
+      createCaptainAbilityDrafts(requirements, this.availableCaptainAbilityCatalogItems()),
+    );
+    this.captainAbilityPickerOpen.set(false);
+  }
+
+  public clearCaptainAbilityFilters(): void {
+    this.captainAbilityDrafts.set([]);
   }
 
   public openSpecialAbilityPicker(): void {
@@ -698,6 +926,9 @@ export class CaptainCoveragePage implements OnInit {
       case 'special':
         this.openSpecialAbilityPicker();
         break;
+      case CAPTAIN_ABILITY_FILTER_CATEGORY:
+        this.openCaptainAbilityPicker();
+        break;
       case 'crewmate':
         this.openCrewmateAbilityPicker();
         break;
@@ -714,6 +945,9 @@ export class CaptainCoveragePage implements OnInit {
     switch (category) {
       case 'special':
         this.clearSpecialAbilityFilters();
+        break;
+      case CAPTAIN_ABILITY_FILTER_CATEGORY:
+        this.clearCaptainAbilityFilters();
         break;
       case 'crewmate':
         this.clearCrewmateAbilityFilters();
@@ -814,6 +1048,100 @@ export class CaptainCoveragePage implements OnInit {
     );
   }
 
+  private resolveCharacterBoxById(characterBoxId: string | null): CharacterBox | null {
+    if (!characterBoxId) {
+      return null;
+    }
+
+    return this.characterBoxes().find((box) => box.id === characterBoxId) ?? null;
+  }
+
+  private normalizeCharacterBoxId(value: string | null | undefined): string | null {
+    const normalizedBoxId = typeof value === 'string' ? value.trim() : '';
+
+    if (!normalizedBoxId) {
+      return null;
+    }
+
+    return this.resolveCharacterBoxById(normalizedBoxId)?.id ?? null;
+  }
+
+  private clearMissingSelectedCharacterBox(): void {
+    if (this.selectedCharacterBoxId() && !this.selectedCharacterBox()) {
+      this.selectedCharacterBoxId.set(null);
+    }
+  }
+
+  private async applySavedTeamFromRoute(): Promise<void> {
+    const teamId = this.route.snapshot.queryParamMap.get('teamId')?.trim() ?? '';
+
+    if (!teamId.length) {
+      return;
+    }
+
+    await this.userState.readySavedTeams();
+    const team = this.userState.getSavedTeamById(teamId);
+
+    if (!team) {
+      await this.clearSavedTeamQueryParam();
+      return;
+    }
+
+    this.loadSavedTeamDraft(team);
+    await this.clearSavedTeamQueryParam();
+  }
+
+  private loadSavedTeamDraft(team: SavedTeam): void {
+    const characterDetailsById = this.allCharacterDetailsById();
+    const sourceSlotIndexes = [0, 2, 3, 4, 5];
+    const selectedSlots = sourceSlotIndexes.map((slotIndex) => {
+      const characterId = team.slots[slotIndex];
+
+      return typeof characterId === 'number'
+        ? (characterDetailsById.get(characterId) ?? null)
+        : null;
+    });
+    const captain = selectedSlots[0] ?? null;
+
+    this.closeTeamSlotPicker();
+    this.selectedTeamSlots.set(selectedSlots);
+    this.activeTeamSlotIndex.set(0);
+    this.teamName.set(team.name);
+    this.currentTeamId.set(null);
+    this.saveFeedbackError.set('');
+    this.saveUiLocked.set(false);
+    this.searchTerm.set('');
+    this.selectedCaptainDetail.set(captain);
+  }
+
+  private async clearSavedTeamQueryParam(): Promise<void> {
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private buildSavedTeamSlots(): Array<number | null> {
+    const slots = this.selectedTeamSlots();
+    const captainId = slots[0]?.id ?? null;
+
+    return [
+      captainId,
+      captainId,
+      slots[1]?.id ?? null,
+      slots[2]?.id ?? null,
+      slots[3]?.id ?? null,
+      slots[4]?.id ?? null,
+    ];
+  }
+
+  private clearSavedTeamDraftState(): void {
+    this.currentTeamId.set(null);
+    this.saveFeedbackError.set('');
+  }
+
   private buildMatchedAbilityBadges(
     abilities: readonly NormalizedBuilderAbility[],
     requirements: readonly AutoBuildAbilityRequirement[],
@@ -903,7 +1231,10 @@ export class CaptainCoveragePage implements OnInit {
       const sortMode = this.selectedSortMode();
       const idOrder = this.selectedIdOrder();
 
-      if (this.abilityMatchRankingEnabled() && this.selectedAbilityRequirements().length > 0) {
+      if (
+        this.abilityMatchRankingEnabled() &&
+        this.selectedResultAbilityRequirements().length > 0
+      ) {
         const abilityMatchDifference = right.abilityMatchCount - left.abilityMatchCount;
 
         if (abilityMatchDifference !== 0) {

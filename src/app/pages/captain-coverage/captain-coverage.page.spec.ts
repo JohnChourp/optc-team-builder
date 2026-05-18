@@ -10,7 +10,11 @@ import {
   type AutoBuildAbilitySource,
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord, type CharacterListItem } from '../../core/models/optc.models';
+import {
+  type CharacterBox,
+  type CharacterDetailRecord,
+  type CharacterListItem,
+} from '../../core/models/optc.models';
 import { type AbilityRequirementDraft } from '../../core/services/ability-requirement-draft.utils';
 import { CaptainCoveragePage } from './captain-coverage.page';
 
@@ -18,10 +22,12 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
   IonButtons: class {},
   IonContent: class {},
+  IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
   IonMenuButton: class {},
+  IonModal: class {},
   IonSearchbar: class {},
   IonSelect: class {},
   IonSelectOption: class {},
@@ -29,18 +35,6 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonTitle: class {},
   IonToggle: class {},
   IonToolbar: class {},
-}));
-
-vi.mock('../../shared/ability-filter-rail/ability-filter-rail.component', () => ({
-  AbilityFilterRailComponent: class {},
-}));
-
-vi.mock('../../shared/character-image-picker/character-image-picker.component', () => ({
-  CharacterImagePickerComponent: class {},
-}));
-
-vi.mock('../../shared/special-ability-picker/special-ability-picker.component', () => ({
-  SpecialAbilityPickerComponent: class {},
 }));
 
 describe('CaptainCoveragePage', () => {
@@ -165,11 +159,55 @@ describe('CaptainCoveragePage', () => {
     } as CustomEvent<{ checked: boolean }>);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Rejected Untagged STR Candidate',
       'Covered Driven Candidate',
       'Covered STR Candidate',
     ]);
-    expect(page.totalMatchingCharacters()).toBe(3);
+    expect(page.totalMatchingCharacters()).toBe(2);
+    expect(page.resultCards().flatMap((card) => card.coverage.coveredClauses)).toEqual(
+      expect.arrayContaining([
+        'crew tag condition: [Kid Pirates] / [Worst Generation] / [Land of Wano Arc] / [Egghead Arc] characters',
+      ]),
+    );
+  });
+
+  it('can disable Captain Coverage while keeping other result filters active', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Captain Coverage Toggle',
+      type: 'STR',
+      captainAbility: 'Boosts ATK of [DEX] characters by 5x.',
+    });
+    const coveredCharacter = createCharacter({
+      id: 2001,
+      name: 'Covered DEX Candidate',
+      type: 'DEX',
+    });
+    const uncoveredCharacter = createCharacter({
+      id: 2002,
+      name: 'Uncovered QCK Candidate',
+      type: 'QCK',
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, coveredCharacter, uncoveredCharacter],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(page.requireCaptainCoverage()).toBe(true);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Covered DEX Candidate',
+    ]);
+
+    page.onRequireCaptainCoverageChange({
+      detail: { checked: false },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Uncovered QCK Candidate',
+      'Covered DEX Candidate',
+    ]);
   });
 
   it('filters covered character results by search text and favorite state', async () => {
@@ -199,6 +237,111 @@ describe('CaptainCoveragePage', () => {
     page.toggleHideFavorites();
     expect(page.favoritesOnly()).toBe(false);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Luffy Candidate']);
+  });
+
+  it('limits covered character results to the selected character box', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Box Scope',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const inBoxCharacter = createCharacter({ id: 2001, name: 'In Box Candidate' });
+    const outsideBoxCharacter = createCharacter({ id: 2002, name: 'Outside Box Candidate' });
+    const { page, userState } = createPage({
+      captains: [leader],
+      characters: [leader, inBoxCharacter, outsideBoxCharacter],
+      characterBoxes: [createCharacterBox('box-1', 'Coverage Box', [2001])],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(userState.readyCharacterBoxes).toHaveBeenCalledOnce();
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Outside Box Candidate',
+      'In Box Candidate',
+    ]);
+
+    page.onCharacterBoxChange({
+      detail: { value: 'box-1' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedCharacterBox()?.name).toBe('Coverage Box');
+    expect(page.selectedCharacterBoxIds()).toEqual([2001]);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['In Box Candidate']);
+    expect(page.characterBoxSupportLabel()).toBe(
+      'captain-coverage.filters.characterBox.support.withCount',
+    );
+  });
+
+  it('intersects favorites-only results with the selected character box', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Favorite Box',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const favoriteInBox = createCharacter({ id: 2001, name: 'Favorite Candidate' });
+    const nonFavoriteInBox = createCharacter({ id: 2002, name: 'Plain Candidate' });
+    const favoriteOutsideBox = createCharacter({ id: 2003, name: 'Outside Favorite' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, favoriteInBox, nonFavoriteInBox, favoriteOutsideBox],
+      favoriteIds: [2001, 2003],
+      characterBoxes: [createCharacterBox('box-1', 'Favorite Box', [2001, 2002])],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+    page.onCharacterBoxChange({
+      detail: { value: 'box-1' },
+    } as CustomEvent<{ value?: string | null }>);
+    page.toggleFavoritesOnly();
+
+    expect(page.selectedCharacterBoxFavoriteCount()).toBe(1);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Favorite Candidate']);
+    expect(page.characterBoxSupportLabel()).toBe(
+      'captain-coverage.filters.characterBox.support.withFavorites',
+    );
+  });
+
+  it('returns no covered results when the selected character box is empty', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Empty Box',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const coveredCharacter = createCharacter({ id: 2001, name: 'Covered Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, coveredCharacter],
+      characterBoxes: [createCharacterBox('empty-box', 'Empty Box', [])],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(page.resultCards()).toHaveLength(1);
+
+    page.onCharacterBoxChange({
+      detail: { value: 'empty-box' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.selectedCharacterBox()?.name).toBe('Empty Box');
+    expect(page.resultCards()).toEqual([]);
+    expect(page.totalMatchingCharacters()).toBe(0);
+  });
+
+  it('clears missing selected character box ids when character boxes are loaded', async () => {
+    const { page } = createPage({
+      characterBoxes: [createCharacterBox('box-1', 'Available Box', [2001])],
+    });
+
+    page.selectedCharacterBoxId.set('deleted-box');
+
+    await page.ngOnInit();
+
+    expect(page.selectedCharacterBoxId()).toBeNull();
+    expect(page.selectedCharacterBox()).toBeNull();
   });
 
   it('excludes covered characters that conflict with the selected team or cannot fit the cost budget', async () => {
@@ -278,10 +421,301 @@ describe('CaptainCoveragePage', () => {
       'Bind Reducer',
     ]);
     expect(page.resultCards().map((card) => card.abilityMatchCount)).toEqual([1, 1]);
-    expect(page.abilityFilterRailItems()[0]).toMatchObject({
+    expect(page.abilityFilterRailItems()[1]).toMatchObject({
       category: 'special',
       count: 2,
     });
+  });
+
+  it('filters covered results to characters with Super Tandem data when enabled', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Super Tandem Filter',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const superTandemCandidate = createCharacter({
+      id: 2001,
+      name: 'Structured Super Tandem',
+      superTandemData: {
+        requirement: 'On the last stage',
+        levels: [{ level: 5, effect: 'Boosts Tandem ATK by 2.5x.' }],
+        criteria: null,
+      },
+    });
+    const noSuperTandemCandidate = createCharacter({
+      id: 2002,
+      name: 'No Super Tandem',
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, superTandemCandidate, noSuperTandemCandidate],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'No Super Tandem',
+      'Structured Super Tandem',
+    ]);
+
+    page.onRequireSuperTandemPresenceChange({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Structured Super Tandem',
+    ]);
+  });
+
+  it('filters covered results to characters with Super Type or Super Class data when enabled', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Super Types Classes Filter',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const superTypeCandidate = createCharacter({
+      id: 2001,
+      name: 'Structured Super Type',
+      superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+    });
+    const superClassCandidate = createCharacter({
+      id: 2002,
+      name: 'Structured Super Class',
+      superClass: { specialEffect: 'Transforms Fighter characters into Super Fighter characters.' },
+    });
+    const noSuperTypesClassesCandidate = createCharacter({
+      id: 2003,
+      name: 'No Super Types Classes',
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [
+        leader,
+        superTypeCandidate,
+        superClassCandidate,
+        noSuperTypesClassesCandidate,
+      ],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'No Super Types Classes',
+      'Structured Super Class',
+      'Structured Super Type',
+    ]);
+
+    page.onRequireSuperTypesClassesPresenceChange({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Structured Super Class',
+      'Structured Super Type',
+    ]);
+  });
+
+  it('adds Required to the rail and opens or clears its picker', async () => {
+    const { page } = createPage({
+      abilityCatalog: createAbilityCatalog([
+        createAbilityCatalogItem(
+          'remove_despair',
+          'Remove Despair',
+          'special',
+          [2001],
+          ['captainAbility'],
+        ),
+      ]),
+    });
+
+    await page.ngOnInit();
+
+    expect(page.abilityFilterRailItems().map((item) => item.category)).toEqual([
+      'captainAbility',
+      'special',
+      'crewmate',
+      'potential',
+      'support',
+    ]);
+    expect(page.abilityFilterRailItems()[0]).toMatchObject({
+      category: 'captainAbility',
+      label: 'Required',
+      count: 0,
+      disabled: false,
+    });
+
+    page.openAbilityFilterCategory('captainAbility');
+    expect(page.captainAbilityPickerOpen()).toBe(true);
+
+    page.saveCaptainAbilityPicker([createAbilityDraft('remove_despair')]);
+    expect(page.captainAbilityDrafts()).toHaveLength(1);
+    expect(page.abilityFilterRailItems()[0]).toMatchObject({
+      category: 'captainAbility',
+      count: 1,
+    });
+
+    page.clearAbilityFilterCategory('captainAbility');
+    expect(page.captainAbilityDrafts()).toEqual([]);
+  });
+
+  it('applies Required Captain Ability filters to each character own Captain Ability tags', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Captain Ability Filter',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const captainBindReducer = createCharacter({
+      id: 2001,
+      name: 'Captain Bind Reducer',
+      builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 'captainAbility')],
+    });
+    const specialBindReducer = createCharacter({
+      id: 2002,
+      name: 'Special Bind Reducer',
+      builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 'specialText')],
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, captainBindReducer, specialBindReducer],
+      abilityCatalog: createAbilityCatalog([
+        createAbilityCatalogItem(
+          'remove_bind',
+          'Remove Bind',
+          'special',
+          [2001, 2002],
+          ['captainAbility', 'specialText'],
+        ),
+      ]),
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+    page.saveCaptainAbilityPicker([createAbilityDraft('remove_bind')]);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Captain Bind Reducer']);
+    expect(page.resultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
+      'Captain: Remove Bind',
+    ]);
+  });
+
+  it('treats selected Required Captain Ability filters as source-scoped OR matches', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Captain Ability Or',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const captainBindReducer = createCharacter({
+      id: 2001,
+      name: 'Captain Bind Reducer',
+      builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 'captainAbility')],
+    });
+    const captainDespairReducer = createCharacter({
+      id: 2002,
+      name: 'Captain Despair Reducer',
+      builderAbilities: [
+        createBuilderAbility('remove_despair', 'Remove Despair', 'captainAbility'),
+      ],
+    });
+    const specialBindReducer = createCharacter({
+      id: 2003,
+      name: 'Special Bind Reducer',
+      builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 'specialText')],
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, captainBindReducer, captainDespairReducer, specialBindReducer],
+      abilityCatalog: createAbilityCatalog([
+        createAbilityCatalogItem(
+          'remove_bind',
+          'Remove Bind',
+          'special',
+          [2001, 2003],
+          ['captainAbility', 'specialText'],
+        ),
+        createAbilityCatalogItem(
+          'remove_despair',
+          'Remove Despair',
+          'special',
+          [2002],
+          ['captainAbility'],
+        ),
+      ]),
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+    page.saveCaptainAbilityPicker([
+      createAbilityDraft('remove_bind'),
+      createAbilityDraft('remove_despair'),
+    ]);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Captain Despair Reducer',
+      'Captain Bind Reducer',
+    ]);
+  });
+
+  it('ANDs Required Captain Ability filters with existing non-captain ability filters', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Captain Ability And',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const bothMatcher = createCharacter({
+      id: 2001,
+      name: 'Both Matcher',
+      builderAbilities: [
+        createBuilderAbility('remove_bind', 'Remove Bind', 'specialText'),
+        createBuilderAbility('remove_despair', 'Remove Despair', 'captainAbility'),
+      ],
+    });
+    const specialOnly = createCharacter({
+      id: 2002,
+      name: 'Special Only',
+      builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 'specialText')],
+    });
+    const captainOnly = createCharacter({
+      id: 2003,
+      name: 'Captain Only',
+      builderAbilities: [
+        createBuilderAbility('remove_despair', 'Remove Despair', 'captainAbility'),
+      ],
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, bothMatcher, specialOnly, captainOnly],
+      abilityCatalog: createAbilityCatalog([
+        createAbilityCatalogItem(
+          'remove_bind',
+          'Remove Bind',
+          'special',
+          [2001, 2002],
+          ['specialText'],
+        ),
+        createAbilityCatalogItem(
+          'remove_despair',
+          'Remove Despair',
+          'special',
+          [2001, 2003],
+          ['captainAbility'],
+        ),
+      ]),
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+    page.saveSpecialAbilityPicker([createAbilityDraft('remove_bind')]);
+    page.saveCaptainAbilityPicker([createAbilityDraft('remove_despair')]);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
+    expect(page.resultCards()[0]?.abilityMatchCount).toBe(2);
+    expect(page.resultCards()[0]?.selectedAbilityCount).toBe(2);
+    expect(page.resultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
+      'Special: Remove Bind',
+      'Captain: Remove Despair',
+    ]);
   });
 
   it('returns characters matching any selected ability across special, potential, and support', async () => {
@@ -420,7 +854,7 @@ describe('CaptainCoveragePage', () => {
 
     expect(page.selectedCaptainDetail()).toBeNull();
     expect(page.resultCards()).toEqual([]);
-    expect(page.abilityFilterRailItems()[0]).toMatchObject({
+    expect(page.abilityFilterRailItems()[1]).toMatchObject({
       category: 'special',
       disabled: false,
     });
@@ -601,6 +1035,123 @@ describe('CaptainCoveragePage', () => {
     ]);
   });
 
+  it('saves the selected coverage team to shared saved teams with the Captain mirrored as friend captain', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Coverage Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const subs = [2001, 2002, 2003, 2004].map((id) => createCharacter({ id }));
+    const { page, userState } = createPage({
+      captains: [leader],
+      characters: [leader, ...subs],
+    });
+
+    await page.ngOnInit();
+    page.onTeamNameChange({ detail: { value: 'Captain Coverage Crew' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    await page.saveTeamSlotSelection(leader);
+
+    for (const [index, sub] of subs.entries()) {
+      page.openTeamSlotPicker(index + 1);
+      await page.saveTeamSlotSelection(sub);
+    }
+
+    await page.saveTeam();
+
+    expect(userState.saveTeam).toHaveBeenCalledWith({
+      id: undefined,
+      name: 'Captain Coverage Crew',
+      notes: '',
+      shipId: null,
+      slots: [1001, 1001, 2001, 2002, 2003, 2004],
+    });
+    expect(page.currentTeamId()).toBe('saved-captain-coverage-team');
+    expect(page.saveUiLocked()).toBe(false);
+    expect(page.saveFeedbackError()).toBe('');
+
+    page.clearTeamSlot(4);
+    expect(page.currentTeamId()).toBeNull();
+  });
+
+  it('loads a saved team route as a captain coverage draft and ignores Friend Captain', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Saved Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const friendCaptain = createCharacter({
+      id: 1002,
+      name: 'Ignored Friend Captain',
+      captainAbility: 'Boosts HP of all characters by 1.3x.',
+    });
+    const subs = [2001, 2002, 2003, 2004].map((id) => createCharacter({ id }));
+    const { page, router, userState } = createPage({
+      routeTeamId: 'team-1',
+      savedTeams: [
+        createSavedTeam({
+          id: 'team-1',
+          name: 'Coverage Import',
+          slots: [1001, 1002, 2001, 2002, 2003, 2004],
+        }),
+      ],
+      captains: [leader, friendCaptain],
+      characters: [leader, friendCaptain, ...subs],
+    });
+
+    await page.ngOnInit();
+
+    expect(userState.readySavedTeams).toHaveBeenCalledOnce();
+    expect(page.selectedTeamSlots().map((slot) => slot?.id ?? null)).toEqual([
+      1001, 2001, 2002, 2003, 2004,
+    ]);
+    expect(page.selectedCaptainDetail()?.id).toBe(1001);
+    expect(page.teamName()).toBe('Coverage Import');
+    expect(page.currentTeamId()).toBeNull();
+    expect(page.saveFeedbackError()).toBe('');
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
+  it('clears an unknown saved team route id without replacing the captain coverage draft', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Existing Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const { page, router } = createPage({
+      routeTeamId: 'missing-team',
+      captains: [leader],
+      characters: [leader],
+    });
+
+    page.teamName.set('Existing Coverage Draft');
+    page.selectedTeamSlots.set([leader, null, null, null, null]);
+    page.selectedCaptainDetail.set(leader);
+
+    await page.ngOnInit();
+
+    expect(page.teamName()).toBe('Existing Coverage Draft');
+    expect(page.selectedTeamSlots().map((slot) => slot?.id ?? null)).toEqual([
+      1001,
+      null,
+      null,
+      null,
+      null,
+    ]);
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
   it('keeps the leader-driven picker, ability filters, and result surfaces wired in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage.page.html'),
@@ -617,14 +1168,43 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('abilityMatchRankingDisabled()');
     expect(template).toContain('onAbilityMatchRankingChange($event)');
     expect(template).toContain("t('filters.bestAbilityMatchesFirst')");
+    expect(template).toContain('requireCaptainCoverage()');
+    expect(template).toContain("t('filters.captainCoverage.toggle')");
+    expect(template).toContain('captainCoverageSupportLabel()');
+    expect(template).toContain('onRequireCaptainCoverageChange($event)');
+    expect(template).toContain('requireFullCaptainAbilityCoverage()');
+    expect(template).toContain("t('filters.captainAbilityCoverage.toggle')");
+    expect(template).toContain('onRequireFullCaptainAbilityCoverageChange($event)');
+    expect(template).toContain('requireSuperTandemPresence()');
+    expect(template).toContain("t('filters.superTandemPresence.toggle')");
+    expect(template).toContain('onRequireSuperTandemPresenceChange($event)');
+    expect(template).toContain('requireSuperTypesClassesPresence()');
+    expect(template).toContain("t('filters.superTypesClassesPresence.toggle')");
+    expect(template).toContain('onRequireSuperTypesClassesPresenceChange($event)');
+    expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).toContain('captainAbilityPickerOpen()');
+    expect(template).toContain('captainAbilityDrafts()');
+    expect(template).toContain('availableCaptainAbilityCatalogItems()');
+    expect(template).toContain('saveCaptainAbilityPicker($event)');
     expect(template).toContain('resultCards()');
     expect(template).toContain('toggleFavoritesOnly()');
     expect(template).toContain('toggleHideFavorites()');
+    expect(template).toContain("t('filters.characterBox.label')");
+    expect(template).toContain('selectedCharacterBoxId()');
+    expect(template).toContain('characterBoxes()');
+    expect(template).toContain('characterBoxSupportLabel()');
+    expect(template).toContain('onCharacterBoxChange($event)');
     expect(template).toContain('onMaxTotalCostChange($event)');
     expect(template).toContain('<app-captain-team-condition-status');
     expect(template).toContain('teamConditionStatus()');
     expect(template).toContain('captain-condition-panel--full');
     expect(template).toContain('assignCharacterFromResult(card)');
+    expect(template).toContain('teamName()');
+    expect(template).toContain('onTeamNameChange($event)');
+    expect(template).toContain('(click)="saveTeam()"');
+    expect(template).toContain('saveDisabled()');
+    expect(template).toContain('currentTeamId()');
+    expect(template).toContain('[routerLink]="[\'/tabs/saved-teams\']"');
     expect(template).toContain('[routerLink]="[\'/characters\', captain.id]"');
     expect(template).toContain('class="selected-target"');
     expect(template).toContain('class="captain-result__boosts"');
@@ -654,6 +1234,31 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('coverage-chip');
     expect(template).toContain("t('results.openCharacterDetails')");
   });
+
+  it('keeps Captain Coverage filter labels exact in English and Greek', () => {
+    for (const locale of ['en', 'el']) {
+      const translations = JSON.parse(
+        readFileSync(
+          resolve(process.cwd(), `public/i18n/captain-coverage/${locale}.json`),
+          'utf8',
+        ),
+      );
+
+      expect([
+        translations.filters.captainAbilityEyebrow,
+        translations.filters.superTandemPresence.toggle,
+        translations.filters.superTypesClassesPresence.toggle,
+        translations.filters.captainCoverage.toggle,
+        translations.filters.captainAbilityCoverage.toggle,
+      ]).toEqual([
+        'Required',
+        'Super Tandem',
+        'Super Types/Classes',
+        'Captain Coverage',
+        'Full Coverage',
+      ]);
+    }
+  });
 });
 
 function createPage({
@@ -661,11 +1266,17 @@ function createPage({
   characters = [],
   favoriteIds = [],
   abilityCatalog = createAbilityCatalog(),
+  routeTeamId = null,
+  savedTeams = [],
+  characterBoxes = [],
 }: {
   captains?: CharacterDetailRecord[];
   characters?: Array<CharacterDetailRecord & CharacterListItem>;
   favoriteIds?: number[];
   abilityCatalog?: AutoBuildAbilityCatalog;
+  routeTeamId?: string | null;
+  savedTeams?: Array<ReturnType<typeof createSavedTeam>>;
+  characterBoxes?: CharacterBox[];
 } = {}): {
   page: CaptainCoveragePage;
   repository: {
@@ -679,9 +1290,16 @@ function createPage({
     ensureLoaded: ReturnType<typeof vi.fn>;
   };
   userState: {
+    characterBoxes: ReturnType<typeof signal<CharacterBox[]>>;
     favoriteCharacterIds: ReturnType<typeof signal<number[]>>;
+    getSavedTeamById: ReturnType<typeof vi.fn>;
     ready: ReturnType<typeof vi.fn>;
+    readyCharacterBoxes: ReturnType<typeof vi.fn>;
+    readySavedTeams: ReturnType<typeof vi.fn>;
+    saveTeam: ReturnType<typeof vi.fn>;
   };
+  route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
+  router: { navigate: ReturnType<typeof vi.fn> };
   i18n: {
     translate: ReturnType<typeof vi.fn>;
   };
@@ -692,6 +1310,7 @@ function createPage({
   const repository = {
     getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue(abilityCatalog),
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       characterCount: characters.length,
     }),
     getCharacterById: vi.fn((characterId: number) =>
@@ -704,14 +1323,31 @@ function createPage({
     ensureLoaded: vi.fn().mockResolvedValue(undefined),
   };
   const userState = {
+    characterBoxes: signal(characterBoxes),
     favoriteCharacterIds: signal(favoriteIds),
+    getSavedTeamById: vi.fn(
+      (teamId: string) => savedTeams.find((team) => team.id === teamId) ?? null,
+    ),
     ready: vi.fn().mockResolvedValue(undefined),
+    readyCharacterBoxes: vi.fn().mockResolvedValue(undefined),
     readyFavoriteCharacterIds: vi.fn().mockResolvedValue(undefined),
+    readySavedTeams: vi.fn().mockResolvedValue(undefined),
+    saveTeam: vi.fn().mockResolvedValue({ id: 'saved-captain-coverage-team' }),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) =>
       formatTranslation(key, params),
     ),
+  };
+  const route = {
+    snapshot: {
+      queryParamMap: {
+        get: vi.fn((key: string) => (key === 'teamId' ? routeTeamId : null)),
+      },
+    },
+  };
+  const router = {
+    navigate: vi.fn().mockResolvedValue(true),
   };
 
   return {
@@ -720,18 +1356,54 @@ function createPage({
       characterCatalogCache as never,
       userState as never,
       i18n as never,
+      route as never,
+      router as never,
     ),
     repository,
     characterCatalogCache,
+    route,
+    router,
     userState,
     i18n,
   };
 }
 
+function createSavedTeam(
+  overrides: Partial<{
+    id: string;
+    name: string;
+    notes: string;
+    shipId: number | null;
+    slots: Array<number | null>;
+  }> = {},
+) {
+  return {
+    id: overrides.id ?? 'team-1',
+    name: overrides.name ?? 'Saved Coverage Team',
+    notes: overrides.notes ?? '',
+    shipId: overrides.shipId ?? null,
+    slots: overrides.slots ?? [1001, 1001, null, null, null, null],
+    createdAt: '2026-05-10T10:00:00.000Z',
+    updatedAt: '2026-05-10T10:00:00.000Z',
+  };
+}
+
+function createCharacterBox(id: string, name: string, characterIds: number[]): CharacterBox {
+  return {
+    id,
+    name,
+    characterIds,
+    createdAt: '2026-05-10T10:00:00.000Z',
+    updatedAt: '2026-05-10T10:00:00.000Z',
+  };
+}
+
 function formatTranslation(key: string, params?: Record<string, string | number>): string {
   const translations: Record<string, string> = {
+    'common.defaults.newCrew': 'New Crew',
     'characterAbilityGroups.metadata.turns': '{{count}} turns',
     'characterAbilityGroups.sources.specialText': 'Special',
+    'characterAbilityGroups.sources.superSpecialText': 'Super Special',
     'characterAbilityGroups.sources.captainAbility': 'Captain',
     'characterAbilityGroups.sources.sailorAbilities': 'Crewmate',
     'characterAbilityGroups.sources.potentialAbilities': 'Potential',
@@ -739,6 +1411,11 @@ function formatTranslation(key: string, params?: Record<string, string | number>
     'characterAbilityGroups.sources.superTandemData': 'Super Tandem',
     'characterAbilityGroups.sources.finalTapData': 'Final Tap',
     'characterAbilityGroups.sources.rushSugoSpecialData': 'Rush Sugo',
+    'captain-coverage.filters.captainAbilityEyebrow': 'Required',
+    'captain-coverage.filters.superTandemPresence.toggle': 'Super Tandem',
+    'captain-coverage.filters.superTypesClassesPresence.toggle': 'Super Types/Classes',
+    'captain-coverage.filters.captainCoverage.toggle': 'Captain Coverage',
+    'captain-coverage.filters.captainAbilityCoverage.toggle': 'Full Coverage',
   };
   const translation = translations[key] ?? key;
 
@@ -778,6 +1455,7 @@ function createAbilityCatalogItem(
   label: string,
   category: AutoBuildAbilityCatalogItem['category'],
   matchingCharacterIds: number[],
+  availableSources: AutoBuildAbilitySource[] = ['specialText'],
 ): AutoBuildAbilityCatalogItem {
   return {
     key,
@@ -789,7 +1467,7 @@ function createAbilityCatalogItem(
     supportsTurns: false,
     supportsSlotTokens: false,
     availableSlotTokens: [],
-    availableSources: ['specialText'],
+    availableSources,
     matchCount: matchingCharacterIds.length,
     matchingCharacterIds,
     sampleCharacterIds: matchingCharacterIds.slice(0, 3),
@@ -804,6 +1482,9 @@ function createCharacter(
     classes?: string[];
     id: number;
     partyConflictKeys?: string[];
+    superClass?: CharacterDetailRecord['detail']['superClass'];
+    superTandemData?: CharacterDetailRecord['detail']['superTandemData'];
+    superType?: CharacterDetailRecord['detail']['superType'];
     type?: string;
     characterTags?: string[];
   },
@@ -864,8 +1545,9 @@ function createCharacter(
       supportData: [],
       swapData: null,
       vsSpecial: null,
-      superType: null,
-      superClass: null,
+      superType: overrides.superType ?? null,
+      superTandemData: overrides.superTandemData ?? null,
+      superClass: overrides.superClass ?? null,
       captainShiftData: null,
       rumbleData: null,
     },

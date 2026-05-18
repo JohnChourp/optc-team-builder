@@ -1,10 +1,11 @@
 {
-  "generatedAt": "2026-05-11T20:21:54.496Z",
+  "schemaVersion": 1,
+  "generatedAt": "2026-05-16T18:22:24.066Z",
   "sourceVersion": "36",
-  "characterCount": 4552,
-  "detailCount": 4465,
+  "characterCount": 4553,
+  "detailCount": 4466,
   "shipCount": 66,
-  "rumbleCount": 4521,
+  "rumbleCount": 4534,
   "availableTypes": [
     "DEX",
     "INT",
@@ -30,8 +31,8 @@
       "id": "thumbnails-glo",
       "label": "Global thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-glo",
-      "fileCount": 5280,
-      "totalBytes": 53590701,
+      "fileCount": 5282,
+      "totalBytes": 53609949,
       "installed": true,
       "checksum": "df94f79786955eedd082930b70946c4aa0d71e27"
     },
@@ -40,8 +41,8 @@
       "id": "thumbnails-jap",
       "label": "Japan thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-jap",
-      "fileCount": 5475,
-      "totalBytes": 112902610,
+      "fileCount": 5477,
+      "totalBytes": 112921954,
       "installed": true,
       "checksum": "dd8283e86a3614e7105a6c59d6d153c189ecab65"
     },

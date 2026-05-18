@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createDriveSyncServer } from './drive-sync-server.mjs';
+import { createDriveSyncServer, createRateLimiter } from './drive-sync-server.mjs';
 
 const tempDirs = [];
 
@@ -191,7 +191,164 @@ describe('drive sync backend', () => {
       return getCookieHeader(callbackResponse, 'optc_drive_session');
     }
   });
+
+  it('rejects sync requests without an authenticated backend session', async () => {
+    const { baseUrl, server } = await startTestServer();
+
+    try {
+      const syncResponse = await fetch(`${baseUrl}/drive/sync/run`, {
+        body: JSON.stringify({
+          deviceId: 'device-1',
+          payload: {
+            exportedAt: '2026-05-11T10:00:00.000Z',
+            schemaVersion: 1,
+            source: 'all-data',
+          },
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      });
+      const syncPayload = await syncResponse.json();
+
+      expect(syncResponse.status).toBe(401);
+      expect(syncPayload).toMatchObject({
+        error: 'needs_reconnect',
+      });
+    } finally {
+      server.close();
+    }
+  });
+
+  it('returns 429 with Retry-After when the per-client request limit is exceeded', async () => {
+    const { baseUrl, server } = await startTestServer({
+      rateLimitGlobalPerMinute: 2,
+      rateLimitWritePerMinute: 0,
+    });
+
+    try {
+      const first = await fetch(`${baseUrl}/auth/google/status`);
+      const second = await fetch(`${baseUrl}/auth/google/status`);
+      const third = await fetch(`${baseUrl}/auth/google/status`);
+
+      expect(first.status).toBe(200);
+      expect(second.status).toBe(200);
+      expect(third.status).toBe(429);
+      expect(Number(third.headers.get('retry-after'))).toBeGreaterThan(0);
+
+      const payload = await third.json();
+
+      expect(payload).toMatchObject({ error: 'rate_limited' });
+      expect(payload.retryAfterSeconds).toBeGreaterThan(0);
+    } finally {
+      server.close();
+    }
+  });
+
+  it('applies a stricter limit to write requests independently of the global window', async () => {
+    let now = 0;
+    const limiter = createRateLimiter({
+      globalPerMinute: 100,
+      writePerMinute: 2,
+      now: () => now,
+    });
+
+    expect(limiter.consume('client-a', true).allowed).toBe(true);
+    now += 100;
+    expect(limiter.consume('client-a', true).allowed).toBe(true);
+    now += 100;
+
+    const rejected = limiter.consume('client-a', true);
+
+    expect(rejected.allowed).toBe(false);
+    expect(rejected.retryAfterSeconds).toBeGreaterThan(0);
+
+    expect(limiter.consume('client-a', false).allowed).toBe(true);
+    expect(limiter.consume('client-b', true).allowed).toBe(true);
+
+    now += 60 * 1000 + 1;
+    expect(limiter.consume('client-a', true).allowed).toBe(true);
+  });
+
+  it('treats invalid sync payloads as remote checks without enqueueing an upload', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          access_token: 'callback-access-token',
+          expires_in: 3600,
+          refresh_token: 'refresh-token-secret',
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          email: 'captain@example.com',
+          id: 'google-user-1',
+          name: 'Monkey D. Luffy',
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          access_token: 'refreshed-access-token',
+          expires_in: 3600,
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ files: [] }));
+    const { baseUrl, server, store } = await startTestServer({ fetchImpl });
+
+    try {
+      const sessionCookie = await connectGoogleSession(baseUrl);
+      const syncResponse = await fetch(`${baseUrl}/drive/sync/run`, {
+        body: JSON.stringify({
+          deviceId: 'device-1',
+          payload: {
+            exportedAt: '2026-05-11T10:00:00.000Z',
+            schemaVersion: 1,
+            source: 'not-all-data',
+          },
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          cookie: sessionCookie,
+        },
+        method: 'POST',
+      });
+      const syncPayload = await syncResponse.json();
+      const db = await store.read();
+      const user = db.users['google-user-1'];
+
+      expect(syncResponse.status).toBe(200);
+      expect(syncPayload).toMatchObject({
+        remoteSnapshot: {
+          backup: null,
+          folderId: null,
+          summary: null,
+        },
+        status: 'checked',
+      });
+      expect(user.encryptedPendingUpload).toBeNull();
+      expect(user.syncStatus).toBe('idle');
+    } finally {
+      server.close();
+    }
+  });
 });
+
+async function connectGoogleSession(baseUrl) {
+  const startResponse = await fetch(`${baseUrl}/auth/google/start`, { redirect: 'manual' });
+  const state = new URL(startResponse.headers.get('location')).searchParams.get('state');
+  const stateCookie = getCookieHeader(startResponse, 'optc_drive_oauth_state');
+  const callbackResponse = await fetch(
+    `${baseUrl}/auth/google/callback?code=auth-code&state=${state}`,
+    {
+      headers: { cookie: stateCookie },
+      redirect: 'manual',
+    },
+  );
+
+  return getCookieHeader(callbackResponse, 'optc_drive_session');
+}
 
 async function startTestServer(options = {}) {
   const tempDir = await mkdtemp(join(tmpdir(), 'optc-drive-sync-'));
@@ -209,6 +366,8 @@ async function startTestServer(options = {}) {
       googleRedirectUri: 'http://127.0.0.1:8787/auth/google/callback',
       maxJsonBytes: 1024 * 1024,
       publicBaseUrl: 'http://127.0.0.1:8787',
+      rateLimitGlobalPerMinute: options.rateLimitGlobalPerMinute ?? 0,
+      rateLimitWritePerMinute: options.rateLimitWritePerMinute ?? 0,
       sessionCookieName: 'optc_drive_session',
       sessionSecret: 'session-secret',
       sessionTtlMs: 30 * 24 * 60 * 60 * 1000,

@@ -35,7 +35,7 @@ import {
 import { type AutoTeamBuilderWorkerRequest } from './auto-team-builder.worker.models';
 
 const INPUT = createInput();
-type AutoTeamBuilderServiceWithWorkerFactory = AutoTeamBuilderService & {
+type AutoTeamBuilderServiceWithWorkerFactory = {
   createWorker: () => Worker | null;
 };
 type PreferredLeaderAutoFillResolver = {
@@ -934,7 +934,7 @@ describe('Auto team builder', () => {
     ]);
   });
 
-  it('does not turn full Captain Ability coverage into selected captain-source requirements', () => {
+  it('does not turn Second Coverage into selected captain-source requirements', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainAbilityBindLeaderRecord(6820),
@@ -1843,6 +1843,65 @@ describe('Auto team builder', () => {
     expect(slotIds).not.toContain(2802);
   });
 
+  it('treats titled Monkey D. Luffy variants as duplicate with Luffy dual units', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCharacterRecord({
+          id: 4233,
+          name: 'Dorry & Broggy - Retaliating Against the Threat to the Homeland',
+          primaryClass: 'Free Spirit',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Free Spirit characters by 5.5x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 4550,
+          name: 'Crocodile & Mihawk - Powers Needed to Build Their Utopia',
+          primaryClass: 'Free Spirit',
+          detail: {
+            captainAbility: 'Boosts ATK of DEX and Free Spirit characters by 5.25x.',
+          },
+        }),
+        createCharacterRecord({
+          id: 3065,
+          name: 'Luffy & Sanji - A Joint Struggle Underpinned by Trust',
+          primaryClass: 'Free Spirit',
+          detail: {
+            specialText: 'Boosts ATK of Free Spirit characters by 2.5x for 1 turn.',
+          },
+        }),
+        createCharacterRecord({
+          id: 1916,
+          name: 'Monkey D. Luffy: Gear Four - Enemy of the Gods',
+          primaryClass: 'Free Spirit',
+          detail: {
+            partyConflictKeys: ['monkey d. luffy: gear four', 'four'],
+            specialText: 'Boosts Orb Effects of Free Spirit characters by 2.5x for 1 turn.',
+          },
+        }),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createAtkSubRecord(),
+      ],
+      createInput(['DEX'], ['Free Spirit'], {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createManualSlots({
+          captain: [4233],
+          friendCaptain: [4550],
+          sub1: [3065],
+          sub2: [1916],
+        }),
+      }),
+    );
+
+    const slotIds = result?.slots.map((slot) => slot.character.id) ?? [];
+
+    expect(result).not.toBeNull();
+    expect(slotIds).toContain(3065);
+    expect(slotIds).not.toContain(1916);
+  });
+
   it('normalizes straw hat alter egos into canonical party conflict keys', () => {
     const conflictKeys = [
       ...resolveCharacterPartyConflictKeys({ id: 2802, name: 'Luffytaro & Zorojuro' }),
@@ -1856,6 +1915,15 @@ describe('Auto team builder', () => {
     expect(conflictKeys).toEqual(
       expect.arrayContaining(['luffy', 'zoro', 'nami', 'usopp', 'franky', 'robin', 'sanji']),
     );
+  });
+
+  it('normalizes titled canonical names into simple party conflict keys', () => {
+    expect(
+      resolveCharacterPartyConflictKeys({
+        id: 1916,
+        name: 'Monkey D. Luffy: Gear Four - Enemy of the Gods',
+      }),
+    ).toEqual(expect.arrayContaining(['monkey d. luffy', 'luffy']));
   });
 
   it('treats distinct normalized base names like Chef Sanji and Sanji as unique', () => {
@@ -3377,7 +3445,7 @@ describe('Auto team builder', () => {
     ).toBeGreaterThanOrEqual(4);
   });
 
-  it('requires Captain and Friend Captain to match captain ability coverage', () => {
+  it('requires Captain and Friend Captain to match Second Coverage', () => {
     const records = [
       createCharacterRecord({
         id: 8200,
@@ -5142,7 +5210,7 @@ describe('Auto team builder', () => {
     expect(pruned.map((record) => record.id)).toEqual([8300, 8301, 8302, 8303, 8304]);
   });
 
-  it('uses full per-slot captain ability coverage for pool pruning without requiring team tag clauses per character', () => {
+  it('uses Second Coverage for pool pruning without requiring team tag clauses per character', () => {
     const service = new AutoTeamBuilderService({} as never);
     const captain = createCharacterRecord({
       id: 8310,
@@ -6880,6 +6948,10 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
     const worker = new FakeWorker((request) => {
+      if (request.type !== 'run') {
+        throw new Error(`Unexpected request type: ${request.type}`);
+      }
+
       worker.emitMessage({
         type: 'progress',
         runId: request.runId,
@@ -6913,7 +6985,7 @@ describe('Auto team builder', () => {
     const progressSnapshots: AutoBuildProgressSnapshot[] = [];
 
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValue(worker as never);
@@ -6961,7 +7033,7 @@ describe('Auto team builder', () => {
     const abortController = new AbortController();
 
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValue(worker as never);
@@ -6988,7 +7060,7 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValue(null);
@@ -7018,7 +7090,7 @@ describe('Auto team builder', () => {
       });
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValue(worker as never);
@@ -7118,7 +7190,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7209,7 +7281,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -7283,7 +7355,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -7361,7 +7433,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7454,7 +7526,7 @@ describe('Auto team builder', () => {
       deferredWorkerCRunId ??= request.runId;
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7580,7 +7652,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7684,7 +7756,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy
@@ -7849,7 +7921,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -7957,7 +8029,7 @@ describe('Auto team builder', () => {
     });
 
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8097,7 +8169,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8234,7 +8306,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8334,7 +8406,7 @@ describe('Auto team builder', () => {
       });
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8397,7 +8469,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8475,7 +8547,7 @@ describe('Auto team builder', () => {
       emitAttemptProgressThenMiss(workerB, request),
     );
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8552,7 +8624,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8601,7 +8673,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -8642,7 +8714,7 @@ describe('Auto team builder', () => {
       }
     });
     const createWorkerSpy = vi.spyOn(
-      service as AutoTeamBuilderServiceWithWorkerFactory,
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
@@ -9580,10 +9652,16 @@ function buildWorkerResult(
     requestedInput?: AutoBuildInput;
     coveredSelectedClasses?: string[];
     coveredSelectedTypes?: AutoTeamBuilderType[];
+    coveredSelectedCharacterTags?: string[];
+    coveredSelectedCharacterNames?: string[];
     coversAllSelectedClasses?: boolean;
     coversAllSelectedTypes?: boolean;
+    coversAllSelectedCharacterTags?: boolean;
+    coversAllSelectedCharacterNames?: boolean;
     selectedClassMatches?: number;
     selectedTypeMatches?: number;
+    selectedCharacterTagMatches?: number;
+    selectedCharacterNameMatches?: number;
     abilityRequirements?: Partial<AutoBuildResult['coverage']['abilityRequirements']>;
   } = {},
 ): AutoBuildResult {
@@ -9637,15 +9715,27 @@ function buildWorkerResult(
       utility: [],
       coveredSelectedClasses: overrides.coveredSelectedClasses ?? [...input.selectedClasses],
       coveredSelectedTypes: overrides.coveredSelectedTypes ?? [...input.types],
+      coveredSelectedCharacterTags:
+        overrides.coveredSelectedCharacterTags ?? [...input.selectedCharacterTags],
+      coveredSelectedCharacterNames:
+        overrides.coveredSelectedCharacterNames ?? [...input.selectedCharacterNames],
       coversAllSelectedClasses: overrides.coversAllSelectedClasses ?? true,
       coversAllSelectedTypes: overrides.coversAllSelectedTypes ?? true,
+      coversAllSelectedCharacterTags: overrides.coversAllSelectedCharacterTags ?? true,
+      coversAllSelectedCharacterNames: overrides.coversAllSelectedCharacterNames ?? true,
       selectedClassMatches: overrides.selectedClassMatches ?? input.selectedClasses.length,
       selectedTypeMatches: overrides.selectedTypeMatches ?? input.types.length,
+      selectedCharacterTagMatches:
+        overrides.selectedCharacterTagMatches ?? input.selectedCharacterTags.length,
+      selectedCharacterNameMatches:
+        overrides.selectedCharacterNameMatches ?? input.selectedCharacterNames.length,
     },
     relaxation: {
       usedFallback: true,
       droppedTypes: ['INT'],
       droppedClasses: [],
+      droppedCharacterTags: [],
+      droppedCharacterNames: [],
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,

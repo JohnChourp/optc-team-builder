@@ -6,7 +6,7 @@ import { CharacterCatalogCacheService } from './character-catalog-cache.service'
 describe('CharacterCatalogCacheService', () => {
   it('loads the full catalog only once even when ensureLoaded is called concurrently', async () => {
     let overrideRevision = 0;
-    let resolveCatalog: ((catalog: CharacterListItem[]) => void) | null = null;
+    let resolveCatalog!: (catalog: CharacterListItem[]) => void;
     const repository = {
       getAllCharacters: vi.fn(
         () =>
@@ -28,7 +28,7 @@ describe('CharacterCatalogCacheService', () => {
     expect(repository.getAllCharacters).toHaveBeenCalledOnce();
     expect(service.loading()).toBe(true);
 
-    resolveCatalog?.([createCharacter(101), createCharacter(202)]);
+    resolveCatalog([createCharacter(101), createCharacter(202)]);
     await Promise.all([firstLoad, secondLoad]);
 
     expect(service.loaded()).toBe(true);

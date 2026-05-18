@@ -123,6 +123,8 @@ img {
   max-width: min(1040px, calc(100vw - 28px));
   max-height: min(860px, calc(100vh - 28px));
   border-radius: 24px;
+  background: #0a0e1b;
+  overflow: hidden;
 }
 
 @media (max-width: 679px) {

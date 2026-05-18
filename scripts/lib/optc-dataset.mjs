@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { normalizeHtmlToText } from './html-text.mjs';
 
+export const DATASET_SCHEMA_VERSION = 1;
 export const validTypes = new Set(['STR', 'DEX', 'QCK', 'PSY', 'INT']);
 const invalidClassPattern = /^Class\d+$/i;
 const captainBranchPattern =
@@ -261,6 +262,7 @@ function sqlValue(value) {
 
 export function buildManifest(characters, ships, sourceVersion, packs, generatedAt) {
   return {
+    schemaVersion: DATASET_SCHEMA_VERSION,
     generatedAt,
     sourceVersion,
     characterCount: characters.length,

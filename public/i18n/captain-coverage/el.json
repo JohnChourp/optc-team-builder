@@ -25,11 +25,34 @@
   "filters": {
     "abilityRailLabel": "Ability filters",
     "bestAbilityMatchesFirst": "Πρώτα τα καλύτερα ability matches",
+    "captainAbilityCopy": "Το Required περιορίζει τα results με tags που έχουν γίνει parse από το Captain Ability κάθε result χαρακτήρα. Αυτό δεν αλλάζει τον επιλεγμένο Captain.",
     "captainAbilityCoverage": {
-      "toggle": "Πλήρες Captain Ability coverage",
+      "toggle": "Full Coverage",
       "support": {
-        "simple": "Δείχνει units που καλύπτονται από το standard HP/ATK boost scope του Captain.",
-        "full": "Δείχνει μόνο units που καλύπτονται από όλα τα targetable Captain Ability clauses."
+        "simple": "Χρησιμοποιεί το standard HP/ATK boost scope του Captain.",
+        "full": "Χρησιμοποιεί όλα τα targetable Captain Ability clauses και ταιριάζει crew tag conditions."
+      }
+    },
+    "captainAbilityEyebrow": "Required",
+    "captainAbilityTitle": "Required",
+    "captainCoverage": {
+      "toggle": "Captain Coverage",
+      "support": {
+        "enabled": "Απαιτεί κάθε result να καλύπτεται από τον επιλεγμένο Captain.",
+        "disabled": "Παρακάμπτει το selected Captain coverage αλλά κρατά τα άλλα φίλτρα ενεργά."
+      }
+    },
+    "characterBox": {
+      "label": "Character box",
+      "placeholder": "Επίλεξε character box",
+      "options": {
+        "all": "Όλοι οι χαρακτήρες"
+      },
+      "support": {
+        "all": "Χρησιμοποίησε όλους τους covered χαρακτήρες του local dataset.",
+        "noBoxes": "Δημιούργησε character box για να περιορίσεις τα Captain Coverage αποτελέσματα σε αυτό το box.",
+        "withCount": "Περιόρισε τα αποτελέσματα σε {{count}} χαρακτήρα/ες αυτού του box.",
+        "withFavorites": "{{count}} από {{total}} χαρακτήρα/ες αυτού του box είναι favorites."
       }
     },
     "crewmateCopy": "Φίλτραρε τα καλυπτόμενα character results με Crewmate Ability tags.",
@@ -43,6 +66,14 @@
     "specialCopy": "Φίλτραρε τα καλυπτόμενα character results με Special tags.",
     "specialEyebrow": "Special",
     "specialTitle": "Special filters",
+    "superTandemPresence": {
+      "toggle": "Super Tandem",
+      "support": "Δείξε μόνο καλυπτόμενους χαρακτήρες με structured Super Tandem δεδομένα."
+    },
+    "superTypesClassesPresence": {
+      "toggle": "Super Types/Classes",
+      "support": "Δείξε μόνο καλυπτόμενους χαρακτήρες με structured Super Type ή Super Class δεδομένα."
+    },
     "supportCopy": "Φίλτραρε τα καλυπτόμενα character results με Support Ability tags.",
     "supportEyebrow": "Support Ability",
     "supportTitle": "Support Ability filters"
@@ -99,6 +130,14 @@
       "copy": "Διάλεξε χαρακτήρα που χωράει στο remaining team cost."
     },
     "selectedCaptain": "Επιλεγμένος Captain",
+    "save": {
+      "action": "Αποθήκευση team",
+      "error": "Η αποθήκευση της ομάδας δεν ολοκληρώθηκε. Δοκίμασε ξανά.",
+      "nameLabel": "Όνομα πληρώματος",
+      "savingLabel": "Αποθήκευση...",
+      "success": "Το team αποθηκεύτηκε στα Saved Teams.",
+      "viewSavedTeams": "Άνοιγμα Saved Teams"
+    },
     "slots": {
       "captain": "Captain",
       "sub": "Sub {{index}}"

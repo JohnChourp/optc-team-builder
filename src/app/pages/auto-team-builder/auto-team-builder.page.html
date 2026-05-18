@@ -496,6 +496,7 @@
         </div>
 
         <ion-modal
+          #requirementSourceModal
           [isOpen]="requirementSourceModalOpen()"
           cssClass="pick-editor-modal"
           (didDismiss)="closeRequirementSourceModal()"
@@ -515,7 +516,13 @@
                 </div>
 
                 <ion-buttons slot="end">
-                  <ion-button fill="clear" color="light" (click)="closeRequirementSourceModal()">
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    (click)="
+                      closeRequirementSourceModal(); requirementSourceModal.dismiss(null, 'cancel')
+                    "
+                  >
                     <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                   </ion-button>
                 </ion-buttons>
@@ -991,6 +998,7 @@
             </div>
 
             <ion-modal
+              #manualPickerModal
               [isOpen]="manualPickerModalOpen()"
               cssClass="pick-editor-modal"
               (didDismiss)="closeManualPickerModal()"
@@ -1010,7 +1018,13 @@
                     </div>
 
                     <ion-buttons slot="end">
-                      <ion-button fill="clear" color="light" (click)="closeManualPickerModal()">
+                      <ion-button
+                        fill="clear"
+                        color="light"
+                        (click)="
+                          closeManualPickerModal(); manualPickerModal.dismiss(null, 'cancel')
+                        "
+                      >
                         <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                       </ion-button>
                     </ion-buttons>
@@ -1423,6 +1437,7 @@
         </section>
 
         <ion-modal
+          #manualCopyModal
           [isOpen]="manualCopyModalOpen()"
           cssClass="manual-copy-modal"
           (didDismiss)="closeManualCopyModal()"
@@ -1442,7 +1457,11 @@
                 </div>
 
                 <ion-buttons slot="end">
-                  <ion-button fill="clear" color="light" (click)="closeManualCopyModal()">
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    (click)="closeManualCopyModal(); manualCopyModal.dismiss(null, 'cancel')"
+                  >
                     <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                   </ion-button>
                 </ion-buttons>
@@ -1537,7 +1556,11 @@
             <ion-footer class="manual-copy-modal__footer">
               <ion-toolbar>
                 <div class="manual-copy-modal__actions">
-                  <ion-button fill="outline" color="light" (click)="closeManualCopyModal()">
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    (click)="closeManualCopyModal(); manualCopyModal.dismiss(null, 'cancel')"
+                  >
                     {{ 'common.actions.cancel' | transloco }}
                   </ion-button>
                   <ion-button
@@ -1661,6 +1684,7 @@
             </div>
 
             <ion-modal
+              #excludePickerModal
               [isOpen]="excludePickerModalOpen()"
               cssClass="pick-editor-modal"
               (didDismiss)="closeExcludePickerModal()"
@@ -1680,7 +1704,13 @@
                     </div>
 
                     <ion-buttons slot="end">
-                      <ion-button fill="clear" color="light" (click)="closeExcludePickerModal()">
+                      <ion-button
+                        fill="clear"
+                        color="light"
+                        (click)="
+                          closeExcludePickerModal(); excludePickerModal.dismiss(null, 'cancel')
+                        "
+                      >
                         <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
                       </ion-button>
                     </ion-buttons>

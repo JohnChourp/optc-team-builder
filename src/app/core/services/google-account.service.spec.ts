@@ -29,7 +29,14 @@ describe('GoogleAccountService', () => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
     getPlatform.mockReturnValue('web');
-    vi.stubGlobal('location', { origin: 'https://optcteambuilder.com' });
+    vi.stubGlobal('location', {
+      assign: vi.fn(),
+      hash: '',
+      href: 'https://optcteambuilder.com/',
+      origin: 'https://optcteambuilder.com',
+      pathname: '/',
+      search: '',
+    });
   });
 
   it('restores a signed-in session from the stored authorization state', async () => {
@@ -137,7 +144,10 @@ describe('GoogleAccountService', () => {
       close,
       location: {
         hash: `#state=popup&access_token=popup-access-token&id_token=${idToken}`,
+        href: 'https://optcteambuilder.com/',
         origin: 'https://optcteambuilder.com',
+        pathname: '/',
+        search: '',
       },
       localStorage: {
         getItem: vi.fn(() =>
@@ -254,8 +264,11 @@ describe('GoogleAccountService', () => {
 
     vi.stubGlobal('location', {
       assign,
+      hash: '',
       href: 'https://optcteambuilder.com/tabs/account',
       origin: 'https://optcteambuilder.com',
+      pathname: '/tabs/account',
+      search: '',
     });
     vi.stubGlobal(
       'fetch',

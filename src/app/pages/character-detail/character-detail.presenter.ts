@@ -48,8 +48,8 @@ export interface CharacterDetailCaptainAbilitySummary {
 export interface CharacterDetailCaptainCoverageEntry {
   label?: string;
   text: string;
-  captainCoverageClauses: string[];
-  fullCoverageClauses: string[];
+  firstCoverageClauses: string[];
+  secondCoverageClauses: string[];
 }
 
 export interface CharacterDetailViewModel {
@@ -230,29 +230,38 @@ function buildCaptainAbilitySummary(
           },
         ]
       : [];
+  const generatedCoverageByKey = new Map(
+    (detail.captainAbilityCoverage?.entries ?? []).map((entry) => [entry.key, entry] as const),
+  );
   const coverageEntries = captainAbilityVariants
     .map((entry) => {
       const text = entry.text.trim();
-      const coverage = summarizeCaptainAbilityCoverageText(entry.text);
-      const fullCoverageClauses = hasDistinctFullCoverage(
-        coverage.captainCoverageClauses,
-        coverage.fullCoverageClauses,
+      const generatedCoverage = generatedCoverageByKey.get(entry.key);
+      const coverage = generatedCoverage
+        ? {
+            firstCoverageClauses: generatedCoverage.firstCoverageClauses,
+            secondCoverageClauses: generatedCoverage.secondCoverageClauses,
+          }
+        : summarizeCaptainAbilityCoverageText(entry.text);
+      const secondCoverageClauses = hasDistinctSecondCoverage(
+        coverage.firstCoverageClauses,
+        coverage.secondCoverageClauses,
       )
-        ? coverage.fullCoverageClauses
+        ? coverage.secondCoverageClauses
         : [];
 
       return {
         label: entry.label,
         text,
-        captainCoverageClauses: coverage.captainCoverageClauses,
-        fullCoverageClauses,
+        firstCoverageClauses: coverage.firstCoverageClauses,
+        secondCoverageClauses,
       };
     })
     .filter(
       (entry) =>
         entry.text.length ||
-        entry.captainCoverageClauses.length ||
-        entry.fullCoverageClauses.length,
+        entry.firstCoverageClauses.length ||
+        entry.secondCoverageClauses.length,
     );
   const captainNotes = detail.captainNotes?.trim() || null;
   const recognizedAbilities = detail.builderAbilities.filter(
@@ -273,14 +282,16 @@ function buildCaptainAbilitySummary(
     : null;
 }
 
-function hasDistinctFullCoverage(
-  captainCoverageClauses: string[],
-  fullCoverageClauses: string[],
+function hasDistinctSecondCoverage(
+  firstCoverageClauses: string[],
+  secondCoverageClauses: string[],
 ): boolean {
-  const simpleKeys = captainCoverageClauses.map(normalizeCoverageSummaryClause);
-  const fullKeys = fullCoverageClauses.map(normalizeCoverageSummaryClause);
+  const firstKeys = firstCoverageClauses.map(normalizeCoverageSummaryClause);
+  const secondKeys = secondCoverageClauses.map(normalizeCoverageSummaryClause);
 
-  return fullKeys.length !== simpleKeys.length || fullKeys.some((key) => !simpleKeys.includes(key));
+  return (
+    secondKeys.length !== firstKeys.length || secondKeys.some((key) => !firstKeys.includes(key))
+  );
 }
 
 function normalizeCoverageSummaryClause(clause: string): string {

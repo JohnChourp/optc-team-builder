@@ -25,11 +25,34 @@
   "filters": {
     "abilityRailLabel": "Ability filters",
     "bestAbilityMatchesFirst": "Best ability matches first",
+    "captainAbilityCopy": "Required narrows results by tags parsed from each result character's own Captain Ability. This does not change the selected Captain.",
     "captainAbilityCoverage": {
-      "toggle": "Full Captain Ability coverage",
+      "toggle": "Full Coverage",
       "support": {
-        "simple": "Showing units covered by the Captain's standard HP/ATK boost scope.",
-        "full": "Showing only units covered by every targetable Captain Ability clause."
+        "simple": "Using the Captain's standard HP/ATK boost scope.",
+        "full": "Using every targetable Captain Ability clause and matching crew tag conditions."
+      }
+    },
+    "captainAbilityEyebrow": "Required",
+    "captainAbilityTitle": "Required",
+    "captainCoverage": {
+      "toggle": "Captain Coverage",
+      "support": {
+        "enabled": "Require each result to be covered by the selected Captain.",
+        "disabled": "Bypass selected Captain coverage while keeping other filters active."
+      }
+    },
+    "characterBox": {
+      "label": "Character box",
+      "placeholder": "Select character box",
+      "options": {
+        "all": "All characters"
+      },
+      "support": {
+        "all": "Use every covered character in the local dataset.",
+        "noBoxes": "Create a character box to limit Captain Coverage results to that box.",
+        "withCount": "Limit results to {{count}} character(s) in this box.",
+        "withFavorites": "{{count}} of {{total}} character(s) in this box are currently favorites."
       }
     },
     "crewmateCopy": "Filter covered character results by Crewmate Ability tags.",
@@ -43,6 +66,14 @@
     "specialCopy": "Filter covered character results by Special tags.",
     "specialEyebrow": "Special",
     "specialTitle": "Special filters",
+    "superTandemPresence": {
+      "toggle": "Super Tandem",
+      "support": "Show only covered characters with structured Super Tandem data."
+    },
+    "superTypesClassesPresence": {
+      "toggle": "Super Types/Classes",
+      "support": "Show only covered characters with structured Super Type or Super Class data."
+    },
     "supportCopy": "Filter covered character results by Support Ability tags.",
     "supportEyebrow": "Support Ability",
     "supportTitle": "Support Ability filters"
@@ -99,6 +130,14 @@
       "copy": "Choose a character that fits the remaining team cost."
     },
     "selectedCaptain": "Selected Captain",
+    "save": {
+      "action": "Save team",
+      "error": "The team could not be saved. Please try again.",
+      "nameLabel": "Crew name",
+      "savingLabel": "Saving...",
+      "success": "Team saved to Saved Teams.",
+      "viewSavedTeams": "Open Saved Teams"
+    },
     "slots": {
       "captain": "Captain",
       "sub": "Sub {{index}}"

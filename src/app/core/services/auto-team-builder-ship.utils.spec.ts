@@ -192,8 +192,12 @@ function createResult(
   const input: AutoBuildInput = {
     types: ['DEX'],
     selectedClasses: ['Free Spirit'],
+    selectedCharacterTags: [],
+    selectedCharacterNames: [],
     requireAllSelectedTypesInTeam: false,
     requireAllSelectedClassesPerCharacter: false,
+    requireAllSelectedCharacterTagsInTeam: false,
+    requireAllSelectedCharacterNamesInTeam: false,
     requireAllSlotsInLeaderSuperEffectScope: false,
     requireFullCaptainAbilityCoverage: false,
     requireBothLeadersFullCaptainAbilityCoverage: false,

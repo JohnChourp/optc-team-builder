@@ -49,6 +49,18 @@ import { SpecialAbilityPickerComponent } from '../../shared/special-ability-pick
 import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 
 type EditorFeedbackTone = 'error' | 'success';
+type BuilderAbilityFilterCategory = Exclude<AbilityFilterRailCategory, 'captainAbility'>;
+
+function isBuilderAbilityFilterCategory(
+  category: AbilityFilterRailCategory,
+): category is BuilderAbilityFilterCategory {
+  return (
+    category === 'special' ||
+    category === 'crewmate' ||
+    category === 'potential' ||
+    category === 'support'
+  );
+}
 
 interface EditorFeedback {
   message: string;
@@ -269,6 +281,10 @@ export class CharacterEditPage implements OnInit {
   }
 
   public openBuilderAbilityPicker(category: AbilityFilterRailCategory): void {
+    if (!isBuilderAbilityFilterCategory(category)) {
+      return;
+    }
+
     if (!this.resolveCategoryCatalogItems(category).length) {
       return;
     }
@@ -289,7 +305,7 @@ export class CharacterEditPage implements OnInit {
     }
   }
 
-  public closeBuilderAbilityPicker(category: AbilityFilterRailCategory): void {
+  public closeBuilderAbilityPicker(category: BuilderAbilityFilterCategory): void {
     switch (category) {
       case 'crewmate':
         this.crewmateAbilityPickerOpen.set(false);
@@ -307,7 +323,7 @@ export class CharacterEditPage implements OnInit {
   }
 
   public saveBuilderAbilityPicker(
-    category: AbilityFilterRailCategory,
+    category: BuilderAbilityFilterCategory,
     drafts: AbilityRequirementDraft[],
   ): void {
     const catalogItems = this.resolveCategoryCatalogItems(category);
@@ -324,6 +340,10 @@ export class CharacterEditPage implements OnInit {
   }
 
   public clearBuilderAbilityCategory(category: AbilityFilterRailCategory): void {
+    if (!isBuilderAbilityFilterCategory(category)) {
+      return;
+    }
+
     this.setBuilderAbilityDrafts(category, []);
     this.syncBuilderAbilitiesFromDrafts();
     this.syncAdvancedJsonFromStructured();
@@ -668,7 +688,7 @@ export class CharacterEditPage implements OnInit {
   }
 
   private setBuilderAbilityDrafts(
-    category: AbilityFilterRailCategory,
+    category: BuilderAbilityFilterCategory,
     drafts: AbilityRequirementDraft[],
   ): void {
     switch (category) {
@@ -688,7 +708,7 @@ export class CharacterEditPage implements OnInit {
   }
 
   private resolveCategoryCatalogItems(
-    category: AbilityFilterRailCategory,
+    category: BuilderAbilityFilterCategory,
   ): AutoBuildAbilityCatalogItem[] {
     switch (category) {
       case 'crewmate':

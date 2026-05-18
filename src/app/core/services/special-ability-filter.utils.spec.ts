@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { type AutoBuildAbilityCatalogItem } from '../models/auto-team-builder-ability.models';
 import {
   createCategoryAbilityDrafts,
+  getCaptainAbilityCatalogItems,
   getAbilityCatalogItemsByCategory,
   intersectAbilityMatchingCharacterIds,
   resolveCategoryAbilityMatchingCharacterIds,
@@ -28,6 +29,22 @@ const CATALOG_ITEMS: AutoBuildAbilityCatalogItem[] = [
       { minTurns: 1, characterIds: [10] },
       { minTurns: 2, characterIds: [20] },
     ],
+    sampleCharacterIds: [],
+    sampleTexts: [],
+  },
+  {
+    key: 'territory',
+    label: 'Territory',
+    category: 'special',
+    groupLabel: 'Field Effects',
+    groupOrder: 8,
+    effectOrder: 1,
+    supportsTurns: false,
+    supportsSlotTokens: false,
+    availableSlotTokens: [],
+    availableSources: ['specialText', 'superSpecialText'],
+    matchCount: 2,
+    matchingCharacterIds: [4561, 5000],
     sampleCharacterIds: [],
     sampleTexts: [],
   },
@@ -154,6 +171,40 @@ describe('special ability filter utils', () => {
     expect(
       getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'crewmate').map((item) => item.key),
     ).toEqual(['crewmate_atk_boost_fighter', 'crewmate_hp_recovery_eot']);
+  });
+
+  it('keeps Territory selectable for true Special and Super Special providers', () => {
+    expect(
+      getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'special').map((item) => item.key),
+    ).toEqual(['boost_atk', 'territory']);
+    expect(
+      resolveSpecialAbilityMatchingCharacterIds(
+        [
+          {
+            abilityKey: 'territory',
+            minTurns: null,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+        CATALOG_ITEMS,
+      ),
+    ).toEqual([5000, 4561]);
+  });
+
+  it('keeps Territory out of the captain picker unless a captain source truly provides it', () => {
+    expect(getCaptainAbilityCatalogItems(CATALOG_ITEMS).map((item) => item.key)).not.toContain(
+      'territory',
+    );
+    expect(
+      getCaptainAbilityCatalogItems([
+        ...CATALOG_ITEMS,
+        {
+          ...CATALOG_ITEMS.find((item) => item.key === 'territory')!,
+          availableSources: ['captainAbility'],
+        },
+      ]).map((item) => item.key),
+    ).toContain('territory');
   });
 
   it('serializes category drafts with normalized strict-and fields', () => {

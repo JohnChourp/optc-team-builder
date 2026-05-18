@@ -1,7 +1,7 @@
 import '@angular/compiler';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   DEFAULT_RUMBLE_BUFF_FOCUS,
@@ -9,6 +9,11 @@ import {
   type RumbleBuildProgressSnapshot,
   type RumbleTeamResult,
 } from '../../core/models/auto-team-builder-rumble.models';
+import {
+  captureJsonDownloads,
+  readJsonDownloadPayload,
+  restoreJsonDownloadCapture,
+} from '../../testing/download-capture';
 import * as rumbleExportUtils from './auto-team-builder-rumble-export.utils';
 import { AutoTeamBuilderRumblePage } from './auto-team-builder-rumble.page';
 
@@ -31,6 +36,11 @@ vi.mock('@ionic/angular/standalone', () => ({
 }));
 
 describe('AutoTeamBuilderRumblePage', () => {
+  afterEach(() => {
+    restoreJsonDownloadCapture();
+    vi.clearAllMocks();
+  });
+
   it('initializes without auto-building on first entry', async () => {
     const { page, rumbleBuilder } = createPage();
 
@@ -757,12 +767,7 @@ describe('AutoTeamBuilderRumblePage', () => {
   });
 
   it('downloads settings and team json through the export helpers', async () => {
-    const settingsSpy = vi
-      .spyOn(rumbleExportUtils, 'downloadRumbleBuilderSettingsExport')
-      .mockImplementation(() => undefined);
-    const teamSpy = vi
-      .spyOn(rumbleExportUtils, 'downloadRumbleTeamExport')
-      .mockImplementation(() => undefined);
+    const downloads = captureJsonDownloads();
     const { page } = createPage();
 
     await page.ngOnInit();
@@ -770,11 +775,12 @@ describe('AutoTeamBuilderRumblePage', () => {
     page.downloadSettingsJson();
     page.downloadTeamJson();
 
-    expect(settingsSpy).toHaveBeenCalledWith(expect.objectContaining({ exportType: 'settings' }));
-    expect(teamSpy).toHaveBeenCalledWith(expect.objectContaining({ exportType: 'team' }));
-
-    settingsSpy.mockRestore();
-    teamSpy.mockRestore();
+    await expect(readJsonDownloadPayload(downloads, 0)).resolves.toMatchObject({
+      exportType: 'settings',
+    });
+    await expect(readJsonDownloadPayload(downloads, 1)).resolves.toMatchObject({
+      exportType: 'team',
+    });
   });
 
   it('imports settings without replacing the current generated teams', async () => {
@@ -1335,6 +1341,7 @@ function createPage(
   };
   const repository = {
     getDatasetManifest: vi.fn().mockResolvedValue({
+      schemaVersion: 1,
       availableClasses: ['Fighter', 'Slasher'],
     }),
     getRumbleBuilderCandidates: vi.fn().mockResolvedValue(defaultCandidates),
@@ -1526,7 +1533,7 @@ function createSlot(
       reasonChips: ['Damage'],
       conflictKeys: [`character:${id}`],
     },
-  } as RumbleTeamResult['activeSlots'][number];
+  } as unknown as RumbleTeamResult['activeSlots'][number];
 }
 
 function createBox(id: string, name: string, characterIds: number[]) {

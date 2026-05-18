@@ -1,0 +1,169 @@
+[
+  {
+    "id": 101,
+    "name": "Monkey D. Luffy - Fixture Captain",
+    "searchText": "monkey d luffy fixture captain str fighter free spirit straw hat pirates",
+    "isIncomplete": false,
+    "type": "STR",
+    "classes": ["Fighter", "Free Spirit"],
+    "primaryClass": "Fighter",
+    "secondaryClass": "Free Spirit",
+    "stars": 6,
+    "starsLabel": "6",
+    "cost": 55,
+    "combo": 4,
+    "captainHpBoost": 1.3,
+    "captainAtkBoost": 5,
+    "captainAverageBoost": 3.15,
+    "stats": {
+      "min": { "hp": 1200, "atk": 500, "rcv": 120 },
+      "max": { "hp": 4200, "atk": 2100, "rcv": 390 },
+      "growth": 4
+    },
+    "regionAvailability": {
+      "exactLocal": false,
+      "thumbnailGlobal": false,
+      "thumbnailJapan": false
+    },
+    "assets": {
+      "exactLocal": null,
+      "thumbnailLocal": null,
+      "thumbnailGlobal": null,
+      "thumbnailJapan": null
+    },
+    "detail": {
+      "characterId": 101,
+      "captainAbility": "Boosts ATK of all characters by 5x and HP by 1.3x.",
+      "captainAbilityVariants": [
+        {
+          "key": "captain",
+          "label": "Captain Ability",
+          "text": "Boosts ATK of all characters by 5x and HP by 1.3x."
+        }
+      ],
+      "captainAbilityCoverage": {
+        "entries": [
+          {
+            "key": "captain",
+            "label": "Captain Ability",
+            "firstCoverageScope": "crew-wide",
+            "secondCoverageScope": "crew-wide",
+            "firstCoverageClauses": ["Boosts ATK of all characters by 5x and HP by 1.3x"],
+            "secondCoverageClauses": ["Boosts ATK of all characters by 5x and HP by 1.3x"]
+          }
+        ]
+      },
+      "captainNotes": null,
+      "specialName": "Fixture Special",
+      "specialText": "Reduces Bind duration by 5 turns.",
+      "specialNotes": null,
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": ["monkey d. luffy", "luffy"],
+      "characterTags": ["Straw Hat Pirates"],
+      "builderAbilities": [
+        {
+          "key": "remove_bind",
+          "label": "Bind",
+          "minTurns": 5,
+          "isCompleteRemoval": false,
+          "slotTokens": [],
+          "source": "specialText",
+          "coverageMode": "explicit"
+        }
+      ],
+      "sailorAbilities": [],
+      "sailorNotes": null,
+      "potentialAbilities": [],
+      "supportData": [],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": null
+    }
+  },
+  {
+    "id": 102,
+    "name": "Roronoa Zoro - Fixture Sub",
+    "searchText": "roronoa zoro fixture sub dex slasher straw hat pirates",
+    "isIncomplete": false,
+    "type": "DEX",
+    "classes": ["Slasher"],
+    "primaryClass": "Slasher",
+    "secondaryClass": null,
+    "stars": 5,
+    "starsLabel": "5",
+    "cost": 30,
+    "combo": 5,
+    "captainHpBoost": 0,
+    "captainAtkBoost": 0,
+    "captainAverageBoost": 0,
+    "stats": {
+      "min": { "hp": 900, "atk": 430, "rcv": 90 },
+      "max": { "hp": 3100, "atk": 1650, "rcv": 220 },
+      "growth": 3
+    },
+    "regionAvailability": {
+      "exactLocal": false,
+      "thumbnailGlobal": false,
+      "thumbnailJapan": false
+    },
+    "assets": {
+      "exactLocal": null,
+      "thumbnailLocal": null,
+      "thumbnailGlobal": null,
+      "thumbnailJapan": null
+    },
+    "detail": {
+      "characterId": 102,
+      "captainAbility": null,
+      "captainAbilityVariants": [],
+      "captainAbilityCoverage": { "entries": [] },
+      "captainNotes": null,
+      "specialName": "Fixture Slash",
+      "specialText": "Boosts ATK of Slasher characters by 2x.",
+      "specialNotes": null,
+      "superSpecialText": null,
+      "superSpecialCriteriaText": null,
+      "superSpecialNotes": null,
+      "superSpecialCriteria": null,
+      "partyConflictKeys": ["roronoa zoro", "zoro"],
+      "characterTags": ["Straw Hat Pirates"],
+      "builderAbilities": [
+        {
+          "key": "boost_atk",
+          "label": "Boost ATK",
+          "minTurns": null,
+          "isCompleteRemoval": false,
+          "slotTokens": [],
+          "source": "specialText",
+          "coverageMode": "explicit"
+        }
+      ],
+      "sailorAbilities": [],
+      "sailorNotes": null,
+      "potentialAbilities": [],
+      "supportData": [],
+      "swapData": null,
+      "vsSpecial": null,
+      "exSuperData": null,
+      "superType": null,
+      "superTandemData": null,
+      "finalTapData": null,
+      "rushSugoSpecialData": null,
+      "superClass": null,
+      "switchEffectData": null,
+      "captainShiftData": null,
+      "rumbleData": null
+    }
+  }
+]

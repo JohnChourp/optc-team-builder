@@ -40,11 +40,44 @@
   "picker": {
     "assignedElsewhere": "Χρησιμοποιείται ήδη σε άλλο fixed slot.",
     "close": "Κλείσιμο character picker",
+    "costBlocked": "Αυτός ο χαρακτήρας ξεπερνά το max team cost {{max}} για το active slot.",
     "copy": "Αναζήτησε στο catalog και βάλε χαρακτήρα στο active fixed slot.",
     "empty": "Δεν βρέθηκαν χαρακτήρες για αυτό το manual team search.",
     "eyebrow": "Slot picker",
+    "filters": {
+      "anyClass": "Any class",
+      "anyTag": "Any tag",
+      "anyType": "Any type",
+      "class": "Class",
+      "clear": "Καθαρισμός filters",
+      "costError": "Το minimum cost {{min}} δεν μπορεί να είναι πάνω από το maximum cost {{max}}.",
+      "maxCost": "Max cost",
+      "minCost": "Min cost",
+      "tag": "Tag",
+      "type": "Type"
+    },
+    "loading": "Φόρτωση matching χαρακτήρων...",
     "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
     "title": "Assign slot {{slot}}"
+  },
+  "captainHelper": {
+    "branchLabel": "Captain branch",
+    "branches": {
+      "both": "Και τα δύο branches",
+      "side": "{{name}} branch"
+    },
+    "rawScope": "Υπάρχει captain ability text",
+    "scopeChip": "{{label}}: {{scope}}",
+    "scopes": {
+      "captain-only": "Μόνο captain",
+      "crew-wide": "Όλο το crew",
+      "none": "Χωρίς coverage",
+      "subset": "Subset"
+    }
+  },
+  "drag": {
+    "clearZone": "Σύρε filled slot εδώ για να καθαριστεί",
+    "invalidCost": "Το drop μπλοκαρίστηκε γιατί η ομάδα θα ξεπεράσει max cost {{max}}."
   },
   "save": {
     "error": "Δεν ήταν δυνατή η αποθήκευση του manual team.",
@@ -65,9 +98,62 @@
     }
   },
   "slots": {
+    "cost": "Cost {{cost}}",
     "empty": "Κενό slot",
     "emptyAlt": "Κενό character slot",
-    "label": "Slot {{slot}}"
+    "label": "Slot {{slot}}",
+    "noAbilityPreview": "Δεν υπάρχει captain ή special text."
+  },
+  "summary": {
+    "copy": "Live totals για τα visible fixed slots και το τρέχον cost budget.",
+    "metrics": {
+      "atk": {
+        "label": "ATK",
+        "support": "Max attack στα filled slots"
+      },
+      "cost": {
+        "label": "Cost",
+        "supportNoMax": "Το Friend Captain cost εξαιρείται",
+        "supportWithMax": "Μένουν {{remaining}} cost",
+        "valueWithMax": "{{used}} / {{max}}"
+      },
+      "filled": {
+        "label": "Filled",
+        "value": "{{filled}} / {{total}}"
+      },
+      "hp": {
+        "label": "HP",
+        "support": "Max health στα filled slots"
+      },
+      "rcv": {
+        "label": "RCV",
+        "support": "Max recovery στα filled slots"
+      }
+    },
+    "title": "Team summary"
+  },
+  "validation": {
+    "captain": {
+      "ability": {
+        "copy": "Ο {{name}} δεν έχει captain ability data, οπότε δεν γίνεται coverage verification.",
+        "title": "{{role}} data missing"
+      },
+      "coverage": {
+        "copy": "Δεν καλύπτονται: {{slots}}.",
+        "title": "{{role}} δεν καλύπτει όλα τα slots"
+      },
+      "missing": {
+        "copy": "Βάλε και τα δύο leader slots για captain coverage validation.",
+        "title": "{{role}} missing"
+      },
+      "tags": {
+        "copy": "Ένα ή περισσότερα captain tag conditions δεν καλύπτονται.",
+        "title": "{{role}} conditions not met"
+      }
+    },
+    "cost": {
+      "title": "Cost budget exceeded"
+    }
   },
   "title": "Manual Team Builder"
 }

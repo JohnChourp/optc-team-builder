@@ -1,7 +1,8 @@
 {
   "actions": {
     "exportSingle": "Εξαγωγή",
-    "openBuilder": "Open in team builder"
+    "openBuilder": "Άνοιγμα στο team builder",
+    "openTeam": "Άνοιγμα team"
   },
   "confirm": {
     "deleteSelected": "Να διαγραφούν {{count}} επιλεγμένες ομάδες;",
@@ -60,6 +61,25 @@
     "warningTitle": "Το import ολοκληρώθηκε με παρατηρήσεις"
   },
   "loading": "Φόρτωση αποθηκευμένων ομάδων...",
+  "openTeam": {
+    "copy": "Διάλεξε πού θα ανοίξει το \"{{name}}\".",
+    "destinations": {
+      "auto": {
+        "copy": "Χρησιμοποιεί τους χαρακτήρες και το ship ως locked manual inputs για αυτόματο team search.",
+        "title": "Auto Team Builder"
+      },
+      "captainCoverage": {
+        "copy": "Χρησιμοποιεί το slot 1 ως Captain και τα slots 3-6 ως coverage subs. Το Friend Captain αγνοείται.",
+        "title": "Captain Coverage"
+      },
+      "manual": {
+        "copy": "Ανοίγει και τα έξι slots μαζί με το saved ship για άμεσο manual edit.",
+        "title": "Manual Team Builder"
+      }
+    },
+    "eyebrow": "Άνοιγμα saved team",
+    "title": "Επιλογή προορισμού"
+  },
   "preview": {
     "ariaLabel": "Θέσεις χαρακτήρων αποθηκευμένης ομάδας",
     "emptySlotAlt": "Κενό slot",
