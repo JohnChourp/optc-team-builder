@@ -1,11 +1,7 @@
 import { vi } from 'vitest';
 
+import { socialLogin } from './test-mocks/social-login';
+
 vi.mock('@capgo/capacitor-social-login', () => ({
-  SocialLogin: {
-    getAuthorizationCode: vi.fn(),
-    initialize: vi.fn(),
-    isLoggedIn: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-  },
+  SocialLogin: socialLogin,
 }));
