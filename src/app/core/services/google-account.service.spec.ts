@@ -18,6 +18,14 @@ vi.mock('@capacitor/core', () => ({
   Capacitor: {
     getPlatform,
   },
+  WebPlugin: class WebPluginStub {
+    addListener() {
+      return { remove: () => undefined };
+    }
+    notifyListeners() {}
+    removeAllListeners() {}
+  },
+  registerPlugin: vi.fn(() => ({})),
 }));
 
 vi.mock('@capgo/capacitor-social-login', () => ({
