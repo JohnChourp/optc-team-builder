@@ -8,8 +8,17 @@ import { GoogleAnalyticsService } from './google-analytics.service';
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
+    getPlatform: vi.fn(() => 'web'),
     isNativePlatform: vi.fn(() => false),
   },
+  WebPlugin: class WebPluginStub {
+    addListener() {
+      return { remove: () => undefined };
+    }
+    notifyListeners() {}
+    removeAllListeners() {}
+  },
+  registerPlugin: vi.fn(() => ({})),
 }));
 
 describe('GoogleAnalyticsService', () => {
