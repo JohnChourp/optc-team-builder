@@ -392,6 +392,44 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(character.captainAverageBoost).toBe(3.6);
   });
 
+  it('applies a shared trailing multiplier to both ATK and HP captain clauses', () => {
+    const [character] = normalizeCharacters(
+      [
+        [
+          'Dogstorm & Cat Viper - Vassals Following Their Master',
+          'STR',
+          ['Slasher', 'Striker'],
+          6,
+          55,
+          4,
+          5,
+          99,
+          5_000_000,
+          1500,
+          1200,
+          200,
+          3000,
+          1800,
+          250,
+          1,
+        ],
+      ],
+      {
+        1: {
+          captain: {
+            base: 'Boosts ATK of Slasher and Striker characters and boosts HP of Slasher and Striker characters by 1.2x',
+          },
+        },
+      },
+      [],
+      new Map(),
+    );
+
+    expect(character.captainHpBoost).toBe(1.2);
+    expect(character.captainAtkBoost).toBe(1.2);
+    expect(character.captainAverageBoost).toBe(1.2);
+  });
+
   it('supports object-based unit maps from the 2shankz source', () => {
     const [character] = normalizeCharacters(
       {
@@ -751,8 +789,14 @@ describe('import-optc-data ship thumbnail pack', () => {
           label: 'Captain Ability',
           firstCoverageScope: 'crew-wide',
           secondCoverageScope: 'crew-wide',
-          firstCoverageClauses: ['boosts HP of all characters by 1.5x'],
-          secondCoverageClauses: ['boosts HP of all characters by 1.5x'],
+          firstCoverageClauses: [
+            'boosts ATK of all other characters by 4x',
+            'boosts HP of all characters by 1.5x',
+          ],
+          secondCoverageClauses: [
+            'Boosts ATK of Cost 70 or more characters by 6x',
+            'boosts HP of all characters by 1.5x',
+          ],
         },
       ],
     });

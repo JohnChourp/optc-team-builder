@@ -29,6 +29,8 @@ const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
 ]);
 const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
   /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)|\s+and\s+(?=(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)/gi;
+const SHARED_CAPTAIN_BOOST_MULTIPLIER_PATTERN =
+  /\b(boosts?\s+(?:ATK|HP)\s+of\s+)((?:(?!\bby\s+\d).)+?)(\s+and\s+boosts?\s+(?:ATK|HP)\s+of\s+(?:(?!\bby\s+\d).)+?)(\s+by\s+(\d+(?:\.\d+)?)x)\b/gi;
 const CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
 const CAPTAIN_MULTIPLIER_PATTERN =
@@ -39,6 +41,9 @@ const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
 const START_OF_FIGHT_EFFECT_PATTERN =
   /\b(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure)\b/i;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
+const COST_SUBSET_PATTERN = /\bcost\s+\d+\s+or\s+(?:more|less)\s+characters?\b/i;
+const ATK_CLAUSE_PATTERN = /\batk\b/i;
+const HP_CLAUSE_PATTERN = /\bhp\b/i;
 const BOOST_TARGET_FRAGMENT_PATTERNS = [
   /\b(?:of|for)\s+([^.;]{1,220}?)\s+(?:characters|units)\b/gi,
   /\b(?:of|for)\s+(crew)\b/gi,
@@ -85,7 +90,9 @@ export function buildCaptainAbilityCoverage(captainAbilityVariants) {
 }
 
 export function summarizeCaptainAbilityCoverageText(captainText) {
-  const normalizedCaptainText = normalizeHtmlToText(captainText);
+  const normalizedCaptainText = normalizeSharedCaptainBoostMultipliers(
+    normalizeHtmlToText(captainText),
+  );
 
   if (!normalizedCaptainText) {
     return {
@@ -97,17 +104,77 @@ export function summarizeCaptainAbilityCoverageText(captainText) {
   }
 
   const defaultCaptainText = extractDefaultCaptainBoostText(normalizedCaptainText);
+  const defaultClauses = resolveCaptainBoostScopeClauses(defaultCaptainText, false);
+  const fullClauses = resolveCaptainBoostScopeClauses(normalizedCaptainText, true);
+  const conditionalOnlyClauses = fullClauses.filter((clause) => !defaultClauses.includes(clause));
+
+  const { baselineClauses, topClauses } = splitCaptainBoostTiers(
+    defaultClauses,
+    conditionalOnlyClauses,
+  );
+
+  const baseFirstScope = resolveCaptainAbilityScope(defaultCaptainText, false);
+  const baseSecondScope = resolveCaptainAbilityScope(normalizedCaptainText, true);
 
   return {
-    firstCoverageScope: resolveCaptainAbilityScope(defaultCaptainText, false),
-    secondCoverageScope: resolveCaptainAbilityScope(normalizedCaptainText, true),
-    firstCoverageClauses: resolveCaptainBoostScopeClauses(defaultCaptainText, false),
-    secondCoverageClauses: resolveCaptainBoostScopeClauses(normalizedCaptainText, true),
+    firstCoverageScope: resolveScopeFromTierClauses(baselineClauses, baseFirstScope),
+    secondCoverageScope: resolveScopeFromTierClauses(topClauses, baseSecondScope),
+    firstCoverageClauses: baselineClauses,
+    secondCoverageClauses: topClauses,
   };
 }
 
+// Splits the default boost clauses into a baseline tier (the boost that applies to the broadest
+// audience, e.g. "all other characters") and a top tier (the specialised boost for a subset, e.g.
+// "Cost 70 or more characters"). HP clauses are repeated in both tiers because HP boosts don't
+// participate in OPTC's ATK tier-up convention. When the default has no clause that survives the
+// boost-scope filter (typical of captains whose unconditional boost is self-only), the top tier
+// falls back to conditional clauses so the user can still see the "real" payoff.
+function splitCaptainBoostTiers(defaultClauses, conditionalOnlyClauses) {
+  const atkClauses = defaultClauses.filter((clause) => ATK_CLAUSE_PATTERN.test(clause));
+  const hpClauses = defaultClauses.filter((clause) => HP_CLAUSE_PATTERN.test(clause));
+  const fallbackAtk = atkClauses.filter((clause) => FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
+  const nonFallbackAtk = atkClauses.filter((clause) => !FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
+
+  let baselineAtk;
+  let topAtk;
+  if (fallbackAtk.length > 0 && nonFallbackAtk.length > 0) {
+    baselineAtk = fallbackAtk;
+    topAtk = nonFallbackAtk;
+  } else {
+    baselineAtk = atkClauses;
+    topAtk = atkClauses;
+  }
+
+  if (topAtk.length === 0 && conditionalOnlyClauses.length > 0) {
+    topAtk = conditionalOnlyClauses.filter((clause) => ATK_CLAUSE_PATTERN.test(clause));
+  }
+
+  return {
+    baselineClauses: dedupeClauses([...baselineAtk, ...hpClauses]),
+    topClauses: dedupeClauses([...topAtk, ...hpClauses]),
+  };
+}
+
+function resolveScopeFromTierClauses(tierClauses, fallbackScope) {
+  if (!tierClauses.length) {
+    return fallbackScope;
+  }
+
+  return tierClauses.reduce(
+    (scope, clause) => higherCaptainScope(scope, resolveCaptainClauseScope(clause)),
+    'none',
+  );
+}
+
+function dedupeClauses(items) {
+  return [...new Set(items)];
+}
+
 export function resolveCaptainAbilityScope(captainText, includeConditional = false) {
-  const normalizedCaptainText = normalizeHtmlToText(captainText);
+  const normalizedCaptainText = normalizeSharedCaptainBoostMultipliers(
+    normalizeHtmlToText(captainText),
+  );
 
   if (!normalizedCaptainText.length) {
     return 'none';
@@ -134,6 +201,7 @@ function resolveCaptainClauseScope(clause) {
   }
 
   if (
+    COST_SUBSET_PATTERN.test(normalizedClause) ||
     extractAllowedTypesFromCoverageClause(normalizedClause).length > 0 ||
     extractAllowedClassesFromCoverageClause(normalizedClause).length > 0 ||
     extractAllowedCharacterTagsFromCoverageClause(normalizedClause).length > 0
@@ -148,8 +216,7 @@ function isCaptainScopedEffectClause(clause) {
   return (
     /\bboosts?\b/i.test(clause) &&
     /\b(?:atk|hp)\b/i.test(clause) &&
-    CAPTAIN_MULTIPLIER_PATTERN.test(clause) &&
-    !FALLBACK_OTHER_SCOPE_PATTERN.test(clause)
+    CAPTAIN_MULTIPLIER_PATTERN.test(clause)
   );
 }
 
@@ -165,8 +232,24 @@ function resolveCaptainBoostScopeClauses(captainText, includeConditional) {
   );
 }
 
+// "boosts ATK of X and boosts HP of Y by Nx" -> "boosts ATK of X by Nx and boosts HP of Y by Nx"
+// so each side carries its own multiplier through the clause splitter.
+function normalizeSharedCaptainBoostMultipliers(text) {
+  if (!text) {
+    return text;
+  }
+
+  return String(text).replace(
+    SHARED_CAPTAIN_BOOST_MULTIPLIER_PATTERN,
+    (_match, prefix, firstTarget, middle, byClause, multiplier) =>
+      `${prefix}${firstTarget.trimEnd()} by ${multiplier}x${middle}${byClause}`,
+  );
+}
+
 function extractDefaultCaptainBoostText(captainText) {
-  const normalizedCaptainText = normalizeHtmlToText(captainText);
+  const normalizedCaptainText = normalizeSharedCaptainBoostMultipliers(
+    normalizeHtmlToText(captainText),
+  );
   const branches = extractCaptainBranches(normalizedCaptainText);
 
   if (!branches.length) {
@@ -266,8 +349,8 @@ function isCaptainBoostScopeClause(clause) {
     /\b(?:atk|hp)\b/i.test(normalizedClause) &&
     CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) &&
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
-    !FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
+      COST_SUBSET_PATTERN.test(normalizedClause) ||
       extractAllowedTypesFromCoverageClause(normalizedClause).length > 0 ||
       extractAllowedClassesFromCoverageClause(normalizedClause).length > 0 ||
       extractAllowedCharacterTagsFromCoverageClause(normalizedClause).length > 0)
@@ -323,10 +406,6 @@ function extractSpecialCooldownTargetFragments(clause) {
 }
 
 function boostClauseHasUniversalScope(clause) {
-  if (FALLBACK_OTHER_SCOPE_PATTERN.test(clause)) {
-    return false;
-  }
-
   return extractBoostTargetFragments(clause).some((fragment) =>
     UNIVERSAL_SCOPE_PATTERN.test(fragment),
   );

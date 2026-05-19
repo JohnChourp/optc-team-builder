@@ -9,6 +9,8 @@ const captainBranchPattern =
   /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
 const captainEffectClauseSeparator =
   /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)|\s+\band\s+(?=(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)/gi;
+const sharedCaptainBoostMultiplierPattern =
+  /\b(boosts?\s+(?:ATK|HP)\s+of\s+)((?:(?!\bby\s+\d).)+?)(\s+and\s+boosts?\s+(?:ATK|HP)\s+of\s+(?:(?!\bby\s+\d).)+?)(\s+by\s+(\d+(?:\.\d+)?)x)\b/gi;
 const conditionalCaptainBoostPrefixPattern =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
 const defaultCaptainBranchLabels = new Set(['always active', 'standard captain']);
@@ -100,7 +102,7 @@ function resolveDefaultCaptainAbilityText(detail) {
 }
 
 function extractDefaultCaptainBoostText(text) {
-  const normalizedText = normalizeCaptainBoostText(text);
+  const normalizedText = normalizeSharedCaptainBoostMultipliers(normalizeCaptainBoostText(text));
   const branches = extractCaptainBranches(normalizedText);
 
   if (!branches.length) {
@@ -115,6 +117,20 @@ function extractDefaultCaptainBoostText(text) {
   return defaultBranches.length
     ? defaultBranches.join('. ')
     : (branches[0]?.text ?? normalizedText);
+}
+
+// "boosts ATK of X and boosts HP of Y by Nx" -> "boosts ATK of X by Nx and boosts HP of Y by Nx"
+// so each side carries its own multiplier through the clause splitter.
+function normalizeSharedCaptainBoostMultipliers(text) {
+  if (!text) {
+    return text;
+  }
+
+  return String(text).replace(
+    sharedCaptainBoostMultiplierPattern,
+    (_match, prefix, firstTarget, middle, byClause, multiplier) =>
+      `${prefix}${firstTarget.trimEnd()} by ${multiplier}x${middle}${byClause}`,
+  );
 }
 
 function extractCaptainBranches(text) {
