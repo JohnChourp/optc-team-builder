@@ -236,6 +236,7 @@ describe('SavedEnemiesPage', () => {
       enemyMechanics: [],
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
+      associatedTeamIds: [],
     });
     expect(page.editorOpen()).toBe(false);
   });
