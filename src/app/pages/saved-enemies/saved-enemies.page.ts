@@ -1,4 +1,4 @@
-import { Component, type OnInit, computed, signal } from '@angular/core';
+import { Component, ViewChild, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { type ViewWillEnter } from '@ionic/angular';
 import {
@@ -98,6 +98,12 @@ import {
   type ParsedEnemyTextResult,
   type ParsedEnemyTextWarning,
 } from './saved-enemies-text-parser.utils';
+import {
+  applyAutocompleteSelection,
+  buildAutocompleteSuggestions,
+  extractAutocompleteToken,
+  type EnemyTextAutocompleteSuggestion,
+} from './saved-enemies-text-autocomplete.utils';
 
 interface SavedEnemyAbilitySummaryChipView {
   draftId: string;
@@ -215,6 +221,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly processingEnemyImage = signal(false);
   public readonly characterImagePickerOpen = signal(false);
   public readonly enemyTextPasteValue = signal('');
+  public readonly enemyTextPasteCaret = signal(0);
+  public readonly enemyTextAutocompleteOpen = signal(false);
+  public readonly enemyTextAutocompleteActiveIndex = signal(0);
   public readonly enemyTextParseResult = signal<ParsedEnemyTextResult | null>(null);
   public readonly enemyTextParseErrorMessage = signal('');
   public readonly parsedAbilitySelectionOpen = signal(false);
@@ -367,6 +376,33 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly canAddBattleRequirement = computed(
     () => !this.savingEnemy() && this.battleRequirements().length < MAX_AUTO_BUILD_BATTLE_COUNT,
   );
+  public readonly enemyTextAutocompleteSuggestions = computed<EnemyTextAutocompleteSuggestion[]>(
+    () => {
+      if (!this.enemyTextAutocompleteOpen()) {
+        return [];
+      }
+
+      const token = extractAutocompleteToken(
+        this.enemyTextPasteValue(),
+        this.enemyTextPasteCaret(),
+      );
+
+      if (!token) {
+        return [];
+      }
+
+      return buildAutocompleteSuggestions({
+        token,
+        mechanics: this.availableEnemyMechanicCatalogItems(),
+        abilities: this.availableAbilityCatalogItems(),
+      });
+    },
+  );
+  public readonly enemyTextAutocompleteVisible = computed(
+    () =>
+      this.enemyTextAutocompleteOpen() && this.enemyTextAutocompleteSuggestions().length > 0,
+  );
+  @ViewChild('enemyPasteTextarea') private readonly pasteTextareaRef?: IonTextarea;
   public readonly activeRequiredCharacterGroup = computed(() => {
     const activeBattleId = this.activeRequiredCharacterBattleId();
     const activeGroupId = this.activeRequiredCharacterGroupId();
@@ -1040,11 +1076,124 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public onEnemyPasteTextChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.enemyTextPasteValue.set((event.detail.value ?? '').toString());
+    const value = (event.detail.value ?? '').toString();
+    this.enemyTextPasteValue.set(value);
     this.enemyTextParseResult.set(null);
     this.enemyTextParseErrorMessage.set('');
     this.parsedAbilitySelectionOpen.set(false);
     this.selectedParsedAbilityCandidateIds.set([]);
+    this.enemyTextAutocompleteOpen.set(true);
+    this.enemyTextAutocompleteActiveIndex.set(0);
+    void this.syncPasteCaretFromTarget(event.target, value.length);
+  }
+
+  public onEnemyPasteSelect(event: Event): void {
+    if (!this.enemyTextAutocompleteOpen()) {
+      return;
+    }
+
+    void this.syncPasteCaretFromTarget(event.target, this.enemyTextPasteValue().length);
+  }
+
+  public onEnemyPasteKeyDown(event: KeyboardEvent): void {
+    if (!this.enemyTextAutocompleteVisible()) {
+      if (event.key === 'Escape' && this.enemyTextAutocompleteOpen()) {
+        this.enemyTextAutocompleteOpen.set(false);
+      }
+      return;
+    }
+
+    const suggestions = this.enemyTextAutocompleteSuggestions();
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.enemyTextAutocompleteActiveIndex.update(
+          (index) => (index + 1) % suggestions.length,
+        );
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.enemyTextAutocompleteActiveIndex.update(
+          (index) => (index - 1 + suggestions.length) % suggestions.length,
+        );
+        break;
+      case 'Enter': {
+        const activeSuggestion =
+          suggestions[Math.min(this.enemyTextAutocompleteActiveIndex(), suggestions.length - 1)];
+
+        if (!activeSuggestion) {
+          return;
+        }
+
+        event.preventDefault();
+        void this.selectEnemyTextAutocompleteSuggestion(activeSuggestion);
+        break;
+      }
+      case 'Escape':
+        event.preventDefault();
+        this.enemyTextAutocompleteOpen.set(false);
+        break;
+      default:
+        break;
+    }
+  }
+
+  public setEnemyTextAutocompleteActiveIndex(index: number): void {
+    this.enemyTextAutocompleteActiveIndex.set(index);
+  }
+
+  public async selectEnemyTextAutocompleteSuggestion(
+    suggestion: EnemyTextAutocompleteSuggestion,
+  ): Promise<void> {
+    const value = this.enemyTextPasteValue();
+    const caret = this.enemyTextPasteCaret();
+    const token = extractAutocompleteToken(value, caret);
+
+    if (!token) {
+      this.enemyTextAutocompleteOpen.set(false);
+      return;
+    }
+
+    const { value: nextValue, caret: nextCaret } = applyAutocompleteSelection(
+      value,
+      token,
+      suggestion,
+    );
+
+    this.enemyTextPasteValue.set(nextValue);
+    this.enemyTextPasteCaret.set(nextCaret);
+    this.enemyTextAutocompleteOpen.set(false);
+    this.enemyTextAutocompleteActiveIndex.set(0);
+    this.enemyTextParseResult.set(null);
+    this.enemyTextParseErrorMessage.set('');
+
+    await this.restorePasteTextareaCaret(nextCaret);
+  }
+
+  public closeEnemyTextAutocomplete(): void {
+    this.enemyTextAutocompleteOpen.set(false);
+  }
+
+  private async syncPasteCaretFromTarget(
+    target: EventTarget | null,
+    fallbackCaret: number,
+  ): Promise<void> {
+    const ionTextarea = target as IonTextarea | null;
+    const inputElement = (await ionTextarea?.getInputElement?.()) ?? null;
+    const caret = inputElement?.selectionStart ?? fallbackCaret;
+    this.enemyTextPasteCaret.set(caret);
+  }
+
+  private async restorePasteTextareaCaret(caret: number): Promise<void> {
+    const inputElement = await this.pasteTextareaRef?.getInputElement();
+
+    if (!inputElement) {
+      return;
+    }
+
+    inputElement.focus();
+    inputElement.setSelectionRange(caret, caret);
   }
 
   public parseEnemyText(): void {

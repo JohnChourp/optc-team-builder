@@ -89,6 +89,13 @@
       },
       "errors": {
         "empty": "Κάνε πρώτα paste το enemy text."
+      },
+      "autocomplete": {
+        "ariaLabel": "Προτάσεις abilities και mechanics",
+        "source": {
+          "mechanic": "Mechanic",
+          "ability": "Ability"
+        }
       }
     },
     "image": {

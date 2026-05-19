@@ -284,17 +284,67 @@
                 </div>
               </div>
 
-              <ion-textarea
-                [label]="t('editor.paste.label')"
-                labelPlacement="stacked"
-                fill="outline"
-                autoGrow="true"
-                rows="8"
-                [value]="enemyTextPasteValue()"
-                [disabled]="savingEnemy()"
-                [placeholder]="t('editor.paste.placeholder')"
-                (ionInput)="onEnemyPasteTextChange($event)"
-              ></ion-textarea>
+              <div class="paste-autocomplete-host">
+                <ion-textarea
+                  #enemyPasteTextarea
+                  [label]="t('editor.paste.label')"
+                  labelPlacement="stacked"
+                  fill="outline"
+                  autoGrow="true"
+                  rows="8"
+                  [value]="enemyTextPasteValue()"
+                  [disabled]="savingEnemy()"
+                  [placeholder]="t('editor.paste.placeholder')"
+                  (ionInput)="onEnemyPasteTextChange($event)"
+                  (click)="onEnemyPasteSelect($event)"
+                  (keyup)="onEnemyPasteSelect($event)"
+                  (keydown)="onEnemyPasteKeyDown($event)"
+                  (ionBlur)="closeEnemyTextAutocomplete()"
+                ></ion-textarea>
+
+                @if (enemyTextAutocompleteVisible()) {
+                  <div
+                    class="paste-autocomplete"
+                    role="listbox"
+                    [attr.aria-label]="t('editor.paste.autocomplete.ariaLabel')"
+                  >
+                    @for (
+                      suggestion of enemyTextAutocompleteSuggestions();
+                      track suggestion.id;
+                      let i = $index
+                    ) {
+                      <button
+                        type="button"
+                        class="paste-autocomplete__option"
+                        [class.paste-autocomplete__option--active]="
+                          i === enemyTextAutocompleteActiveIndex()
+                        "
+                        role="option"
+                        [attr.aria-selected]="i === enemyTextAutocompleteActiveIndex()"
+                        (mousedown)="$event.preventDefault()"
+                        (mouseenter)="setEnemyTextAutocompleteActiveIndex(i)"
+                        (click)="selectEnemyTextAutocompleteSuggestion(suggestion)"
+                      >
+                        <span
+                          class="paste-autocomplete__source paste-autocomplete__source--{{
+                            suggestion.source
+                          }}"
+                        >
+                          {{ t('editor.paste.autocomplete.source.' + suggestion.source) }}
+                        </span>
+                        <span class="paste-autocomplete__label">{{ suggestion.label }}</span>
+                        @if (suggestion.matchedKeyword) {
+                          <span class="paste-autocomplete__hint">
+                            {{ suggestion.matchedKeyword }}
+                          </span>
+                        } @else if (suggestion.hint) {
+                          <span class="paste-autocomplete__hint">{{ suggestion.hint }}</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
 
               @if (enemyTextParseFeedback(); as feedback) {
                 <div

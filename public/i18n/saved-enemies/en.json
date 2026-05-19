@@ -89,6 +89,13 @@
       },
       "errors": {
         "empty": "Paste enemy text first."
+      },
+      "autocomplete": {
+        "ariaLabel": "Ability and mechanic suggestions",
+        "source": {
+          "mechanic": "Mechanic",
+          "ability": "Ability"
+        }
       }
     },
     "image": {
