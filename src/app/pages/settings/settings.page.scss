@@ -196,3 +196,34 @@
     align-items: flex-start;
   }
 }
+
+@media (max-width: 679px) {
+  .intro-card,
+  .analytics-card,
+  .performance-card,
+  .data-card {
+    padding: 14px;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .transfer-card {
+    padding: 14px;
+  }
+
+  .transfer-actions {
+    justify-content: stretch;
+  }
+
+  .transfer-actions ion-button {
+    flex: 1 1 auto;
+  }
+
+  .transfer-feedback--progress {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+}

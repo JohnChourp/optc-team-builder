@@ -533,3 +533,29 @@
     padding-bottom: 14px;
   }
 }
+
+@media (max-width: 480px) {
+  .hero-card,
+  .section-card,
+  .loading-card,
+  .empty-card {
+    padding: 14px;
+  }
+
+  .hero-actions ion-button {
+    flex: 1 1 auto;
+  }
+
+  .saved-teams-tool-actions ion-button {
+    flex: 1 1 auto;
+  }
+
+  .saved-team-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .saved-team-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

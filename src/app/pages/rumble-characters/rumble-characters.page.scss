@@ -411,3 +411,20 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+@media (max-width: 400px) {
+  .rumble-character-card__link {
+    grid-template-columns: 64px minmax(0, 1fr);
+    min-height: 0;
+    padding: 10px;
+  }
+
+  .rumble-character-card__link img {
+    width: 64px;
+    height: 86px;
+  }
+
+  .rumble-character-card__content {
+    padding-right: 28px;
+  }
+}

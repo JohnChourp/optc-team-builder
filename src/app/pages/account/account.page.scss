@@ -352,3 +352,40 @@
     display: grid;
   }
 }
+
+@media (max-width: 679px) {
+  .account-hero,
+  .drive-sync-hero,
+  .drive-sync-card {
+    padding: 14px;
+  }
+
+  .account-avatar {
+    width: 56px;
+    font-size: 1.1rem;
+  }
+
+  .account-avatar--icon ion-icon {
+    font-size: 1.85rem;
+  }
+
+  .account-actions ion-button {
+    flex: 1 1 auto;
+  }
+
+  .drive-review-shell {
+    padding: 12px;
+  }
+
+  .drive-review-row {
+    padding: 10px;
+  }
+
+  .drive-review-actions {
+    justify-content: stretch;
+  }
+
+  .drive-review-actions ion-button {
+    flex: 1 1 auto;
+  }
+}

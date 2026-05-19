@@ -195,3 +195,29 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+@media (max-width: 480px) {
+  .hero-card,
+  .section-card,
+  .loading-card,
+  .empty-card {
+    padding: 14px;
+  }
+
+  .saved-rumble-team-list article {
+    padding: 12px;
+  }
+
+  .saved-rumble-team-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .saved-rumble-team-actions ion-button {
+    flex: 1 1 auto;
+  }
+
+  .edit-modal-shell {
+    padding: 14px;
+  }
+}

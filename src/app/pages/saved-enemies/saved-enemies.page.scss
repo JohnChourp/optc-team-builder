@@ -1274,6 +1274,50 @@
   }
 }
 
+@media (max-width: 480px) {
+  .hero-card,
+  .section-card,
+  .loading-card,
+  .empty-card {
+    padding: 14px;
+  }
+
+  .saved-enemy-list article {
+    padding: 12px;
+  }
+
+  .saved-enemy-thumb {
+    width: 64px;
+    height: 64px;
+  }
+
+  .saved-enemy-actions {
+    width: 100%;
+  }
+
+  .saved-enemy-actions ion-button {
+    flex: 1 1 auto;
+  }
+
+  .hero-actions ion-button,
+  .saved-enemies-tool-actions ion-button {
+    flex: 1 1 auto;
+  }
+
+  .editor-grid,
+  .toggle-grid {
+    gap: 10px;
+  }
+
+  .ability-card {
+    padding: 12px;
+  }
+
+  .associated-team-pill__name {
+    max-width: 120px;
+  }
+}
+
 .paste-autocomplete-host {
   position: relative;
 }

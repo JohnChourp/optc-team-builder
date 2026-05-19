@@ -1009,6 +1009,50 @@
   }
 }
 
+@media (max-width: 480px) {
+  .rumble-builder-shell {
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .hero-card,
+  .summary-card,
+  .team-section,
+  .state-card,
+  .loading-card,
+  .controls-card,
+  .excluded-card {
+    padding: 16px;
+  }
+
+  .rumble-slot-card {
+    padding: 12px 12px 12px 12px;
+  }
+
+  .slot-replace-button,
+  .slot-exclude-button {
+    position: static;
+    width: auto;
+    height: 36px;
+    min-height: 36px;
+    --padding-start: 12px;
+    --padding-end: 12px;
+  }
+
+  .slot-image {
+    width: 64px;
+    height: 64px;
+  }
+
+  .slot-buff-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .slot-buff-chip {
+    min-width: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .team-flip-panel {
     transition: none;

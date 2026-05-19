@@ -97,3 +97,32 @@
     flex-direction: column;
   }
 }
+
+@media (max-width: 679px) {
+  .editor-card,
+  .intro-card,
+  .feedback-card {
+    gap: 0.85rem;
+  }
+
+  .image-card {
+    padding: 0.85rem;
+  }
+
+  .image-card img {
+    max-height: 220px;
+  }
+
+  .json-editor {
+    --min-height: 240px;
+  }
+
+  .top-actions {
+    width: 100%;
+  }
+
+  .top-actions ion-button,
+  .image-card__actions ion-button {
+    flex: 1 1 auto;
+  }
+}
