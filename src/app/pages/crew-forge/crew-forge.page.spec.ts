@@ -289,7 +289,7 @@ describe('CrewForgePage', () => {
       height: 2000,
       name: 'unsupported.png',
     });
-    crewForgeImageImport.resolveExactProfile.mockReturnValue(null);
+    crewForgeImageImport.resolveProfile.mockReturnValue(null);
 
     await page.ngOnInit();
     await page.onImageImportSelected(
@@ -401,7 +401,7 @@ function createPage(options: {
       height: 1920,
       name: 'crew.png',
     }),
-    resolveExactProfile: vi.fn().mockImplementation((profiles: Array<{ id: string }>) => profiles[0] ?? null),
+    resolveProfile: vi.fn().mockImplementation((profiles: Array<{ id: string }>) => profiles[0] ?? null),
     recognizeImage: vi.fn().mockResolvedValue(
       createRecognitionResult([101, 102, 103, 104, 105]),
     ),

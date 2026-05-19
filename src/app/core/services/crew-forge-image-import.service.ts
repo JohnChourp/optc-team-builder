@@ -26,6 +26,7 @@ interface CatalogFingerprintEntry {
 
 const DEFAULT_PROFILE_MATCH_THRESHOLD = 0.92;
 const DEFAULT_EMPTY_VARIANCE_THRESHOLD = 0.005;
+const ASPECT_RATIO_TOLERANCE = 0.03;
 
 @Injectable({ providedIn: 'root' })
 export class CrewForgeImageImportService {
@@ -68,23 +69,45 @@ export class CrewForgeImageImportService {
     };
   }
 
-  public resolveExactProfile(
+  public resolveProfile(
     profiles: CrewForgeImageProfile[],
     imageWidth: number,
     imageHeight: number,
     preferredProfileId: string | null = null,
   ): CrewForgeImageProfile | null {
+    if (imageWidth <= 0 || imageHeight <= 0 || !profiles.length) {
+      return null;
+    }
+
     const exactProfiles = profiles.filter(
       (profile) => profile.imageWidth === imageWidth && profile.imageHeight === imageHeight,
     );
 
-    if (!exactProfiles.length) {
+    if (exactProfiles.length) {
+      return (
+        exactProfiles.find((profile) => profile.id === preferredProfileId) ??
+        exactProfiles[0] ??
+        null
+      );
+    }
+
+    const sourceAspect = imageWidth / imageHeight;
+    const compatibleProfiles = profiles
+      .filter((profile) => profile.imageWidth > 0 && profile.imageHeight > 0)
+      .map((profile) => ({
+        profile,
+        delta: Math.abs(profile.imageWidth / profile.imageHeight - sourceAspect),
+      }))
+      .filter(({ delta }) => delta <= ASPECT_RATIO_TOLERANCE)
+      .sort((left, right) => left.delta - right.delta);
+
+    if (!compatibleProfiles.length) {
       return null;
     }
 
     return (
-      exactProfiles.find((profile) => profile.id === preferredProfileId) ??
-      exactProfiles[0] ??
+      compatibleProfiles.find(({ profile }) => profile.id === preferredProfileId)?.profile ??
+      compatibleProfiles[0]?.profile ??
       null
     );
   }
@@ -112,15 +135,34 @@ export class CrewForgeImageImportService {
       return this.createNoProfileResult(imageWidth, imageHeight, 'no_profile');
     }
 
-    if (profile.imageWidth !== imageWidth || profile.imageHeight !== imageHeight) {
+    if (
+      imageWidth <= 0 ||
+      imageHeight <= 0 ||
+      profile.imageWidth <= 0 ||
+      profile.imageHeight <= 0
+    ) {
       return this.createNoProfileResult(imageWidth, imageHeight, 'dimension_mismatch');
     }
 
+    const sourceAspect = imageWidth / imageHeight;
+    const profileAspect = profile.imageWidth / profile.imageHeight;
+
+    if (Math.abs(profileAspect - sourceAspect) > ASPECT_RATIO_TOLERANCE) {
+      return this.createNoProfileResult(imageWidth, imageHeight, 'dimension_mismatch');
+    }
+
+    const slotDefinitions = this.scaleSlotDefinitions(
+      profile.slotDefinitions,
+      profile.imageWidth,
+      profile.imageHeight,
+      imageWidth,
+      imageHeight,
+    );
     const sourceImage = await this.loadImageElement(imageDataUrl);
     const catalogFingerprints = await this.getCatalogFingerprints(catalog, profile.preprocess);
     const slots: CrewForgeImageRecognitionSlotResult[] = [];
 
-    for (const slotDefinition of profile.slotDefinitions) {
+    for (const slotDefinition of slotDefinitions) {
       const cropDataUrl = this.extractSlotCropDataUrl(sourceImage, slotDefinition);
 
       if (!cropDataUrl) {
@@ -348,6 +390,29 @@ export class CrewForgeImageImportService {
     this.imageFingerprintCache.set(cacheKey, fingerprint);
 
     return fingerprint;
+  }
+
+  private scaleSlotDefinitions(
+    slotDefinitions: CrewForgeImageSlotDefinition[],
+    fromWidth: number,
+    fromHeight: number,
+    toWidth: number,
+    toHeight: number,
+  ): CrewForgeImageSlotDefinition[] {
+    if (fromWidth === toWidth && fromHeight === toHeight) {
+      return slotDefinitions;
+    }
+
+    const scaleX = toWidth / fromWidth;
+    const scaleY = toHeight / fromHeight;
+
+    return slotDefinitions.map((slot) => ({
+      ...slot,
+      x: Math.round(slot.x * scaleX),
+      y: Math.round(slot.y * scaleY),
+      width: Math.round(slot.width * scaleX),
+      height: Math.round(slot.height * scaleY),
+    }));
   }
 
   private extractSlotCropDataUrl(

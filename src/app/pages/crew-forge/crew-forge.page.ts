@@ -209,7 +209,7 @@ export class CrewForgePage implements OnInit {
 
     try {
       const loadedImage = await this.crewForgeImageImport.loadImageFile(file);
-      const matchedProfile = this.crewForgeImageImport.resolveExactProfile(
+      const matchedProfile = this.crewForgeImageImport.resolveProfile(
         this.crewForgeImageProfiles(),
         loadedImage.width,
         loadedImage.height,

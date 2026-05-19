@@ -20,7 +20,7 @@
   },
   "imageImport": {
     "title": "Upload screenshot",
-    "copy": "The screenshot is matched automatically against a local exact-dimensions profile before portrait recognition runs.",
+    "copy": "The screenshot is matched against a local profile — exact dimensions first, then any profile with a matching aspect ratio — before portrait recognition runs.",
     "empty": "Upload a roster screenshot to start recognition.",
     "processing": "Crew Forge is analyzing the screenshot...",
     "previewAlt": "Uploaded roster screenshot",
@@ -41,9 +41,9 @@
       "invalidType": "Only image files can be imported.",
       "loadFailed": "The screenshot could not be loaded.",
       "recognitionFailed": "Crew Forge could not analyze this screenshot.",
-      "noProfile": "No matching exact profile is available for this screenshot.",
-      "profileMismatch": "The exact profile does not match the current screenshot dimensions.",
-      "noProfileForDimensions": "Screenshot size {{width}} × {{height}} is not supported yet.",
+      "noProfile": "No matching profile is available for this screenshot.",
+      "profileMismatch": "The selected profile does not match the screenshot aspect ratio.",
+      "noProfileForDimensions": "Screenshot size {{width}} × {{height}} is not supported yet — no profile matches this aspect ratio.",
       "invalidProfile": "The local profile is incomplete."
     }
   },

@@ -4,15 +4,35 @@ import { CrewForgeImageImportService } from './crew-forge-image-import.service';
 import type { CharacterListItem, CrewForgeImageProfile } from '../models/optc.models';
 
 describe('CrewForgeImageImportService', () => {
-  it('resolves an exact profile by dimensions and preferred id', () => {
+  it('prefers a profile with exact dimensions and honors the preferred id', () => {
     const service = new CrewForgeImageImportService();
     const profileA = createProfile('profile-a', 1080, 1920);
     const profileB = createProfile('profile-b', 1080, 1920);
 
-    expect(service.resolveExactProfile([profileA, profileB], 1080, 1920, 'profile-b')).toEqual(
-      profileB,
-    );
-    expect(service.resolveExactProfile([profileA], 720, 1280)).toBeNull();
+    expect(service.resolveProfile([profileA, profileB], 1080, 1920, 'profile-b')).toEqual(profileB);
+  });
+
+  it('falls back to an aspect-ratio compatible profile when no exact match exists', () => {
+    const service = new CrewForgeImageImportService();
+    const androidProfile = createProfile('android', 1080, 2400);
+
+    expect(service.resolveProfile([androidProfile], 720, 1600)).toEqual(androidProfile);
+    expect(service.resolveProfile([androidProfile], 1440, 3200)).toEqual(androidProfile);
+  });
+
+  it('rejects profiles whose aspect ratio differs beyond the tolerance', () => {
+    const service = new CrewForgeImageImportService();
+    const androidProfile = createProfile('android', 1080, 2400);
+
+    expect(service.resolveProfile([androidProfile], 1080, 1920)).toBeNull();
+  });
+
+  it('picks the closest aspect-ratio profile when several are compatible', () => {
+    const service = new CrewForgeImageImportService();
+    const closeProfile = createProfile('close', 1080, 2400);
+    const looserProfile = createProfile('looser', 1100, 2400);
+
+    expect(service.resolveProfile([looserProfile, closeProfile], 720, 1600)).toEqual(closeProfile);
   });
 
   it('returns a no-profile result when no exact profile exists', async () => {
@@ -23,6 +43,63 @@ describe('CrewForgeImageImportService', () => {
     ).resolves.toMatchObject({
       profileId: null,
       reason: 'no_profile',
+    });
+  });
+
+  it('scales slot rectangles proportionally when the screenshot uses a compatible aspect ratio', async () => {
+    const service = new CrewForgeImageImportService();
+    const serviceWithPrivateApi = service as unknown as {
+      loadImageElement: ReturnType<typeof vi.fn>;
+      extractSlotCropDataUrl: ReturnType<typeof vi.fn>;
+      fingerprintImageDataUrl: ReturnType<typeof vi.fn>;
+      getCatalogFingerprints: ReturnType<typeof vi.fn>;
+    };
+    const profile = createProfile('profile-a', 1080, 2400);
+
+    profile.slotDefinitions = [
+      ...profile.slotDefinitions.slice(0, 1).map((slot) => ({
+        ...slot,
+        x: 149,
+        y: 856,
+        width: 179,
+        height: 179,
+      })),
+      ...profile.slotDefinitions.slice(1),
+    ];
+
+    serviceWithPrivateApi.loadImageElement = vi.fn().mockResolvedValue({});
+    serviceWithPrivateApi.extractSlotCropDataUrl = vi
+      .fn()
+      .mockImplementation((_: unknown, slot: { key: string }) => `crop-${slot.key}`);
+    serviceWithPrivateApi.fingerprintImageDataUrl = vi.fn().mockResolvedValue([0, 1]);
+    serviceWithPrivateApi.getCatalogFingerprints = vi.fn().mockResolvedValue([]);
+
+    await service.recognizeImage('data:image/png;base64,ZmFrZQ==', 720, 1600, profile, []);
+
+    const firstCallSlot = serviceWithPrivateApi.extractSlotCropDataUrl.mock.calls[0]?.[1] as {
+      key: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+
+    expect(firstCallSlot.key).toBe('leader-1');
+    expect(firstCallSlot.x).toBe(Math.round((149 * 720) / 1080));
+    expect(firstCallSlot.y).toBe(Math.round((856 * 1600) / 2400));
+    expect(firstCallSlot.width).toBe(Math.round((179 * 720) / 1080));
+    expect(firstCallSlot.height).toBe(Math.round((179 * 1600) / 2400));
+  });
+
+  it('returns dimension_mismatch when aspect ratios differ beyond the tolerance', async () => {
+    const service = new CrewForgeImageImportService();
+    const profile = createProfile('profile-a', 1080, 2400);
+
+    await expect(
+      service.recognizeImage('data:image/png;base64,ZmFrZQ==', 1080, 1920, profile, []),
+    ).resolves.toMatchObject({
+      profileId: null,
+      reason: 'dimension_mismatch',
     });
   });
 

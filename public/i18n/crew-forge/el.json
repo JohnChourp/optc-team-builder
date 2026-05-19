@@ -20,7 +20,7 @@
   },
   "imageImport": {
     "title": "Ανέβασμα screenshot",
-    "copy": "Το screenshot ταιριάζεται αυτόματα με local exact profile ίδιων διαστάσεων και μετά ξεκινά η αναγνώριση portraits.",
+    "copy": "Το screenshot ταιριάζεται με local profile — πρώτα στις ίδιες διαστάσεις, αλλιώς σε profile με την ίδια αναλογία — πριν ξεκινήσει η αναγνώριση portraits.",
     "empty": "Ανέβασε ένα screenshot roster για να ξεκινήσει η αναγνώριση.",
     "processing": "Το Crew Forge αναλύει το screenshot...",
     "previewAlt": "Ανεβασμένο screenshot roster",
@@ -41,9 +41,9 @@
       "invalidType": "Μπορούν να εισαχθούν μόνο αρχεία εικόνας.",
       "loadFailed": "Το screenshot δεν μπόρεσε να φορτωθεί.",
       "recognitionFailed": "Το Crew Forge δεν μπόρεσε να αναλύσει αυτό το screenshot.",
-      "noProfile": "Δεν βρέθηκε κατάλληλο exact profile για αυτό το screenshot.",
-      "profileMismatch": "Το exact profile δεν ταιριάζει με τις διαστάσεις του τρέχοντος screenshot.",
-      "noProfileForDimensions": "Δεν υποστηρίζεται ακόμα screenshot {{width}} × {{height}}.",
+      "noProfile": "Δεν βρέθηκε κατάλληλο profile για αυτό το screenshot.",
+      "profileMismatch": "Το επιλεγμένο profile δεν ταιριάζει με την αναλογία διαστάσεων του screenshot.",
+      "noProfileForDimensions": "Δεν υποστηρίζεται ακόμα screenshot {{width}} × {{height}} — δεν υπάρχει profile με αυτή την αναλογία.",
       "invalidProfile": "Το local profile είναι ελλιπές."
     }
   },
