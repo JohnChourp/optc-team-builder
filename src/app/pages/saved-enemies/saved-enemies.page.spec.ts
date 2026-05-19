@@ -5,7 +5,11 @@ import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SavedEnemiesPage } from './saved-enemies.page';
-import { type CharacterListItem, type SavedEnemy } from '../../core/models/optc.models';
+import {
+  type CharacterListItem,
+  type SavedEnemy,
+  type SavedTeam,
+} from '../../core/models/optc.models';
 import {
   captureJsonDownloads,
   readJsonDownloadPayload,
@@ -874,10 +878,13 @@ describe('SavedEnemiesPage', () => {
 
 function createPage(overrides: { savedEnemies?: SavedEnemy[] } = {}) {
   const savedEnemies = signal<SavedEnemy[]>(overrides.savedEnemies ?? buildSavedEnemies());
+  const savedTeams = signal<SavedTeam[]>([]);
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     readySavedEnemies: vi.fn().mockResolvedValue(undefined),
+    readySavedTeams: vi.fn().mockResolvedValue(undefined),
     savedEnemies,
+    savedTeams,
     getSavedEnemyById: vi.fn(
       (enemyId: string) => savedEnemies().find((enemy) => enemy.id === enemyId) ?? null,
     ),
