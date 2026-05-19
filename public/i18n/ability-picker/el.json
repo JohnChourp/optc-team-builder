@@ -9,6 +9,7 @@
     "searchPlaceholder": "Αναζήτηση effects {{eyebrow}}",
     "sectionCount": "{{count}} effects",
     "matchCount": "{{count}} matching χαρακτήρες",
+    "selectedCount": "{{count}} επιλεγμένα",
     "emptyCatalogTitle": "Δεν υπάρχει ability catalog",
     "emptyCatalogCopy": "Το picker δεν μπορεί να εμφανίσει abilities μέχρι να φορτωθεί το local catalog.",
     "emptySearchTitle": "Δεν βρέθηκαν abilities",
@@ -48,11 +49,11 @@
     "characters": "Χαρακτήρες",
     "turns": "Turns",
     "slotTokens": "Slot tokens",
-    "slotScope": "Slot",
+    "slotScope": "Ισχύει για",
     "slotScopes": {
-      "any": "Any",
-      "leader": "Leader",
-      "sub": "Sub"
+      "any": "Όλο το crew",
+      "leader": "Μόνο Captain",
+      "sub": "Μόνο Sub members"
     }
   }
 }

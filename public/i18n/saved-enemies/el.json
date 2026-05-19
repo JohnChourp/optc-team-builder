@@ -230,8 +230,8 @@
       "characters": ">={{count}} chars",
       "turns": "{{count}} turns",
       "slotScopes": {
-        "leader": "Leader",
-        "sub": "Sub"
+        "leader": "Μόνο Captain",
+        "sub": "Μόνο Sub members"
       },
       "sourceScopes": {
         "captainAbility": "Captain ability"

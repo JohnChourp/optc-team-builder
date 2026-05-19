@@ -9,6 +9,7 @@
     "searchPlaceholder": "Search {{eyebrow}} effects",
     "sectionCount": "{{count}} effects",
     "matchCount": "{{count}} matching characters",
+    "selectedCount": "{{count}} selected",
     "emptyCatalogTitle": "No ability catalog available",
     "emptyCatalogCopy": "The picker cannot show abilities until the local catalog is loaded.",
     "emptySearchTitle": "No abilities matched",
@@ -48,11 +49,11 @@
     "characters": "Characters",
     "turns": "Turns",
     "slotTokens": "Slot tokens",
-    "slotScope": "Slot",
+    "slotScope": "Applies to",
     "slotScopes": {
-      "any": "Any",
-      "leader": "Leader",
-      "sub": "Sub"
+      "any": "Whole crew",
+      "leader": "Captain only",
+      "sub": "Sub members only"
     }
   }
 }
