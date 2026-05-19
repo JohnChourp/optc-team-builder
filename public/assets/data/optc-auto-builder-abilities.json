@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-16T18:22:24.066Z",
+  "generatedAt": "2026-05-19T17:35:20.063Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -6290,15 +6290,14 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 7,
+      "matchCount": 6,
       "matchingCharacterIds": [
         3293,
         3776,
         4067,
         4068,
         4429,
-        4430,
-        4555
+        4430
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -7326,7 +7325,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 924,
+      "matchCount": 923,
       "matchingCharacterIds": [
         9,
         11,
@@ -8239,7 +8238,6 @@
         4549,
         4552,
         4553,
-        4555,
         4557,
         4558,
         4563,
@@ -8634,7 +8632,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 975,
+      "matchCount": 976,
       "matchingCharacterIds": [
         389,
         390,
@@ -9594,6 +9592,7 @@
         4552,
         4553,
         4554,
+        4555,
         4556,
         4557,
         4558,
@@ -9701,7 +9700,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1495,
+      "matchCount": 1496,
       "matchingCharacterIds": [
         21,
         23,
@@ -11187,6 +11186,7 @@
         4547,
         4552,
         4554,
+        4555,
         4556,
         5013,
         5014,
@@ -24892,7 +24892,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 170,
+      "matchCount": 171,
       "matchingCharacterIds": [
         577,
         578,
@@ -25063,7 +25063,8 @@
         4445,
         4528,
         4531,
-        4554
+        4554,
+        4555
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -25625,7 +25626,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 18,
+      "matchCount": 17,
       "matchingCharacterIds": [
         3339,
         3661,
@@ -25643,8 +25644,7 @@
         4250,
         4365,
         4387,
-        4432,
-        4555
+        4432
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -42240,7 +42240,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 114,
+      "matchCount": 115,
       "matchingCharacterIds": [
         232,
         263,
@@ -42355,7 +42355,8 @@
         4399,
         4404,
         4498,
-        4554
+        4554,
+        4555
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
