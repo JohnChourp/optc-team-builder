@@ -664,7 +664,7 @@ export class UserStateService {
   }
 
   public async deleteTeams(teamIds: string[]): Promise<void> {
-    await this.readySavedTeams();
+    await Promise.all([this.readySavedTeams(), this.readySavedEnemies()]);
     const targetTeamIds = new Set(
       teamIds.map((teamId) => teamId.trim()).filter((teamId) => teamId.length > 0),
     );
@@ -680,6 +680,43 @@ export class UserStateService {
     }
 
     await this.replaceSavedTeams(next);
+    await this.pruneAssociatedTeamIdsFromEnemies(targetTeamIds);
+  }
+
+  private async pruneAssociatedTeamIdsFromEnemies(
+    removedTeamIds: ReadonlySet<string>,
+  ): Promise<void> {
+    if (!removedTeamIds.size) {
+      return;
+    }
+
+    const enemies = this.savedEnemies();
+    let mutated = false;
+
+    const next = enemies.map((enemy) => {
+      const associated = enemy.associatedTeamIds ?? [];
+
+      if (!associated.length) {
+        return enemy;
+      }
+
+      const filtered = associated.filter((teamId) => !removedTeamIds.has(teamId));
+
+      if (filtered.length === associated.length) {
+        return enemy;
+      }
+
+      mutated = true;
+      return {
+        ...enemy,
+        associatedTeamIds: filtered,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+
+    if (mutated) {
+      await this.replaceSavedEnemies(next);
+    }
   }
 
   public async clearAllSavedTeams(): Promise<void> {
@@ -1150,7 +1187,7 @@ export class UserStateService {
       | 'requireAllSelectedCharacterTagsInTeam'
       | 'requireAllSelectedCharacterNamesInTeam'
     > &
-      Partial<SavedEnemy>,
+      Partial<SavedEnemy> & { associatedTeamIds?: readonly string[] | null },
     existing?: SavedEnemy,
   ): SavedEnemy {
     const now = new Date().toISOString();
@@ -1193,9 +1230,34 @@ export class UserStateService {
       requireAllSelectedCharacterNamesInTeam: Boolean(
         enemy.requireAllSelectedCharacterNamesInTeam,
       ),
+      associatedTeamIds: this.normalizeAssociatedTeamIds(enemy.associatedTeamIds),
       createdAt: this.normalizeTimestamp(enemy.createdAt, existing?.createdAt ?? now),
       updatedAt: this.normalizeTimestamp(enemy.updatedAt, now),
     };
+  }
+
+  private normalizeAssociatedTeamIds(
+    value: readonly string[] | null | undefined,
+  ): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const seen = new Set<string>();
+    const result: string[] = [];
+
+    value.forEach((entry) => {
+      const normalized = this.normalizeEntityId(entry);
+
+      if (!normalized || seen.has(normalized)) {
+        return;
+      }
+
+      seen.add(normalized);
+      result.push(normalized);
+    });
+
+    return result;
   }
 
   private normalizeSavedRumbleTeam(

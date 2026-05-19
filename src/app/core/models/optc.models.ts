@@ -348,6 +348,7 @@ export interface SavedEnemy {
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSelectedCharacterTagsInTeam?: boolean;
   requireAllSelectedCharacterNamesInTeam?: boolean;
+  associatedTeamIds?: string[];
   createdAt: string;
   updatedAt: string;
 }

@@ -277,7 +277,36 @@ function cloneSavedEnemy(enemy: SavedEnemy): SavedEnemy {
       responseTags: [...mechanic.responseTags],
       conditionTags: [...mechanic.conditionTags],
     })),
+    ...(enemy.associatedTeamIds?.length
+      ? { associatedTeamIds: [...enemy.associatedTeamIds] }
+      : {}),
   };
+}
+
+function normalizeAssociatedTeamIds(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  value.forEach((entry) => {
+    if (typeof entry !== "string") {
+      return;
+    }
+
+    const normalized = entry.trim();
+
+    if (!normalized.length || seen.has(normalized)) {
+      return;
+    }
+
+    seen.add(normalized);
+    result.push(normalized);
+  });
+
+  return result;
 }
 
 export function buildSavedEnemiesTransferPayload(
@@ -365,6 +394,7 @@ export function parseSavedEnemiesImportPayloadValue(
           requireAllSelectedCharacterNamesInTeam: Boolean(
             enemy["requireAllSelectedCharacterNamesInTeam"],
           ),
+          associatedTeamIds: normalizeAssociatedTeamIds(enemy["associatedTeamIds"]),
           createdAt: exportedAt,
           updatedAt: exportedAt,
         },
@@ -459,6 +489,7 @@ export function sanitizeSavedEnemiesImportPayload(
       requireAllSelectedCharacterNamesInTeam: Boolean(
         enemy["requireAllSelectedCharacterNamesInTeam"],
       ),
+      associatedTeamIds: normalizeAssociatedTeamIds(enemy["associatedTeamIds"]),
       createdAt: normalizeTimestamp(enemy["createdAt"], fallbackTimestamp),
       updatedAt: normalizeTimestamp(enemy["updatedAt"], fallbackTimestamp),
     };

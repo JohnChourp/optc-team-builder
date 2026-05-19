@@ -45,6 +45,16 @@
       "turns": "Turns"
     },
     "addAbility": "Add ability",
+    "associatedTeams": {
+      "title": "Associated teams",
+      "copy": "Link saved teams that counter this enemy so you can jump back to them later.",
+      "count": "{{selected}} / {{total}} linked",
+      "empty": "Save some teams first to link them to this enemy.",
+      "summaryEmpty": "No teams linked yet. Tap the button below to pick the ones that counter this enemy.",
+      "manage": "Manage linked teams",
+      "add": "Link saved teams",
+      "toggleAria": "Toggle team association for {{name}}"
+    },
     "editAbilities": "Open picker",
     "classesLabel": "Classes",
     "classesPlaceholder": "Select classes",
@@ -254,6 +264,33 @@
     "copy": "Create a saved enemy preset, then reopen it in Auto Team Builder with all enemy filters prefilled.",
     "cta": "Create first enemy",
     "title": "No saved enemies yet."
+  },
+  "teamAssociation": {
+    "eyebrow": "Saved teams",
+    "title": "Pick teams that counter this enemy",
+    "copy": "Tap a team to link it. Linked teams stay attached to this enemy so you can reopen them in one click.",
+    "counter": "{{selected}} / {{total}} selected",
+    "searchLabel": "Search teams",
+    "searchPlaceholder": "Search by name, notes or character",
+    "noShipLabel": "No ship",
+    "toggleAria": "Toggle link to {{name}}",
+    "actions": {
+      "selectAll": "Select all",
+      "clear": "Clear",
+      "apply": "Save selection"
+    },
+    "empty": {
+      "title": "No saved teams yet",
+      "copy": "Save a team from the Auto Team Builder first, then come back to link it."
+    },
+    "noMatches": {
+      "title": "No teams match your search",
+      "copy": "Try a different name, note keyword, or character."
+    },
+    "footer": {
+      "selected": "{{count}} teams selected",
+      "hint": "Save to apply your changes — they update only this enemy."
+    }
   },
   "hero": {
     "copy": "Saved enemies let you keep boss requirements separately from your manual team strategy.",

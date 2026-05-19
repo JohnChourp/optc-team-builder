@@ -953,6 +953,7 @@ function createEnemy(id: string, name: string) {
     requireAllSelectedClassesPerCharacter: false,
     requireAllSelectedCharacterTagsInTeam: false,
     requireAllSelectedCharacterNamesInTeam: false,
+    associatedTeamIds: [],
     createdAt: '2026-03-29T10:00:00.000Z',
     updatedAt: '2026-03-29T10:05:00.000Z',
   };

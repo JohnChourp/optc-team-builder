@@ -256,6 +256,97 @@
               (ionInput)="onEnemyNotesChange($event)"
             ></ion-textarea>
 
+            <section class="enemy-associated-teams-card">
+              <div class="section-head section-head--editor">
+                <div>
+                  <h3>{{ t('editor.associatedTeams.title') }}</h3>
+                  <span>{{ t('editor.associatedTeams.copy') }}</span>
+                </div>
+                @if (savedTeamCards().length) {
+                  <small class="enemy-associated-teams-count">
+                    {{
+                      t('editor.associatedTeams.count', {
+                        selected: associatedTeamIds().length,
+                        total: savedTeamCards().length
+                      })
+                    }}
+                  </small>
+                }
+              </div>
+
+              @if (!savedTeamCards().length) {
+                <p class="editor-empty-copy">
+                  {{ t('editor.associatedTeams.empty') }}
+                </p>
+              } @else {
+                <div class="associated-teams-summary">
+                  @if (associatedTeamSummaryCards().length) {
+                    <div class="associated-teams-summary__list">
+                      @for (
+                        teamCard of associatedTeamSummaryCards();
+                        track teamCard.team.id
+                      ) {
+                        <div
+                          class="associated-team-pill"
+                          [attr.aria-label]="teamCard.team.name"
+                          [title]="teamCard.team.name"
+                        >
+                          <span class="associated-team-pill__name">
+                            {{ teamCard.team.name }}
+                          </span>
+                          <span class="associated-team-pill__icons">
+                            @if (teamCard.shipThumbUrl) {
+                              <img
+                                class="associated-team-pill__ship"
+                                [src]="teamCard.shipThumbUrl"
+                                alt=""
+                                aria-hidden="true"
+                                loading="lazy"
+                              />
+                            }
+                            @for (slot of teamCard.slots; track $index) {
+                              @if (slot; as filledSlot) {
+                                <img
+                                  class="associated-team-pill__slot"
+                                  [src]="filledSlot.imageUrl"
+                                  [alt]="filledSlot.name"
+                                  loading="lazy"
+                                />
+                              } @else {
+                                <span
+                                  class="associated-team-pill__slot associated-team-pill__slot--empty"
+                                  aria-hidden="true"
+                                ></span>
+                              }
+                            }
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <p class="associated-teams-summary__empty">
+                      {{ t('editor.associatedTeams.summaryEmpty') }}
+                    </p>
+                  }
+
+                  <ion-button
+                    class="associated-teams-summary__cta"
+                    fill="outline"
+                    color="warning"
+                    [disabled]="savingEnemy()"
+                    (click)="openTeamAssociationPicker()"
+                  >
+                    <ion-icon slot="start" [icon]="addIcon"></ion-icon>
+                    {{
+                      associatedTeamIds().length
+                        ? t('editor.associatedTeams.manage')
+                        : t('editor.associatedTeams.add')
+                    }}
+                  </ion-button>
+                </div>
+              }
+            </section>
+
             <input
               #enemyImageInput
               type="file"
@@ -777,6 +868,224 @@
                       >
                         {{ t('editor.paste.selection.actions.parse') }}
                       </ion-button>
+                    </div>
+                  </ion-toolbar>
+                </ion-footer>
+              </ng-template>
+            </ion-modal>
+
+            <ion-modal
+              #teamAssociationPickerModal
+              [isOpen]="teamAssociationPickerOpen()"
+              cssClass="enemy-team-association-modal"
+              (didDismiss)="closeTeamAssociationPicker()"
+            >
+              <ng-template>
+                <ion-header class="team-association-modal__header ion-no-border">
+                  <ion-toolbar>
+                    <div class="team-association-modal__head">
+                      <div>
+                        <div class="section-label">
+                          {{ t('teamAssociation.eyebrow') }}
+                        </div>
+                        <h2>{{ t('teamAssociation.title') }}</h2>
+                        <p>{{ t('teamAssociation.copy') }}</p>
+                      </div>
+                      <span class="team-association-modal__counter">
+                        {{
+                          t('teamAssociation.counter', {
+                            selected: teamAssociationDraftIds().length,
+                            total: filteredTeamAssociationCards().length
+                          })
+                        }}
+                      </span>
+                    </div>
+
+                    <ion-buttons slot="end">
+                      <ion-button
+                        fill="clear"
+                        color="light"
+                        (click)="
+                          closeTeamAssociationPicker();
+                          teamAssociationPickerModal.dismiss(null, 'cancel')
+                        "
+                      >
+                        <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                      </ion-button>
+                    </ion-buttons>
+                  </ion-toolbar>
+                </ion-header>
+
+                <ion-content class="team-association-modal__content">
+                  <div class="team-association-modal__shell">
+                    <div class="team-association-modal__toolbar">
+                      <ion-input
+                        class="team-association-modal__search"
+                        [label]="t('teamAssociation.searchLabel')"
+                        labelPlacement="stacked"
+                        fill="outline"
+                        type="search"
+                        clearInput="true"
+                        [value]="teamAssociationSearchQuery()"
+                        [placeholder]="t('teamAssociation.searchPlaceholder')"
+                        (ionInput)="onTeamAssociationSearchChange($event)"
+                      ></ion-input>
+                      <div class="team-association-modal__quick-actions">
+                        <ion-button
+                          fill="clear"
+                          color="warning"
+                          size="small"
+                          [disabled]="!filteredTeamAssociationCards().length"
+                          (click)="selectAllVisibleTeams()"
+                        >
+                          {{ t('teamAssociation.actions.selectAll') }}
+                        </ion-button>
+                        <ion-button
+                          fill="clear"
+                          color="light"
+                          size="small"
+                          [disabled]="!teamAssociationDraftIds().length"
+                          (click)="clearTeamAssociationSelection()"
+                        >
+                          {{ t('teamAssociation.actions.clear') }}
+                        </ion-button>
+                      </div>
+                    </div>
+
+                    @if (!savedTeamCards().length) {
+                      <div class="team-association-modal__empty">
+                        <ion-icon
+                          [icon]="addIcon"
+                          aria-hidden="true"
+                          class="team-association-modal__empty-icon"
+                        ></ion-icon>
+                        <h3>{{ t('teamAssociation.empty.title') }}</h3>
+                        <p>{{ t('teamAssociation.empty.copy') }}</p>
+                      </div>
+                    } @else if (!filteredTeamAssociationCards().length) {
+                      <div class="team-association-modal__empty">
+                        <h3>{{ t('teamAssociation.noMatches.title') }}</h3>
+                        <p>{{ t('teamAssociation.noMatches.copy') }}</p>
+                      </div>
+                    } @else {
+                      <div class="team-association-grid">
+                        @for (
+                          teamCard of filteredTeamAssociationCards();
+                          track teamCard.team.id;
+                          let cardIndex = $index
+                        ) {
+                          <button
+                            type="button"
+                            class="team-association-card"
+                            [class.team-association-card--selected]="
+                              isTeamAssociationDraft(teamCard.team.id)
+                            "
+                            [attr.aria-pressed]="isTeamAssociationDraft(teamCard.team.id)"
+                            [attr.aria-label]="
+                              t('teamAssociation.toggleAria', { name: teamCard.team.name })
+                            "
+                            [style.--card-index]="cardIndex"
+                            (click)="toggleTeamAssociationDraft(teamCard.team.id)"
+                          >
+                            <span class="team-association-card__check" aria-hidden="true">
+                              <svg viewBox="0 0 24 24">
+                                <path
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="3"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M5 12.5l4.5 4.5L19 7"
+                                />
+                              </svg>
+                            </span>
+
+                            <div class="team-association-card__head">
+                              <strong class="team-association-card__name">
+                                {{ teamCard.team.name }}
+                              </strong>
+                              @if (teamCard.team.notes) {
+                                <small class="team-association-card__notes">
+                                  {{ teamCard.team.notes }}
+                                </small>
+                              }
+                            </div>
+
+                            <div class="team-association-card__body">
+                              <div class="team-association-card__ship">
+                                @if (teamCard.shipThumbUrl) {
+                                  <img
+                                    [src]="teamCard.shipThumbUrl"
+                                    alt=""
+                                    aria-hidden="true"
+                                    loading="lazy"
+                                  />
+                                } @else {
+                                  <span class="team-association-card__ship-fallback">
+                                    {{ t('teamAssociation.noShipLabel') }}
+                                  </span>
+                                }
+                              </div>
+                              <div class="team-association-card__slots">
+                                @for (slot of teamCard.slots; track $index) {
+                                  @if (slot; as filledSlot) {
+                                    <span class="team-association-card__slot">
+                                      <img
+                                        [src]="filledSlot.imageUrl"
+                                        [alt]="filledSlot.name"
+                                        loading="lazy"
+                                      />
+                                    </span>
+                                  } @else {
+                                    <span
+                                      class="team-association-card__slot team-association-card__slot--empty"
+                                      aria-hidden="true"
+                                    ></span>
+                                  }
+                                }
+                              </div>
+                            </div>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                </ion-content>
+
+                <ion-footer class="team-association-modal__footer">
+                  <ion-toolbar>
+                    <div class="team-association-modal__footer-row">
+                      <div class="team-association-modal__footer-summary">
+                        <strong>
+                          {{
+                            t('teamAssociation.footer.selected', {
+                              count: teamAssociationDraftIds().length
+                            })
+                          }}
+                        </strong>
+                        <small>{{ t('teamAssociation.footer.hint') }}</small>
+                      </div>
+                      <div class="team-association-modal__footer-actions">
+                        <ion-button
+                          fill="outline"
+                          color="light"
+                          (click)="
+                            closeTeamAssociationPicker();
+                            teamAssociationPickerModal.dismiss(null, 'cancel')
+                          "
+                        >
+                          {{ 'common.actions.cancel' | transloco }}
+                        </ion-button>
+                        <ion-button
+                          color="warning"
+                          (click)="
+                            applyTeamAssociationSelection();
+                            teamAssociationPickerModal.dismiss(null, 'confirm')
+                          "
+                        >
+                          {{ t('teamAssociation.actions.apply') }}
+                        </ion-button>
+                      </div>
                     </div>
                   </ion-toolbar>
                 </ion-footer>

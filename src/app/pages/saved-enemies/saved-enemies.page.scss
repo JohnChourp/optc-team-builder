@@ -236,6 +236,9 @@
 
 .editor-modal-shell {
   padding: 22px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
 }
 
 .editor-modal-head h2,
@@ -359,12 +362,526 @@
 }
 
 .enemy-import-card,
-.enemy-image-card {
+.enemy-image-card,
+.enemy-associated-teams-card {
   display: grid;
   gap: 14px;
   padding: 16px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.03);
+}
+
+.enemy-associated-teams-count {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.associated-teams-summary {
+  display: grid;
+  gap: 14px;
+}
+
+.associated-teams-summary__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.associated-teams-summary__empty {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.86rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.associated-teams-summary__cta {
+  justify-self: start;
+}
+
+.associated-team-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 200, 76, 0.4);
+  background: rgba(245, 200, 76, 0.1);
+  color: #fff;
+  font-size: 0.82rem;
+  animation: enemy-pill-pop 200ms ease;
+}
+
+.associated-team-pill__name {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.associated-team-pill__icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.associated-team-pill__ship,
+.associated-team-pill__slot {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.associated-team-pill__ship {
+  border-radius: 7px;
+  width: 22px;
+  height: 22px;
+  margin-right: 2px;
+}
+
+.associated-team-pill__slot--empty {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.04) 3px,
+      transparent 3px,
+      transparent 6px
+    );
+}
+
+@keyframes enemy-pill-pop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes enemy-card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enemy-check-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.team-association-modal__header {
+  background: transparent;
+}
+
+.team-association-modal__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 24px 8px;
+}
+
+.team-association-modal__head .section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(245, 200, 76, 0.9);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.team-association-modal__head h2 {
+  margin: 6px 0 4px;
+  font-size: 1.55rem;
+  color: #fff;
+}
+
+.team-association-modal__head p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.68);
+  max-width: 60ch;
+}
+
+.team-association-modal__counter {
+  margin-left: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 200, 76, 0.4);
+  background: rgba(245, 200, 76, 0.12);
+  color: #f5c84c;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.team-association-modal__content {
+  --background: transparent;
+}
+
+.team-association-modal__shell {
+  padding: 8px 24px 28px;
+  display: grid;
+  gap: 18px;
+}
+
+.team-association-modal__toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.team-association-modal__search {
+  flex: 1 1 280px;
+}
+
+.team-association-modal__quick-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.team-association-modal__empty {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  text-align: center;
+  padding: 48px 24px;
+  border-radius: 22px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(248, 251, 255, 0.72);
+}
+
+.team-association-modal__empty h3 {
+  margin: 4px 0;
+  color: #fff;
+}
+
+.team-association-modal__empty p {
+  margin: 0;
+  max-width: 48ch;
+  color: rgba(248, 251, 255, 0.6);
+}
+
+.team-association-modal__empty-icon {
+  font-size: 2rem;
+  color: rgba(245, 200, 76, 0.72);
+}
+
+.team-association-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.team-association-card {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 14px 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+  animation: enemy-card-rise 320ms ease both;
+  animation-delay: calc(var(--card-index, 0) * 28ms);
+}
+
+.team-association-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at top right,
+    rgba(245, 200, 76, 0.18),
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.team-association-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(245, 200, 76, 0.5);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
+}
+
+.team-association-card:hover::before {
+  opacity: 1;
+}
+
+.team-association-card:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.team-association-card--selected {
+  border-color: rgba(245, 200, 76, 0.85);
+  background: linear-gradient(
+    160deg,
+    rgba(245, 200, 76, 0.18),
+    rgba(245, 200, 76, 0.04) 70%
+  );
+  box-shadow: 0 12px 32px rgba(245, 200, 76, 0.16);
+}
+
+.team-association-card--selected::before {
+  opacity: 1;
+}
+
+.team-association-card__check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 11, 23, 0.65);
+  color: transparent;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.team-association-card__check svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.team-association-card--selected .team-association-card__check {
+  background: #f5c84c;
+  border-color: #f5c84c;
+  color: #1a1408;
+  animation: enemy-check-pop 240ms ease;
+}
+
+.team-association-card--selected .team-association-card__check svg {
+  opacity: 1;
+}
+
+.team-association-card__head {
+  display: grid;
+  gap: 4px;
+  padding-right: 36px;
+}
+
+.team-association-card__name {
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.team-association-card__notes {
+  color: rgba(248, 251, 255, 0.6);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.team-association-card__body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.team-association-card__ship {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-association-card__ship img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.team-association-card__ship-fallback {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(248, 251, 255, 0.5);
+  padding: 0 6px;
+  text-align: center;
+}
+
+.team-association-card__slots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.team-association-card__slot {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-association-card__slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.team-association-card__slot--empty {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.04) 3px,
+      transparent 3px,
+      transparent 6px
+    );
+}
+
+.team-association-modal__footer {
+  background: transparent;
+}
+
+.team-association-modal__footer ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+}
+
+.team-association-modal__footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 24px 20px;
+}
+
+.team-association-modal__footer-summary {
+  display: grid;
+  gap: 2px;
+}
+
+.team-association-modal__footer-summary strong {
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.team-association-modal__footer-summary small {
+  color: rgba(248, 251, 255, 0.55);
+  font-size: 0.78rem;
+}
+
+.team-association-modal__footer-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 679px) {
+  .team-association-modal__head {
+    padding: 16px 16px 4px;
+  }
+
+  .team-association-modal__shell {
+    padding: 4px 16px 20px;
+  }
+
+  .team-association-modal__counter {
+    margin-left: 0;
+  }
+
+  .team-association-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .team-association-modal__footer-row {
+    padding: 8px 16px 16px;
+  }
+
+  .team-association-modal__footer-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 .enemy-image-actions {

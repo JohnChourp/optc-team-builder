@@ -36,6 +36,8 @@ import {
   type CharacterListItem,
   type DatasetManifest,
   type SavedEnemy,
+  type SavedTeam,
+  type ShipRecord,
 } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
@@ -158,6 +160,12 @@ interface ParsedEnemyTextAbilityCategorySectionView {
   candidates: ParsedEnemyTextAbilityCandidateView[];
 }
 
+interface SavedEnemyAssociatedTeamCardView {
+  team: SavedTeam;
+  shipThumbUrl: string | null;
+  slots: Array<{ imageUrl: string; name: string } | null>;
+}
+
 @Component({
   selector: 'app-saved-enemies-page',
   standalone: true,
@@ -249,6 +257,74 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
   public readonly savingEnemy = signal(false);
+  public readonly associatedTeamIds = signal<string[]>([]);
+  public readonly associatedTeamIdSet = computed(() => new Set(this.associatedTeamIds()));
+  public readonly savedTeams;
+  public readonly savedTeamCharacterMap = signal(new Map<number, CharacterListItem>());
+  public readonly savedTeamShipMap = signal(new Map<number, ShipRecord>());
+  public readonly savedTeamCards = computed<SavedEnemyAssociatedTeamCardView[]>(() => {
+    const teams = this.savedTeams();
+    const characterMap = this.savedTeamCharacterMap();
+    const shipMap = this.savedTeamShipMap();
+
+    return teams.map((team) => {
+      const ship =
+        typeof team.shipId === 'number' ? (shipMap.get(team.shipId) ?? null) : null;
+
+      return {
+        team,
+        shipThumbUrl: ship?.thumbUrl ?? null,
+        slots: team.slots.map((slotId) => {
+          if (typeof slotId !== 'number') {
+            return null;
+          }
+
+          const character = characterMap.get(slotId);
+
+          if (!character) {
+            return null;
+          }
+
+          return { imageUrl: character.imageUrl, name: character.name };
+        }),
+      };
+    });
+  });
+  public readonly associatedTeamSummaryCards = computed<SavedEnemyAssociatedTeamCardView[]>(() => {
+    const associated = this.associatedTeamIdSet();
+
+    return this.savedTeamCards().filter((teamCard) => associated.has(teamCard.team.id));
+  });
+  public readonly teamAssociationPickerOpen = signal(false);
+  public readonly teamAssociationDraftIds = signal<string[]>([]);
+  public readonly teamAssociationDraftIdSet = computed(
+    () => new Set(this.teamAssociationDraftIds()),
+  );
+  public readonly teamAssociationSearchQuery = signal('');
+  public readonly filteredTeamAssociationCards = computed<SavedEnemyAssociatedTeamCardView[]>(
+    () => {
+      const cards = this.savedTeamCards();
+      const query = this.teamAssociationSearchQuery().trim().toLocaleLowerCase();
+
+      if (!query) {
+        return cards;
+      }
+
+      return cards.filter((teamCard) => {
+        const haystack = [
+          teamCard.team.name,
+          teamCard.team.notes ?? '',
+          ...teamCard.slots
+            .map((slot) => slot?.name ?? '')
+            .filter((name) => name.length > 0),
+        ]
+          .join('\n')
+          .toLocaleLowerCase();
+
+        return haystack.includes(query);
+      });
+    },
+  );
   public readonly addIcon = addCircleOutline;
   public readonly closeIcon = closeOutline;
 
@@ -521,14 +597,16 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     private readonly i18n: AppI18nService,
   ) {
     this.savedEnemies = this.userState.savedEnemies;
+    this.savedTeams = this.userState.savedTeams;
   }
 
   public async ngOnInit(): Promise<void> {
-    await this.userState.readySavedEnemies();
+    await Promise.all([this.userState.readySavedEnemies(), this.userState.readySavedTeams()]);
     await Promise.all([
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('character-image-picker'),
       this.i18n.preloadScope('enemy-mechanics-picker'),
+      this.i18n.preloadScope('saved-teams'),
     ]);
     const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
@@ -537,12 +615,41 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
+    await this.refreshSavedTeamLookups();
     this.loading.set(false);
   }
 
   public async ionViewWillEnter(): Promise<void> {
-    await this.userState.readySavedEnemies();
+    await Promise.all([this.userState.readySavedEnemies(), this.userState.readySavedTeams()]);
+    await this.refreshSavedTeamLookups();
     this.loading.set(false);
+  }
+
+  private async refreshSavedTeamLookups(): Promise<void> {
+    const teams = this.savedTeams();
+
+    if (!teams.length) {
+      this.savedTeamCharacterMap.set(new Map());
+      this.savedTeamShipMap.set(new Map());
+      return;
+    }
+
+    const characterIds = [
+      ...new Set(
+        teams.flatMap((team) =>
+          team.slots.filter((slotId): slotId is number => typeof slotId === 'number'),
+        ),
+      ),
+    ];
+    const [characters, ships] = await Promise.all([
+      this.repository.getCharactersByIds(characterIds),
+      this.repository.getShips(),
+    ]);
+
+    this.savedTeamCharacterMap.set(
+      new Map(characters.map((character) => [character.id, character] as const)),
+    );
+    this.savedTeamShipMap.set(new Map(ships.map((ship) => [ship.id, ship] as const)));
   }
 
   public ionViewDidEnter(): void {
@@ -601,6 +708,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.battleRequirements.set([createEmptyBattleRequirement(0)]);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
+    this.associatedTeamIds.set([]);
+    this.teamAssociationPickerOpen.set(false);
+    this.teamAssociationDraftIds.set([]);
+    this.teamAssociationSearchQuery.set('');
     this.savingEnemy.set(false);
     this.editorOpen.set(true);
   }
@@ -668,6 +779,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     );
     this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(enemy.requireAllSelectedClassesPerCharacter);
+    this.associatedTeamIds.set([...(enemy.associatedTeamIds ?? [])]);
+    this.teamAssociationPickerOpen.set(false);
+    this.teamAssociationDraftIds.set([]);
+    this.teamAssociationSearchQuery.set('');
     this.savingEnemy.set(false);
     this.editorOpen.set(true);
   }
@@ -686,6 +801,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.enemyImageErrorMessage.set('');
     this.processingEnemyImage.set(false);
     this.characterImagePickerOpen.set(false);
+    this.teamAssociationPickerOpen.set(false);
+    this.teamAssociationSearchQuery.set('');
     this.resetEnemyTextParseState();
   }
 
@@ -1396,6 +1513,64 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.supportAbilityDrafts.set([]);
   }
 
+  public isTeamAssociated(teamId: string): boolean {
+    return this.associatedTeamIdSet().has(teamId);
+  }
+
+  public isTeamAssociationDraft(teamId: string): boolean {
+    return this.teamAssociationDraftIdSet().has(teamId);
+  }
+
+  public openTeamAssociationPicker(): void {
+    this.teamAssociationDraftIds.set([...this.associatedTeamIds()]);
+    this.teamAssociationSearchQuery.set('');
+    this.teamAssociationPickerOpen.set(true);
+  }
+
+  public closeTeamAssociationPicker(): void {
+    this.teamAssociationPickerOpen.set(false);
+    this.teamAssociationSearchQuery.set('');
+  }
+
+  public onTeamAssociationSearchChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.teamAssociationSearchQuery.set(event.detail.value ?? '');
+  }
+
+  public toggleTeamAssociationDraft(teamId: string): void {
+    const current = this.teamAssociationDraftIds();
+
+    if (current.includes(teamId)) {
+      this.teamAssociationDraftIds.set(current.filter((id) => id !== teamId));
+      return;
+    }
+
+    this.teamAssociationDraftIds.set([...current, teamId]);
+  }
+
+  public selectAllVisibleTeams(): void {
+    const visibleIds = this.filteredTeamAssociationCards().map((card) => card.team.id);
+
+    if (!visibleIds.length) {
+      return;
+    }
+
+    const merged = new Set(this.teamAssociationDraftIds());
+    visibleIds.forEach((teamId) => merged.add(teamId));
+    this.teamAssociationDraftIds.set([...merged]);
+  }
+
+  public clearTeamAssociationSelection(): void {
+    this.teamAssociationDraftIds.set([]);
+  }
+
+  public applyTeamAssociationSelection(): void {
+    const knownTeamIds = new Set(this.savedTeams().map((team) => team.id));
+    const applied = this.teamAssociationDraftIds().filter((teamId) => knownTeamIds.has(teamId));
+
+    this.associatedTeamIds.set(applied);
+    this.closeTeamAssociationPicker();
+  }
+
   public async saveEnemy(): Promise<void> {
     if (this.savingEnemy() || this.processingEnemyImage() || !this.canSaveEnemy()) {
       return;
@@ -1406,6 +1581,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     try {
       const battleRequirements = cloneBattleRequirements(this.battleRequirements());
       const requiredCharacterGroups = flattenBattleRequiredCharacterGroups(battleRequirements);
+      const knownTeamIds = new Set(this.savedTeams().map((team) => team.id));
+      const associatedTeamIds = this.associatedTeamIds().filter((teamId) =>
+        knownTeamIds.has(teamId),
+      );
 
       await this.userState.saveEnemy({
         id: this.editingEnemy()?.id ?? undefined,
@@ -1421,6 +1600,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         enemyMechanics: this.serializeEnemyMechanics(),
         requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
         requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+        associatedTeamIds,
       });
       this.closeEditor();
     } finally {

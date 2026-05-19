@@ -94,7 +94,8 @@ img {
 .pick-editor-modal::part(backdrop),
 .ship-picker-modal::part(backdrop),
 .saved-teams-edit-modal::part(backdrop),
-.saved-enemies-editor-modal::part(backdrop) {
+.saved-enemies-editor-modal::part(backdrop),
+.enemy-team-association-modal::part(backdrop) {
   background: rgba(7, 11, 23, 0.7);
 }
 
@@ -106,7 +107,7 @@ img {
 .pick-editor-modal::part(content),
 .ship-picker-modal::part(content),
 .saved-teams-edit-modal::part(content),
-.saved-enemies-editor-modal::part(content) {
+.enemy-team-association-modal::part(content) {
   width: 80vw;
   height: 80vh;
   max-width: 80vw;
@@ -115,6 +116,17 @@ img {
   border-radius: 32px;
   background: linear-gradient(180deg, rgba(18, 25, 46, 0.98), rgba(10, 14, 27, 0.98));
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+.saved-enemies-editor-modal::part(content) {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  border: none;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(18, 25, 46, 0.98), rgba(10, 14, 27, 0.98));
+  box-shadow: none;
 }
 
 .pick-editor-modal::part(content) {
@@ -136,12 +148,20 @@ img {
   .pick-editor-modal::part(content),
   .ship-picker-modal::part(content),
   .saved-teams-edit-modal::part(content),
-  .saved-enemies-editor-modal::part(content) {
+  .enemy-team-association-modal::part(content) {
     width: calc(100vw - 16px);
     height: var(--app-mobile-sheet-height);
     max-width: calc(100vw - 16px);
     max-height: var(--app-mobile-sheet-height);
     border-radius: 24px;
+  }
+
+  .saved-enemies-editor-modal::part(content) {
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
   }
 }
 

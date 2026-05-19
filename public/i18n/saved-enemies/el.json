@@ -45,6 +45,16 @@
       "turns": "Turns"
     },
     "addAbility": "Προσθήκη ability",
+    "associatedTeams": {
+      "title": "Συσχετισμένες ομάδες",
+      "copy": "Σύνδεσε saved teams που counter-άρουν αυτόν τον εχθρό για να επιστρέφεις σε αυτές γρήγορα.",
+      "count": "{{selected}} / {{total}} συνδεδεμένες",
+      "empty": "Αποθήκευσε πρώτα ομάδες για να τις συσχετίσεις με αυτόν τον εχθρό.",
+      "summaryEmpty": "Καμία συνδεδεμένη ομάδα ακόμη. Πάτησε το κουμπί παρακάτω για να διαλέξεις αυτές που counter-άρουν τον εχθρό.",
+      "manage": "Διαχείριση συνδεδεμένων ομάδων",
+      "add": "Σύνδεση αποθηκευμένων ομάδων",
+      "toggleAria": "Εναλλαγή συσχέτισης ομάδας για {{name}}"
+    },
     "editAbilities": "Άνοιγμα picker",
     "classesLabel": "Classes",
     "classesPlaceholder": "Επίλεξε classes",
@@ -254,6 +264,33 @@
     "copy": "Φτιάξε ένα saved enemy preset και μετά άνοιξέ το στο Auto Team Builder με όλα τα enemy filters προγεμισμένα.",
     "cta": "Δημιουργία πρώτου εχθρού",
     "title": "Δεν υπάρχουν saved enemies ακόμα."
+  },
+  "teamAssociation": {
+    "eyebrow": "Saved teams",
+    "title": "Επίλεξε ομάδες που counter-άρουν αυτόν τον εχθρό",
+    "copy": "Πάτησε μια ομάδα για να την συνδέσεις. Οι επιλεγμένες παραμένουν συνδεδεμένες ώστε να τις ανοίγεις ξανά με ένα κλικ.",
+    "counter": "{{selected}} / {{total}} επιλεγμένες",
+    "searchLabel": "Αναζήτηση ομάδων",
+    "searchPlaceholder": "Όνομα, notes ή χαρακτήρας",
+    "noShipLabel": "Χωρίς ship",
+    "toggleAria": "Εναλλαγή σύνδεσης για {{name}}",
+    "actions": {
+      "selectAll": "Επιλογή όλων",
+      "clear": "Καθαρισμός",
+      "apply": "Αποθήκευση επιλογής"
+    },
+    "empty": {
+      "title": "Δεν υπάρχουν saved teams ακόμα",
+      "copy": "Αποθήκευσε πρώτα μια ομάδα από το Auto Team Builder και ξαναγύρνα εδώ."
+    },
+    "noMatches": {
+      "title": "Καμία ομάδα δεν ταιριάζει",
+      "copy": "Δοκίμασε άλλο όνομα, λέξη από τα notes ή χαρακτήρα."
+    },
+    "footer": {
+      "selected": "{{count}} ομάδες επιλεγμένες",
+      "hint": "Πάτησε αποθήκευση για να εφαρμοστούν — αλλάζει μόνο αυτός ο εχθρός."
+    }
   },
   "hero": {
     "copy": "Τα saved enemies κρατούν τα boss requirements ξεχωριστά από τη δική σου manual team στρατηγική.",

@@ -384,6 +384,7 @@ describe('Saved enemies transfer helpers', () => {
           requireAllSelectedClassesPerCharacter: false,
           requireAllSelectedCharacterTagsInTeam: false,
           requireAllSelectedCharacterNamesInTeam: false,
+          associatedTeamIds: [],
           createdAt: '2026-04-22T04:53:22.812Z',
           updatedAt: '2026-04-22T04:53:22.812Z',
         },
