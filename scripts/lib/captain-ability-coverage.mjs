@@ -621,7 +621,8 @@ export function extractCoverageTiers(captainText) {
   );
   const conditionalTiers = extractConditionalSentenceClusters(normalizedCaptainText)
     .map((cluster) => buildConditionalTier(cluster))
-    .filter((tier) => tier !== null);
+    .filter((tier) => tier !== null)
+    .filter((tier) => !isUnactionableTriggerOnlyTier(tier));
 
   const tiers = [];
 
@@ -881,6 +882,22 @@ function buildConditionalTier(cluster) {
     atkBoost: resolveTierBoost(clauseEffects, 'atk'),
     hpBoost: resolveTierBoost(clauseEffects, 'hp'),
   };
+}
+
+// "defeated an enemy last turn" depends on a mid-battle event the team builder cannot influence,
+// so a tier whose only gate is that trigger gives the user no extra team-composition advice.
+const UNACTIONABLE_TRIGGER_KINDS = new Set(['defeated-enemy-last-turn']);
+
+function isUnactionableTriggerOnlyTier(tier) {
+  if (tier.teamConditions.length > 0 || tier.fieldConditions.length > 0) {
+    return false;
+  }
+  if (tier.triggerConditions.length === 0) {
+    return false;
+  }
+  return tier.triggerConditions.every((trigger) =>
+    UNACTIONABLE_TRIGGER_KINDS.has(trigger.kind),
+  );
 }
 
 function extractConditionalSentenceClusters(text) {

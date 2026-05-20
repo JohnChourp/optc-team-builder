@@ -431,6 +431,26 @@ describe('extractCoverageTiers', () => {
     });
   });
 
+  it('drops trigger-only tiers gated solely by "defeated an enemy last turn"', () => {
+    const tiers = extractCoverageTiers(
+      'If you have 5 or more Slashers characters in your crew, boosts ATK of Slasher characters by 2.5x and their HP by 1.5x. If you defeated an enemy last turn, boosts ATK of Slasher characters by 3x instead and boosts ATK of all other characters by 1.2x',
+    );
+
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'conditional',
+      teamConditions: expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 5,
+          classes: ['Slasher'],
+        }),
+      ]),
+    });
+    expect(tiers[0].triggerConditions).toEqual([]);
+  });
+
   it('renumbers tiers sequentially when default tier is absent', () => {
     const tiers = extractCoverageTiers(
       "If there's a [STR], [DEX], [QCK], [PSY] and [INT] character in your crew, boosts ATK of all characters by 2.25x and their HP by 1.5x.",
