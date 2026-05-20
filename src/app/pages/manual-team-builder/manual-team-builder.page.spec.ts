@@ -453,14 +453,16 @@ describe('ManualTeamBuilderPage', () => {
       'both',
     ]);
     expect(page.captainScopeChips(0).map((chip) => chip.label)).toEqual([
-      'ATK boost: Crew-wide',
-      'ATK boost: Subset',
+      'Captain Ability (Character 1) Tier 1: Crew-wide',
+      'Captain Ability (Character 2) Tier 1: Subset',
     ]);
 
     page.onCaptainBranchModeChange(0, createValueEvent('character2'));
 
     expect(page.captainBranchModes()[0]).toBe('character2');
-    expect(page.captainScopeChips(0).map((chip) => chip.label)).toEqual(['ATK boost: Subset']);
+    expect(page.captainScopeChips(0).map((chip) => chip.label)).toEqual([
+      'Captain Ability (Character 2) Tier 1: Subset',
+    ]);
   });
 });
 
@@ -638,6 +640,12 @@ function createPage(
 
         if (key === 'captainHelper.scopeChip') {
           return `${params?.['label'] ?? ''}: ${params?.['scope'] ?? ''}`;
+        }
+
+        if (key === 'captainHelper.tierScopeChip') {
+          return `${params?.['label'] ?? ''} Tier ${params?.['tier'] ?? ''}: ${
+            params?.['scope'] ?? ''
+          }`;
         }
 
         if (key === 'captainHelper.scopes.crew-wide') {
@@ -843,8 +851,8 @@ function createDualCaptainRecord(): CharacterDetailRecord {
   captain.detail.captainAbilityCoverage = {
     entries: [
       {
-        key: 'atk',
-        label: 'ATK boost',
+        key: 'character1',
+        label: 'Captain Ability (Character 1)',
         tiers: [
           {
             tier: 1,
@@ -863,9 +871,15 @@ function createDualCaptainRecord(): CharacterDetailRecord {
             triggerConditions: [],
             clauses: ['Boosts ATK of [STR] characters by 5x'],
           },
+        ],
+      },
+      {
+        key: 'character2',
+        label: 'Captain Ability (Character 2)',
+        tiers: [
           {
-            tier: 2,
-            kind: 'unconditional-top',
+            tier: 1,
+            kind: 'baseline',
             scope: 'subset',
             characterConditions: {
               universal: false,

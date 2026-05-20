@@ -37,6 +37,20 @@ describe('buildCaptainAbilityCoverage', () => {
 });
 
 describe('extractCoverageTiers', () => {
+  it('captures cost-range subset scope (Cost A-B characters)', () => {
+    const tiers = extractCoverageTiers('Boosts ATK of Cost 50-55 characters by 2x');
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      scope: 'subset',
+      atkBoost: 2,
+      characterConditions: expect.objectContaining({
+        costRange: { min: 50, max: 55 },
+      }),
+    });
+  });
+
   it('returns single tier for simple single-layer captains', () => {
     const tiers = extractCoverageTiers('Boosts ATK of all characters by 1.5x');
     expect(tiers).toHaveLength(1);

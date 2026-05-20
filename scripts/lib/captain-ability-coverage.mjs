@@ -42,7 +42,9 @@ const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
 const START_OF_FIGHT_EFFECT_PATTERN =
   /\b(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure)\b/i;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
-const COST_SUBSET_PATTERN = /\bcost\s+\d+\s+or\s+(?:more|less)\s+characters?\b/i;
+const COST_SUBSET_PATTERN =
+  /\bcost\s+(?:\d+\s+or\s+(?:more|less)|\d+\s*-\s*\d+)\s+characters?\b/i;
+const COST_RANGE_PATTERN = /\bcost\s+(\d+)\s*-\s*(\d+)\s+characters?\b/i;
 const ATK_CLAUSE_PATTERN = /\batk\b/i;
 const HP_CLAUSE_PATTERN = /\bhp\b/i;
 const BOOST_TARGET_FRAGMENT_PATTERNS = [
@@ -1085,6 +1087,14 @@ function resolveTierCharacterConditions(clauses) {
       }
     }
 
+    const costRange = clause.match(COST_RANGE_PATTERN);
+    if (costRange !== null) {
+      conditions.costRange = {
+        ...(conditions.costRange ?? {}),
+        min: Number(costRange[1]),
+        max: Number(costRange[2]),
+      };
+    }
     const costMin = clause.match(COST_MIN_PATTERN);
     const costMax = clause.match(COST_MAX_PATTERN);
     if (costMin !== null) {

@@ -824,55 +824,26 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     }
 
     const entries = character.detail.captainAbilityCoverage?.entries ?? [];
-    const mode =
-      this.captainBranchModes()[index] ?? this.resolveDefaultCaptainBranchMode(character);
 
     if (entries.length) {
-      return entries.flatMap((entry) => {
-        const firstScope = entry.tiers[0]?.scope ?? 'none';
-        const secondScope = entry.tiers[1]?.scope ?? entry.tiers[0]?.scope ?? 'none';
+      const mode =
+        this.captainBranchModes()[index] ?? this.resolveDefaultCaptainBranchMode(character);
+      const filteredEntries =
+        mode === 'character1' || mode === 'character2'
+          ? entries.filter((entry) => entry.key === mode)
+          : entries;
+      const visibleEntries = filteredEntries.length ? filteredEntries : entries;
 
-        if (mode === 'character1') {
-          return [
-            {
-              key: `${entry.key}:first`,
-              label: this.t('captainHelper.scopeChip', {
-                label: entry.label,
-                scope: this.t(`captainHelper.scopes.${firstScope}`),
-              }),
-            },
-          ];
-        }
-
-        if (mode === 'character2') {
-          return [
-            {
-              key: `${entry.key}:second`,
-              label: this.t('captainHelper.scopeChip', {
-                label: entry.label,
-                scope: this.t(`captainHelper.scopes.${secondScope}`),
-              }),
-            },
-          ];
-        }
-
-        return [
-          {
-            key: `${entry.key}:first`,
-            label: this.t('captainHelper.scopeChip', {
-              label: entry.label,
-              scope: this.t(`captainHelper.scopes.${firstScope}`),
-            }),
-          },
-          {
-            key: `${entry.key}:second`,
-            label: this.t('captainHelper.scopeChip', {
-              label: entry.label,
-              scope: this.t(`captainHelper.scopes.${secondScope}`),
-            }),
-          },
-        ];
-      });
+      return visibleEntries.flatMap((entry) =>
+        entry.tiers.map((tier) => ({
+          key: `${entry.key}:tier${tier.tier}`,
+          label: this.t('captainHelper.tierScopeChip', {
+            label: entry.label,
+            tier: tier.tier,
+            scope: this.t(`captainHelper.scopes.${tier.scope}`),
+          }),
+        })),
+      );
     }
 
     return character.detail.captainAbility
