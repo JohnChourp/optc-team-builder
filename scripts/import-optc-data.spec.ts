@@ -776,7 +776,7 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(detail.sailorNotes).not.toContain('<br>');
   });
 
-  it('generates First and Second Coverage clauses for Imu without treating Special Captain Ability as a branch', () => {
+  it('generates 3 coverage tiers for Imu without treating Special Captain Ability as a branch', () => {
     const imuCaptainAbility =
       'Launches the following effect at start of fight: reduces Special Cooldown of Cost 70 or more characters by 34% of Max Cooldown (rounded down), reduces VS Gauge and Switch Effect of all characters by 3, and allows all characters to perform Super Tandem with [STR] orbs for 10 turns. Boosts ATK of Cost 70 or more characters by 6x, boosts ATK of all other characters by 4x, boosts HP of all characters by 1.5x, and reduces Bind, Despair, Paralysis and Special Bind duration completely on this character. If this character is your Captain and performs EXCELLENT with their Action Special, for 3 turns boosts ATK of Cost 70 or more characters by 6.5x instead. If field has Territory: Crew, makes all specials that apply Class or Type restricted buffs apply to all characters instead. Special Captain Ability: If this character begins a quest as Captain, allows crew to immediately clear certain quests 6 times per day.';
 
@@ -786,16 +786,6 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(detail.captainAbilityCoverage?.entries[0]).toMatchObject({
       key: 'captain',
       label: 'Captain Ability',
-      firstCoverageScope: 'crew-wide',
-      secondCoverageScope: 'crew-wide',
-      firstCoverageClauses: [
-        'boosts ATK of all other characters by 4x',
-        'boosts HP of all characters by 1.5x',
-      ],
-      secondCoverageClauses: [
-        'Boosts ATK of Cost 70 or more characters by 6x',
-        'boosts HP of all characters by 1.5x',
-      ],
     });
     const imuTiers = detail.captainAbilityCoverage?.entries[0]?.tiers ?? [];
     expect(imuTiers).toHaveLength(3);

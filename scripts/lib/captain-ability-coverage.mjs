@@ -73,102 +73,16 @@ export function buildCaptainAbilityCoverage(captainAbilityVariants) {
             return null;
           }
 
-          const coverage = summarizeCaptainAbilityCoverageText(text);
-          const tiers = extractCoverageTiers(text);
-
           return {
             key,
             label,
-            firstCoverageScope: coverage.firstCoverageScope,
-            secondCoverageScope: coverage.secondCoverageScope,
-            firstCoverageClauses: coverage.firstCoverageClauses,
-            secondCoverageClauses: coverage.secondCoverageClauses,
-            tiers,
+            tiers: extractCoverageTiers(text),
           };
         })
         .filter(Boolean)
     : [];
 
   return { entries };
-}
-
-export function summarizeCaptainAbilityCoverageText(captainText) {
-  const normalizedCaptainText = normalizeSharedCaptainBoostMultipliers(
-    normalizeHtmlToText(captainText),
-  );
-
-  if (!normalizedCaptainText) {
-    return {
-      firstCoverageScope: 'none',
-      secondCoverageScope: 'none',
-      firstCoverageClauses: [],
-      secondCoverageClauses: [],
-    };
-  }
-
-  const defaultCaptainText = extractDefaultCaptainBoostText(normalizedCaptainText);
-  const defaultClauses = resolveCaptainBoostScopeClauses(defaultCaptainText, false);
-  const fullClauses = resolveCaptainBoostScopeClauses(normalizedCaptainText, true);
-  const conditionalOnlyClauses = fullClauses.filter((clause) => !defaultClauses.includes(clause));
-
-  const { baselineClauses, topClauses } = splitCaptainBoostTiers(
-    defaultClauses,
-    conditionalOnlyClauses,
-  );
-
-  const baseFirstScope = resolveCaptainAbilityScope(defaultCaptainText, false);
-  const baseSecondScope = resolveCaptainAbilityScope(normalizedCaptainText, true);
-
-  return {
-    firstCoverageScope: resolveScopeFromTierClauses(baselineClauses, baseFirstScope),
-    secondCoverageScope: resolveScopeFromTierClauses(topClauses, baseSecondScope),
-    firstCoverageClauses: baselineClauses,
-    secondCoverageClauses: topClauses,
-  };
-}
-
-// Splits the default boost clauses into a baseline tier (the boost that applies to the broadest
-// audience, e.g. "all other characters") and a top tier (the specialised boost for a subset, e.g.
-// "Cost 70 or more characters"). HP clauses are repeated in both tiers because HP boosts don't
-// participate in OPTC's ATK tier-up convention. When the default has no clause that survives the
-// boost-scope filter (typical of captains whose unconditional boost is self-only), the top tier
-// falls back to conditional clauses so the user can still see the "real" payoff.
-function splitCaptainBoostTiers(defaultClauses, conditionalOnlyClauses) {
-  const atkClauses = defaultClauses.filter((clause) => ATK_CLAUSE_PATTERN.test(clause));
-  const hpClauses = defaultClauses.filter((clause) => HP_CLAUSE_PATTERN.test(clause));
-  const dominantTypeAtkClauses = conditionalOnlyClauses.filter(
-    (clause) => ATK_CLAUSE_PATTERN.test(clause) && boostClauseHasDominantTypeScope(clause),
-  );
-
-  if (atkClauses.length === 0 && hpClauses.length > 0 && dominantTypeAtkClauses.length > 0) {
-    const dominantTypeClauses = dedupeClauses([...dominantTypeAtkClauses, ...hpClauses]);
-    return {
-      baselineClauses: dominantTypeClauses,
-      topClauses: dominantTypeClauses,
-    };
-  }
-
-  const fallbackAtk = atkClauses.filter((clause) => FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
-  const nonFallbackAtk = atkClauses.filter((clause) => !FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
-
-  let baselineAtk;
-  let topAtk;
-  if (fallbackAtk.length > 0 && nonFallbackAtk.length > 0) {
-    baselineAtk = fallbackAtk;
-    topAtk = nonFallbackAtk;
-  } else {
-    baselineAtk = atkClauses;
-    topAtk = atkClauses;
-  }
-
-  if (topAtk.length === 0 && conditionalOnlyClauses.length > 0) {
-    topAtk = conditionalOnlyClauses.filter((clause) => ATK_CLAUSE_PATTERN.test(clause));
-  }
-
-  return {
-    baselineClauses: dedupeClauses([...baselineAtk, ...hpClauses]),
-    topClauses: dedupeClauses([...topAtk, ...hpClauses]),
-  };
 }
 
 function resolveScopeFromTierClauses(tierClauses, fallbackScope) {
@@ -184,24 +98,6 @@ function resolveScopeFromTierClauses(tierClauses, fallbackScope) {
 
 function dedupeClauses(items) {
   return [...new Set(items)];
-}
-
-export function resolveCaptainAbilityScope(captainText, includeConditional = false) {
-  const normalizedCaptainText = normalizeSharedCaptainBoostMultipliers(
-    normalizeHtmlToText(captainText),
-  );
-
-  if (!normalizedCaptainText.length) {
-    return 'none';
-  }
-
-  return splitCaptainEffectClauses(normalizedCaptainText.replace(BRANCH_LABEL_PATTERN, '. '))
-    .map(stripInlineConditionalBoostRiders)
-    .map(stripBoostInsteadSuffix)
-    .filter((clause) => includeConditional || !isConditionalCaptainBoostClause(clause))
-    .reduce((scope, clause) => {
-      return higherCaptainScope(scope, resolveCaptainClauseScope(clause));
-    }, 'none');
 }
 
 function resolveCaptainClauseScope(clause) {

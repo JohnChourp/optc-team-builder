@@ -8,6 +8,7 @@ import {
 import { type AutoBuildAbilityCatalog } from '../models/auto-team-builder-ability.models';
 import {
   type CharacterAssets,
+  type CharacterCaptainAbilityScope,
   type CharacterDetail,
   type CharacterDetailRecord,
   type CharacterRecord,
@@ -203,12 +204,6 @@ function normalizeCaptainAbilityCoverage(value: unknown): CharacterDetail['capta
         const entryRecord = entry as Record<string, unknown>;
         const key = String(entryRecord['key'] ?? '').trim();
         const label = String(entryRecord['label'] ?? '').trim();
-        const firstCoverageScope = normalizeCaptainAbilityScope(entryRecord['firstCoverageScope']);
-        const secondCoverageScope = normalizeCaptainAbilityScope(
-          entryRecord['secondCoverageScope'],
-        );
-        const firstCoverageClauses = normalizeStringList(entryRecord['firstCoverageClauses']);
-        const secondCoverageClauses = normalizeStringList(entryRecord['secondCoverageClauses']);
 
         if (!key.length || !label.length) {
           return null;
@@ -219,10 +214,6 @@ function normalizeCaptainAbilityCoverage(value: unknown): CharacterDetail['capta
         return {
           key,
           label,
-          firstCoverageScope,
-          secondCoverageScope,
-          firstCoverageClauses,
-          secondCoverageClauses,
           tiers,
         };
       })
@@ -230,9 +221,7 @@ function normalizeCaptainAbilityCoverage(value: unknown): CharacterDetail['capta
   };
 }
 
-function normalizeCaptainAbilityScope(
-  value: unknown,
-): NonNullable<CharacterDetail['captainAbilityCoverage']>['entries'][number]['firstCoverageScope'] {
+function normalizeCaptainAbilityScope(value: unknown): CharacterCaptainAbilityScope {
   return value === 'crew-wide' ||
     value === 'captain-only' ||
     value === 'subset' ||

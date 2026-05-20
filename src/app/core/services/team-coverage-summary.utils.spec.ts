@@ -82,10 +82,6 @@ describe('resolveTeamCoverageSummary', () => {
           {
             key: 'captain',
             label: 'Captain Ability',
-            firstCoverageScope: 'crew-wide',
-            secondCoverageScope: 'crew-wide',
-            firstCoverageClauses: ['boosts ATK of all characters by 1.5x'],
-            secondCoverageClauses: ['If your crew has 4+ Free Spirit, boosts ATK by 3x'],
             tiers: [
               {
                 tier: 1,
@@ -173,16 +169,6 @@ describe('resolveTeamCoverageSummary', () => {
           {
             key: 'captain',
             label: 'Captain Ability',
-            firstCoverageScope: 'crew-wide',
-            secondCoverageScope: 'crew-wide',
-            firstCoverageClauses: [
-              'boosts ATK of the Dominant Type characters by 4.5x',
-              'Boosts HP of all characters by 1.25x',
-            ],
-            secondCoverageClauses: [
-              'boosts ATK of the Dominant Type characters by 4.5x',
-              'Boosts HP of all characters by 1.25x',
-            ],
             tiers: [
               {
                 tier: 1,
@@ -319,10 +305,6 @@ function buildImuCoverage(): CharacterCaptainAbilityCoverage {
       {
         key: 'captain',
         label: 'Captain Ability',
-        firstCoverageScope: 'crew-wide',
-        secondCoverageScope: 'crew-wide',
-        firstCoverageClauses: tiers[0]!.clauses,
-        secondCoverageClauses: tiers[1]!.clauses,
         tiers,
       },
     ],

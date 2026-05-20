@@ -42,12 +42,21 @@ Captain ability data is stored as:
 
 Each coverage entry contains:
 
-- `firstCoverageScope`: default/simple scope category
-- `secondCoverageScope`: full/conditional scope category
-- `firstCoverageClauses`: default/simple coverage clauses
-- `secondCoverageClauses`: full/conditional coverage clauses
+- `key`: variant identifier matching the source `captainAbilityVariants` entry
+- `label`: human-readable variant label
+- `tiers`: ordered list of `(conditions → effects)` tier bundles parsed from the captain ability
 
-Scope values are `crew-wide`, `captain-only`, `subset`, and `none`.
+Each tier in `tiers` contains:
+
+- `tier`: 1-indexed position
+- `kind`: `baseline`, `unconditional-top`, or `conditional`
+- `scope`: one of `crew-wide`, `captain-only`, `subset`, `none`
+- `characterConditions`: target subset (types, classes, character tags, cost range, dominant type, universal, fallbackOther, selfOnly)
+- `teamConditions`: crew composition / count / exclusion / requires-captain conditions
+- `fieldConditions`: territory and other field-state gates
+- `triggerConditions`: in-fight or branch-state triggers (action special, HP threshold, captain-branch-state, etc.)
+- `clauses`: raw clause text fragments for display
+- `atkBoost` / `hpBoost`: best derived multipliers for that tier
 
 ## Ability Catalog
 

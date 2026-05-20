@@ -46,11 +46,6 @@ export interface CaptainCoverageResult {
   uncoveredClauses: string[];
 }
 
-export interface CaptainAbilityCoverageSummary {
-  firstCoverageClauses: string[];
-  secondCoverageClauses: string[];
-}
-
 export interface CaptainBoostScopeSummary {
   clauses: string[];
   allCharacters: boolean;
@@ -122,33 +117,6 @@ const TEAM_TAG_CONDITION_TARGET_FRAGMENT_PATTERNS = [
   /\bcrew\s+has\s+\d+\s*(?:\+|or\s+more)?\s+(.{1,240}?)\s+(?:characters|units)\b/gi,
   /\bcrew tag condition:\s+(.{1,240}?)\s+(?:characters|units)\b/gi,
 ] as const;
-
-export function summarizeCaptainAbilityCoverageText(
-  captainText: string | null | undefined,
-): CaptainAbilityCoverageSummary {
-  const normalizedCaptainText = normalizeHtmlToText(captainText);
-
-  if (!normalizedCaptainText) {
-    return {
-      firstCoverageClauses: [],
-      secondCoverageClauses: [],
-    };
-  }
-
-  const firstCoverageClauses = resolveCaptainBoostScope(
-    normalizedCaptainText,
-    'simpleBoostScope',
-  ).clauses;
-  const secondCoverageClauses = resolveCaptainBoostScope(
-    normalizedCaptainText,
-    'fullAbilityCoverage',
-  ).clauses;
-
-  return {
-    firstCoverageClauses,
-    secondCoverageClauses,
-  };
-}
 
 export function resolveCaptainBoostScope(
   captainText: string | null | undefined,

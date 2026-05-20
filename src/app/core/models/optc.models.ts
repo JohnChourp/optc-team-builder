@@ -38,10 +38,6 @@ export interface CharacterCaptainAbilityVariant {
 export interface CharacterCaptainAbilityCoverageEntry {
   key: string;
   label: string;
-  firstCoverageScope: CharacterCaptainAbilityScope;
-  secondCoverageScope: CharacterCaptainAbilityScope;
-  firstCoverageClauses: string[];
-  secondCoverageClauses: string[];
   tiers: CharacterCaptainAbilityCoverageTier[];
 }
 

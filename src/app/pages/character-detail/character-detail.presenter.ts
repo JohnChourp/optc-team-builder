@@ -1,7 +1,6 @@
 import { type NormalizedBuilderAbility } from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../../core/models/optc.models';
 import { buildCaptainCoverageTierView } from '../../core/services/captain-coverage-tier-view.utils';
-import { summarizeCaptainAbilityCoverageText } from '../../core/services/captain-coverage.utils';
 
 type DisplayLabel = {
   label?: string;
@@ -49,8 +48,6 @@ export interface CharacterDetailCaptainAbilitySummary {
 export interface CharacterDetailCaptainCoverageEntry {
   label?: string;
   text: string;
-  firstCoverageClauses: string[];
-  secondCoverageClauses: string[];
   tiers: CharacterDetailCaptainCoverageTier[];
 }
 
@@ -249,19 +246,6 @@ function buildCaptainAbilitySummary(
     .map((entry) => {
       const text = entry.text.trim();
       const generatedCoverage = generatedCoverageByKey.get(entry.key);
-      const coverage = generatedCoverage
-        ? {
-            firstCoverageClauses: generatedCoverage.firstCoverageClauses,
-            secondCoverageClauses: generatedCoverage.secondCoverageClauses,
-          }
-        : summarizeCaptainAbilityCoverageText(entry.text);
-      const secondCoverageClauses = hasDistinctSecondCoverage(
-        coverage.firstCoverageClauses,
-        coverage.secondCoverageClauses,
-      )
-        ? coverage.secondCoverageClauses
-        : [];
-
       const tiers = generatedCoverage?.tiers
         ? generatedCoverage.tiers.map(buildCaptainCoverageTierView)
         : [];
@@ -269,18 +253,10 @@ function buildCaptainAbilitySummary(
       return {
         label: entry.label,
         text,
-        firstCoverageClauses: coverage.firstCoverageClauses,
-        secondCoverageClauses,
         tiers,
       };
     })
-    .filter(
-      (entry) =>
-        entry.text.length ||
-        entry.firstCoverageClauses.length ||
-        entry.secondCoverageClauses.length ||
-        entry.tiers.length,
-    );
+    .filter((entry) => entry.text.length || entry.tiers.length);
   const captainNotes = detail.captainNotes?.trim() || null;
   const recognizedAbilities = detail.builderAbilities.filter(
     (ability) => ability.source === 'captainAbility',
@@ -300,22 +276,6 @@ function buildCaptainAbilitySummary(
     : null;
 }
 
-
-function hasDistinctSecondCoverage(
-  firstCoverageClauses: string[],
-  secondCoverageClauses: string[],
-): boolean {
-  const firstKeys = firstCoverageClauses.map(normalizeCoverageSummaryClause);
-  const secondKeys = secondCoverageClauses.map(normalizeCoverageSummaryClause);
-
-  return (
-    secondKeys.length !== firstKeys.length || secondKeys.some((key) => !firstKeys.includes(key))
-  );
-}
-
-function normalizeCoverageSummaryClause(clause: string): string {
-  return clause.replace(/\s+/g, ' ').trim().toLowerCase();
-}
 
 function buildAbilitiesGroup(character: CharacterDetailRecord): DetailDisplayGroup | null {
   const { detail } = character;

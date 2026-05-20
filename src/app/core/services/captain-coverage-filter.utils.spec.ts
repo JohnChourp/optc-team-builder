@@ -421,10 +421,6 @@ function buildImuCoverage(): CharacterCaptainAbilityCoverage {
       {
         key: 'captain',
         label: 'Captain Ability',
-        firstCoverageScope: 'crew-wide',
-        secondCoverageScope: 'crew-wide',
-        firstCoverageClauses: tiers[0]!.clauses,
-        secondCoverageClauses: tiers[1]!.clauses,
         tiers,
       },
     ],

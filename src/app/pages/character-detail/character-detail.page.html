@@ -139,32 +139,6 @@
                           <p>{{ entry.text }}</p>
                         }
 
-                        @if (entry.firstCoverageClauses.length) {
-                          <section class="detail-list-block">
-                            <span class="detail-list-block__label">
-                              {{ t('sections.firstCoverage') }}
-                            </span>
-                            <ul>
-                              @for (clause of entry.firstCoverageClauses; track $index) {
-                                <li>{{ clause }}</li>
-                              }
-                            </ul>
-                          </section>
-                        }
-
-                        @if (entry.secondCoverageClauses.length) {
-                          <section class="detail-list-block">
-                            <span class="detail-list-block__label">
-                              {{ t('sections.secondCoverage') }}
-                            </span>
-                            <ul>
-                              @for (clause of entry.secondCoverageClauses; track $index) {
-                                <li>{{ clause }}</li>
-                              }
-                            </ul>
-                          </section>
-                        }
-
                         @if (entry.tiers.length) {
                           <section
                             class="detail-list-block captain-ability-summary__tiers"

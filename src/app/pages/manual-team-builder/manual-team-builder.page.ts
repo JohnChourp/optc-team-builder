@@ -829,13 +829,16 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
     if (entries.length) {
       return entries.flatMap((entry) => {
+        const firstScope = entry.tiers[0]?.scope ?? 'none';
+        const secondScope = entry.tiers[1]?.scope ?? entry.tiers[0]?.scope ?? 'none';
+
         if (mode === 'character1') {
           return [
             {
               key: `${entry.key}:first`,
               label: this.t('captainHelper.scopeChip', {
                 label: entry.label,
-                scope: this.t(`captainHelper.scopes.${entry.firstCoverageScope}`),
+                scope: this.t(`captainHelper.scopes.${firstScope}`),
               }),
             },
           ];
@@ -847,7 +850,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
               key: `${entry.key}:second`,
               label: this.t('captainHelper.scopeChip', {
                 label: entry.label,
-                scope: this.t(`captainHelper.scopes.${entry.secondCoverageScope}`),
+                scope: this.t(`captainHelper.scopes.${secondScope}`),
               }),
             },
           ];
@@ -858,14 +861,14 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
             key: `${entry.key}:first`,
             label: this.t('captainHelper.scopeChip', {
               label: entry.label,
-              scope: this.t(`captainHelper.scopes.${entry.firstCoverageScope}`),
+              scope: this.t(`captainHelper.scopes.${firstScope}`),
             }),
           },
           {
             key: `${entry.key}:second`,
             label: this.t('captainHelper.scopeChip', {
               label: entry.label,
-              scope: this.t(`captainHelper.scopes.${entry.secondCoverageScope}`),
+              scope: this.t(`captainHelper.scopes.${secondScope}`),
             }),
           },
         ];
