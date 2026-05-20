@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T14:46:54.451Z",
+  "generatedAt": "2026-05-20T15:08:58.854Z",
   "characters": [
     {
       "id": 1,
@@ -3509,11 +3509,33 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "none",
-              "secondCoverageScope": "none",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [],
               "secondCoverageClauses": [],
-              "tiers": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts RCV of [PSY] characters by 1.2x"
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -3624,11 +3646,33 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "none",
-              "secondCoverageScope": "none",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [],
               "secondCoverageClauses": [],
-              "tiers": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts RCV of [PSY] characters by 1.5x"
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -3833,11 +3877,33 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "none",
-              "secondCoverageScope": "none",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [],
               "secondCoverageClauses": [],
-              "tiers": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "INT"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts RCV of [INT] characters by 1.5x"
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -3948,11 +4014,33 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "none",
-              "secondCoverageScope": "none",
+              "firstCoverageScope": "subset",
+              "secondCoverageScope": "subset",
               "firstCoverageClauses": [],
               "secondCoverageClauses": [],
-              "tiers": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "STR"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts RCV of [STR] characters by 1.5x"
+                  ]
+                }
+              ]
             }
           ]
         },

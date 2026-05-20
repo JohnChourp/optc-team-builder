@@ -123,6 +123,24 @@ describe('extractCoverageTiers', () => {
     expect(tiers[0].triggerConditions).toEqual([]);
   });
 
+  it('routes default non-boost extras per tier scope (Imu-style fallback + subset)', () => {
+    const tiers = extractCoverageTiers(
+      'Launches the following effect at start of fight: reduces Special Cooldown of Cost 70 or more characters by 34% of Max Cooldown (rounded down), reduces VS Gauge of all characters by 3. Boosts ATK of Cost 70 or more characters by 6x, boosts ATK of all other characters by 4x, boosts HP of all characters by 1.5x.',
+    );
+
+    expect(tiers).toHaveLength(2);
+
+    // Tier 1 (baseline, "all other") should NOT include the SCD Cost 70+ extra — those targets
+    // don't receive that effect.
+    expect(tiers[0]?.clauses.some((c) => /Special Cooldown of Cost 70/i.test(c))).toBe(false);
+    // The crew-wide VS Gauge clause does attach.
+    expect(tiers[0]?.clauses.some((c) => /VS Gauge of all characters/i.test(c))).toBe(true);
+
+    // Tier 2 (subset Cost 70+) DOES include the SCD Cost 70+ extra (scope overlap).
+    expect(tiers[1]?.clauses.some((c) => /Special Cooldown of Cost 70/i.test(c))).toBe(true);
+    expect(tiers[1]?.clauses.some((c) => /VS Gauge of all characters/i.test(c))).toBe(true);
+  });
+
   it('produces 3 tiers for Imu-style captain ability', () => {
     const tiers = extractCoverageTiers(
       'Boosts ATK of Cost 70 or more characters by 6x, boosts ATK of all other characters by 4x, boosts HP of all characters by 1.5x. If this character is your Captain and performs EXCELLENT with their Action Special, for 3 turns boosts ATK of Cost 70 or more characters by 6.5x instead.',
@@ -188,6 +206,57 @@ describe('extractCoverageTiers', () => {
         expect.stringMatching(/reduces Special Cooldown of \[QCK\] and Free Spirit/i),
       ]),
     );
+  });
+
+  it('produces branch-state tiers for "Powered Up Captain:" / "Gear N Captain:" labels', () => {
+    const tiers = extractCoverageTiers(
+      'Always Active: Boosts HP of [STR], [DEX] and [QCK] characters by 1.2x. Standard Captain: Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x. Powered Up Captain: Boosts ATK of [STR], [DEX] and [QCK] characters by 4x and reduces damage received by 15%. Rampage Captain: Boosts ATK of this character by 10x.',
+    );
+
+    // Tier 1 = default Always Active + Standard Captain
+    expect(tiers[0]).toMatchObject({ tier: 1, kind: 'baseline', atkBoost: 3.5, hpBoost: 1.2 });
+
+    // Powered Up Captain emerges as a branch-state tier
+    const poweredUp = tiers.find((tier) =>
+      tier.triggerConditions.some(
+        (trigger) => trigger.kind === 'captain-branch-state' && /Powered Up/i.test(trigger.branchLabel ?? ''),
+      ),
+    );
+    expect(poweredUp).toBeDefined();
+    expect(poweredUp).toMatchObject({
+      atkBoost: 4,
+      characterConditions: expect.objectContaining({
+        types: expect.arrayContaining(['STR', 'DEX', 'QCK']),
+      }),
+    });
+
+    // Rampage Captain is self-only with no scoped boost → no tier emitted
+    expect(
+      tiers.some((tier) =>
+        tier.triggerConditions.some(
+          (trigger) => trigger.kind === 'captain-branch-state' && /Rampage/i.test(trigger.branchLabel ?? ''),
+        ),
+      ),
+    ).toBe(false);
+  });
+
+  it('captures consecutive-PERFECTs trigger from "Gear 3 Captain:" branch', () => {
+    const tiers = extractCoverageTiers(
+      'Always Active: Boosts HP of all characters by 1.25x. Gear 2 Captain: Boosts ATK of all characters by 3x. Gear 3 Captain: Boosts ATK of all characters by 3.5x after 2 consecutive PERFECTs.',
+    );
+    const gear3 = tiers.find((tier) =>
+      tier.triggerConditions.some(
+        (trigger) => trigger.kind === 'captain-branch-state' && /Gear 3/i.test(trigger.branchLabel ?? ''),
+      ),
+    );
+    expect(gear3).toBeDefined();
+    expect(gear3?.triggerConditions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'captain-branch-state' }),
+        expect.objectContaining({ kind: 'consecutive-perfects', perfectStreak: 2 }),
+      ]),
+    );
+    expect(gear3?.atkBoost).toBe(3.5);
   });
 
   it('captures conditional non-boost tier (e.g. "If crew has 4+ FS, reduces Special Use Limit -10")', () => {

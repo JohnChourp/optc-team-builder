@@ -91,12 +91,16 @@ export type CaptainCoverageTriggerKind =
   | 'hp-above'
   | 'defeated-enemy-last-turn'
   | 'start-of-fight'
+  | 'captain-branch-state'
+  | 'consecutive-perfects'
   | 'other';
 
 export interface CaptainCoverageTriggerCondition {
   kind: CaptainCoverageTriggerKind;
   hpPercent?: number;
   durationTurns?: number;
+  branchLabel?: string;
+  perfectStreak?: number;
   rawClause: string;
 }
 

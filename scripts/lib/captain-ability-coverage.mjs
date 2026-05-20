@@ -18,9 +18,9 @@ const FALLBACK_OTHER_SCOPE_PATTERN = /\ball other (?:characters|units|crewmates)
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
 const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
 const BRANCH_LABEL_PATTERN =
-  /(?<!Special\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Gear\s+\d+(?:\s*-\s*[A-Za-z]+)?\s+Captain|Captain Swap|Captain Shift|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const CAPTAIN_BRANCH_PATTERN =
-  /(?<!Special\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Gear\s+\d+(?:\s*-\s*[A-Za-z]+)?\s+Captain|Captain Swap|Captain Shift|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
   'always active',
   'standard captain',
@@ -293,9 +293,11 @@ function extractCaptainBranches(text) {
       const nextMatch = matches[index + 1] ?? null;
       const start = (match.index ?? 0) + match[0].length;
       const end = nextMatch?.index ?? text.length;
+      const rawLabel = String(match[1] ?? '').trim();
 
       return {
-        label: String(match[1] ?? '').toLowerCase(),
+        label: rawLabel.toLowerCase(),
+        displayLabel: rawLabel,
         text: text.slice(start, end).trim(),
       };
     })
@@ -376,7 +378,7 @@ function isCaptainBoostScopeClause(clause) {
 
   return (
     /\bboosts?\b/i.test(normalizedClause) &&
-    /\b(?:atk|hp)\b/i.test(normalizedClause) &&
+    /\b(?:atk|hp|rcv)\b/i.test(normalizedClause) &&
     CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) &&
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
@@ -423,6 +425,15 @@ function isCaptainTierEffectClause(clause) {
     return true;
   }
   if (/\breduces?\s+damage\s+received\b/i.test(normalizedClause)) {
+    return true;
+  }
+  if (
+    /\brecovers?\s+[\d.,x]+\s+(?:character'?s?\s+RCV|HP)\b/i.test(normalizedClause) ||
+    /\brecovers?\s+\d+(?:,\d{3})*\s+HP\b/i.test(normalizedClause)
+  ) {
+    // Self-only or captain-only healing clauses still get a tier when the targets are crew-wide,
+    // matching the long-standing "Recovers Nx character's RCV in HP at the end of each turn"
+    // category. If the clause is self-only we drop it via the earlier SELF_SCOPE_PATTERN guard.
     return true;
   }
   if (/\bmakes?\b[^.;]*\borbs?\b[^.;]*\bbeneficial\b/i.test(normalizedClause)) {
@@ -633,24 +644,27 @@ export function extractCoverageTiers(captainText) {
       );
     }
   } else if (fallbackAtk.length > 0 && subsetAtk.length > 0) {
+    const baselinePrimary = dedupeClauses([...fallbackAtk, ...hpClauses]);
+    const topPrimary = dedupeClauses([...subsetAtk, ...hpClauses]);
     tiers.push(
       buildDefaultTier(
         'baseline',
-        dedupeClauses([...fallbackAtk, ...hpClauses]),
-        defaultNonBoostEffectClauses,
+        baselinePrimary,
+        routeExtrasToTierScope(defaultNonBoostEffectClauses, baselinePrimary),
       ),
       buildDefaultTier(
         'unconditional-top',
-        dedupeClauses([...subsetAtk, ...hpClauses]),
-        defaultNonBoostEffectClauses,
+        topPrimary,
+        routeExtrasToTierScope(defaultNonBoostEffectClauses, topPrimary),
       ),
     );
   } else if (defaultBoostClauses.length > 0) {
+    const primary = dedupeClauses(defaultBoostClauses);
     tiers.push(
       buildDefaultTier(
         'baseline',
-        dedupeClauses(defaultBoostClauses),
-        defaultNonBoostEffectClauses,
+        primary,
+        routeExtrasToTierScope(defaultNonBoostEffectClauses, primary),
       ),
     );
   } else if (defaultNonBoostEffectClauses.length > 0) {
@@ -660,15 +674,77 @@ export function extractCoverageTiers(captainText) {
     tiers.push(buildDefaultTier('baseline', dedupeClauses(defaultNonBoostEffectClauses), []));
   }
 
-  // 2. Each conditional clause becomes its own tier.
+  // 2. Each non-default branch label ("Powered Up Captain:", "Gear 3 Captain:", "Captain Swap:")
+  // becomes its own tier gated by a `captain-branch-state` trigger.
+  const branchStateTiers = extractCaptainBranchStateTiers(normalizedCaptainText);
+  for (const tier of branchStateTiers) {
+    tiers.push(tier);
+  }
+
+  // 3. Each conditional clause becomes its own tier.
   if (!shouldMergeDefaultHpIntoDominantTypeTier) {
     for (const tier of conditionalTiers) {
       tiers.push(tier);
     }
   }
 
-  // 3. Renumber tiers sequentially after filtering.
+  // 4. Renumber tiers sequentially after filtering.
   return tiers.map((tier, index) => ({ ...tier, tier: index + 1 }));
+}
+
+function extractCaptainBranchStateTiers(captainText) {
+  const branches = extractCaptainBranches(captainText);
+  if (!branches.length) {
+    return [];
+  }
+  const tiers = [];
+  for (const branch of branches) {
+    if (DEFAULT_CAPTAIN_BRANCH_LABELS.has(branch.label)) {
+      continue;
+    }
+    const branchEffectClauses = splitCaptainEffectClauses(branch.text)
+      .map(stripInlineConditionalBoostRiders)
+      .map(stripBoostInsteadSuffix)
+      .filter((clause) => !isConditionalCaptainBoostClause(clause))
+      .filter(isCaptainTierEffectClause)
+      .map(normalizeCoverageClause);
+    if (branchEffectClauses.length === 0) {
+      continue;
+    }
+    const dedupedClauses = dedupeClauses(branchEffectClauses);
+    const characterConditions = resolveTierCharacterConditions(dedupedClauses);
+    const scope = resolveScopeFromTierClauses(dedupedClauses, 'none');
+    const triggers = [
+      {
+        kind: 'captain-branch-state',
+        branchLabel: branch.displayLabel,
+        rawClause: `${branch.displayLabel}:`,
+      },
+    ];
+    const consecutivePerfects = branch.text.match(
+      /\bafter\s+(\d+)\s+consecutive\s+PERFECTs\b/i,
+    );
+    if (consecutivePerfects !== null) {
+      triggers.push({
+        kind: 'consecutive-perfects',
+        perfectStreak: Number(consecutivePerfects[1]),
+        rawClause: consecutivePerfects[0],
+      });
+    }
+    tiers.push({
+      tier: 0,
+      kind: 'conditional',
+      scope,
+      characterConditions,
+      teamConditions: [],
+      fieldConditions: [],
+      triggerConditions: triggers,
+      clauses: dedupedClauses,
+      atkBoost: resolveTierBoost(dedupedClauses, 'atk'),
+      hpBoost: resolveTierBoost(dedupedClauses, 'hp'),
+    });
+  }
+  return tiers;
 }
 
 function resolveCaptainTierEffectClauses(captainText) {
@@ -693,6 +769,67 @@ function mergeDefaultClausesIntoConditionalTier(tier, defaultClauses) {
     atkBoost: resolveTierBoost(clauses, 'atk'),
     hpBoost: resolveTierBoost(clauses, 'hp'),
   };
+}
+
+// Decides which of the non-boost extra clauses should be attached as "context" effects on a
+// default tier whose target characters are defined by the given primary clauses. Universal
+// extras attach to every tier; subset extras only attach when their scope overlaps the tier's
+// primary scope (so an "SCD reduction for Cost 70+" clause appears only on the Cost 70+ tier and
+// not on the "all other characters" fallback tier).
+function routeExtrasToTierScope(extras, primaryClauses) {
+  if (!extras.length) {
+    return [];
+  }
+  const tierScope = resolveTierCharacterConditions(primaryClauses);
+  return extras.filter((extra) => clauseFitsTierScope(extra, tierScope));
+}
+
+function clauseFitsTierScope(clause, tierScope) {
+  const clauseScope = resolveTierCharacterConditions([clause]);
+
+  if (clauseScope.universal) {
+    // "all characters" / crew-wide extras apply to every tier's targets.
+    return true;
+  }
+  if (clauseScope.fallbackOther) {
+    // "all other characters" extras only make sense on the fallback tier.
+    return tierScope.fallbackOther === true;
+  }
+
+  const clauseHasSubset =
+    clauseScope.types.length > 0 ||
+    clauseScope.classes.length > 0 ||
+    clauseScope.characterTags.length > 0 ||
+    clauseScope.costRange !== undefined ||
+    clauseScope.dominantType === true;
+
+  if (!clauseHasSubset) {
+    // Effect without a recognisable subset (e.g. status removal "reduces Despair on self") —
+    // attach to the broadest tier only: that's the baseline if the tier has fallbackOther true,
+    // otherwise any non-fallback tier.
+    return tierScope.fallbackOther !== true;
+  }
+
+  // Cost-range overlap: same minimum or maximum.
+  if (clauseScope.costRange?.min !== undefined && tierScope.costRange?.min !== undefined) {
+    return clauseScope.costRange.min === tierScope.costRange.min;
+  }
+  if (clauseScope.costRange?.max !== undefined && tierScope.costRange?.max !== undefined) {
+    return clauseScope.costRange.max === tierScope.costRange.max;
+  }
+  if (clauseScope.costRange !== undefined && tierScope.costRange === undefined) {
+    return false;
+  }
+
+  // Type / class / tag overlap.
+  const typeOverlap = clauseScope.types.some((type) => tierScope.types.includes(type));
+  const classOverlap = clauseScope.classes.some((characterClass) =>
+    tierScope.classes.includes(characterClass),
+  );
+  const tagOverlap = clauseScope.characterTags.some((tag) =>
+    tierScope.characterTags.includes(tag),
+  );
+  return typeOverlap || classOverlap || tagOverlap;
 }
 
 function buildDefaultTier(kind, primaryClauses, extraClauses = []) {

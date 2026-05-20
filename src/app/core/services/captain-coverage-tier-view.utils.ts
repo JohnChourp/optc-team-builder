@@ -94,6 +94,14 @@ export function collectCaptainCoverageTierConditionLines(
     lines.push(`Field: Territory ${condition.territories.map((t) => `[${t}]`).join(' / ')}`);
   }
   for (const condition of tier.triggerConditions) {
+    if (condition.kind === 'captain-branch-state') {
+      lines.push(`Branch state: ${condition.branchLabel ?? condition.rawClause}`);
+      continue;
+    }
+    if (condition.kind === 'consecutive-perfects' && condition.perfectStreak) {
+      lines.push(`Trigger: after ${condition.perfectStreak} consecutive PERFECTs`);
+      continue;
+    }
     lines.push(`Trigger: ${condition.rawClause || condition.kind}`);
   }
   return lines;

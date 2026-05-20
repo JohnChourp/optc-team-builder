@@ -418,32 +418,45 @@ function normalizeCaptainCoverageTriggerConditions(
       }
       const record = entry as Record<string, unknown>;
       const kindRaw = record['kind'];
-      const allowedKinds = new Set([
+      type TriggerKind =
+        | 'action-special-excellent'
+        | 'action-special-perfect'
+        | 'hp-below'
+        | 'hp-above'
+        | 'defeated-enemy-last-turn'
+        | 'start-of-fight'
+        | 'captain-branch-state'
+        | 'consecutive-perfects'
+        | 'other';
+      const allowedKinds = new Set<TriggerKind>([
         'action-special-excellent',
         'action-special-perfect',
         'hp-below',
         'hp-above',
         'defeated-enemy-last-turn',
         'start-of-fight',
+        'captain-branch-state',
+        'consecutive-perfects',
         'other',
       ]);
-      const kind = allowedKinds.has(String(kindRaw))
-        ? (kindRaw as
-            | 'action-special-excellent'
-            | 'action-special-perfect'
-            | 'hp-below'
-            | 'hp-above'
-            | 'defeated-enemy-last-turn'
-            | 'start-of-fight'
-            | 'other')
+      const kind: TriggerKind = allowedKinds.has(kindRaw as TriggerKind)
+        ? (kindRaw as TriggerKind)
         : 'other';
       const hpPercentRaw = Number(record['hpPercent']);
       const durationTurnsRaw = Number(record['durationTurns']);
+      const perfectStreakRaw = Number(record['perfectStreak']);
+      const branchLabelRaw = record['branchLabel'];
       return {
         kind,
         hpPercent: Number.isFinite(hpPercentRaw) ? hpPercentRaw : undefined,
         durationTurns:
           Number.isFinite(durationTurnsRaw) && durationTurnsRaw > 0 ? durationTurnsRaw : undefined,
+        perfectStreak:
+          Number.isFinite(perfectStreakRaw) && perfectStreakRaw > 0 ? perfectStreakRaw : undefined,
+        branchLabel:
+          typeof branchLabelRaw === 'string' && branchLabelRaw.length > 0
+            ? branchLabelRaw
+            : undefined,
         rawClause: String(record['rawClause'] ?? ''),
       };
     })
