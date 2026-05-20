@@ -2619,6 +2619,12 @@
           ></app-captain-team-condition-status>
         }
 
+        <app-team-coverage-summary
+          [captain]="resultCaptainDetail()"
+          [friendCaptain]="resultFriendCaptainDetail()"
+          [members]="resultTeamMembers()"
+        ></app-team-coverage-summary>
+
         <section
           class="result-grid captain-condition-panel"
           [class.captain-condition-panel--full]="resultTeamConditionStatus()?.state === 'full'"

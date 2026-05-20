@@ -42,6 +42,13 @@
         "disabled": "Bypass selected Captain coverage while keeping other filters active."
       }
     },
+    "tierCoverage": {
+      "toggle": "Tier Coverage",
+      "support": "Filter results by which Captain Ability tiers each character qualifies for.",
+      "chip": "Tier {{tier}}",
+      "chipAvailable": "Filter results to characters that qualify for Tier {{tier}}.",
+      "chipUnavailable": "Selected Captain has no Tier {{tier}}."
+    },
     "characterBox": {
       "label": "Character box",
       "placeholder": "Select character box",

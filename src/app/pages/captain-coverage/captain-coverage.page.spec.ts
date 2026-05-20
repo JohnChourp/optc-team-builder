@@ -1161,7 +1161,9 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('<app-character-image-picker');
     expect(template).toContain('[allowedCharacterIds]="activeTeamSlotAllowedCharacterIds()"');
     expect(template).toContain('(saveSelection)="saveTeamSlotSelection($event)"');
+    expect(template).toContain('class="results-toolbar__heading"');
     expect(template).toContain('<app-ability-filter-rail');
+    expect(template).toContain('class="results-toolbar__toggle-grid"');
     expect(template).toContain('[disabled]="loading()"');
     expect(template).toContain('openAbilityFilterCategory($event)');
     expect(template).toContain('abilityMatchRankingEnabled()');
@@ -1233,6 +1235,19 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('card.coverage.chips');
     expect(template).not.toContain('coverage-chip');
     expect(template).toContain("t('results.openCharacterDetails')");
+  });
+
+  it('keeps the result title from sharing the desktop auto column with filters', () => {
+    const styles = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage.page.scss'),
+      'utf8',
+    );
+
+    expect(styles).toContain('.results-toolbar__heading,\n.coverage-ability-filters');
+    expect(styles).toContain('.results-toolbar__heading,\n  .coverage-ability-filters');
+    expect(styles).toContain('.results-toolbar__toggle-grid');
+    expect(styles).toContain('grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));');
+    expect(styles).toContain('grid-column: 1 / -1;');
   });
 
   it('keeps Captain Coverage filter labels exact in English and Greek', () => {

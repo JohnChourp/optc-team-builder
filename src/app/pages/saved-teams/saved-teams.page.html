@@ -169,6 +169,11 @@
                   [status]="teamCard.conditionStatus"
                   [compact]="true"
                 ></app-captain-team-condition-status>
+                <app-team-coverage-summary
+                  [captain]="teamCard.slots[0]"
+                  [friendCaptain]="teamCard.slots[1]"
+                  [members]="teamCard.slots"
+                ></app-team-coverage-summary>
               </article>
             }
           </div>

@@ -1,0 +1,12 @@
+{
+  "eyebrow": "Ανάλυση tiers Captain Ability",
+  "title": "Κάλυψη ομάδας",
+  "tierLabel": "Tier {{tier}}",
+  "tierStatus": {
+    "both": "Και οι δύο",
+    "captainOnly": "Captain",
+    "friendOnly": "Friend",
+    "none": "Δεν καλύπτεται"
+  },
+  "pendingConditions": "Εκκρεμές in-fight: {{conditions}}"
+}

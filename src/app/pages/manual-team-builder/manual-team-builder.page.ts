@@ -54,6 +54,7 @@ import {
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
 
@@ -124,6 +125,7 @@ function createEmptyManualTeamSlots(): Array<CharacterDetailRecord | null> {
     IonTitle,
     IonToolbar,
     CaptainTeamConditionStatusComponent,
+    TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
     RouterLink,
     ShipPickerComponent,

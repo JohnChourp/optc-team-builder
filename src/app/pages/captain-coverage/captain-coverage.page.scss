@@ -293,8 +293,18 @@
   gap: 14px;
 }
 
-.coverage-ability-filters {
+.results-toolbar__heading,
+.coverage-ability-filters,
+.results-toolbar__toggle-grid,
+.results-controls {
   display: block;
+  min-width: 0;
+}
+
+.results-toolbar__toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 12px;
 }
 
 .ability-rank-toggle {
@@ -302,7 +312,9 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  width: min(100%, 360px);
+  width: 100%;
+  min-width: 0;
+  min-height: 66px;
   padding: 10px 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
@@ -320,7 +332,7 @@
 
 .ability-rank-toggle span {
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .ability-rank-toggle__copy {
@@ -334,6 +346,47 @@
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.ability-rank-toggle--tier {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.ability-rank-toggle__chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ability-rank-toggle__chip {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(248, 251, 255, 0.72);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.ability-rank-toggle__chip:hover:not(:disabled) {
+  border-color: rgba(245, 200, 76, 0.4);
+  color: #f8fbff;
+}
+
+.ability-rank-toggle__chip--active {
+  border-color: rgba(245, 200, 76, 0.6);
+  background: rgba(245, 200, 76, 0.18);
+  color: #fff8e0;
+}
+
+.ability-rank-toggle__chip:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .results-controls {
@@ -460,6 +513,13 @@ ion-select {
   .results-toolbar {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .results-toolbar__heading,
+  .coverage-ability-filters,
+  .results-toolbar__toggle-grid,
+  .results-controls {
+    grid-column: 1 / -1;
   }
 }
 

@@ -310,6 +310,12 @@
               [status]="conditionStatus()"
             ></app-captain-team-condition-status>
 
+            <app-team-coverage-summary
+              [captain]="slots()[0]"
+              [friendCaptain]="slots()[1]"
+              [members]="slots()"
+            ></app-team-coverage-summary>
+
             @if (validationMessages().length) {
               <div class="manual-team-validation-list">
                 @for (message of validationMessages(); track message.key) {

@@ -73,6 +73,7 @@ export function buildCaptainAbilityCoverage(captainAbilityVariants) {
           }
 
           const coverage = summarizeCaptainAbilityCoverageText(text);
+          const tiers = extractCoverageTiers(text);
 
           return {
             key,
@@ -81,6 +82,7 @@ export function buildCaptainAbilityCoverage(captainAbilityVariants) {
             secondCoverageScope: coverage.secondCoverageScope,
             firstCoverageClauses: coverage.firstCoverageClauses,
             secondCoverageClauses: coverage.secondCoverageClauses,
+            tiers,
           };
         })
         .filter(Boolean)
@@ -457,4 +459,351 @@ function normalizeCoverageClause(value) {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const CREW_TEAM_CONDITION_PATTERN =
+  /\bcrew\s+has\s+(\d+)\s*\+?\s*(?:or\s+more\s+)?([^,.;]{1,220}?)\s+(?:characters|units)\b/gi;
+const TERRITORY_FIELD_PATTERN =
+  /\bfield\s+has\s+Territory\s*[:\s]+([^,.;]+?)(?=,|\.|;|$)/gi;
+const ACTION_SPECIAL_EXCELLENT_PATTERN = /\bperforms?\s+EXCELLENT\s+with\s+their\s+Action\s+Special\b/i;
+const ACTION_SPECIAL_PERFECT_PATTERN = /\bperforms?\s+PERFECT\s+with\s+their\s+Action\s+Special\b/i;
+const HP_THRESHOLD_PATTERN = /\bHP\s+is\s+(below|above)\s+(\d+)\s*%/i;
+const DEFEATED_ENEMY_PATTERN = /\bdefeated\s+an?\s+enemy\s+last\s+turn\b/i;
+const REQUIRES_CAPTAIN_PATTERN = /\b(?:this character is your Captain|if you have this character as your Captain)\b/i;
+const FOR_N_TURNS_PATTERN = /\bfor\s+(\d+)\s+turns?\b/i;
+const COST_MIN_PATTERN = /\bcost\s+(\d+)\s+or\s+more\s+characters?\b/i;
+const COST_MAX_PATTERN = /\bcost\s+(\d+)\s+or\s+less\s+characters?\b/i;
+
+// Produces an ordered list of tiers (1-indexed) describing distinct (conditions → effects) bundles
+// in the captain ability. Tier 1 is the baseline — clauses that apply with the broadest scope (or
+// the "all other characters" fallback). Tier 2 is the unconditional top tier (subset boost without
+// any If/When prefix). Tier 3+ are conditional clauses gated by If/When (trigger / team / field
+// conditions).
+export function extractCoverageTiers(captainText) {
+  const normalizedCaptainText = normalizeSharedCaptainBoostMultipliers(
+    normalizeHtmlToText(captainText),
+  );
+
+  if (!normalizedCaptainText) {
+    return [];
+  }
+
+  const defaultCaptainText = extractDefaultCaptainBoostText(normalizedCaptainText);
+  const defaultBoostClauses = resolveCaptainBoostScopeClauses(defaultCaptainText, false);
+
+  const tiers = [];
+
+  // 1. Split default clauses into baseline (fallback ATK + shared HP/utility) and top (subset ATK).
+  const atkClauses = defaultBoostClauses.filter((clause) => ATK_CLAUSE_PATTERN.test(clause));
+  const hpClauses = defaultBoostClauses.filter((clause) => HP_CLAUSE_PATTERN.test(clause));
+  const fallbackAtk = atkClauses.filter((clause) => FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
+  const subsetAtk = atkClauses.filter((clause) => !FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
+
+  if (fallbackAtk.length > 0 && subsetAtk.length > 0) {
+    tiers.push(
+      buildDefaultTier('baseline', dedupeClauses([...fallbackAtk, ...hpClauses])),
+      buildDefaultTier('unconditional-top', dedupeClauses([...subsetAtk, ...hpClauses])),
+    );
+  } else if (defaultBoostClauses.length > 0) {
+    tiers.push(buildDefaultTier('baseline', dedupeClauses(defaultBoostClauses)));
+  }
+
+  // 2. Each conditional clause becomes its own tier.
+  const conditionalSentences = extractConditionalSentenceClusters(normalizedCaptainText);
+
+  for (const cluster of conditionalSentences) {
+    const tier = buildConditionalTier(cluster);
+    if (tier !== null) {
+      tiers.push(tier);
+    }
+  }
+
+  // 3. Renumber tiers sequentially after filtering.
+  return tiers.map((tier, index) => ({ ...tier, tier: index + 1 }));
+}
+
+function buildDefaultTier(kind, clauses) {
+  const characterConditions = resolveTierCharacterConditions(clauses);
+  const scope = resolveScopeFromTierClauses(clauses, 'none');
+
+  return {
+    tier: 0,
+    kind,
+    scope,
+    characterConditions,
+    teamConditions: [],
+    fieldConditions: [],
+    triggerConditions: [],
+    clauses,
+    atkBoost: resolveTierBoost(clauses, 'atk'),
+    hpBoost: resolveTierBoost(clauses, 'hp'),
+  };
+}
+
+function buildConditionalTier(cluster) {
+  const clauseBoosts = cluster.clauses
+    .map(stripInlineConditionalBoostRiders)
+    .map(stripBoostInsteadSuffix)
+    .filter(isCaptainBoostScopeClause)
+    .map(normalizeCoverageClause);
+
+  if (clauseBoosts.length === 0) {
+    return null;
+  }
+
+  const characterConditions = resolveTierCharacterConditions(clauseBoosts);
+  const scope = resolveScopeFromTierClauses(clauseBoosts, 'none');
+
+  return {
+    tier: 0,
+    kind: 'conditional',
+    scope,
+    characterConditions,
+    teamConditions: cluster.teamConditions,
+    fieldConditions: cluster.fieldConditions,
+    triggerConditions: cluster.triggerConditions,
+    clauses: dedupeClauses(clauseBoosts),
+    atkBoost: resolveTierBoost(clauseBoosts, 'atk'),
+    hpBoost: resolveTierBoost(clauseBoosts, 'hp'),
+  };
+}
+
+function extractConditionalSentenceClusters(text) {
+  return splitCaptainSentences(text.replace(BRANCH_LABEL_PATTERN, '. '))
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0 && isConditionalCaptainBoostClause(sentence))
+    .map((sentence) => buildConditionalCluster(sentence));
+}
+
+function buildConditionalCluster(sentence) {
+  const teamConditions = [];
+  const fieldConditions = [];
+  const triggerConditions = [];
+
+  let match;
+  CREW_TEAM_CONDITION_PATTERN.lastIndex = 0;
+  while ((match = CREW_TEAM_CONDITION_PATTERN.exec(sentence)) !== null) {
+    teamConditions.push(parseCrewTeamCondition(match[1], match[2], match[0]));
+  }
+
+  TERRITORY_FIELD_PATTERN.lastIndex = 0;
+  while ((match = TERRITORY_FIELD_PATTERN.exec(sentence)) !== null) {
+    fieldConditions.push(parseTerritoryFieldCondition(match[1], match[0]));
+  }
+
+  if (ACTION_SPECIAL_EXCELLENT_PATTERN.test(sentence)) {
+    triggerConditions.push(buildActionSpecialTrigger('action-special-excellent', sentence));
+  }
+  if (ACTION_SPECIAL_PERFECT_PATTERN.test(sentence)) {
+    triggerConditions.push(buildActionSpecialTrigger('action-special-perfect', sentence));
+  }
+
+  const hpThreshold = sentence.match(HP_THRESHOLD_PATTERN);
+  if (hpThreshold !== null) {
+    triggerConditions.push({
+      kind: hpThreshold[1].toLowerCase() === 'below' ? 'hp-below' : 'hp-above',
+      hpPercent: Number(hpThreshold[2]),
+      rawClause: hpThreshold[0],
+    });
+  }
+
+  if (DEFEATED_ENEMY_PATTERN.test(sentence)) {
+    triggerConditions.push({
+      kind: 'defeated-enemy-last-turn',
+      rawClause: DEFEATED_ENEMY_PATTERN.exec(sentence)?.[0] ?? '',
+    });
+  }
+
+  if (
+    REQUIRES_CAPTAIN_PATTERN.test(sentence) &&
+    !teamConditions.some((condition) => condition.kind === 'requires-captain')
+  ) {
+    teamConditions.push({
+      kind: 'requires-captain',
+      rawClause: REQUIRES_CAPTAIN_PATTERN.exec(sentence)?.[0] ?? '',
+    });
+  }
+
+  // The conditional sentence keeps the whole "If X, ..." block as a single token in the regular
+  // splitter — bypass that and extract just the effect portion (after the condition's trailing
+  // comma, optionally past a "for N turns" rider).
+  const clauses = extractEffectClausesFromConditionalSentence(sentence);
+
+  return {
+    sentence,
+    clauses,
+    teamConditions,
+    fieldConditions,
+    triggerConditions,
+  };
+}
+
+function extractEffectClausesFromConditionalSentence(sentence) {
+  const effectStartPattern =
+    /,\s*(?:for\s+\d+\s+turns?\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?|allows?|launches?|deals?|restores?|inflicts?)\b/i;
+  const effectStartMatch = sentence.match(effectStartPattern);
+  if (effectStartMatch === null || effectStartMatch.index === undefined) {
+    return [];
+  }
+
+  const effectText = sentence
+    .slice(effectStartMatch.index + 1)
+    .replace(/^\s*for\s+\d+\s+turns?\s+/i, '')
+    .trim();
+
+  return effectText
+    .split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR)
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+}
+
+function parseCrewTeamCondition(countText, descriptor, rawClause) {
+  const minCount = Number(countText);
+  const types = [];
+  const classes = [];
+  const characterTags = [];
+
+  const lowerDescriptor = descriptor.toLowerCase();
+
+  for (const typeLabel of AUTO_TEAM_BUILDER_TYPES) {
+    if (new RegExp(`\\[${typeLabel}\\]`, 'i').test(descriptor)) {
+      types.push(typeLabel);
+    }
+  }
+  for (const classLabel of AUTO_TEAM_BUILDER_CLASSES) {
+    if (new RegExp(`\\b${escapeRegExp(classLabel)}\\b`, 'i').test(lowerDescriptor)) {
+      classes.push(classLabel);
+    }
+  }
+
+  const tagMatches = [...descriptor.matchAll(BRACKETED_LABEL_PATTERN)].map((tag) => tag[1]);
+  for (const tag of tagMatches) {
+    const lowerTag = tag.toLowerCase();
+    if (
+      !AUTO_TEAM_BUILDER_TYPES.some((typeLabel) => typeLabel.toLowerCase() === lowerTag) &&
+      !AUTO_TEAM_BUILDER_CLASSES.some((classLabel) => classLabel.toLowerCase() === lowerTag)
+    ) {
+      characterTags.push(tag);
+    }
+  }
+
+  return {
+    kind: 'crew-composition',
+    minCount: Number.isFinite(minCount) && minCount > 0 ? minCount : undefined,
+    types,
+    classes,
+    characterTags,
+    rawClause,
+  };
+}
+
+function parseTerritoryFieldCondition(descriptor, rawClause) {
+  const territories = [];
+  const tagMatches = [...descriptor.matchAll(BRACKETED_LABEL_PATTERN)].map((tag) => tag[1]);
+  for (const tag of tagMatches) {
+    territories.push(tag);
+  }
+  if (territories.length === 0) {
+    const trimmed = descriptor.trim();
+    if (trimmed.length > 0) {
+      territories.push(trimmed);
+    }
+  }
+
+  return {
+    kind: 'territory',
+    territories,
+    rawClause,
+  };
+}
+
+function buildActionSpecialTrigger(kind, sentence) {
+  const turnsMatch = sentence.match(FOR_N_TURNS_PATTERN);
+  return {
+    kind,
+    durationTurns: turnsMatch !== null ? Number(turnsMatch[1]) : undefined,
+    rawClause:
+      kind === 'action-special-excellent'
+        ? (ACTION_SPECIAL_EXCELLENT_PATTERN.exec(sentence)?.[0] ?? '')
+        : (ACTION_SPECIAL_PERFECT_PATTERN.exec(sentence)?.[0] ?? ''),
+  };
+}
+
+function resolveTierCharacterConditions(clauses) {
+  const conditions = {
+    universal: false,
+    fallbackOther: false,
+    selfOnly: false,
+    types: [],
+    classes: [],
+    characterTags: [],
+  };
+
+  for (const clause of clauses) {
+    if (boostClauseHasUniversalScope(clause)) {
+      conditions.universal = true;
+    }
+    if (FALLBACK_OTHER_SCOPE_PATTERN.test(clause)) {
+      conditions.fallbackOther = true;
+    }
+    if (SELF_SCOPE_PATTERN.test(clause)) {
+      conditions.selfOnly = true;
+    }
+
+    for (const type of extractAllowedTypesFromCoverageClause(clause)) {
+      if (!conditions.types.includes(type)) {
+        conditions.types.push(type);
+      }
+    }
+    for (const characterClass of extractAllowedClassesFromCoverageClause(clause)) {
+      if (!conditions.classes.includes(characterClass)) {
+        conditions.classes.push(characterClass);
+      }
+    }
+    for (const tag of extractAllowedCharacterTagsFromCoverageClause(clause)) {
+      if (!conditions.characterTags.includes(tag)) {
+        conditions.characterTags.push(tag);
+      }
+    }
+
+    const costMin = clause.match(COST_MIN_PATTERN);
+    const costMax = clause.match(COST_MAX_PATTERN);
+    if (costMin !== null) {
+      conditions.costRange = {
+        ...(conditions.costRange ?? {}),
+        min: Number(costMin[1]),
+      };
+    }
+    if (costMax !== null) {
+      conditions.costRange = {
+        ...(conditions.costRange ?? {}),
+        max: Number(costMax[1]),
+      };
+    }
+  }
+
+  return conditions;
+}
+
+function resolveTierBoost(clauses, stat) {
+  const pattern = new RegExp(
+    `\\b${stat}\\b[^.;]*?\\bby\\s+(?:a\\s+further\\s+|an?\\s+additional\\s+|another\\s+)?(\\d+(?:\\.\\d+)?)x`,
+    'gi',
+  );
+
+  let highest = 0;
+  for (const clause of clauses) {
+    if (SELF_SCOPE_PATTERN.test(clause) && !UNIVERSAL_SCOPE_PATTERN.test(clause)) {
+      continue;
+    }
+    const matches = [...clause.matchAll(pattern)];
+    for (const match of matches) {
+      const value = Number(match[1]);
+      if (Number.isFinite(value) && value > highest) {
+        highest = value;
+      }
+    }
+  }
+
+  return highest > 0 ? highest : undefined;
 }

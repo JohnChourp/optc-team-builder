@@ -44,6 +44,7 @@ import {
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import {
   buildSavedTeamsTransferPayload,
   clearUnavailableSavedTeamSlots,
@@ -59,7 +60,7 @@ interface SavedTeamPreviewCard {
   shipDisplayName: string;
   shipThumbUrl: string | null;
   team: SavedTeam;
-  slots: Array<CharacterListItem | null>;
+  slots: Array<CharacterDetailRecord | null>;
   conditionStatus: CaptainTeamConditionStatus;
 }
 
@@ -88,6 +89,7 @@ interface SavedTeamsImportFeedback {
     IonTitle,
     IonToolbar,
     CaptainTeamConditionStatusComponent,
+    TeamCoverageSummaryComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,

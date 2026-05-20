@@ -42,9 +42,73 @@ export interface CharacterCaptainAbilityCoverageEntry {
   secondCoverageScope: CharacterCaptainAbilityScope;
   firstCoverageClauses: string[];
   secondCoverageClauses: string[];
+  tiers: CharacterCaptainAbilityCoverageTier[];
 }
 
 export type CharacterCaptainAbilityScope = 'crew-wide' | 'captain-only' | 'subset' | 'none';
+
+export type CaptainCoverageTierKind = 'baseline' | 'unconditional-top' | 'conditional';
+
+export interface CaptainCoverageTargetScope {
+  universal: boolean;
+  fallbackOther: boolean;
+  selfOnly: boolean;
+  types: string[];
+  classes: string[];
+  characterTags: string[];
+  costRange?: { min?: number; max?: number };
+}
+
+export type CaptainCoverageTeamConditionKind =
+  | 'crew-composition'
+  | 'crew-count'
+  | 'requires-captain'
+  | 'requires-friend-captain';
+
+export interface CaptainCoverageTeamCondition {
+  kind: CaptainCoverageTeamConditionKind;
+  minCount?: number;
+  exactCount?: number;
+  types?: string[];
+  classes?: string[];
+  characterTags?: string[];
+  rawClause: string;
+}
+
+export interface CaptainCoverageFieldCondition {
+  kind: 'territory';
+  territories: string[];
+  rawClause: string;
+}
+
+export type CaptainCoverageTriggerKind =
+  | 'action-special-excellent'
+  | 'action-special-perfect'
+  | 'hp-below'
+  | 'hp-above'
+  | 'defeated-enemy-last-turn'
+  | 'start-of-fight'
+  | 'other';
+
+export interface CaptainCoverageTriggerCondition {
+  kind: CaptainCoverageTriggerKind;
+  hpPercent?: number;
+  durationTurns?: number;
+  rawClause: string;
+}
+
+export interface CharacterCaptainAbilityCoverageTier {
+  tier: number;
+  kind: CaptainCoverageTierKind;
+  scope: CharacterCaptainAbilityScope;
+  characterConditions: CaptainCoverageTargetScope;
+  teamConditions: CaptainCoverageTeamCondition[];
+  fieldConditions: CaptainCoverageFieldCondition[];
+  triggerConditions: CaptainCoverageTriggerCondition[];
+  clauses: string[];
+  atkBoost?: number;
+  hpBoost?: number;
+}
 
 export interface CharacterCaptainAbilityCoverage {
   entries: CharacterCaptainAbilityCoverageEntry[];

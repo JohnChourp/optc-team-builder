@@ -42,6 +42,13 @@
         "disabled": "Παρακάμπτει το selected Captain coverage αλλά κρατά τα άλλα φίλτρα ενεργά."
       }
     },
+    "tierCoverage": {
+      "toggle": "Tier Coverage",
+      "support": "Φιλτράρει τα results ανάλογα με ποια Captain Ability tiers υποστηρίζει κάθε χαρακτήρας.",
+      "chip": "Tier {{tier}}",
+      "chipAvailable": "Φιλτράρει τα results σε χαρακτήρες που υποστηρίζονται από το Tier {{tier}}.",
+      "chipUnavailable": "Ο επιλεγμένος Captain δεν έχει Tier {{tier}}."
+    },
     "characterBox": {
       "label": "Character box",
       "placeholder": "Επίλεξε character box",

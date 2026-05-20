@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-19T18:58:15.077Z",
+  "generatedAt": "2026-05-19T19:45:24.769Z",
   "characters": [
     {
       "id": 1,
@@ -157,6 +157,28 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of all characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "crew-wide",
+                  "characterConditions": {
+                    "universal": true,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of all characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -274,6 +296,28 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of all characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "crew-wide",
+                  "characterConditions": {
+                    "universal": true,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of all characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -392,6 +436,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "STR"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
+                  ],
+                  "atkBoost": 2
+                }
               ]
             }
           ]
@@ -558,6 +626,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [DEX] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "DEX"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [DEX] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -676,6 +768,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [DEX] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "DEX"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [DEX] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -794,6 +910,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [DEX] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "DEX"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [DEX] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -912,6 +1052,31 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK and HP of [DEX] characters by 2x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "DEX"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK and HP of [DEX] characters by 2x"
+                  ],
+                  "atkBoost": 2,
+                  "hpBoost": 2
+                }
               ]
             }
           ]
@@ -1083,7 +1248,8 @@
               "firstCoverageScope": "none",
               "secondCoverageScope": "none",
               "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "secondCoverageClauses": [],
+              "tiers": []
             }
           ]
         },
@@ -1209,6 +1375,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [INT] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "INT"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [INT] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -1326,6 +1516,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [INT] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "INT"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [INT] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -1443,6 +1657,31 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK and HP of [INT] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "INT"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK and HP of [INT] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5,
+                  "hpBoost": 1.5
+                }
               ]
             }
           ]
@@ -1626,6 +1865,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of Shooter characters by 1.2x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [],
+                    "classes": [
+                      "Shooter"
+                    ],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of Shooter characters by 1.2x"
+                  ],
+                  "atkBoost": 1.2
+                }
               ]
             }
           ]
@@ -1810,6 +2073,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [PSY] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [PSY] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -1994,6 +2281,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [PSY] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [PSY] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -2178,6 +2489,31 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK and HP of [PSY] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK and HP of [PSY] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5,
+                  "hpBoost": 1.5
+                }
               ]
             }
           ]
@@ -2502,6 +2838,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [QCK] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "QCK"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [QCK] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -2619,6 +2979,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts HP of [QCK] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "QCK"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts HP of [QCK] characters by 1.5x"
+                  ],
+                  "hpBoost": 1.5
+                }
               ]
             }
           ]
@@ -2726,6 +3110,30 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK of [QCK] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "QCK"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [QCK] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -2844,6 +3252,31 @@
               ],
               "secondCoverageClauses": [
                 "Boosts ATK and HP of [QCK] characters by 1.5x"
+              ],
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "QCK"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK and HP of [QCK] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5,
+                  "hpBoost": 1.5
+                }
               ]
             }
           ]
@@ -3059,7 +3492,8 @@
               "firstCoverageScope": "none",
               "secondCoverageScope": "none",
               "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "secondCoverageClauses": [],
+              "tiers": []
             }
           ]
         },
@@ -3173,7 +3607,8 @@
               "firstCoverageScope": "none",
               "secondCoverageScope": "none",
               "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "secondCoverageClauses": [],
+              "tiers": []
             }
           ]
         },
@@ -3381,7 +3816,8 @@
               "firstCoverageScope": "none",
               "secondCoverageScope": "none",
               "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "secondCoverageClauses": [],
+              "tiers": []
             }
           ]
         },
@@ -3495,7 +3931,8 @@
               "firstCoverageScope": "none",
               "secondCoverageScope": "none",
               "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "secondCoverageClauses": [],
+              "tiers": []
             }
           ]
         },

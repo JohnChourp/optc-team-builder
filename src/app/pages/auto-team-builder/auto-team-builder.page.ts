@@ -139,6 +139,7 @@ import {
   type AbilityRequirementPickerLeaderBoostSettings,
 } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import {
   createAbilityRequirementDrafts,
@@ -535,6 +536,7 @@ function matchesScopedManualRequirements(
     AbilityFilterRailComponent,
     AbilityRequirementPickerComponent,
     CaptainTeamConditionStatusComponent,
+    TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
     RouterLink,
     TranslocoDirective,
@@ -2404,6 +2406,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       slots: slots.map((slot) => slot.character),
     });
   });
+  public readonly resultCaptainDetail = computed(
+    () => this.result()?.slots.find((slot) => slot.role === 'captain')?.character ?? null,
+  );
+  public readonly resultFriendCaptainDetail = computed(
+    () => this.result()?.slots.find((slot) => slot.role === 'friendCaptain')?.character ?? null,
+  );
+  public readonly resultTeamMembers = computed(
+    () => this.result()?.slots.map((slot) => slot.character) ?? [],
+  );
+
   public readonly teamSlots = computed<TeamSlotViewModel[]>(() => {
     const currentResult = this.result();
     let subSlotIndex = 0;

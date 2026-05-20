@@ -782,23 +782,43 @@ describe('import-optc-data ship thumbnail pack', () => {
 
     const detail = normalizeCharacterDetail({ captain: imuCaptainAbility }, 4571);
 
-    expect(detail.captainAbilityCoverage).toEqual({
-      entries: [
-        {
-          key: 'captain',
-          label: 'Captain Ability',
-          firstCoverageScope: 'crew-wide',
-          secondCoverageScope: 'crew-wide',
-          firstCoverageClauses: [
-            'boosts ATK of all other characters by 4x',
-            'boosts HP of all characters by 1.5x',
-          ],
-          secondCoverageClauses: [
-            'Boosts ATK of Cost 70 or more characters by 6x',
-            'boosts HP of all characters by 1.5x',
-          ],
-        },
+    expect(detail.captainAbilityCoverage?.entries).toHaveLength(1);
+    expect(detail.captainAbilityCoverage?.entries[0]).toMatchObject({
+      key: 'captain',
+      label: 'Captain Ability',
+      firstCoverageScope: 'crew-wide',
+      secondCoverageScope: 'crew-wide',
+      firstCoverageClauses: [
+        'boosts ATK of all other characters by 4x',
+        'boosts HP of all characters by 1.5x',
       ],
+      secondCoverageClauses: [
+        'Boosts ATK of Cost 70 or more characters by 6x',
+        'boosts HP of all characters by 1.5x',
+      ],
+    });
+    const imuTiers = detail.captainAbilityCoverage?.entries[0]?.tiers ?? [];
+    expect(imuTiers).toHaveLength(3);
+    expect(imuTiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      atkBoost: 4,
+      hpBoost: 1.5,
+    });
+    expect(imuTiers[1]).toMatchObject({
+      tier: 2,
+      kind: 'unconditional-top',
+      atkBoost: 6,
+      hpBoost: 1.5,
+      characterConditions: expect.objectContaining({ costRange: { min: 70 } }),
+    });
+    expect(imuTiers[2]).toMatchObject({
+      tier: 3,
+      kind: 'conditional',
+      atkBoost: 6.5,
+      triggerConditions: expect.arrayContaining([
+        expect.objectContaining({ kind: 'action-special-excellent', durationTurns: 3 }),
+      ]),
     });
   });
 

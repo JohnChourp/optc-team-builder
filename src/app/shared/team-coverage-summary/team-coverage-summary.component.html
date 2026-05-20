@@ -1,0 +1,52 @@
+<ng-container *transloco="let t; scope: 'team-coverage-summary'; read: 'team-coverage-summary'">
+  @if (summary().isComplete && hasAnyTiers()) {
+    <section class="team-coverage-summary" data-test="team-coverage-summary">
+      <header class="team-coverage-summary__header">
+        <span class="team-coverage-summary__eyebrow">{{ t('eyebrow') }}</span>
+        <h3 class="team-coverage-summary__title">{{ t('title') }}</h3>
+      </header>
+      <ul class="team-coverage-summary__tiers">
+        @for (tier of summary().tiers; track tier.tier) {
+          <li
+            class="team-coverage-summary__tier"
+            [class.team-coverage-summary__tier--both]="tier.captureSource === 'both'"
+            [class.team-coverage-summary__tier--captain]="tier.captureSource === 'captain-only'"
+            [class.team-coverage-summary__tier--friend]="tier.captureSource === 'friend-only'"
+            [class.team-coverage-summary__tier--none]="tier.captureSource === 'none'"
+            [attr.data-test]="'team-coverage-tier-' + tier.tier"
+          >
+            <div class="team-coverage-summary__tier-header">
+              <span class="team-coverage-summary__tier-label"
+                >{{ t('tierLabel', { tier: tier.tier }) }}</span
+              >
+              <span class="team-coverage-summary__tier-scope">{{ tier.scopeLabel }}</span>
+              <span class="team-coverage-summary__tier-status"
+                >{{ t(statusKey(tier.captureSource)) }}</span
+              >
+            </div>
+            @if (tier.effectsSummary.length > 0) {
+              <ul class="team-coverage-summary__effects">
+                @for (effect of tier.effectsSummary; track effect) {
+                  <li>{{ effect }}</li>
+                }
+              </ul>
+            }
+            @if (tier.pendingTriggerConditions.length > 0 || tier.pendingFieldConditions.length > 0) {
+              <p class="team-coverage-summary__note">
+                {{
+                  t('pendingConditions', {
+                    conditions:
+                      [
+                        ...tier.pendingTriggerConditions,
+                        ...tier.pendingFieldConditions,
+                      ].join(' · '),
+                  })
+                }}
+              </p>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</ng-container>
