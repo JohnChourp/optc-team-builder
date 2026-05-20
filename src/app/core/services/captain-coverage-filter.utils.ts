@@ -174,6 +174,13 @@ export function matchesCaptainCoverageTier(
 ): boolean {
   const conditions = tier.characterConditions;
 
+  // Negative team conditions ("there are no [PSY] or [INT] characters on your crew") narrow
+  // which targets can appear in a team that satisfies this tier — a PSY character cannot share
+  // the team with a tier that demands no PSY, so we exclude them up front.
+  if (targetMatchesTeamExclusion(tier, target)) {
+    return false;
+  }
+
   // Fallback tier: target matches iff it does NOT satisfy any more-specific subset tier in the
   // same entry. This is the natural complement reading of "all other characters".
   if (conditions.fallbackOther) {
@@ -181,6 +188,47 @@ export function matchesCaptainCoverageTier(
   }
 
   return matchesTierCharacterConditionsInner(tier, target);
+}
+
+function targetMatchesTeamExclusion(
+  tier: CharacterCaptainAbilityCoverageTier,
+  target: CharacterListItem,
+): boolean {
+  const exclusionConditions = tier.teamConditions.filter(
+    (condition) => condition.kind === 'crew-exclusion',
+  );
+  if (exclusionConditions.length === 0) {
+    return false;
+  }
+  const targetTypes = target.type.split(',').map((entry) => entry.trim().toUpperCase());
+  const targetTags =
+    (target as CharacterListItem & { detail?: { characterTags?: string[] } }).detail
+      ?.characterTags ?? [];
+  return exclusionConditions.some((condition) => {
+    const excludedTypes = condition.types ?? [];
+    const excludedClasses = condition.classes ?? [];
+    const excludedTags = condition.characterTags ?? [];
+    if (excludedTypes.some((type) => targetTypes.includes(type.toUpperCase()))) {
+      return true;
+    }
+    if (
+      excludedClasses.some((characterClass) =>
+        target.classes.some(
+          (memberClass) => memberClass.toLowerCase() === characterClass.toLowerCase(),
+        ),
+      )
+    ) {
+      return true;
+    }
+    if (
+      excludedTags.some((tag) =>
+        targetTags.some((memberTag) => memberTag.toLowerCase() === tag.toLowerCase()),
+      )
+    ) {
+      return true;
+    }
+    return false;
+  });
 }
 
 function matchesTierCharacterConditionsInner(
@@ -192,7 +240,8 @@ function matchesTierCharacterConditionsInner(
     conditions.types.length > 0 ||
     conditions.classes.length > 0 ||
     conditions.characterTags.length > 0 ||
-    conditions.costRange !== undefined;
+    conditions.costRange !== undefined ||
+    conditions.dominantType === true;
 
   // When a tier has any explicit subset condition (cost / type / class / tag), characters must
   // satisfy that subset to "fully qualify" for the tier — the tier-defining boost only applies to
@@ -209,6 +258,15 @@ function matchesTierCharacterConditionsInner(
   }
 
   const targetTypes = target.type.split(',').map((entry) => entry.trim().toUpperCase());
+  if (
+    conditions.dominantType === true &&
+    targetTypes.some((type) =>
+      ['DEX', 'STR', 'QCK', 'PSY', 'INT'].includes(type.toUpperCase()),
+    )
+  ) {
+    return true;
+  }
+
   if (conditions.types.length > 0 && conditions.types.some((type) => targetTypes.includes(type))) {
     return true;
   }

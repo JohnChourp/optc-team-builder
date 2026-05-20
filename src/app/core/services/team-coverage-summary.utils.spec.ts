@@ -163,6 +163,88 @@ describe('resolveTeamCoverageSummary', () => {
     const tier2Full = summary2.tiers.find((tier) => tier.tier === 2);
     expect(tier2Full?.captureSource).toBe('both');
   });
+
+  it('requires all slots to share one type for Dominant Type target coverage', () => {
+    const captain = createCharacter({
+      id: 4574,
+      type: 'INT',
+      captainAbilityCoverage: {
+        entries: [
+          {
+            key: 'captain',
+            label: 'Captain Ability',
+            firstCoverageScope: 'crew-wide',
+            secondCoverageScope: 'crew-wide',
+            firstCoverageClauses: [
+              'boosts ATK of the Dominant Type characters by 4.5x',
+              'Boosts HP of all characters by 1.25x',
+            ],
+            secondCoverageClauses: [
+              'boosts ATK of the Dominant Type characters by 4.5x',
+              'Boosts HP of all characters by 1.25x',
+            ],
+            tiers: [
+              {
+                tier: 1,
+                kind: 'conditional',
+                scope: 'crew-wide',
+                characterConditions: {
+                  universal: true,
+                  fallbackOther: false,
+                  selfOnly: false,
+                  dominantType: true,
+                  types: [],
+                  classes: [],
+                  characterTags: [],
+                },
+                teamConditions: [
+                  {
+                    kind: 'crew-composition',
+                    minCount: 4,
+                    sameType: true,
+                    rawClause: 'your crew has 4+ characters of the same Type',
+                  },
+                ],
+                fieldConditions: [],
+                triggerConditions: [],
+                clauses: [
+                  'boosts ATK of the Dominant Type characters by 4.5x',
+                  'Boosts HP of all characters by 1.25x',
+                ],
+                atkBoost: 4.5,
+                hpBoost: 1.25,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const mixedDominantTeam = [
+      ...Array.from({ length: 4 }, (_, index) =>
+        createCharacter({ id: 8200 + index, type: 'INT' }),
+      ),
+      createCharacter({ id: 8204, type: 'DEX' }),
+      createCharacter({ id: 8205, type: 'DEX' }),
+    ];
+    const fullDominantTeam = Array.from({ length: 6 }, (_, index) =>
+      createCharacter({ id: 8300 + index, type: 'INT' }),
+    );
+
+    expect(
+      resolveTeamCoverageSummary({
+        captain,
+        friendCaptain: captain,
+        members: mixedDominantTeam,
+      }).tiers[0]?.captureSource,
+    ).toBe('none');
+    expect(
+      resolveTeamCoverageSummary({
+        captain,
+        friendCaptain: captain,
+        members: fullDominantTeam,
+      }).tiers[0]?.captureSource,
+    ).toBe('both');
+  });
 });
 
 function buildImuCoverage(): CharacterCaptainAbilityCoverage {

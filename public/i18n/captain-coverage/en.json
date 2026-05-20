@@ -47,7 +47,14 @@
       "support": "Filter results by which Captain Ability tiers each character qualifies for.",
       "chip": "Tier {{tier}}",
       "chipAvailable": "Filter results to characters that qualify for Tier {{tier}}.",
-      "chipUnavailable": "Selected Captain has no Tier {{tier}}."
+      "chipUnavailable": "Selected Captain has no Tier {{tier}}.",
+      "panelEyebrow": "Captain Ability tiers",
+      "panelTitle": "What each tier requires",
+      "kinds": {
+        "baseline": "Baseline",
+        "unconditional-top": "Top tier",
+        "conditional": "Conditional"
+      }
     },
     "characterBox": {
       "label": "Character box",

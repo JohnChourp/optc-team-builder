@@ -314,6 +314,58 @@
                 }
               </div>
             </div>
+
+            @if (captainTierBreakdown().length) {
+              <section
+                class="captain-tier-breakdown captain-tier-breakdown--inline"
+                data-test="captain-coverage-tier-panel"
+              >
+                <header class="captain-tier-breakdown__panel-header">
+                  <span class="captain-tier-breakdown__panel-eyebrow">
+                    {{ t('filters.tierCoverage.panelEyebrow') }}
+                  </span>
+                  <h3 class="captain-tier-breakdown__panel-title">
+                    {{ t('filters.tierCoverage.panelTitle') }}
+                  </h3>
+                </header>
+                <ul class="captain-tier-breakdown__list">
+                  @for (tier of captainTierBreakdown(); track tier.tier) {
+                    <li
+                      class="captain-tier-breakdown__tier"
+                      [class.captain-tier-breakdown__tier--baseline]="tier.kind === 'baseline'"
+                      [class.captain-tier-breakdown__tier--top]="tier.kind === 'unconditional-top'"
+                      [class.captain-tier-breakdown__tier--conditional]="tier.kind === 'conditional'"
+                      [class.captain-tier-breakdown__tier--active]="isTierCoverageActive(tier.tier)"
+                      [attr.data-test]="'captain-coverage-tier-panel-row-' + tier.tier"
+                    >
+                      <header class="captain-tier-breakdown__header">
+                        <span class="captain-tier-breakdown__label">
+                          {{ t('filters.tierCoverage.chip', { tier: tier.tier }) }}
+                        </span>
+                        <span class="captain-tier-breakdown__scope">{{ tier.scopeLabel }}</span>
+                        <span class="captain-tier-breakdown__kind">
+                          {{ t('filters.tierCoverage.kinds.' + tier.kind) }}
+                        </span>
+                      </header>
+                      @if (tier.conditionLines.length) {
+                        <ul class="captain-tier-breakdown__conditions">
+                          @for (line of tier.conditionLines; track $index) {
+                            <li>{{ line }}</li>
+                          }
+                        </ul>
+                      }
+                      @if (tier.effectClauses.length) {
+                        <ul class="captain-tier-breakdown__effects">
+                          @for (effect of tier.effectClauses; track $index) {
+                            <li>{{ effect }}</li>
+                          }
+                        </ul>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
           </div>
 
           <app-special-ability-picker

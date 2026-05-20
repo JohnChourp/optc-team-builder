@@ -65,6 +65,7 @@
     "maxStats": "Max Stats",
     "overview": "Overview",
     "secondCoverage": "Second Coverage",
+    "captainCoverageTiers": "Captain Coverage Tiers",
     "potentialAbilities": "Potential Abilities",
     "profile": "Profile",
     "rushSugoSpecialData": "Rush Sugo Special",
@@ -94,5 +95,11 @@
     "maxAtk": "Max ATK",
     "maxHp": "Max HP",
     "maxRcv": "Max RCV"
+  },
+  "captainTierLabel": "Tier {{tier}}",
+  "captainTierKinds": {
+    "baseline": "Baseline",
+    "unconditional-top": "Top tier",
+    "conditional": "Conditional"
   }
 }

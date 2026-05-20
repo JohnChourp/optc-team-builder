@@ -16,6 +16,7 @@ const AUTO_TEAM_BUILDER_CLASSES = [
 const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates|crew)\b/i;
 const FALLBACK_OTHER_SCOPE_PATTERN = /\ball other (?:characters|units|crewmates)\b/i;
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
+const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
 const BRANCH_LABEL_PATTERN =
   /(?<!Special\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const CAPTAIN_BRANCH_PATTERN =
@@ -135,6 +136,18 @@ export function summarizeCaptainAbilityCoverageText(captainText) {
 function splitCaptainBoostTiers(defaultClauses, conditionalOnlyClauses) {
   const atkClauses = defaultClauses.filter((clause) => ATK_CLAUSE_PATTERN.test(clause));
   const hpClauses = defaultClauses.filter((clause) => HP_CLAUSE_PATTERN.test(clause));
+  const dominantTypeAtkClauses = conditionalOnlyClauses.filter(
+    (clause) => ATK_CLAUSE_PATTERN.test(clause) && boostClauseHasDominantTypeScope(clause),
+  );
+
+  if (atkClauses.length === 0 && hpClauses.length > 0 && dominantTypeAtkClauses.length > 0) {
+    const dominantTypeClauses = dedupeClauses([...dominantTypeAtkClauses, ...hpClauses]);
+    return {
+      baselineClauses: dominantTypeClauses,
+      topClauses: dominantTypeClauses,
+    };
+  }
+
   const fallbackAtk = atkClauses.filter((clause) => FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
   const nonFallbackAtk = atkClauses.filter((clause) => !FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
 
@@ -204,6 +217,7 @@ function resolveCaptainClauseScope(clause) {
 
   if (
     COST_SUBSET_PATTERN.test(normalizedClause) ||
+    boostClauseHasDominantTypeScope(normalizedClause) ||
     extractAllowedTypesFromCoverageClause(normalizedClause).length > 0 ||
     extractAllowedClassesFromCoverageClause(normalizedClause).length > 0 ||
     extractAllowedCharacterTagsFromCoverageClause(normalizedClause).length > 0
@@ -287,8 +301,7 @@ function extractCaptainBranches(text) {
 
 function extractCaptainBoostScopeClauses(text, includeConditional) {
   const boostClauses = splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. '))
-    .map(stripInlineConditionalBoostRiders)
-    .map(stripBoostInsteadSuffix)
+    .flatMap((clause) => normalizeCaptainBoostScopeClauseCandidates(clause, includeConditional))
     .filter(
       (clause) =>
         (includeConditional || !isConditionalCaptainBoostClause(clause)) &&
@@ -300,6 +313,18 @@ function extractCaptainBoostScopeClauses(text, includeConditional) {
   }
 
   return [...boostClauses, ...extractCaptainStartOfFightCooldownTagClauses(text)];
+}
+
+function normalizeCaptainBoostScopeClauseCandidates(clause, includeConditional) {
+  const normalizedClause = stripBoostInsteadSuffix(stripInlineConditionalBoostRiders(clause));
+
+  if (!includeConditional || !isConditionalCaptainBoostClause(normalizedClause)) {
+    return [normalizedClause];
+  }
+
+  return extractEffectClausesFromConditionalSentence(normalizedClause)
+    .map(stripInlineConditionalBoostRiders)
+    .map(stripBoostInsteadSuffix);
 }
 
 function splitCaptainEffectClauses(text) {
@@ -353,6 +378,7 @@ function isCaptainBoostScopeClause(clause) {
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
       COST_SUBSET_PATTERN.test(normalizedClause) ||
+      boostClauseHasDominantTypeScope(normalizedClause) ||
       extractAllowedTypesFromCoverageClause(normalizedClause).length > 0 ||
       extractAllowedClassesFromCoverageClause(normalizedClause).length > 0 ||
       extractAllowedCharacterTagsFromCoverageClause(normalizedClause).length > 0)
@@ -462,7 +488,20 @@ function escapeRegExp(value) {
 }
 
 const CREW_TEAM_CONDITION_PATTERN =
-  /\bcrew\s+has\s+(\d+)\s*\+?\s*(?:or\s+more\s+)?([^,.;]{1,220}?)\s+(?:characters|units)\b/gi;
+  /\bcrew\s+has\s+(\d+)\s*(?:\+|or\s+more)?\s+(?!(?:or\s+more\s+)?characters?\s+(?:of|with)\s+the\s+same\s+Type\b)([^,.;]{1,220}?)\s+(?:characters|units)\b/gi;
+// Alternative count phrasing: "you have N or more X characters in your crew".
+const CREW_TEAM_ALT_COUNT_PATTERN =
+  /\byou\s+have\s+(\d+)\s*(?:\+|or\s+more)?\s+(?!(?:or\s+more\s+)?characters?\s+(?:of|with)\s+the\s+same\s+Type\b)([^,.;]{1,220}?)\s+(?:characters|units)\s+in\s+your\s+crew\b/gi;
+const CREW_TEAM_SAME_TYPE_PATTERN =
+  /\b(?:your\s+)?crew\s+has\s+(\d+)\s*(?:\+|or\s+more)?\s+characters?\s+(?:of|with)\s+the\s+same\s+Type\b/gi;
+const CREW_TEAM_ALT_SAME_TYPE_PATTERN =
+  /\byou\s+have\s+(\d+)\s*(?:\+|or\s+more)?\s+characters?\s+(?:of|with)\s+the\s+same\s+Type\s+in\s+your\s+crew\b/gi;
+// Rainbow / presence-all phrasing: "there is/are a [STR], [DEX] ... character(s) in your crew".
+const CREW_TEAM_RAINBOW_PATTERN =
+  /\bthere(?:'?s|\s+is|\s+are)\s+a?\s*((?:\[[A-Z]{3}\][\s,/]*(?:and\s+)?){2,5})\s*characters?\s+in\s+your\s+crew\b/gi;
+// Negative crew presence: "there are no [PSY] or [INT] characters on/in your crew".
+const CREW_TEAM_EXCLUSION_PATTERN =
+  /\bthere\s+(?:are\s+no|aren'?t(?:\s+any)?)\s+([^,.;]{1,220}?)\s+(?:characters|units)\s+(?:on|in)\s+your\s+crew\b/gi;
 const TERRITORY_FIELD_PATTERN =
   /\bfield\s+has\s+Territory\s*[:\s]+([^,.;]+?)(?=,|\.|;|$)/gi;
 const ACTION_SPECIAL_EXCELLENT_PATTERN = /\bperforms?\s+EXCELLENT\s+with\s+their\s+Action\s+Special\b/i;
@@ -490,6 +529,9 @@ export function extractCoverageTiers(captainText) {
 
   const defaultCaptainText = extractDefaultCaptainBoostText(normalizedCaptainText);
   const defaultBoostClauses = resolveCaptainBoostScopeClauses(defaultCaptainText, false);
+  const conditionalTiers = extractConditionalSentenceClusters(normalizedCaptainText)
+    .map((cluster) => buildConditionalTier(cluster))
+    .filter((tier) => tier !== null);
 
   const tiers = [];
 
@@ -498,8 +540,20 @@ export function extractCoverageTiers(captainText) {
   const hpClauses = defaultBoostClauses.filter((clause) => HP_CLAUSE_PATTERN.test(clause));
   const fallbackAtk = atkClauses.filter((clause) => FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
   const subsetAtk = atkClauses.filter((clause) => !FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
+  const shouldMergeDefaultHpIntoDominantTypeTier =
+    atkClauses.length === 0 &&
+    hpClauses.length > 0 &&
+    conditionalTiers.some((tier) => tier.characterConditions.dominantType && tier.atkBoost);
 
-  if (fallbackAtk.length > 0 && subsetAtk.length > 0) {
+  if (shouldMergeDefaultHpIntoDominantTypeTier) {
+    for (const tier of conditionalTiers) {
+      tiers.push(
+        tier.characterConditions.dominantType && tier.atkBoost
+          ? mergeDefaultClausesIntoConditionalTier(tier, hpClauses)
+          : tier,
+      );
+    }
+  } else if (fallbackAtk.length > 0 && subsetAtk.length > 0) {
     tiers.push(
       buildDefaultTier('baseline', dedupeClauses([...fallbackAtk, ...hpClauses])),
       buildDefaultTier('unconditional-top', dedupeClauses([...subsetAtk, ...hpClauses])),
@@ -509,17 +563,28 @@ export function extractCoverageTiers(captainText) {
   }
 
   // 2. Each conditional clause becomes its own tier.
-  const conditionalSentences = extractConditionalSentenceClusters(normalizedCaptainText);
-
-  for (const cluster of conditionalSentences) {
-    const tier = buildConditionalTier(cluster);
-    if (tier !== null) {
+  if (!shouldMergeDefaultHpIntoDominantTypeTier) {
+    for (const tier of conditionalTiers) {
       tiers.push(tier);
     }
   }
 
   // 3. Renumber tiers sequentially after filtering.
   return tiers.map((tier, index) => ({ ...tier, tier: index + 1 }));
+}
+
+function mergeDefaultClausesIntoConditionalTier(tier, defaultClauses) {
+  const clauses = dedupeClauses([...tier.clauses, ...defaultClauses]);
+  const characterConditions = resolveTierCharacterConditions(clauses);
+
+  return {
+    ...tier,
+    scope: resolveScopeFromTierClauses(clauses, tier.scope),
+    characterConditions,
+    clauses,
+    atkBoost: resolveTierBoost(clauses, 'atk'),
+    hpBoost: resolveTierBoost(clauses, 'hp'),
+  };
 }
 
 function buildDefaultTier(kind, clauses) {
@@ -581,9 +646,29 @@ function buildConditionalCluster(sentence) {
   const triggerConditions = [];
 
   let match;
+  CREW_TEAM_SAME_TYPE_PATTERN.lastIndex = 0;
+  while ((match = CREW_TEAM_SAME_TYPE_PATTERN.exec(sentence)) !== null) {
+    teamConditions.push(parseSameTypeTeamCondition(match[1], match[0]));
+  }
+  CREW_TEAM_ALT_SAME_TYPE_PATTERN.lastIndex = 0;
+  while ((match = CREW_TEAM_ALT_SAME_TYPE_PATTERN.exec(sentence)) !== null) {
+    teamConditions.push(parseSameTypeTeamCondition(match[1], match[0]));
+  }
   CREW_TEAM_CONDITION_PATTERN.lastIndex = 0;
   while ((match = CREW_TEAM_CONDITION_PATTERN.exec(sentence)) !== null) {
     teamConditions.push(parseCrewTeamCondition(match[1], match[2], match[0]));
+  }
+  CREW_TEAM_ALT_COUNT_PATTERN.lastIndex = 0;
+  while ((match = CREW_TEAM_ALT_COUNT_PATTERN.exec(sentence)) !== null) {
+    teamConditions.push(parseCrewTeamCondition(match[1], match[2], match[0]));
+  }
+  CREW_TEAM_RAINBOW_PATTERN.lastIndex = 0;
+  while ((match = CREW_TEAM_RAINBOW_PATTERN.exec(sentence)) !== null) {
+    teamConditions.push(parseRainbowTeamCondition(match[1], match[0]));
+  }
+  CREW_TEAM_EXCLUSION_PATTERN.lastIndex = 0;
+  while ((match = CREW_TEAM_EXCLUSION_PATTERN.exec(sentence)) !== null) {
+    teamConditions.push(parseExclusionTeamCondition(match[1], match[0]));
   }
 
   TERRITORY_FIELD_PATTERN.lastIndex = 0;
@@ -657,6 +742,72 @@ function extractEffectClausesFromConditionalSentence(sentence) {
     .filter(Boolean);
 }
 
+function parseSameTypeTeamCondition(countText, rawClause) {
+  const minCount = Number(countText);
+
+  return {
+    kind: 'crew-composition',
+    minCount: Number.isFinite(minCount) && minCount > 0 ? minCount : undefined,
+    types: [],
+    classes: [],
+    characterTags: [],
+    sameType: true,
+    rawClause,
+  };
+}
+
+function parseExclusionTeamCondition(descriptor, rawClause) {
+  const types = [];
+  const classes = [];
+  const characterTags = [];
+
+  for (const typeLabel of AUTO_TEAM_BUILDER_TYPES) {
+    if (new RegExp(`\\[${typeLabel}\\]`, 'i').test(descriptor)) {
+      types.push(typeLabel);
+    }
+  }
+  for (const classLabel of AUTO_TEAM_BUILDER_CLASSES) {
+    if (new RegExp(`\\b${escapeRegExp(classLabel)}s?\\b`, 'i').test(descriptor)) {
+      classes.push(classLabel);
+    }
+  }
+  const tagMatches = [...descriptor.matchAll(BRACKETED_LABEL_PATTERN)].map((tag) => tag[1]);
+  for (const tag of tagMatches) {
+    const lowerTag = tag.toLowerCase();
+    if (
+      !AUTO_TEAM_BUILDER_TYPES.some((typeLabel) => typeLabel.toLowerCase() === lowerTag) &&
+      !AUTO_TEAM_BUILDER_CLASSES.some((classLabel) => classLabel.toLowerCase() === lowerTag)
+    ) {
+      characterTags.push(tag);
+    }
+  }
+
+  return {
+    kind: 'crew-exclusion',
+    types,
+    classes,
+    characterTags,
+    rawClause,
+  };
+}
+
+function parseRainbowTeamCondition(typeListText, rawClause) {
+  const types = [];
+  for (const typeLabel of AUTO_TEAM_BUILDER_TYPES) {
+    if (new RegExp(`\\[${typeLabel}\\]`, 'i').test(typeListText)) {
+      types.push(typeLabel);
+    }
+  }
+  return {
+    kind: 'crew-composition',
+    minCount: types.length > 0 ? types.length : undefined,
+    types,
+    classes: [],
+    characterTags: [],
+    rawClause,
+  };
+}
+
 function parseCrewTeamCondition(countText, descriptor, rawClause) {
   const minCount = Number(countText);
   const types = [];
@@ -671,7 +822,9 @@ function parseCrewTeamCondition(countText, descriptor, rawClause) {
     }
   }
   for (const classLabel of AUTO_TEAM_BUILDER_CLASSES) {
-    if (new RegExp(`\\b${escapeRegExp(classLabel)}\\b`, 'i').test(lowerDescriptor)) {
+    // Allow plural form (Slashers, Strikers, ...) when matching crew condition descriptors —
+    // some captain abilities say "5 or more Slashers characters" instead of "5 or more Slasher".
+    if (new RegExp(`\\b${escapeRegExp(classLabel)}s?\\b`, 'i').test(lowerDescriptor)) {
       classes.push(classLabel);
     }
   }
@@ -749,6 +902,9 @@ function resolveTierCharacterConditions(clauses) {
     if (SELF_SCOPE_PATTERN.test(clause)) {
       conditions.selfOnly = true;
     }
+    if (boostClauseHasDominantTypeScope(clause)) {
+      conditions.dominantType = true;
+    }
 
     for (const type of extractAllowedTypesFromCoverageClause(clause)) {
       if (!conditions.types.includes(type)) {
@@ -806,4 +962,10 @@ function resolveTierBoost(clauses, stat) {
   }
 
   return highest > 0 ? highest : undefined;
+}
+
+function boostClauseHasDominantTypeScope(clause) {
+  return extractBoostTargetFragments(clause).some((fragment) =>
+    DOMINANT_TYPE_SCOPE_PATTERN.test(fragment),
+  );
 }

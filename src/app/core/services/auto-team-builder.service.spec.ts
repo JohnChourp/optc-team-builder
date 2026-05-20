@@ -3193,6 +3193,59 @@ describe('Auto team builder', () => {
     ).toBe(true);
   });
 
+  it('builds Dominant Type captain teams with every slot on the leader type', () => {
+    const captainAbility =
+      'Boosts HP of all characters by 1.25x, makes badly matching orbs beneficial for all characters, and reduces Despair duration by 6 turns. If your crew has 4+ characters of the same Type, boosts ATK of the Dominant Type characters by 4.5x.';
+    const records = [
+      createCharacterRecord({
+        id: 4574,
+        name: 'St. Ethanbaron V. Nusjuro - Approaching Monstrous Horse',
+        type: 'INT',
+        primaryClass: 'Driven',
+        secondaryClass: 'Slasher',
+        detail: {
+          captainAbility,
+          specialText: 'Reduces Chain Coefficient Reduction duration by 6 turns.',
+        },
+      }),
+      ...[4580, 4581, 4582, 4583].map((id) =>
+        createCharacterRecord({
+          id,
+          type: 'INT',
+          primaryClass: 'Driven',
+          detail: {
+            specialText: 'Reduces Bind duration by 5 turns.',
+          },
+        }),
+      ),
+      ...[9000, 9001, 9002, 9003].map((id) =>
+        createCharacterRecord({
+          id,
+          type: 'DEX',
+          primaryClass: 'Driven',
+          detail: {
+            specialText: 'Reduces Despair duration by 5 turns.',
+          },
+        }),
+      ),
+    ];
+
+    const result = buildAutoTeamResult(records, {
+      ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
+        lockedCharacterIds: [4574],
+        captainCharacterId: 4574,
+        friendCaptainCharacterId: 4574,
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.leaderCriteria.requiresDominantType).toBe(true);
+    expect(result?.coverage.leaderCriteria.derivedAllowedTypes).toEqual(['INT']);
+    expect(result?.coverage.leaderCriteria.matchingSlots).toBe(6);
+    expect(result?.slots.every((slot) => slot.character.type === 'INT')).toBe(true);
+    expect(result?.slots.some((slot) => slot.character.type === 'DEX')).toBe(false);
+  });
+
   it('keeps selected captain despair coverage global while satisfying battle counters', () => {
     const result = buildAutoTeamResult(createKidCaptainRequirementRecords(), {
       ...createInput(['DEX', 'STR', 'QCK', 'PSY', 'INT'], [], {
@@ -9691,11 +9744,13 @@ function buildWorkerResult(
         derivedAllowedClasses: [],
         derivedAllowedTypes: [],
         derivedAllowedCharacterTags: [],
+        dominantTypeRequirements: [],
         hasCostRestriction: false,
         maxAllowedCost: null,
         hasClassRestriction: false,
         hasTypeRestriction: false,
         hasCharacterTagRestriction: false,
+        requiresDominantType: false,
         tagConditionSets: [],
         matchingSlots: 0,
         totalSlots: 0,

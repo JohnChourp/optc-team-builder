@@ -53,6 +53,7 @@ export interface CaptainCoverageTargetScope {
   universal: boolean;
   fallbackOther: boolean;
   selfOnly: boolean;
+  dominantType?: boolean;
   types: string[];
   classes: string[];
   characterTags: string[];
@@ -62,6 +63,7 @@ export interface CaptainCoverageTargetScope {
 export type CaptainCoverageTeamConditionKind =
   | 'crew-composition'
   | 'crew-count'
+  | 'crew-exclusion'
   | 'requires-captain'
   | 'requires-friend-captain';
 
@@ -72,6 +74,7 @@ export interface CaptainCoverageTeamCondition {
   types?: string[];
   classes?: string[];
   characterTags?: string[];
+  sameType?: boolean;
   rawClause: string;
 }
 

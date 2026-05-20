@@ -295,14 +295,15 @@ function normalizeCaptainCoverageTargetScope(
   CharacterDetail['captainAbilityCoverage']
 >['entries'][number]['tiers'][number]['characterConditions'] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {
-      universal: false,
-      fallbackOther: false,
-      selfOnly: false,
-      types: [],
-      classes: [],
-      characterTags: [],
-    };
+      return {
+        universal: false,
+        fallbackOther: false,
+        selfOnly: false,
+        dominantType: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+      };
   }
   const record = value as Record<string, unknown>;
   const costRangeRaw = record['costRange'];
@@ -326,6 +327,7 @@ function normalizeCaptainCoverageTargetScope(
     universal: Boolean(record['universal']),
     fallbackOther: Boolean(record['fallbackOther']),
     selfOnly: Boolean(record['selfOnly']),
+    dominantType: Boolean(record['dominantType']),
     types: normalizeStringList(record['types']),
     classes: normalizeStringList(record['classes']),
     characterTags: normalizeStringList(record['characterTags']),
@@ -351,11 +353,13 @@ function normalizeCaptainCoverageTeamConditions(
       type TeamConditionKind =
         | 'crew-composition'
         | 'crew-count'
+        | 'crew-exclusion'
         | 'requires-captain'
         | 'requires-friend-captain';
       const kind: TeamConditionKind =
         kindRaw === 'crew-composition' ||
         kindRaw === 'crew-count' ||
+        kindRaw === 'crew-exclusion' ||
         kindRaw === 'requires-captain' ||
         kindRaw === 'requires-friend-captain'
           ? (kindRaw as TeamConditionKind)
@@ -369,6 +373,7 @@ function normalizeCaptainCoverageTeamConditions(
         types: normalizeStringList(record['types']),
         classes: normalizeStringList(record['classes']),
         characterTags: normalizeStringList(record['characterTags']),
+        sameType: Boolean(record['sameType']),
         rawClause: String(record['rawClause'] ?? ''),
       };
     })

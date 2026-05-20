@@ -34,10 +34,12 @@ import {
 } from '../../core/models/auto-team-builder-ability.models';
 import { type AutoBuildCaptainAbilityCoverageMode } from '../../core/models/auto-team-builder.models';
 import { type CaptainCoverageResult } from '../../core/services/captain-coverage.utils';
+import { buildCaptainCoverageTierView } from '../../core/services/captain-coverage-tier-view.utils';
 import {
   createCaptainCoverageFilterState,
   type CaptainCoverageFilterState,
   getCaptainCoverageAvailableTierNumbers,
+  getCaptainCoverageTiers,
   resolveCaptainCoverageFilterResult,
 } from '../../core/services/captain-coverage-filter.utils';
 import {
@@ -292,6 +294,9 @@ export class CaptainCoveragePage implements OnInit {
   );
   public readonly availableTierNumbers = computed<number[]>(() =>
     getCaptainCoverageAvailableTierNumbers(this.selectedCaptainDetail()),
+  );
+  public readonly captainTierBreakdown = computed(() =>
+    getCaptainCoverageTiers(this.selectedCaptainDetail()).map(buildCaptainCoverageTierView),
   );
   public readonly hasTierCoverageData = computed<boolean>(
     () => this.availableTierNumbers().length > 0,

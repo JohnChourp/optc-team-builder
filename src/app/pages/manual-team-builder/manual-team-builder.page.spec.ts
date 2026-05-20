@@ -849,6 +849,7 @@ function createDualCaptainRecord(): CharacterDetailRecord {
         secondCoverageScope: 'subset',
         firstCoverageClauses: ['Boosts ATK of [STR] characters by 5x'],
         secondCoverageClauses: ['Boosts ATK of [DEX] characters by 5x'],
+        tiers: [],
       },
     ],
   };

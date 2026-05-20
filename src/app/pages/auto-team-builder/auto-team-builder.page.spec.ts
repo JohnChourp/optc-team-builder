@@ -3101,6 +3101,13 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         tone: 'secondary',
       },
       {
+        key: 'leaderScope',
+        text: '',
+        displayText: '\u00A0',
+        visible: false,
+        tone: 'secondary',
+      },
+      {
         key: 'leaderPairPosition',
         text: '',
         displayText: '\u00A0',
@@ -3165,9 +3172,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       },
       {
         key: 'workEstimate',
-        text: 'Upper-bound scheduled pool rescans so far: 31,744 x 1,200 = ~38,092,800 candidate checks',
+        text: 'Approximate upper-bound scheduled candidate visits so far: 31,744 x 1,200 = ~38,092,800 visits',
         displayText:
-          'Upper-bound scheduled pool rescans so far: 31,744 x 1,200 = ~38,092,800 candidate checks',
+          'Approximate upper-bound scheduled candidate visits so far: 31,744 x 1,200 = ~38,092,800 visits',
         visible: true,
         tone: 'secondary',
       },
@@ -3190,6 +3197,14 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         key: 'candidatePool',
         text: '1200 candidates in the current search pool',
         displayText: '1200 candidates in the current search pool',
+        visible: true,
+        tone: 'secondary',
+      },
+      {
+        key: 'favoriteScope',
+        text: 'Favorites scope: 3 favorites active; current search pool 1,200 candidates after filters/exclusions.',
+        displayText:
+          'Favorites scope: 3 favorites active; current search pool 1,200 candidates after filters/exclusions.',
         visible: true,
         tone: 'secondary',
       },
@@ -3410,6 +3425,99 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         expect.objectContaining({
           key: 'activeWorkers',
           text: 'Active workers: 7',
+          visible: true,
+        }),
+      ]),
+    );
+  });
+
+  it('labels favorite-only progress leaders as favorite when the active favorites include them', async () => {
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    userState.favoriteCharacterIds.set([4574]);
+    page.favoritesOnly.set(true);
+    page.buildProgress.set(
+      createLeaderProgressSnapshot({
+        captainId: 4574,
+        captainName: 'St. Ethanbaron V. Nusjuro - Approaching Monstrous Horse',
+        friendCaptainId: 4574,
+        friendCaptainName: 'St. Ethanbaron V. Nusjuro - Approaching Monstrous Horse',
+      }),
+    );
+
+    expect(page.loadingProgressRows()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'leaderScope',
+          text: 'Leader scope: Captain favorite; Friend favorite',
+          tone: 'secondary',
+          visible: true,
+        }),
+        expect.objectContaining({
+          key: 'favoriteScope',
+          text: 'Favorites scope: 1 favorites active; current search pool 1,236 candidates after filters/exclusions.',
+          tone: 'secondary',
+          visible: true,
+        }),
+      ]),
+    );
+  });
+
+  it('labels non-favorite manual progress leaders as manual outside favorites', async () => {
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    userState.favoriteCharacterIds.set([101]);
+    page.favoritesOnly.set(true);
+    page.manualSlots.set(
+      createManualSlots({
+        captain: [4574],
+        friendCaptain: [4575],
+      }),
+    );
+    page.buildProgress.set(
+      createLeaderProgressSnapshot({
+        captainId: 4574,
+        captainName: 'Manual Captain',
+        friendCaptainId: 4575,
+        friendCaptainName: 'Manual Friend',
+      }),
+    );
+
+    expect(page.loadingProgressRows()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'leaderScope',
+          text: 'Leader scope: Captain manual outside favorites; Friend manual outside favorites',
+          tone: 'secondary',
+          visible: true,
+        }),
+      ]),
+    );
+  });
+
+  it('warns when favorite-only progress leaders are outside favorites and not manual locked', async () => {
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+    userState.favoriteCharacterIds.set([101]);
+    page.favoritesOnly.set(true);
+    page.buildProgress.set(
+      createLeaderProgressSnapshot({
+        captainId: 4574,
+        captainName: 'Unexpected Captain',
+        friendCaptainId: 4575,
+        friendCaptainName: 'Unexpected Friend',
+      }),
+    );
+
+    expect(page.loadingProgressRows()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'leaderScope',
+          text: 'Leader scope: Captain unexpected outside favorite auto-fill; Friend unexpected outside favorite auto-fill',
+          tone: 'warning',
           visible: true,
         }),
       ]),
@@ -6292,6 +6400,46 @@ describe('AutoTeamBuilderPage preset import state', () => {
     });
   });
 
+  it('warns when an imported favorite-only preset was saved with a different favorite count', async () => {
+    const { page, userState } = await createPage();
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: true,
+      favoritesOnly: true,
+      favoriteCount: 2,
+      manualSlots: createManualSlots(),
+      lockedCharacterIds: [],
+      lockedCharacters: [],
+      selectedLeaderIds: [],
+      captainLeaderId: null,
+      friendCaptainLeaderId: null,
+      exportedAt: '2026-05-20T04:10:10.459Z',
+    });
+
+    await page.ngOnInit();
+    userState.favoriteCharacterIds.set([101, 102, 103, 104]);
+    await page['importSelectionPreset'](
+      new File([JSON.stringify(payload)], 'favorite-count-preset.json', {
+        type: 'application/json',
+      }),
+    );
+
+    expect(page.presetImportFeedback()).toEqual({
+      tone: 'warning',
+      title: 'Preset applied with warnings.',
+      details: [
+        'Loaded settings from favorite-count-preset.json.',
+        'Preset was saved with 2 favorite characters, but this device currently has 4. Favorites were not imported; favorite-only auto-fill uses the current local favorites.',
+      ],
+    });
+  });
+
   it('imports v31 embedded generated team into AutoTeamBuilder slots and restores settings', async () => {
     const { page } = await createPage();
     const exportedAt = '2026-05-05T20:14:45.183Z';
@@ -6838,6 +6986,38 @@ function createManualSlots(
   }));
 }
 
+function createLeaderProgressSnapshot(input: {
+  captainId: number;
+  captainName: string;
+  friendCaptainId: number;
+  friendCaptainName: string;
+}): AutoBuildProgressSnapshot {
+  return {
+    stage: 'exactAttempt',
+    candidateCount: 1236,
+    completedAttempts: 0,
+    totalAttempts: 1,
+    attemptCountFinal: true,
+    elapsedMs: 35_000,
+    estimatedRemainingMs: null,
+    averageFallbackAttemptMs: null,
+    completedFallbackAttempts: 0,
+    currentCaptainId: input.captainId,
+    currentCaptainName: input.captainName,
+    currentFriendCaptainId: input.friendCaptainId,
+    currentFriendCaptainName: input.friendCaptainName,
+    currentDroppedTypes: [],
+    currentDroppedClasses: [],
+    currentAllowedLeadersWithSuperEffects: false,
+    currentIgnoredLeaderSuperSpecialCriteria: false,
+    messageKey: 'progress.exactAttempt',
+    messageParams: {
+      current: 1,
+      total: 1,
+    },
+  };
+}
+
 function createAutoBuildResult(
   slots: AutoBuildResult['slots'] = [
     { role: 'captain', character: createCharacterRecord(101), reasonChips: ['Captain slot'] },
@@ -6962,11 +7142,13 @@ function createAutoBuildResult(
         derivedAllowedClasses: ['Fighter', 'Slasher'],
         derivedAllowedTypes: ['DEX', 'PSY'],
         derivedAllowedCharacterTags: [],
+        dominantTypeRequirements: [],
         hasCostRestriction: false,
         maxAllowedCost: null,
         hasClassRestriction: true,
         hasTypeRestriction: true,
         hasCharacterTagRestriction: false,
+        requiresDominantType: false,
         tagConditionSets: [],
         matchingSlots: 6,
         totalSlots: 6,

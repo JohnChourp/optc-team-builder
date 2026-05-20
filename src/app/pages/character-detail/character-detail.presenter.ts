@@ -1,5 +1,6 @@
 import { type NormalizedBuilderAbility } from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../../core/models/optc.models';
+import { buildCaptainCoverageTierView } from '../../core/services/captain-coverage-tier-view.utils';
 import { summarizeCaptainAbilityCoverageText } from '../../core/services/captain-coverage.utils';
 
 type DisplayLabel = {
@@ -50,6 +51,17 @@ export interface CharacterDetailCaptainCoverageEntry {
   text: string;
   firstCoverageClauses: string[];
   secondCoverageClauses: string[];
+  tiers: CharacterDetailCaptainCoverageTier[];
+}
+
+export interface CharacterDetailCaptainCoverageTier {
+  tier: number;
+  kind: 'baseline' | 'unconditional-top' | 'conditional';
+  scopeLabel: string;
+  conditionLines: string[];
+  effectClauses: string[];
+  atkBoost?: number;
+  hpBoost?: number;
 }
 
 export interface CharacterDetailViewModel {
@@ -250,18 +262,24 @@ function buildCaptainAbilitySummary(
         ? coverage.secondCoverageClauses
         : [];
 
+      const tiers = generatedCoverage?.tiers
+        ? generatedCoverage.tiers.map(buildCaptainCoverageTierView)
+        : [];
+
       return {
         label: entry.label,
         text,
         firstCoverageClauses: coverage.firstCoverageClauses,
         secondCoverageClauses,
+        tiers,
       };
     })
     .filter(
       (entry) =>
         entry.text.length ||
         entry.firstCoverageClauses.length ||
-        entry.secondCoverageClauses.length,
+        entry.secondCoverageClauses.length ||
+        entry.tiers.length,
     );
   const captainNotes = detail.captainNotes?.trim() || null;
   const recognizedAbilities = detail.builderAbilities.filter(
@@ -281,6 +299,7 @@ function buildCaptainAbilitySummary(
       }
     : null;
 }
+
 
 function hasDistinctSecondCoverage(
   firstCoverageClauses: string[],

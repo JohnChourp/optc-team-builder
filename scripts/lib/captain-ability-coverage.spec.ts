@@ -164,6 +164,111 @@ describe('extractCoverageTiers', () => {
     });
   });
 
+  it('captures negative crew presence ("there are no [X] or [Y]") team conditions', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of [STR] characters by 3x. If there are no [PSY] or [INT] characters on your crew, boosts ATK of [STR] characters by 4x instead.',
+    );
+    expect(tiers).toHaveLength(2);
+    expect(tiers[1]).toMatchObject({
+      tier: 2,
+      kind: 'conditional',
+      atkBoost: 4,
+      teamConditions: expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'crew-exclusion',
+          types: expect.arrayContaining(['PSY', 'INT']),
+        }),
+      ]),
+    });
+  });
+
+  it('captures rainbow ("there is a [STR], [DEX]...") team conditions on conditional tiers', () => {
+    const tiers = extractCoverageTiers(
+      "If there's a [STR], [DEX], [QCK], [PSY] and [INT] character in your crew, boosts ATK of all characters by 2.25x and their HP by 1.5x",
+    );
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]?.teamConditions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 5,
+          types: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+        }),
+      ]),
+    );
+  });
+
+  it('captures alt-phrasing ("you have N or more X") crew counts', () => {
+    const tiers = extractCoverageTiers(
+      'If you have 5 or more Slasher characters in your crew, boosts ATK of Slasher characters by 2.5x and their HP by 1.5x',
+    );
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]?.teamConditions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 5,
+          classes: ['Slasher'],
+        }),
+      ]),
+    );
+  });
+
+  it('models Dominant Type ATK as a same-type team coverage and keeps shared HP in that tier', () => {
+    const captainAbility =
+      'Boosts HP of all characters by 1.25x, makes badly matching orbs beneficial for all characters, and reduces Despair duration by 6 turns. If your crew has 4+ characters of the same Type, boosts ATK of the Dominant Type characters by 4.5x.';
+    const summary = summarizeCaptainAbilityCoverageText(captainAbility);
+    const tiers = extractCoverageTiers(captainAbility);
+
+    expect(summary.firstCoverageClauses).toEqual([
+      'boosts ATK of the Dominant Type characters by 4.5x',
+      'Boosts HP of all characters by 1.25x',
+    ]);
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'conditional',
+      atkBoost: 4.5,
+      hpBoost: 1.25,
+      characterConditions: expect.objectContaining({
+        dominantType: true,
+      }),
+      teamConditions: [
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 4,
+          sameType: true,
+        }),
+      ],
+      clauses: [
+        'boosts ATK of the Dominant Type characters by 4.5x',
+        'Boosts HP of all characters by 1.25x',
+      ],
+    });
+  });
+
+  it('keeps same-type all-character boosts as team-gated crew-wide coverage', () => {
+    const tiers = extractCoverageTiers(
+      'If your crew has 4 or more characters of the same Type, boosts ATK of all characters by 3.5x, by 2.75x otherwise and boosts HP of all characters by 1.3x.',
+    );
+
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      scope: 'crew-wide',
+      characterConditions: expect.objectContaining({
+        universal: true,
+      }),
+      teamConditions: [
+        expect.objectContaining({
+          minCount: 4,
+          sameType: true,
+        }),
+      ],
+    });
+    expect(tiers[0]?.characterConditions.dominantType).not.toBe(true);
+  });
+
   it('captures team composition conditions on conditional tiers', () => {
     const tiers = extractCoverageTiers(
       'Boosts ATK of all characters by 1.5x. If your crew has 4+ Free Spirit characters, boosts ATK of Free Spirit characters by 3x instead.',
