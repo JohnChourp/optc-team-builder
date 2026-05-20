@@ -207,7 +207,10 @@ export function resolveCaptainAbilityScope(captainText, includeConditional = fal
 function resolveCaptainClauseScope(clause) {
   const normalizedClause = normalizeCoverageClause(clause);
 
-  if (!isCaptainScopedEffectClause(normalizedClause)) {
+  if (
+    !isCaptainScopedEffectClause(normalizedClause) &&
+    !isCaptainTierEffectClause(normalizedClause)
+  ) {
     return 'none';
   }
 
@@ -385,6 +388,67 @@ function isCaptainBoostScopeClause(clause) {
   );
 }
 
+// Broader than isCaptainBoostScopeClause — also recognizes non-boost effect clauses (SCD
+// reduction, Special Use Limit reduction, Super Tandem enable, status removals, etc.) that
+// surface a coverage tier even when there is no ATK/HP multiplier. Required for captains whose
+// default branch is utility-only (e.g. start-of-fight cooldown reductions for a tag/type subset)
+// and for conditional clusters that gate a non-boost effect like "Special Use Limit -10 turns".
+function isCaptainTierEffectClause(clause) {
+  const normalizedClause = normalizeCoverageClause(clause);
+  if (isCaptainBoostScopeClause(normalizedClause)) {
+    return true;
+  }
+  if (SELF_SCOPE_PATTERN.test(normalizedClause) && !boostClauseHasUniversalScope(normalizedClause)) {
+    return false;
+  }
+  if (
+    /\breduces?\s+Special\s+Cooldown\s+of\b/i.test(normalizedClause) &&
+    clauseHasAnyCaptainScope(normalizedClause)
+  ) {
+    return true;
+  }
+  if (/\breduces?\s+Special\s+Use\s+Limit\b/i.test(normalizedClause)) {
+    return true;
+  }
+  if (
+    /\ballows?\b[^.;]*\bto\s+perform\s+Super\s+Tandem\b/i.test(normalizedClause) &&
+    clauseHasAnyCaptainScope(normalizedClause)
+  ) {
+    return true;
+  }
+  if (
+    /\breduces?\s+(?:VS\s*Gauge|Switch\s+Effect)\b/i.test(normalizedClause) &&
+    clauseHasAnyCaptainScope(normalizedClause)
+  ) {
+    return true;
+  }
+  if (/\breduces?\s+damage\s+received\b/i.test(normalizedClause)) {
+    return true;
+  }
+  if (/\bmakes?\b[^.;]*\borbs?\b[^.;]*\bbeneficial\b/i.test(normalizedClause)) {
+    return true;
+  }
+  if (
+    /\breduces?\s+(?:Despair|Bind|Paralysis|Special\s+Bind|Burn|Poison|Silence|Blindness|Slow|Chain\s+Coefficient\s+Reduction|Increase\s+Damage\s+Taken|Healing\s+Reduction|No\s+Healing|Threshold\s+Damage\s+Reduction|Percent\s+Damage\s+Reduction)\b/i.test(
+      normalizedClause,
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function clauseHasAnyCaptainScope(clause) {
+  return (
+    boostClauseHasUniversalScope(clause) ||
+    COST_SUBSET_PATTERN.test(clause) ||
+    boostClauseHasDominantTypeScope(clause) ||
+    extractAllowedTypesFromCoverageClause(clause).length > 0 ||
+    extractAllowedClassesFromCoverageClause(clause).length > 0 ||
+    extractAllowedCharacterTagsFromCoverageClause(clause).length > 0
+  );
+}
+
 function stripInlineConditionalBoostRiders(clause) {
   return normalizeCoverageClause(clause.replace(INLINE_CONDITIONAL_BOOST_RIDER_PATTERN, ''));
 }
@@ -440,16 +504,27 @@ function boostClauseHasUniversalScope(clause) {
 }
 
 function extractAllowedTypesFromCoverageClause(clause) {
-  const text = normalizeCoverageClause(clause);
-
-  return AUTO_TEAM_BUILDER_TYPES.filter((type) => new RegExp(`\\[${type}\\]`, 'i').test(text));
+  // Restrict scope detection to the clause's TARGET fragments (e.g. "X characters") so we don't
+  // accidentally pick up orb-color tokens like `[STR]` from clauses such as
+  // "allows all characters to perform Super Tandem with [STR] orbs for 10 turns".
+  const targetFragments = extractCoverageTargetFragments(clause);
+  if (targetFragments.length === 0) {
+    return [];
+  }
+  return AUTO_TEAM_BUILDER_TYPES.filter((type) =>
+    targetFragments.some((fragment) => new RegExp(`\\[${type}\\]`, 'i').test(fragment)),
+  );
 }
 
 function extractAllowedClassesFromCoverageClause(clause) {
-  const text = normalizeCoverageClause(clause);
-
+  const targetFragments = extractCoverageTargetFragments(clause);
+  if (targetFragments.length === 0) {
+    return [];
+  }
   return AUTO_TEAM_BUILDER_CLASSES.filter((characterClass) =>
-    new RegExp(`\\b${escapeRegExp(characterClass)}\\b`, 'i').test(text),
+    targetFragments.some((fragment) =>
+      new RegExp(`\\b${escapeRegExp(characterClass)}\\b`, 'i').test(fragment),
+    ),
   );
 }
 
@@ -529,6 +604,10 @@ export function extractCoverageTiers(captainText) {
 
   const defaultCaptainText = extractDefaultCaptainBoostText(normalizedCaptainText);
   const defaultBoostClauses = resolveCaptainBoostScopeClauses(defaultCaptainText, false);
+  const defaultEffectClauses = resolveCaptainTierEffectClauses(defaultCaptainText);
+  const defaultNonBoostEffectClauses = defaultEffectClauses.filter(
+    (clause) => !defaultBoostClauses.includes(clause),
+  );
   const conditionalTiers = extractConditionalSentenceClusters(normalizedCaptainText)
     .map((cluster) => buildConditionalTier(cluster))
     .filter((tier) => tier !== null);
@@ -555,11 +634,30 @@ export function extractCoverageTiers(captainText) {
     }
   } else if (fallbackAtk.length > 0 && subsetAtk.length > 0) {
     tiers.push(
-      buildDefaultTier('baseline', dedupeClauses([...fallbackAtk, ...hpClauses])),
-      buildDefaultTier('unconditional-top', dedupeClauses([...subsetAtk, ...hpClauses])),
+      buildDefaultTier(
+        'baseline',
+        dedupeClauses([...fallbackAtk, ...hpClauses]),
+        defaultNonBoostEffectClauses,
+      ),
+      buildDefaultTier(
+        'unconditional-top',
+        dedupeClauses([...subsetAtk, ...hpClauses]),
+        defaultNonBoostEffectClauses,
+      ),
     );
   } else if (defaultBoostClauses.length > 0) {
-    tiers.push(buildDefaultTier('baseline', dedupeClauses(defaultBoostClauses)));
+    tiers.push(
+      buildDefaultTier(
+        'baseline',
+        dedupeClauses(defaultBoostClauses),
+        defaultNonBoostEffectClauses,
+      ),
+    );
+  } else if (defaultNonBoostEffectClauses.length > 0) {
+    // Captains whose default branch is utility-only (SCD/SUL/Super Tandem/etc.) still get a
+    // baseline tier so the user can see and filter on it. Here all clauses are tier-defining
+    // because there are no boost clauses to take precedence.
+    tiers.push(buildDefaultTier('baseline', dedupeClauses(defaultNonBoostEffectClauses), []));
   }
 
   // 2. Each conditional clause becomes its own tier.
@@ -571,6 +669,16 @@ export function extractCoverageTiers(captainText) {
 
   // 3. Renumber tiers sequentially after filtering.
   return tiers.map((tier, index) => ({ ...tier, tier: index + 1 }));
+}
+
+function resolveCaptainTierEffectClauses(captainText) {
+  const branchStripped = captainText.replace(BRANCH_LABEL_PATTERN, '. ');
+  return splitCaptainEffectClauses(branchStripped)
+    .map(stripInlineConditionalBoostRiders)
+    .map(stripBoostInsteadSuffix)
+    .filter((clause) => !isConditionalCaptainBoostClause(clause))
+    .filter(isCaptainTierEffectClause)
+    .map(normalizeCoverageClause);
 }
 
 function mergeDefaultClausesIntoConditionalTier(tier, defaultClauses) {
@@ -587,9 +695,14 @@ function mergeDefaultClausesIntoConditionalTier(tier, defaultClauses) {
   };
 }
 
-function buildDefaultTier(kind, clauses) {
-  const characterConditions = resolveTierCharacterConditions(clauses);
-  const scope = resolveScopeFromTierClauses(clauses, 'none');
+function buildDefaultTier(kind, primaryClauses, extraClauses = []) {
+  // `primaryClauses` drive tier-defining metadata (scope, character conditions, atk/hp boost).
+  // `extraClauses` are attached for display purposes but do not contaminate the tier's character
+  // scope (e.g. attaching a "[STR] orbs" Super Tandem clause to a Cost 70+ tier should not introduce
+  // a spurious type/cost filter).
+  const characterConditions = resolveTierCharacterConditions(primaryClauses);
+  const scope = resolveScopeFromTierClauses(primaryClauses, 'none');
+  const clauses = dedupeClauses([...primaryClauses, ...extraClauses]);
 
   return {
     tier: 0,
@@ -600,24 +713,24 @@ function buildDefaultTier(kind, clauses) {
     fieldConditions: [],
     triggerConditions: [],
     clauses,
-    atkBoost: resolveTierBoost(clauses, 'atk'),
-    hpBoost: resolveTierBoost(clauses, 'hp'),
+    atkBoost: resolveTierBoost(primaryClauses, 'atk'),
+    hpBoost: resolveTierBoost(primaryClauses, 'hp'),
   };
 }
 
 function buildConditionalTier(cluster) {
-  const clauseBoosts = cluster.clauses
+  const clauseEffects = cluster.clauses
     .map(stripInlineConditionalBoostRiders)
     .map(stripBoostInsteadSuffix)
-    .filter(isCaptainBoostScopeClause)
+    .filter(isCaptainTierEffectClause)
     .map(normalizeCoverageClause);
 
-  if (clauseBoosts.length === 0) {
+  if (clauseEffects.length === 0) {
     return null;
   }
 
-  const characterConditions = resolveTierCharacterConditions(clauseBoosts);
-  const scope = resolveScopeFromTierClauses(clauseBoosts, 'none');
+  const characterConditions = resolveTierCharacterConditions(clauseEffects);
+  const scope = resolveScopeFromTierClauses(clauseEffects, 'none');
 
   return {
     tier: 0,
@@ -627,9 +740,9 @@ function buildConditionalTier(cluster) {
     teamConditions: cluster.teamConditions,
     fieldConditions: cluster.fieldConditions,
     triggerConditions: cluster.triggerConditions,
-    clauses: dedupeClauses(clauseBoosts),
-    atkBoost: resolveTierBoost(clauseBoosts, 'atk'),
-    hpBoost: resolveTierBoost(clauseBoosts, 'hp'),
+    clauses: dedupeClauses(clauseEffects),
+    atkBoost: resolveTierBoost(clauseEffects, 'atk'),
+    hpBoost: resolveTierBoost(clauseEffects, 'hp'),
   };
 }
 

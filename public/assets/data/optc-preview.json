@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T04:49:45.435Z",
+  "generatedAt": "2026-05-20T14:46:54.451Z",
   "characters": [
     {
       "id": 1,
@@ -1249,7 +1249,27 @@
               "secondCoverageScope": "none",
               "firstCoverageClauses": [],
               "secondCoverageClauses": [],
-              "tiers": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "none",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Reduces damage received from [INT] enemies by 20%"
+                  ]
+                }
+              ]
             }
           ]
         },

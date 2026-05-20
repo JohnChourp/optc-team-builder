@@ -164,6 +164,51 @@ describe('extractCoverageTiers', () => {
     });
   });
 
+  it('produces a tier for utility-only captains (SCD/Super Tandem in default branch, no ATK/HP)', () => {
+    const tiers = extractCoverageTiers(
+      'Reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns, reduces Special Cooldown of [QCK] and Free Spirit characters by 2 turns, and reduces VS Gauge and Switch Effect of [QCK] and Free Spirit characters by 2.',
+    );
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      characterConditions: expect.objectContaining({
+        types: expect.arrayContaining(['QCK']),
+        classes: expect.arrayContaining(['Free Spirit']),
+        characterTags: expect.arrayContaining([
+          'Blackbeard Pirates',
+          'Four Emperors',
+          'Worst Generation',
+        ]),
+      }),
+    });
+    expect(tiers[0].clauses).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/reduces Special Cooldown of \[Blackbeard Pirates\]/i),
+        expect.stringMatching(/reduces Special Cooldown of \[QCK\] and Free Spirit/i),
+      ]),
+    );
+  });
+
+  it('captures conditional non-boost tier (e.g. "If crew has 4+ FS, reduces Special Use Limit -10")', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of all characters by 1.5x. If your crew has 4+ Free Spirit characters, reduces Special Use Limit duration by 10 turns.',
+    );
+    expect(tiers).toHaveLength(2);
+    expect(tiers[1]).toMatchObject({
+      tier: 2,
+      kind: 'conditional',
+      teamConditions: expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 4,
+          classes: ['Free Spirit'],
+        }),
+      ]),
+    });
+    expect(tiers[1].clauses[0]).toMatch(/reduces Special Use Limit duration by 10 turns/i);
+  });
+
   it('captures negative crew presence ("there are no [X] or [Y]") team conditions', () => {
     const tiers = extractCoverageTiers(
       'Boosts ATK of [STR] characters by 3x. If there are no [PSY] or [INT] characters on your crew, boosts ATK of [STR] characters by 4x instead.',
