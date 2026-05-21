@@ -86,21 +86,20 @@ describe('extractCoverageTiers', () => {
     expect(tiers[0].atkBoost).toBe(3);
   });
 
-  it('captures tiered-rarity scope ("Rarity N or N+ characters") with single-tier merge', () => {
-    // The clustering logic merges multi-rarity boosts into a single subset tier whose
-    // characterConditions reflect the last rarity match. The full breakdown is preserved in
-    // the clauses[] list so the user still sees each individual rarity boost.
+  it('splits tiered-rarity captains into one tier per rarity level', () => {
     const tiers = extractCoverageTiers(
-      'Boosts ATK of Rarity 4 or 4+ characters by 1.75x, boosts ATK of Rarity 5 or 5+ characters by 2x',
+      'Boosts ATK of Rarity 4 or 4+ characters by 1.75x, boosts ATK of Rarity 5 or 5+ characters by 2x and boosts ATK of Rarity 6 or 6+ characters by 2.25x',
     );
-    expect(tiers.length).toBeGreaterThanOrEqual(1);
-    expect(tiers[0].characterConditions.rarityRange).toMatchObject({ min: expect.any(Number) });
-    expect(tiers[0].clauses).toEqual(
-      expect.arrayContaining([
-        expect.stringMatching(/Rarity 4/i),
-        expect.stringMatching(/Rarity 5/i),
-      ]),
+    expect(tiers).toHaveLength(3);
+    const byRarity = new Map(
+      tiers.map((t) => [t.characterConditions.rarityRange?.min, t]),
     );
+    expect(byRarity.get(4)?.atkBoost).toBe(1.75);
+    expect(byRarity.get(5)?.atkBoost).toBe(2);
+    expect(byRarity.get(6)?.atkBoost).toBe(2.25);
+    expect(byRarity.get(4)?.characterConditions.rarityRange).toEqual({ min: 4, max: 4 });
+    expect(byRarity.get(5)?.characterConditions.rarityRange).toEqual({ min: 5, max: 5 });
+    expect(byRarity.get(6)?.characterConditions.rarityRange).toEqual({ min: 6, max: 6 });
   });
 
   it('captures orb-chance bias ("Boosts chances of getting [X] orbs") as a tier effect', () => {

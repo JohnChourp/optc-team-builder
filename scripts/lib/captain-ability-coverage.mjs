@@ -643,14 +643,41 @@ export function extractCoverageTiers(captainText) {
       ),
     );
   } else if (defaultBoostClauses.length > 0) {
-    const primary = dedupeClauses(defaultBoostClauses);
-    tiers.push(
-      buildDefaultTier(
-        'baseline',
-        primary,
-        routeExtrasToTierScope(defaultNonBoostEffectClauses, primary),
-      ),
-    );
+    // Detect rarity-tiered or cost-tiered captains: multiple subset ATK clauses each scoped to a
+    // DIFFERENT rarity or cost subset (e.g. Sir Crocodile #2697: Rarity 4/5/6 with distinct ATK
+    // multipliers). Without this split, all clauses collapse into a single tier and the rarity
+    // scope label reflects only the last match. With it, each rarity gets its own tier with the
+    // correct atkBoost and characterConditions.rarityRange.
+    const numericGroups = groupBoostClausesByNumericSubset(atkClauses);
+    if (numericGroups.length > 1) {
+      // Only universal-scoped HP clauses propagate to every tier (crew-wide HP applies to all
+      // groups regardless of cost/rarity scope). Scoped HP clauses ("boosts HP of Cost 41+ by Yx")
+      // already live in their own ATK clause's group via the same string; we filter them out of
+      // the propagating HP list to avoid corrupting other tiers' character conditions.
+      const universalHpClauses = hpClauses.filter(
+        (clause) => boostClauseHasUniversalScope(clause) && !ATK_CLAUSE_PATTERN.test(clause),
+      );
+      for (let i = 0; i < numericGroups.length; i++) {
+        const primary = dedupeClauses([...numericGroups[i], ...universalHpClauses]);
+        const kind = i === 0 ? 'baseline' : 'unconditional-top';
+        tiers.push(
+          buildDefaultTier(
+            kind,
+            primary,
+            routeExtrasToTierScope(defaultNonBoostEffectClauses, primary),
+          ),
+        );
+      }
+    } else {
+      const primary = dedupeClauses(defaultBoostClauses);
+      tiers.push(
+        buildDefaultTier(
+          'baseline',
+          primary,
+          routeExtrasToTierScope(defaultNonBoostEffectClauses, primary),
+        ),
+      );
+    }
   } else if (defaultNonBoostEffectClauses.length > 0) {
     // Captains whose default branch is utility-only (SCD/SUL/Super Tandem/etc.) still get a
     // baseline tier so the user can see and filter on it. Here all clauses are tier-defining
@@ -870,6 +897,43 @@ function clauseFitsTierScope(clause, tierScope) {
     tierScope.characterTags.includes(tag),
   );
   return typeOverlap || classOverlap || tagOverlap;
+}
+
+// Groups ATK boost clauses by their numeric subset signature (rarityRange/costRange). Clauses
+// with the same rarity/cost min+max collapse into one group; clauses with DIFFERENT numeric
+// scopes get their own group. Used to split rarity-tiered or cost-tiered captains into one tier
+// per rarity/cost level so their `atkBoost` and `characterConditions` reflect each tier exactly.
+//
+// Returns the input list as a single-group array when no numeric subset exists (so the caller
+// can fall back to the single-tier path).
+function groupBoostClausesByNumericSubset(boostClauses) {
+  if (boostClauses.length <= 1) {
+    return [boostClauses];
+  }
+  const groups = new Map();
+  let hasAnyNumericRange = false;
+  const noneKey = '__none__';
+  for (const clause of boostClauses) {
+    const conditions = resolveTierCharacterConditions([clause]);
+    const rarityKey = conditions.rarityRange
+      ? `r:${conditions.rarityRange.min ?? ''}-${conditions.rarityRange.max ?? ''}`
+      : '';
+    const costKey = conditions.costRange
+      ? `c:${conditions.costRange.min ?? ''}-${conditions.costRange.max ?? ''}`
+      : '';
+    if (rarityKey || costKey) {
+      hasAnyNumericRange = true;
+    }
+    const key = `${rarityKey}|${costKey}` || noneKey;
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(clause);
+  }
+  if (!hasAnyNumericRange || groups.size <= 1) {
+    return [boostClauses];
+  }
+  return [...groups.values()];
 }
 
 function buildDefaultTier(kind, primaryClauses, extraClauses = []) {
