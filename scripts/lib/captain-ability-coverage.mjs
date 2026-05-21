@@ -471,9 +471,11 @@ function extractAllowedClassesFromCoverageClause(clause) {
   if (targetFragments.length === 0) {
     return [];
   }
+  // Match both singular and plural forms ("Striker" / "Strikers") since OPTC text is inconsistent
+  // — already handled the same way in the team-condition class extractor (line ~1129).
   return AUTO_TEAM_BUILDER_CLASSES.filter((characterClass) =>
     targetFragments.some((fragment) =>
-      new RegExp(`\\b${escapeRegExp(characterClass)}\\b`, 'i').test(fragment),
+      new RegExp(`\\b${escapeRegExp(characterClass)}s?\\b`, 'i').test(fragment),
     ),
   );
 }

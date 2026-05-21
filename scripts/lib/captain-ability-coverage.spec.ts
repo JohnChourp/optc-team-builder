@@ -54,6 +54,15 @@ describe('extractCoverageTiers', () => {
     expect(tiers[0].clauses[0]).not.toMatch(/this character/i);
   });
 
+  it('matches plural class names in coverage clause ("Strikers characters")', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of Strikers characters by 2.5x if HP is below 30% at the start of the turn',
+    );
+    expect(tiers.length).toBeGreaterThanOrEqual(1);
+    const allClasses = tiers.flatMap((t) => t.characterConditions.classes);
+    expect(allClasses).toContain('Striker');
+  });
+
   it('captures exact-cost subset (Cost N characters, no qualifier)', () => {
     const tiers = extractCoverageTiers('Boosts ATK of Cost 40 characters by 2.5x');
     expect(tiers).toHaveLength(1);
