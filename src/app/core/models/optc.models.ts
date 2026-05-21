@@ -43,7 +43,11 @@ export interface CharacterCaptainAbilityCoverageEntry {
 
 export type CharacterCaptainAbilityScope = 'crew-wide' | 'captain-only' | 'subset' | 'none';
 
-export type CaptainCoverageTierKind = 'baseline' | 'unconditional-top' | 'conditional';
+export type CaptainCoverageTierKind =
+  | 'baseline'
+  | 'unconditional-top'
+  | 'conditional'
+  | 'baseline-and-conditional';
 
 export interface CaptainCoverageTargetScope {
   universal: boolean;
@@ -109,6 +113,11 @@ export interface CharacterCaptainAbilityCoverageTier {
   fieldConditions: CaptainCoverageFieldCondition[];
   triggerConditions: CaptainCoverageTriggerCondition[];
   clauses: string[];
+  // For `baseline-and-conditional` tiers (e.g. a captain with universal HP baseline and a
+  // team-gated universal ATK boost): split clauses so the UI can render the unconditional baseline
+  // and the gated effects under separate labels within the same tier.
+  baselineClauses?: string[];
+  conditionalClauses?: string[];
   atkBoost?: number;
   hpBoost?: number;
 }

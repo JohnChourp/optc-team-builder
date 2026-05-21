@@ -1,5 +1,8 @@
 import { type NormalizedBuilderAbility } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord } from '../../core/models/optc.models';
+import {
+  type CaptainCoverageTierKind,
+  type CharacterDetailRecord,
+} from '../../core/models/optc.models';
 import { buildCaptainCoverageTierView } from '../../core/services/captain-coverage-tier-view.utils';
 
 type DisplayLabel = {
@@ -53,10 +56,12 @@ export interface CharacterDetailCaptainCoverageEntry {
 
 export interface CharacterDetailCaptainCoverageTier {
   tier: number;
-  kind: 'baseline' | 'unconditional-top' | 'conditional';
+  kind: CaptainCoverageTierKind;
   scopeLabel: string;
   conditionLines: string[];
   effectClauses: string[];
+  baselineEffectClauses?: string[];
+  conditionalEffectClauses?: string[];
   atkBoost?: number;
   hpBoost?: number;
 }

@@ -125,6 +125,37 @@ describe('extractCoverageTiers', () => {
     });
   });
 
+  it('drops HP-dependent variable damage reduction clauses from the tier (Coby #5055)', () => {
+    const tiers = extractCoverageTiers(
+      "Boosts ATK of Fighter characters by 2x, reduces damage received by 0%-30% depending on the crew's current HP",
+    );
+
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      atkBoost: 2,
+      characterConditions: expect.objectContaining({
+        classes: ['Fighter'],
+      }),
+    });
+    expect(tiers[0]?.clauses).toEqual(['Boosts ATK of Fighter characters by 2x']);
+    expect(
+      tiers[0]?.clauses.some((clause) => /depending on the crew/i.test(clause)),
+    ).toBe(false);
+  });
+
+  it('keeps flat damage reduction clauses (no HP dependency) on the tier', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of [STR] characters by 2x and reduces damage received by 20%',
+    );
+
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]?.clauses).toEqual(
+      expect.arrayContaining([expect.stringMatching(/reduces damage received by 20%/i)]),
+    );
+  });
+
   it('produces a tier for utility-only captains (SCD/Super Tandem in default branch, no ATK/HP)', () => {
     const tiers = extractCoverageTiers(
       'Reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns, reduces Special Cooldown of [QCK] and Free Spirit characters by 2 turns, and reduces VS Gauge and Switch Effect of [QCK] and Free Spirit characters by 2.',
@@ -269,6 +300,40 @@ describe('extractCoverageTiers', () => {
         }),
       ]),
     );
+  });
+
+  it('merges default universal HP into the universal-scope conditional ATK tier as baseline-and-conditional (Roger #4573)', () => {
+    const captainAbility =
+      'Boosts HP of all characters by 1.25x, and makes badly matching orbs beneficial for all characters. If you have 6 [PSY] characters or there is a [STR], [DEX], [QCK], [PSY] and [INT] character in your crew, boosts ATK of all characters by 5.25x, and reduces Bind duration by 6 turns.';
+    const tiers = extractCoverageTiers(captainAbility);
+
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline-and-conditional',
+      scope: 'crew-wide',
+      atkBoost: 5.25,
+      hpBoost: 1.25,
+      characterConditions: expect.objectContaining({
+        universal: true,
+        fallbackOther: false,
+      }),
+      teamConditions: expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 5,
+          types: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+        }),
+      ]),
+      baselineClauses: [
+        'Boosts HP of all characters by 1.25x',
+        'and makes badly matching orbs beneficial for all characters',
+      ],
+      conditionalClauses: [
+        'boosts ATK of all characters by 5.25x',
+        'and reduces Bind duration by 6 turns',
+      ],
+    });
   });
 
   it('models Dominant Type ATK as a same-type team coverage and keeps shared HP in that tier', () => {

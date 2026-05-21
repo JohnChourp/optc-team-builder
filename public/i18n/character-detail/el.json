@@ -98,6 +98,7 @@
   "captainTierKinds": {
     "baseline": "Baseline",
     "unconditional-top": "Top tier",
-    "conditional": "Conditional"
+    "conditional": "Conditional",
+    "baseline-and-conditional": "Baseline + Conditional"
   }
 }

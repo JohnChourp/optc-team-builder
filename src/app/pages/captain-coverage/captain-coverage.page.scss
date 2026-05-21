@@ -453,6 +453,36 @@
   background: rgba(126, 174, 255, 0.08);
 }
 
+.captain-tier-breakdown__tier--mixed {
+  border-color: rgba(204, 165, 247, 0.5);
+  background: rgba(204, 165, 247, 0.08);
+}
+
+.captain-tier-breakdown__subsection {
+  display: grid;
+  gap: 2px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.captain-tier-breakdown__subsection--baseline {
+  border-left-color: rgba(102, 220, 130, 0.7);
+}
+
+.captain-tier-breakdown__subsection--conditional {
+  border-left-color: rgba(126, 174, 255, 0.7);
+}
+
+.captain-tier-breakdown__subsection-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(248, 251, 255, 0.8);
+}
+
 .captain-tier-breakdown__tier--active {
   outline: 2px solid rgba(245, 200, 76, 0.7);
   outline-offset: 1px;

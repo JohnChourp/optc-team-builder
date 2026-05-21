@@ -1,11 +1,18 @@
-import { type CharacterCaptainAbilityCoverageTier } from '../models/optc.models';
+import {
+  type CaptainCoverageTierKind,
+  type CharacterCaptainAbilityCoverageTier,
+} from '../models/optc.models';
 
 export interface CaptainCoverageTierViewModel {
   tier: number;
-  kind: 'baseline' | 'unconditional-top' | 'conditional';
+  kind: CaptainCoverageTierKind;
   scopeLabel: string;
   conditionLines: string[];
   effectClauses: string[];
+  // Populated for `baseline-and-conditional` tiers so the UI can render the unconditional
+  // baseline and the gated effects under separate labels within the same tier panel.
+  baselineEffectClauses?: string[];
+  conditionalEffectClauses?: string[];
   atkBoost?: number;
   hpBoost?: number;
 }
@@ -13,12 +20,25 @@ export interface CaptainCoverageTierViewModel {
 export function buildCaptainCoverageTierView(
   tier: CharacterCaptainAbilityCoverageTier,
 ): CaptainCoverageTierViewModel {
+  const hasSplit =
+    tier.kind === 'baseline-and-conditional' &&
+    Array.isArray(tier.baselineClauses) &&
+    Array.isArray(tier.conditionalClauses) &&
+    tier.baselineClauses.length > 0 &&
+    tier.conditionalClauses.length > 0;
+
   return {
     tier: tier.tier,
     kind: tier.kind,
     scopeLabel: buildCaptainCoverageTierScopeLabel(tier),
     conditionLines: collectCaptainCoverageTierConditionLines(tier),
     effectClauses: [...tier.clauses],
+    ...(hasSplit
+      ? {
+          baselineEffectClauses: [...tier.baselineClauses!],
+          conditionalEffectClauses: [...tier.conditionalClauses!],
+        }
+      : {}),
     atkBoost: tier.atkBoost,
     hpBoost: tier.hpBoost,
   };

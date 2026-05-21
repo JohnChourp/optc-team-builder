@@ -335,6 +335,9 @@
                       [class.captain-tier-breakdown__tier--baseline]="tier.kind === 'baseline'"
                       [class.captain-tier-breakdown__tier--top]="tier.kind === 'unconditional-top'"
                       [class.captain-tier-breakdown__tier--conditional]="tier.kind === 'conditional'"
+                      [class.captain-tier-breakdown__tier--mixed]="
+                        tier.kind === 'baseline-and-conditional'
+                      "
                       [class.captain-tier-breakdown__tier--active]="isTierCoverageActive(tier.tier)"
                       [attr.data-test]="'captain-coverage-tier-panel-row-' + tier.tier"
                     >
@@ -347,19 +350,57 @@
                           {{ t('filters.tierCoverage.kinds.' + tier.kind) }}
                         </span>
                       </header>
-                      @if (tier.conditionLines.length) {
-                        <ul class="captain-tier-breakdown__conditions">
-                          @for (line of tier.conditionLines; track $index) {
-                            <li>{{ line }}</li>
+                      @if (
+                        tier.kind === 'baseline-and-conditional' &&
+                        tier.baselineEffectClauses?.length &&
+                        tier.conditionalEffectClauses?.length
+                      ) {
+                        <div
+                          class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--baseline"
+                        >
+                          <span class="captain-tier-breakdown__subsection-label">
+                            {{ t('filters.tierCoverage.kinds.baseline') }}
+                          </span>
+                          <ul class="captain-tier-breakdown__effects">
+                            @for (effect of tier.baselineEffectClauses; track $index) {
+                              <li>{{ effect }}</li>
+                            }
+                          </ul>
+                        </div>
+                        <div
+                          class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--conditional"
+                        >
+                          <span class="captain-tier-breakdown__subsection-label">
+                            {{ t('filters.tierCoverage.kinds.conditional') }}
+                          </span>
+                          @if (tier.conditionLines.length) {
+                            <ul class="captain-tier-breakdown__conditions">
+                              @for (line of tier.conditionLines; track $index) {
+                                <li>{{ line }}</li>
+                              }
+                            </ul>
                           }
-                        </ul>
-                      }
-                      @if (tier.effectClauses.length) {
-                        <ul class="captain-tier-breakdown__effects">
-                          @for (effect of tier.effectClauses; track $index) {
-                            <li>{{ effect }}</li>
-                          }
-                        </ul>
+                          <ul class="captain-tier-breakdown__effects">
+                            @for (effect of tier.conditionalEffectClauses; track $index) {
+                              <li>{{ effect }}</li>
+                            }
+                          </ul>
+                        </div>
+                      } @else {
+                        @if (tier.conditionLines.length) {
+                          <ul class="captain-tier-breakdown__conditions">
+                            @for (line of tier.conditionLines; track $index) {
+                              <li>{{ line }}</li>
+                            }
+                          </ul>
+                        }
+                        @if (tier.effectClauses.length) {
+                          <ul class="captain-tier-breakdown__effects">
+                            @for (effect of tier.effectClauses; track $index) {
+                              <li>{{ effect }}</li>
+                            }
+                          </ul>
+                        }
                       }
                     </li>
                   }

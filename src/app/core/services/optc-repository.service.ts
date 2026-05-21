@@ -7,6 +7,7 @@ import {
 } from '../models/auto-team-builder.models';
 import { type AutoBuildAbilityCatalog } from '../models/auto-team-builder-ability.models';
 import {
+  type CaptainCoverageTierKind,
   type CharacterAssets,
   type CharacterCaptainAbilityScope,
   type CharacterDetail,
@@ -247,9 +248,12 @@ function normalizeCaptainCoverageTiers(
         return null;
       }
       const kindRaw = record['kind'];
-      const kind: 'baseline' | 'unconditional-top' | 'conditional' =
-        kindRaw === 'baseline' || kindRaw === 'unconditional-top' || kindRaw === 'conditional'
-          ? (kindRaw as 'baseline' | 'unconditional-top' | 'conditional')
+      const kind: CaptainCoverageTierKind =
+        kindRaw === 'baseline' ||
+        kindRaw === 'unconditional-top' ||
+        kindRaw === 'conditional' ||
+        kindRaw === 'baseline-and-conditional'
+          ? (kindRaw as CaptainCoverageTierKind)
           : 'baseline';
       const scope = normalizeCaptainAbilityScope(record['scope']);
       const characterConditions = normalizeCaptainCoverageTargetScope(record['characterConditions']);
@@ -259,6 +263,14 @@ function normalizeCaptainCoverageTiers(
         record['triggerConditions'],
       );
       const clauses = normalizeStringList(record['clauses']);
+      const baselineClausesRaw = record['baselineClauses'];
+      const conditionalClausesRaw = record['conditionalClauses'];
+      const baselineClauses =
+        baselineClausesRaw !== undefined ? normalizeStringList(baselineClausesRaw) : undefined;
+      const conditionalClauses =
+        conditionalClausesRaw !== undefined
+          ? normalizeStringList(conditionalClausesRaw)
+          : undefined;
       const atkBoostRaw = Number(record['atkBoost']);
       const hpBoostRaw = Number(record['hpBoost']);
 
@@ -271,6 +283,8 @@ function normalizeCaptainCoverageTiers(
         fieldConditions,
         triggerConditions,
         clauses,
+        ...(baselineClauses && baselineClauses.length ? { baselineClauses } : {}),
+        ...(conditionalClauses && conditionalClauses.length ? { conditionalClauses } : {}),
         atkBoost: Number.isFinite(atkBoostRaw) && atkBoostRaw > 0 ? atkBoostRaw : undefined,
         hpBoost: Number.isFinite(hpBoostRaw) && hpBoostRaw > 0 ? hpBoostRaw : undefined,
       };

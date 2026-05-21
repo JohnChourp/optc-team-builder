@@ -323,6 +323,14 @@ function isCaptainTierEffectClause(clause) {
     return true;
   }
   if (/\breduces?\s+damage\s+received\b/i.test(normalizedClause)) {
+    // Variable damage reduction tied to mid-battle state (crew current HP, accumulated specials,
+    // tap timing, perfects scored, etc.) is unactionable from a team builder perspective — the
+    // value depends on what the player does during combat, not on team composition. We drop those
+    // clauses from tier output so they don't pollute coverage breakdowns with effects the user
+    // cannot plan around.
+    if (HP_DEPENDENT_DAMAGE_REDUCTION_PATTERN.test(normalizedClause)) {
+      return false;
+    }
     return true;
   }
   if (
@@ -496,6 +504,12 @@ const REQUIRES_CAPTAIN_PATTERN = /\b(?:this character is your Captain|if you hav
 const FOR_N_TURNS_PATTERN = /\bfor\s+(\d+)\s+turns?\b/i;
 const COST_MIN_PATTERN = /\bcost\s+(\d+)\s+or\s+more\s+characters?\b/i;
 const COST_MAX_PATTERN = /\bcost\s+(\d+)\s+or\s+less\s+characters?\b/i;
+// Damage reduction clauses whose effective value is set mid-battle by something the team builder
+// cannot control: the crew's current HP (e.g. "0%-30% depending on the crew's current HP"), tap
+// timing, perfects scored, etc. We surface the actionable, flat damage-reduction clauses but drop
+// the variable ones so coverage tiers describe what the captain reliably provides on selection.
+const HP_DEPENDENT_DAMAGE_REDUCTION_PATTERN =
+  /\breduces?\s+damage\s+received\b[^.;]*\bdepending\s+on\s+(?:the\s+)?(?:crew|captain|character|own)['’]?s?\s+(?:current\s+)?HP\b/i;
 
 // Produces an ordered list of tiers (1-indexed) describing distinct (conditions → effects) bundles
 // in the captain ability. Tier 1 is the baseline — clauses that apply with the broadest scope (or
@@ -529,16 +543,49 @@ export function extractCoverageTiers(captainText) {
   const hpClauses = defaultBoostClauses.filter((clause) => HP_CLAUSE_PATTERN.test(clause));
   const fallbackAtk = atkClauses.filter((clause) => FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
   const subsetAtk = atkClauses.filter((clause) => !FALLBACK_OTHER_SCOPE_PATTERN.test(clause));
+  const defaultHpIsUniversal =
+    hpClauses.length > 0 && hpClauses.every((clause) => boostClauseHasUniversalScope(clause));
   const shouldMergeDefaultHpIntoDominantTypeTier =
     atkClauses.length === 0 &&
     hpClauses.length > 0 &&
     conditionalTiers.some((tier) => tier.characterConditions.dominantType && tier.atkBoost);
+  // Roger-style: default branch contributes only universal HP (no ATK); a conditional tier
+  // contributes ATK with the same universal scope. The character provides both HP and ATK across
+  // the whole crew — gating one of them shouldn't fork the breakdown into two tiers. Fold the
+  // baseline HP into the conditional ATK tier and tag the merged tier as baseline-and-conditional
+  // so the UI can render the unconditional HP and the gated ATK as labeled subsections.
+  const shouldMergeDefaultHpIntoUniversalConditionalAtkTier =
+    !shouldMergeDefaultHpIntoDominantTypeTier &&
+    atkClauses.length === 0 &&
+    defaultHpIsUniversal &&
+    conditionalTiers.some((tier) => isUniversalConditionalAtkTierMergeTarget(tier));
 
   if (shouldMergeDefaultHpIntoDominantTypeTier) {
     for (const tier of conditionalTiers) {
       tiers.push(
         tier.characterConditions.dominantType && tier.atkBoost
           ? mergeDefaultClausesIntoConditionalTier(tier, hpClauses)
+          : tier,
+      );
+    }
+  } else if (shouldMergeDefaultHpIntoUniversalConditionalAtkTier) {
+    // Carry over any default non-boost effects (e.g. "makes badly matching orbs beneficial")
+    // alongside the HP boost so the baseline subsection isn't reduced to a bare stat line.
+    const baselineExtras = defaultNonBoostEffectClauses.filter((clause) =>
+      clauseFitsTierScope(clause, {
+        universal: true,
+        fallbackOther: false,
+        selfOnly: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+      }),
+    );
+    const baselineClauses = dedupeClauses([...hpClauses, ...baselineExtras]);
+    for (const tier of conditionalTiers) {
+      tiers.push(
+        isUniversalConditionalAtkTierMergeTarget(tier)
+          ? mergeBaselineClausesIntoConditionalTier(tier, baselineClauses)
           : tier,
       );
     }
@@ -581,7 +628,10 @@ export function extractCoverageTiers(captainText) {
   }
 
   // 3. Each conditional clause becomes its own tier.
-  if (!shouldMergeDefaultHpIntoDominantTypeTier) {
+  if (
+    !shouldMergeDefaultHpIntoDominantTypeTier &&
+    !shouldMergeDefaultHpIntoUniversalConditionalAtkTier
+  ) {
     for (const tier of conditionalTiers) {
       tiers.push(tier);
     }
@@ -668,6 +718,44 @@ function mergeDefaultClausesIntoConditionalTier(tier, defaultClauses) {
     atkBoost: resolveTierBoost(clauses, 'atk'),
     hpBoost: resolveTierBoost(clauses, 'hp'),
   };
+}
+
+// Roger-style merge: keep the conditional tier as the spine (its team/field/trigger conditions
+// gate the ATK clauses) and graft the unconditional baseline clauses on top with explicit split
+// fields so the UI can label the unconditional vs gated effects without losing either side. We
+// stamp `kind: 'baseline-and-conditional'` so consumers can opt into the split-section rendering
+// without breaking existing single-kind tiers.
+function mergeBaselineClausesIntoConditionalTier(tier, baselineClauses) {
+  const conditionalClauses = dedupeClauses(tier.clauses);
+  const baselineDedup = dedupeClauses(baselineClauses);
+  const clauses = dedupeClauses([...baselineDedup, ...conditionalClauses]);
+  const characterConditions = resolveTierCharacterConditions(clauses);
+
+  return {
+    ...tier,
+    kind: 'baseline-and-conditional',
+    scope: resolveScopeFromTierClauses(clauses, tier.scope),
+    characterConditions,
+    clauses,
+    baselineClauses: baselineDedup,
+    conditionalClauses,
+    atkBoost: resolveTierBoost(clauses, 'atk'),
+    hpBoost: resolveTierBoost(clauses, 'hp'),
+  };
+}
+
+function isUniversalConditionalAtkTierMergeTarget(tier) {
+  return (
+    tier.atkBoost !== undefined &&
+    !tier.hpBoost &&
+    tier.characterConditions.universal === true &&
+    tier.characterConditions.fallbackOther !== true &&
+    tier.characterConditions.dominantType !== true &&
+    tier.characterConditions.types.length === 0 &&
+    tier.characterConditions.classes.length === 0 &&
+    tier.characterConditions.characterTags.length === 0 &&
+    tier.characterConditions.costRange === undefined
+  );
 }
 
 // Decides which of the non-boost extra clauses should be attached as "context" effects on a
