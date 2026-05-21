@@ -127,6 +127,19 @@
               </div>
 
               @if (view.captainAbilitySummary; as captainSummary) {
+                @if (captainSummary.fieldTerritories.length) {
+                  <div class="captain-ability-summary__field-territory" data-test="captain-field-territory">
+                    <span class="detail-text__label">
+                      {{ t('fields.requiresFieldTerritory') }}
+                    </span>
+                    <div class="chip-row">
+                      @for (territory of captainSummary.fieldTerritories; track territory) {
+                        <span class="detail-chip detail-chip--territory">[{{ territory }}]</span>
+                      }
+                    </div>
+                  </div>
+                }
+
                 @if (captainSummary.coverageEntries.length) {
                   <div class="captain-ability-summary">
                     @for (entry of captainSummary.coverageEntries; track $index) {

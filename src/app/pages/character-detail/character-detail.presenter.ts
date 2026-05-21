@@ -46,6 +46,12 @@ export interface CharacterDetailCaptainAbilitySummary {
   captainNotes: string | null;
   recognizedAbilities: NormalizedBuilderAbility[];
   characterTags: string[];
+  /**
+   * Union of all distinct Field Territory values across all tiers in all coverage entries.
+   * Surfaces as a prominent badge near the raw captain ability so the user immediately sees
+   * the field requirement (e.g. "Territory: [QCK]") without scrolling to the tier breakdown.
+   */
+  fieldTerritories: string[];
 }
 
 export interface CharacterDetailCaptainCoverageEntry {
@@ -267,16 +273,27 @@ function buildCaptainAbilitySummary(
     (ability) => ability.source === 'captainAbility',
   );
   const characterTags = (detail.characterTags ?? []).filter((tag) => tag.trim().length > 0);
+  const fieldTerritories = [
+    ...new Set(
+      (detail.captainAbilityCoverage?.entries ?? []).flatMap((entry) =>
+        (entry.tiers ?? []).flatMap((tier) =>
+          (tier.fieldConditions ?? []).flatMap((condition) => condition.territories ?? []),
+        ),
+      ),
+    ),
+  ];
 
   return coverageEntries.length ||
     captainNotes ||
     recognizedAbilities.length ||
-    characterTags.length
+    characterTags.length ||
+    fieldTerritories.length
     ? {
         coverageEntries,
         captainNotes,
         recognizedAbilities,
         characterTags,
+        fieldTerritories,
       }
     : null;
 }

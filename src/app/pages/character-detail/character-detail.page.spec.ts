@@ -28,6 +28,8 @@ describe('CharacterDetailPage template', () => {
     expect(template).toContain("t('sections.abilitySummary')");
     expect(template).toContain("t('sections.captainCoverageTiers')");
     expect(template).toContain("t('sections.characterTags')");
+    expect(template).toContain("t('fields.requiresFieldTerritory')");
+    expect(template).toContain('captainSummary.fieldTerritories');
     expect(template).toContain('detail-card');
     expect(template).toContain('meta.labelKey');
     expect(template).toContain('list.labelKey');

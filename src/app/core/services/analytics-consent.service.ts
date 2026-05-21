@@ -1,7 +1,7 @@
 import { computed, Injectable, signal } from "@angular/core";
-import { Preferences } from "@capacitor/preferences";
 
 import { GoogleAnalyticsService } from "./google-analytics.service";
+import { PreferencesAdapterService } from "./preferences-adapter.service";
 
 export const ANALYTICS_CONSENT_PREFERENCE_KEY = "analyticsConsent";
 
@@ -16,7 +16,10 @@ export class AnalyticsConsentService {
   public readonly hasAnsweredConsent = computed(() => this.consentState() !== "unknown");
   public readonly canTrack = computed(() => this.consentState() === "accepted");
 
-  public constructor(private readonly analytics: GoogleAnalyticsService) {
+  public constructor(
+    private readonly analytics: GoogleAnalyticsService,
+    private readonly preferences: PreferencesAdapterService,
+  ) {
     this.readyPromise = this.hydrate();
   }
 
@@ -36,7 +39,7 @@ export class AnalyticsConsentService {
     await this.ready();
 
     this.consentState.set(nextConsent);
-    await Preferences.set({
+    await this.preferences.set({
       key: ANALYTICS_CONSENT_PREFERENCE_KEY,
       value: nextConsent,
     });
@@ -50,7 +53,7 @@ export class AnalyticsConsentService {
   }
 
   private async hydrate(): Promise<void> {
-    const { value } = await Preferences.get({ key: ANALYTICS_CONSENT_PREFERENCE_KEY });
+    const { value } = await this.preferences.get({ key: ANALYTICS_CONSENT_PREFERENCE_KEY });
     const storedConsent = this.resolveStoredConsent(value);
 
     this.consentState.set(storedConsent);

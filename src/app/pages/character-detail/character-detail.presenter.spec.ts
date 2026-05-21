@@ -133,6 +133,49 @@ describe('character-detail presenter', () => {
     expect(tiers[2]?.conditionLines.some((line) => line.startsWith('Trigger:'))).toBe(true);
   });
 
+  it('extracts Field Territory values from tiers and exposes them on the summary', () => {
+    const view = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        detail: {
+          captainAbility: 'If field has Territory: [QCK], boosts ATK of all characters by 7x.',
+          captainAbilityVariants: [
+            { key: 'captain', label: 'Captain Ability', text: 'If field has Territory: [QCK]...' },
+          ],
+          captainAbilityCoverage: {
+            entries: [
+              {
+                key: 'captain',
+                label: 'Captain Ability',
+                tiers: [
+                  {
+                    tier: 1,
+                    kind: 'conditional',
+                    scope: 'crew-wide',
+                    characterConditions: {
+                      universal: true,
+                      fallbackOther: false,
+                      selfOnly: false,
+                      types: [],
+                      classes: [],
+                      characterTags: [],
+                    },
+                    teamConditions: [],
+                    fieldConditions: [{ kind: 'territory', territories: ['QCK'], rawClause: '' }],
+                    triggerConditions: [],
+                    clauses: ['boosts ATK of all characters by 7x'],
+                    atkBoost: 7,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    expect(view.captainAbilitySummary?.fieldTerritories).toEqual(['QCK']);
+  });
+
   it('formats full rumble data into readable rows, pattern, and level entries', () => {
     const rumbleCard = buildRumbleCardModel({
       id: 13,

@@ -1,6 +1,5 @@
 import { DOCUMENT } from "@angular/common";
 import { Inject, Injectable, signal } from "@angular/core";
-import { Preferences } from "@capacitor/preferences";
 import { TranslocoService } from "@jsverse/transloco";
 import { firstValueFrom } from "rxjs";
 
@@ -10,6 +9,7 @@ import {
   DEFAULT_APP_LANGUAGE,
   type SupportedLanguage,
 } from "../i18n/app-i18n.types";
+import { PreferencesAdapterService } from "./preferences-adapter.service";
 
 type TranslationParams = Record<string, string | number | boolean | null | undefined>;
 
@@ -27,6 +27,7 @@ export class AppI18nService {
   public constructor(
     private readonly transloco: TranslocoService,
     @Inject(DOCUMENT) private readonly document: Document,
+    private readonly preferences: PreferencesAdapterService,
   ) {
     this.readyPromise = this.hydrate();
 
@@ -52,7 +53,7 @@ export class AppI18nService {
     this.transloco.setActiveLang(nextLanguage);
     this.activeLanguageState.set(nextLanguage);
     this.document.documentElement.lang = nextLanguage;
-    await Preferences.set({ key: APP_LANGUAGE_PREFERENCE_KEY, value: nextLanguage });
+    await this.preferences.set({ key: APP_LANGUAGE_PREFERENCE_KEY, value: nextLanguage });
   }
 
   public async preloadScope(scope: string): Promise<void> {
@@ -73,7 +74,7 @@ export class AppI18nService {
   }
 
   private async hydrate(): Promise<void> {
-    const { value } = await Preferences.get({ key: APP_LANGUAGE_PREFERENCE_KEY });
+    const { value } = await this.preferences.get({ key: APP_LANGUAGE_PREFERENCE_KEY });
     await this.setLanguage(this.resolveSupportedLanguage(value));
   }
 

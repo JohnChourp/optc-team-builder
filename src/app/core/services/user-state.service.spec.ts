@@ -1,22 +1,20 @@
 import '@angular/compiler';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 
-import { Preferences } from '@capacitor/preferences';
-
 import { BUILT_IN_CREW_FORGE_IMAGE_PROFILES } from '../data/crew-forge-built-in-profiles';
+import { type PreferencesAdapterService } from './preferences-adapter.service';
 import { UserStateService } from './user-state.service';
 
-vi.mock('@capacitor/preferences', () => ({
-  Preferences: {
-    get: vi.fn(),
-    set: vi.fn(),
-  },
-}));
+let preferences: { get: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn> };
 
 describe('UserStateService saved teams', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    preferences = {
+      get: vi.fn().mockResolvedValue({ value: null }),
+      set: vi.fn().mockResolvedValue(undefined),
+    };
   });
 
   it('hydrates only requested domains until full ready is requested', async () => {
@@ -36,21 +34,21 @@ describe('UserStateService saved teams', () => {
       translate: vi.fn((key: string) => key),
     };
 
-    vi.mocked(Preferences.get).mockImplementation(async ({ key }) => ({
+    preferences.get.mockImplementation(async ({ key }) => ({
       value: store.get(key) ?? null,
     }));
 
-    const service = new UserStateService(i18n as never);
+    const service = new UserStateService(i18n as never, preferences as unknown as PreferencesAdapterService);
 
     await service.readySavedEnemies();
     expect(service.savedEnemies().map((enemy) => enemy.id)).toEqual(['enemy-1']);
-    expect(vi.mocked(Preferences.get).mock.calls.map(([call]) => call.key)).toEqual([
+    expect(preferences.get.mock.calls.map(([call]) => call.key)).toEqual([
       'savedEnemies',
     ]);
 
-    vi.mocked(Preferences.get).mockClear();
+    preferences.get.mockClear();
     await service.ready();
-    expect(vi.mocked(Preferences.get).mock.calls.map(([call]) => call.key)).toEqual(
+    expect(preferences.get.mock.calls.map(([call]) => call.key)).toEqual(
       expect.arrayContaining([
         'favoriteCharacterIds',
         'favoriteShipIds',
@@ -63,7 +61,7 @@ describe('UserStateService saved teams', () => {
         'autoTeamBuilderWorkerPreference',
       ]),
     );
-    expect(vi.mocked(Preferences.get).mock.calls.map(([call]) => call.key)).not.toContain(
+    expect(preferences.get.mock.calls.map(([call]) => call.key)).not.toContain(
       'savedEnemies',
     );
   });
@@ -894,10 +892,10 @@ async function createService(
   ]);
   const setCalls: Array<{ key: string; value: string }> = [];
 
-  vi.mocked(Preferences.get).mockImplementation(async ({ key }) => ({
+  preferences.get.mockImplementation(async ({ key }) => ({
     value: store.get(key) ?? null,
   }));
-  vi.mocked(Preferences.set).mockImplementation(async ({ key, value }) => {
+  preferences.set.mockImplementation(async ({ key, value }) => {
     setCalls.push({ key, value });
     store.set(key, value);
   });
@@ -915,7 +913,7 @@ async function createService(
       return key;
     }),
   };
-  const service = new UserStateService(i18n as never);
+  const service = new UserStateService(i18n as never, preferences as unknown as PreferencesAdapterService);
 
   await service.ready();
 
