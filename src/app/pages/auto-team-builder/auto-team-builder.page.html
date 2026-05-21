@@ -2101,6 +2101,7 @@
                   [class.loading-progress-row--visible]="row.visible"
                   [class.loading-progress-row--muted]="row.tone === 'secondary'"
                   [class.loading-progress-row--fallback]="row.tone === 'fallback'"
+                  [class.loading-progress-row--warning]="row.tone === 'warning'"
                 >
                   <span>{{ row.displayText }}</span>
                 </div>
@@ -2618,6 +2619,12 @@
             [status]="conditionStatus"
           ></app-captain-team-condition-status>
         }
+
+        <app-team-coverage-summary
+          [captain]="resultCaptainDetail()"
+          [friendCaptain]="resultFriendCaptainDetail()"
+          [members]="resultTeamMembers()"
+        ></app-team-coverage-summary>
 
         <section
           class="result-grid captain-condition-panel"

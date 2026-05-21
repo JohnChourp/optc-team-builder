@@ -68,6 +68,7 @@
     },
     "rawScope": "Captain ability text available",
     "scopeChip": "{{label}}: {{scope}}",
+    "tierScopeChip": "{{label}} Tier {{tier}}: {{scope}}",
     "scopes": {
       "captain-only": "Captain only",
       "crew-wide": "Crew-wide",

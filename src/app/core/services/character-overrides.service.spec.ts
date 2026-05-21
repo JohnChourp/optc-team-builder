@@ -2,18 +2,16 @@ import '@angular/compiler';
 import { JSDOM } from 'jsdom';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Preferences } from '@capacitor/preferences';
-
 import { type CharacterListItem, type LocalCharacterOverride } from '../models/optc.models';
 import { CharacterOverridesService } from './character-overrides.service';
 import { applyOverrideToCharacterListItem } from './character-overrides.utils';
+import { type PreferencesAdapterService } from './preferences-adapter.service';
 
-vi.mock('@capacitor/preferences', () => ({
-  Preferences: {
-    get: vi.fn(),
-    set: vi.fn(),
-  },
-}));
+let preferences: { get: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn> };
+
+function buildService(): CharacterOverridesService {
+  return new CharacterOverridesService(preferences as unknown as PreferencesAdapterService);
+}
 
 describe('CharacterOverridesService', () => {
   beforeAll(() => {
@@ -22,10 +20,14 @@ describe('CharacterOverridesService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    preferences = {
+      get: vi.fn().mockResolvedValue({ value: null }),
+      set: vi.fn().mockResolvedValue(undefined),
+    };
   });
 
   it('hydrates saved overrides and normalizes invalid image payloads away', async () => {
-    vi.mocked(Preferences.get).mockResolvedValue({
+    preferences.get.mockResolvedValue({
       value: JSON.stringify([
         createOverride({
           characterId: 4101,
@@ -37,7 +39,7 @@ describe('CharacterOverridesService', () => {
       ]),
     });
 
-    const service = new CharacterOverridesService();
+    const service = buildService();
     await service.ready();
 
     expect(service.getOverrideByCharacterId(4101)).toMatchObject({
@@ -50,8 +52,8 @@ describe('CharacterOverridesService', () => {
   });
 
   it('saves a normalized override and bumps the revision', async () => {
-    vi.mocked(Preferences.get).mockResolvedValue({ value: null });
-    const service = new CharacterOverridesService();
+    preferences.get.mockResolvedValue({ value: null });
+    const service = buildService();
     await service.ready();
 
     await service.saveOverride(
@@ -69,14 +71,14 @@ describe('CharacterOverridesService', () => {
       type: 'PSY',
       classes: ['Shooter', 'Free Spirit'],
     });
-    expect(vi.mocked(Preferences.set)).toHaveBeenCalledOnce();
+    expect(preferences.set).toHaveBeenCalledOnce();
   });
 
   it('merges imported overrides with added and updated counts', async () => {
-    vi.mocked(Preferences.get).mockResolvedValue({
+    preferences.get.mockResolvedValue({
       value: JSON.stringify([createOverride({ characterId: 4101, name: 'Original' })]),
     });
-    const service = new CharacterOverridesService();
+    const service = buildService();
     await service.ready();
 
     const result = await service.mergeImportedOverrides([
@@ -92,13 +94,13 @@ describe('CharacterOverridesService', () => {
   });
 
   it('deletes overrides by character id', async () => {
-    vi.mocked(Preferences.get).mockResolvedValue({
+    preferences.get.mockResolvedValue({
       value: JSON.stringify([
         createOverride({ characterId: 4101 }),
         createOverride({ characterId: 4102 }),
       ]),
     });
-    const service = new CharacterOverridesService();
+    const service = buildService();
     await service.ready();
 
     await service.deleteOverride(4101);

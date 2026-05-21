@@ -139,6 +139,7 @@ import {
   type AbilityRequirementPickerLeaderBoostSettings,
 } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import {
   createAbilityRequirementDrafts,
@@ -189,13 +190,15 @@ import {
   type AbilityFilterRailItem,
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
 
-type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
+type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback' | 'warning';
 
 interface LoadingProgressRow {
   key:
     | 'message'
     | 'currentStepElapsed'
+    | 'favoriteScope'
     | 'leaderPair'
+    | 'leaderScope'
     | 'leaderPairPosition'
     | 'attemptWork'
     | 'candidateChecks'
@@ -535,6 +538,7 @@ function matchesScopedManualRequirements(
     AbilityFilterRailComponent,
     AbilityRequirementPickerComponent,
     CaptainTeamConditionStatusComponent,
+    TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
     RouterLink,
     TranslocoDirective,
@@ -1801,6 +1805,63 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         })
       : '';
   });
+  public readonly buildFavoriteScopeLabel = computed(() => {
+    if (!this.favoritesOnly()) {
+      return '';
+    }
+
+    const progress = this.buildProgress();
+    const favoriteCount = this.favoriteCharacterIds().length.toLocaleString();
+    const candidateCount =
+      typeof progress?.candidateCount === 'number'
+        ? progress.candidateCount.toLocaleString()
+        : null;
+    const selectedBox = this.selectedCharacterBox();
+
+    if (selectedBox) {
+      const boxCount = (this.effectiveAutoBuildCandidateIds() ?? []).length.toLocaleString();
+
+      return this.t(
+        candidateCount ? 'progress.favoriteScopeWithBox' : 'progress.favoriteScopeWithBoxPending',
+        {
+          favoriteCount,
+          boxCount,
+          boxName: selectedBox.name,
+          candidateCount: candidateCount ?? '',
+        },
+      );
+    }
+
+    return this.t(candidateCount ? 'progress.favoriteScope' : 'progress.favoriteScopePending', {
+      favoriteCount,
+      candidateCount: candidateCount ?? '',
+    });
+  });
+  public readonly buildCurrentLeaderScopeRow = computed<Pick<LoadingProgressRow, 'text' | 'tone'>>(
+    () => {
+      const progress = this.buildProgress();
+      const captain = this.resolveProgressLeaderScope(progress?.currentCaptainId, 'captain');
+      const friendCaptain = this.resolveProgressLeaderScope(
+        progress?.currentFriendCaptainId,
+        'friendCaptain',
+      );
+
+      if (!captain && !friendCaptain) {
+        return {
+          text: '',
+          tone: 'secondary',
+        };
+      }
+
+      return {
+        text: this.t('progress.leaderScope', {
+          captain: captain?.label ?? '-',
+          friendCaptain: friendCaptain?.label ?? '-',
+        }),
+        tone: captain?.isWarning || friendCaptain?.isWarning ? 'warning' : 'secondary',
+      };
+    },
+  );
   public readonly buildLeaderPairPositionLabel = computed(() => {
     const progress = this.buildProgress();
 
@@ -1944,6 +2005,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         tone: 'secondary',
       },
       {
+        key: 'leaderScope',
+        text: this.buildCurrentLeaderScopeRow().text,
+        tone: this.buildCurrentLeaderScopeRow().tone,
+      },
+      {
         key: 'leaderPairPosition',
         text: this.buildLeaderPairPositionLabel(),
         tone: 'secondary',
@@ -2006,6 +2072,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       {
         key: 'candidatePool',
         text: this.buildCandidateProgressLabel(),
+        tone: 'secondary',
+      },
+      {
+        key: 'favoriteScope',
+        text: this.buildFavoriteScopeLabel(),
         tone: 'secondary',
       },
     ];
@@ -2404,6 +2475,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       slots: slots.map((slot) => slot.character),
     });
   });
+  public readonly resultCaptainDetail = computed(
+    () => this.result()?.slots.find((slot) => slot.role === 'captain')?.character ?? null,
+  );
+  public readonly resultFriendCaptainDetail = computed(
+    () => this.result()?.slots.find((slot) => slot.role === 'friendCaptain')?.character ?? null,
+  );
+  public readonly resultTeamMembers = computed(
+    () => this.result()?.slots.map((slot) => slot.character) ?? [],
+  );
+
   public readonly teamSlots = computed<TeamSlotViewModel[]>(() => {
     const currentResult = this.result();
     let subSlotIndex = 0;
@@ -4768,20 +4849,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     fileName: string,
     payload: AutoTeamSelectionExportPayload,
   ): Promise<void> {
+    const warnings = [...importResult.warnings];
+
     await this.applySelectionPresetState(importResult.state, availableLockedCharacters);
-    this.applyEmbeddedPresetTeam(payload, availableLockedCharacters, importResult.warnings);
+    this.applyEmbeddedPresetTeam(payload, availableLockedCharacters, warnings);
+    warnings.push(...this.resolvePresetFavoriteScopeWarnings(payload));
 
     this.presetImportFeedback.set({
-      tone: importResult.warnings.length > 0 ? 'warning' : 'success',
+      tone: warnings.length > 0 ? 'warning' : 'success',
       title:
-        importResult.warnings.length > 0
+        warnings.length > 0
           ? this.t('preset.appliedWithWarningsTitle')
           : this.t('preset.appliedTitle'),
       details:
-        importResult.warnings.length > 0
+        warnings.length > 0
           ? [
               this.t('preset.loadedFromFile', { fileName }),
-              ...importResult.warnings.map((warning) => this.translateImportMessage(warning)),
+              ...warnings.map((warning) => this.translateImportMessage(warning)),
             ]
           : [this.t('preset.loadedFromFile', { fileName })],
     });
@@ -6785,6 +6869,87 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private translateImportMessage(message: AutoTeamSelectionImportMessage): string {
     return this.t(message.key, message.params);
+  }
+
+  private resolvePresetFavoriteScopeWarnings(
+    payload: AutoTeamSelectionExportPayload,
+  ): AutoTeamSelectionImportMessage[] {
+    const warnings: AutoTeamSelectionImportMessage[] = [];
+
+    if (
+      payload.filters.favoritesOnly &&
+      payload.filters.favoriteCount !== this.favoriteCharacterIds().length
+    ) {
+      warnings.push({
+        key: 'preset.warnings.favoriteCountMismatch',
+        params: {
+          imported: payload.filters.favoriteCount,
+          current: this.favoriteCharacterIds().length,
+        },
+      });
+    }
+
+    if (
+      payload.filters.favoriteShipsOnly === true &&
+      (payload.filters.favoriteShipCount ?? 0) !== this.favoriteShipIds().length
+    ) {
+      warnings.push({
+        key: 'preset.warnings.favoriteShipCountMismatch',
+        params: {
+          imported: payload.filters.favoriteShipCount ?? 0,
+          current: this.favoriteShipIds().length,
+        },
+      });
+    }
+
+    return warnings;
+  }
+
+  private resolveProgressLeaderScope(
+    characterId: number | null | undefined,
+    role: 'captain' | 'friendCaptain',
+  ): { label: string; isWarning: boolean } | null {
+    if (typeof characterId !== 'number' || !Number.isInteger(characterId) || characterId <= 0) {
+      return null;
+    }
+
+    const isFavorite = this.favoriteCharacterIds().includes(characterId);
+    const isManualLocked = this.manualSlots().some((slot) =>
+      slot.characterIds.includes(characterId),
+    );
+    const isManualLeaderPick = this.manualSlots().some(
+      (slot) => slot.role === role && slot.characterIds.includes(characterId),
+    );
+
+    if (this.favoritesOnly()) {
+      if (isFavorite) {
+        return {
+          label: this.t('progress.leaderScopeFavorite'),
+          isWarning: false,
+        };
+      }
+
+      if (isManualLocked) {
+        return {
+          label: this.t('progress.leaderScopeManualOutsideFavorites'),
+          isWarning: false,
+        };
+      }
+
+      return {
+        label: this.t('progress.leaderScopeUnexpectedOutsideFavorites'),
+        isWarning: true,
+      };
+    }
+
+    if (isManualLeaderPick || isManualLocked) {
+      return {
+        label: this.t('progress.leaderScopeManual'),
+        isWarning: false,
+      };
+    }
+
+    return null;
   }
 
   private joinRequirementLabels(labels: string[]): string {

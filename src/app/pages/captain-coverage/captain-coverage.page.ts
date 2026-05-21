@@ -34,9 +34,12 @@ import {
 } from '../../core/models/auto-team-builder-ability.models';
 import { type AutoBuildCaptainAbilityCoverageMode } from '../../core/models/auto-team-builder.models';
 import { type CaptainCoverageResult } from '../../core/services/captain-coverage.utils';
+import { buildCaptainCoverageTierView } from '../../core/services/captain-coverage-tier-view.utils';
 import {
   createCaptainCoverageFilterState,
   type CaptainCoverageFilterState,
+  getCaptainCoverageAvailableTierNumbers,
+  getCaptainCoverageTiers,
   resolveCaptainCoverageFilterResult,
 } from '../../core/services/captain-coverage-filter.utils';
 import {
@@ -81,6 +84,7 @@ import {
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 
@@ -133,6 +137,7 @@ interface CaptainCoverageAbilityBadgeView {
     IonToolbar,
     RouterLink,
     SpecialAbilityPickerComponent,
+    TeamCoverageSummaryComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],
@@ -166,6 +171,8 @@ export class CaptainCoveragePage implements OnInit {
   public readonly requireFullCaptainAbilityCoverage = signal(false);
   public readonly requireSuperTandemPresence = signal(false);
   public readonly requireSuperTypesClassesPresence = signal(false);
+  public readonly requiredTierNumbers = signal<number[]>([]);
+  public readonly tierCoverageMaxRender = 5;
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
   public readonly captainAbilityPickerOpen = signal(false);
@@ -285,15 +292,36 @@ export class CaptainCoveragePage implements OnInit {
       ? this.t('filters.captainCoverage.support.enabled')
       : this.t('filters.captainCoverage.support.disabled'),
   );
-  public readonly captainCoverageFilterState = computed<CaptainCoverageFilterState>(() =>
-    createCaptainCoverageFilterState({
+  public readonly availableTierNumbers = computed<number[]>(() =>
+    getCaptainCoverageAvailableTierNumbers(this.selectedCaptainDetail()),
+  );
+  public readonly captainTierBreakdown = computed(() =>
+    getCaptainCoverageTiers(this.selectedCaptainDetail()).map(buildCaptainCoverageTierView),
+  );
+  public readonly hasTierCoverageData = computed<boolean>(
+    () => this.availableTierNumbers().length > 0,
+  );
+  public readonly tierCoverageOptions = computed<number[]>(() => {
+    const slots = Math.max(
+      this.tierCoverageMaxRender,
+      this.availableTierNumbers().length,
+    );
+    return Array.from({ length: slots }, (_, index) => index + 1);
+  });
+  public readonly captainCoverageFilterState = computed<CaptainCoverageFilterState>(() => {
+    const availableTiers = this.availableTierNumbers();
+    const requestedTiers = this.requiredTierNumbers().filter((tier) =>
+      availableTiers.includes(tier),
+    );
+    return createCaptainCoverageFilterState({
       requiredAbilityRequirements: this.captainAbilityRequirements(),
       requireSuperTandem: this.requireSuperTandemPresence(),
       requireSuperTypesClasses: this.requireSuperTypesClassesPresence(),
       requireCaptainCoverage: this.requireCaptainCoverage(),
       requireFullCoverage: this.requireFullCaptainAbilityCoverage(),
-    }),
-  );
+      requiredTiers: requestedTiers,
+    });
+  });
   public readonly characterBoxSupportLabel = computed(() => {
     const selectedBox = this.selectedCharacterBox();
 
@@ -769,6 +797,26 @@ export class CaptainCoveragePage implements OnInit {
     event: CustomEvent<{ checked?: boolean | null }>,
   ): void {
     this.requireSuperTandemPresence.set(Boolean(event.detail.checked));
+  }
+
+  public isTierCoverageAvailable(tier: number): boolean {
+    return this.availableTierNumbers().includes(tier);
+  }
+
+  public isTierCoverageActive(tier: number): boolean {
+    return (
+      this.isTierCoverageAvailable(tier) && this.requiredTierNumbers().includes(tier)
+    );
+  }
+
+  public onTierCoverageToggle(tier: number, checked: boolean): void {
+    const current = new Set(this.requiredTierNumbers());
+    if (checked) {
+      current.add(tier);
+    } else {
+      current.delete(tier);
+    }
+    this.requiredTierNumbers.set([...current].sort((a, b) => a - b));
   }
 
   public onRequireSuperTypesClassesPresenceChange(

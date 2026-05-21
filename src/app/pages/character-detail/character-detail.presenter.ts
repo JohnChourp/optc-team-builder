@@ -1,6 +1,9 @@
 import { type NormalizedBuilderAbility } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord } from '../../core/models/optc.models';
-import { summarizeCaptainAbilityCoverageText } from '../../core/services/captain-coverage.utils';
+import {
+  type CaptainCoverageTierKind,
+  type CharacterDetailRecord,
+} from '../../core/models/optc.models';
+import { buildCaptainCoverageTierView } from '../../core/services/captain-coverage-tier-view.utils';
 
 type DisplayLabel = {
   label?: string;
@@ -43,13 +46,30 @@ export interface CharacterDetailCaptainAbilitySummary {
   captainNotes: string | null;
   recognizedAbilities: NormalizedBuilderAbility[];
   characterTags: string[];
+  /**
+   * Union of all distinct Field Territory values across all tiers in all coverage entries.
+   * Surfaces as a prominent badge near the raw captain ability so the user immediately sees
+   * the field requirement (e.g. "Territory: [QCK]") without scrolling to the tier breakdown.
+   */
+  fieldTerritories: string[];
 }
 
 export interface CharacterDetailCaptainCoverageEntry {
   label?: string;
   text: string;
-  firstCoverageClauses: string[];
-  secondCoverageClauses: string[];
+  tiers: CharacterDetailCaptainCoverageTier[];
+}
+
+export interface CharacterDetailCaptainCoverageTier {
+  tier: number;
+  kind: CaptainCoverageTierKind;
+  scopeLabel: string;
+  conditionLines: string[];
+  effectClauses: string[];
+  baselineEffectClauses?: string[];
+  conditionalEffectClauses?: string[];
+  atkBoost?: number;
+  hpBoost?: number;
 }
 
 export interface CharacterDetailViewModel {
@@ -237,66 +257,47 @@ function buildCaptainAbilitySummary(
     .map((entry) => {
       const text = entry.text.trim();
       const generatedCoverage = generatedCoverageByKey.get(entry.key);
-      const coverage = generatedCoverage
-        ? {
-            firstCoverageClauses: generatedCoverage.firstCoverageClauses,
-            secondCoverageClauses: generatedCoverage.secondCoverageClauses,
-          }
-        : summarizeCaptainAbilityCoverageText(entry.text);
-      const secondCoverageClauses = hasDistinctSecondCoverage(
-        coverage.firstCoverageClauses,
-        coverage.secondCoverageClauses,
-      )
-        ? coverage.secondCoverageClauses
+      const tiers = generatedCoverage?.tiers
+        ? generatedCoverage.tiers.map(buildCaptainCoverageTierView)
         : [];
 
       return {
         label: entry.label,
         text,
-        firstCoverageClauses: coverage.firstCoverageClauses,
-        secondCoverageClauses,
+        tiers,
       };
     })
-    .filter(
-      (entry) =>
-        entry.text.length ||
-        entry.firstCoverageClauses.length ||
-        entry.secondCoverageClauses.length,
-    );
+    .filter((entry) => entry.text.length || entry.tiers.length);
   const captainNotes = detail.captainNotes?.trim() || null;
   const recognizedAbilities = detail.builderAbilities.filter(
     (ability) => ability.source === 'captainAbility',
   );
   const characterTags = (detail.characterTags ?? []).filter((tag) => tag.trim().length > 0);
+  const fieldTerritories = [
+    ...new Set(
+      (detail.captainAbilityCoverage?.entries ?? []).flatMap((entry) =>
+        (entry.tiers ?? []).flatMap((tier) =>
+          (tier.fieldConditions ?? []).flatMap((condition) => condition.territories ?? []),
+        ),
+      ),
+    ),
+  ];
 
   return coverageEntries.length ||
     captainNotes ||
     recognizedAbilities.length ||
-    characterTags.length
+    characterTags.length ||
+    fieldTerritories.length
     ? {
         coverageEntries,
         captainNotes,
         recognizedAbilities,
         characterTags,
+        fieldTerritories,
       }
     : null;
 }
 
-function hasDistinctSecondCoverage(
-  firstCoverageClauses: string[],
-  secondCoverageClauses: string[],
-): boolean {
-  const firstKeys = firstCoverageClauses.map(normalizeCoverageSummaryClause);
-  const secondKeys = secondCoverageClauses.map(normalizeCoverageSummaryClause);
-
-  return (
-    secondKeys.length !== firstKeys.length || secondKeys.some((key) => !firstKeys.includes(key))
-  );
-}
-
-function normalizeCoverageSummaryClause(clause: string): string {
-  return clause.replace(/\s+/g, ' ').trim().toLowerCase();
-}
 
 function buildAbilitiesGroup(character: CharacterDetailRecord): DetailDisplayGroup | null {
   const { detail } = character;

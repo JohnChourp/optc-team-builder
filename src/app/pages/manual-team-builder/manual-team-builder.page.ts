@@ -54,6 +54,7 @@ import {
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
 
@@ -124,6 +125,7 @@ function createEmptyManualTeamSlots(): Array<CharacterDetailRecord | null> {
     IonTitle,
     IonToolbar,
     CaptainTeamConditionStatusComponent,
+    TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
     RouterLink,
     ShipPickerComponent,
@@ -822,52 +824,26 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     }
 
     const entries = character.detail.captainAbilityCoverage?.entries ?? [];
-    const mode =
-      this.captainBranchModes()[index] ?? this.resolveDefaultCaptainBranchMode(character);
 
     if (entries.length) {
-      return entries.flatMap((entry) => {
-        if (mode === 'character1') {
-          return [
-            {
-              key: `${entry.key}:first`,
-              label: this.t('captainHelper.scopeChip', {
-                label: entry.label,
-                scope: this.t(`captainHelper.scopes.${entry.firstCoverageScope}`),
-              }),
-            },
-          ];
-        }
+      const mode =
+        this.captainBranchModes()[index] ?? this.resolveDefaultCaptainBranchMode(character);
+      const filteredEntries =
+        mode === 'character1' || mode === 'character2'
+          ? entries.filter((entry) => entry.key === mode)
+          : entries;
+      const visibleEntries = filteredEntries.length ? filteredEntries : entries;
 
-        if (mode === 'character2') {
-          return [
-            {
-              key: `${entry.key}:second`,
-              label: this.t('captainHelper.scopeChip', {
-                label: entry.label,
-                scope: this.t(`captainHelper.scopes.${entry.secondCoverageScope}`),
-              }),
-            },
-          ];
-        }
-
-        return [
-          {
-            key: `${entry.key}:first`,
-            label: this.t('captainHelper.scopeChip', {
-              label: entry.label,
-              scope: this.t(`captainHelper.scopes.${entry.firstCoverageScope}`),
-            }),
-          },
-          {
-            key: `${entry.key}:second`,
-            label: this.t('captainHelper.scopeChip', {
-              label: entry.label,
-              scope: this.t(`captainHelper.scopes.${entry.secondCoverageScope}`),
-            }),
-          },
-        ];
-      });
+      return visibleEntries.flatMap((entry) =>
+        entry.tiers.map((tier) => ({
+          key: `${entry.key}:tier${tier.tier}`,
+          label: this.t('captainHelper.tierScopeChip', {
+            label: entry.label,
+            tier: tier.tier,
+            scope: this.t(`captainHelper.scopes.${tier.scope}`),
+          }),
+        })),
+      );
     }
 
     return character.detail.captainAbility

@@ -1,18 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { normalizeHtmlToText } from './lib/html-text.mjs';
-
-const SPECIAL_ABILITY_DEFINITIONS = JSON.parse(
-  readFileSync(new URL('./data/special-ability-definitions.json', import.meta.url), 'utf8'),
-);
-const CREWMATE_ABILITY_DEFINITIONS = JSON.parse(
-  readFileSync(new URL('./data/crewmate-ability-definitions.json', import.meta.url), 'utf8'),
-);
-const POTENTIAL_ABILITY_DEFINITIONS = JSON.parse(
-  readFileSync(new URL('./data/potential-ability-definitions.json', import.meta.url), 'utf8'),
-);
-const SUPPORT_ABILITY_DEFINITIONS = JSON.parse(
-  readFileSync(new URL('./data/support-ability-definitions.json', import.meta.url), 'utf8'),
-);
+import SPECIAL_ABILITY_DEFINITIONS from './data/special-ability-definitions.json' with { type: 'json' };
+import CREWMATE_ABILITY_DEFINITIONS from './data/crewmate-ability-definitions.json' with { type: 'json' };
+import POTENTIAL_ABILITY_DEFINITIONS from './data/potential-ability-definitions.json' with { type: 'json' };
+import SUPPORT_ABILITY_DEFINITIONS from './data/support-ability-definitions.json' with { type: 'json' };
 const SPECIAL_UNIQUE_ABILITY_SOURCES = {
   territory: ['specialText', 'superSpecialText'],
 };

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-19T18:58:15.077Z",
+  "generatedAt": "2026-05-21T04:53:15.584Z",
   "characters": [
     {
       "id": 1,
@@ -150,13 +150,27 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "crew-wide",
-              "secondCoverageScope": "crew-wide",
-              "firstCoverageClauses": [
-                "Boosts ATK of all characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of all characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "crew-wide",
+                  "characterConditions": {
+                    "universal": true,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of all characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -267,13 +281,27 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "crew-wide",
-              "secondCoverageScope": "crew-wide",
-              "firstCoverageClauses": [
-                "Boosts ATK of all characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of all characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "crew-wide",
+                  "characterConditions": {
+                    "universal": true,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of all characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -385,13 +413,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "STR"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x"
+                  ],
+                  "atkBoost": 2
+                }
               ]
             }
           ]
@@ -551,13 +595,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [DEX] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [DEX] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "DEX"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [DEX] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -669,13 +729,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [DEX] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [DEX] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "DEX"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [DEX] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -787,13 +863,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [DEX] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [DEX] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "DEX"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [DEX] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -905,13 +997,30 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK and HP of [DEX] characters by 2x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK and HP of [DEX] characters by 2x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "DEX"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK and HP of [DEX] characters by 2x"
+                  ],
+                  "atkBoost": 2,
+                  "hpBoost": 2
+                }
               ]
             }
           ]
@@ -1080,10 +1189,27 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "none",
-              "secondCoverageScope": "none",
-              "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "none",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Reduces damage received from [INT] enemies by 20%"
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -1202,13 +1328,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [INT] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [INT] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "INT"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [INT] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -1319,13 +1461,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [INT] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [INT] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "INT"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [INT] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -1436,13 +1594,30 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK and HP of [INT] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK and HP of [INT] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "INT"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK and HP of [INT] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5,
+                  "hpBoost": 1.5
+                }
               ]
             }
           ]
@@ -1619,13 +1794,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of Shooter characters by 1.2x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of Shooter characters by 1.2x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [],
+                    "classes": [
+                      "Shooter"
+                    ],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of Shooter characters by 1.2x"
+                  ],
+                  "atkBoost": 1.2
+                }
               ]
             }
           ]
@@ -1803,13 +1994,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [PSY] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [PSY] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [PSY] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -1987,13 +2194,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [PSY] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [PSY] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [PSY] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -2171,13 +2394,30 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK and HP of [PSY] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK and HP of [PSY] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK and HP of [PSY] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5,
+                  "hpBoost": 1.5
+                }
               ]
             }
           ]
@@ -2495,13 +2735,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [QCK] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [QCK] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "QCK"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [QCK] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -2612,13 +2868,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts HP of [QCK] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts HP of [QCK] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "QCK"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts HP of [QCK] characters by 1.5x"
+                  ],
+                  "hpBoost": 1.5
+                }
               ]
             }
           ]
@@ -2719,13 +2991,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK of [QCK] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK of [QCK] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "QCK"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK of [QCK] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5
+                }
               ]
             }
           ]
@@ -2837,13 +3125,30 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "subset",
-              "secondCoverageScope": "subset",
-              "firstCoverageClauses": [
-                "Boosts ATK and HP of [QCK] characters by 1.5x"
-              ],
-              "secondCoverageClauses": [
-                "Boosts ATK and HP of [QCK] characters by 1.5x"
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "QCK"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts ATK and HP of [QCK] characters by 1.5x"
+                  ],
+                  "atkBoost": 1.5,
+                  "hpBoost": 1.5
+                }
               ]
             }
           ]
@@ -3056,10 +3361,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "none",
-              "secondCoverageScope": "none",
-              "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts RCV of [PSY] characters by 1.2x"
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -3170,10 +3494,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "none",
-              "secondCoverageScope": "none",
-              "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "PSY"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts RCV of [PSY] characters by 1.5x"
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -3378,10 +3721,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "none",
-              "secondCoverageScope": "none",
-              "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "INT"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts RCV of [INT] characters by 1.5x"
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -3492,10 +3854,29 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "firstCoverageScope": "none",
-              "secondCoverageScope": "none",
-              "firstCoverageClauses": [],
-              "secondCoverageClauses": []
+              "tiers": [
+                {
+                  "tier": 1,
+                  "kind": "baseline",
+                  "scope": "subset",
+                  "characterConditions": {
+                    "universal": false,
+                    "fallbackOther": false,
+                    "selfOnly": false,
+                    "types": [
+                      "STR"
+                    ],
+                    "classes": [],
+                    "characterTags": []
+                  },
+                  "teamConditions": [],
+                  "fieldConditions": [],
+                  "triggerConditions": [],
+                  "clauses": [
+                    "Boosts RCV of [STR] characters by 1.5x"
+                  ]
+                }
+              ]
             }
           ]
         },

@@ -31,6 +31,12 @@ jobs:
             build-mode: none
           - language: javascript-typescript
             build-mode: none
+          # The Android wrapper has 3 Capacitor-scaffolding Java files (MainActivity +
+          # 2 example tests). Default-setup auto-enabled this language at some point —
+          # keep it in the explicit matrix so PRs against main don't get
+          # "1 configuration not found" warnings when CodeQL diffs against historical state.
+          - language: java-kotlin
+            build-mode: none
 
     steps:
       - name: Checkout repository

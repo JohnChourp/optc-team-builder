@@ -67,6 +67,9 @@ const CAPTAIN_BRANCH_PATTERN =
 const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
   /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)|\s+\band\s+(?=(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)/gi;
 const SCOPE_CLAUSE_PATTERN = /\b(?:of|for)\s+([^.;]{1,160}?)\s+(?:characters|units)\b/g;
+const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
+const SAME_TYPE_CREW_CONDITION_PATTERN =
+  /\b(?:(?:your\s+)?crew\s+has|you\s+have)\s+\d+\s*(?:\+|or\s+more)?\s+characters?\s+(?:of|with)\s+the\s+same\s+Type\b/i;
 const SUPER_EFFECT_SCOPE_CLAUSE_PATTERN =
   /\b(?:changes?|transforms?)\s+([^.;]{1,160}?)\s+(?:characters|units)\s+(?:to|into)\s+(?:a\s+|an\s+)?super\b/gi;
 const COST_UPPER_BOUND_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:less|lower)\b/i;
@@ -3873,6 +3876,8 @@ function resolveActiveLeaderCriteria(
     (leader) => leader.tags.captainScope.allowedTypes,
     (leader) => leader.tags.captainScope.hasTypeRestriction,
   );
+  const dominantTypeScope = resolveDominantTypeLeaderScope(uniqueLeaders);
+  const combinedTypeScope = combineLeaderTypeScopes(typeScope, dominantTypeScope);
   const characterTagScope = resolveIntersectedLeaderDimension(
     uniqueLeaders,
     resolveOrderedLeaderCharacterTags(uniqueLeaders),
@@ -3896,15 +3901,74 @@ function resolveActiveLeaderCriteria(
       .filter((selection): selection is NonNullable<typeof selection> => Boolean(selection)),
     dualLeaderMode: activeLeaderEntries.length > 1 ? 'intersection' : 'single',
     derivedAllowedClasses: classScope.values,
-    derivedAllowedTypes: typeScope.values,
+    derivedAllowedTypes: combinedTypeScope.values,
     derivedAllowedCharacterTags: characterTagScope.values,
+    dominantTypeRequirements: dominantTypeScope.values,
     hasCostRestriction: false,
     maxAllowedCost: null,
     hasClassRestriction: classScope.restricted,
-    hasTypeRestriction: typeScope.restricted,
+    hasTypeRestriction: combinedTypeScope.restricted,
     hasCharacterTagRestriction: characterTagScope.restricted,
+    requiresDominantType: dominantTypeScope.restricted,
     tagConditionSets,
   };
+}
+
+function resolveDominantTypeLeaderScope(
+  leaders: AutoBuildCandidate[],
+): { values: AutoTeamBuilderType[]; restricted: boolean } {
+  const dominantLeaderTypeSets = leaders
+    .filter((leader) => hasDominantTypeCaptainText(leader.captainText))
+    .map((leader) => new Set(resolveCharacterTypeTokens(leader.character.type)));
+
+  if (!dominantLeaderTypeSets.length) {
+    return {
+      values: [],
+      restricted: false,
+    };
+  }
+
+  const intersection = AUTO_TEAM_BUILDER_TYPES.filter((type) =>
+    dominantLeaderTypeSets.every((types) => types.has(type)),
+  );
+
+  // Two dominant-type leaders with incompatible native types (e.g. INT + DEX) produce an empty
+  // intersection. Treat this as an unenforceable constraint: keep the type list open so the
+  // builder can still propose candidate teams instead of silently rejecting every typed character.
+  // Each leader's individual ATK boost will still be governed by its own coverage tier — the
+  // dominant-type bonus simply won't apply when the team can't share a single dominant type.
+  if (intersection.length === 0) {
+    return {
+      values: [],
+      restricted: false,
+    };
+  }
+
+  return {
+    values: intersection,
+    restricted: true,
+  };
+}
+
+function combineLeaderTypeScopes(
+  typeScope: { values: AutoTeamBuilderType[]; restricted: boolean },
+  dominantTypeScope: { values: AutoTeamBuilderType[]; restricted: boolean },
+): { values: AutoTeamBuilderType[]; restricted: boolean } {
+  if (typeScope.restricted && dominantTypeScope.restricted) {
+    return {
+      values: typeScope.values.filter((type) => dominantTypeScope.values.includes(type)),
+      restricted: true,
+    };
+  }
+
+  return dominantTypeScope.restricted ? dominantTypeScope : typeScope;
+}
+
+function hasDominantTypeCaptainText(captainText: string): boolean {
+  return (
+    DOMINANT_TYPE_SCOPE_PATTERN.test(captainText) &&
+    SAME_TYPE_CREW_CONDITION_PATTERN.test(captainText)
+  );
 }
 
 function resolveActiveLeaderCriteriaEntries(
@@ -4275,11 +4339,13 @@ function summarizeLeaderCriteria(
     derivedAllowedClasses: [...leaderCriteria.derivedAllowedClasses],
     derivedAllowedTypes: [...leaderCriteria.derivedAllowedTypes],
     derivedAllowedCharacterTags: [...leaderCriteria.derivedAllowedCharacterTags],
+    dominantTypeRequirements: [...leaderCriteria.dominantTypeRequirements],
     hasCostRestriction: leaderCriteria.hasCostRestriction,
     maxAllowedCost: leaderCriteria.maxAllowedCost,
     hasClassRestriction: leaderCriteria.hasClassRestriction,
     hasTypeRestriction: leaderCriteria.hasTypeRestriction,
     hasCharacterTagRestriction: leaderCriteria.hasCharacterTagRestriction,
+    requiresDominantType: leaderCriteria.requiresDominantType,
     tagConditionSets: leaderCriteria.tagConditionSets.map((set) => ({
       ...set,
       branches: set.branches.map((branch) => ({
@@ -4298,6 +4364,7 @@ function matchesActiveLeaderCriteria(
   candidate: AutoBuildCandidate,
   leaderCriteria: ActiveLeaderCriteria,
 ): boolean {
+  const matchesDominantTypeScope = matchesDominantTypeRequirement(candidate, leaderCriteria);
   const branchAwareCoverageResults = leaderCriteria.leaders.map((leader) =>
     resolveCaptainCoverage(leader.candidate.character, candidate.character, {
       coverageMode: leaderCriteria.coverageMode,
@@ -4308,7 +4375,9 @@ function matchesActiveLeaderCriteria(
   );
 
   if (leaderCriteria.coverageMode === 'fullAbilityCoverage') {
-    return branchAwareCoverageResults.every((coverage) => coverage.matches);
+    return (
+      branchAwareCoverageResults.every((coverage) => coverage.matches) && matchesDominantTypeScope
+    );
   }
 
   const simpleCoverageResults = leaderCriteria.leaders.map((leader, index) => ({
@@ -4319,10 +4388,12 @@ function matchesActiveLeaderCriteria(
   }));
 
   if (simpleCoverageResults.some((result) => result.coverage.targetableClauseCount > 0)) {
-    return simpleCoverageResults.every((result) =>
-      result.coverage.targetableClauseCount > 0
-        ? result.coverage.matches
-        : !result.hasSelfOnlyCoverage,
+    return (
+      simpleCoverageResults.every((result) =>
+        result.coverage.targetableClauseCount > 0
+          ? result.coverage.matches
+          : !result.hasSelfOnlyCoverage,
+      ) && matchesDominantTypeScope
     );
   }
 
@@ -4358,7 +4429,23 @@ function matchesActiveLeaderCriteria(
     ? matchesClassScope || matchesTypeScope || matchesCharacterTagScope
     : true;
 
-  return matchesDimensionScope;
+  return matchesDimensionScope && matchesDominantTypeScope;
+}
+
+function matchesDominantTypeRequirement(
+  candidate: AutoBuildCandidate,
+  leaderCriteria: ActiveLeaderCriteria,
+): boolean {
+  if (!leaderCriteria.requiresDominantType) {
+    return true;
+  }
+
+  const characterTypes = resolveCharacterTypeTokens(candidate.character.type);
+
+  return (
+    characterTypes.length > 0 &&
+    characterTypes.every((type) => leaderCriteria.dominantTypeRequirements.includes(type))
+  );
 }
 
 function matchesLeaderSuperEffectScope(

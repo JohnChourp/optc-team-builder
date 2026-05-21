@@ -4,6 +4,178 @@ import { type CharacterDetailRecord } from '../../core/models/optc.models';
 import { buildCharacterDetailViewModel, buildRumbleCardModel } from './character-detail.presenter';
 
 describe('character-detail presenter', () => {
+  it('exposes captain coverage tier breakdown from stored coverage entries', () => {
+    const view = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        id: 4571,
+        name: 'Imu - Occupant of the Empty Throne',
+        detail: {
+          characterId: 4571,
+          captainAbility:
+            'Boosts ATK of Cost 70 or more characters by 6x, boosts ATK of all other characters by 4x, boosts HP of all characters by 1.5x.',
+          captainAbilityVariants: [
+            {
+              key: 'captain',
+              label: 'Captain Ability',
+              text: 'Boosts ATK of Cost 70 or more characters by 6x, boosts ATK of all other characters by 4x, boosts HP of all characters by 1.5x.',
+            },
+          ],
+          captainAbilityCoverage: {
+            entries: [
+              {
+                key: 'captain',
+                label: 'Captain Ability',
+                tiers: [
+                  {
+                    tier: 1,
+                    kind: 'baseline',
+                    scope: 'crew-wide',
+                    characterConditions: {
+                      universal: true,
+                      fallbackOther: true,
+                      selfOnly: false,
+                      types: [],
+                      classes: [],
+                      characterTags: [],
+                    },
+                    teamConditions: [],
+                    fieldConditions: [],
+                    triggerConditions: [],
+                    clauses: [
+                      'boosts ATK of all other characters by 4x',
+                      'boosts HP of all characters by 1.5x',
+                    ],
+                    atkBoost: 4,
+                    hpBoost: 1.5,
+                  },
+                  {
+                    tier: 2,
+                    kind: 'unconditional-top',
+                    scope: 'crew-wide',
+                    characterConditions: {
+                      universal: true,
+                      fallbackOther: false,
+                      selfOnly: false,
+                      types: [],
+                      classes: [],
+                      characterTags: [],
+                      costRange: { min: 70 },
+                    },
+                    teamConditions: [],
+                    fieldConditions: [],
+                    triggerConditions: [],
+                    clauses: [
+                      'Boosts ATK of Cost 70 or more characters by 6x',
+                      'boosts HP of all characters by 1.5x',
+                    ],
+                    atkBoost: 6,
+                    hpBoost: 1.5,
+                  },
+                  {
+                    tier: 3,
+                    kind: 'conditional',
+                    scope: 'subset',
+                    characterConditions: {
+                      universal: false,
+                      fallbackOther: false,
+                      selfOnly: false,
+                      types: [],
+                      classes: [],
+                      characterTags: [],
+                      costRange: { min: 70 },
+                    },
+                    teamConditions: [
+                      { kind: 'requires-captain', rawClause: 'this character is your Captain' },
+                    ],
+                    fieldConditions: [],
+                    triggerConditions: [
+                      {
+                        kind: 'action-special-excellent',
+                        durationTurns: 3,
+                        rawClause: 'performs EXCELLENT with their Action Special',
+                      },
+                    ],
+                    clauses: ['boosts ATK of Cost 70 or more characters by 6.5x'],
+                    atkBoost: 6.5,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    const summary = view.captainAbilitySummary;
+    expect(summary?.coverageEntries).toHaveLength(1);
+    const tiers = summary?.coverageEntries[0]?.tiers ?? [];
+    expect(tiers).toHaveLength(3);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      scopeLabel: 'all other characters',
+      atkBoost: 4,
+      hpBoost: 1.5,
+    });
+    expect(tiers[1]).toMatchObject({
+      tier: 2,
+      kind: 'unconditional-top',
+      scopeLabel: 'all characters · Cost 70+',
+      atkBoost: 6,
+    });
+    expect(tiers[2]).toMatchObject({
+      tier: 3,
+      kind: 'conditional',
+      atkBoost: 6.5,
+    });
+    expect(tiers[2]?.conditionLines.length).toBeGreaterThan(0);
+    expect(tiers[2]?.conditionLines.some((line) => line.startsWith('Team:'))).toBe(true);
+    expect(tiers[2]?.conditionLines.some((line) => line.startsWith('Trigger:'))).toBe(true);
+  });
+
+  it('extracts Field Territory values from tiers and exposes them on the summary', () => {
+    const view = buildCharacterDetailViewModel(
+      createCharacterDetailRecord({
+        detail: {
+          captainAbility: 'If field has Territory: [QCK], boosts ATK of all characters by 7x.',
+          captainAbilityVariants: [
+            { key: 'captain', label: 'Captain Ability', text: 'If field has Territory: [QCK]...' },
+          ],
+          captainAbilityCoverage: {
+            entries: [
+              {
+                key: 'captain',
+                label: 'Captain Ability',
+                tiers: [
+                  {
+                    tier: 1,
+                    kind: 'conditional',
+                    scope: 'crew-wide',
+                    characterConditions: {
+                      universal: true,
+                      fallbackOther: false,
+                      selfOnly: false,
+                      types: [],
+                      classes: [],
+                      characterTags: [],
+                    },
+                    teamConditions: [],
+                    fieldConditions: [{ kind: 'territory', territories: ['QCK'], rawClause: '' }],
+                    triggerConditions: [],
+                    clauses: ['boosts ATK of all characters by 7x'],
+                    atkBoost: 7,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    expect(view.captainAbilitySummary?.fieldTerritories).toEqual(['QCK']);
+  });
+
   it('formats full rumble data into readable rows, pattern, and level entries', () => {
     const rumbleCard = buildRumbleCardModel({
       id: 13,
@@ -555,14 +727,12 @@ describe('character-detail presenter', () => {
       expect.objectContaining({
         label: 'Base Captain Ability',
         text: 'Base effect.',
-        firstCoverageClauses: [],
-        secondCoverageClauses: [],
+        tiers: [],
       }),
       expect.objectContaining({
         label: 'Limit Break Level 1 Captain Ability',
         text: 'Level 1 effect.',
-        firstCoverageClauses: [],
-        secondCoverageClauses: [],
+        tiers: [],
       }),
     ]);
     expect(viewModel.captainAbilitySummary?.captainNotes).toBe(
@@ -616,14 +786,12 @@ describe('character-detail presenter', () => {
       expect.objectContaining({
         label: 'Base Captain Ability',
         text: 'Boosts ATK of DEX characters by 5x.',
-        firstCoverageClauses: ['Boosts ATK of DEX characters by 5x'],
-        secondCoverageClauses: [],
+        tiers: [],
       }),
       expect.objectContaining({
         label: 'Limit Break Level 1 Captain Ability',
         text: 'Boosts ATK of DEX characters by 5x and HP by 1.3x. Reduces Bind duration by 10 turns.',
-        firstCoverageClauses: ['Boosts ATK of DEX characters by 5x and HP by 1.3x'],
-        secondCoverageClauses: [],
+        tiers: [],
       }),
     ]);
     expect(viewModel.captainAbilitySummary?.recognizedAbilities).toEqual([
@@ -657,8 +825,7 @@ describe('character-detail presenter', () => {
           expect.objectContaining({
             label: 'Captain Ability',
             text: 'Boosts ATK of crew by 5x.',
-            firstCoverageClauses: ['Boosts ATK of crew by 5x'],
-            secondCoverageClauses: [],
+            tiers: [],
           }),
         ],
         captainNotes: null,
@@ -666,43 +833,6 @@ describe('character-detail presenter', () => {
         characterTags: [],
       }),
     );
-  });
-
-  it('prefers generated First and Second Coverage entries when they are present', () => {
-    const viewModel = buildCharacterDetailViewModel(
-      createCharacterDetailRecord({
-        detail: {
-          captainAbility: 'Legacy captain text.',
-          captainAbilityVariants: [
-            {
-              key: 'captain',
-              label: 'Captain Ability',
-              text: 'Legacy captain text.',
-            },
-          ],
-          captainAbilityCoverage: {
-            entries: [
-              {
-                key: 'captain',
-                label: 'Captain Ability',
-                firstCoverageScope: 'crew-wide',
-                secondCoverageScope: 'crew-wide',
-                firstCoverageClauses: ['generated first clause'],
-                secondCoverageClauses: ['generated first clause', 'generated second clause'],
-              },
-            ],
-          },
-          builderAbilities: [],
-        },
-      }),
-    );
-
-    expect(viewModel.captainAbilitySummary?.coverageEntries).toEqual([
-      expect.objectContaining({
-        firstCoverageClauses: ['generated first clause'],
-        secondCoverageClauses: ['generated first clause', 'generated second clause'],
-      }),
-    ]);
   });
 
   it('keeps character tags in the top summary even without captain ability data', () => {

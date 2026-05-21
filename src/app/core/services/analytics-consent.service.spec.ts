@@ -1,16 +1,8 @@
 import "@angular/compiler";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { Preferences } from "@capacitor/preferences";
-
 import { AnalyticsConsentService } from "./analytics-consent.service";
-
-vi.mock("@capacitor/preferences", () => ({
-  Preferences: {
-    get: vi.fn(),
-    set: vi.fn(),
-  },
-}));
+import { type PreferencesAdapterService } from "./preferences-adapter.service";
 
 describe("AnalyticsConsentService", () => {
   beforeEach(() => {
@@ -48,13 +40,13 @@ describe("AnalyticsConsentService", () => {
   });
 
   it("persists acceptance and enables analytics", async () => {
-    const { service, analytics } = createService(null);
+    const { service, analytics, preferences } = createService(null);
 
     await service.ready();
     await service.accept();
 
     expect(service.consent()).toBe("accepted");
-    expect(vi.mocked(Preferences.set)).toHaveBeenLastCalledWith({
+    expect(preferences.set).toHaveBeenLastCalledWith({
       key: "analyticsConsent",
       value: "accepted",
     });
@@ -62,13 +54,13 @@ describe("AnalyticsConsentService", () => {
   });
 
   it("persists rejection and disables analytics", async () => {
-    const { service, analytics } = createService("accepted");
+    const { service, analytics, preferences } = createService("accepted");
 
     await service.ready();
     await service.reject();
 
     expect(service.consent()).toBe("rejected");
-    expect(vi.mocked(Preferences.set)).toHaveBeenLastCalledWith({
+    expect(preferences.set).toHaveBeenLastCalledWith({
       key: "analyticsConsent",
       value: "rejected",
     });
@@ -82,15 +74,19 @@ function createService(storedConsent: string | null) {
     disable: vi.fn(),
   };
 
-  vi.mocked(Preferences.get).mockResolvedValue({
-    value: storedConsent,
-  });
-  vi.mocked(Preferences.set).mockResolvedValue();
+  const preferences = {
+    get: vi.fn().mockResolvedValue({ value: storedConsent }),
+    set: vi.fn().mockResolvedValue(undefined),
+  } satisfies PreferencesAdapterService;
 
-  const service = new AnalyticsConsentService(analytics as never);
+  const service = new AnalyticsConsentService(
+    analytics as never,
+    preferences as unknown as PreferencesAdapterService,
+  );
 
   return {
     service,
     analytics,
+    preferences,
   };
 }

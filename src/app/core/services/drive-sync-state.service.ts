@@ -1,7 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Preferences } from '@capacitor/preferences';
 
 import { type GoogleAccountProfile } from './google-account.service';
+import { PreferencesAdapterService } from './preferences-adapter.service';
 import { type SyncScopeSummary } from './user-data-transfer.service';
 
 const DRIVE_SYNC_METADATA_KEY = 'driveSyncMetadata';
@@ -113,7 +113,7 @@ export class DriveSyncStateService {
 
   private readonly hydratePromise: Promise<void>;
 
-  public constructor() {
+  public constructor(private readonly preferences: PreferencesAdapterService) {
     this.hydratePromise = this.hydrate();
   }
 
@@ -241,7 +241,7 @@ export class DriveSyncStateService {
   }
 
   private async hydrate(): Promise<void> {
-    const { value } = await Preferences.get({ key: DRIVE_SYNC_METADATA_KEY });
+    const { value } = await this.preferences.get({ key: DRIVE_SYNC_METADATA_KEY });
 
     if (!value) {
       return;
@@ -256,7 +256,7 @@ export class DriveSyncStateService {
 
   private async replaceMetadata(metadata: StoredDriveSyncMetadata): Promise<void> {
     this.metadata.set(metadata);
-    await Preferences.set({
+    await this.preferences.set({
       key: DRIVE_SYNC_METADATA_KEY,
       value: JSON.stringify(metadata),
     });

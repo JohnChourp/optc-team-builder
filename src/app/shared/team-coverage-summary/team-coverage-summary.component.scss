@@ -1,0 +1,117 @@
+.team-coverage-summary {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 22, 36, 0.72);
+  color: rgba(248, 251, 255, 0.9);
+}
+
+.team-coverage-summary__header {
+  display: grid;
+  gap: 2px;
+}
+
+.team-coverage-summary__eyebrow {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: rgba(245, 200, 76, 0.85);
+  font-weight: 700;
+}
+
+.team-coverage-summary__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.team-coverage-summary__tiers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.team-coverage-summary__tier {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.team-coverage-summary__tier--both {
+  border-color: rgba(102, 220, 130, 0.55);
+  background: rgba(102, 220, 130, 0.12);
+}
+
+.team-coverage-summary__tier--captain,
+.team-coverage-summary__tier--friend {
+  border-color: rgba(245, 200, 76, 0.55);
+  background: rgba(245, 200, 76, 0.1);
+}
+
+.team-coverage-summary__tier--none {
+  border-color: rgba(248, 96, 96, 0.45);
+  background: rgba(248, 96, 96, 0.08);
+  color: rgba(248, 251, 255, 0.7);
+}
+
+.team-coverage-summary__tier-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  column-gap: 10px;
+  row-gap: 2px;
+}
+
+.team-coverage-summary__tier-label {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.team-coverage-summary__tier-scope {
+  font-size: 0.86rem;
+  color: rgba(248, 251, 255, 0.78);
+  font-weight: 600;
+}
+
+.team-coverage-summary__tier-status {
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.team-coverage-summary__effects {
+  list-style: disc inside;
+  margin: 0;
+  padding: 0;
+  font-size: 0.82rem;
+  color: rgba(248, 251, 255, 0.78);
+  line-height: 1.45;
+}
+
+.team-coverage-summary__note {
+  margin: 0;
+  padding-top: 2px;
+  font-size: 0.76rem;
+  color: rgba(248, 251, 255, 0.6);
+  font-style: italic;
+}
+
+@media (max-width: 540px) {
+  .team-coverage-summary__tier-header {
+    grid-template-columns: 1fr;
+  }
+
+  .team-coverage-summary__tier-status {
+    justify-self: start;
+  }
+}

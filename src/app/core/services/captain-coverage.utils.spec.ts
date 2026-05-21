@@ -5,7 +5,6 @@ import {
   resolveCaptainBoostScope,
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverage,
-  summarizeCaptainAbilityCoverageText,
 } from './captain-coverage.utils';
 
 describe('resolveCaptainCoverage', () => {
@@ -229,30 +228,11 @@ describe('resolveCaptainCoverage', () => {
       characterTags: ['Straw Hat Pirates'],
     });
 
-    expect(summarizeCaptainAbilityCoverageText(captainAbility).firstCoverageClauses).toEqual([
-      'Boosts ATK of [INT], Free Spirit and Cerebral characters by 6x',
-      'boosts HP of [INT], Free Spirit and Cerebral characters by 1.2x',
-    ]);
     expect(
       resolveCaptainCoverage(captain, target, { coverageMode: 'simpleBoostScope' }).boosts,
     ).toEqual({
       hp: 1.2,
       atk: 6,
-    });
-  });
-
-  it('keeps Blackbeard First Coverage at the base scope and normalizes Second Coverage wording', () => {
-    expect(summarizeCaptainAbilityCoverageText(blackbeardEmperorCaptainAbility)).toEqual({
-      firstCoverageClauses: [
-        'Boosts ATK of [QCK] and Free Spirit characters by 6x',
-        'boosts HP of [QCK] and Free Spirit characters by 1.3x',
-      ],
-      secondCoverageClauses: [
-        'Boosts ATK of [QCK] and Free Spirit characters by 6x',
-        'boosts HP of [QCK] and Free Spirit characters by 1.3x',
-        'If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x',
-        'reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns',
-      ],
     });
   });
 
@@ -311,26 +291,6 @@ describe('resolveCaptainCoverage', () => {
     expect(coverage.matches).toBe(true);
     expect(coverage.coveredClauses).toHaveLength(1);
     expect(coverage.uncoveredClauses).toEqual([]);
-  });
-
-  it('uses primary VS captain boost scopes without fallback or inline conditional boosts', () => {
-    const character1Summary = summarizeCaptainAbilityCoverageText(
-      zoroVsLucciCharacter1CaptainAbility,
-    );
-    const character2Summary = summarizeCaptainAbilityCoverageText(
-      zoroVsLucciCharacter2CaptainAbility,
-    );
-
-    expect(character1Summary.firstCoverageClauses).toEqual([
-      'boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x',
-      'boosts HP of [INT], Slasher and Free Spirit characters by 1.35x',
-    ]);
-    expect(character1Summary.secondCoverageClauses).toEqual(character1Summary.firstCoverageClauses);
-    expect(character2Summary.firstCoverageClauses).toEqual([
-      'boosts ATK of [STR], Driven and Cerebral characters by 5.5x',
-      'boosts HP of [STR], Driven and Cerebral characters by 1.35x',
-    ]);
-    expect(character2Summary.secondCoverageClauses).toEqual(character2Summary.firstCoverageClauses);
   });
 
   it('matches either branch for VS dual-character captain coverage', () => {

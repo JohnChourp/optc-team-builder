@@ -1,0 +1,12 @@
+{
+  "eyebrow": "Captain Ability tier analysis",
+  "title": "Team Coverage",
+  "tierLabel": "Tier {{tier}}",
+  "tierStatus": {
+    "both": "Both",
+    "captainOnly": "Captain",
+    "friendOnly": "Friend",
+    "none": "Not covered"
+  },
+  "pendingConditions": "Pending in-fight: {{conditions}}"
+}

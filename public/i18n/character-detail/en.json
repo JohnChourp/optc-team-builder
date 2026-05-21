@@ -29,6 +29,7 @@
     "minRcv": "Min RCV",
     "parsedCriteria": "Parsed criteria",
     "passiveLevel": "Passive level",
+    "requiresFieldTerritory": "Captain requires Field Territory",
     "pattern": "Pattern",
     "primaryClass": "Primary class",
     "recognizedCaptainAbilities": "Captain Ability Effects",
@@ -56,7 +57,6 @@
     "abilitySummary": "Ability summary",
     "battleModes": "Battle Modes",
     "captainAbility": "Captain Ability",
-    "firstCoverage": "First Coverage",
     "captainShiftData": "Captain Shift",
     "characterTags": "Character Tags",
     "enhancements": "Enhancements",
@@ -64,7 +64,7 @@
     "finalTapData": "Final Tap",
     "maxStats": "Max Stats",
     "overview": "Overview",
-    "secondCoverage": "Second Coverage",
+    "captainCoverageTiers": "Captain Coverage Tiers",
     "potentialAbilities": "Potential Abilities",
     "profile": "Profile",
     "rushSugoSpecialData": "Rush Sugo Special",
@@ -94,5 +94,12 @@
     "maxAtk": "Max ATK",
     "maxHp": "Max HP",
     "maxRcv": "Max RCV"
+  },
+  "captainTierLabel": "Tier {{tier}}",
+  "captainTierKinds": {
+    "baseline": "Baseline",
+    "unconditional-top": "Top tier",
+    "conditional": "Conditional",
+    "baseline-and-conditional": "Baseline + Conditional"
   }
 }

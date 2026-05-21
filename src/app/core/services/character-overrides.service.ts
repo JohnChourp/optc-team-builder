@@ -1,5 +1,4 @@
 import { Injectable, Optional, computed, signal } from '@angular/core';
-import { Preferences } from '@capacitor/preferences';
 
 import { type LocalCharacterOverride } from '../models/optc.models';
 import { DriveSyncStateService } from './drive-sync-state.service';
@@ -7,6 +6,7 @@ import {
   normalizeLocalCharacterOverride,
   type LocalCharacterOverrideInput,
 } from './character-overrides.utils';
+import { PreferencesAdapterService } from './preferences-adapter.service';
 
 const CHARACTER_OVERRIDES_KEY = 'characterOverrides';
 
@@ -20,7 +20,10 @@ export class CharacterOverridesService {
 
   private readonly hydratePromise: Promise<void>;
 
-  public constructor(@Optional() private readonly driveSyncState?: DriveSyncStateService) {
+  public constructor(
+    private readonly preferences: PreferencesAdapterService,
+    @Optional() private readonly driveSyncState?: DriveSyncStateService,
+  ) {
     this.hydratePromise = this.hydrate();
   }
 
@@ -127,7 +130,7 @@ export class CharacterOverridesService {
   }
 
   private async hydrate(): Promise<void> {
-    const { value } = await Preferences.get({ key: CHARACTER_OVERRIDES_KEY });
+    const { value } = await this.preferences.get({ key: CHARACTER_OVERRIDES_KEY });
 
     if (!value) {
       this.overrides.set([]);
@@ -151,7 +154,7 @@ export class CharacterOverridesService {
   private async replaceOverrides(overrides: LocalCharacterOverride[]): Promise<void> {
     this.overrides.set(overrides);
     this.revision.update((value) => value + 1);
-    await Preferences.set({
+    await this.preferences.set({
       key: CHARACTER_OVERRIDES_KEY,
       value: JSON.stringify(overrides),
     });

@@ -127,6 +127,19 @@
               </div>
 
               @if (view.captainAbilitySummary; as captainSummary) {
+                @if (captainSummary.fieldTerritories.length) {
+                  <div class="captain-ability-summary__field-territory" data-test="captain-field-territory">
+                    <span class="detail-text__label">
+                      {{ t('fields.requiresFieldTerritory') }}
+                    </span>
+                    <div class="chip-row">
+                      @for (territory of captainSummary.fieldTerritories; track territory) {
+                        <span class="detail-chip detail-chip--territory">[{{ territory }}]</span>
+                      }
+                    </div>
+                  </div>
+                }
+
                 @if (captainSummary.coverageEntries.length) {
                   <div class="captain-ability-summary">
                     @for (entry of captainSummary.coverageEntries; track $index) {
@@ -139,27 +152,99 @@
                           <p>{{ entry.text }}</p>
                         }
 
-                        @if (entry.firstCoverageClauses.length) {
-                          <section class="detail-list-block">
+                        @if (entry.tiers.length) {
+                          <section
+                            class="detail-list-block captain-ability-summary__tiers"
+                            data-test="captain-coverage-tier-breakdown"
+                          >
                             <span class="detail-list-block__label">
-                              {{ t('sections.firstCoverage') }}
+                              {{ t('sections.captainCoverageTiers') }}
                             </span>
-                            <ul>
-                              @for (clause of entry.firstCoverageClauses; track $index) {
-                                <li>{{ clause }}</li>
-                              }
-                            </ul>
-                          </section>
-                        }
-
-                        @if (entry.secondCoverageClauses.length) {
-                          <section class="detail-list-block">
-                            <span class="detail-list-block__label">
-                              {{ t('sections.secondCoverage') }}
-                            </span>
-                            <ul>
-                              @for (clause of entry.secondCoverageClauses; track $index) {
-                                <li>{{ clause }}</li>
+                            <ul class="captain-tier-breakdown">
+                              @for (tier of entry.tiers; track tier.tier) {
+                                <li
+                                  class="captain-tier-breakdown__tier"
+                                  [class.captain-tier-breakdown__tier--baseline]="
+                                    tier.kind === 'baseline'
+                                  "
+                                  [class.captain-tier-breakdown__tier--top]="
+                                    tier.kind === 'unconditional-top'
+                                  "
+                                  [class.captain-tier-breakdown__tier--conditional]="
+                                    tier.kind === 'conditional'
+                                  "
+                                  [class.captain-tier-breakdown__tier--mixed]="
+                                    tier.kind === 'baseline-and-conditional'
+                                  "
+                                  [attr.data-test]="'captain-coverage-tier-row-' + tier.tier"
+                                >
+                                  <header class="captain-tier-breakdown__header">
+                                    <span class="captain-tier-breakdown__label">
+                                      {{ t('captainTierLabel', { tier: tier.tier }) }}
+                                    </span>
+                                    <span class="captain-tier-breakdown__scope">
+                                      {{ tier.scopeLabel }}
+                                    </span>
+                                    <span class="captain-tier-breakdown__kind">
+                                      {{ t('captainTierKinds.' + tier.kind) }}
+                                    </span>
+                                  </header>
+                                  @if (
+                                    tier.kind === 'baseline-and-conditional' &&
+                                    tier.baselineEffectClauses?.length &&
+                                    tier.conditionalEffectClauses?.length
+                                  ) {
+                                    <div
+                                      class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--baseline"
+                                    >
+                                      <span class="captain-tier-breakdown__subsection-label">
+                                        {{ t('captainTierKinds.baseline') }}
+                                      </span>
+                                      <ul class="captain-tier-breakdown__effects">
+                                        @for (effect of tier.baselineEffectClauses; track $index) {
+                                          <li>{{ effect }}</li>
+                                        }
+                                      </ul>
+                                    </div>
+                                    <div
+                                      class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--conditional"
+                                    >
+                                      <span class="captain-tier-breakdown__subsection-label">
+                                        {{ t('captainTierKinds.conditional') }}
+                                      </span>
+                                      @if (tier.conditionLines.length) {
+                                        <ul class="captain-tier-breakdown__conditions">
+                                          @for (line of tier.conditionLines; track $index) {
+                                            <li>{{ line }}</li>
+                                          }
+                                        </ul>
+                                      }
+                                      <ul class="captain-tier-breakdown__effects">
+                                        @for (
+                                          effect of tier.conditionalEffectClauses;
+                                          track $index
+                                        ) {
+                                          <li>{{ effect }}</li>
+                                        }
+                                      </ul>
+                                    </div>
+                                  } @else {
+                                    @if (tier.conditionLines.length) {
+                                      <ul class="captain-tier-breakdown__conditions">
+                                        @for (line of tier.conditionLines; track $index) {
+                                          <li>{{ line }}</li>
+                                        }
+                                      </ul>
+                                    }
+                                    @if (tier.effectClauses.length) {
+                                      <ul class="captain-tier-breakdown__effects">
+                                        @for (effect of tier.effectClauses; track $index) {
+                                          <li>{{ effect }}</li>
+                                        }
+                                      </ul>
+                                    }
+                                  }
+                                </li>
                               }
                             </ul>
                           </section>

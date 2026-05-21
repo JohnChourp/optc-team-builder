@@ -109,6 +109,12 @@
           ></app-captain-team-condition-status>
         }
 
+        <app-team-coverage-summary
+          [captain]="selectedCaptainDetail()"
+          [friendCaptain]="null"
+          [members]="selectedTeamSlots()"
+        ></app-team-coverage-summary>
+
         <div class="coverage-save-team">
           <ion-input
             [label]="t('team.save.nameLabel')"
@@ -173,7 +179,7 @@
 
       <section class="results-panel glass-card">
         <div class="results-toolbar">
-          <div>
+          <div class="results-toolbar__heading">
             <div class="section-label">{{ t('results.eyebrow') }}</div>
             <h2>
               {{
@@ -204,82 +210,204 @@
             (saveDrafts)="saveCaptainAbilityPicker($event)"
           ></app-ability-requirement-picker>
 
-          <label
-            class="ability-rank-toggle"
-            [class.ability-rank-toggle--active]="abilityMatchRankingEnabled()"
-          >
-            <span>{{ t('filters.bestAbilityMatchesFirst') }}</span>
-            <ion-toggle
-              justify="space-between"
-              [checked]="abilityMatchRankingEnabled()"
-              [disabled]="abilityMatchRankingDisabled()"
-              (ionChange)="onAbilityMatchRankingChange($event)"
-            ></ion-toggle>
-          </label>
+          <div class="results-toolbar__toggle-grid">
+            <label
+              class="ability-rank-toggle"
+              [class.ability-rank-toggle--active]="abilityMatchRankingEnabled()"
+            >
+              <span>{{ t('filters.bestAbilityMatchesFirst') }}</span>
+              <ion-toggle
+                justify="space-between"
+                [checked]="abilityMatchRankingEnabled()"
+                [disabled]="abilityMatchRankingDisabled()"
+                (ionChange)="onAbilityMatchRankingChange($event)"
+              ></ion-toggle>
+            </label>
 
-          <label
-            class="ability-rank-toggle"
-            [class.ability-rank-toggle--active]="requireSuperTandemPresence()"
-          >
-            <div class="ability-rank-toggle__copy">
-              <span>{{ t('filters.superTandemPresence.toggle') }}</span>
-              <small>{{ t('filters.superTandemPresence.support') }}</small>
-            </div>
-            <ion-toggle
-              justify="space-between"
-              [checked]="requireSuperTandemPresence()"
-              [disabled]="!selectedCaptainDetail()"
-              (ionChange)="onRequireSuperTandemPresenceChange($event)"
-            ></ion-toggle>
-          </label>
+            <label
+              class="ability-rank-toggle"
+              [class.ability-rank-toggle--active]="requireSuperTandemPresence()"
+            >
+              <div class="ability-rank-toggle__copy">
+                <span>{{ t('filters.superTandemPresence.toggle') }}</span>
+                <small>{{ t('filters.superTandemPresence.support') }}</small>
+              </div>
+              <ion-toggle
+                justify="space-between"
+                [checked]="requireSuperTandemPresence()"
+                [disabled]="!selectedCaptainDetail()"
+                (ionChange)="onRequireSuperTandemPresenceChange($event)"
+              ></ion-toggle>
+            </label>
 
-          <label
-            class="ability-rank-toggle"
-            [class.ability-rank-toggle--active]="requireSuperTypesClassesPresence()"
-          >
-            <div class="ability-rank-toggle__copy">
-              <span>{{ t('filters.superTypesClassesPresence.toggle') }}</span>
-              <small>{{ t('filters.superTypesClassesPresence.support') }}</small>
-            </div>
-            <ion-toggle
-              justify="space-between"
-              [checked]="requireSuperTypesClassesPresence()"
-              [disabled]="!selectedCaptainDetail()"
-              (ionChange)="onRequireSuperTypesClassesPresenceChange($event)"
-            ></ion-toggle>
-          </label>
+            <label
+              class="ability-rank-toggle"
+              [class.ability-rank-toggle--active]="requireSuperTypesClassesPresence()"
+            >
+              <div class="ability-rank-toggle__copy">
+                <span>{{ t('filters.superTypesClassesPresence.toggle') }}</span>
+                <small>{{ t('filters.superTypesClassesPresence.support') }}</small>
+              </div>
+              <ion-toggle
+                justify="space-between"
+                [checked]="requireSuperTypesClassesPresence()"
+                [disabled]="!selectedCaptainDetail()"
+                (ionChange)="onRequireSuperTypesClassesPresenceChange($event)"
+              ></ion-toggle>
+            </label>
 
-          <label
-            class="ability-rank-toggle"
-            [class.ability-rank-toggle--active]="requireCaptainCoverage()"
-          >
-            <div class="ability-rank-toggle__copy">
-              <span>{{ t('filters.captainCoverage.toggle') }}</span>
-              <small>{{ captainCoverageSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              justify="space-between"
-              [checked]="requireCaptainCoverage()"
-              [disabled]="!selectedCaptainDetail()"
-              (ionChange)="onRequireCaptainCoverageChange($event)"
-            ></ion-toggle>
-          </label>
+            <label
+              class="ability-rank-toggle"
+              [class.ability-rank-toggle--active]="requireCaptainCoverage()"
+            >
+              <div class="ability-rank-toggle__copy">
+                <span>{{ t('filters.captainCoverage.toggle') }}</span>
+                <small>{{ captainCoverageSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                justify="space-between"
+                [checked]="requireCaptainCoverage()"
+                [disabled]="!selectedCaptainDetail()"
+                (ionChange)="onRequireCaptainCoverageChange($event)"
+              ></ion-toggle>
+            </label>
 
-          <label
-            class="ability-rank-toggle"
-            [class.ability-rank-toggle--active]="requireFullCaptainAbilityCoverage()"
-          >
-            <div class="ability-rank-toggle__copy">
-              <span>{{ t('filters.captainAbilityCoverage.toggle') }}</span>
-              <small>{{ captainAbilityCoverageSupportLabel() }}</small>
+            <label
+              class="ability-rank-toggle"
+              [class.ability-rank-toggle--active]="requireFullCaptainAbilityCoverage()"
+            >
+              <div class="ability-rank-toggle__copy">
+                <span>{{ t('filters.captainAbilityCoverage.toggle') }}</span>
+                <small>{{ captainAbilityCoverageSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                justify="space-between"
+                [checked]="requireFullCaptainAbilityCoverage()"
+                [disabled]="!selectedCaptainDetail()"
+                (ionChange)="onRequireFullCaptainAbilityCoverageChange($event)"
+              ></ion-toggle>
+            </label>
+
+            <div class="ability-rank-toggle ability-rank-toggle--tier" data-test="tier-coverage-group">
+              <div class="ability-rank-toggle__copy">
+                <span>{{ t('filters.tierCoverage.toggle') }}</span>
+                <small>{{ t('filters.tierCoverage.support') }}</small>
+              </div>
+              <div class="ability-rank-toggle__chip-row">
+                @for (tier of tierCoverageOptions(); track tier) {
+                  <button
+                    type="button"
+                    class="ability-rank-toggle__chip"
+                    [class.ability-rank-toggle__chip--active]="isTierCoverageActive(tier)"
+                    [disabled]="!selectedCaptainDetail() || !isTierCoverageAvailable(tier)"
+                    [attr.data-test]="'tier-coverage-toggle-' + tier"
+                    [attr.aria-pressed]="isTierCoverageActive(tier)"
+                    [title]="
+                      isTierCoverageAvailable(tier)
+                        ? t('filters.tierCoverage.chipAvailable', { tier })
+                        : t('filters.tierCoverage.chipUnavailable', { tier })
+                    "
+                    (click)="onTierCoverageToggle(tier, !isTierCoverageActive(tier))"
+                  >
+                    {{ t('filters.tierCoverage.chip', { tier }) }}
+                  </button>
+                }
+              </div>
             </div>
-            <ion-toggle
-              justify="space-between"
-              [checked]="requireFullCaptainAbilityCoverage()"
-              [disabled]="!selectedCaptainDetail()"
-              (ionChange)="onRequireFullCaptainAbilityCoverageChange($event)"
-            ></ion-toggle>
-          </label>
+
+            @if (captainTierBreakdown().length) {
+              <section
+                class="captain-tier-breakdown captain-tier-breakdown--inline"
+                data-test="captain-coverage-tier-panel"
+              >
+                <header class="captain-tier-breakdown__panel-header">
+                  <span class="captain-tier-breakdown__panel-eyebrow">
+                    {{ t('filters.tierCoverage.panelEyebrow') }}
+                  </span>
+                  <h3 class="captain-tier-breakdown__panel-title">
+                    {{ t('filters.tierCoverage.panelTitle') }}
+                  </h3>
+                </header>
+                <ul class="captain-tier-breakdown__list">
+                  @for (tier of captainTierBreakdown(); track tier.tier) {
+                    <li
+                      class="captain-tier-breakdown__tier"
+                      [class.captain-tier-breakdown__tier--baseline]="tier.kind === 'baseline'"
+                      [class.captain-tier-breakdown__tier--top]="tier.kind === 'unconditional-top'"
+                      [class.captain-tier-breakdown__tier--conditional]="tier.kind === 'conditional'"
+                      [class.captain-tier-breakdown__tier--mixed]="
+                        tier.kind === 'baseline-and-conditional'
+                      "
+                      [class.captain-tier-breakdown__tier--active]="isTierCoverageActive(tier.tier)"
+                      [attr.data-test]="'captain-coverage-tier-panel-row-' + tier.tier"
+                    >
+                      <header class="captain-tier-breakdown__header">
+                        <span class="captain-tier-breakdown__label">
+                          {{ t('filters.tierCoverage.chip', { tier: tier.tier }) }}
+                        </span>
+                        <span class="captain-tier-breakdown__scope">{{ tier.scopeLabel }}</span>
+                        <span class="captain-tier-breakdown__kind">
+                          {{ t('filters.tierCoverage.kinds.' + tier.kind) }}
+                        </span>
+                      </header>
+                      @if (
+                        tier.kind === 'baseline-and-conditional' &&
+                        tier.baselineEffectClauses?.length &&
+                        tier.conditionalEffectClauses?.length
+                      ) {
+                        <div
+                          class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--baseline"
+                        >
+                          <span class="captain-tier-breakdown__subsection-label">
+                            {{ t('filters.tierCoverage.kinds.baseline') }}
+                          </span>
+                          <ul class="captain-tier-breakdown__effects">
+                            @for (effect of tier.baselineEffectClauses; track $index) {
+                              <li>{{ effect }}</li>
+                            }
+                          </ul>
+                        </div>
+                        <div
+                          class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--conditional"
+                        >
+                          <span class="captain-tier-breakdown__subsection-label">
+                            {{ t('filters.tierCoverage.kinds.conditional') }}
+                          </span>
+                          @if (tier.conditionLines.length) {
+                            <ul class="captain-tier-breakdown__conditions">
+                              @for (line of tier.conditionLines; track $index) {
+                                <li>{{ line }}</li>
+                              }
+                            </ul>
+                          }
+                          <ul class="captain-tier-breakdown__effects">
+                            @for (effect of tier.conditionalEffectClauses; track $index) {
+                              <li>{{ effect }}</li>
+                            }
+                          </ul>
+                        </div>
+                      } @else {
+                        @if (tier.conditionLines.length) {
+                          <ul class="captain-tier-breakdown__conditions">
+                            @for (line of tier.conditionLines; track $index) {
+                              <li>{{ line }}</li>
+                            }
+                          </ul>
+                        }
+                        @if (tier.effectClauses.length) {
+                          <ul class="captain-tier-breakdown__effects">
+                            @for (effect of tier.effectClauses; track $index) {
+                              <li>{{ effect }}</li>
+                            }
+                          </ul>
+                        }
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          </div>
 
           <app-special-ability-picker
             [isOpen]="specialAbilityPickerOpen()"

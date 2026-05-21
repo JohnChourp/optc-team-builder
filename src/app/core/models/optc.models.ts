@@ -38,13 +38,90 @@ export interface CharacterCaptainAbilityVariant {
 export interface CharacterCaptainAbilityCoverageEntry {
   key: string;
   label: string;
-  firstCoverageScope: CharacterCaptainAbilityScope;
-  secondCoverageScope: CharacterCaptainAbilityScope;
-  firstCoverageClauses: string[];
-  secondCoverageClauses: string[];
+  tiers: CharacterCaptainAbilityCoverageTier[];
 }
 
 export type CharacterCaptainAbilityScope = 'crew-wide' | 'captain-only' | 'subset' | 'none';
+
+export type CaptainCoverageTierKind =
+  | 'baseline'
+  | 'unconditional-top'
+  | 'conditional'
+  | 'baseline-and-conditional';
+
+export interface CaptainCoverageTargetScope {
+  universal: boolean;
+  fallbackOther: boolean;
+  selfOnly: boolean;
+  dominantType?: boolean;
+  types: string[];
+  classes: string[];
+  characterTags: string[];
+  costRange?: { min?: number; max?: number };
+  rarityRange?: { min?: number; max?: number };
+}
+
+export type CaptainCoverageTeamConditionKind =
+  | 'crew-composition'
+  | 'crew-count'
+  | 'crew-exclusion'
+  | 'requires-captain'
+  | 'requires-friend-captain';
+
+export interface CaptainCoverageTeamCondition {
+  kind: CaptainCoverageTeamConditionKind;
+  minCount?: number;
+  exactCount?: number;
+  types?: string[];
+  classes?: string[];
+  characterTags?: string[];
+  sameType?: boolean;
+  rawClause: string;
+}
+
+export interface CaptainCoverageFieldCondition {
+  kind: 'territory';
+  territories: string[];
+  rawClause: string;
+}
+
+export type CaptainCoverageTriggerKind =
+  | 'action-special-excellent'
+  | 'action-special-perfect'
+  | 'hp-below'
+  | 'hp-above'
+  | 'defeated-enemy-last-turn'
+  | 'start-of-fight'
+  | 'captain-branch-state'
+  | 'consecutive-perfects'
+  | 'other';
+
+export interface CaptainCoverageTriggerCondition {
+  kind: CaptainCoverageTriggerKind;
+  hpPercent?: number;
+  durationTurns?: number;
+  branchLabel?: string;
+  perfectStreak?: number;
+  rawClause: string;
+}
+
+export interface CharacterCaptainAbilityCoverageTier {
+  tier: number;
+  kind: CaptainCoverageTierKind;
+  scope: CharacterCaptainAbilityScope;
+  characterConditions: CaptainCoverageTargetScope;
+  teamConditions: CaptainCoverageTeamCondition[];
+  fieldConditions: CaptainCoverageFieldCondition[];
+  triggerConditions: CaptainCoverageTriggerCondition[];
+  clauses: string[];
+  // For `baseline-and-conditional` tiers (e.g. a captain with universal HP baseline and a
+  // team-gated universal ATK boost): split clauses so the UI can render the unconditional baseline
+  // and the gated effects under separate labels within the same tier.
+  baselineClauses?: string[];
+  conditionalClauses?: string[];
+  atkBoost?: number;
+  hpBoost?: number;
+}
 
 export interface CharacterCaptainAbilityCoverage {
   entries: CharacterCaptainAbilityCoverageEntry[];

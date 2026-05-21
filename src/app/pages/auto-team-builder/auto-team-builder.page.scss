@@ -1939,6 +1939,14 @@
   color: #f7a7ce;
 }
 
+.loading-progress-row--warning {
+  min-height: calc(1.45em + 12px);
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: rgba(245, 200, 76, 0.14);
+  color: #f5c84c;
+}
+
 .loading-card__action {
   margin: 0;
 }

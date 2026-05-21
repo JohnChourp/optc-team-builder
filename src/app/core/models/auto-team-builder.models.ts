@@ -301,11 +301,13 @@ export interface AutoBuildLeaderCriteriaSummary {
   derivedAllowedClasses: string[];
   derivedAllowedTypes: AutoTeamBuilderType[];
   derivedAllowedCharacterTags: string[];
+  dominantTypeRequirements: AutoTeamBuilderType[];
   hasCostRestriction: boolean;
   maxAllowedCost: number | null;
   hasClassRestriction: boolean;
   hasTypeRestriction: boolean;
   hasCharacterTagRestriction: boolean;
+  requiresDominantType: boolean;
   tagConditionSets: AutoBuildLeaderTagConditionSet[];
   matchingSlots: number;
   totalSlots: number;

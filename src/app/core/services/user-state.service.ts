@@ -1,5 +1,4 @@
 import { Injectable, Optional, computed, signal } from '@angular/core';
-import { Preferences } from '@capacitor/preferences';
 
 import {
   BUILT_IN_CREW_FORGE_IMAGE_PROFILES,
@@ -43,6 +42,7 @@ import {
 } from '../models/saved-rumble-team.models';
 import { AppI18nService } from './app-i18n.service';
 import { DriveSyncStateService } from './drive-sync-state.service';
+import { PreferencesAdapterService } from './preferences-adapter.service';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
 
 const FAVORITES_KEY = 'favoriteCharacterIds';
@@ -113,6 +113,7 @@ export class UserStateService {
 
   public constructor(
     private readonly i18n: AppI18nService,
+    private readonly preferences: PreferencesAdapterService,
     @Optional() private readonly driveSyncState?: DriveSyncStateService,
   ) {}
 
@@ -1040,7 +1041,7 @@ export class UserStateService {
   }
 
   private async readJson<T>(key: string, fallback: T): Promise<T> {
-    const { value } = await Preferences.get({ key });
+    const { value } = await this.preferences.get({ key });
 
     if (!value) {
       return fallback;
@@ -1054,7 +1055,7 @@ export class UserStateService {
   }
 
   private async persistJson(key: string, value: unknown): Promise<void> {
-    await Preferences.set({ key, value: JSON.stringify(value) });
+    await this.preferences.set({ key, value: JSON.stringify(value) });
     await this.markSyncScopedLocalChange(key);
   }
 

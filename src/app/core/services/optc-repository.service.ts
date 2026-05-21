@@ -7,7 +7,9 @@ import {
 } from '../models/auto-team-builder.models';
 import { type AutoBuildAbilityCatalog } from '../models/auto-team-builder-ability.models';
 import {
+  type CaptainCoverageTierKind,
   type CharacterAssets,
+  type CharacterCaptainAbilityScope,
   type CharacterDetail,
   type CharacterDetailRecord,
   type CharacterRecord,
@@ -203,39 +205,268 @@ function normalizeCaptainAbilityCoverage(value: unknown): CharacterDetail['capta
         const entryRecord = entry as Record<string, unknown>;
         const key = String(entryRecord['key'] ?? '').trim();
         const label = String(entryRecord['label'] ?? '').trim();
-        const firstCoverageScope = normalizeCaptainAbilityScope(entryRecord['firstCoverageScope']);
-        const secondCoverageScope = normalizeCaptainAbilityScope(
-          entryRecord['secondCoverageScope'],
-        );
-        const firstCoverageClauses = normalizeStringList(entryRecord['firstCoverageClauses']);
-        const secondCoverageClauses = normalizeStringList(entryRecord['secondCoverageClauses']);
 
         if (!key.length || !label.length) {
           return null;
         }
 
+        const tiers = normalizeCaptainCoverageTiers(entryRecord['tiers']);
+
         return {
           key,
           label,
-          firstCoverageScope,
-          secondCoverageScope,
-          firstCoverageClauses,
-          secondCoverageClauses,
+          tiers,
         };
       })
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
   };
 }
 
-function normalizeCaptainAbilityScope(
-  value: unknown,
-): NonNullable<CharacterDetail['captainAbilityCoverage']>['entries'][number]['firstCoverageScope'] {
+function normalizeCaptainAbilityScope(value: unknown): CharacterCaptainAbilityScope {
   return value === 'crew-wide' ||
     value === 'captain-only' ||
     value === 'subset' ||
     value === 'none'
     ? value
     : 'none';
+}
+
+function normalizeCaptainCoverageTiers(
+  value: unknown,
+): NonNullable<CharacterDetail['captainAbilityCoverage']>['entries'][number]['tiers'] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+      }
+      const record = entry as Record<string, unknown>;
+      const tierNumber = Number(record['tier']);
+      if (!Number.isFinite(tierNumber) || tierNumber <= 0) {
+        return null;
+      }
+      const kindRaw = record['kind'];
+      const kind: CaptainCoverageTierKind =
+        kindRaw === 'baseline' ||
+        kindRaw === 'unconditional-top' ||
+        kindRaw === 'conditional' ||
+        kindRaw === 'baseline-and-conditional'
+          ? (kindRaw as CaptainCoverageTierKind)
+          : 'baseline';
+      const scope = normalizeCaptainAbilityScope(record['scope']);
+      const characterConditions = normalizeCaptainCoverageTargetScope(record['characterConditions']);
+      const teamConditions = normalizeCaptainCoverageTeamConditions(record['teamConditions']);
+      const fieldConditions = normalizeCaptainCoverageFieldConditions(record['fieldConditions']);
+      const triggerConditions = normalizeCaptainCoverageTriggerConditions(
+        record['triggerConditions'],
+      );
+      const clauses = normalizeStringList(record['clauses']);
+      const baselineClausesRaw = record['baselineClauses'];
+      const conditionalClausesRaw = record['conditionalClauses'];
+      const baselineClauses =
+        baselineClausesRaw !== undefined ? normalizeStringList(baselineClausesRaw) : undefined;
+      const conditionalClauses =
+        conditionalClausesRaw !== undefined
+          ? normalizeStringList(conditionalClausesRaw)
+          : undefined;
+      const atkBoostRaw = Number(record['atkBoost']);
+      const hpBoostRaw = Number(record['hpBoost']);
+
+      return {
+        tier: tierNumber,
+        kind,
+        scope,
+        characterConditions,
+        teamConditions,
+        fieldConditions,
+        triggerConditions,
+        clauses,
+        ...(baselineClauses && baselineClauses.length ? { baselineClauses } : {}),
+        ...(conditionalClauses && conditionalClauses.length ? { conditionalClauses } : {}),
+        atkBoost: Number.isFinite(atkBoostRaw) && atkBoostRaw > 0 ? atkBoostRaw : undefined,
+        hpBoost: Number.isFinite(hpBoostRaw) && hpBoostRaw > 0 ? hpBoostRaw : undefined,
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+}
+
+function normalizeCaptainCoverageTargetScope(
+  value: unknown,
+): NonNullable<
+  CharacterDetail['captainAbilityCoverage']
+>['entries'][number]['tiers'][number]['characterConditions'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return {
+        universal: false,
+        fallbackOther: false,
+        selfOnly: false,
+        dominantType: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+      };
+  }
+  const record = value as Record<string, unknown>;
+  const costRange = normalizeNumericRange(record['costRange']);
+  const rarityRange = normalizeNumericRange(record['rarityRange']);
+  return {
+    universal: Boolean(record['universal']),
+    fallbackOther: Boolean(record['fallbackOther']),
+    selfOnly: Boolean(record['selfOnly']),
+    dominantType: Boolean(record['dominantType']),
+    types: normalizeStringList(record['types']),
+    classes: normalizeStringList(record['classes']),
+    characterTags: normalizeStringList(record['characterTags']),
+    costRange,
+    rarityRange,
+  };
+}
+
+function normalizeNumericRange(value: unknown): { min?: number; max?: number } | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const min = Number(record['min']);
+  const max = Number(record['max']);
+  const range: { min?: number; max?: number } = {};
+  if (Number.isFinite(min)) {
+    range.min = min;
+  }
+  if (Number.isFinite(max)) {
+    range.max = max;
+  }
+  return range.min === undefined && range.max === undefined ? undefined : range;
+}
+
+function normalizeCaptainCoverageTeamConditions(
+  value: unknown,
+): NonNullable<
+  CharacterDetail['captainAbilityCoverage']
+>['entries'][number]['tiers'][number]['teamConditions'] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+      }
+      const record = entry as Record<string, unknown>;
+      const kindRaw = record['kind'];
+      type TeamConditionKind =
+        | 'crew-composition'
+        | 'crew-count'
+        | 'crew-exclusion'
+        | 'requires-captain'
+        | 'requires-friend-captain';
+      const kind: TeamConditionKind =
+        kindRaw === 'crew-composition' ||
+        kindRaw === 'crew-count' ||
+        kindRaw === 'crew-exclusion' ||
+        kindRaw === 'requires-captain' ||
+        kindRaw === 'requires-friend-captain'
+          ? (kindRaw as TeamConditionKind)
+          : 'crew-composition';
+      const minCountRaw = Number(record['minCount']);
+      const exactCountRaw = Number(record['exactCount']);
+      return {
+        kind,
+        minCount: Number.isFinite(minCountRaw) && minCountRaw > 0 ? minCountRaw : undefined,
+        exactCount: Number.isFinite(exactCountRaw) && exactCountRaw > 0 ? exactCountRaw : undefined,
+        types: normalizeStringList(record['types']),
+        classes: normalizeStringList(record['classes']),
+        characterTags: normalizeStringList(record['characterTags']),
+        sameType: Boolean(record['sameType']),
+        rawClause: String(record['rawClause'] ?? ''),
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+}
+
+function normalizeCaptainCoverageFieldConditions(
+  value: unknown,
+): NonNullable<
+  CharacterDetail['captainAbilityCoverage']
+>['entries'][number]['tiers'][number]['fieldConditions'] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+      }
+      const record = entry as Record<string, unknown>;
+      return {
+        kind: 'territory' as const,
+        territories: normalizeStringList(record['territories']),
+        rawClause: String(record['rawClause'] ?? ''),
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+}
+
+function normalizeCaptainCoverageTriggerConditions(
+  value: unknown,
+): NonNullable<
+  CharacterDetail['captainAbilityCoverage']
+>['entries'][number]['tiers'][number]['triggerConditions'] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+      }
+      const record = entry as Record<string, unknown>;
+      const kindRaw = record['kind'];
+      type TriggerKind =
+        | 'action-special-excellent'
+        | 'action-special-perfect'
+        | 'hp-below'
+        | 'hp-above'
+        | 'defeated-enemy-last-turn'
+        | 'start-of-fight'
+        | 'captain-branch-state'
+        | 'consecutive-perfects'
+        | 'other';
+      const allowedKinds = new Set<TriggerKind>([
+        'action-special-excellent',
+        'action-special-perfect',
+        'hp-below',
+        'hp-above',
+        'defeated-enemy-last-turn',
+        'start-of-fight',
+        'captain-branch-state',
+        'consecutive-perfects',
+        'other',
+      ]);
+      const kind: TriggerKind = allowedKinds.has(kindRaw as TriggerKind)
+        ? (kindRaw as TriggerKind)
+        : 'other';
+      const hpPercentRaw = Number(record['hpPercent']);
+      const durationTurnsRaw = Number(record['durationTurns']);
+      const perfectStreakRaw = Number(record['perfectStreak']);
+      const branchLabelRaw = record['branchLabel'];
+      return {
+        kind,
+        hpPercent: Number.isFinite(hpPercentRaw) ? hpPercentRaw : undefined,
+        durationTurns:
+          Number.isFinite(durationTurnsRaw) && durationTurnsRaw > 0 ? durationTurnsRaw : undefined,
+        perfectStreak:
+          Number.isFinite(perfectStreakRaw) && perfectStreakRaw > 0 ? perfectStreakRaw : undefined,
+        branchLabel:
+          typeof branchLabelRaw === 'string' && branchLabelRaw.length > 0
+            ? branchLabelRaw
+            : undefined,
+        rawClause: String(record['rawClause'] ?? ''),
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
 }
 
 function normalizeSuperCriteriaBranch(value: unknown): SuperCriteriaBranch | null {

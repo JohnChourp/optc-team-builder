@@ -4,12 +4,18 @@ import {
   type AutoBuildAbilityRequirement,
   type NormalizedBuilderAbility,
 } from '../models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord } from '../models/optc.models';
+import {
+  type CharacterCaptainAbilityCoverage,
+  type CharacterCaptainAbilityCoverageTier,
+  type CharacterDetailRecord,
+} from '../models/optc.models';
 import {
   createCaptainCoverageFilterState,
+  getCaptainCoverageAvailableTierNumbers,
   hasCaptainCoverageSuperTandemData,
   hasCaptainCoverageSuperTypesClassesData,
   matchesCaptainCoverageRequiredAbilityFilters,
+  matchesCaptainCoverageRequiredTiers,
   resolveCaptainCoverageFilterResult,
 } from './captain-coverage-filter.utils';
 
@@ -152,6 +158,81 @@ describe('captain coverage filter model', () => {
     ).toBe(true);
   });
 
+  it('reads available tier numbers from captain coverage entries', () => {
+    const captain = createCharacter({
+      id: 4571,
+      captainAbilityCoverage: buildImuCoverage(),
+    });
+    expect(getCaptainCoverageAvailableTierNumbers(captain)).toEqual([1, 2, 3]);
+  });
+
+  it('returns no tiers for a captain without coverage data', () => {
+    const captain = createCharacter({ id: 7000 });
+    expect(getCaptainCoverageAvailableTierNumbers(captain)).toEqual([]);
+  });
+
+  it('passes any target when requiredTiers is empty (default permissive behaviour)', () => {
+    const captain = createCharacter({
+      id: 4571,
+      captainAbilityCoverage: buildImuCoverage(),
+    });
+    const anyTarget = createCharacter({ id: 9001, cost: 30 });
+    expect(matchesCaptainCoverageRequiredTiers(captain, anyTarget, [])).toBe(true);
+  });
+
+  it('requires the target to match at least one of the requested tiers', () => {
+    const captain = createCharacter({
+      id: 4571,
+      captainAbilityCoverage: buildImuCoverage(),
+    });
+    const cost70Target = createCharacter({ id: 9001, cost: 70 });
+    const cost30Target = createCharacter({ id: 9002, cost: 30 });
+
+    // Tier 2 = Cost 70+
+    expect(matchesCaptainCoverageRequiredTiers(captain, cost70Target, [2])).toBe(true);
+    expect(matchesCaptainCoverageRequiredTiers(captain, cost30Target, [2])).toBe(false);
+
+    // Tier 1 = baseline (fallback-other): matches anyone NOT in subset tier
+    expect(matchesCaptainCoverageRequiredTiers(captain, cost70Target, [1])).toBe(false);
+    expect(matchesCaptainCoverageRequiredTiers(captain, cost30Target, [1])).toBe(true);
+
+    // Selecting both tiers passes both targets
+    expect(matchesCaptainCoverageRequiredTiers(captain, cost70Target, [1, 2])).toBe(true);
+    expect(matchesCaptainCoverageRequiredTiers(captain, cost30Target, [1, 2])).toBe(true);
+  });
+
+  it('integrates requiredTiers filter into the overall match result', () => {
+    const captain = createCharacter({
+      id: 4571,
+      captainAbilityCoverage: buildImuCoverage(),
+      captainAbility:
+        'Boosts ATK of Cost 70 or more characters by 6x, boosts ATK of all other characters by 4x, boosts HP of all characters by 1.5x.',
+    });
+    const cost70Target = createCharacter({ id: 9001, cost: 70 });
+    const cost30Target = createCharacter({ id: 9002, cost: 30 });
+
+    const stateRequireTier2 = createCaptainCoverageFilterState({
+      requireCaptainCoverage: false,
+      requiredTiers: [2],
+    });
+
+    const cost70Result = resolveCaptainCoverageFilterResult(
+      captain,
+      { character: cost70Target, detail: cost70Target },
+      stateRequireTier2,
+    );
+    const cost30Result = resolveCaptainCoverageFilterResult(
+      captain,
+      { character: cost30Target, detail: cost30Target },
+      stateRequireTier2,
+    );
+
+    expect(cost70Result.matchesRequiredTiers).toBe(true);
+    expect(cost70Result.matches).toBe(true);
+    expect(cost30Result.matchesRequiredTiers).toBe(false);
+    expect(cost30Result.matches).toBe(false);
+  });
+
   it('switches Full Coverage to the stricter Captain Ability coverage mode', () => {
     const captain = createCharacter({
       id: 4561,
@@ -192,6 +273,7 @@ function createCharacter(
   overrides: Partial<CharacterDetailRecord> & {
     builderAbilities?: NormalizedBuilderAbility[];
     captainAbility?: string;
+    captainAbilityCoverage?: CharacterCaptainAbilityCoverage;
     characterTags?: string[];
     classes?: string[];
     id: number;
@@ -240,6 +322,7 @@ function createCharacter(
       characterId: overrides.id,
       captainAbility: overrides.captainAbility ?? null,
       captainAbilityVariants: [],
+      captainAbilityCoverage: overrides.captainAbilityCoverage,
       captainNotes: null,
       specialName: null,
       specialText: null,
@@ -264,6 +347,84 @@ function createCharacter(
       rumbleData: null,
     },
   } satisfies CharacterDetailRecord;
+}
+
+function buildImuCoverage(): CharacterCaptainAbilityCoverage {
+  const tiers: CharacterCaptainAbilityCoverageTier[] = [
+    {
+      tier: 1,
+      kind: 'baseline',
+      scope: 'crew-wide',
+      characterConditions: {
+        universal: true,
+        fallbackOther: true,
+        selfOnly: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+      },
+      teamConditions: [],
+      fieldConditions: [],
+      triggerConditions: [],
+      clauses: ['boosts ATK of all other characters by 4x', 'boosts HP of all characters by 1.5x'],
+      atkBoost: 4,
+      hpBoost: 1.5,
+    },
+    {
+      tier: 2,
+      kind: 'unconditional-top',
+      scope: 'crew-wide',
+      characterConditions: {
+        universal: true,
+        fallbackOther: false,
+        selfOnly: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+        costRange: { min: 70 },
+      },
+      teamConditions: [],
+      fieldConditions: [],
+      triggerConditions: [],
+      clauses: ['Boosts ATK of Cost 70 or more characters by 6x', 'boosts HP of all characters by 1.5x'],
+      atkBoost: 6,
+      hpBoost: 1.5,
+    },
+    {
+      tier: 3,
+      kind: 'conditional',
+      scope: 'subset',
+      characterConditions: {
+        universal: false,
+        fallbackOther: false,
+        selfOnly: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+        costRange: { min: 70 },
+      },
+      teamConditions: [{ kind: 'requires-captain', rawClause: 'this character is your Captain' }],
+      fieldConditions: [],
+      triggerConditions: [
+        {
+          kind: 'action-special-excellent',
+          durationTurns: 3,
+          rawClause: 'performs EXCELLENT with their Action Special',
+        },
+      ],
+      clauses: ['boosts ATK of Cost 70 or more characters by 6.5x'],
+      atkBoost: 6.5,
+    },
+  ];
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers,
+      },
+    ],
+  };
 }
 
 function createRequirement(abilityKey: string): AutoBuildAbilityRequirement {

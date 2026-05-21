@@ -46,17 +46,13 @@ export interface CaptainCoverageResult {
   uncoveredClauses: string[];
 }
 
-export interface CaptainAbilityCoverageSummary {
-  firstCoverageClauses: string[];
-  secondCoverageClauses: string[];
-}
-
 export interface CaptainBoostScopeSummary {
   clauses: string[];
   allCharacters: boolean;
   allowedClasses: string[];
   allowedTypes: AutoTeamBuilderType[];
   allowedCharacterTags: string[];
+  dominantType: boolean;
 }
 
 export interface CaptainCoverageOptions {
@@ -82,6 +78,9 @@ export interface CaptainCoverageBranchOption extends CaptainCoverageBranchText {
 const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates|crew)\b/i;
 const FALLBACK_OTHER_SCOPE_PATTERN = /\ball other (?:characters|units|crewmates)\b/i;
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
+const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
+const SAME_TYPE_CREW_CONDITION_PATTERN =
+  /\b(?:(?:your\s+)?crew\s+has|you\s+have)\s+\d+\s*(?:\+|or\s+more)?\s+characters?\s+(?:of|with)\s+the\s+same\s+Type\b/i;
 const BRANCH_LABEL_PATTERN =
   /(?<!Special\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const CAPTAIN_BRANCH_PATTERN =
@@ -119,33 +118,6 @@ const TEAM_TAG_CONDITION_TARGET_FRAGMENT_PATTERNS = [
   /\bcrew tag condition:\s+(.{1,240}?)\s+(?:characters|units)\b/gi,
 ] as const;
 
-export function summarizeCaptainAbilityCoverageText(
-  captainText: string | null | undefined,
-): CaptainAbilityCoverageSummary {
-  const normalizedCaptainText = normalizeHtmlToText(captainText);
-
-  if (!normalizedCaptainText) {
-    return {
-      firstCoverageClauses: [],
-      secondCoverageClauses: [],
-    };
-  }
-
-  const firstCoverageClauses = resolveCaptainBoostScope(
-    normalizedCaptainText,
-    'simpleBoostScope',
-  ).clauses;
-  const secondCoverageClauses = resolveCaptainBoostScope(
-    normalizedCaptainText,
-    'fullAbilityCoverage',
-  ).clauses;
-
-  return {
-    firstCoverageClauses,
-    secondCoverageClauses,
-  };
-}
-
 export function resolveCaptainBoostScope(
   captainText: string | null | undefined,
   coverageMode: AutoBuildCaptainAbilityCoverageMode = 'fullAbilityCoverage',
@@ -156,9 +128,11 @@ export function resolveCaptainBoostScope(
     return createEmptyCaptainBoostScope();
   }
 
+  const defaultCaptainText = extractDefaultCaptainBoostText(normalizedCaptainText);
+  const defaultBoostClauses = extractDefaultCaptainBoostClauses(defaultCaptainText);
   const clauses =
     coverageMode === 'simpleBoostScope'
-      ? extractDefaultCaptainBoostClauses(extractDefaultCaptainBoostText(normalizedCaptainText))
+      ? resolveSimpleCaptainBoostScopeClauses(normalizedCaptainText, defaultBoostClauses)
       : extractCaptainBoostScopeClauses(normalizedCaptainText, true);
 
   return clauses.reduce<CaptainBoostScopeSummary>((scope, clause) => {
@@ -166,6 +140,7 @@ export function resolveCaptainBoostScope(
     const allowedTypes = extractAllowedTypesFromBoostClause(normalizedClause);
     const allowedClasses = extractAllowedClassesFromBoostClause(normalizedClause);
     const allowedCharacterTags = extractAllowedCharacterTagsFromCoverageClause(normalizedClause);
+    const dominantType = boostClauseHasDominantTypeScope(normalizedClause);
 
     return {
       clauses: [...scope.clauses, normalizedClause],
@@ -173,6 +148,7 @@ export function resolveCaptainBoostScope(
       allowedClasses: mergeUniqueValues(scope.allowedClasses, allowedClasses),
       allowedTypes: mergeOrderedValues(AUTO_TEAM_BUILDER_TYPES, scope.allowedTypes, allowedTypes),
       allowedCharacterTags: mergeUniqueValues(scope.allowedCharacterTags, allowedCharacterTags),
+      dominantType: scope.dominantType || dominantType,
     };
   }, createEmptyCaptainBoostScope());
 }
@@ -351,6 +327,17 @@ export function hasSelfOnlyCaptainCoverageText(
       );
     }),
   );
+}
+
+export function hasDominantTypeCaptainCoverageText(
+  captain: CharacterDetailRecord,
+  options: Pick<CaptainCoverageOptions, 'branchMode'> = {},
+): boolean {
+  const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
+  const forcedBranch = resolveCaptainCoverageBranchForMode(branches, options.branchMode);
+  const targetBranches = forcedBranch ? [forcedBranch] : branches;
+
+  return targetBranches.some((branch) => hasDominantTypeCoverageText(branch.text));
 }
 
 function resolveDualBaseCaptainAbilityVariants(
@@ -632,6 +619,7 @@ function resolveCaptainCoverageClause(
   const chips: CaptainCoverageChip[] = [];
 
   const isUniversal = boostClauseHasUniversalScope(normalizedClause);
+  const isDominantType = boostClauseHasDominantTypeScope(normalizedClause);
   const matchingTypes = resolveMatchingTypeScopes(normalizedClause, target);
   const matchingClasses = resolveMatchingClassScopes(normalizedClause, target);
   const matchingTags = resolveMatchingCharacterTagScopes(normalizedClause, target, options);
@@ -659,7 +647,8 @@ function resolveCaptainCoverageClause(
     }),
   );
 
-  const hasTargetScope = isUniversal || hasTypeScope || hasClassScope || hasCharacterTagScope;
+  const hasTargetScope =
+    isUniversal || isDominantType || hasTypeScope || hasClassScope || hasCharacterTagScope;
 
   if (!hasTargetScope) {
     return {
@@ -672,7 +661,12 @@ function resolveCaptainCoverageClause(
   const typeMatches = hasTypeScope ? matchingTypes.length > 0 : false;
   const classMatches = hasClassScope ? matchingClasses.length > 0 : false;
   const tagMatches = hasCharacterTagScope ? matchingTags.length > 0 : false;
-  const covered = isUniversal || typeMatches || classMatches || tagMatches;
+  const covered =
+    isUniversal ||
+    (isDominantType && resolveCharacterTypeTokens(target.type).length > 0) ||
+    typeMatches ||
+    classMatches ||
+    tagMatches;
 
   return {
     text: normalizedClause,
@@ -717,6 +711,25 @@ function extractDefaultCaptainBoostClauses(text: string): string[] {
   return extractCaptainBoostScopeClauses(text, false);
 }
 
+function resolveSimpleCaptainBoostScopeClauses(
+  normalizedCaptainText: string,
+  defaultBoostClauses: string[],
+): string[] {
+  const defaultAtkClauses = defaultBoostClauses.filter((clause) => /\batk\b/i.test(clause));
+  const defaultHpClauses = defaultBoostClauses.filter((clause) => /\bhp\b/i.test(clause));
+  const dominantTypeClauses = extractDominantTypeCaptainBoostClauses(normalizedCaptainText);
+
+  if (
+    defaultAtkClauses.length === 0 &&
+    defaultHpClauses.length > 0 &&
+    dominantTypeClauses.length > 0
+  ) {
+    return mergeUniqueValues(dominantTypeClauses, defaultHpClauses);
+  }
+
+  return defaultBoostClauses;
+}
+
 function extractCaptainBoostScopeClauses(text: string, includeConditional: boolean): string[] {
   const boostClauses = splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. '))
     .map(stripInlineConditionalBoostRiders)
@@ -734,6 +747,18 @@ function extractCaptainBoostScopeClauses(text: string, includeConditional: boole
   return [...boostClauses, ...extractCaptainStartOfFightCooldownTagClauses(text)];
 }
 
+function extractDominantTypeCaptainBoostClauses(text: string): string[] {
+  return splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. '))
+    .map(stripInlineConditionalBoostRiders)
+    .map(stripBoostInsteadSuffix)
+    .filter(
+      (clause) =>
+        isConditionalCaptainBoostClause(clause) &&
+        hasDominantTypeCoverageText(clause) &&
+        isCaptainBoostScopeClause(clause),
+    );
+}
+
 function isCaptainBoostScopeClause(clause: string): boolean {
   const normalizedClause = normalizeCoverageClause(clause);
 
@@ -744,6 +769,7 @@ function isCaptainBoostScopeClause(clause: string): boolean {
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
     !FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
+      boostClauseHasDominantTypeScope(normalizedClause) ||
       extractAllowedTypesFromBoostClause(normalizedClause).length > 0 ||
       extractAllowedClassesFromBoostClause(normalizedClause).length > 0 ||
       extractAllowedCharacterTagsFromBoostClause(normalizedClause).length > 0)
@@ -918,6 +944,16 @@ function extractAllowedTypesFromBoostClause(clause: string): AutoTeamBuilderType
   );
 }
 
+function boostClauseHasDominantTypeScope(clause: string): boolean {
+  return extractBoostTargetFragments(clause).some((fragment) =>
+    DOMINANT_TYPE_SCOPE_PATTERN.test(fragment),
+  );
+}
+
+function hasDominantTypeCoverageText(text: string): boolean {
+  return DOMINANT_TYPE_SCOPE_PATTERN.test(text) && SAME_TYPE_CREW_CONDITION_PATTERN.test(text);
+}
+
 function textMatchesTypeScope(clause: string, type: AutoTeamBuilderType): boolean {
   return new RegExp(`(?:\\[${type}\\]|\\b${type}\\b)`, 'i').test(clause);
 }
@@ -1044,6 +1080,7 @@ function createEmptyCaptainBoostScope(): CaptainBoostScopeSummary {
     allowedClasses: [],
     allowedTypes: [],
     allowedCharacterTags: [],
+    dominantType: false,
   };
 }
 
