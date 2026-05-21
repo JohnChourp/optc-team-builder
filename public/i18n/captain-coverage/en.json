@@ -27,7 +27,7 @@
     "bestAbilityMatchesFirst": "Best ability matches first",
     "captainAbilityCopy": "Required narrows results by tags parsed from each result character's own Captain Ability. This does not change the selected Captain.",
     "captainAbilityCoverage": {
-      "toggle": "Full Coverage",
+      "toggle": "All Captain Ability clauses",
       "support": {
         "simple": "Using the Captain's standard HP/ATK boost scope.",
         "full": "Using every targetable Captain Ability clause and matching crew tag conditions."

@@ -312,6 +312,18 @@ export interface AutoBuildLeaderCriteriaSummary {
   matchingSlots: number;
   totalSlots: number;
   allSlotsMatch: boolean;
+  leaderTierCoverages: AutoBuildLeaderTierCoverageSummary[];
+  allLeaderTiersCovered: boolean;
+}
+
+export interface AutoBuildLeaderTierCoverageSummary {
+  leaderId: number;
+  leaderName: string;
+  // Tiers that contribute to coverage — excludes self-only-only tiers that no other slot can satisfy.
+  applicableTierCount: number;
+  matchedTierCount: number;
+  uncoveredTierLabels: string[];
+  matches: boolean;
 }
 
 export interface AutoBuildCandidate {

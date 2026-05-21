@@ -27,7 +27,7 @@
     "bestAbilityMatchesFirst": "Πρώτα τα καλύτερα ability matches",
     "captainAbilityCopy": "Το Required περιορίζει τα results με tags που έχουν γίνει parse από το Captain Ability κάθε result χαρακτήρα. Αυτό δεν αλλάζει τον επιλεγμένο Captain.",
     "captainAbilityCoverage": {
-      "toggle": "Full Coverage",
+      "toggle": "All Captain Ability clauses",
       "support": {
         "simple": "Χρησιμοποιεί το standard HP/ATK boost scope του Captain.",
         "full": "Χρησιμοποιεί όλα τα targetable Captain Ability clauses και ταιριάζει crew tag conditions."

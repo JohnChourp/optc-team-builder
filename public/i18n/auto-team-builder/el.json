@@ -14,8 +14,8 @@
       "characterTags": "κάλυψη character tags στην ομάδα",
       "characterNames": "υποχρεωτικά character names",
       "leaderSuperEffectScope": "match στο leader super effect scope",
-      "captainAbilityCoverage": "Second Coverage",
-      "bothLeadersCaptainCoverage": "Second Coverage και από τους δύο leaders",
+      "captainAbilityCoverage": "Κάλυψη Captain Ability tiers",
+      "bothLeadersCaptainCoverage": "Κάλυψη Captain Ability tiers και από τους δύο leaders",
       "superSpecialCriteriaCoverage": "κάλυψη Super Special criteria",
       "superTandemCriteriaCoverage": "κάλυψη Super Tandem criteria"
     },
@@ -91,7 +91,7 @@
       "modal": {
         "eyebrow": "Requirement sources",
         "title": "Επίλεξε requirement source",
-        "copy": "Εμφανίζονται μόνο χαρακτήρες με extractable Captain, First Coverage, Second Coverage, Super Special ή Super Tandem roster requirements.",
+        "copy": "Εμφανίζονται μόνο χαρακτήρες με extractable Captain Ability, Super Special ή Super Tandem roster requirements.",
         "support": "Η εφαρμογή αντιγράφει τα ability-derived required tags και names στα relaxed filters.",
         "searchPlaceholder": "Αναζήτηση source χαρακτήρων",
         "count": "{{count}} source χαρακτήρες",
@@ -113,17 +113,17 @@
       }
     },
     "captainAbilityCoverage": {
-      "toggle": "Απαίτησε Second Coverage",
+      "toggle": "Απαίτησε κάλυψη Captain Ability tiers",
       "support": {
-        "simple": "Το default mode φιλτράρει την ομάδα με First Coverage: μόνο το standard HP/ATK boost scope του leader.",
-        "full": "Κάθε final slot, μαζί με Captain και Friend Captain, πρέπει να καλύπτει Second Coverage: όλα τα targetable Captain Ability clauses."
+        "simple": "Το default mode φιλτράρει την ομάδα με το standard HP/ATK boost scope του leader.",
+        "full": "Κάθε final slot πρέπει να ταιριάζει σε ένα Captain Ability tier του leader και κάθε tier πρέπει να καλύπτεται από τουλάχιστον ένα slot της ομάδας."
       }
     },
     "bothLeadersCaptainCoverage": {
-      "toggle": "Απαίτησε να περνούν και οι δύο leaders το Second Coverage",
+      "toggle": "Απαίτησε να περνούν και οι δύο leaders την κάλυψη tiers",
       "support": {
-        "flexible": "Επίτρεψε ομάδες όπου περνάει Second Coverage μόνο ένας leader και δείξε warning στο αποτέλεσμα.",
-        "strict": "Captain και Friend Captain πρέπει να περνούν Second Coverage για κάθε slot και κάθε team-count Captain Ability condition."
+        "flexible": "Επίτρεψε ομάδες όπου περνάει την κάλυψη tiers μόνο ένας leader και δείξε warning στο αποτέλεσμα.",
+        "strict": "Captain και Friend Captain πρέπει να περνούν την κάλυψη tiers για κάθε slot, κάθε Captain Ability tier και κάθε team-count Captain Ability condition."
       }
     },
     "superSpecialCriteriaCoverage": {
@@ -644,7 +644,7 @@
     "groups": {
       "abilityRequirements": "Ability requirements",
       "burst": "Burst",
-      "captainAbilityCoverage": "Second Coverage",
+      "captainAbilityCoverage": "Κάλυψη Captain Ability tiers",
       "characterNameRequest": "Character name request",
       "characterTagRequest": "Character tag request",
       "classCoverage": "Class coverage",
@@ -691,10 +691,10 @@
       "startsAs": "Ξεκινά ως {{name}}"
     },
     "captainAbilityCoverage": {
-      "full": "Το Second Coverage περνάει.",
+      "full": "Η κάλυψη Captain Ability tiers περνάει.",
       "missingLeaderSlots": "{{leader}} δεν καλύπτει {{slots}}.",
-      "partial": "{{matched}} / {{total}} Second Coverage slot checks καλύπτονται.",
-      "pending": "Το Second Coverage θα υπολογιστεί μετά από επιτυχημένο build."
+      "partial": "{{matched}} / {{total}} tier coverage slot checks καλύπτονται.",
+      "pending": "Η κάλυψη tiers θα υπολογιστεί μετά από επιτυχημένο build."
     },
     "none": "Κανένα",
     "requiredAbilities": {

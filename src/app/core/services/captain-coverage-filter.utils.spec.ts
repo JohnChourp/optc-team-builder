@@ -16,6 +16,7 @@ import {
   hasCaptainCoverageSuperTypesClassesData,
   matchesCaptainCoverageRequiredAbilityFilters,
   matchesCaptainCoverageRequiredTiers,
+  resolveCaptainAllTierCoverage,
   resolveCaptainCoverageFilterResult,
 } from './captain-coverage-filter.utils';
 
@@ -233,7 +234,7 @@ describe('captain coverage filter model', () => {
     expect(cost30Result.matches).toBe(false);
   });
 
-  it('switches Full Coverage to the stricter Captain Ability coverage mode', () => {
+  it('switches the all-clauses toggle to the stricter Captain Ability coverage mode', () => {
     const captain = createCharacter({
       id: 4561,
       captainAbility: blackbeardEmperorCaptainAbility,
@@ -266,6 +267,86 @@ describe('captain coverage filter model', () => {
     expect(fullResult.coverageMode).toBe('fullAbilityCoverage');
     expect(fullResult.matches).toBe(false);
     expect(fullResult.matchesCaptainCoverage).toBe(false);
+  });
+});
+
+describe('resolveCaptainAllTierCoverage', () => {
+  it('matches when every captain ability tier has at least one team slot covering it', () => {
+    const captain = createCharacter({
+      id: 9001,
+      captainAbilityCoverage: buildTwoTierFighterFallbackCoverage(),
+    });
+    const fighterSlot = createCharacter({ id: 9101, classes: ['Fighter'], type: 'DEX' });
+    const nonFighterSlot = createCharacter({ id: 9102, classes: ['Cerebral'], type: 'QCK' });
+
+    const result = resolveCaptainAllTierCoverage(captain, [
+      { character: fighterSlot },
+      { character: nonFighterSlot },
+    ]);
+
+    expect(result.applicableTierCount).toBe(2);
+    expect(result.matchedTierCount).toBe(2);
+    expect(result.matches).toBe(true);
+    expect(result.uncoveredTierLabels).toEqual([]);
+  });
+
+  it('fails when a non-fallback tier has no matching slot', () => {
+    const captain = createCharacter({
+      id: 9002,
+      captainAbilityCoverage: buildTwoTierFighterFallbackCoverage(),
+    });
+    const cerebralSlot = createCharacter({ id: 9201, classes: ['Cerebral'], type: 'QCK' });
+
+    const result = resolveCaptainAllTierCoverage(captain, [
+      { character: cerebralSlot },
+      { character: cerebralSlot },
+    ]);
+
+    expect(result.matches).toBe(false);
+    expect(result.uncoveredTierLabels).toEqual(['Tier 1']);
+    expect(result.matchedTierCount).toBe(1);
+  });
+
+  it('fails when the fallback tier has no slot that misses the more-specific tier', () => {
+    const captain = createCharacter({
+      id: 9003,
+      captainAbilityCoverage: buildTwoTierFighterFallbackCoverage(),
+    });
+    const fighterSlot = createCharacter({ id: 9301, classes: ['Fighter'], type: 'DEX' });
+
+    const result = resolveCaptainAllTierCoverage(captain, [
+      { character: fighterSlot },
+      { character: fighterSlot },
+    ]);
+
+    expect(result.matches).toBe(false);
+    expect(result.uncoveredTierLabels).toEqual(['Tier 2']);
+  });
+
+  it('returns matches=true for captains without tier data', () => {
+    const captain = createCharacter({ id: 9004 });
+    const slot = createCharacter({ id: 9401 });
+
+    const result = resolveCaptainAllTierCoverage(captain, [{ character: slot }]);
+
+    expect(result.matches).toBe(true);
+    expect(result.applicableTierCount).toBe(0);
+    expect(result.tierResults).toEqual([]);
+  });
+
+  it('ignores self-only tiers that no team slot can satisfy', () => {
+    const captain = createCharacter({
+      id: 9005,
+      captainAbilityCoverage: buildSelfOnlyAndUniversalCoverage(),
+    });
+    const slot = createCharacter({ id: 9501, classes: ['Fighter'], type: 'DEX' });
+
+    const result = resolveCaptainAllTierCoverage(captain, [{ character: slot }]);
+
+    expect(result.matches).toBe(true);
+    expect(result.applicableTierCount).toBe(1);
+    expect(result.tierResults).toHaveLength(2);
+    expect(result.tierResults[0]?.notApplicable).toBe(true);
   });
 });
 
@@ -347,6 +428,106 @@ function createCharacter(
       rumbleData: null,
     },
   } satisfies CharacterDetailRecord;
+}
+
+function buildTwoTierFighterFallbackCoverage(): CharacterCaptainAbilityCoverage {
+  const tiers: CharacterCaptainAbilityCoverageTier[] = [
+    {
+      tier: 1,
+      kind: 'conditional',
+      scope: 'subset',
+      characterConditions: {
+        universal: false,
+        fallbackOther: false,
+        selfOnly: false,
+        types: [],
+        classes: ['Fighter'],
+        characterTags: [],
+      },
+      teamConditions: [],
+      fieldConditions: [],
+      triggerConditions: [],
+      clauses: ['boosts ATK of Fighter characters by 3x'],
+      atkBoost: 3,
+    },
+    {
+      tier: 2,
+      kind: 'baseline',
+      scope: 'crew-wide',
+      characterConditions: {
+        universal: true,
+        fallbackOther: true,
+        selfOnly: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+      },
+      teamConditions: [],
+      fieldConditions: [],
+      triggerConditions: [],
+      clauses: ['boosts ATK of all other characters by 1.5x'],
+      atkBoost: 1.5,
+    },
+  ];
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers,
+      },
+    ],
+  };
+}
+
+function buildSelfOnlyAndUniversalCoverage(): CharacterCaptainAbilityCoverage {
+  const tiers: CharacterCaptainAbilityCoverageTier[] = [
+    {
+      tier: 1,
+      kind: 'baseline',
+      scope: 'captain-only',
+      characterConditions: {
+        universal: false,
+        fallbackOther: false,
+        selfOnly: true,
+        types: [],
+        classes: [],
+        characterTags: [],
+      },
+      teamConditions: [],
+      fieldConditions: [],
+      triggerConditions: [],
+      clauses: ['boosts ATK of this character by 12x'],
+      atkBoost: 12,
+    },
+    {
+      tier: 2,
+      kind: 'baseline',
+      scope: 'crew-wide',
+      characterConditions: {
+        universal: true,
+        fallbackOther: false,
+        selfOnly: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+      },
+      teamConditions: [],
+      fieldConditions: [],
+      triggerConditions: [],
+      clauses: ['boosts HP of all characters by 1.5x'],
+      hpBoost: 1.5,
+    },
+  ];
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers,
+      },
+    ],
+  };
 }
 
 function buildImuCoverage(): CharacterCaptainAbilityCoverage {

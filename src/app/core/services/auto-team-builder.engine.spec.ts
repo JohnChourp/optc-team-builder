@@ -493,6 +493,8 @@ describe('runAutoTeamBuildSearch', () => {
           matchingSlots: 0,
           totalSlots: 0,
           allSlotsMatch: true,
+          leaderTierCoverages: [],
+          allLeaderTiersCovered: true,
         },
         abilityRequirements: {
           requested: [],

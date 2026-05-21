@@ -157,12 +157,93 @@ export function matchesCaptainCoverageRequiredTiers(
     // Leader has no tier data — keep behaviour unchanged (no extra restriction).
     return true;
   }
+  const subsetTiers = filterSubsetCaptainCoverageTiers(tiers);
+  return requiredTiers.some((tierNumber) => {
+    const tier = tiers.find((entry) => entry.tier === tierNumber);
+    if (!tier) {
+      return false;
+    }
+    return matchesCaptainCoverageTier(tier, target, subsetTiers);
+  });
+}
+
+export interface CaptainAllTierCoverageTierResult {
+  tier: CharacterCaptainAbilityCoverageTier;
+  matchingCandidateCount: number;
+  matches: boolean;
+  // True when the tier cannot be covered by any team slot (e.g. self-only tiers that only the
+  // captain itself satisfies) — these are treated as not-applicable for team coverage purposes.
+  notApplicable: boolean;
+}
+
+export interface CaptainAllTierCoverageResult {
+  matches: boolean;
+  totalTierCount: number;
+  matchedTierCount: number;
+  applicableTierCount: number;
+  tierResults: CaptainAllTierCoverageTierResult[];
+  uncoveredTierLabels: string[];
+}
+
+export function resolveCaptainAllTierCoverage(
+  captain: CharacterDetailRecord | null | undefined,
+  candidates: readonly { character: CharacterListItem }[],
+): CaptainAllTierCoverageResult {
+  const tiers = getCaptainCoverageTiers(captain);
+  if (tiers.length === 0) {
+    return {
+      matches: true,
+      totalTierCount: 0,
+      matchedTierCount: 0,
+      applicableTierCount: 0,
+      tierResults: [],
+      uncoveredTierLabels: [],
+    };
+  }
+  const subsetTiers = filterSubsetCaptainCoverageTiers(tiers);
+  const tierResults = tiers.map<CaptainAllTierCoverageTierResult>((tier) => {
+    if (isCaptainCoverageTierNotApplicableForTeamCoverage(tier)) {
+      return {
+        tier,
+        matchingCandidateCount: 0,
+        matches: true,
+        notApplicable: true,
+      };
+    }
+    const matchingCandidateCount = candidates.filter((candidate) =>
+      matchesCaptainCoverageTier(tier, candidate.character, subsetTiers),
+    ).length;
+    return {
+      tier,
+      matchingCandidateCount,
+      matches: matchingCandidateCount > 0,
+      notApplicable: false,
+    };
+  });
+  const applicableResults = tierResults.filter((result) => !result.notApplicable);
+  const matchedTierCount = applicableResults.filter((result) => result.matches).length;
+  const uncoveredTierLabels = applicableResults
+    .filter((result) => !result.matches)
+    .map((result) => `Tier ${result.tier.tier}`);
+  return {
+    matches: matchedTierCount === applicableResults.length,
+    totalTierCount: tierResults.length,
+    matchedTierCount,
+    applicableTierCount: applicableResults.length,
+    tierResults,
+    uncoveredTierLabels,
+  };
+}
+
+function filterSubsetCaptainCoverageTiers(
+  tiers: readonly CharacterCaptainAbilityCoverageTier[],
+): CharacterCaptainAbilityCoverageTier[] {
   // Fallback ("all other characters") tiers match a target iff that target does NOT satisfy any
   // more-specific subset tier in the same entry. The reference list must contain only tiers with
   // explicit subset constraints — universal-only conditional tiers (no types/classes/tags/cost/
   // rarity/dominantType) would otherwise return `true` for every target inside
   // `matchesTierCharacterConditionsInner`, making the fallback tier match nothing.
-  const subsetTiers = tiers.filter((tier) => {
+  return tiers.filter((tier) => {
     if (tier.characterConditions.fallbackOther) {
       return false;
     }
@@ -176,13 +257,25 @@ export function matchesCaptainCoverageRequiredTiers(
       conditions.dominantType === true
     );
   });
-  return requiredTiers.some((tierNumber) => {
-    const tier = tiers.find((entry) => entry.tier === tierNumber);
-    if (!tier) {
-      return false;
-    }
-    return matchesCaptainCoverageTier(tier, target, subsetTiers);
-  });
+}
+
+function isCaptainCoverageTierNotApplicableForTeamCoverage(
+  tier: CharacterCaptainAbilityCoverageTier,
+): boolean {
+  // Self-only tiers ("Boosts ATK of this character by 12x") only target the captain itself, so
+  // they can never be covered by another team slot — treat as not-applicable.
+  const conditions = tier.characterConditions;
+  return (
+    conditions.selfOnly &&
+    !conditions.universal &&
+    !conditions.fallbackOther &&
+    !conditions.dominantType &&
+    conditions.types.length === 0 &&
+    conditions.classes.length === 0 &&
+    conditions.characterTags.length === 0 &&
+    conditions.costRange === undefined &&
+    conditions.rarityRange === undefined
+  );
 }
 
 export function matchesCaptainCoverageTier(

@@ -236,7 +236,7 @@ describe('resolveCaptainCoverage', () => {
     });
   });
 
-  it('requires Blackbeard Second Coverage targets to be Free Spirit and tag-covered', () => {
+  it('requires Blackbeard tier coverage targets to be Free Spirit and tag-covered', () => {
     const captain = createCharacter({
       id: 4561,
       captainAbility: blackbeardEmperorCaptainAbility,

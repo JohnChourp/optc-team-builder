@@ -325,7 +325,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('passes strict both-leader Second Coverage to the builder when enabled', async () => {
+  it('passes strict both-leader tier coverage to the builder when enabled', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
@@ -345,7 +345,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('reports partial Second Coverage and exposes result character tags', async () => {
+  it('reports partial tier coverage and exposes result character tags', async () => {
     const { page } = await createPage();
     const captain = createCharacterRecord(200, 'DEX Captain');
     const dexSub = createCharacterRecord(202, 'DEX Sub');
@@ -368,7 +368,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     expect(page.teamSlots()[5]?.characterTags).toEqual(['Kid Pirates', 'Worst Generation']);
     expect(page.captainAbilityCoverageReportLabel()).toBe(
-      '10 / 12 Second Coverage slot checks covered.',
+      '10 / 12 tier coverage slot checks covered.',
     );
     expect(page.captainAbilityCoverageMissingLabels()).toEqual([
       'Captain misses Sub 4.',
@@ -7153,6 +7153,8 @@ function createAutoBuildResult(
         matchingSlots: 6,
         totalSlots: 6,
         allSlotsMatch: true,
+        leaderTierCoverages: [],
+        allLeaderTiersCovered: true,
       },
       abilityRequirements: {
         requested: [],

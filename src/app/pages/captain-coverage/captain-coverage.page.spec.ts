@@ -1270,7 +1270,7 @@ describe('CaptainCoveragePage', () => {
         'Super Tandem',
         'Super Types/Classes',
         'Captain Coverage',
-        'Full Coverage',
+        'All Captain Ability clauses',
       ]);
     }
   });
@@ -1430,7 +1430,7 @@ function formatTranslation(key: string, params?: Record<string, string | number>
     'captain-coverage.filters.superTandemPresence.toggle': 'Super Tandem',
     'captain-coverage.filters.superTypesClassesPresence.toggle': 'Super Types/Classes',
     'captain-coverage.filters.captainCoverage.toggle': 'Captain Coverage',
-    'captain-coverage.filters.captainAbilityCoverage.toggle': 'Full Coverage',
+    'captain-coverage.filters.captainAbilityCoverage.toggle': 'All Captain Ability clauses',
   };
   const translation = translations[key] ?? key;
 

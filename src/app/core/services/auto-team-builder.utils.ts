@@ -58,6 +58,7 @@ import {
   resolveCaptainCoverage,
   resolveRequiredCaptainCoverageBranchTexts,
 } from './captain-coverage.utils';
+import { resolveCaptainAllTierCoverage } from './captain-coverage-filter.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 import { cloneRequiredCharacterGroup } from './required-character-groups.utils';
 import { cloneBattleRequirements } from './auto-team-builder-battle.utils';
@@ -154,7 +155,11 @@ interface TeamCoverageState {
 
 interface ActiveLeaderCriteria extends Omit<
   AutoBuildLeaderCriteriaSummary,
-  'matchingSlots' | 'totalSlots' | 'allSlotsMatch'
+  | 'matchingSlots'
+  | 'totalSlots'
+  | 'allSlotsMatch'
+  | 'leaderTierCoverages'
+  | 'allLeaderTiersCovered'
 > {
   leaders: ActiveLeaderCriteriaLeader[];
 }
@@ -1811,6 +1816,13 @@ export function buildAutoTeamResultFromPreparedContext(
 
         if (
           shouldEnforceCaptainAbilityCoverage(input) &&
+          !coverage.leaderCriteria.allLeaderTiersCovered
+        ) {
+          continue;
+        }
+
+        if (
+          shouldEnforceCaptainAbilityCoverage(input) &&
           !matchesActiveLeaderTagConditions(teamCandidates, leaderCriteria)
         ) {
           continue;
@@ -2717,6 +2729,13 @@ function selectSubs(
     );
 
     if (shouldEnforceCaptainAbilityCoverage(input) && !nextCoverage.leaderCriteria.allSlotsMatch) {
+      return false;
+    }
+
+    if (
+      shouldEnforceCaptainAbilityCoverage(input) &&
+      !nextCoverage.leaderCriteria.allLeaderTiersCovered
+    ) {
       return false;
     }
 
@@ -4326,6 +4345,17 @@ function summarizeLeaderCriteria(
   const leaderBranchSelections = leaderCriteria.leaders
     .map((leader) => resolveLeaderBranchSelection(leader, candidates, leaderCriteria.coverageMode))
     .filter((selection): selection is NonNullable<typeof selection> => Boolean(selection));
+  const leaderTierCoverages = leaderCriteria.leaders.map((leader) => {
+    const tierCoverage = resolveCaptainAllTierCoverage(leader.candidate.character, candidates);
+    return {
+      leaderId: leader.candidate.character.id,
+      leaderName: leader.candidate.character.name,
+      applicableTierCount: tierCoverage.applicableTierCount,
+      matchedTierCount: tierCoverage.matchedTierCount,
+      uncoveredTierLabels: tierCoverage.uncoveredTierLabels,
+      matches: tierCoverage.matches,
+    };
+  });
 
   return {
     source: leaderCriteria.source,
@@ -4357,6 +4387,8 @@ function summarizeLeaderCriteria(
     matchingSlots,
     totalSlots: candidates.length,
     allSlotsMatch: matchingSlots === candidates.length,
+    leaderTierCoverages,
+    allLeaderTiersCovered: leaderTierCoverages.every((coverage) => coverage.matches),
   };
 }
 

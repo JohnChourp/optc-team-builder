@@ -303,7 +303,7 @@ describe('resolveCaptainTeamConditionStatus', () => {
     expect(status.leaderStatuses[0]?.passed).toBe(false);
   });
 
-  it('requires Blackbeard Second Coverage slots to satisfy Free Spirit and tag cooldown scopes', () => {
+  it('requires Blackbeard tier coverage slots to satisfy Free Spirit and tag cooldown scopes', () => {
     const captainAbility =
       'Launches the following effect at start of fight: reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns, reduces Special Cooldown of [QCK] and Free Spirit characters by 2 turns. Boosts ATK of [QCK] and Free Spirit characters by 6x, boosts HP of [QCK] and Free Spirit characters by 1.3x. If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x instead.';
     const captain = createCharacter({

@@ -17,7 +17,11 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type AutoBuildAbilitySource } from '../models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord, type ShipRecord } from '../models/optc.models';
+import {
+  type CharacterCaptainAbilityCoverage,
+  type CharacterDetailRecord,
+  type ShipRecord,
+} from '../models/optc.models';
 import { AutoTeamBuildCancelledError } from './auto-team-builder.engine';
 import {
   AutoTeamBuildSearchTooLargeError,
@@ -934,7 +938,7 @@ describe('Auto team builder', () => {
     ]);
   });
 
-  it('does not turn Second Coverage into selected captain-source requirements', () => {
+  it('does not turn Captain Ability tier coverage into selected captain-source requirements', () => {
     const result = buildAutoTeamResult(
       [
         createCaptainAbilityBindLeaderRecord(6820),
@@ -3498,7 +3502,7 @@ describe('Auto team builder', () => {
     ).toBeGreaterThanOrEqual(4);
   });
 
-  it('requires Captain and Friend Captain to match Second Coverage', () => {
+  it('requires Captain and Friend Captain to match tier coverage', () => {
     const records = [
       createCharacterRecord({
         id: 8200,
@@ -3554,6 +3558,120 @@ describe('Auto team builder', () => {
         manualLeaderOnlyOptions,
       ),
     ).toBeNull();
+  });
+
+  it('rejects teams that miss any tier of the captain ability under tier coverage', () => {
+    const captainCoverage: CharacterCaptainAbilityCoverage = {
+      entries: [
+        {
+          key: 'captain',
+          label: 'Captain Ability',
+          tiers: [
+            {
+              tier: 1,
+              kind: 'conditional',
+              scope: 'subset',
+              characterConditions: {
+                universal: false,
+                fallbackOther: false,
+                selfOnly: false,
+                types: [],
+                classes: ['Fighter'],
+                characterTags: [],
+              },
+              teamConditions: [],
+              fieldConditions: [],
+              triggerConditions: [],
+              clauses: ['boosts ATK of Fighter characters by 3x'],
+              atkBoost: 3,
+            },
+            {
+              tier: 2,
+              kind: 'baseline',
+              scope: 'crew-wide',
+              characterConditions: {
+                universal: true,
+                fallbackOther: true,
+                selfOnly: false,
+                types: [],
+                classes: [],
+                characterTags: [],
+              },
+              teamConditions: [],
+              fieldConditions: [],
+              triggerConditions: [],
+              clauses: ['boosts ATK of all other characters by 1.5x'],
+              atkBoost: 1.5,
+            },
+          ],
+        },
+      ],
+    };
+    const captain = createCharacterRecord({
+      id: 8300,
+      name: 'Tiered Captain',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 5x and HP by 1.3x.',
+        captainAbilityCoverage: captainCoverage,
+      },
+    });
+    const fighterSubs = [8301, 8302, 8303, 8304].map((id) =>
+      createCharacterRecord({
+        id,
+        name: `Fighter Sub ${id}`,
+        type: 'DEX',
+        primaryClass: 'Fighter',
+        detail: { specialText: 'Boosts ATK of Fighter characters by 2x for 1 turn.' },
+      }),
+    );
+    const cerebralSubs = [8311, 8312, 8313, 8314].map((id) =>
+      createCharacterRecord({
+        id,
+        name: `Cerebral Sub ${id}`,
+        type: 'DEX',
+        primaryClass: 'Cerebral',
+        detail: { specialText: 'Boosts ATK of Cerebral characters by 2x for 1 turn.' },
+      }),
+    );
+
+    const baseInput = createInput(['DEX'], [], {
+      manualSlots: createManualSlots({
+        captain: [8300],
+        friendCaptain: [8300],
+      }),
+      lockedCharacterIds: [8300],
+      captainCharacterId: 8300,
+      friendCaptainCharacterId: 8300,
+      requireFullCaptainAbilityCoverage: true,
+    });
+    // Tiered captain (Fighter) acts as both Captain & Friend Captain, leaving 4 sub slots.
+    const onlyCerebralRecords = [captain, ...cerebralSubs];
+    const onlyFighterRecords = [captain, ...fighterSubs];
+    const mixedRecords = [
+      captain,
+      ...fighterSubs.slice(0, 2),
+      ...cerebralSubs.slice(0, 2),
+    ];
+
+    // With only the captain as Fighter and the rest Cerebral, the Fighter tier is covered by the
+    // captain slots only. The fallback tier is also covered by the cerebrals. The captain ability
+    // text is universal, so the per-slot tier coverage check passes too — the build succeeds.
+    const cerebralResult = buildAutoTeamResult(onlyCerebralRecords, baseInput);
+    expect(cerebralResult).not.toBeNull();
+    expect(cerebralResult?.coverage.leaderCriteria.allLeaderTiersCovered).toBe(true);
+    // With only Fighter subs, the fallback Tier 2 cannot be matched by any slot — reject.
+    expect(buildAutoTeamResult(onlyFighterRecords, baseInput)).toBeNull();
+    // Mixed roster also covers every tier.
+    const mixedResult = buildAutoTeamResult(mixedRecords, baseInput);
+    expect(mixedResult).not.toBeNull();
+    expect(mixedResult?.coverage.leaderCriteria.allLeaderTiersCovered).toBe(true);
+    expect(
+      mixedResult?.coverage.leaderCriteria.leaderTierCoverages.every(
+        (coverage) => coverage.matches,
+      ),
+    ).toBe(true);
   });
 
   it('builds Big Mom teams only from STR, DEX, and QCK characters', () => {
@@ -5263,7 +5381,7 @@ describe('Auto team builder', () => {
     expect(pruned.map((record) => record.id)).toEqual([8300, 8301, 8302, 8303, 8304]);
   });
 
-  it('uses Second Coverage for pool pruning without requiring team tag clauses per character', () => {
+  it('uses tier coverage for pool pruning without requiring team tag clauses per character', () => {
     const service = new AutoTeamBuilderService({} as never);
     const captain = createCharacterRecord({
       id: 8310,
@@ -9755,6 +9873,8 @@ function buildWorkerResult(
         matchingSlots: 0,
         totalSlots: 0,
         allSlotsMatch: true,
+        leaderTierCoverages: [],
+        allLeaderTiersCovered: true,
       },
       abilityRequirements: {
         ...abilityRequirements,
@@ -11187,6 +11307,7 @@ function createCharacterRecord(
       characterId: overrides.id,
       captainAbility: overrides.detail?.captainAbility ?? null,
       captainAbilityVariants: overrides.detail?.captainAbilityVariants ?? [],
+      captainAbilityCoverage: overrides.detail?.captainAbilityCoverage,
       captainNotes: overrides.detail?.captainNotes ?? null,
       specialName: overrides.detail?.specialName ?? null,
       specialText: overrides.detail?.specialText ?? null,
