@@ -54,6 +54,82 @@ describe('extractCoverageTiers', () => {
     expect(tiers[0].clauses[0]).not.toMatch(/this character/i);
   });
 
+  it('captures exact-cost subset (Cost N characters, no qualifier)', () => {
+    const tiers = extractCoverageTiers('Boosts ATK of Cost 40 characters by 2.5x');
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      scope: 'subset',
+      atkBoost: 2.5,
+      characterConditions: expect.objectContaining({
+        costRange: { min: 40, max: 40 },
+      }),
+    });
+  });
+
+  it('captures cost minimum with "or higher" phrasing', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of Cost 50 or higher characters by 3x and their HP and RCV by 1.1x',
+    );
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0].characterConditions.costRange).toEqual({ min: 50 });
+    expect(tiers[0].atkBoost).toBe(3);
+  });
+
+  it('captures tiered-rarity scope ("Rarity N or N+ characters") with single-tier merge', () => {
+    // The clustering logic merges multi-rarity boosts into a single subset tier whose
+    // characterConditions reflect the last rarity match. The full breakdown is preserved in
+    // the clauses[] list so the user still sees each individual rarity boost.
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of Rarity 4 or 4+ characters by 1.75x, boosts ATK of Rarity 5 or 5+ characters by 2x',
+    );
+    expect(tiers.length).toBeGreaterThanOrEqual(1);
+    expect(tiers[0].characterConditions.rarityRange).toMatchObject({ min: expect.any(Number) });
+    expect(tiers[0].clauses).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/Rarity 4/i),
+        expect.stringMatching(/Rarity 5/i),
+      ]),
+    );
+  });
+
+  it('captures orb-chance bias ("Boosts chances of getting [X] orbs") as a tier effect', () => {
+    const tiers = extractCoverageTiers('Boosts chances of getting [RCV] orbs');
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+    });
+    expect(tiers[0].clauses).toEqual(
+      expect.arrayContaining([expect.stringMatching(/chances of getting/i)]),
+    );
+  });
+
+  it('captures defeat-protection ("Protects from defeat as long as HP is above N%") as a tier effect', () => {
+    const tiers = extractCoverageTiers('Protects from defeat as long as HP is above 50%');
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+    });
+    expect(tiers[0].clauses).toEqual(
+      expect.arrayContaining([expect.stringMatching(/Protects from defeat/i)]),
+    );
+  });
+
+  it('captures Chain Multiplier Growth Rate as a baseline tier effect', () => {
+    const tiers = extractCoverageTiers('Boosts Chain Multiplier Growth Rate by 4x');
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+    });
+    expect(tiers[0].clauses).toEqual(
+      expect.arrayContaining([expect.stringMatching(/Chain\s+Multiplier\s+Growth\s+Rate/i)]),
+    );
+  });
+
   it('captures rarity-max subset scope (Rarity N or less characters)', () => {
     const tiers = extractCoverageTiers('Boosts ATK of Rarity 2 or less characters by 2.5x');
     expect(tiers).toHaveLength(1);

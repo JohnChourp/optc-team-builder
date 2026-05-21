@@ -45,9 +45,11 @@ const START_OF_FIGHT_EFFECT_PATTERN =
   /\b(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure)\b/i;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
 const COST_SUBSET_PATTERN =
-  /\bcost\s+(?:\d+\s+or\s+(?:more|less)|\d+\s*-\s*\d+)\s+characters?\b/i;
+  /\bcost\s+(?:\d+\s+or\s+(?:more|less|higher|lower)|\d+\s*-\s*\d+|\d+)\s+characters?\b/i;
 const COST_RANGE_PATTERN = /\bcost\s+(\d+)\s*-\s*(\d+)\s+characters?\b/i;
-const RARITY_SUBSET_PATTERN = /\brarity\s+\d+\s+or\s+(?:more|less)\s+characters?\b/i;
+const COST_EXACT_PATTERN = /\bcost\s+(\d+)\s+characters?\b/i;
+const RARITY_SUBSET_PATTERN =
+  /\brarity\s+(?:\d+\s+or\s+(?:more|less|higher|lower|\d+\+))\s+characters?\b/i;
 const ATK_CLAUSE_PATTERN = /\batk\b/i;
 const HP_CLAUSE_PATTERN = /\bhp\b/i;
 const BOOST_TARGET_FRAGMENT_PATTERNS = [
@@ -353,6 +355,24 @@ function isCaptainTierEffectClause(clause) {
   if (/\bmakes?\b[^.;]*\borbs?\b[^.;]*\bbeneficial\b/i.test(normalizedClause)) {
     return true;
   }
+  if (/\b(?:boosts?|adds?)\b[^.;]*\bChain\s+Multiplier\s+Growth\s+Rate\b/i.test(normalizedClause)) {
+    // Chain Multiplier Growth Rate is a crew-wide combat-economy boost (faster chain ramp-up =
+    // more damage on later hits). Even when nothing else surfaces a tier, this effect alone is
+    // worth showing as a baseline tier so the captain isn't displayed as zero-tier.
+    return true;
+  }
+  if (/\bprotects?\s+from\s+defeat\b/i.test(normalizedClause)) {
+    // Defeat protection above an HP threshold is a captain-only (or crew-wide, depending on
+    // legacy wording) survival mechanic. Same convention as chain-multiplier: surface as a
+    // baseline tier with the raw clause so the captain isn't displayed as zero-tier.
+    return true;
+  }
+  if (/\b(?:boosts?|lowers?)\s+chances?\s+of\s+getting\b[^.;]*\borbs?\b/i.test(normalizedClause)) {
+    // Orb-chance bias is a crew-wide combat-economy effect — affects how often the listed orb
+    // colours appear in the orb pool. Same convention as chain-multiplier / defeat-protection:
+    // surface as a tier with the raw clause.
+    return true;
+  }
   if (
     /\breduces?\s+(?:Despair|Bind|Paralysis|Special\s+Bind|Burn|Poison|Silence|Blindness|Slow|Chain\s+Coefficient\s+Reduction|Increase\s+Damage\s+Taken|Healing\s+Reduction|No\s+Healing|Threshold\s+Damage\s+Reduction|Percent\s+Damage\s+Reduction)\b/i.test(
       normalizedClause,
@@ -515,10 +535,11 @@ const HP_THRESHOLD_PATTERN = /\bHP\s+is\s+(below|above)\s+(\d+)\s*%/i;
 const DEFEATED_ENEMY_PATTERN = /\bdefeated\s+an?\s+enemy\s+last\s+turn\b/i;
 const REQUIRES_CAPTAIN_PATTERN = /\b(?:this character is your Captain|if you have this character as your Captain)\b/i;
 const FOR_N_TURNS_PATTERN = /\bfor\s+(\d+)\s+turns?\b/i;
-const COST_MIN_PATTERN = /\bcost\s+(\d+)\s+or\s+more\s+characters?\b/i;
-const COST_MAX_PATTERN = /\bcost\s+(\d+)\s+or\s+less\s+characters?\b/i;
-const RARITY_MIN_PATTERN = /\brarity\s+(\d+)\s+or\s+more\s+characters?\b/i;
-const RARITY_MAX_PATTERN = /\brarity\s+(\d+)\s+or\s+less\s+characters?\b/i;
+const COST_MIN_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:more|higher)\s+characters?\b/i;
+const COST_MAX_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:less|lower)\s+characters?\b/i;
+const RARITY_MIN_PATTERN = /\brarity\s+(\d+)\s+or\s+(?:more|higher)\s+characters?\b/i;
+const RARITY_MAX_PATTERN = /\brarity\s+(\d+)\s+or\s+(?:less|lower)\s+characters?\b/i;
+const RARITY_TIERED_PATTERN = /\brarity\s+(\d+)\s+or\s+\1\+\s+characters?\b/i;
 // Damage reduction clauses whose effective value is set mid-battle by something the team builder
 // cannot control: the crew's current HP (e.g. "0%-30% depending on the crew's current HP"), tap
 // timing, perfects scored, etc. We surface the actionable, flat damage-reduction clauses but drop
@@ -1213,6 +1234,21 @@ function resolveTierCharacterConditions(clauses) {
         min: Number(costRange[1]),
         max: Number(costRange[2]),
       };
+    } else {
+      // "Cost N characters" (exact, no qualifier) — equivalent to a closed range [N, N].
+      // Only applied when no other cost qualifier already matched, to avoid double-counting
+      // patterns like "Cost N or more" / "Cost A-B" which contain "Cost N" as a substring.
+      const costExact = clause.match(COST_EXACT_PATTERN);
+      const hasOtherCostMatch =
+        COST_MIN_PATTERN.test(clause) || COST_MAX_PATTERN.test(clause);
+      if (costExact !== null && !hasOtherCostMatch) {
+        const exact = Number(costExact[1]);
+        conditions.costRange = {
+          ...(conditions.costRange ?? {}),
+          min: exact,
+          max: exact,
+        };
+      }
     }
     const costMin = clause.match(COST_MIN_PATTERN);
     const costMax = clause.match(COST_MAX_PATTERN);
@@ -1229,19 +1265,32 @@ function resolveTierCharacterConditions(clauses) {
       };
     }
 
-    const rarityMin = clause.match(RARITY_MIN_PATTERN);
-    const rarityMax = clause.match(RARITY_MAX_PATTERN);
-    if (rarityMin !== null) {
+    const rarityTiered = clause.match(RARITY_TIERED_PATTERN);
+    if (rarityTiered !== null) {
+      // "Rarity N or N+ characters" — exact-tier (both base and trained Rarity N units).
+      // The "+" suffix is OPTC's trained-rarity marker; the boost still scopes to that single
+      // rarity level (a Rarity 5 unit does not get the Rarity 4 tier's boost).
+      const exact = Number(rarityTiered[1]);
       conditions.rarityRange = {
         ...(conditions.rarityRange ?? {}),
-        min: Number(rarityMin[1]),
+        min: exact,
+        max: exact,
       };
-    }
-    if (rarityMax !== null) {
-      conditions.rarityRange = {
-        ...(conditions.rarityRange ?? {}),
-        max: Number(rarityMax[1]),
-      };
+    } else {
+      const rarityMin = clause.match(RARITY_MIN_PATTERN);
+      const rarityMax = clause.match(RARITY_MAX_PATTERN);
+      if (rarityMin !== null) {
+        conditions.rarityRange = {
+          ...(conditions.rarityRange ?? {}),
+          min: Number(rarityMin[1]),
+        };
+      }
+      if (rarityMax !== null) {
+        conditions.rarityRange = {
+          ...(conditions.rarityRange ?? {}),
+          max: Number(rarityMax[1]),
+        };
+      }
     }
   }
 
