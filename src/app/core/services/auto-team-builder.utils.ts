@@ -3928,10 +3928,24 @@ function resolveDominantTypeLeaderScope(
     };
   }
 
+  const intersection = AUTO_TEAM_BUILDER_TYPES.filter((type) =>
+    dominantLeaderTypeSets.every((types) => types.has(type)),
+  );
+
+  // Two dominant-type leaders with incompatible native types (e.g. INT + DEX) produce an empty
+  // intersection. Treat this as an unenforceable constraint: keep the type list open so the
+  // builder can still propose candidate teams instead of silently rejecting every typed character.
+  // Each leader's individual ATK boost will still be governed by its own coverage tier — the
+  // dominant-type bonus simply won't apply when the team can't share a single dominant type.
+  if (intersection.length === 0) {
+    return {
+      values: [],
+      restricted: false,
+    };
+  }
+
   return {
-    values: AUTO_TEAM_BUILDER_TYPES.filter((type) =>
-      dominantLeaderTypeSets.every((types) => types.has(type)),
-    ),
+    values: intersection,
     restricted: true,
   };
 }

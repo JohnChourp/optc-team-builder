@@ -157,7 +157,25 @@ export function matchesCaptainCoverageRequiredTiers(
     // Leader has no tier data — keep behaviour unchanged (no extra restriction).
     return true;
   }
-  const subsetTiers = tiers.filter((tier) => !tier.characterConditions.fallbackOther);
+  // Fallback ("all other characters") tiers match a target iff that target does NOT satisfy any
+  // more-specific subset tier in the same entry. The reference list must contain only tiers with
+  // explicit subset constraints — universal-only conditional tiers (no types/classes/tags/cost/
+  // rarity/dominantType) would otherwise return `true` for every target inside
+  // `matchesTierCharacterConditionsInner`, making the fallback tier match nothing.
+  const subsetTiers = tiers.filter((tier) => {
+    if (tier.characterConditions.fallbackOther) {
+      return false;
+    }
+    const conditions = tier.characterConditions;
+    return (
+      conditions.types.length > 0 ||
+      conditions.classes.length > 0 ||
+      conditions.characterTags.length > 0 ||
+      conditions.costRange !== undefined ||
+      conditions.rarityRange !== undefined ||
+      conditions.dominantType === true
+    );
+  });
   return requiredTiers.some((tierNumber) => {
     const tier = tiers.find((entry) => entry.tier === tierNumber);
     if (!tier) {
