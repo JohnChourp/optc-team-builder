@@ -241,6 +241,7 @@ function matchesTierCharacterConditionsInner(
     conditions.classes.length > 0 ||
     conditions.characterTags.length > 0 ||
     conditions.costRange !== undefined ||
+    conditions.rarityRange !== undefined ||
     conditions.dominantType === true;
 
   // When a tier has any explicit subset condition (cost / type / class / tag), characters must
@@ -299,6 +300,15 @@ function matchesTierCharacterConditionsInner(
     const { min, max } = conditions.costRange;
     const meetsMin = min === undefined || target.cost >= min;
     const meetsMax = max === undefined || target.cost <= max;
+    if (meetsMin && meetsMax) {
+      return true;
+    }
+  }
+
+  if (conditions.rarityRange) {
+    const { min, max } = conditions.rarityRange;
+    const meetsMin = min === undefined || target.stars >= min;
+    const meetsMax = max === undefined || target.stars <= max;
     if (meetsMin && meetsMax) {
       return true;
     }

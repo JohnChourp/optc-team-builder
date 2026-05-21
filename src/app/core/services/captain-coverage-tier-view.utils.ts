@@ -64,6 +64,12 @@ export function buildCaptainCoverageTierScopeLabel(
   if (conditions.costRange?.max !== undefined) {
     fragments.push(`Cost ≤ ${conditions.costRange.max}`);
   }
+  if (conditions.rarityRange?.min !== undefined) {
+    fragments.push(`Rarity ${conditions.rarityRange.min}+`);
+  }
+  if (conditions.rarityRange?.max !== undefined) {
+    fragments.push(`Rarity ≤ ${conditions.rarityRange.max}`);
+  }
   if (conditions.types.length > 0) {
     fragments.push(conditions.types.map((type) => `[${type}]`).join(' / '));
   }

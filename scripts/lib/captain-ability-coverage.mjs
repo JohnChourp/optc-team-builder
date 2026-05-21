@@ -39,12 +39,15 @@ const CAPTAIN_MULTIPLIER_PATTERN =
 const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
   /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
 const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
+const SELF_OVERRIDE_RIDER_PATTERN =
+  /,?\s*but\s+boosts?\s+(?:atk|hp|rcv|atk\s+and\s+hp)[^,.;]*?\bof\s+this\s+character\b[^,.;]*?\bby\s+\d+(?:\.\d+)?x\b(?:\s+instead)?/gi;
 const START_OF_FIGHT_EFFECT_PATTERN =
   /\b(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure)\b/i;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
 const COST_SUBSET_PATTERN =
   /\bcost\s+(?:\d+\s+or\s+(?:more|less)|\d+\s*-\s*\d+)\s+characters?\b/i;
 const COST_RANGE_PATTERN = /\bcost\s+(\d+)\s*-\s*(\d+)\s+characters?\b/i;
+const RARITY_SUBSET_PATTERN = /\brarity\s+\d+\s+or\s+(?:more|less)\s+characters?\b/i;
 const ATK_CLAUSE_PATTERN = /\batk\b/i;
 const HP_CLAUSE_PATTERN = /\bhp\b/i;
 const BOOST_TARGET_FRAGMENT_PATTERNS = [
@@ -118,6 +121,7 @@ function resolveCaptainClauseScope(clause) {
 
   if (
     COST_SUBSET_PATTERN.test(normalizedClause) ||
+    RARITY_SUBSET_PATTERN.test(normalizedClause) ||
     boostClauseHasDominantTypeScope(normalizedClause) ||
     extractAllowedTypesFromCoverageClause(normalizedClause).length > 0 ||
     extractAllowedClassesFromCoverageClause(normalizedClause).length > 0 ||
@@ -219,7 +223,9 @@ function extractCaptainBoostScopeClauses(text, includeConditional) {
 }
 
 function normalizeCaptainBoostScopeClauseCandidates(clause, includeConditional) {
-  const normalizedClause = stripBoostInsteadSuffix(stripInlineConditionalBoostRiders(clause));
+  const normalizedClause = stripBoostInsteadSuffix(
+    stripSelfOverrideRider(stripInlineConditionalBoostRiders(clause)),
+  );
 
   if (!includeConditional || !isConditionalCaptainBoostClause(normalizedClause)) {
     return [normalizedClause];
@@ -227,6 +233,7 @@ function normalizeCaptainBoostScopeClauseCandidates(clause, includeConditional) 
 
   return extractEffectClausesFromConditionalSentence(normalizedClause)
     .map(stripInlineConditionalBoostRiders)
+    .map(stripSelfOverrideRider)
     .map(stripBoostInsteadSuffix);
 }
 
@@ -281,6 +288,7 @@ function isCaptainBoostScopeClause(clause) {
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
       COST_SUBSET_PATTERN.test(normalizedClause) ||
+      RARITY_SUBSET_PATTERN.test(normalizedClause) ||
       boostClauseHasDominantTypeScope(normalizedClause) ||
       extractAllowedTypesFromCoverageClause(normalizedClause).length > 0 ||
       extractAllowedClassesFromCoverageClause(normalizedClause).length > 0 ||
@@ -359,6 +367,7 @@ function clauseHasAnyCaptainScope(clause) {
   return (
     boostClauseHasUniversalScope(clause) ||
     COST_SUBSET_PATTERN.test(clause) ||
+    RARITY_SUBSET_PATTERN.test(clause) ||
     boostClauseHasDominantTypeScope(clause) ||
     extractAllowedTypesFromCoverageClause(clause).length > 0 ||
     extractAllowedClassesFromCoverageClause(clause).length > 0 ||
@@ -368,6 +377,10 @@ function clauseHasAnyCaptainScope(clause) {
 
 function stripInlineConditionalBoostRiders(clause) {
   return normalizeCoverageClause(clause.replace(INLINE_CONDITIONAL_BOOST_RIDER_PATTERN, ''));
+}
+
+function stripSelfOverrideRider(clause) {
+  return normalizeCoverageClause(clause.replace(SELF_OVERRIDE_RIDER_PATTERN, ''));
 }
 
 function stripBoostInsteadSuffix(clause) {
@@ -504,6 +517,8 @@ const REQUIRES_CAPTAIN_PATTERN = /\b(?:this character is your Captain|if you hav
 const FOR_N_TURNS_PATTERN = /\bfor\s+(\d+)\s+turns?\b/i;
 const COST_MIN_PATTERN = /\bcost\s+(\d+)\s+or\s+more\s+characters?\b/i;
 const COST_MAX_PATTERN = /\bcost\s+(\d+)\s+or\s+less\s+characters?\b/i;
+const RARITY_MIN_PATTERN = /\brarity\s+(\d+)\s+or\s+more\s+characters?\b/i;
+const RARITY_MAX_PATTERN = /\brarity\s+(\d+)\s+or\s+less\s+characters?\b/i;
 // Damage reduction clauses whose effective value is set mid-battle by something the team builder
 // cannot control: the crew's current HP (e.g. "0%-30% depending on the crew's current HP"), tap
 // timing, perfects scored, etc. We surface the actionable, flat damage-reduction clauses but drop
@@ -653,6 +668,7 @@ function extractCaptainBranchStateTiers(captainText) {
     }
     const branchEffectClauses = splitCaptainEffectClauses(branch.text)
       .map(stripInlineConditionalBoostRiders)
+      .map(stripSelfOverrideRider)
       .map(stripBoostInsteadSuffix)
       .filter((clause) => !isConditionalCaptainBoostClause(clause))
       .filter(isCaptainTierEffectClause)
@@ -700,6 +716,7 @@ function resolveCaptainTierEffectClauses(captainText) {
   const branchStripped = captainText.replace(BRANCH_LABEL_PATTERN, '. ');
   return splitCaptainEffectClauses(branchStripped)
     .map(stripInlineConditionalBoostRiders)
+    .map(stripSelfOverrideRider)
     .map(stripBoostInsteadSuffix)
     .filter((clause) => !isConditionalCaptainBoostClause(clause))
     .filter(isCaptainTierEffectClause)
@@ -754,7 +771,8 @@ function isUniversalConditionalAtkTierMergeTarget(tier) {
     tier.characterConditions.types.length === 0 &&
     tier.characterConditions.classes.length === 0 &&
     tier.characterConditions.characterTags.length === 0 &&
-    tier.characterConditions.costRange === undefined
+    tier.characterConditions.costRange === undefined &&
+    tier.characterConditions.rarityRange === undefined
   );
 }
 
@@ -788,6 +806,7 @@ function clauseFitsTierScope(clause, tierScope) {
     clauseScope.classes.length > 0 ||
     clauseScope.characterTags.length > 0 ||
     clauseScope.costRange !== undefined ||
+    clauseScope.rarityRange !== undefined ||
     clauseScope.dominantType === true;
 
   if (!clauseHasSubset) {
@@ -805,6 +824,17 @@ function clauseFitsTierScope(clause, tierScope) {
     return clauseScope.costRange.max === tierScope.costRange.max;
   }
   if (clauseScope.costRange !== undefined && tierScope.costRange === undefined) {
+    return false;
+  }
+
+  // Rarity-range overlap: same minimum or maximum.
+  if (clauseScope.rarityRange?.min !== undefined && tierScope.rarityRange?.min !== undefined) {
+    return clauseScope.rarityRange.min === tierScope.rarityRange.min;
+  }
+  if (clauseScope.rarityRange?.max !== undefined && tierScope.rarityRange?.max !== undefined) {
+    return clauseScope.rarityRange.max === tierScope.rarityRange.max;
+  }
+  if (clauseScope.rarityRange !== undefined && tierScope.rarityRange === undefined) {
     return false;
   }
 
@@ -845,6 +875,7 @@ function buildDefaultTier(kind, primaryClauses, extraClauses = []) {
 function buildConditionalTier(cluster) {
   const clauseEffects = cluster.clauses
     .map(stripInlineConditionalBoostRiders)
+    .map(stripSelfOverrideRider)
     .map(stripBoostInsteadSuffix)
     .filter(isCaptainTierEffectClause)
     .map(normalizeCoverageClause);
@@ -1195,6 +1226,21 @@ function resolveTierCharacterConditions(clauses) {
       conditions.costRange = {
         ...(conditions.costRange ?? {}),
         max: Number(costMax[1]),
+      };
+    }
+
+    const rarityMin = clause.match(RARITY_MIN_PATTERN);
+    const rarityMax = clause.match(RARITY_MAX_PATTERN);
+    if (rarityMin !== null) {
+      conditions.rarityRange = {
+        ...(conditions.rarityRange ?? {}),
+        min: Number(rarityMin[1]),
+      };
+    }
+    if (rarityMax !== null) {
+      conditions.rarityRange = {
+        ...(conditions.rarityRange ?? {}),
+        max: Number(rarityMax[1]),
       };
     }
   }

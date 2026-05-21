@@ -58,6 +58,7 @@ export interface CaptainCoverageTargetScope {
   classes: string[];
   characterTags: string[];
   costRange?: { min?: number; max?: number };
+  rarityRange?: { min?: number; max?: number };
 }
 
 export type CaptainCoverageTeamConditionKind =

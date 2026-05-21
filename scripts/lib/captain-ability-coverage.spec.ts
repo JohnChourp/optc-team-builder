@@ -37,6 +37,37 @@ describe('buildCaptainAbilityCoverage', () => {
 });
 
 describe('extractCoverageTiers', () => {
+  it('strips "but boosts ATK of this character" self-override rider so the crew clause surfaces', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of [STR], [DEX] and [QCK] characters by 2.5x, but boosts ATK of this character by 4x',
+    );
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      scope: 'subset',
+      atkBoost: 2.5,
+      characterConditions: expect.objectContaining({
+        types: expect.arrayContaining(['STR', 'DEX', 'QCK']),
+      }),
+    });
+    expect(tiers[0].clauses[0]).not.toMatch(/this character/i);
+  });
+
+  it('captures rarity-max subset scope (Rarity N or less characters)', () => {
+    const tiers = extractCoverageTiers('Boosts ATK of Rarity 2 or less characters by 2.5x');
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      scope: 'subset',
+      atkBoost: 2.5,
+      characterConditions: expect.objectContaining({
+        rarityRange: { max: 2 },
+      }),
+    });
+  });
+
   it('captures cost-range subset scope (Cost A-B characters)', () => {
     const tiers = extractCoverageTiers('Boosts ATK of Cost 50-55 characters by 2x');
     expect(tiers).toHaveLength(1);

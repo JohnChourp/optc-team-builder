@@ -309,23 +309,8 @@ function normalizeCaptainCoverageTargetScope(
       };
   }
   const record = value as Record<string, unknown>;
-  const costRangeRaw = record['costRange'];
-  let costRange: { min?: number; max?: number } | undefined;
-  if (costRangeRaw && typeof costRangeRaw === 'object' && !Array.isArray(costRangeRaw)) {
-    const costRecord = costRangeRaw as Record<string, unknown>;
-    const min = Number(costRecord['min']);
-    const max = Number(costRecord['max']);
-    costRange = {};
-    if (Number.isFinite(min)) {
-      costRange.min = min;
-    }
-    if (Number.isFinite(max)) {
-      costRange.max = max;
-    }
-    if (costRange.min === undefined && costRange.max === undefined) {
-      costRange = undefined;
-    }
-  }
+  const costRange = normalizeNumericRange(record['costRange']);
+  const rarityRange = normalizeNumericRange(record['rarityRange']);
   return {
     universal: Boolean(record['universal']),
     fallbackOther: Boolean(record['fallbackOther']),
@@ -335,7 +320,25 @@ function normalizeCaptainCoverageTargetScope(
     classes: normalizeStringList(record['classes']),
     characterTags: normalizeStringList(record['characterTags']),
     costRange,
+    rarityRange,
   };
+}
+
+function normalizeNumericRange(value: unknown): { min?: number; max?: number } | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const min = Number(record['min']);
+  const max = Number(record['max']);
+  const range: { min?: number; max?: number } = {};
+  if (Number.isFinite(min)) {
+    range.min = min;
+  }
+  if (Number.isFinite(max)) {
+    range.max = max;
+  }
+  return range.min === undefined && range.max === undefined ? undefined : range;
 }
 
 function normalizeCaptainCoverageTeamConditions(
