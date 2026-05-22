@@ -6536,6 +6536,80 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(5927);
   });
 
+  it('keeps a required manual captain without captain text in the captain slot', async () => {
+    const noCaptainLeader = createNoCaptainManualLeaderRecord();
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([noCaptainLeader, ...createDualLeaderMixedTeamRecords()]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(AUTO_TEAM_BUILDER_CLASSES, AUTO_TEAM_BUILDER_TYPES, {
+      manualSlots: createManualSlots(
+        {
+          captain: [noCaptainLeader.id],
+        },
+        {
+          captain: noCaptainLeader.id,
+        },
+      ),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(noCaptainLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps the same required no-captain manual leader in both leader slots', async () => {
+    const noCaptainLeader = createNoCaptainManualLeaderRecord();
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([noCaptainLeader, ...createDualLeaderMixedTeamRecords()]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(AUTO_TEAM_BUILDER_CLASSES, AUTO_TEAM_BUILDER_TYPES, {
+      manualSlots: createManualSlots(
+        {
+          captain: [noCaptainLeader.id],
+          friendCaptain: [noCaptainLeader.id],
+        },
+        {
+          captain: noCaptainLeader.id,
+          friendCaptain: noCaptainLeader.id,
+        },
+      ),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).toBe(noCaptainLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(noCaptainLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('does not promote an optional manual captain without captain text to leader', async () => {
+    const noCaptainLeader = createNoCaptainManualLeaderRecord();
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue([noCaptainLeader, ...createDualLeaderMixedTeamRecords()]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(AUTO_TEAM_BUILDER_CLASSES, AUTO_TEAM_BUILDER_TYPES, {
+      manualSlots: createManualSlots({
+        captain: [noCaptainLeader.id],
+      }),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.character.id).not.toBe(noCaptainLeader.id);
+    expect(result?.slots[1]?.character.id).not.toBe(noCaptainLeader.id);
+  });
+
   it('keeps a required manual sub in its exact sub slot', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
@@ -9294,6 +9368,35 @@ function createManualSlots(
     characterIds: [...(overrides[slot.role] ?? [])],
     requiredCharacterId: requiredOverrides[slot.role] ?? null,
   }));
+}
+
+function createNoCaptainManualLeaderRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 1,
+    name: 'Monkey D. Luffy',
+    type: 'STR',
+    primaryClass: 'Fighter',
+    cost: 1,
+    captainHpBoost: 0,
+    captainAtkBoost: 0,
+    captainAverageBoost: 0,
+    detail: {
+      captainAbility: null,
+      specialName: 'Spinning Gum Punch',
+      specialText: "Deals 5x character's ATK in [STR] damage to one enemy",
+      builderAbilities: [
+        {
+          key: 'special_damage',
+          label: 'Damage',
+          minTurns: null,
+          isCompleteRemoval: false,
+          slotTokens: [],
+          source: 'specialText',
+          coverageMode: 'explicit',
+        },
+      ],
+    },
+  });
 }
 
 function createManualSlotsFromLegacySelection(

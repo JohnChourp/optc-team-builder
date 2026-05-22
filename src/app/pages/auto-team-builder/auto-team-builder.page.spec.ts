@@ -106,6 +106,59 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('serializes required manual leader slots when building', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.favoritesOnly.set(false);
+    page.requireFullCaptainAbilityCoverage.set(false);
+    page.requireBothLeadersFullCaptainAbilityCoverage.set(false);
+    page.requireSuperSpecialCriteriaCoverage.set(false);
+    page.requireSuperTandemCriteriaCoverage.set(false);
+    page.manualSlots.set(
+      createManualSlots(
+        {
+          captain: [1],
+          friendCaptain: [1],
+        },
+        {
+          captain: 1,
+          friendCaptain: 1,
+        },
+      ),
+    );
+
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        favoritesOnly: false,
+        requireFullCaptainAbilityCoverage: false,
+        requireBothLeadersFullCaptainAbilityCoverage: false,
+        strictSuperSpecialCriteriaCoverage: false,
+        strictSuperTandemCriteriaCoverage: false,
+        manualSlots: createManualSlots(
+          {
+            captain: [1],
+            friendCaptain: [1],
+          },
+          {
+            captain: 1,
+            friendCaptain: 1,
+          },
+        ),
+      }),
+      expect.objectContaining({
+        onProgress: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
   it('passes selected character tag and name filters to the builder service', async () => {
     const { page, autoTeamBuilder } = await createPage();
 

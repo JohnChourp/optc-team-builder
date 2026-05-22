@@ -1714,19 +1714,20 @@ export function buildAutoTeamResultFromPreparedContext(
     options.friendCaptainContext,
     leaderAutoFillCandidateIdSet,
   );
+  const requiredManualCaptain = requiredManualSlotCandidateMap.get('captain');
+  const requiredManualFriendCaptain = requiredManualSlotCandidateMap.get('friendCaptain');
   const captainOptions = resolveLeaderCandidateOptions(
-    requiredManualSlotCandidateMap.get('captain')
-      ? [requiredManualSlotCandidateMap.get('captain')!]
+    requiredManualCaptain
+      ? [requiredManualCaptain]
       : (manualSlotCandidateMap.get('captain') ?? []),
     leaderAutoFillCandidates,
     input,
     options,
-    !requiredManualSlotCandidateMap.has('captain'),
+    !requiredManualCaptain,
+    Boolean(requiredManualCaptain),
   );
   const friendCaptainOptions = resolveLeaderCandidateOptions(
-    requiredManualSlotCandidateMap.get('friendCaptain')
-      ? [requiredManualSlotCandidateMap.get('friendCaptain')!]
-      : manualFriendCaptainCandidates,
+    requiredManualFriendCaptain ? [requiredManualFriendCaptain] : manualFriendCaptainCandidates,
     friendCaptainCandidates,
     input,
     input.allowAnyFriendCaptainAutoFill && manualFriendCaptainCandidates.length === 0
@@ -1737,7 +1738,8 @@ export function buildAutoTeamResultFromPreparedContext(
           ),
         }
       : options,
-    !requiredManualSlotCandidateMap.has('friendCaptain'),
+    !requiredManualFriendCaptain,
+    Boolean(requiredManualFriendCaptain),
   );
 
   if (!captainOptions.length || !friendCaptainOptions.length) {
@@ -2078,26 +2080,28 @@ function resolveLeaderCandidateOptions(
   input: AutoBuildInput,
   options: AutoTeamBuildAttemptOptions,
   allowAutoFill = true,
+  allowManualLeaderWithoutCaptainText = false,
 ): AutoBuildCandidate[] {
   const manualCandidateIdSet = new Set(slotCandidates.map((candidate) => candidate.character.id));
   const candidateMatchesLeaderConstraints = (
     candidate: AutoBuildCandidate,
     applyAutoFillLeaderRanges: boolean,
+    requireReadableCaptainText: boolean,
   ): boolean =>
     Boolean(
-      candidate.tags.readableCaptainText &&
+      (!requireReadableCaptainText || candidate.tags.readableCaptainText) &&
       (!applyAutoFillLeaderRanges || candidateMatchesLeaderBoostRanges(candidate, input)) &&
       (!options.requireLeadersWithoutSuperEffects || !hasCandidateSuperEffects(candidate)) &&
       (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
     );
   const manualCandidatePool = slotCandidates.filter((candidate) =>
-    candidateMatchesLeaderConstraints(candidate, false),
+    candidateMatchesLeaderConstraints(candidate, false, !allowManualLeaderWithoutCaptainText),
   );
 
   const autoCandidatePool = allowAutoFill
     ? candidates
         .filter((candidate) => !manualCandidateIdSet.has(candidate.character.id))
-        .filter((candidate) => candidateMatchesLeaderConstraints(candidate, true))
+        .filter((candidate) => candidateMatchesLeaderConstraints(candidate, true, true))
         .sort((left, right) => compareAutoFillLeaderCandidates(left, right, input, options))
         .slice(0, AUTO_FILL_LEADER_OPTION_LIMIT)
     : [];
