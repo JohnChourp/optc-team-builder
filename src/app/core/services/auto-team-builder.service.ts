@@ -178,6 +178,7 @@ export class AutoTeamBuilderService {
     branchMode: AutoBuildCaptainBranchMode | null;
   }> {
     const recordById = new Map(records.map((record) => [record.id, record] as const));
+    const manualSlots = options.manualSlots ?? [];
     const entries = (['captain', 'friendCaptain'] as const)
       .map((role) => {
         const characterId =
@@ -195,14 +196,21 @@ export class AutoTeamBuilderService {
           return null;
         }
 
+        const isRequiredManualLeader = manualSlots.some(
+          (slot) => slot.role === role && slot.requiredCharacterId === characterId,
+        );
+        const captainAbility = character.detail.captainAbility;
+        const hasReadableCaptainText =
+          typeof captainAbility === 'string' && captainAbility.trim().length > 0;
+
+        if (isRequiredManualLeader && !hasReadableCaptainText) {
+          return null;
+        }
+
         return {
           role,
           character,
-          branchMode: this.resolveManualLeaderBranchMode(
-            options.manualSlots ?? [],
-            role,
-            characterId,
-          ),
+          branchMode: this.resolveManualLeaderBranchMode(manualSlots, role, characterId),
         };
       })
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
