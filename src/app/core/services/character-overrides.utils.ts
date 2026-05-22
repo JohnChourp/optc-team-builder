@@ -93,7 +93,7 @@ function normalizeNullableNumber(value: unknown): number | null {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
-export function normalizeOverrideImageDataUrl(value: unknown): string | null {
+function normalizeOverrideImageDataUrl(value: unknown): string | null {
   if (typeof value !== 'string') {
     return null;
   }
@@ -107,7 +107,7 @@ export function normalizeOverrideImageDataUrl(value: unknown): string | null {
   return normalizedValue.includes(';base64,') ? normalizedValue : null;
 }
 
-export function createEmptyCharacterDetail(characterId: number): CharacterDetail {
+function createEmptyCharacterDetail(characterId: number): CharacterDetail {
   return {
     characterId,
     captainAbility: null,
@@ -138,7 +138,7 @@ export function createEmptyCharacterDetail(characterId: number): CharacterDetail
   };
 }
 
-export function cloneCharacterDetail(detail: CharacterDetail): CharacterDetail {
+function cloneCharacterDetail(detail: CharacterDetail): CharacterDetail {
   return deepClone(detail);
 }
 

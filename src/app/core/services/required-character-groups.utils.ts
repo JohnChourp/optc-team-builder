@@ -19,11 +19,11 @@ export function createRequiredCharacterGroup(
   };
 }
 
-export function createRequiredCharacterGroupId(): string {
+function createRequiredCharacterGroupId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function normalizeRequiredCharacterGroupAbility(
+function normalizeRequiredCharacterGroupAbility(
   requirement: Partial<AutoBuildAbilityRequirement> | null | undefined,
 ): AutoBuildAbilityRequirement | null {
   if (!requirement || typeof requirement !== 'object') {

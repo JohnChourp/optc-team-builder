@@ -593,7 +593,7 @@ export class AutoTeamBuildFallbackPlanner {
   private readonly hasStrictConstraints: boolean;
 
   public constructor(
-    private readonly requestedInput: AutoBuildInput,
+    requestedInput: AutoBuildInput,
     records: CharacterDetailRecord[],
     options: AutoTeamBuildFallbackPlannerOptions = {},
   ) {
@@ -1239,7 +1239,7 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
   ].join('::');
 }
 
-export function hasStrictAutoTeamBuildConstraints(input: AutoBuildInput): boolean {
+function hasStrictAutoTeamBuildConstraints(input: AutoBuildInput): boolean {
   return Boolean(
     input.requireAllSelectedTypesInTeam ||
       input.requireAllSelectedClassesPerCharacter ||

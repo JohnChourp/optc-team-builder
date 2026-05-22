@@ -3,7 +3,7 @@ import { computed, Injectable, signal } from "@angular/core";
 import { GoogleAnalyticsService } from "./google-analytics.service";
 import { PreferencesAdapterService } from "./preferences-adapter.service";
 
-export const ANALYTICS_CONSENT_PREFERENCE_KEY = "analyticsConsent";
+const ANALYTICS_CONSENT_PREFERENCE_KEY = "analyticsConsent";
 
 export type AnalyticsConsentState = "accepted" | "rejected" | "unknown";
 

@@ -26,14 +26,12 @@ import {
   buildSavedEnemiesTransferPayload,
   parseSavedEnemiesImportPayloadValue,
   sanitizeSavedEnemiesImportPayload,
-  type SavedEnemiesTransferPayload,
 } from '../../pages/saved-enemies/saved-enemies-transfer.utils';
 import {
   buildSavedTeamsTransferPayload,
   clearUnavailableSavedTeamSlots,
   parseSavedTeamsImportPayloadValue,
   sanitizeSavedTeamsImportPayload,
-  type SavedTeamsTransferPayload,
 } from '../../pages/saved-teams/saved-teams-transfer.utils';
 import {
   buildSavedRumbleTeamsTransferPayload,

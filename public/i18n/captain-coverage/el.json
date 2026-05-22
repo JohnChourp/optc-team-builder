@@ -26,22 +26,8 @@
     "abilityRailLabel": "Ability filters",
     "bestAbilityMatchesFirst": "Πρώτα τα καλύτερα ability matches",
     "captainAbilityCopy": "Το Required περιορίζει τα results με tags που έχουν γίνει parse από το Captain Ability κάθε result χαρακτήρα. Αυτό δεν αλλάζει τον επιλεγμένο Captain.",
-    "captainAbilityCoverage": {
-      "toggle": "All Captain Ability clauses",
-      "support": {
-        "simple": "Χρησιμοποιεί το standard HP/ATK boost scope του Captain.",
-        "full": "Χρησιμοποιεί όλα τα targetable Captain Ability clauses και ταιριάζει crew tag conditions."
-      }
-    },
     "captainAbilityEyebrow": "Required",
     "captainAbilityTitle": "Required",
-    "captainCoverage": {
-      "toggle": "Captain Coverage",
-      "support": {
-        "enabled": "Απαιτεί κάθε result να καλύπτεται από τον επιλεγμένο Captain.",
-        "disabled": "Παρακάμπτει το selected Captain coverage αλλά κρατά τα άλλα φίλτρα ενεργά."
-      }
-    },
     "tierCoverage": {
       "toggle": "Tier Coverage",
       "support": "Φιλτράρει τα results ανάλογα με ποια Captain Ability tiers υποστηρίζει κάθε χαρακτήρας.",

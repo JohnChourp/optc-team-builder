@@ -225,12 +225,6 @@ export function intersectAbilityMatchingCharacterIds(
   return [...new Set(intersection)];
 }
 
-export function getSpecialAbilityCatalogItems(
-  catalogItems: readonly AutoBuildAbilityCatalogItem[],
-): AutoBuildAbilityCatalogItem[] {
-  return getAbilityCatalogItemsByCategory(catalogItems, 'special');
-}
-
 export function createSpecialAbilityDrafts(
   requirements: readonly AutoBuildAbilityRequirement[],
   catalogItems: readonly AutoBuildAbilityCatalogItem[],

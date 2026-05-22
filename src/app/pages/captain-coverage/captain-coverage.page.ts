@@ -32,7 +32,6 @@ import {
   type AutoBuildAbilitySource,
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
-import { type AutoBuildCaptainAbilityCoverageMode } from '../../core/models/auto-team-builder.models';
 import { type CaptainCoverageResult } from '../../core/services/captain-coverage.utils';
 import { buildCaptainCoverageTierView } from '../../core/services/captain-coverage-tier-view.utils';
 import {
@@ -167,8 +166,6 @@ export class CaptainCoveragePage implements OnInit {
   public readonly selectedSortMode = signal<CaptainCoverageSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly abilityMatchRankingEnabled = signal(false);
-  public readonly requireCaptainCoverage = signal(true);
-  public readonly requireFullCaptainAbilityCoverage = signal(false);
   public readonly requireSuperTandemPresence = signal(false);
   public readonly requireSuperTypesClassesPresence = signal(false);
   public readonly requiredTierNumbers = signal<number[]>([]);
@@ -279,19 +276,6 @@ export class CaptainCoveragePage implements OnInit {
   public readonly abilityMatchRankingDisabled = computed(
     () => this.selectedResultAbilityRequirements().length === 0,
   );
-  public readonly captainAbilityCoverageMode = computed<AutoBuildCaptainAbilityCoverageMode>(() =>
-    this.requireFullCaptainAbilityCoverage() ? 'fullAbilityCoverage' : 'simpleBoostScope',
-  );
-  public readonly captainAbilityCoverageSupportLabel = computed(() =>
-    this.requireFullCaptainAbilityCoverage()
-      ? this.t('filters.captainAbilityCoverage.support.full')
-      : this.t('filters.captainAbilityCoverage.support.simple'),
-  );
-  public readonly captainCoverageSupportLabel = computed(() =>
-    this.requireCaptainCoverage()
-      ? this.t('filters.captainCoverage.support.enabled')
-      : this.t('filters.captainCoverage.support.disabled'),
-  );
   public readonly availableTierNumbers = computed<number[]>(() =>
     getCaptainCoverageAvailableTierNumbers(this.selectedCaptainDetail()),
   );
@@ -317,8 +301,8 @@ export class CaptainCoveragePage implements OnInit {
       requiredAbilityRequirements: this.captainAbilityRequirements(),
       requireSuperTandem: this.requireSuperTandemPresence(),
       requireSuperTypesClasses: this.requireSuperTypesClassesPresence(),
-      requireCaptainCoverage: this.requireCaptainCoverage(),
-      requireFullCoverage: this.requireFullCaptainAbilityCoverage(),
+      requireCaptainCoverage: true,
+      requireFullCoverage: false,
       requiredTiers: requestedTiers,
     });
   });
@@ -558,7 +542,7 @@ export class CaptainCoveragePage implements OnInit {
 
     return resolveCaptainTeamConditionStatus({
       expectedSlotCount: CAPTAIN_COVERAGE_TEAM_SLOT_COUNT,
-      coverageMode: this.captainAbilityCoverageMode(),
+      coverageMode: 'simpleBoostScope',
       leaders: [
         {
           role: 'captain',
@@ -781,16 +765,6 @@ export class CaptainCoveragePage implements OnInit {
 
   public onAbilityMatchRankingChange(event: CustomEvent<{ checked?: boolean | null }>): void {
     this.abilityMatchRankingEnabled.set(Boolean(event.detail.checked));
-  }
-
-  public onRequireCaptainCoverageChange(event: CustomEvent<{ checked?: boolean | null }>): void {
-    this.requireCaptainCoverage.set(Boolean(event.detail.checked));
-  }
-
-  public onRequireFullCaptainAbilityCoverageChange(
-    event: CustomEvent<{ checked?: boolean | null }>,
-  ): void {
-    this.requireFullCaptainAbilityCoverage.set(Boolean(event.detail.checked));
   }
 
   public onRequireSuperTandemPresenceChange(

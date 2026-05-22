@@ -132,7 +132,6 @@ import { buildAutoTeamBuilderStateFromSavedTeam } from './auto-team-builder-save
 import {
   buildSavedTeamsTransferPayload,
   downloadSavedTeamsExport,
-  type SavedTeamsTransferPayload,
 } from '../saved-teams/saved-teams-transfer.utils';
 import {
   AbilityRequirementPickerComponent,
@@ -5817,10 +5816,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private isLeaderManualSlotRole(role: AutoBuildManualSlotRole): boolean {
     return role === 'captain' || role === 'friendCaptain';
-  }
-
-  private isSubManualSlotRole(role: AutoBuildManualSlotRole): boolean {
-    return !this.isLeaderManualSlotRole(role);
   }
 
   private getManualSlotTitle(role: AutoBuildManualSlotRole): string {

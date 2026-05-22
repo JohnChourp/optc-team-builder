@@ -5,7 +5,7 @@ import {
   type AutoBuildEnemyMechanicCategory,
 } from '../../core/models/auto-team-builder-ability.models';
 
-export type EnemyTextAutocompleteSuggestionSource = 'mechanic' | 'ability';
+type EnemyTextAutocompleteSuggestionSource = 'mechanic' | 'ability';
 
 export interface EnemyTextAutocompleteSuggestion {
   id: string;

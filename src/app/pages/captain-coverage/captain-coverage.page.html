@@ -256,38 +256,6 @@
               ></ion-toggle>
             </label>
 
-            <label
-              class="ability-rank-toggle"
-              [class.ability-rank-toggle--active]="requireCaptainCoverage()"
-            >
-              <div class="ability-rank-toggle__copy">
-                <span>{{ t('filters.captainCoverage.toggle') }}</span>
-                <small>{{ captainCoverageSupportLabel() }}</small>
-              </div>
-              <ion-toggle
-                justify="space-between"
-                [checked]="requireCaptainCoverage()"
-                [disabled]="!selectedCaptainDetail()"
-                (ionChange)="onRequireCaptainCoverageChange($event)"
-              ></ion-toggle>
-            </label>
-
-            <label
-              class="ability-rank-toggle"
-              [class.ability-rank-toggle--active]="requireFullCaptainAbilityCoverage()"
-            >
-              <div class="ability-rank-toggle__copy">
-                <span>{{ t('filters.captainAbilityCoverage.toggle') }}</span>
-                <small>{{ captainAbilityCoverageSupportLabel() }}</small>
-              </div>
-              <ion-toggle
-                justify="space-between"
-                [checked]="requireFullCaptainAbilityCoverage()"
-                [disabled]="!selectedCaptainDetail()"
-                (ionChange)="onRequireFullCaptainAbilityCoverageChange($event)"
-              ></ion-toggle>
-            </label>
-
             <div class="ability-rank-toggle ability-rank-toggle--tier" data-test="tier-coverage-group">
               <div class="ability-rank-toggle__copy">
                 <span>{{ t('filters.tierCoverage.toggle') }}</span>

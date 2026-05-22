@@ -6,13 +6,13 @@ import {
   type NormalizedBuilderAbility,
 } from './auto-team-builder-ability.models';
 
-export interface CharacterStatsRange {
+interface CharacterStatsRange {
   hp: number | null;
   atk: number | null;
   rcv: number | null;
 }
 
-export interface CharacterStats {
+interface CharacterStats {
   min: CharacterStatsRange;
   max: CharacterStatsRange;
   growth: number | null;
@@ -35,7 +35,7 @@ export interface CharacterCaptainAbilityVariant {
   text: string;
 }
 
-export interface CharacterCaptainAbilityCoverageEntry {
+interface CharacterCaptainAbilityCoverageEntry {
   key: string;
   label: string;
   tiers: CharacterCaptainAbilityCoverageTier[];
@@ -49,7 +49,7 @@ export type CaptainCoverageTierKind =
   | 'conditional'
   | 'baseline-and-conditional';
 
-export interface CaptainCoverageTargetScope {
+interface CaptainCoverageTargetScope {
   universal: boolean;
   fallbackOther: boolean;
   selfOnly: boolean;
@@ -61,7 +61,7 @@ export interface CaptainCoverageTargetScope {
   rarityRange?: { min?: number; max?: number };
 }
 
-export type CaptainCoverageTeamConditionKind =
+type CaptainCoverageTeamConditionKind =
   | 'crew-composition'
   | 'crew-count'
   | 'crew-exclusion'
@@ -79,13 +79,13 @@ export interface CaptainCoverageTeamCondition {
   rawClause: string;
 }
 
-export interface CaptainCoverageFieldCondition {
+interface CaptainCoverageFieldCondition {
   kind: 'territory';
   territories: string[];
   rawClause: string;
 }
 
-export type CaptainCoverageTriggerKind =
+type CaptainCoverageTriggerKind =
   | 'action-special-excellent'
   | 'action-special-perfect'
   | 'hp-below'
@@ -96,7 +96,7 @@ export type CaptainCoverageTriggerKind =
   | 'consecutive-perfects'
   | 'other';
 
-export interface CaptainCoverageTriggerCondition {
+interface CaptainCoverageTriggerCondition {
   kind: CaptainCoverageTriggerKind;
   hpPercent?: number;
   durationTurns?: number;
@@ -127,26 +127,26 @@ export interface CharacterCaptainAbilityCoverage {
   entries: CharacterCaptainAbilityCoverageEntry[];
 }
 
-export interface SuperCriteriaCharacterOption {
+interface SuperCriteriaCharacterOption {
   label: string;
   acceptedKeys: string[];
 }
 
-export interface CharacterCountAnySuperCriteriaBranch {
+interface CharacterCountAnySuperCriteriaBranch {
   branchType: 'character_count_any';
   requiredCount: number;
   options: SuperCriteriaCharacterOption[];
   matchMode?: 'unique_options' | 'any_candidate';
 }
 
-export interface ClassOrTypeCountAnySuperCriteriaBranch {
+interface ClassOrTypeCountAnySuperCriteriaBranch {
   branchType: 'class_or_type_count_any';
   requiredCount: number;
   allowedClasses: string[];
   allowedTypes: string[];
 }
 
-export interface ClassOrTypePresenceAllSuperCriteriaBranch {
+interface ClassOrTypePresenceAllSuperCriteriaBranch {
   branchType: 'class_or_type_presence_all';
   requiredClasses: string[];
   requiredTypes: string[];
@@ -247,7 +247,7 @@ export interface CharacterDetailRecord extends CharacterListItem {
   detailImageUrl: string;
 }
 
-export interface LocalCharacterOverrideImages {
+interface LocalCharacterOverrideImages {
   thumbnailDataUrl: string | null;
   detailDataUrl: string | null;
 }
@@ -290,7 +290,7 @@ export interface CharacterBox {
   updatedAt: string;
 }
 
-export type CrewForgeImageSlotRole = 'leader' | 'sub';
+type CrewForgeImageSlotRole = 'leader' | 'sub';
 
 export interface CrewForgeImageSlotDefinition {
   key: string;
@@ -353,7 +353,7 @@ export interface CrewForgeImageRecognitionCandidate {
   source: 'exemplar' | 'catalog';
 }
 
-export type CrewForgeImageRecognitionSlotStatus =
+type CrewForgeImageRecognitionSlotStatus =
   | 'matched'
   | 'ambiguous'
   | 'empty'

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "src/test-setup.ts",
+    "src/test-mocks/social-login.ts",
+    "src/types/*.d.ts",
+    "src/app/core/services/auto-team-builder.worker.ts",
+    "src/app/core/services/auto-team-builder-rumble.worker.ts",
+    "scripts/*.mjs",
+    "scripts/lib/*.mjs",
+    "transloco.config.ts",
+    "eslint.config.mjs"
+  ],
+  "project": [
+    "src/**/*.ts",
+    "server/**/*.mjs",
+    "scripts/**/*.mjs",
+    "*.ts",
+    "*.mjs"
+  ],
+  "ignoreDependencies": [
+    "@capacitor/cli",
+    "@capacitor/ios"
+  ]
+}

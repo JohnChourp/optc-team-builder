@@ -44,7 +44,7 @@ export function buildCaptainCoverageTierView(
   };
 }
 
-export function buildCaptainCoverageTierScopeLabel(
+function buildCaptainCoverageTierScopeLabel(
   tier: CharacterCaptainAbilityCoverageTier,
 ): string {
   const fragments: string[] = [];
@@ -83,7 +83,7 @@ export function buildCaptainCoverageTierScopeLabel(
   return fragments.length > 0 ? fragments.join(' · ') : `Tier ${tier.tier}`;
 }
 
-export function collectCaptainCoverageTierConditionLines(
+function collectCaptainCoverageTierConditionLines(
   tier: CharacterCaptainAbilityCoverageTier,
 ): string[] {
   const lines: string[] = [];

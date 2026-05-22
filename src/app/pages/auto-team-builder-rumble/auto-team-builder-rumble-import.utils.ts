@@ -63,7 +63,7 @@ export function parseRumbleBuilderSettingsImportPayload(
   return parseRumbleBuilderSettingsImportPayloadValue(parseJson(rawContent));
 }
 
-export function parseRumbleBuilderSettingsImportPayloadValue(
+function parseRumbleBuilderSettingsImportPayloadValue(
   parsedPayload: unknown,
 ): RumbleBuilderSettingsExportPayload {
   if (!isRecord(parsedPayload)) {
@@ -89,7 +89,7 @@ export function parseRumbleTeamImportPayload(rawContent: string): RumbleTeamExpo
   return parseRumbleTeamImportPayloadValue(parseJson(rawContent));
 }
 
-export function parseRumbleTeamImportPayloadValue(parsedPayload: unknown): RumbleTeamExportPayload {
+function parseRumbleTeamImportPayloadValue(parsedPayload: unknown): RumbleTeamExportPayload {
   if (!isRecord(parsedPayload)) {
     throw new RumbleBuilderImportError('import.errors.invalidPayload');
   }
@@ -147,7 +147,7 @@ export function buildSavedRumbleTeamResultSnapshotsFromImportPayload(
   return results;
 }
 
-export function buildSavedRumbleTeamResultSnapshotFromExport(
+function buildSavedRumbleTeamResultSnapshotFromExport(
   result: RumbleTeamExportResult,
 ): SavedRumbleTeamResult {
   return {

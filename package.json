@@ -21,6 +21,7 @@
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:firefox": "playwright test --project=firefox",
     "test:e2e:webkit": "playwright test --project=webkit",
+    "audit:dead-code": "npx tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false && npx knip --include files,exports,types",
     "perf:dataset": "node ./scripts/benchmark-dataset.mjs",
     "i18n:extract": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager extract --project optc-team-builder",
     "i18n:find": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager find --project optc-team-builder --translations-path public/i18n",
@@ -41,7 +42,6 @@
   "packageManager": "npm@11.8.0",
   "dependencies": {
     "@angular/animations": "^21.2.12",
-    "@angular/cdk": "^21.2.10",
     "@angular/common": "^21.2.12",
     "@angular/compiler": "^21.2.12",
     "@angular/core": "^21.2.12",
@@ -69,10 +69,11 @@
     "@angular/build": "^21.2.10",
     "@angular/cli": "^21.2.10",
     "@angular/compiler-cli": "^21.2.12",
+    "@jsverse/transloco-utils": "^8.3.0",
     "@playwright/test": "^1.60.0",
-    "globals": "^17.6.0",
+    "@types/node": "^25.9.1",
     "jsdom": "^29.1.1",
-    "prettier": "^3.8.3",
+    "knip": "^6.14.1",
     "typescript": "5.9.3",
     "vitest": "^4.1.6"
   }

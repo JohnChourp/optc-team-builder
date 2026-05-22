@@ -18,7 +18,6 @@ import {
 import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
 import { AUTO_TEAM_BUILDER_TYPES } from '../models/auto-team-builder.models';
 import {
-  cloneBattleRequirements,
   normalizeBattleRequirementsWithLegacyFallback,
 } from './auto-team-builder-battle.utils';
 import {

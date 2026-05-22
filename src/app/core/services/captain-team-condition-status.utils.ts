@@ -13,10 +13,10 @@ import {
   resolveRequiredCaptainCoverageBranchTexts,
 } from './captain-coverage.utils';
 
-export type CaptainTeamConditionLeaderRole = 'captain' | 'friendCaptain';
-export type CaptainTeamConditionState = 'pending' | 'full' | 'partial' | 'none';
+type CaptainTeamConditionLeaderRole = 'captain' | 'friendCaptain';
+type CaptainTeamConditionState = 'pending' | 'full' | 'partial' | 'none';
 
-export interface CaptainTeamConditionLeaderInput {
+interface CaptainTeamConditionLeaderInput {
   role: CaptainTeamConditionLeaderRole;
   label: string;
   character: CharacterDetailRecord | null;
@@ -31,7 +31,7 @@ export interface CaptainTeamConditionStatusOptions {
   slots: readonly (CharacterDetailRecord | null)[];
 }
 
-export interface CaptainTeamConditionLeaderStatus {
+interface CaptainTeamConditionLeaderStatus {
   role: CaptainTeamConditionLeaderRole;
   label: string;
   characterId: number | null;

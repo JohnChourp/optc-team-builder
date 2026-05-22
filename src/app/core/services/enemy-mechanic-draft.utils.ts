@@ -60,22 +60,14 @@ const DEFAULT_TRIGGER_TAGS: AutoBuildEnemyMechanicTriggerTag[] = [];
 const DEFAULT_RESPONSE_TAGS: AutoBuildEnemyMechanicResponseTag[] = [];
 const DEFAULT_CONDITION_TAGS: AutoBuildEnemyMechanicConditionTag[] = [];
 
-export const ENEMY_MECHANIC_CATEGORY_ORDER: AutoBuildEnemyMechanicCategory[] = [
-  'enemyDefense',
-  'crewDebuff',
-  'orbControl',
-  'interrupt',
-  'conditional',
-];
-
-export const ENEMY_INTERRUPT_RESPONSE_TAGS: AutoBuildEnemyMechanicResponseTag[] = [
+const ENEMY_INTERRUPT_RESPONSE_TAGS: AutoBuildEnemyMechanicResponseTag[] = [
   'removeBuffs',
   'applyDebuffs',
   'heal',
   'shield',
 ];
 
-export const ENEMY_MECHANIC_CATALOG: AutoBuildEnemyMechanicCatalogItem[] = [
+const ENEMY_MECHANIC_CATALOG: AutoBuildEnemyMechanicCatalogItem[] = [
   createEnemyMechanicCatalogItem({
     key: 'enemy_damage_reduction',
     label: 'Enemy Damage Reduction',
@@ -482,7 +474,7 @@ export function resolveEnemyMechanicVisual(mechanicKey: string): EnemyMechanicVi
   };
 }
 
-export function createEnemyMechanicDraft(
+function createEnemyMechanicDraft(
   item?: AutoBuildEnemyMechanicCatalogItem | null,
   requirement?: Partial<AutoBuildEnemyMechanicRequirement>,
 ): EnemyMechanicDraft {
@@ -514,66 +506,12 @@ export function createEnemyMechanicDraft(
   };
 }
 
-export function cloneEnemyMechanicDraft(draft: EnemyMechanicDraft): EnemyMechanicDraft {
-  return {
-    draftId: draft.draftId,
-    mechanicKey: draft.mechanicKey,
-    category: draft.category,
-    minTurns: draft.minTurns,
-    requiredCharacterCount: draft.requiredCharacterCount,
-    triggerTags: [...draft.triggerTags],
-    responseTags: [...draft.responseTags],
-    conditionTags: [...draft.conditionTags],
-    derivedAbilityKey: draft.derivedAbilityKey,
-  };
-}
-
-export function cloneEnemyMechanicDrafts(drafts: EnemyMechanicDraft[]): EnemyMechanicDraft[] {
-  return drafts.map((draft) => cloneEnemyMechanicDraft(draft));
-}
-
 export function createEnemyMechanicDrafts(
   requirements: AutoBuildEnemyMechanicRequirement[],
 ): EnemyMechanicDraft[] {
   return requirements.map((requirement) =>
     createEnemyMechanicDraft(resolveEnemyMechanicCatalogItem(requirement.mechanicKey), requirement),
   );
-}
-
-export function applyCatalogEnemyMechanicToDraft(
-  draft: EnemyMechanicDraft,
-  mechanicKey: string,
-  catalogMap: Map<string, AutoBuildEnemyMechanicCatalogItem>,
-): EnemyMechanicDraft {
-  const catalogItem = catalogMap.get(mechanicKey);
-
-  if (!catalogItem) {
-    return draft;
-  }
-
-  return {
-    ...draft,
-    mechanicKey,
-    category: catalogItem.category,
-    minTurns: catalogItem.supportsTurns ? (resolvePositiveInteger(draft.minTurns) ?? 1) : null,
-    requiredCharacterCount: resolvePositiveInteger(draft.requiredCharacterCount),
-    triggerTags: sanitizeTags(
-      draft.triggerTags,
-      catalogItem.availableTriggerTags,
-      catalogItem.defaultTriggerTags,
-    ),
-    responseTags: sanitizeTags(
-      draft.responseTags,
-      catalogItem.availableResponseTags,
-      catalogItem.defaultResponseTags,
-    ),
-    conditionTags: sanitizeTags(
-      draft.conditionTags,
-      catalogItem.availableConditionTags,
-      catalogItem.defaultConditionTags,
-    ),
-    derivedAbilityKey: normalizeDerivedAbilityKey(catalogItem.derivedAbilityKey),
-  };
 }
 
 export function serializeEnemyMechanicDrafts(

@@ -10,20 +10,20 @@ type DisplayLabel = {
   labelKey?: string;
 };
 
-export interface DetailDisplayRow extends DisplayLabel {
+interface DetailDisplayRow extends DisplayLabel {
   value: string;
 }
 
-export interface DetailDisplayText extends DisplayLabel {
+interface DetailDisplayText extends DisplayLabel {
   value: string;
   tone?: 'default' | 'muted';
 }
 
-export interface DetailDisplayList extends DisplayLabel {
+interface DetailDisplayList extends DisplayLabel {
   items: string[];
 }
 
-export interface DetailDisplayEntry {
+interface DetailDisplayEntry {
   title?: string;
   titleKey?: string;
   rows: DetailDisplayRow[];
@@ -36,12 +36,12 @@ export interface DetailDisplayCard extends DetailDisplayEntry {
   entries: DetailDisplayEntry[];
 }
 
-export interface DetailDisplayGroup {
+interface DetailDisplayGroup {
   titleKey: string;
   cards: DetailDisplayCard[];
 }
 
-export interface CharacterDetailCaptainAbilitySummary {
+interface CharacterDetailCaptainAbilitySummary {
   coverageEntries: CharacterDetailCaptainCoverageEntry[];
   captainNotes: string | null;
   recognizedAbilities: NormalizedBuilderAbility[];
@@ -54,13 +54,13 @@ export interface CharacterDetailCaptainAbilitySummary {
   fieldTerritories: string[];
 }
 
-export interface CharacterDetailCaptainCoverageEntry {
+interface CharacterDetailCaptainCoverageEntry {
   label?: string;
   text: string;
   tiers: CharacterDetailCaptainCoverageTier[];
 }
 
-export interface CharacterDetailCaptainCoverageTier {
+interface CharacterDetailCaptainCoverageTier {
   tier: number;
   kind: CaptainCoverageTierKind;
   scopeLabel: string;

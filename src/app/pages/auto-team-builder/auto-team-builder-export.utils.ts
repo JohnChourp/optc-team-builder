@@ -49,7 +49,7 @@ import { type SavedTeamsTransferPayload } from '../saved-teams/saved-teams-trans
 type AutoTeamExportRole = AutoBuildResult['slots'][number]['role'];
 type AutoTeamExportLeaderAssignment = 'captain' | 'friendCaptain' | 'dual' | null;
 
-export interface AutoTeamExportSlot {
+interface AutoTeamExportSlot {
   slotIndex: number;
   role: AutoTeamExportRole;
   isLeader: boolean;
@@ -70,7 +70,7 @@ export interface AutoTeamExportPayload {
   team: AutoTeamExportSlot[];
 }
 
-export interface AutoTeamSelectionCharacterSummary {
+interface AutoTeamSelectionCharacterSummary {
   id: number;
   name: string;
   type: CharacterListItem['type'];
@@ -81,7 +81,7 @@ export interface AutoTeamSelectionCharacterSummary {
   leaderAssignment: AutoTeamExportLeaderAssignment;
 }
 
-export interface AutoTeamSelectionShipSummary {
+interface AutoTeamSelectionShipSummary {
   id: number;
   name: string;
   thumb: string | null;

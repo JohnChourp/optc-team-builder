@@ -9,7 +9,7 @@ import {
 
 export type RumbleBuffFocusDirection = 'up' | 'down';
 
-export const RUMBLE_BUFF_FOCUS_RANK_WEIGHTS: Record<RumbleBuffFocusRank, number> = {
+const RUMBLE_BUFF_FOCUS_RANK_WEIGHTS: Record<RumbleBuffFocusRank, number> = {
   primary: 1.75,
   secondary: 1,
   tertiary: 0.55,
@@ -66,7 +66,7 @@ export function buildRumbleBuffFocusWeightMap(
   );
 }
 
-export function resolveRumbleBuffFocusRank(
+function resolveRumbleBuffFocusRank(
   buffFocus: readonly RumbleBuffFocusPreference[],
   stat: RumbleBuffFocusStat,
 ): RumbleBuffFocusRank {

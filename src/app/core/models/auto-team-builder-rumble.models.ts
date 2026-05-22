@@ -129,10 +129,6 @@ export interface RumbleTeamResult {
   droppedClasses: string[];
 }
 
-export interface RumbleTeamResultSet {
-  teams: RumbleTeamResult[];
-}
-
 export type RumbleBuildResultMode = 'score' | 'closestCost';
 
 export interface RumbleBuildInput {
@@ -149,7 +145,7 @@ export interface RumbleBuildInput {
   requireFullTeam: boolean;
 }
 
-export type RumbleBuildProgressStage =
+type RumbleBuildProgressStage =
   | 'loadingCandidates'
   | 'scoringCandidates'
   | 'preparingSearch'

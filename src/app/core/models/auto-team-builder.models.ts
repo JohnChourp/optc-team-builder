@@ -3,7 +3,6 @@ import {
   type AutoBuildBattleRequirement,
   type AutoBuildEnemyMechanicRequirement,
   type AutoBuildRequiredCharacterGroup,
-  type NormalizedBuilderAbility,
 } from './auto-team-builder-ability.models';
 import { type CharacterDetailRecord, type ShipRecord } from './optc.models';
 
@@ -37,12 +36,11 @@ export const AUTO_BUILD_TOTAL_SLOT_COUNT = AUTO_BUILD_MANUAL_SLOT_ROLES.length;
 export const AUTO_BUILD_LEADER_BOOST_FILTERS = ['HP', 'ATK'] as const;
 
 export type AutoTeamBuilderType = (typeof AUTO_TEAM_BUILDER_TYPES)[number];
-export type AutoTeamBuilderClass = (typeof AUTO_TEAM_BUILDER_CLASSES)[number];
 export type AutoBuildManualSlotRole = (typeof AUTO_BUILD_MANUAL_SLOT_ROLES)[number];
 export type AutoBuildLeaderBoostFilter = (typeof AUTO_BUILD_LEADER_BOOST_FILTERS)[number];
 export type AutoBuildCaptainAbilityCoverageMode = 'simpleBoostScope' | 'fullAbilityCoverage';
 export type AutoBuildCaptainBranchMode = 'character1' | 'character2' | 'both';
-export type AutoBuildCaptainBranchSelectionSource = 'manual' | 'auto';
+type AutoBuildCaptainBranchSelectionSource = 'manual' | 'auto';
 export type AutoBuildLeaderSlotRole = 'captain' | 'friendCaptain';
 
 export interface AutoBuildLeaderBoostRange {
@@ -67,7 +65,7 @@ export interface AutoBuildManualSlotSelection {
   branchSelections?: AutoBuildManualSlotBranchSelection[];
 }
 
-export interface AutoBuildManualSlotBranchSelection {
+interface AutoBuildManualSlotBranchSelection {
   characterId: number;
   mode: AutoBuildCaptainBranchMode;
 }
@@ -80,7 +78,7 @@ export interface AutoBuildCaptainBranchSelection {
   source: AutoBuildCaptainBranchSelectionSource;
 }
 
-export interface AutoBuildLeaderBranchSelection extends AutoBuildCaptainBranchSelection {
+interface AutoBuildLeaderBranchSelection extends AutoBuildCaptainBranchSelection {
   role: AutoBuildLeaderSlotRole;
 }
 
@@ -316,7 +314,7 @@ export interface AutoBuildLeaderCriteriaSummary {
   allLeaderTiersCovered: boolean;
 }
 
-export interface AutoBuildLeaderTierCoverageSummary {
+interface AutoBuildLeaderTierCoverageSummary {
   leaderId: number;
   leaderName: string;
   // Tiers that contribute to coverage — excludes self-only-only tiers that no other slot can satisfy.
@@ -387,7 +385,7 @@ export interface AutoBuildCoverageSummary {
   selectedCharacterNameMatches: number;
 }
 
-export interface AutoBuildRelaxationSummary {
+interface AutoBuildRelaxationSummary {
   usedFallback: boolean;
   droppedTypes: AutoTeamBuilderType[];
   droppedClasses: string[];
@@ -404,7 +402,7 @@ export interface AutoBuildRelaxationSummary {
   downgradedCaptainAbilityCoverageToSimple?: boolean;
 }
 
-export type AutoBuildProgressStage =
+type AutoBuildProgressStage =
   | 'loadingCandidates'
   | 'preparingSearch'
   | 'exactAttempt'
@@ -524,13 +522,4 @@ export interface AutoBuildAbilityCoverageState {
   requested: AutoBuildAbilityRequirement[];
   matched: AutoBuildAbilityRequirement[];
   missing: AutoBuildAbilityRequirement[];
-}
-
-export interface AutoBuildAbilityMatchSummary {
-  requirement: AutoBuildAbilityRequirement;
-  matchedByCharacterIds: number[];
-}
-
-export interface AutoBuildRequirementMatchCandidate {
-  abilities: NormalizedBuilderAbility[];
 }

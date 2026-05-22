@@ -6,7 +6,7 @@ import {
 } from '../models/auto-team-builder-rumble.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 
-export interface AutoTeamBuilderRumbleWorkerRunRequest {
+interface AutoTeamBuilderRumbleWorkerRunRequest {
   type: 'run';
   runId: string;
   records: CharacterDetailRecord[];
@@ -16,19 +16,19 @@ export interface AutoTeamBuilderRumbleWorkerRunRequest {
   resultMode?: RumbleBuildResultMode;
 }
 
-export interface AutoTeamBuilderRumbleWorkerProgressResponse {
+interface AutoTeamBuilderRumbleWorkerProgressResponse {
   type: 'progress';
   runId: string;
   snapshot: RumbleBuildProgressSnapshot;
 }
 
-export interface AutoTeamBuilderRumbleWorkerResultResponse {
+interface AutoTeamBuilderRumbleWorkerResultResponse {
   type: 'result';
   runId: string;
   results: RumbleTeamResult[];
 }
 
-export interface AutoTeamBuilderRumbleWorkerErrorResponse {
+interface AutoTeamBuilderRumbleWorkerErrorResponse {
   type: 'error';
   runId: string;
   errorMessage: string;

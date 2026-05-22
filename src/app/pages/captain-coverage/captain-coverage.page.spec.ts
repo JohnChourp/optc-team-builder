@@ -89,7 +89,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.totalMatchingCharacters()).toBe(1);
   });
 
-  it('renders covered results for Kid Aimed Damned Punk after selecting him as Captain', async () => {
+  it('renders simple boost-scope results for Kid Aimed Damned Punk after selecting him as Captain', async () => {
     const kidCaptainAbility =
       'Reduces Special Cooldown of all characters by 1 turn and reduces Special Cooldown of this character by 4 turns at the start of the fight, boosts ATK of [STR], Striker and Driven characters by 5x, boosts HP of [STR], Striker and Driven characters by 1.3x, and makes [STR] and [INT] orbs beneficial for all characters. If HP is below 50% at the start of the turn, boosts ATK of [STR], Striker and Driven characters by 6x instead, and reduces damage received by 25%. If your crew has 4+ [Kid Pirates], [Worst Generation] or [Land of Wano Arc] characters or your crew has 6 [Kid Pirates], [Worst Generation] or [Egghead Arc] characters, reduces Despair duration by 10 turns, and boosts base ATK of [Paramythia-type] characters by 500.';
     const kid = createCharacter({
@@ -153,27 +153,12 @@ describe('CaptainCoveragePage', () => {
       'Covered STR Candidate',
     ]);
     expect(page.totalMatchingCharacters()).toBe(3);
-
-    page.onRequireFullCaptainAbilityCoverageChange({
-      detail: { checked: true },
-    } as CustomEvent<{ checked: boolean }>);
-
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Covered Driven Candidate',
-      'Covered STR Candidate',
-    ]);
-    expect(page.totalMatchingCharacters()).toBe(2);
-    expect(page.resultCards().flatMap((card) => card.coverage.coveredClauses)).toEqual(
-      expect.arrayContaining([
-        'crew tag condition: [Kid Pirates] / [Worst Generation] / [Land of Wano Arc] / [Egghead Arc] characters',
-      ]),
-    );
   });
 
-  it('can disable Captain Coverage while keeping other result filters active', async () => {
+  it('keeps selected Captain coverage enforced from the page filter state', async () => {
     const leader = createCharacter({
       id: 1001,
-      name: 'Leader Captain Coverage Toggle',
+      name: 'Leader Captain Coverage Scope',
       type: 'STR',
       captainAbility: 'Boosts ATK of [DEX] characters by 5x.',
     });
@@ -195,17 +180,8 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.saveTeamSlotSelection(leader);
 
-    expect(page.requireCaptainCoverage()).toBe(true);
+    expect(page.captainCoverageFilterState().requireCaptainCoverage).toBe(true);
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Covered DEX Candidate',
-    ]);
-
-    page.onRequireCaptainCoverageChange({
-      detail: { checked: false },
-    } as CustomEvent<{ checked: boolean }>);
-
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Uncovered QCK Candidate',
       'Covered DEX Candidate',
     ]);
   });
@@ -1170,13 +1146,14 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('abilityMatchRankingDisabled()');
     expect(template).toContain('onAbilityMatchRankingChange($event)');
     expect(template).toContain("t('filters.bestAbilityMatchesFirst')");
-    expect(template).toContain('requireCaptainCoverage()');
-    expect(template).toContain("t('filters.captainCoverage.toggle')");
-    expect(template).toContain('captainCoverageSupportLabel()');
-    expect(template).toContain('onRequireCaptainCoverageChange($event)');
-    expect(template).toContain('requireFullCaptainAbilityCoverage()');
-    expect(template).toContain("t('filters.captainAbilityCoverage.toggle')");
-    expect(template).toContain('onRequireFullCaptainAbilityCoverageChange($event)');
+    expect(template).not.toContain('requireCaptainCoverage()');
+    expect(template).not.toContain("t('filters.captainCoverage.toggle')");
+    expect(template).not.toContain('captainCoverageSupportLabel()');
+    expect(template).not.toContain('onRequireCaptainCoverageChange($event)');
+    expect(template).not.toContain('requireFullCaptainAbilityCoverage()');
+    expect(template).not.toContain("t('filters.captainAbilityCoverage.toggle')");
+    expect(template).not.toContain('onRequireFullCaptainAbilityCoverageChange($event)');
+    expect(template).toContain("t('filters.tierCoverage.toggle')");
     expect(template).toContain('requireSuperTandemPresence()');
     expect(template).toContain("t('filters.superTandemPresence.toggle')");
     expect(template).toContain('onRequireSuperTandemPresenceChange($event)');
@@ -1263,14 +1240,12 @@ describe('CaptainCoveragePage', () => {
         translations.filters.captainAbilityEyebrow,
         translations.filters.superTandemPresence.toggle,
         translations.filters.superTypesClassesPresence.toggle,
-        translations.filters.captainCoverage.toggle,
-        translations.filters.captainAbilityCoverage.toggle,
+        translations.filters.tierCoverage.toggle,
       ]).toEqual([
         'Required',
         'Super Tandem',
         'Super Types/Classes',
-        'Captain Coverage',
-        'All Captain Ability clauses',
+        'Tier Coverage',
       ]);
     }
   });
@@ -1429,8 +1404,6 @@ function formatTranslation(key: string, params?: Record<string, string | number>
     'captain-coverage.filters.captainAbilityEyebrow': 'Required',
     'captain-coverage.filters.superTandemPresence.toggle': 'Super Tandem',
     'captain-coverage.filters.superTypesClassesPresence.toggle': 'Super Types/Classes',
-    'captain-coverage.filters.captainCoverage.toggle': 'Captain Coverage',
-    'captain-coverage.filters.captainAbilityCoverage.toggle': 'All Captain Ability clauses',
   };
   const translation = translations[key] ?? key;
 

@@ -334,7 +334,7 @@ export function createAbilityRequirementDraft(
   };
 }
 
-export function cloneAbilityRequirementDraft(
+function cloneAbilityRequirementDraft(
   draft: AbilityRequirementDraft,
 ): AbilityRequirementDraft {
   return {

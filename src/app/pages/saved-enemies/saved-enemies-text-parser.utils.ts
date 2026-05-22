@@ -11,8 +11,8 @@ import {
   resolveEnemyMechanicCatalogItem,
 } from '../../core/services/enemy-mechanic-draft.utils';
 
-export type ParsedEnemyTextMatchKind = 'ability' | 'mechanic';
-export type ParsedEnemyTextWarningKind = 'precisionLoss' | 'unmatched';
+type ParsedEnemyTextMatchKind = 'ability' | 'mechanic';
+type ParsedEnemyTextWarningKind = 'precisionLoss' | 'unmatched';
 
 export interface ParsedEnemyTextWarning {
   kind: ParsedEnemyTextWarningKind;

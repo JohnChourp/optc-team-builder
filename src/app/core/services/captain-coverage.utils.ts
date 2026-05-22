@@ -16,20 +16,20 @@ import {
 } from './captain-tag-conditions.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 
-export type CaptainCoverageChipKind = 'class' | 'tag' | 'type';
+type CaptainCoverageChipKind = 'class' | 'tag' | 'type';
 
-export interface CaptainCoverageChip {
+interface CaptainCoverageChip {
   kind: CaptainCoverageChipKind;
   label: string;
 }
 
-export interface CaptainCoverageClauseResult {
+interface CaptainCoverageClauseResult {
   text: string;
   status: 'covered' | 'neutral' | 'uncovered';
   chips: CaptainCoverageChip[];
 }
 
-export interface CaptainCoverageBoosts {
+interface CaptainCoverageBoosts {
   hp: number;
   atk: number;
 }
@@ -68,7 +68,7 @@ export interface CaptainCoverageBranchText {
   text: string;
 }
 
-export type CaptainCoverageSingleBranchMode = Exclude<AutoBuildCaptainBranchMode, 'both'>;
+type CaptainCoverageSingleBranchMode = Exclude<AutoBuildCaptainBranchMode, 'both'>;
 
 export interface CaptainCoverageBranchOption extends CaptainCoverageBranchText {
   mode: CaptainCoverageSingleBranchMode;
@@ -275,10 +275,6 @@ export function resolveCaptainCoverageBranchOptions(
   });
 }
 
-export function hasCaptainCoverageBranchOptions(captain: CharacterDetailRecord): boolean {
-  return resolveCaptainCoverageBranchOptions(captain).length === 2;
-}
-
 export function isVsCaptainCoverageBranchCaptain(captain: CharacterDetailRecord): boolean {
   const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
 
@@ -327,17 +323,6 @@ export function hasSelfOnlyCaptainCoverageText(
       );
     }),
   );
-}
-
-export function hasDominantTypeCaptainCoverageText(
-  captain: CharacterDetailRecord,
-  options: Pick<CaptainCoverageOptions, 'branchMode'> = {},
-): boolean {
-  const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
-  const forcedBranch = resolveCaptainCoverageBranchForMode(branches, options.branchMode);
-  const targetBranches = forcedBranch ? [forcedBranch] : branches;
-
-  return targetBranches.some((branch) => hasDominantTypeCoverageText(branch.text));
 }
 
 function resolveDualBaseCaptainAbilityVariants(

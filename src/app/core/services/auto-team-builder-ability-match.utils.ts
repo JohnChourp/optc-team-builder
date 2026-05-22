@@ -74,17 +74,6 @@ export function matchesAnyAbilityRequirement(
   return requirements.some((requirement) => matchesAbilityRequirement(ability, requirement));
 }
 
-export function builderAbilitiesMatchAllRequirements(
-  abilities: NormalizedBuilderAbility[],
-  requirements: AutoBuildAbilityRequirement[],
-): boolean {
-  return requirements.every(
-    (requirement) =>
-      Number(abilities.some((ability) => matchesAbilityRequirement(ability, requirement))) >=
-      requirement.requiredCharacterCount,
-  );
-}
-
 function normalizeAbilityKey(value: string): string {
   const normalizedValue = value.trim();
 

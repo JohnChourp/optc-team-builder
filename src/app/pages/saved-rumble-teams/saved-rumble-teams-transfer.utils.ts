@@ -7,7 +7,7 @@ export interface SavedRumbleTeamsTransferPayload {
   rumbleTeams: SavedRumbleTeam[];
 }
 
-export class SavedRumbleTeamsImportError extends Error {
+class SavedRumbleTeamsImportError extends Error {
   public constructor(public readonly key: string) {
     super(key);
     this.name = 'SavedRumbleTeamsImportError';

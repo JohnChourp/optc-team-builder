@@ -18,7 +18,7 @@ export interface CharacterAbilityGroupLabels {
   sources: Record<AutoBuildAbilitySource, string>;
 }
 
-export interface CharacterAbilityView {
+interface CharacterAbilityView {
   key: string;
   label: string;
   highlighted: boolean;

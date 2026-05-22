@@ -50,16 +50,6 @@ interface SectionConfig<T> {
   rowKey: (item: T) => string;
 }
 
-const sectionOrder: DriveSyncReviewSectionKey[] = [
-  'favorites',
-  'favoriteShips',
-  'characterBoxes',
-  'characterOverrides',
-  'savedTeams',
-  'savedRumbleTeams',
-  'savedEnemies',
-];
-
 const sectionConfigs: SectionConfig<never>[] = [
   {
     buildPayload: (items, _exportedAt) => ({
@@ -373,8 +363,4 @@ function stableStringify(value: unknown): string {
     .sort()
     .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
     .join(',')}}`;
-}
-
-export function getDriveSyncReviewSectionKeys(): DriveSyncReviewSectionKey[] {
-  return [...sectionOrder];
 }

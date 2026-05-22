@@ -16,7 +16,7 @@ import {
   MAX_REQUIRED_CHARACTER_GROUPS,
 } from './required-character-groups.utils';
 
-export const DEFAULT_BATTLE_TITLE_PREFIX = 'Battle';
+const DEFAULT_BATTLE_TITLE_PREFIX = 'Battle';
 export const MAX_AUTO_BUILD_BATTLE_COUNT = 10;
 
 export function createAutoBuildBattleRequirement(
@@ -31,7 +31,7 @@ export function createAutoBuildBattleRequirement(
   };
 }
 
-export function createBattleRequirementId(): string {
+function createBattleRequirementId(): string {
   return `battle-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
@@ -47,7 +47,7 @@ export function createEmptyBattleRequirement(index: number): AutoBuildBattleRequ
   );
 }
 
-export function cloneBattleRequirement(
+function cloneBattleRequirement(
   battle: AutoBuildBattleRequirement,
   index = 0,
 ): AutoBuildBattleRequirement {
@@ -70,14 +70,6 @@ export function flattenBattleRequiredCharacterGroups(
 ): AutoBuildRequiredCharacterGroup[] {
   return cloneBattleRequirements(battles).flatMap((battle) =>
     cloneRequiredCharacterGroups(battle.requiredCharacterGroups),
-  );
-}
-
-export function flattenBattleEnemyMechanics(
-  battles: readonly AutoBuildBattleRequirement[] | null | undefined,
-): AutoBuildEnemyMechanicRequirement[] {
-  return cloneBattleRequirements(battles).flatMap((battle) =>
-    normalizeEnemyMechanicRequirements(battle.enemyMechanics),
   );
 }
 

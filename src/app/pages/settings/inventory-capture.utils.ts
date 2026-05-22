@@ -97,7 +97,7 @@ export function parseInventoryCapturePayload(rawContent: string): InventoryCaptu
   return parseInventoryCapturePayloadValue(parsedPayload);
 }
 
-export function parseInventoryCapturePayloadValue(
+function parseInventoryCapturePayloadValue(
   parsedPayload: unknown,
 ): InventoryCapturePayload {
   if (!isRecord(parsedPayload)) {

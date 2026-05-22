@@ -43,11 +43,8 @@ import {
 } from '../characters/characters-favorites.utils';
 import {
   buildCharacterBoxesTransferPayload,
-  clearUnavailableCharacterBoxCharacterIds,
   downloadCharacterBoxesExport,
   parseCharacterBoxesImportPayload,
-  parseCharacterBoxesImportPayloadValue,
-  sanitizeCharacterBoxesImportPayload,
   type CharacterBoxesImportError,
   type CharacterBoxesTransferPayload,
 } from '../character-boxes/character-boxes-transfer.utils';
@@ -55,8 +52,6 @@ import {
   buildCharacterOverridesTransferPayload,
   downloadCharacterOverridesExport,
   parseCharacterOverridesImportPayload,
-  parseCharacterOverridesImportPayloadValue,
-  sanitizeCharacterOverridesImportPayload,
   type CharacterOverridesImportError,
   type CharacterOverridesTransferPayload,
 } from '../character-detail/character-overrides-transfer.utils';
@@ -64,21 +59,15 @@ import {
   buildSavedEnemiesTransferPayload,
   downloadSavedEnemiesExport,
   parseSavedEnemiesImportPayload,
-  parseSavedEnemiesImportPayloadValue,
-  sanitizeSavedEnemiesImportPayload,
   type SavedEnemiesImportError,
 } from '../saved-enemies/saved-enemies-transfer.utils';
 import {
   buildSavedTeamsTransferPayload,
-  clearUnavailableSavedTeamSlots,
   downloadSavedTeamsExport,
   parseSavedTeamsImportPayload,
-  parseSavedTeamsImportPayloadValue,
-  sanitizeSavedTeamsImportPayload,
   type SavedTeamsImportError,
 } from '../saved-teams/saved-teams-transfer.utils';
 import {
-  buildAllDataTransferPayload,
   downloadAllDataExport,
   parseAllDataImportCandidate,
   type AllDataTransferPayload,
@@ -86,10 +75,7 @@ import {
 import {
   buildFavoriteShipsTransferPayload,
   downloadFavoriteShipsExport,
-  filterAvailableFavoriteShips,
   parseFavoriteShipsImportPayload,
-  parseFavoriteShipsImportPayloadValue,
-  sanitizeFavoriteShipsImportPayload,
   type FavoriteShipsImportError,
   type FavoriteShipsTransferPayload,
 } from './favorite-ships-transfer.utils';
@@ -592,9 +578,7 @@ export class SettingsPage implements OnInit {
         boxSelection: this.inventoryCaptureBoxSelection(),
       });
 
-      this.inventoryCaptureFeedback.set(
-        this.buildInventoryCaptureApplyFeedback(preview, applySummary),
-      );
+      this.inventoryCaptureFeedback.set(this.buildInventoryCaptureApplyFeedback(applySummary));
       this.clearInventoryCapturePreview();
     } catch (error) {
       this.inventoryCaptureFeedback.set({
@@ -779,7 +763,6 @@ export class SettingsPage implements OnInit {
   }
 
   private buildInventoryCaptureApplyFeedback(
-    preview: InventoryCapturePreview,
     summary: {
       addedShipCount: number;
       alreadyFavoritedShipCount: number;
@@ -1802,25 +1785,6 @@ export class SettingsPage implements OnInit {
       undefined,
       'settings',
     );
-  }
-
-  private mergeFavoriteShipIds(
-    importedShipIds: number[],
-    currentFavoriteShipIds: number[],
-  ): number[] {
-    const nextFavoriteShipIds: number[] = [];
-    const seenShipIds = new Set<number>();
-
-    [...importedShipIds, ...currentFavoriteShipIds].forEach((shipId) => {
-      if (!Number.isInteger(shipId) || shipId <= 0 || seenShipIds.has(shipId)) {
-        return;
-      }
-
-      seenShipIds.add(shipId);
-      nextFavoriteShipIds.push(shipId);
-    });
-
-    return nextFavoriteShipIds;
   }
 
   private async importSavedTeams(file: File): Promise<void> {

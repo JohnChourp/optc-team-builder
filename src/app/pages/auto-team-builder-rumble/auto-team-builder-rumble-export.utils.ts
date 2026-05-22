@@ -46,7 +46,7 @@ export interface RumbleTeamExportResult {
   team: RumbleTeamExportSlot[];
 }
 
-export interface RumbleOpponentTeamExport {
+interface RumbleOpponentTeamExport {
   selectedCount: number;
   totalRumbleCost: number;
   activeSlots: RumbleTeamExportSlot[];

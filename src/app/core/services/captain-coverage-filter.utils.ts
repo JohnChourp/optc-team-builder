@@ -14,13 +14,6 @@ import {
   resolveCaptainCoverage,
 } from './captain-coverage.utils';
 
-export type CaptainCoverageFilterKey =
-  | 'required'
-  | 'superTandem'
-  | 'superTypesClasses'
-  | 'captainCoverage'
-  | 'fullCoverage';
-
 export interface CaptainCoverageFilterState {
   requiredAbilityRequirements: AutoBuildAbilityRequirement[];
   requireSuperTandem: boolean;
@@ -46,7 +39,7 @@ export interface CaptainCoverageFilterResult {
   matchesRequiredTiers: boolean;
 }
 
-export const DEFAULT_CAPTAIN_COVERAGE_FILTER_STATE: CaptainCoverageFilterState = {
+const DEFAULT_CAPTAIN_COVERAGE_FILTER_STATE: CaptainCoverageFilterState = {
   requiredAbilityRequirements: [],
   requireSuperTandem: false,
   requireSuperTypesClasses: false,
@@ -167,7 +160,7 @@ export function matchesCaptainCoverageRequiredTiers(
   });
 }
 
-export interface CaptainAllTierCoverageTierResult {
+interface CaptainAllTierCoverageTierResult {
   tier: CharacterCaptainAbilityCoverageTier;
   matchingCandidateCount: number;
   matches: boolean;
@@ -428,7 +421,7 @@ function matchesTierCharacterConditionsInner(
   return false;
 }
 
-export function resolveCaptainCoverageFilterCoverageMode(
+function resolveCaptainCoverageFilterCoverageMode(
   state: Pick<CaptainCoverageFilterState, 'requireFullCoverage'>,
 ): AutoBuildCaptainAbilityCoverageMode {
   return state.requireFullCoverage ? 'fullAbilityCoverage' : 'simpleBoostScope';

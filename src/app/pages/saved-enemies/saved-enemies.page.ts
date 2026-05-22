@@ -63,7 +63,6 @@ import {
   formatEnemyMechanicSummary,
   getEnemyMechanicCatalogItems,
   resolveEnemyMechanicVisual,
-  resolveEnemyMechanicCatalogItem,
   serializeEnemyMechanicDrafts,
   splitManualAbilityRequirementsFromEnemyMechanics,
   type EnemyMechanicDraft,
@@ -1959,25 +1958,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   private confirmDelete(message: string): boolean {
     return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
-  }
-
-  private createParsedEnemyMechanicDrafts(
-    requirements: AutoBuildEnemyMechanicRequirement[],
-  ): EnemyMechanicDraft[] {
-    return requirements.map((requirement, index) => ({
-      draftId: `parsed-mechanic-${Date.now()}-${index}`,
-      mechanicKey: requirement.mechanicKey,
-      category: requirement.category,
-      minTurns: requirement.minTurns,
-      requiredCharacterCount: resolvePositiveInteger(requirement.requiredCharacterCount),
-      triggerTags: [...requirement.triggerTags],
-      responseTags: [...requirement.responseTags],
-      conditionTags: [...requirement.conditionTags],
-      derivedAbilityKey:
-        requirement.derivedAbilityKey ??
-        resolveEnemyMechanicCatalogItem(requirement.mechanicKey)?.derivedAbilityKey ??
-        null,
-    }));
   }
 
   private translateEnemyTextWarning(warning: ParsedEnemyTextWarning): string {

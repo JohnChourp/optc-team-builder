@@ -57,7 +57,7 @@ export function rankRumbleCharacters(
     .sort(compareRankedRumbleCharacters);
 }
 
-export function resolveFocusContributions(
+function resolveFocusContributions(
   unit: RumbleUnitScore,
 ): Record<RumbleBuffFocusStat, number> {
   const character = unit.character;

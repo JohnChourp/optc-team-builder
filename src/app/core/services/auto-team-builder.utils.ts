@@ -218,7 +218,7 @@ interface SubAbilityDemandContext {
   battleAssignmentMode: BattleRequirementAssignmentMode;
 }
 
-export interface PreparedAutoBuildRecord {
+interface PreparedAutoBuildRecord {
   record: CharacterDetailRecord;
   index: number;
   total: number;
@@ -352,7 +352,7 @@ function resolveCaptainAbilityCoverageMode(
     : 'simpleBoostScope';
 }
 
-export function resolveAutoBuildCharacterPowerPreferenceScore(
+function resolveAutoBuildCharacterPowerPreferenceScore(
   character: Pick<CharacterDetailRecord, 'cost' | 'id'>,
 ): number {
   const { cost, id } = character;
@@ -461,7 +461,7 @@ export function buildAutoBuildAbilityCoverageBreakdown(
   };
 }
 
-export function normalizePartyConflictKey(name: string): string {
+function normalizePartyConflictKey(name: string): string {
   const trimmedName = name
     .replace(/^[^A-Za-z0-9]+/, '')
     .replace(/\s+/g, ' ')
@@ -470,7 +470,7 @@ export function normalizePartyConflictKey(name: string): string {
   return trimmedName.toLowerCase();
 }
 
-export function resolveCharacterBaseNameKey(name: string): string {
+function resolveCharacterBaseNameKey(name: string): string {
   const trimmedName = name
     .replace(/^[^A-Za-z0-9]+/, '')
     .replace(/\s+/g, ' ')
@@ -480,7 +480,7 @@ export function resolveCharacterBaseNameKey(name: string): string {
   return normalizePartyConflictKey(baseName);
 }
 
-export function resolveNameDerivedPartyConflictKeys(name: string): string[] {
+function resolveNameDerivedPartyConflictKeys(name: string): string[] {
   const primaryKey = resolveCharacterBaseNameKey(name);
 
   if (!primaryKey.length) {
@@ -623,22 +623,6 @@ function candidateMatchesSuperCriteriaCharacterOption(
         candidateKey === normalizedAcceptedKey || candidateKey.includes(normalizedAcceptedKey),
     );
   });
-}
-
-function candidateMatchesSelectedCharacterName(
-  candidate: AutoBuildCandidate,
-  selectedName: string,
-): boolean {
-  const normalizedSelectedName = normalizeAutoBuildCharacterMatchKey(selectedName);
-
-  if (!normalizedSelectedName) {
-    return false;
-  }
-
-  return resolveCandidateSuperCriteriaKeys(candidate).some(
-    (candidateKey) =>
-      candidateKey === normalizedSelectedName || candidateKey.includes(normalizedSelectedName),
-  );
 }
 
 function candidateMatchesSuperCriteriaClassOrTypeBranch(

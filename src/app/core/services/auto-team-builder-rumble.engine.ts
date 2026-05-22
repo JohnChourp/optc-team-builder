@@ -178,7 +178,7 @@ export function normalizeRumbleBuildInput(input: Partial<RumbleBuildInput> = {})
   };
 }
 
-export function runRumbleTeamBuildSearch(
+function runRumbleTeamBuildSearch(
   candidates: CharacterDetailRecord[],
   requestedInput: Partial<RumbleBuildInput> = {},
   options: RumbleBuildSearchOptions = {},
@@ -1608,10 +1608,6 @@ export class RumbleTeamBuilderEngine {
 
   private resolveTotalRumbleCost(units: RumbleUnitScore[]): number {
     return resolveRumbleUnitGroupCost(units);
-  }
-
-  private resolveRumbleCost(unit: RumbleUnitScore): number {
-    return resolveRumbleUnitCost(unit);
   }
 
   private normalizeLevelEffects(

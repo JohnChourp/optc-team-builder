@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 
 import {
-  type CharacterBox,
   type CharacterListItem,
   type ShipRecord,
 } from '../models/optc.models';

@@ -6,7 +6,7 @@ import {
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 
-export interface AutoTeamBuilderWorkerInitRequest {
+interface AutoTeamBuilderWorkerInitRequest {
   type: 'init';
   records: CharacterDetailRecord[];
   friendCaptainRecords?: CharacterDetailRecord[];
@@ -15,7 +15,7 @@ export interface AutoTeamBuilderWorkerInitRequest {
   subAutoFillCharacterIds?: number[];
 }
 
-export interface AutoTeamBuilderWorkerRunRequest {
+interface AutoTeamBuilderWorkerRunRequest {
   type: 'run';
   runId: string;
   records: CharacterDetailRecord[];
@@ -27,7 +27,7 @@ export interface AutoTeamBuilderWorkerRunRequest {
   requestedInput: AutoBuildInput;
 }
 
-export interface AutoTeamBuilderWorkerRunAttemptRequest {
+interface AutoTeamBuilderWorkerRunAttemptRequest {
   type: 'runAttempt';
   runId: string;
   input: AutoBuildInput;
@@ -39,29 +39,29 @@ export interface AutoTeamBuilderWorkerRunAttemptRequest {
   subAutoFillCharacterIds?: number[];
 }
 
-export interface AutoTeamBuilderWorkerReadyResponse {
+interface AutoTeamBuilderWorkerReadyResponse {
   type: 'ready';
 }
 
-export interface AutoTeamBuilderWorkerProgressResponse {
+interface AutoTeamBuilderWorkerProgressResponse {
   type: 'progress';
   runId: string;
   snapshot: AutoBuildProgressSnapshot;
 }
 
-export interface AutoTeamBuilderWorkerAttemptProgressResponse {
+interface AutoTeamBuilderWorkerAttemptProgressResponse {
   type: 'attemptProgress';
   runId: string;
   progress: AutoBuildAttemptProgressSnapshot;
 }
 
-export interface AutoTeamBuilderWorkerResultResponse {
+interface AutoTeamBuilderWorkerResultResponse {
   type: 'result';
   runId: string;
   result: AutoBuildResult | null;
 }
 
-export interface AutoTeamBuilderWorkerErrorResponse {
+interface AutoTeamBuilderWorkerErrorResponse {
   type: 'error';
   runId?: string;
   errorMessage: string;

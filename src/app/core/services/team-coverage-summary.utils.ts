@@ -13,9 +13,9 @@ import {
   matchesCaptainCoverageTier,
 } from './captain-coverage-filter.utils';
 
-export type TeamCoverageCaptureSource = 'both' | 'captain-only' | 'friend-only' | 'none';
+type TeamCoverageCaptureSource = 'both' | 'captain-only' | 'friend-only' | 'none';
 
-export interface TeamTierCoverageStatus {
+interface TeamTierCoverageStatus {
   tier: number;
   scopeLabel: string;
   effectsSummary: string[];

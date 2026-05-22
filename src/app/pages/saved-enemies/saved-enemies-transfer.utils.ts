@@ -15,15 +15,6 @@ export interface SavedEnemiesTransferPayload {
   enemies: SavedEnemy[];
 }
 
-export interface EnemySkillTransferPayload {
-  schemaVersion: 1;
-  source: "optc-enemy-skill";
-  exportType: "enemy";
-  enemy: Omit<SavedEnemy, "id" | "createdAt" | "updatedAt"> & {
-    requireAllSpecialsSupportTeam?: boolean;
-  };
-}
-
 export interface SavedEnemiesImportSanitizeOptions {
   now?: string;
   untitledEnemyName: string;

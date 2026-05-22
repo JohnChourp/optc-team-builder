@@ -53,7 +53,7 @@ export function normalizeCaptainTagKey(value: string): string {
     .toLowerCase();
 }
 
-export function resolveCharacterCaptainTagKeys(
+function resolveCharacterCaptainTagKeys(
   character: Pick<CharacterDetailRecord, 'detail'>,
 ): string[] {
   const characterTags = Array.isArray(character.detail.characterTags)
@@ -67,20 +67,13 @@ export function resolveCharacterCaptainTagKeys(
   ];
 }
 
-export function characterMatchesCaptainTagBranch(
+function characterMatchesCaptainTagBranch(
   character: Pick<CharacterDetailRecord, 'detail'>,
   branch: CaptainTagConditionBranch,
 ): boolean {
   const tagKeys = resolveCharacterCaptainTagKeys(character);
 
   return branch.acceptedKeys.some((key) => tagKeys.includes(key));
-}
-
-export function characterMatchesAnyCaptainTagBranch(
-  character: Pick<CharacterDetailRecord, 'detail'>,
-  branches: readonly CaptainTagConditionBranch[],
-): boolean {
-  return branches.some((branch) => characterMatchesCaptainTagBranch(character, branch));
 }
 
 export function countCaptainTagBranchMatches(

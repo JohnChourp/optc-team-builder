@@ -1,6 +1,6 @@
 import { type CharacterListItem } from "../../core/models/optc.models";
 
-export interface OptcbxFavoritesExportCharacter {
+interface OptcbxFavoritesExportCharacter {
   number: number;
   name: string;
 }

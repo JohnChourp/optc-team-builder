@@ -56,7 +56,7 @@ export interface AutoBuildAbilityCatalogItem {
   sampleTexts: string[];
 }
 
-export interface AutoBuildAbilityTurnMatchingCharacterIds {
+interface AutoBuildAbilityTurnMatchingCharacterIds {
   minTurns: number;
   characterIds: number[];
 }
