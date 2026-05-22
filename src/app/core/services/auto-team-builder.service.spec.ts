@@ -6545,16 +6545,20 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(AUTO_TEAM_BUILDER_CLASSES, AUTO_TEAM_BUILDER_TYPES, {
-      manualSlots: createManualSlots(
-        {
-          captain: [noCaptainLeader.id],
-        },
-        {
-          captain: noCaptainLeader.id,
-        },
-      ),
-    });
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        manualSlots: createManualSlots(
+          {
+            captain: [noCaptainLeader.id],
+          },
+          {
+            captain: noCaptainLeader.id,
+          },
+        ),
+      },
+    );
 
     expect(result).not.toBeNull();
     expect(result?.slots[0]?.character.id).toBe(noCaptainLeader.id);
@@ -6570,18 +6574,22 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(AUTO_TEAM_BUILDER_CLASSES, AUTO_TEAM_BUILDER_TYPES, {
-      manualSlots: createManualSlots(
-        {
-          captain: [noCaptainLeader.id],
-          friendCaptain: [noCaptainLeader.id],
-        },
-        {
-          captain: noCaptainLeader.id,
-          friendCaptain: noCaptainLeader.id,
-        },
-      ),
-    });
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        manualSlots: createManualSlots(
+          {
+            captain: [noCaptainLeader.id],
+            friendCaptain: [noCaptainLeader.id],
+          },
+          {
+            captain: noCaptainLeader.id,
+            friendCaptain: noCaptainLeader.id,
+          },
+        ),
+      },
+    );
 
     expect(result).not.toBeNull();
     expect(result?.slots[0]?.character.id).toBe(noCaptainLeader.id);
@@ -6599,11 +6607,15 @@ describe('Auto team builder', () => {
     };
     const service = new AutoTeamBuilderService(repository as never);
 
-    const result = await service.buildTeam(AUTO_TEAM_BUILDER_CLASSES, AUTO_TEAM_BUILDER_TYPES, {
-      manualSlots: createManualSlots({
-        captain: [noCaptainLeader.id],
-      }),
-    });
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        manualSlots: createManualSlots({
+          captain: [noCaptainLeader.id],
+        }),
+      },
+    );
 
     expect(result).not.toBeNull();
     expect(result?.slots[0]?.character.id).not.toBe(noCaptainLeader.id);
