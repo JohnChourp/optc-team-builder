@@ -183,6 +183,42 @@ describe('Auto team builder', () => {
     );
   });
 
+  it('matches prepared-context results with selected names and strict battle groups', () => {
+    const records = createPreparedContextStressRecords();
+    const input = createInput(['DEX'], ['Fighter'], {
+      selectedCharacterTags: ['Straw Hat Pirates'],
+      selectedCharacterNames: ['Bind Specialist'],
+      requireAllSelectedCharacterTagsInTeam: true,
+      requireAllSelectedCharacterNamesInTeam: true,
+      requireUniqueBaseCharacterNames: true,
+      battleRequirements: [
+        createBattleRequirementWithGroups('stage-3', [
+          [
+            {
+              abilityKey: 'remove_special_bind',
+              minTurns: 5,
+              slotTokens: [],
+              requiredCharacterCount: 1,
+            },
+          ],
+          [
+            {
+              abilityKey: 'remove_atk_down',
+              minTurns: 5,
+              slotTokens: [],
+              requiredCharacterCount: 1,
+            },
+          ],
+        ]),
+      ],
+    });
+    const context = prepareAutoTeamBuildContext(records);
+    const preparedResult = buildAutoTeamResultFromPreparedContext(context, input);
+
+    expect(preparedResult).toEqual(buildAutoTeamResult(records, input));
+    expect(preparedResult?.coverage.battleRequirements?.matchesAll).toBe(true);
+  });
+
   it('normalizes HTML ability text before deriving candidate tags', () => {
     const candidate = buildAutoBuildCandidate(
       createCharacterRecord({
@@ -10014,6 +10050,67 @@ function createStrictMixedTeamRecords(): CharacterDetailRecord[] {
     createAffinitySubRecord(),
     createUtilitySubRecord(),
     createConsistencySubRecord(),
+  ];
+}
+
+function createPreparedContextStressRecords(): CharacterDetailRecord[] {
+  return [
+    createCaptainRecord(),
+    createCharacterRecord({
+      id: 9830,
+      name: 'Dual Counter',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Reduces Special Bind and ATK Down duration by 5 turns.',
+        sailorAbilities: ['Reduces Special Bind duration on this character by 5 turns.'],
+        characterTags: ['Straw Hat Pirates'],
+        builderAbilities: [
+          createBuilderAbility('remove_special_bind', 'Remove Special Bind', 5, 'specialText'),
+          createBuilderAbility('remove_atk_down', 'Remove ATK Down', 5, 'specialText'),
+          createBuilderAbility(
+            'crewmate_recover_special_bind',
+            'Crewmate Special Bind Recovery',
+            5,
+            'sailorAbilities',
+          ),
+        ],
+      },
+    }),
+    createCharacterRecord({
+      id: 9828,
+      name: 'Bind Specialist',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Reduces Special Bind duration by 5 turns.',
+        sailorAbilities: ['Reduces Special Bind duration on this character by 5 turns.'],
+        characterTags: ['Straw Hat Pirates'],
+        builderAbilities: [
+          createBuilderAbility('remove_special_bind', 'Remove Special Bind', 5, 'specialText'),
+          createBuilderAbility(
+            'crewmate_recover_special_bind',
+            'Crewmate Special Bind Recovery',
+            5,
+            'sailorAbilities',
+          ),
+        ],
+      },
+    }),
+    createCharacterRecord({
+      id: 9829,
+      name: 'ATK Down Specialist',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Reduces ATK Down duration by 5 turns.',
+        characterTags: ['Straw Hat Pirates'],
+        builderAbilities: [
+          createBuilderAbility('remove_atk_down', 'Remove ATK Down', 5, 'specialText'),
+        ],
+      },
+    }),
+    createAffinitySubRecord(),
+    createUtilitySubRecord(),
   ];
 }
 

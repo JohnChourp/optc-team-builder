@@ -218,6 +218,30 @@ interface SubAbilityDemandContext {
   battleAssignmentMode: BattleRequirementAssignmentMode;
 }
 
+interface PreparedAutoBuildEffectFacts {
+  captainScope: Pick<
+    AutoBuildEffectTags['captainScope'],
+    | 'allCharacters'
+    | 'allowedClasses'
+    | 'allowedTypes'
+    | 'allowedCharacterTags'
+    | 'hasCostRestriction'
+    | 'maxAllowedCost'
+    | 'hasClassRestriction'
+    | 'hasTypeRestriction'
+    | 'hasCharacterTagRestriction'
+  >;
+  specialScope: AutoBuildSpecialScope;
+  burstRoles: AutoBuildBurstRole[];
+  consistencyRoles: AutoBuildConsistencyRole[];
+  utilityRoles: AutoBuildUtilityRole[];
+  captainAtkMultiplier: number;
+  captainHpMultiplier: number;
+  readableCaptainText: boolean;
+  readableSpecialText: boolean;
+  readableSailorText: boolean;
+}
+
 interface PreparedAutoBuildRecord {
   record: CharacterDetailRecord;
   index: number;
@@ -226,6 +250,14 @@ interface PreparedAutoBuildRecord {
   specialText: string;
   sailorText: string;
   combinedText: string;
+  classKeys: string[];
+  typeTokens: AutoTeamBuilderType[];
+  characterTagKeys: string[];
+  demandTagKeys: string[];
+  partyConflictKeys: string[];
+  superCriteriaKeys: string[];
+  superEffectTexts: string[];
+  effectFacts: PreparedAutoBuildEffectFacts;
 }
 
 export interface PreparedAutoTeamBuildContext {
@@ -233,8 +265,25 @@ export interface PreparedAutoTeamBuildContext {
   recordById: Map<number, PreparedAutoBuildRecord>;
 }
 
+interface AutoBuildSubCandidateRank {
+  strictBattleGroupPreferenceScore: number;
+  demandScore: number;
+  leaderTagConditionScore: number;
+  strictBattleGroupSpreadScore: number;
+  coverageRoleScore: number;
+  leaderCriteriaCoveragePreferenceScore: number;
+  selectedFilterScore: number;
+}
+
+interface RankedAutoBuildSubCandidate {
+  candidate: AutoBuildCandidate;
+  rank: AutoBuildSubCandidateRank;
+}
+
 type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
   Partial<Pick<CharacterDetailRecord, 'detail'>>;
+
+const PREPARED_RECORD_BY_CANDIDATE = new WeakMap<AutoBuildCandidate, PreparedAutoBuildRecord>();
 
 function createProgressExclusionCounts(): AutoBuildProgressExclusionCounts {
   return {
@@ -562,7 +611,10 @@ export function resolveCharacterPartyConflictKeys(character: PartyConflictCharac
 }
 
 function resolveCandidatePartyConflictKeys(candidate: AutoBuildCandidate): string[] {
-  return resolveCharacterPartyConflictKeys(candidate.character);
+  return (
+    PREPARED_RECORD_BY_CANDIDATE.get(candidate)?.partyConflictKeys ??
+    resolveCharacterPartyConflictKeys(candidate.character)
+  );
 }
 
 export function normalizeAutoBuildCharacterMatchKey(value: string): string {
@@ -606,7 +658,38 @@ function resolveCharacterSuperCriteriaKeys(character: CharacterDetailRecord): st
 }
 
 function resolveCandidateSuperCriteriaKeys(candidate: AutoBuildCandidate): string[] {
-  return resolveCharacterSuperCriteriaKeys(candidate.character);
+  return (
+    PREPARED_RECORD_BY_CANDIDATE.get(candidate)?.superCriteriaKeys ??
+    resolveCharacterSuperCriteriaKeys(candidate.character)
+  );
+}
+
+function resolveCandidateTypeTokens(candidate: AutoBuildCandidate): AutoTeamBuilderType[] {
+  return (
+    PREPARED_RECORD_BY_CANDIDATE.get(candidate)?.typeTokens ??
+    resolveCharacterTypeTokens(candidate.character.type)
+  );
+}
+
+function resolveCandidateClassKeys(candidate: AutoBuildCandidate): string[] {
+  return (
+    PREPARED_RECORD_BY_CANDIDATE.get(candidate)?.classKeys ??
+    candidate.character.classes.map((characterClass) => characterClass.toLowerCase())
+  );
+}
+
+function resolveCandidateCharacterTagKeys(candidate: AutoBuildCandidate): string[] {
+  return (
+    PREPARED_RECORD_BY_CANDIDATE.get(candidate)?.characterTagKeys ??
+    (candidate.character.detail.characterTags ?? []).map((tag) => normalizeCaptainTagKey(tag))
+  );
+}
+
+function resolveCandidateDemandTagKeys(candidate: AutoBuildCandidate): string[] {
+  return (
+    PREPARED_RECORD_BY_CANDIDATE.get(candidate)?.demandTagKeys ??
+    (candidate.character.detail.characterTags ?? []).map((tag) => normalizeTagKeyForDemand(tag))
+  );
 }
 
 function candidateMatchesSuperCriteriaCharacterOption(
@@ -636,14 +719,13 @@ function candidateMatchesSuperCriteriaClassOrTypeBranch(
 ): boolean {
   const allowedClasses = branch.allowedClasses ?? branch.requiredClasses ?? [];
   const allowedTypes = branch.allowedTypes ?? branch.requiredTypes ?? [];
+  const classKeys = resolveCandidateClassKeys(candidate);
   const matchesClass =
     allowedClasses.length > 0 &&
-    candidate.character.classes.some((characterClass) =>
-      allowedClasses.some(
-        (allowedClass) => allowedClass.toLowerCase() === characterClass.toLowerCase(),
-      ),
+    allowedClasses.some((allowedClass) =>
+      classKeys.includes(allowedClass.toLowerCase()),
     );
-  const characterTypes = resolveCharacterTypeTokens(candidate.character.type);
+  const characterTypes = resolveCandidateTypeTokens(candidate);
   const matchesType =
     allowedTypes.length > 0
       ? characterTypes.some((type) =>
@@ -702,16 +784,16 @@ function countSatisfiedPresenceRequirements(
   const satisfiedTypes = new Set<string>();
 
   candidates.forEach((candidate) => {
-    candidate.character.classes.forEach((characterClass) => {
+    resolveCandidateClassKeys(candidate).forEach((characterClassKey) => {
       if (
         branch.requiredClasses.some(
-          (requiredClass) => requiredClass.toLowerCase() === characterClass.toLowerCase(),
+          (requiredClass) => requiredClass.toLowerCase() === characterClassKey,
         )
       ) {
-        satisfiedClasses.add(characterClass.toLowerCase());
+        satisfiedClasses.add(characterClassKey);
       }
     });
-    resolveCharacterTypeTokens(candidate.character.type).forEach((type) => {
+    resolveCandidateTypeTokens(candidate).forEach((type) => {
       if (
         branch.requiredTypes.some(
           (requiredType) => requiredType.toLowerCase() === type.toLowerCase(),
@@ -2346,20 +2428,11 @@ export function buildAutoBuildCandidate(
   index: number,
   total: number,
 ): AutoBuildCandidate {
-  const captainText = normalizeText(record.detail.captainAbility);
-  const specialText = normalizeText(record.detail.specialText);
-  const sailorText = normalizeText(record.detail.sailorAbilities.join(' '));
-  const combinedText = [captainText, specialText, sailorText].filter(Boolean).join(' ');
-
   return buildAutoBuildCandidateFromPreparedRecord(
     {
-      record,
+      ...prepareAutoBuildRecord(record),
       index,
       total,
-      captainText,
-      specialText,
-      sailorText,
-      combinedText,
     },
     input,
     index,
@@ -2370,14 +2443,29 @@ export function buildAutoBuildCandidate(
 function prepareAutoBuildRecordText(
   record: CharacterDetailRecord,
 ): Omit<PreparedAutoBuildRecord, 'index' | 'total'> | null {
+  const preparedRecord = prepareAutoBuildRecord(record);
+
+  return preparedRecord.combinedText ? preparedRecord : null;
+}
+
+function prepareAutoBuildRecord(
+  record: CharacterDetailRecord,
+): Omit<PreparedAutoBuildRecord, 'index' | 'total'> {
   const captainText = normalizeText(record.detail.captainAbility);
   const specialText = normalizeText(record.detail.specialText);
   const sailorText = normalizeText(record.detail.sailorAbilities.join(' '));
   const combinedText = [captainText, specialText, sailorText].filter(Boolean).join(' ');
-
-  if (!combinedText) {
-    return null;
-  }
+  const characterTags = record.detail.characterTags ?? [];
+  const partyConflictKeys = resolveCharacterPartyConflictKeys(record);
+  const searchableText = [
+    record.name,
+    record.searchText ?? '',
+    record.primaryClass,
+    record.secondaryClass ?? '',
+    record.type,
+    ...record.classes,
+    ...characterTags,
+  ];
 
   return {
     record,
@@ -2385,6 +2473,24 @@ function prepareAutoBuildRecordText(
     specialText,
     sailorText,
     combinedText,
+    classKeys: record.classes.map((characterClass) => characterClass.toLowerCase()),
+    typeTokens: resolveCharacterTypeTokens(record.type),
+    characterTagKeys: characterTags.map((tag) => normalizeCaptainTagKey(tag)),
+    demandTagKeys: characterTags.map((tag) => normalizeTagKeyForDemand(tag)),
+    partyConflictKeys,
+    superCriteriaKeys: [
+      ...new Set(
+        [...partyConflictKeys, ...searchableText]
+          .flatMap((value) =>
+            String(value ?? '')
+              .split(',')
+              .map((entry) => normalizeSuperCriteriaKey(entry)),
+          )
+          .filter((value) => value.length > 0),
+      ),
+    ],
+    superEffectTexts: resolveCharacterSuperEffectTexts(record),
+    effectFacts: prepareAutoBuildEffectFacts(captainText, specialText, sailorText),
   };
 }
 
@@ -2395,20 +2501,25 @@ function buildAutoBuildCandidateFromPreparedRecord(
   total = preparedRecord.total,
 ): AutoBuildCandidate {
   const { record, captainText, specialText, sailorText, combinedText } = preparedRecord;
-  const matchedSelectedClasses = resolveMatchedSelectedClasses(record, input.selectedClasses);
-  const matchesAllSelectedClasses = resolveMatchesAllSelectedClasses(record, input.selectedClasses);
-  const matchedSelectedTypes = resolveMatchedSelectedTypes(record, input.types);
+  const matchedSelectedClasses = resolveMatchedSelectedClasses(
+    preparedRecord,
+    input.selectedClasses,
+  );
+  const matchesAllSelectedClasses =
+    input.selectedClasses.length === 0 ||
+    matchedSelectedClasses.length === input.selectedClasses.length;
+  const matchedSelectedTypes = resolveMatchedSelectedTypes(preparedRecord, input.types);
   const matchedSelectedCharacterTags = resolveMatchedSelectedCharacterTags(
-    record,
+    preparedRecord,
     input.selectedCharacterTags ?? [],
   );
   const matchedSelectedCharacterNames = resolveMatchedSelectedCharacterNames(
-    record,
+    preparedRecord,
     input.selectedCharacterNames ?? [],
   );
-  const tags = parseEffectTags(input, captainText, specialText, sailorText);
+  const tags = buildAutoBuildEffectTags(input, preparedRecord.effectFacts);
 
-  return {
+  const candidate = {
     character: record,
     captainText,
     specialText,
@@ -2430,6 +2541,8 @@ function buildAutoBuildCandidateFromPreparedRecord(
     ),
     recencyScore: total <= 1 ? 1 : 1 - index / (total - 1),
   };
+  PREPARED_RECORD_BY_CANDIDATE.set(candidate, preparedRecord);
+  return candidate;
 }
 
 export function hasReadableEffectText(record: CharacterDetailRecord): boolean {
@@ -2650,9 +2763,19 @@ function selectSubs(
 
       return true;
     })
+    .map((candidate): RankedAutoBuildSubCandidate => ({
+      candidate,
+      rank: resolveAutoFillSubCandidateRank(
+        candidate,
+        input,
+        subAbilityDemandContext,
+        leaderCriteria,
+      ),
+    }))
     .sort((left, right) =>
-      compareAutoFillSubCandidates(left, right, input, subAbilityDemandContext, leaderCriteria),
-    );
+      compareAutoFillSubCandidateRanks(left, right, input, subAbilityDemandContext),
+    )
+    .map((entry) => entry.candidate);
   let subSearchWorkUnits = 0;
   const currentExclusionCounts = createProgressExclusionCounts();
   const estimatedSubSearchWorkUnits = Math.max(
@@ -2930,6 +3053,26 @@ function selectSubs(
       ...selected,
       ...pool,
     ]);
+    const matchingCandidatesByBattleGroup = new Map<string, AutoBuildCandidate[]>();
+    const resolveMatchingBattleGroupCandidates = (
+      battleIndex: number,
+      groupIndex: number,
+      group: AutoBuildRequiredCharacterGroup,
+    ): AutoBuildCandidate[] => {
+      const cacheKey = `${battleIndex}:${groupIndex}`;
+      const cachedCandidates = matchingCandidatesByBattleGroup.get(cacheKey);
+
+      if (cachedCandidates) {
+        return cachedCandidates;
+      }
+
+      const matchingCandidates = battleAssignmentCandidates.filter((candidate) =>
+        candidateMatchesRequiredCharacterGroup(candidate, group, leaderCandidates),
+      );
+
+      matchingCandidatesByBattleGroup.set(cacheKey, matchingCandidates);
+      return matchingCandidates;
+    };
 
     const assignBattle = (
       battleIndex: number,
@@ -2951,8 +3094,10 @@ function selectSubs(
 
       const groups = battle.requiredCharacterGroups
         .map((group, index) => {
-          const matchingCandidates = battleAssignmentCandidates.filter((candidate) =>
-            candidateMatchesRequiredCharacterGroup(candidate, group, leaderCandidates),
+          const matchingCandidates = resolveMatchingBattleGroupCandidates(
+            battleIndex,
+            index,
+            group,
           );
 
           return {
@@ -3102,12 +3247,42 @@ function selectSubs(
   return findNewestValidSelection(0, selected, selectedIds, selectedPartyConflictKeys) ?? selected;
 }
 
-function compareAutoFillSubCandidates(
-  left: AutoBuildCandidate,
-  right: AutoBuildCandidate,
+function resolveAutoFillSubCandidateRank(
+  candidate: AutoBuildCandidate,
   input: AutoBuildInput,
   subAbilityDemandContext: SubAbilityDemandContext,
   leaderCriteria: ActiveLeaderCriteria,
+): AutoBuildSubCandidateRank {
+  return {
+    strictBattleGroupPreferenceScore:
+      subAbilityDemandContext.battleAssignmentMode === 'strict'
+        ? resolveStrictBattleGroupPreferenceScore(
+            candidate,
+            subAbilityDemandContext.battleRequirements,
+          )
+        : 0,
+    demandScore: resolveSubAbilityDemandScore(candidate, subAbilityDemandContext),
+    leaderTagConditionScore: resolveLeaderTagConditionDemandScore(
+      candidate,
+      subAbilityDemandContext,
+    ),
+    strictBattleGroupSpreadScore:
+      subAbilityDemandContext.battleAssignmentMode === 'strict'
+        ? resolveStrictBattleGroupSpreadScore(candidate, subAbilityDemandContext.battleRequirements)
+        : 0,
+    coverageRoleScore: resolveSubCoverageRoleScore(candidate),
+    leaderCriteriaCoveragePreferenceScore: input.allowPartialCaptainAbilityCoverage
+      ? resolveLeaderCriteriaCoveragePreferenceScore(candidate, leaderCriteria)
+      : 0,
+    selectedFilterScore: resolveSubSelectedFilterScore(candidate, input),
+  };
+}
+
+function compareAutoFillSubCandidateRanks(
+  left: RankedAutoBuildSubCandidate,
+  right: RankedAutoBuildSubCandidate,
+  input: AutoBuildInput,
+  subAbilityDemandContext: SubAbilityDemandContext,
 ): number {
   if (
     subAbilityDemandContext.requirements.length > 0 ||
@@ -3116,25 +3291,21 @@ function compareAutoFillSubCandidates(
   ) {
     if (subAbilityDemandContext.battleAssignmentMode === 'strict') {
       const strictGroupPreferenceDifference =
-        resolveStrictBattleGroupPreferenceScore(right, subAbilityDemandContext.battleRequirements) -
-        resolveStrictBattleGroupPreferenceScore(left, subAbilityDemandContext.battleRequirements);
+        right.rank.strictBattleGroupPreferenceScore - left.rank.strictBattleGroupPreferenceScore;
 
       if (strictGroupPreferenceDifference !== 0) {
         return strictGroupPreferenceDifference;
       }
     }
 
-    const demandDifference =
-      resolveSubAbilityDemandScore(right, subAbilityDemandContext) -
-      resolveSubAbilityDemandScore(left, subAbilityDemandContext);
+    const demandDifference = right.rank.demandScore - left.rank.demandScore;
 
     if (demandDifference !== 0) {
       return demandDifference;
     }
 
     const leaderTagConditionDifference =
-      resolveLeaderTagConditionDemandScore(right, subAbilityDemandContext) -
-      resolveLeaderTagConditionDemandScore(left, subAbilityDemandContext);
+      right.rank.leaderTagConditionScore - left.rank.leaderTagConditionScore;
 
     if (leaderTagConditionDifference !== 0) {
       return leaderTagConditionDifference;
@@ -3142,16 +3313,14 @@ function compareAutoFillSubCandidates(
 
     if (subAbilityDemandContext.battleAssignmentMode === 'strict') {
       const battleGroupSpreadDifference =
-        resolveStrictBattleGroupSpreadScore(left, subAbilityDemandContext.battleRequirements) -
-        resolveStrictBattleGroupSpreadScore(right, subAbilityDemandContext.battleRequirements);
+        left.rank.strictBattleGroupSpreadScore - right.rank.strictBattleGroupSpreadScore;
 
       if (battleGroupSpreadDifference !== 0) {
         return battleGroupSpreadDifference;
       }
     }
 
-    const coverageDifference =
-      resolveSubCoverageRoleScore(right) - resolveSubCoverageRoleScore(left);
+    const coverageDifference = right.rank.coverageRoleScore - left.rank.coverageRoleScore;
 
     if (coverageDifference !== 0) {
       return coverageDifference;
@@ -3160,22 +3329,21 @@ function compareAutoFillSubCandidates(
 
   if (input.allowPartialCaptainAbilityCoverage) {
     const leaderCoverageDifference =
-      resolveLeaderCriteriaCoveragePreferenceScore(right, leaderCriteria) -
-      resolveLeaderCriteriaCoveragePreferenceScore(left, leaderCriteria);
+      right.rank.leaderCriteriaCoveragePreferenceScore -
+      left.rank.leaderCriteriaCoveragePreferenceScore;
 
     if (leaderCoverageDifference !== 0) {
       return leaderCoverageDifference;
     }
   }
 
-  const selectedFilterDifference =
-    resolveSubSelectedFilterScore(right, input) - resolveSubSelectedFilterScore(left, input);
+  const selectedFilterDifference = right.rank.selectedFilterScore - left.rank.selectedFilterScore;
 
   if (selectedFilterDifference !== 0) {
     return selectedFilterDifference;
   }
 
-  return compareCandidatesByNewestId(left, right);
+  return compareCandidatesByNewestId(left.candidate, right.candidate);
 }
 
 function collectSubAbilityDemandContext(
@@ -3280,11 +3448,7 @@ function resolveLeaderTagConditionDemandScore(
       score +
       set.branches.reduce((bestGain, branch) => {
         if (
-          !branch.acceptedKeys.some((key) =>
-            (candidate.character.detail.characterTags ?? [])
-              .map((tag) => normalizeTagKeyForDemand(tag))
-              .includes(key),
-          )
+          !branch.acceptedKeys.some((key) => resolveCandidateDemandTagKeys(candidate).includes(key))
         ) {
           return bestGain;
         }
@@ -3445,14 +3609,11 @@ function hasCrewWideSpecialTarget(specialText: string): boolean {
   ]);
 }
 
-function parseEffectTags(
-  input: AutoBuildInput,
+function prepareAutoBuildEffectFacts(
   captainText: string,
   specialText: string,
   sailorText: string,
-): AutoBuildEffectTags {
-  const selectedClasses = input.selectedClasses;
-  const selectedTypes = input.types;
+): PreparedAutoBuildEffectFacts {
   const abilityText = [specialText, sailorText].filter(Boolean).join(' ');
   const burstRoles = uniqueRoles<AutoBuildBurstRole>([
     textHasAtkBoost(abilityText) ? 'atkBoost' : null,
@@ -3487,9 +3648,51 @@ function parseEffectTags(
   const allowedClasses = captainBoostScope.allowedClasses;
   const allowedTypes = captainBoostScope.allowedTypes;
   const allowedCharacterTags = captainBoostScope.allowedCharacterTags;
+  const allCharacters = captainBoostScope.allCharacters;
   const hasCostRestriction = false;
   const maxAllowedCost = null;
-  const allCharacters = captainBoostScope.allCharacters;
+
+  return {
+    captainScope: {
+      allCharacters,
+      allowedClasses,
+      allowedTypes,
+      allowedCharacterTags,
+      hasCostRestriction,
+      maxAllowedCost,
+      hasClassRestriction: !allCharacters && allowedClasses.length > 0,
+      hasTypeRestriction: !allCharacters && allowedTypes.length > 0,
+      hasCharacterTagRestriction: !allCharacters && allowedCharacterTags.length > 0,
+    },
+    specialScope: resolveSpecialScope(specialText),
+    burstRoles,
+    consistencyRoles,
+    utilityRoles,
+    captainAtkMultiplier: extractCaptainMultiplier(captainText, 'atk'),
+    captainHpMultiplier: extractCaptainMultiplier(captainText, 'hp'),
+    readableCaptainText: captainText.length > 0,
+    readableSpecialText: specialText.length > 0,
+    readableSailorText: sailorText.length > 0,
+  };
+}
+
+function buildAutoBuildEffectTags(
+  input: AutoBuildInput,
+  facts: PreparedAutoBuildEffectFacts,
+): AutoBuildEffectTags {
+  const selectedClasses = input.selectedClasses;
+  const selectedTypes = input.types;
+  const {
+    allCharacters,
+    allowedClasses,
+    allowedTypes,
+    allowedCharacterTags,
+    hasCostRestriction,
+    maxAllowedCost,
+    hasClassRestriction,
+    hasTypeRestriction,
+    hasCharacterTagRestriction,
+  } = facts.captainScope;
   const matchedSelectedClasses = allCharacters
     ? [...selectedClasses]
     : selectedClasses.filter((selectedClass) =>
@@ -3509,9 +3712,9 @@ function parseEffectTags(
       allowedCharacterTags,
       hasCostRestriction,
       maxAllowedCost,
-      hasClassRestriction: !allCharacters && allowedClasses.length > 0,
-      hasTypeRestriction: !allCharacters && allowedTypes.length > 0,
-      hasCharacterTagRestriction: !allCharacters && allowedCharacterTags.length > 0,
+      hasClassRestriction,
+      hasTypeRestriction,
+      hasCharacterTagRestriction,
       matchedSelectedClasses,
       matchedSelectedClassCount: matchedSelectedClasses.length,
       coversAllSelectedClasses:
@@ -3523,15 +3726,15 @@ function parseEffectTags(
       matchesClass: matchedSelectedClasses.length > 0,
       tagConditionBranches: [],
     },
-    specialScope: resolveSpecialScope(specialText),
-    burstRoles,
-    consistencyRoles,
-    utilityRoles,
-    captainAtkMultiplier: extractCaptainMultiplier(captainText, 'atk'),
-    captainHpMultiplier: extractCaptainMultiplier(captainText, 'hp'),
-    readableCaptainText: captainText.length > 0,
-    readableSpecialText: specialText.length > 0,
-    readableSailorText: sailorText.length > 0,
+    specialScope: facts.specialScope,
+    burstRoles: facts.burstRoles,
+    consistencyRoles: facts.consistencyRoles,
+    utilityRoles: facts.utilityRoles,
+    captainAtkMultiplier: facts.captainAtkMultiplier,
+    captainHpMultiplier: facts.captainHpMultiplier,
+    readableCaptainText: facts.readableCaptainText,
+    readableSpecialText: facts.readableSpecialText,
+    readableSailorText: facts.readableSailorText,
   };
 }
 
@@ -3773,75 +3976,52 @@ function applyCandidateCoverage(coverage: TeamCoverageState, candidate: AutoBuil
 }
 
 function resolveMatchedSelectedClasses(
-  record: CharacterDetailRecord,
+  record: Pick<PreparedAutoBuildRecord, 'classKeys'>,
   selectedClasses: string[],
 ): string[] {
   if (!selectedClasses.length) {
     return [];
   }
 
-  const normalizedRecordClasses = record.classes.map((characterClass) =>
-    characterClass.toLowerCase(),
-  );
-
   return selectedClasses.filter((selectedClass) =>
-    normalizedRecordClasses.includes(selectedClass.toLowerCase()),
+    record.classKeys.includes(selectedClass.toLowerCase()),
   );
-}
-
-function resolveMatchesAllSelectedClasses(
-  record: CharacterDetailRecord,
-  selectedClasses: string[],
-): boolean {
-  if (!selectedClasses.length) {
-    return true;
-  }
-
-  return resolveMatchedSelectedClasses(record, selectedClasses).length === selectedClasses.length;
 }
 
 function resolveMatchedSelectedTypes(
-  record: CharacterDetailRecord,
+  record: Pick<PreparedAutoBuildRecord, 'typeTokens'>,
   selectedTypes: AutoTeamBuilderType[],
 ): AutoTeamBuilderType[] {
-  const recordTypes = resolveCharacterTypeTokens(record.type);
-
-  return selectedTypes.filter((type) => recordTypes.includes(type));
+  return selectedTypes.filter((type) => record.typeTokens.includes(type));
 }
 
 function resolveMatchedSelectedCharacterTags(
-  record: CharacterDetailRecord,
+  record: Pick<PreparedAutoBuildRecord, 'characterTagKeys'>,
   selectedCharacterTags: string[],
 ): string[] {
   if (!selectedCharacterTags.length) {
     return [];
   }
 
-  const characterTagKeys = (record.detail.characterTags ?? []).map((tag) =>
-    normalizeCaptainTagKey(tag),
-  );
-
   return selectedCharacterTags.filter((selectedTag) =>
-    characterTagKeys.includes(normalizeCaptainTagKey(selectedTag)),
+    record.characterTagKeys.includes(normalizeCaptainTagKey(selectedTag)),
   );
 }
 
 function resolveMatchedSelectedCharacterNames(
-  record: CharacterDetailRecord,
+  record: Pick<PreparedAutoBuildRecord, 'superCriteriaKeys'>,
   selectedCharacterNames: string[],
 ): string[] {
   if (!selectedCharacterNames.length) {
     return [];
   }
 
-  const characterKeys = resolveCharacterSuperCriteriaKeys(record);
-
   return selectedCharacterNames.filter((selectedName) => {
     const normalizedSelectedName = normalizeAutoBuildCharacterMatchKey(selectedName);
 
     return (
       normalizedSelectedName.length > 0 &&
-      characterKeys.some(
+      record.superCriteriaKeys.some(
         (characterKey) =>
           characterKey === normalizedSelectedName || characterKey.includes(normalizedSelectedName),
       )
@@ -3922,7 +4102,7 @@ function resolveDominantTypeLeaderScope(
 ): { values: AutoTeamBuilderType[]; restricted: boolean } {
   const dominantLeaderTypeSets = leaders
     .filter((leader) => hasDominantTypeCaptainText(leader.captainText))
-    .map((leader) => new Set(resolveCharacterTypeTokens(leader.character.type)));
+    .map((leader) => new Set(resolveCandidateTypeTokens(leader)));
 
   if (!dominantLeaderTypeSets.length) {
     return {
@@ -4418,20 +4598,16 @@ function matchesActiveLeaderCriteria(
   }
 
   const matchesClassScope = leaderCriteria.hasClassRestriction
-    ? candidate.character.classes.some((characterClass) =>
-        leaderCriteria.derivedAllowedClasses.some(
-          (allowedClass) => allowedClass.toLowerCase() === characterClass.toLowerCase(),
-        ),
+    ? leaderCriteria.derivedAllowedClasses.some((allowedClass) =>
+        resolveCandidateClassKeys(candidate).includes(allowedClass.toLowerCase()),
       )
     : false;
-  const characterTypes = resolveCharacterTypeTokens(candidate.character.type);
+  const characterTypes = resolveCandidateTypeTokens(candidate);
   const matchesTypeScope = leaderCriteria.hasTypeRestriction
     ? characterTypes.length > 0 &&
       characterTypes.every((type) => leaderCriteria.derivedAllowedTypes.includes(type))
     : false;
-  const characterTagKeys = (candidate.character.detail.characterTags ?? []).map((tag) =>
-    normalizeCaptainTagKey(tag),
-  );
+  const characterTagKeys = resolveCandidateCharacterTagKeys(candidate);
   const matchesCharacterTagScope = leaderCriteria.hasCharacterTagRestriction
     ? leaderCriteria.derivedAllowedCharacterTags.some((tag) =>
         characterTagKeys.includes(normalizeCaptainTagKey(tag)),
@@ -4456,7 +4632,7 @@ function matchesDominantTypeRequirement(
     return true;
   }
 
-  const characterTypes = resolveCharacterTypeTokens(candidate.character.type);
+  const characterTypes = resolveCandidateTypeTokens(candidate);
 
   return (
     characterTypes.length > 0 &&
@@ -4473,13 +4649,11 @@ function matchesLeaderSuperEffectScope(
   }
 
   const matchesClassScope = leaderSuperEffectScope.hasClassRestriction
-    ? candidate.character.classes.some((characterClass) =>
-        leaderSuperEffectScope.derivedAllowedClasses.some(
-          (allowedClass) => allowedClass.toLowerCase() === characterClass.toLowerCase(),
-        ),
+    ? leaderSuperEffectScope.derivedAllowedClasses.some((allowedClass) =>
+        resolveCandidateClassKeys(candidate).includes(allowedClass.toLowerCase()),
       )
     : true;
-  const characterTypes = resolveCharacterTypeTokens(candidate.character.type);
+  const characterTypes = resolveCandidateTypeTokens(candidate);
   const matchesTypeScope = leaderSuperEffectScope.hasTypeRestriction
     ? characterTypes.some((type) => leaderSuperEffectScope.derivedAllowedTypes.includes(type))
     : true;
@@ -4637,19 +4811,30 @@ function resolveStructuredSuperEffectText(value: Record<string, unknown> | null)
   return typeof effectText === 'string' ? effectText.trim() : '';
 }
 
-function resolveCandidateSuperEffectTexts(candidate: AutoBuildCandidate): string[] {
+function resolveCharacterSuperEffectTexts(
+  character: CharacterDetailRecord,
+  normalizedSuperSpecialText = normalizeText(character.detail.superSpecialText),
+): string[] {
   const structuredEffectTexts = [
-    candidate.character.detail.superType,
-    candidate.character.detail.superClass,
+    character.detail.superType,
+    character.detail.superClass,
   ]
     .map(resolveStructuredSuperEffectText)
     .filter((text): text is string => text.length > 0);
-  const superSpecialText = normalizeText(candidate.character.detail.superSpecialText);
 
   return [
     ...structuredEffectTexts,
-    ...(superSpecialText && /\bsuper\b/i.test(superSpecialText) ? [superSpecialText] : []),
+    ...(normalizedSuperSpecialText && /\bsuper\b/i.test(normalizedSuperSpecialText)
+      ? [normalizedSuperSpecialText]
+      : []),
   ];
+}
+
+function resolveCandidateSuperEffectTexts(candidate: AutoBuildCandidate): string[] {
+  return (
+    PREPARED_RECORD_BY_CANDIDATE.get(candidate)?.superEffectTexts ??
+    resolveCharacterSuperEffectTexts(candidate.character)
+  );
 }
 
 function hasCandidateSuperEffects(candidate: AutoBuildCandidate): boolean {
