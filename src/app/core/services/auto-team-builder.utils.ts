@@ -1607,17 +1607,25 @@ export function buildAutoTeamResult(
   options: AutoTeamBuildAttemptOptions = {},
 ): AutoBuildCoreResult | null {
   return buildAutoTeamResultFromPreparedContext(
-    prepareAutoTeamBuildContext(records),
+    prepareAutoTeamBuildContext(records, {
+      forceIncludeRecordIds: resolveRequiredManualCharacterIds(input.manualSlots),
+    }),
     input,
     options,
   );
 }
 
+export interface PrepareAutoTeamBuildContextOptions {
+  forceIncludeRecordIds?: readonly number[];
+}
+
 export function prepareAutoTeamBuildContext(
   records: CharacterDetailRecord[],
+  options: PrepareAutoTeamBuildContextOptions = {},
 ): PreparedAutoTeamBuildContext {
+  const forceIncludeRecordIds = new Set(options.forceIncludeRecordIds ?? []);
   const preparedRecords = records
-    .map((record) => prepareAutoBuildRecordText(record))
+    .map((record) => prepareAutoBuildRecordText(record, forceIncludeRecordIds))
     .filter((record): record is Omit<PreparedAutoBuildRecord, 'index' | 'total'> => Boolean(record))
     .map((record, index, values) => ({
       ...record,
@@ -1629,6 +1637,21 @@ export function prepareAutoTeamBuildContext(
     records: preparedRecords,
     recordById: new Map(preparedRecords.map((record) => [record.record.id, record] as const)),
   };
+}
+
+export function resolveRequiredManualCharacterIds(
+  manualSlots: readonly AutoBuildManualSlotSelection[],
+): number[] {
+  return [
+    ...new Set(
+      manualSlots
+        .map((slot) => slot.requiredCharacterId ?? null)
+        .filter(
+          (characterId): characterId is number =>
+            characterId !== null && Number.isInteger(characterId) && characterId > 0,
+        ),
+    ),
+  ];
 }
 
 export function buildAutoTeamResultFromPreparedContext(
@@ -2446,10 +2469,13 @@ export function buildAutoBuildCandidate(
 
 function prepareAutoBuildRecordText(
   record: CharacterDetailRecord,
+  forceIncludeRecordIds: ReadonlySet<number> = new Set(),
 ): Omit<PreparedAutoBuildRecord, 'index' | 'total'> | null {
   const preparedRecord = prepareAutoBuildRecord(record);
 
-  return preparedRecord.combinedText ? preparedRecord : null;
+  return preparedRecord.combinedText || forceIncludeRecordIds.has(record.id)
+    ? preparedRecord
+    : null;
 }
 
 function prepareAutoBuildRecord(

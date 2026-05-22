@@ -13,6 +13,7 @@ import {
   buildAutoTeamResultFromPreparedContext,
   prepareAutoTeamBuildContext,
   normalizeAutoBuildCharacterMatchKey,
+  resolveRequiredManualCharacterIds,
   resolveCharacterPartyConflictKeys,
   resolveCharacterTypeTokens,
   resolveUnsatisfiedSuperSpecialCriteriaCharacterNames,
@@ -131,7 +132,16 @@ export function runAutoTeamBuildSearch(
   options: AutoTeamBuildSearchOptions = {},
 ): AutoBuildResult | null {
   const timingState = createTimingState(options);
-  const preparedContext = options.preparedContext ?? prepareAutoTeamBuildContext(records);
+  const requiredManualCharacterIds = resolveRequiredManualCharacterIds(requestedInput.manualSlots);
+  const preparedContext =
+    options.preparedContext &&
+    requiredManualCharacterIds.every((characterId) =>
+      options.preparedContext?.recordById.has(characterId),
+    )
+      ? options.preparedContext
+      : prepareAutoTeamBuildContext(records, {
+          forceIncludeRecordIds: requiredManualCharacterIds,
+        });
   const friendCaptainContext =
     options.friendCaptainContext ??
     (options.friendCaptainRecords
@@ -499,7 +509,14 @@ export function runAutoTeamBuildAttempt(
   friendCaptainContext?: PreparedAutoTeamBuildContext,
   executionOptions: AutoTeamBuildAttemptExecutionOptions = {},
 ): AutoBuildResult | null {
-  const attempt = buildAutoTeamResultFromPreparedContext(preparedContext, input, {
+  const requiredManualCharacterIds = resolveRequiredManualCharacterIds(input.manualSlots);
+  const attemptPreparedContext =
+    requiredManualCharacterIds.every((characterId) => preparedContext.recordById.has(characterId))
+      ? preparedContext
+      : prepareAutoTeamBuildContext(records, {
+          forceIncludeRecordIds: requiredManualCharacterIds,
+        });
+  const attempt = buildAutoTeamResultFromPreparedContext(attemptPreparedContext, input, {
     requireLeadersWithoutSuperEffects,
     friendCaptainRecords,
     friendCaptainContext,
