@@ -348,6 +348,21 @@ describe('resolveCaptainAllTierCoverage', () => {
     expect(result.tierResults).toHaveLength(2);
     expect(result.tierResults[0]?.notApplicable).toBe(true);
   });
+
+  it('ignores non-targeting tiers that do not boost crew slots', () => {
+    const captain = createCharacter({
+      id: 9006,
+      captainAbilityCoverage: buildNoScopeDamageReductionCoverage(),
+    });
+    const slot = createCharacter({ id: 9601, classes: ['Striker'], type: 'INT' });
+
+    const result = resolveCaptainAllTierCoverage(captain, [{ character: slot }]);
+
+    expect(result.matches).toBe(true);
+    expect(result.applicableTierCount).toBe(0);
+    expect(result.tierResults).toHaveLength(1);
+    expect(result.tierResults[0]?.notApplicable).toBe(true);
+  });
 });
 
 function createCharacter(
@@ -517,6 +532,37 @@ function buildSelfOnlyAndUniversalCoverage(): CharacterCaptainAbilityCoverage {
       triggerConditions: [],
       clauses: ['boosts HP of all characters by 1.5x'],
       hpBoost: 1.5,
+    },
+  ];
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers,
+      },
+    ],
+  };
+}
+
+function buildNoScopeDamageReductionCoverage(): CharacterCaptainAbilityCoverage {
+  const tiers: CharacterCaptainAbilityCoverageTier[] = [
+    {
+      tier: 1,
+      kind: 'baseline',
+      scope: 'none',
+      characterConditions: {
+        universal: false,
+        fallbackOther: false,
+        selfOnly: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+      },
+      teamConditions: [],
+      fieldConditions: [],
+      triggerConditions: [],
+      clauses: ['Reduces damage received from [INT] enemies by 20%'],
     },
   ];
   return {

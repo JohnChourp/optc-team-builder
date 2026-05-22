@@ -258,16 +258,30 @@ function isCaptainCoverageTierNotApplicableForTeamCoverage(
   // Self-only tiers ("Boosts ATK of this character by 12x") only target the captain itself, so
   // they can never be covered by another team slot — treat as not-applicable.
   const conditions = tier.characterConditions;
+  const hasSubsetCondition =
+    conditions.types.length > 0 ||
+    conditions.classes.length > 0 ||
+    conditions.characterTags.length > 0 ||
+    conditions.costRange !== undefined ||
+    conditions.rarityRange !== undefined ||
+    conditions.dominantType === true;
+
+  if (
+    tier.scope === 'none' &&
+    !conditions.universal &&
+    !conditions.fallbackOther &&
+    !conditions.selfOnly &&
+    !hasSubsetCondition
+  ) {
+    return true;
+  }
+
   return (
     conditions.selfOnly &&
     !conditions.universal &&
     !conditions.fallbackOther &&
     !conditions.dominantType &&
-    conditions.types.length === 0 &&
-    conditions.classes.length === 0 &&
-    conditions.characterTags.length === 0 &&
-    conditions.costRange === undefined &&
-    conditions.rarityRange === undefined
+    !hasSubsetCondition
   );
 }
 
