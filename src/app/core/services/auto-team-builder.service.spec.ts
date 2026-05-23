@@ -12982,6 +12982,8056 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
   });
 
+  it('keeps #188 Cannoneer Seaman - Navy as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(188);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 188,
+      name: 'Cannoneer Seaman - Navy',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #189 Red Elder Turtle as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(189);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 189,
+      name: 'Red Elder Turtle',
+      type: 'STR',
+      primaryClass: 'Booster',
+      cost: 4,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #190 Blue Elder Turtle as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(190);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 190,
+      name: 'Blue Elder Turtle',
+      type: 'QCK',
+      primaryClass: 'Booster',
+      cost: 4,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #191 Green Elder Turtle as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(191);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 191,
+      name: 'Green Elder Turtle',
+      type: 'DEX',
+      primaryClass: 'Booster',
+      cost: 4,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #192 Yellow Elder Turtle as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(192);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 192,
+      name: 'Yellow Elder Turtle',
+      type: 'PSY',
+      primaryClass: 'Booster',
+      cost: 4,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #193 Black Elder Turtle as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(193);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 193,
+      name: 'Black Elder Turtle',
+      type: 'INT',
+      primaryClass: 'Booster',
+      cost: 4,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #194 Knuckle Ensign - Navy HQ as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(194);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 194,
+      name: 'Knuckle Ensign - Navy HQ',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #195 Saber Ensign - Navy HQ as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(195);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 195,
+      name: 'Saber Ensign - Navy HQ',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [DEX] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #196 Halberd Ensign - Navy HQ as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(196);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 196,
+      name: 'Halberd Ensign - Navy HQ',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #197 Pistol Ensign - Navy HQ as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(197);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 197,
+      name: 'Pistol Ensign - Navy HQ',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [PSY] enemies by 20%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #198 Bazooka Ensign - Navy HQ as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(198);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 198,
+      name: 'Bazooka Ensign - Navy HQ',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #199 Mr. 5 - Nez-Palm Cannon as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(199);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 199,
+      name: 'Mr. 5 - Nez-Palm Cannon',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #200 Mr. 5 - Breeze Breath Bomb as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(200);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 200,
+      name: 'Mr. 5 - Breeze Breath Bomb',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #201 Miss Valentine as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(201);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 201,
+      name: 'Miss Valentine',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 11,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of Fighter characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #202 Miss Valentine - 10,000 Kill-O-Guillotine as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(202);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 202,
+      name: 'Miss Valentine - 10,000 Kill-O-Guillotine',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 15,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of Fighter characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #203 Mr. 3 as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(203);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 203,
+      name: 'Mr. 3',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [INT] enemies by 10%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #204 Mr. 3 - Extra Special Candelabra as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(204);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 204,
+      name: 'Mr. 3 - Extra Special Candelabra',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [INT] enemies by 10%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #205 Miss Goldenweek as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(205);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 205,
+      name: 'Miss Goldenweek',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      secondaryClass: 'Free Spirit',
+      cost: 11,
+      captainHpBoost: 1.2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts HP and RCV of [DEX] characters by 1.2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #206 Miss Goldenweek - Colors Trap: Calming Green as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(206);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 206,
+      name: 'Miss Goldenweek - Colors Trap: Calming Green',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      secondaryClass: 'Free Spirit',
+      cost: 15,
+      captainHpBoost: 1.2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts HP and RCV of [DEX] characters by 1.2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #207 Mr. 2 Bon Clay as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(207);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 207,
+      name: 'Mr. 2 Bon Clay',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [PSY] enemies by 10%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #208 Mr. 2 Bon Clay - Bombardier Arabesque as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(208);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 208,
+      name: 'Mr. 2 Bon Clay - Bombardier Arabesque',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [PSY] enemies by 20%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #209 Miss All Sunday - Baroque Works VP as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(209);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 209,
+      name: 'Miss All Sunday - Baroque Works VP',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [INT] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #210 Nico Robin as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(210);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 210,
+      name: 'Nico Robin',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [INT] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #211 Mr. 9 as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(211);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 211,
+      name: 'Mr. 9',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 1.2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #212 Mr. 9 - Hot Blooded Bat as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(212);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 212,
+      name: 'Mr. 9 - Hot Blooded Bat',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #213 Laboon as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(213);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 213,
+      name: 'Laboon',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Protects from defeat as long as HP is above 50%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it("keeps #214 Laboon - (Luffy's drawing) as both required manual leaders", async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(214);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 214,
+      name: "Laboon - (Luffy's drawing)",
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 22,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Protects from defeat as long as HP is above 50%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #215 Neptunian Squid as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(215);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 215,
+      name: 'Neptunian Squid',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 18,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of Striker characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #216 Monkey D. Luffy - Gum-Gum Balloon as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(216);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 216,
+      name: 'Monkey D. Luffy - Gum-Gum Balloon',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 20%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #217 Monkey D. Luffy - Gear Third as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(217);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 217,
+      name: 'Monkey D. Luffy - Gear Third',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 22,
+      captainHpBoost: 0,
+      captainAtkBoost: 3.5,
+      captainAverageBoost: 1.75,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 3.5x after scoring 3 PERFECTs in a row',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #218 Roronoa Zoro - Streaming Wolf Swords as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(218);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 218,
+      name: 'Roronoa Zoro - Streaming Wolf Swords',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 80% if HP is above 99% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it("keeps #219 Roronoa Zoro - Lion's Song as both required manual leaders", async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(219);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 219,
+      name: "Roronoa Zoro - Lion's Song",
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 22,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 80% if HP is above 99% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #220 Nami - Fine Tempo as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(220);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 220,
+      name: 'Nami - Fine Tempo',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [INT] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #221 Nami - Happiness Punch as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(221);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 221,
+      name: 'Nami - Happiness Punch',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 22,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of [INT] characters by 2.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #222 Usopp - Usopp Hammer as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(222);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 222,
+      name: 'Usopp - Usopp Hammer',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 1.2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #223 Usopp - Impact as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(223);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 223,
+      name: 'Usopp - Impact',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #224 Mr. Prince - Mutton Shot as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(224);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 224,
+      name: 'Mr. Prince - Mutton Shot',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 2x after scoring 2 PERFECTs in a row',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #225 Mr. Prince - Veau Shot as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(225);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 225,
+      name: 'Mr. Prince - Veau Shot',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 2.5x after scoring 2 PERFECTs in a row',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #226 Dracule Mihawk as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(226);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 226,
+      name: 'Dracule Mihawk',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Slasher characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #227 Hawk Eyes Mihawk as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(227);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 227,
+      name: 'Hawk Eyes Mihawk',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      cost: 50,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of Slasher characters by 2.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #228 Escapee Morgan as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(228);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 228,
+      name: 'Escapee Morgan',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 17,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of Slasher characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #229 Double Crosser Django as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(229);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 229,
+      name: 'Double Crosser Django',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 10%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #230 Double Ironfist Fullbody as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(230);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 230,
+      name: 'Double Ironfist Fullbody',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #231 Hina as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(231);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 231,
+      name: 'Hina',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #232 Black Cage Hina as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(232);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 232,
+      name: 'Black Cage Hina',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #233 Mr. 8 as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(233);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 233,
+      name: 'Mr. 8',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 10,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of [PSY] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #234 Mr. 8 - Igarappapa as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(234);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 234,
+      name: 'Mr. 8 - Igarappapa',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 13,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [PSY] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #235 Miss Monday as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(235);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 235,
+      name: 'Miss Monday',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 1.2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #236 Miss Monday - Superhuman Brass Knuckles as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(236);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 236,
+      name: 'Miss Monday - Superhuman Brass Knuckles',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #237 Knuckle Millions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(237);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 237,
+      name: 'Knuckle Millions - Baroque Works',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #238 Saber Millions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(238);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 238,
+      name: 'Saber Millions - Baroque Works',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #239 Polearm Millions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(239);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 239,
+      name: 'Polearm Millions - Baroque Works',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #240 Pistol Millions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(240);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 240,
+      name: 'Pistol Millions - Baroque Works',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #241 Bazooka Millions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(241);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 241,
+      name: 'Bazooka Millions - Baroque Works',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #242 Knuckle Billions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(242);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 242,
+      name: 'Knuckle Billions - Baroque Works',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #243 Saber Billions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(243);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 243,
+      name: 'Saber Billions - Baroque Works',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #244 Halberd Billions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(244);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 244,
+      name: 'Halberd Billions - Baroque Works',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #245 Pistol Billions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(245);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 245,
+      name: 'Pistol Billions - Baroque Works',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #246 Bazooka Billions - Baroque Works as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(246);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 246,
+      name: 'Bazooka Billions - Baroque Works',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #247 Chopper Man as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(247);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 247,
+      name: 'Chopper Man',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 10%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #248 Tony Tony Chopper - Pre-Rampage as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(248);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 248,
+      name: 'Tony Tony Chopper - Pre-Rampage',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 2.5x and reduces HP of [STR] characters by 60%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #249 Tony Tony Chopper - Post-Rampage as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(249);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 249,
+      name: 'Tony Tony Chopper - Post-Rampage',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 50,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 3x and reduces HP of [STR] characters by 70%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #250 Marco as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(250);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 250,
+      name: 'Marco',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 3x if HP is above 99% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #251 Marco the Phoenix as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(251);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 251,
+      name: 'Marco the Phoenix',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 3x if HP is above 99% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #252 Jozu as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(252);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 252,
+      name: 'Jozu',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 18,
+      captainHpBoost: 2,
+      captainAtkBoost: 2,
+      captainAverageBoost: 2,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [QCK] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #253 Diamond Jozu as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(253);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 253,
+      name: 'Diamond Jozu',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 28,
+      captainHpBoost: 2,
+      captainAtkBoost: 2,
+      captainAverageBoost: 2,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [QCK] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #254 Vista as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(254);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 254,
+      name: 'Vista',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 18,
+      captainHpBoost: 2,
+      captainAtkBoost: 2,
+      captainAverageBoost: 2,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [INT] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #255 Flower Sword Vista as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(255);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 255,
+      name: 'Flower Sword Vista',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 28,
+      captainHpBoost: 2,
+      captainAtkBoost: 2,
+      captainAverageBoost: 2,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [INT] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #256 Izo as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(256);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 256,
+      name: 'Izo',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [DEX] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #257 Flintlock Pistols Izo as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(257);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 257,
+      name: 'Flintlock Pistols Izo',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [DEX] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #258 Blamenco as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(258);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 258,
+      name: 'Blamenco',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [STR] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #259 Blamenco the Mallet as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(259);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 259,
+      name: 'Blamenco the Mallet',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Free Spirit',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [STR] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #260 Edward Newgate as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(260);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 260,
+      name: 'Edward Newgate',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Powerhouse',
+      cost: 40,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 3x if HP is below 30% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #261 Whitebeard as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(261);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 261,
+      name: 'Whitebeard',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Powerhouse',
+      cost: 55,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 3x if HP is below 30% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #262 Training Coby as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(262);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 262,
+      name: 'Training Coby',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: "Recovers 2x character's RCV in HP at the end of each turn",
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #263 Petty Officer Coby as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(263);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 263,
+      name: 'Petty Officer Coby',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Driven',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #264 Training Helmeppo as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(264);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 264,
+      name: 'Training Helmeppo',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [INT] enemies by 30%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #265 Sergeant Helmeppo as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(265);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 265,
+      name: 'Sergeant Helmeppo',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 18,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of Slasher characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #266 Rainbow Pirate Penguin as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(266);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 266,
+      name: 'Rainbow Pirate Penguin',
+      type: 'INT',
+      primaryClass: 'Evolver',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #267 Rainbow Striped Dragon as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(267);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 267,
+      name: 'Rainbow Striped Dragon',
+      type: 'INT',
+      primaryClass: 'Evolver',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #268 White Chase Smoker as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(268);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 268,
+      name: 'White Chase Smoker',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 25%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #269 Armed Fighter Unit - Red Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(269);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 269,
+      name: 'Armed Fighter Unit - Red Pirates',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #270 Armed Fighter Unit - Blue Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(270);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 270,
+      name: 'Armed Fighter Unit - Blue Pirates',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #271 Armed Fighter Unit - Green Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(271);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 271,
+      name: 'Armed Fighter Unit - Green Pirates',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #272 Armed Fighter Unit - Yellow Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(272);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 272,
+      name: 'Armed Fighter Unit - Yellow Pirates',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #273 Armed Fighter Unit - Black Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(273);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 273,
+      name: 'Armed Fighter Unit - Black Pirates',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #274 Armed Slasher Unit - Red Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(274);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 274,
+      name: 'Armed Slasher Unit - Red Pirates',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #275 Armed Slasher Unit - Blue Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(275);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 275,
+      name: 'Armed Slasher Unit - Blue Pirates',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #276 Armed Slasher Unit - Green Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(276);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 276,
+      name: 'Armed Slasher Unit - Green Pirates',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #277 Armed Slasher Unit - Yellow Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(277);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 277,
+      name: 'Armed Slasher Unit - Yellow Pirates',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #278 Armed Slasher Unit - Black Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(278);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 278,
+      name: 'Armed Slasher Unit - Black Pirates',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #279 Armed Striker Unit - Red Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(279);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 279,
+      name: 'Armed Striker Unit - Red Pirates',
+      type: 'STR',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #280 Armed Striker Unit - Blue Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(280);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 280,
+      name: 'Armed Striker Unit - Blue Pirates',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #281 Armed Striker Unit - Green Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(281);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 281,
+      name: 'Armed Striker Unit - Green Pirates',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #282 Armed Striker Unit - Yellow Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(282);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 282,
+      name: 'Armed Striker Unit - Yellow Pirates',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #283 Armed Striker Unit - Black Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(283);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 283,
+      name: 'Armed Striker Unit - Black Pirates',
+      type: 'INT',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #284 Armed Shooter Unit - Red Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(284);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 284,
+      name: 'Armed Shooter Unit - Red Pirates',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #285 Armed Shooter Unit - Blue Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(285);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 285,
+      name: 'Armed Shooter Unit - Blue Pirates',
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #286 Armed Shooter Unit - Green Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(286);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 286,
+      name: 'Armed Shooter Unit - Green Pirates',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #287 Armed Shooter Unit - Yellow Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(287);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 287,
+      name: 'Armed Shooter Unit - Yellow Pirates',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #288 Armed Shooter Unit - Black Pirates as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(288);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 288,
+      name: 'Armed Shooter Unit - Black Pirates',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #289 Skilled Gunner as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(289);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 289,
+      name: 'Skilled Gunner',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #290 Mr. 13 & Ms. Friday - The Unluckies as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(290);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 290,
+      name: 'Mr. 13 & Ms. Friday - The Unluckies',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #291 Dorry as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(291);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 291,
+      name: 'Dorry',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 25,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [INT] enemies by 50%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #292 Broggy as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(292);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 292,
+      name: 'Broggy',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 25,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [PSY] enemies by 50%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #293 Triceratops as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(293);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 293,
+      name: 'Triceratops',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 25,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [QCK] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #294 Rex as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(294);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 294,
+      name: 'Rex',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 25,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [STR] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #295 Brontosaurus as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(295);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 295,
+      name: 'Brontosaurus',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      cost: 25,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [DEX] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #296 Tsuru as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(296);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 296,
+      name: 'Tsuru',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #297 Great Advisor Tsuru as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(297);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 297,
+      name: 'Great Advisor Tsuru',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #298 Momonga as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(298);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 298,
+      name: 'Momonga',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 11,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [PSY] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #299 Onigumo as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(299);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 299,
+      name: 'Onigumo',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #300 Red Plated Lobster as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(300);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 300,
+      name: 'Red Plated Lobster',
+      type: 'STR',
+      primaryClass: 'Evolver',
+      cost: 7,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #301 Blue Plated Lobster as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(301);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 301,
+      name: 'Blue Plated Lobster',
+      type: 'QCK',
+      primaryClass: 'Evolver',
+      cost: 7,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #302 Green Plated Lobster as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(302);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 302,
+      name: 'Green Plated Lobster',
+      type: 'DEX',
+      primaryClass: 'Evolver',
+      cost: 7,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #303 Yellow Plated Lobster as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(303);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 303,
+      name: 'Yellow Plated Lobster',
+      type: 'PSY',
+      primaryClass: 'Evolver',
+      cost: 7,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #304 Black Plated Lobster as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(304);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 304,
+      name: 'Black Plated Lobster',
+      type: 'INT',
+      primaryClass: 'Evolver',
+      cost: 7,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #305 Monkey D. Garp as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(305);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 305,
+      name: 'Monkey D. Garp',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 30,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [PSY] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #306 Garp the Fist as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(306);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 306,
+      name: 'Garp the Fist',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 50,
+      captainHpBoost: 2,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 2.25,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 2.5x and their HP by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #307 Trafalgar Law as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(307);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 307,
+      name: 'Trafalgar Law',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 2.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #308 Trafalgar Law - ROOM as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(308);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 308,
+      name: 'Trafalgar Law - ROOM',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 2.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #309 Basil Hawkins as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(309);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 309,
+      name: 'Basil Hawkins',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces RCV of all characters by 90%, reduces damage received by 40%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #310 Basil Hawkins the Magician as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(310);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 310,
+      name: 'Basil Hawkins the Magician',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces RCV of all characters by 90%, reduces damage received by 40%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #311 Killer as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(311);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 311,
+      name: 'Killer',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 3.5,
+      captainAverageBoost: 1.75,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 3.5x after scoring 3 hits below Good in a row',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #312 Massacre Soldier Killer as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(312);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 312,
+      name: 'Massacre Soldier Killer',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 3.5,
+      captainAverageBoost: 1.75,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 3.5x after scoring 3 hits below Good in a row',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #313 Urouge as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(313);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 313,
+      name: 'Urouge',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      secondaryClass: 'Powerhouse',
+      cost: 18,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 2x and their HP by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #314 Mad Monk Urouge as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(314);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 314,
+      name: 'Mad Monk Urouge',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      secondaryClass: 'Powerhouse',
+      cost: 28,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 2x and their HP by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #315 Bepo as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(315);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 315,
+      name: 'Bepo',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 18,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK, HP and RCV of Fighter characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #316 Bepo the Martial Artist as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(316);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 316,
+      name: 'Bepo the Martial Artist',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 28,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK, HP and RCV of Fighter characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #317 Kalifa as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(317);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 317,
+      name: 'Kalifa',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Recovers 500 HP at the end of each turn, reduces damage received by 10%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #318 Beautiful Secretary Kalifa as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(318);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 318,
+      name: 'Beautiful Secretary Kalifa',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Recovers 1,000 HP at the end of each turn, reduces damage received by 15%',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #319 Paulie as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(319);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 319,
+      name: 'Paulie',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #320 Paulie - Dock One Foreman/Mast Specialist as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(320);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 320,
+      name: 'Paulie - Dock One Foreman/Mast Specialist',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #321 Rob Lucci as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(321);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 321,
+      name: 'Rob Lucci',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #322 Rob Lucci - Dock One Sawyer, Treenail Specialist as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(322);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 322,
+      name: 'Rob Lucci - Dock One Sawyer, Treenail Specialist',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #323 Kaku as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(323);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 323,
+      name: 'Kaku',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP and RCV of [QCK] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #324 Kaku - Dock One Carpentry Specialist as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(324);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 324,
+      name: 'Kaku - Dock One Carpentry Specialist',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP and RCV of [QCK] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #325 Lulu as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(325);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 325,
+      name: 'Lulu',
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #326 Wapol as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(326);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 326,
+      name: 'Wapol',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: "Recovers 10x character's RCV in HP at the end of each turn",
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #327 Wapol House as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(327);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 327,
+      name: 'Wapol House',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: "Recovers 10x character's RCV in HP at the end of each turn",
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #328 Dalton as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(328);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 328,
+      name: 'Dalton',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 7,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of all characters by 5x if HP is below 30% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #329 Dalton - Bison as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(329);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 329,
+      name: 'Dalton - Bison',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of all characters by 5x if HP is below 30% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #330 Chess as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(330);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 330,
+      name: 'Chess',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      cost: 7,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #331 Kuromarimo as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(331);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 331,
+      name: 'Kuromarimo',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 7,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #332 Chessmarimo as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(332);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 332,
+      name: 'Chessmarimo',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 11,
+      captainHpBoost: 1.2,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 1.2,
+      detail: {
+        captainAbility: 'Boosts ATK, HP and RCV of Striker characters by 1.2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #333 Dr. Kureha as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(333);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 333,
+      name: 'Dr. Kureha',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [PSY] and [INT] characters by 1.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #334 Lapin as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(334);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 334,
+      name: 'Lapin',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #335 Lapin - Adult as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(335);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 335,
+      name: 'Lapin - Adult',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #336 Franky as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(336);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 336,
+      name: 'Franky',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility:
+          'Reduces damage received by 10% if HP is above 50% at the start of the turn, boosts ATK of [PSY] characters by 2x and reduces ATK of every other character by 20% if HP is above 50% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #337 Dismantler Franky as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(337);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 337,
+      name: 'Dismantler Franky',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility:
+          'Reduces damage received by 10% if HP is above 50% at the start of the turn, boosts ATK of [PSY] characters by 2.5x and reduces ATK of every other character by 20% if HP is above 50% at the start of the turn',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #338 Kiwi as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(338);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 338,
+      name: 'Kiwi',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #339 Mozu as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(339);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 339,
+      name: 'Mozu',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #340 Kraken - Surume as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(340);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 340,
+      name: 'Kraken - Surume',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Powerhouse',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #341 Kraken - Monster of the North as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(341);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 341,
+      name: 'Kraken - Monster of the North',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Powerhouse',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #342 Red Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(342);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 342,
+      name: 'Red Jeweled Porc',
+      type: 'STR',
+      primaryClass: 'Booster',
+      cost: 2,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #343 Blue Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(343);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 343,
+      name: 'Blue Jeweled Porc',
+      type: 'QCK',
+      primaryClass: 'Booster',
+      cost: 2,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #344 Green Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(344);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 344,
+      name: 'Green Jeweled Porc',
+      type: 'DEX',
+      primaryClass: 'Booster',
+      cost: 2,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #345 Yellow Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(345);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 345,
+      name: 'Yellow Jeweled Porc',
+      type: 'PSY',
+      primaryClass: 'Booster',
+      cost: 2,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #346 Black Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(346);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 346,
+      name: 'Black Jeweled Porc',
+      type: 'INT',
+      primaryClass: 'Booster',
+      cost: 2,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #347 Ruby Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(347);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 347,
+      name: 'Ruby Jeweled Porc',
+      type: 'STR',
+      primaryClass: 'Booster',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #348 Sapphire Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(348);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 348,
+      name: 'Sapphire Jeweled Porc',
+      type: 'QCK',
+      primaryClass: 'Booster',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #349 Emerald Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(349);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 349,
+      name: 'Emerald Jeweled Porc',
+      type: 'DEX',
+      primaryClass: 'Booster',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #350 Topaz Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(350);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 350,
+      name: 'Topaz Jeweled Porc',
+      type: 'PSY',
+      primaryClass: 'Booster',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #351 Amethyst Jeweled Porc as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(351);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 351,
+      name: 'Amethyst Jeweled Porc',
+      type: 'INT',
+      primaryClass: 'Booster',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #352 Zephyr as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(352);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 352,
+      name: 'Zephyr',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 2x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #353 Zephyr - Neo Marines Leader as both required manual leaders', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(353);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(requiredLeader).toMatchObject({
+      id: 353,
+      name: 'Zephyr - Neo Marines Leader',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      cost: 50,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 2.5x',
+      },
+    });
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
   it('promotes an optional manual captain without captain text to leader because every character has a coverage tier', async () => {
     // Under the tier-driven no-bypass policy, a no-captain-text character still owns the
     // trivial scope:'none' baseline tier injected by `normalizeCaptainAbilityCoverage`. So a
