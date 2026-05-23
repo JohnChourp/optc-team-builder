@@ -582,6 +582,35 @@ describe('resolveCaptainCoverage', () => {
     expect(resolveCaptainCoverage(captain, createCharacter({ id: 2004 })).matches).toBe(false);
   });
 
+  it('keeps targetable boost coverage when a later rider only boosts this character', () => {
+    const captain = createCharacter({
+      id: 1122,
+      captainAbility:
+        'Boosts ATK of [STR], [DEX] and [QCK] characters by 2.5x, but boosts ATK of this character by 4x.',
+    });
+
+    const dexCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 3007, type: 'DEX' }),
+      { coverageMode: 'simpleBoostScope' },
+    );
+    const intCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 3008, type: 'INT' }),
+      { coverageMode: 'simpleBoostScope' },
+    );
+
+    expect(resolveCaptainBoostScope(captain.detail.captainAbility, 'simpleBoostScope')).toEqual(
+      expect.objectContaining({
+        clauses: ['Boosts ATK of [STR], [DEX] and [QCK] characters by 2.5x'],
+        allowedTypes: ['DEX', 'STR', 'QCK'],
+      }),
+    );
+    expect(dexCoverage.matches).toBe(true);
+    expect(dexCoverage.boosts).toEqual({ hp: 0, atk: 2.5 });
+    expect(intCoverage.matches).toBe(false);
+  });
+
   it('ignores Kid team-count tags and non-boost riders while keeping type/class boost coverage', () => {
     const captain = createCharacter({
       id: 4549,

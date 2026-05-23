@@ -93,7 +93,7 @@ const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
   'llb base captain ability',
 ]);
 const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
-  /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)|\s+and\s+(?=(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)/gi;
+  /,\s+(?=(?:(?:and|but)\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)|\s+(?:and|but)\s+(?=(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)/gi;
 const CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
 const CAPTAIN_MULTIPLIER_PATTERN =
