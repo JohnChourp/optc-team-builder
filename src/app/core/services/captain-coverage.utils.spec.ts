@@ -103,6 +103,92 @@ describe('resolveCaptainCoverage', () => {
     expect(dexQckCoverage.boosts).toEqual({ hp: 0, atk: 0 });
   });
 
+  it('allows simple boost scope targets to match one sibling scoped boost clause', () => {
+    const captain = createCharacter({
+      id: 4316,
+      captainAbility:
+        'Boosts ATK of [PSY] characters by 2.75x and boosts ATK of [DEX] characters by 2x.',
+    });
+    const psyCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4317, type: 'PSY' }),
+      {
+        coverageMode: 'simpleBoostScope',
+      },
+    );
+    const dexCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4318, type: 'DEX' }),
+      {
+        coverageMode: 'simpleBoostScope',
+      },
+    );
+    const qckCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4319, type: 'QCK' }),
+      {
+        coverageMode: 'simpleBoostScope',
+      },
+    );
+
+    expect(psyCoverage.matches).toBe(true);
+    expect(dexCoverage.matches).toBe(true);
+    expect(qckCoverage.matches).toBe(false);
+  });
+
+  it('allows simple boost scope fallback-other targets to match all-other clauses', () => {
+    const captain = createCharacter({
+      id: 4320,
+      captainAbility:
+        'Boosts ATK of Fighter characters by 2.5x. If you defeated an enemy in the last turn, boosts ATK of Fighter characters by 3x instead and boosts ATK of all other characters by 1.2x.',
+    });
+    const fighterCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4321, type: 'INT', classes: ['Fighter'] }),
+      { coverageMode: 'simpleBoostScope' },
+    );
+    const boosterCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 4322, type: 'INT', classes: ['Booster'] }),
+      { coverageMode: 'simpleBoostScope' },
+    );
+
+    expect(fighterCoverage.matches).toBe(true);
+    expect(boosterCoverage.matches).toBe(true);
+  });
+
+  it('allows simple boost scope targets to match one non-VS dual ATK-only branch', () => {
+    const character1Text = 'Boosts ATK of [PSY] characters by 2x.';
+    const character2Text = 'Boosts ATK of [QCK] characters by 2x.';
+    const captain = createCharacter({
+      id: 4323,
+      captainAbility: character1Text,
+      captainAbilityVariants: [
+        { key: 'character1', label: 'Captain Ability (Character 1)', text: character1Text },
+        { key: 'character2', label: 'Captain Ability (Character 2)', text: character2Text },
+        {
+          key: 'combined',
+          label: 'Captain Ability (Combined)',
+          text: 'Boosts ATK of [QCK], [PSY] and [INT] characters by 2.5x.',
+        },
+      ],
+    });
+    const psyTarget = createCharacter({ id: 4324, type: 'PSY' });
+    const qckTarget = createCharacter({ id: 4325, type: 'QCK' });
+    const dexTarget = createCharacter({ id: 4326, type: 'DEX' });
+
+    expect(resolveCaptainCoverage(captain, psyTarget).matches).toBe(false);
+    expect(
+      resolveCaptainCoverage(captain, psyTarget, { coverageMode: 'simpleBoostScope' }).matches,
+    ).toBe(true);
+    expect(
+      resolveCaptainCoverage(captain, qckTarget, { coverageMode: 'simpleBoostScope' }).matches,
+    ).toBe(true);
+    expect(
+      resolveCaptainCoverage(captain, dexTarget, { coverageMode: 'simpleBoostScope' }).matches,
+    ).toBe(false);
+  });
+
   it('allows class coverage to cover a mixed-type target independently of strict type scope', () => {
     const captain = createCharacter({
       id: 4313,

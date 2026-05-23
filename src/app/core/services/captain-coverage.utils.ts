@@ -193,6 +193,13 @@ export function resolveCaptainCoverage(
     return mergeCaptainCoverageAlternativeBranchResults(branchResults);
   }
 
+  if (
+    options.coverageMode === 'simpleBoostScope' &&
+    shouldUseSimpleAlternativeCaptainCoverageBranches(branchResults)
+  ) {
+    return mergeCaptainCoverageAlternativeBranchResults(branchResults);
+  }
+
   return mergeCaptainCoverageBranchResults(branchResults);
 }
 
@@ -226,13 +233,37 @@ function resolveCaptainCoverageForText(
     chips: dedupeCoverageChips(targetableClauses.flatMap((clause) => clause.chips)),
     clauses,
     coveredClauses,
-    matches: targetableClauses.length > 0 && uncoveredClauses.length === 0,
+    matches:
+      targetableClauses.length > 0 &&
+      (coverageMode === 'simpleBoostScope'
+        ? simpleBoostScopeMatches(targetableClauses)
+        : uncoveredClauses.length === 0),
     neutralNotes: clauses
       .filter((clause) => clause.status === 'neutral')
       .map((clause) => clause.text),
     targetableClauseCount: targetableClauses.length,
     uncoveredClauses,
   };
+}
+
+function simpleBoostScopeMatches(targetableClauses: CaptainCoverageClauseResult[]): boolean {
+  const requiredStats = new Set(
+    targetableClauses.flatMap((clause) => extractBoostStats(clause.text)),
+  );
+  const coveredStats = new Set(
+    targetableClauses
+      .filter((clause) => clause.status === 'covered')
+      .flatMap((clause) => extractBoostStats(clause.text)),
+  );
+
+  return requiredStats.size > 0 && [...requiredStats].every((stat) => coveredStats.has(stat));
+}
+
+function extractBoostStats(clause: string): Array<'atk' | 'hp'> {
+  return [
+    /\batk\b/i.test(clause) ? 'atk' : null,
+    /\bhp\b/i.test(clause) ? 'hp' : null,
+  ].filter((stat): stat is 'atk' | 'hp' => stat !== null);
 }
 
 export function resolveRequiredCaptainCoverageBranchTexts(
@@ -526,6 +557,26 @@ function mergeCaptainCoverageAlternativeBranchResults(
   };
 }
 
+function shouldUseSimpleAlternativeCaptainCoverageBranches(
+  branchResults: readonly CaptainCoverageResult[],
+): boolean {
+  if (branchResults.length < 2) {
+    return false;
+  }
+
+  const targetableClauses = branchResults.flatMap((result) =>
+    result.clauses.filter((clause) => clause.status !== 'neutral'),
+  );
+
+  return (
+    targetableClauses.length > 0 &&
+    targetableClauses.every((clause) => {
+      const stats = extractBoostStats(clause.text);
+      return stats.length > 0 && stats.every((stat) => stat === 'atk');
+    })
+  );
+}
+
 function shouldUseAlternativeCaptainCoverageBranches(
   captain: CharacterDetailRecord,
   branches: readonly CaptainCoverageBranchText[],
@@ -603,7 +654,10 @@ function resolveCaptainCoverageClause(
   const normalizedClause = normalizeCoverageClause(clause);
   const chips: CaptainCoverageChip[] = [];
 
-  const isUniversal = boostClauseHasUniversalScope(normalizedClause);
+  const isFallbackOther = FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause);
+  const isUniversal =
+    boostClauseHasUniversalScope(normalizedClause) ||
+    (options.coverageMode === 'simpleBoostScope' && isFallbackOther);
   const isDominantType = boostClauseHasDominantTypeScope(normalizedClause);
   const matchingTypes = resolveMatchingTypeScopes(normalizedClause, target);
   const matchingClasses = resolveMatchingClassScopes(normalizedClause, target);
@@ -703,16 +757,20 @@ function resolveSimpleCaptainBoostScopeClauses(
   const defaultAtkClauses = defaultBoostClauses.filter((clause) => /\batk\b/i.test(clause));
   const defaultHpClauses = defaultBoostClauses.filter((clause) => /\bhp\b/i.test(clause));
   const dominantTypeClauses = extractDominantTypeCaptainBoostClauses(normalizedCaptainText);
+  const fallbackOtherClauses = extractFallbackOtherCaptainBoostClauses(normalizedCaptainText);
 
   if (
     defaultAtkClauses.length === 0 &&
     defaultHpClauses.length > 0 &&
     dominantTypeClauses.length > 0
   ) {
-    return mergeUniqueValues(dominantTypeClauses, defaultHpClauses);
+    return mergeUniqueValues(
+      mergeUniqueValues(dominantTypeClauses, defaultHpClauses),
+      fallbackOtherClauses,
+    );
   }
 
-  return defaultBoostClauses;
+  return mergeUniqueValues(defaultBoostClauses, fallbackOtherClauses);
 }
 
 function extractCaptainBoostScopeClauses(text: string, includeConditional: boolean): string[] {
@@ -744,6 +802,14 @@ function extractDominantTypeCaptainBoostClauses(text: string): string[] {
     );
 }
 
+function extractFallbackOtherCaptainBoostClauses(text: string): string[] {
+  return splitCaptainSentences(text.replace(BRANCH_LABEL_PATTERN, '. '))
+    .flatMap((sentence) => sentence.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR))
+    .map(stripInlineConditionalBoostRiders)
+    .map(stripBoostInsteadSuffix)
+    .filter(isFallbackOtherCaptainBoostScopeClause);
+}
+
 function isCaptainBoostScopeClause(clause: string): boolean {
   const normalizedClause = normalizeCoverageClause(clause);
 
@@ -758,6 +824,18 @@ function isCaptainBoostScopeClause(clause: string): boolean {
       extractAllowedTypesFromBoostClause(normalizedClause).length > 0 ||
       extractAllowedClassesFromBoostClause(normalizedClause).length > 0 ||
       extractAllowedCharacterTagsFromBoostClause(normalizedClause).length > 0)
+  );
+}
+
+function isFallbackOtherCaptainBoostScopeClause(clause: string): boolean {
+  const normalizedClause = normalizeCoverageClause(clause);
+
+  return (
+    /\bboosts?\b/i.test(normalizedClause) &&
+    /\b(?:atk|hp)\b/i.test(normalizedClause) &&
+    CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) &&
+    !SELF_SCOPE_PATTERN.test(normalizedClause) &&
+    FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause)
   );
 }
 
