@@ -1908,7 +1908,7 @@ export function buildAutoTeamResultFromPreparedContext(
         }
 
         if (
-          shouldEnforceCaptainAbilityCoverage(input) &&
+          shouldRequireAllLeaderTiersCovered(input) &&
           !coverage.leaderCriteria.allLeaderTiersCovered
         ) {
           continue;
@@ -2892,7 +2892,7 @@ function selectSubs(
     }
 
     if (
-      shouldEnforceCaptainAbilityCoverage(input) &&
+      shouldRequireAllLeaderTiersCovered(input) &&
       !nextCoverage.leaderCriteria.allLeaderTiersCovered
     ) {
       return false;
@@ -4796,6 +4796,13 @@ function matchesLeaderBuildScopeForAttempt(
 function shouldEnforceCaptainAbilityCoverage(input: AutoBuildInput): boolean {
   return (
     input.requireBothLeadersFullCaptainAbilityCoverage || !input.allowPartialCaptainAbilityCoverage
+  );
+}
+
+function shouldRequireAllLeaderTiersCovered(input: AutoBuildInput): boolean {
+  return (
+    shouldEnforceCaptainAbilityCoverage(input) &&
+    (input.requireFullCaptainAbilityCoverage || input.requireBothLeadersFullCaptainAbilityCoverage)
   );
 }
 

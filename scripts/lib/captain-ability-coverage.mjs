@@ -18,9 +18,9 @@ const FALLBACK_OTHER_SCOPE_PATTERN = /\ball other (?:characters|units|crewmates)
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
 const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
 const BRANCH_LABEL_PATTERN =
-  /(?<!Special\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Gear\s+\d+(?:\s*-\s*[A-Za-z]+)?\s+Captain|Captain Swap|Captain Shift|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)(?<!['’]s\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Gear\s+\d+(?:\s*-\s*[A-Za-z]+)?\s+Captain|Captain Swap|Captain Shift|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const CAPTAIN_BRANCH_PATTERN =
-  /(?<!Special\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Gear\s+\d+(?:\s*-\s*[A-Za-z]+)?\s+Captain|Captain Swap|Captain Shift|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)(?<!['’]s\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Gear\s+\d+(?:\s*-\s*[A-Za-z]+)?\s+Captain|Captain Swap|Captain Shift|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
   'always active',
   'standard captain',
@@ -41,6 +41,8 @@ const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
 const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
 const SELF_OVERRIDE_RIDER_PATTERN =
   /,?\s*but\s+boosts?\s+(?:atk|hp|rcv|atk\s+and\s+hp)[^,.;]*?\bof\s+this\s+character\b[^,.;]*?\bby\s+\d+(?:\.\d+)?x\b(?:\s+instead)?/gi;
+const SELF_ACTIVATION_RIDER_PATTERN =
+  /(?:,\s*|\s+and\s+)(?:(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure),?\s+)?this character activates their own special\b[^,.;]*/gi;
 const START_OF_FIGHT_EFFECT_PATTERN =
   /\b(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure)\b/i;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
@@ -226,7 +228,7 @@ function extractCaptainBoostScopeClauses(text, includeConditional) {
 
 function normalizeCaptainBoostScopeClauseCandidates(clause, includeConditional) {
   const normalizedClause = stripBoostInsteadSuffix(
-    stripSelfOverrideRider(stripInlineConditionalBoostRiders(clause)),
+    stripSelfActivationRider(stripSelfOverrideRider(stripInlineConditionalBoostRiders(clause))),
   );
 
   if (!includeConditional || !isConditionalCaptainBoostClause(normalizedClause)) {
@@ -236,6 +238,7 @@ function normalizeCaptainBoostScopeClauseCandidates(clause, includeConditional) 
   return extractEffectClausesFromConditionalSentence(normalizedClause)
     .map(stripInlineConditionalBoostRiders)
     .map(stripSelfOverrideRider)
+    .map(stripSelfActivationRider)
     .map(stripBoostInsteadSuffix);
 }
 
@@ -401,6 +404,10 @@ function stripInlineConditionalBoostRiders(clause) {
 
 function stripSelfOverrideRider(clause) {
   return normalizeCoverageClause(clause.replace(SELF_OVERRIDE_RIDER_PATTERN, ''));
+}
+
+function stripSelfActivationRider(clause) {
+  return normalizeCoverageClause(clause.replace(SELF_ACTIVATION_RIDER_PATTERN, ''));
 }
 
 function stripBoostInsteadSuffix(clause) {
@@ -719,6 +726,7 @@ function extractCaptainBranchStateTiers(captainText) {
     const branchEffectClauses = splitCaptainEffectClauses(branch.text)
       .map(stripInlineConditionalBoostRiders)
       .map(stripSelfOverrideRider)
+      .map(stripSelfActivationRider)
       .map(stripBoostInsteadSuffix)
       .filter((clause) => !isConditionalCaptainBoostClause(clause))
       .filter(isCaptainTierEffectClause)
@@ -767,6 +775,7 @@ function resolveCaptainTierEffectClauses(captainText) {
   return splitCaptainEffectClauses(branchStripped)
     .map(stripInlineConditionalBoostRiders)
     .map(stripSelfOverrideRider)
+    .map(stripSelfActivationRider)
     .map(stripBoostInsteadSuffix)
     .filter((clause) => !isConditionalCaptainBoostClause(clause))
     .filter(isCaptainTierEffectClause)
@@ -963,6 +972,7 @@ function buildConditionalTier(cluster) {
   const clauseEffects = cluster.clauses
     .map(stripInlineConditionalBoostRiders)
     .map(stripSelfOverrideRider)
+    .map(stripSelfActivationRider)
     .map(stripBoostInsteadSuffix)
     .filter(isCaptainTierEffectClause)
     .map(normalizeCoverageClause);

@@ -189,6 +189,38 @@ describe('resolveCaptainCoverage', () => {
     ).toBe(false);
   });
 
+  it('uses a restricted combined non-VS dual branch for simple boost scope coverage', () => {
+    const character1Text = 'Boosts ATK of [PSY] characters by 2.75x and HP by 1.25x.';
+    const character2Text = 'Boosts ATK of [INT] characters by 2.75x and HP by 1.25x.';
+    const combinedText = 'Boosts ATK of [PSY] and [INT] characters by 3.75x and HP by 1.25x.';
+    const captain = createCharacter({
+      id: 4327,
+      captainAbility: character1Text,
+      captainAbilityVariants: [
+        { key: 'character1', label: 'Captain Ability (Character 1)', text: character1Text },
+        { key: 'character2', label: 'Captain Ability (Character 2)', text: character2Text },
+        { key: 'combined', label: 'Captain Ability (Combined)', text: combinedText },
+      ],
+    });
+    const psyTarget = createCharacter({ id: 4328, type: 'PSY' });
+    const intTarget = createCharacter({ id: 4329, type: 'INT' });
+    const dexTarget = createCharacter({ id: 4330, type: 'DEX' });
+
+    expect(resolveCaptainCoverage(captain, psyTarget).matches).toBe(false);
+    expect(
+      resolveCaptainCoverage(captain, psyTarget, { coverageMode: 'simpleBoostScope' }).matches,
+    ).toBe(true);
+    expect(
+      resolveCaptainCoverage(captain, intTarget, { coverageMode: 'simpleBoostScope' }).matches,
+    ).toBe(true);
+    expect(
+      resolveCaptainCoverage(captain, dexTarget, { coverageMode: 'simpleBoostScope' }).matches,
+    ).toBe(false);
+    expect(
+      resolveCaptainCoverage(captain, intTarget, { coverageMode: 'simpleBoostScope' }).captainText,
+    ).toBe(combinedText);
+  });
+
   it('allows class coverage to cover a mixed-type target independently of strict type scope', () => {
     const captain = createCharacter({
       id: 4313,
@@ -296,6 +328,39 @@ describe('resolveCaptainCoverage', () => {
       hp: 1.3,
       atk: 3.5,
     });
+  });
+
+  it('does not treat possessive Captain Ability removal text as a branch label', () => {
+    const captainAbility =
+      "Boosts ATK of Driven and Powerhouse characters by 4.5x, boosts HP of Driven and Powerhouse characters by 1.75x, increases damage received by 1.5x. If total Damage Taken is 50,000 or more, boosts ATK of Driven and Powerhouse characters by 5.25x instead, recovers 2,000 HP at the end of each turn, reduces damage received by 10% and removes the following effect from this character's Captain Ability: increases damage received by 1.5x.";
+    const captain = createCharacter({
+      id: 3751,
+      captainAbility,
+      type: 'QCK',
+      classes: ['Driven', 'Powerhouse'],
+    });
+    const target = createCharacter({
+      id: 5003,
+      type: 'STR',
+      classes: ['Driven', 'Shooter'],
+    });
+
+    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope')).toMatchObject({
+      clauses: [
+        'Boosts ATK of Driven and Powerhouse characters by 4.5x',
+        'boosts HP of Driven and Powerhouse characters by 1.75x',
+      ],
+      allowedClasses: ['Driven', 'Powerhouse'],
+    });
+    expect(resolveCaptainCoverage(captain, target, { coverageMode: 'simpleBoostScope' })).toEqual(
+      expect.objectContaining({
+        matches: true,
+        boosts: {
+          hp: 1.75,
+          atk: 4.5,
+        },
+      }),
+    );
   });
 
   it('keeps additionally-labeled Action Special boosts out of default captain coverage', () => {
@@ -695,6 +760,38 @@ describe('resolveCaptainCoverage', () => {
     expect(dexCoverage.matches).toBe(true);
     expect(dexCoverage.boosts).toEqual({ hp: 0, atk: 2.5 });
     expect(intCoverage.matches).toBe(false);
+  });
+
+  it('keeps targetable boost coverage when a later rider only activates this character special', () => {
+    const captainAbility =
+      'Reduces Special Cooldown of [PSY], Fighter and Free Spirit characters by 2 turns at the start of the fight, boosts ATK of [PSY], Fighter and Free Spirit characters by 5x, their HP by 1.3x and at the start of the fight, this character activates their own special.';
+    const captain = createCharacter({
+      id: 3363,
+      captainAbility,
+      type: 'PSY',
+      classes: ['Fighter', 'Free Spirit'],
+    });
+    const fighterCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 5001, type: 'PSY', classes: ['Fighter', 'Shooter'] }),
+      { coverageMode: 'simpleBoostScope' },
+    );
+    const drivenCoverage = resolveCaptainCoverage(
+      captain,
+      createCharacter({ id: 5002, type: 'DEX', classes: ['Driven', 'Shooter'] }),
+      { coverageMode: 'simpleBoostScope' },
+    );
+
+    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope')).toMatchObject({
+      clauses: [
+        'boosts ATK of [PSY], Fighter and Free Spirit characters by 5x, their HP by 1.3x',
+      ],
+      allowedTypes: ['PSY'],
+      allowedClasses: ['Fighter', 'Free Spirit'],
+    });
+    expect(fighterCoverage.matches).toBe(true);
+    expect(fighterCoverage.boosts).toEqual({ hp: 1.3, atk: 5 });
+    expect(drivenCoverage.matches).toBe(false);
   });
 
   it('ignores Kid team-count tags and non-boost riders while keeping type/class boost coverage', () => {

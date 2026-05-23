@@ -82,9 +82,9 @@ const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
 const SAME_TYPE_CREW_CONDITION_PATTERN =
   /\b(?:(?:your\s+)?crew\s+has|you\s+have)\s+\d+\s*(?:\+|or\s+more)?\s+characters?\s+(?:of|with)\s+the\s+same\s+Type\b/i;
 const BRANCH_LABEL_PATTERN =
-  /(?<!Special\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)(?<!['’]s\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const CAPTAIN_BRANCH_PATTERN =
-  /(?<!Special\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)(?<!['’]s\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
   'always active',
   'standard captain',
@@ -101,6 +101,8 @@ const CAPTAIN_MULTIPLIER_PATTERN =
 const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
   /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
 const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
+const SELF_ACTIVATION_RIDER_PATTERN =
+  /(?:,\s*|\s+and\s+)(?:(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure),?\s+)?this character activates their own special\b[^,.;]*/gi;
 const START_OF_FIGHT_EFFECT_PATTERN =
   /\b(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure)\b/i;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
@@ -158,7 +160,7 @@ export function resolveCaptainCoverage(
   target: CharacterListItem,
   options: CaptainCoverageOptions = {},
 ): CaptainCoverageResult {
-  const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
+  const branches = resolveCaptainCoverageBranchTextsForOptions(captain, options);
 
   if (!branches.length) {
     return createEmptyCoverageResult('');
@@ -290,6 +292,25 @@ export function resolveRequiredCaptainCoverageBranchTexts(
     : [];
 }
 
+function resolveCaptainCoverageBranchTextsForOptions(
+  captain: CharacterDetailRecord,
+  options: CaptainCoverageOptions,
+): CaptainCoverageBranchText[] {
+  const branches = resolveRequiredCaptainCoverageBranchTexts(captain);
+
+  if (options.coverageMode !== 'simpleBoostScope' || options.branchMode) {
+    return branches;
+  }
+
+  const combinedBranch = resolveDualCombinedCaptainAbilityVariant(
+    captain.detail.captainAbilityVariants,
+  );
+
+  return shouldUseSimpleCombinedCaptainCoverageBranch(captain, branches, combinedBranch)
+    ? [combinedBranch]
+    : branches;
+}
+
 export function resolveCaptainCoverageBranchOptions(
   captain: CharacterDetailRecord,
 ): CaptainCoverageBranchOption[] {
@@ -377,6 +398,45 @@ function resolveDualBaseCaptainAbilityVariants(
   return branches.length === 2 ? branches : [];
 }
 
+function resolveDualCombinedCaptainAbilityVariant(
+  variants: readonly CharacterCaptainAbilityVariant[],
+): CaptainCoverageBranchText | null {
+  const combinedVariant = variants.find(isDualCombinedCaptainAbilityVariant);
+  const text = normalizeHtmlToText(combinedVariant?.text);
+
+  return combinedVariant && text
+    ? {
+        key: combinedVariant.key,
+        label: combinedVariant.label,
+        text,
+      }
+    : null;
+}
+
+function shouldUseSimpleCombinedCaptainCoverageBranch(
+  captain: CharacterDetailRecord,
+  branches: readonly CaptainCoverageBranchText[],
+  combinedBranch: CaptainCoverageBranchText | null,
+): combinedBranch is CaptainCoverageBranchText {
+  if (
+    branches.length !== 2 ||
+    !combinedBranch ||
+    shouldUseAlternativeCaptainCoverageBranches(captain, branches)
+  ) {
+    return false;
+  }
+
+  const combinedScope = resolveCaptainBoostScope(combinedBranch.text, 'simpleBoostScope');
+
+  return (
+    !combinedScope.allCharacters &&
+    (combinedScope.allowedTypes.length > 0 ||
+      combinedScope.allowedClasses.length > 0 ||
+      combinedScope.allowedCharacterTags.length > 0 ||
+      combinedScope.dominantType)
+  );
+}
+
 function resolveCaptainCoverageBranchForMode(
   branches: readonly CaptainCoverageBranchText[],
   mode: AutoBuildCaptainBranchMode | null | undefined,
@@ -438,6 +498,13 @@ function isDualBaseCaptainAbilityVariant(
   const characterToken = `character${characterNumber}`;
 
   return key === characterToken || label.includes(characterToken);
+}
+
+function isDualCombinedCaptainAbilityVariant(variant: CharacterCaptainAbilityVariant): boolean {
+  const key = normalizeVariantIdentity(variant.key);
+  const label = normalizeVariantIdentity(variant.label);
+
+  return key === 'combined' || key === 'llbcombined' || label.includes('combined');
 }
 
 function normalizeVariantIdentity(value: string): string {
@@ -776,6 +843,7 @@ function resolveSimpleCaptainBoostScopeClauses(
 function extractCaptainBoostScopeClauses(text: string, includeConditional: boolean): string[] {
   const boostClauses = splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. '))
     .map(stripInlineConditionalBoostRiders)
+    .map(stripSelfActivationRider)
     .map(stripBoostInsteadSuffix)
     .filter(
       (clause) =>
@@ -793,6 +861,7 @@ function extractCaptainBoostScopeClauses(text: string, includeConditional: boole
 function extractDominantTypeCaptainBoostClauses(text: string): string[] {
   return splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. '))
     .map(stripInlineConditionalBoostRiders)
+    .map(stripSelfActivationRider)
     .map(stripBoostInsteadSuffix)
     .filter(
       (clause) =>
@@ -806,6 +875,7 @@ function extractFallbackOtherCaptainBoostClauses(text: string): string[] {
   return splitCaptainSentences(text.replace(BRANCH_LABEL_PATTERN, '. '))
     .flatMap((sentence) => sentence.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR))
     .map(stripInlineConditionalBoostRiders)
+    .map(stripSelfActivationRider)
     .map(stripBoostInsteadSuffix)
     .filter(isFallbackOtherCaptainBoostScopeClause);
 }
@@ -841,6 +911,10 @@ function isFallbackOtherCaptainBoostScopeClause(clause: string): boolean {
 
 function stripInlineConditionalBoostRiders(clause: string): string {
   return normalizeCoverageClause(clause.replace(INLINE_CONDITIONAL_BOOST_RIDER_PATTERN, ''));
+}
+
+function stripSelfActivationRider(clause: string): string {
+  return normalizeCoverageClause(clause.replace(SELF_ACTIVATION_RIDER_PATTERN, ''));
 }
 
 function stripBoostInsteadSuffix(clause: string): string {

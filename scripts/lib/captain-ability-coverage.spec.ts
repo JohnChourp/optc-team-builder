@@ -54,6 +54,61 @@ describe('extractCoverageTiers', () => {
     expect(tiers[0].clauses[0]).not.toMatch(/this character/i);
   });
 
+  it('keeps scoped ATK/HP boosts when a later rider only activates this character special', () => {
+    const tiers = extractCoverageTiers(
+      'Reduces Special Cooldown of [PSY], Fighter and Free Spirit characters by 2 turns at the start of the fight, boosts ATK of [PSY], Fighter and Free Spirit characters by 5x, their HP by 1.3x and at the start of the fight, this character activates their own special.',
+    );
+
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      scope: 'subset',
+      atkBoost: 5,
+      hpBoost: 1.3,
+      characterConditions: expect.objectContaining({
+        types: ['PSY'],
+        classes: ['Fighter', 'Free Spirit'],
+      }),
+    });
+    expect(tiers[0].clauses).toEqual(
+      expect.arrayContaining([
+        'boosts ATK of [PSY], Fighter and Free Spirit characters by 5x, their HP by 1.3x',
+      ]),
+    );
+    expect(tiers[0].clauses.join(' ')).not.toMatch(/activates their own special/i);
+  });
+
+  it('does not treat possessive Captain Ability removal text as a branch label', () => {
+    const tiers = extractCoverageTiers(
+      "Boosts ATK of Driven and Powerhouse characters by 4.5x, boosts HP of Driven and Powerhouse characters by 1.75x, increases damage received by 1.5x. If total Damage Taken is 50,000 or more, boosts ATK of Driven and Powerhouse characters by 5.25x instead, recovers 2,000 HP at the end of each turn, reduces damage received by 10% and removes the following effect from this character's Captain Ability: increases damage received by 1.5x.",
+    );
+
+    expect(tiers).toHaveLength(2);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'baseline',
+      scope: 'subset',
+      atkBoost: 4.5,
+      hpBoost: 1.75,
+      characterConditions: expect.objectContaining({
+        classes: ['Driven', 'Powerhouse'],
+      }),
+      clauses: expect.arrayContaining([
+        'Boosts ATK of Driven and Powerhouse characters by 4.5x',
+        'boosts HP of Driven and Powerhouse characters by 1.75x',
+      ]),
+    });
+    expect(tiers[1]).toMatchObject({
+      tier: 2,
+      kind: 'conditional',
+      atkBoost: 5.25,
+      characterConditions: expect.objectContaining({
+        classes: ['Driven', 'Powerhouse'],
+      }),
+    });
+  });
+
   it('matches plural class names in coverage clause ("Strikers characters")', () => {
     const tiers = extractCoverageTiers(
       'Boosts ATK of Strikers characters by 2.5x if HP is below 30% at the start of the turn',
