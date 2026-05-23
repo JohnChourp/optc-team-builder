@@ -23379,6 +23379,7 @@ function createInput(
     captainCharacterId,
     friendCaptainCharacterId,
     manualShipId: null,
+    requireManualShip: false,
     excludedShipIds: overrides.excludedShipIds ?? [],
     candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
   };

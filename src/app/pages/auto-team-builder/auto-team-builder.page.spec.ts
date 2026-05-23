@@ -7110,6 +7110,7 @@ function createAutoBuildResult(
     captainCharacterId: 101,
     friendCaptainCharacterId: 102,
     manualShipId: null,
+    requireManualShip: false,
     excludedShipIds: [],
     candidateLimit: null,
   };

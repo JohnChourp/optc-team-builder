@@ -226,6 +226,7 @@ function createResult(
     captainCharacterId: null,
     friendCaptainCharacterId: null,
     manualShipId,
+    requireManualShip: false,
     excludedShipIds: [],
     candidateLimit: 1200,
   };
