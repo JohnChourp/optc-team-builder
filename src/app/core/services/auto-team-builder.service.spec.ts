@@ -55,6 +55,12 @@ type PreferredLeaderAutoFillResolver = {
     >,
   ) => number[] | undefined;
 };
+type DeepPartial<T> = T extends Array<infer Item>
+  ? Array<DeepPartial<Item>>
+  : T extends object
+    ? { [Key in keyof T]?: DeepPartial<T[Key]> }
+    : T;
+type ExpectedCharacterRecordMatch = DeepPartial<CharacterDetailRecord>;
 const BIG_MOM_CAPTAIN_ABILITY =
   '<b>Always Active: </b>Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x and changes [RCV] orbs into [SEMLA] orbs.. <b>Standard Captain: </b>Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x. <b>Powered Up Captain: </b>Boosts ATK of this character by 4.25x, boosts ATK of [STR], [DEX] and [QCK] characters by 4x and reduces damage received by 15%. <b>Rampage Captain: </b>Boosts ATK of this character by 12x and own attacks will ignore damage reducing Barriers and Buffs, boosts ATK of [STR], [DEX] and [QCK] characters by 3.75x and boosts chances of getting [SEMLA] orbs.';
 const BROOK_CAPTAIN_ABILITY =
@@ -22698,6 +22704,1669 @@ describe('Auto team builder', () => {
     });
   });
 
+  it('keeps #454 Fossa as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(454, {
+      id: 454,
+      name: 'Fossa',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 2x, boosts Typed Special Damage of [STR] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #455 Fossa the Blazing Katana as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(455, {
+      id: 455,
+      name: 'Fossa the Blazing Katana',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 2x, boosts Typed Special Damage of [STR] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #456 Curiel as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(456, {
+      id: 456,
+      name: 'Curiel',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 2x and their RCV by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #457 Heavy Artillery Curiel as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(457, {
+      id: 457,
+      name: 'Heavy Artillery Curiel',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 2x and their RCV by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #458 Sengoku as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(458, {
+      id: 458,
+      name: 'Sengoku',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Reduces Special Cooldown of all characters by 2 turns at the start of the fight, boosts ATK of Cost 20 or less characters by 3x',
+      },
+    });
+  });
+
+  it('keeps #459 Sengoku the Buddha as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(459, {
+      id: 459,
+      name: 'Sengoku the Buddha',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 54,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Reduces Special Cooldown of all characters by 2 turns at the start of the fight, boosts ATK of Cost 54 or 20 or less characters by 3x.',
+      },
+    });
+  });
+
+  it('keeps #460 Galdino the Criminal - Mr. 3 as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(460, {
+      id: 460,
+      name: 'Galdino the Criminal - Mr. 3',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 10%',
+      },
+    });
+  });
+
+  it('keeps #461 Escapee Bentham - Mr. 2 Bon Clay as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(461, {
+      id: 461,
+      name: 'Escapee Bentham - Mr. 2 Bon Clay',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #462 Master Escape Artist Bentham - Mr. 2 Bon Clay as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(462, {
+      id: 462,
+      name: 'Master Escape Artist Bentham - Mr. 2 Bon Clay',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #463 Satori as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(463, {
+      id: 463,
+      name: 'Satori',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 15,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [PSY] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #464 Shura as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(464, {
+      id: 464,
+      name: 'Shura',
+      type: 'INT',
+      primaryClass: 'Striker',
+      cost: 15,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of Striker characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #465 Gedatsu as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(465, {
+      id: 465,
+      name: 'Gedatsu',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 3x after scoring 4 hits below Good in a row',
+      },
+    });
+  });
+
+  it('keeps #466 Braham as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(466, {
+      id: 466,
+      name: 'Braham',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 15,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of Shooter characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #467 Yama as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(467, {
+      id: 467,
+      name: 'Yama',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [STR] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #468 Yellow White Beret - Skypiea Guard as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(468, {
+      id: 468,
+      name: 'Yellow White Beret - Skypiea Guard',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 3,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #469 Black White Beret - Skypiea Guard as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(469, {
+      id: 469,
+      name: 'Black White Beret - Skypiea Guard',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 3,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #470 Yellow White Beret Captain - Skypiea Guard as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(470, {
+      id: 470,
+      name: 'Yellow White Beret Captain - Skypiea Guard',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [PSY] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #471 Black White Beret Captain - Skypiea Guard as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(471, {
+      id: 471,
+      name: 'Black White Beret Captain - Skypiea Guard',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #472 Eneru\'s Elect: Red Guard - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(472, {
+      id: 472,
+      name: 'Eneru\'s Elect: Red Guard - Skypiea Enforcer',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #473 Eneru\'s Elect: Blue Guard - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(473, {
+      id: 473,
+      name: 'Eneru\'s Elect: Blue Guard - Skypiea Enforcer',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #474 Eneru\'s Elect: Green Guard - Slypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(474, {
+      id: 474,
+      name: 'Eneru\'s Elect: Green Guard - Slypiea Enforcer',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #475 Eneru\'s Elect: Yellow Guard - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(475, {
+      id: 475,
+      name: 'Eneru\'s Elect: Yellow Guard - Skypiea Enforcer',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #476 Eneru\'s Elect: Black Guard - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(476, {
+      id: 476,
+      name: 'Eneru\'s Elect: Black Guard - Skypiea Enforcer',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #477 Red Striker - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(477, {
+      id: 477,
+      name: 'Red Striker - Skypiea Enforcer',
+      type: 'STR',
+      primaryClass: 'Striker',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #478 Blue Striker - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(478, {
+      id: 478,
+      name: 'Blue Striker - Skypiea Enforcer',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #479 Green Striker - Slypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(479, {
+      id: 479,
+      name: 'Green Striker - Slypiea Enforcer',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #480 Yellow Striker - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(480, {
+      id: 480,
+      name: 'Yellow Striker - Skypiea Enforcer',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #481 Black Striker - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(481, {
+      id: 481,
+      name: 'Black Striker - Skypiea Enforcer',
+      type: 'INT',
+      primaryClass: 'Striker',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #482 Red Striker Elite - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(482, {
+      id: 482,
+      name: 'Red Striker Elite - Skypiea Enforcer',
+      type: 'STR',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of Striker characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #483 Blue Striker Elite - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(483, {
+      id: 483,
+      name: 'Blue Striker Elite - Skypiea Enforcer',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [QCK] characters by 1.2x',
+      },
+    });
+  });
+
+  it('keeps #484 Green Striker Elite - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(484, {
+      id: 484,
+      name: 'Green Striker Elite - Skypiea Enforcer',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 10%',
+      },
+    });
+  });
+
+  it('keeps #485 Yellow Striker Elite - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(485, {
+      id: 485,
+      name: 'Yellow Striker Elite - Skypiea Enforcer',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 1.2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts HP and RCV of [PSY] characters by 1.2x',
+      },
+    });
+  });
+
+  it('keeps #486 Black Striker Elite - Skypiea Enforcer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(486, {
+      id: 486,
+      name: 'Black Striker Elite - Skypiea Enforcer',
+      type: 'INT',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #487 Red Nomad - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(487, {
+      id: 487,
+      name: 'Red Nomad - Shandian Warrior',
+      type: 'STR',
+      primaryClass: 'Striker',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #488 Blue Nomad - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(488, {
+      id: 488,
+      name: 'Blue Nomad - Shandian Warrior',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #489 Green Nomad - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(489, {
+      id: 489,
+      name: 'Green Nomad - Shandian Warrior',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #490 Red Nomad Adept - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(490, {
+      id: 490,
+      name: 'Red Nomad Adept - Shandian Warrior',
+      type: 'STR',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 1.2,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 1.2,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of Striker characters by 1.2x',
+      },
+    });
+  });
+
+  it('keeps #491 Blue Nomad Adept - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(491, {
+      id: 491,
+      name: 'Blue Nomad Adept - Shandian Warrior',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of Striker characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #492 Green Nomad Adept - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(492, {
+      id: 492,
+      name: 'Green Nomad Adept - Shandian Warrior',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 1.2x',
+      },
+    });
+  });
+
+  it('keeps #493 Yellow Hunter - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(493, {
+      id: 493,
+      name: 'Yellow Hunter - Shandian Warrior',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #494 Black Hunter - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(494, {
+      id: 494,
+      name: 'Black Hunter - Shandian Warrior',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 5,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #495 Yellow Hunter Adept - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(495, {
+      id: 495,
+      name: 'Yellow Hunter Adept - Shandian Warrior',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Recovers 500 HP at the end of each turn',
+      },
+    });
+  });
+
+  it('keeps #496 Black Hunter Adept - Shandian Warrior as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(496, {
+      id: 496,
+      name: 'Black Hunter Adept - Shandian Warrior',
+      type: 'INT',
+      primaryClass: 'Shooter',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #497 Portgas D. Ace - Mt. Corvo\'s Brothers 3 as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(497, {
+      id: 497,
+      name: 'Portgas D. Ace - Mt. Corvo\'s Brothers 3',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #498 Portgas D. Ace - Mt. Corvo\'s Brothers 3, Cup of Sworn Brotherhood as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(498, {
+      id: 498,
+      name: 'Portgas D. Ace - Mt. Corvo\'s Brothers 3, Cup of Sworn Brotherhood',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #499 Bellmere as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(499, {
+      id: 499,
+      name: 'Bellmere',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of Shooter characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #500 Bellmere - Nami and Nojiko\'s  Mother as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(500, {
+      id: 500,
+      name: 'Bellmere - Nami and Nojiko\'s  Mother',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of Shooter characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #501 Kaya as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(501, {
+      id: 501,
+      name: 'Kaya',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 9,
+      captainHpBoost: 1.2,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 1.2,
+      detail: {
+        captainAbility: 'Boosts ATK, HP and RCV of [PSY] characters by 1.2x',
+      },
+    });
+  });
+
+  it('keeps #502 Kaya - A rich young girl from Syrup Village as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(502, {
+      id: 502,
+      name: 'Kaya - A rich young girl from Syrup Village',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 15,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK, HP and RCV of [PSY] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #503 Hotori and Kotori as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(503, {
+      id: 503,
+      name: 'Hotori and Kotori',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      cost: 9,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of [INT] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #504 Hotori and Kotori - Skypiea Vice Head Enforcers as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(504, {
+      id: 504,
+      name: 'Hotori and Kotori - Skypiea Vice Head Enforcers',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      cost: 15,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [INT] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #505 Pell as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(505, {
+      id: 505,
+      name: 'Pell',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Protects from defeat as long as HP is above 50%',
+      },
+    });
+  });
+
+  it('keeps #506 Pell - The guardian falcon of Alabasta. as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(506, {
+      id: 506,
+      name: 'Pell - The guardian falcon of Alabasta.',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Protects from defeat as long as HP is above 30%',
+      },
+    });
+  });
+
+  it('keeps #507 Chaka as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(507, {
+      id: 507,
+      name: 'Chaka',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 9,
+      captainHpBoost: 1.2,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 1.2,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [STR] characters by 1.2x',
+      },
+    });
+  });
+
+  it('keeps #508 Chaka - The guardian jackal of Alabasta. as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(508, {
+      id: 508,
+      name: 'Chaka - The guardian jackal of Alabasta.',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Powerhouse',
+      cost: 15,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [STR] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #509 Sir Crocodile, the Strongest Prisoner - Mr. 0, Ex-Baroque Works Leader as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(509, {
+      id: 509,
+      name: 'Sir Crocodile, the Strongest Prisoner - Mr. 0, Ex-Baroque Works Leader',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #510 Sir Crocodile, the Strongest Prisoner - Ex-Seven Warlords Member as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(510, {
+      id: 510,
+      name: 'Sir Crocodile, the Strongest Prisoner - Ex-Seven Warlords Member',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Reduces damage received by 10%, boosts ATK of Striker characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #511 Daz Bonez, Convict - Mr. 1 as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(511, {
+      id: 511,
+      name: 'Daz Bonez, Convict - Mr. 1',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 16,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Slasher characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #512 Sabo - Mt. Corvo\'s Brothers 3 as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(512, {
+      id: 512,
+      name: 'Sabo - Mt. Corvo\'s Brothers 3',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      secondaryClass: 'Free Spirit',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Protects from defeat as long as HP is above 50%',
+      },
+    });
+  });
+
+  it('keeps #513 Sabo - Mt. Corvo\'s Brothers 3, Cup of Sworn Brotherhood as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(513, {
+      id: 513,
+      name: 'Sabo - Mt. Corvo\'s Brothers 3, Cup of Sworn Brotherhood',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Protects from defeat as long as HP is above 50%, boosts ATK of [PSY] characters by 1.5x if HP is above 50% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #514 Nico Robin - Tropical as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(514, {
+      id: 514,
+      name: 'Nico Robin - Tropical',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [INT] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #515 Heracles-un as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(515, {
+      id: 515,
+      name: 'Heracles-un',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 30,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK, HP and RCV of Shooter characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #516 Heracles-un - Hero of the Forest as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(516, {
+      id: 516,
+      name: 'Heracles-un - Hero of the Forest',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 50,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 2,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 2.5x, their HP and RCV by 1.5x and recovers 1x character\'s RCV in HP at the end of each turn',
+      },
+    });
+  });
+
+  it('keeps #517 Usopp-un as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(517, {
+      id: 517,
+      name: 'Usopp-un',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 10,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of [PSY] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #518 Usopp-un - Hercules’ Student as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(518, {
+      id: 518,
+      name: 'Usopp-un - Hercules’ Student',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      cost: 20,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [PSY] characters by 2x, boosts chances of getting [RCV] orbs',
+      },
+    });
+  });
+
+  it('keeps #519 Monkey D. Luffy - Merveille\'s Adventurer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(519, {
+      id: 519,
+      name: 'Monkey D. Luffy - Merveille\'s Adventurer',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 17,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #520 Monkey D. Luffy - Straw Hat Pirates\' Attack as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(520, {
+      id: 520,
+      name: 'Monkey D. Luffy - Straw Hat Pirates\' Attack',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 27,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 2.5x',
+      },
+    });
+  });
+
+  it('keeps #521 Sanji - Merveille\'s Adventurer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(521, {
+      id: 521,
+      name: 'Sanji - Merveille\'s Adventurer',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 17,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 80% if HP is above 99% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #522 Sanji - Straw Hat Pirates\' Attack as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(522, {
+      id: 522,
+      name: 'Sanji - Straw Hat Pirates\' Attack',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 27,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 80% if HP is above 99% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #523 Nami - Merveille\'s Adventurer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(523, {
+      id: 523,
+      name: 'Nami - Merveille\'s Adventurer',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 17,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of Striker characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #524 Nami and Billy the Thunder Bird as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(524, {
+      id: 524,
+      name: 'Nami and Billy the Thunder Bird',
+      type: 'QCK',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 27,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 2x and their RCV by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #525 Brook - Merveille\'s Adventurer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(525, {
+      id: 525,
+      name: 'Brook - Merveille\'s Adventurer',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 17,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #526 Brook - Straw Hat Pirates\' Attack as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(526, {
+      id: 526,
+      name: 'Brook - Straw Hat Pirates\' Attack',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 27,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 2x, reduces damage received from [INT] enemies by 30%',
+      },
+    });
+  });
+
+  it('keeps #527 Chopper - Merveille\'s Adventurer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(527, {
+      id: 527,
+      name: 'Chopper - Merveille\'s Adventurer',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 17,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [DEX] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #528 Chopper - Straw Hat Pirates\' Attack as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(528, {
+      id: 528,
+      name: 'Chopper - Straw Hat Pirates\' Attack',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 27,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [DEX] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #529 Shanks - Black Clad Redhead as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(529, {
+      id: 529,
+      name: 'Shanks - Black Clad Redhead',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts chances of getting [PSY] orbs, boosts ATK of [PSY] characters by 2x-2.75x depending on the crew\'s current HP',
+      },
+    });
+  });
+
+  it('keeps #530 Shanks - Black Clad Emperor as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(530, {
+      id: 530,
+      name: 'Shanks - Black Clad Emperor',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 55,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts chances of getting [PSY] orbs, boosts ATK of [PSY] characters by 2x-2.75x depending on the crew\'s current HP',
+      },
+    });
+  });
+
+  it('keeps #531 Nico Robin - Cherry Blossoms Falling as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(531, {
+      id: 531,
+      name: 'Nico Robin - Cherry Blossoms Falling',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [STR], [DEX] and [QCK] enemies by 30%',
+      },
+    });
+  });
+
+  it('keeps #532 Nico Robin - Cherry Blossoms in Full Bloom as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(532, {
+      id: 532,
+      name: 'Nico Robin - Cherry Blossoms in Full Bloom',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 19,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received from [STR], [DEX] and [QCK] enemies by 30%',
+      },
+    });
+  });
+
+  it('keeps #533 Brook - Cherry Blossom Hair as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(533, {
+      id: 533,
+      name: 'Brook - Cherry Blossom Hair',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #534 Brook - Cherry Blossom Melody as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(534, {
+      id: 534,
+      name: 'Brook - Cherry Blossom Melody',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #535 Nami - Blossom Cloud as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(535, {
+      id: 535,
+      name: 'Nami - Blossom Cloud',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [DEX] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #536 Nami - Blossom Climate as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(536, {
+      id: 536,
+      name: 'Nami - Blossom Climate',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [DEX] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #537 Domino as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(537, {
+      id: 537,
+      name: 'Domino',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts Chain Multiplier Growth Rate by 2x',
+      },
+    });
+  });
+
+  it('keeps #538 Domino - Impel Down Vice Head Jailer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(538, {
+      id: 538,
+      name: 'Domino - Impel Down Vice Head Jailer',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts Chain Multiplier Growth Rate by 2x, recovers 2x character\'s RCV in HP at the end of each turn',
+      },
+    });
+  });
+
+  it('keeps #539 Minorhinoceros as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(539, {
+      id: 539,
+      name: 'Minorhinoceros',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Powerhouse',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #540 Basilisk as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(540, {
+      id: 540,
+      name: 'Basilisk',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #541 Ohm as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(541, {
+      id: 541,
+      name: 'Ohm',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 16,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of [STR] characters by 2.5x if HP is below 50% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #542 Nola - Giant Snake as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(542, {
+      id: 542,
+      name: 'Nola - Giant Snake',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 20,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of all characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #543 Wyper as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(543, {
+      id: 543,
+      name: 'Wyper',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 9,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of Shooter characters by 1.5x, reduces crew\'s RCV to 0',
+      },
+    });
+  });
+
+  it('keeps #544 Wyper - Descendant of Great Warrior Calgara as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(544, {
+      id: 544,
+      name: 'Wyper - Descendant of Great Warrior Calgara',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 15,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 2.25,
+      captainAverageBoost: 1.875,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 2.25x and their HP by 1.5x, reduces crew\'s RCV to 0',
+      },
+    });
+  });
+
+  it('keeps #545 Eneru as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(545, {
+      id: 545,
+      name: 'Eneru',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #546 Kami Eneru as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(546, {
+      id: 546,
+      name: 'Kami Eneru',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 2x, reduces damage received by 20%',
+      },
+    });
+  });
+
+  it('keeps #547 Monkey D. Luffy - Mt. Corvo\'s Brothers 3 as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(547, {
+      id: 547,
+      name: 'Monkey D. Luffy - Mt. Corvo\'s Brothers 3',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts chances of getting [RCV] orbs',
+      },
+    });
+  });
+
+  it('keeps #548 Monkey D. Luffy - Mt. Corvo\'s Brothers 3, Cup of Sworn Brotherhood as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(548, {
+      id: 548,
+      name: 'Monkey D. Luffy - Mt. Corvo\'s Brothers 3, Cup of Sworn Brotherhood',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts chances of getting [RCV] orbs, boosts ATK of all characters by 1.2x',
+      },
+    });
+  });
+
+  it('keeps #549 Sadie as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(549, {
+      id: 549,
+      name: 'Sadie',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Free Spirit',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 2x after scoring 3 PERFECTs in a row',
+      },
+    });
+  });
+
+  it('keeps #550 Sadie - Impel Down Chief Jailer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(550, {
+      id: 550,
+      name: 'Sadie - Impel Down Chief Jailer',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Free Spirit',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 2.5x after scoring 3 PERFECTs in a row',
+      },
+    });
+  });
+
+  it('keeps #551 Minokoala as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(551, {
+      id: 551,
+      name: 'Minokoala',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #552 Manticore as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(552, {
+      id: 552,
+      name: 'Manticore',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #553 Roronoa Zoro - Merveille\'s Adventurer as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(553, {
+      id: 553,
+      name: 'Roronoa Zoro - Merveille\'s Adventurer',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 17,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.75,
+      captainAverageBoost: 1.375,
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 2.75x if HP is below 30% at the start of the turn',
+      },
+    });
+  });
+
   it('promotes an optional manual captain without captain text to leader because every character has a coverage tier', async () => {
     // Under the tier-driven no-bypass policy, a no-captain-text character still owns the
     // trivial scope:'none' baseline tier injected by `normalizeCaptainAbilityCoverage`. So a
@@ -25495,7 +27164,7 @@ function expectCompleteAutoTeam(result: AutoBuildResult | null): asserts result 
 
 async function expectManualLeaderSweepCase(
   characterId: number,
-  expectedCharacter: Partial<CharacterDetailRecord>,
+  expectedCharacter: ExpectedCharacterRecordMatch,
 ): Promise<void> {
   const requiredLeader = loadGeneratedCharacterRecord(characterId);
   const repository = {
