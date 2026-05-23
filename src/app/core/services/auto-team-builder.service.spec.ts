@@ -21032,6 +21032,1672 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
   });
 
+  it('keeps #354 Ain as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(354, {
+      id: 354,
+      name: 'Ain',
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #355 Ain - Neo Marines Vice Admiral as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(355, {
+      id: 355,
+      name: 'Ain - Neo Marines Vice Admiral',
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Cerebral',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #356 Eustass Kid as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(356, {
+      id: 356,
+      name: 'Eustass Kid',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #357 Captain Kid as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(357, {
+      id: 357,
+      name: 'Captain Kid',
+      type: 'STR',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 2.5x',
+      },
+    });
+  });
+
+  it('keeps #358 Scratchmen Apoo as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(358, {
+      id: 358,
+      name: 'Scratchmen Apoo',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 2.5x if HP is above 99% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #359 Roar of the Sea Scratchmen Apoo as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(359, {
+      id: 359,
+      name: 'Roar of the Sea Scratchmen Apoo',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 3x if HP is above 99% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #360 X Drake as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(360, {
+      id: 360,
+      name: 'X Drake',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Powerhouse',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of [INT] characters by 3x if HP is below 30% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #361 Red Flag X Drake as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(361, {
+      id: 361,
+      name: 'Red Flag X Drake',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of [INT] characters by 3x if HP is below 30% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #362 Jewelry Bonney as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(362, {
+      id: 362,
+      name: 'Jewelry Bonney',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [PSY] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #363 Big Eater Jewelry Bonney as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(363, {
+      id: 363,
+      name: 'Big Eater Jewelry Bonney',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [PSY] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #364 Capone Bege as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(364, {
+      id: 364,
+      name: 'Capone Bege',
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [QCK] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #365 Capone Gang Bege as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(365, {
+      id: 365,
+      name: 'Capone Gang Bege',
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [QCK] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #366 Silvers Rayleigh as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(366, {
+      id: 366,
+      name: 'Silvers Rayleigh',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts Chain Multiplier Growth Rate by 4x',
+      },
+    });
+  });
+
+  it('keeps #367 Dark King Rayleigh as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(367, {
+      id: 367,
+      name: 'Dark King Rayleigh',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 55,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts Chain Multiplier Growth Rate by 4x.',
+      },
+    });
+  });
+
+  it('keeps #368 Giant Slasher - Red Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(368, {
+      id: 368,
+      name: 'Giant Slasher - Red Pirates',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #369 Giant Shooter - Blue Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(369, {
+      id: 369,
+      name: 'Giant Shooter - Blue Pirates',
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #370 Female Giant Warrior - Green Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(370, {
+      id: 370,
+      name: 'Female Giant Warrior - Green Pirates',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #371 Giant Fighter - Yellow Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(371, {
+      id: 371,
+      name: 'Giant Fighter - Yellow Pirates',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #372 Giant Striker - Black Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(372, {
+      id: 372,
+      name: 'Giant Striker - Black Pirates',
+      type: 'INT',
+      primaryClass: 'Striker',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #373 Giant Imperial Slasher - Red Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(373, {
+      id: 373,
+      name: 'Giant Imperial Slasher - Red Pirates',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Slasher characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #374 Giant Imperial Shooter - Blue Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(374, {
+      id: 374,
+      name: 'Giant Imperial Shooter - Blue Pirates',
+      type: 'QCK',
+      primaryClass: 'Shooter',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #375 Female Giant Imperial Warrior - Green Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(375, {
+      id: 375,
+      name: 'Female Giant Imperial Warrior - Green Pirates',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      cost: 13,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of Striker characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #376 Giant Imperial Fighter - Yellow Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(376, {
+      id: 376,
+      name: 'Giant Imperial Fighter - Yellow Pirates',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #377 Giant Imperial Striker - Black Pirates as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(377, {
+      id: 377,
+      name: 'Giant Imperial Striker - Black Pirates',
+      type: 'INT',
+      primaryClass: 'Striker',
+      cost: 13,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Striker characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #378 Sea Cat as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(378, {
+      id: 378,
+      name: 'Sea Cat',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of all characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #379 Kung Fu Dugong as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(379, {
+      id: 379,
+      name: 'Kung Fu Dugong',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 7,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #380 Kung Fu Dugong - Faithful Apprentice as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(380, {
+      id: 380,
+      name: 'Kung Fu Dugong - Faithful Apprentice',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [STR] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #381 Banana Gator as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(381, {
+      id: 381,
+      name: 'Banana Gator',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #382 Sandora Dragon as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(382, {
+      id: 382,
+      name: 'Sandora Dragon',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #383 Mr. 0 - Baroque Works CEO as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(383, {
+      id: 383,
+      name: 'Mr. 0 - Baroque Works CEO',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Reduces damage received by 10%, boosts ATK of [INT] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #384 Sir Crocodile as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(384, {
+      id: 384,
+      name: 'Sir Crocodile',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Reduces damage received by 20%, boosts ATK of [INT] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #385 Hogback as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(385, {
+      id: 385,
+      name: 'Hogback',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [INT] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #386 Doctor Hogback as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(386, {
+      id: 386,
+      name: 'Doctor Hogback',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Cerebral',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [INT] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #387 Cindry as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(387, {
+      id: 387,
+      name: 'Cindry',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [PSY] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #388 Victoria Cindry as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(388, {
+      id: 388,
+      name: 'Victoria Cindry',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [PSY] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #389 Emporio Ivankov as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(389, {
+      id: 389,
+      name: 'Emporio Ivankov',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.25,
+      captainAverageBoost: 1.125,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 2.25x following a chain of [DEX] > [INT] > [QCK] attacks no lower than Good',
+      },
+    });
+  });
+
+  it('keeps #390 Emporio Ivankov - Queen of Kamabakka Queendom (Retired) as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(390, {
+      id: 390,
+      name: 'Emporio Ivankov - Queen of Kamabakka Queendom (Retired)',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 50,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 3x following a chain of [DEX] > [INT] > [QCK] attacks no lower than Good',
+      },
+    });
+  });
+
+  it('keeps #391 Perona as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(391, {
+      id: 391,
+      name: 'Perona',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [DEX] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #392 Ghost Princess Perona as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(392, {
+      id: 392,
+      name: 'Ghost Princess Perona',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [DEX] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #393 Kumacy as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(393, {
+      id: 393,
+      name: 'Kumacy',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #394 Inuppe as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(394, {
+      id: 394,
+      name: 'Inuppe',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #395 Miss Merry Christmas as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(395, {
+      id: 395,
+      name: 'Miss Merry Christmas',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [QCK] characters by 1.2x',
+      },
+    });
+  });
+
+  it('keeps #396 Miss Merry Christmas - Human Mole as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(396, {
+      id: 396,
+      name: 'Miss Merry Christmas - Human Mole',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.2,
+      captainAverageBoost: 0.6,
+      detail: {
+        captainAbility: 'Boosts ATK and RCV of [QCK] characters by 1.2x',
+      },
+    });
+  });
+
+  it('keeps #397 Mr. 4 as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(397, {
+      id: 397,
+      name: 'Mr. 4',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 3x after scoring 5 PERFECTs in a row',
+      },
+    });
+  });
+
+  it('keeps #398 Mr. 4 and Lassoo the Dog-Gun as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(398, {
+      id: 398,
+      name: 'Mr. 4 and Lassoo the Dog-Gun',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 4,
+      captainAverageBoost: 2,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 4x after scoring 5 PERFECTs in a row',
+      },
+    });
+  });
+
+  it('keeps #399 Miss Doublefinger as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(399, {
+      id: 399,
+      name: 'Miss Doublefinger',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 11,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts HP of Striker characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #400 Miss Doublefinger - Human Spike as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(400, {
+      id: 400,
+      name: 'Miss Doublefinger - Human Spike',
+      type: 'DEX',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 15,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of Striker characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #401 Mr. 1 as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(401, {
+      id: 401,
+      name: 'Mr. 1',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Reduces damage received by 10%, boosts ATK of Slasher characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #402 Mr. 1 - Human Sword as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(402, {
+      id: 402,
+      name: 'Mr. 1 - Human Sword',
+      type: 'STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Reduces damage received by 10%, boosts ATK of Slasher characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #403 Rebecca as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(403, {
+      id: 403,
+      name: 'Rebecca',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      cost: 14,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Reduces damage received by 50% and boosts RCV of all characters by 3x when HP is low',
+      },
+    });
+  });
+
+  it('keeps #404 Absalom as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(404, {
+      id: 404,
+      name: 'Absalom',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #405 Absalom of the Graveyard as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(405, {
+      id: 405,
+      name: 'Absalom of the Graveyard',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Shooter characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #406 General Zombie as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(406, {
+      id: 406,
+      name: 'General Zombie',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #407 Jigoro of the Wind as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(407, {
+      id: 407,
+      name: 'Jigoro of the Wind',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #408 Sir Crocodile - Warlord of the Sea as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(408, {
+      id: 408,
+      name: 'Sir Crocodile - Warlord of the Sea',
+      type: 'INT',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Reduces damage received by 20%, boosts ATK of Slasher characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #409 Jinbe as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(409, {
+      id: 409,
+      name: 'Jinbe',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #410 Jinbe - Warlord of the Sea as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(410, {
+      id: 410,
+      name: 'Jinbe - Warlord of the Sea',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 2.5x',
+      },
+    });
+  });
+
+  it('keeps #411 Bartholomew Kuma as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(411, {
+      id: 411,
+      name: 'Bartholomew Kuma',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      cost: 15,
+      captainHpBoost: 2,
+      captainAtkBoost: 2,
+      captainAverageBoost: 2,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [STR] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #412 Bartholomew Kuma - Warlord of the Sea as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(412, {
+      id: 412,
+      name: 'Bartholomew Kuma - Warlord of the Sea',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Powerhouse',
+      cost: 30,
+      captainHpBoost: 2,
+      captainAtkBoost: 2,
+      captainAverageBoost: 2,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [STR] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #413 Gecko Moria as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(413, {
+      id: 413,
+      name: 'Gecko Moria',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      cost: 15,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of [INT] characters by 2.5x if HP is above 99% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #414 Gecko Moria - Warlord of the Sea as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(414, {
+      id: 414,
+      name: 'Gecko Moria - Warlord of the Sea',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of [INT] characters by 3x if HP is above 99% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #415 Boa Hancock as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(415, {
+      id: 415,
+      name: 'Boa Hancock',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.75,
+      captainAverageBoost: 1.375,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] and [PSY] characters by 2.75x and their RCV by 1.5x if HP is above 70% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #416 Boa Hancock - Warlord of the Sea as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(416, {
+      id: 416,
+      name: 'Boa Hancock - Warlord of the Sea',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 55,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.75,
+      captainAverageBoost: 1.375,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] and [PSY] characters by 2.75x and their RCV by 1.5x if HP is above 70% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #417 Donquixote Doflamingo as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(417, {
+      id: 417,
+      name: 'Donquixote Doflamingo',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 30,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Slasher characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #418 Donquixote Doflamingo - Warlord of the Sea as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(418, {
+      id: 418,
+      name: 'Donquixote Doflamingo - Warlord of the Sea',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 50,
+      captainHpBoost: 2,
+      captainAtkBoost: 2,
+      captainAverageBoost: 2,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of Slasher characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #419 Sanji - Parage Shot: The Storm as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(419, {
+      id: 419,
+      name: 'Sanji - Parage Shot: The Storm',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #420 Monkey D. Luffy - Gum-Gum Bazooka: Supremacy as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(420, {
+      id: 420,
+      name: 'Monkey D. Luffy - Gum-Gum Bazooka: Supremacy',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 15,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK, HP and RCV of [STR] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #421 Roronoa Zoro - Three Thousand Worlds: The Final Stroke as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(421, {
+      id: 421,
+      name: 'Roronoa Zoro - Three Thousand Worlds: The Final Stroke',
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      cost: 15,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK, HP and RCV of [DEX] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #422 Nami - Mirage Tempo: The Heavens as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(422, {
+      id: 422,
+      name: 'Nami - Mirage Tempo: The Heavens',
+      type: 'INT',
+      primaryClass: 'Striker',
+      secondaryClass: 'Cerebral',
+      cost: 15,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK, HP and RCV of [INT] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #423 Brook as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(423, {
+      id: 423,
+      name: 'Brook',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Protects from defeat as long as HP is above 70%',
+      },
+    });
+  });
+
+  it('keeps #424 Humming Swordsman Brook as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(424, {
+      id: 424,
+      name: 'Humming Swordsman Brook',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 1.5x and protects from defeat as long as HP is above 70%',
+      },
+    });
+  });
+
+  it('keeps #425 Ryuma as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(425, {
+      id: 425,
+      name: 'Ryuma',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      cost: 18,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of Slasher characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #426 Masira as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(426, {
+      id: 426,
+      name: 'Masira',
+      type: 'STR',
+      primaryClass: 'Fighter',
+      cost: 10,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [STR] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #427 Shoujou as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(427, {
+      id: 427,
+      name: 'Shoujou',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      cost: 10,
+      captainHpBoost: 2,
+      captainAtkBoost: 0,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts HP of [DEX] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #428 Montblanc Cricket as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(428, {
+      id: 428,
+      name: 'Montblanc Cricket',
+      type: 'PSY',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Free Spirit',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #429 South Bird and Forest Residents as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(429, {
+      id: 429,
+      name: 'South Bird and Forest Residents',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      cost: 8,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #430 Bellamy as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(430, {
+      id: 430,
+      name: 'Bellamy',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Driven',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 0.75,
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #431 Bellamy the Hyena as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(431, {
+      id: 431,
+      name: 'Bellamy the Hyena',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Driven',
+      cost: 15,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 1.5,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK and HP of [DEX] characters by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #432 Sarquiss as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(432, {
+      id: 432,
+      name: 'Sarquiss',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #433 Elizabeth as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(433, {
+      id: 433,
+      name: 'Elizabeth',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 12,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 2x following a chain of [QCK] > [STR] > [DEX] attacks no lower than Good',
+      },
+    });
+  });
+
+  it('keeps #434 Caroline as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(434, {
+      id: 434,
+      name: 'Caroline',
+      type: 'INT',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 2x following a chain of [PSY] > [INT] > [INT] attacks no lower than Good',
+      },
+    });
+  });
+
+  it('keeps #435 Sanji - Kamabakka Queendom Traditional Fighting Style as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(435, {
+      id: 435,
+      name: 'Sanji - Kamabakka Queendom Traditional Fighting Style',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      cost: 10,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 2x following a chain of [INT] > [PSY] > [QCK] attacks no lower than Good',
+      },
+    });
+  });
+
+  it('keeps #436 Sanji - Candy as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(436, {
+      id: 436,
+      name: 'Sanji - Candy',
+      type: 'QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.25,
+      captainAverageBoost: 1.125,
+      detail: {
+        captainAbility: 'Boosts ATK of all characters by 2.25x following a chain of [INT] > [PSY] > [QCK] attacks no lower than Good',
+      },
+    });
+  });
+
+  it('keeps #437 Perona ~Sweets~ as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(437, {
+      id: 437,
+      name: 'Perona ~Sweets~',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [DEX] characters by 3x if HP is below 30% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #438 Perona ~Sweets~ - Ghost Princess as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(438, {
+      id: 438,
+      name: 'Perona ~Sweets~ - Ghost Princess',
+      type: 'DEX',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Boosts RCV of [DEX] characters by 5x if HP is below 30% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #439 Nefeltari Vivi ~Love~ as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(439, {
+      id: 439,
+      name: 'Nefeltari Vivi ~Love~',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 11,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Recovers 5x character\'s RCV in HP at the end of each turn',
+      },
+    });
+  });
+
+  it('keeps #440 Princess Vivi ~Love~ as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(440, {
+      id: 440,
+      name: 'Princess Vivi ~Love~',
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Free Spirit',
+      cost: 20,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: 'Recovers 7x character\'s RCV in HP at the end of each turn',
+      },
+    });
+  });
+
+  it('keeps #441 Cowboy and Bourbon Jr. - Supersonic Duck Squadron as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(441, {
+      id: 441,
+      name: 'Cowboy and Bourbon Jr. - Supersonic Duck Squadron',
+      type: 'QCK',
+      primaryClass: 'Evolver',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #442 Stomp and Ivan X - Supersonic Duck Squadron as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(442, {
+      id: 442,
+      name: 'Stomp and Ivan X - Supersonic Duck Squadron',
+      type: 'DEX',
+      primaryClass: 'Evolver',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #443 Centaur and Hikoichi - Supersonic Duck Squadron as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(443, {
+      id: 443,
+      name: 'Centaur and Hikoichi - Supersonic Duck Squadron',
+      type: 'STR',
+      primaryClass: 'Evolver',
+      cost: 9,
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+      detail: {
+        captainAbility: null,
+      },
+    });
+  });
+
+  it('keeps #444 Karoo as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(444, {
+      id: 444,
+      name: 'Karoo',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      cost: 6,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Boosts ATK of Evolver and Booster characters by 2x if HP is above 50% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #445 Captain Karoo and the Supersonic Duck Squadron as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(445, {
+      id: 445,
+      name: 'Captain Karoo and the Supersonic Duck Squadron',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2.5,
+      captainAverageBoost: 1.25,
+      detail: {
+        captainAbility: 'Boosts ATK of Evolver and Booster characters by 2.5x if HP is above 50% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #446 Marshall D. Teach as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(446, {
+      id: 446,
+      name: 'Marshall D. Teach',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 30,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1.75,
+      detail: {
+        captainAbility: 'Increases damage received by 2x, boosts ATK of [STR] characters by 2x and their HP by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #447 Blackbeard as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(447, {
+      id: 447,
+      name: 'Blackbeard',
+      type: 'STR',
+      primaryClass: 'Shooter',
+      secondaryClass: 'Driven',
+      cost: 50,
+      captainHpBoost: 2.5,
+      captainAtkBoost: 2.75,
+      captainAverageBoost: 2.625,
+      detail: {
+        captainAbility: 'Increases damage received by 2x, boosts ATK of [STR] characters by 2.75x and their HP by 2.5x',
+      },
+    });
+  });
+
+  it('keeps #448 Thatch as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(448, {
+      id: 448,
+      name: 'Thatch',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 3x if HP is above 99% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #449 Twin-Blade Thatch as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(449, {
+      id: 449,
+      name: 'Twin-Blade Thatch',
+      type: 'QCK',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Cerebral',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 3,
+      captainAverageBoost: 1.5,
+      detail: {
+        captainAbility: 'Boosts ATK of [QCK] characters by 3x if HP is above 99% at the start of the turn',
+      },
+    });
+  });
+
+  it('keeps #450 Namule as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(450, {
+      id: 450,
+      name: 'Namule',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 18,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 2x and their HP by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #451 One-Hit Namule as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(451, {
+      id: 451,
+      name: 'One-Hit Namule',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Powerhouse',
+      cost: 28,
+      captainHpBoost: 1.5,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1.75,
+      detail: {
+        captainAbility: 'Boosts ATK of Fighter characters by 2x and their HP by 1.5x',
+      },
+    });
+  });
+
+  it('keeps #452 Rakuyo as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(452, {
+      id: 452,
+      name: 'Rakuyo',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      cost: 18,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Reduces Special Cooldown of all characters by 3 turns at the start of the fight, boosts ATK of Striker characters by 2x',
+      },
+    });
+  });
+
+  it('keeps #453 Morning Star Rakuyo as both required manual leaders', async () => {
+    await expectManualLeaderSweepCase(453, {
+      id: 453,
+      name: 'Morning Star Rakuyo',
+      type: 'PSY',
+      primaryClass: 'Striker',
+      secondaryClass: 'Driven',
+      cost: 28,
+      captainHpBoost: 0,
+      captainAtkBoost: 2,
+      captainAverageBoost: 1,
+      detail: {
+        captainAbility: 'Reduces Special Cooldown of all characters by 3 turns at the start of the fight, boosts ATK of Striker characters by 2x',
+      },
+    });
+  });
+
   it('promotes an optional manual captain without captain text to leader because every character has a coverage tier', async () => {
     // Under the tier-driven no-bypass policy, a no-captain-text character still owns the
     // trivial scope:'none' baseline tier injected by `normalizeCaptainAbilityCoverage`. So a
@@ -23827,23 +25493,57 @@ function expectCompleteAutoTeam(result: AutoBuildResult | null): asserts result 
   expect(result?.slots.every((slot) => slot.character)).toBe(true);
 }
 
+async function expectManualLeaderSweepCase(
+  characterId: number,
+  expectedCharacter: Partial<CharacterDetailRecord>,
+): Promise<void> {
+  const requiredLeader = loadGeneratedCharacterRecord(characterId);
+  const repository = {
+    getAutoBuilderCandidates: vi
+      .fn()
+      .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+  };
+  const service = new AutoTeamBuilderService(repository as never);
+
+  const result = await service.buildTeam(
+    [...AUTO_TEAM_BUILDER_CLASSES],
+    [...AUTO_TEAM_BUILDER_TYPES],
+    {
+      requireUniqueBaseCharacterNames: true,
+      leaderBoostFilters: ['HP', 'ATK'],
+      manualSlots: createManualSlots(
+        {
+          captain: [requiredLeader.id],
+          friendCaptain: [requiredLeader.id],
+        },
+        {
+          captain: requiredLeader.id,
+          friendCaptain: requiredLeader.id,
+        },
+      ),
+    },
+  );
+
+  expectCompleteAutoTeam(result);
+  expect(requiredLeader).toMatchObject(expectedCharacter);
+  expect(result.slots[0]?.character.id).toBe(requiredLeader.id);
+  expect(result.slots[1]?.character.id).toBe(requiredLeader.id);
+  expect(result.slots[0]?.reasonChips).toContain('Manual pick');
+  expect(result.slots[1]?.reasonChips).toContain('Manual pick');
+}
+
 function createManualLeaderSweepRecords(
   requiredLeader: CharacterDetailRecord,
 ): CharacterDetailRecord[] {
   const baseId = 900000 + requiredLeader.id * 10;
-  const type = requiredLeader.type;
-  const supportedLeaderClasses = [
-    requiredLeader.primaryClass,
-    requiredLeader.secondaryClass,
-  ].filter(
-    (characterClass): characterClass is string =>
-      Boolean(characterClass) &&
-      AUTO_TEAM_BUILDER_CLASSES.some((supportedClass) => supportedClass === characterClass),
-  );
-  const primaryClass = supportedLeaderClasses[0] ?? 'Fighter';
-  const secondaryClass = supportedLeaderClasses.find(
-    (characterClass) => characterClass !== primaryClass,
-  );
+  const { type, primaryClass, secondaryClass, characterTags, cost, stars } =
+    resolveManualLeaderSweepFixtureScope(requiredLeader);
+  const helperDetailScope =
+    characterTags.length > 0
+      ? {
+          characterTags,
+        }
+      : {};
 
   return [
     requiredLeader,
@@ -23853,7 +25553,10 @@ function createManualLeaderSweepRecords(
       type,
       primaryClass,
       secondaryClass,
+      cost,
+      stars,
       detail: {
+        ...helperDetailScope,
         captainAbility: 'Boosts ATK of all characters by 5x and HP by 1.3x.',
       },
     }),
@@ -23862,7 +25565,10 @@ function createManualLeaderSweepRecords(
       type,
       primaryClass,
       secondaryClass,
+      cost,
+      stars,
       detail: {
+        ...helperDetailScope,
         specialText: `Boosts ATK of [${type}] characters by 2.25x for 1 turn.`,
       },
     }),
@@ -23871,7 +25577,10 @@ function createManualLeaderSweepRecords(
       type,
       primaryClass,
       secondaryClass,
+      cost,
+      stars,
       detail: {
+        ...helperDetailScope,
         specialText: `Boosts color affinity of [${type}] characters by 2x for 1 turn.`,
       },
     }),
@@ -23880,7 +25589,10 @@ function createManualLeaderSweepRecords(
       type,
       primaryClass,
       secondaryClass,
+      cost,
+      stars,
       detail: {
+        ...helperDetailScope,
         specialText: 'Reduces Bind and Despair duration by 5 turns.',
       },
     }),
@@ -23889,11 +25601,104 @@ function createManualLeaderSweepRecords(
       type,
       primaryClass,
       secondaryClass,
+      cost,
+      stars,
       detail: {
+        ...helperDetailScope,
         specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
       },
     }),
   ];
+}
+
+function resolveManualLeaderSweepFixtureScope(requiredLeader: CharacterDetailRecord): {
+  type: AutoTeamBuilderType;
+  primaryClass: string;
+  secondaryClass: string | null;
+  characterTags: string[];
+  cost: number;
+  stars: number;
+} {
+  const fixtureTier = resolveManualLeaderSweepFixtureTier(requiredLeader);
+  const fixtureConditions = fixtureTier?.characterConditions;
+  const coverageTypes = (fixtureConditions?.types ?? []).filter(isAutoTeamBuilderType);
+  const type =
+    coverageTypes[0] ??
+    (isAutoTeamBuilderType(requiredLeader.type)
+      ? requiredLeader.type
+      : AUTO_TEAM_BUILDER_DEFAULT_TYPE);
+  const coverageClasses = (fixtureConditions?.classes ?? []).filter(isAutoTeamBuilderClass);
+  const leaderClasses = [requiredLeader.primaryClass, requiredLeader.secondaryClass].filter(
+    (characterClass): characterClass is string =>
+      typeof characterClass === 'string' && isAutoTeamBuilderClass(characterClass),
+  );
+  const fixtureClasses = coverageClasses.length > 0 ? coverageClasses : leaderClasses;
+  const primaryClass = fixtureClasses[0] ?? 'Fighter';
+  const secondaryClass =
+    fixtureClasses.find((characterClass) => characterClass !== primaryClass) ?? null;
+
+  return {
+    type,
+    primaryClass,
+    secondaryClass,
+    characterTags: [...(fixtureConditions?.characterTags ?? [])],
+    cost: resolveManualLeaderSweepFixtureNumber(fixtureConditions?.costRange, requiredLeader.cost),
+    stars: resolveManualLeaderSweepFixtureNumber(
+      fixtureConditions?.rarityRange,
+      requiredLeader.stars,
+    ),
+  };
+}
+
+function resolveManualLeaderSweepFixtureTier(requiredLeader: CharacterDetailRecord) {
+  const tiers =
+    requiredLeader.detail.captainAbilityCoverage?.entries.flatMap((entry) => entry.tiers) ?? [];
+  const teamTargetableTiers = tiers.filter((tier) => !tier.characterConditions.selfOnly);
+
+  return (
+    teamTargetableTiers.find((tier) => {
+      const conditions = tier.characterConditions;
+      return (
+        conditions.types.length > 0 ||
+        conditions.classes.length > 0 ||
+        conditions.characterTags.length > 0
+      );
+    }) ??
+    teamTargetableTiers.find((tier) => {
+      const conditions = tier.characterConditions;
+      return conditions.costRange !== undefined || conditions.rarityRange !== undefined;
+    }) ??
+    teamTargetableTiers.find((tier) => tier.characterConditions.universal) ??
+    teamTargetableTiers[0]
+  );
+}
+
+function resolveManualLeaderSweepFixtureNumber(
+  range: { min?: number; max?: number } | undefined,
+  fallback: number,
+): number {
+  if (!range) {
+    return fallback;
+  }
+  const min = range.min ?? fallback;
+  const max = range.max ?? fallback;
+
+  if (fallback < min) {
+    return min;
+  }
+  if (fallback > max) {
+    return max;
+  }
+
+  return fallback;
+}
+
+function isAutoTeamBuilderType(value: string): value is AutoTeamBuilderType {
+  return AUTO_TEAM_BUILDER_TYPES.some((type) => type === value);
+}
+
+function isAutoTeamBuilderClass(value: string): boolean {
+  return AUTO_TEAM_BUILDER_CLASSES.some((characterClass) => characterClass === value);
 }
 
 let generatedPreviewCharacters: CharacterDetailRecord[] | null = null;

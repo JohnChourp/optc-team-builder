@@ -1843,7 +1843,7 @@ export function buildAutoTeamResultFromPreparedContext(
 
       if (
         shouldEnforceCaptainAbilityCoverage(input) &&
-        leaderSlots.some((leader) => !matchesLeaderBuildScope(leader, leaderCriteria))
+        !leaderSlotsMatchLeaderBuildScope(leaderSlots, leaderCriteria, input)
       ) {
         continue;
       }
@@ -1900,7 +1900,10 @@ export function buildAutoTeamResultFromPreparedContext(
           battleRequirementAssignmentMode,
         );
 
-        if (shouldEnforceCaptainAbilityCoverage(input) && !coverage.leaderCriteria.allSlotsMatch) {
+        if (
+          shouldEnforceCaptainAbilityCoverage(input) &&
+          !allSubSlotsMatchLeaderBuildScope(teamCandidates, leaderSlots, leaderCriteria)
+        ) {
           continue;
         }
 
@@ -2881,7 +2884,10 @@ function selectSubs(
       battleRequirementAssignmentMode,
     );
 
-    if (shouldEnforceCaptainAbilityCoverage(input) && !nextCoverage.leaderCriteria.allSlotsMatch) {
+    if (
+      shouldEnforceCaptainAbilityCoverage(input) &&
+      !allSubSlotsMatchLeaderBuildScope(teamCandidates, leaderSlots, leaderCriteria)
+    ) {
       return false;
     }
 
@@ -4718,6 +4724,62 @@ function matchesLeaderBuildScope(
   leaderCriteria: ActiveLeaderCriteria,
 ): boolean {
   return matchesActiveLeaderCriteria(candidate, leaderCriteria);
+}
+
+function leaderSlotsMatchLeaderBuildScope(
+  leaderSlots: AutoBuildCandidate[],
+  leaderCriteria: ActiveLeaderCriteria,
+  input: AutoBuildInput,
+): boolean {
+  return leaderSlots.every((leader, index) => {
+    if (matchesLeaderBuildScope(leader, leaderCriteria)) {
+      return true;
+    }
+
+    if (!isRequiredManualLeaderSlot(leader, index, input)) {
+      return false;
+    }
+
+    const distinctOtherLeaders = leaderSlots.filter(
+      (otherLeader) => otherLeader.character.id !== leader.character.id,
+    );
+
+    if (distinctOtherLeaders.length === 0) {
+      return true;
+    }
+
+    return matchesLeaderBuildScope(
+      leader,
+      resolveActiveLeaderCriteria(
+        distinctOtherLeaders,
+        leaderCriteria.captainLeaderId,
+        leaderCriteria.friendCaptainLeaderId,
+        input,
+      ),
+    );
+  });
+}
+
+function isRequiredManualLeaderSlot(
+  candidate: AutoBuildCandidate,
+  slotIndex: number,
+  input: AutoBuildInput,
+): boolean {
+  const role: AutoBuildLeaderSlotRole = slotIndex === 0 ? 'captain' : 'friendCaptain';
+  const slot = input.manualSlots.find((manualSlot) => manualSlot.role === role);
+
+  return slot?.requiredCharacterId === candidate.character.id;
+}
+
+function allSubSlotsMatchLeaderBuildScope(
+  candidates: AutoBuildCandidate[],
+  leaderSlots: AutoBuildCandidate[],
+  leaderCriteria: ActiveLeaderCriteria,
+): boolean {
+  return candidates.every(
+    (candidate) =>
+      leaderSlots.includes(candidate) || matchesLeaderBuildScope(candidate, leaderCriteria),
+  );
 }
 
 function matchesLeaderBuildScopeForAttempt(
