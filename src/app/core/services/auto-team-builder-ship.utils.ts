@@ -127,6 +127,10 @@ export function resolveAutoBuildShipSelection(
     };
   }
 
+  if (result.input.requireManualShip && result.input.manualShipId !== null) {
+    return null;
+  }
+
   const [recommendedShip] = eligibleShips
     .map<RecommendedShipCandidate>((ship) => ({
       ship,

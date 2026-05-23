@@ -144,6 +144,7 @@ export interface AutoBuildConstraints {
   captainCharacterId?: number | null;
   friendCaptainCharacterId?: number | null;
   manualShipId?: number | null;
+  requireManualShip?: boolean;
   excludedShipIds?: number[];
 }
 
@@ -210,6 +211,7 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   captainCharacterId: number | null;
   friendCaptainCharacterId: number | null;
   manualShipId: number | null;
+  requireManualShip: boolean;
   excludedShipIds: number[];
   candidateLimit?: number | null;
 }

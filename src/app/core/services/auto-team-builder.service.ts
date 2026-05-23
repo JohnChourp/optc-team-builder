@@ -242,13 +242,13 @@ export class AutoTeamBuilderService {
     const favoriteShipsOnly = constraints.favoriteShipsOnly ?? false;
     const requireAllSlotsInLeaderSuperEffectScope =
       constraints.requireAllSlotsInLeaderSuperEffectScope ?? false;
-    const requireFullCaptainAbilityCoverage =
+    let requireFullCaptainAbilityCoverage =
       constraints.requireFullCaptainAbilityCoverage ?? false;
-    const requireBothLeadersFullCaptainAbilityCoverage =
+    let requireBothLeadersFullCaptainAbilityCoverage =
       constraints.requireBothLeadersFullCaptainAbilityCoverage ?? false;
-    const strictSuperSpecialCriteriaCoverage =
+    let strictSuperSpecialCriteriaCoverage =
       constraints.strictSuperSpecialCriteriaCoverage ?? false;
-    const strictSuperTandemCriteriaCoverage =
+    let strictSuperTandemCriteriaCoverage =
       constraints.strictSuperTandemCriteriaCoverage ?? false;
     const normalizedTypes = normalizeSelectedTypes(selectedTypes);
     const normalizedClasses: string[] = [];
@@ -314,6 +314,7 @@ export class AutoTeamBuilderService {
     const captainCharacterId = derivedManualSelection.captainCharacterId;
     const friendCaptainCharacterId = derivedManualSelection.friendCaptainCharacterId;
     const manualShipId = this.normalizeCharacterId(constraints.manualShipId);
+    const requireManualShip = (constraints.requireManualShip ?? false) && manualShipId !== null;
     const excludedShipIds = this.normalizeCharacterIds(constraints.excludedShipIds);
     const leaderBoostFilters = this.normalizeLeaderBoostFilters(constraints.leaderBoostFilters);
     const leaderBoostRanges = this.normalizeLeaderBoostRanges(constraints.leaderBoostRanges);
@@ -371,6 +372,7 @@ export class AutoTeamBuilderService {
       captainCharacterId,
       friendCaptainCharacterId,
       manualShipId,
+      requireManualShip,
       excludedShipIds,
       candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
     };
@@ -484,6 +486,51 @@ export class AutoTeamBuilderService {
           excludedCharacterIds,
         })
       : undefined;
+
+    const knownLeaderRecordsById = new Map<number, CharacterDetailRecord>();
+    for (const record of records) {
+      knownLeaderRecordsById.set(record.id, record);
+    }
+    if (friendCaptainRecords) {
+      for (const record of friendCaptainRecords) {
+        if (!knownLeaderRecordsById.has(record.id)) {
+          knownLeaderRecordsById.set(record.id, record);
+        }
+      }
+    }
+    const autoDetectStrictFlagsFromLeader = (leaderId: number | null): void => {
+      if (leaderId === null) {
+        return;
+      }
+      const leaderRecord = knownLeaderRecordsById.get(leaderId);
+      if (!leaderRecord) {
+        return;
+      }
+      const captainAbility = leaderRecord.detail.captainAbility;
+      const hasReadableCaptainText =
+        typeof captainAbility === 'string' && captainAbility.trim().length > 0;
+      if (!hasReadableCaptainText) {
+        requireFullCaptainAbilityCoverage = false;
+        requireBothLeadersFullCaptainAbilityCoverage = false;
+      }
+      if (!leaderRecord.detail.superSpecialCriteria) {
+        strictSuperSpecialCriteriaCoverage = false;
+      }
+      if (!leaderRecord.detail.superTandemData?.criteria) {
+        strictSuperTandemCriteriaCoverage = false;
+      }
+    };
+    autoDetectStrictFlagsFromLeader(captainCharacterId);
+    autoDetectStrictFlagsFromLeader(friendCaptainCharacterId);
+    const mutableRequestedInput = requestedInput as {
+      -readonly [K in keyof AutoBuildInput]: AutoBuildInput[K];
+    };
+    mutableRequestedInput.requireFullCaptainAbilityCoverage = requireFullCaptainAbilityCoverage;
+    mutableRequestedInput.requireBothLeadersFullCaptainAbilityCoverage =
+      requireBothLeadersFullCaptainAbilityCoverage;
+    mutableRequestedInput.strictSuperSpecialCriteriaCoverage = strictSuperSpecialCriteriaCoverage;
+    mutableRequestedInput.strictSuperTandemCriteriaCoverage = strictSuperTandemCriteriaCoverage;
+
     const captainCoveredRecords = this.resolveCaptainCoveredCandidateRecords(records, {
       captainCharacterId,
       friendCaptainCharacterId,
@@ -2086,6 +2133,7 @@ export class AutoTeamBuilderService {
       captainCharacterId,
       friendCaptainCharacterId,
       manualShipId: null,
+      requireManualShip: false,
       excludedShipIds: [],
       candidateLimit: AUTO_TEAM_CANDIDATE_LIMIT,
     };

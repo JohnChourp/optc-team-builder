@@ -378,13 +378,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('passes strict both-leader tier coverage to the builder when enabled', async () => {
+  it('always passes strict both-leader tier coverage to the builder (auto-detect handles per-leader)', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
-    page.onRequireBothLeadersFullCaptainAbilityCoverageToggle({
-      detail: { checked: true },
-    } as CustomEvent<{ checked: boolean }>);
     await page.buildTeam();
 
     expect(page.requireBothLeadersFullCaptainAbilityCoverage()).toBe(true);
@@ -668,15 +665,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('passes the strict Super Special Criteria coverage toggle to the builder service', async () => {
+  it('always passes the strict Super Special Criteria coverage flag (auto-detect handles per-leader)', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    page.onRequireSuperSpecialCriteriaCoverageToggle({
-      detail: { checked: true },
-    } as CustomEvent<{ checked: boolean }>);
     await page.buildTeam();
 
     expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
@@ -692,15 +686,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('passes the strict Super Tandem coverage toggle to the builder service', async () => {
+  it('always passes the strict Super Tandem coverage flag (auto-detect handles per-leader)', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    page.onRequireSuperTandemCriteriaCoverageToggle({
-      detail: { checked: true },
-    } as CustomEvent<{ checked: boolean }>);
     await page.buildTeam();
 
     expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
@@ -2682,14 +2673,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
     expect(template).not.toContain("t('filters.leaderBoost.label')");
     expect(template).not.toContain('(ionChange)="onLeaderBoostFilterChange($event)"');
-    expect(template).toContain('captainAbilityCoverageToggleLabel()');
-    expect(template).toContain('onRequireFullCaptainAbilityCoverageToggle($event)');
-    expect(template).toContain('bothLeadersCaptainCoverageToggleLabel()');
-    expect(template).toContain('onRequireBothLeadersFullCaptainAbilityCoverageToggle($event)');
-    expect(template).toContain('superSpecialCriteriaCoverageToggleLabel()');
-    expect(template).toContain('onRequireSuperSpecialCriteriaCoverageToggle($event)');
-    expect(template).toContain('superTandemCriteriaCoverageToggleLabel()');
-    expect(template).toContain('onRequireSuperTandemCriteriaCoverageToggle($event)');
+    expect(template).not.toContain('onRequireFullCaptainAbilityCoverageToggle($event)');
+    expect(template).not.toContain('onRequireBothLeadersFullCaptainAbilityCoverageToggle($event)');
+    expect(template).not.toContain('onRequireSuperSpecialCriteriaCoverageToggle($event)');
+    expect(template).not.toContain('onRequireSuperTandemCriteriaCoverageToggle($event)');
     expect(template).toContain('ignoredSuperTandemCriteriaLabel()');
     expect(template).toContain('captainAbilityCoverageReportLabel()');
     expect(template).toContain('slot.characterTags');
@@ -2993,8 +2980,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.selectedManualShipId()).toBeNull();
     expect(page.excludedShipIds()).toEqual([]);
     expect(page.requireUniqueBaseCharacterNames()).toBe(true);
-    expect(page.favoritesOnly()).toBe(true);
-    expect(page.favoriteShipsOnly()).toBe(true);
+    expect(page.favoritesOnly()).toBe(false);
+    expect(page.favoriteShipsOnly()).toBe(false);
     expect(page.manualSearchTerm()).toBe('');
     expect(page.manualShipSearchTerm()).toBe('');
     expect(page.excludeCharacterSearchTerm()).toBe('');
@@ -3255,10 +3242,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       },
       {
         key: 'favoriteScope',
-        text: 'Favorites scope: 3 favorites active; current search pool 1,200 candidates after filters/exclusions.',
-        displayText:
-          'Favorites scope: 3 favorites active; current search pool 1,200 candidates after filters/exclusions.',
-        visible: true,
+        text: '',
+        displayText: ' ',
+        visible: false,
         tone: 'secondary',
       },
     ]);
@@ -4796,11 +4782,6 @@ describe('AutoTeamBuilderPage preset export state', () => {
       checked: boolean;
     }>);
     page.onRequireAllSlotsInLeaderSuperEffectScopeToggle({
-      detail: { checked: true },
-    } as CustomEvent<{
-      checked: boolean;
-    }>);
-    page.onRequireBothLeadersFullCaptainAbilityCoverageToggle({
       detail: { checked: true },
     } as CustomEvent<{
       checked: boolean;

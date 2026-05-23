@@ -553,6 +553,10 @@
     "openAction": "Επιλογή ship",
     "pickerCopy": "Διάλεξε οποιοδήποτε ship από όλο το catalog ή άφησέ το κενό ώστε ο builder να προτείνει ship. Τα excluded ships μένουν ορατά αλλά κλειδωμένα.",
     "pickerTitle": "Manual ship επιλογή",
+    "requireToggle": {
+      "label": "Lock this ship as required",
+      "support": "When on, the builder must use this exact ship; if it is excluded or unavailable, the build fails instead of falling back to a recommendation."
+    },
     "favoriteActions": {
       "add": "Προσθήκη ship στα favorites",
       "remove": "Αφαίρεση ship από τα favorites"

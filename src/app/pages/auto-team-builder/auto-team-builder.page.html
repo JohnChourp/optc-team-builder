@@ -287,19 +287,6 @@
 
             <div class="strict-toggle-row">
               <div class="strict-toggle-copy">
-                <strong>{{ allowAnyFriendCaptainAutoFillToggleLabel() }}</strong>
-                <small>{{ allowAnyFriendCaptainAutoFillSupportLabel() }}</small>
-              </div>
-              <ion-toggle
-                color="warning"
-                [checked]="allowAnyFriendCaptainAutoFill()"
-                [disabled]="building()"
-                (ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"
-              ></ion-toggle>
-            </div>
-
-            <div class="strict-toggle-row">
-              <div class="strict-toggle-copy">
                 <strong>{{ favoriteShipsOnlyToggleLabel() }}</strong>
                 <small>{{ favoriteShipsOnlySupportLabel() }}</small>
               </div>
@@ -308,6 +295,19 @@
                 [checked]="favoriteShipsOnly()"
                 [disabled]="building()"
                 (ionChange)="onFavoriteShipsOnlyToggle($event)"
+              ></ion-toggle>
+            </div>
+
+            <div class="strict-toggle-row">
+              <div class="strict-toggle-copy">
+                <strong>{{ allowAnyFriendCaptainAutoFillToggleLabel() }}</strong>
+                <small>{{ allowAnyFriendCaptainAutoFillSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="allowAnyFriendCaptainAutoFill()"
+                [disabled]="building()"
+                (ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"
               ></ion-toggle>
             </div>
           </div>
@@ -334,58 +334,6 @@
                 {{ manualTeamCostBudgetErrorLabel() }}
               </small>
             }
-          </div>
-
-          <div class="strict-toggle-row strict-toggle-row--filter">
-            <div class="strict-toggle-copy">
-              <strong>{{ captainAbilityCoverageToggleLabel() }}</strong>
-              <small>{{ captainAbilityCoverageSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireFullCaptainAbilityCoverage()"
-              [disabled]="building()"
-              (ionChange)="onRequireFullCaptainAbilityCoverageToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row strict-toggle-row--filter">
-            <div class="strict-toggle-copy">
-              <strong>{{ bothLeadersCaptainCoverageToggleLabel() }}</strong>
-              <small>{{ bothLeadersCaptainCoverageSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireBothLeadersFullCaptainAbilityCoverage()"
-              [disabled]="building()"
-              (ionChange)="onRequireBothLeadersFullCaptainAbilityCoverageToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row strict-toggle-row--filter">
-            <div class="strict-toggle-copy">
-              <strong>{{ superSpecialCriteriaCoverageToggleLabel() }}</strong>
-              <small>{{ superSpecialCriteriaCoverageSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireSuperSpecialCriteriaCoverage()"
-              [disabled]="building()"
-              (ionChange)="onRequireSuperSpecialCriteriaCoverageToggle($event)"
-            ></ion-toggle>
-          </div>
-
-          <div class="strict-toggle-row strict-toggle-row--filter">
-            <div class="strict-toggle-copy">
-              <strong>{{ superTandemCriteriaCoverageToggleLabel() }}</strong>
-              <small>{{ superTandemCriteriaCoverageSupportLabel() }}</small>
-            </div>
-            <ion-toggle
-              color="warning"
-              [checked]="requireSuperTandemCriteriaCoverage()"
-              [disabled]="building()"
-              (ionChange)="onRequireSuperTandemCriteriaCoverageToggle($event)"
-            ></ion-toggle>
           </div>
 
           <div class="strict-toggle-row strict-toggle-row--select">
@@ -888,17 +836,6 @@
                 </div>
               </div>
 
-              <div class="manual-filter-summary-card">
-                <div class="manual-filter-summary-copy">
-                  <div class="section-label">
-                    <ion-icon [icon]="manualFilterIcon"></ion-icon>
-                    <span>{{ t('manual.sync.eyebrow') }}</span>
-                  </div>
-                  <strong>{{ t('manual.sync.title') }}</strong>
-                  <p>{{ manualFilterSummaryLabel() }}</p>
-                </div>
-              </div>
-
               @if (manualSimilarPickFeedback()) {
                 <div class="manual-similar-feedback">
                   {{ manualSimilarPickFeedback() }}
@@ -1332,6 +1269,20 @@
                             </ion-button>
                           }
                         </div>
+                        @if (hasSelectedManualShip()) {
+                          <div class="strict-toggle-row strict-toggle-row--filter">
+                            <div class="strict-toggle-copy">
+                              <strong>{{ t('ships.requireToggle.label') }}</strong>
+                              <small>{{ t('ships.requireToggle.support') }}</small>
+                            </div>
+                            <ion-toggle
+                              color="warning"
+                              [checked]="requireManualShip()"
+                              [disabled]="building()"
+                              (ionChange)="onRequireManualShipToggle($event)"
+                            ></ion-toggle>
+                          </div>
+                        }
                         @if (!manualShipCandidates().length) {
                           <div class="manual-candidate-empty-state">
                             {{ t('ships.emptySearch') }}

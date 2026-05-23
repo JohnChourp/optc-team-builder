@@ -472,9 +472,9 @@ function buildDefaultAutoTeamBuilderFilterState(
     requireSuperSpecialCriteriaCoverage: true,
     requireSuperTandemCriteriaCoverage: true,
     requireUniqueBaseCharacterNames: true,
-    favoritesOnly: true,
+    favoritesOnly: false,
     allowAnyFriendCaptainAutoFill: false,
-    favoriteShipsOnly: true,
+    favoriteShipsOnly: false,
   };
 }
 
@@ -660,6 +660,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly lockedCharacterRecords = signal<Record<number, CharacterListItem>>({});
   public readonly excludedCharacterIds = signal<number[]>([]);
   public readonly selectedManualShipId = signal<number | null>(null);
+  public readonly requireManualShip = signal(false);
   public readonly excludedShipIds = signal<number[]>([]);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
@@ -1149,11 +1150,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.requireAllSelectedClassesPerCharacter() ||
       this.requireAllSelectedCharacterTagsInTeam() ||
       this.requireAllSelectedCharacterNamesInTeam() ||
-      this.requireAllSlotsInLeaderSuperEffectScope() ||
-      this.requireFullCaptainAbilityCoverage() ||
-      this.requireBothLeadersFullCaptainAbilityCoverage() ||
-      this.requireSuperSpecialCriteriaCoverage() ||
-      this.requireSuperTandemCriteriaCoverage(),
+      this.requireAllSlotsInLeaderSuperEffectScope(),
   );
   public readonly allClassesSelected = computed(
     () =>
@@ -1286,26 +1283,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requireAllSlotsInLeaderSuperEffectScope()
       ? this.t('filters.leaderSuperEffectScope.support.strict')
       : this.t('filters.leaderSuperEffectScope.support.flexible'),
-  );
-  public readonly captainAbilityCoverageSupportLabel = computed(() =>
-    this.requireFullCaptainAbilityCoverage()
-      ? this.t('filters.captainAbilityCoverage.support.full')
-      : this.t('filters.captainAbilityCoverage.support.simple'),
-  );
-  public readonly bothLeadersCaptainCoverageSupportLabel = computed(() =>
-    this.requireBothLeadersFullCaptainAbilityCoverage()
-      ? this.t('filters.bothLeadersCaptainCoverage.support.strict')
-      : this.t('filters.bothLeadersCaptainCoverage.support.flexible'),
-  );
-  public readonly superSpecialCriteriaCoverageSupportLabel = computed(() =>
-    this.requireSuperSpecialCriteriaCoverage()
-      ? this.t('filters.superSpecialCriteriaCoverage.support.strict')
-      : this.t('filters.superSpecialCriteriaCoverage.support.flexible'),
-  );
-  public readonly superTandemCriteriaCoverageSupportLabel = computed(() =>
-    this.requireSuperTandemCriteriaCoverage()
-      ? this.t('filters.superTandemCriteriaCoverage.support.strict')
-      : this.t('filters.superTandemCriteriaCoverage.support.flexible'),
   );
   public readonly favoritesOnlySupportLabel = computed(() =>
     this.hasFavoriteCharacters()
@@ -1588,18 +1565,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly leaderSuperEffectScopeToggleLabel = computed(() =>
     this.t('filters.leaderSuperEffectScope.toggle'),
   );
-  public readonly captainAbilityCoverageToggleLabel = computed(() =>
-    this.t('filters.captainAbilityCoverage.toggle'),
-  );
-  public readonly bothLeadersCaptainCoverageToggleLabel = computed(() =>
-    this.t('filters.bothLeadersCaptainCoverage.toggle'),
-  );
-  public readonly superSpecialCriteriaCoverageToggleLabel = computed(() =>
-    this.t('filters.superSpecialCriteriaCoverage.toggle'),
-  );
-  public readonly superTandemCriteriaCoverageToggleLabel = computed(() =>
-    this.t('filters.superTandemCriteriaCoverage.toggle'),
-  );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
   public readonly allowAnyFriendCaptainAutoFillToggleLabel = computed(() =>
     this.t('filters.allowAnyFriendCaptainAutoFill.toggle'),
@@ -1697,22 +1662,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (this.requireAllSlotsInLeaderSuperEffectScope()) {
       strictModes.push(this.t('hero.strictModes.leaderSuperEffectScope'));
-    }
-
-    if (this.requireFullCaptainAbilityCoverage()) {
-      strictModes.push(this.t('hero.strictModes.captainAbilityCoverage'));
-    }
-
-    if (this.requireBothLeadersFullCaptainAbilityCoverage()) {
-      strictModes.push(this.t('hero.strictModes.bothLeadersCaptainCoverage'));
-    }
-
-    if (this.requireSuperSpecialCriteriaCoverage()) {
-      strictModes.push(this.t('hero.strictModes.superSpecialCriteriaCoverage'));
-    }
-
-    if (this.requireSuperTandemCriteriaCoverage()) {
-      strictModes.push(this.t('hero.strictModes.superTandemCriteriaCoverage'));
     }
 
     return strictModes.length > 0
@@ -2909,11 +2858,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public clearManualShipSelection(): void {
     this.selectedManualShipId.set(null);
+    this.requireManualShip.set(false);
     this.updateResultShipSelection();
   }
 
   public isSelectedManualShip(shipId: number): boolean {
     return this.selectedManualShipId() === shipId;
+  }
+
+  public onRequireManualShipToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.requireManualShip.set(event.detail.checked);
+    this.resetBuildState();
   }
 
   public toggleExcludedCharacter(character: CharacterDetailRecord): void {
@@ -3199,32 +3154,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     event: CustomEvent<{ checked: boolean }>,
   ): void {
     this.requireAllSlotsInLeaderSuperEffectScope.set(event.detail.checked);
-    this.resetBuildState();
-  }
-
-  public onRequireFullCaptainAbilityCoverageToggle(event: CustomEvent<{ checked: boolean }>): void {
-    this.requireFullCaptainAbilityCoverage.set(event.detail.checked);
-    this.resetBuildState();
-  }
-
-  public onRequireBothLeadersFullCaptainAbilityCoverageToggle(
-    event: CustomEvent<{ checked: boolean }>,
-  ): void {
-    this.requireBothLeadersFullCaptainAbilityCoverage.set(event.detail.checked);
-    this.resetBuildState();
-  }
-
-  public onRequireSuperSpecialCriteriaCoverageToggle(
-    event: CustomEvent<{ checked: boolean }>,
-  ): void {
-    this.requireSuperSpecialCriteriaCoverage.set(event.detail.checked);
-    this.resetBuildState();
-  }
-
-  public onRequireSuperTandemCriteriaCoverageToggle(
-    event: CustomEvent<{ checked: boolean }>,
-  ): void {
-    this.requireSuperTandemCriteriaCoverage.set(event.detail.checked);
     this.resetBuildState();
   }
 
@@ -4155,6 +4084,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           manualSlots: this.serializeManualSlots(),
           excludedCharacterIds: this.effectiveExcludedCharacterIds(),
           manualShipId: this.selectedManualShipId(),
+          requireManualShip: this.requireManualShip(),
           excludedShipIds: this.excludedShipIds(),
         },
         executionOptions,

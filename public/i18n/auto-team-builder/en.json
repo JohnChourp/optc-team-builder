@@ -553,6 +553,10 @@
     "openAction": "Choose ship",
     "pickerCopy": "Pick any ship from the full catalog, or leave it empty so the builder can recommend one. Excluded ships stay visible but locked.",
     "pickerTitle": "Manual ship selection",
+    "requireToggle": {
+      "label": "Lock this ship as required",
+      "support": "When on, the builder must use this exact ship; if it is excluded or unavailable, the build fails instead of falling back to a recommendation."
+    },
     "favoriteActions": {
       "add": "Add ship to favorites",
       "remove": "Remove ship from favorites"
