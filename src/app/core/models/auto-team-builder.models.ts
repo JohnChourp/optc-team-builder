@@ -285,6 +285,7 @@ export interface AutoBuildEffectTags {
   captainAtkMultiplier: number;
   captainHpMultiplier: number;
   readableCaptainText: boolean;
+  hasCaptainCoverageTier: boolean;
   readableSpecialText: boolean;
   readableSailorText: boolean;
 }

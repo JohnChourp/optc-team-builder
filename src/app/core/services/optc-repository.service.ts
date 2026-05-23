@@ -187,39 +187,81 @@ function normalizeSupportData(value: unknown): CharacterSupportEntry[] {
     .filter((entry): entry is CharacterSupportEntry => Boolean(entry));
 }
 
-function normalizeCaptainAbilityCoverage(value: unknown): CharacterDetail['captainAbilityCoverage'] {
+// Every character has at least one captain ability coverage tier. Characters with parsed
+// captain text produce real tiers; characters without captain text get this trivial
+// scope:'none' baseline tier so the Auto Team Builder can treat leader eligibility uniformly
+// as "has any captain ability tier" — no text-vs-tier branching, no per-character bypass.
+// Documented in audits/auto-team-builder/MANUAL_LEADER_SWEEP_AUDIT.md (No-Bypass policy).
+const NO_CAPTAIN_ABILITY_TIER_ENTRY_KEY = 'no-captain-ability';
+const NO_CAPTAIN_ABILITY_TIER_ENTRY_LABEL = 'No Captain Ability';
+
+function createNoCaptainAbilityCoverageEntry(): NonNullable<
+  CharacterDetail['captainAbilityCoverage']
+>['entries'][number] {
+  return {
+    key: NO_CAPTAIN_ABILITY_TIER_ENTRY_KEY,
+    label: NO_CAPTAIN_ABILITY_TIER_ENTRY_LABEL,
+    tiers: [
+      {
+        tier: 1,
+        kind: 'baseline',
+        scope: 'none',
+        characterConditions: {
+          universal: false,
+          fallbackOther: false,
+          selfOnly: false,
+          types: [],
+          classes: [],
+          characterTags: [],
+        },
+        teamConditions: [],
+        fieldConditions: [],
+        triggerConditions: [],
+        clauses: [],
+      },
+    ],
+  };
+}
+
+export function normalizeCaptainAbilityCoverage(
+  value: unknown,
+): CharacterDetail['captainAbilityCoverage'] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return { entries: [] };
+    return { entries: [createNoCaptainAbilityCoverageEntry()] };
   }
 
   const record = value as Record<string, unknown>;
   const rawEntries = Array.isArray(record['entries']) ? record['entries'] : [];
 
-  return {
-    entries: rawEntries
-      .map((entry) => {
-        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-          return null;
-        }
+  const parsedEntries = rawEntries
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+      }
 
-        const entryRecord = entry as Record<string, unknown>;
-        const key = String(entryRecord['key'] ?? '').trim();
-        const label = String(entryRecord['label'] ?? '').trim();
+      const entryRecord = entry as Record<string, unknown>;
+      const key = String(entryRecord['key'] ?? '').trim();
+      const label = String(entryRecord['label'] ?? '').trim();
 
-        if (!key.length || !label.length) {
-          return null;
-        }
+      if (!key.length || !label.length) {
+        return null;
+      }
 
-        const tiers = normalizeCaptainCoverageTiers(entryRecord['tiers']);
+      const tiers = normalizeCaptainCoverageTiers(entryRecord['tiers']);
 
-        return {
-          key,
-          label,
-          tiers,
-        };
-      })
-      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
-  };
+      return {
+        key,
+        label,
+        tiers,
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+
+  if (parsedEntries.length === 0) {
+    parsedEntries.push(createNoCaptainAbilityCoverageEntry());
+  }
+
+  return { entries: parsedEntries };
 }
 
 function normalizeCaptainAbilityScope(value: unknown): CharacterCaptainAbilityScope {

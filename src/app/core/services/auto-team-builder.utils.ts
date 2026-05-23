@@ -238,6 +238,7 @@ interface PreparedAutoBuildEffectFacts {
   captainAtkMultiplier: number;
   captainHpMultiplier: number;
   readableCaptainText: boolean;
+  hasCaptainCoverageTier: boolean;
   readableSpecialText: boolean;
   readableSailorText: boolean;
 }
@@ -1747,7 +1748,6 @@ export function buildAutoTeamResultFromPreparedContext(
     input,
     options,
     !requiredManualCaptain,
-    Boolean(requiredManualCaptain),
   );
   const friendCaptainOptions = resolveLeaderCandidateOptions(
     requiredManualFriendCaptain ? [requiredManualFriendCaptain] : manualFriendCaptainCandidates,
@@ -1762,7 +1762,6 @@ export function buildAutoTeamResultFromPreparedContext(
         }
       : options,
     !requiredManualFriendCaptain,
-    Boolean(requiredManualFriendCaptain),
   );
 
   if (!captainOptions.length || !friendCaptainOptions.length) {
@@ -2103,28 +2102,31 @@ function resolveLeaderCandidateOptions(
   input: AutoBuildInput,
   options: AutoTeamBuildAttemptOptions,
   allowAutoFill = true,
-  allowManualLeaderWithoutCaptainText = false,
 ): AutoBuildCandidate[] {
   const manualCandidateIdSet = new Set(slotCandidates.map((candidate) => candidate.character.id));
   const candidateMatchesLeaderConstraints = (
     candidate: AutoBuildCandidate,
     applyAutoFillLeaderRanges: boolean,
-    requireReadableCaptainText: boolean,
   ): boolean =>
     Boolean(
-      (!requireReadableCaptainText || candidate.tags.readableCaptainText) &&
+      // Tier-driven leader eligibility (No-Bypass policy, see MANUAL_LEADER_SWEEP_AUDIT.md).
+      // Every character has at least one captain ability coverage tier after the normalizer
+      // (real tiers for characters with captain text, a trivial scope:'none' baseline tier for
+      // characters with no captain ability). `readableCaptainText` stays as a fallback so that
+      // synthetic test records that skip the normalizer remain eligible based on text alone.
+      (candidate.tags.readableCaptainText || candidate.tags.hasCaptainCoverageTier) &&
       (!applyAutoFillLeaderRanges || candidateMatchesLeaderBoostRanges(candidate, input)) &&
       (!options.requireLeadersWithoutSuperEffects || !hasCandidateSuperEffects(candidate)) &&
       (!input.requireAllSelectedClassesPerCharacter || candidate.matchesAllSelectedClasses),
     );
   const manualCandidatePool = slotCandidates.filter((candidate) =>
-    candidateMatchesLeaderConstraints(candidate, false, !allowManualLeaderWithoutCaptainText),
+    candidateMatchesLeaderConstraints(candidate, false),
   );
 
   const autoCandidatePool = allowAutoFill
     ? candidates
         .filter((candidate) => !manualCandidateIdSet.has(candidate.character.id))
-        .filter((candidate) => candidateMatchesLeaderConstraints(candidate, true, true))
+        .filter((candidate) => candidateMatchesLeaderConstraints(candidate, true))
         .sort((left, right) => compareAutoFillLeaderCandidates(left, right, input, options))
         .slice(0, AUTO_FILL_LEADER_OPTION_LIMIT)
     : [];
@@ -2520,8 +2522,22 @@ function prepareAutoBuildRecord(
       ),
     ],
     superEffectTexts: resolveCharacterSuperEffectTexts(record),
-    effectFacts: prepareAutoBuildEffectFacts(captainText, specialText, sailorText),
+    effectFacts: prepareAutoBuildEffectFacts(
+      captainText,
+      specialText,
+      sailorText,
+      hasAnyCaptainCoverageTier(record.detail.captainAbilityCoverage),
+    ),
   };
+}
+
+function hasAnyCaptainCoverageTier(
+  coverage: CharacterDetailRecord['detail']['captainAbilityCoverage'],
+): boolean {
+  if (!coverage) {
+    return false;
+  }
+  return coverage.entries.some((entry) => entry.tiers.length > 0);
 }
 
 function buildAutoBuildCandidateFromPreparedRecord(
@@ -3643,6 +3659,7 @@ function prepareAutoBuildEffectFacts(
   captainText: string,
   specialText: string,
   sailorText: string,
+  hasCaptainCoverageTier: boolean,
 ): PreparedAutoBuildEffectFacts {
   const abilityText = [specialText, sailorText].filter(Boolean).join(' ');
   const burstRoles = uniqueRoles<AutoBuildBurstRole>([
@@ -3701,6 +3718,7 @@ function prepareAutoBuildEffectFacts(
     captainAtkMultiplier: extractCaptainMultiplier(captainText, 'atk'),
     captainHpMultiplier: extractCaptainMultiplier(captainText, 'hp'),
     readableCaptainText: captainText.length > 0,
+    hasCaptainCoverageTier,
     readableSpecialText: specialText.length > 0,
     readableSailorText: sailorText.length > 0,
   };
@@ -3763,6 +3781,7 @@ function buildAutoBuildEffectTags(
     captainAtkMultiplier: facts.captainAtkMultiplier,
     captainHpMultiplier: facts.captainHpMultiplier,
     readableCaptainText: facts.readableCaptainText,
+    hasCaptainCoverageTier: facts.hasCaptainCoverageTier,
     readableSpecialText: facts.readableSpecialText,
     readableSailorText: facts.readableSailorText,
   };
@@ -4192,18 +4211,6 @@ function resolveActiveLeaderCriteriaEntries(
     .slice(0, 2)
     .map((candidate, index): ActiveLeaderCriteriaLeader | null => {
       const role: AutoBuildLeaderSlotRole = index === 0 ? 'captain' : 'friendCaptain';
-      const characterId = candidate.character.id;
-      const isRequiredManualLeader = input.manualSlots.some(
-        (slot) => slot.role === role && slot.requiredCharacterId === characterId,
-      );
-      const captainAbility = candidate.character.detail.captainAbility;
-      const hasReadableCaptainText =
-        typeof captainAbility === 'string' && captainAbility.trim().length > 0;
-
-      if (isRequiredManualLeader && !hasReadableCaptainText) {
-        return null;
-      }
-
       return resolveLeaderCriteriaEntryForSlot(role, candidate, input);
     })
     .filter((entry): entry is ActiveLeaderCriteriaLeader => entry !== null);

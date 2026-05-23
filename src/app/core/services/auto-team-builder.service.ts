@@ -196,17 +196,6 @@ export class AutoTeamBuilderService {
           return null;
         }
 
-        const isRequiredManualLeader = manualSlots.some(
-          (slot) => slot.role === role && slot.requiredCharacterId === characterId,
-        );
-        const captainAbility = character.detail.captainAbility;
-        const hasReadableCaptainText =
-          typeof captainAbility === 'string' && captainAbility.trim().length > 0;
-
-        if (isRequiredManualLeader && !hasReadableCaptainText) {
-          return null;
-        }
-
         return {
           role,
           character,
@@ -487,41 +476,6 @@ export class AutoTeamBuilderService {
         })
       : undefined;
 
-    const knownLeaderRecordsById = new Map<number, CharacterDetailRecord>();
-    for (const record of records) {
-      knownLeaderRecordsById.set(record.id, record);
-    }
-    if (friendCaptainRecords) {
-      for (const record of friendCaptainRecords) {
-        if (!knownLeaderRecordsById.has(record.id)) {
-          knownLeaderRecordsById.set(record.id, record);
-        }
-      }
-    }
-    const autoDetectStrictFlagsFromLeader = (leaderId: number | null): void => {
-      if (leaderId === null) {
-        return;
-      }
-      const leaderRecord = knownLeaderRecordsById.get(leaderId);
-      if (!leaderRecord) {
-        return;
-      }
-      const captainAbility = leaderRecord.detail.captainAbility;
-      const hasReadableCaptainText =
-        typeof captainAbility === 'string' && captainAbility.trim().length > 0;
-      if (!hasReadableCaptainText) {
-        requireFullCaptainAbilityCoverage = false;
-        requireBothLeadersFullCaptainAbilityCoverage = false;
-      }
-      if (!leaderRecord.detail.superSpecialCriteria) {
-        strictSuperSpecialCriteriaCoverage = false;
-      }
-      if (!leaderRecord.detail.superTandemData?.criteria) {
-        strictSuperTandemCriteriaCoverage = false;
-      }
-    };
-    autoDetectStrictFlagsFromLeader(captainCharacterId);
-    autoDetectStrictFlagsFromLeader(friendCaptainCharacterId);
     const mutableRequestedInput = requestedInput as {
       -readonly [K in keyof AutoBuildInput]: AutoBuildInput[K];
     };
