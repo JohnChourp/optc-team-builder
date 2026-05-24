@@ -4271,6 +4271,61 @@ describe('Auto team builder', () => {
     expect(result?.slots.some((slot) => slot.character.id === 7421)).toBe(true);
   });
 
+  it('relaxes strict Super Tandem criteria while preserving favorite-only manual leaders', async () => {
+    const manualLeader = createLeaderWithSuperTandemCriteriaRecord(
+      7425,
+      'Manual Tandem Blackbeard',
+      createNonRosterSuperCriteria(),
+    );
+    const candidateRecords = [
+      manualLeader,
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ];
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(candidateRecords),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: candidateRecords.map((record) => record.id),
+      requireUniqueBaseCharacterNames: true,
+      strictSuperTandemCriteriaCoverage: true,
+      manualSlots: createManualSlots(
+        {
+          captain: [manualLeader.id],
+          friendCaptain: [manualLeader.id],
+        },
+        {
+          captain: manualLeader.id,
+          friendCaptain: manualLeader.id,
+        },
+      ),
+    });
+
+    expectCompleteAutoTeam(result);
+    expect(result.slots[0]?.character.id).toBe(manualLeader.id);
+    expect(result.slots[1]?.character.id).toBe(manualLeader.id);
+    expect(
+      result.slots.map((slot) => slot.character.id).sort((left, right) => left - right),
+    ).toEqual([5860, 5870, 5880, 5890, manualLeader.id, manualLeader.id]);
+    expect(result.requestedInput.strictSuperTandemCriteriaCoverage).toBe(true);
+    expect(result.requestedInput.requireSuperTandemCriteria).toBe(true);
+    expect(result.input.strictSuperTandemCriteriaCoverage).toBe(true);
+    expect(result.input.requireSuperTandemCriteria).toBe(false);
+    expect(result.input.favoritesOnly).toBe(true);
+    expect(result.relaxation.usedFallback).toBe(true);
+    expect(result.relaxation.droppedTypes).toEqual([]);
+    expect(result.relaxation.droppedClasses).toEqual([]);
+    expect(result.relaxation.ignoredSuperTandemCriteria).toBe(true);
+    expect(result.relaxation.ignoredSuperTandemCriteriaCharacterNames).toEqual([
+      'Manual Tandem Blackbeard',
+    ]);
+  });
+
   it('does not require a Super Special leader when strict criteria coverage is enabled', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([
@@ -5794,7 +5849,7 @@ describe('Auto team builder', () => {
     );
   });
 
-  it('returns no result when cost range excludes every auto-fill candidate', async () => {
+  it('builds a team when deprecated cost range excludes every auto-fill candidate', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
     };
@@ -5804,7 +5859,9 @@ describe('Auto team builder', () => {
       costRange: { min: 1, max: 10 },
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.costRange).toEqual(createEmptyAutoBuildCostRange());
+    expect(result?.input.costRange).toEqual(createEmptyAutoBuildCostRange());
     expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
       ['DEX'],
       AUTO_TEAM_CANDIDATE_LIMIT,
@@ -5817,7 +5874,7 @@ describe('Auto team builder', () => {
     );
   });
 
-  it('applies leader cost range only to auto-filled leaders', async () => {
+  it('ignores deprecated leader cost range for auto-filled leaders', async () => {
     const outOfRangeNewestLeader = createCharacterRecord({
       id: 9999,
       name: 'Out of Range Newest Leader',
@@ -5847,8 +5904,8 @@ describe('Auto team builder', () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(5900);
-    expect(result?.slots[1]?.character.id).toBe(5900);
+    expect(result?.slots[0]?.character.id).toBe(9999);
+    expect(result?.slots[1]?.character.id).toBe(9999);
     expect(
       result?.slots.filter((slot) => slot.role === 'sub').some((slot) => slot.character.cost > 60),
     ).toBe(true);
@@ -6078,7 +6135,7 @@ describe('Auto team builder', () => {
     expect(result?.slots[1]?.character.id).toBe(4549);
   });
 
-  it('selects the newest eligible favorite inside the leader cost range', async () => {
+  it('selects the newest eligible favorite while ignoring deprecated leader cost range', async () => {
     const newestFavoriteLeader = createLeaderPriorityCaptainRecord({
       id: 4556,
       name: 'Portgas D. Ace - The Man Who Came for an Emperor of the Sea',
@@ -6116,8 +6173,8 @@ describe('Auto team builder', () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result?.slots[0]?.character.id).toBe(4549);
-    expect(result?.slots[1]?.character.id).toBe(4549);
+    expect(result?.slots[0]?.character.id).toBe(4556);
+    expect(result?.slots[1]?.character.id).toBe(4556);
   });
 
   it('applies sub cost range only to auto-filled subs', async () => {
@@ -34188,7 +34245,7 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
-  it('still returns null when no team can be built after relaxing manual picks', async () => {
+  it('relaxes strict class coverage after an optional manual pick cannot be used', async () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
@@ -34203,7 +34260,9 @@ describe('Auto team builder', () => {
       }),
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.some((slot) => slot.character.id === 999999)).toBe(false);
+    expect(result?.relaxation.droppedClasses).toEqual(['Slasher']);
   });
 
   it('returns null when a selected leader is outside the locked picks', async () => {
@@ -34321,6 +34380,63 @@ describe('Auto team builder', () => {
     });
   });
 
+  it('relaxes strict leader super special criteria while preserving favorite-only manual leaders', async () => {
+    const manualLeader = createLeaderWithSuperCriteriaRecord(
+      7003,
+      'Manual Blackbeard',
+      createNonRosterSuperCriteria(),
+    );
+    const candidateRecords = [
+      manualLeader,
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ];
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(candidateRecords),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter'], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: candidateRecords.map((record) => record.id),
+      strictSuperSpecialCriteriaCoverage: true,
+      manualSlots: createManualSlots(
+        {
+          captain: [manualLeader.id],
+          friendCaptain: [manualLeader.id],
+        },
+        {
+          captain: manualLeader.id,
+          friendCaptain: manualLeader.id,
+        },
+      ),
+    });
+
+    expectCompleteAutoTeam(result);
+    expect(result.slots.map((slot) => slot.character.id)).toEqual([
+      manualLeader.id,
+      manualLeader.id,
+      5890,
+      5880,
+      5870,
+      5860,
+    ]);
+    expect(result.requestedInput.strictSuperSpecialCriteriaCoverage).toBe(true);
+    expect(result.requestedInput.requireLeaderSuperSpecialCriteria).toBe(true);
+    expect(result.input.strictSuperSpecialCriteriaCoverage).toBe(true);
+    expect(result.input.requireLeaderSuperSpecialCriteria).toBe(false);
+    expect(result.input.favoritesOnly).toBe(true);
+    expect(result.relaxation.usedFallback).toBe(true);
+    expect(result.relaxation.droppedTypes).toEqual([]);
+    expect(result.relaxation.droppedClasses).toEqual([]);
+    expect(result.relaxation.ignoredLeaderSuperSpecialCriteria).toBe(true);
+    expect(result.relaxation.ignoredSuperSpecialCriteriaCharacterNames).toEqual([
+      'Manual Blackbeard',
+    ]);
+  });
+
   it('still allows the leader super special fallback when type or class strict mode is enabled', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([
@@ -34356,7 +34472,7 @@ describe('Auto team builder', () => {
     expect(result?.relaxation.droppedClasses).toEqual([]);
   });
 
-  it('relaxes the leader super effect scope filter one matching slot at a time', async () => {
+  it('relaxes the leader super effect scope filter when exact scope coverage blocks the team', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue([
         createLeaderWithSuperEffectScopeRecord(7240, {
@@ -34392,7 +34508,10 @@ describe('Auto team builder', () => {
       requireAllSlotsInLeaderSuperEffectScope: true,
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.requireAllSlotsInLeaderSuperEffectScope).toBe(true);
+    expect(result?.input.requireAllSlotsInLeaderSuperEffectScope).toBe(false);
+    expect(result?.relaxation.ignoredLeaderSuperEffectScope).toBe(true);
   });
 
   it('relaxes an invalid manual friend captain while preserving strict leader super effect scope', async () => {
@@ -34602,7 +34721,7 @@ describe('Auto team builder', () => {
     expect(result?.relaxation.droppedCharacterNames).toEqual(['zoro']);
   });
 
-  it('does not relax filters when any strict toggle is enabled', async () => {
+  it('relaxes selected type filters when a strict selected coverage toggle blocks exact search', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
     };
@@ -34612,7 +34731,9 @@ describe('Auto team builder', () => {
       requireAllSelectedTypesInTeam: true,
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.requestedInput.requireAllSelectedTypesInTeam).toBe(true);
+    expect(result?.relaxation.droppedTypes).toEqual(['INT']);
   });
 
   it('forwards progress snapshots from the worker runtime', async () => {

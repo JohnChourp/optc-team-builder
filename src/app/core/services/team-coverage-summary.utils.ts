@@ -1,5 +1,6 @@
 import {
   type CaptainCoverageTeamCondition,
+  type CaptainCoverageTierKind,
   type CharacterCaptainAbilityCoverageTier,
   type CharacterDetailRecord,
   type CharacterListItem,
@@ -12,12 +13,15 @@ import {
   getCaptainCoverageTiers,
   matchesCaptainCoverageTier,
 } from './captain-coverage-filter.utils';
+import { buildCaptainCoverageTierView } from './captain-coverage-tier-view.utils';
 
 type TeamCoverageCaptureSource = 'both' | 'captain-only' | 'friend-only' | 'none';
 
 interface TeamTierCoverageStatus {
   tier: number;
+  kind: CaptainCoverageTierKind | null;
   scopeLabel: string;
+  conditionLines: string[];
   effectsSummary: string[];
   capturedByCaptain: boolean;
   capturedByFriendCaptain: boolean;
@@ -56,6 +60,7 @@ export function resolveTeamCoverageSummary(input: TeamCoverageInput): TeamCovera
     const captainTier = captainTiers.find((tier) => tier.tier === tierNumber);
     const friendTier = friendTiers.find((tier) => tier.tier === tierNumber);
     const referenceTier = captainTier ?? friendTier ?? null;
+    const referenceTierView = referenceTier ? buildCaptainCoverageTierView(referenceTier) : null;
 
     const capturedByCaptain =
       captainTier !== undefined &&
@@ -66,8 +71,10 @@ export function resolveTeamCoverageSummary(input: TeamCoverageInput): TeamCovera
 
     return {
       tier: tierNumber,
-      scopeLabel: referenceTier ? buildTierScopeLabel(referenceTier) : `Tier ${tierNumber}`,
-      effectsSummary: referenceTier?.clauses ?? [],
+      kind: referenceTierView?.kind ?? null,
+      scopeLabel: referenceTierView?.scopeLabel ?? `Tier ${tierNumber}`,
+      conditionLines: referenceTierView?.conditionLines ?? [],
+      effectsSummary: referenceTierView?.effectClauses ?? [],
       capturedByCaptain,
       capturedByFriendCaptain,
       captureSource: resolveCaptureSource(capturedByCaptain, capturedByFriendCaptain),
@@ -134,6 +141,12 @@ function teamCoversTier(
   ) {
     return false;
   }
+  if (!teamSatisfiesTeamConditions(tier.teamConditions, members)) {
+    return false;
+  }
+  if (tierHasOnlyTeamTargeting(tier)) {
+    return true;
+  }
   const subsetTiers = allTiersInEntry.filter((entry) => !entry.characterConditions.fallbackOther);
   const everyMemberQualifies = members.every((member) =>
     matchesCaptainCoverageTier(tier, member, subsetTiers),
@@ -141,7 +154,27 @@ function teamCoversTier(
   if (!everyMemberQualifies) {
     return false;
   }
-  return teamSatisfiesTeamConditions(tier.teamConditions, members);
+  return true;
+}
+
+function tierHasOnlyTeamTargeting(tier: CharacterCaptainAbilityCoverageTier): boolean {
+  const conditions = tier.characterConditions;
+  const hasSubsetCondition =
+    conditions.types.length > 0 ||
+    conditions.classes.length > 0 ||
+    conditions.characterTags.length > 0 ||
+    conditions.costRange !== undefined ||
+    conditions.rarityRange !== undefined ||
+    conditions.dominantType === true;
+
+  return (
+    tier.teamConditions.length > 0 &&
+    tier.scope === 'none' &&
+    !conditions.universal &&
+    !conditions.fallbackOther &&
+    !conditions.selfOnly &&
+    !hasSubsetCondition
+  );
 }
 
 function teamSatisfiesTeamConditions(
@@ -306,35 +339,4 @@ function resolveMemberTypes(member: CharacterListItem): AutoTeamBuilderType[] {
     .filter((type): type is AutoTeamBuilderType =>
       AUTO_TEAM_BUILDER_TYPES.includes(type as AutoTeamBuilderType),
     );
-}
-
-function buildTierScopeLabel(tier: CharacterCaptainAbilityCoverageTier): string {
-  const fragments: string[] = [];
-  const conditions = tier.characterConditions;
-
-  if (conditions.fallbackOther) {
-    fragments.push('all other characters');
-  } else if (conditions.universal) {
-    fragments.push('all characters');
-  }
-  if (conditions.costRange?.min !== undefined) {
-    fragments.push(`Cost ${conditions.costRange.min}+`);
-  }
-  if (conditions.costRange?.max !== undefined) {
-    fragments.push(`Cost ≤ ${conditions.costRange.max}`);
-  }
-  if (conditions.types.length > 0) {
-    fragments.push(conditions.types.map((type) => `[${type}]`).join(' / '));
-  }
-  if (conditions.dominantType) {
-    fragments.push('Dominant Type');
-  }
-  if (conditions.classes.length > 0) {
-    fragments.push(conditions.classes.join(' / '));
-  }
-  if (conditions.characterTags.length > 0) {
-    fragments.push(conditions.characterTags.map((tag) => `[${tag}]`).join(' / '));
-  }
-
-  return fragments.length > 0 ? fragments.join(' · ') : `Tier ${tier.tier}`;
 }

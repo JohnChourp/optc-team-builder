@@ -77,18 +77,6 @@
                 {{ selectAllTypesButtonLabel() }}
               </ion-button>
             </div>
-            <div class="strict-toggle-row strict-toggle-row--filter">
-              <div class="strict-toggle-copy">
-                <strong>{{ typeStrictToggleLabel() }}</strong>
-                <small>{{ typeSupportLabel() }}</small>
-              </div>
-              <ion-toggle
-                color="warning"
-                [checked]="requireAllSelectedTypesInTeam()"
-                [disabled]="building()"
-                (ionChange)="onRequireAllSelectedTypesToggle($event)"
-              ></ion-toggle>
-            </div>
           </div>
 
           <div class="class-select-card">
@@ -133,18 +121,6 @@
               >
                 {{ selectAllClassesButtonLabel() }}
               </ion-button>
-            </div>
-            <div class="strict-toggle-row strict-toggle-row--filter">
-              <div class="strict-toggle-copy">
-                <strong>{{ classStrictToggleLabel() }}</strong>
-                <small>{{ classSupportLabel() }}</small>
-              </div>
-              <ion-toggle
-                color="warning"
-                [checked]="requireAllSelectedClassesPerCharacter()"
-                [disabled]="building()"
-                (ionChange)="onRequireAllSelectedClassesToggle($event)"
-              ></ion-toggle>
             </div>
           </div>
 
@@ -196,18 +172,6 @@
                 }
               </div>
             }
-            <div class="strict-toggle-row strict-toggle-row--filter">
-              <div class="strict-toggle-copy">
-                <strong>{{ characterTagStrictToggleLabel() }}</strong>
-                <small>{{ characterTagSupportLabel() }}</small>
-              </div>
-              <ion-toggle
-                color="warning"
-                [checked]="requireAllSelectedCharacterTagsInTeam()"
-                [disabled]="building()"
-                (ionChange)="onRequireAllSelectedCharacterTagsToggle($event)"
-              ></ion-toggle>
-            </div>
           </div>
 
           <div class="character-filter-card">
@@ -255,18 +219,6 @@
                 {{ t('filters.characterRequirements.actions.open') }}
               </ion-button>
             </div>
-            <div class="strict-toggle-row strict-toggle-row--filter">
-              <div class="strict-toggle-copy">
-                <strong>{{ characterNameStrictToggleLabel() }}</strong>
-                <small>{{ characterNameSupportLabel() }}</small>
-              </div>
-              <ion-toggle
-                color="warning"
-                [checked]="requireAllSelectedCharacterNamesInTeam()"
-                [disabled]="building()"
-                (ionChange)="onRequireAllSelectedCharacterNamesToggle($event)"
-              ></ion-toggle>
-            </div>
           </div>
         </div>
 
@@ -312,30 +264,6 @@
             </div>
           </div>
 
-          <div class="strict-toggle-row strict-toggle-row--select strict-toggle-row--total-cost">
-            <div class="strict-toggle-copy">
-              <strong>{{ t('filters.totalCost.label') }}</strong>
-              <small>{{ manualTeamCostBudgetSupportLabel() }}</small>
-            </div>
-            <ion-input
-              type="number"
-              inputmode="numeric"
-              min="0"
-              step="1"
-              fill="outline"
-              [label]="t('filters.totalCost.range.max')"
-              labelPlacement="stacked"
-              [value]="maxTotalCost()"
-              [disabled]="building()"
-              (ionInput)="onMaxTotalCostChange($event)"
-            ></ion-input>
-            @if (manualTeamCostBudgetErrorLabel()) {
-              <small class="cost-range-error">
-                {{ manualTeamCostBudgetErrorLabel() }}
-              </small>
-            }
-          </div>
-
           <div class="strict-toggle-row strict-toggle-row--select">
             <div class="strict-toggle-copy">
               <strong>{{ t('filters.characterBox.label') }}</strong>
@@ -362,85 +290,6 @@
             </ion-select>
           </div>
 
-          <div class="strict-toggle-row strict-toggle-row--select strict-toggle-row--cost">
-            <div class="strict-toggle-copy">
-              <strong>{{ t('filters.cost.label') }}</strong>
-              <small>{{ t('filters.cost.support') }}</small>
-            </div>
-            <div class="cost-scope-grid">
-              <div class="strict-toggle-copy cost-scope-copy">
-                <strong>{{ t('filters.cost.leaders.label') }}</strong>
-                <small>{{ leaderCostRangeSupportLabel() }}</small>
-              </div>
-              <div class="cost-range-grid">
-                <ion-input
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  step="1"
-                  fill="outline"
-                  [label]="t('filters.cost.leaders.range.min')"
-                  labelPlacement="stacked"
-                  [value]="leaderCostRange().min"
-                  [disabled]="building()"
-                  (ionInput)="onLeaderCostRangeChange('min', $event)"
-                ></ion-input>
-                <ion-input
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  step="1"
-                  fill="outline"
-                  [label]="t('filters.cost.leaders.range.max')"
-                  labelPlacement="stacked"
-                  [value]="leaderCostRange().max"
-                  [disabled]="building()"
-                  (ionInput)="onLeaderCostRangeChange('max', $event)"
-                ></ion-input>
-              </div>
-              @if (leaderCostRangeErrorLabel()) {
-                <small class="cost-range-error">
-                  {{ leaderCostRangeErrorLabel() }}
-                </small>
-              }
-
-              <div class="strict-toggle-copy cost-scope-copy">
-                <strong>{{ t('filters.cost.subs.label') }}</strong>
-                <small>{{ subCostRangeSupportLabel() }}</small>
-              </div>
-              <div class="cost-range-grid">
-                <ion-input
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  step="1"
-                  fill="outline"
-                  [label]="t('filters.cost.subs.range.min')"
-                  labelPlacement="stacked"
-                  [value]="subCostRange().min"
-                  [disabled]="building()"
-                  (ionInput)="onSubCostRangeChange('min', $event)"
-                ></ion-input>
-                <ion-input
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  step="1"
-                  fill="outline"
-                  [label]="t('filters.cost.subs.range.max')"
-                  labelPlacement="stacked"
-                  [value]="subCostRange().max"
-                  [disabled]="building()"
-                  (ionInput)="onSubCostRangeChange('max', $event)"
-                ></ion-input>
-              </div>
-              @if (subCostRangeErrorLabel()) {
-                <small class="cost-range-error">
-                  {{ subCostRangeErrorLabel() }}
-                </small>
-              }
-            </div>
-          </div>
         </div>
 
         <ion-modal
@@ -2247,6 +2096,35 @@
             </div>
           </section>
         }
+        <section class="glass-card report-card">
+          <div class="slot-grid__header">
+            <h2>{{ t('report.title') }}</h2>
+            <p>{{ t('report.copy') }}</p>
+          </div>
+          <div class="coverage-groups report-groups">
+            @for (row of finalReportRows(); track row.key) {
+              <div class="report-row">
+                <span>{{ row.title }}</span>
+                <div class="chip-row">
+                  <small
+                    class="coverage-chip report-state-chip"
+                    [class.report-state-chip--passed]="row.state === 'passed'"
+                    [class.report-state-chip--relaxed]="row.state === 'relaxed'"
+                    [class.report-state-chip--not-applicable]="row.state === 'notApplicable'"
+                  >
+                    {{ row.stateLabel }}
+                  </small>
+                  <small
+                    class="coverage-chip report-detail-chip"
+                    [class.fallback-chip]="row.state === 'relaxed'"
+                  >
+                    {{ row.detail }}
+                  </small>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
         <section class="summary-grid">
           <article class="glass-card summary-card">
             <span>{{ t('summary.requestedClasses') }}</span>

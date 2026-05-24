@@ -619,6 +619,64 @@
     "ignoredSuperTandemCriteriaWithNames": "Το Super Tandem δεν θα ενεργοποιηθεί για: {{names}}",
     "title": "Χρησιμοποιήθηκε relaxed fallback"
   },
+  "report": {
+    "copy": "Δείχνει ποια synergy rules ακολουθεί η τελική ομάδα και ποια έγιναν relaxed αφού απέτυχε το exact search.",
+    "rules": {
+      "captainAbility": {
+        "notApplicable": "Δεν ζητήθηκε Captain Ability tier coverage.",
+        "passed": "Η ομάδα περνάει πλήρως το Captain Ability tier coverage.",
+        "relaxed": "Η ομάδα δεν περνάει πλήρως το Captain Ability tier coverage.",
+        "relaxedWithMissing": "Η ομάδα δεν περνάει πλήρως το Captain Ability tier coverage: {{missing}}",
+        "title": "Captain Ability tier coverage"
+      },
+      "characterNames": {
+        "notApplicable": "Δεν ζητήθηκε selected character name coverage.",
+        "passed": "Η ομάδα ακολουθεί το selected character name coverage: {{value}}.",
+        "relaxed": "Η ομάδα δεν ακολουθεί πλήρως το selected character name coverage. Ζητήθηκε: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
+        "title": "Selected character name coverage"
+      },
+      "characterTags": {
+        "notApplicable": "Δεν ζητήθηκε selected character tag coverage.",
+        "passed": "Η ομάδα ακολουθεί το selected character tag coverage: {{value}}.",
+        "relaxed": "Η ομάδα δεν ακολουθεί πλήρως το selected character tag coverage. Ζητήθηκε: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
+        "title": "Selected character tag coverage"
+      },
+      "classes": {
+        "notApplicable": "Δεν ζητήθηκε selected class coverage.",
+        "passed": "Η ομάδα ακολουθεί το selected class coverage: {{value}}.",
+        "relaxed": "Η ομάδα δεν ακολουθεί πλήρως το selected class coverage. Ζητήθηκε: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
+        "title": "Selected class coverage"
+      },
+      "leaderSuperScope": {
+        "notApplicable": "Δεν ζητήθηκε Leader Super Type/Class scope.",
+        "passed": "Η ομάδα ακολουθεί πλήρως το Leader Super Type/Class scope.",
+        "relaxed": "Η ομάδα δεν ακολουθεί πλήρως το Leader Super Type/Class scope.",
+        "title": "Leader Super Type/Class scope"
+      },
+      "superSpecial": {
+        "notApplicable": "Δεν ζητήθηκαν Super Special criteria.",
+        "passed": "Τα Super Special criteria καλύπτονται για το final team.",
+        "title": "Super Special criteria"
+      },
+      "superTandem": {
+        "notApplicable": "Δεν ζητήθηκαν Super Tandem criteria.",
+        "passed": "Τα Super Tandem criteria καλύπτονται για το final team.",
+        "title": "Super Tandem criteria"
+      },
+      "types": {
+        "notApplicable": "Δεν ζητήθηκε selected type coverage.",
+        "passed": "Η ομάδα ακολουθεί το selected type coverage: {{value}}.",
+        "relaxed": "Η ομάδα δεν ακολουθεί πλήρως το selected type coverage. Ζητήθηκε: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
+        "title": "Selected type coverage"
+      }
+    },
+    "states": {
+      "notApplicable": "Δεν εφαρμόζεται",
+      "passed": "Πέρασε",
+      "relaxed": "Relaxed"
+    },
+    "title": "Τελικό report ομάδας"
+  },
   "summary": {
     "burstCoverage": "Burst coverage",
     "candidatePool": "Candidate pool",

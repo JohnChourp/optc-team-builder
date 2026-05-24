@@ -466,6 +466,140 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('shows passed and not-applicable rows in the final team report for exact builds', async () => {
+    const { page } = await createPage();
+    const captainAbilityText =
+      'Boosts ATK of DEX and PSY characters by 5x and HP by 1.3x.';
+    const captain = createCharacterRecord(101);
+    const friendCaptain = createCharacterRecord(102);
+    const sub1 = createCharacterRecord(103);
+    const sub2 = createCharacterRecord(104);
+    const sub3 = createCharacterRecord(105);
+    const sub4 = createCharacterRecord(106);
+    captain.detail.captainAbility = captainAbilityText;
+    friendCaptain.detail.captainAbility = captainAbilityText;
+    captain.detail.captainAbilityVariants = [
+      { key: 'base', label: 'Base Captain Ability', text: captainAbilityText },
+    ];
+    friendCaptain.detail.captainAbilityVariants = [
+      { key: 'base', label: 'Base Captain Ability', text: captainAbilityText },
+    ];
+    const result = createAutoBuildResult([
+      { role: 'captain', character: captain, reasonChips: ['Captain slot'] },
+      {
+        role: 'friendCaptain',
+        character: friendCaptain,
+        reasonChips: ['Friend captain slot'],
+      },
+      { role: 'sub', character: sub1, reasonChips: ['Burst'] },
+      { role: 'sub', character: sub2, reasonChips: ['Utility'] },
+      { role: 'sub', character: sub3, reasonChips: ['Consistency'] },
+      { role: 'sub', character: sub4, reasonChips: ['Damage'] },
+    ]);
+
+    page.result.set({
+      ...result,
+      input: {
+        ...result.input,
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        requireFullCaptainAbilityCoverage: true,
+        requireLeaderSuperSpecialCriteria: true,
+        requireSuperTandemCriteria: true,
+      },
+      requestedInput: {
+        ...result.requestedInput,
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        requireFullCaptainAbilityCoverage: true,
+        requireLeaderSuperSpecialCriteria: true,
+        requireSuperTandemCriteria: true,
+      },
+    });
+
+    const rows = page.finalReportRows();
+    const byKey = new Map(rows.map((row) => [row.key, row]));
+
+    expect(byKey.get('types')).toMatchObject({ state: 'passed' });
+    expect(byKey.get('classes')).toMatchObject({ state: 'passed' });
+    expect(byKey.get('leaderSuperScope')).toMatchObject({ state: 'passed' });
+    expect(byKey.get('captainAbility')).toMatchObject({ state: 'passed' });
+    expect(byKey.get('superSpecial')).toMatchObject({ state: 'passed' });
+    expect(byKey.get('superTandem')).toMatchObject({ state: 'passed' });
+    expect(byKey.get('characterTags')).toMatchObject({ state: 'notApplicable' });
+    expect(byKey.get('characterNames')).toMatchObject({ state: 'notApplicable' });
+  });
+
+  it('shows relaxed rows in the final team report when fallback ignores synergy rules', async () => {
+    const { page } = await createPage();
+    const result = createAutoBuildResult();
+
+    page.result.set({
+      ...result,
+      input: {
+        ...result.input,
+        types: ['DEX'],
+        selectedClasses: ['Fighter'],
+        selectedCharacterTags: [],
+        selectedCharacterNames: [],
+        requireAllSlotsInLeaderSuperEffectScope: false,
+        requireFullCaptainAbilityCoverage: true,
+        allowPartialCaptainAbilityCoverage: true,
+        requireLeaderSuperSpecialCriteria: false,
+        requireSuperTandemCriteria: false,
+      },
+      requestedInput: {
+        ...result.requestedInput,
+        types: ['DEX', 'INT'],
+        selectedClasses: ['Fighter', 'Shooter'],
+        selectedCharacterTags: ['Minks'],
+        selectedCharacterNames: ['zoro'],
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        requireFullCaptainAbilityCoverage: true,
+        requireLeaderSuperSpecialCriteria: true,
+        requireSuperTandemCriteria: true,
+      },
+      relaxation: {
+        ...result.relaxation,
+        usedFallback: true,
+        droppedTypes: ['INT'],
+        droppedClasses: ['Shooter'],
+        droppedCharacterTags: ['Minks'],
+        droppedCharacterNames: ['zoro'],
+        ignoredLeaderSuperEffectScope: true,
+        ignoredCaptainAbilityCoverage: true,
+        ignoredLeaderSuperSpecialCriteria: true,
+        ignoredSuperSpecialCriteriaCharacterNames: ['Luffy'],
+        ignoredSuperTandemCriteria: true,
+        ignoredSuperTandemCriteriaCharacterNames: ['Zoro'],
+      },
+    });
+
+    const byKey = new Map(page.finalReportRows().map((row) => [row.key, row]));
+
+    expect(byKey.get('types')).toMatchObject({
+      state: 'relaxed',
+      detail: expect.stringContaining('Team does not fully follow selected type coverage'),
+    });
+    expect(byKey.get('classes')).toMatchObject({ state: 'relaxed' });
+    expect(byKey.get('characterTags')).toMatchObject({ state: 'relaxed' });
+    expect(byKey.get('characterNames')).toMatchObject({ state: 'relaxed' });
+    expect(byKey.get('leaderSuperScope')).toMatchObject({
+      state: 'relaxed',
+      detail: 'Team does not fully follow Leader Super Type/Class scope.',
+    });
+    expect(byKey.get('captainAbility')).toMatchObject({
+      state: 'relaxed',
+      detail: expect.stringContaining('Team does not fully pass Captain Ability tier coverage'),
+    });
+    expect(byKey.get('superSpecial')).toMatchObject({
+      state: 'relaxed',
+      detail: 'Super Special will not activate for: Luffy',
+    });
+    expect(byKey.get('superTandem')).toMatchObject({
+      state: 'relaxed',
+      detail: 'Super Tandem will not activate for: Zoro',
+    });
+  });
+
   it('disables builds when a leader boost range minimum is greater than maximum', async () => {
     const { page } = await createPage();
 
@@ -486,7 +620,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('passes scoped cost ranges to the builder and resets them', async () => {
+  it('clears deprecated scoped cost ranges before building and resets them', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
     await page.ngOnInit();
@@ -514,9 +648,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       expect.any(Array),
       expect.any(Array),
       expect.objectContaining({
-        leaderCostRange: { min: 20, max: 60 },
-        subCostRange: { min: 10, max: 40 },
-        maxTotalCost: 300,
+        leaderCostRange: createEmptyAutoBuildCostRange(),
+        subCostRange: createEmptyAutoBuildCostRange(),
+        maxTotalCost: null,
       }),
       expect.any(Object),
     );
@@ -527,7 +661,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.maxTotalCost()).toBeNull();
   });
 
-  it('disables builds when a scoped cost range minimum is greater than maximum', async () => {
+  it('ignores stale scoped cost range validation when deciding build availability', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
@@ -541,7 +675,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     } as CustomEvent<{ value: string }>);
 
     expect(page.hasInvalidLeaderCostRange()).toBe(true);
-    expect(page.buildDisabled()).toBe(true);
+    expect(page.buildDisabled()).toBe(false);
     expect(page.leaderCostRangeErrorLabel()).toBe(
       'Minimum leader cost cannot be greater than maximum leader cost.',
     );
@@ -2695,6 +2829,19 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).not.toContain('<app-ship-picker');
     expect(template).not.toContain('leaderSuperEffectScopeToggleLabel()');
+    expect(template).not.toContain('typeStrictToggleLabel()');
+    expect(template).not.toContain('classStrictToggleLabel()');
+    expect(template).not.toContain('characterTagStrictToggleLabel()');
+    expect(template).not.toContain('characterNameStrictToggleLabel()');
+    expect(template).not.toContain('onRequireAllSelectedTypesToggle');
+    expect(template).not.toContain('onRequireAllSelectedClassesToggle');
+    expect(template).not.toContain('onRequireAllSelectedCharacterTagsToggle');
+    expect(template).not.toContain('onRequireAllSelectedCharacterNamesToggle');
+    expect(template).not.toContain("t('filters.cost.label')");
+    expect(template).not.toContain("t('filters.totalCost.label')");
+    expect(template).not.toContain('onLeaderCostRangeChange');
+    expect(template).not.toContain('onSubCostRangeChange');
+    expect(template).not.toContain('onMaxTotalCostChange');
     expect(template).toContain('allowAnyFriendCaptainAutoFillToggleLabel()');
     expect(template).toContain('(ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
@@ -3970,7 +4117,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ).toEqual([706, 705, 704, 703, 702, 701]);
   });
 
-  it('marks manual candidates that do not fit the remaining max total cost as blocked', async () => {
+  it('keeps manual candidates selectable when stale max total cost state is present', async () => {
     const { page } = await createPage();
     const captain = createCharacterRecord(801, 'Budget Captain');
     const cheapSub = createCharacterRecord(802, 'Cheap Sub');
@@ -3995,7 +4142,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       })),
     ).toEqual([
       { id: 802, selectable: true },
-      { id: 803, selectable: false },
+      { id: 803, selectable: true },
     ]);
   });
 
@@ -4835,7 +4982,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
         requiredCharacterGroups: [],
         enemyMechanics: [],
         requireAllSelectedTypesInTeam: true,
-        requireAllSelectedClassesPerCharacter: true,
+        requireAllSelectedClassesPerCharacter: false,
         requireAllSelectedCharacterTagsInTeam: false,
         requireAllSelectedCharacterNamesInTeam: false,
         requireAllSlotsInLeaderSuperEffectScope: true,
@@ -5104,8 +5251,8 @@ describe('AutoTeamBuilder preset export helpers', () => {
     expect(payload.filters.selectedCharacterNames).toEqual(['zoro', 'luffy']);
     expect(result.state.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
     expect(result.state.selectedCharacterNames).toEqual(['zoro', 'luffy']);
-    expect(result.state.requireAllSelectedCharacterTagsInTeam).toBe(true);
-    expect(result.state.requireAllSelectedCharacterNamesInTeam).toBe(true);
+    expect(result.state.requireAllSelectedCharacterTagsInTeam).toBe(false);
+    expect(result.state.requireAllSelectedCharacterNamesInTeam).toBe(false);
   });
 
   it('defaults missing character tag and name preset fields for legacy imports', () => {
@@ -5179,7 +5326,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
     });
   });
 
-  it('exports leader boost, scoped cost ranges, max total cost, and required manual picks in schema 27 presets', () => {
+  it('exports leader boost, cleared cost ranges, and required manual picks in schema 27 presets', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -5220,9 +5367,9 @@ describe('AutoTeamBuilder preset export helpers', () => {
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
     });
-    expect(payload.filters.leaderCostRange).toEqual({ min: 20, max: 60 });
-    expect(payload.filters.subCostRange).toEqual({ min: 10, max: 40 });
-    expect(payload.filters.maxTotalCost).toBe(300);
+    expect(payload.filters.leaderCostRange).toEqual(createEmptyAutoBuildCostRange());
+    expect(payload.filters.subCostRange).toEqual(createEmptyAutoBuildCostRange());
+    expect(payload.filters.maxTotalCost).toBeNull();
     expect(payload.manualSelection.manualSlots.find((slot) => slot.role === 'captain')).toEqual({
       role: 'captain',
       characterIds: [201],
@@ -5613,7 +5760,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
     });
   });
 
-  it('restores scoped cost ranges from imported presets', () => {
+  it('clears scoped cost ranges from imported presets', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -5647,9 +5794,9 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(result.state.leaderCostRange).toEqual({ min: 20, max: 60 });
-    expect(result.state.subCostRange).toEqual({ min: 10, max: 40 });
-    expect(result.state.maxTotalCost).toBe(300);
+    expect(result.state.leaderCostRange).toEqual(createEmptyAutoBuildCostRange());
+    expect(result.state.subCostRange).toEqual(createEmptyAutoBuildCostRange());
+    expect(result.state.maxTotalCost).toBeNull();
   });
 
   it('round-trips global captain-source required ability requirements in presets', () => {
@@ -5727,7 +5874,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
     expect(result.state.battleRequirements).toEqual([]);
   });
 
-  it('restores legacy cost range imports into both scoped cost ranges', () => {
+  it('clears legacy cost range imports instead of restoring hidden constraints', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
       selectedClasses: ['Fighter'],
@@ -5771,8 +5918,8 @@ describe('AutoTeamBuilder preset import helpers', () => {
       },
     );
 
-    expect(result.state.leaderCostRange).toEqual({ min: 20, max: 60 });
-    expect(result.state.subCostRange).toEqual({ min: 20, max: 60 });
+    expect(result.state.leaderCostRange).toEqual(createEmptyAutoBuildCostRange());
+    expect(result.state.subCostRange).toEqual(createEmptyAutoBuildCostRange());
   });
 
   it('defaults missing legacy preset character counts to 1', () => {
@@ -6407,8 +6554,10 @@ describe('AutoTeamBuilderPage preset import state', () => {
     );
     expect(page.effectiveCaptainLeaderId()).toBe(102);
     expect(page.effectiveFriendLeaderId()).toBe(101);
-    expect(page.requireAllSelectedTypesInTeam()).toBe(true);
-    expect(page.requireAllSelectedClassesPerCharacter()).toBe(true);
+    expect(page.requireAllSelectedTypesInTeam()).toBe(false);
+    expect(page.requireAllSelectedClassesPerCharacter()).toBe(false);
+    expect(page.derivedRequireAllSelectedTypesInTeam()).toBe(true);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
     expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(true);
     expect(page.requireFullCaptainAbilityCoverage()).toBe(true);
     expect(page.requireBothLeadersFullCaptainAbilityCoverage()).toBe(true);
@@ -6524,7 +6673,8 @@ describe('AutoTeamBuilderPage preset import state', () => {
 
     expect(page.selectedTypes()).toEqual(['DEX']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
-    expect(page.requireAllSelectedTypesInTeam()).toBe(true);
+    expect(page.requireAllSelectedTypesInTeam()).toBe(false);
+    expect(page.derivedRequireAllSelectedTypesInTeam()).toBe(true);
     expect(page.manualSlots()).toEqual(
       createManualSlots({
         captain: [101],
@@ -6773,8 +6923,10 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
         requiredCharacterCount: 1,
       },
     ]);
-    expect(page.requireAllSelectedTypesInTeam()).toBe(true);
+    expect(page.requireAllSelectedTypesInTeam()).toBe(false);
+    expect(page.derivedRequireAllSelectedTypesInTeam()).toBe(true);
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(false);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
     expect(page.requireBothLeadersFullCaptainAbilityCoverage()).toBe(true);
     expect(page.requireSuperSpecialCriteriaCoverage()).toBe(true);
     expect(page.requireSuperTandemCriteriaCoverage()).toBe(true);
@@ -6828,7 +6980,7 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
           },
         ],
         requireAllSelectedTypesInTeam: true,
-        requireAllSelectedClassesPerCharacter: false,
+        requireAllSelectedClassesPerCharacter: true,
         requireBothLeadersFullCaptainAbilityCoverage: true,
         strictSuperSpecialCriteriaCoverage: true,
         strictSuperTandemCriteriaCoverage: true,

@@ -8,5 +8,11 @@
     "friendOnly": "Friend",
     "none": "Not covered"
   },
+  "tierKinds": {
+    "baseline": "Baseline",
+    "unconditional-top": "Top",
+    "conditional": "Conditional",
+    "baseline-and-conditional": "Mixed"
+  },
   "pendingConditions": "Pending in-fight: {{conditions}}"
 }

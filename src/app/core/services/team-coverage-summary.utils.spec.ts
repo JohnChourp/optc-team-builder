@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -160,6 +163,47 @@ describe('resolveTeamCoverageSummary', () => {
     expect(tier2Full?.captureSource).toBe('both');
   });
 
+  it('covers team-only conditional tiers when their crew condition is satisfied', () => {
+    const captain = createCharacter({
+      id: 4561,
+      captainAbilityCoverage: buildTeamOnlyFreeSpiritCoverage(),
+    });
+    const fullFreeSpiritTeam = Array.from({ length: 6 }, (_, i) =>
+      createCharacter({ id: 8400 + i, classes: ['Free Spirit'] }),
+    );
+    const partialFreeSpiritTeam = [
+      ...Array.from({ length: 3 }, (_, i) =>
+        createCharacter({ id: 8500 + i, classes: ['Free Spirit'] }),
+      ),
+      ...Array.from({ length: 3 }, (_, i) =>
+        createCharacter({ id: 8510 + i, classes: ['Fighter'] }),
+      ),
+    ];
+
+    const coveredSummary = resolveTeamCoverageSummary({
+      captain,
+      friendCaptain: captain,
+      members: fullFreeSpiritTeam,
+    });
+    const coveredTier = coveredSummary.tiers.find((tier) => tier.tier === 2);
+
+    expect(coveredTier).toMatchObject({
+      kind: 'conditional',
+      scopeLabel: 'Tier 2',
+      conditionLines: ['Team: crew has 4+ Free Spirit characters'],
+      effectsSummary: ['reduces Special Use Limit duration by 10 turns'],
+      captureSource: 'both',
+    });
+
+    const uncoveredTier = resolveTeamCoverageSummary({
+      captain,
+      friendCaptain: captain,
+      members: partialFreeSpiritTeam,
+    }).tiers.find((tier) => tier.tier === 2);
+
+    expect(uncoveredTier?.captureSource).toBe('none');
+  });
+
   it('requires all slots to share one type for Dominant Type target coverage', () => {
     const captain = createCharacter({
       id: 4574,
@@ -231,6 +275,25 @@ describe('resolveTeamCoverageSummary', () => {
       }).tiers[0]?.captureSource,
     ).toBe('both');
   });
+
+  it('renders tier kind and tier condition lines in the shared summary panel', () => {
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/shared/team-coverage-summary/team-coverage-summary.component.html'),
+      'utf8',
+    );
+    const englishTranslations = JSON.parse(
+      readFileSync(resolve(process.cwd(), 'public/i18n/team-coverage-summary/en.json'), 'utf8'),
+    ) as { tierKinds?: Record<string, string> };
+    const greekTranslations = JSON.parse(
+      readFileSync(resolve(process.cwd(), 'public/i18n/team-coverage-summary/el.json'), 'utf8'),
+    ) as { tierKinds?: Record<string, string> };
+
+    expect(template).toContain("t('tierKinds.' + kind)");
+    expect(template).toContain('tier.conditionLines');
+    expect(template).toContain('team-coverage-summary__conditions');
+    expect(englishTranslations.tierKinds?.['conditional']).toBe('Conditional');
+    expect(greekTranslations.tierKinds?.['conditional']).toBe('Υπό συνθήκη');
+  });
 });
 
 function buildImuCoverage(): CharacterCaptainAbilityCoverage {
@@ -300,6 +363,63 @@ function buildImuCoverage(): CharacterCaptainAbilityCoverage {
       atkBoost: 6.5,
     },
   ];
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers,
+      },
+    ],
+  };
+}
+
+function buildTeamOnlyFreeSpiritCoverage(): CharacterCaptainAbilityCoverage {
+  const tiers: CharacterCaptainAbilityCoverageTier[] = [
+    {
+      tier: 1,
+      kind: 'baseline',
+      scope: 'subset',
+      characterConditions: {
+        universal: false,
+        fallbackOther: false,
+        selfOnly: false,
+        types: ['QCK'],
+        classes: ['Free Spirit'],
+        characterTags: [],
+      },
+      teamConditions: [],
+      fieldConditions: [],
+      triggerConditions: [],
+      clauses: ['Boosts ATK of [QCK] and Free Spirit characters by 6x'],
+      atkBoost: 6,
+    },
+    {
+      tier: 2,
+      kind: 'conditional',
+      scope: 'none',
+      characterConditions: {
+        universal: false,
+        fallbackOther: false,
+        selfOnly: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+      },
+      teamConditions: [
+        {
+          kind: 'crew-composition',
+          minCount: 4,
+          classes: ['Free Spirit'],
+          rawClause: 'crew has 4+ Free Spirit characters',
+        },
+      ],
+      fieldConditions: [],
+      triggerConditions: [],
+      clauses: ['reduces Special Use Limit duration by 10 turns'],
+    },
+  ];
+
   return {
     entries: [
       {

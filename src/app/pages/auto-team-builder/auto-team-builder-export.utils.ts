@@ -551,36 +551,6 @@ function normalizeLeaderBoostRangeBound(value: unknown): number | null {
   return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : null;
 }
 
-function normalizeCostRange(value: unknown): AutoBuildCostRange {
-  const normalizedRange = createEmptyAutoBuildCostRange();
-  const source = isRecord(value) ? value : {};
-
-  normalizedRange.min = normalizeCostRangeBound(source['min']);
-  normalizedRange.max = normalizeCostRangeBound(source['max']);
-
-  return normalizedRange;
-}
-
-function normalizeCostRangeBound(value: unknown): number | null {
-  if (value === null || value === undefined || value === '') {
-    return null;
-  }
-
-  const parsedValue = Number(value);
-
-  return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
-}
-
-function normalizeMaxTotalCost(value: unknown): number | null {
-  if (value === null || value === undefined || value === '') {
-    return null;
-  }
-
-  const parsedValue = Number(value);
-
-  return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
-}
-
 function isLeaderBoostRangesShape(value: unknown): boolean {
   if (value === undefined) {
     return true;
@@ -1459,16 +1429,6 @@ export function sanitizeAutoTeamSelectionImportPayload(
   );
   const leaderBoostFilters = normalizeLeaderBoostFilters(payload.filters.leaderBoostFilters);
   const leaderBoostRanges = normalizeLeaderBoostRanges(payload.filters.leaderBoostRanges);
-  const costRange = normalizeCostRange(payload.filters.costRange);
-  const leaderCostRange =
-    payload.filters.leaderCostRange !== undefined
-      ? normalizeCostRange(payload.filters.leaderCostRange)
-      : { ...costRange };
-  const subCostRange =
-    payload.filters.subCostRange !== undefined
-      ? normalizeCostRange(payload.filters.subCostRange)
-      : { ...costRange };
-  const maxTotalCost = normalizeMaxTotalCost(payload.filters.maxTotalCost);
 
   return {
     state: {
@@ -1480,12 +1440,10 @@ export function sanitizeAutoTeamSelectionImportPayload(
       requiredCharacterGroups: normalizedBattleRequirements.length ? [] : requiredCharacterGroups,
       battleRequirements: normalizedBattleRequirements,
       enemyMechanics,
-      requireAllSelectedTypesInTeam: payload.filters.requireAllSelectedTypesInTeam,
-      requireAllSelectedClassesPerCharacter: payload.filters.requireAllSelectedClassesPerCharacter,
-      requireAllSelectedCharacterTagsInTeam:
-        payload.filters.requireAllSelectedCharacterTagsInTeam === true,
-      requireAllSelectedCharacterNamesInTeam:
-        payload.filters.requireAllSelectedCharacterNamesInTeam === true,
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSelectedCharacterTagsInTeam: false,
+      requireAllSelectedCharacterNamesInTeam: false,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage: payload.filters.requireFullCaptainAbilityCoverage === true,
       requireBothLeadersFullCaptainAbilityCoverage:
@@ -1500,9 +1458,9 @@ export function sanitizeAutoTeamSelectionImportPayload(
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
       leaderBoostFilters,
       leaderBoostRanges,
-      leaderCostRange,
-      subCostRange,
-      maxTotalCost,
+      leaderCostRange: createEmptyAutoBuildCostRange(),
+      subCostRange: createEmptyAutoBuildCostRange(),
+      maxTotalCost: null,
       manualSlots: normalizedManualSlots,
       lockedCharacterIds: derivedManualSelection.lockedCharacterIds,
       excludedCharacterIds,
@@ -1584,10 +1542,6 @@ export function buildAutoTeamSelectionExportPayload({
   favoriteShipCount = 0,
   leaderBoostFilters = [...AUTO_BUILD_LEADER_BOOST_FILTERS],
   leaderBoostRanges = createEmptyAutoBuildLeaderBoostRanges(),
-  costRange = createEmptyAutoBuildCostRange(),
-  leaderCostRange = costRange,
-  subCostRange = costRange,
-  maxTotalCost = null,
   manualSlots,
   lockedCharacterIds,
   lockedCharacters,
@@ -1663,10 +1617,10 @@ export function buildAutoTeamSelectionExportPayload({
       favoriteShipCount,
       leaderBoostFilters: normalizeLeaderBoostFilters(leaderBoostFilters),
       leaderBoostRanges: normalizeLeaderBoostRanges(leaderBoostRanges),
-      costRange: normalizeCostRange(costRange),
-      leaderCostRange: normalizeCostRange(leaderCostRange),
-      subCostRange: normalizeCostRange(subCostRange),
-      maxTotalCost: normalizeMaxTotalCost(maxTotalCost),
+      costRange: createEmptyAutoBuildCostRange(),
+      leaderCostRange: createEmptyAutoBuildCostRange(),
+      subCostRange: createEmptyAutoBuildCostRange(),
+      maxTotalCost: null,
     },
     manualSelection: {
       manualSlots: normalizedManualSlots,

@@ -52,6 +52,7 @@ import {
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_TEAM_CANDIDATE_LIMIT,
+  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildLeaderBoostFilter,
   type AutoBuildLeaderBoostRange,
@@ -190,6 +191,15 @@ import {
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback' | 'warning';
+type AutoBuildFinalReportState = 'passed' | 'relaxed' | 'notApplicable';
+
+interface AutoBuildFinalReportRow {
+  key: string;
+  title: string;
+  detail: string;
+  state: AutoBuildFinalReportState;
+  stateLabel: string;
+}
 
 interface LoadingProgressRow {
   key:
@@ -1141,16 +1151,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.building() ||
       this.buildBlockedByCharacterScope() ||
       this.buildBlockedByFavorites() ||
-      this.hasInvalidLeaderBoostRanges() ||
-      this.hasInvalidCostRanges(),
+      this.hasInvalidLeaderBoostRanges(),
   );
   public readonly hasStrictFilters = computed(
-    () =>
-      this.requireAllSelectedTypesInTeam() ||
-      this.requireAllSelectedClassesPerCharacter() ||
-      this.requireAllSelectedCharacterTagsInTeam() ||
-      this.requireAllSelectedCharacterNamesInTeam() ||
-      this.requireAllSlotsInLeaderSuperEffectScope(),
+    () => this.requireAllSlotsInLeaderSuperEffectScope(),
   );
   public readonly allClassesSelected = computed(
     () =>
@@ -1159,6 +1163,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly allTypesSelected = computed(
     () => this.selectedTypes().length === this.availableTypes.length,
+  );
+  public readonly derivedRequireAllSelectedTypesInTeam = computed(() =>
+    this.shouldRequireExactSelectedTypeCoverage(),
+  );
+  public readonly derivedRequireAllSelectedClassesPerCharacter = computed(() =>
+    this.shouldRequireExactSelectedClassCoverage(),
+  );
+  public readonly derivedRequireAllSelectedCharacterTagsInTeam = computed(
+    () => this.selectedCharacterTags().length > 0,
+  );
+  public readonly derivedRequireAllSelectedCharacterNamesInTeam = computed(
+    () => this.selectedCharacterNames().length > 0,
   );
   public readonly teamStructureLabel = computed(() =>
     this.hasDualLeaders() ? this.t('hero.teamStructure.dual') : this.t('hero.teamStructure.single'),
@@ -1260,24 +1276,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.hasInvalidSubCostRange() ? this.t('filters.cost.subs.range.invalid') : '',
   );
   public readonly typeSupportLabel = computed(() =>
-    this.requireAllSelectedTypesInTeam()
-      ? this.t('filters.types.support.strict')
-      : this.t('filters.types.support.flexible'),
+    this.t('filters.types.support.flexible'),
   );
   public readonly classSupportLabel = computed(() =>
-    this.requireAllSelectedClassesPerCharacter()
-      ? this.t('filters.classes.support.strict')
-      : this.t('filters.classes.support.flexible'),
+    this.t('filters.classes.support.flexible'),
   );
   public readonly characterTagSupportLabel = computed(() =>
-    this.requireAllSelectedCharacterTagsInTeam()
-      ? this.t('filters.characterTags.support.strict')
-      : this.t('filters.characterTags.support.flexible'),
+    this.t('filters.characterTags.support.flexible'),
   );
   public readonly characterNameSupportLabel = computed(() =>
-    this.requireAllSelectedCharacterNamesInTeam()
-      ? this.t('filters.characterNames.support.strict')
-      : this.t('filters.characterNames.support.flexible'),
+    this.t('filters.characterNames.support.flexible'),
   );
   public readonly leaderSuperEffectScopeSupportLabel = computed(() =>
     this.requireAllSlotsInLeaderSuperEffectScope()
@@ -1643,22 +1651,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly strictModeLabel = computed(() => {
     const strictModes: string[] = [];
-
-    if (this.requireAllSelectedTypesInTeam()) {
-      strictModes.push(this.t('hero.strictModes.typeCoverage'));
-    }
-
-    if (this.requireAllSelectedClassesPerCharacter()) {
-      strictModes.push(this.t('hero.strictModes.perCharacterClasses'));
-    }
-
-    if (this.requireAllSelectedCharacterTagsInTeam()) {
-      strictModes.push(this.t('hero.strictModes.characterTags'));
-    }
-
-    if (this.requireAllSelectedCharacterNamesInTeam()) {
-      strictModes.push(this.t('hero.strictModes.characterNames'));
-    }
 
     if (this.requireAllSlotsInLeaderSuperEffectScope()) {
       strictModes.push(this.t('hero.strictModes.leaderSuperEffectScope'));
@@ -2127,11 +2119,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         })
       : this.t('fallback.ignoredSuperTandemCriteria');
   });
+  public readonly finalReportRows = computed<AutoBuildFinalReportRow[]>(() => {
+    const current = this.result();
+
+    if (!current) {
+      return [];
+    }
+
+    return this.buildFinalReportRows(current);
+  });
   public readonly selectedClassSummaryLabel = computed(() => {
     const current = this.result();
 
     if (!current) {
-      return this.requireAllSelectedClassesPerCharacter()
+      return this.derivedRequireAllSelectedClassesPerCharacter()
         ? this.t('results.selectedClassSummary.strictPending')
         : this.t('results.selectedClassSummary.flexiblePending');
     }
@@ -2157,7 +2158,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const current = this.result();
 
     if (!current) {
-      return this.requireAllSelectedTypesInTeam()
+      return this.derivedRequireAllSelectedTypesInTeam()
         ? this.t('results.selectedTypeSummary.strictPending')
         : this.t('results.selectedTypeSummary.flexiblePending');
     }
@@ -2181,7 +2182,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const current = this.result();
 
     if (!current) {
-      return this.requireAllSelectedCharacterTagsInTeam()
+      return this.derivedRequireAllSelectedCharacterTagsInTeam()
         ? this.t('results.selectedCharacterTagSummary.strictPending')
         : this.t('results.selectedCharacterTagSummary.flexiblePending');
     }
@@ -2205,7 +2206,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const current = this.result();
 
     if (!current) {
-      return this.requireAllSelectedCharacterNamesInTeam()
+      return this.derivedRequireAllSelectedCharacterNamesInTeam()
         ? this.t('results.selectedCharacterNameSummary.strictPending')
         : this.t('results.selectedCharacterNameSummary.flexiblePending');
     }
@@ -4056,10 +4057,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
           selectedCharacterTags: this.selectedCharacterTags(),
           selectedCharacterNames: this.selectedCharacterNames(),
-          requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
-          requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
-          requireAllSelectedCharacterTagsInTeam: this.requireAllSelectedCharacterTagsInTeam(),
-          requireAllSelectedCharacterNamesInTeam: this.requireAllSelectedCharacterNamesInTeam(),
+          requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
+          requireAllSelectedClassesPerCharacter:
+            this.derivedRequireAllSelectedClassesPerCharacter(),
+          requireAllSelectedCharacterTagsInTeam:
+            this.derivedRequireAllSelectedCharacterTagsInTeam(),
+          requireAllSelectedCharacterNamesInTeam:
+            this.derivedRequireAllSelectedCharacterNamesInTeam(),
           requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
           requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
           requireBothLeadersFullCaptainAbilityCoverage:
@@ -4078,9 +4082,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           favoriteShipIds: this.favoriteShipIds(),
           leaderBoostFilters: this.leaderBoostFilters(),
           leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
-          leaderCostRange: { ...this.leaderCostRange() },
-          subCostRange: { ...this.subCostRange() },
-          maxTotalCost: this.maxTotalCost(),
+          leaderCostRange: createEmptyAutoBuildCostRange(),
+          subCostRange: createEmptyAutoBuildCostRange(),
+          maxTotalCost: null,
           manualSlots: this.serializeManualSlots(),
           excludedCharacterIds: this.effectiveExcludedCharacterIds(),
           manualShipId: this.selectedManualShipId(),
@@ -4240,10 +4244,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       requiredCharacterGroups: [],
       battleRequirements: this.pageBattleRequirements(),
       enemyMechanics: this.pageEnemyMechanics(),
-      requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
-      requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
-      requireAllSelectedCharacterTagsInTeam: this.requireAllSelectedCharacterTagsInTeam(),
-      requireAllSelectedCharacterNamesInTeam: this.requireAllSelectedCharacterNamesInTeam(),
+      requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
+      requireAllSelectedClassesPerCharacter: this.derivedRequireAllSelectedClassesPerCharacter(),
+      requireAllSelectedCharacterTagsInTeam: this.derivedRequireAllSelectedCharacterTagsInTeam(),
+      requireAllSelectedCharacterNamesInTeam: this.derivedRequireAllSelectedCharacterNamesInTeam(),
       requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
       requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
       requireBothLeadersFullCaptainAbilityCoverage:
@@ -4258,9 +4262,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       favoriteShipCount: this.favoriteShipIds().length,
       leaderBoostFilters: this.leaderBoostFilters(),
       leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
-      leaderCostRange: { ...this.leaderCostRange() },
-      subCostRange: { ...this.subCostRange() },
-      maxTotalCost: this.maxTotalCost(),
+      leaderCostRange: createEmptyAutoBuildCostRange(),
+      subCostRange: createEmptyAutoBuildCostRange(),
+      maxTotalCost: null,
       manualSlots: this.serializeManualSlots(),
       lockedCharacterIds: this.lockedCharacterIds(),
       lockedCharacters: this.lockedCharacters(),
@@ -4814,9 +4818,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.mergeSelectedCharacterNames(state.selectedCharacterNames ?? []);
     this.leaderBoostFilters.set([...state.leaderBoostFilters]);
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(state.leaderBoostRanges));
-    this.leaderCostRange.set({ ...state.leaderCostRange });
-    this.subCostRange.set({ ...state.subCostRange });
-    this.maxTotalCost.set(state.maxTotalCost);
+    this.leaderCostRange.set(createEmptyAutoBuildCostRange());
+    this.subCostRange.set(createEmptyAutoBuildCostRange());
+    this.maxTotalCost.set(null);
     const manualRequiredAbilities = splitManualAbilityRequirementsFromEnemyMechanics(
       state.requiredAbilities,
       state.enemyMechanics,
@@ -4870,10 +4874,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.excludedCharacterIds.set([...state.excludedCharacterIds]);
     this.selectedManualShipId.set(state.manualShipId);
     this.excludedShipIds.set([...state.excludedShipIds]);
-    this.requireAllSelectedTypesInTeam.set(state.requireAllSelectedTypesInTeam);
-    this.requireAllSelectedClassesPerCharacter.set(state.requireAllSelectedClassesPerCharacter);
-    this.requireAllSelectedCharacterTagsInTeam.set(state.requireAllSelectedCharacterTagsInTeam);
-    this.requireAllSelectedCharacterNamesInTeam.set(state.requireAllSelectedCharacterNamesInTeam);
+    this.requireAllSelectedTypesInTeam.set(false);
+    this.requireAllSelectedClassesPerCharacter.set(false);
+    this.requireAllSelectedCharacterTagsInTeam.set(false);
+    this.requireAllSelectedCharacterNamesInTeam.set(false);
     this.requireAllSlotsInLeaderSuperEffectScope.set(state.requireAllSlotsInLeaderSuperEffectScope);
     this.requireFullCaptainAbilityCoverage.set(state.requireFullCaptainAbilityCoverage);
     this.requireBothLeadersFullCaptainAbilityCoverage.set(
@@ -4985,30 +4989,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     const activeRequirements: string[] = [];
     const favoritesScope = this.favoritesOnly() ? this.t('errors.requirements.favoritesScope') : '';
-
-    if (this.requireAllSelectedTypesInTeam()) {
-      activeRequirements.push(this.t('errors.requirements.typeCoverage'));
-    }
-
-    if (this.requireAllSelectedClassesPerCharacter()) {
-      activeRequirements.push(this.t('errors.requirements.classCoverage'));
-    }
-
-    if (this.requireAllSelectedCharacterTagsInTeam()) {
-      activeRequirements.push(this.t('errors.requirements.characterTagCoverage'));
-    }
-
-    if (this.requireAllSelectedCharacterNamesInTeam()) {
-      activeRequirements.push(this.t('errors.requirements.characterNameCoverage'));
-    }
-
-    if (this.requireSuperSpecialCriteriaCoverage()) {
-      activeRequirements.push(this.t('errors.requirements.superSpecialCriteria'));
-    }
-
-    if (this.requireSuperTandemCriteriaCoverage()) {
-      activeRequirements.push(this.t('errors.requirements.superTandemCriteria'));
-    }
 
     activeRequirements.push(this.t('errors.requirements.uniqueCharacterNames'));
 
@@ -6424,13 +6404,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     role: AutoBuildManualSlotRole,
     character: Pick<CharacterListItem, 'cost'>,
   ): boolean {
-    const maxTotalCost = this.maxTotalCost();
+    void role;
+    void character;
 
-    if (maxTotalCost === null || role === 'friendCaptain') {
-      return true;
-    }
-
-    return this.manualTeamBudgetCost() + character.cost <= maxTotalCost;
+    return true;
   }
 
   private buildCharacterSubtitle(character: CharacterDetailRecord): string {
@@ -6626,8 +6603,236 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return values.length > 0 ? this.formatSelectedValues(values) : this.t('results.none');
   }
 
+  private shouldRequireExactSelectedTypeCoverage(): boolean {
+    return (
+      this.hasSelectedTypes() &&
+      !this.sameUnorderedValues(this.selectedTypes(), this.availableTypes)
+    );
+  }
+
+  private shouldRequireExactSelectedClassCoverage(): boolean {
+    const availableClasses = this.availableClasses();
+
+    return (
+      this.hasSelectedClasses() &&
+      availableClasses.length > 0 &&
+      !this.sameUnorderedValues(this.selectedClasses(), availableClasses)
+    );
+  }
+
+  private buildFinalReportRows(result: AutoBuildResult): AutoBuildFinalReportRow[] {
+    return [
+      this.buildSelectedFilterReportRow(
+        'types',
+        result.requestedInput.types,
+        result.input.types,
+        result.relaxation.droppedTypes,
+        !(
+          !result.requestedInput.requireAllSelectedTypesInTeam &&
+          this.sameUnorderedValues(result.requestedInput.types, AUTO_TEAM_BUILDER_TYPES)
+        ),
+      ),
+      this.buildSelectedFilterReportRow(
+        'classes',
+        result.requestedInput.selectedClasses,
+        result.input.selectedClasses,
+        result.relaxation.droppedClasses,
+        !(
+          !result.requestedInput.requireAllSelectedClassesPerCharacter &&
+          this.sameUnorderedValues(result.requestedInput.selectedClasses, AUTO_TEAM_BUILDER_CLASSES)
+        ),
+      ),
+      this.buildSelectedFilterReportRow(
+        'characterTags',
+        result.requestedInput.selectedCharacterTags ?? [],
+        result.input.selectedCharacterTags ?? [],
+        result.relaxation.droppedCharacterTags,
+        (result.requestedInput.selectedCharacterTags ?? []).length > 0,
+      ),
+      this.buildSelectedFilterReportRow(
+        'characterNames',
+        result.requestedInput.selectedCharacterNames ?? [],
+        result.input.selectedCharacterNames ?? [],
+        result.relaxation.droppedCharacterNames,
+        (result.requestedInput.selectedCharacterNames ?? []).length > 0,
+      ),
+      this.buildLeaderSuperScopeReportRow(result),
+      this.buildCaptainAbilityReportRow(result),
+      this.buildSuperSpecialReportRow(result),
+      this.buildSuperTandemReportRow(result),
+    ];
+  }
+
+  private buildSelectedFilterReportRow(
+    key: string,
+    requestedValues: readonly string[],
+    effectiveValues: readonly string[],
+    droppedValues: readonly string[],
+    applicable: boolean,
+  ): AutoBuildFinalReportRow {
+    if (!applicable) {
+      return this.buildFinalReportRow(
+        key,
+        'notApplicable',
+        this.t(`report.rules.${key}.notApplicable`),
+      );
+    }
+
+    if (droppedValues.length > 0) {
+      return this.buildFinalReportRow(
+        key,
+        'relaxed',
+        this.t(`report.rules.${key}.relaxed`, {
+          requested: this.formatResultValues(requestedValues),
+          effective: this.formatResultValues(effectiveValues),
+          relaxed: this.formatResultValues(droppedValues),
+        }),
+      );
+    }
+
+    return this.buildFinalReportRow(
+      key,
+      'passed',
+      this.t(`report.rules.${key}.passed`, {
+        value: this.formatResultValues(effectiveValues),
+      }),
+    );
+  }
+
+  private buildLeaderSuperScopeReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
+    if (result.relaxation.ignoredLeaderSuperEffectScope) {
+      return this.buildFinalReportRow(
+        'leaderSuperScope',
+        'relaxed',
+        this.t('report.rules.leaderSuperScope.relaxed'),
+      );
+    }
+
+    if (result.requestedInput.requireAllSlotsInLeaderSuperEffectScope) {
+      return this.buildFinalReportRow(
+        'leaderSuperScope',
+        'passed',
+        this.t('report.rules.leaderSuperScope.passed'),
+      );
+    }
+
+    return this.buildFinalReportRow(
+      'leaderSuperScope',
+      'notApplicable',
+      this.t('report.rules.leaderSuperScope.notApplicable'),
+    );
+  }
+
+  private buildCaptainAbilityReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
+    const requestedCaptainCoverage = Boolean(
+      result.requestedInput.requireFullCaptainAbilityCoverage ||
+        result.requestedInput.requireBothLeadersFullCaptainAbilityCoverage,
+    );
+    const missingLabels = this.captainAbilityCoverageMissingLabels();
+
+    if (
+      result.relaxation.ignoredCaptainAbilityCoverage ||
+      result.relaxation.downgradedCaptainAbilityCoverageToSimple ||
+      (requestedCaptainCoverage && missingLabels.length > 0)
+    ) {
+      return this.buildFinalReportRow(
+        'captainAbility',
+        'relaxed',
+        missingLabels.length > 0
+          ? this.t('report.rules.captainAbility.relaxedWithMissing', {
+              missing: missingLabels.join(', '),
+            })
+          : this.t('report.rules.captainAbility.relaxed'),
+      );
+    }
+
+    if (requestedCaptainCoverage) {
+      return this.buildFinalReportRow(
+        'captainAbility',
+        'passed',
+        this.t('report.rules.captainAbility.passed'),
+      );
+    }
+
+    return this.buildFinalReportRow(
+      'captainAbility',
+      'notApplicable',
+      this.t('report.rules.captainAbility.notApplicable'),
+    );
+  }
+
+  private buildSuperSpecialReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
+    if (result.relaxation.ignoredLeaderSuperSpecialCriteria) {
+      return this.buildFinalReportRow(
+        'superSpecial',
+        'relaxed',
+        this.ignoredSuperSpecialCriteriaLabel(),
+      );
+    }
+
+    if (result.requestedInput.requireLeaderSuperSpecialCriteria) {
+      return this.buildFinalReportRow(
+        'superSpecial',
+        'passed',
+        this.t('report.rules.superSpecial.passed'),
+      );
+    }
+
+    return this.buildFinalReportRow(
+      'superSpecial',
+      'notApplicable',
+      this.t('report.rules.superSpecial.notApplicable'),
+    );
+  }
+
+  private buildSuperTandemReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
+    if (result.relaxation.ignoredSuperTandemCriteria) {
+      return this.buildFinalReportRow(
+        'superTandem',
+        'relaxed',
+        this.ignoredSuperTandemCriteriaLabel(),
+      );
+    }
+
+    if (result.requestedInput.requireSuperTandemCriteria) {
+      return this.buildFinalReportRow(
+        'superTandem',
+        'passed',
+        this.t('report.rules.superTandem.passed'),
+      );
+    }
+
+    return this.buildFinalReportRow(
+      'superTandem',
+      'notApplicable',
+      this.t('report.rules.superTandem.notApplicable'),
+    );
+  }
+
+  private buildFinalReportRow(
+    key: string,
+    state: AutoBuildFinalReportState,
+    detail: string,
+  ): AutoBuildFinalReportRow {
+    return {
+      key,
+      title: this.t(`report.rules.${key}.title`),
+      detail,
+      state,
+      stateLabel: this.t(`report.states.${state}`),
+    };
+  }
+
   private formatSelectedValues(values: readonly string[]): string {
     return values.join(' / ');
+  }
+
+  private sameUnorderedValues<T>(left: readonly T[], right: readonly T[]): boolean {
+    return (
+      left.length === right.length &&
+      left.every((value) => right.includes(value)) &&
+      right.every((value) => left.includes(value))
+    );
   }
 
   private resolvePresetImportError(error: unknown): string {

@@ -64,7 +64,7 @@
 
 .team-coverage-summary__tier-header {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: baseline;
   column-gap: 10px;
   row-gap: 2px;
@@ -89,6 +89,14 @@
   white-space: nowrap;
 }
 
+.team-coverage-summary__tier-kind {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(248, 251, 255, 0.72);
+  white-space: nowrap;
+}
+
+.team-coverage-summary__conditions,
 .team-coverage-summary__effects {
   list-style: disc inside;
   margin: 0;
@@ -96,6 +104,12 @@
   font-size: 0.82rem;
   color: rgba(248, 251, 255, 0.78);
   line-height: 1.45;
+}
+
+.team-coverage-summary__conditions {
+  list-style: none;
+  color: rgba(248, 251, 255, 0.68);
+  font-style: italic;
 }
 
 .team-coverage-summary__note {

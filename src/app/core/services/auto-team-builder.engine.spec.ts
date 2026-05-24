@@ -328,7 +328,7 @@ describe('runAutoTeamBuildSearch', () => {
     });
   });
 
-  it('does not downgrade full captain coverage to simple coverage', () => {
+  it('relaxes full captain coverage after exact search fails', () => {
     const result = runAutoTeamBuildSearch(
       createSimpleCaptainCoverageFallbackRecords(),
       createInput(['DEX'], ['Fighter'], {
@@ -340,10 +340,14 @@ describe('runAutoTeamBuildSearch', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
+    expect(result?.slots[0].character.id).toBe(9020);
+    expect(result?.slots[1].character.id).toBe(9020);
   });
 
-  it('does not downgrade captain coverage when strict both-leader coverage is required', () => {
+  it('relaxes strict both-leader captain coverage after exact search fails', () => {
     const result = runAutoTeamBuildSearch(
       createSimpleCaptainCoverageFallbackRecords(),
       createInput(['DEX'], ['Fighter'], {
@@ -356,10 +360,13 @@ describe('runAutoTeamBuildSearch', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.input.requireBothLeadersFullCaptainAbilityCoverage).toBe(false);
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
   });
 
-  it('preserves strict both-leader coverage across unrelated fallback attempts', () => {
+  it('schedules captain coverage relaxation separately from Super Special relaxation', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput(['DEX'], ['Fighter'], {
         requireFullCaptainAbilityCoverage: true,
@@ -377,27 +384,34 @@ describe('runAutoTeamBuildSearch', () => {
 
     const attempts = collectScheduledAttempts(planner);
 
+    expect(
+      attempts.some(
+        (attempt) =>
+          attempt.droppedTypes.length === 0 &&
+          attempt.droppedClasses.length === 0 &&
+          attempt.ignoredLeaderSuperSpecialCriteria &&
+          attempt.input.requireBothLeadersFullCaptainAbilityCoverage &&
+          attempt.input.requireFullCaptainAbilityCoverage &&
+          attempt.input.allowPartialCaptainAbilityCoverage !== true,
+      ),
+    ).toBe(true);
     expect(attempts).toContainEqual(
       expect.objectContaining({
         droppedTypes: [],
         droppedClasses: [],
-        ignoredLeaderSuperSpecialCriteria: true,
+        input: expect.objectContaining({
+          requireBothLeadersFullCaptainAbilityCoverage: false,
+          requireFullCaptainAbilityCoverage: true,
+          allowPartialCaptainAbilityCoverage: true,
+        }),
       }),
     );
-    expect(
-      attempts.every(
-        (attempt) =>
-          attempt.input.requireBothLeadersFullCaptainAbilityCoverage &&
-          attempt.input.requireFullCaptainAbilityCoverage &&
-          !attempt.input.allowPartialCaptainAbilityCoverage,
-      ),
-    ).toBe(true);
   });
 
   it('keeps a full captain coverage team ahead of relaxed partial coverage', () => {
     const result = runAutoTeamBuildSearch(
       createFullCaptainCoverageRecords(),
-      createInput(['DEX', 'PSY'], ['Fighter'], {
+      createInput(['DEX'], ['Fighter'], {
         requireFullCaptainAbilityCoverage: true,
         manualSlots: createCaptainCoverageManualSlots(9000),
         lockedCharacterIds: [9000],
@@ -412,7 +426,7 @@ describe('runAutoTeamBuildSearch', () => {
     expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
   });
 
-  it('does not return ignored partial captain coverage when strict simple coverage is impossible', () => {
+  it('returns ignored partial captain coverage when strict simple coverage is impossible', () => {
     const result = runAutoTeamBuildSearch(
       createPartialCaptainCoverageRecords({ extraUncoveredSubs: true }),
       createInput(['DEX', 'PSY'], ['Fighter'], {
@@ -424,7 +438,9 @@ describe('runAutoTeamBuildSearch', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
   });
 
   it('does not accept fallback coverage when requested battle requirements are still missing', () => {
@@ -533,6 +549,19 @@ describe('runAutoTeamBuildSearch', () => {
     } satisfies AutoBuildResult;
 
     expect(satisfiesRequestedAutoTeamBuildCoverage(result)).toBe(false);
+  });
+
+  it('relaxes strict selected type coverage after exact search fails', () => {
+    const result = runAutoTeamBuildSearch(
+      createSingleTypeRecords(),
+      createInput(['DEX', 'INT'], ['Fighter'], {
+        requireAllSelectedTypesInTeam: true,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.relaxation.droppedTypes).toContain('INT');
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
   });
 
   it('throws cancellation before starting the next attempt', () => {
@@ -705,7 +734,7 @@ describe('runAutoTeamBuildSearch', () => {
     expect(result?.slots.map((slot) => slot.character.cost)).toEqual([100, 999, 50, 50, 50, 50]);
   });
 
-  it('rejects manual teams above the max total cost', () => {
+  it('allows manual teams above deprecated max total cost', () => {
     const result = runAutoTeamBuildSearch(
       createBudgetRecords(),
       createInput(['DEX'], ['Fighter'], {
@@ -714,10 +743,11 @@ describe('runAutoTeamBuildSearch', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots.map((slot) => slot.character.cost)).toEqual([100, 999, 50, 50, 50, 50]);
   });
 
-  it('rejects auto-filled teams above the max total cost', () => {
+  it('allows auto-filled teams above deprecated max total cost', () => {
     const result = runAutoTeamBuildSearch(
       createSingleTypeRecords(),
       createInput(['DEX'], ['Fighter'], {
@@ -725,7 +755,8 @@ describe('runAutoTeamBuildSearch', () => {
       }),
     );
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.slots).toHaveLength(6);
   });
 
   it('caps the bounded subset plan at 31,744 total attempts for now', () => {
@@ -772,7 +803,7 @@ describe('runAutoTeamBuildSearch', () => {
     ]);
   });
 
-  it('does not relax Super Special criteria or schedule hidden super-leader fallback when strict coverage is on', () => {
+  it('relaxes Super Special criteria as a zero-drop fallback when strict coverage is on', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput([...AUTO_TEAM_BUILDER_TYPES], [...AUTO_TEAM_BUILDER_CLASSES], {
         requireLeaderSuperSpecialCriteria: true,
@@ -783,10 +814,21 @@ describe('runAutoTeamBuildSearch', () => {
 
     planner.scheduleInitialFallbackAttempts();
 
-    expect(collectScheduledAttempts(planner)).toEqual([]);
+    expect(collectScheduledAttempts(planner)).toEqual([
+      expect.objectContaining({
+        category: 'meta',
+        droppedTypes: [],
+        droppedClasses: [],
+        ignoredLeaderSuperSpecialCriteria: true,
+        input: expect.objectContaining({
+          requireLeaderSuperSpecialCriteria: false,
+          strictSuperSpecialCriteriaCoverage: true,
+        }),
+      }),
+    ]);
   });
 
-  it('relaxes Super Tandem criteria only when strict coverage is off', () => {
+  it('relaxes Super Tandem criteria as a zero-drop fallback when strict coverage is on', () => {
     const flexiblePlanner = createAutoTeamBuildFallbackPlanner(
       createInput([...AUTO_TEAM_BUILDER_TYPES], [...AUTO_TEAM_BUILDER_CLASSES], {
         requireSuperTandemCriteria: true,
@@ -814,7 +856,41 @@ describe('runAutoTeamBuildSearch', () => {
         input: expect.objectContaining({ requireSuperTandemCriteria: false }),
       }),
     ]);
-    expect(collectScheduledAttempts(strictPlanner)).toEqual([]);
+    expect(collectScheduledAttempts(strictPlanner)).toEqual([
+      expect.objectContaining({
+        category: 'meta',
+        droppedTypes: [],
+        droppedClasses: [],
+        input: expect.objectContaining({
+          requireSuperTandemCriteria: false,
+          strictSuperTandemCriteriaCoverage: true,
+        }),
+      }),
+    ]);
+  });
+
+  it('relaxes Leader Super Type/Class scope as a zero-drop fallback', () => {
+    const planner = createAutoTeamBuildFallbackPlanner(
+      createInput(['DEX'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        minimumLeaderSuperEffectMatchingSlots: 6,
+      }),
+      createSingleTypeRecords(),
+    );
+
+    planner.scheduleInitialFallbackAttempts();
+
+    expect(collectScheduledAttempts(planner)).toContainEqual(
+      expect.objectContaining({
+        droppedTypes: [],
+        droppedClasses: [],
+        ignoredLeaderSuperEffectScope: true,
+        input: expect.objectContaining({
+          requireAllSlotsInLeaderSuperEffectScope: false,
+          minimumLeaderSuperEffectMatchingSlots: null,
+        }),
+      }),
+    );
   });
 
   it('orders single-filter drops by ascending pool support', () => {
@@ -862,7 +938,7 @@ describe('runAutoTeamBuildSearch', () => {
     ]);
   });
 
-  it('does not create type/class drop attempts when strict constraints are enabled', () => {
+  it('creates type/class drop attempts when strict constraints block exact search', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput(['DEX', 'INT'], ['Fighter'], {
         requireAllSelectedTypesInTeam: true,
@@ -872,13 +948,17 @@ describe('runAutoTeamBuildSearch', () => {
 
     planner.scheduleInitialFallbackAttempts();
 
-    expect(collectScheduledAttempts(planner)).toEqual([
+    const attempts = collectScheduledAttempts(planner);
+
+    expect(attempts).toContainEqual(
       expect.objectContaining({
         droppedTypes: [],
         droppedClasses: [],
         category: 'meta',
       }),
-    ]);
+    );
+    expect(attempts.some((attempt) => attempt.droppedTypes.includes('INT'))).toBe(true);
+    expect(attempts.some((attempt) => attempt.droppedClasses.includes('Fighter'))).toBe(true);
   });
 
   it('schedules relaxed character tag and name drops in fallback attempts', () => {
@@ -905,7 +985,7 @@ describe('runAutoTeamBuildSearch', () => {
     ).toBe(true);
   });
 
-  it('does not create character tag/name drop attempts when strict coverage is enabled', () => {
+  it('creates character tag/name drop attempts when strict coverage blocks exact search', () => {
     const planner = createAutoTeamBuildFallbackPlanner(
       createInput(['DEX'], ['Fighter'], {
         selectedCharacterTags: ['Minks'],
@@ -918,10 +998,15 @@ describe('runAutoTeamBuildSearch', () => {
 
     planner.scheduleInitialFallbackAttempts();
 
+    const attempts = collectScheduledAttempts(planner);
+
+    expect(attempts.some((attempt) => attempt.droppedCharacterTags.includes('Minks'))).toBe(true);
+    expect(attempts.some((attempt) => attempt.droppedCharacterNames.includes('zoro'))).toBe(true);
     expect(
-      collectScheduledAttempts(planner).every(
+      attempts.some(
         (attempt) =>
-          attempt.droppedCharacterTags.length === 0 && attempt.droppedCharacterNames.length === 0,
+          attempt.droppedCharacterTags.includes('Minks') &&
+          attempt.droppedCharacterNames.includes('zoro'),
       ),
     ).toBe(true);
   });

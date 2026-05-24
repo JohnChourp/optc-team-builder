@@ -619,6 +619,64 @@
     "ignoredSuperTandemCriteriaWithNames": "Super Tandem will not activate for: {{names}}",
     "title": "Relaxed fallback used"
   },
+  "report": {
+    "copy": "Shows which synergy rules the generated team follows and which ones were relaxed after exact search failed.",
+    "rules": {
+      "captainAbility": {
+        "notApplicable": "No Captain Ability tier coverage was requested.",
+        "passed": "Team fully passes Captain Ability tier coverage.",
+        "relaxed": "Team does not fully pass Captain Ability tier coverage.",
+        "relaxedWithMissing": "Team does not fully pass Captain Ability tier coverage: {{missing}}",
+        "title": "Captain Ability tier coverage"
+      },
+      "characterNames": {
+        "notApplicable": "No selected character name coverage was requested.",
+        "passed": "Team follows selected character name coverage: {{value}}.",
+        "relaxed": "Team does not fully follow selected character name coverage. Requested: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
+        "title": "Selected character name coverage"
+      },
+      "characterTags": {
+        "notApplicable": "No selected character tag coverage was requested.",
+        "passed": "Team follows selected character tag coverage: {{value}}.",
+        "relaxed": "Team does not fully follow selected character tag coverage. Requested: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
+        "title": "Selected character tag coverage"
+      },
+      "classes": {
+        "notApplicable": "No selected class coverage was requested.",
+        "passed": "Team follows selected class coverage: {{value}}.",
+        "relaxed": "Team does not fully follow selected class coverage. Requested: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
+        "title": "Selected class coverage"
+      },
+      "leaderSuperScope": {
+        "notApplicable": "Leader Super Type/Class scope was not required.",
+        "passed": "Team fully follows Leader Super Type/Class scope.",
+        "relaxed": "Team does not fully follow Leader Super Type/Class scope.",
+        "title": "Leader Super Type/Class scope"
+      },
+      "superSpecial": {
+        "notApplicable": "No Super Special criteria were requested.",
+        "passed": "Super Special criteria are satisfied for the final team.",
+        "title": "Super Special criteria"
+      },
+      "superTandem": {
+        "notApplicable": "No Super Tandem criteria were requested.",
+        "passed": "Super Tandem criteria are satisfied for the final team.",
+        "title": "Super Tandem criteria"
+      },
+      "types": {
+        "notApplicable": "No selected type coverage was requested.",
+        "passed": "Team follows selected type coverage: {{value}}.",
+        "relaxed": "Team does not fully follow selected type coverage. Requested: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
+        "title": "Selected type coverage"
+      }
+    },
+    "states": {
+      "notApplicable": "Not applicable",
+      "passed": "Passed",
+      "relaxed": "Relaxed"
+    },
+    "title": "Final team report"
+  },
   "summary": {
     "burstCoverage": "Burst coverage",
     "candidatePool": "Candidate pool",

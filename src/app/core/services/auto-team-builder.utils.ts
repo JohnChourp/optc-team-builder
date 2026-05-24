@@ -3567,18 +3567,16 @@ function resolveSubSelectedFilterScore(
   );
 }
 
-function resolveCountedTeamCost(captain: AutoBuildCandidate, subs: AutoBuildCandidate[]): number {
-  return (
-    captain.character.cost + subs.reduce((total, candidate) => total + candidate.character.cost, 0)
-  );
-}
-
 function teamCostWithinBudget(
   input: Pick<AutoBuildInput, 'maxTotalCost'>,
   captain: AutoBuildCandidate,
   subs: AutoBuildCandidate[],
 ): boolean {
-  return input.maxTotalCost === null || resolveCountedTeamCost(captain, subs) <= input.maxTotalCost;
+  void input;
+  void captain;
+  void subs;
+
+  return true;
 }
 
 function canAddSubWithinTeamCostBudget(

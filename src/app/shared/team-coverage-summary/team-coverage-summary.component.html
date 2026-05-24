@@ -20,10 +20,22 @@
                 >{{ t('tierLabel', { tier: tier.tier }) }}</span
               >
               <span class="team-coverage-summary__tier-scope">{{ tier.scopeLabel }}</span>
+              @if (tier.kind; as kind) {
+                <span class="team-coverage-summary__tier-kind">
+                  {{ t('tierKinds.' + kind) }}
+                </span>
+              }
               <span class="team-coverage-summary__tier-status"
                 >{{ t(statusKey(tier.captureSource)) }}</span
               >
             </div>
+            @if (tier.conditionLines.length > 0) {
+              <ul class="team-coverage-summary__conditions">
+                @for (condition of tier.conditionLines; track condition) {
+                  <li>{{ condition }}</li>
+                }
+              </ul>
+            }
             @if (tier.effectsSummary.length > 0) {
               <ul class="team-coverage-summary__effects">
                 @for (effect of tier.effectsSummary; track effect) {

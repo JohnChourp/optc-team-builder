@@ -8,5 +8,11 @@
     "friendOnly": "Friend",
     "none": "Δεν καλύπτεται"
   },
+  "tierKinds": {
+    "baseline": "Βασικό",
+    "unconditional-top": "Κορυφαίο",
+    "conditional": "Υπό συνθήκη",
+    "baseline-and-conditional": "Μικτό"
+  },
   "pendingConditions": "Εκκρεμές in-fight: {{conditions}}"
 }

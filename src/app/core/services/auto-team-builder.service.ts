@@ -307,16 +307,10 @@ export class AutoTeamBuilderService {
     const excludedShipIds = this.normalizeCharacterIds(constraints.excludedShipIds);
     const leaderBoostFilters = this.normalizeLeaderBoostFilters(constraints.leaderBoostFilters);
     const leaderBoostRanges = this.normalizeLeaderBoostRanges(constraints.leaderBoostRanges);
-    const costRange = this.normalizeCostRange(constraints.costRange);
-    const leaderCostRange =
-      constraints.leaderCostRange !== undefined
-        ? this.normalizeCostRange(constraints.leaderCostRange)
-        : { ...costRange };
-    const subCostRange =
-      constraints.subCostRange !== undefined
-        ? this.normalizeCostRange(constraints.subCostRange)
-        : { ...costRange };
-    const maxTotalCost = this.normalizeMaxTotalCost(constraints.maxTotalCost);
+    const costRange = createEmptyAutoBuildCostRange();
+    const leaderCostRange = createEmptyAutoBuildCostRange();
+    const subCostRange = createEmptyAutoBuildCostRange();
+    const maxTotalCost = null;
 
     const input: AutoBuildInput = {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
@@ -577,7 +571,6 @@ export class AutoTeamBuilderService {
       this.normalizeCharacterIds(rosterInput.favoriteCharacterIds),
     );
     const candidateCharacterIds = this.normalizeCharacterIds(rosterInput.candidateCharacterIds);
-    const rosterCostRange = this.normalizeCostRange(rosterInput.costRange);
     const favoritesOnly = rosterInput.favoritesOnly ?? false;
     const scopedRosterIds = normalizedRosterIds.filter((characterId) => {
       if (excludedCharacterIds.includes(characterId)) {
@@ -634,7 +627,6 @@ export class AutoTeamBuilderService {
         allowedCharacterIds: scopedRosterIds,
         lockedCharacterIds: lockedLeaderIds,
         excludedCharacterIds,
-        costRange: this.hasActiveCostRange(rosterCostRange) ? rosterCostRange : undefined,
       },
     );
 
@@ -2067,16 +2059,10 @@ export class AutoTeamBuilderService {
       favoriteShipIds: [],
       leaderBoostFilters: this.normalizeLeaderBoostFilters(rosterInput.leaderBoostFilters),
       leaderBoostRanges: this.normalizeLeaderBoostRanges(rosterInput.leaderBoostRanges),
-      costRange: this.normalizeCostRange(rosterInput.costRange),
-      leaderCostRange:
-        rosterInput.leaderCostRange !== undefined
-          ? this.normalizeCostRange(rosterInput.leaderCostRange)
-          : this.normalizeCostRange(rosterInput.costRange),
-      subCostRange:
-        rosterInput.subCostRange !== undefined
-          ? this.normalizeCostRange(rosterInput.subCostRange)
-          : this.normalizeCostRange(rosterInput.costRange),
-      maxTotalCost: this.normalizeMaxTotalCost(rosterInput.maxTotalCost),
+      costRange: createEmptyAutoBuildCostRange(),
+      leaderCostRange: createEmptyAutoBuildCostRange(),
+      subCostRange: createEmptyAutoBuildCostRange(),
+      maxTotalCost: null,
       manualSlots: this.createExactManualSlots(
         captainCharacterId,
         friendCaptainCharacterId,
@@ -2440,35 +2426,6 @@ export class AutoTeamBuilderService {
     const parsedValue = Number(value);
 
     return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : null;
-  }
-
-  private normalizeCostRange(range: AutoBuildConstraints['costRange']): AutoBuildCostRange {
-    const normalizedRange = createEmptyAutoBuildCostRange();
-
-    normalizedRange.min = this.normalizeCostRangeBound(range?.min);
-    normalizedRange.max = this.normalizeCostRangeBound(range?.max);
-
-    return normalizedRange;
-  }
-
-  private normalizeCostRangeBound(value: unknown): number | null {
-    if (value === null || value === undefined || value === '') {
-      return null;
-    }
-
-    const parsedValue = Number(value);
-
-    return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
-  }
-
-  private normalizeMaxTotalCost(value: unknown): number | null {
-    if (value === null || value === undefined || value === '') {
-      return null;
-    }
-
-    const parsedValue = Number(value);
-
-    return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
   }
 
   private hasActiveCostRange(range: AutoBuildCostRange): boolean {

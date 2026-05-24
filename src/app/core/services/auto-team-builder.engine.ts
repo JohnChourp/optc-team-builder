@@ -50,6 +50,13 @@ export interface AutoTeamBuildPlannedAttempt {
   ignoredLeaderSuperSpecialCriteria: boolean;
 }
 
+interface AutoTeamBuildZeroDropRelaxationOption {
+  apply: (input: AutoBuildInput) => AutoBuildInput;
+  allowedLeadersWithSuperEffects: boolean;
+  ignoredLeaderSuperEffectScope: boolean;
+  ignoredLeaderSuperSpecialCriteria: boolean;
+}
+
 type AutoTeamBuildDroppedFilterKind = 'type' | 'class' | 'characterTag' | 'characterName';
 export type AutoTeamBuildFallbackAttemptCategory = 'meta' | 'single' | 'double' | 'subset';
 
@@ -568,9 +575,9 @@ export function runAutoTeamBuildAttempt(
       ),
       minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
       allowedLeadersWithSuperEffects,
-      ...(requestedInput.requireFullCaptainAbilityCoverage &&
-      input.allowPartialCaptainAbilityCoverage &&
-      !requestedInput.requireBothLeadersFullCaptainAbilityCoverage
+      ...((requestedInput.requireFullCaptainAbilityCoverage ||
+        requestedInput.requireBothLeadersFullCaptainAbilityCoverage) &&
+      input.allowPartialCaptainAbilityCoverage
         ? { ignoredCaptainAbilityCoverage: true }
         : {}),
       ...(requestedInput.requireFullCaptainAbilityCoverage &&
@@ -607,7 +614,6 @@ export class AutoTeamBuildFallbackPlanner {
   private attemptCountFinal = false;
   private readonly maxScheduledFallbackAttempts: number;
   private readonly baseSubsetInput: AutoBuildInput;
-  private readonly hasStrictConstraints: boolean;
 
   public constructor(
     requestedInput: AutoBuildInput,
@@ -618,37 +624,34 @@ export class AutoTeamBuildFallbackPlanner {
       resolveRequestedLeaderSuperEffectMatchingSlots(requestedInput);
     const exactAttemptRequiresNoSuperLeaders =
       resolveExactAttemptRequiresNoSuperLeaders(requestedInput);
+    const canRelaxLeaderSuperEffectScope =
+      requestedInput.requireAllSlotsInLeaderSuperEffectScope;
     const canRelaxLeaderSuperSpecialCriteria =
-      requestedInput.requireLeaderSuperSpecialCriteria &&
-      !requestedInput.strictSuperSpecialCriteriaCoverage &&
-      exactLeaderSuperEffectSlots === null;
+      requestedInput.requireLeaderSuperSpecialCriteria;
     const canRelaxSuperTandemCriteria =
-      requestedInput.requireSuperTandemCriteria &&
-      !requestedInput.strictSuperTandemCriteriaCoverage;
+      requestedInput.requireSuperTandemCriteria;
+    const canRelaxCaptainAbilityCoverage =
+      (requestedInput.requireFullCaptainAbilityCoverage ||
+        requestedInput.requireBothLeadersFullCaptainAbilityCoverage) &&
+      !requestedInput.allowPartialCaptainAbilityCoverage;
 
     this.zeroDropAttempts = buildZeroDropFallbackAttempts(
       requestedInput,
       exactLeaderSuperEffectSlots,
       exactAttemptRequiresNoSuperLeaders,
+      canRelaxLeaderSuperEffectScope,
       canRelaxLeaderSuperSpecialCriteria,
       canRelaxSuperTandemCriteria,
+      canRelaxCaptainAbilityCoverage,
     );
-    this.hasStrictConstraints = hasStrictAutoTeamBuildConstraints(requestedInput);
-    this.baseSubsetInput =
-      canRelaxLeaderSuperSpecialCriteria || canRelaxSuperTandemCriteria
-        ? {
-            ...requestedInput,
-            requireLeaderSuperSpecialCriteria: canRelaxLeaderSuperSpecialCriteria
-              ? false
-              : requestedInput.requireLeaderSuperSpecialCriteria,
-            requireSuperTandemCriteria: canRelaxSuperTandemCriteria
-              ? false
-              : requestedInput.requireSuperTandemCriteria,
-          }
-        : requestedInput;
-    this.subsetCandidates = this.hasStrictConstraints
-      ? []
-      : buildSubsetCandidates(requestedInput, this.baseSubsetInput, records);
+    this.baseSubsetInput = buildBaseSubsetInput(
+      requestedInput,
+      canRelaxLeaderSuperEffectScope,
+      canRelaxLeaderSuperSpecialCriteria,
+      canRelaxSuperTandemCriteria,
+      canRelaxCaptainAbilityCoverage,
+    );
+    this.subsetCandidates = buildSubsetCandidates(requestedInput, this.baseSubsetInput, records);
     this.maxScheduledFallbackAttempts = resolveMaxScheduledFallbackAttemptCount(
       requestedInput,
       this.zeroDropAttempts.length,
@@ -813,88 +816,142 @@ function buildZeroDropFallbackAttempts(
   requestedInput: AutoBuildInput,
   exactLeaderSuperEffectSlots: number | null,
   exactAttemptRequiresNoSuperLeaders: boolean,
+  canRelaxLeaderSuperEffectScope: boolean,
   canRelaxLeaderSuperSpecialCriteria: boolean,
   canRelaxSuperTandemCriteria: boolean,
+  canRelaxCaptainAbilityCoverage: boolean,
 ): AutoTeamBuildPlannedAttempt[] {
-  const fixedAttempts: AutoTeamBuildPlannedAttempt[] = [];
-
-  if (
-    exactLeaderSuperEffectSlots !== null &&
-    !canRelaxLeaderSuperSpecialCriteria &&
-    !canRelaxSuperTandemCriteria
-  ) {
-    return fixedAttempts;
-  }
+  const relaxationOptions: AutoTeamBuildZeroDropRelaxationOption[] = [];
 
   if (exactLeaderSuperEffectSlots === null && exactAttemptRequiresNoSuperLeaders) {
-    fixedAttempts.push({
-      input: {
-        ...requestedInput,
-      },
-      requireLeadersWithoutSuperEffects: false,
+    relaxationOptions.push({
+      apply: (input) => ({ ...input }),
       allowedLeadersWithSuperEffects: true,
-      droppedTypes: [],
-      droppedClasses: [],
-      droppedCharacterTags: [],
-      droppedCharacterNames: [],
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
   }
 
+  if (canRelaxLeaderSuperEffectScope) {
+    relaxationOptions.push({
+      apply: (input) => ({
+        ...input,
+        requireAllSlotsInLeaderSuperEffectScope: false,
+        minimumLeaderSuperEffectMatchingSlots: null,
+      }),
+      allowedLeadersWithSuperEffects: false,
+      ignoredLeaderSuperEffectScope: true,
+      ignoredLeaderSuperSpecialCriteria: false,
+    });
+  }
+
   if (canRelaxLeaderSuperSpecialCriteria) {
-    fixedAttempts.push({
-      input: {
-        ...requestedInput,
+    relaxationOptions.push({
+      apply: (input) => ({
+        ...input,
         requireLeaderSuperSpecialCriteria: false,
-      },
-      requireLeadersWithoutSuperEffects: false,
-      allowedLeadersWithSuperEffects: true,
-      droppedTypes: [],
-      droppedClasses: [],
-      droppedCharacterTags: [],
-      droppedCharacterNames: [],
+      }),
+      allowedLeadersWithSuperEffects: exactLeaderSuperEffectSlots === null,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: true,
     });
   }
 
   if (canRelaxSuperTandemCriteria) {
-    fixedAttempts.push({
-      input: {
-        ...requestedInput,
+    relaxationOptions.push({
+      apply: (input) => ({
+        ...input,
         requireSuperTandemCriteria: false,
-      },
-      requireLeadersWithoutSuperEffects: false,
-      allowedLeadersWithSuperEffects: exactAttemptRequiresNoSuperLeaders,
-      droppedTypes: [],
-      droppedClasses: [],
-      droppedCharacterTags: [],
-      droppedCharacterNames: [],
+      }),
+      allowedLeadersWithSuperEffects: exactLeaderSuperEffectSlots === null && exactAttemptRequiresNoSuperLeaders,
       ignoredLeaderSuperEffectScope: false,
       ignoredLeaderSuperSpecialCriteria: false,
     });
   }
 
-  if (canRelaxLeaderSuperSpecialCriteria && canRelaxSuperTandemCriteria) {
-    fixedAttempts.push({
-      input: {
-        ...requestedInput,
-        requireLeaderSuperSpecialCriteria: false,
-        requireSuperTandemCriteria: false,
-      },
-      requireLeadersWithoutSuperEffects: false,
-      allowedLeadersWithSuperEffects: true,
-      droppedTypes: [],
-      droppedClasses: [],
-      droppedCharacterTags: [],
-      droppedCharacterNames: [],
+  if (canRelaxCaptainAbilityCoverage) {
+    relaxationOptions.push({
+      apply: (input) => ({
+        ...input,
+        requireBothLeadersFullCaptainAbilityCoverage: false,
+        allowPartialCaptainAbilityCoverage: true,
+      }),
+      allowedLeadersWithSuperEffects: false,
       ignoredLeaderSuperEffectScope: false,
-      ignoredLeaderSuperSpecialCriteria: true,
+      ignoredLeaderSuperSpecialCriteria: false,
     });
   }
 
-  return dedupeFallbackAttempts(fixedAttempts);
+  return dedupeFallbackAttempts(
+    buildZeroDropRelaxationOptionSubsets(relaxationOptions).map((options) =>
+      buildZeroDropFallbackAttempt(requestedInput, options),
+    ),
+  );
+}
+
+function buildZeroDropRelaxationOptionSubsets(
+  options: AutoTeamBuildZeroDropRelaxationOption[],
+): AutoTeamBuildZeroDropRelaxationOption[][] {
+  const subsets: AutoTeamBuildZeroDropRelaxationOption[][] = [];
+
+  for (let mask = 1; mask < 1 << options.length; mask += 1) {
+    subsets.push(options.filter((_, index) => (mask & (1 << index)) !== 0));
+  }
+
+  return subsets.sort((left, right) => left.length - right.length);
+}
+
+function buildZeroDropFallbackAttempt(
+  requestedInput: AutoBuildInput,
+  options: AutoTeamBuildZeroDropRelaxationOption[],
+): AutoTeamBuildPlannedAttempt {
+  const input = options.reduce((nextInput, option) => option.apply(nextInput), requestedInput);
+
+  return {
+    input,
+    requireLeadersWithoutSuperEffects: false,
+    allowedLeadersWithSuperEffects: options.some((option) => option.allowedLeadersWithSuperEffects),
+    droppedTypes: [],
+    droppedClasses: [],
+    droppedCharacterTags: [],
+    droppedCharacterNames: [],
+    ignoredLeaderSuperEffectScope: options.some(
+      (option) => option.ignoredLeaderSuperEffectScope,
+    ),
+    ignoredLeaderSuperSpecialCriteria: options.some(
+      (option) => option.ignoredLeaderSuperSpecialCriteria,
+    ),
+  };
+}
+
+function buildBaseSubsetInput(
+  requestedInput: AutoBuildInput,
+  canRelaxLeaderSuperEffectScope: boolean,
+  canRelaxLeaderSuperSpecialCriteria: boolean,
+  canRelaxSuperTandemCriteria: boolean,
+  canRelaxCaptainAbilityCoverage: boolean,
+): AutoBuildInput {
+  return {
+    ...requestedInput,
+    requireAllSlotsInLeaderSuperEffectScope: canRelaxLeaderSuperEffectScope
+      ? false
+      : requestedInput.requireAllSlotsInLeaderSuperEffectScope,
+    minimumLeaderSuperEffectMatchingSlots: canRelaxLeaderSuperEffectScope
+      ? null
+      : requestedInput.minimumLeaderSuperEffectMatchingSlots,
+    requireLeaderSuperSpecialCriteria: canRelaxLeaderSuperSpecialCriteria
+      ? false
+      : requestedInput.requireLeaderSuperSpecialCriteria,
+    requireSuperTandemCriteria: canRelaxSuperTandemCriteria
+      ? false
+      : requestedInput.requireSuperTandemCriteria,
+    requireBothLeadersFullCaptainAbilityCoverage: canRelaxCaptainAbilityCoverage
+      ? false
+      : requestedInput.requireBothLeadersFullCaptainAbilityCoverage,
+    allowPartialCaptainAbilityCoverage: canRelaxCaptainAbilityCoverage
+      ? true
+      : requestedInput.allowPartialCaptainAbilityCoverage,
+  };
 }
 
 function buildSubsetCandidates(
@@ -1038,6 +1095,10 @@ function buildSubsetAttempt(
       minimumLeaderSuperEffectMatchingSlots: baseInput.minimumLeaderSuperEffectMatchingSlots,
       requireLeaderSuperSpecialCriteria: baseInput.requireLeaderSuperSpecialCriteria,
       requireSuperTandemCriteria: baseInput.requireSuperTandemCriteria,
+      requireFullCaptainAbilityCoverage: baseInput.requireFullCaptainAbilityCoverage,
+      requireBothLeadersFullCaptainAbilityCoverage:
+        baseInput.requireBothLeadersFullCaptainAbilityCoverage,
+      allowPartialCaptainAbilityCoverage: baseInput.allowPartialCaptainAbilityCoverage,
     },
     requireLeadersWithoutSuperEffects: false,
     allowedLeadersWithSuperEffects: shouldReportAllowedLeadersWithSuperEffects(
@@ -1256,15 +1317,6 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
   ].join('::');
 }
 
-function hasStrictAutoTeamBuildConstraints(input: AutoBuildInput): boolean {
-  return Boolean(
-    input.requireAllSelectedTypesInTeam ||
-      input.requireAllSelectedClassesPerCharacter ||
-      input.requireAllSelectedCharacterTagsInTeam ||
-      input.requireAllSelectedCharacterNamesInTeam,
-  );
-}
-
 function resolveExactAttemptRequiresNoSuperLeaders(input: AutoBuildInput): boolean {
   return !input.requireAllSlotsInLeaderSuperEffectScope && !hasStrictSuperCriteriaCoverage(input);
 }
@@ -1335,13 +1387,13 @@ export function satisfiesRequestedAutoTeamBuildCoverage(
 ): result is AutoBuildResult {
   return Boolean(
     result &&
-    (shouldTreatSelectedClassesAsNeutral(result.requestedInput) ||
+    (shouldTreatSelectedClassesAsNeutral(result.input) ||
       result.coverage.coversAllSelectedClasses) &&
-    (shouldTreatSelectedTypesAsNeutral(result.requestedInput) ||
+    (shouldTreatSelectedTypesAsNeutral(result.input) ||
       result.coverage.coversAllSelectedTypes) &&
-    (shouldTreatSelectedCharacterTagsAsNeutral(result.requestedInput) ||
+    (shouldTreatSelectedCharacterTagsAsNeutral(result.input) ||
       result.coverage.coversAllSelectedCharacterTags) &&
-    (shouldTreatSelectedCharacterNamesAsNeutral(result.requestedInput) ||
+    (shouldTreatSelectedCharacterNamesAsNeutral(result.input) ||
       result.coverage.coversAllSelectedCharacterNames) &&
     result.coverage.abilityRequirements.matchesAll &&
     result.coverage.requiredCharacterGroups.matchesAll &&

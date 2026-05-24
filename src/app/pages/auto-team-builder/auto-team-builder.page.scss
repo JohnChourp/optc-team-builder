@@ -1564,6 +1564,40 @@
   color: #f7a7ce;
 }
 
+.report-groups .chip-row {
+  align-items: flex-start;
+}
+
+.report-row {
+  min-width: 0;
+}
+
+.report-state-chip {
+  flex: 0 0 auto;
+}
+
+.report-state-chip--passed {
+  background: rgba(74, 222, 128, 0.16);
+  color: #86efac;
+}
+
+.report-state-chip--relaxed {
+  background: rgba(244, 114, 182, 0.16);
+  color: #f7a7ce;
+}
+
+.report-state-chip--not-applicable {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 251, 255, 0.68);
+}
+
+.report-detail-chip {
+  justify-content: flex-start;
+  max-width: 100%;
+  text-align: left;
+  white-space: normal;
+}
+
 .summary-status-chip {
   justify-content: flex-start;
   text-transform: none;
