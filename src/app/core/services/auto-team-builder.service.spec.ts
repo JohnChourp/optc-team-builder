@@ -5349,7 +5349,7 @@ describe('Auto team builder', () => {
     expect(progressSnapshots.some((snapshot) => snapshot.candidateCount === 6)).toBe(true);
   });
 
-  it('does not downgrade full captain coverage to simple coverage', async () => {
+  it('relaxes full captain coverage without downgrading to simple coverage', async () => {
     const repository = {
       getAutoBuilderCandidates: vi
         .fn()
@@ -5365,7 +5365,12 @@ describe('Auto team builder', () => {
       }),
     });
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.input.requireFullCaptainAbilityCoverage).toBe(true);
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBe(true);
+    expect(result?.coverage.leaderCriteria.coverageMode).toBe('fullAbilityCoverage');
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
+    expect(result?.relaxation.downgradedCaptainAbilityCoverageToSimple).toBeUndefined();
   });
 
   it('excludes candidates outside the selected captain standard boost scope in simple mode', () => {
