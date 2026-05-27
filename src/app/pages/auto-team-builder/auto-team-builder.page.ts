@@ -3600,6 +3600,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const alert = await this.alertController.create({
       header: card.character.name,
       message: this.t('manual.branchPicker.message'),
+      cssClass: 'manual-branch-picker-alert',
       inputs: choosableActions.map((action) => ({
         type: 'radio',
         label: action.label,

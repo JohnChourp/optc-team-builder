@@ -184,3 +184,12 @@ img {
     min-height: 100dvh;
   }
 }
+
+ion-alert.manual-branch-picker-alert .alert-radio-label,
+ion-alert.manual-branch-picker-alert .alert-checkbox-label {
+  color: #f8fbff !important;
+}
+
+ion-alert.manual-branch-picker-alert [aria-checked='true'] .alert-radio-label {
+  color: #f5c84c !important;
+}
