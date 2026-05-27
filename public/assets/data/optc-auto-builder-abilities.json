@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-24T18:36:14.086Z",
+  "generatedAt": "2026-05-27T18:47:52.409Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -1872,7 +1872,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 271,
+      "matchCount": 273,
       "matchingCharacterIds": [
         20,
         230,
@@ -2144,7 +2144,9 @@
         4520,
         4521,
         4535,
-        4549
+        4549,
+        4576,
+        4577
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -2649,7 +2651,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 408,
+      "matchCount": 409,
       "matchingCharacterIds": [
         226,
         227,
@@ -3057,6 +3059,7 @@
         4441,
         4458,
         4505,
+        4579,
         5029,
         5030
       ],
@@ -5429,7 +5432,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 10,
+      "matchCount": 9,
       "matchingCharacterIds": [
         3176,
         3177,
@@ -5439,8 +5442,7 @@
         4125,
         4126,
         4127,
-        4128,
-        4577
+        4128
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -6889,7 +6891,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 305,
+      "matchCount": 303,
       "matchingCharacterIds": [
         3365,
         3371,
@@ -7193,9 +7195,7 @@
         4545,
         4546,
         4559,
-        4560,
-        4576,
-        4577
+        4560
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -7252,7 +7252,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 45,
+      "matchCount": 46,
       "matchingCharacterIds": [
         4040,
         4041,
@@ -7298,7 +7298,8 @@
         4518,
         4521,
         4532,
-        4544
+        4544,
+        4578
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -7333,7 +7334,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 926,
+      "matchCount": 924,
       "matchingCharacterIds": [
         9,
         11,
@@ -8254,8 +8255,6 @@
         4566,
         4574,
         4575,
-        4576,
-        4577,
         4578,
         5013,
         5014,
@@ -9714,7 +9713,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1498,
+      "matchCount": 1496,
       "matchingCharacterIds": [
         21,
         23,
@@ -11202,8 +11201,6 @@
         4554,
         4555,
         4556,
-        4576,
-        4577,
         5013,
         5014,
         5029,
@@ -12010,7 +12007,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 505,
+      "matchCount": 507,
       "matchingCharacterIds": [
         228,
         265,
@@ -12514,6 +12511,8 @@
         4571,
         4572,
         4573,
+        4576,
+        4579,
         5031,
         5032,
         5056
@@ -12990,7 +12989,8 @@
             4556,
             4569,
             4572,
-            4573
+            4573,
+            4579
           ]
         },
         {
@@ -13022,7 +13022,8 @@
             4477,
             4483,
             4492,
-            4529
+            4529,
+            4576
           ]
         },
         {
@@ -22129,17 +22130,11 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4576
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [
-        4576
-      ],
-      "sampleTexts": [
-        "Deals 150x character's ATK in non-type damage to all enemies (ignoring all defensive effects and DEF), reduces the duration of all enemy barriers by 3 turns, reduces crew's Bind duratiom by 7 turns, and sets all enemies' DEF to 0 for 1 turn (ignoring immunity to DEF Down, immunity to all status effects, or immunity excluding certain status effect). Increases all enemies' damage taken by up to 3x for up to 6 turns based on total Cost of crew at start of quest including Friend Captains and Support Characters (2x for 1 turn for less than 500 Cost, 2.25x for 1 turn for 500 or more Cost, 2.5x for 1 turn for 600 or more Cost, 2.75x for 3 turns for 700 or more Cost, and 3x for 6 tuns for 750 or more Cost). If 4 or more [Five Elders] [Celestial Dragon] [Navy] [World Government] characters are on the crew, applies \"Territory: Powerhouse class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 2 turns, boosts Powerhouse and Striker characters' base ATK by +2000 for 1 turn, then after that, becomes \"St. Mars & St. Saturn\" for 3 turns"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "inflict_poison",
@@ -22709,28 +22704,24 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility",
-        "specialText"
+        "captainAbility"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 3,
+      "matchCount": 2,
       "matchingCharacterIds": [
         3895,
-        3896,
-        4577
+        3896
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
         3895,
-        3896,
-        4577
+        3896
       ],
       "sampleTexts": [
         "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn.",
-        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn.",
-        "Deals 150x character's ATK in non-type damage to all enemies (ignoring all defensive effects and DEF), sets all enemies' DEF to 0 for 1 turn (ignoring immunity to DEF Down, immunity to all status effects, or immunity excluding certain status effect), and reduces crew's Blow Away duration by 5 turns. Boosts damage dealt to enemies affected by increase damage taken or Weakened status by up to 3.5x for 1 turn based on total Cost of crew at start of quest including Friend Captains and Support Characters (2.5x for less than 500 Cost, 2.75x for 500 or more Cost, 3x for 600 or more Cost, 3.25x for 700 or more Cost, and 3.5x for 750 or more Cost). If 4 or more [Five Elders] [Celestial Dragon] [Navy] [World Government] characters are on the crew and a [STR] or [INT] is set as Support for character, applies \"Territory\" based on Support character's type to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 2 turns, boosts Powerhouse and Striker characters' advantageous class effect by 2.25x for 1 turn, then after that, becomes \"St. Peter & St. Warcury\" for 3 turns"
+        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn."
       ]
     },
     {
@@ -22788,25 +22779,16 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility"
+        "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 2,
-      "matchingCharacterIds": [
-        4576,
-        4577
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [
-        4576,
-        4577
-      ],
-      "sampleTexts": [
-        "Reduces [STR] and [INT] characters' Switch Effect and VS Effect gauge by 2 at start of quest, boosts [STR], [INT], Powerhouse, and Striker characters' ATK by 5.5x, boosts their ATK by approximately 6x when they have [STR][RCV] or Rainbow slots, makes crew's [STR][RCV][TND] slots have matching slot effects, and if crew uses a Special to apply similar effect of slot effect boost that is applied on crew, reduces the boost effect by 1.75 but changes the effect to a stackable boost (the reduction of the effect cannot go below 1.0; after being changed the effect will not be treated as slot effect boost and can no longer change the effect and turn duration; certain special status will not carry over; stackable with other slot effect boost effects) [Applies following effect based on number of applicable Character Tags on crew] Boosts [Five Elders] [Celestial Dragon] [Navy] characters' HP by 1.4x, and reduces [Five Elders] [Celestial Dragon] [Navy] [World Government] characters' Special charge time by 5 turns at start of quest",
-        "Reduces [STR] and [INT] characters' Switch Effect and VS Effect gauge by 2 at start of quest, boosts [STR], [INT], Powerhouse, and Striker characters' ATK by 5.5x, boosts their ATK by approximately 6x when they have [STR][TND] or Rainbow slots, makes crew's [STR][TND] slots have matching slot effects, and if crew uses a Special to apply similar effect of slot effect boost that is applied on crew, reduces the boost effect by 1.75 but changes the effect to a stackable boost (the reduction of the effect cannot go below 1.0; after being changed the effect will not be treated as slot effect boost and can no longer change the effect and turn duration; certain special status will not carry over; stackable with other slot effect boost effects) [Applies following effect based on number of applicable Character Tags on crew] Boosts [Five Elders] [Celestial Dragon] [Navy] characters' HP by 1.4x, and reduces [Five Elders] [Celestial Dragon] [Navy] [World Government] characters' Special charge time by 5 turns at start of quest"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "reduce_special_charge",
@@ -25673,7 +25655,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 19,
+      "matchCount": 18,
       "matchingCharacterIds": [
         3339,
         3661,
@@ -25692,8 +25674,7 @@
         4365,
         4387,
         4432,
-        4576,
-        4577
+        4576
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -25926,7 +25907,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 73,
+      "matchCount": 74,
       "matchingCharacterIds": [
         4206,
         4209,
@@ -26000,7 +25981,8 @@
         4571,
         4572,
         4573,
-        4576
+        4576,
+        4577
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -28760,17 +28742,11 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4576
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [
-        4576
-      ],
-      "sampleTexts": [
-        "Tapping on this character with a [RCV] slot will further increase crew's slot effect boost by +0.25. Character cannot be blown away by attack, and makes Powerhouse and Striker characters' [INT][RCV] slots have matching slot effects"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_slot_carry_over",
@@ -29137,7 +29113,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 360,
+      "matchCount": 359,
       "matchingCharacterIds": [
         20,
         22,
@@ -29496,7 +29472,6 @@
         4573,
         4574,
         4575,
-        4577,
         5054,
         5055
       ],
@@ -31582,7 +31557,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 28,
+      "matchCount": 27,
       "matchingCharacterIds": [
         314,
         575,
@@ -31610,8 +31585,7 @@
         4389,
         4405,
         4489,
-        4505,
-        4576
+        4505
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -44258,7 +44232,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 10,
+      "matchCount": 11,
       "matchingCharacterIds": [
         4133,
         4222,
@@ -44269,14 +44243,16 @@
         4422,
         4447,
         4448,
-        4518
+        4518,
+        4578
       ],
       "turnMatchingCharacterIds": [
         {
           "minTurns": 2,
           "characterIds": [
             4373,
-            4447
+            4447,
+            4578
           ]
         },
         {
