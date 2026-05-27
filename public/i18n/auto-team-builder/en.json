@@ -405,6 +405,11 @@
       "loadingCandidates": "Loading manual candidates...",
       "noCandidates": "No characters matched the current manual search."
     },
+    "displayMode": {
+      "label": "Display mode",
+      "list": "List",
+      "compact": "Compact"
+    },
     "actions": {
       "clearAll": "Clear all",
       "editPicks": "Edit picks",

@@ -975,6 +975,27 @@
                           [value]="manualSearchTerm()"
                           (ionInput)="onManualSearchChange($event)"
                         ></ion-searchbar>
+                        <div
+                          class="view-toggle picker-view-toggle"
+                          [attr.aria-label]="t('manual.displayMode.label')"
+                        >
+                          <button
+                            type="button"
+                            class="view-toggle__button"
+                            [class.view-toggle__button--active]="!isPickerCompactMode()"
+                            (click)="setPickerDisplayMode('list')"
+                          >
+                            {{ t('manual.displayMode.list') }}
+                          </button>
+                          <button
+                            type="button"
+                            class="view-toggle__button"
+                            [class.view-toggle__button--active]="isPickerCompactMode()"
+                            (click)="setPickerDisplayMode('compact')"
+                          >
+                            {{ t('manual.displayMode.compact') }}
+                          </button>
+                        </div>
                         @if (manualCandidatesLoading()) {
                           <div class="manual-candidate-empty-state">
                             {{ t('manual.empty.loadingCandidates') }}
@@ -985,7 +1006,57 @@
                             {{ t('manual.empty.noCandidates') }}
                           </div>
                         }
-                        @if (manualCandidateCards().length) {
+                        @if (manualCandidateCards().length && isPickerCompactMode()) {
+                          <div
+                            class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--manual-characters manual-candidate-list--compact"
+                            (scroll)="onManualCharacterListScroll($event)"
+                          >
+                            @for (
+                              candidateCard of manualCandidateCards();
+                              track candidateCard.character.id
+                            ) {
+                              <button
+                                type="button"
+                                class="manual-candidate-thumb"
+                                [class.manual-candidate-thumb--selected]="
+                                  candidateCard.isSelectedInActiveSlot
+                                "
+                                [class.manual-candidate-thumb--blocked]="
+                                  !candidateCard.isSelectedInActiveSlot &&
+                                  !candidateCard.isSelectableInActiveSlot
+                                "
+                                [disabled]="
+                                  building() ||
+                                  (!candidateCard.isSelectedInActiveSlot &&
+                                    !candidateCard.isSelectableInActiveSlot)
+                                "
+                                [title]="candidateCard.character.name"
+                                [attr.aria-label]="candidateCard.character.name"
+                                [attr.aria-pressed]="candidateCard.isSelectedInActiveSlot"
+                                (click)="
+                                  toggleCharacterInActiveManualSlot(candidateCard.character)
+                                "
+                              >
+                                <img
+                                  [src]="candidateCard.character.imageUrl"
+                                  [alt]="candidateCard.character.name"
+                                  loading="lazy"
+                                />
+                                @if (candidateCard.favoriteLabel) {
+                                  <span class="manual-candidate-thumb__favorite" aria-hidden="true"
+                                    >★</span
+                                  >
+                                }
+                              </button>
+                            }
+                          </div>
+                          @if (manualCandidatesLoadingMore()) {
+                            <div class="manual-candidate-loading-more">
+                              <ion-spinner name="crescent"></ion-spinner>
+                            </div>
+                          }
+                        }
+                        @if (manualCandidateCards().length && !isPickerCompactMode()) {
                           <div
                             class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--manual-characters"
                             (scroll)="onManualCharacterListScroll($event)"
@@ -1550,6 +1621,27 @@
                           [value]="excludeCharacterSearchTerm()"
                           (ionInput)="onExcludeCharacterSearchChange($event)"
                         ></ion-searchbar>
+                        <div
+                          class="view-toggle picker-view-toggle"
+                          [attr.aria-label]="t('manual.displayMode.label')"
+                        >
+                          <button
+                            type="button"
+                            class="view-toggle__button"
+                            [class.view-toggle__button--active]="!isPickerCompactMode()"
+                            (click)="setPickerDisplayMode('list')"
+                          >
+                            {{ t('manual.displayMode.list') }}
+                          </button>
+                          <button
+                            type="button"
+                            class="view-toggle__button"
+                            [class.view-toggle__button--active]="isPickerCompactMode()"
+                            (click)="setPickerDisplayMode('compact')"
+                          >
+                            {{ t('manual.displayMode.compact') }}
+                          </button>
+                        </div>
                         @if (excludedCandidatesLoading()) {
                           <div class="manual-candidate-empty-state">
                             {{ t('exclude.empty.loadingCharacters') }}
@@ -1560,7 +1652,51 @@
                             {{ t('exclude.empty.noCharacters') }}
                           </div>
                         }
-                        @if (excludedCharacterCards().length) {
+                        @if (excludedCharacterCards().length && isPickerCompactMode()) {
+                          <div
+                            class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--exclude-characters manual-candidate-list--compact"
+                            (scroll)="onExcludedCharacterListScroll($event)"
+                          >
+                            @for (
+                              candidateCard of excludedCharacterCards();
+                              track candidateCard.character.id
+                            ) {
+                              <button
+                                type="button"
+                                class="manual-candidate-thumb manual-candidate-thumb--exclude"
+                                [class.manual-candidate-thumb--selected]="candidateCard.isExcluded"
+                                [class.manual-candidate-thumb--blocked]="
+                                  !candidateCard.isExcluded && !candidateCard.isSelectable
+                                "
+                                [disabled]="
+                                  building() ||
+                                  (!candidateCard.isExcluded && !candidateCard.isSelectable)
+                                "
+                                [title]="candidateCard.character.name"
+                                [attr.aria-label]="candidateCard.character.name"
+                                [attr.aria-pressed]="candidateCard.isExcluded"
+                                (click)="toggleExcludedCharacter(candidateCard.character)"
+                              >
+                                <img
+                                  [src]="candidateCard.character.imageUrl"
+                                  [alt]="candidateCard.character.name"
+                                  loading="lazy"
+                                />
+                                @if (candidateCard.favoriteLabel) {
+                                  <span class="manual-candidate-thumb__favorite" aria-hidden="true"
+                                    >★</span
+                                  >
+                                }
+                              </button>
+                            }
+                          </div>
+                          @if (excludedCandidatesLoadingMore()) {
+                            <div class="manual-candidate-loading-more">
+                              <ion-spinner name="crescent"></ion-spinner>
+                            </div>
+                          }
+                        }
+                        @if (excludedCharacterCards().length && !isPickerCompactMode()) {
                           <div
                             class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--exclude-characters"
                             (scroll)="onExcludedCharacterListScroll($event)"

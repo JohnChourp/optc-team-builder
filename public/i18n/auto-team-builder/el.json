@@ -405,6 +405,11 @@
       "loadingCandidates": "Γίνεται φόρτωση manual candidates...",
       "noCandidates": "Δεν βρέθηκαν χαρακτήρες για το current manual search."
     },
+    "displayMode": {
+      "label": "Λειτουργία προβολής",
+      "list": "Λίστα",
+      "compact": "Συμπαγής"
+    },
     "actions": {
       "clearAll": "Καθαρισμός όλων",
       "editPicks": "Edit picks",

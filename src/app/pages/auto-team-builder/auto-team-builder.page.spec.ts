@@ -1186,7 +1186,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.manualCandidateFilters().requiredAbilities).toEqual([]);
   });
 
-  it('passes Special matching ids to manual candidate repository searches', async () => {
+  it('does not filter manual candidate repository searches by ability requirements', async () => {
     const matchingLeader = createCharacterRecord(401, 'Buggy', [
       {
         key: 'extra_drop_any',
@@ -1223,11 +1223,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       },
     ]);
 
-    expect(repository.searchDetailedCharacters).toHaveBeenCalledWith(
-      expect.objectContaining({
-        allowedCharacterIds: [102, 101],
-      }),
-    );
+    const lastCall =
+      repository.searchDetailedCharacters.mock.calls[
+        repository.searchDetailedCharacters.mock.calls.length - 1
+      ]?.[0];
+
+    expect(lastCall?.allowedCharacterIds).toBeUndefined();
     expect(page.manualCandidateCards().map((card) => card.character.id)).toEqual([402, 401]);
   });
 

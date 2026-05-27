@@ -510,18 +510,6 @@ function resolveManualSlotRequiredAbilities(
   });
 }
 
-function matchesScopedManualRequirements(
-  character: Pick<CharacterDetailRecord, 'detail'>,
-  requirements: AutoBuildAbilityRequirement[],
-): boolean {
-  return requirements.every((requirement) =>
-    character.detail.builderAbilities.some(
-      (ability) =>
-        ability.source !== 'captainAbility' && matchesAnyAbilityRequirement(ability, [requirement]),
-    ),
-  );
-}
-
 @Component({
   selector: 'app-auto-team-builder-page',
   standalone: true,
@@ -658,6 +646,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly excludePickerMode = signal<'characters' | 'ships'>('characters');
   public readonly manualPickerModalOpen = signal(false);
   public readonly excludePickerModalOpen = signal(false);
+  public readonly pickerDisplayMode = signal<'list' | 'compact'>('compact');
+  public readonly isPickerCompactMode = computed(() => this.pickerDisplayMode() === 'compact');
   public readonly requirementSourceModalOpen = signal(false);
   public readonly manualSlots = signal<AutoBuildManualSlotSelection[]>(
     createEmptyAutoBuildManualSlots(),
@@ -2804,6 +2794,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public closeExcludePickerModal(): void {
     this.excludePickerModalOpen.set(false);
+  }
+
+  public setPickerDisplayMode(mode: 'list' | 'compact'): void {
+    this.pickerDisplayMode.set(mode);
   }
 
   public async openRequirementSourceModal(): Promise<void> {
@@ -5294,7 +5288,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       searchTerm,
       selectedTypes: [],
       selectedClasses: [],
-      allowedCharacterIds: this.abilityFilterCharacterIds(),
       sortMode: 'powerFirst',
       limit: CHARACTER_PICKER_PAGE_SIZE,
       offset,
@@ -6224,21 +6217,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     highlightedRequirements: AutoBuildAbilityRequirement[],
   ): ManualCharacterCardView[] {
     const activeRole = this.activeManualSlotRole();
-    const activeRoleRequirements = resolveManualSlotRequiredAbilities(
-      highlightedRequirements,
-      activeRole,
-    );
-    const requiredLeaderOnlyRequirements = activeRoleRequirements.filter((requirement) =>
-      EXTRA_DROP_ABILITY_KEY_SET.has(requirement.abilityKey),
-    );
-    const visibleCharacters =
-      requiredLeaderOnlyRequirements.length > 0
-        ? characters.filter((character) =>
-            matchesScopedManualRequirements(character, requiredLeaderOnlyRequirements),
-          )
-        : characters;
 
-    return visibleCharacters.map((character) => {
+    return characters.map((character) => {
       const isSelectedInActiveSlot = this.isCharacterSelectedInManualSlot(activeRole, character.id);
       const selectedBranchLabel = this.resolveManualSlotCharacterBranchLabel(activeRole, character);
 
