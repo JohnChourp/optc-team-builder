@@ -420,6 +420,9 @@
       "both": "Και οι δύο",
       "side": "{{name}}"
     },
+    "branchPicker": {
+      "message": "Επίλεξε ποιον χαρακτήρα να κλειδώσεις σε αυτό το slot."
+    },
     "similar": {
       "actions": {
         "add": "Βρες παρόμοιο OR pick",

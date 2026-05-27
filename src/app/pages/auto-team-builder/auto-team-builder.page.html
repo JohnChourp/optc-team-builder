@@ -1033,9 +1033,7 @@
                                 [title]="candidateCard.character.name"
                                 [attr.aria-label]="candidateCard.character.name"
                                 [attr.aria-pressed]="candidateCard.isSelectedInActiveSlot"
-                                (click)="
-                                  toggleCharacterInActiveManualSlot(candidateCard.character)
-                                "
+                                (click)="pickManualCharacterInActiveSlot(candidateCard)"
                               >
                                 <img
                                   [src]="candidateCard.character.imageUrl"

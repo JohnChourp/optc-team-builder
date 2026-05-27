@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
-import { type ViewWillEnter } from '@ionic/angular';
+import { AlertController, type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
   IonButtons,
@@ -2476,6 +2476,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     private readonly i18n: AppI18nService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly alertController: AlertController,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
@@ -3573,6 +3574,57 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.activeRequiredCharacterGroupId.set(null);
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
+  }
+
+  public async pickManualCharacterInActiveSlot(card: ManualCharacterCardView): Promise<void> {
+    const activeRole = this.activeManualSlotRole();
+    const isSelected = this.isCharacterSelectedInManualSlot(activeRole, card.character.id);
+
+    if (isSelected || card.branchActions.length === 0) {
+      this.toggleCharacterInActiveManualSlot(card.character);
+      return;
+    }
+
+    if (!this.canAssignCharacterToManualSlot(activeRole, card.character)) {
+      return;
+    }
+
+    const choosableActions = card.branchActions.filter((action) => !action.disabled);
+
+    if (choosableActions.length === 0) {
+      return;
+    }
+
+    const defaultMode =
+      choosableActions.find((action) => action.selected)?.mode ?? choosableActions[0].mode;
+    const alert = await this.alertController.create({
+      header: card.character.name,
+      message: this.t('manual.branchPicker.message'),
+      inputs: choosableActions.map((action) => ({
+        type: 'radio',
+        label: action.label,
+        value: action.mode,
+        checked: action.mode === defaultMode,
+      })),
+      buttons: [
+        {
+          text: this.i18n.translate('common.actions.cancel'),
+          role: 'cancel',
+        },
+        {
+          text: this.i18n.translate('common.actions.confirm'),
+          handler: (mode: AutoBuildCaptainBranchMode | undefined) => {
+            if (!mode) {
+              return;
+            }
+
+            this.selectCaptainBranchInActiveManualSlot(card.character, mode);
+          },
+        },
+      ],
+    });
+
+    await alert.present();
   }
 
   public toggleCharacterInActiveManualSlot(character: CharacterDetailRecord): void {

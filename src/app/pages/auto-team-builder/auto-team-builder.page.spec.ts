@@ -7428,6 +7428,7 @@ async function createPage(
     toggleFavorite: ReturnType<typeof vi.fn>;
     toggleShipFavorite: ReturnType<typeof vi.fn>;
   };
+  alertController: { create: ReturnType<typeof vi.fn> };
 }> {
   const { AutoTeamBuilderPage } = await import('./auto-team-builder.page');
   const repository = {
@@ -7661,6 +7662,9 @@ async function createPage(
   const router = {
     navigate: vi.fn().mockResolvedValue(true),
   };
+  const alertController = {
+    create: vi.fn().mockResolvedValue({ present: vi.fn().mockResolvedValue(undefined) }),
+  };
 
   return {
     page: new AutoTeamBuilderPage(
@@ -7670,12 +7674,14 @@ async function createPage(
       i18n as never,
       route as never,
       router as never,
+      alertController as never,
     ),
     repository,
     autoTeamBuilder,
     router,
     route,
     userState,
+    alertController,
   };
 }
 

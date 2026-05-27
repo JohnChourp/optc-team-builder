@@ -420,6 +420,9 @@
       "both": "Both",
       "side": "{{name}}"
     },
+    "branchPicker": {
+      "message": "Choose which character to lock into this slot."
+    },
     "similar": {
       "actions": {
         "add": "Find similar OR pick",
