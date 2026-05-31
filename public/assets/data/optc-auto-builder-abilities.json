@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-27T18:47:52.409Z",
+  "generatedAt": "2026-05-31T10:22:55.679Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -20,7 +20,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1816,
+      "matchCount": 1818,
       "matchingCharacterIds": [
         1,
         2,
@@ -1834,6 +1834,8 @@
         4576,
         4577,
         4579,
+        4586,
+        4588,
         5013,
         5014,
         5029,
@@ -3140,7 +3142,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1323,
+      "matchCount": 1324,
       "matchingCharacterIds": [
         209,
         210,
@@ -4463,6 +4465,7 @@
         4569,
         4570,
         4571,
+        4583,
         5013,
         5014
       ],
@@ -5324,30 +5327,34 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility"
+        "captainAbility",
+        "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 4,
+      "matchCount": 5,
       "matchingCharacterIds": [
         4186,
         4455,
         4462,
-        4506
+        4506,
+        4587
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
         4186,
         4455,
         4462,
-        4506
+        4506,
+        4587
       ],
       "sampleTexts": [
         "Reduces Special Cooldown of all characters by 2 turns at the start of the fight, boosts ATK of [DEX], Cerebral and Striker characters by 5.25x, boosts HP of [DEX], Cerebral and Striker characters by 1.3x, boosts chances of getting [TND] orbs, makes [DEX], [PSY] and [TND] orbs beneficial for [DEX], Cerebral and Striker characters, reduces Paralysis duration by 10 turns, and recovers 3x character's RCV in HP at the end of each turn. Boosts ATK of [DEX], Cerebral and Striker characters against enemies inflicted with Increase Damage Taken, delayed enemies, Poisoned enemies, enemies with reduced Defense and Paralyzed enemies by 1.1x.",
         "Boosts ATK of Driven and Slasher characters by 3.75x, boosts HP of Driven and Slasher characters by 1.25x, and boosts ATK against enemies inflicted with Increase Damage Taken, delayed enemies, poisoned enemies, enemies with reduced defense and paralyzed enemies by 1.2x.",
         "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, reduces VS Gauge of all characters by 1 at the start of the fight, boosts ATK of [QCK] and [INT] characters by 4x, and boosts HP of [QCK] and [INT] characters by 1.2x. If this character becomes your captain in the middle of an island, boosts ATK of [QCK] and [INT] by 4.8x, boosts [QCK] and [INT] characters ATK against enemies inflicted with Increase Damage Taken, delayed enemies, poisoned enemies, enemies with reduced defense, paralyzed enemies and enemies inflicted with Burn by 1.05x-1.34x, by a multiplicative 1.05x for each status effect, and reduces damage received by 15%.",
-        "Boosts ATK of [PSY], Cerebral and Striker characters by 5x, boosts ATK of all other characters by 3.5x, boosts HP of [PSY], Cerebral and Striker characters by 1.3x, makes [STR], [PSY], [RCV] and [TND] orbs beneficial for [PSY], Cerebral and Striker characters, and reduces Bind duration by 10 turns. Boosts [PSY], Cerebral and Striker characters ATK against enemies inflicted with Increase Damage Taken, delayed enemies, poisoned enemies, enemies with reduced defense, paralyzed enemies, enemies inflicted with Burn and enemies inflicted with Negative by 1.03x-1.23x, by a multiplicative 1.03x for each status effect. If your crew has 4+ [Paramythia-type] or [Zoan-type] characters, allows effects that inflict Increase Damage Taken, Delay, Poison, Defense Reduction, Paralysis, Burn and Weaken to ignore Debuff Protection."
+        "Boosts ATK of [PSY], Cerebral and Striker characters by 5x, boosts ATK of all other characters by 3.5x, boosts HP of [PSY], Cerebral and Striker characters by 1.3x, makes [STR], [PSY], [RCV] and [TND] orbs beneficial for [PSY], Cerebral and Striker characters, and reduces Bind duration by 10 turns. Boosts [PSY], Cerebral and Striker characters ATK against enemies inflicted with Increase Damage Taken, delayed enemies, poisoned enemies, enemies with reduced defense, paralyzed enemies, enemies inflicted with Burn and enemies inflicted with Negative by 1.03x-1.23x, by a multiplicative 1.03x for each status effect. If your crew has 4+ [Paramythia-type] or [Zoan-type] characters, allows effects that inflict Increase Damage Taken, Delay, Poison, Defense Reduction, Paralysis, Burn and Weaken to ignore Debuff Protection.",
+        "Reduces [INT] characters' Special charge time by 2 turns, reduces crew's Despair duration by 7 turns, removes all Poison effects on the crew, and boosts damage dealt to delayed enemies by 2.5x for 2 turns. If field has \"Territory: [INT]\" or \"Territory: Striker class\", delays all enemies for 1 turn ignoring immunity to Delay, immunity to all status effects, or immunity (excluding certain status effect), locks crew's slots for 1 turn, heals crew by 30,000 HP (up to 2x max HP ignoring max HP limit; if HP is above max limit, it is treated as being full HP), and adds 50x character's ATK in non-type damage on top of tap-timing bonuses for 5 turn (delays all enemies for 1 turn and heals crew by 10,000 HP otherwise)"
       ]
     },
     {
@@ -5432,7 +5439,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 9,
+      "matchCount": 10,
       "matchingCharacterIds": [
         3176,
         3177,
@@ -5442,7 +5449,8 @@
         4125,
         4126,
         4127,
-        4128
+        4128,
+        4587
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -5477,7 +5485,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 453,
+      "matchCount": 454,
       "matchingCharacterIds": [
         1233,
         1234,
@@ -5931,7 +5939,8 @@
         4553,
         4561,
         4562,
-        4579
+        4579,
+        4583
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -5966,7 +5975,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 86,
+      "matchCount": 87,
       "matchingCharacterIds": [
         1046,
         1047,
@@ -6053,7 +6062,8 @@
         4419,
         4421,
         4432,
-        4521
+        4521,
+        4587
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -6547,7 +6557,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 102,
+      "matchCount": 103,
       "matchingCharacterIds": [
         366,
         367,
@@ -6650,7 +6660,8 @@
         4460,
         4478,
         4486,
-        4524
+        4524,
+        4583
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -6685,7 +6696,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 170,
+      "matchCount": 171,
       "matchingCharacterIds": [
         2535,
         2536,
@@ -6856,7 +6867,8 @@
         4549,
         4572,
         4573,
-        4576
+        4576,
+        4588
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -6891,7 +6903,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 303,
+      "matchCount": 304,
       "matchingCharacterIds": [
         3365,
         3371,
@@ -7195,7 +7207,8 @@
         4545,
         4546,
         4559,
-        4560
+        4560,
+        4585
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -7334,7 +7347,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 924,
+      "matchCount": 926,
       "matchingCharacterIds": [
         9,
         11,
@@ -8256,6 +8269,8 @@
         4574,
         4575,
         4578,
+        4583,
+        4588,
         5013,
         5014,
         5054,
@@ -8338,7 +8353,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 268,
+      "matchCount": 269,
       "matchingCharacterIds": [
         231,
         232,
@@ -8606,6 +8621,7 @@
         4543,
         4554,
         4555,
+        4587,
         5054,
         5055
       ],
@@ -8642,7 +8658,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 979,
+      "matchCount": 983,
       "matchingCharacterIds": [
         389,
         390,
@@ -9622,7 +9638,11 @@
         4575,
         4576,
         4577,
-        4579
+        4579,
+        4583,
+        4584,
+        4585,
+        4588
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -9713,7 +9733,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1496,
+      "matchCount": 1499,
       "matchingCharacterIds": [
         21,
         23,
@@ -11201,6 +11221,9 @@
         4554,
         4555,
         4556,
+        4584,
+        4585,
+        4586,
         5013,
         5014,
         5029,
@@ -11244,7 +11267,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 623,
+      "matchCount": 624,
       "matchingCharacterIds": [
         566,
         570,
@@ -11867,6 +11890,7 @@
         4547,
         4552,
         4556,
+        4586,
         5031,
         5032
       ],
@@ -12007,7 +12031,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 507,
+      "matchCount": 508,
       "matchingCharacterIds": [
         228,
         265,
@@ -12513,6 +12537,7 @@
         4573,
         4576,
         4579,
+        4586,
         5031,
         5032,
         5056
@@ -12746,6 +12771,7 @@
             4438,
             4456,
             4526,
+            4586,
             5056
           ]
         },
@@ -13023,7 +13049,8 @@
             4483,
             4492,
             4529,
-            4576
+            4576,
+            4586
           ]
         },
         {
@@ -13134,7 +13161,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 465,
+      "matchCount": 466,
       "matchingCharacterIds": [
         354,
         355,
@@ -13600,7 +13627,8 @@
         4573,
         4574,
         4575,
-        4578
+        4578,
+        4587
       ],
       "turnMatchingCharacterIds": [
         {
@@ -14055,7 +14083,8 @@
             4521,
             4529,
             4548,
-            4578
+            4578,
+            4587
           ]
         },
         {
@@ -14187,7 +14216,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 556,
+      "matchCount": 557,
       "matchingCharacterIds": [
         73,
         251,
@@ -14741,6 +14770,7 @@
         4565,
         4571,
         4579,
+        4583,
         5031,
         5032,
         5046,
@@ -15265,7 +15295,8 @@
             4171,
             4489,
             4529,
-            4551
+            4551,
+            4583
           ]
         },
         {
@@ -17194,7 +17225,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 335,
+      "matchCount": 336,
       "matchingCharacterIds": [
         1823,
         1824,
@@ -17529,6 +17560,7 @@
         4557,
         4558,
         4566,
+        4584,
         5046,
         5047
       ],
@@ -17599,7 +17631,8 @@
             4360,
             4374,
             4554,
-            4555
+            4555,
+            4584
           ]
         },
         {
@@ -19104,7 +19137,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 258,
+      "matchCount": 259,
       "matchingCharacterIds": [
         1411,
         1412,
@@ -19363,7 +19396,8 @@
         4552,
         4556,
         4561,
-        4562
+        4562,
+        4585
       ],
       "turnMatchingCharacterIds": [
         {
@@ -19628,7 +19662,8 @@
             4527,
             4548,
             4552,
-            4556
+            4556,
+            4585
           ]
         },
         {
@@ -19967,12 +20002,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
+        "sailorAbilities",
         "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 45,
+      "matchCount": 48,
       "matchingCharacterIds": [
         1903,
         1904,
@@ -20018,7 +20054,10 @@
         4497,
         4513,
         4514,
-        4539
+        4539,
+        4574,
+        4575,
+        4583
       ],
       "turnMatchingCharacterIds": [
         {
@@ -20046,7 +20085,9 @@
             4462,
             4496,
             4497,
-            4513
+            4513,
+            4574,
+            4575
           ]
         },
         {
@@ -20068,7 +20109,9 @@
             4483,
             4487,
             4514,
-            4539
+            4539,
+            4575,
+            4583
           ]
         },
         {
@@ -20121,7 +20164,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 321,
+      "matchCount": 324,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -20442,6 +20485,9 @@
         4546,
         4550,
         4570,
+        4583,
+        4584,
+        4588,
         5031,
         5032
       ],
@@ -20507,7 +20553,8 @@
             4323,
             4357,
             4486,
-            4570
+            4570,
+            4584
           ]
         },
         {
@@ -20563,7 +20610,8 @@
             4271,
             4358,
             4437,
-            4485
+            4485,
+            4588
           ]
         },
         {
@@ -20769,7 +20817,9 @@
             4469,
             4495,
             4519,
-            4570
+            4570,
+            4583,
+            4584
           ]
         },
         {
@@ -21195,7 +21245,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 133,
+      "matchCount": 134,
       "matchingCharacterIds": [
         2106,
         2107,
@@ -21328,6 +21378,7 @@
         4518,
         4525,
         4532,
+        4585,
         5046,
         5047
       ],
@@ -21356,7 +21407,8 @@
             2709,
             2951,
             2952,
-            3626
+            3626,
+            4585
           ]
         },
         {
@@ -21828,7 +21880,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 267,
+      "matchCount": 268,
       "matchingCharacterIds": [
         13,
         14,
@@ -22096,7 +22148,8 @@
         4493,
         4517,
         4536,
-        4547
+        4547,
+        4587
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -22130,11 +22183,20 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 2,
+      "matchingCharacterIds": [
+        4585,
+        4588
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "sampleCharacterIds": [
+        4585,
+        4588
+      ],
+      "sampleTexts": [
+        "Reduces all enemies' DEF Up/Resilience duration by 2 turns, changes character's slot to character's own type, and further increases crew's slot effect boost by +0.25. If 4 or more [Elbaph Arc] [Straw Hat Pirates] [Giant] characters are on the crew, doubles [INT], Striker, and Free Spirit characters' slot effects for 1 turn. Reduces all enemies' DEF Up/Resilience duration by 4 turns, changes character's slot and adjacent slots (including [BLOCK] slots) to character's own type, allows crew's slot effect boost to be further increased up to 2 times, and further increases the boost by +0.75. If 4 or more [Elbaph Arc] [Straw Hat Pirates] [Giant] characters are on the crew, boosts [INT], Striker, and Free Spirit characters' slot effects by 2.25x for 3 turns. Reduces all enemies' damage reduction from certain slots effect duration by 4 turns, reduces all enemies' Resilience duration by 7 turns, and boosts Striker and Free Spirit characters' advantageous class effect by 1.75x for 1 turn. If 4 or more [Elbaph Arc] [Straw Hat Pirates] [Giant] characters are on the crew, applies \"Territory: Striker class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 2 turns, and boosts [INT], Striker, and Free Spirit characters' slot effects by 3x for 5 turns",
+        "Deals 100x character's ATK in non-type damage to all enemies at end of turn for 1 turn, reduces all enemies' damage reduction/DEF Up and Threshold Damage Reduction duration by 3 turns, and boosts crew's base ATK by +1250 for 3 turns. If 5 or more [Giant] [Elbaph Arc] characters are on the crew, applies \"Territory: Striker class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 1 turn. If 3 or more [New Giant Pirate Crew] characters or 5 or more [Giant] characters are on the crew, applies \"Territory: [INT]\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 1 turn"
+      ]
     },
     {
       "key": "inflict_poison",
@@ -22153,7 +22215,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 76,
+      "matchCount": 77,
       "matchingCharacterIds": [
         58,
         215,
@@ -22230,7 +22292,8 @@
         4509,
         4510,
         4511,
-        4550
+        4550,
+        4587
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -22649,7 +22712,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 25,
+      "matchCount": 26,
       "matchingCharacterIds": [
         4110,
         4111,
@@ -22675,7 +22738,8 @@
         4539,
         4547,
         4563,
-        4564
+        4564,
+        4586
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -22807,7 +22871,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 988,
+      "matchCount": 993,
       "matchingCharacterIds": [
         452,
         453,
@@ -23796,7 +23860,12 @@
         4575,
         4576,
         4577,
-        4578
+        4578,
+        4583,
+        4584,
+        4585,
+        4586,
+        4587
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -23831,7 +23900,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 712,
+      "matchCount": 713,
       "matchingCharacterIds": [
         9,
         17,
@@ -24541,6 +24610,7 @@
         4545,
         4552,
         4553,
+        4587,
         5031,
         5032,
         5046,
@@ -24684,11 +24754,17 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 1,
+      "matchingCharacterIds": [
+        4585
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "sampleCharacterIds": [
+        4585
+      ],
+      "sampleTexts": [
+        "Reduces all enemies' DEF Up/Resilience duration by 2 turns, changes character's slot to character's own type, and further increases crew's slot effect boost by +0.25. If 4 or more [Elbaph Arc] [Straw Hat Pirates] [Giant] characters are on the crew, doubles [INT], Striker, and Free Spirit characters' slot effects for 1 turn. Reduces all enemies' DEF Up/Resilience duration by 4 turns, changes character's slot and adjacent slots (including [BLOCK] slots) to character's own type, allows crew's slot effect boost to be further increased up to 2 times, and further increases the boost by +0.75. If 4 or more [Elbaph Arc] [Straw Hat Pirates] [Giant] characters are on the crew, boosts [INT], Striker, and Free Spirit characters' slot effects by 2.25x for 3 turns. Reduces all enemies' damage reduction from certain slots effect duration by 4 turns, reduces all enemies' Resilience duration by 7 turns, and boosts Striker and Free Spirit characters' advantageous class effect by 1.75x for 1 turn. If 4 or more [Elbaph Arc] [Straw Hat Pirates] [Giant] characters are on the crew, applies \"Territory: Striker class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 2 turns, and boosts [INT], Striker, and Free Spirit characters' slot effects by 3x for 5 turns"
+      ]
     },
     {
       "key": "defeat_enemy",
@@ -24827,7 +24903,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 58,
+      "matchCount": 60,
       "matchingCharacterIds": [
         317,
         318,
@@ -24885,6 +24961,8 @@
         4504,
         4521,
         4528,
+        4586,
+        4588,
         5029,
         5030
       ],
@@ -24921,7 +24999,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 171,
+      "matchCount": 172,
       "matchingCharacterIds": [
         577,
         578,
@@ -25093,7 +25171,8 @@
         4528,
         4531,
         4554,
-        4555
+        4555,
+        4587
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -25655,7 +25734,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 18,
+      "matchCount": 20,
       "matchingCharacterIds": [
         3339,
         3661,
@@ -25674,7 +25753,9 @@
         4365,
         4387,
         4432,
-        4576
+        4576,
+        4586,
+        4588
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -25907,7 +25988,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 74,
+      "matchCount": 75,
       "matchingCharacterIds": [
         4206,
         4209,
@@ -25982,7 +26063,8 @@
         4572,
         4573,
         4576,
-        4577
+        4577,
+        4588
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -26907,11 +26989,20 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 2,
+      "matchingCharacterIds": [
+        4587,
+        4588
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "sampleCharacterIds": [
+        4587,
+        4588
+      ],
+      "sampleTexts": [
+        "Reduces character's Special Reverse by 3 turns. Heals crew by 600 HP at end of turn",
+        "Lets character completely evade Special Bind. Reduces character's Special Reverse by 3 turns"
+      ]
     },
     {
       "key": "crewmate_recover_remove_sfx",
@@ -26929,11 +27020,17 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 1,
+      "matchingCharacterIds": [
+        4586
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "sampleCharacterIds": [
+        4586
+      ],
+      "sampleTexts": [
+        "Makes crew immune to Remove SFX when Captain is a Striker class. Reduces character's Bind duration by 3 turns when Captain is a Striker class"
+      ]
     },
     {
       "key": "crewmate_recover_paralysis",
@@ -29950,7 +30047,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 86,
+      "matchCount": 87,
       "matchingCharacterIds": [
         418,
         553,
@@ -30037,7 +30134,8 @@
         4477,
         4563,
         4564,
-        4569
+        4569,
+        4584
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -30071,7 +30169,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 62,
+      "matchCount": 63,
       "matchingCharacterIds": [
         314,
         357,
@@ -30134,7 +30232,8 @@
         4405,
         4489,
         4503,
-        4505
+        4505,
+        4583
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -30263,7 +30362,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 115,
+      "matchCount": 116,
       "matchingCharacterIds": [
         669,
         833,
@@ -30379,7 +30478,8 @@
         4554,
         4555,
         4561,
-        4562
+        4562,
+        4585
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -32116,7 +32216,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 281,
+      "matchCount": 282,
       "matchingCharacterIds": [
         20,
         22,
@@ -32397,6 +32497,7 @@
         4573,
         4574,
         4575,
+        4587,
         5054,
         5055
       ],
@@ -33428,7 +33529,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 39,
+      "matchCount": 40,
       "matchingCharacterIds": [
         3613,
         3629,
@@ -33468,7 +33569,8 @@
         4394,
         4395,
         4423,
-        4523
+        4523,
+        4587
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -33503,7 +33605,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 118,
+      "matchCount": 119,
       "matchingCharacterIds": [
         575,
         1595,
@@ -33622,7 +33724,8 @@
         4565,
         4574,
         4575,
-        4577
+        4577,
+        4583
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -33700,7 +33803,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 46,
+      "matchCount": 48,
       "matchingCharacterIds": [
         4364,
         4365,
@@ -33747,7 +33850,9 @@
         4562,
         4563,
         4564,
-        4566
+        4566,
+        4584,
+        4585
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -35606,7 +35711,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 508,
+      "matchCount": 510,
       "matchingCharacterIds": [
         12,
         20,
@@ -36115,6 +36220,8 @@
         4555,
         4556,
         4579,
+        4583,
+        4587,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -36149,7 +36256,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 339,
+      "matchCount": 340,
       "matchingCharacterIds": [
         16,
         257,
@@ -36489,7 +36596,8 @@
         4539,
         4545,
         4547,
-        4556
+        4556,
+        4586
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -36523,7 +36631,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 689,
+      "matchCount": 692,
       "matchingCharacterIds": [
         8,
         77,
@@ -37213,6 +37321,9 @@
         4573,
         4574,
         4575,
+        4584,
+        4585,
+        4588,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -38305,7 +38416,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 32,
+      "matchCount": 33,
       "matchingCharacterIds": [
         2391,
         2507,
@@ -38338,7 +38449,8 @@
         4497,
         4544,
         4565,
-        4566
+        4566,
+        4584
       ],
       "turnMatchingCharacterIds": [
         {
