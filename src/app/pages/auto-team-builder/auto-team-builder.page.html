@@ -32,7 +32,14 @@
         </div>
       </section>
 
-      <section class="glass-card controls-card">
+      <app-auto-team-builder-controls-panel>
+        <app-auto-team-builder-requirements-panel>
+          <app-auto-team-builder-manual-panel>
+            <app-auto-team-builder-manual-chip-panel>
+              <app-auto-team-builder-candidate-card-panel>
+                <app-auto-team-builder-picker-panel>
+                  <app-auto-team-builder-actions-panel>
+                    <section class="glass-card controls-card">
         <div class="controls-grid">
           <div class="fixed-type-card">
             <span>{{ t('filters.types.label') }}</span>
@@ -2011,113 +2018,121 @@
             {{ buildButtonLabel() }}
           </ion-button>
         </div>
-      </section>
+                    </section>
+                  </app-auto-team-builder-actions-panel>
+                </app-auto-team-builder-picker-panel>
+              </app-auto-team-builder-candidate-card-panel>
+            </app-auto-team-builder-manual-chip-panel>
+          </app-auto-team-builder-manual-panel>
+        </app-auto-team-builder-requirements-panel>
+      </app-auto-team-builder-controls-panel>
 
-      @if (building()) {
-        <section class="loading-card glass-card">
-          <ion-spinner name="crescent" class="loading-card__spinner"></ion-spinner>
-          <div class="loading-card__copy" role="status" aria-live="polite">
-            <div class="loading-card__progress-shell">
-              <div class="loading-card__progress-header">
-                <strong>{{ buildOverallProgressLabel() }}</strong>
-              </div>
-              <div class="loading-card__progress-bar" aria-hidden="true">
-                <span
-                  class="loading-card__progress-bar-fill"
-                  [style.width.%]="buildOverallProgressPercent()"
-                ></span>
-              </div>
-            </div>
-            <div class="loading-progress-list">
-              @for (row of loadingProgressRows(); track $index) {
-                <div
-                  class="loading-progress-row"
-                  [class.loading-progress-row--visible]="row.visible"
-                  [class.loading-progress-row--muted]="row.tone === 'secondary'"
-                  [class.loading-progress-row--fallback]="row.tone === 'fallback'"
-                  [class.loading-progress-row--warning]="row.tone === 'warning'"
-                >
-                  <span>{{ row.displayText }}</span>
+      <app-auto-team-builder-loading-panel>
+        @if (building()) {
+          <section class="loading-card glass-card">
+            <ion-spinner name="crescent" class="loading-card__spinner"></ion-spinner>
+            <div class="loading-card__copy" role="status" aria-live="polite">
+              <div class="loading-card__progress-shell">
+                <div class="loading-card__progress-header">
+                  <strong>{{ buildOverallProgressLabel() }}</strong>
                 </div>
-              }
-            </div>
-            <section class="loading-card__performance">
-              <div class="loading-card__performance-copy">
-                <strong>{{ t('performance.title') }}</strong>
-                <small>{{ t('performance.copy') }}</small>
+                <div class="loading-card__progress-bar" aria-hidden="true">
+                  <span
+                    class="loading-card__progress-bar-fill"
+                    [style.width.%]="buildOverallProgressPercent()"
+                  ></span>
+                </div>
               </div>
-              <div class="loading-card__performance-controls">
-                <label class="loading-card__performance-field">
-                  <span>{{ t('performance.mode.label') }}</span>
-                  <ion-select
-                    interface="popover"
-                    fill="outline"
-                    [value]="autoTeamBuilderWorkerPreference().mode"
-                    (ionChange)="onAutoTeamBuilderWorkerModeChange($event)"
+              <div class="loading-progress-list">
+                @for (row of loadingProgressRows(); track $index) {
+                  <div
+                    class="loading-progress-row"
+                    [class.loading-progress-row--visible]="row.visible"
+                    [class.loading-progress-row--muted]="row.tone === 'secondary'"
+                    [class.loading-progress-row--fallback]="row.tone === 'fallback'"
+                    [class.loading-progress-row--warning]="row.tone === 'warning'"
                   >
-                    <ion-select-option value="auto">
-                      {{ t('performance.mode.options.auto') }}
-                    </ion-select-option>
-                    <ion-select-option value="manual">
-                      {{ t('performance.mode.options.manual') }}
-                    </ion-select-option>
-                  </ion-select>
-                </label>
-                @if (autoTeamBuilderWorkerPreference().mode === 'manual') {
+                    <span>{{ row.displayText }}</span>
+                  </div>
+                }
+              </div>
+              <section class="loading-card__performance">
+                <div class="loading-card__performance-copy">
+                  <strong>{{ t('performance.title') }}</strong>
+                  <small>{{ t('performance.copy') }}</small>
+                </div>
+                <div class="loading-card__performance-controls">
                   <label class="loading-card__performance-field">
-                    <span>{{ t('performance.manualCount.label') }}</span>
+                    <span>{{ t('performance.mode.label') }}</span>
                     <ion-select
                       interface="popover"
                       fill="outline"
-                      [value]="autoTeamBuilderWorkerPreference().manualCount"
-                      (ionChange)="onAutoTeamBuilderManualWorkerCountChange($event)"
+                      [value]="autoTeamBuilderWorkerPreference().mode"
+                      (ionChange)="onAutoTeamBuilderWorkerModeChange($event)"
                     >
-                      @for (count of autoTeamBuilderAvailableWorkerCounts(); track count) {
-                        <ion-select-option [value]="count">{{ count }}</ion-select-option>
-                      }
+                      <ion-select-option value="auto">
+                        {{ t('performance.mode.options.auto') }}
+                      </ion-select-option>
+                      <ion-select-option value="manual">
+                        {{ t('performance.mode.options.manual') }}
+                      </ion-select-option>
                     </ion-select>
                   </label>
-                }
-              </div>
-              <div class="loading-card__performance-summary">
-                <small>
-                  {{
-                    t('performance.runtime.detected', {
-                      count: autoTeamBuilderWorkerRuntime().detectedCoreCount,
-                    })
-                  }}
-                </small>
-                <small>
-                  {{
-                    t('performance.runtime.target', {
-                      count: autoTeamBuilderWorkerRuntime().effectiveCount,
-                    })
-                  }}
-                </small>
-                <small>{{ t('performance.runtime.applies') }}</small>
-              </div>
-            </section>
-          </div>
-          <div class="loading-card__actions">
-            <ion-button
-              fill="outline"
-              color="warning"
-              class="loading-card__action"
-              (click)="pauseBuild()"
-            >
-              {{ pauseBuildButtonLabel() }}
-            </ion-button>
-            <ion-button
-              fill="outline"
-              color="light"
-              class="loading-card__action"
-              (click)="cancelBuild()"
-            >
-              {{ cancelBuildButtonLabel() }}
-            </ion-button>
-          </div>
-        </section>
-      }
+                  @if (autoTeamBuilderWorkerPreference().mode === 'manual') {
+                    <label class="loading-card__performance-field">
+                      <span>{{ t('performance.manualCount.label') }}</span>
+                      <ion-select
+                        interface="popover"
+                        fill="outline"
+                        [value]="autoTeamBuilderWorkerPreference().manualCount"
+                        (ionChange)="onAutoTeamBuilderManualWorkerCountChange($event)"
+                      >
+                        @for (count of autoTeamBuilderAvailableWorkerCounts(); track count) {
+                          <ion-select-option [value]="count">{{ count }}</ion-select-option>
+                        }
+                      </ion-select>
+                    </label>
+                  }
+                </div>
+                <div class="loading-card__performance-summary">
+                  <small>
+                    {{
+                      t('performance.runtime.detected', {
+                        count: autoTeamBuilderWorkerRuntime().detectedCoreCount,
+                      })
+                    }}
+                  </small>
+                  <small>
+                    {{
+                      t('performance.runtime.target', {
+                        count: autoTeamBuilderWorkerRuntime().effectiveCount,
+                      })
+                    }}
+                  </small>
+                  <small>{{ t('performance.runtime.applies') }}</small>
+                </div>
+              </section>
+            </div>
+            <div class="loading-card__actions">
+              <ion-button
+                fill="outline"
+                color="warning"
+                class="loading-card__action"
+                (click)="pauseBuild()"
+              >
+                {{ pauseBuildButtonLabel() }}
+              </ion-button>
+              <ion-button
+                fill="outline"
+                color="light"
+                class="loading-card__action"
+                (click)="cancelBuild()"
+              >
+                {{ cancelBuildButtonLabel() }}
+              </ion-button>
+            </div>
+          </section>
+        }
 
       @if (!building() && buildPaused()) {
         <section class="loading-card glass-card empty-card">
@@ -2156,8 +2171,9 @@
         </section>
       }
 
-      @if (!building() && result(); as current) {
-        @if (resultUsesFallback()) {
+        <app-auto-team-builder-results-panel>
+          @if (!building() && result(); as current) {
+            @if (resultUsesFallback()) {
           <section class="glass-card fallback-card">
             <div class="slot-grid__header">
               <h2>{{ t('fallback.title') }}</h2>
@@ -2696,7 +2712,9 @@
             </article>
           }
         </section>
-      }
+          }
+        </app-auto-team-builder-results-panel>
+      </app-auto-team-builder-loading-panel>
     </div>
   </ion-content>
 </ng-container>

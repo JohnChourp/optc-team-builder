@@ -88,6 +88,11 @@ import {
   type SavedRumbleTeamResult,
   type SavedRumbleTeamSlot,
 } from '../../core/models/saved-rumble-team.models';
+import {
+  AutoTeamBuilderRumbleControlsPanelComponent,
+  AutoTeamBuilderRumbleResultsPanelComponent,
+  AutoTeamBuilderRumbleRosterPanelComponent,
+} from './auto-team-builder-rumble-style-panels.component';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 
@@ -162,6 +167,9 @@ function createEmptyRumbleSlots(count: number): OptionalRumbleTeamSlot[] {
     IonTitle,
     IonToggle,
     IonToolbar,
+    AutoTeamBuilderRumbleControlsPanelComponent,
+    AutoTeamBuilderRumbleResultsPanelComponent,
+    AutoTeamBuilderRumbleRosterPanelComponent,
     RouterLink,
     TranslocoDirective,
   ],

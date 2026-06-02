@@ -70,6 +70,10 @@ import {
   buildOptcbxFavoritesExportPayload,
   downloadOptcbxFavoritesExport,
 } from './characters-favorites.utils';
+import {
+  CharactersCatalogPanelComponent,
+  CharactersImportPanelComponent,
+} from './characters-style-panels.component';
 
 const PAGE_SIZE = 100;
 type CharacterDisplayMode = 'list' | 'compact';
@@ -114,6 +118,8 @@ interface AbilityFilterGroupView {
     IonToolbar,
     AbilityFilterRailComponent,
     CharacterFilterRowComponent,
+    CharactersCatalogPanelComponent,
+    CharactersImportPanelComponent,
     SpecialAbilityPickerComponent,
     RouterLink,
     TranslocoDirective,

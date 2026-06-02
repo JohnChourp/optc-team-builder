@@ -105,6 +105,12 @@ import {
   extractAutocompleteToken,
   type EnemyTextAutocompleteSuggestion,
 } from './saved-enemies-text-autocomplete.utils';
+import {
+  SavedEnemiesAssociationPanelComponent,
+  SavedEnemiesEditorPanelComponent,
+  SavedEnemiesImportPanelComponent,
+  SavedEnemiesOverviewPanelComponent,
+} from './saved-enemies-style-panels.component';
 
 interface SavedEnemyAbilitySummaryChipView {
   draftId: string;
@@ -188,6 +194,10 @@ interface SavedEnemyAssociatedTeamCardView {
     CharacterImagePickerComponent,
     AbilityRequirementPickerComponent,
     AbilityFilterRailComponent,
+    SavedEnemiesAssociationPanelComponent,
+    SavedEnemiesEditorPanelComponent,
+    SavedEnemiesImportPanelComponent,
+    SavedEnemiesOverviewPanelComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,

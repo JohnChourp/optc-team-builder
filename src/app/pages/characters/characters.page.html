@@ -9,7 +9,9 @@
   </ion-header>
 
   <ion-content [fullscreen]="true">
-    <div class="page-shell characters-shell">
+    <app-characters-catalog-panel>
+      <app-characters-import-panel>
+        <div class="page-shell characters-shell">
       <section class="catalog-summary glass-card">
         <div class="catalog-summary__title">
           <div class="section-label">
@@ -417,5 +419,7 @@
         </div>
       </ng-template>
     </ion-modal>
+      </app-characters-import-panel>
+    </app-characters-catalog-panel>
   </ion-content>
 </ng-container>

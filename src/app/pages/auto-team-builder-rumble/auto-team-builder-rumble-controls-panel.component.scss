@@ -1,0 +1,339 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .rumble-builder-shell {
+    display: grid;
+    gap: 18px;
+    min-height: 100%;
+    padding: 18px;
+    background:
+      radial-gradient(circle at top left, rgba(246, 190, 82, 0.18), transparent 30%),
+      linear-gradient(180deg, #101512 0%, #11161a 44%, #0b1115 100%);
+  }
+
+  .glass-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.03)),
+      rgba(6, 10, 14, 0.82);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.2);
+  }
+
+  .hero-card,
+  .summary-card,
+  .team-section,
+  .state-card,
+  .loading-card,
+  .controls-card,
+  .excluded-card {
+    padding: 22px;
+  }
+
+  .hero-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 18px;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    max-width: 680px;
+  }
+
+  .visually-hidden-file {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .hero-actions small {
+    flex-basis: 100%;
+    color: rgba(246, 241, 232, 0.62);
+    line-height: 1.45;
+    text-align: right;
+  }
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #f7bf54;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .section-title,
+  .section-head h2 {
+    margin: 10px 0 8px;
+    color: #fff8ee;
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+
+  .section-copy,
+  .state-card p,
+  .slot-copy small {
+    margin: 0;
+    color: rgba(246, 241, 232, 0.72);
+    line-height: 1.55;
+  }
+
+  .state-card {
+    display: grid;
+    gap: 8px;
+  }
+
+  .state-card strong {
+    color: #fff8ee;
+  }
+
+  .state-card--error {
+    border-color: rgba(255, 139, 118, 0.34);
+  }
+
+  .import-feedback-card {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .import-feedback-card--success {
+    border-color: rgba(95, 214, 154, 0.34);
+  }
+
+  .import-feedback-card--warning {
+    border-color: rgba(247, 191, 84, 0.42);
+  }
+
+  .import-feedback-card--error {
+    border-color: rgba(255, 139, 118, 0.34);
+  }
+
+  .summary-card,
+  .team-section,
+  .slot-copy,
+  .controls-card,
+  .excluded-card {
+    display: grid;
+    gap: 14px;
+  }
+
+  .summary-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .team-switch {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgba(247, 191, 84, 0.22);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .team-switch__button {
+    min-width: 86px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: rgba(246, 241, 232, 0.72);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .team-switch__button--active {
+    background: #f7bf54;
+    color: #201609;
+  }
+
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .section-head h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .filter-card,
+  .buff-focus-card,
+  .strict-toggle-row {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .filter-card > span,
+  .buff-focus-card__head > span,
+  .strict-toggle-copy strong,
+  .loading-card__performance-copy strong {
+    color: #fff8ee;
+    font-weight: 800;
+  }
+
+  .filter-card ion-button {
+    justify-self: start;
+  }
+
+  .filter-support-copy {
+    color: rgba(246, 241, 232, 0.68);
+    line-height: 1.45;
+  }
+
+  .selected-values-row,
+  .secondary-toggle-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .selected-value-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 6px 9px;
+    border: 1px solid rgba(247, 191, 84, 0.28);
+    border-radius: 999px;
+    background: rgba(247, 191, 84, 0.12);
+    color: #f8d36b;
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+
+  .buff-focus-card {
+    margin-top: 14px;
+  }
+
+  .buff-focus-card__head {
+    display: grid;
+    gap: 4px;
+  }
+
+  .buff-focus-card__head small,
+  .buff-focus-empty {
+    color: rgba(246, 241, 232, 0.68);
+    line-height: 1.45;
+  }
+
+  .buff-focus-lanes {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .buff-focus-lane {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  .buff-focus-lane strong {
+    color: #fff8ee;
+    font-size: 0.82rem;
+  }
+
+  .buff-focus-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .buff-focus-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 5px 6px 5px 9px;
+    border: 1px solid rgba(247, 191, 84, 0.28);
+    border-radius: 999px;
+    background: rgba(247, 191, 84, 0.12);
+    color: #f8d36b;
+    font-size: 0.78rem;
+  }
+
+  .buff-focus-chip > span {
+    overflow-wrap: anywhere;
+  }
+
+  .buff-focus-chip button {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff8ee;
+    cursor: pointer;
+  }
+
+  .buff-focus-chip button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .buff-focus-chip ion-icon {
+    font-size: 0.95rem;
+  }
+
+  .strict-toggle-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    width: 100%;
+  }
+
+  .strict-toggle-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .strict-toggle-copy small,
+  .loading-card__performance-copy small,
+  .loading-card__performance-summary small {
+    color: rgba(246, 241, 232, 0.68);
+    line-height: 1.45;
+  }
+
+  .favorites-only-warning {
+    margin: 0;
+    color: #ffd6a8;
+  }
+}

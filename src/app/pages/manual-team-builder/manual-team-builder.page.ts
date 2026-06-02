@@ -57,6 +57,10 @@ import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-c
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
+import {
+  ManualTeamBuilderPickerPanelComponent,
+  ManualTeamBuilderWorkbenchPanelComponent,
+} from './manual-team-builder-style-panels.component';
 
 const MANUAL_TEAM_SLOT_COUNT = 6;
 const MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX = 1;
@@ -127,6 +131,8 @@ function createEmptyManualTeamSlots(): Array<CharacterDetailRecord | null> {
     CaptainTeamConditionStatusComponent,
     TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
+    ManualTeamBuilderPickerPanelComponent,
+    ManualTeamBuilderWorkbenchPanelComponent,
     RouterLink,
     ShipPickerComponent,
     TranslocoDirective,

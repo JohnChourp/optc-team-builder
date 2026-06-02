@@ -9,7 +9,9 @@
   </ion-header>
 
   <ion-content [fullscreen]="true">
-    <div class="page-shell manual-team-builder-shell">
+    <app-manual-team-builder-workbench-panel>
+      <app-manual-team-builder-picker-panel>
+        <div class="page-shell manual-team-builder-shell">
       <section class="glass-card hero-card">
         <div class="section-label">
           <ion-icon [icon]="pageIcon"></ion-icon>
@@ -601,5 +603,7 @@
       (saveSelection)="saveShipSelection($event)"
       (toggleFavoriteShip)="toggleShipFavorite($event)"
     ></app-ship-picker>
+      </app-manual-team-builder-picker-panel>
+    </app-manual-team-builder-workbench-panel>
   </ion-content>
 </ng-container>

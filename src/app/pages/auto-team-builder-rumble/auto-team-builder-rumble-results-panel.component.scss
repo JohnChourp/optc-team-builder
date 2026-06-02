@@ -1,0 +1,310 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .loading-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+    color: #fff8ee;
+  }
+
+  .loading-card__spinner {
+    margin-top: 4px;
+  }
+
+  .loading-card__copy,
+  .loading-card__progress-shell,
+  .loading-progress-list,
+  .loading-card__performance {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .loading-card__progress-header,
+  .loading-card__performance-controls,
+  .loading-card__performance-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .loading-card__progress-header span {
+    color: rgba(246, 241, 232, 0.72);
+  }
+
+  .loading-card__progress-bar {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .loading-card__progress-bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f7bf54, #7ed7aa);
+    transition: width 180ms ease;
+  }
+
+  .loading-progress-row {
+    display: none;
+    color: rgba(246, 241, 232, 0.82);
+    line-height: 1.45;
+  }
+
+  .loading-progress-row--visible {
+    display: block;
+  }
+
+  .loading-progress-row--muted {
+    color: rgba(246, 241, 232, 0.62);
+  }
+
+  .loading-progress-row--fallback {
+    color: #f8d36b;
+  }
+
+  .loading-card__performance {
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .loading-card__action {
+    align-self: start;
+    white-space: nowrap;
+  }
+
+  .loading-card__performance-copy {
+    display: grid;
+    gap: 4px;
+  }
+
+  .loading-card__performance-field {
+    display: grid;
+    gap: 6px;
+    min-width: min(220px, 100%);
+  }
+
+  .loading-card__performance-field span {
+    color: rgba(246, 241, 232, 0.74);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .summary-grid article {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .summary-grid span,
+  .coverage-block > span {
+    color: rgba(246, 241, 232, 0.62);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .summary-grid strong {
+    color: #ffffff;
+    font-size: 1.45rem;
+  }
+
+  .team-cost-pill {
+    display: grid;
+    gap: 4px;
+    min-width: min(180px, 100%);
+    padding: 10px 12px;
+    border: 1px solid rgba(126, 215, 170, 0.3);
+    border-radius: 14px;
+    background: rgba(126, 215, 170, 0.1);
+  }
+
+  .team-cost-pill span {
+    color: rgba(246, 241, 232, 0.62);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .team-cost-pill strong {
+    color: #a8efc8;
+    font-size: 1rem;
+  }
+
+  .coverage-grid,
+  .coverage-block,
+  .factor-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .coverage-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .factor-list {
+    color: rgba(246, 241, 232, 0.78);
+  }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .comparison-chip {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .comparison-chip span {
+    color: rgba(246, 241, 232, 0.62);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .comparison-chip strong {
+    color: #fff8ee;
+    font-size: 1rem;
+  }
+
+  .comparison-chip--positive {
+    border-color: rgba(126, 215, 170, 0.28);
+    background: rgba(126, 215, 170, 0.09);
+  }
+
+  .comparison-chip--positive strong {
+    color: #a8efc8;
+  }
+
+  .comparison-chip--negative {
+    border-color: rgba(255, 139, 118, 0.28);
+    background: rgba(255, 139, 118, 0.09);
+  }
+
+  .comparison-chip--negative strong {
+    color: #ffb5a8;
+  }
+
+  .team-flip-shell {
+    display: grid;
+    perspective: 1400px;
+  }
+
+  .team-flip-panel {
+    display: grid;
+    gap: 18px;
+    transform: rotateY(0deg);
+    transform-style: preserve-3d;
+    transition: transform 420ms cubic-bezier(0.2, 0.75, 0.25, 1);
+  }
+
+  .team-flip-panel--alternate {
+    transform: rotateY(360deg);
+  }
+
+  .team-flip-panel > .team-section {
+    backface-visibility: hidden;
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .reason-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    padding: 7px 10px;
+    border: 1px solid rgba(247, 191, 84, 0.26);
+    border-radius: 999px;
+    background: rgba(247, 191, 84, 0.12);
+    color: #f8d36b;
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+  }
+
+  .reason-chip--muted {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(246, 241, 232, 0.68);
+  }
+
+  .excluded-character-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .excluded-character-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 5px 9px 5px 5px;
+    border: 1px solid rgba(255, 139, 118, 0.26);
+    border-radius: 999px;
+    background: rgba(255, 139, 118, 0.1);
+    color: #ffd6cc;
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+
+  .excluded-character-chip img {
+    width: 26px;
+    height: 26px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    object-fit: cover;
+  }
+
+  .excluded-character-chip span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .excluded-character-chip ion-icon {
+    flex: 0 0 auto;
+    font-size: 0.9rem;
+  }
+
+  .excluded-card__empty {
+    margin: 0;
+    color: rgba(246, 241, 232, 0.68);
+  }
+}

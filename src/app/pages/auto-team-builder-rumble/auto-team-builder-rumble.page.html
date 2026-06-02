@@ -10,8 +10,11 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-content [fullscreen]="true">
-    <div class="rumble-builder-shell">
+  <app-auto-team-builder-rumble-controls-panel>
+    <app-auto-team-builder-rumble-results-panel>
+      <app-auto-team-builder-rumble-roster-panel>
+        <ion-content [fullscreen]="true">
+          <div class="rumble-builder-shell">
       <section class="glass-card hero-card">
         <div class="hero-copy">
           <div class="section-label">
@@ -1026,4 +1029,7 @@
       </ion-footer>
     </ng-template>
   </ion-modal>
+      </app-auto-team-builder-rumble-roster-panel>
+    </app-auto-team-builder-rumble-results-panel>
+  </app-auto-team-builder-rumble-controls-panel>
 </ng-container>

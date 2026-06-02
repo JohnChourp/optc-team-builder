@@ -1,0 +1,374 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .ability-requirements-card {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .manual-locks-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .manual-locks-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .manual-locks-meta strong {
+    color: #f8fbff;
+    font-size: 0.9rem;
+  }
+
+  .exclude-box-select-row {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  :host ion-modal.manual-copy-modal::part(backdrop) {
+    background: rgba(3, 10, 18, 0.72);
+  }
+
+  :host ion-modal.manual-copy-modal::part(content) {
+    --background: rgba(13, 24, 32, 0.98);
+    --border-radius: 22px;
+    --box-shadow: 0 24px 72px rgba(0, 0, 0, 0.42);
+    width: min(920px, calc(100vw - 24px));
+    height: min(760px, calc(100vh - 32px));
+  }
+
+  .manual-copy-modal__header ion-toolbar,
+  .manual-copy-modal__footer ion-toolbar {
+    --background: rgba(13, 24, 32, 0.98);
+    --color: #f8fbff;
+  }
+
+  .manual-copy-modal__head {
+    display: grid;
+    gap: 6px;
+    padding: 16px 64px 14px 18px;
+  }
+
+  .manual-copy-modal__head h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.18rem;
+    line-height: 1.25;
+  }
+
+  .manual-copy-modal__head p {
+    margin: 0;
+    color: rgba(248, 251, 255, 0.64);
+    line-height: 1.45;
+  }
+
+  .manual-copy-modal__content {
+    --background: rgba(13, 24, 32, 0.98);
+  }
+
+  .manual-copy-modal__shell {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .manual-copy-card {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .manual-copy-card__head {
+    display: grid;
+    gap: 4px;
+  }
+
+  .manual-copy-card__head h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 0.98rem;
+  }
+
+  .manual-copy-card__head span {
+    color: rgba(248, 251, 255, 0.62);
+    line-height: 1.45;
+  }
+
+  .manual-copy-list,
+  .manual-copy-target-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .manual-copy-item,
+  .manual-copy-target {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .manual-copy-item {
+    grid-template-columns: auto 42px minmax(0, 1fr);
+  }
+
+  .manual-copy-item img {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+
+  .manual-copy-item span,
+  .manual-copy-target__copy strong,
+  .manual-copy-target__copy small {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .manual-copy-item span,
+  .manual-copy-target__copy strong {
+    color: #f8fbff;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .manual-copy-target__copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .manual-copy-target__copy small {
+    color: rgba(248, 251, 255, 0.62);
+    line-height: 1.4;
+  }
+
+  .manual-copy-target--source {
+    opacity: 0.62;
+  }
+
+  .manual-copy-modal__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .manual-locks-meta--candidates {
+    display: grid;
+    gap: 4px;
+    justify-content: initial;
+    align-items: flex-start;
+  }
+
+  .manual-locks-meta--candidates small {
+    color: rgba(248, 251, 255, 0.62);
+    line-height: 1.45;
+  }
+
+  .ability-requirements-meta {
+    align-items: flex-start;
+  }
+
+  .ability-requirements-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .required-character-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 10px;
+  }
+
+  .required-battle-grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .required-battle-card {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .required-character-card {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .required-character-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .required-character-card__head h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 0.98rem;
+    line-height: 1.3;
+  }
+
+  .required-character-card__head small {
+    color: rgba(248, 251, 255, 0.62);
+    line-height: 1.35;
+  }
+
+  .required-character-actions {
+    justify-content: flex-start;
+  }
+
+  .ability-requirements-selected-row {
+    margin-top: 0;
+  }
+
+  .ability-requirement-chip {
+    cursor: default;
+  }
+
+  .ability-requirement-chip--mechanic {
+    border-color: rgba(255, 186, 116, 0.34);
+    background: rgba(255, 186, 116, 0.12);
+    color: #ffd7a5;
+  }
+
+  .ability-visual-chip {
+    display: inline-grid;
+    justify-items: center;
+    gap: 2px;
+    min-width: 42px;
+    padding: 5px 6px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .ability-visual-chip ion-icon {
+    font-size: 0.92rem;
+  }
+
+  .ability-visual-chip small {
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+
+  .ability-visual-chip[data-tone='gold'] {
+    color: #f5c84c;
+  }
+
+  .ability-visual-chip[data-tone='red'] {
+    color: #ff9d81;
+  }
+
+  .ability-visual-chip[data-tone='teal'] {
+    color: #65d4d4;
+  }
+
+  .ability-visual-chip[data-tone='blue'] {
+    color: #7eb9ff;
+  }
+
+  .ability-visual-chip[data-tone='violet'] {
+    color: #c4a3ff;
+  }
+
+  .ability-visual-chip[data-tone='green'] {
+    color: #8ee38e;
+  }
+
+  .ability-visual-chip[data-tone='orange'] {
+    color: #ffba74;
+  }
+
+  .ability-visual-chip[data-tone='neutral'] {
+    color: rgba(248, 251, 255, 0.76);
+  }
+
+  .ability-requirement-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .ability-requirement-card {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .ability-requirement-fields {
+    display: grid;
+    gap: 12px;
+  }
+
+  .ability-requirement-field {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .ability-requirement-field span {
+    color: rgba(248, 251, 255, 0.62);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ability-requirement-field--number input {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    font: inherit;
+  }
+
+  .ability-requirement-field--number input:focus-visible {
+    outline: 2px solid rgba(245, 200, 76, 0.72);
+    outline-offset: 2px;
+  }
+}

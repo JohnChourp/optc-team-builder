@@ -1,0 +1,427 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    align-items: start;
+    gap: 14px;
+  }
+
+  .opponent-team-section {
+    gap: 18px;
+  }
+
+  .opponent-team-group {
+    display: grid;
+    gap: 10px;
+  }
+
+  .opponent-team-group > span {
+    color: rgba(246, 241, 232, 0.62);
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .rumble-slot-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    align-self: start;
+    align-items: start;
+    gap: 14px;
+    min-width: 0;
+    padding: 14px 82px 14px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .slot-copy {
+    display: contents;
+  }
+
+  .rumble-slot-card--bench {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .opponent-empty-slot {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 132px;
+    align-content: center;
+    gap: 6px;
+    padding: 18px;
+    border-style: dashed;
+    color: #fff8ee;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .opponent-empty-slot span,
+  .opponent-empty-slot strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .opponent-empty-slot span {
+    color: rgba(246, 241, 232, 0.62);
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .opponent-empty-slot strong {
+    color: #f8d36b;
+    font-size: 0.95rem;
+  }
+
+  .slot-image {
+    display: block;
+    width: 76px;
+    height: 76px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .slot-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .slot-replace-button,
+  .slot-exclude-button {
+    position: absolute;
+    top: 8px;
+    z-index: 1;
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    margin: 0;
+    --border-radius: 999px;
+    --padding-start: 0;
+    --padding-end: 0;
+    --background: rgba(255, 255, 255, 0.04);
+    --background-hover: rgba(255, 255, 255, 0.08);
+    --color: rgba(246, 241, 232, 0.72);
+  }
+
+  .slot-replace-button {
+    right: 44px;
+  }
+
+  .slot-exclude-button {
+    right: 8px;
+    --background: rgba(255, 139, 118, 0.08);
+    --background-hover: rgba(255, 139, 118, 0.16);
+    --color: rgba(255, 214, 204, 0.86);
+  }
+
+  .slot-rumble-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    grid-column: 1 / -1;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .slot-rumble-details div {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .slot-rumble-details__wide {
+    grid-column: 1 / -1;
+  }
+
+  .slot-rumble-details dt,
+  .slot-rumble-details dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .slot-rumble-details dt {
+    color: rgba(246, 241, 232, 0.74);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  .slot-rumble-details dd {
+    margin-top: 3px;
+    color: #fff8ee;
+    font-size: 0.76rem;
+    line-height: 1.35;
+  }
+
+  .slot-rumble-effects {
+    display: grid;
+    gap: 4px;
+    margin: 4px 0 0;
+    padding-left: 18px;
+    list-style: disc;
+  }
+
+  .slot-buff-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(86px, auto));
+    gap: 6px;
+    align-items: start;
+    justify-content: start;
+  }
+
+  .slot-buff-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5px;
+    min-width: 86px;
+    padding: 4px 7px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.06);
+    white-space: nowrap;
+  }
+
+  .slot-buff-chip span {
+    color: rgba(246, 241, 232, 0.68);
+    font-size: 0.68rem;
+    font-weight: 800;
+    overflow-wrap: normal;
+  }
+
+  .slot-buff-chip strong {
+    color: #ffffff;
+    font-size: 0.74rem;
+    overflow-wrap: normal;
+  }
+
+  .slot-rumble-effects li {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  ion-modal.rumble-manual-picker-modal::part(backdrop) {
+    background: rgba(6, 10, 18, 0.78);
+  }
+
+  ion-modal.rumble-manual-picker-modal::part(content) {
+    --border-radius: 18px;
+    --height: min(760px, var(--app-modal-max-height, 88vh));
+    --max-width: 920px;
+    --width: min(920px, calc(100vw - 24px));
+    background: #131821;
+  }
+
+  .rumble-manual-picker-header ion-toolbar,
+  .rumble-manual-picker-footer ion-toolbar {
+    --background: #131821;
+    --color: #fff8ee;
+  }
+
+  .rumble-manual-picker-head {
+    padding: 16px 20px;
+  }
+
+  .rumble-manual-picker-head h2,
+  .rumble-manual-picker-head p {
+    margin: 0;
+  }
+
+  .rumble-manual-picker-head h2 {
+    color: #fff8ee;
+    font-size: 1rem;
+  }
+
+  .rumble-manual-picker-head p {
+    margin-top: 4px;
+    color: rgba(246, 241, 232, 0.68);
+    font-size: 0.82rem;
+  }
+
+  .rumble-manual-picker-content {
+    --background: #10151d;
+  }
+
+  .rumble-manual-picker-shell {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .rumble-manual-picker-search {
+    padding: 0;
+    --background: rgba(255, 255, 255, 0.08);
+    --color: #fff8ee;
+    --placeholder-color: rgba(246, 241, 232, 0.58);
+    --border-radius: 10px;
+  }
+
+  .rumble-manual-picker-state {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 36px 18px;
+    color: rgba(246, 241, 232, 0.72);
+    text-align: center;
+  }
+
+  .rumble-manual-picker-state strong {
+    color: #fff8ee;
+  }
+
+  .rumble-manual-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+
+  .rumble-manual-picker-card {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.045);
+    color: #fff8ee;
+    text-align: left;
+  }
+
+  .rumble-manual-picker-card:hover {
+    border-color: rgba(247, 191, 84, 0.36);
+    background: rgba(247, 191, 84, 0.08);
+  }
+
+  .rumble-manual-picker-card img {
+    width: 54px;
+    height: 54px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  .rumble-manual-picker-card span {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .rumble-manual-picker-card strong,
+  .rumble-manual-picker-card small {
+    overflow-wrap: anywhere;
+  }
+
+  .rumble-manual-picker-card small {
+    color: rgba(246, 241, 232, 0.66);
+  }
+
+  .rumble-manual-picker-footer ion-toolbar {
+    padding: 8px 14px;
+    text-align: right;
+  }
+
+  @media (max-width: 680px) {
+    .hero-card {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-actions ion-button {
+      width: 100%;
+    }
+
+    .hero-actions {
+      max-width: none;
+    }
+
+    .hero-actions small {
+      text-align: left;
+    }
+
+    .summary-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .controls-grid,
+    .buff-focus-lanes,
+    .coverage-grid,
+    .loading-card {
+      grid-template-columns: 1fr;
+    }
+
+    .summary-head,
+    .team-switch {
+      width: 100%;
+    }
+
+    .team-switch__button {
+      flex: 1 1 0;
+    }
+
+    .rumble-slot-card,
+    .slot-rumble-details {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .rumble-builder-shell {
+      padding: 12px;
+      gap: 14px;
+    }
+
+    .hero-card,
+    .summary-card,
+    .team-section,
+    .state-card,
+    .loading-card,
+    .controls-card,
+    .excluded-card {
+      padding: 16px;
+    }
+
+    .rumble-slot-card {
+      padding: 12px 12px 12px 12px;
+    }
+
+    .slot-replace-button,
+    .slot-exclude-button {
+      position: static;
+      width: auto;
+      height: 36px;
+      min-height: 36px;
+      --padding-start: 12px;
+      --padding-end: 12px;
+    }
+
+    .slot-image {
+      width: 64px;
+      height: 64px;
+    }
+
+    .slot-buff-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .slot-buff-chip {
+      min-width: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .team-flip-panel {
+      transition: none;
+    }
+  }
+}

@@ -1,0 +1,540 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  @media (max-width: 679px) {
+    .team-association-modal__head {
+      padding: 16px 16px 4px;
+    }
+
+    .team-association-modal__shell {
+      padding: 4px 16px 20px;
+    }
+
+    .team-association-modal__counter {
+      margin-left: 0;
+    }
+
+    .team-association-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .team-association-modal__footer-row {
+      padding: 8px 16px 16px;
+    }
+
+    .team-association-modal__footer-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+
+  .enemy-image-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .editor-field-actions {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .card-actions {
+    justify-content: flex-end;
+  }
+
+  .enemy-image-preview {
+    width: min(100%, 320px);
+    aspect-ratio: 1;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .enemy-image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .enemy-image-status {
+    margin: 0;
+    color: rgba(248, 251, 255, 0.7);
+    line-height: 1.5;
+  }
+
+  .enemy-image-error {
+    margin: 0;
+    color: #ff9b9b;
+    line-height: 1.5;
+  }
+
+  .import-file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(76, 201, 240, 0.12);
+    color: #d8f7ff;
+  }
+
+  .import-file-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .import-feedback {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 22px;
+  }
+
+  .import-feedback > div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .import-feedback strong {
+    color: #ffffff;
+  }
+
+  .import-feedback span {
+    color: rgba(248, 251, 255, 0.78);
+    line-height: 1.6;
+  }
+
+  .import-feedback ion-icon {
+    margin-top: 2px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .import-feedback--progress {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .import-feedback--success {
+    background: rgba(76, 201, 240, 0.1);
+    border: 1px solid rgba(76, 201, 240, 0.22);
+  }
+
+  .import-feedback--warning {
+    background: rgba(245, 200, 76, 0.12);
+    border: 1px solid rgba(245, 200, 76, 0.26);
+  }
+
+  .import-feedback--error {
+    background: rgba(255, 107, 107, 0.12);
+    border: 1px solid rgba(255, 107, 107, 0.26);
+  }
+
+  .enemy-text-warning-list {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .enemy-text-warning-list strong {
+    color: #ffffff;
+  }
+
+  .enemy-text-warning-list ul {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 6px;
+    color: rgba(248, 251, 255, 0.78);
+  }
+
+  .section-head--editor {
+    margin-bottom: 0;
+  }
+
+  .import-dropzone {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 24px 18px;
+    border: 1px dashed rgba(255, 255, 255, 0.22);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #f8fbff;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      border-color 120ms ease,
+      background 120ms ease,
+      transform 120ms ease;
+  }
+
+  .import-dropzone ion-icon {
+    font-size: 1.8rem;
+    color: #f5c84c;
+  }
+
+  .import-dropzone span {
+    color: rgba(248, 251, 255, 0.66);
+  }
+
+  .import-dropzone:hover,
+  .import-dropzone--active {
+    border-color: rgba(245, 200, 76, 0.4);
+    background: rgba(245, 200, 76, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .import-dropzone:focus-visible {
+    outline: 2px solid rgba(245, 200, 76, 0.7);
+    outline-offset: 2px;
+  }
+
+  .editor-modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .editor-modal-footer ion-toolbar {
+    --background: transparent;
+    --border-width: 0;
+    padding: 12px 18px 18px;
+  }
+
+  .import-modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  .selected-values-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .selected-value-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 200, 76, 0.32);
+    background: rgba(245, 200, 76, 0.14);
+    color: #f6d779;
+    font-size: 0.8rem;
+  }
+
+  .editor-ability-chip--mechanic {
+    border-color: rgba(255, 186, 116, 0.32);
+    background: rgba(255, 186, 116, 0.14);
+    color: #ffd7a5;
+  }
+
+  .editor-ability-chip__icon {
+    display: inline-grid;
+    justify-items: center;
+    gap: 2px;
+    min-width: 38px;
+    padding: 4px 5px;
+    border-radius: 11px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .editor-ability-chip__icon ion-icon {
+    font-size: 0.9rem;
+  }
+
+  .editor-ability-chip__icon small {
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+
+  .editor-ability-chip__icon[data-tone='gold'] {
+    color: #f5c84c;
+  }
+
+  .editor-ability-chip__icon[data-tone='red'] {
+    color: #ff9d81;
+  }
+
+  .editor-ability-chip__icon[data-tone='teal'] {
+    color: #65d4d4;
+  }
+
+  .editor-ability-chip__icon[data-tone='blue'] {
+    color: #7eb9ff;
+  }
+
+  .editor-ability-chip__icon[data-tone='violet'] {
+    color: #c4a3ff;
+  }
+
+  .editor-ability-chip__icon[data-tone='green'] {
+    color: #8ee38e;
+  }
+
+  .editor-ability-chip__icon[data-tone='orange'] {
+    color: #ffba74;
+  }
+
+  .editor-ability-chip__icon[data-tone='neutral'] {
+    color: rgba(248, 251, 255, 0.76);
+  }
+
+  .ability-card-grid {
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+    align-items: flex-start;
+  }
+
+  .ability-card-row {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .editor-field {
+    display: grid;
+    gap: 8px;
+  }
+
+  .editor-field span {
+    color: rgba(248, 251, 255, 0.82);
+    font-size: 0.94rem;
+  }
+
+  .editor-field--number input {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #f8fbff;
+    padding: 12px 14px;
+    font: inherit;
+  }
+
+  .editor-field--number input:focus-visible {
+    outline: 2px solid rgba(245, 200, 76, 0.7);
+    outline-offset: 2px;
+  }
+
+  ion-modal.saved-enemies-import-modal::part(backdrop),
+  ion-modal.saved-enemies-editor-modal::part(backdrop) {
+    background: rgba(7, 11, 23, 0.68);
+  }
+
+  ion-modal.saved-enemies-import-modal::part(content),
+  ion-modal.saved-enemies-editor-modal::part(content) {
+    width: min(720px, calc(100vw - 24px));
+    max-height: var(--app-modal-max-height);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 32px;
+    background: linear-gradient(180deg, rgba(18, 25, 46, 0.98), rgba(10, 14, 27, 0.98));
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+  }
+
+  .parsed-ability-selection-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .parsed-ability-selection-item {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .parsed-ability-selection-copy {
+    display: grid;
+    gap: 4px;
+  }
+
+  .parsed-ability-selection-copy strong {
+    color: #f8fbff;
+  }
+
+  .parsed-ability-selection-copy small {
+    color: rgba(248, 251, 255, 0.64);
+  }
+
+  @media (max-width: 920px) {
+    .editor-grid,
+    .toggle-grid,
+    .ability-card-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .saved-enemies-selection,
+    .saved-enemy-head,
+    .saved-enemy-main,
+    .section-head,
+    .strict-toggle-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .saved-enemy-actions {
+      justify-content: flex-start;
+    }
+
+    .editor-modal-header ion-toolbar {
+      --padding-start: 16px;
+      --padding-end: 10px;
+      --padding-top: 18px;
+    }
+
+    .editor-modal-shell {
+      padding: 18px 16px 0;
+    }
+
+    .editor-modal-head,
+    .import-modal-head {
+      padding-inline-end: 48px;
+    }
+
+    .editor-modal-footer ion-toolbar {
+      padding-inline: 12px;
+      padding-bottom: 14px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-card,
+    .section-card,
+    .loading-card,
+    .empty-card {
+      padding: 14px;
+    }
+
+    .saved-enemy-list article {
+      padding: 12px;
+    }
+
+    .saved-enemy-thumb {
+      width: 64px;
+      height: 64px;
+    }
+
+    .saved-enemy-actions {
+      width: 100%;
+    }
+
+    .saved-enemy-actions ion-button {
+      flex: 1 1 auto;
+    }
+
+    .hero-actions ion-button,
+    .saved-enemies-tool-actions ion-button {
+      flex: 1 1 auto;
+    }
+
+    .editor-grid,
+    .toggle-grid {
+      gap: 10px;
+    }
+
+    .ability-card {
+      padding: 12px;
+    }
+
+    .associated-team-pill__name {
+      max-width: 120px;
+    }
+  }
+
+  .paste-autocomplete-host {
+    position: relative;
+  }
+
+  .paste-autocomplete {
+    position: absolute;
+    inset-inline: 0;
+    top: calc(100% + 4px);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #1a1f2a;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  }
+
+  .paste-autocomplete__option {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(248, 251, 255, 0.92);
+    text-align: start;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+
+  .paste-autocomplete__option:hover,
+  .paste-autocomplete__option--active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .paste-autocomplete__source {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 58px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .paste-autocomplete__source--mechanic {
+    background: rgba(112, 173, 247, 0.18);
+    color: #93c5fd;
+  }
+
+  .paste-autocomplete__source--ability {
+    background: rgba(196, 181, 253, 0.18);
+    color: #d8b4fe;
+  }
+
+  .paste-autocomplete__label {
+    font-size: 0.94rem;
+  }
+
+  .paste-autocomplete__hint {
+    font-size: 0.78rem;
+    color: rgba(248, 251, 255, 0.55);
+    font-style: italic;
+  }
+}

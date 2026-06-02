@@ -189,6 +189,17 @@ import {
   type AbilityFilterRailCategory,
   type AbilityFilterRailItem,
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
+import {
+  AutoTeamBuilderActionsPanelComponent,
+  AutoTeamBuilderCandidateCardPanelComponent,
+  AutoTeamBuilderControlsPanelComponent,
+  AutoTeamBuilderLoadingPanelComponent,
+  AutoTeamBuilderManualChipPanelComponent,
+  AutoTeamBuilderManualPanelComponent,
+  AutoTeamBuilderPickerPanelComponent,
+  AutoTeamBuilderRequirementsPanelComponent,
+  AutoTeamBuilderResultsPanelComponent,
+} from './auto-team-builder-style-panels.component';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback' | 'warning';
 type AutoBuildFinalReportState = 'passed' | 'relaxed' | 'notApplicable';
@@ -537,6 +548,15 @@ function resolveManualSlotRequiredAbilities(
     CaptainTeamConditionStatusComponent,
     TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
+    AutoTeamBuilderActionsPanelComponent,
+    AutoTeamBuilderCandidateCardPanelComponent,
+    AutoTeamBuilderControlsPanelComponent,
+    AutoTeamBuilderLoadingPanelComponent,
+    AutoTeamBuilderManualChipPanelComponent,
+    AutoTeamBuilderManualPanelComponent,
+    AutoTeamBuilderPickerPanelComponent,
+    AutoTeamBuilderRequirementsPanelComponent,
+    AutoTeamBuilderResultsPanelComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
