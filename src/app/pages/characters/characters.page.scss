@@ -232,21 +232,17 @@
   font-weight: 800;
 }
 
-.compact-toolbar {
+.characters-filter-toolbar {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: 8px;
-  overflow-x: auto;
   padding-bottom: 2px;
-  scrollbar-width: thin;
 }
 
-.quick-filter {
-  position: relative;
-  display: grid;
-  flex: 0 0 180px;
-  gap: 4px;
-  min-width: 180px;
+.characters-filter-row {
+  flex: 999 1 720px;
+  min-width: min(100%, 560px);
 }
 
 .view-toggle {
@@ -327,25 +323,6 @@
   line-height: 1.5;
 }
 
-.filter-input {
-  --background: rgba(255, 255, 255, 0.06);
-  --border-color: rgba(255, 255, 255, 0.14);
-  --border-radius: 12px;
-  --color: #f8fbff;
-  --highlight-color-focused: rgba(245, 200, 76, 0.8);
-  min-height: 38px;
-}
-
-ion-select {
-  --background: rgba(255, 255, 255, 0.06);
-  --border-color: rgba(255, 255, 255, 0.14);
-  --border-radius: 12px;
-  --color: #f8fbff;
-  --highlight-color-focused: rgba(245, 200, 76, 0.8);
-  min-height: 38px;
-}
-
-.quick-filter > span,
 .filter-group span {
   color: rgba(248, 251, 255, 0.72);
   font-size: 0.66rem;
@@ -354,8 +331,7 @@ ion-select {
   text-transform: uppercase;
 }
 
-.filter-selection,
-.filter-suggestions {
+.filter-selection {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -369,8 +345,7 @@ ion-select {
   text-transform: none;
 }
 
-.filter-clear,
-.filter-suggestion {
+.filter-clear {
   padding: 6px 9px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -381,42 +356,11 @@ ion-select {
   font-size: 0.76rem;
 }
 
-.filter-clear:hover,
-.filter-suggestion:hover {
+.filter-clear:hover {
   border-color: rgba(245, 200, 76, 0.36);
 }
 
-.filter-suggestion {
-  text-align: left;
-}
-
-.quick-filter .filter-suggestions {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  background: rgba(14, 19, 36, 0.98);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
-}
-
-.inline-clear {
-  position: absolute;
-  right: 6px;
-  bottom: 5px;
-  padding: 5px 7px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(245, 200, 76, 0.16);
-  color: #f5c84c;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.68rem;
-  font-weight: 800;
-}
-
-.filter-suggestion:focus-visible,
 .filter-clear:focus-visible,
-.inline-clear:focus-visible,
 .ability-filter-chip:focus-visible,
 .active-filter-badge:focus-visible,
 .active-filter-strip__clear:focus-visible,
@@ -615,34 +559,6 @@ ion-select {
 
 .empty-card {
   justify-content: center;
-}
-
-.sort-filter {
-  flex-basis: 220px;
-  min-width: 220px;
-}
-
-.toggle-chip {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  gap: 8px;
-  min-height: 46px;
-  margin-top: 18px;
-  padding: 5px 8px 5px 11px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.045);
-  color: rgba(248, 251, 255, 0.76);
-  font-size: 0.8rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.toggle-chip--active {
-  border-color: rgba(245, 200, 76, 0.42);
-  background: rgba(245, 200, 76, 0.11);
-  color: #f8fbff;
 }
 
 :host ion-modal.favorites-import-modal::part(backdrop) {
@@ -912,8 +828,7 @@ ion-select {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .view-toggle,
-  .toggle-chip {
+  .view-toggle {
     margin-top: 0;
   }
 

@@ -20,6 +20,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonSelect: class {},
   IonSelectOption: class {},
   IonSpinner: class {},
+  IonToggle: class {},
   IonTitle: class {},
   IonToolbar: class {},
 }));
@@ -192,6 +193,32 @@ describe('CharacterBoxesPage', () => {
       selectedTypes: [],
       selectedTypesMatchMode: 'any',
       selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: undefined,
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('applies type and class suggestion selections to repository lookups', async () => {
+    const { page, repository } = createPage();
+
+    await page.onTypeQueryChange('de');
+    expect(page.typeQuery()).toBe('de');
+
+    await page.applyTypeFilter('DEX');
+    await page.applyClassFilter('Fighter');
+
+    expect(page.typeQuery()).toBe('DEX');
+    expect(page.classQuery()).toBe('Fighter');
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: ['DEX'],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: ['Fighter'],
       selectedClassesMatchMode: 'any',
       allowedCharacterIds: undefined,
       excludedCharacterIds: undefined,
@@ -571,6 +598,10 @@ describe('CharacterBoxesPage', () => {
     } as CustomEvent<{ value?: string | number | null }>);
     await page.clearFilters();
 
+    expect(page.typeQuery()).toBe('');
+    expect(page.classQuery()).toBe('');
+    expect(page.selectedType()).toBe('');
+    expect(page.selectedClass()).toBe('');
     expect(page.selectedFavoriteFilter()).toBe('all');
     expect(page.selectedMembershipFilter()).toBe('all');
     expect(page.selectedSortMode()).toBe('catalog');
@@ -604,15 +635,17 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain("t('editor.addFavorites'");
     expect(template).toContain("t('editor.selectAllFiltered'");
     expect(template).toContain('selectAllFilteredCharacters()');
+    expect(template).toContain('<app-character-filter-row');
+    expect(template).toContain("t('filters.typeLabel')");
+    expect(template).toContain("t('filters.classLabel')");
     expect(template).toContain("t('filters.favoritesPlaceholder')");
-    expect(template).toContain("t('filters.favoritesOptions.favorites')");
-    expect(template).toContain("t('filters.favoritesOptions.hideFavorites')");
+    expect(template).toContain('favoriteFilterOptions()');
     expect(template).toContain("t('filters.membershipPlaceholder')");
+    expect(template).toContain('membershipFilterOptions()');
     expect(template).toContain("t('filters.cost.from')");
     expect(template).toContain("t('filters.cost.to')");
     expect(template).toContain('costRangeValidationMessage()');
-    expect(template).toContain("onCostRangeChange('min', $event)");
-    expect(template).toContain("onCostRangeChange('max', $event)");
+    expect(template).toContain('onCostRangeChange($event.bound, $event.value)');
     expect(template).toContain("t('sort.placeholder')");
     expect(template).toContain('selectedSortMode()');
     expect(template).toContain('onSortModeChange($event)');

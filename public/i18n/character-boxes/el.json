@@ -37,9 +37,13 @@
   },
   "filters": {
     "searchPlaceholder": "Αναζήτηση χαρακτήρων με όνομα",
+    "typeLabel": "Type",
     "typePlaceholder": "Φίλτρο ανά type",
+    "classLabel": "Class",
     "classPlaceholder": "Φίλτρο ανά class",
+    "favoritesLabel": "Favorites",
     "favoritesPlaceholder": "Φίλτρο favorites",
+    "membershipLabel": "Συμμετοχή",
     "membershipPlaceholder": "Φίλτρο συμμετοχής στο box",
     "cost": {
       "from": "Cost από",

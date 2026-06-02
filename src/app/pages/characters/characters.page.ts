@@ -8,14 +8,10 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
-  IonInput,
   IonMenuButton,
   IonModal,
   IonSearchbar,
-  IonSelect,
-  IonSelectOption,
   IonSpinner,
-  IonToggle,
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
@@ -67,6 +63,10 @@ import {
   type AbilityFilterRailCategory,
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
 import {
+  CharacterFilterRowComponent,
+  type CharacterFilterOption,
+} from '../../shared/character-filter-row/character-filter-row.component';
+import {
   buildOptcbxFavoritesExportPayload,
   downloadOptcbxFavoritesExport,
 } from './characters-favorites.utils';
@@ -106,17 +106,14 @@ interface AbilityFilterGroupView {
     IonContent,
     IonHeader,
     IonIcon,
-    IonInput,
     IonMenuButton,
     IonModal,
     IonSearchbar,
-    IonSelect,
-    IonSelectOption,
     IonSpinner,
-    IonToggle,
     IonTitle,
     IonToolbar,
     AbilityFilterRailComponent,
+    CharacterFilterRowComponent,
     SpecialAbilityPickerComponent,
     RouterLink,
     TranslocoDirective,
@@ -303,6 +300,36 @@ export class CharactersPage implements OnInit {
       disabled: !this.availableSupportAbilityCatalogItems().length,
     },
   ]);
+  public readonly sortFilterOptions = computed<CharacterFilterOption[]>(() => [
+    { value: 'catalog', label: this.i18n.translate('sort.options.catalog', undefined, 'characters') },
+    { value: 'nameAsc', label: this.i18n.translate('sort.options.nameAsc', undefined, 'characters') },
+    {
+      value: 'nameDesc',
+      label: this.i18n.translate('sort.options.nameDesc', undefined, 'characters'),
+    },
+    {
+      value: 'captainHpBoost',
+      label: this.i18n.translate('sort.options.captainHpBoost', undefined, 'characters'),
+    },
+    {
+      value: 'captainAtkBoost',
+      label: this.i18n.translate('sort.options.captainAtkBoost', undefined, 'characters'),
+    },
+    {
+      value: 'captainAverageBoost',
+      label: this.i18n.translate('sort.options.captainAverageBoost', undefined, 'characters'),
+    },
+  ]);
+  public readonly idOrderFilterOptions = computed<CharacterFilterOption[]>(() => [
+    {
+      value: 'newest',
+      label: this.i18n.translate('idOrder.options.newest', undefined, 'characters'),
+    },
+    {
+      value: 'oldest',
+      label: this.i18n.translate('idOrder.options.oldest', undefined, 'characters'),
+    },
+  ]);
   public readonly characterCardViews = computed<CharacterCatalogCardView[]>(() =>
     this.characters().map((character) => {
       const isFavorite = this.isFavorite(character.id);
@@ -375,8 +402,10 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
-  public async onTypeQueryChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    const nextValue = (event.detail.value ?? '').trimStart();
+  public async onTypeQueryChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    const nextValue = this.resolveStringInput(input).trimStart();
     this.typeQuery.set(nextValue);
 
     if (this.selectedType() && nextValue.trim() !== this.selectedType()) {
@@ -385,8 +414,10 @@ export class CharactersPage implements OnInit {
     }
   }
 
-  public async onClassQueryChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    const nextValue = (event.detail.value ?? '').trimStart();
+  public async onClassQueryChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    const nextValue = this.resolveStringInput(input).trimStart();
     this.classQuery.set(nextValue);
 
     if (this.selectedClass() && nextValue.trim() !== this.selectedClass()) {
@@ -439,20 +470,28 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
-  public async onFavoritesOnlyToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
-    this.favoritesOnly.set(event.detail.checked);
+  public async onFavoritesOnlyToggle(
+    input: boolean | CustomEvent<{ checked?: boolean | null }>,
+  ): Promise<void> {
+    const checked = this.resolveCheckedInput(input);
 
-    if (event.detail.checked) {
+    this.favoritesOnly.set(checked);
+
+    if (checked) {
       this.hideFavorites.set(false);
     }
 
     await this.loadCharacters(true);
   }
 
-  public async onHideFavoritesToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
-    this.hideFavorites.set(event.detail.checked);
+  public async onHideFavoritesToggle(
+    input: boolean | CustomEvent<{ checked?: boolean | null }>,
+  ): Promise<void> {
+    const checked = this.resolveCheckedInput(input);
 
-    if (event.detail.checked) {
+    this.hideFavorites.set(checked);
+
+    if (checked) {
       this.favoritesOnly.set(false);
     }
 
@@ -463,13 +502,17 @@ export class CharactersPage implements OnInit {
     this.displayMode.set(displayMode);
   }
 
-  public async onSortModeChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    this.selectedSortMode.set(this.normalizeSortMode(event.detail.value));
+  public async onSortModeChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    this.selectedSortMode.set(this.normalizeSortMode(this.resolveStringInput(input)));
     await this.loadCharacters(true);
   }
 
-  public async onIdOrderChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    this.selectedIdOrder.set(this.normalizeIdOrder(event.detail.value));
+  public async onIdOrderChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    this.selectedIdOrder.set(this.normalizeIdOrder(this.resolveStringInput(input)));
     await this.loadCharacters(true);
   }
 
@@ -870,6 +913,14 @@ export class CharactersPage implements OnInit {
     return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort((left, right) =>
       left.localeCompare(right),
     );
+  }
+
+  private resolveStringInput(input: string | CustomEvent<{ value?: string | null }>): string {
+    return typeof input === 'string' ? input : (input.detail.value ?? '');
+  }
+
+  private resolveCheckedInput(input: boolean | CustomEvent<{ checked?: boolean | null }>): boolean {
+    return typeof input === 'boolean' ? input : Boolean(input.detail.checked);
   }
 
   private resolveAllowedCharacterIds(): number[] | undefined {

@@ -110,7 +110,8 @@ describe('CharactersPage favorites tools', () => {
     expect(template).toContain('clearAbilityFilterCategory($event)');
     expect(template).not.toContain('activeAbilityFilterGroups()');
     expect(template).not.toContain('removeAbilityFilterBadge');
-    expect(template).toContain('compact-toolbar');
+    expect(template).toContain('characters-filter-toolbar');
+    expect(template).toContain('<app-character-filter-row');
     expect(template).toContain("t('filters.favoritesOnly.label')");
     expect(template).toContain('favoritesOnlySupportLabel()');
     expect(template).toContain('onFavoritesOnlyToggle($event)');

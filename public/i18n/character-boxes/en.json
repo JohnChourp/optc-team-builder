@@ -37,9 +37,13 @@
   },
   "filters": {
     "searchPlaceholder": "Search characters by name",
+    "typeLabel": "Type",
     "typePlaceholder": "Filter by type",
+    "classLabel": "Class",
     "classPlaceholder": "Filter by class",
+    "favoritesLabel": "Favorites",
     "favoritesPlaceholder": "Filter by favorites",
+    "membershipLabel": "Membership",
     "membershipPlaceholder": "Filter by box membership",
     "cost": {
       "from": "Cost from",

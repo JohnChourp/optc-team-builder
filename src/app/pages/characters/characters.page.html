@@ -92,7 +92,7 @@
           (saveDrafts)="saveSupportAbilityPicker($event)"
         ></app-special-ability-picker>
 
-        <div class="compact-toolbar">
+        <div class="characters-filter-toolbar">
           <ion-searchbar
             class="vault-search"
             [debounce]="150"
@@ -102,138 +102,48 @@
             (ionInput)="onSearchChange($event)"
           ></ion-searchbar>
 
-          <div class="quick-filter">
-            <span>{{ t('filters.type.label') }}</span>
-            <ion-input
-              class="filter-input"
-              fill="outline"
-              [placeholder]="t('filters.type.placeholder')"
-              [value]="typeQuery()"
-              (ionInput)="onTypeQueryChange($event)"
-            ></ion-input>
-
-            <button
-              *ngIf="selectedType()"
-              type="button"
-              class="inline-clear"
-              (click)="clearTypeFilter()"
-            >
-              {{ 'common.actions.clear' | transloco }}
-            </button>
-
-            <div *ngIf="showTypeSuggestions()" class="filter-suggestions">
-              <button
-                type="button"
-                class="filter-suggestion"
-                *ngFor="let item of filteredTypeOptions()"
-                (click)="applyTypeFilter(item)"
-              >
-                {{ item }}
-              </button>
-            </div>
-          </div>
-
-          <div class="quick-filter">
-            <span>{{ t('filters.class.label') }}</span>
-            <ion-input
-              class="filter-input"
-              fill="outline"
-              [placeholder]="t('filters.class.placeholder')"
-              [value]="classQuery()"
-              (ionInput)="onClassQueryChange($event)"
-            ></ion-input>
-
-            <button
-              *ngIf="selectedClass()"
-              type="button"
-              class="inline-clear"
-              (click)="clearClassFilter()"
-            >
-              {{ 'common.actions.clear' | transloco }}
-            </button>
-
-            <div *ngIf="showClassSuggestions()" class="filter-suggestions">
-              <button
-                type="button"
-                class="filter-suggestion"
-                *ngFor="let item of filteredClassOptions()"
-                (click)="applyClassFilter(item)"
-              >
-                {{ item }}
-              </button>
-            </div>
-          </div>
-
-          <label
-            class="toggle-chip"
-            [class.toggle-chip--active]="favoritesOnly()"
-            [title]="favoritesOnlySupportLabel()"
-          >
-            <span>{{ t('filters.favoritesOnly.label') }}</span>
-            <ion-toggle
-              color="warning"
-              [checked]="favoritesOnly()"
-              (ionChange)="onFavoritesOnlyToggle($event)"
-            ></ion-toggle>
-          </label>
-
-          <label
-            class="toggle-chip"
-            [class.toggle-chip--active]="hideFavorites()"
-            [title]="hideFavoritesSupportLabel()"
-          >
-            <span>{{ t('filters.hideFavorites.label') }}</span>
-            <ion-toggle
-              color="warning"
-              [checked]="hideFavorites()"
-              (ionChange)="onHideFavoritesToggle($event)"
-            ></ion-toggle>
-          </label>
-
-          <div class="quick-filter sort-filter">
-            <span>{{ t('sort.label') }}</span>
-            <ion-select
-              interface="popover"
-              fill="outline"
-              [attr.aria-label]="t('sort.label')"
-              [placeholder]="t('sort.placeholder')"
-              [value]="selectedSortMode()"
-              (ionChange)="onSortModeChange($event)"
-            >
-              <ion-select-option value="catalog">{{ t('sort.options.catalog') }}</ion-select-option>
-              <ion-select-option value="nameAsc">{{ t('sort.options.nameAsc') }}</ion-select-option>
-              <ion-select-option value="nameDesc">
-                {{ t('sort.options.nameDesc') }}
-              </ion-select-option>
-              <ion-select-option value="captainHpBoost">
-                {{ t('sort.options.captainHpBoost') }}
-              </ion-select-option>
-              <ion-select-option value="captainAtkBoost">
-                {{ t('sort.options.captainAtkBoost') }}
-              </ion-select-option>
-              <ion-select-option value="captainAverageBoost">
-                {{ t('sort.options.captainAverageBoost') }}
-              </ion-select-option>
-            </ion-select>
-          </div>
-
-          <div class="quick-filter sort-filter">
-            <span>{{ t('idOrder.label') }}</span>
-            <ion-select
-              interface="popover"
-              fill="outline"
-              [attr.aria-label]="t('idOrder.label')"
-              [value]="selectedIdOrder()"
-              (ionChange)="onIdOrderChange($event)"
-            >
-              <ion-select-option value="newest">{{
-                t('idOrder.options.newest')
-              }}</ion-select-option>
-              <ion-select-option value="oldest">{{
-                t('idOrder.options.oldest')
-              }}</ion-select-option>
-            </ion-select>
-          </div>
+          <app-character-filter-row
+            class="characters-filter-row"
+            [showTypeFilter]="true"
+            [typeLabel]="t('filters.type.label')"
+            [typePlaceholder]="t('filters.type.placeholder')"
+            [typeOptions]="availableTypes()"
+            [typeQuery]="typeQuery()"
+            [selectedType]="selectedType()"
+            [showClassFilter]="true"
+            [classLabel]="t('filters.class.label')"
+            [classPlaceholder]="t('filters.class.placeholder')"
+            [classOptions]="availableClasses()"
+            [classQuery]="classQuery()"
+            [selectedClass]="selectedClass()"
+            favoriteMode="toggles"
+            [favoritesOnlyLabel]="t('filters.favoritesOnly.label')"
+            [favoritesOnlySupportText]="favoritesOnlySupportLabel()"
+            [favoritesOnly]="favoritesOnly()"
+            [hideFavoritesLabel]="t('filters.hideFavorites.label')"
+            [hideFavoritesSupportText]="hideFavoritesSupportLabel()"
+            [hideFavorites]="hideFavorites()"
+            [showSortFilter]="true"
+            [sortLabel]="t('sort.label')"
+            [sortPlaceholder]="t('sort.placeholder')"
+            [sortOptions]="sortFilterOptions()"
+            [selectedSortValue]="selectedSortMode()"
+            [showIdOrderFilter]="true"
+            [idOrderLabel]="t('idOrder.label')"
+            [idOrderOptions]="idOrderFilterOptions()"
+            [selectedIdOrderValue]="selectedIdOrder()"
+            [clearLabel]="'common.actions.clear' | transloco"
+            (typeQueryChange)="onTypeQueryChange($event)"
+            (typeSelected)="applyTypeFilter($event)"
+            (typeCleared)="clearTypeFilter()"
+            (classQueryChange)="onClassQueryChange($event)"
+            (classSelected)="applyClassFilter($event)"
+            (classCleared)="clearClassFilter()"
+            (favoritesOnlyChange)="onFavoritesOnlyToggle($event)"
+            (hideFavoritesChange)="onHideFavoritesToggle($event)"
+            (sortChange)="onSortModeChange($event)"
+            (idOrderChange)="onIdOrderChange($event)"
+          ></app-character-filter-row>
 
           <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
             <button

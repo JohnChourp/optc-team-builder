@@ -56,6 +56,14 @@
         "withFavorites": "{{count}} από {{total}} χαρακτήρα/ες αυτού του box είναι favorites."
       }
     },
+    "class": {
+      "label": "Class",
+      "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά class"
+    },
+    "cost": {
+      "from": "Cost από",
+      "to": "Cost έως"
+    },
     "crewmateCopy": "Φίλτραρε τα καλυπτόμενα character results με Crewmate Ability tags.",
     "crewmateEyebrow": "Crewmate Ability",
     "crewmateTitle": "Crewmate Ability filters",
@@ -77,7 +85,11 @@
     },
     "supportCopy": "Φίλτραρε τα καλυπτόμενα character results με Support Ability tags.",
     "supportEyebrow": "Support Ability",
-    "supportTitle": "Support Ability filters"
+    "supportTitle": "Support Ability filters",
+    "type": {
+      "label": "Type",
+      "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά type"
+    }
   },
   "loading": "Φόρτωση captain δεδομένων...",
   "results": {

@@ -10,8 +10,6 @@ import {
   IonInput,
   IonMenuButton,
   IonSearchbar,
-  IonSelect,
-  IonSelectOption,
   IonSpinner,
   IonTitle,
   IonToggle,
@@ -86,6 +84,12 @@ import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-c
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
+import {
+  CharacterFilterRowComponent,
+  type CharacterFilterCostBound,
+  type CharacterFilterCostRange,
+  type CharacterFilterOption,
+} from '../../shared/character-filter-row/character-filter-row.component';
 
 const MAX_CAPTAIN_LOOKUP_COUNT = 12000;
 const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 5;
@@ -128,14 +132,13 @@ interface CaptainCoverageAbilityBadgeView {
     IonInput,
     IonMenuButton,
     IonSearchbar,
-    IonSelect,
-    IonSelectOption,
     IonSpinner,
     IonTitle,
     IonToggle,
     IonToolbar,
     RouterLink,
     SpecialAbilityPickerComponent,
+    CharacterFilterRowComponent,
     TeamCoverageSummaryComponent,
     TranslocoDirective,
     TranslocoPipe,
@@ -163,6 +166,14 @@ export class CaptainCoveragePage implements OnInit {
   public readonly allCaptains = signal<CharacterDetailRecord[]>([]);
   public readonly loading = signal(true);
   public readonly searchTerm = signal('');
+  public readonly typeQuery = signal('');
+  public readonly classQuery = signal('');
+  public readonly selectedType = signal('');
+  public readonly selectedClass = signal('');
+  public readonly coverageCostRange = signal<CharacterFilterCostRange>({
+    min: null,
+    max: null,
+  });
   public readonly selectedSortMode = signal<CaptainCoverageSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly abilityMatchRankingEnabled = signal(false);
@@ -204,6 +215,12 @@ export class CaptainCoveragePage implements OnInit {
 
     return selectedBox.characterIds.filter((characterId) => favoriteIdSet.has(characterId)).length;
   });
+  public readonly availableTypes = computed(() =>
+    this.normalizeOptions(this.summary()?.availableTypes ?? []),
+  );
+  public readonly availableClasses = computed(() =>
+    this.normalizeOptions(this.summary()?.availableClasses ?? []),
+  );
   public readonly selectedCaptainSubtitle = computed(() => {
     const captain = this.selectedCaptain();
 
@@ -307,27 +324,32 @@ export class CaptainCoveragePage implements OnInit {
     });
   });
   public readonly characterBoxSupportLabel = computed(() => {
-    const selectedBox = this.selectedCharacterBox();
-
-    if (!this.characterBoxes().length) {
-      return this.t('filters.characterBox.support.noBoxes');
-    }
-
-    if (!selectedBox) {
-      return this.t('filters.characterBox.support.all');
-    }
-
-    if (this.favoritesOnly()) {
-      return this.t('filters.characterBox.support.withFavorites', {
-        count: this.selectedCharacterBoxFavoriteCount(),
-        total: selectedBox.characterIds.length,
-      });
-    }
-
-    return this.t('filters.characterBox.support.withCount', {
-      count: selectedBox.characterIds.length,
-    });
+    return this.buildCharacterBoxSupportText(this.selectedCharacterBox());
   });
+  public readonly characterBoxFilterOptions = computed<CharacterFilterOption[]>(() => [
+    {
+      value: '',
+      label: this.t('filters.characterBox.options.all'),
+      supportText: this.buildCharacterBoxSupportText(null),
+    },
+    ...this.characterBoxes().map((box) => ({
+      value: box.id,
+      label: `${box.name} (${box.characterIds.length})`,
+      supportText: this.buildCharacterBoxSupportText(box),
+    })),
+  ]);
+  public readonly sortFilterOptions = computed<CharacterFilterOption[]>(() => [
+    { value: 'catalog', label: this.t('sort.options.catalog') },
+    { value: 'captainAverageBoost', label: this.t('sort.options.captainAverageBoost') },
+    { value: 'captainAtkBoost', label: this.t('sort.options.captainAtkBoost') },
+    { value: 'captainHpBoost', label: this.t('sort.options.captainHpBoost') },
+    { value: 'nameAsc', label: this.t('sort.options.nameAsc') },
+    { value: 'nameDesc', label: this.t('sort.options.nameDesc') },
+  ]);
+  public readonly idOrderFilterOptions = computed<CharacterFilterOption[]>(() => [
+    { value: 'newest', label: this.t('idOrder.options.newest') },
+    { value: 'oldest', label: this.t('idOrder.options.oldest') },
+  ]);
   public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => [
     {
       category: CAPTAIN_ABILITY_FILTER_CATEGORY,
@@ -369,6 +391,9 @@ export class CaptainCoveragePage implements OnInit {
     }
 
     const normalizedSearchTerm = this.searchTerm().trim().toLowerCase();
+    const selectedType = this.selectedType();
+    const selectedClass = this.selectedClass();
+    const coverageCostRange = this.coverageCostRange();
     const favoriteIdSet = new Set(this.favoriteIds());
     const selectedCharacterBoxIdSet = this.selectedCharacterBox()
       ? new Set(this.selectedCharacterBoxIds())
@@ -438,6 +463,9 @@ export class CaptainCoveragePage implements OnInit {
         return matchesSelectedAbilities;
       })
       .filter(({ assignableSlotIndex }) => assignableSlotIndex !== null)
+      .filter(({ character }) => this.matchesSelectedType(character, selectedType))
+      .filter(({ character }) => this.matchesSelectedClass(character, selectedClass))
+      .filter(({ character }) => this.matchesCoverageCostRange(character, coverageCostRange))
       .filter(({ character }) => {
         if (this.favoritesOnly()) {
           return favoriteIdSet.has(character.id);
@@ -751,16 +779,80 @@ export class CaptainCoveragePage implements OnInit {
     this.searchTerm.set((event.detail.value ?? '').trimStart());
   }
 
-  public onSortModeChange(event: CustomEvent<{ value?: string | null }>): void {
-    const value = event.detail.value;
+  public onTypeQueryChange(input: string | CustomEvent<{ value?: string | null }>): void {
+    const nextValue = this.resolveStringInput(input).trimStart();
+    this.typeQuery.set(nextValue);
+
+    if (this.selectedType() && nextValue.trim() !== this.selectedType()) {
+      this.selectedType.set('');
+    }
+  }
+
+  public onClassQueryChange(input: string | CustomEvent<{ value?: string | null }>): void {
+    const nextValue = this.resolveStringInput(input).trimStart();
+    this.classQuery.set(nextValue);
+
+    if (this.selectedClass() && nextValue.trim() !== this.selectedClass()) {
+      this.selectedClass.set('');
+    }
+  }
+
+  public applyTypeFilter(type: string): void {
+    this.typeQuery.set(type);
+    this.selectedType.set(type);
+  }
+
+  public applyClassFilter(characterClass: string): void {
+    this.classQuery.set(characterClass);
+    this.selectedClass.set(characterClass);
+  }
+
+  public clearTypeFilter(): void {
+    this.typeQuery.set('');
+    this.selectedType.set('');
+  }
+
+  public clearClassFilter(): void {
+    this.classQuery.set('');
+    this.selectedClass.set('');
+  }
+
+  public onCoverageCostRangeChange(
+    bound: CharacterFilterCostBound,
+    input: string | number | null | CustomEvent<{ value?: string | number | null }>,
+  ): void {
+    this.coverageCostRange.update((currentRange) => ({
+      ...currentRange,
+      [bound]: normalizeCostValue(this.resolveCostInput(input)),
+    }));
+  }
+
+  public onFavoritesOnlyFilterChange(checked: boolean): void {
+    this.favoritesOnly.set(checked);
+
+    if (checked) {
+      this.hideFavorites.set(false);
+    }
+  }
+
+  public onHideFavoritesFilterChange(checked: boolean): void {
+    this.hideFavorites.set(checked);
+
+    if (checked) {
+      this.favoritesOnly.set(false);
+    }
+  }
+
+  public onSortModeChange(input: string | CustomEvent<{ value?: string | null }>): void {
+    const value = this.resolveStringInput(input);
 
     if (isCaptainCoverageSortMode(value)) {
       this.selectedSortMode.set(value);
     }
   }
 
-  public onIdOrderChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.selectedIdOrder.set(normalizeCharacterIdOrder(event.detail.value));
+  public onIdOrderChange(input: string | CustomEvent<{ value?: string | null }>): void {
+    this.selectedIdOrder.set(normalizeCharacterIdOrder(this.resolveStringInput(input)));
   }
 
   public onAbilityMatchRankingChange(event: CustomEvent<{ checked?: boolean | null }>): void {
@@ -799,8 +891,8 @@ export class CaptainCoveragePage implements OnInit {
     this.requireSuperTypesClassesPresence.set(Boolean(event.detail.checked));
   }
 
-  public onCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.selectedCharacterBoxId.set(this.normalizeCharacterBoxId(event.detail.value));
+  public onCharacterBoxChange(input: string | CustomEvent<{ value?: string | null }>): void {
+    this.selectedCharacterBoxId.set(this.normalizeCharacterBoxId(this.resolveStringInput(input)));
   }
 
   public openCaptainAbilityPicker(): void {
@@ -1033,6 +1125,37 @@ export class CaptainCoveragePage implements OnInit {
       .includes(searchTerm);
   }
 
+  private matchesSelectedType(character: CharacterListItem, selectedType: string): boolean {
+    if (!selectedType) {
+      return true;
+    }
+
+    return character.type
+      .split(',')
+      .map((type) => type.trim())
+      .filter(Boolean)
+      .includes(selectedType);
+  }
+
+  private matchesSelectedClass(character: CharacterListItem, selectedClass: string): boolean {
+    return selectedClass ? character.classes.includes(selectedClass) : true;
+  }
+
+  private matchesCoverageCostRange(
+    character: CharacterListItem,
+    range: CharacterFilterCostRange,
+  ): boolean {
+    if (range.min !== null && character.cost < range.min) {
+      return false;
+    }
+
+    if (range.max !== null && character.cost > range.max) {
+      return false;
+    }
+
+    return true;
+  }
+
   private hasPartyConflict(
     character: CharacterListItem,
     selectedConflictKeys: Set<string>,
@@ -1092,6 +1215,33 @@ export class CaptainCoveragePage implements OnInit {
     if (this.selectedCharacterBoxId() && !this.selectedCharacterBox()) {
       this.selectedCharacterBoxId.set(null);
     }
+  }
+
+  private buildCharacterBoxSupportText(box: CharacterBox | null): string {
+    if (!this.characterBoxes().length) {
+      return this.t('filters.characterBox.support.noBoxes');
+    }
+
+    if (!box) {
+      return this.t('filters.characterBox.support.all');
+    }
+
+    if (this.favoritesOnly()) {
+      return this.t('filters.characterBox.support.withFavorites', {
+        count: this.countCharacterBoxFavorites(box),
+        total: box.characterIds.length,
+      });
+    }
+
+    return this.t('filters.characterBox.support.withCount', {
+      count: box.characterIds.length,
+    });
+  }
+
+  private countCharacterBoxFavorites(box: CharacterBox): number {
+    const favoriteIdSet = new Set(this.favoriteIds());
+
+    return box.characterIds.filter((characterId) => favoriteIdSet.has(characterId)).length;
   }
 
   private async applySavedTeamFromRoute(): Promise<void> {
@@ -1246,6 +1396,24 @@ export class CaptainCoveragePage implements OnInit {
 
   private formatAbilitySourceLabel(source: AutoBuildAbilitySource): string {
     return this.i18n.translate(`characterAbilityGroups.sources.${source}`);
+  }
+
+  private normalizeOptions(values: string[]): string[] {
+    return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort((left, right) =>
+      left.localeCompare(right),
+    );
+  }
+
+  private resolveStringInput(input: string | CustomEvent<{ value?: string | null }>): string {
+    return typeof input === 'string' ? input : (input.detail.value ?? '');
+  }
+
+  private resolveCostInput(
+    input: string | number | null | CustomEvent<{ value?: string | number | null }>,
+  ): string | number | null {
+    return typeof input === 'object' && input !== null && 'detail' in input
+      ? (input.detail.value ?? null)
+      : input;
   }
 
   private sortResultCards(cards: CaptainCoverageCardView[]): CaptainCoverageCardView[] {

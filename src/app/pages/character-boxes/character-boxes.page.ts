@@ -10,8 +10,6 @@ import {
   IonInput,
   IonMenuButton,
   IonSearchbar,
-  IonSelect,
-  IonSelectOption,
   IonSpinner,
   IonTitle,
   IonToolbar,
@@ -52,6 +50,11 @@ import {
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
+import {
+  CharacterFilterRowComponent,
+  type CharacterFilterCostBound,
+  type CharacterFilterOption,
+} from '../../shared/character-filter-row/character-filter-row.component';
 
 const PAGE_SIZE = 48;
 const FILTERED_SELECT_PAGE_SIZE = 500;
@@ -85,11 +88,10 @@ interface CharacterBoxCharacterCardView {
     IonInput,
     IonMenuButton,
     IonSearchbar,
-    IonSelect,
-    IonSelectOption,
     IonSpinner,
     IonTitle,
     IonToolbar,
+    CharacterFilterRowComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -105,6 +107,8 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedBoxId = signal<string | null>(null);
   public readonly boxNameDraft = signal('');
   public readonly searchTerm = signal('');
+  public readonly typeQuery = signal('');
+  public readonly classQuery = signal('');
   public readonly selectedType = signal('');
   public readonly selectedClass = signal('');
   public readonly selectedFavoriteFilter = signal<CharacterBoxesFavoriteFilter>('all');
@@ -136,6 +140,31 @@ export class CharacterBoxesPage implements OnInit {
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
   );
+  public readonly favoriteFilterOptions = computed<CharacterFilterOption[]>(() => [
+    { value: 'all', label: this.t('filters.favoritesOptions.all') },
+    { value: 'favorites', label: this.t('filters.favoritesOptions.favorites') },
+    { value: 'hideFavorites', label: this.t('filters.favoritesOptions.hideFavorites') },
+  ]);
+  public readonly membershipFilterOptions = computed<CharacterFilterOption[]>(() => [
+    { value: 'all', label: this.t('filters.membershipOptions.all') },
+    { value: 'inBox', label: this.t('filters.membershipOptions.inBox') },
+    { value: 'notInBox', label: this.t('filters.membershipOptions.notInBox') },
+  ]);
+  public readonly sortFilterOptions = computed<CharacterFilterOption[]>(() => [
+    { value: 'catalog', label: this.t('sort.options.catalog') },
+    { value: 'nameAsc', label: this.t('sort.options.nameAsc') },
+    { value: 'nameDesc', label: this.t('sort.options.nameDesc') },
+    { value: 'captainHpBoost', label: this.t('sort.options.captainHpBoost') },
+    { value: 'captainAtkBoost', label: this.t('sort.options.captainAtkBoost') },
+    {
+      value: 'captainAverageBoost',
+      label: this.t('sort.options.captainAverageBoost'),
+    },
+  ]);
+  public readonly idOrderFilterOptions = computed<CharacterFilterOption[]>(() => [
+    { value: 'newest', label: this.t('idOrder.options.newest') },
+    { value: 'oldest', label: this.t('idOrder.options.oldest') },
+  ]);
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
   );
@@ -426,31 +455,91 @@ export class CharacterBoxesPage implements OnInit {
     await this.loadCharacters(true);
   }
 
-  public async onTypeChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    this.selectedType.set((event.detail.value ?? '').trim());
+  public async onTypeQueryChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    const nextValue = this.resolveStringInput(input).trimStart();
+    this.typeQuery.set(nextValue);
+
+    if (this.selectedType() && nextValue.trim() !== this.selectedType()) {
+      this.selectedType.set('');
+      await this.loadCharacters(true);
+    }
+  }
+
+  public async onClassQueryChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    const nextValue = this.resolveStringInput(input).trimStart();
+    this.classQuery.set(nextValue);
+
+    if (this.selectedClass() && nextValue.trim() !== this.selectedClass()) {
+      this.selectedClass.set('');
+      await this.loadCharacters(true);
+    }
+  }
+
+  public async applyTypeFilter(type: string): Promise<void> {
+    if (this.selectedType() === type) {
+      return;
+    }
+
+    this.typeQuery.set(type);
+    this.selectedType.set(type);
     await this.loadCharacters(true);
   }
 
-  public async onClassChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    this.selectedClass.set((event.detail.value ?? '').trim());
+  public async applyClassFilter(characterClass: string): Promise<void> {
+    if (this.selectedClass() === characterClass) {
+      return;
+    }
+
+    this.classQuery.set(characterClass);
+    this.selectedClass.set(characterClass);
+    await this.loadCharacters(true);
+  }
+
+  public async clearTypeFilter(): Promise<void> {
+    const hadSelection = Boolean(this.selectedType());
+    this.typeQuery.set('');
+
+    if (!hadSelection) {
+      return;
+    }
+
+    this.selectedType.set('');
+    await this.loadCharacters(true);
+  }
+
+  public async clearClassFilter(): Promise<void> {
+    const hadSelection = Boolean(this.selectedClass());
+    this.classQuery.set('');
+
+    if (!hadSelection) {
+      return;
+    }
+
+    this.selectedClass.set('');
     await this.loadCharacters(true);
   }
 
   public async onFavoriteFilterChange(
-    event: CustomEvent<{ value?: string | null }>,
+    input: string | CustomEvent<{ value?: string | null }>,
   ): Promise<void> {
+    const value = this.resolveStringInput(input);
+
     this.selectedFavoriteFilter.set(
-      event.detail.value === 'favorites' || event.detail.value === 'hideFavorites'
-        ? event.detail.value
+      value === 'favorites' || value === 'hideFavorites'
+        ? value
         : 'all',
     );
     await this.loadCharacters(true);
   }
 
   public async onMembershipFilterChange(
-    event: CustomEvent<{ value?: string | null }>,
+    input: string | CustomEvent<{ value?: string | null }>,
   ): Promise<void> {
-    const nextValue = event.detail.value;
+    const nextValue = this.resolveStringInput(input);
 
     this.selectedMembershipFilter.set(
       nextValue === 'inBox' || nextValue === 'notInBox' ? nextValue : 'all',
@@ -458,25 +547,29 @@ export class CharacterBoxesPage implements OnInit {
     await this.loadCharacters(true);
   }
 
-  public async onSortModeChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    this.selectedSortMode.set(this.normalizeSortMode(event.detail.value));
+  public async onSortModeChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    this.selectedSortMode.set(this.normalizeSortMode(this.resolveStringInput(input)));
     await this.loadCharacters(true);
   }
 
-  public async onIdOrderChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    this.selectedIdOrder.set(this.normalizeIdOrder(event.detail.value));
+  public async onIdOrderChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
+    this.selectedIdOrder.set(this.normalizeIdOrder(this.resolveStringInput(input)));
     await this.loadCharacters(true);
   }
 
   public async onCostRangeChange(
-    bound: keyof CharacterBoxesCostRange,
-    event: CustomEvent<{ value?: string | number | null }>,
+    bound: CharacterFilterCostBound,
+    input: string | number | null | CustomEvent<{ value?: string | number | null }>,
   ): Promise<void> {
     const currentRange = this.costRange();
 
     this.costRange.set({
       ...currentRange,
-      [bound]: this.resolveCostRangeBound(event.detail.value),
+      [bound]: this.resolveCostRangeBound(this.resolveCostInput(input)),
     });
     await this.loadCharacters(true);
   }
@@ -625,6 +718,8 @@ export class CharacterBoxesPage implements OnInit {
 
   public async clearFilters(): Promise<void> {
     this.searchTerm.set('');
+    this.typeQuery.set('');
+    this.classQuery.set('');
     this.selectedType.set('');
     this.selectedClass.set('');
     this.selectedFavoriteFilter.set('all');
@@ -771,6 +866,18 @@ export class CharacterBoxesPage implements OnInit {
 
   private normalizeOptions(values: string[]): string[] {
     return [...new Set(values.map((value) => value.trim()).filter((value) => value.length > 0))];
+  }
+
+  private resolveStringInput(input: string | CustomEvent<{ value?: string | null }>): string {
+    return typeof input === 'string' ? input : (input.detail.value ?? '');
+  }
+
+  private resolveCostInput(
+    input: string | number | null | CustomEvent<{ value?: string | number | null }>,
+  ): string | number | null {
+    return typeof input === 'object' && input !== null && 'detail' in input
+      ? (input.detail.value ?? null)
+      : input;
   }
 
   private resolveCostRangeBound(value: string | number | null | undefined): number | null {

@@ -215,6 +215,74 @@ describe('CaptainCoveragePage', () => {
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Luffy Candidate']);
   });
 
+  it('filters covered character results by type, class, and individual cost range', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Result Filters',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const dexFighter = createCharacter({
+      id: 2001,
+      name: 'DEX Fighter Candidate',
+      type: 'DEX',
+      classes: ['Fighter', 'Slasher'],
+      cost: 20,
+    });
+    const strFighter = createCharacter({
+      id: 2002,
+      name: 'STR Fighter Candidate',
+      type: 'STR',
+      classes: ['Fighter', 'Slasher'],
+      cost: 20,
+    });
+    const dexShooter = createCharacter({
+      id: 2003,
+      name: 'DEX Shooter Candidate',
+      type: 'DEX',
+      classes: ['Shooter', 'Cerebral'],
+      cost: 20,
+    });
+    const expensiveDexFighter = createCharacter({
+      id: 2004,
+      name: 'Expensive DEX Fighter Candidate',
+      type: 'DEX',
+      classes: ['Fighter', 'Slasher'],
+      cost: 60,
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, dexFighter, strFighter, dexShooter, expensiveDexFighter],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+    page.applyTypeFilter('DEX');
+    page.applyClassFilter('Fighter');
+    page.onCoverageCostRangeChange('min', '10');
+    page.onCoverageCostRangeChange('max', '30');
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'DEX Fighter Candidate',
+    ]);
+
+    page.clearTypeFilter();
+    page.clearClassFilter();
+    page.onCoverageCostRangeChange('min', null);
+    page.onCoverageCostRangeChange('max', null);
+
+    expect(page.selectedType()).toBe('');
+    expect(page.selectedClass()).toBe('');
+    expect(page.coverageCostRange()).toEqual({ min: null, max: null });
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(
+      expect.arrayContaining([
+        'DEX Fighter Candidate',
+        'STR Fighter Candidate',
+        'DEX Shooter Candidate',
+        'Expensive DEX Fighter Candidate',
+      ]),
+    );
+  });
+
   it('limits covered character results to the selected character box', async () => {
     const leader = createCharacter({
       id: 1001,
@@ -1166,12 +1234,16 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('availableCaptainAbilityCatalogItems()');
     expect(template).toContain('saveCaptainAbilityPicker($event)');
     expect(template).toContain('resultCards()');
-    expect(template).toContain('toggleFavoritesOnly()');
-    expect(template).toContain('toggleHideFavorites()');
+    expect(template).toContain('<app-character-filter-row');
+    expect(template).toContain("t('filters.type.label')");
+    expect(template).toContain("t('filters.class.label')");
+    expect(template).toContain("t('filters.cost.from')");
+    expect(template).toContain("t('filters.cost.to')");
+    expect(template).toContain('onFavoritesOnlyFilterChange($event)');
+    expect(template).toContain('onHideFavoritesFilterChange($event)');
     expect(template).toContain("t('filters.characterBox.label')");
     expect(template).toContain('selectedCharacterBoxId()');
-    expect(template).toContain('characterBoxes()');
-    expect(template).toContain('characterBoxSupportLabel()');
+    expect(template).toContain('characterBoxFilterOptions()');
     expect(template).toContain('onCharacterBoxChange($event)');
     expect(template).toContain('onMaxTotalCostChange($event)');
     expect(template).toContain('<app-captain-team-condition-status');

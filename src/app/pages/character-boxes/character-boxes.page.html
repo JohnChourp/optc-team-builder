@@ -154,140 +154,57 @@
                 </div>
               </div>
 
-              <div class="filters-grid">
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [placeholder]="t('filters.typePlaceholder')"
-                  [value]="selectedType()"
-                  (ionChange)="onTypeChange($event)"
-                >
-                  @for (type of availableTypes(); track type) {
-                    <ion-select-option [value]="type">{{ type }}</ion-select-option>
-                  }
-                </ion-select>
-
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [placeholder]="t('filters.classPlaceholder')"
-                  [value]="selectedClass()"
-                  (ionChange)="onClassChange($event)"
-                >
-                  @for (characterClass of availableClasses(); track characterClass) {
-                    <ion-select-option [value]="characterClass">
-                      {{ characterClass }}
-                    </ion-select-option>
-                  }
-                </ion-select>
-
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [placeholder]="t('filters.favoritesPlaceholder')"
-                  [value]="selectedFavoriteFilter()"
-                  (ionChange)="onFavoriteFilterChange($event)"
-                >
-                  <ion-select-option value="all">
-                    {{ t('filters.favoritesOptions.all') }}
-                  </ion-select-option>
-                  <ion-select-option value="favorites">
-                    {{ t('filters.favoritesOptions.favorites') }}
-                  </ion-select-option>
-                  <ion-select-option value="hideFavorites">
-                    {{ t('filters.favoritesOptions.hideFavorites') }}
-                  </ion-select-option>
-                </ion-select>
-
-                <ion-input
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  step="1"
-                  fill="outline"
-                  [label]="t('filters.cost.from')"
-                  labelPlacement="stacked"
-                  [value]="costRange().min"
-                  (ionInput)="onCostRangeChange('min', $event)"
-                ></ion-input>
-
-                <ion-input
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  step="1"
-                  fill="outline"
-                  [label]="t('filters.cost.to')"
-                  labelPlacement="stacked"
-                  [value]="costRange().max"
-                  (ionInput)="onCostRangeChange('max', $event)"
-                ></ion-input>
-
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [placeholder]="t('filters.membershipPlaceholder')"
-                  [value]="selectedMembershipFilter()"
-                  (ionChange)="onMembershipFilterChange($event)"
-                >
-                  <ion-select-option value="all">
-                    {{ t('filters.membershipOptions.all') }}
-                  </ion-select-option>
-                  <ion-select-option value="inBox">
-                    {{ t('filters.membershipOptions.inBox') }}
-                  </ion-select-option>
-                  <ion-select-option value="notInBox">
-                    {{ t('filters.membershipOptions.notInBox') }}
-                  </ion-select-option>
-                </ion-select>
-
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [attr.aria-label]="t('sort.label')"
-                  [placeholder]="t('sort.placeholder')"
-                  [value]="selectedSortMode()"
-                  (ionChange)="onSortModeChange($event)"
-                >
-                  <ion-select-option value="catalog">{{
-                    t('sort.options.catalog')
-                  }}</ion-select-option>
-                  <ion-select-option value="nameAsc">{{
-                    t('sort.options.nameAsc')
-                  }}</ion-select-option>
-                  <ion-select-option value="nameDesc">
-                    {{ t('sort.options.nameDesc') }}
-                  </ion-select-option>
-                  <ion-select-option value="captainHpBoost">{{
-                    t('sort.options.captainHpBoost')
-                  }}</ion-select-option>
-                  <ion-select-option value="captainAtkBoost">{{
-                    t('sort.options.captainAtkBoost')
-                  }}</ion-select-option>
-                  <ion-select-option value="captainAverageBoost">{{
-                    t('sort.options.captainAverageBoost')
-                  }}</ion-select-option>
-                </ion-select>
-
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [attr.aria-label]="t('idOrder.label')"
-                  [value]="selectedIdOrder()"
-                  (ionChange)="onIdOrderChange($event)"
-                >
-                  <ion-select-option value="newest">{{
-                    t('idOrder.options.newest')
-                  }}</ion-select-option>
-                  <ion-select-option value="oldest">{{
-                    t('idOrder.options.oldest')
-                  }}</ion-select-option>
-                </ion-select>
-
-                <ion-button fill="outline" color="light" (click)="clearFilters()">
-                  {{ 'common.actions.clear' | transloco }}
-                </ion-button>
-              </div>
+              <app-character-filter-row
+                [showTypeFilter]="true"
+                [typeLabel]="t('filters.typeLabel')"
+                [typePlaceholder]="t('filters.typePlaceholder')"
+                [typeOptions]="availableTypes()"
+                [typeQuery]="typeQuery()"
+                [selectedType]="selectedType()"
+                [showClassFilter]="true"
+                [classLabel]="t('filters.classLabel')"
+                [classPlaceholder]="t('filters.classPlaceholder')"
+                [classOptions]="availableClasses()"
+                [classQuery]="classQuery()"
+                [selectedClass]="selectedClass()"
+                favoriteMode="select"
+                [favoritesSelectLabel]="t('filters.favoritesLabel')"
+                [favoritesSelectPlaceholder]="t('filters.favoritesPlaceholder')"
+                [favoriteSelectOptions]="favoriteFilterOptions()"
+                [selectedFavoriteFilter]="selectedFavoriteFilter()"
+                [showCostFilter]="true"
+                [costFromLabel]="t('filters.cost.from')"
+                [costToLabel]="t('filters.cost.to')"
+                [costRange]="costRange()"
+                [showMembershipFilter]="true"
+                [membershipLabel]="t('filters.membershipLabel')"
+                [membershipPlaceholder]="t('filters.membershipPlaceholder')"
+                [membershipOptions]="membershipFilterOptions()"
+                [selectedMembershipFilter]="selectedMembershipFilter()"
+                [showSortFilter]="true"
+                [sortLabel]="t('sort.label')"
+                [sortPlaceholder]="t('sort.placeholder')"
+                [sortOptions]="sortFilterOptions()"
+                [selectedSortValue]="selectedSortMode()"
+                [showIdOrderFilter]="true"
+                [idOrderLabel]="t('idOrder.label')"
+                [idOrderOptions]="idOrderFilterOptions()"
+                [selectedIdOrderValue]="selectedIdOrder()"
+                [showClearButton]="true"
+                [clearLabel]="'common.actions.clear' | transloco"
+                (typeQueryChange)="onTypeQueryChange($event)"
+                (typeSelected)="applyTypeFilter($event)"
+                (typeCleared)="clearTypeFilter()"
+                (classQueryChange)="onClassQueryChange($event)"
+                (classSelected)="applyClassFilter($event)"
+                (classCleared)="clearClassFilter()"
+                (favoriteFilterChange)="onFavoriteFilterChange($event)"
+                (costRangeChange)="onCostRangeChange($event.bound, $event.value)"
+                (membershipFilterChange)="onMembershipFilterChange($event)"
+                (sortChange)="onSortModeChange($event)"
+                (idOrderChange)="onIdOrderChange($event)"
+                (clearFilters)="clearFilters()"
+              ></app-character-filter-row>
 
               @if (costRangeValidationMessage()) {
                 <small class="validation-message">{{ costRangeValidationMessage() }}</small>

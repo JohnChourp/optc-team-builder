@@ -426,53 +426,6 @@
           ></app-special-ability-picker>
 
           <div class="results-controls">
-            <ion-button
-              class="favorite-filter-button"
-              [class.favorite-filter-button--active]="favoritesOnly()"
-              [fill]="favoritesOnly() ? 'solid' : 'outline'"
-              color="warning"
-              [disabled]="!selectedCaptainDetail()"
-              (click)="toggleFavoritesOnly()"
-            >
-              {{ t('filters.favoritesOnly') }}
-            </ion-button>
-
-            <ion-button
-              class="favorite-filter-button"
-              [class.favorite-filter-button--active]="hideFavorites()"
-              [fill]="hideFavorites() ? 'solid' : 'outline'"
-              color="light"
-              [disabled]="!selectedCaptainDetail()"
-              (click)="toggleHideFavorites()"
-            >
-              {{ t('filters.hideFavorites') }}
-            </ion-button>
-
-            <div class="character-box-filter">
-              <ion-select
-                interface="popover"
-                fill="outline"
-                [placeholder]="t('filters.characterBox.placeholder')"
-                [value]="selectedCharacterBoxId() ?? ''"
-                [selectedText]="
-                  selectedCharacterBox()?.name ?? t('filters.characterBox.options.all')
-                "
-                [disabled]="!selectedCaptainDetail() || !characterBoxes().length"
-                [attr.aria-label]="t('filters.characterBox.label')"
-                (ionChange)="onCharacterBoxChange($event)"
-              >
-                <ion-select-option value="">
-                  {{ t('filters.characterBox.options.all') }}
-                </ion-select-option>
-                @for (box of characterBoxes(); track box.id) {
-                  <ion-select-option [value]="box.id">
-                    {{ box.name }} ({{ box.characterIds.length }})
-                  </ion-select-option>
-                }
-              </ion-select>
-              <small>{{ characterBoxSupportLabel() }}</small>
-            </div>
-
             <ion-searchbar
               class="coverage-search"
               [debounce]="150"
@@ -483,47 +436,58 @@
               (ionInput)="onSearchChange($event)"
             ></ion-searchbar>
 
-            <ion-select
-              interface="popover"
-              fill="outline"
+            <app-character-filter-row
+              class="captain-coverage-filter-row"
               [disabled]="!selectedCaptainDetail()"
-              [attr.aria-label]="t('sort.label')"
-              [value]="selectedSortMode()"
-              (ionChange)="onSortModeChange($event)"
-            >
-              <ion-select-option value="catalog">
-                {{ t('sort.options.catalog') }}
-              </ion-select-option>
-              <ion-select-option value="captainAverageBoost">
-                {{ t('sort.options.captainAverageBoost') }}
-              </ion-select-option>
-              <ion-select-option value="captainAtkBoost">
-                {{ t('sort.options.captainAtkBoost') }}
-              </ion-select-option>
-              <ion-select-option value="captainHpBoost">
-                {{ t('sort.options.captainHpBoost') }}
-              </ion-select-option>
-              <ion-select-option value="nameAsc">{{ t('sort.options.nameAsc') }}</ion-select-option>
-              <ion-select-option value="nameDesc">{{
-                t('sort.options.nameDesc')
-              }}</ion-select-option>
-            </ion-select>
-
-            <ion-select
-              interface="popover"
-              fill="outline"
-              [disabled]="!selectedCaptainDetail()"
-              [attr.aria-label]="t('idOrder.label')"
-              [value]="selectedIdOrder()"
-              (ionChange)="onIdOrderChange($event)"
-            >
-              <ion-select-option value="newest">{{
-                t('idOrder.options.newest')
-              }}</ion-select-option>
-              <ion-select-option value="oldest">{{
-                t('idOrder.options.oldest')
-              }}</ion-select-option>
-            </ion-select>
+              [showTypeFilter]="true"
+              [typeLabel]="t('filters.type.label')"
+              [typePlaceholder]="t('filters.type.placeholder')"
+              [typeOptions]="availableTypes()"
+              [typeQuery]="typeQuery()"
+              [selectedType]="selectedType()"
+              [showClassFilter]="true"
+              [classLabel]="t('filters.class.label')"
+              [classPlaceholder]="t('filters.class.placeholder')"
+              [classOptions]="availableClasses()"
+              [classQuery]="classQuery()"
+              [selectedClass]="selectedClass()"
+              favoriteMode="toggles"
+              [favoritesOnlyLabel]="t('filters.favoritesOnly')"
+              [favoritesOnly]="favoritesOnly()"
+              [hideFavoritesLabel]="t('filters.hideFavorites')"
+              [hideFavorites]="hideFavorites()"
+              [showCharacterBoxFilter]="true"
+              [characterBoxLabel]="t('filters.characterBox.label')"
+              [characterBoxPlaceholder]="t('filters.characterBox.placeholder')"
+              [characterBoxOptions]="characterBoxFilterOptions()"
+              [selectedCharacterBoxValue]="selectedCharacterBoxId() ?? ''"
+              [showCostFilter]="true"
+              [costFromLabel]="t('filters.cost.from')"
+              [costToLabel]="t('filters.cost.to')"
+              [costRange]="coverageCostRange()"
+              [showSortFilter]="true"
+              [sortLabel]="t('sort.label')"
+              [sortPlaceholder]="t('sort.label')"
+              [sortOptions]="sortFilterOptions()"
+              [selectedSortValue]="selectedSortMode()"
+              [showIdOrderFilter]="true"
+              [idOrderLabel]="t('idOrder.label')"
+              [idOrderOptions]="idOrderFilterOptions()"
+              [selectedIdOrderValue]="selectedIdOrder()"
+              [clearLabel]="'common.actions.clear' | transloco"
+              (typeQueryChange)="onTypeQueryChange($event)"
+              (typeSelected)="applyTypeFilter($event)"
+              (typeCleared)="clearTypeFilter()"
+              (classQueryChange)="onClassQueryChange($event)"
+              (classSelected)="applyClassFilter($event)"
+              (classCleared)="clearClassFilter()"
+              (favoritesOnlyChange)="onFavoritesOnlyFilterChange($event)"
+              (hideFavoritesChange)="onHideFavoritesFilterChange($event)"
+              (characterBoxChange)="onCharacterBoxChange($event)"
+              (costRangeChange)="onCoverageCostRangeChange($event.bound, $event.value)"
+              (sortChange)="onSortModeChange($event)"
+              (idOrderChange)="onIdOrderChange($event)"
+            ></app-character-filter-row>
           </div>
         </div>
 

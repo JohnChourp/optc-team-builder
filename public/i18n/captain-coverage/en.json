@@ -56,6 +56,14 @@
         "withFavorites": "{{count}} of {{total}} character(s) in this box are currently favorites."
       }
     },
+    "class": {
+      "label": "Class",
+      "placeholder": "Type to filter by class"
+    },
+    "cost": {
+      "from": "Cost from",
+      "to": "Cost to"
+    },
     "crewmateCopy": "Filter covered character results by Crewmate Ability tags.",
     "crewmateEyebrow": "Crewmate Ability",
     "crewmateTitle": "Crewmate Ability filters",
@@ -77,7 +85,11 @@
     },
     "supportCopy": "Filter covered character results by Support Ability tags.",
     "supportEyebrow": "Support Ability",
-    "supportTitle": "Support Ability filters"
+    "supportTitle": "Support Ability filters",
+    "type": {
+      "label": "Type",
+      "placeholder": "Type to filter by character type"
+    }
   },
   "loading": "Loading captain data...",
   "results": {

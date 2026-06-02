@@ -158,11 +158,6 @@
   line-height: 1.5;
 }
 
-.filters-grid {
-  display: grid;
-  gap: 12px;
-}
-
 .view-toggle {
   display: inline-flex;
   align-items: center;
@@ -433,11 +428,6 @@ ion-select {
   .box-layout {
     grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
     align-items: start;
-  }
-
-  .filters-grid {
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    align-items: center;
   }
 
   .character-grid {
