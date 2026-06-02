@@ -1,0 +1,53 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .ability-requirement-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .ability-requirement-card {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .ability-requirement-fields {
+    display: grid;
+    gap: 12px;
+  }
+
+  .ability-requirement-field {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .ability-requirement-field span {
+    color: rgba(248, 251, 255, 0.62);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ability-requirement-field--number input {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    font: inherit;
+  }
+
+  .ability-requirement-field--number input:focus-visible {
+    outline: 2px solid rgba(245, 200, 76, 0.72);
+    outline-offset: 2px;
+  }
+}

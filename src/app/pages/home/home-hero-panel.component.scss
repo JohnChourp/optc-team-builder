@@ -1,0 +1,48 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .home-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.65fr);
+    align-items: center;
+    gap: 20px;
+    min-height: 360px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 78% 12%, rgba(245, 200, 76, 0.18), transparent 30%),
+      linear-gradient(135deg, rgba(24, 35, 61, 0.95), rgba(9, 14, 28, 0.94));
+  }
+
+  .home-hero__copy {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .home-hero__copy .section-title {
+    margin: 10px 0 6px;
+    color: #ffffff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+
+  .home-hero__copy .section-copy {
+    color: rgba(248, 251, 255, 0.72);
+    line-height: 1.55;
+  }
+
+  .home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .home-hero__visual {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 260px;
+  }
+}

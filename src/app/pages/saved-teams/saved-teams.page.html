@@ -9,12 +9,13 @@
   </ion-header>
 
   <ion-content [fullscreen]="true">
-    <div class="page-shell saved-teams-shell">
-      <section class="glass-card hero-card">
-        <div class="section-label">{{ t('hero.eyebrow') }}</div>
-        <h1 class="section-title">{{ t('hero.title') }}</h1>
-        <p class="section-copy">{{ t('hero.copy') }}</p>
-      </section>
+    <app-saved-teams-style-panels>
+      <div class="page-shell saved-teams-shell">
+        <section class="glass-card hero-card">
+          <div class="section-label">{{ t('hero.eyebrow') }}</div>
+          <h1 class="section-title">{{ t('hero.title') }}</h1>
+          <p class="section-copy">{{ t('hero.copy') }}</p>
+        </section>
 
       @if (loading()) {
         <section class="glass-card loading-card">
@@ -441,5 +442,6 @@
         </div>
       </ng-template>
     </ion-modal>
+    </app-saved-teams-style-panels>
   </ion-content>
 </ng-container>

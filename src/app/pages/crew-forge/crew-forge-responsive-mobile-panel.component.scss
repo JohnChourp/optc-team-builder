@@ -1,0 +1,51 @@
+:host ::ng-deep {
+  @media (max-width: 679px) {
+    .crew-forge-shell {
+      padding: 14px;
+      gap: 14px;
+    }
+
+    .hero-card,
+    .roster-card,
+    .catalog-card,
+    .results-card {
+      padding: 16px;
+    }
+
+    .selection-panel,
+    .ability-breakdown-card,
+    .image-profile-editor,
+    .catalog-card-item,
+    .image-profile-slot-card,
+    .image-import-slot-card,
+    .result-card {
+      padding: 12px;
+    }
+
+    .picked-character-card,
+    .result-slot-card {
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .selection-panel__head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .metric-pill {
+      min-width: 96px;
+    }
+
+    .image-import-slot-card__crop,
+    .image-import-slot-card__match--selected {
+      width: 70%;
+    }
+
+    .image-import-actions ion-button,
+    .image-import-inline-actions ion-button,
+    .catalog-card-item__actions ion-button {
+      flex: 1 1 auto;
+    }
+  }
+}

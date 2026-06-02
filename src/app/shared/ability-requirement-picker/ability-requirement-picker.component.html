@@ -1,378 +1,389 @@
 <ng-container *transloco="let t; scope: 'ability-picker'; read: 'ability-picker'">
-  <ion-modal
-    #abilityPickerModal
-    [isOpen]="isOpen"
-    cssClass="ability-picker-modal"
-    (didDismiss)="onModalDidDismiss()"
-  >
-    <ng-template>
-      <ion-header class="ability-picker-header ion-no-border">
-        <ion-toolbar>
-          <div class="ability-picker-head">
-            <div>
-              <div class="section-label">
-                <ion-icon [icon]="pickerIcon"></ion-icon>
-                <span>{{ t('eyebrow') }}</span>
+  <app-ability-requirement-picker-style-panels>
+    <ion-modal
+      #abilityPickerModal
+      [isOpen]="isOpen"
+      cssClass="ability-picker-modal"
+      (didDismiss)="onModalDidDismiss()"
+    >
+      <ng-template>
+        <ion-header class="ability-picker-header ion-no-border">
+          <ion-toolbar>
+            <div class="ability-picker-head">
+              <div>
+                <div class="section-label">
+                  <ion-icon [icon]="pickerIcon"></ion-icon>
+                  <span>{{ t('eyebrow') }}</span>
+                </div>
+                <h2>{{ title }}</h2>
+                <p>{{ copy }}</p>
               </div>
-              <h2>{{ title }}</h2>
-              <p>{{ copy }}</p>
             </div>
-          </div>
 
-          <ion-buttons slot="end">
-            <ion-button
-              fill="clear"
-              color="light"
-              (click)="cancel(); abilityPickerModal.dismiss(null, 'cancel')"
-            >
-              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
+            <ion-buttons slot="end">
+              <ion-button
+                fill="clear"
+                color="light"
+                (click)="cancel(); abilityPickerModal.dismiss(null, 'cancel')"
+              >
+                <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
 
-      <ion-content class="ability-picker-content">
-        <div class="ability-picker-content-shell">
-          <div class="ability-picker-body">
-            <section class="ability-picker-panel">
-              <div class="ability-picker-panel__head">
-                <div>
-                  <strong>{{ t('catalog.title') }}</strong>
-                  <small>{{
-                    t('catalog.count', {
-                      count: filteredCatalogTiles().length,
-                      total: catalogItemsState().length,
-                    })
-                  }}</small>
-                </div>
-
-                <ion-button
-                  fill="clear"
-                  size="small"
-                  color="warning"
-                  [disabled]="!workingDrafts().length"
-                  (click)="clearAll()"
-                >
-                  {{ t('actions.clearAll') }}
-                </ion-button>
-              </div>
-
-              <ion-searchbar
-                class="ability-picker-search"
-                [debounce]="150"
-                [placeholder]="t('catalog.searchPlaceholder')"
-                [value]="searchTerm()"
-                (ionInput)="onSearchChange($event)"
-              ></ion-searchbar>
-
-              @if (!catalogItemsState().length) {
-                <div class="ability-picker-empty">
-                  <strong>{{ t('catalog.emptyCatalogTitle') }}</strong>
-                  <p>{{ t('catalog.emptyCatalogCopy') }}</p>
-                </div>
-              } @else if (!filteredCatalogTiles().length) {
-                <div class="ability-picker-empty">
-                  <strong>{{ t('catalog.emptySearchTitle') }}</strong>
-                  <p>{{ t('catalog.emptySearchCopy') }}</p>
-                </div>
-              } @else {
-                <div class="ability-picker-tile-grid">
-                  @for (tile of filteredCatalogTiles(); track tile.item.key) {
-                    <button
-                      type="button"
-                      class="ability-picker-tile"
-                      [class.ability-picker-tile--selected]="tile.isSelected"
-                      (click)="onCatalogItemSelect(tile.item)"
-                    >
-                      <span class="ability-picker-tile__badge" [attr.data-tone]="tile.visual.tone">
-                        <ion-icon [icon]="tile.visual.icon"></ion-icon>
-                        <small>{{ tile.visual.badge }}</small>
-                      </span>
-
-                      <span class="ability-picker-tile__copy">
-                        <strong>{{ tile.item.label }}</strong>
-                        <span class="ability-picker-tile__meta">
-                          @if (tile.item.supportsTurns) {
-                            <small>{{ t('catalog.hints.turns') }}</small>
-                          }
-                          @if (tile.item.supportsSlotTokens) {
-                            <small>{{ t('catalog.hints.slotTokens') }}</small>
-                          }
-                          @if (tile.supportsSelectableDebuff) {
-                            <small>{{ t('catalog.hints.selectableDebuff') }}</small>
-                          }
-                        </span>
-                        @if (tile.painSelectableBadges.length) {
-                          <span class="ability-picker-mini-badge-list">
-                            @for (badge of tile.painSelectableBadges; track badge.abilityKey) {
-                              <small
-                                class="ability-picker-mini-badge"
-                                [attr.data-tone]="badge.tone"
-                                [title]="badge.label"
-                              >
-                                {{ badge.badge }}
-                              </small>
-                            }
-                          </span>
-                        }
-                      </span>
-
-                      @if (tile.selectedCount > 0) {
-                        <span class="ability-picker-tile__count">
-                          {{ t('catalog.selectedCount', { count: tile.selectedCount }) }}
-                        </span>
-                      }
-                    </button>
-                  }
-                </div>
-              }
-            </section>
-
-            <section class="ability-picker-panel ability-picker-panel--selected">
-              <div class="ability-picker-panel__head">
-                <div>
-                  <strong>{{ t('selected.title') }}</strong>
-                  <small>{{ t('selected.count', { count: selectedRows().length }) }}</small>
-                </div>
-              </div>
-
-              @if (showLeaderBoostControls) {
-                <section class="ability-picker-leader-boost">
-                  <div class="ability-picker-leader-boost__head">
-                    <strong>{{ t('leaderBoost.title') }}</strong>
-                    <small>{{ t('leaderBoost.copy') }}</small>
+        <ion-content class="ability-picker-content">
+          <div class="ability-picker-content-shell">
+            <div class="ability-picker-body">
+              <section class="ability-picker-panel">
+                <div class="ability-picker-panel__head">
+                  <div>
+                    <strong>{{ t('catalog.title') }}</strong>
+                    <small>{{
+                      t('catalog.count', {
+                        count: filteredCatalogTiles().length,
+                        total: catalogItemsState().length,
+                      })
+                    }}</small>
                   </div>
 
-                  <label class="ability-picker-field">
-                    <span>{{ t('leaderBoost.priority.label') }}</span>
-                    <ion-select
-                      interface="popover"
-                      [multiple]="true"
-                      fill="outline"
-                      [placeholder]="t('leaderBoost.priority.placeholder')"
-                      [value]="workingLeaderBoostFilters()"
-                      (ionChange)="onLeaderBoostFilterChange($event)"
-                    >
-                      @for (item of availableLeaderBoostFilters; track item) {
-                        <ion-select-option [value]="item">
-                          {{ t('leaderBoost.priority.options.' + item) }}
-                        </ion-select-option>
-                      }
-                    </ion-select>
-                  </label>
-
-                  <div class="ability-picker-leader-boost__ranges">
-                    <ion-input
-                      type="number"
-                      inputmode="decimal"
-                      min="0"
-                      step="0.01"
-                      fill="outline"
-                      [label]="t('leaderBoost.range.atkMin')"
-                      labelPlacement="stacked"
-                      [value]="workingLeaderBoostRanges().ATK.min"
-                      (ionInput)="onLeaderBoostRangeChange('ATK', 'min', $event)"
-                    ></ion-input>
-                    <ion-input
-                      type="number"
-                      inputmode="decimal"
-                      min="0"
-                      step="0.01"
-                      fill="outline"
-                      [label]="t('leaderBoost.range.atkMax')"
-                      labelPlacement="stacked"
-                      [value]="workingLeaderBoostRanges().ATK.max"
-                      (ionInput)="onLeaderBoostRangeChange('ATK', 'max', $event)"
-                    ></ion-input>
-                    <ion-input
-                      type="number"
-                      inputmode="decimal"
-                      min="0"
-                      step="0.01"
-                      fill="outline"
-                      [label]="t('leaderBoost.range.hpMin')"
-                      labelPlacement="stacked"
-                      [value]="workingLeaderBoostRanges().HP.min"
-                      (ionInput)="onLeaderBoostRangeChange('HP', 'min', $event)"
-                    ></ion-input>
-                    <ion-input
-                      type="number"
-                      inputmode="decimal"
-                      min="0"
-                      step="0.01"
-                      fill="outline"
-                      [label]="t('leaderBoost.range.hpMax')"
-                      labelPlacement="stacked"
-                      [value]="workingLeaderBoostRanges().HP.max"
-                      (ionInput)="onLeaderBoostRangeChange('HP', 'max', $event)"
-                    ></ion-input>
-                  </div>
-
-                  @if (hasInvalidLeaderBoostRanges()) {
-                    <small class="ability-picker-leader-boost__error">
-                      {{ t('leaderBoost.range.invalid') }}
-                    </small>
-                  }
-                </section>
-              }
-
-              @if (!selectedRows().length) {
-                <div class="ability-picker-empty ability-picker-empty--selected">
-                  <strong>{{ t('selected.emptyTitle') }}</strong>
-                  <p>{{ t('selected.emptyCopy') }}</p>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    color="warning"
+                    [disabled]="!workingDrafts().length"
+                    (click)="clearAll()"
+                  >
+                    {{ t('actions.clearAll') }}
+                  </ion-button>
                 </div>
-              } @else {
-                <div class="ability-picker-selected-list">
-                  @for (row of selectedRows(); track row.draft.draftId) {
-                    <article class="ability-picker-row">
-                      <div class="ability-picker-row__head">
-                        <div class="ability-picker-row__title">
-                          <span
-                            class="ability-picker-tile__badge"
-                            [attr.data-tone]="row.visual.tone"
-                          >
-                            <ion-icon [icon]="row.visual.icon"></ion-icon>
-                            <small>{{ row.visual.badge }}</small>
-                          </span>
-                          <div>
-                            <strong>{{ row.label }}</strong>
-                            <small>{{ row.draft.abilityKey }}</small>
-                            @if (row.painSelectableBadges.length) {
-                              <span class="ability-picker-mini-badge-list">
-                                @for (badge of row.painSelectableBadges; track badge.abilityKey) {
-                                  <small
-                                    class="ability-picker-mini-badge"
-                                    [attr.data-tone]="badge.tone"
-                                    [title]="badge.label"
-                                  >
-                                    {{ badge.badge }}
-                                  </small>
-                                }
-                              </span>
-                            }
-                          </div>
-                        </div>
 
-                        <ion-button
-                          fill="clear"
-                          color="danger"
-                          size="small"
-                          (click)="removeDraft(row.draft.draftId)"
+                <ion-searchbar
+                  class="ability-picker-search"
+                  [debounce]="150"
+                  [placeholder]="t('catalog.searchPlaceholder')"
+                  [value]="searchTerm()"
+                  (ionInput)="onSearchChange($event)"
+                ></ion-searchbar>
+
+                @if (!catalogItemsState().length) {
+                  <div class="ability-picker-empty">
+                    <strong>{{ t('catalog.emptyCatalogTitle') }}</strong>
+                    <p>{{ t('catalog.emptyCatalogCopy') }}</p>
+                  </div>
+                } @else if (!filteredCatalogTiles().length) {
+                  <div class="ability-picker-empty">
+                    <strong>{{ t('catalog.emptySearchTitle') }}</strong>
+                    <p>{{ t('catalog.emptySearchCopy') }}</p>
+                  </div>
+                } @else {
+                  <div class="ability-picker-tile-grid">
+                    @for (tile of filteredCatalogTiles(); track tile.item.key) {
+                      <button
+                        type="button"
+                        class="ability-picker-tile"
+                        [class.ability-picker-tile--selected]="tile.isSelected"
+                        (click)="onCatalogItemSelect(tile.item)"
+                      >
+                        <span
+                          class="ability-picker-tile__badge"
+                          [attr.data-tone]="tile.visual.tone"
                         >
-                          {{ 'common.actions.remove' | transloco }}
-                        </ion-button>
-                      </div>
+                          <ion-icon [icon]="tile.visual.icon"></ion-icon>
+                          <small>{{ tile.visual.badge }}</small>
+                        </span>
 
-                      <div class="ability-picker-row__fields">
-                        @if (showCharacterCount) {
-                          <label class="ability-picker-field">
-                            <span>{{ t('fields.characters') }}</span>
-                            <ion-input
-                              type="number"
-                              min="1"
-                              inputmode="numeric"
-                              fill="outline"
-                              [value]="row.draft.requiredCharacterCount ?? ''"
-                              (ionInput)="onRequiredCharacterCountChange(row.draft.draftId, $event)"
-                            ></ion-input>
-                          </label>
+                        <span class="ability-picker-tile__copy">
+                          <strong>{{ tile.item.label }}</strong>
+                          <span class="ability-picker-tile__meta">
+                            @if (tile.item.supportsTurns) {
+                              <small>{{ t('catalog.hints.turns') }}</small>
+                            }
+                            @if (tile.item.supportsSlotTokens) {
+                              <small>{{ t('catalog.hints.slotTokens') }}</small>
+                            }
+                            @if (tile.supportsSelectableDebuff) {
+                              <small>{{ t('catalog.hints.selectableDebuff') }}</small>
+                            }
+                          </span>
+                          @if (tile.painSelectableBadges.length) {
+                            <span class="ability-picker-mini-badge-list">
+                              @for (badge of tile.painSelectableBadges; track badge.abilityKey) {
+                                <small
+                                  class="ability-picker-mini-badge"
+                                  [attr.data-tone]="badge.tone"
+                                  [title]="badge.label"
+                                >
+                                  {{ badge.badge }}
+                                </small>
+                              }
+                            </span>
+                          }
+                        </span>
+
+                        @if (tile.selectedCount > 0) {
+                          <span class="ability-picker-tile__count">
+                            {{ t('catalog.selectedCount', { count: tile.selectedCount }) }}
+                          </span>
                         }
+                      </button>
+                    }
+                  </div>
+                }
+              </section>
 
-                        @if (row.supportsTurns) {
-                          <label class="ability-picker-field">
-                            <span>{{ t('fields.turns') }}</span>
-                            <ion-input
-                              type="number"
-                              min="0"
-                              inputmode="numeric"
-                              fill="outline"
-                              [value]="row.draft.minTurns ?? ''"
-                              (ionInput)="onRequiredTurnsChange(row.draft.draftId, $event)"
-                            ></ion-input>
-                          </label>
+              <section class="ability-picker-panel ability-picker-panel--selected">
+                <div class="ability-picker-panel__head">
+                  <div>
+                    <strong>{{ t('selected.title') }}</strong>
+                    <small>{{ t('selected.count', { count: selectedRows().length }) }}</small>
+                  </div>
+                </div>
+
+                @if (showLeaderBoostControls) {
+                  <section class="ability-picker-leader-boost">
+                    <div class="ability-picker-leader-boost__head">
+                      <strong>{{ t('leaderBoost.title') }}</strong>
+                      <small>{{ t('leaderBoost.copy') }}</small>
+                    </div>
+
+                    <label class="ability-picker-field">
+                      <span>{{ t('leaderBoost.priority.label') }}</span>
+                      <ion-select
+                        interface="popover"
+                        [multiple]="true"
+                        fill="outline"
+                        [placeholder]="t('leaderBoost.priority.placeholder')"
+                        [value]="workingLeaderBoostFilters()"
+                        (ionChange)="onLeaderBoostFilterChange($event)"
+                      >
+                        @for (item of availableLeaderBoostFilters; track item) {
+                          <ion-select-option [value]="item">
+                            {{ t('leaderBoost.priority.options.' + item) }}
+                          </ion-select-option>
                         }
+                      </ion-select>
+                    </label>
 
-                        <div class="ability-picker-field">
-                          <span>{{ t('fields.slotScope') }}</span>
-                          <div class="ability-picker-segmented" role="group">
-                            <button
-                              type="button"
-                              class="ability-picker-segmented__button"
-                              [class.ability-picker-segmented__button--selected]="
-                                row.draft.slotScope === 'any'
-                              "
-                              (click)="setSlotScope(row.draft.draftId, 'any')"
+                    <div class="ability-picker-leader-boost__ranges">
+                      <ion-input
+                        type="number"
+                        inputmode="decimal"
+                        min="0"
+                        step="0.01"
+                        fill="outline"
+                        [label]="t('leaderBoost.range.atkMin')"
+                        labelPlacement="stacked"
+                        [value]="workingLeaderBoostRanges().ATK.min"
+                        (ionInput)="onLeaderBoostRangeChange('ATK', 'min', $event)"
+                      ></ion-input>
+                      <ion-input
+                        type="number"
+                        inputmode="decimal"
+                        min="0"
+                        step="0.01"
+                        fill="outline"
+                        [label]="t('leaderBoost.range.atkMax')"
+                        labelPlacement="stacked"
+                        [value]="workingLeaderBoostRanges().ATK.max"
+                        (ionInput)="onLeaderBoostRangeChange('ATK', 'max', $event)"
+                      ></ion-input>
+                      <ion-input
+                        type="number"
+                        inputmode="decimal"
+                        min="0"
+                        step="0.01"
+                        fill="outline"
+                        [label]="t('leaderBoost.range.hpMin')"
+                        labelPlacement="stacked"
+                        [value]="workingLeaderBoostRanges().HP.min"
+                        (ionInput)="onLeaderBoostRangeChange('HP', 'min', $event)"
+                      ></ion-input>
+                      <ion-input
+                        type="number"
+                        inputmode="decimal"
+                        min="0"
+                        step="0.01"
+                        fill="outline"
+                        [label]="t('leaderBoost.range.hpMax')"
+                        labelPlacement="stacked"
+                        [value]="workingLeaderBoostRanges().HP.max"
+                        (ionInput)="onLeaderBoostRangeChange('HP', 'max', $event)"
+                      ></ion-input>
+                    </div>
+
+                    @if (hasInvalidLeaderBoostRanges()) {
+                      <small class="ability-picker-leader-boost__error">
+                        {{ t('leaderBoost.range.invalid') }}
+                      </small>
+                    }
+                  </section>
+                }
+
+                @if (!selectedRows().length) {
+                  <div class="ability-picker-empty ability-picker-empty--selected">
+                    <strong>{{ t('selected.emptyTitle') }}</strong>
+                    <p>{{ t('selected.emptyCopy') }}</p>
+                  </div>
+                } @else {
+                  <div class="ability-picker-selected-list">
+                    @for (row of selectedRows(); track row.draft.draftId) {
+                      <article class="ability-picker-row">
+                        <div class="ability-picker-row__head">
+                          <div class="ability-picker-row__title">
+                            <span
+                              class="ability-picker-tile__badge"
+                              [attr.data-tone]="row.visual.tone"
                             >
-                              {{ t('fields.slotScopes.any') }}
-                            </button>
-                            <button
-                              type="button"
-                              class="ability-picker-segmented__button"
-                              [class.ability-picker-segmented__button--selected]="
-                                row.draft.slotScope === 'leader'
-                              "
-                              (click)="setSlotScope(row.draft.draftId, 'leader')"
-                            >
-                              {{ t('fields.slotScopes.leader') }}
-                            </button>
-                            <button
-                              type="button"
-                              class="ability-picker-segmented__button"
-                              [class.ability-picker-segmented__button--selected]="
-                                row.draft.slotScope === 'sub'
-                              "
-                              (click)="setSlotScope(row.draft.draftId, 'sub')"
-                            >
-                              {{ t('fields.slotScopes.sub') }}
-                            </button>
+                              <ion-icon [icon]="row.visual.icon"></ion-icon>
+                              <small>{{ row.visual.badge }}</small>
+                            </span>
+                            <div>
+                              <strong>{{ row.label }}</strong>
+                              <small>{{ row.draft.abilityKey }}</small>
+                              @if (row.painSelectableBadges.length) {
+                                <span class="ability-picker-mini-badge-list">
+                                  @for (badge of row.painSelectableBadges; track badge.abilityKey) {
+                                    <small
+                                      class="ability-picker-mini-badge"
+                                      [attr.data-tone]="badge.tone"
+                                      [title]="badge.label"
+                                    >
+                                      {{ badge.badge }}
+                                    </small>
+                                  }
+                                </span>
+                              }
+                            </div>
                           </div>
-                        </div>
-                      </div>
 
-                      @if (row.supportsSlotTokens && row.availableSlotTokens.length) {
-                        <div class="ability-picker-field">
-                          <span>{{ t('fields.slotTokens') }}</span>
-                          <div class="ability-picker-token-list">
-                            @for (token of row.availableSlotTokens; track token) {
+                          <ion-button
+                            fill="clear"
+                            color="danger"
+                            size="small"
+                            (click)="removeDraft(row.draft.draftId)"
+                          >
+                            {{ 'common.actions.remove' | transloco }}
+                          </ion-button>
+                        </div>
+
+                        <div class="ability-picker-row__fields">
+                          @if (showCharacterCount) {
+                            <label class="ability-picker-field">
+                              <span>{{ t('fields.characters') }}</span>
+                              <ion-input
+                                type="number"
+                                min="1"
+                                inputmode="numeric"
+                                fill="outline"
+                                [value]="row.draft.requiredCharacterCount ?? ''"
+                                (ionInput)="
+                                  onRequiredCharacterCountChange(row.draft.draftId, $event)
+                                "
+                              ></ion-input>
+                            </label>
+                          }
+
+                          @if (row.supportsTurns) {
+                            <label class="ability-picker-field">
+                              <span>{{ t('fields.turns') }}</span>
+                              <ion-input
+                                type="number"
+                                min="0"
+                                inputmode="numeric"
+                                fill="outline"
+                                [value]="row.draft.minTurns ?? ''"
+                                (ionInput)="onRequiredTurnsChange(row.draft.draftId, $event)"
+                              ></ion-input>
+                            </label>
+                          }
+
+                          <div class="ability-picker-field">
+                            <span>{{ t('fields.slotScope') }}</span>
+                            <div class="ability-picker-segmented" role="group">
                               <button
                                 type="button"
-                                class="ability-picker-token"
-                                [class.ability-picker-token--selected]="
-                                  row.draft.slotTokens.includes(token)
+                                class="ability-picker-segmented__button"
+                                [class.ability-picker-segmented__button--selected]="
+                                  row.draft.slotScope === 'any'
                                 "
-                                (click)="toggleSlotToken(row.draft.draftId, token)"
+                                (click)="setSlotScope(row.draft.draftId, 'any')"
                               >
-                                {{ token }}
+                                {{ t('fields.slotScopes.any') }}
                               </button>
-                            }
+                              <button
+                                type="button"
+                                class="ability-picker-segmented__button"
+                                [class.ability-picker-segmented__button--selected]="
+                                  row.draft.slotScope === 'leader'
+                                "
+                                (click)="setSlotScope(row.draft.draftId, 'leader')"
+                              >
+                                {{ t('fields.slotScopes.leader') }}
+                              </button>
+                              <button
+                                type="button"
+                                class="ability-picker-segmented__button"
+                                [class.ability-picker-segmented__button--selected]="
+                                  row.draft.slotScope === 'sub'
+                                "
+                                (click)="setSlotScope(row.draft.draftId, 'sub')"
+                              >
+                                {{ t('fields.slotScopes.sub') }}
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      }
-                    </article>
-                  }
-                </div>
-              }
-            </section>
-          </div>
-        </div>
-      </ion-content>
 
-      <ion-footer class="ability-picker-footer">
-        <ion-toolbar>
-          <div class="ability-picker-footer__actions">
-            <ion-button
-              fill="clear"
-              color="light"
-              (click)="cancel(); abilityPickerModal.dismiss(null, 'cancel')"
-            >
-              {{ 'common.actions.cancel' | transloco }}
-            </ion-button>
-            <ion-button color="warning" [disabled]="hasInvalidLeaderBoostRanges()" (click)="save()">
-              {{ 'common.actions.save' | transloco }}
-            </ion-button>
+                        @if (row.supportsSlotTokens && row.availableSlotTokens.length) {
+                          <div class="ability-picker-field">
+                            <span>{{ t('fields.slotTokens') }}</span>
+                            <div class="ability-picker-token-list">
+                              @for (token of row.availableSlotTokens; track token) {
+                                <button
+                                  type="button"
+                                  class="ability-picker-token"
+                                  [class.ability-picker-token--selected]="
+                                    row.draft.slotTokens.includes(token)
+                                  "
+                                  (click)="toggleSlotToken(row.draft.draftId, token)"
+                                >
+                                  {{ token }}
+                                </button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </article>
+                    }
+                  </div>
+                }
+              </section>
+            </div>
           </div>
-        </ion-toolbar>
-      </ion-footer>
-    </ng-template>
-  </ion-modal>
+        </ion-content>
+
+        <ion-footer class="ability-picker-footer">
+          <ion-toolbar>
+            <div class="ability-picker-footer__actions">
+              <ion-button
+                fill="clear"
+                color="light"
+                (click)="cancel(); abilityPickerModal.dismiss(null, 'cancel')"
+              >
+                {{ 'common.actions.cancel' | transloco }}
+              </ion-button>
+              <ion-button
+                color="warning"
+                [disabled]="hasInvalidLeaderBoostRanges()"
+                (click)="save()"
+              >
+                {{ 'common.actions.save' | transloco }}
+              </ion-button>
+            </div>
+          </ion-toolbar>
+        </ion-footer>
+      </ng-template>
+    </ion-modal>
+  </app-ability-requirement-picker-style-panels>
 </ng-container>

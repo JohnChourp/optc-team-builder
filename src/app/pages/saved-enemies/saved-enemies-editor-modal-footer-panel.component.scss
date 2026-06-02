@@ -1,0 +1,11 @@
+:host ::ng-deep {
+  .editor-modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .editor-modal-footer ion-toolbar {
+    --background: transparent;
+    --border-width: 0;
+    padding: 12px 18px 18px;
+  }
+}

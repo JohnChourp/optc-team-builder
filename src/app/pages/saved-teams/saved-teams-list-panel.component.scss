@@ -1,0 +1,43 @@
+:host ::ng-deep {
+  .saved-teams-tools {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .saved-teams-selection,
+  .saved-team-head,
+  .saved-team-actions,
+  .saved-teams-tool-actions,
+  .saved-teams-select-all {
+    display: flex;
+    align-items: center;
+  }
+
+  .saved-teams-selection,
+  .saved-team-head {
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .saved-teams-select-all {
+    gap: 10px;
+    color: #ffffff;
+  }
+
+  .saved-teams-selection-count {
+    color: rgba(248, 251, 255, 0.66);
+    font-size: 0.92rem;
+  }
+
+  .saved-teams-tool-actions,
+  .saved-team-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .saved-team-actions {
+    justify-content: flex-end;
+    gap: 4px;
+  }
+}

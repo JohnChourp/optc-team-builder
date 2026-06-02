@@ -45,6 +45,7 @@ import {
   type DriveSyncReviewSectionKey,
   updateDriveSyncReviewRowChoice,
 } from '../drive-sync/drive-sync-review.utils';
+import { AccountStylePanelsComponent } from './account-style-panels.component';
 
 @Component({
   selector: 'app-account-page',
@@ -61,6 +62,7 @@ import {
     IonSpinner,
     IonTitle,
     IonToolbar,
+    AccountStylePanelsComponent,
     TranslocoDirective,
   ],
   templateUrl: './account.page.html',

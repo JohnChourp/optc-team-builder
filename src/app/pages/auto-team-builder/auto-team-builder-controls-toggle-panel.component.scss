@@ -1,0 +1,58 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .strict-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .strict-toggle-row--filter {
+    align-items: flex-start;
+  }
+
+  .strict-toggle-row--select {
+    display: grid;
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 10px;
+  }
+
+  .strict-toggle-row--select .strict-toggle-copy {
+    flex: initial;
+  }
+
+  .strict-toggle-copy {
+    display: grid;
+    flex: 1;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .strict-toggle-copy strong {
+    color: #ffffff;
+    font-size: 0.88rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .strict-toggle-copy small {
+    color: rgba(248, 251, 255, 0.62);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .strict-toggle-select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}

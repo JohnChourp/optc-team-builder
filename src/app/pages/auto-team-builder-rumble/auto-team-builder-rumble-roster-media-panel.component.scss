@@ -1,0 +1,48 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .slot-image {
+    display: block;
+    width: 76px;
+    height: 76px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .slot-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .slot-replace-button,
+  .slot-exclude-button {
+    position: absolute;
+    top: 8px;
+    z-index: 1;
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    margin: 0;
+    --border-radius: 999px;
+    --padding-start: 0;
+    --padding-end: 0;
+    --background: rgba(255, 255, 255, 0.04);
+    --background-hover: rgba(255, 255, 255, 0.08);
+    --color: rgba(246, 241, 232, 0.72);
+  }
+
+  .slot-replace-button {
+    right: 44px;
+  }
+
+  .slot-exclude-button {
+    right: 8px;
+    --background: rgba(255, 139, 118, 0.08);
+    --background-hover: rgba(255, 139, 118, 0.16);
+    --color: rgba(255, 214, 204, 0.86);
+  }
+}

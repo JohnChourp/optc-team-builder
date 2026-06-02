@@ -1,0 +1,94 @@
+:host ::ng-deep {
+  .editor-form,
+  .field-block,
+  .bulk-actions-grid,
+  .favorites-bulk-action__copy {
+    display: grid;
+  }
+
+  .editor-form {
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .field-block {
+    gap: 10px;
+  }
+
+  .field-block > span,
+  .favorites-bulk-action__copy span {
+    color: rgba(248, 251, 255, 0.72);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .bulk-actions-grid {
+    gap: 12px;
+  }
+
+  .favorites-bulk-action {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .favorites-bulk-action__copy {
+    gap: 6px;
+  }
+
+  .favorites-bulk-action__copy small {
+    color: rgba(248, 251, 255, 0.68);
+    line-height: 1.5;
+  }
+
+  .view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .view-toggle__button {
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: rgba(248, 251, 255, 0.74);
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .view-toggle__button--active {
+    background: rgba(245, 200, 76, 0.16);
+    color: #f8fbff;
+  }
+
+  .box-search {
+    --background: rgba(255, 255, 255, 0.08);
+    --border-radius: 18px;
+    --box-shadow: none;
+    --color: #f8fbff;
+    --placeholder-color: rgba(248, 251, 255, 0.54);
+  }
+
+  ion-input,
+  ion-select {
+    --background: rgba(255, 255, 255, 0.06);
+    --border-color: rgba(255, 255, 255, 0.14);
+    --border-radius: 18px;
+    --color: #f8fbff;
+    --highlight-color-focused: rgba(245, 200, 76, 0.8);
+  }
+}

@@ -37,6 +37,7 @@ import { CharacterCatalogCacheService } from '../../core/services/character-cata
 import { CrewForgeImageImportService } from '../../core/services/crew-forge-image-import.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
+import { CrewForgeStylePanelsComponent } from './crew-forge-style-panels.component';
 
 const MINIMUM_RECOGNIZED_ROSTER_COUNT = 5;
 const RESULT_PAGE_SIZE = 10;
@@ -66,6 +67,7 @@ type RecognitionPreviewSlotView = {
     IonTitle,
     IonToolbar,
     CharacterImagePickerComponent,
+    CrewForgeStylePanelsComponent,
     RouterLink,
     TranslocoDirective,
   ],

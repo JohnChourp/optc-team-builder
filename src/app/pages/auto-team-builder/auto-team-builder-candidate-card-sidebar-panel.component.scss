@@ -1,0 +1,40 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .manual-candidate-card--sidebar .manual-candidate-copy {
+    gap: 2px;
+  }
+
+  .manual-candidate-card--sidebar .character-detail-name-link {
+    font-size: 0.82rem;
+    line-height: 1.25;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .manual-candidate-card--sidebar .manual-candidate-copy span {
+    font-size: 0.72rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  .manual-candidate-card--sidebar .manual-candidate-chip-row {
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+    max-height: 52px;
+    overflow: hidden;
+  }
+
+  .manual-candidate-card--sidebar .manual-ability-chip {
+    padding: 4px 7px;
+    font-size: 0.64rem;
+  }
+}

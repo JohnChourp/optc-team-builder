@@ -53,6 +53,7 @@ import {
   sanitizeSavedTeamsImportPayload,
   type SavedTeamsImportError,
 } from './saved-teams-transfer.utils';
+import { SavedTeamsStylePanelsComponent } from './saved-teams-style-panels.component';
 
 interface SavedTeamPreviewCard {
   hasShipThumbnail: boolean;
@@ -89,6 +90,7 @@ interface SavedTeamsImportFeedback {
     IonTitle,
     IonToolbar,
     CaptainTeamConditionStatusComponent,
+    SavedTeamsStylePanelsComponent,
     TeamCoverageSummaryComponent,
     RouterLink,
     TranslocoDirective,

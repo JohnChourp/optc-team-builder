@@ -1,0 +1,27 @@
+:host ::ng-deep {
+  @media (max-width: 900px) {
+    .hero-grid,
+    .section-head,
+    .leader-grid,
+    .ability-breakdown-grid,
+    .catalog-controls {
+      grid-template-columns: 1fr;
+    }
+
+    .catalog-grid,
+    .result-slot-grid,
+    .pool-chip-grid,
+    .image-import-recognition-grid,
+    .image-profile-slot-grid,
+    .image-profile-editor__grid,
+    .image-profile-slot-card__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .image-import-preview,
+    .section-head--compact,
+    .image-import-slot-card__head {
+      grid-template-columns: 1fr;
+    }
+  }
+}

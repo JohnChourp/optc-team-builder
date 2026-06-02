@@ -1,0 +1,40 @@
+:host ::ng-deep {
+  .captain-condition-panel {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .captain-condition-panel--full {
+    border-color: rgba(67, 214, 128, 0.5);
+    box-shadow: 0 0 0 1px rgba(67, 214, 128, 0.16);
+  }
+
+  .captain-condition-panel--partial {
+    border-color: rgba(245, 200, 76, 0.48);
+    box-shadow: 0 0 0 1px rgba(245, 200, 76, 0.14);
+  }
+
+  .captain-condition-panel--none {
+    border-color: rgba(255, 112, 112, 0.38);
+    box-shadow: 0 0 0 1px rgba(255, 112, 112, 0.1);
+  }
+
+  .coverage-team-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .coverage-team-slot {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-height: 76px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    text-align: left;
+  }
+}

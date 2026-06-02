@@ -1,0 +1,45 @@
+:host ::ng-deep {
+  .hero-meta-grid,
+  .hero-stats-grid,
+  .group-grid,
+  .detail-entry-grid {
+    display: grid;
+    gap: 10px;
+  }
+
+  .hero-meta-grid {
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  }
+
+  .hero-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .meta-card,
+  .stat-pill {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(9, 16, 26, 0.32);
+  }
+
+  .meta-card__label,
+  .stat-pill span,
+  .detail-row dt,
+  .detail-text__label,
+  .detail-list-block__label {
+    color: rgba(248, 251, 255, 0.58);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .meta-card strong,
+  .stat-pill strong {
+    color: #ffffff;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+}

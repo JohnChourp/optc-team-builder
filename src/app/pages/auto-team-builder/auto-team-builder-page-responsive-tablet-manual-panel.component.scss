@@ -1,0 +1,41 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  @media (min-width: 768px) {
+    .manual-slot-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .manual-copy-modal__shell {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .manual-candidate-list--sidebar {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      max-height: min(72vh, 760px);
+      padding-right: 4px;
+    }
+
+    .manual-candidate-list--characters {
+      grid-template-columns: minmax(0, 1fr);
+      max-height: min(72vh, 760px);
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .result-grid,
+    .ability-requirement-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ability-requirement-fields {
+      grid-template-columns: minmax(0, 2fr) minmax(140px, 0.8fr) minmax(0, 1.4fr);
+      align-items: end;
+    }
+  }
+}

@@ -34,6 +34,7 @@ import {
 } from './character-detail.presenter';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
+import { CharacterDetailStylePanelsComponent } from './character-detail-style-panels.component';
 
 @Component({
   selector: 'app-character-detail-page',
@@ -49,6 +50,7 @@ import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/too
     IonToolbar,
     RouterLink,
     CharacterAbilityGroupsComponent,
+    CharacterDetailStylePanelsComponent,
     ToolbarBackButtonComponent,
     TranslocoDirective,
   ],
@@ -121,7 +123,9 @@ export class CharacterDetailPage implements OnInit {
   }
 
   public displayBuilderAbilities(character: CharacterDetailRecord): NormalizedBuilderAbility[] {
-    return character.detail.builderAbilities.filter((ability) => ability.source !== 'captainAbility');
+    return character.detail.builderAbilities.filter(
+      (ability) => ability.source !== 'captainAbility',
+    );
   }
 
   public exportCharacterOverride(character: CharacterDetailRecord): void {

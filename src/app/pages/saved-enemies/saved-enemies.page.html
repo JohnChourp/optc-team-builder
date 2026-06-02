@@ -9,11 +9,8 @@
   </ion-header>
 
   <ion-content [fullscreen]="true">
-    <app-saved-enemies-overview-panel>
-      <app-saved-enemies-editor-panel>
-        <app-saved-enemies-association-panel>
-          <app-saved-enemies-import-panel>
-            <div class="page-shell saved-enemies-shell">
+    <app-saved-enemies-style-panels>
+      <div class="page-shell saved-enemies-shell">
       <section class="glass-card hero-card">
         <div class="section-label">{{ t('hero.eyebrow') }}</div>
         <h1 class="section-title">{{ t('hero.title') }}</h1>
@@ -1120,9 +1117,6 @@
         </ion-footer>
       </ng-template>
     </ion-modal>
-          </app-saved-enemies-import-panel>
-        </app-saved-enemies-association-panel>
-      </app-saved-enemies-editor-panel>
-    </app-saved-enemies-overview-panel>
+    </app-saved-enemies-style-panels>
   </ion-content>
 </ng-container>

@@ -1,0 +1,82 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .ability-picker-search {
+    --background: rgba(255, 255, 255, 0.06);
+    --border-radius: 18px;
+    --box-shadow: none;
+    --color: #f8fbff;
+    padding-inline: 0;
+  }
+
+  .ability-picker-empty {
+    display: grid;
+    gap: 8px;
+    padding: 18px;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .ability-picker-empty strong {
+    color: #ffffff;
+  }
+
+  .ability-picker-empty p {
+    margin: 0;
+    color: rgba(248, 251, 255, 0.68);
+    line-height: 1.55;
+  }
+
+  .ability-picker-empty--selected {
+    align-self: start;
+  }
+
+  .ability-picker-tile-grid,
+  .ability-picker-selected-list {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .ability-picker-tile-grid {
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  }
+
+  .ability-picker-tile {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    transition:
+      transform 160ms ease,
+      border-color 160ms ease,
+      background 160ms ease;
+  }
+
+  .ability-picker-tile:hover,
+  .ability-picker-tile:focus-visible {
+    border-color: rgba(245, 200, 76, 0.38);
+    background: rgba(245, 200, 76, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .ability-picker-tile--selected {
+    border-color: rgba(245, 200, 76, 0.42);
+    background:
+      radial-gradient(circle at top, rgba(245, 200, 76, 0.12), transparent 58%),
+      rgba(255, 255, 255, 0.05);
+  }
+}

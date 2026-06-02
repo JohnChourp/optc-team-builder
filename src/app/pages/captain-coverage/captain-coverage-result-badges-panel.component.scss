@@ -1,0 +1,37 @@
+:host ::ng-deep {
+  .captain-result__boosts {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: rgba(248, 251, 255, 0.58);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .captain-result__boosts span {
+    min-width: 0;
+  }
+
+  .captain-result__ability-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .captain-result__ability-badge {
+    max-width: 100%;
+    padding: 3px 6px;
+    border: 1px solid rgba(245, 200, 76, 0.18);
+    border-radius: 6px;
+    background: rgba(245, 200, 76, 0.08);
+    color: rgba(248, 251, 255, 0.74);
+    font-size: 0.66rem;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+}

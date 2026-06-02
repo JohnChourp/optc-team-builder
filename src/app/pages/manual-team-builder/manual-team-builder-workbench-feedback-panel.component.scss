@@ -1,0 +1,68 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .manual-team-clear-zone {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    color: rgba(248, 251, 255, 0.7);
+  }
+
+  .manual-team-clear-zone ion-icon {
+    color: #ff9aa4;
+  }
+
+  .manual-team-clear-zone--active {
+    border-color: rgba(255, 112, 112, 0.5);
+    background: rgba(230, 57, 70, 0.1);
+  }
+
+  .manual-team-validation {
+    border-color: rgba(245, 200, 76, 0.24);
+    background: rgba(245, 200, 76, 0.08);
+  }
+
+  .manual-team-validation--error {
+    border-color: rgba(255, 112, 112, 0.32);
+    background: rgba(230, 57, 70, 0.1);
+  }
+
+  .manual-team-feedback {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+  }
+
+  .manual-team-feedback ion-icon {
+    margin-top: 2px;
+    font-size: 1.1rem;
+  }
+
+  .manual-team-feedback--success {
+    border: 1px solid rgba(76, 201, 240, 0.22);
+    background: rgba(76, 201, 240, 0.1);
+  }
+
+  .manual-team-feedback--success ion-icon {
+    color: #4cc9f0;
+  }
+
+  .manual-team-feedback--error {
+    border: 1px solid rgba(230, 57, 70, 0.24);
+    background: rgba(230, 57, 70, 0.12);
+  }
+
+  .manual-team-feedback--error ion-icon {
+    color: #ff8b95;
+  }
+
+  .manual-team-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+}

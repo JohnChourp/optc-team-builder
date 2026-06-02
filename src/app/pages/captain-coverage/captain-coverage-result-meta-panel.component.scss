@@ -1,0 +1,43 @@
+:host ::ng-deep {
+  .captain-tier-breakdown__list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .captain-tier-breakdown__tier {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .captain-tier-breakdown__tier--baseline {
+    border-color: rgba(102, 220, 130, 0.4);
+    background: rgba(102, 220, 130, 0.08);
+  }
+
+  .captain-tier-breakdown__tier--top {
+    border-color: rgba(245, 200, 76, 0.45);
+    background: rgba(245, 200, 76, 0.08);
+  }
+
+  .captain-tier-breakdown__tier--conditional {
+    border-color: rgba(126, 174, 255, 0.45);
+    background: rgba(126, 174, 255, 0.08);
+  }
+
+  .captain-tier-breakdown__tier--mixed {
+    border-color: rgba(204, 165, 247, 0.5);
+    background: rgba(204, 165, 247, 0.08);
+  }
+
+  .captain-tier-breakdown__tier--active {
+    outline: 2px solid rgba(245, 200, 76, 0.7);
+    outline-offset: 1px;
+  }
+}

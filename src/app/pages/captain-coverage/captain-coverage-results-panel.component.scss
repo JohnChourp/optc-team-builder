@@ -1,0 +1,39 @@
+:host ::ng-deep {
+  .coverage-save-feedback--success {
+    border-color: rgba(67, 214, 128, 0.42);
+    background: rgba(67, 214, 128, 0.09);
+  }
+
+  .coverage-save-feedback--error {
+    border-color: rgba(255, 112, 112, 0.38);
+    background: rgba(255, 112, 112, 0.09);
+  }
+
+  .selected-target {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    border: 1px solid rgba(245, 200, 76, 0.24);
+    border-radius: 18px;
+    background: rgba(245, 200, 76, 0.1);
+    color: inherit;
+    text-decoration: none;
+    transition:
+      border-color 160ms ease,
+      background 160ms ease,
+      transform 160ms ease;
+  }
+
+  .selected-target:hover {
+    transform: translateY(-1px);
+    border-color: rgba(245, 200, 76, 0.44);
+    background: rgba(245, 200, 76, 0.14);
+  }
+
+  .selected-target:focus-visible {
+    outline: 2px solid rgba(245, 200, 76, 0.72);
+    outline-offset: 3px;
+  }
+}

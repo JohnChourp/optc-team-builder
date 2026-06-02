@@ -1,0 +1,70 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .ability-filter-rail {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ability-filter-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+    min-height: 42px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.045);
+    color: rgba(248, 251, 255, 0.78);
+    cursor: pointer;
+    font: inherit;
+    transition:
+      border-color 160ms ease,
+      background 160ms ease,
+      color 160ms ease;
+  }
+
+  .ability-filter-chip:hover:not(:disabled),
+  .ability-filter-chip--active {
+    border-color: rgba(245, 200, 76, 0.52);
+    background: rgba(245, 200, 76, 0.12);
+    color: #f8fbff;
+  }
+
+  .ability-filter-chip:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+  }
+
+  .ability-filter-chip span {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .ability-filter-chip strong {
+    display: inline-grid;
+    min-width: 28px;
+    height: 24px;
+    place-items: center;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+    color: #f5c84c;
+    font-size: 0.78rem;
+  }
+
+  .ability-filter-chip:focus-visible {
+    outline: 2px solid rgba(245, 200, 76, 0.72);
+    outline-offset: 2px;
+  }
+}

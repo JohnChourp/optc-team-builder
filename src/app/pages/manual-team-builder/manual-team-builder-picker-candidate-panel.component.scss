@@ -1,0 +1,61 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .manual-team-candidates {
+    max-height: min(58vh, 520px);
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .manual-team-candidate {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .manual-team-candidate--selected {
+    border-color: rgba(245, 200, 76, 0.42);
+    background: rgba(245, 200, 76, 0.09);
+  }
+
+  .manual-team-candidate--assigned-other {
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .manual-team-candidate--blocked {
+    border-color: rgba(255, 112, 112, 0.28);
+    background: rgba(230, 57, 70, 0.08);
+  }
+
+  .manual-team-candidate__copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .manual-team-candidate__copy small {
+    color: rgba(248, 251, 255, 0.58);
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .manual-team-candidate__actions {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    justify-items: stretch;
+  }
+
+  .manual-team-candidate__actions ion-button {
+    width: 100%;
+    margin: 0;
+  }
+}

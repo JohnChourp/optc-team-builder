@@ -1,0 +1,88 @@
+:host ::ng-deep {
+  .enemy-associated-teams-count {
+    color: rgba(248, 251, 255, 0.62);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .associated-teams-summary {
+    display: grid;
+    gap: 14px;
+  }
+
+  .associated-teams-summary__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .associated-teams-summary__empty {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px dashed rgba(255, 255, 255, 0.16);
+    color: rgba(248, 251, 255, 0.62);
+    font-size: 0.86rem;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .associated-teams-summary__cta {
+    justify-self: start;
+  }
+
+  .associated-team-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px 6px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 200, 76, 0.4);
+    background: rgba(245, 200, 76, 0.1);
+    color: #fff;
+    font-size: 0.82rem;
+    animation: enemy-pill-pop 200ms ease;
+  }
+
+  .associated-team-pill__name {
+    font-weight: 600;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .associated-team-pill__icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .associated-team-pill__ship,
+  .associated-team-pill__slot {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .associated-team-pill__ship {
+    width: 22px;
+    height: 22px;
+    margin-right: 2px;
+    border-radius: 7px;
+  }
+
+  .associated-team-pill__slot--empty {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.04) 3px,
+      transparent 3px,
+      transparent 6px
+    );
+  }
+}

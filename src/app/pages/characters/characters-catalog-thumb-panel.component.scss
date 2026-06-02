@@ -1,0 +1,82 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .character-grid--compact {
+    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+    gap: 8px;
+  }
+
+  .character-thumb-card {
+    position: relative;
+    display: grid;
+    gap: 6px;
+    padding: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .character-thumb-card--incomplete {
+    border: 1px solid rgba(255, 98, 98, 0.72);
+    box-shadow:
+      0 0 0 1px rgba(255, 98, 98, 0.22),
+      0 14px 28px rgba(120, 12, 12, 0.18);
+  }
+
+  .character-status-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 4px 7px;
+    border: 1px solid rgba(255, 120, 120, 0.44);
+    border-radius: 999px;
+    background: rgba(122, 18, 18, 0.22);
+    color: #ffb0b0;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .character-thumb-card .character-status-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 1;
+    backdrop-filter: blur(10px);
+  }
+
+  .character-thumb-card__link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .character-thumb-card__link:focus-visible {
+    outline: 2px solid rgba(245, 200, 76, 0.72);
+    outline-offset: 2px;
+  }
+
+  .character-thumb-card__favorite {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+    width: 28px;
+    height: 28px;
+    backdrop-filter: blur(10px);
+  }
+
+  .character-thumb-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.08);
+    object-fit: cover;
+  }
+}

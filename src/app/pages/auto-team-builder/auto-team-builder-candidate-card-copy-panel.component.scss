@@ -1,0 +1,38 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .manual-candidate-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .manual-candidate-copy__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .manual-candidate-copy span {
+    color: rgba(248, 251, 255, 0.66);
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .manual-candidate-role {
+    color: #f5c84c;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .manual-candidate-role--muted {
+    color: rgba(248, 251, 255, 0.58);
+    letter-spacing: 0.03em;
+    text-transform: none;
+  }
+}

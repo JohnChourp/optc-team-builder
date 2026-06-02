@@ -1,0 +1,52 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .rumble-manual-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+
+  .rumble-manual-picker-card {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.045);
+    color: #fff8ee;
+    text-align: left;
+  }
+
+  .rumble-manual-picker-card:hover {
+    border-color: rgba(247, 191, 84, 0.36);
+    background: rgba(247, 191, 84, 0.08);
+  }
+
+  .rumble-manual-picker-card img {
+    width: 54px;
+    height: 54px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  .rumble-manual-picker-card span {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .rumble-manual-picker-card strong,
+  .rumble-manual-picker-card small {
+    overflow-wrap: anywhere;
+  }
+
+  .rumble-manual-picker-card small {
+    color: rgba(246, 241, 232, 0.66);
+  }
+}

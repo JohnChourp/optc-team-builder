@@ -55,6 +55,7 @@ import {
   type CharacterFilterCostBound,
   type CharacterFilterOption,
 } from '../../shared/character-filter-row/character-filter-row.component';
+import { CharacterBoxesStylePanelsComponent } from './character-boxes-style-panels.component';
 
 const PAGE_SIZE = 48;
 const FILTERED_SELECT_PAGE_SIZE = 500;
@@ -92,6 +93,7 @@ interface CharacterBoxCharacterCardView {
     IonTitle,
     IonToolbar,
     CharacterFilterRowComponent,
+    CharacterBoxesStylePanelsComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -529,9 +531,7 @@ export class CharacterBoxesPage implements OnInit {
     const value = this.resolveStringInput(input);
 
     this.selectedFavoriteFilter.set(
-      value === 'favorites' || value === 'hideFavorites'
-        ? value
-        : 'all',
+      value === 'favorites' || value === 'hideFavorites' ? value : 'all',
     );
     await this.loadCharacters(true);
   }

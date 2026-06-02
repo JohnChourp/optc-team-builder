@@ -194,8 +194,14 @@ import {
   AutoTeamBuilderCandidateCardPanelComponent,
   AutoTeamBuilderControlsPanelComponent,
   AutoTeamBuilderLoadingPanelComponent,
+  AutoTeamBuilderManualChipActionsPanelComponent,
   AutoTeamBuilderManualChipPanelComponent,
+  AutoTeamBuilderManualChipShipPanelComponent,
   AutoTeamBuilderManualPanelComponent,
+  AutoTeamBuilderManualPickerPanelComponent,
+  AutoTeamBuilderManualThumbPanelComponent,
+  AutoTeamBuilderManualThumbStatePanelComponent,
+  AutoTeamBuilderPageStylePanelsComponent,
   AutoTeamBuilderPickerPanelComponent,
   AutoTeamBuilderRequirementsPanelComponent,
   AutoTeamBuilderResultsPanelComponent,
@@ -552,8 +558,14 @@ function resolveManualSlotRequiredAbilities(
     AutoTeamBuilderCandidateCardPanelComponent,
     AutoTeamBuilderControlsPanelComponent,
     AutoTeamBuilderLoadingPanelComponent,
+    AutoTeamBuilderManualChipActionsPanelComponent,
     AutoTeamBuilderManualChipPanelComponent,
+    AutoTeamBuilderManualChipShipPanelComponent,
     AutoTeamBuilderManualPanelComponent,
+    AutoTeamBuilderManualPickerPanelComponent,
+    AutoTeamBuilderManualThumbPanelComponent,
+    AutoTeamBuilderManualThumbStatePanelComponent,
+    AutoTeamBuilderPageStylePanelsComponent,
     AutoTeamBuilderPickerPanelComponent,
     AutoTeamBuilderRequirementsPanelComponent,
     AutoTeamBuilderResultsPanelComponent,
@@ -1163,9 +1175,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.buildBlockedByFavorites() ||
       this.hasInvalidLeaderBoostRanges(),
   );
-  public readonly hasStrictFilters = computed(
-    () => this.requireAllSlotsInLeaderSuperEffectScope(),
-  );
+  public readonly hasStrictFilters = computed(() => this.requireAllSlotsInLeaderSuperEffectScope());
   public readonly allClassesSelected = computed(
     () =>
       this.availableClasses().length > 0 &&
@@ -1285,12 +1295,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly subCostRangeErrorLabel = computed(() =>
     this.hasInvalidSubCostRange() ? this.t('filters.cost.subs.range.invalid') : '',
   );
-  public readonly typeSupportLabel = computed(() =>
-    this.t('filters.types.support.flexible'),
-  );
-  public readonly classSupportLabel = computed(() =>
-    this.t('filters.classes.support.flexible'),
-  );
+  public readonly typeSupportLabel = computed(() => this.t('filters.types.support.flexible'));
+  public readonly classSupportLabel = computed(() => this.t('filters.classes.support.flexible'));
   public readonly characterTagSupportLabel = computed(() =>
     this.t('filters.characterTags.support.flexible'),
   );
@@ -6779,7 +6785,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private buildCaptainAbilityReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
     const requestedCaptainCoverage = Boolean(
       result.requestedInput.requireFullCaptainAbilityCoverage ||
-        result.requestedInput.requireBothLeadersFullCaptainAbilityCoverage,
+      result.requestedInput.requireBothLeadersFullCaptainAbilityCoverage,
     );
     const missingLabels = this.captainAbilityCoverageMissingLabels();
 

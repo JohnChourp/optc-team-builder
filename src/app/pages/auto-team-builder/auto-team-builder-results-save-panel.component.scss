@@ -1,0 +1,28 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .save-team-card,
+  .save-team-fields {
+    display: grid;
+    gap: 12px;
+  }
+
+  .save-team-feedback {
+    align-items: center;
+  }
+
+  .save-team-feedback__copy {
+    min-width: 0;
+  }
+
+  .download-team-button {
+    margin: 0;
+  }
+
+  .summary-card strong {
+    line-height: 1.4;
+    word-break: break-word;
+  }
+}

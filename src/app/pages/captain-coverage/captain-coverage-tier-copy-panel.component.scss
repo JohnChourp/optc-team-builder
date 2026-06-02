@@ -1,0 +1,38 @@
+:host ::ng-deep {
+  .captain-tier-breakdown__subsection {
+    display: grid;
+    gap: 2px;
+    padding: 4px 8px;
+    border-left: 3px solid transparent;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .captain-tier-breakdown__subsection--baseline {
+    border-left-color: rgba(102, 220, 130, 0.7);
+  }
+
+  .captain-tier-breakdown__subsection--conditional {
+    border-left-color: rgba(126, 174, 255, 0.7);
+  }
+
+  .captain-tier-breakdown__subsection-label {
+    color: rgba(248, 251, 255, 0.8);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .captain-tier-breakdown__header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    column-gap: 10px;
+  }
+
+  .captain-tier-breakdown__label {
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+}

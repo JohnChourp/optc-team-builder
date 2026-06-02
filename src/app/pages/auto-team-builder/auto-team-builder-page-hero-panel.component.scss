@@ -1,0 +1,24 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .hero-card {
+    display: grid;
+    gap: 18px;
+    background:
+      linear-gradient(140deg, rgba(255, 255, 255, 0.92), rgba(24, 50, 42, 0.88)),
+      var(--app-surface-card);
+  }
+
+  .hero-copy .section-title,
+  .hero-copy .section-copy {
+    color: #f8fbff;
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}

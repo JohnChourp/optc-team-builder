@@ -7,211 +7,247 @@
   </ion-header>
 
   <ion-content [fullscreen]="true">
-    <div class="page-shell detail-shell">
-      @if (loading()) {
-        <section class="loading-card glass-card">
-          <ion-spinner name="crescent"></ion-spinner>
-          <span>{{ t('loading') }}</span>
-        </section>
-      }
-
-      @if (!loading() && character(); as current) {
-        @if (viewModel(); as view) {
-          @if (transferFeedback(); as feedback) {
-            <section
-              class="glass-card transfer-feedback"
-              [class.transfer-feedback--error]="feedback.tone === 'error'"
-              [class.transfer-feedback--success]="feedback.tone === 'success'"
-            >
-              {{ feedback.message }}
-            </section>
-          }
-
-          <section
-            class="hero-card glass-card"
-            [class.hero-card--incomplete]="current.isIncomplete"
-          >
-            <div class="hero-media">
-              <img [src]="heroImageUrl()" [alt]="current.name" decoding="async" />
-            </div>
-
-            <div class="hero-copy">
-              <div class="section-label">#{{ current.id }} • {{ current.name }}</div>
-              <h1 class="section-title">{{ current.name }}</h1>
-              @if (current.isIncomplete) {
-                <span class="status-badge">{{ t('status.incomplete') }}</span>
-              }
-              <p class="section-copy">
-                {{
-                  t('hero.summary', {
-                    cost: current.cost,
-                    stars: current.starsLabel ?? current.stars,
-                  })
-                }}
-              </p>
-
-              <div class="hero-meta-grid">
-                @for (meta of view.heroMeta; track $index) {
-                  <article class="meta-card">
-                    <span class="meta-card__label">
-                      @if (meta.labelKey) {
-                        {{ t(meta.labelKey) }}
-                      } @else {
-                        {{ meta.label }}
-                      }
-                    </span>
-                    <strong>{{ meta.value }}</strong>
-                  </article>
-                }
-              </div>
-
-              <div class="hero-stats-grid">
-                @for (stat of view.heroStats; track $index) {
-                  <article class="stat-pill">
-                    <span>
-                      @if (stat.labelKey) {
-                        {{ t(stat.labelKey) }}
-                      } @else {
-                        {{ stat.label }}
-                      }
-                    </span>
-                    <strong>{{ stat.value }}</strong>
-                  </article>
-                }
-              </div>
-
-              <div class="hero-actions">
-                <ion-button fill="solid" color="warning" (click)="toggleFavorite(current.id)">
-                  <ion-icon
-                    slot="start"
-                    [icon]="isFavorite(current.id) ? favoriteIcon : favoriteOutlineIcon"
-                  ></ion-icon>
-                  {{ isFavorite(current.id) ? t('hero.favorited') : t('hero.addFavorite') }}
-                </ion-button>
-                <ion-button fill="outline" color="light" [routerLink]="['/tabs/auto-team-builder']">
-                  {{ t('hero.openTeamBuilder') }}
-                </ion-button>
-                <ion-button
-                  fill="outline"
-                  color="light"
-                  [routerLink]="['/characters', current.id, 'edit']"
-                >
-                  {{ t('hero.edit') }}
-                </ion-button>
-                <ion-button fill="outline" color="light" (click)="exportCharacterOverride(current)">
-                  {{ t('hero.exportJson') }}
-                </ion-button>
-                <input
-                  #overrideImportInput
-                  type="file"
-                  accept=".json,application/json"
-                  hidden
-                  (change)="onCharacterOverrideFileSelected($event, overrideImportInput, current)"
-                />
-                <ion-button fill="outline" color="light" (click)="overrideImportInput.click()">
-                  {{ t('hero.importJson') }}
-                </ion-button>
-                @if (hasLocalOverride()) {
-                  <ion-button fill="outline" color="danger" (click)="resetLocalChanges(current.id)">
-                    {{ t('hero.resetOverride') }}
-                  </ion-button>
-                }
-              </div>
-            </div>
+    <app-character-detail-style-panels>
+      <div class="page-shell detail-shell">
+        @if (loading()) {
+          <section class="loading-card glass-card">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>{{ t('loading') }}</span>
           </section>
+        }
 
-          @if (view.captainAbilitySummary || current.detail.builderAbilities.length) {
-            <section class="ability-summary-section glass-card">
-              <div class="group-section__head">
-                <div class="section-label">{{ t('sections.abilitySummary') }}</div>
+        @if (!loading() && character(); as current) {
+          @if (viewModel(); as view) {
+            @if (transferFeedback(); as feedback) {
+              <section
+                class="glass-card transfer-feedback"
+                [class.transfer-feedback--error]="feedback.tone === 'error'"
+                [class.transfer-feedback--success]="feedback.tone === 'success'"
+              >
+                {{ feedback.message }}
+              </section>
+            }
+
+            <section
+              class="hero-card glass-card"
+              [class.hero-card--incomplete]="current.isIncomplete"
+            >
+              <div class="hero-media">
+                <img [src]="heroImageUrl()" [alt]="current.name" decoding="async" />
               </div>
 
-              @if (view.captainAbilitySummary; as captainSummary) {
-                @if (captainSummary.fieldTerritories.length) {
-                  <div class="captain-ability-summary__field-territory" data-test="captain-field-territory">
-                    <span class="detail-text__label">
-                      {{ t('fields.requiresFieldTerritory') }}
-                    </span>
-                    <div class="chip-row">
-                      @for (territory of captainSummary.fieldTerritories; track territory) {
-                        <span class="detail-chip detail-chip--territory">[{{ territory }}]</span>
-                      }
-                    </div>
-                  </div>
+              <div class="hero-copy">
+                <div class="section-label">#{{ current.id }} • {{ current.name }}</div>
+                <h1 class="section-title">{{ current.name }}</h1>
+                @if (current.isIncomplete) {
+                  <span class="status-badge">{{ t('status.incomplete') }}</span>
                 }
+                <p class="section-copy">
+                  {{
+                    t('hero.summary', {
+                      cost: current.cost,
+                      stars: current.starsLabel ?? current.stars,
+                    })
+                  }}
+                </p>
 
-                @if (captainSummary.coverageEntries.length) {
-                  <div class="captain-ability-summary">
-                    @for (entry of captainSummary.coverageEntries; track $index) {
-                      <article class="captain-ability-summary__variant">
-                        @if (entry.label) {
-                          <span class="detail-text__label">{{ entry.label }}</span>
+                <div class="hero-meta-grid">
+                  @for (meta of view.heroMeta; track $index) {
+                    <article class="meta-card">
+                      <span class="meta-card__label">
+                        @if (meta.labelKey) {
+                          {{ t(meta.labelKey) }}
+                        } @else {
+                          {{ meta.label }}
                         }
+                      </span>
+                      <strong>{{ meta.value }}</strong>
+                    </article>
+                  }
+                </div>
 
-                        @if (entry.text) {
-                          <p>{{ entry.text }}</p>
+                <div class="hero-stats-grid">
+                  @for (stat of view.heroStats; track $index) {
+                    <article class="stat-pill">
+                      <span>
+                        @if (stat.labelKey) {
+                          {{ t(stat.labelKey) }}
+                        } @else {
+                          {{ stat.label }}
                         }
+                      </span>
+                      <strong>{{ stat.value }}</strong>
+                    </article>
+                  }
+                </div>
 
-                        @if (entry.tiers.length) {
-                          <section
-                            class="detail-list-block captain-ability-summary__tiers"
-                            data-test="captain-coverage-tier-breakdown"
-                          >
-                            <span class="detail-list-block__label">
-                              {{ t('sections.captainCoverageTiers') }}
-                            </span>
-                            <ul class="captain-tier-breakdown">
-                              @for (tier of entry.tiers; track tier.tier) {
-                                <li
-                                  class="captain-tier-breakdown__tier"
-                                  [class.captain-tier-breakdown__tier--baseline]="
-                                    tier.kind === 'baseline'
-                                  "
-                                  [class.captain-tier-breakdown__tier--top]="
-                                    tier.kind === 'unconditional-top'
-                                  "
-                                  [class.captain-tier-breakdown__tier--conditional]="
-                                    tier.kind === 'conditional'
-                                  "
-                                  [class.captain-tier-breakdown__tier--mixed]="
-                                    tier.kind === 'baseline-and-conditional'
-                                  "
-                                  [attr.data-test]="'captain-coverage-tier-row-' + tier.tier"
-                                >
-                                  <header class="captain-tier-breakdown__header">
-                                    <span class="captain-tier-breakdown__label">
-                                      {{ t('captainTierLabel', { tier: tier.tier }) }}
-                                    </span>
-                                    <span class="captain-tier-breakdown__scope">
-                                      {{ tier.scopeLabel }}
-                                    </span>
-                                    <span class="captain-tier-breakdown__kind">
-                                      {{ t('captainTierKinds.' + tier.kind) }}
-                                    </span>
-                                  </header>
-                                  @if (
-                                    tier.kind === 'baseline-and-conditional' &&
-                                    tier.baselineEffectClauses?.length &&
-                                    tier.conditionalEffectClauses?.length
-                                  ) {
-                                    <div
-                                      class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--baseline"
-                                    >
-                                      <span class="captain-tier-breakdown__subsection-label">
-                                        {{ t('captainTierKinds.baseline') }}
+                <div class="hero-actions">
+                  <ion-button fill="solid" color="warning" (click)="toggleFavorite(current.id)">
+                    <ion-icon
+                      slot="start"
+                      [icon]="isFavorite(current.id) ? favoriteIcon : favoriteOutlineIcon"
+                    ></ion-icon>
+                    {{ isFavorite(current.id) ? t('hero.favorited') : t('hero.addFavorite') }}
+                  </ion-button>
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    [routerLink]="['/tabs/auto-team-builder']"
+                  >
+                    {{ t('hero.openTeamBuilder') }}
+                  </ion-button>
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    [routerLink]="['/characters', current.id, 'edit']"
+                  >
+                    {{ t('hero.edit') }}
+                  </ion-button>
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    (click)="exportCharacterOverride(current)"
+                  >
+                    {{ t('hero.exportJson') }}
+                  </ion-button>
+                  <input
+                    #overrideImportInput
+                    type="file"
+                    accept=".json,application/json"
+                    hidden
+                    (change)="onCharacterOverrideFileSelected($event, overrideImportInput, current)"
+                  />
+                  <ion-button fill="outline" color="light" (click)="overrideImportInput.click()">
+                    {{ t('hero.importJson') }}
+                  </ion-button>
+                  @if (hasLocalOverride()) {
+                    <ion-button
+                      fill="outline"
+                      color="danger"
+                      (click)="resetLocalChanges(current.id)"
+                    >
+                      {{ t('hero.resetOverride') }}
+                    </ion-button>
+                  }
+                </div>
+              </div>
+            </section>
+
+            @if (view.captainAbilitySummary || current.detail.builderAbilities.length) {
+              <section class="ability-summary-section glass-card">
+                <div class="group-section__head">
+                  <div class="section-label">{{ t('sections.abilitySummary') }}</div>
+                </div>
+
+                @if (view.captainAbilitySummary; as captainSummary) {
+                  @if (captainSummary.fieldTerritories.length) {
+                    <div
+                      class="captain-ability-summary__field-territory"
+                      data-test="captain-field-territory"
+                    >
+                      <span class="detail-text__label">
+                        {{ t('fields.requiresFieldTerritory') }}
+                      </span>
+                      <div class="chip-row">
+                        @for (territory of captainSummary.fieldTerritories; track territory) {
+                          <span class="detail-chip detail-chip--territory">[{{ territory }}]</span>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @if (captainSummary.coverageEntries.length) {
+                    <div class="captain-ability-summary">
+                      @for (entry of captainSummary.coverageEntries; track $index) {
+                        <article class="captain-ability-summary__variant">
+                          @if (entry.label) {
+                            <span class="detail-text__label">{{ entry.label }}</span>
+                          }
+
+                          @if (entry.text) {
+                            <p>{{ entry.text }}</p>
+                          }
+
+                          @if (entry.tiers.length) {
+                            <section
+                              class="detail-list-block captain-ability-summary__tiers"
+                              data-test="captain-coverage-tier-breakdown"
+                            >
+                              <span class="detail-list-block__label">
+                                {{ t('sections.captainCoverageTiers') }}
+                              </span>
+                              <ul class="captain-tier-breakdown">
+                                @for (tier of entry.tiers; track tier.tier) {
+                                  <li
+                                    class="captain-tier-breakdown__tier"
+                                    [class.captain-tier-breakdown__tier--baseline]="
+                                      tier.kind === 'baseline'
+                                    "
+                                    [class.captain-tier-breakdown__tier--top]="
+                                      tier.kind === 'unconditional-top'
+                                    "
+                                    [class.captain-tier-breakdown__tier--conditional]="
+                                      tier.kind === 'conditional'
+                                    "
+                                    [class.captain-tier-breakdown__tier--mixed]="
+                                      tier.kind === 'baseline-and-conditional'
+                                    "
+                                    [attr.data-test]="'captain-coverage-tier-row-' + tier.tier"
+                                  >
+                                    <header class="captain-tier-breakdown__header">
+                                      <span class="captain-tier-breakdown__label">
+                                        {{ t('captainTierLabel', { tier: tier.tier }) }}
                                       </span>
-                                      <ul class="captain-tier-breakdown__effects">
-                                        @for (effect of tier.baselineEffectClauses; track $index) {
-                                          <li>{{ effect }}</li>
+                                      <span class="captain-tier-breakdown__scope">
+                                        {{ tier.scopeLabel }}
+                                      </span>
+                                      <span class="captain-tier-breakdown__kind">
+                                        {{ t('captainTierKinds.' + tier.kind) }}
+                                      </span>
+                                    </header>
+                                    @if (
+                                      tier.kind === 'baseline-and-conditional' &&
+                                      tier.baselineEffectClauses?.length &&
+                                      tier.conditionalEffectClauses?.length
+                                    ) {
+                                      <div
+                                        class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--baseline"
+                                      >
+                                        <span class="captain-tier-breakdown__subsection-label">
+                                          {{ t('captainTierKinds.baseline') }}
+                                        </span>
+                                        <ul class="captain-tier-breakdown__effects">
+                                          @for (
+                                            effect of tier.baselineEffectClauses;
+                                            track $index
+                                          ) {
+                                            <li>{{ effect }}</li>
+                                          }
+                                        </ul>
+                                      </div>
+                                      <div
+                                        class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--conditional"
+                                      >
+                                        <span class="captain-tier-breakdown__subsection-label">
+                                          {{ t('captainTierKinds.conditional') }}
+                                        </span>
+                                        @if (tier.conditionLines.length) {
+                                          <ul class="captain-tier-breakdown__conditions">
+                                            @for (line of tier.conditionLines; track $index) {
+                                              <li>{{ line }}</li>
+                                            }
+                                          </ul>
                                         }
-                                      </ul>
-                                    </div>
-                                    <div
-                                      class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--conditional"
-                                    >
-                                      <span class="captain-tier-breakdown__subsection-label">
-                                        {{ t('captainTierKinds.conditional') }}
-                                      </span>
+                                        <ul class="captain-tier-breakdown__effects">
+                                          @for (
+                                            effect of tier.conditionalEffectClauses;
+                                            track $index
+                                          ) {
+                                            <li>{{ effect }}</li>
+                                          }
+                                        </ul>
+                                      </div>
+                                    } @else {
                                       @if (tier.conditionLines.length) {
                                         <ul class="captain-tier-breakdown__conditions">
                                           @for (line of tier.conditionLines; track $index) {
@@ -219,267 +255,251 @@
                                           }
                                         </ul>
                                       }
-                                      <ul class="captain-tier-breakdown__effects">
-                                        @for (
-                                          effect of tier.conditionalEffectClauses;
-                                          track $index
-                                        ) {
-                                          <li>{{ effect }}</li>
-                                        }
-                                      </ul>
-                                    </div>
-                                  } @else {
-                                    @if (tier.conditionLines.length) {
-                                      <ul class="captain-tier-breakdown__conditions">
-                                        @for (line of tier.conditionLines; track $index) {
-                                          <li>{{ line }}</li>
-                                        }
-                                      </ul>
+                                      @if (tier.effectClauses.length) {
+                                        <ul class="captain-tier-breakdown__effects">
+                                          @for (effect of tier.effectClauses; track $index) {
+                                            <li>{{ effect }}</li>
+                                          }
+                                        </ul>
+                                      }
                                     }
-                                    @if (tier.effectClauses.length) {
-                                      <ul class="captain-tier-breakdown__effects">
-                                        @for (effect of tier.effectClauses; track $index) {
-                                          <li>{{ effect }}</li>
-                                        }
-                                      </ul>
-                                    }
-                                  }
-                                </li>
-                              }
-                            </ul>
-                          </section>
-                        }
-                      </article>
-                    }
-                  </div>
-                }
-
-                @if (captainSummary.captainNotes) {
-                  <div class="detail-text detail-text--muted">
-                    <span class="detail-text__label">{{ t('fields.captainNotes') }}</span>
-                    <p>{{ captainSummary.captainNotes }}</p>
-                  </div>
-                }
-
-                @if (captainSummary.recognizedAbilities.length) {
-                  <div class="ability-summary-block captain-ability-summary__recognized">
-                    <span class="detail-list-block__label">
-                      {{ t('fields.recognizedCaptainAbilities') }}
-                    </span>
-                    <app-character-ability-groups
-                      [abilities]="captainSummary.recognizedAbilities"
-                      [catalogItems]="abilityCatalog()?.abilities ?? []"
-                      displayMode="collapsed"
-                    ></app-character-ability-groups>
-                  </div>
-                }
-
-                @if (captainSummary.characterTags.length) {
-                  <div class="ability-summary-block">
-                    <span class="detail-list-block__label">
-                      {{ t('sections.characterTags') }}
-                    </span>
-                    <div class="chip-row">
-                      @for (tag of captainSummary.characterTags; track $index) {
-                        <span class="detail-chip">{{ tag }}</span>
+                                  </li>
+                                }
+                              </ul>
+                            </section>
+                          }
+                        </article>
                       }
                     </div>
-                  </div>
-                }
-              }
+                  }
 
-              @if (displayBuilderAbilities(current).length) {
-                <app-character-ability-groups
-                  [abilities]="displayBuilderAbilities(current)"
-                  [catalogItems]="abilityCatalog()?.abilities ?? []"
-                  displayMode="full"
-                ></app-character-ability-groups>
-              }
-            </section>
-          }
-
-          @for (group of view.groups; track group.titleKey) {
-            <section class="group-section">
-              <div class="group-section__head">
-                <div class="section-label">{{ t(group.titleKey) }}</div>
-              </div>
-
-              <div class="group-grid">
-                @for (card of group.cards; track $index) {
-                  <article
-                    class="glass-card detail-card"
-                    [class.detail-card--rumble]="card.titleKey === 'sections.rumbleData'"
-                  >
-                    <div class="detail-card__head">
-                      <h2>
-                        @if (card.titleKey) {
-                          {{ t(card.titleKey) }}
-                        } @else {
-                          {{ card.title }}
-                        }
-                      </h2>
+                  @if (captainSummary.captainNotes) {
+                    <div class="detail-text detail-text--muted">
+                      <span class="detail-text__label">{{ t('fields.captainNotes') }}</span>
+                      <p>{{ captainSummary.captainNotes }}</p>
                     </div>
+                  }
 
-                    @if (card.rows.length) {
-                      <dl class="detail-rows">
-                        @for (row of card.rows; track $index) {
-                          <div class="detail-row">
-                            <dt>
-                              @if (row.labelKey) {
-                                {{ t(row.labelKey) }}
-                              } @else {
-                                {{ row.label }}
-                              }
-                            </dt>
-                            <dd>{{ row.value }}</dd>
-                          </div>
-                        }
-                      </dl>
-                    }
+                  @if (captainSummary.recognizedAbilities.length) {
+                    <div class="ability-summary-block captain-ability-summary__recognized">
+                      <span class="detail-list-block__label">
+                        {{ t('fields.recognizedCaptainAbilities') }}
+                      </span>
+                      <app-character-ability-groups
+                        [abilities]="captainSummary.recognizedAbilities"
+                        [catalogItems]="abilityCatalog()?.abilities ?? []"
+                        displayMode="collapsed"
+                      ></app-character-ability-groups>
+                    </div>
+                  }
 
-                    @if (card.texts.length) {
-                      <div class="detail-texts">
-                        @for (text of card.texts; track $index) {
-                          <div
-                            class="detail-text"
-                            [class.detail-text--muted]="text.tone === 'muted'"
-                          >
-                            <span class="detail-text__label">
-                              @if (text.labelKey) {
-                                {{ t(text.labelKey) }}
-                              } @else {
-                                {{ text.label }}
-                              }
-                            </span>
-                            <p>{{ text.value }}</p>
-                          </div>
+                  @if (captainSummary.characterTags.length) {
+                    <div class="ability-summary-block">
+                      <span class="detail-list-block__label">
+                        {{ t('sections.characterTags') }}
+                      </span>
+                      <div class="chip-row">
+                        @for (tag of captainSummary.characterTags; track $index) {
+                          <span class="detail-chip">{{ tag }}</span>
                         }
                       </div>
-                    }
+                    </div>
+                  }
+                }
 
-                    @if (card.lists.length) {
-                      <div class="detail-lists">
-                        @for (list of card.lists; track $index) {
-                          <section class="detail-list-block">
-                            @if (list.labelKey || list.label) {
-                              <span class="detail-list-block__label">
-                                @if (list.labelKey) {
-                                  {{ t(list.labelKey) }}
+                @if (displayBuilderAbilities(current).length) {
+                  <app-character-ability-groups
+                    [abilities]="displayBuilderAbilities(current)"
+                    [catalogItems]="abilityCatalog()?.abilities ?? []"
+                    displayMode="full"
+                  ></app-character-ability-groups>
+                }
+              </section>
+            }
+
+            @for (group of view.groups; track group.titleKey) {
+              <section class="group-section">
+                <div class="group-section__head">
+                  <div class="section-label">{{ t(group.titleKey) }}</div>
+                </div>
+
+                <div class="group-grid">
+                  @for (card of group.cards; track $index) {
+                    <article
+                      class="glass-card detail-card"
+                      [class.detail-card--rumble]="card.titleKey === 'sections.rumbleData'"
+                    >
+                      <div class="detail-card__head">
+                        <h2>
+                          @if (card.titleKey) {
+                            {{ t(card.titleKey) }}
+                          } @else {
+                            {{ card.title }}
+                          }
+                        </h2>
+                      </div>
+
+                      @if (card.rows.length) {
+                        <dl class="detail-rows">
+                          @for (row of card.rows; track $index) {
+                            <div class="detail-row">
+                              <dt>
+                                @if (row.labelKey) {
+                                  {{ t(row.labelKey) }}
                                 } @else {
-                                  {{ list.label }}
+                                  {{ row.label }}
+                                }
+                              </dt>
+                              <dd>{{ row.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      }
+
+                      @if (card.texts.length) {
+                        <div class="detail-texts">
+                          @for (text of card.texts; track $index) {
+                            <div
+                              class="detail-text"
+                              [class.detail-text--muted]="text.tone === 'muted'"
+                            >
+                              <span class="detail-text__label">
+                                @if (text.labelKey) {
+                                  {{ t(text.labelKey) }}
+                                } @else {
+                                  {{ text.label }}
                                 }
                               </span>
-                            }
-                            <ul>
-                              @for (item of list.items; track $index) {
-                                <li>{{ item }}</li>
+                              <p>{{ text.value }}</p>
+                            </div>
+                          }
+                        </div>
+                      }
+
+                      @if (card.lists.length) {
+                        <div class="detail-lists">
+                          @for (list of card.lists; track $index) {
+                            <section class="detail-list-block">
+                              @if (list.labelKey || list.label) {
+                                <span class="detail-list-block__label">
+                                  @if (list.labelKey) {
+                                    {{ t(list.labelKey) }}
+                                  } @else {
+                                    {{ list.label }}
+                                  }
+                                </span>
                               }
-                            </ul>
-                          </section>
-                        }
-                      </div>
-                    }
-
-                    @if (card.chips.length) {
-                      <div class="chip-row">
-                        @for (chip of card.chips; track $index) {
-                          <span class="detail-chip">{{ chip }}</span>
-                        }
-                      </div>
-                    }
-
-                    @if (card.entries.length) {
-                      <div class="detail-entry-grid">
-                        @for (entry of card.entries; track $index) {
-                          <section class="detail-entry">
-                            @if (entry.titleKey || entry.title) {
-                              <h3>
-                                @if (entry.titleKey) {
-                                  {{ t(entry.titleKey) }}
-                                } @else {
-                                  {{ entry.title }}
+                              <ul>
+                                @for (item of list.items; track $index) {
+                                  <li>{{ item }}</li>
                                 }
-                              </h3>
-                            }
+                              </ul>
+                            </section>
+                          }
+                        </div>
+                      }
 
-                            @if (entry.rows.length) {
-                              <dl class="detail-rows detail-rows--entry">
-                                @for (row of entry.rows; track $index) {
-                                  <div class="detail-row">
-                                    <dt>
-                                      @if (row.labelKey) {
-                                        {{ t(row.labelKey) }}
-                                      } @else {
-                                        {{ row.label }}
-                                      }
-                                    </dt>
-                                    <dd>{{ row.value }}</dd>
-                                  </div>
-                                }
-                              </dl>
-                            }
+                      @if (card.chips.length) {
+                        <div class="chip-row">
+                          @for (chip of card.chips; track $index) {
+                            <span class="detail-chip">{{ chip }}</span>
+                          }
+                        </div>
+                      }
 
-                            @if (entry.texts.length) {
-                              <div class="detail-texts">
-                                @for (text of entry.texts; track $index) {
-                                  <div
-                                    class="detail-text"
-                                    [class.detail-text--muted]="text.tone === 'muted'"
-                                  >
-                                    <span class="detail-text__label">
-                                      @if (text.labelKey) {
-                                        {{ t(text.labelKey) }}
-                                      } @else {
-                                        {{ text.label }}
-                                      }
-                                    </span>
-                                    <p>{{ text.value }}</p>
-                                  </div>
-                                }
-                              </div>
-                            }
+                      @if (card.entries.length) {
+                        <div class="detail-entry-grid">
+                          @for (entry of card.entries; track $index) {
+                            <section class="detail-entry">
+                              @if (entry.titleKey || entry.title) {
+                                <h3>
+                                  @if (entry.titleKey) {
+                                    {{ t(entry.titleKey) }}
+                                  } @else {
+                                    {{ entry.title }}
+                                  }
+                                </h3>
+                              }
 
-                            @if (entry.lists.length) {
-                              <div class="detail-lists">
-                                @for (list of entry.lists; track $index) {
-                                  <section class="detail-list-block">
-                                    @if (list.labelKey || list.label) {
-                                      <span class="detail-list-block__label">
-                                        @if (list.labelKey) {
-                                          {{ t(list.labelKey) }}
+                              @if (entry.rows.length) {
+                                <dl class="detail-rows detail-rows--entry">
+                                  @for (row of entry.rows; track $index) {
+                                    <div class="detail-row">
+                                      <dt>
+                                        @if (row.labelKey) {
+                                          {{ t(row.labelKey) }}
                                         } @else {
-                                          {{ list.label }}
+                                          {{ row.label }}
+                                        }
+                                      </dt>
+                                      <dd>{{ row.value }}</dd>
+                                    </div>
+                                  }
+                                </dl>
+                              }
+
+                              @if (entry.texts.length) {
+                                <div class="detail-texts">
+                                  @for (text of entry.texts; track $index) {
+                                    <div
+                                      class="detail-text"
+                                      [class.detail-text--muted]="text.tone === 'muted'"
+                                    >
+                                      <span class="detail-text__label">
+                                        @if (text.labelKey) {
+                                          {{ t(text.labelKey) }}
+                                        } @else {
+                                          {{ text.label }}
                                         }
                                       </span>
-                                    }
-                                    <ul>
-                                      @for (item of list.items; track $index) {
-                                        <li>{{ item }}</li>
-                                      }
-                                    </ul>
-                                  </section>
-                                }
-                              </div>
-                            }
+                                      <p>{{ text.value }}</p>
+                                    </div>
+                                  }
+                                </div>
+                              }
 
-                            @if (entry.chips.length) {
-                              <div class="chip-row">
-                                @for (chip of entry.chips; track $index) {
-                                  <span class="detail-chip">{{ chip }}</span>
-                                }
-                              </div>
-                            }
-                          </section>
-                        }
-                      </div>
-                    }
-                  </article>
-                }
-              </div>
-            </section>
+                              @if (entry.lists.length) {
+                                <div class="detail-lists">
+                                  @for (list of entry.lists; track $index) {
+                                    <section class="detail-list-block">
+                                      @if (list.labelKey || list.label) {
+                                        <span class="detail-list-block__label">
+                                          @if (list.labelKey) {
+                                            {{ t(list.labelKey) }}
+                                          } @else {
+                                            {{ list.label }}
+                                          }
+                                        </span>
+                                      }
+                                      <ul>
+                                        @for (item of list.items; track $index) {
+                                          <li>{{ item }}</li>
+                                        }
+                                      </ul>
+                                    </section>
+                                  }
+                                </div>
+                              }
+
+                              @if (entry.chips.length) {
+                                <div class="chip-row">
+                                  @for (chip of entry.chips; track $index) {
+                                    <span class="detail-chip">{{ chip }}</span>
+                                  }
+                                </div>
+                              }
+                            </section>
+                          }
+                        </div>
+                      }
+                    </article>
+                  }
+                </div>
+              </section>
+            }
           }
         }
-      }
-    </div>
+      </div>
+    </app-character-detail-style-panels>
   </ion-content>
 </ng-container>

@@ -1,0 +1,105 @@
+:host ::ng-deep {
+  @media (max-width: 920px) {
+    .editor-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .saved-enemies-selection,
+    .saved-enemy-head,
+    .saved-enemy-main,
+    .section-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .saved-enemy-actions {
+      justify-content: flex-start;
+    }
+
+    .editor-modal-header ion-toolbar {
+      --padding-start: 16px;
+      --padding-end: 10px;
+      --padding-top: 18px;
+    }
+
+    .editor-modal-shell {
+      padding: 18px 16px 0;
+    }
+
+    .editor-modal-head {
+      padding-inline-end: 48px;
+    }
+
+    .editor-modal-footer ion-toolbar {
+      padding-inline: 12px;
+      padding-bottom: 14px;
+    }
+  }
+
+  @media (max-width: 679px) {
+    .team-association-modal__head {
+      padding: 16px 16px 4px;
+    }
+
+    .team-association-modal__shell {
+      padding: 4px 16px 20px;
+    }
+
+    .team-association-modal__counter {
+      margin-left: 0;
+    }
+
+    .team-association-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .team-association-modal__footer-row {
+      padding: 8px 16px 16px;
+    }
+
+    .team-association-modal__footer-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-card,
+    .section-card,
+    .loading-card,
+    .empty-card {
+      padding: 14px;
+    }
+
+    .saved-enemy-list article {
+      padding: 12px;
+    }
+
+    .saved-enemy-thumb {
+      width: 64px;
+      height: 64px;
+    }
+
+    .saved-enemy-actions,
+    .saved-enemy-actions ion-button,
+    .hero-actions ion-button,
+    .saved-enemies-tool-actions ion-button {
+      width: 100%;
+      flex: 1 1 auto;
+    }
+
+    .editor-grid {
+      gap: 10px;
+    }
+
+    .ability-card {
+      padding: 12px;
+    }
+
+    .associated-team-pill__name {
+      max-width: 120px;
+    }
+  }
+}

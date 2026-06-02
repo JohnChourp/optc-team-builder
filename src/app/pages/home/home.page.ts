@@ -32,6 +32,7 @@ import {
   GoogleAccountService,
   type GoogleAccountProfile,
 } from '../../core/services/google-account.service';
+import { HomeStylePanelsComponent } from './home-style-panels.component';
 
 interface HomeAction {
   color: 'light' | 'warning';
@@ -65,6 +66,7 @@ interface HomeHeroCharacter {
     IonMenuButton,
     IonTitle,
     IonToolbar,
+    HomeStylePanelsComponent,
     RouterLink,
     TranslocoDirective,
   ],

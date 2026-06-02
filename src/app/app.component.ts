@@ -1,7 +1,15 @@
 import { App } from '@capacitor/app';
-import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import {
+  CUSTOM_ELEMENTS_SCHEMA,
+  Component,
+  DestroyRef,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IonApp, IonButton, IonRouterOutlet } from '@ionic/angular/standalone';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -9,13 +17,13 @@ import {
   NavigationStart,
   Router,
   RouterLink,
+  RouterOutlet,
   type Routes,
 } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
 import packageJson from '../../package.json';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
-import { CharacterCatalogCacheService } from './core/services/character-catalog-cache.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { ToolbarBackNavigationService } from './core/services/toolbar-back-navigation.service';
 
@@ -39,7 +47,8 @@ const defaultSeo: RouteSeoData = {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [IonApp, IonButton, IonRouterOutlet, RouterLink, TranslocoPipe],
+  imports: [RouterLink, RouterOutlet, TranslocoPipe],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <ion-app class="app-shell">
       @if (routeLoading()) {
@@ -49,7 +58,7 @@ const defaultSeo: RouteSeoData = {
       }
 
       <div class="app-shell__content">
-        <ion-router-outlet></ion-router-outlet>
+        <router-outlet></router-outlet>
       </div>
 
       @if (showAnalyticsConsentBanner()) {
@@ -69,22 +78,20 @@ const defaultSeo: RouteSeoData = {
           </div>
 
           <div class="analytics-consent-banner__actions">
-            <ion-button
-              fill="solid"
-              color="warning"
-              size="small"
+            <button
+              type="button"
+              class="analytics-consent-button analytics-consent-button--accept"
               (click)="acceptAnalyticsConsent()"
             >
               {{ 'analyticsConsent.banner.accept' | transloco }}
-            </ion-button>
-            <ion-button
-              fill="outline"
-              color="light"
-              size="small"
+            </button>
+            <button
+              type="button"
+              class="analytics-consent-button analytics-consent-button--reject"
               (click)="rejectAnalyticsConsent()"
             >
               {{ 'analyticsConsent.banner.reject' | transloco }}
-            </ion-button>
+            </button>
           </div>
         </section>
       }
@@ -120,13 +127,13 @@ const defaultSeo: RouteSeoData = {
 })
 export class AppComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly analyticsConsentService = inject(AnalyticsConsentService);
   private readonly analytics = inject(GoogleAnalyticsService);
   private readonly toolbarBackNavigation = inject(ToolbarBackNavigationService);
-  private readonly characterCatalogCache = inject(CharacterCatalogCacheService);
   private lastTrackedUrl: string | null = null;
 
   public readonly appVersion = signal(packageJson.version);
@@ -144,29 +151,27 @@ export class AppComponent {
       this.scheduleCatalogWarmup();
     });
 
-    this.router.events
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((event) => {
-        if (event instanceof NavigationStart) {
-          this.routeLoading.set(true);
-          return;
-        }
+    this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        this.routeLoading.set(true);
+        return;
+      }
 
-        if (event instanceof NavigationCancel || event instanceof NavigationError) {
-          this.routeLoading.set(false);
-          return;
-        }
-
-        if (!(event instanceof NavigationEnd)) {
-          return;
-        }
-
+      if (event instanceof NavigationCancel || event instanceof NavigationError) {
         this.routeLoading.set(false);
-        this.currentUrl.set(event.urlAfterRedirects);
-        this.toolbarBackNavigation.recordNavigation(event.urlAfterRedirects);
-        this.updateRouteMetadata(event.urlAfterRedirects);
-        this.trackPageView(event.urlAfterRedirects);
-      });
+        return;
+      }
+
+      if (!(event instanceof NavigationEnd)) {
+        return;
+      }
+
+      this.routeLoading.set(false);
+      this.currentUrl.set(event.urlAfterRedirects);
+      this.toolbarBackNavigation.recordNavigation(event.urlAfterRedirects);
+      this.updateRouteMetadata(event.urlAfterRedirects);
+      this.trackPageView(event.urlAfterRedirects);
+    });
 
     if (this.router.navigated && this.router.url !== '') {
       this.toolbarBackNavigation.recordNavigation(this.router.url);
@@ -201,7 +206,11 @@ export class AppComponent {
 
   private scheduleCatalogWarmup(): void {
     const warmup = () => {
-      this.characterCatalogCache.kickoffPreload();
+      void import('./core/services/character-catalog-cache.service')
+        .then(({ CharacterCatalogCacheService }) => {
+          this.injector.get(CharacterCatalogCacheService).kickoffPreload();
+        })
+        .catch(() => undefined);
     };
     const runtime = globalThis as typeof globalThis & {
       requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;

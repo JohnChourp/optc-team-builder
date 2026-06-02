@@ -1,0 +1,83 @@
+:host ::ng-deep {
+  @media (max-width: 540px) {
+    .captain-tier-breakdown__header {
+      grid-template-columns: 1fr;
+    }
+
+    .captain-tier-breakdown__kind {
+      justify-self: start;
+    }
+  }
+
+  @media (min-width: 720px) {
+    .detail-card--rumble {
+      gap: 12px;
+    }
+
+    .detail-card--rumble > .detail-rows {
+      grid-template-columns: repeat(auto-fit, minmax(112px, max-content));
+      column-gap: 28px;
+      row-gap: 8px;
+      align-items: start;
+    }
+
+    .detail-card--rumble .detail-row {
+      min-width: 0;
+    }
+
+    .detail-card--rumble > .detail-lists .detail-list-block ul,
+    .detail-card--rumble .detail-entry .detail-list-block ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .detail-card--rumble .detail-list-block li {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      padding: 5px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      line-height: 1.25;
+    }
+
+    .detail-card--rumble .detail-entry-grid {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .detail-card--rumble .detail-entry {
+      gap: 10px;
+      align-content: start;
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    .detail-card--rumble .detail-entry .detail-rows {
+      grid-template-columns: repeat(auto-fit, minmax(96px, max-content));
+      column-gap: 20px;
+      row-gap: 8px;
+    }
+  }
+
+  @media (max-width: 719px) {
+    .hero-stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (min-width: 960px) {
+    .hero-card {
+      grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+      align-items: stretch;
+    }
+
+    .hero-media img {
+      height: 100%;
+      max-height: none;
+    }
+  }
+}

@@ -1,0 +1,59 @@
+:host ::ng-deep {
+  .hero-card {
+    display: grid;
+    gap: 16px;
+    overflow: hidden;
+    padding: 16px;
+  }
+
+  .hero-card--incomplete {
+    border: 1px solid rgba(255, 98, 98, 0.72);
+    box-shadow:
+      0 0 0 1px rgba(255, 98, 98, 0.22),
+      0 18px 34px rgba(120, 12, 12, 0.18);
+  }
+
+  .hero-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+  }
+
+  .hero-media img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 240px;
+    border-radius: 22px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .hero-copy {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 120, 120, 0.44);
+    border-radius: 999px;
+    background: rgba(122, 18, 18, 0.22);
+    color: #ffb0b0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}

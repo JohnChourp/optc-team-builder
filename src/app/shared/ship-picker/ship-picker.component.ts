@@ -23,6 +23,7 @@ import {
 import { boatOutline, closeOutline, heart, heartOutline } from 'ionicons/icons';
 
 import { type ShipRecord } from '../../core/models/optc.models';
+import { ShipPickerStylePanelsComponent } from './ship-picker-style-panels.component';
 
 interface ShipPickerCardView {
   isFavorite: boolean;
@@ -50,6 +51,7 @@ interface ShipPickerCardView {
     IonModal,
     IonSearchbar,
     IonToolbar,
+    ShipPickerStylePanelsComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],

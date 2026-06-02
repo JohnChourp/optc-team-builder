@@ -1,0 +1,43 @@
+:host ::ng-deep {
+  .selected-target img,
+  .captain-result__thumb img {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 14px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .selected-target span,
+  .selected-target small {
+    color: rgba(248, 251, 255, 0.66);
+  }
+
+  .selected-target strong {
+    display: block;
+    margin: 4px 0;
+    color: #f8fbff;
+    overflow-wrap: anywhere;
+  }
+
+  .target-empty,
+  .panel-empty {
+    display: grid;
+    place-items: center;
+    min-height: 96px;
+    padding: 18px;
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    color: rgba(248, 251, 255, 0.68);
+    text-align: center;
+  }
+
+  .panel-empty--large {
+    min-height: 220px;
+    gap: 10px;
+  }
+
+  .panel-empty strong {
+    color: #f8fbff;
+  }
+}

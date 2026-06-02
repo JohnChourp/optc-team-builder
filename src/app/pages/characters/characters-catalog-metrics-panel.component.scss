@@ -1,0 +1,47 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .stat-row,
+  .metrics-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .stat-row span {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(248, 251, 255, 0.8);
+    font-size: 0.74rem;
+  }
+
+  .metrics-row div {
+    display: grid;
+    min-width: 72px;
+  }
+
+  .metrics-row strong {
+    color: #ffffff;
+    font-size: 1rem;
+  }
+
+  .metrics-row span {
+    color: rgba(248, 251, 255, 0.58);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .load-more {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 18px;
+  }
+
+  .empty-card {
+    justify-content: center;
+  }
+}

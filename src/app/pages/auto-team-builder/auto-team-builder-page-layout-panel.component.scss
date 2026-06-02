@@ -1,0 +1,32 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .auto-builder-shell {
+    display: grid;
+    gap: 18px;
+  }
+
+  .hero-card,
+  .controls-card,
+  .coverage-card,
+  .fallback-card,
+  .loading-card,
+  .save-team-card,
+  .summary-card,
+  .result-card {
+    padding: 20px;
+  }
+
+  .controls-grid,
+  .summary-grid,
+  .result-grid {
+    display: grid;
+    gap: 10px;
+  }
+
+  .controls-grid > * {
+    min-width: 0;
+  }
+}

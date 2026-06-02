@@ -113,8 +113,27 @@
   gap: 10px;
 }
 
-.analytics-consent-banner__actions ion-button {
-  margin: 0;
+.analytics-consent-button {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: transparent;
+  color: #f8fbff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.analytics-consent-button--accept {
+  border-color: rgba(245, 200, 76, 0.72);
+  background: #f5c84c;
+  color: #1f1608;
+}
+
+.analytics-consent-button--reject {
+  color: rgba(248, 251, 255, 0.82);
 }
 
 .app-footer-meta {

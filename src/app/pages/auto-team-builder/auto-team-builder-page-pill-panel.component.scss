@@ -1,0 +1,23 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .meta-pill,
+  .type-pill,
+  .role-pill,
+  .coverage-chip,
+  .reason-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+  }
+
+  .meta-pill {
+    background: rgba(255, 255, 255, 0.12);
+    color: #f8fbff;
+  }
+}

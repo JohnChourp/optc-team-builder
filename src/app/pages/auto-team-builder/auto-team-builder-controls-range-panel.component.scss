@@ -1,0 +1,44 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .leader-boost-range-grid,
+  .cost-range-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .cost-range-grid > ion-input:only-child {
+    grid-column: 1 / -1;
+  }
+
+  .cost-scope-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .cost-scope-copy {
+    padding-top: 4px;
+  }
+
+  .leader-boost-range-error,
+  .cost-range-error {
+    color: #ffb4a8;
+  }
+
+  .type-action-row,
+  .control-action-row {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  @media (max-width: 520px) {
+    .leader-boost-range-grid,
+    .cost-range-grid,
+    .character-name-filter-row {
+      grid-template-columns: 1fr;
+    }
+  }
+}

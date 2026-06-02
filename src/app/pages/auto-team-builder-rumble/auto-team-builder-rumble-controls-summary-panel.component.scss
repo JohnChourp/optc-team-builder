@@ -1,0 +1,53 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .summary-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .team-switch {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgba(247, 191, 84, 0.22);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .team-switch__button {
+    min-width: 86px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: rgba(246, 241, 232, 0.72);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .team-switch__button--active {
+    background: #f7bf54;
+    color: #201609;
+  }
+
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .section-head h2 {
+    overflow-wrap: anywhere;
+  }
+}

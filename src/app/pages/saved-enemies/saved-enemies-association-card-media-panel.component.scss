@@ -1,0 +1,40 @@
+:host ::ng-deep {
+  .team-association-card__body,
+  .team-association-card__slots,
+  .team-association-card__ship,
+  .team-association-card__slot {
+    display: flex;
+    align-items: center;
+  }
+
+  .team-association-card__body {
+    gap: 12px;
+  }
+
+  .team-association-card__ship {
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .team-association-card__ship img,
+  .team-association-card__slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .team-association-card__ship-fallback {
+    padding: 0 6px;
+    color: rgba(248, 251, 255, 0.5);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+}

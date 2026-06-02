@@ -1,0 +1,85 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .rumble-character-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+  }
+
+  .rumble-character-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+
+  .rumble-character-card__favorite {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+  }
+
+  .favorite-button {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    background: rgba(10, 15, 22, 0.78);
+    color: #f8d36b;
+    cursor: pointer;
+  }
+
+  .favorite-button ion-icon {
+    font-size: 1.1rem;
+  }
+
+  .rumble-character-card__link {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    min-height: 156px;
+    padding: 12px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .rumble-character-card__link img {
+    width: 96px;
+    height: 128px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    object-fit: cover;
+  }
+
+  .rumble-character-card__content {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-width: 0;
+    padding-right: 30px;
+  }
+
+  .rumble-character-card__head {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .rumble-character-card__head h2 {
+    margin: 0;
+    color: #f8fbff;
+    font-size: 0.98rem;
+    line-height: 1.2;
+  }
+
+  .rumble-character-card__head span {
+    color: #f8d36b;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+}

@@ -90,6 +90,7 @@ import {
   type CharacterFilterCostRange,
   type CharacterFilterOption,
 } from '../../shared/character-filter-row/character-filter-row.component';
+import { CaptainCoverageStylePanelsComponent } from './captain-coverage-style-panels.component';
 
 const MAX_CAPTAIN_LOOKUP_COUNT = 12000;
 const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 5;
@@ -123,6 +124,7 @@ interface CaptainCoverageAbilityBadgeView {
     AbilityFilterRailComponent,
     AbilityRequirementPickerComponent,
     CaptainTeamConditionStatusComponent,
+    CaptainCoverageStylePanelsComponent,
     CharacterImagePickerComponent,
     IonButton,
     IonButtons,

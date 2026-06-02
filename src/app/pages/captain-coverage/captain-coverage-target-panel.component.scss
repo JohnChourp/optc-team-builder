@@ -1,0 +1,36 @@
+:host ::ng-deep {
+  .coverage-save-team {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 12px;
+  }
+
+  .coverage-save-team ion-button {
+    min-height: 44px;
+  }
+
+  .coverage-save-feedback {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #f8fbff;
+  }
+
+  .coverage-save-feedback ion-icon {
+    flex: 0 0 auto;
+    font-size: 1.2rem;
+  }
+
+  .coverage-save-feedback strong {
+    display: block;
+  }
+
+  .coverage-save-feedback ion-button {
+    margin: 4px 0 0 -10px;
+  }
+}

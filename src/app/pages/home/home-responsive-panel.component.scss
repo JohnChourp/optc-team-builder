@@ -1,0 +1,54 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  @media (max-width: 960px) {
+    .home-hero,
+    .home-section__head,
+    .home-workflow {
+      grid-template-columns: 1fr;
+    }
+
+    .home-feature-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 680px) {
+    .home-hero,
+    .home-account,
+    .home-section,
+    .home-workflow,
+    .home-highlight {
+      padding: 16px;
+    }
+
+    .home-hero {
+      min-height: initial;
+    }
+
+    .home-hero__visual {
+      min-height: 210px;
+    }
+
+    .home-highlight-grid,
+    .home-feature-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .home-character-thumb {
+      width: 64px;
+      border-radius: 16px;
+    }
+
+    .home-account__body {
+      align-items: flex-start;
+    }
+
+    .home-account__body ion-button {
+      width: 100%;
+      margin-left: 0;
+    }
+  }
+}

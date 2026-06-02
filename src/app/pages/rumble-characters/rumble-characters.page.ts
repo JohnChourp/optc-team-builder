@@ -52,6 +52,7 @@ import {
   rankRumbleCharacters,
   type RumbleCharacterRankedScore,
 } from './rumble-characters-ranking.utils';
+import { RumbleCharactersStylePanelsComponent } from './rumble-characters-style-panels.component';
 
 const PAGE_SIZE = 48;
 const RUMBLE_ROLE_FILTERS: NormalizedRumbleRoleTag[] = [
@@ -91,6 +92,7 @@ interface RumbleCharacterCardView {
     IonToggle,
     IonToolbar,
     RouterLink,
+    RumbleCharactersStylePanelsComponent,
     TranslocoDirective,
   ],
   templateUrl: './rumble-characters.page.html',

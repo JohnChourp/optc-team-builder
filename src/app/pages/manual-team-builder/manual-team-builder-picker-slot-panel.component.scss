@@ -1,0 +1,82 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .manual-team-picker__meta,
+  .manual-team-picker__filters {
+    display: grid;
+    gap: 10px;
+  }
+
+  .manual-team-picker-slot-rail {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .manual-team-picker-slot-drop {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 64px;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #f8fbff;
+    font: inherit;
+    text-align: start;
+    transition:
+      border-color 0.18s ease,
+      background 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  .manual-team-picker-slot-drop img {
+    width: 38px;
+    height: 48px;
+    border-radius: 6px;
+    object-fit: cover;
+  }
+
+  .manual-team-picker-slot-drop span {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .manual-team-picker-slot-drop strong,
+  .manual-team-picker-slot-drop small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .manual-team-picker-slot-drop strong {
+    font-size: 0.74rem;
+  }
+
+  .manual-team-picker-slot-drop small {
+    color: rgba(248, 251, 255, 0.64);
+    font-size: 0.68rem;
+  }
+
+  .manual-team-picker-slot-drop--active {
+    border-color: rgba(255, 196, 87, 0.72);
+    background: rgba(255, 196, 87, 0.12);
+  }
+
+  .manual-team-picker-slot-drop--target {
+    border-color: rgba(76, 201, 240, 0.82);
+    background: rgba(76, 201, 240, 0.14);
+    transform: translateY(-1px);
+  }
+
+  .manual-team-picker-slot-drop--invalid {
+    border-color: rgba(230, 57, 70, 0.88);
+    background: rgba(230, 57, 70, 0.16);
+  }
+}

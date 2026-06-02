@@ -1,0 +1,43 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .coverage-chip {
+    background: rgba(245, 200, 76, 0.16);
+    color: #f5c84c;
+  }
+
+  .fallback-chip {
+    background: rgba(244, 114, 182, 0.16);
+    color: #f7a7ce;
+  }
+
+  .summary-status-chip {
+    justify-content: flex-start;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .role-pill {
+    background: rgba(245, 200, 76, 0.16);
+    color: #f5c84c;
+  }
+
+  .type-pill {
+    background: rgba(76, 201, 240, 0.16);
+    color: #74d9f5;
+  }
+
+  .reason-chip {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f3f7ff;
+  }
+}

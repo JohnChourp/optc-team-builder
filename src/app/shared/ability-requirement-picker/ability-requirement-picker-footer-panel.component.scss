@@ -1,0 +1,21 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .ability-picker-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .ability-picker-footer ion-toolbar {
+    --background: transparent;
+    --border-width: 0;
+    padding: 12px 18px 18px;
+  }
+
+  .ability-picker-footer__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+}

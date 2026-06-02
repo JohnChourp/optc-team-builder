@@ -1,0 +1,46 @@
+:host ::ng-deep {
+  .character-boxes-shell {
+    display: grid;
+    gap: 18px;
+  }
+
+  .hero-card,
+  .boxes-panel,
+  .editor-panel {
+    padding: 20px;
+  }
+
+  .hero-card {
+    display: grid;
+    gap: 18px;
+    background:
+      linear-gradient(140deg, rgba(255, 255, 255, 0.92), rgba(18, 30, 64, 0.85)),
+      var(--app-surface-card);
+  }
+
+  .hero-copy .section-title,
+  .hero-copy .section-copy {
+    color: #f8fbff;
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .meta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #f8fbff;
+  }
+
+  .box-layout {
+    display: grid;
+    gap: 18px;
+  }
+}

@@ -1,0 +1,18 @@
+:host ::ng-deep {
+  .open-team-destination span {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .open-team-destination strong {
+    color: #ffffff;
+    line-height: 1.25;
+  }
+
+  .open-team-destination small {
+    color: rgba(248, 251, 255, 0.68);
+    line-height: 1.45;
+  }
+}

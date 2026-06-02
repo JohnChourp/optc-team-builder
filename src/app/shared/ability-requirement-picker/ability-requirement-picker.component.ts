@@ -48,6 +48,7 @@ import {
   type AutoBuildLeaderBoostRange,
   type AutoBuildLeaderBoostRanges,
 } from '../../core/models/auto-team-builder.models';
+import { AbilityRequirementPickerStylePanelsComponent } from './ability-requirement-picker-style-panels.component';
 
 interface AbilityRequirementCatalogTileView {
   item: AutoBuildAbilityCatalogItem;
@@ -77,6 +78,7 @@ export interface AbilityRequirementPickerLeaderBoostSettings {
   selector: 'app-ability-requirement-picker',
   standalone: true,
   imports: [
+    AbilityRequirementPickerStylePanelsComponent,
     IonButton,
     IonButtons,
     IonContent,

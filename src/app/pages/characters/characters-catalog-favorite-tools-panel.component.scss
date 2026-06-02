@@ -1,0 +1,53 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .favorites-tools-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .favorites-tools-head p {
+    margin: 10px 0 0;
+    color: rgba(248, 251, 255, 0.66);
+    line-height: 1.6;
+  }
+
+  .favorites-tools-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .favorites-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .favorites-toggle-copy {
+    display: grid;
+    gap: 4px;
+  }
+
+  .favorites-toggle-copy strong {
+    color: #f8fbff;
+    font-size: 0.96rem;
+  }
+
+  .favorites-toggle-copy small {
+    color: rgba(248, 251, 255, 0.66);
+    line-height: 1.5;
+  }
+}

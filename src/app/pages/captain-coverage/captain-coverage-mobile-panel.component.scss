@@ -1,0 +1,29 @@
+:host ::ng-deep {
+  @media (max-width: 679px) {
+    .coverage-summary,
+    .team-budget-panel,
+    .results-panel {
+      padding: 14px;
+    }
+
+    .coverage-team-slots {
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+    }
+
+    .coverage-team-slot {
+      grid-template-columns: 44px minmax(0, 1fr);
+      min-height: 64px;
+      padding: 8px;
+    }
+
+    .coverage-team-slot img {
+      width: 44px;
+    }
+
+    .captain-result-list {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+    }
+  }
+}

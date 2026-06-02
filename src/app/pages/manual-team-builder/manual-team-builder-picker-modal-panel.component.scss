@@ -1,0 +1,67 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  ion-modal.pick-editor-modal::part(backdrop) {
+    background: rgba(7, 11, 23, 0.74);
+  }
+
+  ion-modal.pick-editor-modal::part(content) {
+    width: min(1040px, calc(100vw - 24px));
+    max-height: var(--app-modal-max-height, calc(100vh - 24px));
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    background: #0a0e1b;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+  }
+
+  .pick-editor-modal__header ion-toolbar {
+    --background: #12192e;
+    --border-width: 0;
+    --min-height: auto;
+    --padding-start: 20px;
+    --padding-end: 10px;
+    --padding-top: 18px;
+    --padding-bottom: 0;
+  }
+
+  .pick-editor-modal__head {
+    min-width: 0;
+    padding-inline-end: 52px;
+  }
+
+  .pick-editor-modal__head h2 {
+    margin: 8px 0 6px;
+    color: #ffffff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.35rem, 3vw, 1.85rem);
+    line-height: 1.1;
+  }
+
+  .pick-editor-modal__head p {
+    margin: 0;
+    color: rgba(248, 251, 255, 0.68);
+    line-height: 1.45;
+  }
+
+  .pick-editor-modal__content {
+    --background: #0a0e1b;
+    background: #0a0e1b;
+  }
+
+  .pick-editor-modal__shell {
+    display: grid;
+    min-height: 100%;
+    padding: 14px 20px 20px;
+    background: #0a0e1b;
+  }
+
+  .pick-editor-modal__panel {
+    align-self: stretch;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #0d1325;
+  }
+}

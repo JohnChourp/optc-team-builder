@@ -9,358 +9,362 @@
   </ion-header>
 
   <ion-content [fullscreen]="true">
-    <div class="page-shell character-boxes-shell">
-      <section class="hero-card glass-card">
-        <div class="hero-copy">
-          <div class="section-label">
-            <ion-icon [icon]="boxesIcon"></ion-icon>
-            <span>{{ t('hero.eyebrow') }}</span>
-          </div>
-          <h1 class="section-title">{{ t('hero.title') }}</h1>
-          <p class="section-copy">
-            {{ t('hero.copy', { characterCount: summary()?.characterCount ?? 0 }) }}
-          </p>
-        </div>
-
-        <div class="hero-meta">
-          <div class="meta-pill">
-            <ion-icon [icon]="boxesIcon"></ion-icon>
-            <span>{{ t('hero.boxesCount', { count: boxes().length }) }}</span>
-          </div>
-          <div class="meta-pill">
-            <ion-icon [icon]="unitsIcon"></ion-icon>
-            <span>{{ t('hero.assignedCount', { count: totalAssignedCharacters() }) }}</span>
-          </div>
-          <div class="meta-pill">
-            <ion-icon [icon]="layersIcon"></ion-icon>
-            <span>{{ t('hero.uniqueAssignedCount', { count: uniqueAssignedCharacters() }) }}</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="box-layout">
-        <article class="glass-card boxes-panel">
-          <div class="panel-head">
-            <div>
-              <div class="section-label">{{ t('list.eyebrow') }}</div>
-              <h2>{{ t('list.title') }}</h2>
-              <p>{{ t('list.copy') }}</p>
+    <app-character-boxes-style-panels>
+      <div class="page-shell character-boxes-shell">
+        <section class="hero-card glass-card">
+          <div class="hero-copy">
+            <div class="section-label">
+              <ion-icon [icon]="boxesIcon"></ion-icon>
+              <span>{{ t('hero.eyebrow') }}</span>
             </div>
-
-            <ion-button fill="outline" color="light" (click)="createBox()">
-              <ion-icon slot="start" [icon]="addIcon"></ion-icon>
-              {{ t('list.create') }}
-            </ion-button>
+            <h1 class="section-title">{{ t('hero.title') }}</h1>
+            <p class="section-copy">
+              {{ t('hero.copy', { characterCount: summary()?.characterCount ?? 0 }) }}
+            </p>
           </div>
 
-          @if (!boxes().length) {
-            <div class="panel-empty">
-              <strong>{{ t('empty.noBoxes.title') }}</strong>
-              <span>{{ t('empty.noBoxes.copy') }}</span>
+          <div class="hero-meta">
+            <div class="meta-pill">
+              <ion-icon [icon]="boxesIcon"></ion-icon>
+              <span>{{ t('hero.boxesCount', { count: boxes().length }) }}</span>
             </div>
-          } @else {
-            <div class="box-list">
-              @for (box of boxes(); track trackBox($index, box)) {
-                <button
-                  type="button"
-                  class="box-card"
-                  [class.box-card--active]="selectedBox()?.id === box.id"
-                  (click)="selectBox(box.id)"
-                >
-                  <div class="box-card__title-row">
-                    <strong>{{ box.name }}</strong>
-                    <span>{{ t('list.count', { count: box.characterIds.length }) }}</span>
-                  </div>
-                  <small>{{ t('list.updatedAt', { timestamp: box.updatedAt }) }}</small>
-                </button>
-              }
+            <div class="meta-pill">
+              <ion-icon [icon]="unitsIcon"></ion-icon>
+              <span>{{ t('hero.assignedCount', { count: totalAssignedCharacters() }) }}</span>
             </div>
-          }
-        </article>
+            <div class="meta-pill">
+              <ion-icon [icon]="layersIcon"></ion-icon>
+              <span>{{
+                t('hero.uniqueAssignedCount', { count: uniqueAssignedCharacters() })
+              }}</span>
+            </div>
+          </div>
+        </section>
 
-        <article class="glass-card editor-panel">
-          @if (!boxes().length) {
-            <div class="panel-empty panel-empty--large">
-              <strong>{{ t('empty.noBoxes.title') }}</strong>
-              <span>{{ t('empty.noBoxes.copy') }}</span>
-            </div>
-          } @else if (!selectedBox()) {
-            <div class="panel-empty panel-empty--large">
-              <strong>{{ t('empty.selectBox.title') }}</strong>
-              <span>{{ t('empty.selectBox.copy') }}</span>
-            </div>
-          } @else {
-            <div class="panel-head panel-head--editor">
+        <section class="box-layout">
+          <article class="glass-card boxes-panel">
+            <div class="panel-head">
               <div>
-                <div class="section-label">{{ t('editor.eyebrow') }}</div>
-                <h2>{{ t('editor.title') }}</h2>
-                <p>{{ t('editor.copy', { count: selectedBoxCharacterCount() }) }}</p>
+                <div class="section-label">{{ t('list.eyebrow') }}</div>
+                <h2>{{ t('list.title') }}</h2>
+                <p>{{ t('list.copy') }}</p>
               </div>
 
-              <ion-button fill="clear" color="danger" (click)="deleteSelectedBox()">
-                <ion-icon slot="start" [icon]="deleteIcon"></ion-icon>
-                {{ t('editor.delete') }}
+              <ion-button fill="outline" color="light" (click)="createBox()">
+                <ion-icon slot="start" [icon]="addIcon"></ion-icon>
+                {{ t('list.create') }}
               </ion-button>
             </div>
 
-            <div class="editor-form">
-              <div class="field-block">
-                <span>{{ t('editor.nameLabel') }}</span>
-                <ion-input
-                  fill="outline"
-                  [value]="boxNameDraft()"
-                  [placeholder]="t('editor.namePlaceholder')"
-                  (ionInput)="onBoxNameInput($event)"
-                ></ion-input>
-                @if (boxNameValidationMessage()) {
-                  <small class="validation-message">{{ boxNameValidationMessage() }}</small>
-                }
-              </div>
-
-              <div class="bulk-actions-grid">
-                <div class="favorites-bulk-action">
-                  <div class="favorites-bulk-action__copy">
-                    <span>{{ t('editor.addFavoritesLabel') }}</span>
-                    <small>{{ t('editor.addFavoritesCopy') }}</small>
-                  </div>
-
-                  <ion-button
-                    fill="outline"
-                    color="light"
-                    [disabled]="!canAddFavoritesToSelectedBox()"
-                    (click)="addFavoritesToSelectedBox()"
-                  >
-                    {{ t('editor.addFavorites', { count: missingFavoriteCount() }) }}
-                  </ion-button>
-                </div>
-
-                <div class="favorites-bulk-action">
-                  <div class="favorites-bulk-action__copy">
-                    <span>{{ t('editor.selectAllFilteredLabel') }}</span>
-                    <small>{{ t('editor.selectAllFilteredCopy') }}</small>
-                  </div>
-
-                  <ion-button
-                    fill="outline"
-                    color="light"
-                    [disabled]="!canSelectAllFilteredCharacters()"
-                    (click)="selectAllFilteredCharacters()"
-                  >
-                    @if (selectingFilteredCharacters()) {
-                      <ion-spinner slot="start" name="crescent"></ion-spinner>
-                    }
-                    {{ t('editor.selectAllFiltered') }}
-                  </ion-button>
-                </div>
-              </div>
-
-              <app-character-filter-row
-                [showTypeFilter]="true"
-                [typeLabel]="t('filters.typeLabel')"
-                [typePlaceholder]="t('filters.typePlaceholder')"
-                [typeOptions]="availableTypes()"
-                [typeQuery]="typeQuery()"
-                [selectedType]="selectedType()"
-                [showClassFilter]="true"
-                [classLabel]="t('filters.classLabel')"
-                [classPlaceholder]="t('filters.classPlaceholder')"
-                [classOptions]="availableClasses()"
-                [classQuery]="classQuery()"
-                [selectedClass]="selectedClass()"
-                favoriteMode="select"
-                [favoritesSelectLabel]="t('filters.favoritesLabel')"
-                [favoritesSelectPlaceholder]="t('filters.favoritesPlaceholder')"
-                [favoriteSelectOptions]="favoriteFilterOptions()"
-                [selectedFavoriteFilter]="selectedFavoriteFilter()"
-                [showCostFilter]="true"
-                [costFromLabel]="t('filters.cost.from')"
-                [costToLabel]="t('filters.cost.to')"
-                [costRange]="costRange()"
-                [showMembershipFilter]="true"
-                [membershipLabel]="t('filters.membershipLabel')"
-                [membershipPlaceholder]="t('filters.membershipPlaceholder')"
-                [membershipOptions]="membershipFilterOptions()"
-                [selectedMembershipFilter]="selectedMembershipFilter()"
-                [showSortFilter]="true"
-                [sortLabel]="t('sort.label')"
-                [sortPlaceholder]="t('sort.placeholder')"
-                [sortOptions]="sortFilterOptions()"
-                [selectedSortValue]="selectedSortMode()"
-                [showIdOrderFilter]="true"
-                [idOrderLabel]="t('idOrder.label')"
-                [idOrderOptions]="idOrderFilterOptions()"
-                [selectedIdOrderValue]="selectedIdOrder()"
-                [showClearButton]="true"
-                [clearLabel]="'common.actions.clear' | transloco"
-                (typeQueryChange)="onTypeQueryChange($event)"
-                (typeSelected)="applyTypeFilter($event)"
-                (typeCleared)="clearTypeFilter()"
-                (classQueryChange)="onClassQueryChange($event)"
-                (classSelected)="applyClassFilter($event)"
-                (classCleared)="clearClassFilter()"
-                (favoriteFilterChange)="onFavoriteFilterChange($event)"
-                (costRangeChange)="onCostRangeChange($event.bound, $event.value)"
-                (membershipFilterChange)="onMembershipFilterChange($event)"
-                (sortChange)="onSortModeChange($event)"
-                (idOrderChange)="onIdOrderChange($event)"
-                (clearFilters)="clearFilters()"
-              ></app-character-filter-row>
-
-              @if (costRangeValidationMessage()) {
-                <small class="validation-message">{{ costRangeValidationMessage() }}</small>
-              }
-
-              <ion-searchbar
-                class="box-search"
-                [debounce]="150"
-                [placeholder]="t('filters.searchPlaceholder')"
-                [searchIcon]="searchIcon"
-                [value]="searchTerm()"
-                (ionInput)="onSearchChange($event)"
-              ></ion-searchbar>
-
-              <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
-                <button
-                  type="button"
-                  class="view-toggle__button"
-                  [class.view-toggle__button--active]="!isCompactDisplayMode()"
-                  (click)="setDisplayMode('list')"
-                >
-                  {{ t('displayMode.list') }}
-                </button>
-                <button
-                  type="button"
-                  class="view-toggle__button"
-                  [class.view-toggle__button--active]="isCompactDisplayMode()"
-                  (click)="setDisplayMode('compact')"
-                >
-                  {{ t('displayMode.compact') }}
-                </button>
-              </div>
-            </div>
-
-            @if (loading()) {
-              <div class="panel-empty panel-empty--loading">
-                <ion-spinner name="crescent"></ion-spinner>
-                <span>{{ t('loading') }}</span>
-              </div>
-            } @else if (!characters().length) {
-              <div class="panel-empty panel-empty--large">
-                <strong>{{ t('empty.noCharacters.title') }}</strong>
-                <span>{{ t('empty.noCharacters.copy') }}</span>
+            @if (!boxes().length) {
+              <div class="panel-empty">
+                <strong>{{ t('empty.noBoxes.title') }}</strong>
+                <span>{{ t('empty.noBoxes.copy') }}</span>
               </div>
             } @else {
-              @if (isCompactDisplayMode()) {
-                <div class="character-grid">
-                  @for (card of characterCardViews(); track card.character.id) {
-                    <article class="character-thumb-card" [title]="card.character.name">
-                      <button
-                        type="button"
-                        class="favorite-button character-thumb-card__favorite"
-                        [attr.aria-label]="card.favoriteAriaLabel"
-                        (click)="toggleFavorite(card.character.id, $event)"
-                      >
-                        <ion-icon
-                          [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
-                        ></ion-icon>
-                      </button>
+              <div class="box-list">
+                @for (box of boxes(); track trackBox($index, box)) {
+                  <button
+                    type="button"
+                    class="box-card"
+                    [class.box-card--active]="selectedBox()?.id === box.id"
+                    (click)="selectBox(box.id)"
+                  >
+                    <div class="box-card__title-row">
+                      <strong>{{ box.name }}</strong>
+                      <span>{{ t('list.count', { count: box.characterIds.length }) }}</span>
+                    </div>
+                    <small>{{ t('list.updatedAt', { timestamp: box.updatedAt }) }}</small>
+                  </button>
+                }
+              </div>
+            }
+          </article>
 
-                      <a
-                        class="character-detail-thumb-link character-thumb-card__detail-thumb"
-                        [routerLink]="getCharacterDetailLink(card.character)"
-                        [attr.aria-label]="card.character.name"
-                      >
-                        <img
-                          [src]="card.character.imageUrl"
-                          [alt]="card.character.name"
-                          loading="lazy"
-                        />
-                      </a>
+          <article class="glass-card editor-panel">
+            @if (!boxes().length) {
+              <div class="panel-empty panel-empty--large">
+                <strong>{{ t('empty.noBoxes.title') }}</strong>
+                <span>{{ t('empty.noBoxes.copy') }}</span>
+              </div>
+            } @else if (!selectedBox()) {
+              <div class="panel-empty panel-empty--large">
+                <strong>{{ t('empty.selectBox.title') }}</strong>
+                <span>{{ t('empty.selectBox.copy') }}</span>
+              </div>
+            } @else {
+              <div class="panel-head panel-head--editor">
+                <div>
+                  <div class="section-label">{{ t('editor.eyebrow') }}</div>
+                  <h2>{{ t('editor.title') }}</h2>
+                  <p>{{ t('editor.copy', { count: selectedBoxCharacterCount() }) }}</p>
+                </div>
 
-                      <ion-button
-                        fill="solid"
-                        color="warning"
-                        size="small"
-                        class="character-thumb-card__membership-action"
-                        (click)="toggleCharacterMembership(card.character.id)"
-                      >
-                        {{ card.membershipActionLabel }}
-                      </ion-button>
-                    </article>
+                <ion-button fill="clear" color="danger" (click)="deleteSelectedBox()">
+                  <ion-icon slot="start" [icon]="deleteIcon"></ion-icon>
+                  {{ t('editor.delete') }}
+                </ion-button>
+              </div>
+
+              <div class="editor-form">
+                <div class="field-block">
+                  <span>{{ t('editor.nameLabel') }}</span>
+                  <ion-input
+                    fill="outline"
+                    [value]="boxNameDraft()"
+                    [placeholder]="t('editor.namePlaceholder')"
+                    (ionInput)="onBoxNameInput($event)"
+                  ></ion-input>
+                  @if (boxNameValidationMessage()) {
+                    <small class="validation-message">{{ boxNameValidationMessage() }}</small>
                   }
+                </div>
+
+                <div class="bulk-actions-grid">
+                  <div class="favorites-bulk-action">
+                    <div class="favorites-bulk-action__copy">
+                      <span>{{ t('editor.addFavoritesLabel') }}</span>
+                      <small>{{ t('editor.addFavoritesCopy') }}</small>
+                    </div>
+
+                    <ion-button
+                      fill="outline"
+                      color="light"
+                      [disabled]="!canAddFavoritesToSelectedBox()"
+                      (click)="addFavoritesToSelectedBox()"
+                    >
+                      {{ t('editor.addFavorites', { count: missingFavoriteCount() }) }}
+                    </ion-button>
+                  </div>
+
+                  <div class="favorites-bulk-action">
+                    <div class="favorites-bulk-action__copy">
+                      <span>{{ t('editor.selectAllFilteredLabel') }}</span>
+                      <small>{{ t('editor.selectAllFilteredCopy') }}</small>
+                    </div>
+
+                    <ion-button
+                      fill="outline"
+                      color="light"
+                      [disabled]="!canSelectAllFilteredCharacters()"
+                      (click)="selectAllFilteredCharacters()"
+                    >
+                      @if (selectingFilteredCharacters()) {
+                        <ion-spinner slot="start" name="crescent"></ion-spinner>
+                      }
+                      {{ t('editor.selectAllFiltered') }}
+                    </ion-button>
+                  </div>
+                </div>
+
+                <app-character-filter-row
+                  [showTypeFilter]="true"
+                  [typeLabel]="t('filters.typeLabel')"
+                  [typePlaceholder]="t('filters.typePlaceholder')"
+                  [typeOptions]="availableTypes()"
+                  [typeQuery]="typeQuery()"
+                  [selectedType]="selectedType()"
+                  [showClassFilter]="true"
+                  [classLabel]="t('filters.classLabel')"
+                  [classPlaceholder]="t('filters.classPlaceholder')"
+                  [classOptions]="availableClasses()"
+                  [classQuery]="classQuery()"
+                  [selectedClass]="selectedClass()"
+                  favoriteMode="select"
+                  [favoritesSelectLabel]="t('filters.favoritesLabel')"
+                  [favoritesSelectPlaceholder]="t('filters.favoritesPlaceholder')"
+                  [favoriteSelectOptions]="favoriteFilterOptions()"
+                  [selectedFavoriteFilter]="selectedFavoriteFilter()"
+                  [showCostFilter]="true"
+                  [costFromLabel]="t('filters.cost.from')"
+                  [costToLabel]="t('filters.cost.to')"
+                  [costRange]="costRange()"
+                  [showMembershipFilter]="true"
+                  [membershipLabel]="t('filters.membershipLabel')"
+                  [membershipPlaceholder]="t('filters.membershipPlaceholder')"
+                  [membershipOptions]="membershipFilterOptions()"
+                  [selectedMembershipFilter]="selectedMembershipFilter()"
+                  [showSortFilter]="true"
+                  [sortLabel]="t('sort.label')"
+                  [sortPlaceholder]="t('sort.placeholder')"
+                  [sortOptions]="sortFilterOptions()"
+                  [selectedSortValue]="selectedSortMode()"
+                  [showIdOrderFilter]="true"
+                  [idOrderLabel]="t('idOrder.label')"
+                  [idOrderOptions]="idOrderFilterOptions()"
+                  [selectedIdOrderValue]="selectedIdOrder()"
+                  [showClearButton]="true"
+                  [clearLabel]="'common.actions.clear' | transloco"
+                  (typeQueryChange)="onTypeQueryChange($event)"
+                  (typeSelected)="applyTypeFilter($event)"
+                  (typeCleared)="clearTypeFilter()"
+                  (classQueryChange)="onClassQueryChange($event)"
+                  (classSelected)="applyClassFilter($event)"
+                  (classCleared)="clearClassFilter()"
+                  (favoriteFilterChange)="onFavoriteFilterChange($event)"
+                  (costRangeChange)="onCostRangeChange($event.bound, $event.value)"
+                  (membershipFilterChange)="onMembershipFilterChange($event)"
+                  (sortChange)="onSortModeChange($event)"
+                  (idOrderChange)="onIdOrderChange($event)"
+                  (clearFilters)="clearFilters()"
+                ></app-character-filter-row>
+
+                @if (costRangeValidationMessage()) {
+                  <small class="validation-message">{{ costRangeValidationMessage() }}</small>
+                }
+
+                <ion-searchbar
+                  class="box-search"
+                  [debounce]="150"
+                  [placeholder]="t('filters.searchPlaceholder')"
+                  [searchIcon]="searchIcon"
+                  [value]="searchTerm()"
+                  (ionInput)="onSearchChange($event)"
+                ></ion-searchbar>
+
+                <div class="view-toggle" [attr.aria-label]="t('displayMode.label')">
+                  <button
+                    type="button"
+                    class="view-toggle__button"
+                    [class.view-toggle__button--active]="!isCompactDisplayMode()"
+                    (click)="setDisplayMode('list')"
+                  >
+                    {{ t('displayMode.list') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="view-toggle__button"
+                    [class.view-toggle__button--active]="isCompactDisplayMode()"
+                    (click)="setDisplayMode('compact')"
+                  >
+                    {{ t('displayMode.compact') }}
+                  </button>
+                </div>
+              </div>
+
+              @if (loading()) {
+                <div class="panel-empty panel-empty--loading">
+                  <ion-spinner name="crescent"></ion-spinner>
+                  <span>{{ t('loading') }}</span>
+                </div>
+              } @else if (!characters().length) {
+                <div class="panel-empty panel-empty--large">
+                  <strong>{{ t('empty.noCharacters.title') }}</strong>
+                  <span>{{ t('empty.noCharacters.copy') }}</span>
                 </div>
               } @else {
-                <div class="character-list">
-                  @for (card of characterCardViews(); track card.character.id) {
-                    <article class="character-row">
-                      <a
-                        class="character-detail-thumb-link character-row__detail-thumb"
-                        [routerLink]="getCharacterDetailLink(card.character)"
-                        [attr.aria-label]="card.character.name"
-                      >
-                        <img
-                          [src]="card.character.imageUrl"
-                          [alt]="card.character.name"
-                          loading="lazy"
-                        />
-                      </a>
+                @if (isCompactDisplayMode()) {
+                  <div class="character-grid">
+                    @for (card of characterCardViews(); track card.character.id) {
+                      <article class="character-thumb-card" [title]="card.character.name">
+                        <button
+                          type="button"
+                          class="favorite-button character-thumb-card__favorite"
+                          [attr.aria-label]="card.favoriteAriaLabel"
+                          (click)="toggleFavorite(card.character.id, $event)"
+                        >
+                          <ion-icon
+                            [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
+                          ></ion-icon>
+                        </button>
 
-                      <div class="character-row__content">
-                        <div class="character-row__title-row">
-                          <a
-                            class="character-detail-name-link"
-                            [routerLink]="getCharacterDetailLink(card.character)"
-                          >
-                            {{ card.character.name }}
-                          </a>
-                          <button
-                            type="button"
-                            class="favorite-button"
-                            [attr.aria-label]="card.favoriteAriaLabel"
-                            (click)="toggleFavorite(card.character.id, $event)"
-                          >
-                            <ion-icon
-                              [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
-                            ></ion-icon>
-                          </button>
-                          @if (card.inSelectedBox) {
-                            <span class="membership-chip">{{ t('editor.inBox') }}</span>
-                          }
-                        </div>
-                        <small>{{ card.subtitle }}</small>
-                      </div>
+                        <a
+                          class="character-detail-thumb-link character-thumb-card__detail-thumb"
+                          [routerLink]="getCharacterDetailLink(card.character)"
+                          [attr.aria-label]="card.character.name"
+                        >
+                          <img
+                            [src]="card.character.imageUrl"
+                            [alt]="card.character.name"
+                            loading="lazy"
+                          />
+                        </a>
 
-                      <ion-button
-                        fill="outline"
-                        color="light"
-                        (click)="toggleCharacterMembership(card.character.id)"
-                      >
-                        {{ card.membershipActionLabel }}
-                      </ion-button>
-                    </article>
-                  }
-                </div>
-              }
-
-              @if (hasMore()) {
-                <div class="load-more">
-                  <ion-button
-                    fill="outline"
-                    color="light"
-                    [disabled]="loadingMore()"
-                    (click)="loadMore()"
-                  >
-                    @if (loadingMore()) {
-                      <ion-spinner slot="start" name="crescent"></ion-spinner>
+                        <ion-button
+                          fill="solid"
+                          color="warning"
+                          size="small"
+                          class="character-thumb-card__membership-action"
+                          (click)="toggleCharacterMembership(card.character.id)"
+                        >
+                          {{ card.membershipActionLabel }}
+                        </ion-button>
+                      </article>
                     }
-                    {{ t('loadMore') }}
-                  </ion-button>
-                </div>
+                  </div>
+                } @else {
+                  <div class="character-list">
+                    @for (card of characterCardViews(); track card.character.id) {
+                      <article class="character-row">
+                        <a
+                          class="character-detail-thumb-link character-row__detail-thumb"
+                          [routerLink]="getCharacterDetailLink(card.character)"
+                          [attr.aria-label]="card.character.name"
+                        >
+                          <img
+                            [src]="card.character.imageUrl"
+                            [alt]="card.character.name"
+                            loading="lazy"
+                          />
+                        </a>
+
+                        <div class="character-row__content">
+                          <div class="character-row__title-row">
+                            <a
+                              class="character-detail-name-link"
+                              [routerLink]="getCharacterDetailLink(card.character)"
+                            >
+                              {{ card.character.name }}
+                            </a>
+                            <button
+                              type="button"
+                              class="favorite-button"
+                              [attr.aria-label]="card.favoriteAriaLabel"
+                              (click)="toggleFavorite(card.character.id, $event)"
+                            >
+                              <ion-icon
+                                [icon]="card.isFavorite ? favoriteIcon : favoriteOutlineIcon"
+                              ></ion-icon>
+                            </button>
+                            @if (card.inSelectedBox) {
+                              <span class="membership-chip">{{ t('editor.inBox') }}</span>
+                            }
+                          </div>
+                          <small>{{ card.subtitle }}</small>
+                        </div>
+
+                        <ion-button
+                          fill="outline"
+                          color="light"
+                          (click)="toggleCharacterMembership(card.character.id)"
+                        >
+                          {{ card.membershipActionLabel }}
+                        </ion-button>
+                      </article>
+                    }
+                  </div>
+                }
+
+                @if (hasMore()) {
+                  <div class="load-more">
+                    <ion-button
+                      fill="outline"
+                      color="light"
+                      [disabled]="loadingMore()"
+                      (click)="loadMore()"
+                    >
+                      @if (loadingMore()) {
+                        <ion-spinner slot="start" name="crescent"></ion-spinner>
+                      }
+                      {{ t('loadMore') }}
+                    </ion-button>
+                  </div>
+                }
               }
             }
-          }
-        </article>
-      </section>
-    </div>
+          </article>
+        </section>
+      </div>
+    </app-character-boxes-style-panels>
   </ion-content>
 </ng-container>

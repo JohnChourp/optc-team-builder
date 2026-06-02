@@ -1,0 +1,29 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  @media (min-width: 768px) {
+    .controls-grid,
+    .summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .loading-card__performance-controls {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .secondary-toggle-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .favorite-scope-grid,
+    .strict-toggle-row--cost {
+      grid-column: 1 / -1;
+    }
+
+    .favorite-scope-grid {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+  }
+}

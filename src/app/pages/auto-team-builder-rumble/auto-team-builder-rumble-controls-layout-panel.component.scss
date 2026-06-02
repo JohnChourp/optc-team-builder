@@ -1,0 +1,80 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .rumble-builder-shell {
+    display: grid;
+    gap: 18px;
+    min-height: 100%;
+    padding: 18px;
+    background:
+      radial-gradient(circle at top left, rgba(246, 190, 82, 0.18), transparent 30%),
+      linear-gradient(180deg, #101512 0%, #11161a 44%, #0b1115 100%);
+  }
+
+  .glass-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.03)),
+      rgba(6, 10, 14, 0.82);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.2);
+  }
+
+  .hero-card,
+  .summary-card,
+  .team-section,
+  .state-card,
+  .loading-card,
+  .controls-card,
+  .excluded-card {
+    padding: 22px;
+  }
+
+  .section-copy,
+  .state-card p,
+  .slot-copy small {
+    margin: 0;
+    color: rgba(246, 241, 232, 0.72);
+    line-height: 1.55;
+  }
+
+  .state-card {
+    display: grid;
+    gap: 8px;
+  }
+
+  .state-card strong {
+    color: #fff8ee;
+  }
+
+  .state-card--error {
+    border-color: rgba(255, 139, 118, 0.34);
+  }
+
+  .import-feedback-card {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .import-feedback-card--success {
+    border-color: rgba(95, 214, 154, 0.34);
+  }
+
+  .import-feedback-card--warning {
+    border-color: rgba(247, 191, 84, 0.42);
+  }
+
+  .import-feedback-card--error {
+    border-color: rgba(255, 139, 118, 0.34);
+  }
+
+  .summary-card,
+  .team-section,
+  .slot-copy,
+  .controls-card,
+  .excluded-card {
+    display: grid;
+    gap: 14px;
+  }
+}

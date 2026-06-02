@@ -1,0 +1,59 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .slot-rumble-details {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .slot-rumble-details div {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .slot-rumble-details__wide {
+    grid-column: 1 / -1;
+  }
+
+  .slot-rumble-details dt,
+  .slot-rumble-details dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .slot-rumble-details dt {
+    color: rgba(246, 241, 232, 0.74);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  .slot-rumble-details dd {
+    margin-top: 3px;
+    color: #fff8ee;
+    font-size: 0.76rem;
+    line-height: 1.35;
+  }
+
+  .slot-rumble-effects {
+    display: grid;
+    gap: 4px;
+    margin: 4px 0 0;
+    padding-left: 18px;
+    list-style: disc;
+  }
+
+  .slot-rumble-effects li {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}

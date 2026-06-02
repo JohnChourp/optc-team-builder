@@ -1,0 +1,79 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  ion-modal.rumble-manual-picker-modal::part(backdrop) {
+    background: rgba(6, 10, 18, 0.78);
+  }
+
+  ion-modal.rumble-manual-picker-modal::part(content) {
+    --border-radius: 18px;
+    --height: min(760px, var(--app-modal-max-height, 88vh));
+    --max-width: 920px;
+    --width: min(920px, calc(100vw - 24px));
+    background: #131821;
+  }
+
+  .rumble-manual-picker-header ion-toolbar,
+  .rumble-manual-picker-footer ion-toolbar {
+    --background: #131821;
+    --color: #fff8ee;
+  }
+
+  .rumble-manual-picker-head {
+    padding: 16px 20px;
+  }
+
+  .rumble-manual-picker-head h2,
+  .rumble-manual-picker-head p {
+    margin: 0;
+  }
+
+  .rumble-manual-picker-head h2 {
+    color: #fff8ee;
+    font-size: 1rem;
+  }
+
+  .rumble-manual-picker-head p {
+    margin-top: 4px;
+    color: rgba(246, 241, 232, 0.68);
+    font-size: 0.82rem;
+  }
+
+  .rumble-manual-picker-content {
+    --background: #10151d;
+  }
+
+  .rumble-manual-picker-shell {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .rumble-manual-picker-search {
+    --background: rgba(255, 255, 255, 0.08);
+    --border-radius: 10px;
+    --color: #fff8ee;
+    --placeholder-color: rgba(246, 241, 232, 0.58);
+    padding: 0;
+  }
+
+  .rumble-manual-picker-state {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 36px 18px;
+    color: rgba(246, 241, 232, 0.72);
+    text-align: center;
+  }
+
+  .rumble-manual-picker-state strong {
+    color: #fff8ee;
+  }
+
+  .rumble-manual-picker-footer ion-toolbar {
+    padding: 8px 14px;
+    text-align: right;
+  }
+}

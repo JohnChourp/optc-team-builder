@@ -1,0 +1,39 @@
+:host ::ng-deep {
+  .coverage-team-slot--filled {
+    border-color: rgba(245, 200, 76, 0.3);
+  }
+
+  .coverage-team-slot img {
+    width: 52px;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .coverage-team-slot span {
+    min-width: 0;
+  }
+
+  .coverage-team-slot strong,
+  .coverage-team-slot small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .coverage-team-slot strong {
+    color: #f8fbff;
+  }
+
+  .coverage-team-slot small {
+    margin-top: 3px;
+    color: rgba(248, 251, 255, 0.66);
+  }
+
+  .coverage-team-slot__clear {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

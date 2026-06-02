@@ -1,0 +1,41 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  .character-detail-name-link {
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
+    padding: 1px 4px 2px;
+    margin: -1px -4px -2px;
+    border-radius: 7px;
+    border-bottom: 1px solid rgba(245, 200, 76, 0.48);
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+    transform-origin: left center;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .character-detail-name-link:hover,
+  .character-detail-name-link:focus-visible {
+    border-color: rgba(245, 200, 76, 0.9);
+    background: rgba(245, 200, 76, 0.12);
+    color: #f5c84c;
+    transform: scale(1.03);
+  }
+
+  .character-detail-name-link:focus-visible {
+    outline: 2px solid rgba(245, 200, 76, 0.72);
+    outline-offset: 3px;
+  }
+}

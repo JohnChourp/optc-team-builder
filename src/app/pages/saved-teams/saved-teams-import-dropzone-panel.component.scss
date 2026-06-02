@@ -1,0 +1,38 @@
+:host ::ng-deep {
+  .import-modal-actions {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .import-dropzone {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    padding: 28px 20px;
+    border: 1px dashed rgba(245, 200, 76, 0.35);
+    border-radius: 26px;
+    background:
+      radial-gradient(circle at top, rgba(245, 200, 76, 0.12), transparent 48%),
+      rgba(255, 255, 255, 0.04);
+    color: #f8fbff;
+    cursor: pointer;
+    text-align: center;
+    font: inherit;
+    transition:
+      transform 160ms ease,
+      border-color 160ms ease,
+      background 160ms ease;
+  }
+
+  .import-dropzone ion-icon {
+    color: #f5c84c;
+    font-size: 2rem;
+  }
+
+  .import-dropzone span {
+    color: rgba(248, 251, 255, 0.66);
+    line-height: 1.5;
+  }
+}

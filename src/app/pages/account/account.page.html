@@ -1,479 +1,486 @@
 <ng-container *transloco="let t; scope: 'settings'; read: 'settings'">
-  <ion-header class="ion-no-border">
-    <ion-toolbar>
-      <ion-buttons slot="start">
-        <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
-      </ion-buttons>
-      <ion-title>{{ t('account.title') }}</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <app-account-style-panels>
+    <ion-header class="ion-no-border">
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
+        </ion-buttons>
+        <ion-title>{{ t('account.title') }}</ion-title>
+      </ion-toolbar>
+    </ion-header>
 
-  <ion-content [fullscreen]="true">
-    <div class="page-shell account-shell drive-sync-shell">
-      <section class="glass-card account-hero">
-        @if (googleAccountProfile(); as profile) {
-          <div class="account-identity">
-            @if (profile.imageUrl) {
-              <img
-                class="account-avatar"
-                [src]="profile.imageUrl"
-                [alt]="t('account.avatarAlt', { name: getProfileDisplayName(profile) })"
-                referrerpolicy="no-referrer"
-              />
-            } @else {
-              <span class="account-avatar account-avatar--fallback" aria-hidden="true">
-                {{ getProfileInitials(profile) }}
-              </span>
-            }
-            <div>
-              <div class="section-label">
-                <ion-icon [icon]="accountIcon"></ion-icon>
-                <span>{{ t('account.eyebrow') }}</span>
-              </div>
-              <h1 class="section-title">{{ getProfileDisplayName(profile) }}</h1>
-              @if (profile.email) {
-                <p class="section-copy">{{ profile.email }}</p>
-              }
-            </div>
-          </div>
-          <div class="account-actions">
-            <ion-button fill="outline" color="warning" (click)="syncDriveNow()">
-              {{ t('driveSync.actions.syncNow') }}
-            </ion-button>
-            <ion-button fill="outline" color="medium" (click)="signOutGoogle()">
-              {{ t('driveSync.actions.signOut') }}
-            </ion-button>
-          </div>
-        } @else {
-          <div class="account-identity">
-            <span class="account-avatar account-avatar--icon" aria-hidden="true">
-              <ion-icon [icon]="accountIcon"></ion-icon>
-            </span>
-            <div>
-              <div class="section-label">
-                <ion-icon [icon]="accountIcon"></ion-icon>
-                <span>{{ t('account.eyebrow') }}</span>
-              </div>
-              <h1 class="section-title">{{ t('account.signedOutTitle') }}</h1>
-              <p class="section-copy">
-                {{
-                  googleAccountAvailable()
-                    ? t('account.signedOutCopy')
-                    : t('account.unavailableCopy')
-                }}
-              </p>
-            </div>
-          </div>
-          <div class="account-actions">
-            <ion-button
-              fill="solid"
-              color="warning"
-              [disabled]="!googleAccountAvailable()"
-              (click)="signInWithGoogle()"
-            >
-              {{
-                googleAccountAvailable()
-                  ? t('driveSync.actions.signIn')
-                  : t('driveSync.actions.unavailable')
-              }}
-            </ion-button>
-          </div>
-        }
-      </section>
-
-      <section class="glass-card drive-sync-hero">
-        <div>
-          <div class="section-label">
-            <ion-icon [icon]="cloudDoneIcon"></ion-icon>
-            <span>{{ t('driveSync.review.eyebrow') }}</span>
-          </div>
-          <h1 class="section-title">{{ t('driveSync.review.title') }}</h1>
-          <p class="section-copy">{{ t('driveSync.copy') }}</p>
-        </div>
-
-        <div class="drive-sync-state-card">
-          <strong>{{ t('driveSync.status.label') }}</strong>
-          <span>{{ t(drivePrimaryStateKey()) }}</span>
+    <ion-content [fullscreen]="true">
+      <div class="page-shell account-shell drive-sync-shell">
+        <section class="glass-card account-hero">
           @if (googleAccountProfile(); as profile) {
-            <small>{{ profile.email }}</small>
-          }
-        </div>
-      </section>
-
-      <section class="glass-card drive-sync-card">
-        <div class="section-head">
-          <div>
-            <h2>{{ t('driveSync.status.title') }}</h2>
-            <p>{{ t('driveSync.scope') }}</p>
-          </div>
-          <div class="transfer-actions">
-            @if (!googleAccountAvailable()) {
-              <ion-button fill="outline" color="medium" [disabled]="true">
-                {{ t('driveSync.actions.unavailable') }}
-              </ion-button>
-            } @else if (!googleAccountSignedIn()) {
-              <ion-button fill="outline" color="warning" (click)="signInWithGoogle()">
-                {{ t('driveSync.actions.signIn') }}
-              </ion-button>
-            } @else {
+            <div class="account-identity">
+              @if (profile.imageUrl) {
+                <img
+                  class="account-avatar"
+                  [src]="profile.imageUrl"
+                  [alt]="t('account.avatarAlt', { name: getProfileDisplayName(profile) })"
+                  referrerpolicy="no-referrer"
+                />
+              } @else {
+                <span class="account-avatar account-avatar--fallback" aria-hidden="true">
+                  {{ getProfileInitials(profile) }}
+                </span>
+              }
+              <div>
+                <div class="section-label">
+                  <ion-icon [icon]="accountIcon"></ion-icon>
+                  <span>{{ t('account.eyebrow') }}</span>
+                </div>
+                <h1 class="section-title">{{ getProfileDisplayName(profile) }}</h1>
+                @if (profile.email) {
+                  <p class="section-copy">{{ profile.email }}</p>
+                }
+              </div>
+            </div>
+            <div class="account-actions">
               <ion-button fill="outline" color="warning" (click)="syncDriveNow()">
                 {{ t('driveSync.actions.syncNow') }}
-              </ion-button>
-              <ion-button fill="outline" color="light" (click)="refreshDriveInfo()">
-                {{ t('driveSync.actions.refresh') }}
-              </ion-button>
-              <ion-button
-                fill="outline"
-                color="light"
-                [disabled]="!driveOpenUrl()"
-                (click)="openDriveLocation()"
-              >
-                {{ t('driveSync.actions.openInDrive') }}
               </ion-button>
               <ion-button fill="outline" color="medium" (click)="signOutGoogle()">
                 {{ t('driveSync.actions.signOut') }}
               </ion-button>
-            }
-
-            @if (googleAccountStatus() === 'reconnect-required') {
-              <ion-button fill="outline" color="warning" (click)="reconnectGoogleDrive()">
-                {{ t('driveSync.actions.reconnect') }}
-              </ion-button>
-            }
-          </div>
-        </div>
-
-        <div class="drive-sync-overview-grid">
-          <div class="drive-sync-summary">
-            <div>
-              <strong>{{ t('driveSync.status.lastChecked') }}</strong>
-              <span>{{ formatTimestamp(driveSyncMetadata().lastCheckedAt) }}</span>
             </div>
-            <div>
-              <strong>{{ t('driveSync.status.lastUploaded') }}</strong>
-              <span>{{ formatTimestamp(driveSyncMetadata().lastUploadedExportedAt) }}</span>
-            </div>
-            <div>
-              <strong>{{ t('driveSync.status.lastDownloaded') }}</strong>
-              <span>{{ formatTimestamp(driveSyncMetadata().lastDownloadedExportedAt) }}</span>
-            </div>
-            <div>
-              <strong>{{ t('driveSync.status.remoteUpdated') }}</strong>
-              <span>{{ formatTimestamp(driveSyncMetadata().remoteModifiedTime) }}</span>
-            </div>
-            <div>
-              <strong>{{ t('driveSync.status.folder') }}</strong>
-              <span>{{ getDriveLocationStatus() }}</span>
-            </div>
-            <div>
-              <strong>{{ t('driveSync.status.file') }}</strong>
-              <span>{{ getDriveBackupFileStatus() }}</span>
-            </div>
-          </div>
-
-          <div class="drive-sync-panel">
-            <strong>{{ t('driveSync.summary.localTitle') }}</strong>
-            <span>{{
-              getSummaryCountLabel('favorites', localSyncScopeSummary().favoriteCharacterCount)
-            }}</span>
-            <span>{{
-              getSummaryCountLabel('favoriteShips', localSyncScopeSummary().favoriteShipCount)
-            }}</span>
-            <span>{{
-              getSummaryCountLabel('characterBoxes', localSyncScopeSummary().characterBoxesCount)
-            }}</span>
-            <span>{{
-              getSummaryCountLabel(
-                'characterOverrides',
-                localSyncScopeSummary().characterOverridesCount
-              )
-            }}</span>
-            <span>{{
-              getSummaryCountLabel('savedTeams', localSyncScopeSummary().savedTeamsCount)
-            }}</span>
-            <span>{{
-              getSummaryCountLabel(
-                'savedRumbleTeams',
-                localSyncScopeSummary().savedRumbleTeamsCount
-              )
-            }}</span>
-            <span>{{
-              getSummaryCountLabel('savedEnemies', localSyncScopeSummary().savedEnemiesCount)
-            }}</span>
-          </div>
-
-          <div class="drive-sync-panel">
-            <strong>{{ t('driveSync.summary.remoteTitle') }}</strong>
-            @if (remoteSyncScopeSummary(); as remoteSummary) {
-              <span>{{
-                getSummaryCountLabel('favorites', remoteSummary.favoriteCharacterCount)
-              }}</span>
-              <span>{{
-                getSummaryCountLabel('favoriteShips', remoteSummary.favoriteShipCount)
-              }}</span>
-              <span>{{
-                getSummaryCountLabel('characterBoxes', remoteSummary.characterBoxesCount)
-              }}</span>
-              <span>{{
-                getSummaryCountLabel('characterOverrides', remoteSummary.characterOverridesCount)
-              }}</span>
-              <span>{{ getSummaryCountLabel('savedTeams', remoteSummary.savedTeamsCount) }}</span>
-              <span>{{
-                getSummaryCountLabel('savedRumbleTeams', remoteSummary.savedRumbleTeamsCount)
-              }}</span>
-              <span>{{
-                getSummaryCountLabel('savedEnemies', remoteSummary.savedEnemiesCount)
-              }}</span>
-            } @else {
-              <span>{{ getRemoteSummaryState() }}</span>
-            }
-          </div>
-        </div>
-
-        @if (driveSecondaryMessage()) {
-          <div
-            class="transfer-feedback"
-            [class.transfer-feedback--error]="
-              driveSyncStatus().phase === 'error' || googleAccountStatus() === 'reconnect-required'
-            "
-            [class.transfer-feedback--warning]="
-              driveSyncStatus().phase === 'needs-auth' || googleAccountStatus() === 'signed-out'
-            "
-            [class.transfer-feedback--success]="
-              driveSyncStatus().phase === 'idle' && !driveManualSyncPrompt()
-            "
-          >
-            <strong>{{ t('driveSync.feedback.title') }}</strong>
-            <span>{{ driveSecondaryMessage() }}</span>
-          </div>
-        }
-
-        @if (
-          driveSyncStatus().phase === 'checking' ||
-          driveSyncStatus().phase === 'downloading' ||
-          driveSyncStatus().phase === 'uploading' ||
-          reviewOpening()
-        ) {
-          <div class="transfer-feedback transfer-feedback--progress">
-            <ion-spinner name="crescent"></ion-spinner>
-            <span>{{ t('driveSync.review.processing') }}</span>
-          </div>
-        }
-      </section>
-
-      @if (driveManualSyncPrompt(); as prompt) {
-        <section class="glass-card drive-sync-card">
-          <div class="section-head">
-            <div>
-              <h2>
-                {{
-                  prompt.kind === 'upload-local'
-                    ? t('driveSync.prompt.uploadLocalTitle')
-                    : prompt.kind === 'restore-cloud'
-                      ? t('driveSync.prompt.restoreCloudTitle')
-                      : t('driveSync.prompt.conflictTitle')
-                }}
-              </h2>
-              <p>
-                {{
-                  prompt.kind === 'upload-local'
-                    ? t('driveSync.prompt.uploadLocalCopy')
-                    : prompt.kind === 'restore-cloud'
-                      ? t('driveSync.prompt.restoreCloudCopy', {
-                          modifiedAt: formatTimestamp(prompt.remote?.modifiedTime),
-                        })
-                      : t('driveSync.prompt.conflictCopy', {
-                          modifiedAt: formatTimestamp(prompt.remote?.modifiedTime),
-                        })
-                }}
-              </p>
-            </div>
-          </div>
-
-          <div class="drive-sync-decision-grid">
-            @if (prompt.kind === 'upload-local') {
-              <button
-                type="button"
-                class="drive-decision"
-                (click)="resolveDriveManualSyncPrompt('upload-local')"
-              >
-                <ion-icon [icon]="cloudUploadIcon"></ion-icon>
-                <strong>{{ t('driveSync.prompt.actions.uploadLocal') }}</strong>
-                <span>{{ t('driveSync.review.decision.uploadLocal') }}</span>
-              </button>
-            } @else {
-              @if (prompt.kind === 'local-cloud-conflict') {
-                <button
-                  type="button"
-                  class="drive-decision"
-                  (click)="openReviewedSync('merge-and-upload')"
-                >
-                  <ion-icon [icon]="compareIcon"></ion-icon>
-                  <strong>{{ t('driveSync.prompt.actions.merge') }}</strong>
-                  <span>{{ t('driveSync.review.decision.merge') }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="drive-decision"
-                  (click)="openReviewedSync('replace-cloud')"
-                >
-                  <ion-icon [icon]="cloudUploadIcon"></ion-icon>
-                  <strong>{{ t('driveSync.prompt.actions.replaceCloud') }}</strong>
-                  <span>{{ t('driveSync.review.decision.replaceCloud') }}</span>
-                </button>
-              }
-              <button
-                type="button"
-                class="drive-decision"
-                (click)="openReviewedSync('replace-local')"
-              >
-                <ion-icon [icon]="cloudOfflineIcon"></ion-icon>
-                <strong>{{ t('driveSync.prompt.actions.replaceLocal') }}</strong>
-                <span>{{ t('driveSync.review.decision.replaceLocal') }}</span>
-              </button>
-            }
-          </div>
-
-          <div class="transfer-actions">
-            <ion-button
-              fill="outline"
-              color="medium"
-              (click)="resolveDriveManualSyncPrompt('cancel')"
-            >
-              {{ t('driveSync.prompt.actions.cancel') }}
-            </ion-button>
-          </div>
-        </section>
-      }
-    </div>
-  </ion-content>
-
-  <ion-modal
-    #driveReviewModal
-    class="drive-review-modal"
-    [isOpen]="reviewDraft() !== null"
-    (didDismiss)="closeReview()"
-  >
-    <ng-template>
-      <ion-header class="ion-no-border">
-        <ion-toolbar>
-          <ion-title>
-            @if (reviewDraft(); as draft) {
-              {{ t(getReviewActionLabelKey(draft.action)) }}
-            }
-          </ion-title>
-          <ion-buttons slot="end">
-            <ion-button
-              fill="clear"
-              color="light"
-              (click)="closeReview(); driveReviewModal.dismiss(null, 'cancel')"
-            >
-              {{ t('driveSync.review.close') }}
-            </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-
-      <ion-content [fullscreen]="true">
-        @if (reviewDraft(); as draft) {
-          <div class="drive-review-shell">
-            <section class="drive-review-summary">
-              <strong>{{ t('driveSync.review.summaryTitle') }}</strong>
-              <span>{{ t('driveSync.review.summaryCopy', { count: reviewTotals().total }) }}</span>
-              <div class="drive-review-stats">
-                @for (filter of reviewStatusFilters; track filter) {
-                  <button
-                    type="button"
-                    class="drive-review-stat"
-                    [class.drive-review-stat--active]="reviewFilter() === filter"
-                    [attr.aria-pressed]="reviewFilter() === filter"
-                    (click)="setReviewFilter(filter)"
-                  >
-                    {{ t(getReviewStatsLabelKey(filter), { count: reviewTotals()[filter] }) }}
-                  </button>
-                }
-              </div>
-            </section>
-
-            @for (section of filteredReviewSections(); track section.key) {
-              <section class="drive-review-section">
-                <div class="drive-review-section__head">
-                  <strong>{{ t(getSectionLabelKey(section.key)) }}</strong>
-                  <span>
-                    {{
-                      t('driveSync.review.sectionCounts', {
-                        added: section.addedCount,
-                        changed: section.changedCount,
-                        kept: section.keptCount,
-                        removed: section.removedCount,
-                      })
-                    }}
-                  </span>
+          } @else {
+            <div class="account-identity">
+              <span class="account-avatar account-avatar--icon" aria-hidden="true">
+                <ion-icon [icon]="accountIcon"></ion-icon>
+              </span>
+              <div>
+                <div class="section-label">
+                  <ion-icon [icon]="accountIcon"></ion-icon>
+                  <span>{{ t('account.eyebrow') }}</span>
                 </div>
-
-                <div class="drive-review-rows">
-                  @for (row of section.rows; track row.key) {
-                    <article class="drive-review-row">
-                      <div class="drive-review-row__identity">
-                        @if (getReviewRowImage(row); as imageUrl) {
-                          <img [src]="imageUrl" [alt]="row.label" loading="lazy" />
-                        }
-                        <div>
-                          <strong>{{ row.label }}</strong>
-                          <span>{{ row.detail }}</span>
-                        </div>
-                      </div>
-
-                      <span class="drive-review-status">{{ t(getReviewStatusLabelKey(row)) }}</span>
-
-                      <label class="drive-review-choice">
-                        <span>{{ t('driveSync.review.choiceLabel') }}</span>
-                        <select
-                          [value]="row.choice"
-                          (change)="onReviewChoiceChange(section.key, row.key, $event)"
-                        >
-                          @for (choice of row.choices; track choice) {
-                            <option [value]="choice">{{ t(getChoiceLabelKey(choice)) }}</option>
-                          }
-                        </select>
-                      </label>
-                    </article>
-                  } @empty {
-                    <div class="transfer-feedback">
-                      <span>{{ t('driveSync.review.emptySection') }}</span>
-                    </div>
-                  }
-                </div>
-              </section>
-            } @empty {
-              <div class="transfer-feedback">
-                <span>{{ t('driveSync.review.emptyFilter') }}</span>
+                <h1 class="section-title">{{ t('account.signedOutTitle') }}</h1>
+                <p class="section-copy">
+                  {{
+                    googleAccountAvailable()
+                      ? t('account.signedOutCopy')
+                      : t('account.unavailableCopy')
+                  }}
+                </p>
               </div>
-            }
-
-            <div class="drive-review-actions">
-              <ion-button
-                fill="outline"
-                color="medium"
-                (click)="closeReview(); driveReviewModal.dismiss(null, 'cancel')"
-              >
-                {{ t('driveSync.prompt.actions.cancel') }}
-              </ion-button>
+            </div>
+            <div class="account-actions">
               <ion-button
                 fill="solid"
                 color="warning"
-                [disabled]="reviewSubmitting()"
-                (click)="confirmReview()"
+                [disabled]="!googleAccountAvailable()"
+                (click)="signInWithGoogle()"
               >
-                @if (reviewSubmitting()) {
-                  <ion-spinner name="crescent"></ion-spinner>
-                }
-                {{ t('driveSync.review.confirm') }}
+                {{
+                  googleAccountAvailable()
+                    ? t('driveSync.actions.signIn')
+                    : t('driveSync.actions.unavailable')
+                }}
               </ion-button>
             </div>
+          }
+        </section>
+
+        <section class="glass-card drive-sync-hero">
+          <div>
+            <div class="section-label">
+              <ion-icon [icon]="cloudDoneIcon"></ion-icon>
+              <span>{{ t('driveSync.review.eyebrow') }}</span>
+            </div>
+            <h1 class="section-title">{{ t('driveSync.review.title') }}</h1>
+            <p class="section-copy">{{ t('driveSync.copy') }}</p>
           </div>
+
+          <div class="drive-sync-state-card">
+            <strong>{{ t('driveSync.status.label') }}</strong>
+            <span>{{ t(drivePrimaryStateKey()) }}</span>
+            @if (googleAccountProfile(); as profile) {
+              <small>{{ profile.email }}</small>
+            }
+          </div>
+        </section>
+
+        <section class="glass-card drive-sync-card">
+          <div class="section-head">
+            <div>
+              <h2>{{ t('driveSync.status.title') }}</h2>
+              <p>{{ t('driveSync.scope') }}</p>
+            </div>
+            <div class="transfer-actions">
+              @if (!googleAccountAvailable()) {
+                <ion-button fill="outline" color="medium" [disabled]="true">
+                  {{ t('driveSync.actions.unavailable') }}
+                </ion-button>
+              } @else if (!googleAccountSignedIn()) {
+                <ion-button fill="outline" color="warning" (click)="signInWithGoogle()">
+                  {{ t('driveSync.actions.signIn') }}
+                </ion-button>
+              } @else {
+                <ion-button fill="outline" color="warning" (click)="syncDriveNow()">
+                  {{ t('driveSync.actions.syncNow') }}
+                </ion-button>
+                <ion-button fill="outline" color="light" (click)="refreshDriveInfo()">
+                  {{ t('driveSync.actions.refresh') }}
+                </ion-button>
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  [disabled]="!driveOpenUrl()"
+                  (click)="openDriveLocation()"
+                >
+                  {{ t('driveSync.actions.openInDrive') }}
+                </ion-button>
+                <ion-button fill="outline" color="medium" (click)="signOutGoogle()">
+                  {{ t('driveSync.actions.signOut') }}
+                </ion-button>
+              }
+
+              @if (googleAccountStatus() === 'reconnect-required') {
+                <ion-button fill="outline" color="warning" (click)="reconnectGoogleDrive()">
+                  {{ t('driveSync.actions.reconnect') }}
+                </ion-button>
+              }
+            </div>
+          </div>
+
+          <div class="drive-sync-overview-grid">
+            <div class="drive-sync-summary">
+              <div>
+                <strong>{{ t('driveSync.status.lastChecked') }}</strong>
+                <span>{{ formatTimestamp(driveSyncMetadata().lastCheckedAt) }}</span>
+              </div>
+              <div>
+                <strong>{{ t('driveSync.status.lastUploaded') }}</strong>
+                <span>{{ formatTimestamp(driveSyncMetadata().lastUploadedExportedAt) }}</span>
+              </div>
+              <div>
+                <strong>{{ t('driveSync.status.lastDownloaded') }}</strong>
+                <span>{{ formatTimestamp(driveSyncMetadata().lastDownloadedExportedAt) }}</span>
+              </div>
+              <div>
+                <strong>{{ t('driveSync.status.remoteUpdated') }}</strong>
+                <span>{{ formatTimestamp(driveSyncMetadata().remoteModifiedTime) }}</span>
+              </div>
+              <div>
+                <strong>{{ t('driveSync.status.folder') }}</strong>
+                <span>{{ getDriveLocationStatus() }}</span>
+              </div>
+              <div>
+                <strong>{{ t('driveSync.status.file') }}</strong>
+                <span>{{ getDriveBackupFileStatus() }}</span>
+              </div>
+            </div>
+
+            <div class="drive-sync-panel">
+              <strong>{{ t('driveSync.summary.localTitle') }}</strong>
+              <span>{{
+                getSummaryCountLabel('favorites', localSyncScopeSummary().favoriteCharacterCount)
+              }}</span>
+              <span>{{
+                getSummaryCountLabel('favoriteShips', localSyncScopeSummary().favoriteShipCount)
+              }}</span>
+              <span>{{
+                getSummaryCountLabel('characterBoxes', localSyncScopeSummary().characterBoxesCount)
+              }}</span>
+              <span>{{
+                getSummaryCountLabel(
+                  'characterOverrides',
+                  localSyncScopeSummary().characterOverridesCount
+                )
+              }}</span>
+              <span>{{
+                getSummaryCountLabel('savedTeams', localSyncScopeSummary().savedTeamsCount)
+              }}</span>
+              <span>{{
+                getSummaryCountLabel(
+                  'savedRumbleTeams',
+                  localSyncScopeSummary().savedRumbleTeamsCount
+                )
+              }}</span>
+              <span>{{
+                getSummaryCountLabel('savedEnemies', localSyncScopeSummary().savedEnemiesCount)
+              }}</span>
+            </div>
+
+            <div class="drive-sync-panel">
+              <strong>{{ t('driveSync.summary.remoteTitle') }}</strong>
+              @if (remoteSyncScopeSummary(); as remoteSummary) {
+                <span>{{
+                  getSummaryCountLabel('favorites', remoteSummary.favoriteCharacterCount)
+                }}</span>
+                <span>{{
+                  getSummaryCountLabel('favoriteShips', remoteSummary.favoriteShipCount)
+                }}</span>
+                <span>{{
+                  getSummaryCountLabel('characterBoxes', remoteSummary.characterBoxesCount)
+                }}</span>
+                <span>{{
+                  getSummaryCountLabel('characterOverrides', remoteSummary.characterOverridesCount)
+                }}</span>
+                <span>{{ getSummaryCountLabel('savedTeams', remoteSummary.savedTeamsCount) }}</span>
+                <span>{{
+                  getSummaryCountLabel('savedRumbleTeams', remoteSummary.savedRumbleTeamsCount)
+                }}</span>
+                <span>{{
+                  getSummaryCountLabel('savedEnemies', remoteSummary.savedEnemiesCount)
+                }}</span>
+              } @else {
+                <span>{{ getRemoteSummaryState() }}</span>
+              }
+            </div>
+          </div>
+
+          @if (driveSecondaryMessage()) {
+            <div
+              class="transfer-feedback"
+              [class.transfer-feedback--error]="
+                driveSyncStatus().phase === 'error' ||
+                googleAccountStatus() === 'reconnect-required'
+              "
+              [class.transfer-feedback--warning]="
+                driveSyncStatus().phase === 'needs-auth' || googleAccountStatus() === 'signed-out'
+              "
+              [class.transfer-feedback--success]="
+                driveSyncStatus().phase === 'idle' && !driveManualSyncPrompt()
+              "
+            >
+              <strong>{{ t('driveSync.feedback.title') }}</strong>
+              <span>{{ driveSecondaryMessage() }}</span>
+            </div>
+          }
+
+          @if (
+            driveSyncStatus().phase === 'checking' ||
+            driveSyncStatus().phase === 'downloading' ||
+            driveSyncStatus().phase === 'uploading' ||
+            reviewOpening()
+          ) {
+            <div class="transfer-feedback transfer-feedback--progress">
+              <ion-spinner name="crescent"></ion-spinner>
+              <span>{{ t('driveSync.review.processing') }}</span>
+            </div>
+          }
+        </section>
+
+        @if (driveManualSyncPrompt(); as prompt) {
+          <section class="glass-card drive-sync-card">
+            <div class="section-head">
+              <div>
+                <h2>
+                  {{
+                    prompt.kind === 'upload-local'
+                      ? t('driveSync.prompt.uploadLocalTitle')
+                      : prompt.kind === 'restore-cloud'
+                        ? t('driveSync.prompt.restoreCloudTitle')
+                        : t('driveSync.prompt.conflictTitle')
+                  }}
+                </h2>
+                <p>
+                  {{
+                    prompt.kind === 'upload-local'
+                      ? t('driveSync.prompt.uploadLocalCopy')
+                      : prompt.kind === 'restore-cloud'
+                        ? t('driveSync.prompt.restoreCloudCopy', {
+                            modifiedAt: formatTimestamp(prompt.remote?.modifiedTime),
+                          })
+                        : t('driveSync.prompt.conflictCopy', {
+                            modifiedAt: formatTimestamp(prompt.remote?.modifiedTime),
+                          })
+                  }}
+                </p>
+              </div>
+            </div>
+
+            <div class="drive-sync-decision-grid">
+              @if (prompt.kind === 'upload-local') {
+                <button
+                  type="button"
+                  class="drive-decision"
+                  (click)="resolveDriveManualSyncPrompt('upload-local')"
+                >
+                  <ion-icon [icon]="cloudUploadIcon"></ion-icon>
+                  <strong>{{ t('driveSync.prompt.actions.uploadLocal') }}</strong>
+                  <span>{{ t('driveSync.review.decision.uploadLocal') }}</span>
+                </button>
+              } @else {
+                @if (prompt.kind === 'local-cloud-conflict') {
+                  <button
+                    type="button"
+                    class="drive-decision"
+                    (click)="openReviewedSync('merge-and-upload')"
+                  >
+                    <ion-icon [icon]="compareIcon"></ion-icon>
+                    <strong>{{ t('driveSync.prompt.actions.merge') }}</strong>
+                    <span>{{ t('driveSync.review.decision.merge') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="drive-decision"
+                    (click)="openReviewedSync('replace-cloud')"
+                  >
+                    <ion-icon [icon]="cloudUploadIcon"></ion-icon>
+                    <strong>{{ t('driveSync.prompt.actions.replaceCloud') }}</strong>
+                    <span>{{ t('driveSync.review.decision.replaceCloud') }}</span>
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="drive-decision"
+                  (click)="openReviewedSync('replace-local')"
+                >
+                  <ion-icon [icon]="cloudOfflineIcon"></ion-icon>
+                  <strong>{{ t('driveSync.prompt.actions.replaceLocal') }}</strong>
+                  <span>{{ t('driveSync.review.decision.replaceLocal') }}</span>
+                </button>
+              }
+            </div>
+
+            <div class="transfer-actions">
+              <ion-button
+                fill="outline"
+                color="medium"
+                (click)="resolveDriveManualSyncPrompt('cancel')"
+              >
+                {{ t('driveSync.prompt.actions.cancel') }}
+              </ion-button>
+            </div>
+          </section>
         }
-      </ion-content>
-    </ng-template>
-  </ion-modal>
+      </div>
+    </ion-content>
+
+    <ion-modal
+      #driveReviewModal
+      class="drive-review-modal"
+      [isOpen]="reviewDraft() !== null"
+      (didDismiss)="closeReview()"
+    >
+      <ng-template>
+        <ion-header class="ion-no-border">
+          <ion-toolbar>
+            <ion-title>
+              @if (reviewDraft(); as draft) {
+                {{ t(getReviewActionLabelKey(draft.action)) }}
+              }
+            </ion-title>
+            <ion-buttons slot="end">
+              <ion-button
+                fill="clear"
+                color="light"
+                (click)="closeReview(); driveReviewModal.dismiss(null, 'cancel')"
+              >
+                {{ t('driveSync.review.close') }}
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content [fullscreen]="true">
+          @if (reviewDraft(); as draft) {
+            <div class="drive-review-shell">
+              <section class="drive-review-summary">
+                <strong>{{ t('driveSync.review.summaryTitle') }}</strong>
+                <span>{{
+                  t('driveSync.review.summaryCopy', { count: reviewTotals().total })
+                }}</span>
+                <div class="drive-review-stats">
+                  @for (filter of reviewStatusFilters; track filter) {
+                    <button
+                      type="button"
+                      class="drive-review-stat"
+                      [class.drive-review-stat--active]="reviewFilter() === filter"
+                      [attr.aria-pressed]="reviewFilter() === filter"
+                      (click)="setReviewFilter(filter)"
+                    >
+                      {{ t(getReviewStatsLabelKey(filter), { count: reviewTotals()[filter] }) }}
+                    </button>
+                  }
+                </div>
+              </section>
+
+              @for (section of filteredReviewSections(); track section.key) {
+                <section class="drive-review-section">
+                  <div class="drive-review-section__head">
+                    <strong>{{ t(getSectionLabelKey(section.key)) }}</strong>
+                    <span>
+                      {{
+                        t('driveSync.review.sectionCounts', {
+                          added: section.addedCount,
+                          changed: section.changedCount,
+                          kept: section.keptCount,
+                          removed: section.removedCount,
+                        })
+                      }}
+                    </span>
+                  </div>
+
+                  <div class="drive-review-rows">
+                    @for (row of section.rows; track row.key) {
+                      <article class="drive-review-row">
+                        <div class="drive-review-row__identity">
+                          @if (getReviewRowImage(row); as imageUrl) {
+                            <img [src]="imageUrl" [alt]="row.label" loading="lazy" />
+                          }
+                          <div>
+                            <strong>{{ row.label }}</strong>
+                            <span>{{ row.detail }}</span>
+                          </div>
+                        </div>
+
+                        <span class="drive-review-status">{{
+                          t(getReviewStatusLabelKey(row))
+                        }}</span>
+
+                        <label class="drive-review-choice">
+                          <span>{{ t('driveSync.review.choiceLabel') }}</span>
+                          <select
+                            [value]="row.choice"
+                            (change)="onReviewChoiceChange(section.key, row.key, $event)"
+                          >
+                            @for (choice of row.choices; track choice) {
+                              <option [value]="choice">{{ t(getChoiceLabelKey(choice)) }}</option>
+                            }
+                          </select>
+                        </label>
+                      </article>
+                    } @empty {
+                      <div class="transfer-feedback">
+                        <span>{{ t('driveSync.review.emptySection') }}</span>
+                      </div>
+                    }
+                  </div>
+                </section>
+              } @empty {
+                <div class="transfer-feedback">
+                  <span>{{ t('driveSync.review.emptyFilter') }}</span>
+                </div>
+              }
+
+              <div class="drive-review-actions">
+                <ion-button
+                  fill="outline"
+                  color="medium"
+                  (click)="closeReview(); driveReviewModal.dismiss(null, 'cancel')"
+                >
+                  {{ t('driveSync.prompt.actions.cancel') }}
+                </ion-button>
+                <ion-button
+                  fill="solid"
+                  color="warning"
+                  [disabled]="reviewSubmitting()"
+                  (click)="confirmReview()"
+                >
+                  @if (reviewSubmitting()) {
+                    <ion-spinner name="crescent"></ion-spinner>
+                  }
+                  {{ t('driveSync.review.confirm') }}
+                </ion-button>
+              </div>
+            </div>
+          }
+        </ion-content>
+      </ng-template>
+    </ion-modal>
+  </app-account-style-panels>
 </ng-container>

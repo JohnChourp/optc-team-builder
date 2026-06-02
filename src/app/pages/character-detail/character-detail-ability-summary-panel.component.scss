@@ -1,0 +1,33 @@
+:host ::ng-deep {
+  .ability-summary-section {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .ability-summary-block,
+  .captain-ability-summary,
+  .captain-ability-summary__recognized {
+    display: grid;
+    gap: 8px;
+  }
+
+  .captain-ability-summary__variant {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid rgba(245, 200, 76, 0.16);
+    border-radius: 10px;
+    background: rgba(245, 200, 76, 0.06);
+  }
+
+  .captain-ability-summary__variant p {
+    margin: 0;
+    color: rgba(248, 251, 255, 0.9);
+    line-height: 1.5;
+  }
+
+  .captain-ability-summary__tiers {
+    margin-top: 4px;
+  }
+}

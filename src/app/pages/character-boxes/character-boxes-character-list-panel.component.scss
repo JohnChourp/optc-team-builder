@@ -1,0 +1,48 @@
+:host ::ng-deep {
+  .character-row {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .character-row__detail-thumb {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+  }
+
+  .character-row__content {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .character-row__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .character-row__content app-character-ability-groups,
+  .character-thumb-card app-character-ability-groups {
+    min-width: 0;
+  }
+
+  .membership-chip,
+  .validation-message {
+    color: #f5c84c;
+  }
+
+  .membership-chip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(245, 200, 76, 0.16);
+    font-size: 0.78rem;
+  }
+}

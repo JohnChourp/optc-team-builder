@@ -1,0 +1,40 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  @media (max-width: 679px) {
+    .pick-editor-modal__header ion-toolbar {
+      --padding-start: 16px;
+      --padding-end: 8px;
+      --padding-top: 14px;
+    }
+
+    .pick-editor-modal__shell {
+      padding: 12px 14px 16px;
+    }
+
+    .pick-editor-modal__panel {
+      padding: 10px;
+    }
+
+    .manual-candidate-list--sidebar {
+      max-height: 58vh;
+    }
+
+    .manual-candidate-card--exclude {
+      grid-template-columns: 64px minmax(0, 1fr);
+    }
+
+    .manual-candidate-actions--exclude {
+      grid-column: 2 / -1;
+      grid-row: auto;
+      justify-self: start;
+      justify-content: flex-start;
+    }
+
+    .ability-requirements-actions {
+      justify-content: stretch;
+    }
+  }
+}

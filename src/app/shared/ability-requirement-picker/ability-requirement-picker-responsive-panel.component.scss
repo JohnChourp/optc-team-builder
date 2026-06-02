@@ -1,0 +1,52 @@
+:host {
+  display: contents;
+}
+
+:host ::ng-deep {
+  @media (max-width: 920px) {
+    .ability-picker-body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ability-picker-panel--selected {
+      min-height: 280px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .ability-picker-header ion-toolbar {
+      --padding-start: 16px;
+      --padding-end: 10px;
+      --padding-top: 18px;
+    }
+
+    .ability-picker-content-shell {
+      padding-inline: 16px;
+    }
+
+    .ability-picker-head {
+      padding-inline-end: 48px;
+    }
+
+    .ability-picker-row__head,
+    .ability-picker-row__fields,
+    .ability-picker-leader-boost__ranges {
+      grid-template-columns: minmax(0, 1fr);
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .ability-picker-footer ion-toolbar {
+      padding-inline: 12px;
+      padding-bottom: 14px;
+    }
+
+    .ability-picker-footer__actions {
+      justify-content: stretch;
+    }
+
+    .ability-picker-footer__actions ion-button {
+      flex: 1 1 0;
+    }
+  }
+}

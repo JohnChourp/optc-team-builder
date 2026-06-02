@@ -1,0 +1,50 @@
+:host ::ng-deep {
+  .team-association-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .team-association-card {
+    position: relative;
+    display: grid;
+    gap: 12px;
+    padding: 14px 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+      border-color 160ms ease,
+      background 160ms ease,
+      transform 160ms ease,
+      box-shadow 160ms ease;
+    animation: enemy-card-rise 320ms ease both;
+    animation-delay: calc(var(--card-index, 0) * 28ms);
+  }
+
+  .team-association-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(245, 200, 76, 0.18), transparent 65%);
+    opacity: 0;
+    transition: opacity 200ms ease;
+    pointer-events: none;
+  }
+
+  .team-association-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(245, 200, 76, 0.5);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
+  }
+
+  .team-association-card:hover::before,
+  .team-association-card--selected::before {
+    opacity: 1;
+  }
+}

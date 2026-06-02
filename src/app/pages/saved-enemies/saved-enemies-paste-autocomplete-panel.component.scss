@@ -1,0 +1,75 @@
+:host ::ng-deep {
+  .paste-autocomplete-host {
+    position: relative;
+  }
+
+  .paste-autocomplete {
+    position: absolute;
+    inset-inline: 0;
+    top: calc(100% + 4px);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #1a1f2a;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  }
+
+  .paste-autocomplete__option {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(248, 251, 255, 0.92);
+    text-align: start;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+
+  .paste-autocomplete__option:hover,
+  .paste-autocomplete__option--active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .paste-autocomplete__source {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 58px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .paste-autocomplete__source--mechanic {
+    background: rgba(112, 173, 247, 0.18);
+    color: #93c5fd;
+  }
+
+  .paste-autocomplete__source--ability {
+    background: rgba(196, 181, 253, 0.18);
+    color: #d8b4fe;
+  }
+
+  .paste-autocomplete__label {
+    font-size: 0.94rem;
+  }
+
+  .paste-autocomplete__hint {
+    color: rgba(248, 251, 255, 0.55);
+    font-size: 0.78rem;
+    font-style: italic;
+  }
+}
