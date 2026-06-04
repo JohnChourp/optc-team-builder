@@ -1,64 +1,58 @@
-:host {
-  display: contents;
+.result-card {
+  display: grid;
+  gap: 14px;
 }
 
-:host ::ng-deep {
-  .result-card {
-    display: grid;
-    gap: 14px;
-  }
+.result-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
 
-  .result-card__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
+.result-card__body {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
 
-  .result-card__body {
-    display: grid;
-    grid-template-columns: 88px minmax(0, 1fr);
-    gap: 14px;
-    align-items: start;
-  }
+.result-card__body .character-detail-thumb-link {
+  width: 88px;
+  height: 88px;
+  border-radius: 18px;
+}
 
-  .result-card__body .character-detail-thumb-link {
-    width: 88px;
-    height: 88px;
-    border-radius: 18px;
-  }
+.result-card__body .character-detail-thumb-link img {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+}
 
-  .result-card__body .character-detail-thumb-link img {
-    width: 88px;
-    height: 88px;
-    object-fit: cover;
-    background: rgba(255, 255, 255, 0.08);
-  }
+.result-card__copy {
+  display: grid;
+  gap: 10px;
+}
 
-  .result-card__copy {
-    display: grid;
-    gap: 10px;
-  }
+.result-card__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
 
-  .result-card__title-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
-  }
+.result-card__copy .character-detail-name-link {
+  font-size: 1rem;
+  line-height: 1.4;
+}
 
-  .result-card__copy .character-detail-name-link {
-    font-size: 1rem;
-    line-height: 1.4;
-  }
+.result-card__copy span,
+.result-card__copy p {
+  color: rgba(248, 251, 255, 0.68);
+}
 
-  .result-card__copy span,
-  .result-card__copy p {
-    color: rgba(248, 251, 255, 0.68);
-  }
-
-  .result-card__copy p {
-    font-size: 0.9rem;
-    line-height: 1.55;
-  }
+.result-card__copy p {
+  font-size: 0.9rem;
+  line-height: 1.55;
 }

@@ -1,33 +1,31 @@
-:host ::ng-deep {
-  .editor-modal-head {
-    display: grid;
-    gap: 6px;
-    min-width: 0;
-    padding-inline-end: 56px;
-  }
+.editor-modal-head {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding-inline-end: 56px;
+}
 
-  .editor-modal-head h2 {
-    margin: 12px 0 8px;
-    font-size: clamp(1.7rem, 4vw, 2.2rem);
-  }
+.editor-modal-head h2 {
+  margin: 12px 0 8px;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+}
 
-  .editor-modal-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    color: #f8fbff;
-  }
+.editor-modal-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #f8fbff;
+}
 
-  .editor-modal-header ion-toolbar {
-    --background: transparent;
-    --border-width: 0;
-    --min-height: auto;
-    --padding-start: 22px;
-    --padding-end: 12px;
-    --padding-top: 22px;
-    --padding-bottom: 0;
-  }
+.editor-modal-header ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+  --min-height: auto;
+  --padding-start: 22px;
+  --padding-end: 12px;
+  --padding-top: 22px;
+  --padding-bottom: 0;
+}
 
-  .editor-modal-header ion-buttons {
-    align-self: flex-start;
-    margin-top: 4px;
-  }
+.editor-modal-header ion-buttons {
+  align-self: flex-start;
+  margin-top: 4px;
 }

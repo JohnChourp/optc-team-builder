@@ -1,52 +1,50 @@
-:host ::ng-deep {
-  .team-association-modal__shell {
-    display: grid;
-    gap: 18px;
-    padding: 8px 24px 28px;
-  }
+.team-association-modal__shell {
+  display: grid;
+  gap: 18px;
+  padding: 8px 24px 28px;
+}
 
-  .team-association-modal__toolbar {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
+.team-association-modal__toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
 
-  .team-association-modal__search {
-    flex: 1 1 280px;
-  }
+.team-association-modal__search {
+  flex: 1 1 280px;
+}
 
-  .team-association-modal__quick-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
+.team-association-modal__quick-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 
-  .team-association-modal__empty {
-    display: grid;
-    gap: 6px;
-    justify-items: center;
-    padding: 48px 24px;
-    border-radius: 22px;
-    border: 1px dashed rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.02);
-    color: rgba(248, 251, 255, 0.72);
-    text-align: center;
-  }
+.team-association-modal__empty {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 48px 24px;
+  border-radius: 22px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(248, 251, 255, 0.72);
+  text-align: center;
+}
 
-  .team-association-modal__empty h3 {
-    margin: 4px 0;
-    color: #fff;
-  }
+.team-association-modal__empty h3 {
+  margin: 4px 0;
+  color: #fff;
+}
 
-  .team-association-modal__empty p {
-    margin: 0;
-    max-width: 48ch;
-    color: rgba(248, 251, 255, 0.6);
-  }
+.team-association-modal__empty p {
+  margin: 0;
+  max-width: 48ch;
+  color: rgba(248, 251, 255, 0.6);
+}
 
-  .team-association-modal__empty-icon {
-    color: rgba(245, 200, 76, 0.72);
-    font-size: 2rem;
-  }
+.team-association-modal__empty-icon {
+  color: rgba(245, 200, 76, 0.72);
+  font-size: 2rem;
 }

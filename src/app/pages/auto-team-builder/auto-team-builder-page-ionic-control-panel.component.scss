@@ -1,47 +1,41 @@
-:host {
-  display: contents;
+ion-select {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-color: rgba(255, 255, 255, 0.14);
+  --border-radius: 18px;
+  --color: #f8fbff;
+  --highlight-color-focused: rgba(245, 200, 76, 0.8);
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
-:host ::ng-deep {
-  ion-select {
-    --background: rgba(255, 255, 255, 0.06);
-    --border-color: rgba(255, 255, 255, 0.14);
-    --border-radius: 18px;
-    --color: #f8fbff;
-    --highlight-color-focused: rgba(245, 200, 76, 0.8);
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    overflow: hidden;
-  }
+ion-input,
+ion-textarea {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-color: rgba(255, 255, 255, 0.14);
+  --border-radius: 18px;
+  --color: #f8fbff;
+  --highlight-color-focused: rgba(245, 200, 76, 0.8);
+}
 
-  ion-input,
-  ion-textarea {
-    --background: rgba(255, 255, 255, 0.06);
-    --border-color: rgba(255, 255, 255, 0.14);
-    --border-radius: 18px;
-    --color: #f8fbff;
-    --highlight-color-focused: rgba(245, 200, 76, 0.8);
-  }
+ion-searchbar {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-radius: 16px;
+  --color: #f8fbff;
+  --placeholder-color: rgba(248, 251, 255, 0.6);
+  --clear-button-color: rgba(248, 251, 255, 0.7);
+  padding: 0;
+}
 
-  ion-searchbar {
-    --background: rgba(255, 255, 255, 0.06);
-    --border-radius: 16px;
-    --color: #f8fbff;
-    --placeholder-color: rgba(248, 251, 255, 0.6);
-    --clear-button-color: rgba(248, 251, 255, 0.7);
-    padding: 0;
-  }
+ion-toggle {
+  --track-background: rgba(255, 255, 255, 0.18);
+  --track-background-checked: rgba(245, 200, 76, 0.36);
+  --handle-background: #ffffff;
+  flex-shrink: 0;
+}
 
-  ion-toggle {
-    --track-background: rgba(255, 255, 255, 0.18);
-    --track-background-checked: rgba(245, 200, 76, 0.36);
-    --handle-background: #ffffff;
-    flex-shrink: 0;
-  }
-
-  .strict-toggle-row--filter ion-toggle {
-    margin-top: 2px;
-  }
+.strict-toggle-row--filter ion-toggle {
+  margin-top: 2px;
 }

@@ -1,47 +1,45 @@
-:host ::ng-deep {
-  .enemy-chip-groups,
-  .chip-row {
-    display: grid;
-    gap: 12px;
-  }
+.enemy-chip-groups,
+.chip-row {
+  display: grid;
+  gap: 12px;
+}
 
-  .chip-row {
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
+.chip-row {
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
 
-  .enemy-chip {
-    padding: 7px 11px;
-    border-radius: 999px;
-    background: rgba(245, 200, 76, 0.16);
-    border: 1px solid rgba(245, 200, 76, 0.26);
-    color: #fff7dd;
-    white-space: nowrap;
-  }
+.enemy-chip {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(245, 200, 76, 0.16);
+  border: 1px solid rgba(245, 200, 76, 0.26);
+  color: #fff7dd;
+  white-space: nowrap;
+}
 
-  .enemy-chip--secondary {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: #f8fbff;
-  }
+.enemy-chip--secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fbff;
+}
 
-  .enemy-chip--ability {
-    background: rgba(117, 214, 255, 0.14);
-    border-color: rgba(117, 214, 255, 0.24);
-    color: #d8f7ff;
-  }
+.enemy-chip--ability {
+  background: rgba(117, 214, 255, 0.14);
+  border-color: rgba(117, 214, 255, 0.24);
+  color: #d8f7ff;
+}
 
-  .enemy-chip--mechanic {
-    background: rgba(255, 186, 116, 0.14);
-    border-color: rgba(255, 186, 116, 0.24);
-    color: #ffe2bf;
-  }
+.enemy-chip--mechanic {
+  background: rgba(255, 186, 116, 0.14);
+  border-color: rgba(255, 186, 116, 0.24);
+  color: #ffe2bf;
+}
 
-  .enemy-chip--rule {
-    background: rgba(147, 109, 255, 0.14);
-    border-color: rgba(147, 109, 255, 0.24);
-    color: #e8dcff;
-  }
+.enemy-chip--rule {
+  background: rgba(147, 109, 255, 0.14);
+  border-color: rgba(147, 109, 255, 0.24);
+  color: #e8dcff;
 }

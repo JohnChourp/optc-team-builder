@@ -1,70 +1,64 @@
-:host {
-  display: contents;
+.manual-candidate-list--sidebar {
+  max-height: 440px;
+  align-content: start;
 }
 
-:host ::ng-deep {
-  .manual-candidate-list--sidebar {
-    max-height: 440px;
-    align-content: start;
-  }
+.manual-candidate-list--ships {
+  max-height: 472px;
+}
 
-  .manual-candidate-list--ships {
-    max-height: 472px;
-  }
+.manual-candidate-list--characters {
+  grid-template-columns: minmax(0, 1fr);
+  max-height: min(58vh, 520px);
+  padding-right: 2px;
+  overflow-y: auto;
+}
 
-  .manual-candidate-list--characters {
-    grid-template-columns: minmax(0, 1fr);
-    max-height: min(58vh, 520px);
-    padding-right: 2px;
-    overflow-y: auto;
-  }
+.manual-candidate-list--manual-characters {
+  max-height: min(58vh, 440px);
+}
 
-  .manual-candidate-list--manual-characters {
-    max-height: min(58vh, 440px);
-  }
+.manual-candidate-list--exclude-characters {
+  max-height: min(58vh, 472px);
+}
 
-  .manual-candidate-list--exclude-characters {
-    max-height: min(58vh, 472px);
-  }
+.manual-candidate-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.03);
+}
 
-  .manual-candidate-card {
-    display: grid;
-    grid-template-columns: 48px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    background: rgba(255, 255, 255, 0.03);
-  }
+.manual-candidate-card--detailed {
+  align-items: start;
+}
 
-  .manual-candidate-card--detailed {
-    align-items: start;
-  }
+.manual-candidate-card--sidebar {
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px;
+  border-radius: 16px;
+  align-items: start;
+  min-height: 132px;
+}
 
-  .manual-candidate-card--sidebar {
-    grid-template-columns: 64px minmax(0, 1fr);
-    gap: 10px;
-    padding: 10px;
-    border-radius: 16px;
-    align-items: start;
-    min-height: 132px;
-  }
+.manual-candidate-card--exclude {
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+}
 
-  .manual-candidate-card--exclude {
-    grid-template-columns: 64px minmax(0, 1fr) auto;
-  }
+.manual-candidate-card--selected {
+  border-color: rgba(245, 200, 76, 0.42);
+  background: rgba(245, 200, 76, 0.09);
+}
 
-  .manual-candidate-card--selected {
-    border-color: rgba(245, 200, 76, 0.42);
-    background: rgba(245, 200, 76, 0.09);
-  }
+.manual-candidate-card--blocked {
+  opacity: 0.72;
+}
 
-  .manual-candidate-card--blocked {
-    opacity: 0.72;
-  }
-
-  .manual-candidate-list--leaders {
-    max-height: none;
-  }
+.manual-candidate-list--leaders {
+  max-height: none;
 }

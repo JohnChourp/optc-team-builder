@@ -1,86 +1,84 @@
-:host ::ng-deep {
-  .group-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
+.group-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
 
-  .detail-card,
-  .detail-entry,
-  .detail-rows,
-  .detail-texts,
-  .detail-lists,
-  .detail-text,
-  .detail-list-block {
-    display: grid;
-  }
+.detail-card,
+.detail-entry,
+.detail-rows,
+.detail-texts,
+.detail-lists,
+.detail-text,
+.detail-list-block {
+  display: grid;
+}
 
-  .detail-card,
-  .detail-entry {
-    gap: 14px;
-  }
+.detail-card,
+.detail-entry {
+  gap: 14px;
+}
 
-  .detail-card {
-    padding: 16px;
-  }
+.detail-card {
+  padding: 16px;
+}
 
-  .detail-card__head h2,
-  .detail-entry h3 {
-    margin: 0;
-    color: #ffffff;
-  }
+.detail-card__head h2,
+.detail-entry h3 {
+  margin: 0;
+  color: #ffffff;
+}
 
-  .detail-card__head h2 {
-    font-size: 0.98rem;
-  }
+.detail-card__head h2 {
+  font-size: 0.98rem;
+}
 
-  .detail-entry {
-    padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.03);
-  }
+.detail-entry {
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
 
-  .detail-entry h3 {
-    font-size: 0.92rem;
-  }
+.detail-entry h3 {
+  font-size: 0.92rem;
+}
 
-  .detail-rows,
-  .detail-texts,
-  .detail-lists {
-    gap: 10px;
-    margin: 0;
-  }
+.detail-rows,
+.detail-texts,
+.detail-lists {
+  gap: 10px;
+  margin: 0;
+}
 
-  .detail-row {
-    display: grid;
-    gap: 4px;
-  }
+.detail-row {
+  display: grid;
+  gap: 4px;
+}
 
-  .detail-row dt,
-  .detail-row dd,
-  .detail-text p {
-    margin: 0;
-  }
+.detail-row dt,
+.detail-row dd,
+.detail-text p {
+  margin: 0;
+}
 
-  .detail-row dd,
-  .detail-text p,
-  .detail-list-block li {
-    color: rgba(248, 251, 255, 0.88);
-    line-height: 1.55;
-  }
+.detail-row dd,
+.detail-text p,
+.detail-list-block li {
+  color: rgba(248, 251, 255, 0.88);
+  line-height: 1.55;
+}
 
-  .detail-text,
-  .detail-list-block {
-    gap: 6px;
-  }
+.detail-text,
+.detail-list-block {
+  gap: 6px;
+}
 
-  .detail-text--muted p {
-    color: rgba(248, 251, 255, 0.68);
-  }
+.detail-text--muted p {
+  color: rgba(248, 251, 255, 0.68);
+}
 
-  .detail-list-block ul {
-    display: grid;
-    gap: 8px;
-    padding-left: 18px;
-    margin: 0;
-  }
+.detail-list-block ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 18px;
+  margin: 0;
 }

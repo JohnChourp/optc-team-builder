@@ -446,8 +446,7 @@ interface AutoTeamBuilderDefaultFilterState {
 
 const AUTO_TEAM_BUILD_BUTTON_LABEL = 'Auto Team Build';
 const CHARACTER_TAG_SUGGESTION_LIMIT = 12;
-const CHARACTER_PICKER_PAGE_SIZE = 10;
-const CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD_PX = 144;
+const CHARACTER_PICKER_PAGE_SIZE = 100;
 const SIMILAR_MANUAL_PICK_CANDIDATE_LIMIT = 10_000;
 const SHIP_PICKER_PAGE_SIZE = 10;
 const SHIP_PICKER_SCROLL_LOAD_THRESHOLD_PX = 144;
@@ -2748,8 +2747,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.syncShipPickerPanelState('manual', { reset: true });
   }
 
-  public async onManualCharacterListScroll(event: Event): Promise<void> {
-    await this.loadMoreCharacterPickerPanelOnScroll('manual', event);
+  public async loadMoreManualCharacterCandidates(): Promise<void> {
+    await this.loadMoreCharacterPickerPanel('manual');
   }
 
   public async onExcludeCharacterSearchChange(
@@ -2759,8 +2758,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.refreshAppliedExcludedCandidates();
   }
 
-  public async onExcludedCharacterListScroll(event: Event): Promise<void> {
-    await this.loadMoreCharacterPickerPanelOnScroll('excluded', event);
+  public async loadMoreExcludedCharacterCandidates(): Promise<void> {
+    await this.loadMoreCharacterPickerPanel('excluded');
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -5318,43 +5317,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
             },
       );
     }
-  }
-
-  private async loadMoreCharacterPickerPanelOnScroll(
-    panel: CharacterPickerPanelKey,
-    event: Event,
-  ): Promise<void> {
-    const container = event.target as {
-      scrollTop: number;
-      clientHeight: number;
-      scrollHeight: number;
-    } | null;
-
-    if (!this.shouldLoadMoreCharacterPickerPanel(container)) {
-      return;
-    }
-
-    await this.loadMoreCharacterPickerPanel(panel);
-  }
-
-  private shouldLoadMoreCharacterPickerPanel(
-    container:
-      | {
-          scrollTop: number;
-          clientHeight: number;
-          scrollHeight: number;
-        }
-      | null
-      | undefined,
-  ): boolean {
-    if (!container) {
-      return false;
-    }
-
-    const remainingDistance =
-      container.scrollHeight - (container.scrollTop + container.clientHeight);
-
-    return remainingDistance <= CHARACTER_PICKER_SCROLL_LOAD_THRESHOLD_PX;
   }
 
   private async searchDetailedCharacterPage(

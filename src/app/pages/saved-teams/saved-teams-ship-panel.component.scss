@@ -1,39 +1,37 @@
-:host ::ng-deep {
-  .saved-team-preview {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 6px;
-  }
+.saved-team-preview {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
 
-  .saved-team-ship {
-    display: grid;
-    grid-column: 1 / -1;
-    gap: 8px;
-    padding: 12px 14px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
-  }
+.saved-team-ship {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
 
-  .saved-team-ship__label {
-    color: rgba(248, 251, 255, 0.62);
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.saved-team-ship__label {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
-  .saved-team-ship__content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-  }
+.saved-team-ship__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
 
-  .saved-team-ship__name {
-    color: #ffffff;
-    font-weight: 600;
-    line-height: 1.4;
-    overflow-wrap: anywhere;
-  }
+.saved-team-ship__name {
+  color: #ffffff;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }

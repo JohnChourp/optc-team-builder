@@ -1,46 +1,40 @@
-:host {
-  display: contents;
-}
+@media (max-width: 679px) {
+  .loading-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
-:host ::ng-deep {
-  @media (max-width: 679px) {
-    .loading-card {
-      grid-template-columns: minmax(0, 1fr);
-    }
+  .build-action-row {
+    justify-content: stretch;
+  }
 
-    .build-action-row {
-      justify-content: stretch;
-    }
+  .manual-filter-summary-card {
+    display: grid;
+  }
 
-    .manual-filter-summary-card {
-      display: grid;
-    }
+  .manual-locks-layout {
+    gap: 10px;
+  }
 
-    .manual-locks-layout {
-      gap: 10px;
-    }
+  .download-preset-button,
+  .build-submit-button,
+  .loading-card__action,
+  .loading-card__actions {
+    width: 100%;
+  }
 
-    .download-preset-button,
-    .build-submit-button,
-    .loading-card__action,
-    .loading-card__actions {
-      width: 100%;
-    }
+  .loading-card__action,
+  .loading-card__actions {
+    justify-self: stretch;
+  }
 
-    .loading-card__action,
-    .loading-card__actions {
-      justify-self: stretch;
-    }
+  .manual-locks-meta,
+  .ability-requirements-meta {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-    .manual-locks-meta,
-    .ability-requirements-meta {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .manual-locks-actions,
-    .manual-copy-modal__actions {
-      justify-content: stretch;
-    }
+  .manual-locks-actions,
+  .manual-copy-modal__actions {
+    justify-content: stretch;
   }
 }

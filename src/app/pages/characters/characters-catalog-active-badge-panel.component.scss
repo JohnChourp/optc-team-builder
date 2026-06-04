@@ -1,51 +1,45 @@
-:host {
-  display: contents;
+.active-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 240px;
+  min-height: 25px;
+  padding: 3px 7px 3px 4px;
+  border: 1px solid rgba(245, 200, 76, 0.18);
+  border-radius: 999px;
+  background: rgba(245, 200, 76, 0.08);
+  color: #f8fbff;
+  cursor: pointer;
+  font: inherit;
 }
 
-:host ::ng-deep {
-  .active-filter-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    max-width: 240px;
-    min-height: 25px;
-    padding: 3px 7px 3px 4px;
-    border: 1px solid rgba(245, 200, 76, 0.18);
-    border-radius: 999px;
-    background: rgba(245, 200, 76, 0.08);
-    color: #f8fbff;
-    cursor: pointer;
-    font: inherit;
-  }
+.active-filter-badge span {
+  display: inline-grid;
+  min-width: 23px;
+  height: 19px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(245, 200, 76, 0.18);
+  color: #f5c84c;
+  font-size: 0.58rem;
+  font-weight: 900;
+}
 
-  .active-filter-badge span {
-    display: inline-grid;
-    min-width: 23px;
-    height: 19px;
-    place-items: center;
-    border-radius: 999px;
-    background: rgba(245, 200, 76, 0.18);
-    color: #f5c84c;
-    font-size: 0.58rem;
-    font-weight: 900;
-  }
+.active-filter-badge strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  .active-filter-badge strong {
-    min-width: 0;
-    overflow: hidden;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.active-filter-badge small {
+  color: rgba(248, 251, 255, 0.54);
+  font-weight: 800;
+}
 
-  .active-filter-badge small {
-    color: rgba(248, 251, 255, 0.54);
-    font-weight: 800;
-  }
-
-  .active-filter-badge:focus-visible {
-    outline: 2px solid rgba(245, 200, 76, 0.72);
-    outline-offset: 2px;
-  }
+.active-filter-badge:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
 }

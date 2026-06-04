@@ -1,68 +1,66 @@
-:host ::ng-deep {
-  @media (max-width: 640px) {
-    .saved-teams-selection,
-    .saved-team-head,
-    .import-modal-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .saved-team-actions {
-      justify-content: flex-end;
-    }
-
-    .saved-team-preview {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .saved-team-ship__content {
-      align-items: flex-start;
-    }
-
-    .edit-modal-header ion-toolbar {
-      --padding-start: 16px;
-      --padding-end: 10px;
-      --padding-top: 18px;
-    }
-
-    .edit-modal-shell {
-      padding: 18px 16px 0;
-    }
-
-    .open-team-modal-shell {
-      padding: 18px 16px;
-    }
-
-    .import-modal-head {
-      padding-inline-end: 48px;
-    }
-
-    .edit-modal-footer ion-toolbar {
-      padding-inline: 12px;
-      padding-bottom: 14px;
-    }
+@media (max-width: 640px) {
+  .saved-teams-selection,
+  .saved-team-head,
+  .import-modal-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  @media (max-width: 480px) {
-    .hero-card,
-    .section-card,
-    .loading-card,
-    .empty-card {
-      padding: 14px;
-    }
+  .saved-team-actions {
+    justify-content: flex-end;
+  }
 
-    .hero-actions ion-button,
-    .saved-teams-tool-actions ion-button {
-      flex: 1 1 auto;
-    }
+  .saved-team-preview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 
-    .saved-team-actions {
-      justify-content: flex-start;
-      width: 100%;
-    }
+  .saved-team-ship__content {
+    align-items: flex-start;
+  }
 
-    .saved-team-preview {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .edit-modal-header ion-toolbar {
+    --padding-start: 16px;
+    --padding-end: 10px;
+    --padding-top: 18px;
+  }
+
+  .edit-modal-shell {
+    padding: 18px 16px 0;
+  }
+
+  .open-team-modal-shell {
+    padding: 18px 16px;
+  }
+
+  .import-modal-head {
+    padding-inline-end: 48px;
+  }
+
+  .edit-modal-footer ion-toolbar {
+    padding-inline: 12px;
+    padding-bottom: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-card,
+  .section-card,
+  .loading-card,
+  .empty-card {
+    padding: 14px;
+  }
+
+  .hero-actions ion-button,
+  .saved-teams-tool-actions ion-button {
+    flex: 1 1 auto;
+  }
+
+  .saved-team-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .saved-team-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

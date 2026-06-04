@@ -1,48 +1,42 @@
-:host {
-  display: contents;
+.manual-candidate-thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(245, 200, 76, 0.32);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
-:host ::ng-deep {
-  .manual-candidate-thumb {
-    position: relative;
-    display: block;
-    width: 100%;
-    aspect-ratio: 1;
-    padding: 0;
-    overflow: hidden;
-    border: 1px solid rgba(245, 200, 76, 0.32);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-    cursor: pointer;
-    transition:
-      border-color 160ms ease,
-      box-shadow 160ms ease,
-      transform 160ms ease;
-  }
+.manual-candidate-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+}
 
-  .manual-candidate-thumb img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    background: rgba(255, 255, 255, 0.08);
-  }
+.manual-candidate-thumb:hover:not(:disabled),
+.manual-candidate-thumb:focus-visible {
+  transform: scale(1.04);
+  border-color: rgba(245, 200, 76, 0.82);
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.12);
+}
 
-  .manual-candidate-thumb:hover:not(:disabled),
-  .manual-candidate-thumb:focus-visible {
-    transform: scale(1.04);
-    border-color: rgba(245, 200, 76, 0.82);
-    box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.12);
-  }
+.manual-candidate-thumb:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
 
-  .manual-candidate-thumb:focus-visible {
-    outline: 2px solid rgba(245, 200, 76, 0.72);
-    outline-offset: 2px;
-  }
-
-  .manual-candidate-thumb--selected {
-    border-color: rgba(245, 200, 76, 0.95);
-    background: rgba(245, 200, 76, 0.18);
-    box-shadow: 0 0 0 2px rgba(245, 200, 76, 0.32);
-  }
+.manual-candidate-thumb--selected {
+  border-color: rgba(245, 200, 76, 0.95);
+  background: rgba(245, 200, 76, 0.18);
+  box-shadow: 0 0 0 2px rgba(245, 200, 76, 0.32);
 }

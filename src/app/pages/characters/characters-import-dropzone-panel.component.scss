@@ -1,53 +1,47 @@
-:host {
-  display: contents;
+.import-dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  border: 1px dashed rgba(245, 200, 76, 0.35);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at top, rgba(245, 200, 76, 0.12), transparent 48%),
+    rgba(255, 255, 255, 0.04);
+  color: #f8fbff;
+  cursor: pointer;
+  text-align: center;
+  font: inherit;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
 }
 
-:host ::ng-deep {
-  .import-dropzone {
-    display: grid;
-    justify-items: center;
-    gap: 12px;
-    padding: 28px 20px;
-    border: 1px dashed rgba(245, 200, 76, 0.35);
-    border-radius: 26px;
-    background:
-      radial-gradient(circle at top, rgba(245, 200, 76, 0.12), transparent 48%),
-      rgba(255, 255, 255, 0.04);
-    color: #f8fbff;
-    cursor: pointer;
-    text-align: center;
-    font: inherit;
-    transition:
-      transform 160ms ease,
-      border-color 160ms ease,
-      background 160ms ease;
-  }
+.import-dropzone ion-icon {
+  font-size: 2rem;
+  color: #f5c84c;
+}
 
-  .import-dropzone ion-icon {
-    font-size: 2rem;
-    color: #f5c84c;
-  }
+.import-dropzone strong {
+  font-size: 1.05rem;
+}
 
-  .import-dropzone strong {
-    font-size: 1.05rem;
-  }
+.import-dropzone span {
+  color: rgba(248, 251, 255, 0.66);
+  line-height: 1.5;
+}
 
-  .import-dropzone span {
-    color: rgba(248, 251, 255, 0.66);
-    line-height: 1.5;
-  }
+.import-dropzone:hover,
+.import-dropzone--active {
+  transform: translateY(-2px);
+  border-color: rgba(245, 200, 76, 0.72);
+  background:
+    radial-gradient(circle at top, rgba(245, 200, 76, 0.18), transparent 52%),
+    rgba(255, 255, 255, 0.06);
+}
 
-  .import-dropzone:hover,
-  .import-dropzone--active {
-    transform: translateY(-2px);
-    border-color: rgba(245, 200, 76, 0.72);
-    background:
-      radial-gradient(circle at top, rgba(245, 200, 76, 0.18), transparent 52%),
-      rgba(255, 255, 255, 0.06);
-  }
-
-  .import-dropzone:focus-visible {
-    outline: 2px solid rgba(245, 200, 76, 0.78);
-    outline-offset: 2px;
-  }
+.import-dropzone:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.78);
+  outline-offset: 2px;
 }

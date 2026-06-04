@@ -1,29 +1,27 @@
-:host ::ng-deep {
-  .saved-enemies-shell {
-    display: grid;
-    gap: 18px;
-  }
+.saved-enemies-shell {
+  display: grid;
+  gap: 18px;
+}
 
-  .hero-card,
-  .section-card,
-  .loading-card,
-  .empty-card {
-    padding: 18px;
-  }
+.hero-card,
+.section-card,
+.loading-card,
+.empty-card {
+  padding: 18px;
+}
 
-  .hero-card {
-    display: grid;
-    gap: 12px;
-  }
+.hero-card {
+  display: grid;
+  gap: 12px;
+}
 
-  .loading-card {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-  }
+.loading-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
 
-  .empty-card {
-    display: grid;
-    gap: 10px;
-  }
+.empty-card {
+  display: grid;
+  gap: 10px;
 }

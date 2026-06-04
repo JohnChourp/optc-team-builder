@@ -1,88 +1,82 @@
-:host {
-  display: contents;
+.loading-card__performance {
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
-:host ::ng-deep {
-  .loading-card__performance {
-    padding: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.04);
-  }
+.loading-card__action {
+  align-self: start;
+  white-space: nowrap;
+}
 
-  .loading-card__action {
-    align-self: start;
-    white-space: nowrap;
-  }
+.loading-card__performance-copy {
+  display: grid;
+  gap: 4px;
+}
 
-  .loading-card__performance-copy {
-    display: grid;
-    gap: 4px;
-  }
+.loading-card__performance-field {
+  display: grid;
+  gap: 6px;
+  min-width: min(220px, 100%);
+}
 
-  .loading-card__performance-field {
-    display: grid;
-    gap: 6px;
-    min-width: min(220px, 100%);
-  }
+.loading-card__performance-field span,
+.summary-grid span,
+.coverage-block > span,
+.team-cost-pill span {
+  color: rgba(246, 241, 232, 0.62);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
-  .loading-card__performance-field span,
-  .summary-grid span,
-  .coverage-block > span,
-  .team-cost-pill span {
-    color: rgba(246, 241, 232, 0.62);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.loading-card__performance-field span {
+  color: rgba(246, 241, 232, 0.74);
+  font-size: 0.76rem;
+}
 
-  .loading-card__performance-field span {
-    color: rgba(246, 241, 232, 0.74);
-    font-size: 0.76rem;
-  }
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
 
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-  }
+.summary-grid article {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+}
 
-  .summary-grid article {
-    display: grid;
-    gap: 6px;
-    min-width: 0;
-    padding: 14px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.05);
-  }
+.summary-grid span,
+.coverage-block > span {
+  font-size: 0.76rem;
+}
 
-  .summary-grid span,
-  .coverage-block > span {
-    font-size: 0.76rem;
-  }
+.summary-grid strong {
+  color: #ffffff;
+  font-size: 1.45rem;
+}
 
-  .summary-grid strong {
-    color: #ffffff;
-    font-size: 1.45rem;
-  }
+.team-cost-pill {
+  display: grid;
+  gap: 4px;
+  min-width: min(180px, 100%);
+  padding: 10px 12px;
+  border: 1px solid rgba(126, 215, 170, 0.3);
+  border-radius: 14px;
+  background: rgba(126, 215, 170, 0.1);
+}
 
-  .team-cost-pill {
-    display: grid;
-    gap: 4px;
-    min-width: min(180px, 100%);
-    padding: 10px 12px;
-    border: 1px solid rgba(126, 215, 170, 0.3);
-    border-radius: 14px;
-    background: rgba(126, 215, 170, 0.1);
-  }
+.team-cost-pill span {
+  font-size: 0.72rem;
+  font-weight: 800;
+}
 
-  .team-cost-pill span {
-    font-size: 0.72rem;
-    font-weight: 800;
-  }
-
-  .team-cost-pill strong {
-    color: #a8efc8;
-    font-size: 1rem;
-  }
+.team-cost-pill strong {
+  color: #a8efc8;
+  font-size: 1rem;
 }

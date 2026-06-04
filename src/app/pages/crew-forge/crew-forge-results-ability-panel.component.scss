@@ -1,60 +1,58 @@
-:host ::ng-deep {
-  .result-metrics {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
+.result-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
-  .metric-pill {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    min-width: 120px;
-    padding: 10px 14px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.06);
-    color: #fff8ee;
-  }
+.metric-pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 120px;
+  padding: 10px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff8ee;
+}
 
-  .metric-pill strong {
-    font-size: 1.2rem;
-  }
+.metric-pill strong {
+  font-size: 1.2rem;
+}
 
-  .ability-breakdown-card {
-    display: grid;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
+.ability-breakdown-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-  .ability-chip-row {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  }
+.ability-chip-row {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
 
-  .ability-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 38px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
-    color: #fff8ee;
-    text-align: center;
-  }
+.ability-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff8ee;
+  text-align: center;
+}
 
-  .ability-chip--duplicate {
-    background: rgba(247, 191, 84, 0.14);
-    color: #ffe5ae;
-  }
+.ability-chip--duplicate {
+  background: rgba(247, 191, 84, 0.14);
+  color: #ffe5ae;
+}
 
-  .load-more-row {
-    display: flex;
-    justify-content: center;
-  }
+.load-more-row {
+  display: flex;
+  justify-content: center;
 }

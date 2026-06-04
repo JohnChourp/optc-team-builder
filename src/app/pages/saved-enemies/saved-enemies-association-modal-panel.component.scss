@@ -1,14 +1,8 @@
-:host {
-  display: contents;
+.team-association-modal__header,
+.team-association-modal__footer {
+  background: transparent;
 }
 
-:host ::ng-deep {
-  .team-association-modal__header,
-  .team-association-modal__footer {
-    background: transparent;
-  }
-
-  .team-association-modal__content {
-    --background: transparent;
-  }
+.team-association-modal__content {
+  --background: transparent;
 }

@@ -1,29 +1,27 @@
-:host ::ng-deep {
-  @media (max-width: 679px) {
-    .captain-result {
-      gap: 10px;
-      padding: 10px;
-    }
-
-    .selected-target {
-      grid-template-columns: 56px minmax(0, 1fr);
-      gap: 10px;
-      padding: 10px;
-    }
-
-    .coverage-save-feedback {
-      align-items: flex-start;
-      flex-direction: column;
-    }
+@media (max-width: 679px) {
+  .captain-result {
+    gap: 10px;
+    padding: 10px;
   }
 
-  @media (max-width: 540px) {
-    .captain-tier-breakdown__header {
-      grid-template-columns: 1fr;
-    }
+  .selected-target {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px;
+  }
 
-    .captain-tier-breakdown__kind {
-      justify-self: start;
-    }
+  .coverage-save-feedback {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 540px) {
+  .captain-tier-breakdown__header {
+    grid-template-columns: 1fr;
+  }
+
+  .captain-tier-breakdown__kind {
+    justify-self: start;
   }
 }

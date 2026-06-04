@@ -1,49 +1,43 @@
-:host {
-  display: contents;
+.excluded-character-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-:host ::ng-deep {
-  .excluded-character-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+.excluded-character-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 5px 9px 5px 5px;
+  border: 1px solid rgba(255, 139, 118, 0.26);
+  border-radius: 999px;
+  background: rgba(255, 139, 118, 0.1);
+  color: #ffd6cc;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+}
 
-  .excluded-character-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    max-width: 100%;
-    padding: 5px 9px 5px 5px;
-    border: 1px solid rgba(255, 139, 118, 0.26);
-    border-radius: 999px;
-    background: rgba(255, 139, 118, 0.1);
-    color: #ffd6cc;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.78rem;
-  }
+.excluded-character-chip img {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  object-fit: cover;
+}
 
-  .excluded-character-chip img {
-    width: 26px;
-    height: 26px;
-    flex: 0 0 auto;
-    border-radius: 999px;
-    object-fit: cover;
-  }
+.excluded-character-chip span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
-  .excluded-character-chip span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
+.excluded-character-chip ion-icon {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+}
 
-  .excluded-character-chip ion-icon {
-    flex: 0 0 auto;
-    font-size: 0.9rem;
-  }
-
-  .excluded-card__empty {
-    margin: 0;
-    color: rgba(246, 241, 232, 0.68);
-  }
+.excluded-card__empty {
+  margin: 0;
+  color: rgba(246, 241, 232, 0.68);
 }

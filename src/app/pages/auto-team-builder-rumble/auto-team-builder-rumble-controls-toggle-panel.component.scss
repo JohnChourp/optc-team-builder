@@ -1,42 +1,36 @@
-:host {
-  display: contents;
+.strict-toggle-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
 }
 
-:host ::ng-deep {
-  .strict-toggle-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    min-width: 0;
-    padding: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.045);
-  }
+.strict-toggle-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
 
-  .strict-toggle-copy {
-    display: grid;
-    gap: 4px;
-    min-width: 0;
-  }
+.strict-toggle-copy strong,
+.loading-card__performance-copy strong {
+  color: #fff8ee;
+  font-weight: 800;
+}
 
-  .strict-toggle-copy strong,
-  .loading-card__performance-copy strong {
-    color: #fff8ee;
-    font-weight: 800;
-  }
+.strict-toggle-copy small,
+.loading-card__performance-copy small,
+.loading-card__performance-summary small {
+  color: rgba(246, 241, 232, 0.68);
+  line-height: 1.45;
+}
 
-  .strict-toggle-copy small,
-  .loading-card__performance-copy small,
-  .loading-card__performance-summary small {
-    color: rgba(246, 241, 232, 0.68);
-    line-height: 1.45;
-  }
-
-  .favorites-only-warning {
-    margin: 0;
-    color: #ffd6a8;
-  }
+.favorites-only-warning {
+  margin: 0;
+  color: #ffd6a8;
 }

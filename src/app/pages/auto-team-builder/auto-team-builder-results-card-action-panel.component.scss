@@ -1,64 +1,58 @@
-:host {
-  display: contents;
+.result-character-tag-row,
+.result-ability-chip-row {
+  margin-top: -2px;
 }
 
-:host ::ng-deep {
-  .result-character-tag-row,
-  .result-ability-chip-row {
-    margin-top: -2px;
-  }
+.character-tag-chip {
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(248, 251, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-  .character-tag-chip {
-    background: rgba(255, 255, 255, 0.055);
-    color: rgba(248, 251, 255, 0.62);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
+.result-ability-chip {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 251, 255, 0.92);
+}
 
-  .result-ability-chip {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(248, 251, 255, 0.92);
-  }
+.result-ability-chip--matched {
+  background: rgba(245, 200, 76, 0.18);
+  color: #f5c84c;
+}
 
-  .result-ability-chip--matched {
-    background: rgba(245, 200, 76, 0.18);
-    color: #f5c84c;
-  }
+.result-ability-chip--empty {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(248, 251, 255, 0.58);
+}
 
-  .result-ability-chip--empty {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(248, 251, 255, 0.58);
-  }
+.favorite-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5c84c;
+  flex-shrink: 0;
+}
 
-  .favorite-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    color: #f5c84c;
-    flex-shrink: 0;
-  }
+.favorite-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
 
-  .favorite-button:hover {
-    background: rgba(255, 255, 255, 0.14);
-  }
+.favorite-button:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
 
-  .favorite-button:focus-visible {
-    outline: 2px solid rgba(245, 200, 76, 0.72);
-    outline-offset: 2px;
-  }
+.result-card__actions {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
-  .result-card__actions {
-    display: flex;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .result-branch-row {
-    margin-top: 2px;
-  }
+.result-branch-row {
+  margin-top: 2px;
 }

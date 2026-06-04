@@ -1,80 +1,78 @@
-:host ::ng-deep {
-  .saved-enemies-tools {
-    display: grid;
-    gap: 14px;
-    margin-bottom: 18px;
-  }
+.saved-enemies-tools {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
 
-  .saved-enemy-main,
-  .saved-enemies-selection,
-  .saved-enemies-tool-actions,
-  .saved-enemies-select-all {
-    display: flex;
-    align-items: center;
-  }
+.saved-enemy-main,
+.saved-enemies-selection,
+.saved-enemies-tool-actions,
+.saved-enemies-select-all {
+  display: flex;
+  align-items: center;
+}
 
-  .saved-enemy-main {
-    gap: 12px;
-    flex: 1;
-    min-width: 0;
-  }
+.saved-enemy-main {
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
 
-  .saved-enemies-selection {
-    justify-content: space-between;
-    gap: 12px;
-  }
+.saved-enemies-selection {
+  justify-content: space-between;
+  gap: 12px;
+}
 
-  .saved-enemies-select-all {
-    gap: 10px;
-    color: #ffffff;
-  }
+.saved-enemies-select-all {
+  gap: 10px;
+  color: #ffffff;
+}
 
-  .saved-enemies-selection-count {
-    color: rgba(248, 251, 255, 0.66);
-    font-size: 0.92rem;
-  }
+.saved-enemies-selection-count {
+  color: rgba(248, 251, 255, 0.66);
+  font-size: 0.92rem;
+}
 
-  .saved-enemies-tool-actions {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
+.saved-enemies-tool-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
-  .saved-enemy-list {
-    display: grid;
-    gap: 12px;
-  }
+.saved-enemy-list {
+  display: grid;
+  gap: 12px;
+}
 
-  .saved-enemy-list article {
-    display: grid;
-    gap: 14px;
-    padding: 16px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.03);
-  }
+.saved-enemy-list article {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
 
-  .saved-enemy-copy {
-    flex: 1;
-    min-width: 0;
-  }
+.saved-enemy-copy {
+  flex: 1;
+  min-width: 0;
+}
 
-  .saved-enemy-check {
-    display: inline-flex;
-    align-items: center;
-  }
+.saved-enemy-check {
+  display: inline-flex;
+  align-items: center;
+}
 
-  .saved-enemy-thumb {
-    width: 84px;
-    height: 84px;
-    flex-shrink: 0;
-    border-radius: 18px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.05);
-  }
+.saved-enemy-thumb {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
 
-  .saved-enemy-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+.saved-enemy-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }

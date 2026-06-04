@@ -1,92 +1,86 @@
-:host {
-  display: contents;
+@media (max-width: 680px) {
+  .hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-actions {
+    max-width: none;
+  }
+
+  .hero-actions ion-button {
+    width: 100%;
+  }
+
+  .hero-actions small {
+    text-align: left;
+  }
+
+  .summary-grid,
+  .controls-grid,
+  .buff-focus-lanes,
+  .coverage-grid,
+  .loading-card,
+  .rumble-slot-card,
+  .slot-rumble-details {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-head,
+  .team-switch {
+    width: 100%;
+  }
+
+  .team-switch__button {
+    flex: 1 1 0;
+  }
 }
 
-:host ::ng-deep {
-  @media (max-width: 680px) {
-    .hero-card {
-      grid-template-columns: 1fr;
-    }
-
-    .hero-actions {
-      max-width: none;
-    }
-
-    .hero-actions ion-button {
-      width: 100%;
-    }
-
-    .hero-actions small {
-      text-align: left;
-    }
-
-    .summary-grid,
-    .controls-grid,
-    .buff-focus-lanes,
-    .coverage-grid,
-    .loading-card,
-    .rumble-slot-card,
-    .slot-rumble-details {
-      grid-template-columns: 1fr;
-    }
-
-    .summary-head,
-    .team-switch {
-      width: 100%;
-    }
-
-    .team-switch__button {
-      flex: 1 1 0;
-    }
+@media (max-width: 480px) {
+  .rumble-builder-shell {
+    gap: 14px;
+    padding: 12px;
   }
 
-  @media (max-width: 480px) {
-    .rumble-builder-shell {
-      gap: 14px;
-      padding: 12px;
-    }
-
-    .hero-card,
-    .summary-card,
-    .team-section,
-    .state-card,
-    .loading-card,
-    .controls-card,
-    .excluded-card {
-      padding: 16px;
-    }
-
-    .rumble-slot-card {
-      padding: 12px;
-    }
-
-    .slot-replace-button,
-    .slot-exclude-button {
-      position: static;
-      width: auto;
-      height: 36px;
-      min-height: 36px;
-      --padding-start: 12px;
-      --padding-end: 12px;
-    }
-
-    .slot-image {
-      width: 64px;
-      height: 64px;
-    }
-
-    .slot-buff-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .slot-buff-chip {
-      min-width: 0;
-    }
+  .hero-card,
+  .summary-card,
+  .team-section,
+  .state-card,
+  .loading-card,
+  .controls-card,
+  .excluded-card {
+    padding: 16px;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .team-flip-panel {
-      transition: none;
-    }
+  .rumble-slot-card {
+    padding: 12px;
+  }
+
+  .slot-replace-button,
+  .slot-exclude-button {
+    position: static;
+    width: auto;
+    height: 36px;
+    min-height: 36px;
+    --padding-start: 12px;
+    --padding-end: 12px;
+  }
+
+  .slot-image {
+    width: 64px;
+    height: 64px;
+  }
+
+  .slot-buff-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .slot-buff-chip {
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-flip-panel {
+    transition: none;
   }
 }

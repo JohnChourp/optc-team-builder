@@ -1,57 +1,51 @@
-:host {
-  display: contents;
+.ability-picker-tile__badge {
+  display: inline-grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 54px;
+  padding: 8px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-:host ::ng-deep {
-  .ability-picker-tile__badge {
-    display: inline-grid;
-    justify-items: center;
-    gap: 4px;
-    min-width: 54px;
-    padding: 8px 6px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.05);
-  }
+.ability-picker-tile__badge ion-icon {
+  font-size: 1.05rem;
+}
 
-  .ability-picker-tile__badge ion-icon {
-    font-size: 1.05rem;
-  }
+.ability-picker-tile__badge small {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
 
-  .ability-picker-tile__badge small {
-    font-size: 0.64rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-  }
+.ability-picker-tile__copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
 
-  .ability-picker-tile__copy {
-    display: grid;
-    gap: 6px;
-    min-width: 0;
-  }
+.ability-picker-tile__copy strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
 
-  .ability-picker-tile__copy strong {
-    color: #ffffff;
-    font-size: 0.92rem;
-    line-height: 1.4;
-  }
+.ability-picker-tile__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
-  .ability-picker-tile__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .ability-picker-tile__meta small,
-  .ability-picker-tile__count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(248, 251, 255, 0.74);
-    font-size: 0.7rem;
-    line-height: 1;
-  }
+.ability-picker-tile__meta small,
+.ability-picker-tile__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 251, 255, 0.74);
+  font-size: 0.7rem;
+  line-height: 1;
 }

@@ -1,38 +1,36 @@
-:host ::ng-deep {
-  .hero-card .section-title,
-  .section-head h2,
-  .saved-enemy-copy strong,
-  .empty-card h2,
-  .editor-modal-head h2,
-  .ability-card h3 {
-    color: #ffffff;
-  }
+.hero-card .section-title,
+.section-head h2,
+.saved-enemy-copy strong,
+.empty-card h2,
+.editor-modal-head h2,
+.ability-card h3 {
+  color: #ffffff;
+}
 
-  .hero-card .section-copy,
-  .section-head span,
-  .saved-enemy-copy p,
-  .editor-modal-head p,
-  .empty-card p,
-  .editor-empty-copy {
-    color: rgba(248, 251, 255, 0.66);
-  }
+.hero-card .section-copy,
+.section-head span,
+.saved-enemy-copy p,
+.editor-modal-head p,
+.empty-card p,
+.editor-empty-copy {
+  color: rgba(248, 251, 255, 0.66);
+}
 
-  .section-head h2,
-  .saved-enemy-copy p,
-  .editor-modal-head p,
-  .ability-card h3 {
-    margin: 0;
-  }
+.section-head h2,
+.saved-enemy-copy p,
+.editor-modal-head p,
+.ability-card h3 {
+  margin: 0;
+}
 
-  .section-head > div,
-  .saved-enemy-copy,
-  .enemy-chip-group {
-    display: grid;
-    gap: 6px;
-  }
+.section-head > div,
+.saved-enemy-copy,
+.enemy-chip-group {
+  display: grid;
+  gap: 6px;
+}
 
-  .saved-enemy-copy strong,
-  .saved-enemy-copy p {
-    overflow-wrap: anywhere;
-  }
+.saved-enemy-copy strong,
+.saved-enemy-copy p {
+  overflow-wrap: anywhere;
 }

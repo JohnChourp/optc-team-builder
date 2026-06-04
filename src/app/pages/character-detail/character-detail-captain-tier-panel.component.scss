@@ -1,64 +1,62 @@
-:host ::ng-deep {
-  .captain-tier-breakdown {
-    display: grid;
-    gap: 8px;
-    padding: 0;
-    margin: 4px 0 0;
-    list-style: none;
-  }
+.captain-tier-breakdown {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 4px 0 0;
+  list-style: none;
+}
 
-  .captain-tier-breakdown__tier {
-    display: grid;
-    gap: 4px;
-    padding: 10px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 10px;
-    background: rgba(15, 22, 36, 0.55);
-  }
+.captain-tier-breakdown__tier {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(15, 22, 36, 0.55);
+}
 
-  .captain-tier-breakdown__tier--baseline {
-    border-color: rgba(102, 220, 130, 0.4);
-    background: rgba(102, 220, 130, 0.08);
-  }
+.captain-tier-breakdown__tier--baseline {
+  border-color: rgba(102, 220, 130, 0.4);
+  background: rgba(102, 220, 130, 0.08);
+}
 
-  .captain-tier-breakdown__tier--top {
-    border-color: rgba(245, 200, 76, 0.45);
-    background: rgba(245, 200, 76, 0.08);
-  }
+.captain-tier-breakdown__tier--top {
+  border-color: rgba(245, 200, 76, 0.45);
+  background: rgba(245, 200, 76, 0.08);
+}
 
-  .captain-tier-breakdown__tier--conditional {
-    border-color: rgba(126, 174, 255, 0.45);
-    background: rgba(126, 174, 255, 0.08);
-  }
+.captain-tier-breakdown__tier--conditional {
+  border-color: rgba(126, 174, 255, 0.45);
+  background: rgba(126, 174, 255, 0.08);
+}
 
-  .captain-tier-breakdown__tier--mixed {
-    border-color: rgba(204, 165, 247, 0.5);
-    background: rgba(204, 165, 247, 0.08);
-  }
+.captain-tier-breakdown__tier--mixed {
+  border-color: rgba(204, 165, 247, 0.5);
+  background: rgba(204, 165, 247, 0.08);
+}
 
-  .captain-tier-breakdown__subsection {
-    display: grid;
-    gap: 2px;
-    margin-top: 4px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    border-left: 3px solid transparent;
-    background: rgba(255, 255, 255, 0.03);
-  }
+.captain-tier-breakdown__subsection {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+}
 
-  .captain-tier-breakdown__subsection--baseline {
-    border-left-color: rgba(102, 220, 130, 0.7);
-  }
+.captain-tier-breakdown__subsection--baseline {
+  border-left-color: rgba(102, 220, 130, 0.7);
+}
 
-  .captain-tier-breakdown__subsection--conditional {
-    border-left-color: rgba(126, 174, 255, 0.7);
-  }
+.captain-tier-breakdown__subsection--conditional {
+  border-left-color: rgba(126, 174, 255, 0.7);
+}
 
-  .captain-tier-breakdown__subsection-label {
-    color: rgba(248, 251, 255, 0.8);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
+.captain-tier-breakdown__subsection-label {
+  color: rgba(248, 251, 255, 0.8);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }

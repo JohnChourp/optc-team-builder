@@ -1,42 +1,40 @@
-:host ::ng-deep {
-  .results-panel {
-    display: grid;
-    gap: 16px;
-  }
+.results-panel {
+  display: grid;
+  gap: 16px;
+}
 
-  .results-toolbar {
-    display: grid;
-    gap: 14px;
-  }
+.results-toolbar {
+  display: grid;
+  gap: 14px;
+}
 
-  .results-toolbar__heading,
-  .coverage-ability-filters,
-  .results-toolbar__toggle-grid,
-  .results-controls {
-    display: block;
-    min-width: 0;
-  }
+.results-toolbar__heading,
+.coverage-ability-filters,
+.results-toolbar__toggle-grid,
+.results-controls {
+  display: block;
+  min-width: 0;
+}
 
-  .results-toolbar__toggle-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-    gap: 12px;
-  }
+.results-toolbar__toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 12px;
+}
 
-  .ability-rank-toggle {
-    display: inline-grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-width: 0;
-    min-height: 66px;
-    padding: 10px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(248, 251, 255, 0.72);
-    font-size: 0.86rem;
-    font-weight: 700;
-  }
+.ability-rank-toggle {
+  display: inline-grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  min-height: 66px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.86rem;
+  font-weight: 700;
 }

@@ -1,54 +1,48 @@
-:host {
-  display: contents;
+.hero-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 18px;
 }
 
-:host ::ng-deep {
-  .hero-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 18px;
-  }
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  max-width: 680px;
+}
 
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 10px;
-    max-width: 680px;
-  }
+.visually-hidden-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
-  .visually-hidden-file {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
+.hero-actions small {
+  flex-basis: 100%;
+  color: rgba(246, 241, 232, 0.62);
+  line-height: 1.45;
+  text-align: right;
+}
 
-  .hero-actions small {
-    flex-basis: 100%;
-    color: rgba(246, 241, 232, 0.62);
-    line-height: 1.45;
-    text-align: right;
-  }
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #f7bf54;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
-  .section-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #f7bf54;
-    font-size: 0.76rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .section-title,
-  .section-head h2 {
-    margin: 10px 0 8px;
-    color: #fff8ee;
-    font-family: 'Bricolage Grotesque', sans-serif;
-  }
+.section-title,
+.section-head h2 {
+  margin: 10px 0 8px;
+  color: #fff8ee;
+  font-family: 'Bricolage Grotesque', sans-serif;
 }

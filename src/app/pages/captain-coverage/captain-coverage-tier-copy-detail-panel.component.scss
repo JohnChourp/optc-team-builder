@@ -1,31 +1,29 @@
-:host ::ng-deep {
-  .captain-tier-breakdown__scope {
-    color: rgba(248, 251, 255, 0.78);
-    font-size: 0.86rem;
-    font-weight: 600;
-  }
+.captain-tier-breakdown__scope {
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
 
-  .captain-tier-breakdown__kind {
-    color: rgba(248, 251, 255, 0.7);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
+.captain-tier-breakdown__kind {
+  color: rgba(248, 251, 255, 0.7);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 
-  .captain-tier-breakdown__conditions,
-  .captain-tier-breakdown__effects {
-    margin: 2px 0 0;
-    padding: 0;
-    color: rgba(248, 251, 255, 0.82);
-    font-size: 0.82rem;
-    line-height: 1.45;
-    list-style: disc inside;
-  }
+.captain-tier-breakdown__conditions,
+.captain-tier-breakdown__effects {
+  margin: 2px 0 0;
+  padding: 0;
+  color: rgba(248, 251, 255, 0.82);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  list-style: disc inside;
+}
 
-  .captain-tier-breakdown__conditions {
-    color: rgba(248, 251, 255, 0.7);
-    font-style: italic;
-  }
+.captain-tier-breakdown__conditions {
+  color: rgba(248, 251, 255, 0.7);
+  font-style: italic;
 }

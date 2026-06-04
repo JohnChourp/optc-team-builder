@@ -1,66 +1,60 @@
-:host {
-  display: contents;
+.ability-requirements-card {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
-:host ::ng-deep {
-  .ability-requirements-card {
-    display: grid;
-    gap: 12px;
-    margin-top: 12px;
-    padding: 16px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.04);
-  }
+.manual-locks-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 
-  .manual-locks-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
+.manual-locks-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
 
-  .manual-locks-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 6px;
-  }
+.manual-locks-meta strong {
+  color: #f8fbff;
+  font-size: 0.9rem;
+}
 
-  .manual-locks-meta strong {
-    color: #f8fbff;
-    font-size: 0.9rem;
-  }
+.exclude-box-select-row {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
 
-  .exclude-box-select-row {
-    display: grid;
-    gap: 8px;
-    min-width: 0;
-    padding: 10px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.03);
-  }
+.manual-locks-meta--candidates {
+  display: grid;
+  gap: 4px;
+  justify-content: initial;
+  align-items: flex-start;
+}
 
-  .manual-locks-meta--candidates {
-    display: grid;
-    gap: 4px;
-    justify-content: initial;
-    align-items: flex-start;
-  }
+.manual-locks-meta--candidates small {
+  color: rgba(248, 251, 255, 0.62);
+  line-height: 1.45;
+}
 
-  .manual-locks-meta--candidates small {
-    color: rgba(248, 251, 255, 0.62);
-    line-height: 1.45;
-  }
+.ability-requirements-meta {
+  align-items: flex-start;
+}
 
-  .ability-requirements-meta {
-    align-items: flex-start;
-  }
-
-  .ability-requirements-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 4px;
-  }
+.ability-requirements-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
 }

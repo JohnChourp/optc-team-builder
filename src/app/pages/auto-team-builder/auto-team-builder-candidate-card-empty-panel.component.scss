@@ -1,23 +1,17 @@
-:host {
-  display: contents;
+.manual-candidate-chip-row {
+  margin-top: 2px;
 }
 
-:host ::ng-deep {
-  .manual-candidate-chip-row {
-    margin-top: 2px;
-  }
+.manual-candidate-empty-state {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(248, 251, 255, 0.7);
+  line-height: 1.5;
+}
 
-  .manual-candidate-empty-state {
-    padding: 16px;
-    border-radius: 18px;
-    border: 1px dashed rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.03);
-    color: rgba(248, 251, 255, 0.7);
-    line-height: 1.5;
-  }
-
-  .manual-candidate-empty-state--compact {
-    padding: 10px 12px;
-    font-size: 0.82rem;
-  }
+.manual-candidate-empty-state--compact {
+  padding: 10px 12px;
+  font-size: 0.82rem;
 }

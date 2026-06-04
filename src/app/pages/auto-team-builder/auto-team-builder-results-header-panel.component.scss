@@ -1,49 +1,43 @@
-:host {
-  display: contents;
+.fixed-type-card small,
+.class-select-card small,
+.character-filter-card small,
+.summary-card small {
+  color: rgba(248, 251, 255, 0.62);
 }
 
-:host ::ng-deep {
-  .fixed-type-card small,
-  .class-select-card small,
-  .character-filter-card small,
-  .summary-card small {
-    color: rgba(248, 251, 255, 0.62);
-  }
+.slot-grid__header {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
 
-  .slot-grid__header {
-    display: grid;
-    gap: 6px;
-    margin-bottom: 14px;
-  }
+.slot-grid__header h2,
+.slot-grid__header h3,
+.slot-grid__header p,
+.result-card__copy p {
+  margin: 0;
+}
 
-  .slot-grid__header h2,
-  .slot-grid__header h3,
-  .slot-grid__header p,
-  .result-card__copy p {
-    margin: 0;
-  }
+.slot-grid__header h2,
+.slot-grid__header h3 {
+  color: #ffffff;
+}
 
-  .slot-grid__header h2,
-  .slot-grid__header h3 {
-    color: #ffffff;
-  }
+.slot-grid__header p {
+  color: rgba(248, 251, 255, 0.64);
+}
 
-  .slot-grid__header p {
-    color: rgba(248, 251, 255, 0.64);
-  }
+.coverage-groups {
+  display: grid;
+  gap: 16px;
+}
 
-  .coverage-groups {
-    display: grid;
-    gap: 16px;
-  }
+.coverage-groups--summary {
+  margin-bottom: 18px;
+}
 
-  .coverage-groups--summary {
-    margin-bottom: 18px;
-  }
-
-  .coverage-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 18px;
-  }
+.coverage-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
 }

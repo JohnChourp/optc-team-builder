@@ -1,23 +1,17 @@
-:host {
-  display: contents;
-}
+@media (min-width: 768px) {
+  .strict-toggle-row--cost .cost-scope-grid {
+    grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+    column-gap: 14px;
+    row-gap: 12px;
+  }
 
-:host ::ng-deep {
-  @media (min-width: 768px) {
-    .strict-toggle-row--cost .cost-scope-grid {
-      grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.1fr);
-      align-items: start;
-      column-gap: 14px;
-      row-gap: 12px;
-    }
+  .strict-toggle-row--cost .cost-scope-copy {
+    padding-top: 0;
+  }
 
-    .strict-toggle-row--cost .cost-scope-copy {
-      padding-top: 0;
-    }
-
-    .strict-toggle-row--cost .cost-range-error {
-      grid-column: 2;
-      margin-top: -6px;
-    }
+  .strict-toggle-row--cost .cost-range-error {
+    grid-column: 2;
+    margin-top: -6px;
   }
 }

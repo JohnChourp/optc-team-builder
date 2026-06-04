@@ -1,38 +1,32 @@
-:host {
-  display: contents;
+.home-workflow {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.8fr);
+  align-items: center;
 }
 
-:host ::ng-deep {
-  .home-workflow {
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.8fr);
-    align-items: center;
-  }
+.home-workflow__steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
-  .home-workflow__steps {
-    display: grid;
-    gap: 10px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
+.home-workflow__steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+}
 
-  .home-workflow__steps li {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 12px 14px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.05);
-  }
+.home-workflow__steps ion-icon {
+  flex: 0 0 auto;
+  color: #f5c84c;
+}
 
-  .home-workflow__steps ion-icon {
-    flex: 0 0 auto;
-    color: #f5c84c;
-  }
-
-  .home-workflow__steps span {
-    color: #ffffff;
-    font-weight: 700;
-    line-height: 1.55;
-  }
+.home-workflow__steps span {
+  color: #ffffff;
+  font-weight: 700;
+  line-height: 1.55;
 }

@@ -413,6 +413,7 @@
     "actions": {
       "clearAll": "Clear all",
       "editPicks": "Edit picks",
+      "loadMoreCharacters": "Load more characters",
       "addChoice": "Add OR",
       "addResult": "Add"
     },
@@ -522,7 +523,8 @@
       "addShip": "Exclude",
       "clearCharacters": "Clear characters",
       "clearShips": "Clear ships",
-      "editExcludes": "Edit excludes"
+      "editExcludes": "Edit excludes",
+      "loadMoreCharacters": "Load more characters"
     },
     "badges": {
       "ship": "Excluded ship"

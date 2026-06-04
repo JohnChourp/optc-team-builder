@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 
 const projectedTemplate = '<ng-content></ng-content>';
 const panelHost = { class: 'home-style-panel', style: 'display: contents;' };
@@ -25,6 +25,7 @@ const stylePanelsTemplate = `
 @Component({
   selector: 'app-home-layout-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './home-layout-panel.component.scss',
   host: panelHost,
@@ -34,6 +35,7 @@ export class HomeLayoutPanelComponent {}
 @Component({
   selector: 'app-home-hero-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './home-hero-panel.component.scss',
   host: panelHost,
@@ -43,6 +45,7 @@ export class HomeHeroPanelComponent {}
 @Component({
   selector: 'app-home-hero-media-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './home-hero-media-panel.component.scss',
   host: panelHost,
@@ -52,6 +55,7 @@ export class HomeHeroMediaPanelComponent {}
 @Component({
   selector: 'app-home-account-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './home-account-panel.component.scss',
   host: panelHost,
@@ -61,6 +65,7 @@ export class HomeAccountPanelComponent {}
 @Component({
   selector: 'app-home-highlight-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './home-highlight-panel.component.scss',
   host: panelHost,
@@ -70,6 +75,7 @@ export class HomeHighlightPanelComponent {}
 @Component({
   selector: 'app-home-feature-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './home-feature-panel.component.scss',
   host: panelHost,
@@ -79,6 +85,7 @@ export class HomeFeaturePanelComponent {}
 @Component({
   selector: 'app-home-workflow-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './home-workflow-panel.component.scss',
   host: panelHost,
@@ -88,6 +95,7 @@ export class HomeWorkflowPanelComponent {}
 @Component({
   selector: 'app-home-responsive-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './home-responsive-panel.component.scss',
   host: panelHost,
@@ -97,6 +105,7 @@ export class HomeResponsivePanelComponent {}
 @Component({
   selector: 'app-home-style-panels',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [
     HomeAccountPanelComponent,
     HomeFeaturePanelComponent,

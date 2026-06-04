@@ -1,32 +1,30 @@
-:host ::ng-deep {
-  .hero-actions,
-  .saved-enemy-main,
-  .saved-enemy-head,
-  .saved-enemy-actions,
-  .card-actions,
-  .section-head,
-  .editor-modal-actions,
-  .strict-toggle-row {
-    display: flex;
-    align-items: center;
-  }
+.hero-actions,
+.saved-enemy-main,
+.saved-enemy-head,
+.saved-enemy-actions,
+.card-actions,
+.section-head,
+.editor-modal-actions,
+.strict-toggle-row {
+  display: flex;
+  align-items: center;
+}
 
-  .hero-actions,
-  .saved-enemy-actions,
-  .editor-modal-actions,
-  .card-actions {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
+.hero-actions,
+.saved-enemy-actions,
+.editor-modal-actions,
+.card-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
-  .section-head,
-  .saved-enemy-head,
-  .strict-toggle-row {
-    justify-content: space-between;
-    gap: 14px;
-  }
+.section-head,
+.saved-enemy-head,
+.strict-toggle-row {
+  justify-content: space-between;
+  gap: 14px;
+}
 
-  .section-head {
-    margin-bottom: 18px;
-  }
+.section-head {
+  margin-bottom: 18px;
 }

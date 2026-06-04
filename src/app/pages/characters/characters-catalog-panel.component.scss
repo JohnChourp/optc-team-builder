@@ -1,21 +1,15 @@
-:host {
-  display: contents;
+.characters-shell {
+  display: grid;
+  gap: 10px;
 }
 
-:host ::ng-deep {
-  .characters-shell {
-    display: grid;
-    gap: 10px;
-  }
+.catalog-summary,
+.controls-card,
+.loading-card {
+  padding: 12px;
+}
 
-  .catalog-summary,
-  .controls-card,
-  .loading-card {
-    padding: 12px;
-  }
-
-  .controls-card--compact {
-    display: grid;
-    gap: 10px;
-  }
+.controls-card--compact {
+  display: grid;
+  gap: 10px;
 }

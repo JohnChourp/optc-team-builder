@@ -1,69 +1,67 @@
-:host ::ng-deep {
-  .character-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    gap: 12px;
-  }
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+}
 
-  .character-thumb-card {
-    position: relative;
-    display: grid;
-    gap: 10px;
-    padding: 10px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
+.character-thumb-card {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
-  .character-thumb-card__detail-thumb {
-    width: 100%;
-    aspect-ratio: 1;
-    border-radius: 18px;
-  }
+.character-thumb-card__detail-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 18px;
+}
 
-  .character-thumb-card__favorite {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    width: 32px;
-    height: 32px;
-    z-index: 1;
-    backdrop-filter: blur(10px);
-  }
+.character-thumb-card__favorite {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  z-index: 1;
+  backdrop-filter: blur(10px);
+}
 
-  .character-thumb-card__membership-action {
-    width: 100%;
-    min-height: 32px;
-    font-size: 0.72rem;
-  }
+.character-thumb-card__membership-action {
+  width: 100%;
+  min-height: 32px;
+  font-size: 0.72rem;
+}
 
-  .panel-empty {
-    display: grid;
-    gap: 8px;
-    justify-items: start;
-    padding: 18px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px dashed rgba(255, 255, 255, 0.12);
-    color: rgba(248, 251, 255, 0.72);
-  }
+.panel-empty {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  color: rgba(248, 251, 255, 0.72);
+}
 
-  .panel-empty strong {
-    color: #f8fbff;
-  }
+.panel-empty strong {
+  color: #f8fbff;
+}
 
-  .panel-empty--large {
-    min-height: 220px;
-    align-content: center;
-  }
+.panel-empty--large {
+  min-height: 220px;
+  align-content: center;
+}
 
-  .panel-empty--loading {
-    justify-items: center;
-  }
+.panel-empty--loading {
+  justify-items: center;
+}
 
-  .load-more {
-    display: flex;
-    justify-content: center;
-    margin-top: 16px;
-  }
+.load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }

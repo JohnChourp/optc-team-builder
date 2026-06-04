@@ -1,73 +1,67 @@
-:host {
-  display: contents;
+.loading-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+  color: #fff8ee;
 }
 
-:host ::ng-deep {
-  .loading-card {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: start;
-    gap: 16px;
-    color: #fff8ee;
-  }
+.loading-card__spinner {
+  margin-top: 4px;
+}
 
-  .loading-card__spinner {
-    margin-top: 4px;
-  }
+.loading-card__copy,
+.loading-card__progress-shell,
+.loading-progress-list,
+.loading-card__performance {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
 
-  .loading-card__copy,
-  .loading-card__progress-shell,
-  .loading-progress-list,
-  .loading-card__performance {
-    display: grid;
-    gap: 12px;
-    min-width: 0;
-  }
+.loading-card__progress-header,
+.loading-card__performance-controls,
+.loading-card__performance-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
-  .loading-card__progress-header,
-  .loading-card__performance-controls,
-  .loading-card__performance-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
+.loading-card__progress-header span {
+  color: rgba(246, 241, 232, 0.72);
+}
 
-  .loading-card__progress-header span {
-    color: rgba(246, 241, 232, 0.72);
-  }
+.loading-card__progress-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
 
-  .loading-card__progress-bar {
-    height: 8px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.1);
-  }
+.loading-card__progress-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f7bf54, #7ed7aa);
+  transition: width 180ms ease;
+}
 
-  .loading-card__progress-bar-fill {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, #f7bf54, #7ed7aa);
-    transition: width 180ms ease;
-  }
+.loading-progress-row {
+  display: none;
+  color: rgba(246, 241, 232, 0.82);
+  line-height: 1.45;
+}
 
-  .loading-progress-row {
-    display: none;
-    color: rgba(246, 241, 232, 0.82);
-    line-height: 1.45;
-  }
+.loading-progress-row--visible {
+  display: block;
+}
 
-  .loading-progress-row--visible {
-    display: block;
-  }
+.loading-progress-row--muted {
+  color: rgba(246, 241, 232, 0.62);
+}
 
-  .loading-progress-row--muted {
-    color: rgba(246, 241, 232, 0.62);
-  }
-
-  .loading-progress-row--fallback {
-    color: #f8d36b;
-  }
+.loading-progress-row--fallback {
+  color: #f8d36b;
 }

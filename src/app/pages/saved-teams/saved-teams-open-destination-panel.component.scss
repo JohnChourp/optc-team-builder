@@ -1,64 +1,62 @@
-:host ::ng-deep {
-  .import-feedback {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 14px 16px;
-    border-radius: 22px;
-  }
+.import-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 22px;
+}
 
-  .import-feedback div {
-    display: grid;
-    gap: 4px;
-  }
+.import-feedback div {
+  display: grid;
+  gap: 4px;
+}
 
-  .import-feedback strong {
-    color: #ffffff;
-  }
+.import-feedback strong {
+  color: #ffffff;
+}
 
-  .import-feedback span {
-    color: rgba(248, 251, 255, 0.7);
-    line-height: 1.6;
-  }
+.import-feedback span {
+  color: rgba(248, 251, 255, 0.7);
+  line-height: 1.6;
+}
 
-  .import-feedback--progress {
-    background: rgba(255, 255, 255, 0.05);
-  }
+.import-feedback--progress {
+  background: rgba(255, 255, 255, 0.05);
+}
 
-  .import-feedback--success {
-    background: rgba(76, 201, 240, 0.1);
-    border: 1px solid rgba(76, 201, 240, 0.22);
-  }
+.import-feedback--success {
+  background: rgba(76, 201, 240, 0.1);
+  border: 1px solid rgba(76, 201, 240, 0.22);
+}
 
-  .import-feedback--warning {
-    background: rgba(245, 200, 76, 0.12);
-    border: 1px solid rgba(245, 200, 76, 0.26);
-  }
+.import-feedback--warning {
+  background: rgba(245, 200, 76, 0.12);
+  border: 1px solid rgba(245, 200, 76, 0.26);
+}
 
-  .import-feedback--error {
-    background: rgba(255, 107, 107, 0.12);
-    border: 1px solid rgba(255, 107, 107, 0.26);
-  }
+.import-feedback--error {
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.26);
+}
 
-  .open-team-destinations {
-    display: grid;
-    gap: 12px;
-  }
+.open-team-destinations {
+  display: grid;
+  gap: 12px;
+}
 
-  .open-team-destination {
-    width: 100%;
-    min-height: 78px;
-    --border-radius: 18px;
-    --border-color: rgba(245, 200, 76, 0.34);
-    --background: rgba(245, 200, 76, 0.07);
-    --background-hover: rgba(245, 200, 76, 0.12);
-    --padding-start: 16px;
-    --padding-end: 16px;
-    text-align: start;
-  }
+.open-team-destination {
+  width: 100%;
+  min-height: 78px;
+  --border-radius: 18px;
+  --border-color: rgba(245, 200, 76, 0.34);
+  --background: rgba(245, 200, 76, 0.07);
+  --background-hover: rgba(245, 200, 76, 0.12);
+  --padding-start: 16px;
+  --padding-end: 16px;
+  text-align: start;
+}
 
-  .open-team-destination ion-icon {
-    align-self: center;
-    font-size: 1.35rem;
-  }
+.open-team-destination ion-icon {
+  align-self: center;
+  font-size: 1.35rem;
 }

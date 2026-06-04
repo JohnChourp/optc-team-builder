@@ -1,68 +1,66 @@
-:host ::ng-deep {
-  .import-feedback {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 14px 16px;
-    border-radius: 22px;
-  }
+.import-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 22px;
+}
 
-  .import-feedback > div {
-    display: grid;
-    gap: 4px;
-  }
+.import-feedback > div {
+  display: grid;
+  gap: 4px;
+}
 
-  .import-feedback strong {
-    color: #ffffff;
-  }
+.import-feedback strong {
+  color: #ffffff;
+}
 
-  .import-feedback span {
-    color: rgba(248, 251, 255, 0.78);
-    line-height: 1.6;
-  }
+.import-feedback span {
+  color: rgba(248, 251, 255, 0.78);
+  line-height: 1.6;
+}
 
-  .import-feedback ion-icon {
-    flex-shrink: 0;
-    margin-top: 2px;
-    font-size: 1.2rem;
-  }
+.import-feedback ion-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 1.2rem;
+}
 
-  .import-feedback--progress {
-    background: rgba(255, 255, 255, 0.05);
-  }
+.import-feedback--progress {
+  background: rgba(255, 255, 255, 0.05);
+}
 
-  .import-feedback--success {
-    background: rgba(76, 201, 240, 0.1);
-    border: 1px solid rgba(76, 201, 240, 0.22);
-  }
+.import-feedback--success {
+  background: rgba(76, 201, 240, 0.1);
+  border: 1px solid rgba(76, 201, 240, 0.22);
+}
 
-  .import-feedback--warning {
-    background: rgba(245, 200, 76, 0.12);
-    border: 1px solid rgba(245, 200, 76, 0.26);
-  }
+.import-feedback--warning {
+  background: rgba(245, 200, 76, 0.12);
+  border: 1px solid rgba(245, 200, 76, 0.26);
+}
 
-  .import-feedback--error {
-    background: rgba(255, 107, 107, 0.12);
-    border: 1px solid rgba(255, 107, 107, 0.26);
-  }
+.import-feedback--error {
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.26);
+}
 
-  .enemy-text-warning-list {
-    display: grid;
-    gap: 8px;
-    padding: 14px 16px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.04);
-  }
+.enemy-text-warning-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+}
 
-  .enemy-text-warning-list strong {
-    color: #ffffff;
-  }
+.enemy-text-warning-list strong {
+  color: #ffffff;
+}
 
-  .enemy-text-warning-list ul {
-    display: grid;
-    gap: 6px;
-    margin: 0;
-    padding-left: 18px;
-    color: rgba(248, 251, 255, 0.78);
-  }
+.enemy-text-warning-list ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(248, 251, 255, 0.78);
 }

@@ -1,28 +1,22 @@
-:host {
-  display: contents;
+.home-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
-:host ::ng-deep {
-  .home-highlight-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-  }
+.home-highlight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
 
-  .home-highlight {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-  }
+.home-highlight ion-icon {
+  flex: 0 0 auto;
+  color: #f5c84c;
+}
 
-  .home-highlight ion-icon {
-    flex: 0 0 auto;
-    color: #f5c84c;
-  }
-
-  .home-highlight span {
-    color: #ffffff;
-    font-weight: 700;
-  }
+.home-highlight span {
+  color: #ffffff;
+  font-weight: 700;
 }

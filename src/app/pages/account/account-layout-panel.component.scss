@@ -1,35 +1,29 @@
-:host {
-  display: contents;
+.account-shell,
+.drive-sync-shell {
+  display: grid;
+  gap: 18px;
 }
 
-:host ::ng-deep {
-  .account-shell,
-  .drive-sync-shell {
-    display: grid;
-    gap: 18px;
-  }
+.account-hero,
+.drive-sync-hero,
+.drive-sync-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
 
-  .account-hero,
-  .drive-sync-hero,
-  .drive-sync-card {
-    display: grid;
-    gap: 16px;
-    padding: 18px;
-  }
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
 
-  .section-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-  }
+.section-head p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.58);
+}
 
-  .section-head p {
-    margin: 0;
-    color: rgba(248, 251, 255, 0.58);
-  }
-
-  .section-head h2 {
-    color: #ffffff;
-  }
+.section-head h2 {
+  color: #ffffff;
 }

@@ -1,28 +1,26 @@
-:host ::ng-deep {
-  .team-association-card__head {
-    display: grid;
-    gap: 4px;
-    padding-right: 36px;
-  }
+.team-association-card__head {
+  display: grid;
+  gap: 4px;
+  padding-right: 36px;
+}
 
-  .team-association-card__name {
-    color: #fff;
-    font-size: 1rem;
-    line-height: 1.3;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
+.team-association-card__name {
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
 
-  .team-association-card__notes {
-    color: rgba(248, 251, 255, 0.6);
-    font-size: 0.78rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
+.team-association-card__notes {
+  color: rgba(248, 251, 255, 0.6);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }

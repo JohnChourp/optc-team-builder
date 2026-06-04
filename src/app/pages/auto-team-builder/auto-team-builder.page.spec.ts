@@ -468,8 +468,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
   it('shows passed and not-applicable rows in the final team report for exact builds', async () => {
     const { page } = await createPage();
-    const captainAbilityText =
-      'Boosts ATK of DEX and PSY characters by 5x and HP by 1.3x.';
+    const captainAbilityText = 'Boosts ATK of DEX and PSY characters by 5x and HP by 1.3x.';
     const captain = createCharacterRecord(101);
     const friendCaptain = createCharacterRecord(102);
     const sub1 = createCharacterRecord(103);
@@ -2778,8 +2777,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('detail-link-button');
     expect(template.match(/class="character-detail-thumb-link/g)).toHaveLength(4);
     expect(template.match(/class="character-detail-name-link/g)).toHaveLength(4);
-    expect(template).toContain('[routerLink]="getCharacterDetailLink(candidateCard.character)"');
-    expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
+    expect(normalizedTemplate).toMatch(
+      /\[routerLink\]="\s*getCharacterDetailLink\(\s*candidateCard\.character\s*\)\s*"/,
+    );
+    expect(normalizedTemplate).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
     expect(template).not.toContain('<ng-lottie');
     expect(template).toContain('[disabled]="saveUiLocked()"');
@@ -2803,8 +2804,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('[showLeaderBoostControls]="true"');
     expect(template).toContain('[leaderBoostFilters]="leaderBoostFilters()"');
     expect(template).toContain('[leaderBoostRanges]="leaderBoostRanges()"');
-    expect(template).toContain(
-      '(saveLeaderBoostSettings)="saveCaptainLeaderBoostSettings($event)"',
+    expect(normalizedTemplate).toMatch(
+      /\(saveLeaderBoostSettings\)="\s*saveCaptainLeaderBoostSettings\(\$event\)\s*"/,
     );
     expect(template).not.toContain("t('filters.leaderBoost.label')");
     expect(template).not.toContain('(ionChange)="onLeaderBoostFilterChange($event)"');
@@ -2844,18 +2845,26 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('onSubCostRangeChange');
     expect(template).not.toContain('onMaxTotalCostChange');
     expect(template).toContain('allowAnyFriendCaptainAutoFillToggleLabel()');
-    expect(template).toContain('(ionChange)="onAllowAnyFriendCaptainAutoFillToggle($event)"');
+    expect(normalizedTemplate).toMatch(
+      /\(ionChange\)="\s*onAllowAnyFriendCaptainAutoFillToggle\(\$event\)\s*"/,
+    );
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[value]="manualShipSearchTerm()"');
     expect(template).toContain('(ionInput)="onManualShipSearchChange($event)"');
     expect(template).toContain('(scroll)="onManualShipListScroll($event)"');
     expect(template).toContain('(scroll)="onExcludedShipListScroll($event)"');
     expect(template).toContain("t('ships.actions.selected')");
-    expect(template).toContain('(click)="toggleShipFavorite(shipCard.ship.id)"');
+    expect(normalizedTemplate).toMatch(
+      /\(click\)="\s*toggleShipFavorite\(\s*shipCard\.ship\.id\s*\)\s*"/,
+    );
     expect(template).not.toContain('<cdk-virtual-scroll-viewport');
     expect(template).not.toContain('*cdkVirtualFor=');
-    expect(template).toContain('(scroll)="onManualCharacterListScroll($event)"');
-    expect(template).toContain('(scroll)="onExcludedCharacterListScroll($event)"');
+    expect(template).not.toContain('onManualCharacterListScroll');
+    expect(template).not.toContain('onExcludedCharacterListScroll');
+    expect(template).toContain('loadMoreManualCharacterCandidates');
+    expect(template).toContain('loadMoreExcludedCharacterCandidates');
+    expect(template).toContain("t('manual.actions.loadMoreCharacters')");
+    expect(template).toContain("t('exclude.actions.loadMoreCharacters')");
     expect(template).toContain('manual-candidate-list--manual-characters');
     expect(template).toContain('manual-candidate-list--exclude-characters');
     expect(template).not.toContain('abilityRequirements.placeholders.selectAbility');
@@ -2868,22 +2877,32 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('manualFilterAppliedAbilityLabels()');
     expect(template).not.toContain('hasAppliedManualFilters()');
     expect(template).not.toContain('manualShipPickerOpen()');
-    expect(template).toContain('[class.manual-lock-chip--ship-fallback]="!ship.thumbUrl"');
-    expect(template).toContain('@if (ship.thumbUrl; as thumbUrl)');
-    expect(template).toContain('[class.ship-candidate-icon--fallback]="!shipCard.ship.thumbUrl"');
-    expect(template).toContain('@if (shipCard.ship.thumbUrl; as thumbUrl)');
+    expect(normalizedTemplate).toMatch(
+      /\[class\.manual-lock-chip--ship-fallback\]="\s*!ship\.thumbUrl\s*"/,
+    );
+    expect(normalizedTemplate).toMatch(/@if\s*\(\s*ship\.thumbUrl;\s*as thumbUrl\s*\)/);
+    expect(normalizedTemplate).toMatch(
+      /\[class\.ship-candidate-icon--fallback\]="\s*!shipCard\.ship\.thumbUrl\s*"/,
+    );
+    expect(normalizedTemplate).toMatch(/@if\s*\(\s*shipCard\.ship\.thumbUrl;\s*as thumbUrl\s*\)/);
     expect(template).toContain('(click)="toggleExcludedShip(shipSelection.ship.id)"');
     expect(template).toContain('(click)="addResultCharacterToManualSlot(slot)"');
-    expect(template).toContain('(click)="addSimilarManualPick(slotCard.role, character, $event)"');
+    expect(normalizedTemplate).toMatch(
+      /\(click\)="\s*addSimilarManualPick\(\s*slotCard\.role,\s*character,\s*\$event\s*\)\s*"/,
+    );
     expect(normalizedTemplate).toContain(
       'addSimilarManualPick( activeManualSlotRole(), character, $event )',
     );
     expect(template).toContain('(click)="toggleExcludedCharacter(slot.character)"');
     expect(template).toContain("t('exclude.actions.addShip')");
     expect(template).toContain("t('manual.actions.addResult')");
-    expect(template).toContain("t('manual.similar.actions.addFor', { name: character.name })");
+    expect(normalizedTemplate).toMatch(
+      /t\(\s*'manual\.similar\.actions\.addFor',\s*\{\s*name:\s*character\.name,?\s*\}\s*\)/,
+    );
     expect(template).toContain("t('exclude.actions.add')");
-    expect(template).toContain('@if (current.shipSelection; as shipSelection)');
+    expect(normalizedTemplate).toMatch(
+      /@if\s*\(\s*current\.shipSelection;\s*as shipSelection\s*\)/,
+    );
     expect(template).not.toContain('leaderSuperSpecialCriteriaToggleLabel()');
     expect(template).toContain("t('fallback.allowedLeadersWithSuperEffects')");
     expect(template).toContain('ignoredSuperSpecialCriteriaLabel()');
@@ -3885,7 +3904,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       selectedTypes: [],
       selectedClasses: [],
       sortMode: 'powerFirst',
-      limit: 10,
+      limit: 100,
       offset: 0,
     });
     expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(2, {
@@ -3893,7 +3912,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       selectedTypes: [],
       selectedClasses: [],
       sortMode: 'powerFirst',
-      limit: 10,
+      limit: 100,
       offset: 0,
     });
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
@@ -3913,7 +3932,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       selectedTypes: [],
       selectedClasses: [],
       sortMode: 'powerFirst',
-      limit: 10,
+      limit: 100,
       offset: 0,
     });
     expect(repository.searchDetailedCharacters).toHaveBeenNthCalledWith(2, {
@@ -3921,7 +3940,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       selectedTypes: [],
       selectedClasses: [],
       sortMode: 'powerFirst',
-      limit: 10,
+      limit: 100,
       offset: 0,
     });
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
@@ -4026,7 +4045,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
   it('does not load hidden picker matches on initial render and pages them when opened', async () => {
     const { page, repository } = await createPage();
-    const records = Array.from({ length: 26 }, (_, index) =>
+    const records = Array.from({ length: 126 }, (_, index) =>
       createCharacterRecord(600 + index, `Paged Candidate ${index + 1}`),
     );
 
@@ -4041,7 +4060,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.openExcludePickerModal();
 
     const characterPickerCalls = repository.searchDetailedCharacters.mock.calls.filter(
-      ([query]) => query.limit === 10,
+      ([query]) => query.limit === 100,
     );
 
     expect(characterPickerCalls).toHaveLength(2);
@@ -4052,7 +4071,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           selectedTypes: [],
           selectedClasses: [],
           sortMode: 'powerFirst',
-          limit: 10,
+          limit: 100,
           offset: 0,
         }),
       ],
@@ -4062,7 +4081,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           selectedTypes: [],
           selectedClasses: [],
           sortMode: 'powerFirst',
-          limit: 10,
+          limit: 100,
           offset: 0,
         }),
       ],
@@ -4071,7 +4090,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       records
         .map((record) => record.id)
         .reverse()
-        .slice(0, 10),
+        .slice(0, 100),
     );
     expect(
       page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id),
@@ -4079,7 +4098,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       records
         .map((record) => record.id)
         .reverse()
-        .slice(0, 10),
+        .slice(0, 100),
     );
   });
 
@@ -4147,9 +4166,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ]);
   });
 
-  it('loads more manual and excluded candidates in 10-item batches when the character lists scroll near the end', async () => {
+  it('loads more manual and excluded candidates in 100-item batches from the picker buttons', async () => {
     const { page, repository } = await createPage();
-    const records = Array.from({ length: 26 }, (_, index) =>
+    const records = Array.from({ length: 226 }, (_, index) =>
       createCharacterRecord(600 + index, `Paged Candidate ${index + 1}`),
     );
 
@@ -4161,19 +4180,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.openManualPickerModal();
     await page.openExcludePickerModal();
 
-    const nearBottomScrollEvent = {
-      target: {
-        scrollTop: 340,
-        clientHeight: 300,
-        scrollHeight: 760,
-      },
-    } as unknown as Event;
-
-    await page.onManualCharacterListScroll(nearBottomScrollEvent);
-    await page.onExcludedCharacterListScroll(nearBottomScrollEvent);
+    await page.loadMoreManualCharacterCandidates();
+    await page.loadMoreExcludedCharacterCandidates();
 
     const characterPickerCalls = repository.searchDetailedCharacters.mock.calls.filter(
-      ([query]) => query.limit === 10,
+      ([query]) => query.limit === 100,
     );
 
     expect(characterPickerCalls).toEqual([
@@ -4183,7 +4194,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           selectedTypes: [],
           selectedClasses: [],
           sortMode: 'powerFirst',
-          limit: 10,
+          limit: 100,
           offset: 0,
         }),
       ],
@@ -4193,7 +4204,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           selectedTypes: [],
           selectedClasses: [],
           sortMode: 'powerFirst',
-          limit: 10,
+          limit: 100,
           offset: 0,
         }),
       ],
@@ -4203,8 +4214,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           selectedTypes: [],
           selectedClasses: [],
           sortMode: 'powerFirst',
-          limit: 10,
-          offset: 10,
+          limit: 100,
+          offset: 100,
         }),
       ],
       [
@@ -4213,8 +4224,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           selectedTypes: [],
           selectedClasses: [],
           sortMode: 'powerFirst',
-          limit: 10,
-          offset: 10,
+          limit: 100,
+          offset: 100,
         }),
       ],
     ]);
@@ -4222,7 +4233,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       records
         .map((record) => record.id)
         .reverse()
-        .slice(0, 20),
+        .slice(0, 200),
     );
     expect(
       page.excludedCandidates().map((candidate: CharacterDetailRecord) => candidate.id),
@@ -4230,19 +4241,19 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       records
         .map((record) => record.id)
         .reverse()
-        .slice(0, 20),
+        .slice(0, 200),
     );
   });
 
   it('keeps the character loading-more state active while a manual picker page is pending', async () => {
     const { page, repository } = await createPage();
-    const records = Array.from({ length: 20 }, (_, index) =>
+    const records = Array.from({ length: 120 }, (_, index) =>
       createCharacterRecord(700 + index, `Loading Candidate ${index + 1}`),
     );
     let resolveNextPage: (() => void) | undefined;
 
     repository.searchDetailedCharacters.mockImplementation((query) => {
-      if (query.offset === 10) {
+      if (query.offset === 100) {
         return new Promise<CharacterDetailRecord[]>((resolve) => {
           resolveNextPage = () => resolve(filterCharactersForManualQuery(records, query));
         });
@@ -4254,13 +4265,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.ngOnInit();
     await page.openManualPickerModal();
 
-    const loadPromise = page.onManualCharacterListScroll({
-      target: {
-        scrollTop: 340,
-        clientHeight: 300,
-        scrollHeight: 760,
-      },
-    } as unknown as Event);
+    const loadPromise = page.loadMoreManualCharacterCandidates();
 
     expect(page.manualCandidatesLoadingMore()).toBe(true);
 
@@ -4268,12 +4273,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await loadPromise;
 
     expect(page.manualCandidatesLoadingMore()).toBe(false);
-    expect(page.manualCandidates()).toHaveLength(20);
+    expect(page.manualCandidates()).toHaveLength(120);
   });
 
   it('resets manual character paging when the manual picker search changes', async () => {
     const { page, repository } = await createPage();
-    const records = Array.from({ length: 26 }, (_, index) =>
+    const records = Array.from({ length: 126 }, (_, index) =>
       createCharacterRecord(800 + index, `Search Reset Candidate ${index + 1}`),
     );
 
@@ -4283,30 +4288,24 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     await page.ngOnInit();
     await page.openManualPickerModal();
-    await page.onManualCharacterListScroll({
-      target: {
-        scrollTop: 340,
-        clientHeight: 300,
-        scrollHeight: 760,
-      },
-    } as unknown as Event);
+    await page.loadMoreManualCharacterCandidates();
 
-    expect(page.manualCandidates()).toHaveLength(20);
+    expect(page.manualCandidates()).toHaveLength(126);
 
     repository.searchDetailedCharacters.mockClear();
     await page.onManualSearchChange({
-      detail: { value: 'Candidate 26' },
+      detail: { value: 'Candidate 126' },
     } as CustomEvent<{ value: string }>);
 
     expect(repository.searchDetailedCharacters).toHaveBeenCalledWith(
       expect.objectContaining({
-        searchTerm: 'Candidate 26',
-        limit: 10,
+        searchTerm: 'Candidate 126',
+        limit: 100,
         offset: 0,
       }),
     );
     expect(page.manualCandidates().map((candidate: CharacterDetailRecord) => candidate.id)).toEqual(
-      [825],
+      [925],
     );
   });
 

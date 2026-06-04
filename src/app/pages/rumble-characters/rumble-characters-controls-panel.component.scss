@@ -1,80 +1,74 @@
-:host {
-  display: contents;
+.controls-card--compact {
+  display: grid;
+  gap: 12px;
 }
 
-:host ::ng-deep {
-  .controls-card--compact {
-    display: grid;
-    gap: 12px;
-  }
+.vault-search {
+  --background: rgba(255, 255, 255, 0.08);
+  --border-radius: 14px;
+  --box-shadow: none;
+  --color: #f8fbff;
+  --placeholder-color: rgba(248, 251, 255, 0.54);
+  flex: 1 1 260px;
+  min-width: 220px;
+  max-width: 460px;
+  padding: 0;
+}
 
-  .vault-search {
-    --background: rgba(255, 255, 255, 0.08);
-    --border-radius: 14px;
-    --box-shadow: none;
-    --color: #f8fbff;
-    --placeholder-color: rgba(248, 251, 255, 0.54);
-    flex: 1 1 260px;
-    min-width: 220px;
-    max-width: 460px;
-    padding: 0;
-  }
+.quick-filter {
+  position: relative;
+  display: grid;
+  flex: 1 1 170px;
+  gap: 6px;
+  min-width: 160px;
+}
 
-  .quick-filter {
-    position: relative;
-    display: grid;
-    flex: 1 1 170px;
-    gap: 6px;
-    min-width: 160px;
-  }
+.quick-filter > span {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
 
-  .quick-filter > span {
-    color: rgba(248, 251, 255, 0.72);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-  }
+.quick-filter ion-select,
+.quick-filter ion-input {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-radius: 12px;
+  --color: #f8fbff;
+  min-height: 42px;
+}
 
-  .quick-filter ion-select,
-  .quick-filter ion-input {
-    --background: rgba(255, 255, 255, 0.06);
-    --border-color: rgba(255, 255, 255, 0.1);
-    --border-radius: 12px;
-    --color: #f8fbff;
-    min-height: 42px;
-  }
+.toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(248, 251, 255, 0.78);
+}
 
-  .toggle-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    min-height: 42px;
-    padding: 6px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.045);
-    color: rgba(248, 251, 255, 0.78);
-  }
+.toggle-chip--active {
+  border-color: rgba(245, 200, 76, 0.52);
+  background: rgba(245, 200, 76, 0.12);
+  color: #f8fbff;
+}
 
-  .toggle-chip--active {
-    border-color: rgba(245, 200, 76, 0.52);
-    background: rgba(245, 200, 76, 0.12);
-    color: #f8fbff;
-  }
+.toggle-chip span {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 
-  .toggle-chip span {
-    font-size: 0.76rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .rumble-filter-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-  }
+.rumble-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }

@@ -1,35 +1,29 @@
-:host {
-  display: contents;
+.team-association-modal__head {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px 24px 8px;
 }
 
-:host ::ng-deep {
-  .team-association-modal__head {
-    display: flex;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 16px;
-    padding: 20px 24px 8px;
-  }
+.team-association-modal__head .section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(245, 200, 76, 0.9);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
 
-  .team-association-modal__head .section-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: rgba(245, 200, 76, 0.9);
-    font-size: 0.72rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-  }
+.team-association-modal__head h2 {
+  margin: 6px 0 4px;
+  color: #fff;
+  font-size: 1.55rem;
+}
 
-  .team-association-modal__head h2 {
-    margin: 6px 0 4px;
-    color: #fff;
-    font-size: 1.55rem;
-  }
-
-  .team-association-modal__head p {
-    max-width: 60ch;
-    margin: 0;
-    color: rgba(248, 251, 255, 0.68);
-  }
+.team-association-modal__head p {
+  max-width: 60ch;
+  margin: 0;
+  color: rgba(248, 251, 255, 0.68);
 }

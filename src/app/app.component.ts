@@ -1,15 +1,7 @@
 import { App } from '@capacitor/app';
-import {
-  CUSTOM_ELEMENTS_SCHEMA,
-  Component,
-  DestroyRef,
-  Injector,
-  afterNextRender,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { IonApp, IonButton, IonRouterOutlet } from '@ionic/angular/standalone';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -17,13 +9,13 @@ import {
   NavigationStart,
   Router,
   RouterLink,
-  RouterOutlet,
   type Routes,
 } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
 import packageJson from '../../package.json';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
+import { CharacterCatalogCacheService } from './core/services/character-catalog-cache.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { ToolbarBackNavigationService } from './core/services/toolbar-back-navigation.service';
 
@@ -47,8 +39,7 @@ const defaultSeo: RouteSeoData = {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterLink, RouterOutlet, TranslocoPipe],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  imports: [IonApp, IonButton, IonRouterOutlet, RouterLink, TranslocoPipe],
   template: `
     <ion-app class="app-shell">
       @if (routeLoading()) {
@@ -58,7 +49,7 @@ const defaultSeo: RouteSeoData = {
       }
 
       <div class="app-shell__content">
-        <router-outlet></router-outlet>
+        <ion-router-outlet></ion-router-outlet>
       </div>
 
       @if (showAnalyticsConsentBanner()) {
@@ -78,20 +69,22 @@ const defaultSeo: RouteSeoData = {
           </div>
 
           <div class="analytics-consent-banner__actions">
-            <button
-              type="button"
-              class="analytics-consent-button analytics-consent-button--accept"
+            <ion-button
+              fill="solid"
+              color="warning"
+              size="small"
               (click)="acceptAnalyticsConsent()"
             >
               {{ 'analyticsConsent.banner.accept' | transloco }}
-            </button>
-            <button
-              type="button"
-              class="analytics-consent-button analytics-consent-button--reject"
+            </ion-button>
+            <ion-button
+              fill="outline"
+              color="light"
+              size="small"
               (click)="rejectAnalyticsConsent()"
             >
               {{ 'analyticsConsent.banner.reject' | transloco }}
-            </button>
+            </ion-button>
           </div>
         </section>
       }
@@ -127,13 +120,13 @@ const defaultSeo: RouteSeoData = {
 })
 export class AppComponent {
   private readonly destroyRef = inject(DestroyRef);
-  private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly analyticsConsentService = inject(AnalyticsConsentService);
   private readonly analytics = inject(GoogleAnalyticsService);
   private readonly toolbarBackNavigation = inject(ToolbarBackNavigationService);
+  private readonly characterCatalogCache = inject(CharacterCatalogCacheService);
   private lastTrackedUrl: string | null = null;
 
   public readonly appVersion = signal(packageJson.version);
@@ -206,11 +199,7 @@ export class AppComponent {
 
   private scheduleCatalogWarmup(): void {
     const warmup = () => {
-      void import('./core/services/character-catalog-cache.service')
-        .then(({ CharacterCatalogCacheService }) => {
-          this.injector.get(CharacterCatalogCacheService).kickoffPreload();
-        })
-        .catch(() => undefined);
+      this.characterCatalogCache.kickoffPreload();
     };
     const runtime = globalThis as typeof globalThis & {
       requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;

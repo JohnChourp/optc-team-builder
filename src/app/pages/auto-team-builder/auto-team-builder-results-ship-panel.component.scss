@@ -1,76 +1,70 @@
-:host {
-  display: contents;
+.result-grid {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 
-:host ::ng-deep {
-  .result-grid {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
+.result-grid.captain-condition-panel {
+  padding: 12px;
+}
 
-  .result-grid.captain-condition-panel {
-    padding: 12px;
-  }
+.result-ship-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
 
-  .result-ship-card {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 14px;
-    align-items: start;
-  }
+.result-ship-card__icon {
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
 
-  .result-ship-card__icon {
-    width: 56px;
-    height: 56px;
-    overflow: hidden;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
-  }
+.result-ship-card__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-  .result-ship-card__icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+.result-ship-card__icon--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 200, 76, 0.14);
+  color: #f5c84c;
+}
 
-  .result-ship-card__icon--fallback {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(245, 200, 76, 0.14);
-    color: #f5c84c;
-  }
+.result-ship-card__copy {
+  display: grid;
+  gap: 10px;
+}
 
-  .result-ship-card__copy {
-    display: grid;
-    gap: 10px;
-  }
+.result-ship-card__head {
+  display: grid;
+  gap: 8px;
+}
 
-  .result-ship-card__head {
-    display: grid;
-    gap: 8px;
-  }
+.result-ship-card__head strong {
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1.35;
+}
 
-  .result-ship-card__head strong {
-    color: #ffffff;
-    font-size: 1rem;
-    line-height: 1.35;
-  }
+.result-ship-card__copy p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.68);
+  line-height: 1.55;
+}
 
-  .result-ship-card__copy p {
-    margin: 0;
-    color: rgba(248, 251, 255, 0.68);
-    line-height: 1.55;
-  }
+.result-ship-chip-row {
+  margin-top: 0;
+}
 
-  .result-ship-chip-row {
-    margin-top: 0;
-  }
-
-  .result-ship-card__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-start;
-  }
+.result-ship-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
 }

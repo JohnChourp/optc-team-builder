@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 
 const projectedTemplate = '<ng-content></ng-content>';
 const panelHost = { class: 'character-detail-style-panel', style: 'display: contents;' };
@@ -25,6 +25,7 @@ const stylePanelsTemplate = `
 @Component({
   selector: 'app-character-detail-shell-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-detail-shell-panel.component.scss',
   host: panelHost,
@@ -34,6 +35,7 @@ export class CharacterDetailShellPanelComponent {}
 @Component({
   selector: 'app-character-detail-hero-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-detail-hero-panel.component.scss',
   host: panelHost,
@@ -43,6 +45,7 @@ export class CharacterDetailHeroPanelComponent {}
 @Component({
   selector: 'app-character-detail-hero-meta-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-detail-hero-meta-panel.component.scss',
   host: panelHost,
@@ -52,6 +55,7 @@ export class CharacterDetailHeroMetaPanelComponent {}
 @Component({
   selector: 'app-character-detail-ability-summary-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-detail-ability-summary-panel.component.scss',
   host: panelHost,
@@ -61,6 +65,7 @@ export class CharacterDetailAbilitySummaryPanelComponent {}
 @Component({
   selector: 'app-character-detail-captain-tier-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-detail-captain-tier-panel.component.scss',
   host: panelHost,
@@ -70,6 +75,7 @@ export class CharacterDetailCaptainTierPanelComponent {}
 @Component({
   selector: 'app-character-detail-card-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-detail-card-panel.component.scss',
   host: panelHost,
@@ -79,6 +85,7 @@ export class CharacterDetailCardPanelComponent {}
 @Component({
   selector: 'app-character-detail-chip-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-detail-chip-panel.component.scss',
   host: panelHost,
@@ -88,6 +95,7 @@ export class CharacterDetailChipPanelComponent {}
 @Component({
   selector: 'app-character-detail-responsive-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-detail-responsive-panel.component.scss',
   host: panelHost,
@@ -97,6 +105,7 @@ export class CharacterDetailResponsivePanelComponent {}
 @Component({
   selector: 'app-character-detail-style-panels',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [
     CharacterDetailAbilitySummaryPanelComponent,
     CharacterDetailCaptainTierPanelComponent,

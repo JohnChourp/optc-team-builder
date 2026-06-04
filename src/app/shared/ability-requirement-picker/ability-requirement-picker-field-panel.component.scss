@@ -1,33 +1,27 @@
-:host {
-  display: contents;
+.ability-picker-field {
+  display: grid;
+  gap: 8px;
 }
 
-:host ::ng-deep {
-  .ability-picker-field {
-    display: grid;
-    gap: 8px;
-  }
+.ability-picker-field span {
+  color: rgba(248, 251, 255, 0.68);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
-  .ability-picker-field span {
-    color: rgba(248, 251, 255, 0.68);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.ability-picker-field ion-input,
+.ability-picker-leader-boost__ranges ion-input {
+  --background: rgba(255, 255, 255, 0.05);
+  --border-radius: 16px;
+  --color: #f8fbff;
+}
 
-  .ability-picker-field ion-input,
-  .ability-picker-leader-boost__ranges ion-input {
-    --background: rgba(255, 255, 255, 0.05);
-    --border-radius: 16px;
-    --color: #f8fbff;
-  }
-
-  .ability-picker-field ion-select {
-    --background: rgba(255, 255, 255, 0.05);
-    --border-radius: 16px;
-    --color: #f8fbff;
-    width: 100%;
-    min-width: 0;
-  }
+.ability-picker-field ion-select {
+  --background: rgba(255, 255, 255, 0.05);
+  --border-radius: 16px;
+  --color: #f8fbff;
+  width: 100%;
+  min-width: 0;
 }

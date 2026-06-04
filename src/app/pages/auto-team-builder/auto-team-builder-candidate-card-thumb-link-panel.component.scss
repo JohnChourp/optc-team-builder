@@ -1,51 +1,45 @@
-:host {
-  display: contents;
+.character-detail-thumb-link {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 200, 76, 0.44);
+  background: rgba(245, 200, 76, 0.1);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
-:host ::ng-deep {
-  .character-detail-thumb-link {
-    display: block;
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    border: 1px solid rgba(245, 200, 76, 0.44);
-    background: rgba(245, 200, 76, 0.1);
-    cursor: pointer;
-    overflow: hidden;
-    transition:
-      border-color 160ms ease,
-      box-shadow 160ms ease,
-      transform 160ms ease;
-  }
+.character-detail-thumb-link:hover,
+.character-detail-thumb-link:focus-visible {
+  border-color: rgba(245, 200, 76, 0.82);
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.12);
+  transform: scale(1.05);
+}
 
-  .character-detail-thumb-link:hover,
-  .character-detail-thumb-link:focus-visible {
-    border-color: rgba(245, 200, 76, 0.82);
-    box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.12);
-    transform: scale(1.05);
-  }
+.character-detail-thumb-link:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 3px;
+}
 
-  .character-detail-thumb-link:focus-visible {
-    outline: 2px solid rgba(245, 200, 76, 0.72);
-    outline-offset: 3px;
-  }
+.character-detail-thumb-link img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+}
 
-  .character-detail-thumb-link img {
-    display: block;
-    width: 48px;
-    height: 48px;
-    object-fit: cover;
-    background: rgba(255, 255, 255, 0.08);
-  }
+.manual-candidate-card--sidebar .character-detail-thumb-link {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+}
 
-  .manual-candidate-card--sidebar .character-detail-thumb-link {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
-  }
-
-  .manual-candidate-card--sidebar .character-detail-thumb-link img {
-    width: 64px;
-    height: 64px;
-  }
+.manual-candidate-card--sidebar .character-detail-thumb-link img {
+  width: 64px;
+  height: 64px;
 }

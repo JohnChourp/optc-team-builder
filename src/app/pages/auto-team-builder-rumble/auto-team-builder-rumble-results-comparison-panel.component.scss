@@ -1,52 +1,46 @@
-:host {
-  display: contents;
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
 }
 
-:host ::ng-deep {
-  .comparison-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-  }
+.comparison-chip {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+}
 
-  .comparison-chip {
-    display: grid;
-    gap: 5px;
-    min-width: 0;
-    padding: 11px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.045);
-  }
+.comparison-chip span {
+  color: rgba(246, 241, 232, 0.62);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
-  .comparison-chip span {
-    color: rgba(246, 241, 232, 0.62);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.comparison-chip strong {
+  color: #fff8ee;
+  font-size: 1rem;
+}
 
-  .comparison-chip strong {
-    color: #fff8ee;
-    font-size: 1rem;
-  }
+.comparison-chip--positive {
+  border-color: rgba(126, 215, 170, 0.28);
+  background: rgba(126, 215, 170, 0.09);
+}
 
-  .comparison-chip--positive {
-    border-color: rgba(126, 215, 170, 0.28);
-    background: rgba(126, 215, 170, 0.09);
-  }
+.comparison-chip--positive strong {
+  color: #a8efc8;
+}
 
-  .comparison-chip--positive strong {
-    color: #a8efc8;
-  }
+.comparison-chip--negative {
+  border-color: rgba(255, 139, 118, 0.28);
+  background: rgba(255, 139, 118, 0.09);
+}
 
-  .comparison-chip--negative {
-    border-color: rgba(255, 139, 118, 0.28);
-    background: rgba(255, 139, 118, 0.09);
-  }
-
-  .comparison-chip--negative strong {
-    color: #ffb5a8;
-  }
+.comparison-chip--negative strong {
+  color: #ffb5a8;
 }

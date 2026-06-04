@@ -1,64 +1,62 @@
-:host ::ng-deep {
-  .selection-panel {
-    display: grid;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
+.selection-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-  .selection-panel__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    color: #fff8ee;
-  }
+.selection-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  color: #fff8ee;
+}
 
-  .selection-panel__head small {
-    display: block;
-    color: rgba(246, 241, 232, 0.62);
-    margin-top: 4px;
-  }
+.selection-panel__head small {
+  display: block;
+  color: rgba(246, 241, 232, 0.62);
+  margin-top: 4px;
+}
 
-  .selection-empty {
-    display: grid;
-    place-items: center;
-    min-height: 108px;
-    padding: 18px;
-    text-align: center;
-    border-radius: 18px;
-    border: 1px dashed rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.02);
-  }
+.selection-empty {
+  display: grid;
+  place-items: center;
+  min-height: 108px;
+  padding: 18px;
+  text-align: center;
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
 
-  .selection-empty--large {
-    min-height: 180px;
-    gap: 12px;
-  }
+.selection-empty--large {
+  min-height: 180px;
+  gap: 12px;
+}
 
-  .picked-character-card {
-    display: grid;
-    grid-template-columns: 72px minmax(0, 1fr);
-    align-items: center;
-    gap: 12px;
-  }
+.picked-character-card {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
 
-  .picked-character-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    overflow: hidden;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
+.picked-character-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
-  .picked-character-card strong {
-    color: #fff8ee;
-  }
+.picked-character-card strong {
+  color: #fff8ee;
+}
 
-  .picked-character-card small {
-    color: rgba(246, 241, 232, 0.66);
-  }
+.picked-character-card small {
+  color: rgba(246, 241, 232, 0.66);
 }

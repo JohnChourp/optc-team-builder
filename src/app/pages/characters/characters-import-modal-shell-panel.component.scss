@@ -1,52 +1,46 @@
-:host {
-  display: contents;
+ion-modal.favorites-import-modal::part(backdrop) {
+  background: rgba(7, 11, 23, 0.68);
 }
 
-:host ::ng-deep {
-  ion-modal.favorites-import-modal::part(backdrop) {
-    background: rgba(7, 11, 23, 0.68);
-  }
+ion-modal.favorites-import-modal::part(content) {
+  width: min(720px, calc(100vw - 24px));
+  max-height: var(--app-modal-max-height);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(18, 25, 46, 0.98), rgba(10, 14, 27, 0.98));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
 
-  ion-modal.favorites-import-modal::part(content) {
-    width: min(720px, calc(100vw - 24px));
-    max-height: var(--app-modal-max-height);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 32px;
-    background: linear-gradient(180deg, rgba(18, 25, 46, 0.98), rgba(10, 14, 27, 0.98));
-    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
-  }
+.import-modal-shell {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  overflow: auto;
+  color: #f8fbff;
+}
 
-  .import-modal-shell {
-    display: grid;
-    gap: 18px;
-    padding: 22px;
-    overflow: auto;
-    color: #f8fbff;
-  }
+.import-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
 
-  .import-modal-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-  }
+.import-modal-head h2 {
+  margin: 14px 0 8px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+}
 
-  .import-modal-head h2 {
-    margin: 14px 0 8px;
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: clamp(1.7rem, 4vw, 2.2rem);
-  }
+.import-modal-head p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.68);
+  line-height: 1.6;
+}
 
-  .import-modal-head p {
-    margin: 0;
-    color: rgba(248, 251, 255, 0.68);
-    line-height: 1.6;
-  }
-
-  .import-modal-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 10px;
-  }
+.import-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
 }

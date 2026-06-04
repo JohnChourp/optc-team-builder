@@ -1,80 +1,74 @@
-:host {
-  display: contents;
+.transfer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-:host ::ng-deep {
-  .transfer-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
+.transfer-actions ion-button {
+  margin: 0;
+}
 
-  .transfer-actions ion-button {
-    margin: 0;
-  }
+.transfer-feedback {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
 
-  .transfer-feedback {
-    display: grid;
-    gap: 6px;
-    padding: 14px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.05);
-  }
+.transfer-feedback strong {
+  color: #ffffff;
+}
 
-  .transfer-feedback strong {
-    color: #ffffff;
-  }
+.transfer-feedback span,
+.drive-decision span {
+  color: rgba(248, 251, 255, 0.72);
+}
 
-  .transfer-feedback span,
-  .drive-decision span {
-    color: rgba(248, 251, 255, 0.72);
-  }
+.transfer-feedback--progress {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
 
-  .transfer-feedback--progress {
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: 12px;
-  }
+.transfer-feedback--success {
+  background: rgba(86, 194, 120, 0.16);
+}
 
-  .transfer-feedback--success {
-    background: rgba(86, 194, 120, 0.16);
-  }
+.transfer-feedback--warning {
+  background: rgba(245, 200, 76, 0.16);
+}
 
-  .transfer-feedback--warning {
-    background: rgba(245, 200, 76, 0.16);
-  }
+.transfer-feedback--error {
+  background: rgba(255, 107, 107, 0.14);
+}
 
-  .transfer-feedback--error {
-    background: rgba(255, 107, 107, 0.14);
-  }
+.drive-sync-decision-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 12px;
+}
 
-  .drive-sync-decision-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-    gap: 12px;
-  }
+.drive-decision {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
 
-  .drive-decision {
-    display: grid;
-    gap: 8px;
-    padding: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-    color: inherit;
-    font: inherit;
-    text-align: left;
-  }
+.drive-decision:hover,
+.drive-decision:focus-visible {
+  border-color: rgba(245, 200, 76, 0.42);
+  background: rgba(255, 255, 255, 0.07);
+  outline: none;
+}
 
-  .drive-decision:hover,
-  .drive-decision:focus-visible {
-    border-color: rgba(245, 200, 76, 0.42);
-    background: rgba(255, 255, 255, 0.07);
-    outline: none;
-  }
-
-  .drive-decision ion-icon {
-    color: #f5c84c;
-    font-size: 1.4rem;
-  }
+.drive-decision ion-icon {
+  color: #f5c84c;
+  font-size: 1.4rem;
 }

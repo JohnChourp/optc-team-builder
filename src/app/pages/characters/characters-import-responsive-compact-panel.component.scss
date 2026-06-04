@@ -1,45 +1,39 @@
-:host {
-  display: contents;
-}
+@media (max-width: 480px) {
+  .ability-filter-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-:host ::ng-deep {
-  @media (max-width: 480px) {
-    .ability-filter-rail {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .view-toggle {
+    margin-top: 0;
+  }
 
-    .view-toggle {
-      margin-top: 0;
-    }
+  .favorites-toggle-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-    .favorites-toggle-row {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 12px;
-    }
+  .character-card__link {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px;
+  }
 
-    .character-card__link {
-      grid-template-columns: 72px minmax(0, 1fr);
-      gap: 10px;
-      padding: 10px;
-    }
+  .character-card img {
+    width: 72px;
+    height: 72px;
+  }
 
-    .character-card img {
-      width: 72px;
-      height: 72px;
-    }
+  .favorites-tools-actions ion-button,
+  .import-modal-actions ion-button {
+    flex: 1 1 auto;
+  }
 
-    .favorites-tools-actions ion-button,
-    .import-modal-actions ion-button {
-      flex: 1 1 auto;
-    }
+  .import-dropzone {
+    padding: 20px 14px;
+  }
 
-    .import-dropzone {
-      padding: 20px 14px;
-    }
-
-    .import-modal-shell {
-      padding: 18px 14px;
-    }
+  .import-modal-shell {
+    padding: 18px 14px;
   }
 }

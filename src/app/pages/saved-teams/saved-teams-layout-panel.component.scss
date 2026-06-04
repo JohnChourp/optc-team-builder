@@ -1,68 +1,66 @@
-:host ::ng-deep {
-  .saved-teams-shell {
-    display: grid;
-    gap: 18px;
-  }
+.saved-teams-shell {
+  display: grid;
+  gap: 18px;
+}
 
-  .hero-card,
-  .section-card,
-  .loading-card,
-  .empty-card {
-    padding: 18px;
-  }
+.hero-card,
+.section-card,
+.loading-card,
+.empty-card {
+  padding: 18px;
+}
 
-  .hero-card {
-    display: grid;
-    gap: 10px;
-  }
+.hero-card {
+  display: grid;
+  gap: 10px;
+}
 
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
-  .hero-card .section-title,
-  .section-head h2,
-  .saved-team-list strong,
-  .loading-card,
-  .empty-card h2 {
-    color: #ffffff;
-  }
+.hero-card .section-title,
+.section-head h2,
+.saved-team-list strong,
+.loading-card,
+.empty-card h2 {
+  color: #ffffff;
+}
 
-  .hero-card .section-copy,
-  .section-head span,
-  .saved-team-list p,
-  .empty-card p {
-    color: rgba(248, 251, 255, 0.62);
-  }
+.hero-card .section-copy,
+.section-head span,
+.saved-team-list p,
+.empty-card p {
+  color: rgba(248, 251, 255, 0.62);
+}
 
-  .section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 18px;
-  }
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
 
-  .section-head h2,
-  .saved-team-list p {
-    margin: 0;
-  }
+.section-head h2,
+.saved-team-list p {
+  margin: 0;
+}
 
-  .section-head > div {
-    display: grid;
-    gap: 4px;
-  }
+.section-head > div {
+  display: grid;
+  gap: 4px;
+}
 
-  .loading-card {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-  }
+.loading-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
 
-  .empty-card {
-    display: grid;
-    gap: 8px;
-  }
+.empty-card {
+  display: grid;
+  gap: 8px;
 }

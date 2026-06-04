@@ -1,43 +1,37 @@
-:host {
-  display: contents;
+.fixed-type-card,
+.class-select-card,
+.character-filter-card,
+.summary-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
-:host ::ng-deep {
-  .fixed-type-card,
-  .class-select-card,
-  .character-filter-card,
-  .summary-card {
-    display: grid;
-    gap: 6px;
-    min-width: 0;
-    padding: 12px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.04);
-  }
+.fixed-type-card span,
+.class-select-card span,
+.character-filter-card span,
+.summary-card span,
+.coverage-groups span {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
-  .fixed-type-card span,
-  .class-select-card span,
-  .character-filter-card span,
-  .summary-card span,
-  .coverage-groups span {
-    color: rgba(248, 251, 255, 0.62);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.fixed-type-card strong,
+.character-filter-card strong,
+.summary-card strong {
+  color: #ffffff;
+  font-size: 1.4rem;
+}
 
-  .fixed-type-card strong,
-  .character-filter-card strong,
-  .summary-card strong {
-    color: #ffffff;
-    font-size: 1.4rem;
-  }
-
-  .fixed-type-card small,
-  .class-select-card small,
-  .character-filter-card small,
-  .summary-card small {
-    color: rgba(248, 251, 255, 0.62);
-  }
+.fixed-type-card small,
+.class-select-card small,
+.character-filter-card small,
+.summary-card small {
+  color: rgba(248, 251, 255, 0.62);
 }

@@ -1,39 +1,37 @@
-:host ::ng-deep {
-  @media (max-width: 767px) {
-    .panel-head {
-      display: grid;
-    }
-
-    .favorites-bulk-action {
-      display: grid;
-    }
-
-    .character-row {
-      grid-template-columns: 1fr;
-      justify-items: start;
-    }
-
-    .view-toggle {
-      width: 100%;
-    }
-
-    .view-toggle__button {
-      flex: 1 1 0;
-    }
-
-    .character-grid {
-      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-    }
+@media (max-width: 767px) {
+  .panel-head {
+    display: grid;
   }
 
-  @media (min-width: 960px) {
-    .box-layout {
-      grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
-      align-items: start;
-    }
+  .favorites-bulk-action {
+    display: grid;
+  }
 
-    .character-grid {
-      grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
-    }
+  .character-row {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .view-toggle {
+    width: 100%;
+  }
+
+  .view-toggle__button {
+    flex: 1 1 0;
+  }
+
+  .character-grid {
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .box-layout {
+    grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .character-grid {
+    grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
   }
 }

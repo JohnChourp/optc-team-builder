@@ -1,96 +1,90 @@
-:host {
-  display: contents;
+@media (min-width: 768px) {
+  .manual-team-fields,
+  .manual-team-controls {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
 }
 
-:host ::ng-deep {
-  @media (min-width: 768px) {
-    .manual-team-fields,
-    .manual-team-controls {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    }
+@media (max-width: 1080px) {
+  .manual-team-workbench {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  @media (max-width: 1080px) {
-    .manual-team-workbench {
-      grid-template-columns: minmax(0, 1fr);
-    }
+  .manual-team-summary-card {
+    position: static;
+  }
+}
 
-    .manual-team-summary-card {
-      position: static;
-    }
+@media (max-width: 840px) {
+  .manual-team-slots,
+  .manual-team-picker__filters {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  @media (max-width: 840px) {
-    .manual-team-slots,
-    .manual-team-picker__filters {
-      grid-template-columns: minmax(0, 1fr);
-    }
+  .manual-team-picker-slot-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 
-    .manual-team-picker-slot-rail {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+@media (max-width: 679px) {
+  .hero-card,
+  .manual-team-card,
+  .manual-team-summary-card,
+  .loading-card {
+    padding: 16px;
   }
 
-  @media (max-width: 679px) {
-    .hero-card,
-    .manual-team-card,
-    .manual-team-summary-card,
-    .loading-card {
-      padding: 16px;
-    }
+  .section-head,
+  .manual-team-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
 
-    .section-head,
-    .manual-team-actions {
-      align-items: stretch;
-      flex-direction: column;
-    }
+  .manual-team-slot {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
-    .manual-team-slot {
-      grid-template-columns: minmax(0, 1fr);
-    }
+  .manual-team-slot--empty {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+  }
 
-    .manual-team-slot--empty {
-      grid-template-columns: 48px minmax(0, 1fr) auto;
-    }
+  .manual-team-slot__media {
+    grid-template-columns: 72px minmax(0, 1fr);
+    justify-items: start;
+  }
 
-    .manual-team-slot__media {
-      grid-template-columns: 72px minmax(0, 1fr);
-      justify-items: start;
-    }
+  .manual-team-slot__media img {
+    width: 72px;
+    height: 72px;
+  }
 
-    .manual-team-slot__media img {
-      width: 72px;
-      height: 72px;
-    }
+  .manual-team-slot__head {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
-    .manual-team-slot__head {
-      grid-template-columns: minmax(0, 1fr);
-    }
+  .manual-team-slot__actions {
+    justify-content: flex-start;
+  }
 
-    .manual-team-slot__actions {
-      justify-content: flex-start;
-    }
+  .manual-team-candidate {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
 
-    .manual-team-candidate {
-      grid-template-columns: 48px minmax(0, 1fr);
-    }
+  .manual-team-candidate__actions {
+    grid-column: 1 / -1;
+  }
 
-    .manual-team-candidate__actions {
-      grid-column: 1 / -1;
-    }
+  .manual-team-picker-slot-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-    .manual-team-picker-slot-rail {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .pick-editor-modal__header ion-toolbar {
+    --padding-start: 16px;
+    --padding-end: 8px;
+    --padding-top: 14px;
+  }
 
-    .pick-editor-modal__header ion-toolbar {
-      --padding-start: 16px;
-      --padding-end: 8px;
-      --padding-top: 14px;
-    }
-
-    .pick-editor-modal__shell {
-      padding: 12px 14px 16px;
-    }
+  .pick-editor-modal__shell {
+    padding: 12px 14px 16px;
   }
 }

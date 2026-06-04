@@ -1,93 +1,87 @@
-:host {
-  display: contents;
+.buff-focus-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
 }
 
-:host ::ng-deep {
-  .buff-focus-card {
-    display: grid;
-    gap: 10px;
-    min-width: 0;
-    padding: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.045);
-  }
+.buff-focus-card__head {
+  display: grid;
+  gap: 4px;
+}
 
-  .buff-focus-card__head {
-    display: grid;
-    gap: 4px;
-  }
+.buff-focus-card__head > span {
+  color: #fff8ee;
+  font-weight: 800;
+}
 
-  .buff-focus-card__head > span {
-    color: #fff8ee;
-    font-weight: 800;
-  }
+.buff-focus-card__head small,
+.buff-focus-empty {
+  color: rgba(246, 241, 232, 0.68);
+  line-height: 1.45;
+}
 
-  .buff-focus-card__head small,
-  .buff-focus-empty {
-    color: rgba(246, 241, 232, 0.68);
-    line-height: 1.45;
-  }
+.buff-focus-lanes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
 
-  .buff-focus-lanes {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-  }
+.buff-focus-lane {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.12);
+}
 
-  .buff-focus-lane {
-    display: grid;
-    align-content: start;
-    gap: 8px;
-    min-width: 0;
-    padding: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 14px;
-    background: rgba(0, 0, 0, 0.12);
-  }
+.buff-focus-lane strong {
+  color: #fff8ee;
+  font-size: 0.82rem;
+}
 
-  .buff-focus-lane strong {
-    color: #fff8ee;
-    font-size: 0.82rem;
-  }
+.buff-focus-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
 
-  .buff-focus-chip-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-  }
+.buff-focus-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 5px 6px 5px 9px;
+  border: 1px solid rgba(247, 191, 84, 0.28);
+  border-radius: 999px;
+  background: rgba(247, 191, 84, 0.12);
+  color: #f8d36b;
+  font-size: 0.78rem;
+}
 
-  .buff-focus-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    max-width: 100%;
-    padding: 5px 6px 5px 9px;
-    border: 1px solid rgba(247, 191, 84, 0.28);
-    border-radius: 999px;
-    background: rgba(247, 191, 84, 0.12);
-    color: #f8d36b;
-    font-size: 0.78rem;
-  }
+.buff-focus-chip button {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff8ee;
+  cursor: pointer;
+}
 
-  .buff-focus-chip button {
-    display: inline-grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    border: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff8ee;
-    cursor: pointer;
-  }
+.buff-focus-chip button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
 
-  .buff-focus-chip button:disabled {
-    cursor: default;
-    opacity: 0.35;
-  }
-
-  .buff-focus-chip ion-icon {
-    font-size: 0.95rem;
-  }
+.buff-focus-chip ion-icon {
+  font-size: 0.95rem;
 }

@@ -1,33 +1,31 @@
-:host ::ng-deep {
-  .import-dropzone:hover,
-  .import-dropzone--active {
-    transform: translateY(-2px);
-    border-color: rgba(245, 200, 76, 0.72);
-    background:
-      radial-gradient(circle at top, rgba(245, 200, 76, 0.18), transparent 52%),
-      rgba(255, 255, 255, 0.06);
-  }
+.import-dropzone:hover,
+.import-dropzone--active {
+  transform: translateY(-2px);
+  border-color: rgba(245, 200, 76, 0.72);
+  background:
+    radial-gradient(circle at top, rgba(245, 200, 76, 0.18), transparent 52%),
+    rgba(255, 255, 255, 0.06);
+}
 
-  .import-dropzone:focus-visible {
-    outline: 2px solid rgba(245, 200, 76, 0.78);
-    outline-offset: 2px;
-  }
+.import-dropzone:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.78);
+  outline-offset: 2px;
+}
 
-  .import-file-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    width: fit-content;
-    max-width: 100%;
-    padding: 10px 14px;
-    border-radius: 999px;
-    background: rgba(76, 201, 240, 0.12);
-    color: #d8f7ff;
-  }
+.import-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(76, 201, 240, 0.12);
+  color: #d8f7ff;
+}
 
-  .import-file-chip span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.import-file-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

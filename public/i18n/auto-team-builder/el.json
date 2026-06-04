@@ -413,6 +413,7 @@
     "actions": {
       "clearAll": "Καθαρισμός όλων",
       "editPicks": "Edit picks",
+      "loadMoreCharacters": "Φόρτωση περισσότερων χαρακτήρων",
       "addChoice": "Προσθήκη OR",
       "addResult": "Add"
     },
@@ -522,7 +523,8 @@
       "addShip": "Exclude",
       "clearCharacters": "Καθαρισμός characters",
       "clearShips": "Καθαρισμός ships",
-      "editExcludes": "Edit excludes"
+      "editExcludes": "Edit excludes",
+      "loadMoreCharacters": "Φόρτωση περισσότερων χαρακτήρων"
     },
     "badges": {
       "ship": "Excluded ship"

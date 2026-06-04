@@ -1,83 +1,77 @@
-:host {
-  display: contents;
+.drive-review-rows {
+  display: grid;
+  gap: 10px;
 }
 
-:host ::ng-deep {
-  .drive-review-rows {
-    display: grid;
-    gap: 10px;
-  }
+.drive-review-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(150px, 0.25fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
 
-  .drive-review-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(150px, 0.25fr);
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-  }
+.drive-review-row span,
+.drive-review-choice span {
+  color: rgba(248, 251, 255, 0.72);
+}
 
-  .drive-review-row span,
-  .drive-review-choice span {
-    color: rgba(248, 251, 255, 0.72);
-  }
+.drive-review-row__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
 
-  .drive-review-row__identity {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-  }
+.drive-review-row__identity img {
+  width: 44px;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  object-fit: cover;
+}
 
-  .drive-review-row__identity img {
-    width: 44px;
-    aspect-ratio: 1;
-    border-radius: 8px;
-    object-fit: cover;
-  }
+.drive-review-row__identity div,
+.drive-review-choice {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
 
-  .drive-review-row__identity div,
-  .drive-review-choice {
-    display: grid;
-    gap: 4px;
-    min-width: 0;
-  }
+.drive-review-row__identity strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  .drive-review-row__identity strong {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.drive-review-choice span {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
 
-  .drive-review-choice span {
-    font-size: 0.78rem;
-    font-weight: 700;
-  }
+.drive-review-choice select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(9, 14, 28, 0.94);
+  color: #ffffff;
+  font: inherit;
+}
 
-  .drive-review-choice select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 10px;
-    background: rgba(9, 14, 28, 0.94);
-    color: #ffffff;
-    font: inherit;
-  }
+.drive-review-choice select:focus {
+  outline: 2px solid rgba(245, 200, 76, 0.4);
+  outline-offset: 2px;
+}
 
-  .drive-review-choice select:focus {
-    outline: 2px solid rgba(245, 200, 76, 0.4);
-    outline-offset: 2px;
-  }
-
-  .drive-review-actions {
-    position: sticky;
-    bottom: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 12px 0 0;
-    background: var(--ion-background-color);
-  }
+.drive-review-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 0 0;
+  background: var(--ion-background-color);
 }

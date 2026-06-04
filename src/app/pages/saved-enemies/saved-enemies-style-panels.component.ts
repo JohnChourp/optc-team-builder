@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 
 const projectedTemplate = '<ng-content></ng-content>';
 const panelHost = { class: 'saved-enemies-style-panel', style: 'display: contents;' };
@@ -76,6 +76,7 @@ const stylePanelsTemplate = `
 @Component({
   selector: 'app-saved-enemies-overview-layout-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-overview-layout-panel.component.scss',
   host: panelHost,
@@ -85,6 +86,7 @@ export class SavedEnemiesOverviewLayoutPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-overview-copy-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-overview-copy-panel.component.scss',
   host: panelHost,
@@ -94,6 +96,7 @@ export class SavedEnemiesOverviewCopyPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-overview-flow-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-overview-flow-panel.component.scss',
   host: panelHost,
@@ -103,6 +106,7 @@ export class SavedEnemiesOverviewFlowPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-overview-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [
     SavedEnemiesOverviewCopyPanelComponent,
     SavedEnemiesOverviewFlowPanelComponent,
@@ -117,6 +121,7 @@ export class SavedEnemiesOverviewPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-list-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-list-panel.component.scss',
   host: panelHost,
@@ -126,6 +131,7 @@ export class SavedEnemiesListPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-chip-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-chip-panel.component.scss',
   host: panelHost,
@@ -135,6 +141,7 @@ export class SavedEnemiesChipPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-editor-modal-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-editor-modal-panel.component.scss',
   host: panelHost,
@@ -144,6 +151,7 @@ export class SavedEnemiesEditorModalPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-editor-modal-header-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-editor-modal-header-panel.component.scss',
   host: panelHost,
@@ -153,6 +161,7 @@ export class SavedEnemiesEditorModalHeaderPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-editor-modal-footer-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-editor-modal-footer-panel.component.scss',
   host: panelHost,
@@ -162,6 +171,7 @@ export class SavedEnemiesEditorModalFooterPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-editor-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [
     SavedEnemiesEditorModalFooterPanelComponent,
     SavedEnemiesEditorModalHeaderPanelComponent,
@@ -176,6 +186,7 @@ export class SavedEnemiesEditorPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-editor-form-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-editor-form-panel.component.scss',
   host: panelHost,
@@ -185,6 +196,7 @@ export class SavedEnemiesEditorFormPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-editor-cards-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-editor-cards-panel.component.scss',
   host: panelHost,
@@ -194,6 +206,7 @@ export class SavedEnemiesEditorCardsPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-editor-associated-teams-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-editor-associated-teams-panel.component.scss',
   host: panelHost,
@@ -203,6 +216,7 @@ export class SavedEnemiesEditorAssociatedTeamsPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-animations-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-animations-panel.component.scss',
   host: panelHost,
@@ -212,6 +226,7 @@ export class SavedEnemiesAnimationsPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-modal-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-modal-panel.component.scss',
   host: panelHost,
@@ -221,6 +236,7 @@ export class SavedEnemiesAssociationModalPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-head-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-head-panel.component.scss',
   host: panelHost,
@@ -230,6 +246,7 @@ export class SavedEnemiesAssociationHeadPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-counter-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-counter-panel.component.scss',
   host: panelHost,
@@ -239,6 +256,7 @@ export class SavedEnemiesAssociationCounterPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [
     SavedEnemiesAssociationCounterPanelComponent,
     SavedEnemiesAssociationHeadPanelComponent,
@@ -253,6 +271,7 @@ export class SavedEnemiesAssociationPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-card-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-card-panel.component.scss',
   host: panelHost,
@@ -262,6 +281,7 @@ export class SavedEnemiesAssociationCardPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-card-state-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-card-state-panel.component.scss',
   host: panelHost,
@@ -271,6 +291,7 @@ export class SavedEnemiesAssociationCardStatePanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-card-copy-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-card-copy-panel.component.scss',
   host: panelHost,
@@ -280,6 +301,7 @@ export class SavedEnemiesAssociationCardCopyPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-card-media-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-card-media-panel.component.scss',
   host: panelHost,
@@ -289,6 +311,7 @@ export class SavedEnemiesAssociationCardMediaPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-card-slots-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-card-slots-panel.component.scss',
   host: panelHost,
@@ -298,6 +321,7 @@ export class SavedEnemiesAssociationCardSlotsPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-media-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-media-panel.component.scss',
   host: panelHost,
@@ -307,6 +331,7 @@ export class SavedEnemiesAssociationMediaPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-association-footer-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-association-footer-panel.component.scss',
   host: panelHost,
@@ -316,6 +341,7 @@ export class SavedEnemiesAssociationFooterPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-import-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-import-panel.component.scss',
   host: panelHost,
@@ -325,6 +351,7 @@ export class SavedEnemiesImportPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-parsed-ability-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-parsed-ability-panel.component.scss',
   host: panelHost,
@@ -334,6 +361,7 @@ export class SavedEnemiesParsedAbilityPanelComponent {}
 @Component({
   selector: 'app-saved-enemies-paste-autocomplete-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-paste-autocomplete-panel.component.scss',
   host: panelHost,
@@ -343,6 +371,7 @@ export class SavedEnemiesPasteAutocompletePanelComponent {}
 @Component({
   selector: 'app-saved-enemies-responsive-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './saved-enemies-responsive-panel.component.scss',
   host: panelHost,
@@ -352,6 +381,7 @@ export class SavedEnemiesResponsivePanelComponent {}
 @Component({
   selector: 'app-saved-enemies-style-panels',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [
     SavedEnemiesAssociationCardPanelComponent,
     SavedEnemiesAssociationCardCopyPanelComponent,

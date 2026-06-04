@@ -1,19 +1,13 @@
-:host {
-  display: contents;
-}
+@media (min-width: 1280px) {
+  .ability-requirement-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 
-:host ::ng-deep {
-  @media (min-width: 1280px) {
-    .ability-requirement-list {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+  .ability-requirement-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-    .ability-requirement-fields {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .ability-requirement-field:not(.ability-requirement-field--number) {
-      grid-column: 1 / -1;
-    }
+  .ability-requirement-field:not(.ability-requirement-field--number) {
+    grid-column: 1 / -1;
   }
 }

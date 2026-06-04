@@ -1,77 +1,71 @@
-:host {
-  display: contents;
+.ship-picker-panel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 0;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
-:host ::ng-deep {
-  .ship-picker-panel {
-    display: grid;
-    align-content: start;
-    gap: 14px;
-    min-height: 0;
-    padding: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 24px;
-    background: rgba(255, 255, 255, 0.04);
-  }
+.ship-picker-panel--selected {
+  grid-template-rows: auto minmax(0, 1fr);
+}
 
-  .ship-picker-panel--selected {
-    grid-template-rows: auto minmax(0, 1fr);
-  }
+.ship-picker-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
 
-  .ship-picker-panel__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-  }
+.ship-picker-panel__head strong {
+  display: block;
+  color: #ffffff;
+  font-size: 0.96rem;
+}
 
-  .ship-picker-panel__head strong {
-    display: block;
-    color: #ffffff;
-    font-size: 0.96rem;
-  }
+.ship-picker-panel__head small {
+  color: rgba(248, 251, 255, 0.64);
+  line-height: 1.45;
+}
 
-  .ship-picker-panel__head small {
-    color: rgba(248, 251, 255, 0.64);
-    line-height: 1.45;
-  }
+.ship-picker-search {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-radius: 18px;
+  --box-shadow: none;
+  --color: #f8fbff;
+  padding-inline: 0;
+}
 
-  .ship-picker-search {
-    --background: rgba(255, 255, 255, 0.06);
-    --border-radius: 18px;
-    --box-shadow: none;
-    --color: #f8fbff;
-    padding-inline: 0;
-  }
+.ship-picker-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 22px 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+  text-align: center;
+}
 
-  .ship-picker-empty {
-    display: grid;
-    justify-items: center;
-    gap: 10px;
-    padding: 22px 18px;
-    border: 1px dashed rgba(255, 255, 255, 0.12);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.03);
-    text-align: center;
-  }
+.ship-picker-empty strong {
+  color: #ffffff;
+}
 
-  .ship-picker-empty strong {
-    color: #ffffff;
-  }
+.ship-picker-empty p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.68);
+  line-height: 1.55;
+}
 
-  .ship-picker-empty p {
-    margin: 0;
-    color: rgba(248, 251, 255, 0.68);
-    line-height: 1.55;
-  }
-
-  .ship-picker-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-content: start;
-    gap: 10px;
-    min-height: 0;
-    max-height: min(72vh, 760px);
-    overflow: auto;
-  }
+.ship-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 10px;
+  min-height: 0;
+  max-height: min(72vh, 760px);
+  overflow: auto;
 }

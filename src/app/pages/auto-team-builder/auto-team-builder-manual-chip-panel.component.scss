@@ -1,66 +1,60 @@
-:host {
-  display: contents;
+.manual-selected-row {
+  margin-top: 0;
+  gap: 6px;
 }
 
-:host ::ng-deep {
-  .manual-selected-row {
-    margin-top: 0;
-    gap: 6px;
-  }
+.manual-similar-feedback {
+  padding: 8px 10px;
+  border: 1px solid rgba(245, 200, 76, 0.22);
+  border-radius: 12px;
+  background: rgba(245, 200, 76, 0.08);
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
 
-  .manual-similar-feedback {
-    padding: 8px 10px;
-    border: 1px solid rgba(245, 200, 76, 0.22);
-    border-radius: 12px;
-    background: rgba(245, 200, 76, 0.08);
-    color: rgba(248, 251, 255, 0.78);
-    font-size: 0.76rem;
-    font-weight: 700;
-    line-height: 1.35;
-  }
+.manual-leaders-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-  .manual-leaders-card {
-    display: grid;
-    gap: 12px;
-    padding: 14px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
+.manual-locks-meta--leaders {
+  align-items: flex-start;
+}
 
-  .manual-locks-meta--leaders {
-    align-items: flex-start;
-  }
+.manual-lock-chip {
+  max-width: 100%;
+  justify-content: flex-start;
+  padding: 6px 10px;
+  border-radius: 14px;
+  font-size: 0.74rem;
+}
 
-  .manual-lock-chip {
-    max-width: 100%;
-    justify-content: flex-start;
-    padding: 6px 10px;
-    border-radius: 14px;
-    font-size: 0.74rem;
-  }
+.manual-lock-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  .manual-lock-chip__label {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+.manual-lock-chip__text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.15;
+}
 
-  .manual-lock-chip__text {
-    display: grid;
-    min-width: 0;
-    line-height: 1.15;
-  }
+.manual-lock-chip__branch {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(245, 200, 76, 0.9);
+  font-size: 0.66rem;
+  text-overflow: ellipsis;
+}
 
-  .manual-lock-chip__branch {
-    min-width: 0;
-    overflow: hidden;
-    color: rgba(245, 200, 76, 0.9);
-    font-size: 0.66rem;
-    text-overflow: ellipsis;
-  }
-
-  .manual-lock-chip--static {
-    cursor: default;
-  }
+.manual-lock-chip--static {
+  cursor: default;
 }

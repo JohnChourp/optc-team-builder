@@ -1,44 +1,38 @@
-:host {
-  display: contents;
+.home-shell {
+  display: grid;
+  gap: 18px;
 }
 
-:host ::ng-deep {
-  .home-shell {
-    display: grid;
-    gap: 18px;
-  }
+.home-hero,
+.home-account,
+.home-section,
+.home-workflow,
+.home-highlight {
+  padding: 20px;
+}
 
-  .home-hero,
-  .home-account,
-  .home-section,
-  .home-workflow,
-  .home-highlight {
-    padding: 20px;
-  }
+.home-section,
+.home-workflow {
+  display: grid;
+  gap: 18px;
+}
 
-  .home-section,
-  .home-workflow {
-    display: grid;
-    gap: 18px;
-  }
+.home-section__head h2,
+.home-workflow h2 {
+  margin: 12px 0 0;
+  color: #ffffff;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.08;
+}
 
-  .home-section__head h2,
-  .home-workflow h2 {
-    margin: 12px 0 0;
-    color: #ffffff;
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    line-height: 1.08;
-  }
+.home-section__head p,
+.home-workflow p {
+  margin: 0;
+}
 
-  .home-section__head p,
-  .home-workflow p {
-    margin: 0;
-  }
-
-  .home-section__head p,
-  .home-workflow p {
-    color: rgba(248, 251, 255, 0.68);
-    line-height: 1.55;
-  }
+.home-section__head p,
+.home-workflow p {
+  color: rgba(248, 251, 255, 0.68);
+  line-height: 1.55;
 }

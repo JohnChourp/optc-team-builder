@@ -1,83 +1,77 @@
-:host {
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: start;
+  gap: 14px;
+}
+
+.opponent-team-section {
+  gap: 18px;
+}
+
+.opponent-team-group {
+  display: grid;
+  gap: 10px;
+}
+
+.opponent-team-group > span {
+  color: rgba(246, 241, 232, 0.62);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rumble-slot-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-self: start;
+  align-items: start;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px 82px 14px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.slot-copy {
   display: contents;
 }
 
-:host ::ng-deep {
-  .slot-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    align-items: start;
-    gap: 14px;
-  }
+.rumble-slot-card--bench {
+  background: rgba(255, 255, 255, 0.03);
+}
 
-  .opponent-team-section {
-    gap: 18px;
-  }
+.opponent-empty-slot {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 6px;
+  min-height: 132px;
+  padding: 18px;
+  border-style: dashed;
+  color: #fff8ee;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
 
-  .opponent-team-group {
-    display: grid;
-    gap: 10px;
-  }
+.opponent-empty-slot span,
+.opponent-empty-slot strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
-  .opponent-team-group > span {
-    color: rgba(246, 241, 232, 0.62);
-    font-size: 0.76rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.opponent-empty-slot span {
+  color: rgba(246, 241, 232, 0.62);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
-  .rumble-slot-card {
-    position: relative;
-    display: grid;
-    grid-template-columns: 76px minmax(0, 1fr);
-    align-self: start;
-    align-items: start;
-    gap: 14px;
-    min-width: 0;
-    padding: 14px 82px 14px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.045);
-  }
-
-  .slot-copy {
-    display: contents;
-  }
-
-  .rumble-slot-card--bench {
-    background: rgba(255, 255, 255, 0.03);
-  }
-
-  .opponent-empty-slot {
-    grid-template-columns: minmax(0, 1fr);
-    align-content: center;
-    gap: 6px;
-    min-height: 132px;
-    padding: 18px;
-    border-style: dashed;
-    color: #fff8ee;
-    cursor: pointer;
-    font: inherit;
-    text-align: left;
-  }
-
-  .opponent-empty-slot span,
-  .opponent-empty-slot strong {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  .opponent-empty-slot span {
-    color: rgba(246, 241, 232, 0.62);
-    font-size: 0.76rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .opponent-empty-slot strong {
-    color: #f8d36b;
-    font-size: 0.95rem;
-  }
+.opponent-empty-slot strong {
+  color: #f8d36b;
+  font-size: 0.95rem;
 }

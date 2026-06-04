@@ -1,38 +1,32 @@
-:host {
-  display: contents;
+.slot-buff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(86px, auto));
+  align-items: start;
+  justify-content: start;
+  gap: 6px;
 }
 
-:host ::ng-deep {
-  .slot-buff-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(86px, auto));
-    align-items: start;
-    justify-content: start;
-    gap: 6px;
-  }
+.slot-buff-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  min-width: 86px;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+}
 
-  .slot-buff-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 5px;
-    min-width: 86px;
-    padding: 4px 7px;
-    border-radius: 7px;
-    background: rgba(255, 255, 255, 0.06);
-    white-space: nowrap;
-  }
+.slot-buff-chip span {
+  overflow-wrap: normal;
+  color: rgba(246, 241, 232, 0.68);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
 
-  .slot-buff-chip span {
-    overflow-wrap: normal;
-    color: rgba(246, 241, 232, 0.68);
-    font-size: 0.68rem;
-    font-weight: 800;
-  }
-
-  .slot-buff-chip strong {
-    overflow-wrap: normal;
-    color: #ffffff;
-    font-size: 0.74rem;
-  }
+.slot-buff-chip strong {
+  overflow-wrap: normal;
+  color: #ffffff;
+  font-size: 0.74rem;
 }

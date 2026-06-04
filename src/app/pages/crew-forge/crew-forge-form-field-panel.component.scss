@@ -1,61 +1,59 @@
-:host ::ng-deep {
-  .catalog-controls {
-    display: grid;
-    gap: 16px;
-    grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(180px, 1fr));
-    align-items: end;
-  }
+.catalog-controls {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(180px, 1fr));
+  align-items: end;
+}
 
-  .field,
-  .toggle-field {
-    display: grid;
-    gap: 8px;
-  }
+.field,
+.toggle-field {
+  display: grid;
+  gap: 8px;
+}
 
-  .field input,
-  .checkbox-field {
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.04);
-    color: #fff8ee;
-  }
+.field input,
+.checkbox-field {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff8ee;
+}
 
-  .field input {
-    min-height: 44px;
-    padding: 10px 12px;
-    font: inherit;
-  }
+.field input {
+  min-height: 44px;
+  padding: 10px 12px;
+  font: inherit;
+}
 
-  .checkbox-field {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
-  }
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
 
-  .field span {
-    color: rgba(246, 241, 232, 0.72);
-    font-size: 0.76rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
+.field span {
+  color: rgba(246, 241, 232, 0.72);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 
-  .toggle-field {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    padding: 10px 14px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
+.toggle-field {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-  .toggle-field strong {
-    color: #fff8ee;
-  }
+.toggle-field strong {
+  color: #fff8ee;
+}
 
-  .toggle-field small,
-  .checkbox-field span {
-    color: rgba(246, 241, 232, 0.64);
-  }
+.toggle-field small,
+.checkbox-field span {
+  color: rgba(246, 241, 232, 0.64);
 }

@@ -1,47 +1,41 @@
-:host {
-  display: contents;
+.coverage-grid,
+.coverage-block,
+.factor-list {
+  display: grid;
+  gap: 8px;
 }
 
-:host ::ng-deep {
-  .coverage-grid,
-  .coverage-block,
-  .factor-list {
-    display: grid;
-    gap: 8px;
-  }
+.coverage-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
 
-  .coverage-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
+.factor-list {
+  color: rgba(246, 241, 232, 0.78);
+}
 
-  .factor-list {
-    color: rgba(246, 241, 232, 0.78);
-  }
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
-  .chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+.reason-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid rgba(247, 191, 84, 0.26);
+  border-radius: 999px;
+  background: rgba(247, 191, 84, 0.12);
+  color: #f8d36b;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
 
-  .reason-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    max-width: 100%;
-    padding: 7px 10px;
-    border: 1px solid rgba(247, 191, 84, 0.26);
-    border-radius: 999px;
-    background: rgba(247, 191, 84, 0.12);
-    color: #f8d36b;
-    font-size: 0.78rem;
-    overflow-wrap: anywhere;
-  }
-
-  .reason-chip--muted {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(246, 241, 232, 0.68);
-  }
+.reason-chip--muted {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(246, 241, 232, 0.68);
 }

@@ -1,31 +1,29 @@
-:host ::ng-deep {
-  .detail-shell {
-    display: grid;
-    gap: 16px;
-  }
+.detail-shell {
+  display: grid;
+  gap: 16px;
+}
 
-  .loading-card {
-    display: inline-flex;
-    gap: 12px;
-    align-items: center;
-    padding: 18px 20px;
-    color: #f8fbff;
-  }
+.loading-card {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  padding: 18px 20px;
+  color: #f8fbff;
+}
 
-  .transfer-feedback {
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
+.transfer-feedback {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
-  .transfer-feedback--error {
-    border-color: rgba(255, 120, 120, 0.45);
-  }
+.transfer-feedback--error {
+  border-color: rgba(255, 120, 120, 0.45);
+}
 
-  .transfer-feedback--success {
-    border-color: rgba(123, 242, 176, 0.45);
-  }
+.transfer-feedback--success {
+  border-color: rgba(123, 242, 176, 0.45);
+}
 
-  .group-section {
-    display: grid;
-    gap: 10px;
-  }
+.group-section {
+  display: grid;
+  gap: 10px;
 }

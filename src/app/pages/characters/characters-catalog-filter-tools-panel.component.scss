@@ -1,53 +1,47 @@
-:host {
-  display: contents;
+.filter-group span {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-:host ::ng-deep {
-  .filter-group span {
-    color: rgba(248, 251, 255, 0.72);
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.filter-selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
 
-  .filter-selection {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-  }
+.filter-selection span {
+  color: #f8fbff;
+  font-size: 0.84rem;
+  letter-spacing: normal;
+  text-transform: none;
+}
 
-  .filter-selection span {
-    color: #f8fbff;
-    font-size: 0.84rem;
-    letter-spacing: normal;
-    text-transform: none;
-  }
+.filter-clear {
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e9f1ff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+}
 
-  .filter-clear {
-    padding: 6px 9px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
-    color: #e9f1ff;
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.76rem;
-  }
+.filter-clear:hover {
+  border-color: rgba(245, 200, 76, 0.36);
+}
 
-  .filter-clear:hover {
-    border-color: rgba(245, 200, 76, 0.36);
-  }
+.filter-clear:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
 
-  .filter-clear:focus-visible {
-    outline: 2px solid rgba(245, 200, 76, 0.72);
-    outline-offset: 2px;
-  }
-
-  .filter-selection .filter-clear {
-    border-color: rgba(245, 200, 76, 0.42);
-    background: rgba(245, 200, 76, 0.18);
-    color: #f5c84c;
-  }
+.filter-selection .filter-clear {
+  border-color: rgba(245, 200, 76, 0.42);
+  background: rgba(245, 200, 76, 0.18);
+  color: #f5c84c;
 }

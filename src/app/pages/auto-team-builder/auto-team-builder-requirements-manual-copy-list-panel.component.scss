@@ -1,71 +1,65 @@
-:host {
-  display: contents;
+.manual-copy-list,
+.manual-copy-target-grid {
+  display: grid;
+  gap: 8px;
 }
 
-:host ::ng-deep {
-  .manual-copy-list,
-  .manual-copy-target-grid {
-    display: grid;
-    gap: 8px;
-  }
+.manual-copy-item,
+.manual-copy-target {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
 
-  .manual-copy-item,
-  .manual-copy-target {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-    padding: 10px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.04);
-  }
+.manual-copy-item {
+  grid-template-columns: auto 42px minmax(0, 1fr);
+}
 
-  .manual-copy-item {
-    grid-template-columns: auto 42px minmax(0, 1fr);
-  }
+.manual-copy-item img {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: cover;
+}
 
-  .manual-copy-item img {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    object-fit: cover;
-  }
+.manual-copy-item span,
+.manual-copy-target__copy strong,
+.manual-copy-target__copy small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
-  .manual-copy-item span,
-  .manual-copy-target__copy strong,
-  .manual-copy-target__copy small {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
+.manual-copy-item span,
+.manual-copy-target__copy strong {
+  color: #f8fbff;
+  font-weight: 700;
+  line-height: 1.35;
+}
 
-  .manual-copy-item span,
-  .manual-copy-target__copy strong {
-    color: #f8fbff;
-    font-weight: 700;
-    line-height: 1.35;
-  }
+.manual-copy-target__copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
 
-  .manual-copy-target__copy {
-    display: grid;
-    gap: 3px;
-    min-width: 0;
-  }
+.manual-copy-target__copy small {
+  color: rgba(248, 251, 255, 0.62);
+  line-height: 1.4;
+}
 
-  .manual-copy-target__copy small {
-    color: rgba(248, 251, 255, 0.62);
-    line-height: 1.4;
-  }
+.manual-copy-target--source {
+  opacity: 0.62;
+}
 
-  .manual-copy-target--source {
-    opacity: 0.62;
-  }
-
-  .manual-copy-modal__actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 10px 16px;
-  }
+.manual-copy-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 16px;
 }

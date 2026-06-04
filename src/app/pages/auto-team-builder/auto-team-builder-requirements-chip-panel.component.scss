@@ -1,72 +1,66 @@
-:host {
-  display: contents;
+.ability-requirements-selected-row {
+  margin-top: 0;
 }
 
-:host ::ng-deep {
-  .ability-requirements-selected-row {
-    margin-top: 0;
-  }
+.ability-requirement-chip {
+  cursor: default;
+}
 
-  .ability-requirement-chip {
-    cursor: default;
-  }
+.ability-requirement-chip--mechanic {
+  border-color: rgba(255, 186, 116, 0.34);
+  background: rgba(255, 186, 116, 0.12);
+  color: #ffd7a5;
+}
 
-  .ability-requirement-chip--mechanic {
-    border-color: rgba(255, 186, 116, 0.34);
-    background: rgba(255, 186, 116, 0.12);
-    color: #ffd7a5;
-  }
+.ability-visual-chip {
+  display: inline-grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 42px;
+  padding: 5px 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
 
-  .ability-visual-chip {
-    display: inline-grid;
-    justify-items: center;
-    gap: 2px;
-    min-width: 42px;
-    padding: 5px 6px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.05);
-  }
+.ability-visual-chip ion-icon {
+  font-size: 0.92rem;
+}
 
-  .ability-visual-chip ion-icon {
-    font-size: 0.92rem;
-  }
+.ability-visual-chip small {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
 
-  .ability-visual-chip small {
-    font-size: 0.58rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-  }
+.ability-visual-chip[data-tone='gold'] {
+  color: #f5c84c;
+}
 
-  .ability-visual-chip[data-tone='gold'] {
-    color: #f5c84c;
-  }
+.ability-visual-chip[data-tone='red'] {
+  color: #ff9d81;
+}
 
-  .ability-visual-chip[data-tone='red'] {
-    color: #ff9d81;
-  }
+.ability-visual-chip[data-tone='teal'] {
+  color: #65d4d4;
+}
 
-  .ability-visual-chip[data-tone='teal'] {
-    color: #65d4d4;
-  }
+.ability-visual-chip[data-tone='blue'] {
+  color: #7eb9ff;
+}
 
-  .ability-visual-chip[data-tone='blue'] {
-    color: #7eb9ff;
-  }
+.ability-visual-chip[data-tone='violet'] {
+  color: #c4a3ff;
+}
 
-  .ability-visual-chip[data-tone='violet'] {
-    color: #c4a3ff;
-  }
+.ability-visual-chip[data-tone='green'] {
+  color: #8ee38e;
+}
 
-  .ability-visual-chip[data-tone='green'] {
-    color: #8ee38e;
-  }
+.ability-visual-chip[data-tone='orange'] {
+  color: #ffba74;
+}
 
-  .ability-visual-chip[data-tone='orange'] {
-    color: #ffba74;
-  }
-
-  .ability-visual-chip[data-tone='neutral'] {
-    color: rgba(248, 251, 255, 0.76);
-  }
+.ability-visual-chip[data-tone='neutral'] {
+  color: rgba(248, 251, 255, 0.76);
 }

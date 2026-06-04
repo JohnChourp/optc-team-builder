@@ -1,62 +1,56 @@
-:host {
-  display: contents;
+@media (max-width: 860px) {
+  .catalog-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .catalog-summary h1 {
+    white-space: normal;
+  }
+
+  .catalog-summary__meta {
+    flex-wrap: wrap;
+  }
+
+  .rumble-filter-grid,
+  .buff-focus-lanes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-:host ::ng-deep {
-  @media (max-width: 860px) {
-    .catalog-summary {
-      align-items: flex-start;
-      flex-direction: column;
-    }
-
-    .catalog-summary h1 {
-      white-space: normal;
-    }
-
-    .catalog-summary__meta {
-      flex-wrap: wrap;
-    }
-
-    .rumble-filter-grid,
-    .buff-focus-lanes {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+@media (max-width: 540px) {
+  .rumble-filter-grid,
+  .buff-focus-lanes {
+    grid-template-columns: 1fr;
   }
 
-  @media (max-width: 540px) {
-    .rumble-filter-grid,
-    .buff-focus-lanes {
-      grid-template-columns: 1fr;
-    }
-
-    .rumble-character-card__link {
-      grid-template-columns: 82px minmax(0, 1fr);
-    }
-
-    .rumble-character-card__link img {
-      width: 82px;
-      height: 110px;
-    }
-
-    .metrics-row {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .rumble-character-card__link {
+    grid-template-columns: 82px minmax(0, 1fr);
   }
 
-  @media (max-width: 400px) {
-    .rumble-character-card__link {
-      grid-template-columns: 64px minmax(0, 1fr);
-      min-height: 0;
-      padding: 10px;
-    }
+  .rumble-character-card__link img {
+    width: 82px;
+    height: 110px;
+  }
 
-    .rumble-character-card__link img {
-      width: 64px;
-      height: 86px;
-    }
+  .metrics-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
-    .rumble-character-card__content {
-      padding-right: 28px;
-    }
+@media (max-width: 400px) {
+  .rumble-character-card__link {
+    grid-template-columns: 64px minmax(0, 1fr);
+    min-height: 0;
+    padding: 10px;
+  }
+
+  .rumble-character-card__link img {
+    width: 64px;
+    height: 86px;
+  }
+
+  .rumble-character-card__content {
+    padding-right: 28px;
   }
 }

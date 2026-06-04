@@ -1210,7 +1210,6 @@
                                                   ) {
                                                     <div
                                                       class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--manual-characters manual-candidate-list--compact"
-                                                      (scroll)="onManualCharacterListScroll($event)"
                                                     >
                                                       @for (
                                                         candidateCard of manualCandidateCards();
@@ -1259,11 +1258,6 @@
                                                         </button>
                                                       }
                                                     </div>
-                                                    @if (manualCandidatesLoadingMore()) {
-                                                      <div class="manual-candidate-loading-more">
-                                                        <ion-spinner name="crescent"></ion-spinner>
-                                                      </div>
-                                                    }
                                                   }
                                                   @if (
                                                     manualCandidateCards().length &&
@@ -1271,7 +1265,6 @@
                                                   ) {
                                                     <div
                                                       class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--manual-characters"
-                                                      (scroll)="onManualCharacterListScroll($event)"
                                                     >
                                                       @for (
                                                         candidateCard of manualCandidateCards();
@@ -1407,11 +1400,36 @@
                                                         </article>
                                                       }
                                                     </div>
-                                                    @if (manualCandidatesLoadingMore()) {
-                                                      <div class="manual-candidate-loading-more">
-                                                        <ion-spinner name="crescent"></ion-spinner>
-                                                      </div>
-                                                    }
+                                                  }
+                                                  @if (
+                                                    manualCandidateCards().length &&
+                                                    manualCandidatesHasMore()
+                                                  ) {
+                                                    <div class="manual-candidate-loading-more">
+                                                      <ion-button
+                                                        type="button"
+                                                        fill="outline"
+                                                        color="light"
+                                                        class="manual-candidate-load-more-button"
+                                                        [disabled]="manualCandidatesLoadingMore()"
+                                                        (click)="
+                                                          loadMoreManualCharacterCandidates()
+                                                        "
+                                                      >
+                                                        @if (manualCandidatesLoadingMore()) {
+                                                          <ion-spinner
+                                                            name="crescent"
+                                                          ></ion-spinner>
+                                                        }
+                                                        <span>{{
+                                                          t('manual.actions.loadMoreCharacters')
+                                                        }}</span>
+                                                      </ion-button>
+                                                    </div>
+                                                  } @else if (manualCandidatesLoadingMore()) {
+                                                    <div class="manual-candidate-loading-more">
+                                                      <ion-spinner name="crescent"></ion-spinner>
+                                                    </div>
                                                   }
                                                 } @else {
                                                   <ion-searchbar
@@ -2022,9 +2040,6 @@
                                                   ) {
                                                     <div
                                                       class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--exclude-characters manual-candidate-list--compact"
-                                                      (scroll)="
-                                                        onExcludedCharacterListScroll($event)
-                                                      "
                                                     >
                                                       @for (
                                                         candidateCard of excludedCharacterCards();
@@ -2073,11 +2088,6 @@
                                                         </button>
                                                       }
                                                     </div>
-                                                    @if (excludedCandidatesLoadingMore()) {
-                                                      <div class="manual-candidate-loading-more">
-                                                        <ion-spinner name="crescent"></ion-spinner>
-                                                      </div>
-                                                    }
                                                   }
                                                   @if (
                                                     excludedCharacterCards().length &&
@@ -2085,9 +2095,6 @@
                                                   ) {
                                                     <div
                                                       class="manual-candidate-list manual-candidate-list--sidebar manual-candidate-list--characters manual-candidate-list--exclude-characters"
-                                                      (scroll)="
-                                                        onExcludedCharacterListScroll($event)
-                                                      "
                                                     >
                                                       @for (
                                                         candidateCard of excludedCharacterCards();
@@ -2202,11 +2209,36 @@
                                                         </article>
                                                       }
                                                     </div>
-                                                    @if (excludedCandidatesLoadingMore()) {
-                                                      <div class="manual-candidate-loading-more">
-                                                        <ion-spinner name="crescent"></ion-spinner>
-                                                      </div>
-                                                    }
+                                                  }
+                                                  @if (
+                                                    excludedCharacterCards().length &&
+                                                    excludedCandidatesHasMore()
+                                                  ) {
+                                                    <div class="manual-candidate-loading-more">
+                                                      <ion-button
+                                                        type="button"
+                                                        fill="outline"
+                                                        color="light"
+                                                        class="manual-candidate-load-more-button"
+                                                        [disabled]="excludedCandidatesLoadingMore()"
+                                                        (click)="
+                                                          loadMoreExcludedCharacterCandidates()
+                                                        "
+                                                      >
+                                                        @if (excludedCandidatesLoadingMore()) {
+                                                          <ion-spinner
+                                                            name="crescent"
+                                                          ></ion-spinner>
+                                                        }
+                                                        <span>{{
+                                                          t('exclude.actions.loadMoreCharacters')
+                                                        }}</span>
+                                                      </ion-button>
+                                                    </div>
+                                                  } @else if (excludedCandidatesLoadingMore()) {
+                                                    <div class="manual-candidate-loading-more">
+                                                      <ion-spinner name="crescent"></ion-spinner>
+                                                    </div>
                                                   }
                                                 } @else {
                                                   <ion-searchbar

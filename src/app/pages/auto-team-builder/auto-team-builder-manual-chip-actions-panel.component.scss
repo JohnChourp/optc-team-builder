@@ -1,45 +1,39 @@
-:host {
-  display: contents;
+.manual-lock-chip__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 }
 
-:host ::ng-deep {
-  .manual-lock-chip__actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: auto;
-  }
+.manual-lock-chip__icon-button {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba(245, 200, 76, 0.28);
+  border-radius: 50%;
+  background: rgba(245, 200, 76, 0.12);
+  color: #f5c84c;
+  cursor: pointer;
+}
 
-  .manual-lock-chip__icon-button {
-    display: inline-grid;
-    place-items: center;
-    flex: 0 0 auto;
-    width: 22px;
-    height: 22px;
-    padding: 0;
-    border: 1px solid rgba(245, 200, 76, 0.28);
-    border-radius: 50%;
-    background: rgba(245, 200, 76, 0.12);
-    color: #f5c84c;
-    cursor: pointer;
-  }
+.manual-lock-chip__icon-button ion-icon {
+  font-size: 0.82rem;
+}
 
-  .manual-lock-chip__icon-button ion-icon {
-    font-size: 0.82rem;
-  }
+.manual-lock-chip__icon-button:disabled,
+.manual-lock-chip__icon-button--disabled {
+  cursor: default;
+  opacity: 0.48;
+  pointer-events: none;
+}
 
-  .manual-lock-chip__icon-button:disabled,
-  .manual-lock-chip__icon-button--disabled {
-    cursor: default;
-    opacity: 0.48;
-    pointer-events: none;
-  }
-
-  .manual-lock-chip img {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    object-fit: cover;
-  }
+.manual-lock-chip img {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
 }

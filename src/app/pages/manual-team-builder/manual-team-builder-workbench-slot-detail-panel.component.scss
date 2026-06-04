@@ -1,90 +1,84 @@
-:host {
-  display: contents;
+.manual-team-slot__body,
+.manual-team-slot__head,
+.manual-team-slot__head > span,
+.manual-team-branch-control {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
 }
 
-:host ::ng-deep {
-  .manual-team-slot__body,
-  .manual-team-slot__head,
-  .manual-team-slot__head > span,
-  .manual-team-branch-control {
-    display: grid;
-    gap: 8px;
-    min-width: 0;
-  }
+.manual-team-slot__head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
 
-  .manual-team-slot__head {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-  }
+.manual-team-slot__head strong,
+.manual-team-slot__head small {
+  overflow-wrap: anywhere;
+}
 
-  .manual-team-slot__head strong,
-  .manual-team-slot__head small {
-    overflow-wrap: anywhere;
-  }
+.manual-team-slot__head small {
+  color: rgba(248, 251, 255, 0.76);
+  line-height: 1.35;
+}
 
-  .manual-team-slot__head small {
-    color: rgba(248, 251, 255, 0.76);
-    line-height: 1.35;
-  }
+.manual-team-slot__actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 
-  .manual-team-slot__actions {
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
+.manual-team-slot__edit,
+.manual-team-slot__clear {
+  min-height: 32px;
+  margin: 0;
+  --padding-start: 8px;
+  --padding-end: 8px;
+}
 
-  .manual-team-slot__edit,
-  .manual-team-slot__clear {
-    min-height: 32px;
-    margin: 0;
-    --padding-start: 8px;
-    --padding-end: 8px;
-  }
+.manual-team-slot__meta,
+.manual-team-slot__stats,
+.manual-team-scope-chip-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
 
-  .manual-team-slot__meta,
-  .manual-team-slot__stats,
-  .manual-team-scope-chip-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    min-width: 0;
-  }
+.manual-team-slot__meta small,
+.manual-team-slot__stats span,
+.manual-team-scope-chip-row small {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow-wrap: anywhere;
+}
 
-  .manual-team-slot__meta small,
-  .manual-team-slot__stats span,
-  .manual-team-scope-chip-row small {
-    padding: 4px 7px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.07);
-    overflow-wrap: anywhere;
-  }
+.manual-team-slot__stats span {
+  color: rgba(248, 251, 255, 0.82);
+  font-weight: 700;
+}
 
-  .manual-team-slot__stats span {
-    color: rgba(248, 251, 255, 0.82);
-    font-weight: 700;
-  }
+.manual-team-slot__ability {
+  display: -webkit-box;
+  margin: 0;
+  color: rgba(248, 251, 255, 0.7);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
 
-  .manual-team-slot__ability {
-    display: -webkit-box;
-    margin: 0;
-    color: rgba(248, 251, 255, 0.7);
-    font-size: 0.78rem;
-    line-height: 1.4;
-    overflow: hidden;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-  }
+.manual-team-branch-control ion-select {
+  width: 100%;
+}
 
-  .manual-team-branch-control ion-select {
-    width: 100%;
-  }
-
-  .manual-team-scope-chip-row small {
-    background: rgba(76, 201, 240, 0.13);
-    color: #74d9f5;
-    font-size: 0.68rem;
-  }
+.manual-team-scope-chip-row small {
+  background: rgba(76, 201, 240, 0.13);
+  color: #74d9f5;
+  font-size: 0.68rem;
 }

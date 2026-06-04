@@ -1,66 +1,60 @@
-:host {
-  display: contents;
-}
-
-:host ::ng-deep {
-  @media (max-width: 860px) {
-    .drive-review-modal {
-      --width: 96vw;
-      --height: 90vh;
-      --max-height: 90vh;
-      --border-radius: 16px;
-    }
-
-    .drive-sync-hero,
-    .account-hero,
-    .section-head,
-    .drive-review-row {
-      grid-template-columns: 1fr;
-    }
-
-    .account-actions {
-      justify-content: flex-start;
-    }
-
-    .section-head {
-      display: grid;
-    }
+@media (max-width: 860px) {
+  .drive-review-modal {
+    --width: 96vw;
+    --height: 90vh;
+    --max-height: 90vh;
+    --border-radius: 16px;
   }
 
-  @media (max-width: 679px) {
-    .account-hero,
-    .drive-sync-hero,
-    .drive-sync-card {
-      padding: 14px;
-    }
+  .drive-sync-hero,
+  .account-hero,
+  .section-head,
+  .drive-review-row {
+    grid-template-columns: 1fr;
+  }
 
-    .account-avatar {
-      width: 56px;
-      font-size: 1.1rem;
-    }
+  .account-actions {
+    justify-content: flex-start;
+  }
 
-    .account-avatar--icon ion-icon {
-      font-size: 1.85rem;
-    }
+  .section-head {
+    display: grid;
+  }
+}
 
-    .account-actions ion-button {
-      flex: 1 1 auto;
-    }
+@media (max-width: 679px) {
+  .account-hero,
+  .drive-sync-hero,
+  .drive-sync-card {
+    padding: 14px;
+  }
 
-    .drive-review-shell {
-      padding: 12px;
-    }
+  .account-avatar {
+    width: 56px;
+    font-size: 1.1rem;
+  }
 
-    .drive-review-row {
-      padding: 10px;
-    }
+  .account-avatar--icon ion-icon {
+    font-size: 1.85rem;
+  }
 
-    .drive-review-actions {
-      justify-content: stretch;
-    }
+  .account-actions ion-button {
+    flex: 1 1 auto;
+  }
 
-    .drive-review-actions ion-button {
-      flex: 1 1 auto;
-    }
+  .drive-review-shell {
+    padding: 12px;
+  }
+
+  .drive-review-row {
+    padding: 10px;
+  }
+
+  .drive-review-actions {
+    justify-content: stretch;
+  }
+
+  .drive-review-actions ion-button {
+    flex: 1 1 auto;
   }
 }

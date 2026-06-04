@@ -1,47 +1,41 @@
-:host {
-  display: contents;
+.manual-team-picker__filters {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-:host ::ng-deep {
-  .manual-team-picker__filters {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: end;
-    padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.03);
-  }
+.manual-team-picker-filter {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
 
-  .manual-team-picker-filter {
-    display: grid;
-    gap: 6px;
-    min-width: 0;
-  }
+.manual-team-picker-filter span {
+  color: rgba(248, 251, 255, 0.68);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
 
-  .manual-team-picker-filter span {
-    color: rgba(248, 251, 255, 0.68);
-    font-size: 0.72rem;
-    font-weight: 800;
-    line-height: 1.25;
-    text-transform: uppercase;
-  }
+ion-input,
+ion-textarea,
+ion-select {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-color: rgba(255, 255, 255, 0.14);
+  --border-radius: 16px;
+  --color: #f8fbff;
+  --highlight-color-focused: rgba(245, 200, 76, 0.8);
+}
 
-  ion-input,
-  ion-textarea,
-  ion-select {
-    --background: rgba(255, 255, 255, 0.06);
-    --border-color: rgba(255, 255, 255, 0.14);
-    --border-radius: 16px;
-    --color: #f8fbff;
-    --highlight-color-focused: rgba(245, 200, 76, 0.8);
-  }
-
-  ion-searchbar {
-    --background: rgba(255, 255, 255, 0.06);
-    --border-radius: 16px;
-    --clear-button-color: rgba(248, 251, 255, 0.7);
-    --color: #f8fbff;
-    --placeholder-color: rgba(248, 251, 255, 0.6);
-    padding: 0;
-  }
+ion-searchbar {
+  --background: rgba(255, 255, 255, 0.06);
+  --border-radius: 16px;
+  --clear-button-color: rgba(248, 251, 255, 0.7);
+  --color: #f8fbff;
+  --placeholder-color: rgba(248, 251, 255, 0.6);
+  padding: 0;
 }

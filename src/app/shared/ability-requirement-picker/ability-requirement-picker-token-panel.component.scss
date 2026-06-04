@@ -1,63 +1,57 @@
-:host {
-  display: contents;
+.ability-picker-segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  min-height: 56px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-:host ::ng-deep {
-  .ability-picker-segmented {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 4px;
-    min-height: 56px;
-    padding: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.05);
-  }
+.ability-picker-segmented__button {
+  min-width: 0;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(248, 251, 255, 0.7);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.15;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
 
-  .ability-picker-segmented__button {
-    min-width: 0;
-    padding: 8px 6px;
-    border: 0;
-    border-radius: 12px;
-    background: transparent;
-    color: rgba(248, 251, 255, 0.7);
-    font: inherit;
-    font-size: 0.76rem;
-    font-weight: 800;
-    line-height: 1.15;
-    transition:
-      background 160ms ease,
-      color 160ms ease;
-  }
+.ability-picker-segmented__button--selected {
+  background: rgba(245, 200, 76, 0.16);
+  color: #f5d16d;
+}
 
-  .ability-picker-segmented__button--selected {
-    background: rgba(245, 200, 76, 0.16);
-    color: #f5d16d;
-  }
+.ability-picker-token-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
-  .ability-picker-token-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+.ability-picker-token {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(248, 251, 255, 0.82);
+  font: inherit;
+  font-size: 0.78rem;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
 
-  .ability-picker-token {
-    padding: 8px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(248, 251, 255, 0.82);
-    font: inherit;
-    font-size: 0.78rem;
-    transition:
-      border-color 160ms ease,
-      background 160ms ease,
-      color 160ms ease;
-  }
-
-  .ability-picker-token--selected {
-    border-color: rgba(245, 200, 76, 0.42);
-    background: rgba(245, 200, 76, 0.14);
-    color: #f5d16d;
-  }
+.ability-picker-token--selected {
+  border-color: rgba(245, 200, 76, 0.42);
+  background: rgba(245, 200, 76, 0.14);
+  color: #f5d16d;
 }

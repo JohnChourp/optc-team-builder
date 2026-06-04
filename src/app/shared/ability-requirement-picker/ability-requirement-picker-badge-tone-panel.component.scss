@@ -1,65 +1,59 @@
-:host {
-  display: contents;
+.ability-picker-tile__badge[data-tone='gold'],
+.ability-picker-mini-badge[data-tone='gold'] {
+  color: #f5c84c;
 }
 
-:host ::ng-deep {
-  .ability-picker-tile__badge[data-tone='gold'],
-  .ability-picker-mini-badge[data-tone='gold'] {
-    color: #f5c84c;
-  }
+.ability-picker-tile__badge[data-tone='red'],
+.ability-picker-mini-badge[data-tone='red'] {
+  color: #ff9d81;
+}
 
-  .ability-picker-tile__badge[data-tone='red'],
-  .ability-picker-mini-badge[data-tone='red'] {
-    color: #ff9d81;
-  }
+.ability-picker-tile__badge[data-tone='teal'],
+.ability-picker-mini-badge[data-tone='teal'] {
+  color: #65d4d4;
+}
 
-  .ability-picker-tile__badge[data-tone='teal'],
-  .ability-picker-mini-badge[data-tone='teal'] {
-    color: #65d4d4;
-  }
+.ability-picker-tile__badge[data-tone='blue'],
+.ability-picker-mini-badge[data-tone='blue'] {
+  color: #7eb9ff;
+}
 
-  .ability-picker-tile__badge[data-tone='blue'],
-  .ability-picker-mini-badge[data-tone='blue'] {
-    color: #7eb9ff;
-  }
+.ability-picker-tile__badge[data-tone='violet'],
+.ability-picker-mini-badge[data-tone='violet'] {
+  color: #c4a3ff;
+}
 
-  .ability-picker-tile__badge[data-tone='violet'],
-  .ability-picker-mini-badge[data-tone='violet'] {
-    color: #c4a3ff;
-  }
+.ability-picker-tile__badge[data-tone='green'],
+.ability-picker-mini-badge[data-tone='green'] {
+  color: #8ee38e;
+}
 
-  .ability-picker-tile__badge[data-tone='green'],
-  .ability-picker-mini-badge[data-tone='green'] {
-    color: #8ee38e;
-  }
+.ability-picker-tile__badge[data-tone='orange'],
+.ability-picker-mini-badge[data-tone='orange'] {
+  color: #ffba74;
+}
 
-  .ability-picker-tile__badge[data-tone='orange'],
-  .ability-picker-mini-badge[data-tone='orange'] {
-    color: #ffba74;
-  }
+.ability-picker-tile__badge[data-tone='neutral'] {
+  color: rgba(248, 251, 255, 0.76);
+}
 
-  .ability-picker-tile__badge[data-tone='neutral'] {
-    color: rgba(248, 251, 255, 0.76);
-  }
+.ability-picker-mini-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 
-  .ability-picker-mini-badge-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .ability-picker-mini-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    padding: 3px 6px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(248, 251, 255, 0.78);
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-  }
+.ability-picker-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
 }

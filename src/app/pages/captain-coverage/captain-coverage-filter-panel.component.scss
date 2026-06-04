@@ -1,24 +1,22 @@
-:host ::ng-deep {
-  .results-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 10px;
-  }
+.results-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+}
 
-  .coverage-search {
-    --background: rgba(255, 255, 255, 0.08);
-    --border-radius: 16px;
-    --box-shadow: none;
-    --color: #f8fbff;
-    --placeholder-color: rgba(248, 251, 255, 0.54);
-    flex: 1 1 260px;
-    min-width: min(100%, 240px);
-    padding: 0;
-  }
+.coverage-search {
+  --background: rgba(255, 255, 255, 0.08);
+  --border-radius: 16px;
+  --box-shadow: none;
+  --color: #f8fbff;
+  --placeholder-color: rgba(248, 251, 255, 0.54);
+  flex: 1 1 260px;
+  min-width: min(100%, 240px);
+  padding: 0;
+}
 
-  .captain-coverage-filter-row {
-    flex: 999 1 760px;
-    min-width: min(100%, 620px);
-  }
+.captain-coverage-filter-row {
+  flex: 999 1 760px;
+  min-width: min(100%, 620px);
 }

@@ -1,69 +1,63 @@
-:host {
-  display: contents;
+.import-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(76, 201, 240, 0.12);
+  color: #d8f7ff;
 }
 
-:host ::ng-deep {
-  .import-file-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    width: fit-content;
-    max-width: 100%;
-    padding: 10px 14px;
-    border-radius: 999px;
-    background: rgba(76, 201, 240, 0.12);
-    color: #d8f7ff;
-  }
+.import-file-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  .import-file-chip span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.import-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 22px;
+}
 
-  .import-feedback {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 14px 16px;
-    border-radius: 22px;
-  }
+.import-feedback ion-icon {
+  margin-top: 2px;
+  font-size: 1.1rem;
+}
 
-  .import-feedback ion-icon {
-    margin-top: 2px;
-    font-size: 1.1rem;
-  }
+.import-feedback strong {
+  color: #ffffff;
+}
 
-  .import-feedback strong {
-    color: #ffffff;
-  }
+.import-feedback div,
+.import-feedback span {
+  color: rgba(248, 251, 255, 0.7);
+  line-height: 1.6;
+}
 
-  .import-feedback div,
-  .import-feedback span {
-    color: rgba(248, 251, 255, 0.7);
-    line-height: 1.6;
-  }
+.import-feedback div {
+  display: grid;
+  gap: 4px;
+}
 
-  .import-feedback div {
-    display: grid;
-    gap: 4px;
-  }
+.import-feedback--ready {
+  background: rgba(76, 201, 240, 0.1);
+  border: 1px solid rgba(76, 201, 240, 0.22);
+}
 
-  .import-feedback--ready {
-    background: rgba(76, 201, 240, 0.1);
-    border: 1px solid rgba(76, 201, 240, 0.22);
-  }
+.import-feedback--ready ion-icon {
+  color: #4cc9f0;
+}
 
-  .import-feedback--ready ion-icon {
-    color: #4cc9f0;
-  }
+.import-feedback--error {
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.24);
+}
 
-  .import-feedback--error {
-    background: rgba(230, 57, 70, 0.12);
-    border: 1px solid rgba(230, 57, 70, 0.24);
-  }
-
-  .import-feedback--error ion-icon {
-    color: #ff8b95;
-  }
+.import-feedback--error ion-icon {
+  color: #ff8b95;
 }

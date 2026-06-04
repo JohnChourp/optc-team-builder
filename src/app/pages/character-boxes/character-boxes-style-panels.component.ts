@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 
 const projectedTemplate = '<ng-content></ng-content>';
 const panelHost = { class: 'character-boxes-style-panel', style: 'display: contents;' };
@@ -23,6 +23,7 @@ const stylePanelsTemplate = `
 @Component({
   selector: 'app-character-boxes-shell-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-boxes-shell-panel.component.scss',
   host: panelHost,
@@ -32,6 +33,7 @@ export class CharacterBoxesShellPanelComponent {}
 @Component({
   selector: 'app-character-boxes-box-list-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-boxes-box-list-panel.component.scss',
   host: panelHost,
@@ -41,6 +43,7 @@ export class CharacterBoxesBoxListPanelComponent {}
 @Component({
   selector: 'app-character-boxes-editor-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-boxes-editor-panel.component.scss',
   host: panelHost,
@@ -50,6 +53,7 @@ export class CharacterBoxesEditorPanelComponent {}
 @Component({
   selector: 'app-character-boxes-character-link-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-boxes-character-link-panel.component.scss',
   host: panelHost,
@@ -59,6 +63,7 @@ export class CharacterBoxesCharacterLinkPanelComponent {}
 @Component({
   selector: 'app-character-boxes-character-list-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-boxes-character-list-panel.component.scss',
   host: panelHost,
@@ -68,6 +73,7 @@ export class CharacterBoxesCharacterListPanelComponent {}
 @Component({
   selector: 'app-character-boxes-character-grid-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-boxes-character-grid-panel.component.scss',
   host: panelHost,
@@ -77,6 +83,7 @@ export class CharacterBoxesCharacterGridPanelComponent {}
 @Component({
   selector: 'app-character-boxes-responsive-panel',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
   styleUrl: './character-boxes-responsive-panel.component.scss',
   host: panelHost,
@@ -86,6 +93,7 @@ export class CharacterBoxesResponsivePanelComponent {}
 @Component({
   selector: 'app-character-boxes-style-panels',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [
     CharacterBoxesBoxListPanelComponent,
     CharacterBoxesCharacterGridPanelComponent,

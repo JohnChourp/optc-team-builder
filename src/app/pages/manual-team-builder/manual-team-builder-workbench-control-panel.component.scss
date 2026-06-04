@@ -1,72 +1,66 @@
-:host {
-  display: contents;
+.manual-team-control,
+.manual-team-summary-metric,
+.manual-team-validation,
+.manual-team-clear-zone {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-:host ::ng-deep {
-  .manual-team-control,
-  .manual-team-summary-metric,
-  .manual-team-validation,
-  .manual-team-clear-zone {
-    display: grid;
-    gap: 10px;
-    padding: 12px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.03);
-  }
+.manual-team-control > div,
+.manual-team-summary-metric {
+  min-width: 0;
+}
 
-  .manual-team-control > div,
-  .manual-team-summary-metric {
-    min-width: 0;
-  }
+.manual-team-control span,
+.manual-team-picker__meta small,
+.manual-team-candidate__copy span,
+.manual-team-summary-metric span,
+.manual-team-validation span,
+.manual-team-slot__meta small,
+.manual-team-slot__stats span,
+.manual-team-branch-control span {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
 
-  .manual-team-control span,
-  .manual-team-picker__meta small,
-  .manual-team-candidate__copy span,
-  .manual-team-summary-metric span,
-  .manual-team-validation span,
-  .manual-team-slot__meta small,
-  .manual-team-slot__stats span,
-  .manual-team-branch-control span {
-    color: rgba(248, 251, 255, 0.62);
-    font-size: 0.78rem;
-    line-height: 1.35;
-  }
+.manual-team-control span,
+.manual-team-summary-metric span,
+.manual-team-branch-control span {
+  font-weight: 700;
+  text-transform: uppercase;
+}
 
-  .manual-team-control span,
-  .manual-team-summary-metric span,
-  .manual-team-branch-control span {
-    font-weight: 700;
-    text-transform: uppercase;
-  }
+.manual-team-control strong,
+.manual-team-picker__meta strong,
+.manual-team-candidate__copy strong,
+.manual-team-summary-metric strong,
+.manual-team-validation strong {
+  color: #ffffff;
+}
 
-  .manual-team-control strong,
-  .manual-team-picker__meta strong,
-  .manual-team-candidate__copy strong,
-  .manual-team-summary-metric strong,
-  .manual-team-validation strong {
-    color: #ffffff;
-  }
+.manual-team-summary-metric strong {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.4rem;
+  line-height: 1.05;
+}
 
-  .manual-team-summary-metric strong {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.4rem;
-    line-height: 1.05;
-  }
+.manual-team-summary-metric small {
+  color: rgba(248, 251, 255, 0.58);
+  line-height: 1.35;
+}
 
-  .manual-team-summary-metric small {
-    color: rgba(248, 251, 255, 0.58);
-    line-height: 1.35;
-  }
+.manual-team-control ion-button {
+  justify-self: start;
+  margin: 0;
+}
 
-  .manual-team-control ion-button {
-    justify-self: start;
-    margin: 0;
-  }
-
-  .manual-team-cost-error {
-    color: #ff9aa4;
-    font-size: 0.78rem;
-    line-height: 1.4;
-  }
+.manual-team-cost-error {
+  color: #ff9aa4;
+  font-size: 0.78rem;
+  line-height: 1.4;
 }

@@ -1,78 +1,72 @@
-:host {
-  display: contents;
+.ship-picker-preview-card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
 }
 
-:host ::ng-deep {
-  .ship-picker-preview-card {
-    display: grid;
-    align-content: start;
-    gap: 14px;
-  }
+.ship-picker-preview-card__image {
+  aspect-ratio: 1;
+}
 
-  .ship-picker-preview-card__image {
-    aspect-ratio: 1;
-  }
+.ship-picker-preview-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 
-  .ship-picker-preview-card__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
+.ship-picker-preview-card__copy small {
+  color: rgba(245, 200, 76, 0.84);
+  line-height: 1.5;
+}
 
-  .ship-picker-preview-card__copy small {
-    color: rgba(245, 200, 76, 0.84);
-    line-height: 1.5;
-  }
+.ship-picker-footer ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+  padding: 12px 18px 14px;
+}
 
-  .ship-picker-footer ion-toolbar {
-    --background: transparent;
-    --border-width: 0;
-    padding: 12px 18px 14px;
-  }
+.ship-picker-footer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 
-  .ship-picker-footer__actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-  }
+.ship-picker-favorite-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(10, 12, 18, 0.72);
+  color: rgba(245, 200, 76, 0.92);
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease,
+    color 160ms ease;
+}
 
-  .ship-picker-favorite-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border: 0;
-    border-radius: 999px;
-    background: rgba(10, 12, 18, 0.72);
-    color: rgba(245, 200, 76, 0.92);
-    cursor: pointer;
-    transition:
-      background 160ms ease,
-      transform 160ms ease,
-      color 160ms ease;
-  }
+.ship-picker-favorite-button:hover {
+  background: rgba(245, 200, 76, 0.16);
+  transform: translateY(-1px);
+}
 
-  .ship-picker-favorite-button:hover {
-    background: rgba(245, 200, 76, 0.16);
-    transform: translateY(-1px);
-  }
+.ship-picker-favorite-button:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
 
-  .ship-picker-favorite-button:focus-visible {
-    outline: 2px solid rgba(245, 200, 76, 0.72);
-    outline-offset: 2px;
-  }
+.ship-picker-favorite-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
 
-  .ship-picker-favorite-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.56;
-  }
-
-  .ship-picker-card .ship-picker-favorite-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1;
-  }
+.ship-picker-card .ship-picker-favorite-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
 }

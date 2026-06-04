@@ -1,15 +1,9 @@
-:host {
-  display: contents;
-}
+@media (min-width: 768px) {
+  .character-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-:host ::ng-deep {
-  @media (min-width: 768px) {
-    .character-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .character-grid.character-grid--compact {
-      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-    }
+  .character-grid.character-grid--compact {
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
   }
 }

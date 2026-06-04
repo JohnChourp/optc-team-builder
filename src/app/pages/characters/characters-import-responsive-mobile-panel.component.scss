@@ -1,44 +1,38 @@
-:host {
-  display: contents;
-}
+@media (max-width: 640px) {
+  .catalog-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
 
-:host ::ng-deep {
-  @media (max-width: 640px) {
-    .catalog-summary {
-      align-items: stretch;
-      flex-direction: column;
-    }
+  .catalog-summary__title,
+  .catalog-summary__meta {
+    justify-content: space-between;
+  }
 
-    .catalog-summary__title,
-    .catalog-summary__meta {
-      justify-content: space-between;
-    }
+  .catalog-summary h1 {
+    white-space: normal;
+  }
 
-    .catalog-summary h1 {
-      white-space: normal;
-    }
+  .ability-filter-rail {
+    grid-template-columns: repeat(4, minmax(72px, 1fr));
+  }
 
-    .ability-filter-rail {
-      grid-template-columns: repeat(4, minmax(72px, 1fr));
-    }
+  .active-filter-strip {
+    grid-template-columns: 1fr;
+  }
 
-    .active-filter-strip {
-      grid-template-columns: 1fr;
-    }
+  .favorites-tools-head,
+  .import-modal-head,
+  .import-modal-actions {
+    align-items: stretch;
+  }
 
-    .favorites-tools-head,
-    .import-modal-head,
-    .import-modal-actions {
-      align-items: stretch;
-    }
+  .favorites-tools-actions,
+  .import-modal-actions {
+    justify-content: stretch;
+  }
 
-    .favorites-tools-actions,
-    .import-modal-actions {
-      justify-content: stretch;
-    }
-
-    .import-stats-grid {
-      grid-template-columns: 1fr;
-    }
+  .import-stats-grid {
+    grid-template-columns: 1fr;
   }
 }

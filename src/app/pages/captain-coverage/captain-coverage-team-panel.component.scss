@@ -1,40 +1,38 @@
-:host ::ng-deep {
-  .meta-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 12px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #f8fbff;
-    font-size: 0.84rem;
-  }
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fbff;
+  font-size: 0.84rem;
+}
 
-  .team-budget-panel {
-    display: grid;
-    gap: 16px;
-  }
+.team-budget-panel {
+  display: grid;
+  gap: 16px;
+}
 
-  .team-budget-controls {
-    display: grid;
-    gap: 12px;
-  }
+.team-budget-controls {
+  display: grid;
+  gap: 12px;
+}
 
-  .team-budget-summary {
-    display: grid;
-    gap: 4px;
-    padding: 12px;
-    border: 1px solid rgba(245, 200, 76, 0.22);
-    border-radius: 14px;
-    background: rgba(245, 200, 76, 0.09);
-  }
+.team-budget-summary {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(245, 200, 76, 0.22);
+  border-radius: 14px;
+  background: rgba(245, 200, 76, 0.09);
+}
 
-  .team-budget-summary span,
-  .team-budget-summary small {
-    color: rgba(248, 251, 255, 0.66);
-  }
+.team-budget-summary span,
+.team-budget-summary small {
+  color: rgba(248, 251, 255, 0.66);
+}
 
-  .team-budget-summary strong {
-    color: #f8fbff;
-  }
+.team-budget-summary strong {
+  color: #f8fbff;
 }

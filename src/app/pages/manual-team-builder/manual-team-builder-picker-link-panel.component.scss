@@ -1,72 +1,66 @@
-:host {
-  display: contents;
+.character-detail-thumb-link {
+  display: block;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border: 1px solid rgba(245, 200, 76, 0.44);
+  border-radius: 12px;
+  background: rgba(245, 200, 76, 0.1);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
-:host ::ng-deep {
-  .character-detail-thumb-link {
-    display: block;
-    width: 48px;
-    height: 48px;
-    overflow: hidden;
-    border: 1px solid rgba(245, 200, 76, 0.44);
-    border-radius: 12px;
-    background: rgba(245, 200, 76, 0.1);
-    cursor: pointer;
-    transition:
-      border-color 160ms ease,
-      box-shadow 160ms ease,
-      transform 160ms ease;
-  }
+.character-detail-thumb-link:hover,
+.character-detail-thumb-link:focus-visible {
+  border-color: rgba(245, 200, 76, 0.82);
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.12);
+  transform: scale(1.05);
+}
 
-  .character-detail-thumb-link:hover,
-  .character-detail-thumb-link:focus-visible {
-    border-color: rgba(245, 200, 76, 0.82);
-    box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.12);
-    transform: scale(1.05);
-  }
+.character-detail-thumb-link:focus-visible,
+.character-detail-name-link:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 3px;
+}
 
-  .character-detail-thumb-link:focus-visible,
-  .character-detail-name-link:focus-visible {
-    outline: 2px solid rgba(245, 200, 76, 0.72);
-    outline-offset: 3px;
-  }
+.character-detail-thumb-link img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.08);
+  object-fit: cover;
+}
 
-  .character-detail-thumb-link img {
-    display: block;
-    width: 48px;
-    height: 48px;
-    background: rgba(255, 255, 255, 0.08);
-    object-fit: cover;
-  }
+.character-detail-name-link {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  margin: -1px -4px -2px;
+  padding: 1px 4px 2px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid rgba(245, 200, 76, 0.48);
+  border-radius: 7px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+  transform-origin: left center;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
 
-  .character-detail-name-link {
-    display: inline-block;
-    width: fit-content;
-    max-width: 100%;
-    margin: -1px -4px -2px;
-    padding: 1px 4px 2px;
-    overflow-wrap: anywhere;
-    border-bottom: 1px solid rgba(245, 200, 76, 0.48);
-    border-radius: 7px;
-    color: #ffffff;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 700;
-    line-height: 1.35;
-    text-decoration: none;
-    transform-origin: left center;
-    transition:
-      background 160ms ease,
-      border-color 160ms ease,
-      color 160ms ease,
-      transform 160ms ease;
-  }
-
-  .character-detail-name-link:hover,
-  .character-detail-name-link:focus-visible {
-    border-color: rgba(245, 200, 76, 0.9);
-    background: rgba(245, 200, 76, 0.12);
-    color: #f5c84c;
-    transform: scale(1.03);
-  }
+.character-detail-name-link:hover,
+.character-detail-name-link:focus-visible {
+  border-color: rgba(245, 200, 76, 0.9);
+  background: rgba(245, 200, 76, 0.12);
+  color: #f5c84c;
+  transform: scale(1.03);
 }

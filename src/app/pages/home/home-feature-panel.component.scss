@@ -1,59 +1,53 @@
-:host {
-  display: contents;
+.home-section__head {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(260px, 1.1fr);
+  align-items: end;
+  gap: 18px;
 }
 
-:host ::ng-deep {
-  .home-section__head {
-    display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(260px, 1.1fr);
-    align-items: end;
-    gap: 18px;
-  }
+.home-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
 
-  .home-feature-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-  }
+.home-feature-card {
+  display: grid;
+  gap: 10px;
+  min-height: 178px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
 
-  .home-feature-card {
-    display: grid;
-    gap: 10px;
-    min-height: 178px;
-    padding: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.04);
-    color: inherit;
-    text-decoration: none;
-    transition:
-      transform 140ms ease,
-      border-color 140ms ease,
-      background 140ms ease;
-  }
+.home-feature-card:hover,
+.home-feature-card:focus-visible {
+  border-color: rgba(245, 200, 76, 0.36);
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-2px);
+  outline: none;
+}
 
-  .home-feature-card:hover,
-  .home-feature-card:focus-visible {
-    border-color: rgba(245, 200, 76, 0.36);
-    background: rgba(255, 255, 255, 0.07);
-    transform: translateY(-2px);
-    outline: none;
-  }
+.home-feature-card ion-icon {
+  flex: 0 0 auto;
+  color: #f5c84c;
+  font-size: 1.35rem;
+}
 
-  .home-feature-card ion-icon {
-    flex: 0 0 auto;
-    color: #f5c84c;
-    font-size: 1.35rem;
-  }
+.home-feature-card strong {
+  color: #ffffff;
+  font-weight: 700;
+}
 
-  .home-feature-card strong {
-    color: #ffffff;
-    font-weight: 700;
-  }
-
-  .home-feature-card span {
-    color: rgba(248, 251, 255, 0.68);
-    font-size: 0.93rem;
-    line-height: 1.55;
-  }
+.home-feature-card span {
+  color: rgba(248, 251, 255, 0.68);
+  font-size: 0.93rem;
+  line-height: 1.55;
 }

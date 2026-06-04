@@ -1,62 +1,60 @@
-:host ::ng-deep {
-  .panel-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 18px;
-  }
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
 
-  .panel-head h2 {
-    margin: 8px 0 0;
-    color: #f8fbff;
-  }
+.panel-head h2 {
+  margin: 8px 0 0;
+  color: #f8fbff;
+}
 
-  .panel-head p {
-    margin: 10px 0 0;
-    color: rgba(248, 251, 255, 0.66);
-    line-height: 1.6;
-  }
+.panel-head p {
+  margin: 10px 0 0;
+  color: rgba(248, 251, 255, 0.66);
+  line-height: 1.6;
+}
 
-  .panel-head--editor {
-    margin-bottom: 20px;
-  }
+.panel-head--editor {
+  margin-bottom: 20px;
+}
 
-  .box-list,
-  .character-list {
-    display: grid;
-    gap: 12px;
-  }
+.box-list,
+.character-list {
+  display: grid;
+  gap: 12px;
+}
 
-  .box-card {
-    display: grid;
-    gap: 10px;
-    width: 100%;
-    padding: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.04);
-    color: #f8fbff;
-    text-align: left;
-    cursor: pointer;
-    font: inherit;
-  }
+.box-card {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f8fbff;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
 
-  .box-card--active {
-    border-color: rgba(245, 200, 76, 0.42);
-    background: rgba(245, 200, 76, 0.12);
-  }
+.box-card--active {
+  border-color: rgba(245, 200, 76, 0.42);
+  background: rgba(245, 200, 76, 0.12);
+}
 
-  .box-card__title-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
+.box-card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 
-  .box-card__title-row span,
-  .box-card small,
-  .character-row small {
-    color: rgba(248, 251, 255, 0.68);
-  }
+.box-card__title-row span,
+.box-card small,
+.character-row small {
+  color: rgba(248, 251, 255, 0.68);
 }
