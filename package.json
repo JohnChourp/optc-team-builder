@@ -48,14 +48,14 @@
     "@angular/forms": "^21.2.12",
     "@angular/platform-browser": "^21.2.12",
     "@angular/router": "^21.2.12",
-    "@capacitor/android": "^8.3.3",
+    "@capacitor/android": "^8.4.0",
     "@capacitor/app": "^8.1.0",
-    "@capacitor/cli": "^8.3.3",
+    "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "^8.3.3",
-    "@capacitor/ios": "^8.3.3",
+    "@capacitor/ios": "^8.4.0",
     "@capacitor/preferences": "^8.0.1",
     "@capgo/capacitor-social-login": "^8.3.22",
-    "@ionic/angular": "^8.8.6",
+    "@ionic/angular": "^8.8.9",
     "@jsverse/transloco": "^8.3.0",
     "ionicons": "^8.0.13",
     "lottie-web": "^5.13.0",
@@ -71,10 +71,10 @@
     "@angular/compiler-cli": "^21.2.12",
     "@jsverse/transloco-utils": "^8.3.0",
     "@playwright/test": "^1.60.0",
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.2",
     "jsdom": "^29.1.1",
-    "knip": "^6.14.1",
+    "knip": "^6.16.1",
     "typescript": "5.9.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.8"
   }
 }
