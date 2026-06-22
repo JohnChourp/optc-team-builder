@@ -146,6 +146,50 @@ export function resolveCategoryAbilityMatchingCharacterIds(
   return [...(matchingIds ?? new Set<number>())].sort((left, right) => right - left);
 }
 
+export function resolveCaptainAbilityMatchingCharacterIds(
+  requirements: readonly AutoBuildAbilityRequirement[],
+  catalogItems: readonly AutoBuildAbilityCatalogItem[],
+): number[] | undefined {
+  const captainAbilityKeys = new Set(
+    getCaptainAbilityCatalogItems(catalogItems).map((item) => item.key),
+  );
+  const captainRequirements = requirements.filter(
+    (requirement) =>
+      captainAbilityKeys.has(requirement.abilityKey) &&
+      isCaptainAbilityRequirement(requirement),
+  );
+
+  if (captainRequirements.length === 0) {
+    return undefined;
+  }
+
+  const catalogMap = new Map(catalogItems.map((item) => [item.key, item] as const));
+  const groupedRequirements = groupCategoryRequirements(captainRequirements);
+  let matchingIds: Set<number> | null = null;
+
+  for (const requirements of groupedRequirements) {
+    const itemIds = resolveRequirementGroupMatchingCharacterIds(requirements, catalogMap, true);
+
+    if (itemIds.length === 0) {
+      return [];
+    }
+
+    const itemIdSet = new Set<number>(itemIds);
+    const currentIds: number[] =
+      matchingIds === null
+        ? itemIds
+        : [...matchingIds].filter((characterId) => itemIdSet.has(characterId));
+
+    matchingIds = new Set<number>(currentIds);
+
+    if (matchingIds.size === 0) {
+      return [];
+    }
+  }
+
+  return [...(matchingIds ?? new Set<number>())].sort((left, right) => right - left);
+}
+
 function groupCategoryRequirements(
   requirements: readonly AutoBuildAbilityRequirement[],
 ): AutoBuildAbilityRequirement[][] {
@@ -168,13 +212,14 @@ function groupCategoryRequirements(
 function resolveRequirementGroupMatchingCharacterIds(
   requirements: readonly AutoBuildAbilityRequirement[],
   catalogMap: ReadonlyMap<string, AutoBuildAbilityCatalogItem>,
+  useCaptainAbilityIds = false,
 ): number[] {
   const groupIds = new Set<number>();
 
   for (const requirement of requirements) {
     const catalogItem = catalogMap.get(requirement.abilityKey);
     const itemIds = catalogItem
-      ? resolveRequirementMatchingCharacterIds(catalogItem, requirement)
+      ? resolveRequirementMatchingCharacterIds(catalogItem, requirement, useCaptainAbilityIds)
       : [];
 
     itemIds.forEach((characterId) => groupIds.add(characterId));
@@ -186,16 +231,29 @@ function resolveRequirementGroupMatchingCharacterIds(
 function resolveRequirementMatchingCharacterIds(
   catalogItem: AutoBuildAbilityCatalogItem,
   requirement: AutoBuildAbilityRequirement,
+  useCaptainAbilityIds = false,
 ): number[] {
   const minTurns = normalizeAbilityRequirementTurns(requirement.minTurns);
+  const hasCaptainAbilityIds =
+    useCaptainAbilityIds && catalogItem.captainAbilityMatchingCharacterIds !== undefined;
+  const matchingCharacterIds = useCaptainAbilityIds
+    ? hasCaptainAbilityIds
+      ? catalogItem.captainAbilityMatchingCharacterIds!
+      : (catalogItem.matchingCharacterIds ?? [])
+    : (catalogItem.matchingCharacterIds ?? []);
+  const turnMatchingCharacterIds = useCaptainAbilityIds
+    ? hasCaptainAbilityIds
+      ? (catalogItem.captainAbilityTurnMatchingCharacterIds ?? [])
+      : (catalogItem.turnMatchingCharacterIds ?? [])
+    : (catalogItem.turnMatchingCharacterIds ?? []);
 
   if (minTurns === null) {
-    return catalogItem.matchingCharacterIds ?? [];
+    return matchingCharacterIds;
   }
 
   return [
     ...new Set(
-      (catalogItem.turnMatchingCharacterIds ?? [])
+      turnMatchingCharacterIds
         .filter((bucket) => bucket.minTurns >= minTurns)
         .flatMap((bucket) => bucket.characterIds),
     ),

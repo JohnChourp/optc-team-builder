@@ -49,13 +49,18 @@ import {
   type AbilityRequirementDraft,
 } from '../../core/services/ability-requirement-draft.utils';
 import {
+  createCaptainAbilityDrafts,
   getAbilityCatalogItemsByCategory,
+  getCaptainAbilityCatalogItems,
   intersectAbilityMatchingCharacterIds,
+  resolveCaptainAbilityMatchingCharacterIds,
   resolveCategoryAbilityMatchingCharacterIds,
   resolveSpecialAbilityMatchingCharacterIds,
+  serializeCaptainAbilityDrafts,
   serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
+import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import {
   AbilityFilterRailComponent,
@@ -120,6 +125,7 @@ interface AbilityFilterGroupView {
     CharacterFilterRowComponent,
     CharactersCatalogPanelComponent,
     CharactersImportPanelComponent,
+    AbilityRequirementPickerComponent,
     SpecialAbilityPickerComponent,
     RouterLink,
     TranslocoDirective,
@@ -144,6 +150,8 @@ export class CharactersPage implements OnInit {
   public readonly hideFavorites = signal(false);
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
+  public readonly captainAbilityPickerOpen = signal(false);
+  public readonly captainAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -190,6 +198,9 @@ export class CharactersPage implements OnInit {
       this.filteredClassOptions().length > 0 && this.classQuery().trim() !== this.selectedClass(),
   );
   public readonly isCompactDisplayMode = computed(() => this.displayMode() === 'compact');
+  public readonly availableCaptainAbilityCatalogItems = computed(() =>
+    getCaptainAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+  );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
   );
@@ -201,6 +212,12 @@ export class CharactersPage implements OnInit {
   );
   public readonly availableSupportAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'support'),
+  );
+  public readonly captainAbilityRequirements = computed(() =>
+    serializeCaptainAbilityDrafts(
+      this.captainAbilityDrafts(),
+      this.availableCaptainAbilityCatalogItems(),
+    ),
   );
   public readonly specialAbilityRequirements = computed(() =>
     serializeSpecialAbilityDrafts(
@@ -227,6 +244,12 @@ export class CharactersPage implements OnInit {
       this.supportAbilityDrafts(),
       this.availableSupportAbilityCatalogItems(),
       'support',
+    ),
+  );
+  public readonly captainFilterCharacterIds = computed(() =>
+    resolveCaptainAbilityMatchingCharacterIds(
+      this.captainAbilityRequirements(),
+      this.availableCaptainAbilityCatalogItems(),
     ),
   );
   public readonly specialFilterCharacterIds = computed(() =>
@@ -259,6 +282,11 @@ export class CharactersPage implements OnInit {
   public readonly activeAbilityFilterGroups = computed<AbilityFilterGroupView[]>(() =>
     [
       this.buildAbilityFilterGroup(
+        'captainAbility',
+        this.captainAbilityDrafts(),
+        this.availableCaptainAbilityCatalogItems(),
+      ),
+      this.buildAbilityFilterGroup(
         'special',
         this.specialAbilityDrafts(),
         this.availableSpecialAbilityCatalogItems(),
@@ -281,6 +309,12 @@ export class CharactersPage implements OnInit {
     ].filter((group) => group.badges.length > 0),
   );
   public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => [
+    {
+      category: 'captainAbility',
+      label: this.i18n.translate('filters.captainAbility.eyebrow', undefined, 'characters'),
+      count: this.captainAbilityDrafts().length,
+      disabled: !this.availableCaptainAbilityCatalogItems().length,
+    },
     {
       category: 'special',
       label: this.i18n.translate('filters.special.eyebrow', undefined, 'characters'),
@@ -522,6 +556,35 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
+  public openCaptainAbilityPicker(): void {
+    if (!this.availableCaptainAbilityCatalogItems().length) {
+      return;
+    }
+
+    console.log('[CharactersPage] Captain Ability picker opened');
+    this.captainAbilityPickerOpen.set(true);
+  }
+
+  public closeCaptainAbilityPicker(): void {
+    this.captainAbilityPickerOpen.set(false);
+  }
+
+  public async saveCaptainAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.captainAbilityDrafts.set(
+      createCaptainAbilityDrafts(
+        serializeCaptainAbilityDrafts(drafts, this.availableCaptainAbilityCatalogItems()),
+        this.availableCaptainAbilityCatalogItems(),
+      ),
+    );
+    this.captainAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearCaptainAbilityFilters(): Promise<void> {
+    this.captainAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
   public openSpecialAbilityPicker(): void {
     if (!this.availableSpecialAbilityCatalogItems().length) {
       return;
@@ -650,6 +713,9 @@ export class CharactersPage implements OnInit {
       drafts.filter((draft) => draft.draftId !== draftId);
 
     switch (category) {
+      case 'captainAbility':
+        this.captainAbilityDrafts.update(updateDrafts);
+        break;
       case 'special':
         this.specialAbilityDrafts.update(updateDrafts);
         break;
@@ -669,6 +735,9 @@ export class CharactersPage implements OnInit {
 
   public async clearAbilityFilterCategory(category: CompactAbilityFilterCategory): Promise<void> {
     switch (category) {
+      case 'captainAbility':
+        await this.clearCaptainAbilityFilters();
+        break;
       case 'special':
         await this.clearSpecialAbilityFilters();
         break;
@@ -686,6 +755,9 @@ export class CharactersPage implements OnInit {
 
   public openAbilityFilterCategory(category: CompactAbilityFilterCategory): void {
     switch (category) {
+      case 'captainAbility':
+        this.openCaptainAbilityPicker();
+        break;
       case 'special':
         this.openSpecialAbilityPicker();
         break;
@@ -858,6 +930,8 @@ export class CharactersPage implements OnInit {
     this.hideFavorites.set(false);
     this.selectedSortMode.set('catalog');
     this.selectedIdOrder.set('newest');
+    this.captainAbilityPickerOpen.set(false);
+    this.captainAbilityDrafts.set([]);
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -932,6 +1006,7 @@ export class CharactersPage implements OnInit {
   private resolveAllowedCharacterIds(): number[] | undefined {
     const favoriteIds = this.favoritesOnly() ? this.favoriteIds() : undefined;
     return intersectAbilityMatchingCharacterIds([
+      this.captainFilterCharacterIds(),
       this.specialFilterCharacterIds(),
       this.crewmateFilterCharacterIds(),
       this.potentialFilterCharacterIds(),

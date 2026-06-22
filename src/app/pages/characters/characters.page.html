@@ -46,6 +46,17 @@
           (clearCategory)="clearAbilityFilterCategory($event)"
         ></app-ability-filter-rail>
 
+        <app-ability-requirement-picker
+          [isOpen]="captainAbilityPickerOpen()"
+          [title]="t('filters.captainAbility.title')"
+          [copy]="t('filters.captainAbility.copy')"
+          [drafts]="captainAbilityDrafts()"
+          [catalogItems]="availableCaptainAbilityCatalogItems()"
+          [showCharacterCount]="false"
+          (dismiss)="closeCaptainAbilityPicker()"
+          (saveDrafts)="saveCaptainAbilityPicker($event)"
+        ></app-ability-requirement-picker>
+
         <app-special-ability-picker
           [isOpen]="specialAbilityPickerOpen()"
           category="special"

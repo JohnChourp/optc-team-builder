@@ -52,6 +52,8 @@ export interface AutoBuildAbilityCatalogItem {
   matchCount: number;
   matchingCharacterIds?: number[];
   turnMatchingCharacterIds?: AutoBuildAbilityTurnMatchingCharacterIds[];
+  captainAbilityMatchingCharacterIds?: number[];
+  captainAbilityTurnMatchingCharacterIds?: AutoBuildAbilityTurnMatchingCharacterIds[];
   sampleCharacterIds: number[];
   sampleTexts: string[];
 }
