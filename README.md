@@ -22,6 +22,12 @@ The app does not scrape the live rendered website. It imports from the raw sourc
 
 ## Commands
 
+Required runtime:
+
+- Node.js `24.15.0` is pinned for local development in `.nvmrc` and `.node-version`.
+- Angular 22 also supports Node `^22.22.3` and `>=26.0.0`, as reflected in `package.json` engines.
+- If `ionic serve` or `npm run build` reports that Node `24.13.1` is unsupported, switch to a supported version first, for example `nvm install && nvm use`.
+
 Install dependencies:
 
 ```bash
