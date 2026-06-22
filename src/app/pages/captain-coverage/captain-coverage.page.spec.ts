@@ -1287,16 +1287,20 @@ describe('CaptainCoveragePage', () => {
   });
 
   it('keeps the result title from sharing the desktop auto column with filters', () => {
-    const styles = readFileSync(
-      resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage.page.scss'),
+    const tierStyles = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage-tier-panel.component.scss'),
+      'utf8',
+    );
+    const responsiveStyles = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage-responsive-panel.component.scss'),
       'utf8',
     );
 
-    expect(styles).toContain('.results-toolbar__heading,\n.coverage-ability-filters');
-    expect(styles).toContain('.results-toolbar__heading,\n  .coverage-ability-filters');
-    expect(styles).toContain('.results-toolbar__toggle-grid');
-    expect(styles).toContain('grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));');
-    expect(styles).toContain('grid-column: 1 / -1;');
+    expect(tierStyles).toContain('.results-toolbar__heading,\n.coverage-ability-filters');
+    expect(responsiveStyles).toContain('.results-toolbar__heading,\n  .coverage-ability-filters');
+    expect(tierStyles).toContain('.results-toolbar__toggle-grid');
+    expect(tierStyles).toContain('grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));');
+    expect(responsiveStyles).toContain('grid-column: 1 / -1;');
   });
 
   it('keeps Captain Coverage filter labels exact in English and Greek', () => {
