@@ -11,6 +11,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
   IonButtons: class {},
   IonContent: class {},
+  IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
@@ -108,6 +109,8 @@ describe('CharactersPage favorites tools', () => {
     expect(template).toContain('abilityFilterRailItems()');
     expect(template).toContain('openAbilityFilterCategory($event)');
     expect(template).toContain('clearAbilityFilterCategory($event)');
+    expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).toContain('captainAbilityPickerOpen()');
     expect(template).not.toContain('activeAbilityFilterGroups()');
     expect(template).not.toContain('removeAbilityFilterBadge');
     expect(template).toContain('characters-filter-toolbar');
@@ -142,17 +145,58 @@ describe('CharactersPage favorites tools', () => {
     page.abilityCatalog.set({
       abilities: [
         {
+          key: 'boost_orb',
+          label: 'Boost Orb',
+          category: 'special',
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['captainAbility'],
+          matchCount: 1,
+          matchingCharacterIds: [202],
+          captainAbilityMatchingCharacterIds: [202],
+          sampleCharacterIds: [],
+          sampleTexts: [],
+        },
+        {
           key: 'remove_bind',
           label: 'Remove Bind',
           category: 'special',
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['specialText'],
+          matchCount: 1,
+          matchingCharacterIds: [101],
+          sampleCharacterIds: [],
+          sampleTexts: [],
         },
         {
           key: 'crewmate_recover_paralysis',
           label: 'Status Effect Recovery: Paralysis',
           category: 'crewmate',
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['sailorAbilities'],
+          matchCount: 1,
+          matchingCharacterIds: [303],
+          sampleCharacterIds: [],
+          sampleTexts: [],
         },
       ],
     } as never);
+    page.captainAbilityDrafts.set([
+      {
+        draftId: 'captain-1',
+        abilityKey: 'boost_orb',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
     page.specialAbilityDrafts.set([
       {
         draftId: 'special-1',
@@ -175,6 +219,10 @@ describe('CharactersPage favorites tools', () => {
     expect(page.abilityFilterRailItems()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          category: 'captainAbility',
+          count: 1,
+        }),
+        expect.objectContaining({
           category: 'special',
           count: 1,
         }),
@@ -192,6 +240,13 @@ describe('CharactersPage favorites tools', () => {
         }),
       ]),
     );
+    expect(page.abilityFilterRailItems().map((item) => item.category)).toEqual([
+      'captainAbility',
+      'special',
+      'crewmate',
+      'potential',
+      'support',
+    ]);
   });
 
   it('clears a selected ability category from the rail and reloads results', async () => {
@@ -222,6 +277,53 @@ describe('CharactersPage favorites tools', () => {
       typeFilter: '',
       classFilter: '',
       allowedCharacterIds: undefined,
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 100,
+      offset: 0,
+    });
+  });
+
+  it('filters character searches with captain ability catalog matches', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    page.abilityCatalog.set({
+      abilities: [
+        {
+          key: 'boost_orb',
+          label: 'Boost Orb',
+          category: 'special',
+          supportsTurns: false,
+          supportsSlotTokens: false,
+          availableSlotTokens: [],
+          availableSources: ['captainAbility', 'specialText'],
+          matchCount: 3,
+          matchingCharacterIds: [101, 202, 303],
+          captainAbilityMatchingCharacterIds: [202],
+          sampleCharacterIds: [],
+          sampleTexts: [],
+        },
+      ],
+    } as never);
+
+    await page.saveCaptainAbilityPicker([
+      {
+        draftId: 'captain-1',
+        abilityKey: 'boost_orb',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
+
+    expect(page.captainAbilityDrafts()).toHaveLength(1);
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      allowedCharacterIds: [202],
       sortMode: 'catalog',
       idOrder: 'newest',
       limit: 100,
@@ -429,6 +531,17 @@ describe('CharactersPage favorites tools', () => {
     page.hideFavorites.set(true);
     page.selectedSortMode.set('nameDesc');
     page.selectedIdOrder.set('oldest');
+    page.captainAbilityDrafts.set([
+      {
+        draftId: 'captain-1',
+        abilityKey: 'boost_orb',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      },
+    ]);
     page.specialAbilityDrafts.set([
       {
         draftId: 'special-1',
@@ -482,6 +595,7 @@ describe('CharactersPage favorites tools', () => {
     expect(page.hideFavorites()).toBe(false);
     expect(page.selectedSortMode()).toBe('catalog');
     expect(page.selectedIdOrder()).toBe('newest');
+    expect(page.captainAbilityDrafts()).toEqual([]);
     expect(page.specialAbilityDrafts()).toEqual([]);
     expect(page.crewmateAbilityDrafts()).toEqual([]);
     expect(page.potentialAbilityDrafts()).toEqual([]);

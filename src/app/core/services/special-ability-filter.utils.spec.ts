@@ -6,6 +6,7 @@ import {
   getCaptainAbilityCatalogItems,
   getAbilityCatalogItemsByCategory,
   intersectAbilityMatchingCharacterIds,
+  resolveCaptainAbilityMatchingCharacterIds,
   resolveCategoryAbilityMatchingCharacterIds,
   resolveSpecialAbilityMatchingCharacterIds,
   serializeCategoryAbilityDrafts,
@@ -205,6 +206,65 @@ describe('special ability filter utils', () => {
         },
       ]).map((item) => item.key),
     ).toContain('territory');
+  });
+
+  it('resolves captain ability matches from captain-only catalog ids', () => {
+    const catalogItems: AutoBuildAbilityCatalogItem[] = [
+      ...CATALOG_ITEMS,
+      {
+        key: 'boost_orb',
+        label: 'Boost Orb',
+        category: 'special',
+        groupLabel: 'Boost Damage',
+        groupOrder: 1,
+        effectOrder: 2,
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['captainAbility', 'specialText'],
+        matchCount: 3,
+        matchingCharacterIds: [10, 20, 30],
+        turnMatchingCharacterIds: [
+          { minTurns: 1, characterIds: [10, 20] },
+          { minTurns: 2, characterIds: [30] },
+        ],
+        captainAbilityMatchingCharacterIds: [20],
+        captainAbilityTurnMatchingCharacterIds: [{ minTurns: 2, characterIds: [20] }],
+        sampleCharacterIds: [],
+        sampleTexts: [],
+      },
+    ];
+
+    expect(
+      resolveCaptainAbilityMatchingCharacterIds(
+        [
+          {
+            abilityKey: 'boost_orb',
+            minTurns: null,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'leader',
+            sourceScope: 'captainAbility',
+          },
+        ],
+        catalogItems,
+      ),
+    ).toEqual([20]);
+    expect(
+      resolveCaptainAbilityMatchingCharacterIds(
+        [
+          {
+            abilityKey: 'boost_orb',
+            minTurns: 2,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'leader',
+            sourceScope: 'captainAbility',
+          },
+        ],
+        catalogItems,
+      ),
+    ).toEqual([20]);
   });
 
   it('serializes category drafts with normalized strict-and fields', () => {

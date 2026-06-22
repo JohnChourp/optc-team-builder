@@ -1705,6 +1705,19 @@ export async function enrichCharactersWithBuilderAbilities(
           current.turnMatchingCharacterIds.set(minTurns, turnCharacterIds);
         }
 
+        if (ability.source === 'captainAbility') {
+          current.captainAbilityMatchingCharacterIds.add(character.id);
+
+          if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
+            const minTurns = Math.floor(ability.minTurns);
+            const turnCharacterIds =
+              current.captainAbilityTurnMatchingCharacterIds.get(minTurns) ?? new Set();
+
+            turnCharacterIds.add(character.id);
+            current.captainAbilityTurnMatchingCharacterIds.set(minTurns, turnCharacterIds);
+          }
+        }
+
         if (
           current.sampleCharacterIds.length < 5 &&
           !current.sampleCharacterIds.includes(character.id)
@@ -1776,6 +1789,25 @@ export async function enrichCharactersWithBuilderAbilities(
             minTurns,
             characterIds: [...characterIds].sort((left, right) => left - right),
           })),
+        ...(entry.captainAbilityMatchingCharacterIds.size
+          ? {
+              captainAbilityMatchingCharacterIds: [...entry.captainAbilityMatchingCharacterIds].sort(
+                (left, right) => left - right,
+              ),
+            }
+          : {}),
+        ...(entry.captainAbilityTurnMatchingCharacterIds.size
+          ? {
+              captainAbilityTurnMatchingCharacterIds: [
+                ...entry.captainAbilityTurnMatchingCharacterIds.entries(),
+              ]
+                .sort(([leftTurns], [rightTurns]) => leftTurns - rightTurns)
+                .map(([minTurns, characterIds]) => ({
+                  minTurns,
+                  characterIds: [...characterIds].sort((left, right) => left - right),
+                })),
+            }
+          : {}),
         sampleCharacterIds: [...entry.sampleCharacterIds],
         sampleTexts: [...entry.sampleTexts],
       };
@@ -1915,6 +1947,8 @@ function createCatalogAccumulator(key, label) {
     matchCount: 0,
     matchingCharacterIds: new Set(),
     turnMatchingCharacterIds: new Map(),
+    captainAbilityMatchingCharacterIds: new Set(),
+    captainAbilityTurnMatchingCharacterIds: new Map(),
     sampleCharacterIds: [],
     sampleTexts: [],
   };

@@ -22,6 +22,15 @@
       "label": "Μόνο favorites",
       "withCount": "Περιορισμός αποτελεσμάτων στους {{count}} favorite χαρακτήρες σου."
     },
+    "captainAbility": {
+      "label": "Captain Ability filters",
+      "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν αυτά τα effects στο δικό τους Captain Ability.",
+      "open": "Άνοιγμα Captain Ability picker",
+      "clear": "Καθαρισμός",
+      "eyebrow": "Captain Ability",
+      "title": "Captain Ability filters",
+      "copy": "Φίλτραρε χαρακτήρες με βάση τα effects που έγιναν parse από το δικό τους Captain Ability."
+    },
     "special": {
       "label": "Special filters",
       "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",

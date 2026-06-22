@@ -22,6 +22,15 @@
       "label": "Show favorites only",
       "withCount": "Limit results to your {{count}} favorited characters."
     },
+    "captainAbility": {
+      "label": "Captain Ability filters",
+      "support": "{{count}} selected effects. Results must match those effects in each character's own Captain Ability.",
+      "open": "Open Captain Ability picker",
+      "clear": "Clear",
+      "eyebrow": "Captain Ability",
+      "title": "Captain Ability filters",
+      "copy": "Filter characters by effects parsed from each character's own Captain Ability."
+    },
     "special": {
       "label": "Special filters",
       "support": "{{count}} selected effects. Results must match every selected effect.",
