@@ -38705,7 +38705,7 @@ function createKidLeaderTeamRecords(): CharacterDetailRecord[] {
       detail: {
         captainAbility: kidCaptainAbility,
         specialText: 'Boosts ATK of [STR], Striker and Driven characters by 3x for 1 turn.',
-        characterTags: ['Kid Pirates', 'Worst Generation', 'Egghead Arc'],
+        characterTags: ['Kid Pirates', 'Worst Generation', 'Egghead Arc', 'Paramythia-type'],
         builderAbilities: [
           createBuilderAbility('remove_despair', 'Remove Despair', 10, 'captainAbility'),
         ],
@@ -38717,7 +38717,7 @@ function createKidLeaderTeamRecords(): CharacterDetailRecord[] {
       primaryClass: 'Shooter',
       detail: {
         specialText: 'Boosts ATK of STR characters by 2.5x for 1 turn.',
-        characterTags: ['Worst Generation'],
+        characterTags: ['Worst Generation', 'Paramythia-type'],
       },
     }),
     createCharacterRecord({
@@ -38726,7 +38726,7 @@ function createKidLeaderTeamRecords(): CharacterDetailRecord[] {
       primaryClass: 'Driven',
       detail: {
         specialText: 'Boosts orb effects of Driven characters by 2.25x for 1 turn.',
-        characterTags: ['Land of Wano Arc'],
+        characterTags: ['Land of Wano Arc', 'Paramythia-type'],
       },
     }),
     createCharacterRecord({
@@ -38735,7 +38735,7 @@ function createKidLeaderTeamRecords(): CharacterDetailRecord[] {
       primaryClass: 'Striker',
       detail: {
         specialText: 'Reduces Bind and Despair duration by 5 turns.',
-        characterTags: ['Egghead Arc'],
+        characterTags: ['Egghead Arc', 'Paramythia-type'],
       },
     }),
     createCharacterRecord({
@@ -38744,7 +38744,7 @@ function createKidLeaderTeamRecords(): CharacterDetailRecord[] {
       primaryClass: 'Driven',
       detail: {
         specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
-        characterTags: ['Kid Pirates'],
+        characterTags: ['Kid Pirates', 'Paramythia-type'],
       },
     }),
     createCharacterRecord({

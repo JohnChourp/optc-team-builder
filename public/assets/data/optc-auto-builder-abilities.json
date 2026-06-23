@@ -10725,13 +10725,13 @@
         {
           "characterId": 2415,
           "minEffectValue": 30,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
           "characterId": 2416,
           "minEffectValue": 70,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
@@ -10917,13 +10917,13 @@
         {
           "characterId": 2671,
           "minEffectValue": 20,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
           "characterId": 2672,
           "minEffectValue": 20,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
@@ -12003,13 +12003,13 @@
         {
           "characterId": 3751,
           "minEffectValue": 10,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
           "characterId": 3752,
           "minEffectValue": 10,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
@@ -12387,7 +12387,7 @@
         {
           "characterId": 4037,
           "minEffectValue": 20,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
@@ -12441,7 +12441,7 @@
         {
           "characterId": 4098,
           "minEffectValue": 15,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
@@ -12687,13 +12687,13 @@
         {
           "characterId": 4311,
           "minEffectValue": 10,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
           "characterId": 4312,
           "minEffectValue": 10,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
@@ -12807,7 +12807,7 @@
         {
           "characterId": 4449,
           "minEffectValue": 60,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {

@@ -1040,7 +1040,7 @@ function addCaptainDamageReductionMatches(abilities, seen, normalizedText) {
       source: 'captainAbility',
       coverageMode: DEFAULT_COVERAGE_MODE,
       minEffectValue,
-      effectTargetScope: resolveCaptainEffectTargetScope(clause, 'crew'),
+      effectTargetScope: resolveCaptainDamageReductionTargetScope(clause),
     });
   }
 }
@@ -1100,6 +1100,19 @@ function resolveCaptainEffectTargetScope(text, fallback = 'any') {
   }
 
   return fallback;
+}
+
+function resolveCaptainDamageReductionTargetScope(clause) {
+  const match = clause.match(
+    /\bdamage (?:received|taken)\b[^.;]{0,100}\bby\s+\d+(?:\.\d+)?%([^.;]*)/i,
+  );
+  const explicitTargetMatch = String(match?.[1] ?? '').match(
+    /^\s*(?:for|to|of)\s+((?:all characters?|crew|allies|captains?|this character|self|own|subs?|crewmates?|non-?captains?)(?:\b[^.;]*)?)/i,
+  );
+
+  return explicitTargetMatch
+    ? resolveCaptainEffectTargetScope(explicitTargetMatch[1], 'crew')
+    : 'crew';
 }
 
 function normalizeEffectValue(value) {

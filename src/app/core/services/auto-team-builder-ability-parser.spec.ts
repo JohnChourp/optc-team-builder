@@ -381,6 +381,20 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('keeps captain damage reduction crew-scoped when unrelated self text appears later', () => {
+    const abilities = analyzeBuilderAbilityText(
+      "Reduces damage received by 30%, boosts ATK of Driven characters by 2.25x and reduces this character's ATK by 90%.",
+      'captainAbility',
+    );
+
+    expect(abilities.find((ability) => ability.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({
+        minEffectValue: 30,
+        effectTargetScope: 'crew',
+      }),
+    );
+  });
+
   it('extracts Territory only from provider wording', () => {
     expect(
       analyzeBuilderAbilityText(

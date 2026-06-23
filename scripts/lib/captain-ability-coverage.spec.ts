@@ -553,6 +553,56 @@ describe('extractCoverageTiers', () => {
     });
   });
 
+  it('captures comma-separated bracketed crew tag lists on conditional tiers', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of [STR], Striker and Driven characters by 5x. If your crew has 4+ [Kid Pirates], [Worst Generation] or [Land of Wano Arc] characters or your crew has 6 [Kid Pirates], [Worst Generation] or [Egghead Arc] characters, boosts base ATK of [Paramythia-type] characters by 500.',
+    );
+
+    expect(tiers).toHaveLength(2);
+    expect(tiers[1]).toMatchObject({
+      tier: 2,
+      kind: 'conditional',
+      characterConditions: expect.objectContaining({
+        characterTags: ['Paramythia-type'],
+      }),
+      teamConditions: expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 4,
+          characterTags: ['Kid Pirates', 'Worst Generation', 'Land of Wano Arc'],
+        }),
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 6,
+          characterTags: ['Kid Pirates', 'Worst Generation', 'Egghead Arc'],
+        }),
+      ]),
+    });
+  });
+
+  it('captures character class composition without swallowing following boost text', () => {
+    const tiers = extractCoverageTiers(
+      'If your crew has 6 characters with Fighter, Slasher, Shooter or Striker classes, boosts ATK of all characters by 3x and their HP by 1.3x.',
+    );
+
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      kind: 'conditional',
+      characterConditions: expect.objectContaining({
+        universal: true,
+      }),
+      teamConditions: [
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 6,
+          classes: ['Fighter', 'Shooter', 'Slasher', 'Striker'],
+          rawClause: 'crew has 6 characters with Fighter, Slasher, Shooter or Striker classes',
+        }),
+      ],
+    });
+  });
+
   it('captures field/territory conditions on conditional tiers', () => {
     const tiers = extractCoverageTiers(
       'Boosts ATK of all characters by 1.5x. If field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x instead.',

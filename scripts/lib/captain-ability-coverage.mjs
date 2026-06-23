@@ -439,10 +439,14 @@ function escapeRegExp(value) {
 }
 
 const CREW_TEAM_CONDITION_PATTERN =
-  /\bcrew\s+has\s+(\d+)\s*(?:\+|or\s+more)?\s+(?!(?:or\s+more\s+)?characters?\s+(?:of|with)\s+the\s+same\s+Type\b)([^,.;]{1,220}?)\s+(?:characters|units)\b/gi;
+  /\bcrew\s+has\s+(\d+)\s*(?:\+|or\s+more)?\s+(?!(?:or\s+more\s+)?characters?\s+(?:of|with)\b)([^.;]{1,220}?)\s+(?:characters|units)\b(?=\s*(?:,|\bor\s+(?:your\s+)?crew\s+has\b|\band\b|$))/gi;
+const CREW_TEAM_CHARACTER_CLASS_PATTERN =
+  /\bcrew\s+has\s+(\d+)\s*(?:\+|or\s+more)?\s+characters?\s+(?:of|with)\s+(?!the\s+same\s+Type\b)([^.;]{1,220}?\bclasses?)\b/gi;
 // Alternative count phrasing: "you have N or more X characters in your crew".
 const CREW_TEAM_ALT_COUNT_PATTERN =
-  /\byou\s+have\s+(\d+)\s*(?:\+|or\s+more)?\s+(?!(?:or\s+more\s+)?characters?\s+(?:of|with)\s+the\s+same\s+Type\b)([^,.;]{1,220}?)\s+(?:characters|units)\s+in\s+your\s+crew\b/gi;
+  /\byou\s+have\s+(\d+)\s*(?:\+|or\s+more)?\s+(?!(?:or\s+more\s+)?characters?\s+(?:of|with)\b)([^.;]{1,220}?)\s+(?:characters|units)\s+in\s+your\s+crew\b/gi;
+const CREW_TEAM_ALT_CHARACTER_CLASS_PATTERN =
+  /\byou\s+have\s+(\d+)\s*(?:\+|or\s+more)?\s+characters?\s+(?:of|with)\s+(?!the\s+same\s+Type\b)([^.;]{1,220}?\bclasses?)\s+in\s+your\s+crew\b/gi;
 const CREW_TEAM_SAME_TYPE_PATTERN =
   /\b(?:your\s+)?crew\s+has\s+(\d+)\s*(?:\+|or\s+more)?\s+characters?\s+(?:of|with)\s+the\s+same\s+Type\b/gi;
 const CREW_TEAM_ALT_SAME_TYPE_PATTERN =
@@ -947,8 +951,16 @@ function buildConditionalCluster(sentence) {
   while ((match = CREW_TEAM_CONDITION_PATTERN.exec(sentence)) !== null) {
     teamConditions.push(parseCrewTeamCondition(match[1], match[2], match[0]));
   }
+  CREW_TEAM_CHARACTER_CLASS_PATTERN.lastIndex = 0;
+  while ((match = CREW_TEAM_CHARACTER_CLASS_PATTERN.exec(sentence)) !== null) {
+    teamConditions.push(parseCrewTeamCondition(match[1], match[2], match[0]));
+  }
   CREW_TEAM_ALT_COUNT_PATTERN.lastIndex = 0;
   while ((match = CREW_TEAM_ALT_COUNT_PATTERN.exec(sentence)) !== null) {
+    teamConditions.push(parseCrewTeamCondition(match[1], match[2], match[0]));
+  }
+  CREW_TEAM_ALT_CHARACTER_CLASS_PATTERN.lastIndex = 0;
+  while ((match = CREW_TEAM_ALT_CHARACTER_CLASS_PATTERN.exec(sentence)) !== null) {
     teamConditions.push(parseCrewTeamCondition(match[1], match[2], match[0]));
   }
   CREW_TEAM_RAINBOW_PATTERN.lastIndex = 0;

@@ -4651,7 +4651,9 @@ function matchesActiveLeaderCriteria(
 
   if (leaderCriteria.coverageMode === 'fullAbilityCoverage') {
     return (
-      branchAwareCoverageResults.every((coverage) => coverage.matches) && matchesDominantTypeScope
+      branchAwareCoverageResults.every(
+        (coverage) => coverage.targetableClauseCount === 0 || coverage.matches,
+      ) && matchesDominantTypeScope
     );
   }
 
@@ -4670,10 +4672,6 @@ function matchesActiveLeaderCriteria(
           : !result.hasSelfOnlyCoverage,
       ) && matchesDominantTypeScope
     );
-  }
-
-  if (simpleCoverageResults.some((result) => result.hasSelfOnlyCoverage)) {
-    return false;
   }
 
   const matchesClassScope = leaderCriteria.hasClassRestriction
