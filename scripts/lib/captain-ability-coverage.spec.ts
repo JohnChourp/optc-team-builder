@@ -157,40 +157,10 @@ describe('extractCoverageTiers', () => {
     expect(byRarity.get(6)?.characterConditions.rarityRange).toEqual({ min: 6, max: 6 });
   });
 
-  it('captures orb-chance bias ("Boosts chances of getting [X] orbs") as a tier effect', () => {
-    const tiers = extractCoverageTiers('Boosts chances of getting [RCV] orbs');
-    expect(tiers).toHaveLength(1);
-    expect(tiers[0]).toMatchObject({
-      tier: 1,
-      kind: 'baseline',
-    });
-    expect(tiers[0].clauses).toEqual(
-      expect.arrayContaining([expect.stringMatching(/chances of getting/i)]),
-    );
-  });
-
-  it('captures defeat-protection ("Protects from defeat as long as HP is above N%") as a tier effect', () => {
-    const tiers = extractCoverageTiers('Protects from defeat as long as HP is above 50%');
-    expect(tiers).toHaveLength(1);
-    expect(tiers[0]).toMatchObject({
-      tier: 1,
-      kind: 'baseline',
-    });
-    expect(tiers[0].clauses).toEqual(
-      expect.arrayContaining([expect.stringMatching(/Protects from defeat/i)]),
-    );
-  });
-
-  it('captures Chain Multiplier Growth Rate as a baseline tier effect', () => {
-    const tiers = extractCoverageTiers('Boosts Chain Multiplier Growth Rate by 4x');
-    expect(tiers).toHaveLength(1);
-    expect(tiers[0]).toMatchObject({
-      tier: 1,
-      kind: 'baseline',
-    });
-    expect(tiers[0].clauses).toEqual(
-      expect.arrayContaining([expect.stringMatching(/Chain\s+Multiplier\s+Growth\s+Rate/i)]),
-    );
+  it('does not emit tiers for utility-only captain effects', () => {
+    expect(extractCoverageTiers('Boosts chances of getting [RCV] orbs')).toEqual([]);
+    expect(extractCoverageTiers('Protects from defeat as long as HP is above 50%')).toEqual([]);
+    expect(extractCoverageTiers('Boosts Chain Multiplier Growth Rate by 4x')).toEqual([]);
   });
 
   it('captures rarity-max subset scope (Rarity N or less characters)', () => {
@@ -236,22 +206,68 @@ describe('extractCoverageTiers', () => {
     expect(tiers[0].triggerConditions).toEqual([]);
   });
 
-  it('routes default non-boost extras per tier scope (Imu-style fallback + subset)', () => {
+  it('splits additive base ATK character-tag boosts into their own stat tier', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of [INT] and Striker characters by 3.5x, boosts base ATK of [Giant] characters by 750, boosts HP of [INT] and Striker characters by 1.6x, reduces damage received by 10%, and makes [RCV] orbs beneficial for all characters.',
+    );
+
+    expect(tiers).toHaveLength(2);
+    expect(tiers[0]).toMatchObject({
+      tier: 1,
+      characterConditions: expect.objectContaining({
+        types: ['INT'],
+        classes: ['Striker'],
+        characterTags: [],
+      }),
+      atkBoost: 3.5,
+      hpBoost: 1.6,
+      clauses: [
+        'Boosts ATK of [INT] and Striker characters by 3.5x',
+        'boosts HP of [INT] and Striker characters by 1.6x',
+      ],
+    });
+    expect(tiers[1]).toMatchObject({
+      tier: 2,
+      characterConditions: expect.objectContaining({
+        types: [],
+        classes: [],
+        characterTags: ['Giant'],
+      }),
+      clauses: ['boosts base ATK of [Giant] characters by 750'],
+    });
+  });
+
+  it('does not treat bracketed Crew tags as universal captain scope', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of [New Giant Pirate Crew] characters by 1.1x, boosts ATK of [INT] and Striker characters by 4x, boosts base ATK of [Giant] characters by 750, boosts HP of [INT] and Striker characters by 1.6x, reduces damage received by 10%, and makes [INT] and [RCV] orbs beneficial for all characters.',
+    );
+
+    expect(tiers).toHaveLength(3);
+    expect(tiers[0]).toMatchObject({
+      scope: 'subset',
+      characterConditions: expect.objectContaining({
+        universal: false,
+        characterTags: ['New Giant Pirate Crew'],
+      }),
+      atkBoost: 1.1,
+    });
+    expect(tiers[2]).toMatchObject({
+      characterConditions: expect.objectContaining({
+        characterTags: ['Giant'],
+      }),
+      clauses: ['boosts base ATK of [Giant] characters by 750'],
+    });
+  });
+
+  it('keeps default tiers limited to ATK/HP boosts when utility extras are present', () => {
     const tiers = extractCoverageTiers(
       'Launches the following effect at start of fight: reduces Special Cooldown of Cost 70 or more characters by 34% of Max Cooldown (rounded down), reduces VS Gauge of all characters by 3. Boosts ATK of Cost 70 or more characters by 6x, boosts ATK of all other characters by 4x, boosts HP of all characters by 1.5x.',
     );
 
     expect(tiers).toHaveLength(2);
-
-    // Tier 1 (baseline, "all other") should NOT include the SCD Cost 70+ extra — those targets
-    // don't receive that effect.
-    expect(tiers[0]?.clauses.some((c) => /Special Cooldown of Cost 70/i.test(c))).toBe(false);
-    // The crew-wide VS Gauge clause does attach.
-    expect(tiers[0]?.clauses.some((c) => /VS Gauge of all characters/i.test(c))).toBe(true);
-
-    // Tier 2 (subset Cost 70+) DOES include the SCD Cost 70+ extra (scope overlap).
-    expect(tiers[1]?.clauses.some((c) => /Special Cooldown of Cost 70/i.test(c))).toBe(true);
-    expect(tiers[1]?.clauses.some((c) => /VS Gauge of all characters/i.test(c))).toBe(true);
+    expect(tiers.flatMap((tier) => tier.clauses).join(' ')).not.toMatch(
+      /Special Cooldown|VS Gauge/i,
+    );
   });
 
   it('produces 3 tiers for Imu-style captain ability', () => {
@@ -315,41 +331,20 @@ describe('extractCoverageTiers', () => {
     ).toBe(false);
   });
 
-  it('keeps flat damage reduction clauses (no HP dependency) on the tier', () => {
+  it('drops flat damage reduction clauses from stat tiers', () => {
     const tiers = extractCoverageTiers(
       'Boosts ATK of [STR] characters by 2x and reduces damage received by 20%',
     );
 
     expect(tiers).toHaveLength(1);
-    expect(tiers[0]?.clauses).toEqual(
-      expect.arrayContaining([expect.stringMatching(/reduces damage received by 20%/i)]),
-    );
+    expect(tiers[0]?.clauses).toEqual(['Boosts ATK of [STR] characters by 2x']);
   });
 
-  it('produces a tier for utility-only captains (SCD/Super Tandem in default branch, no ATK/HP)', () => {
+  it('does not produce a tier for utility-only captains', () => {
     const tiers = extractCoverageTiers(
       'Reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns, reduces Special Cooldown of [QCK] and Free Spirit characters by 2 turns, and reduces VS Gauge and Switch Effect of [QCK] and Free Spirit characters by 2.',
     );
-    expect(tiers).toHaveLength(1);
-    expect(tiers[0]).toMatchObject({
-      tier: 1,
-      kind: 'baseline',
-      characterConditions: expect.objectContaining({
-        types: expect.arrayContaining(['QCK']),
-        classes: expect.arrayContaining(['Free Spirit']),
-        characterTags: expect.arrayContaining([
-          'Blackbeard Pirates',
-          'Four Emperors',
-          'Worst Generation',
-        ]),
-      }),
-    });
-    expect(tiers[0].clauses).toEqual(
-      expect.arrayContaining([
-        expect.stringMatching(/reduces Special Cooldown of \[Blackbeard Pirates\]/i),
-        expect.stringMatching(/reduces Special Cooldown of \[QCK\] and Free Spirit/i),
-      ]),
-    );
+    expect(tiers).toEqual([]);
   });
 
   it('produces branch-state tiers for "Powered Up Captain:" / "Gear N Captain:" labels', () => {
@@ -403,23 +398,12 @@ describe('extractCoverageTiers', () => {
     expect(gear3?.atkBoost).toBe(3.5);
   });
 
-  it('captures conditional non-boost tier (e.g. "If crew has 4+ FS, reduces Special Use Limit -10")', () => {
+  it('does not create conditional tiers for non-boost effects', () => {
     const tiers = extractCoverageTiers(
       'Boosts ATK of all characters by 1.5x. If your crew has 4+ Free Spirit characters, reduces Special Use Limit duration by 10 turns.',
     );
-    expect(tiers).toHaveLength(2);
-    expect(tiers[1]).toMatchObject({
-      tier: 2,
-      kind: 'conditional',
-      teamConditions: expect.arrayContaining([
-        expect.objectContaining({
-          kind: 'crew-composition',
-          minCount: 4,
-          classes: ['Free Spirit'],
-        }),
-      ]),
-    });
-    expect(tiers[1].clauses[0]).toMatch(/reduces Special Use Limit duration by 10 turns/i);
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]?.clauses).toEqual(['Boosts ATK of all characters by 1.5x']);
   });
 
   it('captures negative crew presence ("there are no [X] or [Y]") team conditions', () => {
@@ -495,14 +479,8 @@ describe('extractCoverageTiers', () => {
           types: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
         }),
       ]),
-      baselineClauses: [
-        'Boosts HP of all characters by 1.25x',
-        'and makes badly matching orbs beneficial for all characters',
-      ],
-      conditionalClauses: [
-        'boosts ATK of all characters by 5.25x',
-        'and reduces Bind duration by 6 turns',
-      ],
+      baselineClauses: ['Boosts HP of all characters by 1.25x'],
+      conditionalClauses: ['boosts ATK of all characters by 5.25x'],
     });
   });
 

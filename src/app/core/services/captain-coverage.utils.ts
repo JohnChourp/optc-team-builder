@@ -75,7 +75,6 @@ export interface CaptainCoverageBranchOption extends CaptainCoverageBranchText {
   displayName: string;
 }
 
-const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates|crew)\b/i;
 const FALLBACK_OTHER_SCOPE_PATTERN = /\ball other (?:characters|units|crewmates)\b/i;
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
 const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
@@ -98,6 +97,8 @@ const CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
 const CAPTAIN_MULTIPLIER_PATTERN =
   /\bby\s+(?:a\s+further\s+|an?\s+additional\s+|another\s+)?\d+(?:\.\d+)?x\b/i;
+const CAPTAIN_BASE_STAT_BOOST_PATTERN =
+  /\bboosts?\s+base\b[^.;]*\b(?:ATK|HP)\b[^.;]*\bby\s+\d+(?:,\d{3})*\b/i;
 const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
   /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
 const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
@@ -842,9 +843,7 @@ function resolveSimpleCaptainBoostScopeClauses(
 
 function extractCaptainBoostScopeClauses(text: string, includeConditional: boolean): string[] {
   const boostClauses = splitCaptainEffectClauses(text.replace(BRANCH_LABEL_PATTERN, '. '))
-    .map(stripInlineConditionalBoostRiders)
-    .map(stripSelfActivationRider)
-    .map(stripBoostInsteadSuffix)
+    .flatMap((clause) => normalizeCaptainBoostScopeClauseCandidates(clause, includeConditional))
     .filter(
       (clause) =>
         (includeConditional || !isConditionalCaptainBoostClause(clause)) &&
@@ -856,6 +855,24 @@ function extractCaptainBoostScopeClauses(text: string, includeConditional: boole
   }
 
   return [...boostClauses, ...extractCaptainStartOfFightCooldownTagClauses(text)];
+}
+
+function normalizeCaptainBoostScopeClauseCandidates(
+  clause: string,
+  includeConditional: boolean,
+): string[] {
+  const normalizedClause = stripBoostInsteadSuffix(
+    stripSelfActivationRider(stripInlineConditionalBoostRiders(clause)),
+  );
+
+  if (!includeConditional || !isConditionalCaptainBoostClause(normalizedClause)) {
+    return [normalizedClause];
+  }
+
+  return extractEffectClausesFromConditionalSentence(normalizedClause)
+    .map(stripInlineConditionalBoostRiders)
+    .map(stripSelfActivationRider)
+    .map(stripBoostInsteadSuffix);
 }
 
 function extractDominantTypeCaptainBoostClauses(text: string): string[] {
@@ -886,7 +903,8 @@ function isCaptainBoostScopeClause(clause: string): boolean {
   return (
     /\bboosts?\b/i.test(normalizedClause) &&
     /\b(?:atk|hp)\b/i.test(normalizedClause) &&
-    CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) &&
+    (CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) ||
+      CAPTAIN_BASE_STAT_BOOST_PATTERN.test(normalizedClause)) &&
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
     !FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
@@ -903,7 +921,8 @@ function isFallbackOtherCaptainBoostScopeClause(clause: string): boolean {
   return (
     /\bboosts?\b/i.test(normalizedClause) &&
     /\b(?:atk|hp)\b/i.test(normalizedClause) &&
-    CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) &&
+    (CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) ||
+      CAPTAIN_BASE_STAT_BOOST_PATTERN.test(normalizedClause)) &&
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
     FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause)
   );
@@ -1018,6 +1037,25 @@ function splitCaptainSentences(text: string): string[] {
   return clauses;
 }
 
+function extractEffectClausesFromConditionalSentence(sentence: string): string[] {
+  const effectStartPattern =
+    /,\s*(?:for\s+\d+\s+turns?\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?|allows?|launches?|deals?|restores?|inflicts?)\b/i;
+  const effectStartMatch = sentence.match(effectStartPattern);
+  if (effectStartMatch === null || effectStartMatch.index === undefined) {
+    return [];
+  }
+
+  const effectText = sentence
+    .slice(effectStartMatch.index + 1)
+    .replace(/^\s*for\s+\d+\s+turns?\s+/i, '')
+    .trim();
+
+  return effectText
+    .split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR)
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+}
+
 function isConditionalCaptainBoostClause(clause: string): boolean {
   return CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN.test(clause.trim());
 }
@@ -1039,7 +1077,7 @@ function extractCaptainBoost(clause: string, stat: 'atk' | 'hp'): number {
 }
 
 function isSelfOnlyCaptainBoostMatch(text: string): boolean {
-  return SELF_SCOPE_PATTERN.test(text) && !UNIVERSAL_SCOPE_PATTERN.test(text);
+  return SELF_SCOPE_PATTERN.test(text) && !boostClauseHasUniversalScope(text);
 }
 
 function normalizeCoverageClause(clause: string): string {
@@ -1205,8 +1243,17 @@ function boostClauseHasUniversalScope(clause: string): boolean {
     return false;
   }
 
-  return extractBoostTargetFragments(clause).some((fragment) =>
-    UNIVERSAL_SCOPE_PATTERN.test(fragment),
+  return extractBoostTargetFragments(clause).some(isUniversalScopeFragment);
+}
+
+function isUniversalScopeFragment(fragment: string): boolean {
+  const normalizedFragment = normalizeCoverageClause(fragment)
+    .replace(BRACKETED_LABEL_PATTERN, '')
+    .trim()
+    .toLowerCase();
+
+  return ['all', 'all characters', 'all units', 'all crewmates', 'crew', 'the crew'].includes(
+    normalizedFragment,
   );
 }
 

@@ -13,7 +13,6 @@ const AUTO_TEAM_BUILDER_CLASSES = [
   'Slasher',
   'Striker',
 ];
-const UNIVERSAL_SCOPE_PATTERN = /\b(?:all|all characters|all units|all crewmates|crew)\b/i;
 const FALLBACK_OTHER_SCOPE_PATTERN = /\ball other (?:characters|units|crewmates)\b/i;
 const SELF_SCOPE_PATTERN = /\b(?:this character|own attacks|their own attacks)\b/i;
 const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
@@ -36,6 +35,8 @@ const CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
 const CAPTAIN_MULTIPLIER_PATTERN =
   /\bby\s+(?:a\s+further\s+|an?\s+additional\s+|another\s+)?\d+(?:\.\d+)?x\b/i;
+const CAPTAIN_BASE_STAT_BOOST_PATTERN =
+  /\bboosts?\s+base\b[^.;]*\b(?:ATK|HP)\b[^.;]*\bby\s+\d+(?:,\d{3})*\b/i;
 const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
   /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
 const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
@@ -138,11 +139,7 @@ function resolveCaptainClauseScope(clause) {
 }
 
 function isCaptainScopedEffectClause(clause) {
-  return (
-    /\bboosts?\b/i.test(clause) &&
-    /\b(?:atk|hp)\b/i.test(clause) &&
-    CAPTAIN_MULTIPLIER_PATTERN.test(clause)
-  );
+  return isCaptainBoostScopeClause(clause);
 }
 
 function higherCaptainScope(left, right) {
@@ -288,10 +285,12 @@ function isCaptainBoostScopeClause(clause) {
 
   return (
     /\bboosts?\b/i.test(normalizedClause) &&
-    /\b(?:atk|hp|rcv)\b/i.test(normalizedClause) &&
-    CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) &&
+    /\b(?:atk|hp)\b/i.test(normalizedClause) &&
+    (CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) ||
+      CAPTAIN_BASE_STAT_BOOST_PATTERN.test(normalizedClause)) &&
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
+      FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause) ||
       COST_SUBSET_PATTERN.test(normalizedClause) ||
       RARITY_SUBSET_PATTERN.test(normalizedClause) ||
       boostClauseHasDominantTypeScope(normalizedClause) ||
@@ -301,101 +300,10 @@ function isCaptainBoostScopeClause(clause) {
   );
 }
 
-// Broader than isCaptainBoostScopeClause — also recognizes non-boost effect clauses (SCD
-// reduction, Special Use Limit reduction, Super Tandem enable, status removals, etc.) that
-// surface a coverage tier even when there is no ATK/HP multiplier. Required for captains whose
-// default branch is utility-only (e.g. start-of-fight cooldown reductions for a tag/type subset)
-// and for conditional clusters that gate a non-boost effect like "Special Use Limit -10 turns".
+// Captain coverage tiers are stat-boost tiers only. Utility effects are still imported as
+// captainAbility builder abilities and remain available through the Captain Ability picker.
 function isCaptainTierEffectClause(clause) {
-  const normalizedClause = normalizeCoverageClause(clause);
-  if (isCaptainBoostScopeClause(normalizedClause)) {
-    return true;
-  }
-  if (SELF_SCOPE_PATTERN.test(normalizedClause) && !boostClauseHasUniversalScope(normalizedClause)) {
-    return false;
-  }
-  if (
-    /\breduces?\s+Special\s+Cooldown\s+of\b/i.test(normalizedClause) &&
-    clauseHasAnyCaptainScope(normalizedClause)
-  ) {
-    return true;
-  }
-  if (/\breduces?\s+Special\s+Use\s+Limit\b/i.test(normalizedClause)) {
-    return true;
-  }
-  if (
-    /\ballows?\b[^.;]*\bto\s+perform\s+Super\s+Tandem\b/i.test(normalizedClause) &&
-    clauseHasAnyCaptainScope(normalizedClause)
-  ) {
-    return true;
-  }
-  if (
-    /\breduces?\s+(?:VS\s*Gauge|Switch\s+Effect)\b/i.test(normalizedClause) &&
-    clauseHasAnyCaptainScope(normalizedClause)
-  ) {
-    return true;
-  }
-  if (/\breduces?\s+damage\s+received\b/i.test(normalizedClause)) {
-    // Variable damage reduction tied to mid-battle state (crew current HP, accumulated specials,
-    // tap timing, perfects scored, etc.) is unactionable from a team builder perspective — the
-    // value depends on what the player does during combat, not on team composition. We drop those
-    // clauses from tier output so they don't pollute coverage breakdowns with effects the user
-    // cannot plan around.
-    if (HP_DEPENDENT_DAMAGE_REDUCTION_PATTERN.test(normalizedClause)) {
-      return false;
-    }
-    return true;
-  }
-  if (
-    /\brecovers?\s+[\d.,x]+\s+(?:character'?s?\s+RCV|HP)\b/i.test(normalizedClause) ||
-    /\brecovers?\s+\d+(?:,\d{3})*\s+HP\b/i.test(normalizedClause)
-  ) {
-    // Self-only or captain-only healing clauses still get a tier when the targets are crew-wide,
-    // matching the long-standing "Recovers Nx character's RCV in HP at the end of each turn"
-    // category. If the clause is self-only we drop it via the earlier SELF_SCOPE_PATTERN guard.
-    return true;
-  }
-  if (/\bmakes?\b[^.;]*\borbs?\b[^.;]*\bbeneficial\b/i.test(normalizedClause)) {
-    return true;
-  }
-  if (/\b(?:boosts?|adds?)\b[^.;]*\bChain\s+Multiplier\s+Growth\s+Rate\b/i.test(normalizedClause)) {
-    // Chain Multiplier Growth Rate is a crew-wide combat-economy boost (faster chain ramp-up =
-    // more damage on later hits). Even when nothing else surfaces a tier, this effect alone is
-    // worth showing as a baseline tier so the captain isn't displayed as zero-tier.
-    return true;
-  }
-  if (/\bprotects?\s+from\s+defeat\b/i.test(normalizedClause)) {
-    // Defeat protection above an HP threshold is a captain-only (or crew-wide, depending on
-    // legacy wording) survival mechanic. Same convention as chain-multiplier: surface as a
-    // baseline tier with the raw clause so the captain isn't displayed as zero-tier.
-    return true;
-  }
-  if (/\b(?:boosts?|lowers?)\s+chances?\s+of\s+getting\b[^.;]*\borbs?\b/i.test(normalizedClause)) {
-    // Orb-chance bias is a crew-wide combat-economy effect — affects how often the listed orb
-    // colours appear in the orb pool. Same convention as chain-multiplier / defeat-protection:
-    // surface as a tier with the raw clause.
-    return true;
-  }
-  if (
-    /\breduces?\s+(?:Despair|Bind|Paralysis|Special\s+Bind|Burn|Poison|Silence|Blindness|Slow|Chain\s+Coefficient\s+Reduction|Increase\s+Damage\s+Taken|Healing\s+Reduction|No\s+Healing|Threshold\s+Damage\s+Reduction|Percent\s+Damage\s+Reduction)\b/i.test(
-      normalizedClause,
-    )
-  ) {
-    return true;
-  }
-  return false;
-}
-
-function clauseHasAnyCaptainScope(clause) {
-  return (
-    boostClauseHasUniversalScope(clause) ||
-    COST_SUBSET_PATTERN.test(clause) ||
-    RARITY_SUBSET_PATTERN.test(clause) ||
-    boostClauseHasDominantTypeScope(clause) ||
-    extractAllowedTypesFromCoverageClause(clause).length > 0 ||
-    extractAllowedClassesFromCoverageClause(clause).length > 0 ||
-    extractAllowedCharacterTagsFromCoverageClause(clause).length > 0
-  );
+  return isCaptainBoostScopeClause(normalizeCoverageClause(clause));
 }
 
 function stripInlineConditionalBoostRiders(clause) {
@@ -455,8 +363,17 @@ function extractSpecialCooldownTargetFragments(clause) {
 }
 
 function boostClauseHasUniversalScope(clause) {
-  return extractBoostTargetFragments(clause).some((fragment) =>
-    UNIVERSAL_SCOPE_PATTERN.test(fragment),
+  return extractBoostTargetFragments(clause).some(isUniversalScopeFragment);
+}
+
+function isUniversalScopeFragment(fragment) {
+  const normalizedFragment = normalizeCoverageClause(fragment)
+    .replace(BRACKETED_LABEL_PATTERN, '')
+    .trim()
+    .toLowerCase();
+
+  return ['all', 'all characters', 'all units', 'all crewmates', 'crew', 'the crew'].includes(
+    normalizedFragment,
   );
 }
 
@@ -549,13 +466,6 @@ const COST_MAX_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:less|lower)\s+characters?\b/i
 const RARITY_MIN_PATTERN = /\brarity\s+(\d+)\s+or\s+(?:more|higher)\s+characters?\b/i;
 const RARITY_MAX_PATTERN = /\brarity\s+(\d+)\s+or\s+(?:less|lower)\s+characters?\b/i;
 const RARITY_TIERED_PATTERN = /\brarity\s+(\d+)\s+or\s+\1\+\s+characters?\b/i;
-// Damage reduction clauses whose effective value is set mid-battle by something the team builder
-// cannot control: the crew's current HP (e.g. "0%-30% depending on the crew's current HP"), tap
-// timing, perfects scored, etc. We surface the actionable, flat damage-reduction clauses but drop
-// the variable ones so coverage tiers describe what the captain reliably provides on selection.
-const HP_DEPENDENT_DAMAGE_REDUCTION_PATTERN =
-  /\breduces?\s+damage\s+received\b[^.;]*\bdepending\s+on\s+(?:the\s+)?(?:crew|captain|character|own)['’]?s?\s+(?:current\s+)?HP\b/i;
-
 // Produces an ordered list of tiers (1-indexed) describing distinct (conditions → effects) bundles
 // in the captain ability. Tier 1 is the baseline — clauses that apply with the broadest scope (or
 // the "all other characters" fallback). Tier 2 is the unconditional top tier (subset boost without
@@ -650,22 +560,13 @@ export function extractCoverageTiers(captainText) {
       ),
     );
   } else if (defaultBoostClauses.length > 0) {
-    // Detect rarity-tiered or cost-tiered captains: multiple subset ATK clauses each scoped to a
-    // DIFFERENT rarity or cost subset (e.g. Sir Crocodile #2697: Rarity 4/5/6 with distinct ATK
-    // multipliers). Without this split, all clauses collapse into a single tier and the rarity
-    // scope label reflects only the last match. With it, each rarity gets its own tier with the
-    // correct atkBoost and characterConditions.rarityRange.
-    const numericGroups = groupBoostClausesByNumericSubset(atkClauses);
-    if (numericGroups.length > 1) {
-      // Only universal-scoped HP clauses propagate to every tier (crew-wide HP applies to all
-      // groups regardless of cost/rarity scope). Scoped HP clauses ("boosts HP of Cost 41+ by Yx")
-      // already live in their own ATK clause's group via the same string; we filter them out of
-      // the propagating HP list to avoid corrupting other tiers' character conditions.
-      const universalHpClauses = hpClauses.filter(
-        (clause) => boostClauseHasUniversalScope(clause) && !ATK_CLAUSE_PATTERN.test(clause),
-      );
-      for (let i = 0; i < numericGroups.length; i++) {
-        const primary = dedupeClauses([...numericGroups[i], ...universalHpClauses]);
+    // Split default boost clauses by target scope so additive base ATK/HP boosts for character
+    // tags (e.g. "[Giant]") get their own tier instead of being merged into unrelated ATK/HP
+    // multiplier scopes.
+    const boostGroups = groupBoostClausesByTargetScope(defaultBoostClauses);
+    if (boostGroups.length > 1) {
+      for (let i = 0; i < boostGroups.length; i++) {
+        const primary = dedupeClauses(boostGroups[i]);
         const kind = i === 0 ? 'baseline' : 'unconditional-top';
         tiers.push(
           buildDefaultTier(
@@ -685,11 +586,6 @@ export function extractCoverageTiers(captainText) {
         ),
       );
     }
-  } else if (defaultNonBoostEffectClauses.length > 0) {
-    // Captains whose default branch is utility-only (SCD/SUL/Super Tandem/etc.) still get a
-    // baseline tier so the user can see and filter on it. Here all clauses are tier-defining
-    // because there are no boost clauses to take precedence.
-    tiers.push(buildDefaultTier('baseline', dedupeClauses(defaultNonBoostEffectClauses), []));
   }
 
   // 2. Each non-default branch label ("Powered Up Captain:", "Gear 3 Captain:", "Captain Swap:")
@@ -908,41 +804,53 @@ function clauseFitsTierScope(clause, tierScope) {
   return typeOverlap || classOverlap || tagOverlap;
 }
 
-// Groups ATK boost clauses by their numeric subset signature (rarityRange/costRange). Clauses
-// with the same rarity/cost min+max collapse into one group; clauses with DIFFERENT numeric
-// scopes get their own group. Used to split rarity-tiered or cost-tiered captains into one tier
-// per rarity/cost level so their `atkBoost` and `characterConditions` reflect each tier exactly.
-//
-// Returns the input list as a single-group array when no numeric subset exists (so the caller
-// can fall back to the single-tier path).
-function groupBoostClausesByNumericSubset(boostClauses) {
+// Groups default boost clauses by their exact target signature. Clauses with the same scope
+// (for example ATK + HP for [INT]/Striker) collapse into one tier; different scopes, including
+// additive base ATK tags such as [Giant], become separate tiers.
+function groupBoostClausesByTargetScope(boostClauses) {
   if (boostClauses.length <= 1) {
     return [boostClauses];
   }
+
+  const hpClauses = boostClauses.filter((clause) => HP_CLAUSE_PATTERN.test(clause));
+  const universalHpClauses = hpClauses.filter(
+    (clause) => boostClauseHasUniversalScope(clause) && !ATK_CLAUSE_PATTERN.test(clause),
+  );
+  const groupedClauses = boostClauses.filter((clause) => !universalHpClauses.includes(clause));
+
+  if (groupedClauses.length === 0) {
+    return [boostClauses];
+  }
+
   const groups = new Map();
-  let hasAnyNumericRange = false;
-  const noneKey = '__none__';
-  for (const clause of boostClauses) {
-    const conditions = resolveTierCharacterConditions([clause]);
-    const rarityKey = conditions.rarityRange
-      ? `r:${conditions.rarityRange.min ?? ''}-${conditions.rarityRange.max ?? ''}`
-      : '';
-    const costKey = conditions.costRange
-      ? `c:${conditions.costRange.min ?? ''}-${conditions.costRange.max ?? ''}`
-      : '';
-    if (rarityKey || costKey) {
-      hasAnyNumericRange = true;
-    }
-    const key = `${rarityKey}|${costKey}` || noneKey;
+  for (const clause of groupedClauses) {
+    const key = buildBoostScopeGroupKey(resolveTierCharacterConditions([clause]));
     if (!groups.has(key)) {
       groups.set(key, []);
     }
     groups.get(key).push(clause);
   }
-  if (!hasAnyNumericRange || groups.size <= 1) {
+
+  if (groups.size <= 1) {
     return [boostClauses];
   }
-  return [...groups.values()];
+
+  return [...groups.values()].map((group) => dedupeClauses([...group, ...universalHpClauses]));
+}
+
+function buildBoostScopeGroupKey(conditions) {
+  const normalized = {
+    universal: conditions.universal === true,
+    fallbackOther: conditions.fallbackOther === true,
+    dominantType: conditions.dominantType === true,
+    types: [...conditions.types].sort(),
+    classes: [...conditions.classes].sort(),
+    characterTags: [...conditions.characterTags].sort(),
+    costRange: conditions.costRange ?? null,
+    rarityRange: conditions.rarityRange ?? null,
+  };
+
+  return JSON.stringify(normalized);
 }
 
 function buildDefaultTier(kind, primaryClauses, extraClauses = []) {
@@ -1381,7 +1289,7 @@ function resolveTierBoost(clauses, stat) {
 
   let highest = 0;
   for (const clause of clauses) {
-    if (SELF_SCOPE_PATTERN.test(clause) && !UNIVERSAL_SCOPE_PATTERN.test(clause)) {
+    if (SELF_SCOPE_PATTERN.test(clause) && !boostClauseHasUniversalScope(clause)) {
       continue;
     }
     const matches = [...clause.matchAll(pattern)];

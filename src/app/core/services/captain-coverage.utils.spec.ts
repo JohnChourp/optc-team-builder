@@ -425,7 +425,7 @@ describe('resolveCaptainCoverage', () => {
       'reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns',
     ]);
     expect(resolveCaptainCoverage(captain, qckTaggedNonFreeSpiritTarget).uncoveredClauses).toEqual([
-      'If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x',
+      'boosts ATK of Free Spirit characters by 7x',
     ]);
   });
 
@@ -794,7 +794,7 @@ describe('resolveCaptainCoverage', () => {
     expect(drivenCoverage.matches).toBe(false);
   });
 
-  it('ignores Kid team-count tags and non-boost riders while keeping type/class boost coverage', () => {
+  it('uses conditional base ATK target tags without treating team-count tags as targets', () => {
     const captain = createCharacter({
       id: 4549,
       captainAbility: kidAimedDamnedPunkCaptainAbility,
@@ -805,18 +805,19 @@ describe('resolveCaptainCoverage', () => {
       id: 3001,
       type: 'STR',
       classes: ['Shooter', 'Free Spirit'],
-      characterTags: ['Worst Generation'],
+      characterTags: ['Worst Generation', 'Paramythia-type'],
     });
     const untaggedBoostedTarget = createCharacter({
       id: 3003,
       type: 'STR',
       classes: ['Shooter', 'Free Spirit'],
+      characterTags: ['Paramythia-type'],
     });
     const taggedUnboostedTarget = createCharacter({
       id: 3004,
       type: 'QCK',
       classes: ['Shooter', 'Free Spirit'],
-      characterTags: ['Kid Pirates'],
+      characterTags: ['Kid Pirates', 'Paramythia-type'],
     });
     const nonMatchingTarget = createCharacter({
       id: 3002,
@@ -834,7 +835,10 @@ describe('resolveCaptainCoverage', () => {
       hp: 1.3,
       atk: 5,
     });
-    expect(matchingCoverage.chips).toEqual([{ kind: 'type', label: 'STR' }]);
+    expect(matchingCoverage.chips).toEqual([
+      { kind: 'type', label: 'STR' },
+      { kind: 'tag', label: 'Paramythia-type' },
+    ]);
     expect(matchingCoverage.neutralNotes).toEqual([]);
     expect(untaggedBoostedCoverage.matches).toBe(true);
     expect(taggedUnboostedCoverage.matches).toBe(false);
@@ -858,12 +862,13 @@ describe('resolveCaptainCoverage', () => {
       id: 3005,
       type: 'STR',
       classes: ['Shooter', 'Free Spirit'],
-      characterTags: ['Land of Wano Arc'],
+      characterTags: ['Land of Wano Arc', 'Paramythia-type'],
     });
     const untaggedBoostedTarget = createCharacter({
       id: 3006,
       type: 'STR',
       classes: ['Shooter', 'Free Spirit'],
+      characterTags: ['Paramythia-type'],
     });
 
     const taggedCoverage = resolveCaptainCoverage(captain, taggedBoostedTarget, {
