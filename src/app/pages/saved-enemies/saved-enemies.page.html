@@ -46,9 +46,78 @@
           <div class="section-head">
             <div>
               <h2>{{ t('list.title') }}</h2>
-              <span>{{ t('list.total', { count: savedEnemies().length }) }}</span>
+              <span>{{ savedEnemyTotalLabel() }}</span>
             </div>
           </div>
+          @if (hasAbilityFiltersAvailable()) {
+            <div class="saved-enemies-ability-filter-panel">
+              <div class="saved-enemies-ability-filter-panel__head">
+                <div>
+                  <span>{{ t('abilityFilters.eyebrow') }}</span>
+                  <h3>{{ t('abilityFilters.title') }}</h3>
+                  <p>{{ t('abilityFilters.copy') }}</p>
+                </div>
+                <ion-button
+                  fill="clear"
+                  color="light"
+                  [disabled]="!hasAbilityFilters()"
+                  (click)="clearAllAbilityFilters()"
+                >
+                  {{ t('abilityFilters.clearAll') }}
+                </ion-button>
+              </div>
+
+              <div class="saved-enemies-ability-filter-panel__sections">
+                @for (group of savedEnemyAbilityFilterGroups(); track group.category) {
+                  @if (group.abilities.length) {
+                    <section class="saved-enemy-ability-section">
+                      <div class="saved-enemy-ability-section__head">
+                        <div>
+                          <h4>{{ group.label }}</h4>
+                          <p>
+                            {{
+                              t('abilityFilters.categoryCount', {
+                                count: group.abilityCount,
+                              })
+                            }}
+                          </p>
+                        </div>
+                        <div class="saved-enemy-ability-section__meta">
+                          <strong>{{ group.selectedCount }}</strong>
+                          <span>{{ t('abilityFilters.selected') }}</span>
+                          @if (group.hasSelection) {
+                            <button
+                              type="button"
+                              (click)="clearAbilityFilterCategory(group.category)"
+                            >
+                              {{ t('abilityFilters.clearSection') }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="saved-enemy-ability-chip-row">
+                        @for (ability of group.abilities; track ability.identity) {
+                          <button
+                            type="button"
+                            class="saved-enemy-ability-chip"
+                            [class.saved-enemy-ability-chip--selected]="ability.selected"
+                            [attr.aria-pressed]="ability.selected"
+                            (click)="toggleAbilityFilter(ability.identity)"
+                          >
+                            <span>{{ ability.label }}</span>
+                            <strong>
+                              {{ t('abilityFilters.enemyCount', { count: ability.enemyCount }) }}
+                            </strong>
+                          </button>
+                        }
+                      </div>
+                    </section>
+                  }
+                }
+              </div>
+            </div>
+          }
           <div class="saved-enemies-tools">
             <div class="saved-enemies-selection">
               <label class="saved-enemies-select-all">
@@ -85,8 +154,14 @@
               </ion-button>
             </div>
           </div>
+          @if (hasAbilityFilters() && !filteredSavedEnemies().length) {
+            <div class="saved-enemies-filter-empty">
+              <strong>{{ t('abilityFilters.empty.title') }}</strong>
+              <span>{{ t('abilityFilters.empty.copy') }}</span>
+            </div>
+          }
           <div class="saved-enemy-list">
-            @for (enemy of savedEnemies(); track enemy.id) {
+            @for (enemy of filteredSavedEnemies(); track enemy.id) {
               <article>
                 <div class="saved-enemy-head">
                   <label class="saved-enemy-check">

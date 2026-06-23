@@ -6,11 +6,17 @@
 
 @media (max-width: 720px) {
   .saved-enemies-selection,
+  .saved-enemies-ability-filter-panel__head,
+  .saved-enemy-ability-section__head,
   .saved-enemy-head,
   .saved-enemy-main,
   .section-head {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .saved-enemy-ability-section__meta {
+    justify-items: start;
   }
 
   .saved-enemy-actions {
