@@ -568,11 +568,13 @@ describe('extractCoverageTiers', () => {
       teamConditions: expect.arrayContaining([
         expect.objectContaining({
           kind: 'crew-composition',
+          conditionGroup: 'condition-or-1',
           minCount: 4,
           characterTags: ['Kid Pirates', 'Worst Generation', 'Land of Wano Arc'],
         }),
         expect.objectContaining({
           kind: 'crew-composition',
+          conditionGroup: 'condition-or-1',
           minCount: 6,
           characterTags: ['Kid Pirates', 'Worst Generation', 'Egghead Arc'],
         }),

@@ -416,6 +416,10 @@ function normalizeCaptainCoverageTeamConditions(
       const exactCountRaw = Number(record['exactCount']);
       return {
         kind,
+        conditionGroup:
+          typeof record['conditionGroup'] === 'string' && record['conditionGroup'].trim()
+            ? record['conditionGroup'].trim()
+            : undefined,
         minCount: Number.isFinite(minCountRaw) && minCountRaw > 0 ? minCountRaw : undefined,
         exactCount: Number.isFinite(exactCountRaw) && exactCountRaw > 0 ? exactCountRaw : undefined,
         types: normalizeStringList(record['types']),

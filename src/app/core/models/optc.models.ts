@@ -70,6 +70,7 @@ type CaptainCoverageTeamConditionKind =
 
 export interface CaptainCoverageTeamCondition {
   kind: CaptainCoverageTeamConditionKind;
+  conditionGroup?: string;
   minCount?: number;
   exactCount?: number;
   types?: string[];

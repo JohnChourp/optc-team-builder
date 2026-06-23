@@ -18,6 +18,7 @@ import {
   matchesCaptainCoverageRequiredTiers,
   resolveCaptainAllTierCoverage,
   resolveCaptainCoverageFilterResult,
+  targetMatchesAnyApplicableCaptainCoverageTier,
 } from './captain-coverage-filter.utils';
 
 describe('captain coverage filter model', () => {
@@ -253,6 +254,18 @@ describe('captain coverage filter model', () => {
     expect(matchesCaptainCoverageRequiredTiers(captain, cost30Target, [1, 2])).toBe(true);
   });
 
+  it('uses parsed tier metadata when text coverage has no targetable cost clauses', () => {
+    const captain = createCharacter({
+      id: 4572,
+      captainAbilityCoverage: buildCostOnlyCoverage(),
+    });
+    const lowCostTarget = createCharacter({ id: 9003, cost: 20 });
+    const highCostTarget = createCharacter({ id: 9004, cost: 55 });
+
+    expect(targetMatchesAnyApplicableCaptainCoverageTier(captain, lowCostTarget)).toBe(true);
+    expect(targetMatchesAnyApplicableCaptainCoverageTier(captain, highCostTarget)).toBe(false);
+  });
+
   it('integrates requiredTiers filter into the overall match result', () => {
     const captain = createCharacter({
       id: 4571,
@@ -413,6 +426,75 @@ describe('resolveCaptainAllTierCoverage', () => {
     expect(result.applicableTierCount).toBe(0);
     expect(result.tierResults).toHaveLength(1);
     expect(result.tierResults[0]?.notApplicable).toBe(true);
+  });
+
+  it('requires crew-composition conditions when resolving all tier coverage', () => {
+    const captain = createCharacter({
+      id: 9007,
+      captainAbilityCoverage: buildUniversalClassCompositionCoverage(),
+    });
+    const allAllowedClasses = [
+      'Fighter',
+      'Slasher',
+      'Shooter',
+      'Striker',
+      'Fighter',
+      'Slasher',
+    ].map((characterClass, index) =>
+      createCharacter({ id: 9700 + index, classes: [characterClass], type: 'DEX' }),
+    );
+    const offClassTeam = [
+      ...allAllowedClasses.slice(0, 5),
+      createCharacter({ id: 9706, classes: ['Cerebral'], type: 'DEX' }),
+    ];
+
+    expect(
+      resolveCaptainAllTierCoverage(
+        captain,
+        allAllowedClasses.map((character) => ({ character })),
+      ).matches,
+    ).toBe(true);
+    expect(
+      resolveCaptainAllTierCoverage(
+        captain,
+        offClassTeam.map((character) => ({ character })),
+      ).matches,
+    ).toBe(false);
+  });
+
+  it('treats grouped crew-composition conditions as alternatives', () => {
+    const captain = createCharacter({
+      id: 9008,
+      captainAbilityCoverage: buildGroupedAlternativeCoverage(),
+    });
+    const landOfWanoTeam = Array.from({ length: 4 }, (_, index) =>
+      createCharacter({ id: 9800 + index, characterTags: ['Land of Wano Arc'] }),
+    );
+    const eggheadTeam = Array.from({ length: 6 }, (_, index) =>
+      createCharacter({ id: 9810 + index, characterTags: ['Egghead Arc'] }),
+    );
+    const uncoveredTeam = Array.from({ length: 6 }, (_, index) =>
+      createCharacter({ id: 9820 + index, characterTags: ['Blackbeard Pirates'] }),
+    );
+
+    expect(
+      resolveCaptainAllTierCoverage(
+        captain,
+        landOfWanoTeam.map((character) => ({ character })),
+      ).matches,
+    ).toBe(true);
+    expect(
+      resolveCaptainAllTierCoverage(
+        captain,
+        eggheadTeam.map((character) => ({ character })),
+      ).matches,
+    ).toBe(true);
+    expect(
+      resolveCaptainAllTierCoverage(
+        captain,
+        uncoveredTeam.map((character) => ({ character })),
+      ).matches,
+    ).toBe(false);
   });
 });
 
@@ -622,6 +704,124 @@ function buildNoScopeDamageReductionCoverage(): CharacterCaptainAbilityCoverage 
         key: 'captain',
         label: 'Captain Ability',
         tiers,
+      },
+    ],
+  };
+}
+
+function buildCostOnlyCoverage(): CharacterCaptainAbilityCoverage {
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers: [
+          {
+            tier: 1,
+            kind: 'baseline',
+            scope: 'subset',
+            characterConditions: {
+              universal: false,
+              fallbackOther: false,
+              selfOnly: false,
+              types: [],
+              classes: [],
+              characterTags: [],
+              costRange: { max: 20 },
+            },
+            teamConditions: [],
+            fieldConditions: [],
+            triggerConditions: [],
+            clauses: ['Boosts ATK of Cost 20 or less characters by 3x'],
+            atkBoost: 3,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function buildUniversalClassCompositionCoverage(): CharacterCaptainAbilityCoverage {
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers: [
+          {
+            tier: 1,
+            kind: 'conditional',
+            scope: 'crew-wide',
+            characterConditions: {
+              universal: true,
+              fallbackOther: false,
+              selfOnly: false,
+              types: [],
+              classes: [],
+              characterTags: [],
+            },
+            teamConditions: [
+              {
+                kind: 'crew-composition',
+                minCount: 6,
+                classes: ['Fighter', 'Slasher', 'Shooter', 'Striker'],
+                rawClause: 'crew has 6 characters with Fighter, Slasher, Shooter or Striker classes',
+              },
+            ],
+            fieldConditions: [],
+            triggerConditions: [],
+            clauses: ['boosts ATK of all characters by 3x'],
+            atkBoost: 3,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function buildGroupedAlternativeCoverage(): CharacterCaptainAbilityCoverage {
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers: [
+          {
+            tier: 1,
+            kind: 'conditional',
+            scope: 'crew-wide',
+            characterConditions: {
+              universal: true,
+              fallbackOther: false,
+              selfOnly: false,
+              types: [],
+              classes: [],
+              characterTags: [],
+            },
+            teamConditions: [
+              {
+                kind: 'crew-composition',
+                conditionGroup: 'condition-or-1',
+                minCount: 4,
+                characterTags: ['Kid Pirates', 'Worst Generation', 'Land of Wano Arc'],
+                rawClause:
+                  'crew has 4+ [Kid Pirates], [Worst Generation] or [Land of Wano Arc] characters',
+              },
+              {
+                kind: 'crew-composition',
+                conditionGroup: 'condition-or-1',
+                minCount: 6,
+                characterTags: ['Kid Pirates', 'Worst Generation', 'Egghead Arc'],
+                rawClause:
+                  'crew has 6 [Kid Pirates], [Worst Generation] or [Egghead Arc] characters',
+              },
+            ],
+            fieldConditions: [],
+            triggerConditions: [],
+            clauses: ['boosts base ATK of [Paramythia-type] characters by 500'],
+            atkBoost: 500,
+          },
+        ],
       },
     ],
   };

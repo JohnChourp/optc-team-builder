@@ -1010,6 +1010,8 @@ function buildConditionalCluster(sentence) {
     });
   }
 
+  const groupedTeamConditions = applyAlternativeTeamConditionGroups(sentence, teamConditions);
+
   // The conditional sentence keeps the whole "If X, ..." block as a single token in the regular
   // splitter — bypass that and extract just the effect portion (after the condition's trailing
   // comma, optionally past a "for N turns" rider).
@@ -1018,10 +1020,68 @@ function buildConditionalCluster(sentence) {
   return {
     sentence,
     clauses,
-    teamConditions,
+    teamConditions: groupedTeamConditions,
     fieldConditions,
     triggerConditions,
   };
+}
+
+function applyAlternativeTeamConditionGroups(sentence, teamConditions) {
+  const indexedConditions = [];
+  let searchStart = 0;
+
+  for (let index = 0; index < teamConditions.length; index += 1) {
+    const condition = teamConditions[index];
+    const rawClause = condition.rawClause;
+    const start = sentence.indexOf(rawClause, searchStart);
+    if (start === -1) {
+      continue;
+    }
+    const end = start + rawClause.length;
+    indexedConditions.push({ index, start, end });
+    searchStart = end;
+  }
+
+  if (indexedConditions.length < 2) {
+    return teamConditions;
+  }
+
+  const groupByConditionIndex = new Map();
+  let pendingGroup = [indexedConditions[0]];
+  let groupIndex = 0;
+
+  const flushGroup = () => {
+    if (pendingGroup.length > 1) {
+      const groupKey = `condition-or-${groupIndex + 1}`;
+      groupIndex += 1;
+      for (const entry of pendingGroup) {
+        groupByConditionIndex.set(entry.index, groupKey);
+      }
+    }
+  };
+
+  for (let index = 1; index < indexedConditions.length; index += 1) {
+    const previous = pendingGroup[pendingGroup.length - 1];
+    const current = indexedConditions[index];
+    const separator = sentence.slice(previous.end, current.start);
+
+    if (/\bor\b/i.test(separator)) {
+      pendingGroup.push(current);
+    } else {
+      flushGroup();
+      pendingGroup = [current];
+    }
+  }
+  flushGroup();
+
+  if (groupByConditionIndex.size === 0) {
+    return teamConditions;
+  }
+
+  return teamConditions.map((condition, index) => {
+    const conditionGroup = groupByConditionIndex.get(index);
+    return conditionGroup === undefined ? condition : { ...condition, conditionGroup };
+  });
 }
 
 function extractEffectClausesFromConditionalSentence(sentence) {

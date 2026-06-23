@@ -60,7 +60,10 @@ import {
   resolveCaptainCoverage,
   resolveRequiredCaptainCoverageBranchTexts,
 } from './captain-coverage.utils';
-import { resolveCaptainAllTierCoverage } from './captain-coverage-filter.utils';
+import {
+  resolveCaptainAllTierCoverage,
+  targetMatchesAnyApplicableCaptainCoverageTier,
+} from './captain-coverage-filter.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 import { cloneRequiredCharacterGroup } from './required-character-groups.utils';
 import { cloneBattleRequirements } from './auto-team-builder-battle.utils';
@@ -4651,9 +4654,18 @@ function matchesActiveLeaderCriteria(
 
   if (leaderCriteria.coverageMode === 'fullAbilityCoverage') {
     return (
-      branchAwareCoverageResults.every(
-        (coverage) => coverage.targetableClauseCount === 0 || coverage.matches,
-      ) && matchesDominantTypeScope
+      branchAwareCoverageResults.every((coverage, index) => {
+        if (coverage.targetableClauseCount > 0) {
+          return coverage.matches;
+        }
+        const leader = leaderCriteria.leaders[index];
+        return leader
+          ? targetMatchesAnyApplicableCaptainCoverageTier(
+              leader.candidate.character,
+              candidate.character,
+            )
+          : false;
+      }) && matchesDominantTypeScope
     );
   }
 
