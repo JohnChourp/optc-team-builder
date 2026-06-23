@@ -159,6 +159,57 @@ describe('captain coverage filter model', () => {
     ).toBe(true);
   });
 
+  it('requires both Super Tandem and Super Types/Classes data when both filters are enabled', () => {
+    const captain = createCharacter({
+      id: 1001,
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const onlySuperTandem = createCharacter({
+      id: 2001,
+      superTandemData: {
+        requirement: 'On the last stage',
+        levels: [{ level: 5, effect: 'Boosts Tandem ATK by 2.5x.' }],
+        criteria: null,
+      },
+    });
+    const onlySuperType = createCharacter({
+      id: 2002,
+      superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+    });
+    const bothSuperCapabilities = createCharacter({
+      id: 2003,
+      superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+      superTandemData: {
+        requirement: 'On the last stage',
+        levels: [{ level: 5, effect: 'Boosts Tandem ATK by 2.5x.' }],
+        criteria: null,
+      },
+    });
+    const state = createCaptainCoverageFilterState({
+      requireSuperTandem: true,
+      requireSuperTypesClasses: true,
+    });
+
+    expect(
+      resolveCaptainCoverageFilterResult(captain, {
+        character: onlySuperTandem,
+        detail: onlySuperTandem,
+      }, state).matches,
+    ).toBe(false);
+    expect(
+      resolveCaptainCoverageFilterResult(captain, {
+        character: onlySuperType,
+        detail: onlySuperType,
+      }, state).matches,
+    ).toBe(false);
+    expect(
+      resolveCaptainCoverageFilterResult(captain, {
+        character: bothSuperCapabilities,
+        detail: bothSuperCapabilities,
+      }, state).matches,
+    ).toBe(true);
+  });
+
   it('reads available tier numbers from captain coverage entries', () => {
     const captain = createCharacter({
       id: 4571,

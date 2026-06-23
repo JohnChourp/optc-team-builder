@@ -184,9 +184,7 @@
             <div class="section-label">{{ t('results.eyebrow') }}</div>
             <h2>
               {{
-                selectedCaptainDetail()
-                  ? t('results.titleWithCount', { count: totalMatchingCharacters() })
-                  : t('results.title')
+                t('results.titleWithCount', { count: totalMatchingCharacters() })
               }}
             </h2>
           </div>
@@ -236,7 +234,7 @@
               <ion-toggle
                 justify="space-between"
                 [checked]="requireSuperTandemPresence()"
-                [disabled]="!selectedCaptainDetail()"
+                [disabled]="loading()"
                 (ionChange)="onRequireSuperTandemPresenceChange($event)"
               ></ion-toggle>
             </label>
@@ -252,7 +250,7 @@
               <ion-toggle
                 justify="space-between"
                 [checked]="requireSuperTypesClassesPresence()"
-                [disabled]="!selectedCaptainDetail()"
+                [disabled]="loading()"
                 (ionChange)="onRequireSuperTypesClassesPresenceChange($event)"
               ></ion-toggle>
             </label>
@@ -268,7 +266,9 @@
                     type="button"
                     class="ability-rank-toggle__chip"
                     [class.ability-rank-toggle__chip--active]="isTierCoverageActive(tier)"
-                    [disabled]="!selectedCaptainDetail() || !isTierCoverageAvailable(tier)"
+                    [disabled]="
+                      loading() || !selectedCaptainDetail() || !isTierCoverageAvailable(tier)
+                    "
                     [attr.data-test]="'tier-coverage-toggle-' + tier"
                     [attr.aria-pressed]="isTierCoverageActive(tier)"
                     [title]="
@@ -430,7 +430,7 @@
             <ion-searchbar
               class="coverage-search"
               [debounce]="150"
-              [disabled]="!selectedCaptainDetail()"
+              [disabled]="loading()"
               [placeholder]="t('search.placeholder')"
               [searchIcon]="searchIcon"
               [value]="searchTerm()"
@@ -439,7 +439,7 @@
 
             <app-character-filter-row
               class="captain-coverage-filter-row"
-              [disabled]="!selectedCaptainDetail()"
+              [disabled]="loading()"
               [showTypeFilter]="true"
               [typeLabel]="t('filters.type.label')"
               [typePlaceholder]="t('filters.type.placeholder')"
@@ -497,11 +497,6 @@
             <ion-spinner name="crescent"></ion-spinner>
             <span>{{ t('loading') }}</span>
           </div>
-        } @else if (!selectedCaptainDetail()) {
-          <div class="panel-empty panel-empty--large">
-            <strong>{{ t('empty.noCaptain.title') }}</strong>
-            <span>{{ t('empty.noCaptain.copy') }}</span>
-          </div>
         } @else if (!resultCards().length) {
           <div class="panel-empty panel-empty--large">
             <strong>{{ t('empty.noResults.title') }}</strong>
@@ -520,10 +515,12 @@
                 </a>
 
                 <div class="captain-result__body">
-                  <div class="captain-result__boosts" aria-label="Captain boosts">
-                    <span>HP:{{ formatBoost(card.coverage.boosts.hp) }}</span>
-                    <span>ATK:{{ formatBoost(card.coverage.boosts.atk) }}</span>
-                  </div>
+                  @if (card.coverage; as coverage) {
+                    <div class="captain-result__boosts" aria-label="Captain boosts">
+                      <span>HP:{{ formatBoost(coverage.boosts.hp) }}</span>
+                      <span>ATK:{{ formatBoost(coverage.boosts.atk) }}</span>
+                    </div>
+                  }
 
                   @if (card.matchedAbilityBadges.length) {
                     <div class="captain-result__ability-badges">

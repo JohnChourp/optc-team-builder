@@ -7,20 +7,20 @@
   },
   "empty": {
     "noCaptain": {
-      "copy": "Διάλεξε πρώτα Captain στο team slot. Τα αποτελέσματα θα δείχνουν subs που καλύπτονται από το captain ability του.",
+      "copy": "Δες πρώτα όλους τους χαρακτήρες ή διάλεξε Captain για να περιορίσεις τα results σε units που καλύπτει το captain ability του.",
       "title": "Επίλεξε Captain"
     },
     "noResults": {
-      "copy": "Κανένας καλυπτόμενος χαρακτήρας δεν χωράει με τα τρέχοντα team slots, cost budget, search, favorites και ability filters.",
+      "copy": "Κανένας χαρακτήρας δεν χωράει με τα τρέχοντα team slots, cost budget, search, favorites και ability filters.",
       "title": "Δεν βρέθηκαν χαρακτήρες"
     }
   },
   "hero": {
     "captainsCount": "{{count}} captains",
     "charactersCount": "{{count}} χαρακτήρες",
-    "copy": "Διάλεξε Captain στο team slot και μετά κράτα μόνο χαρακτήρες που καλύπτονται από το ability του, με type, class, cost, universal και self-only clauses.",
+    "copy": "Δες πρώτα όλους τους χαρακτήρες ή διάλεξε Captain στο team slot για να κρατήσεις μόνο units που καλύπτονται από το ability του, με type, class, cost, universal και self-only clauses.",
     "eyebrow": "Strict captain scope",
-    "title": "Βρες χαρακτήρες που καλύπτει ο Captain σου"
+    "title": "Browse χαρακτήρες για Captain Coverage"
   },
   "filters": {
     "abilityRailLabel": "Ability filters",
@@ -50,7 +50,7 @@
         "all": "Όλοι οι χαρακτήρες"
       },
       "support": {
-        "all": "Χρησιμοποίησε όλους τους covered χαρακτήρες του local dataset.",
+        "all": "Χρησιμοποίησε όλους τους χαρακτήρες του local dataset.",
         "noBoxes": "Δημιούργησε character box για να περιορίσεις τα Captain Coverage αποτελέσματα σε αυτό το box.",
         "withCount": "Περιόρισε τα αποτελέσματα σε {{count}} χαρακτήρα/ες αυτού του box.",
         "withFavorites": "{{count}} από {{total}} χαρακτήρα/ες αυτού του box είναι favorites."
@@ -64,26 +64,26 @@
       "from": "Cost από",
       "to": "Cost έως"
     },
-    "crewmateCopy": "Φίλτραρε τα καλυπτόμενα character results με Crewmate Ability tags.",
+    "crewmateCopy": "Φίλτραρε τα character results με Crewmate Ability tags.",
     "crewmateEyebrow": "Crewmate Ability",
     "crewmateTitle": "Crewmate Ability filters",
     "favoritesOnly": "Μόνο favorites",
     "hideFavorites": "Κρύψε favorites",
-    "potentialCopy": "Φίλτραρε τα καλυπτόμενα character results με Potential Ability tags.",
+    "potentialCopy": "Φίλτραρε τα character results με Potential Ability tags.",
     "potentialEyebrow": "Potential Ability",
     "potentialTitle": "Potential Ability filters",
-    "specialCopy": "Φίλτραρε τα καλυπτόμενα character results με Special tags.",
+    "specialCopy": "Φίλτραρε τα character results με Special tags.",
     "specialEyebrow": "Special",
     "specialTitle": "Special filters",
     "superTandemPresence": {
       "toggle": "Super Tandem",
-      "support": "Δείξε μόνο καλυπτόμενους χαρακτήρες με structured Super Tandem δεδομένα."
+      "support": "Δείξε μόνο χαρακτήρες με structured Super Tandem δεδομένα."
     },
     "superTypesClassesPresence": {
       "toggle": "Super Types/Classes",
-      "support": "Δείξε μόνο καλυπτόμενους χαρακτήρες με structured Super Type ή Super Class δεδομένα."
+      "support": "Δείξε μόνο χαρακτήρες με structured Super Type ή Super Class δεδομένα."
     },
-    "supportCopy": "Φίλτραρε τα καλυπτόμενα character results με Support Ability tags.",
+    "supportCopy": "Φίλτραρε τα character results με Support Ability tags.",
     "supportEyebrow": "Support Ability",
     "supportTitle": "Support Ability filters",
     "type": {
@@ -93,16 +93,16 @@
   },
   "loading": "Φόρτωση captain δεδομένων...",
   "results": {
-    "eyebrow": "Covered characters",
+    "eyebrow": "Character results",
     "openCharacterDetails": "Άνοιγμα character details",
     "title": "Character αποτελέσματα",
-    "titleWithCount": "{{count}} covered characters"
+    "titleWithCount": "{{count}} matching characters"
   },
   "search": {
-    "placeholder": "Αναζήτηση στους covered χαρακτήρες..."
+    "placeholder": "Αναζήτηση στα character results..."
   },
   "sort": {
-    "label": "Ταξινόμηση captain coverage",
+    "label": "Ταξινόμηση character results",
     "options": {
       "catalog": "Προεπιλεγμένη σειρά",
       "captainAtkBoost": "Captain ATK boost",

@@ -37,6 +37,8 @@ import {
   type CaptainCoverageFilterState,
   getCaptainCoverageAvailableTierNumbers,
   getCaptainCoverageTiers,
+  hasCaptainCoverageSuperTandemData,
+  hasCaptainCoverageSuperTypesClassesData,
   resolveCaptainCoverageFilterResult,
 } from '../../core/services/captain-coverage-filter.utils';
 import {
@@ -104,7 +106,7 @@ type CaptainCoverageSortMode =
   | 'nameDesc';
 interface CaptainCoverageCardView {
   character: CharacterListItem;
-  coverage: CaptainCoverageResult;
+  coverage: CaptainCoverageResult | null;
   detailLink: string[];
   assignableSlotIndex: number | null;
   abilityMatchCount: number;
@@ -387,11 +389,6 @@ export class CaptainCoveragePage implements OnInit {
 
   public readonly resultCards = computed<CaptainCoverageCardView[]>(() => {
     const captain = this.selectedCaptainDetail();
-
-    if (!captain) {
-      return [];
-    }
-
     const normalizedSearchTerm = this.searchTerm().trim().toLowerCase();
     const selectedType = this.selectedType();
     const selectedClass = this.selectedClass();
@@ -411,23 +408,26 @@ export class CaptainCoveragePage implements OnInit {
       )
       .map((character) => {
         const characterDetail = characterDetailsById.get(character.id);
-        const filterResult = resolveCaptainCoverageFilterResult(
-          captain,
-          {
-            character,
-            detail: characterDetail,
-          },
-          captainCoverageFilterState,
-        );
+        const filterResult = captain
+          ? resolveCaptainCoverageFilterResult(
+              captain,
+              {
+                character,
+                detail: characterDetail,
+              },
+              captainCoverageFilterState,
+            )
+          : null;
 
         return {
           character,
           characterDetail,
-          coverage: filterResult.coverage,
-          matchesCaptainCoverageFilters: filterResult.matches,
+          coverage: filterResult?.coverage ?? null,
+          matchesCaptainCoverageFilters: filterResult?.matches ?? true,
         };
       })
       .filter(({ matchesCaptainCoverageFilters }) => matchesCaptainCoverageFilters)
+      .filter(({ characterDetail }) => this.matchesSuperPresenceFilters(characterDetail))
       .filter(({ character }) => !this.hasPartyConflict(character, selectedConflictKeys))
       .map(({ character, characterDetail, coverage }) => {
         const detailAbilities = characterDetail?.detail.builderAbilities ?? [];
@@ -458,11 +458,13 @@ export class CaptainCoveragePage implements OnInit {
           ],
         };
       })
-      .filter(({ abilityMatchCount }) => {
+      .filter(({ abilityMatchCount, captainAbilityMatchCount }) => {
         const matchesSelectedAbilities =
           selectedAbilityRequirements.length === 0 ? true : abilityMatchCount > 0;
+        const matchesCaptainAbilityRequirements =
+          captainAbilityRequirements.length === 0 ? true : captainAbilityMatchCount > 0;
 
-        return matchesSelectedAbilities;
+        return matchesSelectedAbilities && matchesCaptainAbilityRequirements;
       })
       .filter(({ assignableSlotIndex }) => assignableSlotIndex !== null)
       .filter(({ character }) => this.matchesSelectedType(character, selectedType))
@@ -1110,7 +1112,7 @@ export class CaptainCoveragePage implements OnInit {
 
   private matchesSearchTerm(
     character: CharacterListItem,
-    coverage: CaptainCoverageResult,
+    coverage: CaptainCoverageResult | null,
     searchTerm: string,
   ): boolean {
     return [
@@ -1120,11 +1122,28 @@ export class CaptainCoveragePage implements OnInit {
       character.primaryClass,
       character.secondaryClass ?? '',
       ...character.classes,
-      ...coverage.chips.map((chip) => chip.label),
+      ...(coverage?.chips.map((chip) => chip.label) ?? []),
     ]
       .join(' ')
       .toLowerCase()
       .includes(searchTerm);
+  }
+
+  private matchesSuperPresenceFilters(
+    characterDetail: CharacterDetailRecord | null | undefined,
+  ): boolean {
+    if (this.requireSuperTandemPresence() && !hasCaptainCoverageSuperTandemData(characterDetail)) {
+      return false;
+    }
+
+    if (
+      this.requireSuperTypesClassesPresence() &&
+      !hasCaptainCoverageSuperTypesClassesData(characterDetail)
+    ) {
+      return false;
+    }
+
+    return true;
   }
 
   private matchesSelectedType(character: CharacterListItem, selectedType: string): boolean {
