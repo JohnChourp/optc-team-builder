@@ -444,6 +444,12 @@
       "reject": "Reject analytics"
     }
   },
+  "installPrompt": {
+    "title": "Install OPTC Team Builder",
+    "copy": "Add the app to your phone for a full-screen shortcut and offline-friendly loading.",
+    "install": "Install app",
+    "dismiss": "Dismiss install prompt"
+  },
   "legalNav": {
     "ariaLabel": "Legal links",
     "privacy": "Privacy",

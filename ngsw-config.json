@@ -1,0 +1,86 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js",
+          "!/app-config.js"
+        ]
+      }
+    },
+    {
+      "name": "i18n",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/i18n/**/*.json"
+        ]
+      }
+    },
+    {
+      "name": "data",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/assets/data/optc-auto-builder-abilities.json",
+          "/assets/data/optc-manifest.json",
+          "/assets/data/optc-preview.json",
+          "/assets/data/optc-seed.sql",
+          "/assets/data/optc-unresolved-images.json",
+          "/assets/vendor/sql.js/sql-wasm.wasm"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/brand/**",
+          "/*.ico",
+          "/*.jpg",
+          "/*.png",
+          "/*.svg",
+          "/*.webp"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "app-config",
+      "urls": [
+        "/app-config.js"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 1,
+        "maxAge": "1d",
+        "timeout": "2s"
+      }
+    },
+    {
+      "name": "runtime-media",
+      "urls": [
+        "/assets/animations/**",
+        "/assets/exact-character-images/**",
+        "/assets/offline-packs/**",
+        "/assets/placeholders/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 750,
+        "maxAge": "30d"
+      }
+    }
+  ]
+}
