@@ -37,4 +37,20 @@ describe('CharacterDetailPage template', () => {
     expect(template).not.toContain('| json');
     expect(template).not.toContain('ion-back-button');
   });
+
+  it('keeps readable mobile detail text selectable without selecting actions', () => {
+    const styles = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/pages/character-detail/character-detail-responsive-panel.component.scss',
+      ),
+      'utf8',
+    );
+
+    expect(styles).toContain('-webkit-user-select: text');
+    expect(styles).toContain('user-select: text');
+    expect(styles).toContain('-webkit-touch-callout: default');
+    expect(styles).toContain('.hero-actions');
+    expect(styles).toContain('user-select: none');
+  });
 });

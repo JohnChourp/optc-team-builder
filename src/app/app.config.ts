@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { type ApplicationConfig, inject, isDevMode, provideAppInitializer } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideServiceWorker } from '@angular/service-worker';
 import { provideIonicAngular } from '@ionic/angular/standalone';
 import { provideTransloco, translocoConfig } from '@jsverse/transloco';
 import { provideLottieOptions } from 'ngx-lottie';
@@ -22,6 +23,10 @@ export const appConfig: ApplicationConfig = {
     }),
     provideIonicAngular(),
     provideRouter(routes, withComponentInputBinding()),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
     provideTransloco({
       config: translocoConfig({
         availableLangs: APP_I18N_AVAILABLE_LANGUAGES.map(({ id, label }) => ({ id, label })),
