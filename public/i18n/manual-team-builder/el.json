@@ -45,14 +45,40 @@
     "empty": "Δεν βρέθηκαν χαρακτήρες για αυτό το manual team search.",
     "eyebrow": "Slot picker",
     "filters": {
+      "abilityRailLabel": "Manual team ability filter categories",
       "anyClass": "Any class",
       "anyTag": "Any tag",
       "anyType": "Any type",
+      "captainAbility": {
+        "copy": "Φίλτραρε τους slot candidates με effects από το Captain Ability κάθε χαρακτήρα.",
+        "eyebrow": "Captain Ability",
+        "title": "Captain Ability filters"
+      },
       "class": "Class",
       "clear": "Καθαρισμός filters",
       "costError": "Το minimum cost {{min}} δεν μπορεί να είναι πάνω από το maximum cost {{max}}.",
+      "crewmate": {
+        "copy": "Διάλεξε Crewmate effects. Οι slot candidates πρέπει να καλύπτουν κάθε selected effect.",
+        "eyebrow": "Crewmate Ability",
+        "title": "Crewmate Ability filters"
+      },
       "maxCost": "Max cost",
       "minCost": "Min cost",
+      "potential": {
+        "copy": "Διάλεξε Potential effects. Οι slot candidates πρέπει να καλύπτουν κάθε selected effect.",
+        "eyebrow": "Potential Ability",
+        "title": "Potential Ability filters"
+      },
+      "special": {
+        "copy": "Φίλτραρε τους slot candidates με Special effects.",
+        "eyebrow": "Special",
+        "title": "Special filters"
+      },
+      "support": {
+        "copy": "Διάλεξε Support effects. Οι slot candidates πρέπει να καλύπτουν κάθε selected effect.",
+        "eyebrow": "Support Ability",
+        "title": "Support Ability filters"
+      },
       "tag": "Tag",
       "type": "Type"
     },

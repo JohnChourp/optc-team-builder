@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
+import { type AbilityRequirementDraft } from '../../core/services/ability-requirement-draft.utils';
 import {
   type CharacterDetailRecord,
   type DatasetManifest,
@@ -52,6 +53,9 @@ describe('ManualTeamBuilderPage', () => {
     expect(template).toContain('manual-team-picker__filters');
     expect(template).toContain('manual-team-picker-slot-rail');
     expect(template).toContain('manual-team-clear-zone');
+    expect(template).toContain('<app-ability-filter-rail');
+    expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).toContain('<app-special-ability-picker');
     expect(template).toContain('<app-ship-picker');
     expect(template).toContain('<app-captain-team-condition-status');
     expect(template).toContain('<app-character-ability-groups');
@@ -375,6 +379,67 @@ describe('ManualTeamBuilderPage', () => {
     );
   });
 
+  it('applies ability picker filters as allowed character ids through repository search', async () => {
+    const removeBindSpecialist = createCharacterRecord(801, 'Remove Bind Specialist');
+    const orbBooster = createCharacterRecord(802, 'Orb Booster');
+    const unrelated = createCharacterRecord(803, 'Unrelated Candidate');
+    const { page, repository } = createPage({
+      characters: [removeBindSpecialist, orbBooster, unrelated],
+    });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveSpecialAbilityPicker([createAbilityDraft('remove_bind')]);
+
+    const calls = repository.searchDetailedCharacters.mock.calls;
+    const lastQuery = calls[calls.length - 1]?.[0];
+
+    expect([...(lastQuery?.allowedCharacterIds ?? [])].sort()).toEqual([801, 802]);
+    expect(page.candidates().map((character) => character.id)).toEqual([801, 802]);
+    expect(page.hasActiveCandidateFilters()).toBe(true);
+    expect(page.abilityFilterRailItems().find((item) => item.category === 'special')?.count).toBe(
+      1,
+    );
+  });
+
+  it('intersects ability filters with local character tag filtering', async () => {
+    const taggedMatch = createCharacterRecord(901, 'Tagged Match');
+    const taggedMismatch = createCharacterRecord(902, 'Tagged Mismatch');
+    const untaggedMatch = createCharacterRecord(903, 'Untagged Match');
+
+    taggedMatch.detail.characterTags = ['utility'];
+    taggedMismatch.detail.characterTags = ['utility'];
+    untaggedMatch.detail.characterTags = ['damage'];
+
+    const { page, repository } = createPage({
+      characters: [taggedMatch, taggedMismatch, untaggedMatch],
+    });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCaptainAbilityPicker([createAbilityDraft('captain_boost')]);
+    await page.onCharacterTagFilterChange(createValueEvent('utility'));
+
+    expect(repository.getDetailedCharacterCatalog).toHaveBeenCalled();
+    expect(page.candidates().map((character) => character.id)).toEqual([901]);
+  });
+
+  it('clears ability filters with the candidate filter reset action', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveSupportAbilityPicker([createAbilityDraft('support_slot_change')]);
+
+    expect(page.supportAbilityDrafts()).toHaveLength(1);
+    expect(page.hasActiveCandidateFilters()).toBe(true);
+
+    await page.clearCandidateFilters();
+
+    expect(page.supportAbilityDrafts()).toEqual([]);
+    expect(page.hasActiveCandidateFilters()).toBe(false);
+  });
+
   it('uses the detailed catalog for local character tag filtering', async () => {
     const tagged = createCharacterRecord(801, 'Tagged Utility');
     const untagged = createCharacterRecord(802, 'Untagged Utility');
@@ -540,11 +605,22 @@ function createPage(
     searchDetailedCharacters: vi
       .fn()
       .mockImplementation(
-        async (query: { searchTerm: string; limit?: number; offset?: number }) => {
+        async (query: {
+          allowedCharacterIds?: number[];
+          searchTerm: string;
+          limit?: number;
+          offset?: number;
+        }) => {
           const searchTerm = query.searchTerm.trim().toLowerCase();
-          const filteredCharacters = searchTerm
-            ? characters.filter((character) => character.name.toLowerCase().includes(searchTerm))
-            : characters;
+          const allowedCharacterIdSet =
+            query.allowedCharacterIds === undefined ? null : new Set(query.allowedCharacterIds);
+          const filteredCharacters = characters.filter((character) => {
+            if (allowedCharacterIdSet && !allowedCharacterIdSet.has(character.id)) {
+              return false;
+            }
+
+            return searchTerm ? character.name.toLowerCase().includes(searchTerm) : true;
+          });
           const offset = query.offset ?? 0;
           const limit = query.limit ?? filteredCharacters.length;
 
@@ -748,6 +824,23 @@ function createAbilityCatalog(
     abilityCount: 1,
     abilities: [
       {
+        key: 'captain_boost',
+        label: 'Captain Boost',
+        category: 'legacy',
+        groupLabel: 'Captain effects',
+        groupOrder: 0,
+        effectOrder: 0,
+        supportsTurns: false,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['captainAbility'],
+        matchCount: 2,
+        matchingCharacterIds: [901, 903],
+        captainAbilityMatchingCharacterIds: [901, 903],
+        sampleCharacterIds: [901],
+        sampleTexts: ['Boosts crew ATK.'],
+      },
+      {
         key: 'remove_bind',
         label: 'Remove Bind',
         category: 'special',
@@ -758,12 +851,72 @@ function createAbilityCatalog(
         supportsSlotTokens: true,
         availableSlotTokens: ['crew'],
         availableSources: ['specialText'],
-        matchCount: 1,
-        sampleCharacterIds: [101],
+        matchCount: 2,
+        matchingCharacterIds: [801, 802],
+        sampleCharacterIds: [801],
         sampleTexts: ['Removes Bind by 5 turns.'],
+      },
+      {
+        key: 'sailor_boost',
+        label: 'Sailor Boost',
+        category: 'crewmate',
+        groupLabel: 'Crewmate utility',
+        groupOrder: 2,
+        effectOrder: 1,
+        supportsTurns: false,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['sailorAbilities'],
+        matchCount: 1,
+        matchingCharacterIds: [101],
+        sampleCharacterIds: [101],
+        sampleTexts: ['Boosts base stats as sailor.'],
+      },
+      {
+        key: 'potential_reduce_damage',
+        label: 'Reduce Damage',
+        category: 'potential',
+        groupLabel: 'Potential utility',
+        groupOrder: 3,
+        effectOrder: 1,
+        supportsTurns: false,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['potentialAbilities'],
+        matchCount: 1,
+        matchingCharacterIds: [102],
+        sampleCharacterIds: [102],
+        sampleTexts: ['Potential damage reduction.'],
+      },
+      {
+        key: 'support_slot_change',
+        label: 'Support Slot Change',
+        category: 'support',
+        groupLabel: 'Support utility',
+        groupOrder: 4,
+        effectOrder: 1,
+        supportsTurns: false,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['supportData'],
+        matchCount: 1,
+        matchingCharacterIds: [101],
+        sampleCharacterIds: [101],
+        sampleTexts: ['Changes slots from support.'],
       },
     ],
     ...overrides,
+  };
+}
+
+function createAbilityDraft(abilityKey: string): AbilityRequirementDraft {
+  return {
+    draftId: `${abilityKey}-draft`,
+    abilityKey,
+    minTurns: null,
+    slotTokens: [],
+    requiredCharacterCount: 1,
+    slotScope: 'any',
   };
 }
 

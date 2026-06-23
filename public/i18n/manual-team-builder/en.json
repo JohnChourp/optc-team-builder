@@ -45,14 +45,40 @@
     "empty": "No characters matched this manual team search.",
     "eyebrow": "Slot picker",
     "filters": {
+      "abilityRailLabel": "Manual team ability filter categories",
       "anyClass": "Any class",
       "anyTag": "Any tag",
       "anyType": "Any type",
+      "captainAbility": {
+        "copy": "Filter slot candidates by effects parsed from each character's own Captain Ability.",
+        "eyebrow": "Captain Ability",
+        "title": "Captain Ability filters"
+      },
       "class": "Class",
       "clear": "Clear filters",
       "costError": "Minimum cost {{min}} cannot be higher than maximum cost {{max}}.",
+      "crewmate": {
+        "copy": "Pick Crewmate effects. Slot candidates must cover every selected effect.",
+        "eyebrow": "Crewmate Ability",
+        "title": "Crewmate Ability filters"
+      },
       "maxCost": "Max cost",
       "minCost": "Min cost",
+      "potential": {
+        "copy": "Pick Potential effects. Slot candidates must cover every selected effect.",
+        "eyebrow": "Potential Ability",
+        "title": "Potential Ability filters"
+      },
+      "special": {
+        "copy": "Filter slot candidates by Special effects.",
+        "eyebrow": "Special",
+        "title": "Special filters"
+      },
+      "support": {
+        "copy": "Pick Support effects. Slot candidates must cover every selected effect.",
+        "eyebrow": "Support Ability",
+        "title": "Support Ability filters"
+      },
       "tag": "Tag",
       "type": "Type"
     },
