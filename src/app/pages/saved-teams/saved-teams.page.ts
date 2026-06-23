@@ -1,6 +1,5 @@
 import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
   IonButtons,
@@ -31,6 +30,11 @@ import {
 } from 'ionicons/icons';
 
 import {
+  type AutoBuildAbilityCoverageMode,
+  type AutoBuildAbilitySource,
+  type NormalizedBuilderAbility,
+} from '../../core/models/auto-team-builder-ability.models';
+import {
   type CharacterDetailRecord,
   type CharacterListItem,
   type SavedTeam,
@@ -56,6 +60,7 @@ import {
 import { SavedTeamsStylePanelsComponent } from './saved-teams-style-panels.component';
 
 interface SavedTeamPreviewCard {
+  abilityIdentitySets: Record<SavedTeamAbilityOrigin, Set<string>>;
   hasShipThumbnail: boolean;
   ship: ShipRecord | null;
   shipDisplayName: string;
@@ -70,6 +75,47 @@ interface SavedTeamsImportFeedback {
   title: string;
   tone: 'error' | 'success' | 'warning';
 }
+
+type SavedTeamAbilityOrigin = 'leader' | 'crew';
+type SavedTeamAbilityCategory = 'captain' | 'special' | 'crewmate' | 'potential' | 'support';
+
+interface SavedTeamAbilityFacet {
+  category: SavedTeamAbilityCategory;
+  coverageMode: AutoBuildAbilityCoverageMode;
+  identity: string;
+  label: string;
+  metadataLabel: string;
+  minTurns: number | null;
+  selected: boolean;
+  slotTokens: string[];
+  source: AutoBuildAbilitySource;
+  teamCount: number;
+}
+
+interface SavedTeamAbilityCategoryGroup {
+  abilityCount: number;
+  abilities: SavedTeamAbilityFacet[];
+  category: SavedTeamAbilityCategory;
+  label: string;
+}
+
+interface SavedTeamAbilityFilterSection {
+  categories: SavedTeamAbilityCategoryGroup[];
+  copy: string;
+  hasSelection: boolean;
+  origin: SavedTeamAbilityOrigin;
+  selectedCount: number;
+  title: string;
+}
+
+const SAVED_TEAM_ABILITY_ORIGINS: SavedTeamAbilityOrigin[] = ['leader', 'crew'];
+const SAVED_TEAM_ABILITY_CATEGORIES: SavedTeamAbilityCategory[] = [
+  'captain',
+  'special',
+  'crewmate',
+  'potential',
+  'support',
+];
 
 @Component({
   selector: 'app-saved-teams-page',
@@ -99,22 +145,55 @@ interface SavedTeamsImportFeedback {
   templateUrl: './saved-teams.page.html',
   styleUrl: './saved-teams.page.scss',
 })
-export class SavedTeamsPage implements OnInit, ViewWillEnter {
+export class SavedTeamsPage implements OnInit {
   public readonly loading = signal(true);
   public readonly savedTeams;
   public readonly savedTeamCards = signal<SavedTeamPreviewCard[]>([]);
+  public readonly selectedLeaderAbilityIds = signal<string[]>([]);
+  public readonly selectedCrewAbilityIds = signal<string[]>([]);
+  public readonly selectedLeaderAbilityIdSet = computed(
+    () => new Set(this.selectedLeaderAbilityIds()),
+  );
+  public readonly selectedCrewAbilityIdSet = computed(() => new Set(this.selectedCrewAbilityIds()));
+  public readonly hasAbilityFilters = computed(
+    () => this.selectedLeaderAbilityIds().length > 0 || this.selectedCrewAbilityIds().length > 0,
+  );
+  public readonly selectedAbilityFilterCount = computed(
+    () => this.selectedLeaderAbilityIds().length + this.selectedCrewAbilityIds().length,
+  );
+  public readonly filteredSavedTeamCards = computed(() =>
+    this.savedTeamCards().filter((teamCard) => this.matchesSelectedAbilityFilters(teamCard)),
+  );
   public readonly selectedTeamIds = signal<string[]>([]);
   public readonly selectedTeamIdSet = computed(() => new Set(this.selectedTeamIds()));
   public readonly selectedCount = computed(() => this.selectedTeamIds().length);
   public readonly hasSelection = computed(() => this.selectedCount() > 0);
   public readonly allSelected = computed(() => {
-    const teamCards = this.savedTeamCards();
+    const teamCards = this.filteredSavedTeamCards();
 
     return (
       teamCards.length > 0 &&
       teamCards.every((teamCard) => this.selectedTeamIdSet().has(teamCard.team.id))
     );
   });
+  public readonly abilityFilterSections = computed<SavedTeamAbilityFilterSection[]>(() => [
+    this.buildAbilityFilterSection('leader'),
+    this.buildAbilityFilterSection('crew'),
+  ]);
+  public readonly hasAbilityFiltersAvailable = computed(() =>
+    this.abilityFilterSections().some((section) =>
+      section.categories.some((category) => category.abilityCount > 0),
+    ),
+  );
+  public readonly savedTeamTotalLabel = computed(() =>
+    this.hasAbilityFilters()
+      ? this.i18n.translate(
+          'totalFiltered',
+          { count: this.filteredSavedTeamCards().length, total: this.savedTeams().length },
+          'saved-teams',
+        )
+      : this.i18n.translate('total', { count: this.savedTeams().length }, 'saved-teams'),
+  );
   public readonly importModalOpen = signal(false);
   public readonly draggingImportFile = signal(false);
   public readonly importFileName = signal('');
@@ -193,7 +272,7 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
 
   public onSelectAllChange(event: CustomEvent<{ checked: boolean }>): void {
     if (event.detail.checked) {
-      this.selectedTeamIds.set(this.savedTeamCards().map((teamCard) => teamCard.team.id));
+      this.selectedTeamIds.set(this.filteredSavedTeamCards().map((teamCard) => teamCard.team.id));
       return;
     }
 
@@ -219,6 +298,7 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
 
   public resetPage(): void {
     this.selectedTeamIds.set([]);
+    this.clearAllAbilityFilters();
     this.editModalOpen.set(false);
     this.importModalOpen.set(false);
     this.openTeamModalOpen.set(false);
@@ -362,6 +442,25 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     await this.importSavedTeams(file);
   }
 
+  public isAbilityFilterSelected(origin: SavedTeamAbilityOrigin, identity: string): boolean {
+    return this.resolveSelectedAbilitySet(origin).has(identity);
+  }
+
+  public toggleAbilityFilter(origin: SavedTeamAbilityOrigin, identity: string): void {
+    this.setAbilityFilterSelection(origin, identity, !this.isAbilityFilterSelected(origin, identity));
+  }
+
+  public clearAbilityFilterSection(origin: SavedTeamAbilityOrigin): void {
+    this.setSelectedAbilityIds(origin, []);
+    this.pruneSelection();
+  }
+
+  public clearAllAbilityFilters(): void {
+    this.selectedLeaderAbilityIds.set([]);
+    this.selectedCrewAbilityIds.set([]);
+    this.pruneSelection();
+  }
+
   private async refreshSavedTeamCards(): Promise<void> {
     this.loading.set(true);
     const teams = this.savedTeams();
@@ -395,6 +494,7 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
         const slots = team.slots.map((slotId) =>
           typeof slotId === 'number' ? (characterMap.get(slotId) ?? null) : null,
         );
+        const abilityIdentitySets = this.buildTeamAbilityIdentitySets(slots);
 
         return {
           team,
@@ -404,10 +504,12 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
           shipThumbUrl,
           hasShipThumbnail: Boolean(shipThumbUrl),
           slots,
+          abilityIdentitySets,
           conditionStatus: this.resolveSavedTeamConditionStatus(slots),
         };
       }),
     );
+    this.pruneAbilitySelections();
     this.pruneSelection();
     this.loading.set(false);
   }
@@ -452,11 +554,28 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
   }
 
   private pruneSelection(): void {
-    const availableTeamIds = new Set(this.savedTeamCards().map((teamCard) => teamCard.team.id));
+    const availableTeamIds = new Set(
+      this.filteredSavedTeamCards().map((teamCard) => teamCard.team.id),
+    );
 
     this.selectedTeamIds.set(
       this.selectedTeamIds().filter((teamId) => availableTeamIds.has(teamId)),
     );
+  }
+
+  private pruneAbilitySelections(): void {
+    for (const origin of SAVED_TEAM_ABILITY_ORIGINS) {
+      const availableAbilityIds = new Set(
+        this.savedTeamCards().flatMap((teamCard) => [
+          ...teamCard.abilityIdentitySets[origin].values(),
+        ]),
+      );
+      const nextAbilityIds = this.resolveSelectedAbilityIds(origin).filter((abilityId) =>
+        availableAbilityIds.has(abilityId),
+      );
+
+      this.setSelectedAbilityIds(origin, nextAbilityIds);
+    }
   }
 
   private confirmDelete(message: string): boolean {
@@ -475,6 +594,226 @@ export class SavedTeamsPage implements OnInit, ViewWillEnter {
     this.importFileName.set('');
     this.importFeedback.set(null);
     this.importing.set(false);
+  }
+
+  private buildAbilityFilterSection(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFilterSection {
+    const facets = this.buildAbilityFacets(origin);
+    const selectedIds = this.resolveSelectedAbilitySet(origin);
+    const categories = SAVED_TEAM_ABILITY_CATEGORIES.map((category) => {
+      const abilities = facets.filter((facet) => facet.category === category);
+
+      return {
+        abilityCount: abilities.length,
+        abilities,
+        category,
+        label: this.i18n.translate(`abilityFilters.categories.${category}`, undefined, 'saved-teams'),
+      };
+    });
+
+    return {
+      categories,
+      copy: this.i18n.translate(`abilityFilters.sections.${origin}.copy`, undefined, 'saved-teams'),
+      hasSelection: selectedIds.size > 0,
+      origin,
+      selectedCount: selectedIds.size,
+      title: this.i18n.translate(`abilityFilters.sections.${origin}.title`, undefined, 'saved-teams'),
+    };
+  }
+
+  private buildAbilityFacets(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFacet[] {
+    const facets = new Map<string, SavedTeamAbilityFacet & { teamIds: Set<string> }>();
+    const selectedIds = this.resolveSelectedAbilitySet(origin);
+
+    for (const teamCard of this.savedTeamCards()) {
+      const teamAbilityIdentities = new Set<string>();
+
+      for (const slotIndex of this.resolveOriginSlotIndexes(origin)) {
+        const slot = teamCard.slots[slotIndex];
+
+        if (!slot) {
+          continue;
+        }
+
+        for (const ability of slot.detail.builderAbilities) {
+          const identity = this.buildAbilityIdentity(ability);
+          const existingFacet = facets.get(identity);
+
+          teamAbilityIdentities.add(identity);
+
+          if (existingFacet) {
+            continue;
+          }
+
+          facets.set(identity, {
+            category: this.resolveAbilityCategory(ability.source),
+            coverageMode: ability.coverageMode ?? 'explicit',
+            identity,
+            label: ability.label,
+            metadataLabel: this.formatAbilityMetadata(ability),
+            minTurns: ability.minTurns,
+            selected: selectedIds.has(identity),
+            slotTokens: [...ability.slotTokens],
+            source: ability.source,
+            teamCount: 0,
+            teamIds: new Set<string>(),
+          });
+        }
+      }
+
+      for (const identity of teamAbilityIdentities) {
+        facets.get(identity)?.teamIds.add(teamCard.team.id);
+      }
+    }
+
+    return [...facets.values()]
+      .map(({ teamIds, ...facet }) => ({
+        ...facet,
+        selected: selectedIds.has(facet.identity),
+        teamCount: teamIds.size,
+      }))
+      .sort((left, right) => {
+        const categoryDifference =
+          SAVED_TEAM_ABILITY_CATEGORIES.indexOf(left.category) -
+          SAVED_TEAM_ABILITY_CATEGORIES.indexOf(right.category);
+
+        return (
+          categoryDifference ||
+          left.label.localeCompare(right.label) ||
+          left.metadataLabel.localeCompare(right.metadataLabel)
+        );
+      });
+  }
+
+  private buildTeamAbilityIdentitySets(
+    slots: Array<CharacterDetailRecord | null>,
+  ): Record<SavedTeamAbilityOrigin, Set<string>> {
+    return {
+      leader: new Set(this.resolveSlotAbilities(slots, 'leader').map((ability) => this.buildAbilityIdentity(ability))),
+      crew: new Set(this.resolveSlotAbilities(slots, 'crew').map((ability) => this.buildAbilityIdentity(ability))),
+    };
+  }
+
+  private resolveSlotAbilities(
+    slots: Array<CharacterDetailRecord | null>,
+    origin: SavedTeamAbilityOrigin,
+  ): NormalizedBuilderAbility[] {
+    return this.resolveOriginSlotIndexes(origin).flatMap(
+      (slotIndex) => slots[slotIndex]?.detail.builderAbilities ?? [],
+    );
+  }
+
+  private resolveOriginSlotIndexes(origin: SavedTeamAbilityOrigin): number[] {
+    return origin === 'leader' ? [0, 1] : [2, 3, 4, 5];
+  }
+
+  private matchesSelectedAbilityFilters(teamCard: SavedTeamPreviewCard): boolean {
+    return (
+      this.matchesSelectedAbilityOrigin(teamCard, 'leader') &&
+      this.matchesSelectedAbilityOrigin(teamCard, 'crew')
+    );
+  }
+
+  private matchesSelectedAbilityOrigin(
+    teamCard: SavedTeamPreviewCard,
+    origin: SavedTeamAbilityOrigin,
+  ): boolean {
+    const selectedAbilityIds = this.resolveSelectedAbilityIds(origin);
+
+    if (!selectedAbilityIds.length) {
+      return true;
+    }
+
+    const teamAbilityIds = teamCard.abilityIdentitySets[origin];
+
+    return selectedAbilityIds.every((abilityId) => teamAbilityIds.has(abilityId));
+  }
+
+  private setAbilityFilterSelection(
+    origin: SavedTeamAbilityOrigin,
+    identity: string,
+    selected: boolean,
+  ): void {
+    const currentIds = this.resolveSelectedAbilityIds(origin);
+
+    if (selected) {
+      if (!currentIds.includes(identity)) {
+        this.setSelectedAbilityIds(origin, [...currentIds, identity]);
+      }
+    } else {
+      this.setSelectedAbilityIds(
+        origin,
+        currentIds.filter((abilityId) => abilityId !== identity),
+      );
+    }
+
+    this.pruneSelection();
+  }
+
+  private resolveSelectedAbilityIds(origin: SavedTeamAbilityOrigin): string[] {
+    return origin === 'leader' ? this.selectedLeaderAbilityIds() : this.selectedCrewAbilityIds();
+  }
+
+  private resolveSelectedAbilitySet(origin: SavedTeamAbilityOrigin): Set<string> {
+    return origin === 'leader' ? this.selectedLeaderAbilityIdSet() : this.selectedCrewAbilityIdSet();
+  }
+
+  private setSelectedAbilityIds(origin: SavedTeamAbilityOrigin, abilityIds: string[]): void {
+    const nextAbilityIds = [...new Set(abilityIds)];
+
+    if (origin === 'leader') {
+      this.selectedLeaderAbilityIds.set(nextAbilityIds);
+      return;
+    }
+
+    this.selectedCrewAbilityIds.set(nextAbilityIds);
+  }
+
+  private buildAbilityIdentity(ability: NormalizedBuilderAbility): string {
+    return [
+      ability.key,
+      ability.source,
+      ability.minTurns ?? 'none',
+      ability.slotTokens.join(','),
+      ability.coverageMode ?? 'explicit',
+    ].join('|');
+  }
+
+  private resolveAbilityCategory(source: AutoBuildAbilitySource): SavedTeamAbilityCategory {
+    switch (source) {
+      case 'captainAbility':
+        return 'captain';
+      case 'sailorAbilities':
+        return 'crewmate';
+      case 'potentialAbilities':
+        return 'potential';
+      case 'supportData':
+        return 'support';
+      case 'specialText':
+      case 'superSpecialText':
+      case 'superTandemData':
+      case 'finalTapData':
+      case 'rushSugoSpecialData':
+        return 'special';
+    }
+  }
+
+  private formatAbilityMetadata(ability: NormalizedBuilderAbility): string {
+    const metadata = [
+      ability.minTurns === null
+        ? null
+        : this.i18n.translate(
+            'abilityFilters.metadata.turns',
+            { count: ability.minTurns },
+            'saved-teams',
+          ),
+      ability.slotTokens.length ? ability.slotTokens.join(' / ') : null,
+      this.i18n.translate(`abilityFilters.sources.${ability.source}`, undefined, 'saved-teams'),
+      ability.coverageMode === 'selectedDebuff'
+        ? this.i18n.translate('abilityFilters.metadata.selectableDebuff', undefined, 'saved-teams')
+        : null,
+    ].filter((value): value is string => Boolean(value));
+
+    return metadata.join(' - ');
   }
 
   private async importSavedTeams(file: File): Promise<void> {

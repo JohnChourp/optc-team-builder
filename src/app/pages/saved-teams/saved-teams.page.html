@@ -36,9 +36,82 @@
           <div class="section-head">
             <div>
               <h2>{{ t('title') }}</h2>
-              <span>{{ t('total', { count: savedTeams().length }) }}</span>
+              <span>{{ savedTeamTotalLabel() }}</span>
             </div>
           </div>
+          @if (hasAbilityFiltersAvailable()) {
+            <div class="saved-teams-ability-filter-panel">
+              <div class="saved-teams-ability-filter-panel__head">
+                <div>
+                  <span>{{ t('abilityFilters.eyebrow') }}</span>
+                  <h3>{{ t('abilityFilters.title') }}</h3>
+                  <p>{{ t('abilityFilters.copy') }}</p>
+                </div>
+                <ion-button
+                  fill="clear"
+                  color="light"
+                  [disabled]="!hasAbilityFilters()"
+                  (click)="clearAllAbilityFilters()"
+                >
+                  {{ t('abilityFilters.clearAll') }}
+                </ion-button>
+              </div>
+
+              <div class="saved-teams-ability-filter-panel__sections">
+                @for (section of abilityFilterSections(); track section.origin) {
+                  <section class="saved-team-ability-section">
+                    <div class="saved-team-ability-section__head">
+                      <div>
+                        <h4>{{ section.title }}</h4>
+                        <p>{{ section.copy }}</p>
+                      </div>
+                      <div class="saved-team-ability-section__meta">
+                        <strong>{{ section.selectedCount }}</strong>
+                        <span>{{ t('abilityFilters.selected') }}</span>
+                        @if (section.hasSelection) {
+                          <button type="button" (click)="clearAbilityFilterSection(section.origin)">
+                            {{ t('abilityFilters.clearSection') }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="saved-team-ability-categories">
+                      @for (category of section.categories; track category.category) {
+                        @if (category.abilities.length) {
+                          <div class="saved-team-ability-category">
+                            <div class="saved-team-ability-category__label">
+                              <span>{{ category.label }}</span>
+                              <strong>{{ category.abilityCount }}</strong>
+                            </div>
+                            <div class="saved-team-ability-chip-row">
+                              @for (ability of category.abilities; track ability.identity) {
+                                <button
+                                  type="button"
+                                  class="saved-team-ability-chip"
+                                  [class.saved-team-ability-chip--selected]="ability.selected"
+                                  [attr.aria-pressed]="ability.selected"
+                                  (click)="toggleAbilityFilter(section.origin, ability.identity)"
+                                >
+                                  <span>{{ ability.label }}</span>
+                                  @if (ability.metadataLabel) {
+                                    <small>{{ ability.metadataLabel }}</small>
+                                  }
+                                  <strong>{{
+                                    t('abilityFilters.teamCount', { count: ability.teamCount })
+                                  }}</strong>
+                                </button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      }
+                    </div>
+                  </section>
+                }
+              </div>
+            </div>
+          }
           <div class="saved-teams-tools">
             <div class="saved-teams-selection">
               <label class="saved-teams-select-all">
@@ -75,8 +148,14 @@
               </ion-button>
             </div>
           </div>
+          @if (hasAbilityFilters() && !filteredSavedTeamCards().length) {
+            <div class="saved-teams-filter-empty">
+              <strong>{{ t('abilityFilters.empty.title') }}</strong>
+              <span>{{ t('abilityFilters.empty.copy') }}</span>
+            </div>
+          }
           <div class="saved-team-list">
-            @for (teamCard of savedTeamCards(); track teamCard.team.id) {
+            @for (teamCard of filteredSavedTeamCards(); track teamCard.team.id) {
               <article
                 class="captain-condition-panel"
                 [class.captain-condition-panel--full]="teamCard.conditionStatus.state === 'full'"

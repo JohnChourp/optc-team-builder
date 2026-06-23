@@ -8,21 +8,23 @@ const stylePanelsTemplate = `
       <app-saved-teams-preview-panel>
         <app-saved-teams-ship-panel>
           <app-saved-teams-slot-panel>
-            <app-saved-teams-modal-panel>
-              <app-saved-teams-import-head-panel>
-                <app-saved-teams-import-dropzone-panel>
-                  <app-saved-teams-import-feedback-panel>
-                    <app-saved-teams-open-destination-panel>
-                      <app-saved-teams-open-copy-panel>
-                        <app-saved-teams-responsive-panel>
-                          <ng-content></ng-content>
-                        </app-saved-teams-responsive-panel>
-                      </app-saved-teams-open-copy-panel>
-                    </app-saved-teams-open-destination-panel>
-                  </app-saved-teams-import-feedback-panel>
-                </app-saved-teams-import-dropzone-panel>
-              </app-saved-teams-import-head-panel>
-            </app-saved-teams-modal-panel>
+            <app-saved-teams-ability-filter-panel>
+              <app-saved-teams-modal-panel>
+                <app-saved-teams-import-head-panel>
+                  <app-saved-teams-import-dropzone-panel>
+                    <app-saved-teams-import-feedback-panel>
+                      <app-saved-teams-open-destination-panel>
+                        <app-saved-teams-open-copy-panel>
+                          <app-saved-teams-responsive-panel>
+                            <ng-content></ng-content>
+                          </app-saved-teams-responsive-panel>
+                        </app-saved-teams-open-copy-panel>
+                      </app-saved-teams-open-destination-panel>
+                    </app-saved-teams-import-feedback-panel>
+                  </app-saved-teams-import-dropzone-panel>
+                </app-saved-teams-import-head-panel>
+              </app-saved-teams-modal-panel>
+            </app-saved-teams-ability-filter-panel>
           </app-saved-teams-slot-panel>
         </app-saved-teams-ship-panel>
       </app-saved-teams-preview-panel>
@@ -79,6 +81,16 @@ export class SavedTeamsShipPanelComponent {}
   host: panelHost,
 })
 export class SavedTeamsSlotPanelComponent {}
+
+@Component({
+  selector: 'app-saved-teams-ability-filter-panel',
+  standalone: true,
+  encapsulation: ViewEncapsulation.None,
+  template: projectedTemplate,
+  styleUrl: './saved-teams-ability-filter-panel.component.scss',
+  host: panelHost,
+})
+export class SavedTeamsAbilityFilterPanelComponent {}
 
 @Component({
   selector: 'app-saved-teams-modal-panel',
@@ -161,6 +173,7 @@ export class SavedTeamsResponsivePanelComponent {}
     SavedTeamsLayoutPanelComponent,
     SavedTeamsListPanelComponent,
     SavedTeamsModalPanelComponent,
+    SavedTeamsAbilityFilterPanelComponent,
     SavedTeamsOpenCopyPanelComponent,
     SavedTeamsOpenDestinationPanelComponent,
     SavedTeamsPreviewPanelComponent,

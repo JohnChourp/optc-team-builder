@@ -1,9 +1,15 @@
 @media (max-width: 640px) {
   .saved-teams-selection,
   .saved-team-head,
+  .saved-teams-ability-filter-panel__head,
+  .saved-team-ability-section__head,
   .import-modal-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .saved-team-ability-section__meta {
+    justify-items: start;
   }
 
   .saved-team-actions {
@@ -53,6 +59,11 @@
   .hero-actions ion-button,
   .saved-teams-tool-actions ion-button {
     flex: 1 1 auto;
+  }
+
+  .saved-team-ability-chip {
+    max-width: none;
+    width: 100%;
   }
 
   .saved-team-actions {

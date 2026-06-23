@@ -2,8 +2,12 @@ import '@angular/compiler';
 import { signal } from '@angular/core';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import {
+  type AutoBuildAbilitySource,
+  type NormalizedBuilderAbility,
+} from '../../core/models/auto-team-builder-ability.models';
 import {
   captureJsonDownloads,
   readJsonDownloadPayload,
@@ -29,9 +33,14 @@ vi.mock('@ionic/angular/standalone', () => ({
 
 vi.mock('@ionic/angular', () => ({}));
 
-import { SavedTeamsPage } from './saved-teams.page';
+type SavedTeamsPageClass = typeof import('./saved-teams.page').SavedTeamsPage;
+let SavedTeamsPage: SavedTeamsPageClass;
 
 describe('SavedTeamsPage', () => {
+  beforeAll(async () => {
+    SavedTeamsPage = (await import('./saved-teams.page')).SavedTeamsPage;
+  });
+
   afterEach(() => {
     restoreJsonDownloadCapture();
     vi.clearAllMocks();
@@ -102,6 +111,120 @@ describe('SavedTeamsPage', () => {
       'Captain',
       'Friend Captain',
     ]);
+  });
+
+  it('builds deduped ability filters split by leader and crew slots', async () => {
+    const { page } = createPage({
+      characterAbilities: {
+        101: [
+          createAbility('make_slots_favorable', 'Make Slots Favorable', 'captainAbility'),
+          createAbility('make_slots_favorable', 'Make Slots Favorable', 'captainAbility'),
+          createAbility('remove_bind', 'Remove Bind', 'specialText', { minTurns: 6 }),
+        ],
+        202: [createAbility('boost_atk', 'Boost ATK', 'specialText')],
+        303: [createAbility('support_bind', 'Support Bind', 'supportData', { minTurns: 2 })],
+        404: [createAbility('remove_despair', 'Remove Despair', 'captainAbility')],
+      },
+    });
+
+    await page.ngOnInit();
+
+    const leaderSection = page.abilityFilterSections().find((section) => section.origin === 'leader');
+    const crewSection = page.abilityFilterSections().find((section) => section.origin === 'crew');
+
+    expect(leaderSection?.categories.find((category) => category.category === 'captain')?.abilities).toEqual([
+      expect.objectContaining({
+        label: 'Make Slots Favorable',
+        teamCount: 1,
+      }),
+      expect.objectContaining({
+        label: 'Remove Despair',
+        teamCount: 1,
+      }),
+    ]);
+    expect(leaderSection?.categories.find((category) => category.category === 'special')?.abilities).toEqual([
+      expect.objectContaining({
+        label: 'Remove Bind',
+        metadataLabel: '6 turns - Special',
+        teamCount: 1,
+      }),
+    ]);
+    expect(crewSection?.categories.find((category) => category.category === 'special')?.abilities).toEqual([
+      expect.objectContaining({
+        label: 'Boost ATK',
+        teamCount: 1,
+      }),
+    ]);
+    expect(crewSection?.categories.find((category) => category.category === 'support')?.abilities).toEqual([
+      expect.objectContaining({
+        label: 'Support Bind',
+        metadataLabel: '2 turns - Support',
+        teamCount: 1,
+      }),
+    ]);
+  });
+
+  it('filters saved teams by all selected leader and crew abilities', async () => {
+    const { page } = createPage({
+      characterAbilities: {
+        101: [createAbility('make_slots_favorable', 'Make Slots Favorable', 'captainAbility')],
+        202: [createAbility('boost_atk', 'Boost ATK', 'specialText')],
+        404: [createAbility('remove_despair', 'Remove Despair', 'captainAbility')],
+        505: [createAbility('boost_atk', 'Boost ATK', 'specialText')],
+      },
+    });
+
+    await page.ngOnInit();
+
+    const leaderCaptainAbility = page
+      .abilityFilterSections()
+      .find((section) => section.origin === 'leader')
+      ?.categories.find((category) => category.category === 'captain')
+      ?.abilities.find((ability) => ability.label === 'Make Slots Favorable');
+    const crewBoostAbility = page
+      .abilityFilterSections()
+      .find((section) => section.origin === 'crew')
+      ?.categories.find((category) => category.category === 'special')
+      ?.abilities.find((ability) => ability.label === 'Boost ATK');
+
+    expect(leaderCaptainAbility).toBeDefined();
+    expect(crewBoostAbility).toBeDefined();
+
+    page.toggleAbilityFilter('leader', leaderCaptainAbility!.identity);
+    page.toggleAbilityFilter('crew', crewBoostAbility!.identity);
+
+    expect(page.filteredSavedTeamCards().map((card) => card.team.id)).toEqual(['team-1']);
+    expect(page.savedTeamTotalLabel()).toBe('1 matching of 2 total');
+  });
+
+  it('prunes selected teams hidden by ability filters and resets ability filters', async () => {
+    const { page } = createPage({
+      characterAbilities: {
+        101: [createAbility('make_slots_favorable', 'Make Slots Favorable', 'captainAbility')],
+        404: [createAbility('remove_despair', 'Remove Despair', 'captainAbility')],
+      },
+    });
+
+    await page.ngOnInit();
+    page.selectedTeamIds.set(['team-1', 'team-2']);
+    const leaderCaptainAbility = page
+      .abilityFilterSections()
+      .find((section) => section.origin === 'leader')
+      ?.categories.find((category) => category.category === 'captain')
+      ?.abilities.find((ability) => ability.label === 'Make Slots Favorable');
+
+    expect(leaderCaptainAbility).toBeDefined();
+
+    page.toggleAbilityFilter('leader', leaderCaptainAbility!.identity);
+
+    expect(page.filteredSavedTeamCards().map((card) => card.team.id)).toEqual(['team-1']);
+    expect(page.selectedTeamIds()).toEqual(['team-1']);
+
+    page.resetPage();
+
+    expect(page.hasAbilityFilters()).toBe(false);
+    expect(page.filteredSavedTeamCards().map((card) => card.team.id)).toEqual(['team-1', 'team-2']);
+    expect(page.selectedTeamIds()).toEqual([]);
   });
 
   it('selects all teams and enables bulk actions', async () => {
@@ -265,6 +388,10 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('[routerLink]="[\'/tabs/manual-team-builder\']"');
     expect(template).toContain('[queryParams]="getTeamBuilderQueryParams(team)"');
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
+    expect(template).toContain('abilityFilterSections()');
+    expect(template).toContain('filteredSavedTeamCards()');
+    expect(template).toContain('toggleAbilityFilter(section.origin, ability.identity)');
+    expect(template).toContain("t('abilityFilters.title')");
     expect(template).not.toContain('openImportModal()');
     expect(template).not.toContain("t('hero.savedEnemiesCta')");
     expect(template).not.toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
@@ -366,7 +493,12 @@ describe('SavedTeamsPage', () => {
   });
 });
 
-function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams> } = {}) {
+function createPage(
+  overrides: {
+    characterAbilities?: Record<number, NormalizedBuilderAbility[]>;
+    savedTeams?: ReturnType<typeof buildSavedTeams>;
+  } = {},
+) {
   const savedTeams = signal(overrides.savedTeams ?? buildSavedTeams());
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
@@ -451,12 +583,12 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
     getCharactersByIds: vi
       .fn()
       .mockImplementation(async (ids: number[]) =>
-        ids.map((id) => createCharacter(id, `Unit ${id}`)),
+        ids.map((id) => createCharacter(id, `Unit ${id}`, overrides.characterAbilities?.[id])),
       ),
     getDetailedCharactersByIds: vi
       .fn()
       .mockImplementation(async (ids: number[]) =>
-        ids.map((id) => createCharacter(id, `Unit ${id}`)),
+        ids.map((id) => createCharacter(id, `Unit ${id}`, overrides.characterAbilities?.[id])),
       ),
     getShips: vi
       .fn()
@@ -540,6 +672,30 @@ function createPage(overrides: { savedTeams?: ReturnType<typeof buildSavedTeams>
         return `Slot ${params?.['slot'] ?? ''}`;
       }
 
+      if (key === 'abilityFilters.metadata.turns') {
+        return `${params?.['count'] ?? 0} turns`;
+      }
+
+      if (key === 'abilityFilters.sources.captainAbility') {
+        return 'Captain';
+      }
+
+      if (key === 'abilityFilters.sources.specialText') {
+        return 'Special';
+      }
+
+      if (key === 'abilityFilters.sources.supportData') {
+        return 'Support';
+      }
+
+      if (key === 'totalFiltered') {
+        return `${params?.['count'] ?? 0} matching of ${params?.['total'] ?? 0} total`;
+      }
+
+      if (key === 'total') {
+        return `${params?.['count'] ?? 0} total`;
+      }
+
       return key;
     }),
   };
@@ -571,7 +727,11 @@ function buildSavedTeams() {
   ];
 }
 
-function createCharacter(id: number, name: string) {
+function createCharacter(
+  id: number,
+  name: string,
+  builderAbilities: NormalizedBuilderAbility[] = [],
+) {
   const captainAbility =
     id === 101
       ? 'Boosts ATK of all characters by 5x.'
@@ -625,7 +785,7 @@ function createCharacter(id: number, name: string) {
       superSpecialCriteria: null,
       partyConflictKeys: [],
       characterTags: [],
-      builderAbilities: [],
+      builderAbilities,
       sailorAbilities: [],
       sailorNotes: null,
       potentialAbilities: [],
@@ -637,6 +797,23 @@ function createCharacter(id: number, name: string) {
       captainShiftData: null,
       rumbleData: null,
     },
+  };
+}
+
+function createAbility(
+  key: string,
+  label: string,
+  source: AutoBuildAbilitySource,
+  overrides: Partial<NormalizedBuilderAbility> = {},
+): NormalizedBuilderAbility {
+  return {
+    key,
+    label,
+    minTurns: null,
+    isCompleteRemoval: false,
+    slotTokens: [],
+    source,
+    ...overrides,
   };
 }
 
