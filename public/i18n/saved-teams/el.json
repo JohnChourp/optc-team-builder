@@ -4,6 +4,51 @@
     "openBuilder": "Άνοιγμα στο team builder",
     "openTeam": "Άνοιγμα team"
   },
+  "abilityFilters": {
+    "clearAll": "Καθαρισμός ability filters",
+    "clearSection": "Καθαρισμός",
+    "copy": "Διάλεξε ένα ή περισσότερα abilities από τα slots. Τα saved teams πρέπει να καλύπτουν κάθε επιλεγμένο ability στο αντίστοιχο slot group.",
+    "categories": {
+      "captain": "Captain",
+      "crewmate": "Crewmate",
+      "potential": "Potential",
+      "special": "Special",
+      "support": "Support"
+    },
+    "empty": {
+      "copy": "Καθάρισε κάποιο ability filter ή διάλεξε διαφορετικό συνδυασμό.",
+      "title": "Κανένα saved team δεν καλύπτει όλα τα επιλεγμένα abilities."
+    },
+    "eyebrow": "Ability coverage",
+    "metadata": {
+      "selectableDebuff": "Selectable debuff",
+      "turns": "{{count}} turns"
+    },
+    "sections": {
+      "crew": {
+        "copy": "Abilities που βρέθηκαν στα slots 3-6.",
+        "title": "Crew slots"
+      },
+      "leader": {
+        "copy": "Abilities που βρέθηκαν στα Captain και Friend Captain slots.",
+        "title": "Captain + Friend Captain slots"
+      }
+    },
+    "selected": "επιλεγμένα",
+    "sources": {
+      "captainAbility": "Captain",
+      "finalTapData": "Final Tap",
+      "potentialAbilities": "Potential",
+      "rushSugoSpecialData": "Rush",
+      "sailorAbilities": "Crewmate",
+      "specialText": "Special",
+      "superSpecialText": "Super Special",
+      "superTandemData": "Super Tandem",
+      "supportData": "Support"
+    },
+    "teamCount": "{{count}} teams",
+    "title": "Φίλτραρε saved teams με βάση τα covered abilities"
+  },
   "confirm": {
     "deleteSelected": "Να διαγραφούν {{count}} επιλεγμένες ομάδες;",
     "deleteSingle": "Να διαγραφεί η ομάδα \"{{name}}\";"
@@ -103,5 +148,6 @@
     "import": "Εισαγωγή ομάδων"
   },
   "title": "Αποθηκευμένες ομάδες",
-  "total": "{{count}} συνολικά"
+  "total": "{{count}} συνολικά",
+  "totalFiltered": "{{count}} matching από {{total}} συνολικά"
 }

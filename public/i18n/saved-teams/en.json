@@ -4,6 +4,51 @@
     "openBuilder": "Open in team builder",
     "openTeam": "Open team"
   },
+  "abilityFilters": {
+    "clearAll": "Clear ability filters",
+    "clearSection": "Clear",
+    "copy": "Pick one or more slot-derived abilities. Saved teams must cover every selected ability in the selected slot group.",
+    "categories": {
+      "captain": "Captain",
+      "crewmate": "Crewmate",
+      "potential": "Potential",
+      "special": "Special",
+      "support": "Support"
+    },
+    "empty": {
+      "copy": "Clear an ability filter or choose a different combination.",
+      "title": "No saved teams cover every selected ability."
+    },
+    "eyebrow": "Ability coverage",
+    "metadata": {
+      "selectableDebuff": "Selectable debuff",
+      "turns": "{{count}} turns"
+    },
+    "sections": {
+      "crew": {
+        "copy": "Abilities found in slots 3-6.",
+        "title": "Crew slots"
+      },
+      "leader": {
+        "copy": "Abilities found in the Captain and Friend Captain slots.",
+        "title": "Captain + Friend Captain slots"
+      }
+    },
+    "selected": "selected",
+    "sources": {
+      "captainAbility": "Captain",
+      "finalTapData": "Final Tap",
+      "potentialAbilities": "Potential",
+      "rushSugoSpecialData": "Rush",
+      "sailorAbilities": "Crewmate",
+      "specialText": "Special",
+      "superSpecialText": "Super Special",
+      "superTandemData": "Super Tandem",
+      "supportData": "Support"
+    },
+    "teamCount": "{{count}} teams",
+    "title": "Filter saved teams by covered abilities"
+  },
   "confirm": {
     "deleteSelected": "Delete {{count}} selected teams?",
     "deleteSingle": "Delete team \"{{name}}\"?"
@@ -103,5 +148,6 @@
     "import": "Import teams"
   },
   "title": "Saved Teams",
-  "total": "{{count}} total"
+  "total": "{{count}} total",
+  "totalFiltered": "{{count}} matching of {{total}} total"
 }
