@@ -582,6 +582,30 @@ describe('extractCoverageTiers', () => {
     });
   });
 
+  it('groups OR team conditions in source order when regex families parse them out of order', () => {
+    const tiers = extractCoverageTiers(
+      'If your crew has 6 characters with Fighter, Slasher, Shooter or Striker classes or your crew has 4+ [Kid Pirates] characters, boosts ATK of all characters by 3x.',
+    );
+
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]?.teamConditions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'crew-composition',
+          conditionGroup: 'condition-or-1',
+          minCount: 6,
+          classes: ['Fighter', 'Shooter', 'Slasher', 'Striker'],
+        }),
+        expect.objectContaining({
+          kind: 'crew-composition',
+          conditionGroup: 'condition-or-1',
+          minCount: 4,
+          characterTags: ['Kid Pirates'],
+        }),
+      ]),
+    );
+  });
+
   it('captures character class composition without swallowing following boost text', () => {
     const tiers = extractCoverageTiers(
       'If your crew has 6 characters with Fighter, Slasher, Shooter or Striker classes, boosts ATK of all characters by 3x and their HP by 1.3x.',

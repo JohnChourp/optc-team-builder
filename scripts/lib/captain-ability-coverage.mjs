@@ -1028,23 +1028,24 @@ function buildConditionalCluster(sentence) {
 
 function applyAlternativeTeamConditionGroups(sentence, teamConditions) {
   const indexedConditions = [];
-  let searchStart = 0;
+  const usedStarts = new Set();
 
   for (let index = 0; index < teamConditions.length; index += 1) {
     const condition = teamConditions[index];
     const rawClause = condition.rawClause;
-    const start = sentence.indexOf(rawClause, searchStart);
+    const start = findUnusedConditionStart(sentence, rawClause, usedStarts);
     if (start === -1) {
       continue;
     }
     const end = start + rawClause.length;
     indexedConditions.push({ index, start, end });
-    searchStart = end;
   }
 
   if (indexedConditions.length < 2) {
     return teamConditions;
   }
+
+  indexedConditions.sort((left, right) => left.start - right.start);
 
   const groupByConditionIndex = new Map();
   let pendingGroup = [indexedConditions[0]];
@@ -1082,6 +1083,22 @@ function applyAlternativeTeamConditionGroups(sentence, teamConditions) {
     const conditionGroup = groupByConditionIndex.get(index);
     return conditionGroup === undefined ? condition : { ...condition, conditionGroup };
   });
+}
+
+function findUnusedConditionStart(sentence, rawClause, usedStarts) {
+  let searchStart = 0;
+  while (searchStart < sentence.length) {
+    const start = sentence.indexOf(rawClause, searchStart);
+    if (start === -1) {
+      return -1;
+    }
+    if (!usedStarts.has(start)) {
+      usedStarts.add(start);
+      return start;
+    }
+    searchStart = start + rawClause.length;
+  }
+  return -1;
 }
 
 function extractEffectClausesFromConditionalSentence(sentence) {
