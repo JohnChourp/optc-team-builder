@@ -36,6 +36,7 @@
     "boxName": "Box {{count}}"
   },
   "filters": {
+    "abilityRailLabel": "Κατηγορίες φίλτρων abilities",
     "searchPlaceholder": "Αναζήτηση χαρακτήρων με όνομα",
     "typeLabel": "Type",
     "typePlaceholder": "Φίλτρο ανά type",
@@ -59,6 +60,12 @@
       "all": "Όλες οι καταστάσεις",
       "inBox": "Ήδη μέσα στο box",
       "notInBox": "Εκτός box"
+    },
+    "captainAbility": {
+      "open": "Captain Ability filters ({{count}})",
+      "eyebrow": "Captain Ability",
+      "title": "Captain Ability filters",
+      "copy": "Φίλτραρε τα character results του box με βάση effects από το Captain Ability κάθε χαρακτήρα."
     },
     "special": {
       "open": "Special filters ({{count}})",
