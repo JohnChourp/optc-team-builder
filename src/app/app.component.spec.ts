@@ -48,6 +48,7 @@ vi.mock('@capacitor/app', () => ({
 vi.mock('@ionic/angular/standalone', () => ({
   IonApp: class {},
   IonButton: class {},
+  IonIcon: class {},
   IonRouterOutlet: class {},
 }));
 
@@ -127,6 +128,7 @@ describe('AppComponent', () => {
     const template = readFileSync(resolve(process.cwd(), 'src/app/app.component.ts'), 'utf8');
 
     expect(template).toContain("'analyticsConsent.banner.title' | transloco");
+    expect(template).toContain('app-floating-banners');
     expect(template).toContain('(click)="acceptAnalyticsConsent()"');
     expect(template).toContain('(click)="rejectAnalyticsConsent()"');
     expect(template).toContain('[routerLink]="[\'/tabs/privacy\']"');
@@ -135,6 +137,61 @@ describe('AppComponent', () => {
     expect(template).toContain("'legalNav.privacy' | transloco");
     expect(template).toContain("'legalNav.cookies' | transloco");
     expect(template).toContain("'legalNav.terms' | transloco");
+  });
+
+  it('renders browser-supported install prompt actions in the template', () => {
+    const template = readFileSync(resolve(process.cwd(), 'src/app/app.component.ts'), 'utf8');
+
+    expect(template).toContain('@if (showInstallBanner())');
+    expect(template).toContain("'installPrompt.title' | transloco");
+    expect(template).toContain("'installPrompt.copy' | transloco");
+    expect(template).toContain('(click)="installApp()"');
+    expect(template).toContain('(click)="dismissInstallBanner()"');
+    expect(template).toContain('[icon]="installIcon"');
+    expect(template).toContain('[icon]="dismissIcon"');
+  });
+
+  it('shows the install banner only after a browser install prompt event', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+    const promptEvent = new Event('beforeinstallprompt') as Event & {
+      prompt: ReturnType<typeof vi.fn>;
+      userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+    };
+    const preventDefault = vi.spyOn(promptEvent, 'preventDefault');
+    promptEvent.prompt = vi.fn().mockResolvedValue(undefined);
+    promptEvent.userChoice = Promise.resolve({ outcome: 'dismissed' });
+
+    expect(component.showInstallBanner()).toBe(false);
+
+    globalThis.dispatchEvent(promptEvent);
+
+    expect(preventDefault).toHaveBeenCalledOnce();
+    expect(component.showInstallBanner()).toBe(true);
+
+    component.dismissInstallBanner();
+
+    expect(component.showInstallBanner()).toBe(false);
+  });
+
+  it('consumes the install prompt event when installing the app', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+    const promptEvent = new Event('beforeinstallprompt') as Event & {
+      prompt: ReturnType<typeof vi.fn>;
+      userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+    };
+    promptEvent.prompt = vi.fn().mockResolvedValue(undefined);
+    promptEvent.userChoice = Promise.resolve({ outcome: 'accepted' });
+
+    globalThis.dispatchEvent(promptEvent);
+
+    expect(component.showInstallBanner()).toBe(true);
+
+    await component.installApp();
+
+    expect(promptEvent.prompt).toHaveBeenCalledOnce();
+    expect(component.showInstallBanner()).toBe(false);
   });
 
   it('shows the banner while consent is unknown and hides it after acceptance', async () => {

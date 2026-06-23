@@ -66,6 +66,51 @@
   .hero-stats-grid {
     grid-template-columns: 1fr;
   }
+
+  .detail-shell
+    :is(
+      h1,
+      h2,
+      h3,
+      p,
+      dt,
+      dd,
+      li,
+      strong,
+      .section-label,
+      .section-copy,
+      .status-badge,
+      .meta-card__label,
+      .detail-chip,
+      .detail-list-block__label,
+      .detail-text__label,
+      .captain-tier-breakdown__label,
+      .captain-tier-breakdown__scope,
+      .captain-tier-breakdown__kind,
+      .captain-tier-breakdown__subsection-label
+    ) {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  .detail-shell
+    :is(
+      ion-button,
+      ion-button *,
+      button,
+      button *,
+      input,
+      ion-icon,
+      .hero-actions,
+      .hero-actions *,
+      .hero-media,
+      .hero-media *
+    ) {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }
 
 @media (min-width: 960px) {

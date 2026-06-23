@@ -1,7 +1,7 @@
 import { App } from '@capacitor/app';
 import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IonApp, IonButton, IonRouterOutlet } from '@ionic/angular/standalone';
+import { IonApp, IonButton, IonIcon, IonRouterOutlet } from '@ionic/angular/standalone';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -13,11 +13,20 @@ import {
 } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { closeOutline, cloudDownloadOutline } from 'ionicons/icons';
 import packageJson from '../../package.json';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
 import { CharacterCatalogCacheService } from './core/services/character-catalog-cache.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { ToolbarBackNavigationService } from './core/services/toolbar-back-navigation.service';
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform?: string;
+  }>;
+  prompt: () => Promise<void>;
+}
 
 interface RouteSeoData {
   title: string;
@@ -39,7 +48,7 @@ const defaultSeo: RouteSeoData = {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [IonApp, IonButton, IonRouterOutlet, RouterLink, TranslocoPipe],
+  imports: [IonApp, IonButton, IonIcon, IonRouterOutlet, RouterLink, TranslocoPipe],
   template: `
     <ion-app class="app-shell">
       @if (routeLoading()) {
@@ -52,41 +61,70 @@ const defaultSeo: RouteSeoData = {
         <ion-router-outlet></ion-router-outlet>
       </div>
 
-      @if (showAnalyticsConsentBanner()) {
-        <section class="analytics-consent-banner" aria-live="polite">
-          <div class="analytics-consent-banner__copy">
-            <strong>{{ 'analyticsConsent.banner.title' | transloco }}</strong>
-            <p>{{ 'analyticsConsent.banner.copy' | transloco }}</p>
-            <div class="analytics-consent-banner__links">
-              <a [routerLink]="['/tabs/privacy']">{{
-                'analyticsConsent.banner.privacyLink' | transloco
-              }}</a>
-              <span aria-hidden="true">•</span>
-              <a [routerLink]="['/tabs/cookies']">{{
-                'analyticsConsent.banner.cookiesLink' | transloco
-              }}</a>
-            </div>
-          </div>
+      @if (showInstallBanner() || showAnalyticsConsentBanner()) {
+        <div class="app-floating-banners">
+          @if (showInstallBanner()) {
+            <section class="app-install-banner" aria-live="polite">
+              <div class="app-install-banner__copy">
+                <strong>{{ 'installPrompt.title' | transloco }}</strong>
+                <p>{{ 'installPrompt.copy' | transloco }}</p>
+              </div>
 
-          <div class="analytics-consent-banner__actions">
-            <ion-button
-              fill="solid"
-              color="warning"
-              size="small"
-              (click)="acceptAnalyticsConsent()"
-            >
-              {{ 'analyticsConsent.banner.accept' | transloco }}
-            </ion-button>
-            <ion-button
-              fill="outline"
-              color="light"
-              size="small"
-              (click)="rejectAnalyticsConsent()"
-            >
-              {{ 'analyticsConsent.banner.reject' | transloco }}
-            </ion-button>
-          </div>
-        </section>
+              <div class="app-install-banner__actions">
+                <ion-button fill="solid" color="warning" size="small" (click)="installApp()">
+                  <ion-icon slot="start" [icon]="installIcon"></ion-icon>
+                  {{ 'installPrompt.install' | transloco }}
+                </ion-button>
+                <ion-button
+                  fill="clear"
+                  color="light"
+                  size="small"
+                  [attr.aria-label]="'installPrompt.dismiss' | transloco"
+                  (click)="dismissInstallBanner()"
+                >
+                  <ion-icon slot="icon-only" [icon]="dismissIcon"></ion-icon>
+                </ion-button>
+              </div>
+            </section>
+          }
+
+          @if (showAnalyticsConsentBanner()) {
+            <section class="analytics-consent-banner" aria-live="polite">
+              <div class="analytics-consent-banner__copy">
+                <strong>{{ 'analyticsConsent.banner.title' | transloco }}</strong>
+                <p>{{ 'analyticsConsent.banner.copy' | transloco }}</p>
+                <div class="analytics-consent-banner__links">
+                  <a [routerLink]="['/tabs/privacy']">{{
+                    'analyticsConsent.banner.privacyLink' | transloco
+                  }}</a>
+                  <span aria-hidden="true">•</span>
+                  <a [routerLink]="['/tabs/cookies']">{{
+                    'analyticsConsent.banner.cookiesLink' | transloco
+                  }}</a>
+                </div>
+              </div>
+
+              <div class="analytics-consent-banner__actions">
+                <ion-button
+                  fill="solid"
+                  color="warning"
+                  size="small"
+                  (click)="acceptAnalyticsConsent()"
+                >
+                  {{ 'analyticsConsent.banner.accept' | transloco }}
+                </ion-button>
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  size="small"
+                  (click)="rejectAnalyticsConsent()"
+                >
+                  {{ 'analyticsConsent.banner.reject' | transloco }}
+                </ion-button>
+              </div>
+            </section>
+          }
+        </div>
       }
 
       <footer class="app-footer-meta">
@@ -134,11 +172,25 @@ export class AppComponent {
   public readonly currentUrl = signal(this.router.url);
   public readonly routeLoading = signal(false);
   public readonly analyticsConsent = this.analyticsConsentService.consent;
+  public readonly installIcon = cloudDownloadOutline;
+  public readonly dismissIcon = closeOutline;
+  public readonly installPromptEvent = signal<BeforeInstallPromptEvent | null>(null);
+  public readonly installBannerDismissed = signal(false);
+  public readonly appInstalled = signal(false);
+  public readonly standaloneMode = signal(false);
   public readonly showAnalyticsConsentBanner = computed(
     () => this.analyticsConsent() === 'unknown',
   );
+  public readonly showInstallBanner = computed(
+    () =>
+      this.installPromptEvent() !== null &&
+      !this.installBannerDismissed() &&
+      !this.appInstalled() &&
+      !this.standaloneMode(),
+  );
 
   public constructor() {
+    this.initializeInstallPrompt();
     void this.loadAppVersion();
     afterNextRender(() => {
       this.scheduleCatalogWarmup();
@@ -184,6 +236,31 @@ export class AppComponent {
     this.lastTrackedUrl = null;
   }
 
+  public dismissInstallBanner(): void {
+    this.installBannerDismissed.set(true);
+  }
+
+  public async installApp(): Promise<void> {
+    const promptEvent = this.installPromptEvent();
+
+    if (!promptEvent) {
+      return;
+    }
+
+    this.installPromptEvent.set(null);
+
+    try {
+      await promptEvent.prompt();
+      const choice = await promptEvent.userChoice;
+
+      if (choice.outcome !== 'accepted') {
+        this.installBannerDismissed.set(true);
+      }
+    } catch {
+      this.installPromptEvent.set(promptEvent);
+    }
+  }
+
   private async loadAppVersion(): Promise<void> {
     try {
       // Native builds read the platform version fields; web keeps the package.json fallback.
@@ -211,6 +288,66 @@ export class AppComponent {
     }
 
     runtime.setTimeout(warmup, 750);
+  }
+
+  private initializeInstallPrompt(): void {
+    const runtime = globalThis as typeof globalThis & {
+      addEventListener?: typeof globalThis.addEventListener;
+      matchMedia?: typeof globalThis.matchMedia;
+      navigator?: Navigator & { standalone?: boolean };
+      removeEventListener?: typeof globalThis.removeEventListener;
+    };
+
+    this.updateStandaloneMode();
+
+    if (typeof runtime.addEventListener !== 'function') {
+      return;
+    }
+
+    const installPromptHandler = (event: Event) => {
+      event.preventDefault();
+
+      if (this.isStandaloneDisplay()) {
+        this.standaloneMode.set(true);
+        return;
+      }
+
+      this.installPromptEvent.set(event as BeforeInstallPromptEvent);
+      this.installBannerDismissed.set(false);
+    };
+    const appInstalledHandler = () => {
+      this.appInstalled.set(true);
+      this.installPromptEvent.set(null);
+      this.installBannerDismissed.set(true);
+    };
+    const displayModeQuery = runtime.matchMedia?.('(display-mode: standalone)') ?? null;
+    const displayModeHandler = () => this.updateStandaloneMode();
+
+    runtime.addEventListener('beforeinstallprompt', installPromptHandler);
+    runtime.addEventListener('appinstalled', appInstalledHandler);
+    displayModeQuery?.addEventListener?.('change', displayModeHandler);
+
+    (this.destroyRef as Partial<DestroyRef>).onDestroy?.(() => {
+      runtime.removeEventListener?.('beforeinstallprompt', installPromptHandler);
+      runtime.removeEventListener?.('appinstalled', appInstalledHandler);
+      displayModeQuery?.removeEventListener?.('change', displayModeHandler);
+    });
+  }
+
+  private updateStandaloneMode(): void {
+    this.standaloneMode.set(this.isStandaloneDisplay());
+  }
+
+  private isStandaloneDisplay(): boolean {
+    const runtime = globalThis as typeof globalThis & {
+      matchMedia?: typeof globalThis.matchMedia;
+      navigator?: Navigator & { standalone?: boolean };
+    };
+
+    return (
+      runtime.matchMedia?.('(display-mode: standalone)').matches === true ||
+      runtime.navigator?.standalone === true
+    );
   }
 
   private trackPageView(url: string): void {

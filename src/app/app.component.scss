@@ -52,12 +52,19 @@
   }
 }
 
-.analytics-consent-banner {
+.app-floating-banners {
   position: fixed;
   right: 16px;
   bottom: calc(16px + env(safe-area-inset-bottom) + var(--app-footer-bar-height));
   left: 16px;
   z-index: 32;
+  display: grid;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.analytics-consent-banner,
+.app-install-banner {
   display: grid;
   gap: 14px;
   padding: 16px;
@@ -70,19 +77,32 @@
     0 24px 50px rgba(0, 0, 0, 0.42),
     0 0 0 1px rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(20px);
+  pointer-events: auto;
 }
 
-.analytics-consent-banner__copy {
+.app-install-banner {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-color: rgba(76, 201, 240, 0.34);
+  background:
+    radial-gradient(circle at top left, rgba(76, 201, 240, 0.16), transparent 48%),
+    linear-gradient(145deg, rgba(13, 22, 39, 0.97), rgba(8, 11, 24, 0.94));
+}
+
+.analytics-consent-banner__copy,
+.app-install-banner__copy {
   display: grid;
   gap: 6px;
 }
 
-.analytics-consent-banner__copy strong {
+.analytics-consent-banner__copy strong,
+.app-install-banner__copy strong {
   color: #fff8dd;
   font-size: 0.98rem;
 }
 
-.analytics-consent-banner__copy p {
+.analytics-consent-banner__copy p,
+.app-install-banner__copy p {
   margin: 0;
   color: rgba(248, 251, 255, 0.72);
   line-height: 1.45;
@@ -107,13 +127,15 @@
   text-decoration: underline;
 }
 
-.analytics-consent-banner__actions {
+.analytics-consent-banner__actions,
+.app-install-banner__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.analytics-consent-banner__actions ion-button {
+.analytics-consent-banner__actions ion-button,
+.app-install-banner__actions ion-button {
   margin: 0;
 }
 
@@ -204,14 +226,23 @@
 }
 
 @media (max-width: 640px) {
-  .analytics-consent-banner {
+  .app-floating-banners {
     right: 12px;
     bottom: calc(12px + env(safe-area-inset-bottom) + var(--app-footer-bar-height));
     left: 12px;
+  }
+
+  .analytics-consent-banner,
+  .app-install-banner {
     padding: 14px;
   }
 
-  .analytics-consent-banner__actions {
+  .app-install-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-consent-banner__actions,
+  .app-install-banner__actions {
     display: grid;
   }
 
