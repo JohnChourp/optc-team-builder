@@ -15,7 +15,11 @@ import {
   type SavedEnemy,
   type SavedTeam,
 } from '../models/optc.models';
-import { type AutoBuildAbilityRequirement } from '../models/auto-team-builder-ability.models';
+import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
+  type AutoBuildAbilityRequirement,
+} from '../models/auto-team-builder-ability.models';
 import { AUTO_TEAM_BUILDER_TYPES } from '../models/auto-team-builder.models';
 import {
   normalizeBattleRequirementsWithLegacyFallback,
@@ -1854,6 +1858,8 @@ export class UserStateService {
         requirement.requiredCharacterCount > 0
           ? requirement.requiredCharacterCount
           : 1;
+      const minEffectValue = normalizeAbilityRequirementEffectValue(requirement.minEffectValue);
+      const effectTargetScope = normalizeAbilityEffectTargetScope(requirement.effectTargetScope);
 
       normalizedRequirements.push({
         abilityKey,
@@ -1866,6 +1872,8 @@ export class UserStateService {
         ...(requirement.sourceScope === 'captainAbility'
           ? { sourceScope: requirement.sourceScope }
           : {}),
+        ...(minEffectValue !== null ? { minEffectValue } : {}),
+        ...(effectTargetScope !== 'any' ? { effectTargetScope } : {}),
       });
     });
 

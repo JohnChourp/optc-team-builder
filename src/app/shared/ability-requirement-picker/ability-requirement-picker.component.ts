@@ -39,6 +39,7 @@ import {
 } from '../../core/services/ability-requirement-draft.utils';
 import {
   type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilityEffectTargetScope,
   type AutoBuildAbilitySlotScope,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
@@ -65,6 +66,8 @@ interface AbilityRequirementSelectedRowView {
   visual: ReturnType<typeof resolveAbilityRequirementVisual>;
   supportsTurns: boolean;
   supportsSlotTokens: boolean;
+  supportsMinEffectValue: boolean;
+  supportsEffectTargetScope: boolean;
   availableSlotTokens: string[];
   painSelectableBadges: AbilityRequirementMiniBadge[];
 }
@@ -107,6 +110,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   @Input({ required: true }) public catalogItems: AutoBuildAbilityCatalogItem[] = [];
   @Input() public showCharacterCount = true;
   @Input() public showLeaderBoostControls = false;
+  @Input() public captainAbilityMode = false;
   @Input() public leaderBoostFilters: AutoBuildLeaderBoostFilter[] = [
     ...AUTO_BUILD_LEADER_BOOST_FILTERS,
   ];
@@ -120,6 +124,13 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   public readonly closeIcon = closeOutline;
   public readonly pickerIcon = optionsOutline;
   public readonly availableLeaderBoostFilters = AUTO_BUILD_LEADER_BOOST_FILTERS;
+  public readonly availableEffectTargetScopes: AutoBuildAbilityEffectTargetScope[] = [
+    'any',
+    'crew',
+    'captains',
+    'self',
+    'subs',
+  ];
   public readonly searchTerm = signal('');
   public readonly workingDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly catalogItemsState = signal<AutoBuildAbilityCatalogItem[]>([]);
@@ -186,7 +197,13 @@ export class AbilityRequirementPickerComponent implements OnChanges {
         label: catalogItem?.label ?? draft.abilityKey,
         visual: resolveAbilityRequirementVisual(draft.abilityKey),
         supportsTurns: catalogItem?.supportsTurns ?? false,
-        supportsSlotTokens: catalogItem?.supportsSlotTokens ?? false,
+        supportsSlotTokens:
+          catalogItem?.supportsSlotTokens === true ||
+          (this.captainAbilityMode && draft.abilityKey === 'make_slots_favorable'),
+        supportsMinEffectValue: this.captainAbilityMode && draft.abilityKey === 'reduce_damage',
+        supportsEffectTargetScope:
+          this.captainAbilityMode &&
+          (draft.abilityKey === 'reduce_damage' || draft.abilityKey === 'make_slots_favorable'),
         availableSlotTokens: catalogItem?.availableSlotTokens ?? [],
         painSelectableBadges: resolveAbilityRequirementPainSelectableDebuffBadges(draft.abilityKey),
       };
@@ -213,7 +230,12 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   public onCatalogItemSelect(item: AutoBuildAbilityCatalogItem): void {
     this.workingDrafts.update((currentDrafts) => [
       ...currentDrafts,
-      createAbilityRequirementDraft(item),
+      createAbilityRequirementDraft(
+        item,
+        this.captainAbilityMode
+          ? { sourceScope: 'captainAbility', slotScope: 'leader' }
+          : undefined,
+      ),
     ]);
   }
 
@@ -252,6 +274,31 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   public setSlotScope(draftId: string, slotScope: AutoBuildAbilitySlotScope): void {
     this.patchDraft(draftId, {
       slotScope,
+    });
+  }
+
+  public setEffectTargetScope(
+    draftId: string,
+    effectTargetScope: AutoBuildAbilityEffectTargetScope,
+  ): void {
+    this.patchDraft(draftId, {
+      effectTargetScope,
+    });
+  }
+
+  public onMinEffectValueChange(
+    draftId: string,
+    event: CustomEvent<{ value?: string | number | null }> | Event,
+  ): void {
+    const rawValue = this.resolveInputEventValue(event);
+    const nextValue =
+      rawValue === null || rawValue === undefined || rawValue === '' ? null : Number(rawValue);
+
+    this.patchDraft(draftId, {
+      minEffectValue:
+        typeof nextValue === 'number' && Number.isFinite(nextValue) && nextValue >= 0
+          ? nextValue
+          : null,
     });
   }
 

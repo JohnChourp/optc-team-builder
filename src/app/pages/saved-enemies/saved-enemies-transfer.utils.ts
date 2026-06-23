@@ -1,5 +1,10 @@
 import { type SavedEnemy } from "../../core/models/optc.models";
 import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
+  normalizeAbilityRequirementSourceScope,
+} from "../../core/models/auto-team-builder-ability.models";
+import {
   cloneBattleRequirements,
   normalizeBattleRequirementsWithLegacyFallback,
 } from "../../core/services/auto-team-builder-battle.utils";
@@ -76,6 +81,26 @@ function normalizePositiveInteger(value: unknown): number | null {
 
 function normalizeAbilitySlotScope(value: unknown): SavedEnemy["requiredAbilities"][number]["slotScope"] {
   return value === "leader" || value === "sub" ? value : "any";
+}
+
+function normalizeAbilitySourceScope(
+  value: unknown,
+): SavedEnemy["requiredAbilities"][number]["sourceScope"] | null {
+  return typeof value === "string" ? normalizeAbilityRequirementSourceScope(value) : null;
+}
+
+function normalizeEffectTargetScope(
+  value: unknown,
+): SavedEnemy["requiredAbilities"][number]["effectTargetScope"] | null {
+  const scope = typeof value === "string" ? normalizeAbilityEffectTargetScope(value) : "any";
+
+  return scope === "any" ? null : scope;
+}
+
+function normalizeEffectValue(value: unknown): number | null {
+  return typeof value === "number" || typeof value === "string"
+    ? normalizeAbilityRequirementEffectValue(value)
+    : null;
 }
 
 function normalizeTimestamp(value: unknown, fallback: string): string {
@@ -162,6 +187,9 @@ function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbiliti
     }
 
     const slotScope = normalizeAbilitySlotScope(entry["slotScope"]);
+    const sourceScope = normalizeAbilitySourceScope(entry["sourceScope"]);
+    const minEffectValue = normalizeEffectValue(entry["minEffectValue"]);
+    const effectTargetScope = normalizeEffectTargetScope(entry["effectTargetScope"]);
 
     return [
       {
@@ -172,6 +200,9 @@ function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbiliti
         }),
         requiredCharacterCount: normalizePositiveInteger(entry["requiredCharacterCount"]) ?? 1,
         ...(slotScope !== "any" ? { slotScope } : {}),
+        ...(sourceScope ? { sourceScope } : {}),
+        ...(minEffectValue !== null ? { minEffectValue } : {}),
+        ...(effectTargetScope ? { effectTargetScope } : {}),
       },
     ];
   });

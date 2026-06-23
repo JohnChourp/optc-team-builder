@@ -48,6 +48,15 @@
   "fields": {
     "characters": "Χαρακτήρες",
     "turns": "Turns",
+    "minEffectValue": "Minimum %",
+    "effectTargetScope": "Target effect",
+    "effectTargetScopes": {
+      "any": "Οποιοδήποτε target",
+      "crew": "Όλο το crew",
+      "captains": "Captains",
+      "self": "Μόνο ο ίδιος",
+      "subs": "Sub members"
+    },
     "slotTokens": "Slot tokens",
     "slotScope": "Ισχύει για",
     "slotScopes": {

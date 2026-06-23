@@ -14,6 +14,8 @@ let analyzeBuilderAbilityText: (
   slotTokens: string[];
   source: 'specialText' | 'superSpecialText' | 'captainAbility' | 'sailorAbilities';
   coverageMode?: 'explicit' | 'selectedDebuff';
+  minEffectValue?: number | null;
+  effectTargetScope?: 'any' | 'crew' | 'captains' | 'self' | 'subs';
 }>;
 let extractPrimaryAbilityBranchText: (value: unknown) => string;
 let normalizeLegacyAbilityText: (value: unknown) => string;
@@ -348,6 +350,34 @@ describe('auto team builder ability parser', () => {
     expect(abilityKeys).not.toContain('boost_max_hp');
     expect(new Set(abilities.map((ability) => ability.source))).toEqual(
       new Set(['captainAbility']),
+    );
+  });
+
+  it('extracts structured captain utility metadata for damage reduction and favorable slots', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Reduces damage received by 20%, makes [RCV] orbs beneficial for all characters and makes [INT] slots favorable for this character.',
+      'captainAbility',
+    );
+
+    expect(abilities.find((ability) => ability.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({
+        minEffectValue: 20,
+        effectTargetScope: 'crew',
+      }),
+    );
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['RCV'],
+          effectTargetScope: 'crew',
+        }),
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['INT'],
+          effectTargetScope: 'self',
+        }),
+      ]),
     );
   });
 
@@ -857,6 +887,50 @@ describe('auto team builder ability parser', () => {
         category: 'special',
         matchingCharacterIds: [910002],
         matchCount: 1,
+      }),
+    );
+  });
+
+  it('indexes structured captain utility matches in the ability catalog', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 910003,
+        detail: {
+          specialText: null,
+          captainAbility:
+            'Reduces damage received by 10%, makes [RCV] orbs beneficial for all characters.',
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({
+        captainAbilityMatchingCharacterIds: [910003],
+        captainAbilityEffectMatches: [
+          {
+            characterId: 910003,
+            minEffectValue: 10,
+            effectTargetScope: 'crew',
+            slotTokens: [],
+          },
+        ],
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'make_slots_favorable')).toEqual(
+      expect.objectContaining({
+        supportsSlotTokens: true,
+        availableSlotTokens: ['RCV'],
+        captainAbilityMatchingCharacterIds: [910003],
+        captainAbilityEffectMatches: [
+          {
+            characterId: 910003,
+            effectTargetScope: 'crew',
+            slotTokens: ['RCV'],
+          },
+        ],
       }),
     );
   });

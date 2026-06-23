@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-23T18:14:42.934Z",
+  "generatedAt": "2026-06-23T18:47:52.572Z",
   "characters": [
     {
       "id": 1,
@@ -1222,7 +1222,9 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "captainAbility",
-            "coverageMode": "explicit"
+            "coverageMode": "explicit",
+            "minEffectValue": 20,
+            "effectTargetScope": "crew"
           }
         ],
         "sailorAbilities": [],

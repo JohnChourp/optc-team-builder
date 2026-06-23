@@ -316,7 +316,10 @@ const CAPTAIN_ABILITY_SPECIAL_MATCHER_EXCLUDED_KEYS = new Set([
   'boost_atk',
   'boost_rcv',
   'boost_max_hp',
+  'reduce_damage',
+  'make_slots_favorable',
 ]);
+const CAPTAIN_STRUCTURED_EFFECT_KEYS = new Set(['reduce_damage', 'make_slots_favorable']);
 const CREWMATE_STAT_SCOPE_MATCHERS = {
   crew: [/\b(?:crew|all characters?)\b/i],
   self: [/\b(?:this character|self|own)\b/i],
@@ -951,6 +954,10 @@ export function analyzeBuilderAbilityText(value, source) {
     addSpecialAbilityMatches(abilities, seen, normalizedText, source);
   }
 
+  if (source === 'captainAbility') {
+    addCaptainAbilityStructuredEffectMatches(abilities, seen, normalizedText);
+  }
+
   if (source === 'sailorAbilities') {
     CREWMATE_ABILITY_MATCHERS.forEach(({ key, patterns }) => {
       const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
@@ -997,6 +1004,108 @@ function addSpecialAbilityMatches(abilities, seen, normalizedText, source, allow
       coverageMode: DEFAULT_COVERAGE_MODE,
     });
   });
+}
+
+function addCaptainAbilityStructuredEffectMatches(abilities, seen, normalizedText) {
+  addCaptainDamageReductionMatches(abilities, seen, normalizedText);
+  addCaptainFavorableSlotMatches(abilities, seen, normalizedText);
+}
+
+function addCaptainDamageReductionMatches(abilities, seen, normalizedText) {
+  const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get('reduce_damage');
+
+  if (!definition) {
+    return;
+  }
+
+  for (const clause of extractCaptainEffectClauses(normalizedText)) {
+    const match = clause.match(/\breduces?\b[^.;]{0,120}\bdamage (?:received|taken)\b[^.;]{0,80}\bby\s+(\d+(?:\.\d+)?)%/i);
+
+    if (!match) {
+      continue;
+    }
+
+    const minEffectValue = normalizeEffectValue(match[1]);
+
+    if (minEffectValue === null) {
+      continue;
+    }
+
+    addAbility(abilities, seen, {
+      key: 'reduce_damage',
+      label: definition.label,
+      minTurns: null,
+      isCompleteRemoval: false,
+      slotTokens: [],
+      source: 'captainAbility',
+      coverageMode: DEFAULT_COVERAGE_MODE,
+      minEffectValue,
+      effectTargetScope: resolveCaptainEffectTargetScope(clause, 'crew'),
+    });
+  }
+}
+
+function addCaptainFavorableSlotMatches(abilities, seen, normalizedText) {
+  const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get('make_slots_favorable');
+
+  if (!definition) {
+    return;
+  }
+
+  for (const clause of extractCaptainEffectClauses(normalizedText)) {
+    if (!/\bmakes?\b[^.;]{0,160}\b(?:orbs?|slots?)\b[^.;]{0,80}\b(?:beneficial|matching|favorable)\b/i.test(clause)) {
+      continue;
+    }
+
+    const slotTokens = extractSlotTokens(clause);
+
+    addAbility(abilities, seen, {
+      key: 'make_slots_favorable',
+      label: definition.label,
+      minTurns: null,
+      isCompleteRemoval: false,
+      slotTokens,
+      source: 'captainAbility',
+      coverageMode: DEFAULT_COVERAGE_MODE,
+      effectTargetScope: resolveCaptainEffectTargetScope(clause, 'any'),
+    });
+  }
+}
+
+function extractCaptainEffectClauses(normalizedText) {
+  return normalizedText
+    .split(/\.\s+|;\s+/g)
+    .flatMap((sentence) =>
+      sentence.split(/,\s+(?=(?:and\s+)?(?:reduces?|makes?)\b)|\s+and\s+(?=(?:reduces?|makes?)\b)/gi),
+    )
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+}
+
+function resolveCaptainEffectTargetScope(text, fallback = 'any') {
+  if (/\b(?:this character|self|own)\b/i.test(text)) {
+    return 'self';
+  }
+
+  if (/\b(?:captains?)\b/i.test(text)) {
+    return 'captains';
+  }
+
+  if (/\b(?:subs?|crewmates?|non-?captains?)\b/i.test(text)) {
+    return 'subs';
+  }
+
+  if (/\b(?:all characters?|crew|allies)\b/i.test(text)) {
+    return 'crew';
+  }
+
+  return fallback;
+}
+
+function normalizeEffectValue(value) {
+  const parsedValue = Number(value);
+
+  return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : null;
 }
 
 export function analyzeSpecialText(value) {
@@ -1708,6 +1817,27 @@ export async function enrichCharactersWithBuilderAbilities(
         if (ability.source === 'captainAbility') {
           current.captainAbilityMatchingCharacterIds.add(character.id);
 
+          if (isCaptainStructuredEffectAbility(ability)) {
+            const effectMatch = {
+              characterId: character.id,
+              ...(normalizeEffectValue(ability.minEffectValue) !== null
+                ? { minEffectValue: normalizeEffectValue(ability.minEffectValue) }
+                : {}),
+              ...(normalizeEffectTargetScope(ability.effectTargetScope) !== 'any'
+                ? { effectTargetScope: normalizeEffectTargetScope(ability.effectTargetScope) }
+                : {}),
+              slotTokens: normalizeSlotTokens(ability.slotTokens),
+            };
+            const effectMatchIdentity = [
+              effectMatch.characterId,
+              effectMatch.minEffectValue ?? 'none',
+              effectMatch.effectTargetScope ?? 'any',
+              effectMatch.slotTokens.join(','),
+            ].join('|');
+
+            current.captainAbilityEffectMatches.set(effectMatchIdentity, effectMatch);
+          }
+
           if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
             const minTurns = Math.floor(ability.minTurns);
             const turnCharacterIds =
@@ -1769,10 +1899,14 @@ export async function enrichCharactersWithBuilderAbilities(
         groupOrder: metadata?.groupOrder ?? null,
         effectOrder: metadata?.effectOrder ?? null,
         supportsTurns: entry.supportsTurns,
-        supportsSlotTokens: metadata ? false : entry.supportsSlotTokens,
-        availableSlotTokens: metadata
-          ? []
-          : [...entry.availableSlotTokens].sort((left, right) => left.localeCompare(right)),
+        supportsSlotTokens: metadata?.supportsSlotTokens === true
+          ? entry.supportsSlotTokens
+          : metadata
+            ? false
+            : entry.supportsSlotTokens,
+        availableSlotTokens: metadata?.supportsSlotTokens === true || !metadata
+          ? [...entry.availableSlotTokens].sort((left, right) => left.localeCompare(right))
+          : [],
         availableSources: [...entry.availableSources].length
           ? [...entry.availableSources].sort((left, right) => left.localeCompare(right))
           : metadata
@@ -1806,6 +1940,13 @@ export async function enrichCharactersWithBuilderAbilities(
                   minTurns,
                   characterIds: [...characterIds].sort((left, right) => left - right),
                 })),
+            }
+          : {}),
+        ...(entry.captainAbilityEffectMatches.size
+          ? {
+              captainAbilityEffectMatches: [...entry.captainAbilityEffectMatches.values()].sort(
+                compareCaptainAbilityEffectMatches,
+              ),
             }
           : {}),
         sampleCharacterIds: [...entry.sampleCharacterIds],
@@ -1905,13 +2046,7 @@ function normalizeExistingBuilderAbility(value) {
     label: typeof value.label === 'string' && value.label.trim().length ? value.label.trim() : key,
     minTurns,
     isCompleteRemoval: Boolean(value.isCompleteRemoval),
-    slotTokens: Array.isArray(value.slotTokens)
-      ? [
-          ...new Set(
-            value.slotTokens.map((entry) => String(entry).trim().toUpperCase()).filter(Boolean),
-          ),
-        ]
-      : [],
+    slotTokens: normalizeSlotTokens(value.slotTokens),
     source:
       value.source === 'captainAbility'
         ? 'captainAbility'
@@ -1932,6 +2067,12 @@ function normalizeExistingBuilderAbility(value) {
                       : 'specialText',
     coverageMode:
       value.coverageMode === 'selectedDebuff' ? 'selectedDebuff' : DEFAULT_COVERAGE_MODE,
+    ...(normalizeEffectValue(value.minEffectValue) !== null
+      ? { minEffectValue: normalizeEffectValue(value.minEffectValue) }
+      : {}),
+    ...(normalizeEffectTargetScope(value.effectTargetScope) !== 'any'
+      ? { effectTargetScope: normalizeEffectTargetScope(value.effectTargetScope) }
+      : {}),
   };
 }
 
@@ -1949,6 +2090,7 @@ function createCatalogAccumulator(key, label) {
     turnMatchingCharacterIds: new Map(),
     captainAbilityMatchingCharacterIds: new Set(),
     captainAbilityTurnMatchingCharacterIds: new Map(),
+    captainAbilityEffectMatches: new Map(),
     sampleCharacterIds: [],
     sampleTexts: [],
   };
@@ -1984,7 +2126,15 @@ function compareCatalogAbilities(left, right) {
 }
 
 function buildAbilityIdentity(ability) {
-  return `${ability.key}|${ability.minTurns ?? 'none'}|${ability.slotTokens.join(',')}|${ability.source}|${resolveCoverageMode(ability)}`;
+  return [
+    ability.key,
+    ability.minTurns ?? 'none',
+    normalizeSlotTokens(ability.slotTokens).join(','),
+    ability.source,
+    resolveCoverageMode(ability),
+    normalizeEffectValue(ability.minEffectValue) ?? 'none',
+    normalizeEffectTargetScope(ability.effectTargetScope),
+  ].join('|');
 }
 
 function addAbility(abilities, seen, ability) {
@@ -2000,6 +2150,44 @@ function addAbility(abilities, seen, ability) {
 
 function resolveCoverageMode(ability) {
   return ability.coverageMode ?? DEFAULT_COVERAGE_MODE;
+}
+
+function isCaptainStructuredEffectAbility(ability) {
+  return (
+    ability.source === 'captainAbility' &&
+    CAPTAIN_STRUCTURED_EFFECT_KEYS.has(ability.key) &&
+    (normalizeEffectValue(ability.minEffectValue) !== null ||
+      normalizeEffectTargetScope(ability.effectTargetScope) !== 'any' ||
+      normalizeSlotTokens(ability.slotTokens).length > 0)
+  );
+}
+
+function compareCaptainAbilityEffectMatches(left, right) {
+  return (
+    left.characterId - right.characterId ||
+    (left.minEffectValue ?? -1) - (right.minEffectValue ?? -1) ||
+    (left.effectTargetScope ?? 'any').localeCompare(right.effectTargetScope ?? 'any') ||
+    left.slotTokens.join(',').localeCompare(right.slotTokens.join(','))
+  );
+}
+
+function normalizeEffectTargetScope(value) {
+  const normalizedValue = typeof value === 'string' ? value.trim() : '';
+
+  return normalizedValue === 'crew' ||
+    normalizedValue === 'captains' ||
+    normalizedValue === 'self' ||
+    normalizedValue === 'subs'
+    ? normalizedValue
+    : 'any';
+}
+
+function normalizeSlotTokens(value) {
+  return Array.isArray(value)
+    ? [...new Set(value.map((entry) => String(entry).trim().toUpperCase()).filter(Boolean))].sort(
+        (left, right) => left.localeCompare(right),
+      )
+    : [];
 }
 
 function resolveBuilderAbilityCorrection(characterId, abilityCorrections) {

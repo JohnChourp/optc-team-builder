@@ -48,6 +48,15 @@
   "fields": {
     "characters": "Characters",
     "turns": "Turns",
+    "minEffectValue": "Minimum %",
+    "effectTargetScope": "Effect target",
+    "effectTargetScopes": {
+      "any": "Any target",
+      "crew": "Whole crew",
+      "captains": "Captains",
+      "self": "Self only",
+      "subs": "Sub members"
+    },
     "slotTokens": "Slot tokens",
     "slotScope": "Applies to",
     "slotScopes": {

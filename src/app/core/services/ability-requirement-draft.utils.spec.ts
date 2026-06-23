@@ -94,6 +94,37 @@ describe('ability-requirement-draft utils', () => {
     ]);
   });
 
+  it('serializes structured captain utility metadata', () => {
+    const drafts: AbilityRequirementDraft[] = [
+      {
+        draftId: 'captain-damage-1',
+        abilityKey: 'reduce_damage',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        sourceScope: 'captainAbility',
+        minEffectValue: 20,
+        effectTargetScope: 'crew',
+      },
+    ];
+
+    expect(
+      serializeAbilityRequirementDrafts(drafts, {
+        dedupe: true,
+      }),
+    ).toEqual([
+      {
+        abilityKey: 'reduce_damage',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        sourceScope: 'captainAbility',
+        minEffectValue: 20,
+        effectTargetScope: 'crew',
+      },
+    ]);
+  });
+
   it('preserves duplicate draft identities when dedupe is disabled', () => {
     const drafts: AbilityRequirementDraft[] = [
       {
@@ -148,6 +179,30 @@ describe('ability-requirement-draft utils', () => {
         },
       ),
     ).toBe('Remove Slot Barrier (>=2 chars • 2 turns • DEX)');
+  });
+
+  it('formats structured utility metadata in summaries', () => {
+    expect(
+      formatAbilityRequirementSummary(
+        {
+          abilityKey: 'reduce_damage',
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+          sourceScope: 'captainAbility',
+          minEffectValue: 20,
+          effectTargetScope: 'crew',
+        },
+        () => 'Reduce Damage',
+        {
+          formatCharacters: (count) => `>=${count} chars`,
+          formatTurns: (count) => `${count} turns`,
+          formatSourceScope: () => 'Captain Ability',
+          formatMinEffectValue: (value) => `>=${value}%`,
+          formatEffectTargetScope: (scope) => scope,
+        },
+      ),
+    ).toBe('Reduce Damage (Captain Ability • >=20% • crew)');
   });
 });
 

@@ -70,6 +70,8 @@ import {
   createEmptyAutoBuildManualSlots,
 } from '../../core/models/auto-team-builder.models';
 import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityCatalog,
@@ -762,6 +764,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         : {}),
       ...(normalizeAbilityRequirementSourceScope(requirement.sourceScope)
         ? { sourceScope: normalizeAbilityRequirementSourceScope(requirement.sourceScope)! }
+        : {}),
+      ...(normalizeAbilityRequirementEffectValue(requirement.minEffectValue) !== null
+        ? { minEffectValue: normalizeAbilityRequirementEffectValue(requirement.minEffectValue)! }
+        : {}),
+      ...(normalizeAbilityEffectTargetScope(requirement.effectTargetScope) !== 'any'
+        ? { effectTargetScope: normalizeAbilityEffectTargetScope(requirement.effectTargetScope) }
         : {}),
     })),
   }));
@@ -6013,6 +6021,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         formatTurns: (count) => this.t('abilities.requirement.turns', { count }),
         formatSlotScope: (scope) => this.t(`abilities.requirement.slotScopes.${scope}`),
         formatSourceScope: (scope) => this.t(`abilities.requirement.sourceScopes.${scope}`),
+        formatMinEffectValue: (value) => this.t('abilities.requirement.minEffectValue', { value }),
+        formatEffectTargetScope: (scope) =>
+          this.t(`abilities.requirement.effectTargetScopes.${scope}`),
       },
     );
   }
@@ -6061,6 +6072,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       requiredCharacterCount: draft.requiredCharacterCount ?? 1,
       slotScope: draft.slotScope,
       sourceScope: draft.sourceScope,
+      minEffectValue: draft.minEffectValue,
+      effectTargetScope: draft.effectTargetScope,
     });
   }
 

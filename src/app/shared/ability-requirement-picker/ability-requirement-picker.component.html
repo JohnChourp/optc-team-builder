@@ -298,41 +298,77 @@
                             </label>
                           }
 
-                          <div class="ability-picker-field">
-                            <span>{{ t('fields.slotScope') }}</span>
-                            <div class="ability-picker-segmented" role="group">
-                              <button
-                                type="button"
-                                class="ability-picker-segmented__button"
-                                [class.ability-picker-segmented__button--selected]="
-                                  row.draft.slotScope === 'any'
-                                "
-                                (click)="setSlotScope(row.draft.draftId, 'any')"
-                              >
-                                {{ t('fields.slotScopes.any') }}
-                              </button>
-                              <button
-                                type="button"
-                                class="ability-picker-segmented__button"
-                                [class.ability-picker-segmented__button--selected]="
-                                  row.draft.slotScope === 'leader'
-                                "
-                                (click)="setSlotScope(row.draft.draftId, 'leader')"
-                              >
-                                {{ t('fields.slotScopes.leader') }}
-                              </button>
-                              <button
-                                type="button"
-                                class="ability-picker-segmented__button"
-                                [class.ability-picker-segmented__button--selected]="
-                                  row.draft.slotScope === 'sub'
-                                "
-                                (click)="setSlotScope(row.draft.draftId, 'sub')"
-                              >
-                                {{ t('fields.slotScopes.sub') }}
-                              </button>
+                          @if (row.supportsMinEffectValue) {
+                            <label class="ability-picker-field">
+                              <span>{{ t('fields.minEffectValue') }}</span>
+                              <ion-input
+                                type="number"
+                                min="0"
+                                inputmode="decimal"
+                                fill="outline"
+                                [value]="row.draft.minEffectValue ?? ''"
+                                (ionInput)="onMinEffectValueChange(row.draft.draftId, $event)"
+                              ></ion-input>
+                            </label>
+                          }
+
+                          @if (!captainAbilityMode) {
+                            <div class="ability-picker-field">
+                              <span>{{ t('fields.slotScope') }}</span>
+                              <div class="ability-picker-segmented" role="group">
+                                <button
+                                  type="button"
+                                  class="ability-picker-segmented__button"
+                                  [class.ability-picker-segmented__button--selected]="
+                                    row.draft.slotScope === 'any'
+                                  "
+                                  (click)="setSlotScope(row.draft.draftId, 'any')"
+                                >
+                                  {{ t('fields.slotScopes.any') }}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="ability-picker-segmented__button"
+                                  [class.ability-picker-segmented__button--selected]="
+                                    row.draft.slotScope === 'leader'
+                                  "
+                                  (click)="setSlotScope(row.draft.draftId, 'leader')"
+                                >
+                                  {{ t('fields.slotScopes.leader') }}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="ability-picker-segmented__button"
+                                  [class.ability-picker-segmented__button--selected]="
+                                    row.draft.slotScope === 'sub'
+                                  "
+                                  (click)="setSlotScope(row.draft.draftId, 'sub')"
+                                >
+                                  {{ t('fields.slotScopes.sub') }}
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          }
+
+                          @if (row.supportsEffectTargetScope) {
+                            <div class="ability-picker-field">
+                              <span>{{ t('fields.effectTargetScope') }}</span>
+                              <div class="ability-picker-segmented" role="group">
+                                @for (scope of availableEffectTargetScopes; track scope) {
+                                  <button
+                                    type="button"
+                                    class="ability-picker-segmented__button"
+                                    [class.ability-picker-segmented__button--selected]="
+                                      (row.draft.effectTargetScope ?? 'any') === scope
+                                    "
+                                    (click)="setEffectTargetScope(row.draft.draftId, scope)"
+                                  >
+                                    {{ t('fields.effectTargetScopes.' + scope) }}
+                                  </button>
+                                }
+                              </div>
+                            </div>
+                          }
                         </div>
 
                         @if (row.supportsSlotTokens && row.availableSlotTokens.length) {

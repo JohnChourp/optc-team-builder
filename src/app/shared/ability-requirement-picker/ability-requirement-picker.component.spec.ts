@@ -199,6 +199,95 @@ describe('AbilityRequirementPickerComponent', () => {
     ]);
   });
 
+  it('preserves structured captain utility controls in working and saved drafts', () => {
+    const component = new AbilityRequirementPickerComponent();
+    const emitSpy = vi.spyOn(component.saveDrafts, 'emit');
+
+    component.captainAbilityMode = true;
+    component.catalogItems = [
+      {
+        key: 'reduce_damage',
+        label: 'Reduce Damage',
+        supportsTurns: false,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['captainAbility'],
+        availableCoverageModes: ['explicit'],
+        matchCount: 10,
+        sampleCharacterIds: [101],
+        sampleTexts: ['Reduces damage received by 20%'],
+      },
+    ];
+    component.drafts = [
+      {
+        draftId: 'captain-damage-1',
+        abilityKey: 'reduce_damage',
+        minTurns: null,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+        sourceScope: 'captainAbility',
+        minEffectValue: 10,
+        effectTargetScope: 'crew',
+      },
+    ];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.onMinEffectValueChange('captain-damage-1', {
+      detail: { value: '20' },
+    } as CustomEvent<{ value: string }>);
+    component.setEffectTargetScope('captain-damage-1', 'self');
+    component.save();
+
+    expect(component.selectedRows()[0]).toMatchObject({
+      supportsMinEffectValue: true,
+      supportsEffectTargetScope: true,
+    });
+    expect(emitSpy.mock.calls[0]?.[0]).toEqual([
+      expect.objectContaining({
+        minEffectValue: 20,
+        effectTargetScope: 'self',
+      }),
+    ]);
+  });
+
+  it('marks captain favorable slot filters as slot-token aware', () => {
+    const component = new AbilityRequirementPickerComponent();
+
+    component.captainAbilityMode = true;
+    component.catalogItems = [
+      {
+        key: 'make_slots_favorable',
+        label: 'Make Slots Favorable',
+        supportsTurns: false,
+        supportsSlotTokens: true,
+        availableSlotTokens: ['RCV'],
+        availableSources: ['captainAbility'],
+        availableCoverageModes: ['explicit'],
+        matchCount: 10,
+        sampleCharacterIds: [101],
+        sampleTexts: ['Makes [RCV] orbs beneficial for all characters'],
+      },
+    ];
+    component.drafts = [];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.onCatalogItemSelect(component.catalogItems[0]!);
+
+    expect(component.selectedRows()[0]).toMatchObject({
+      supportsSlotTokens: true,
+      supportsEffectTargetScope: true,
+      availableSlotTokens: ['RCV'],
+    });
+  });
+
   it('keeps turns value 0 in working drafts so it can serialize as ignore turns', () => {
     const component = new AbilityRequirementPickerComponent();
 
@@ -418,6 +507,10 @@ describe('AbilityRequirementPickerComponent', () => {
     expect(template).toContain('ability-picker-segmented');
     expect(template).toContain("setSlotScope(row.draft.draftId, 'leader')");
     expect(template).toContain('@if (row.supportsSlotTokens && row.availableSlotTokens.length)');
+    expect(template).toContain('@if (row.supportsMinEffectValue)');
+    expect(template).toContain('onMinEffectValueChange(row.draft.draftId, $event)');
+    expect(template).toContain('@if (row.supportsEffectTargetScope)');
+    expect(template).toContain('setEffectTargetScope(row.draft.draftId, scope)');
     expect(template).toContain('@if (showLeaderBoostControls)');
     expect(template).toContain("t('leaderBoost.range.atkMin')");
     expect(template).toContain("onLeaderBoostRangeChange('HP', 'max', $event)");

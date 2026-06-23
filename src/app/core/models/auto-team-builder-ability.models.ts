@@ -12,6 +12,7 @@ export type AutoBuildAbilityCategory = 'special' | 'crewmate' | 'potential' | 's
 export type AutoBuildAbilityCoverageMode = 'explicit' | 'selectedDebuff';
 export type AutoBuildAbilitySlotScope = 'any' | 'leader' | 'sub';
 export type AutoBuildAbilityRequirementSourceScope = 'captainAbility';
+export type AutoBuildAbilityEffectTargetScope = 'any' | 'crew' | 'captains' | 'self' | 'subs';
 export type AutoBuildEnemyMechanicCategory =
   | 'enemyDefense'
   | 'crewDebuff'
@@ -35,6 +36,15 @@ export interface NormalizedBuilderAbility {
   slotTokens: string[];
   source: AutoBuildAbilitySource;
   coverageMode?: AutoBuildAbilityCoverageMode;
+  minEffectValue?: number | null;
+  effectTargetScope?: AutoBuildAbilityEffectTargetScope;
+}
+
+export interface AutoBuildAbilityEffectMatch {
+  characterId: number;
+  minEffectValue?: number | null;
+  effectTargetScope?: AutoBuildAbilityEffectTargetScope;
+  slotTokens: string[];
 }
 
 export interface AutoBuildAbilityCatalogItem {
@@ -54,6 +64,7 @@ export interface AutoBuildAbilityCatalogItem {
   turnMatchingCharacterIds?: AutoBuildAbilityTurnMatchingCharacterIds[];
   captainAbilityMatchingCharacterIds?: number[];
   captainAbilityTurnMatchingCharacterIds?: AutoBuildAbilityTurnMatchingCharacterIds[];
+  captainAbilityEffectMatches?: AutoBuildAbilityEffectMatch[];
   sampleCharacterIds: number[];
   sampleTexts: string[];
 }
@@ -77,6 +88,8 @@ export interface AutoBuildAbilityRequirement {
   requiredCharacterCount: number;
   slotScope?: AutoBuildAbilitySlotScope;
   sourceScope?: AutoBuildAbilityRequirementSourceScope;
+  minEffectValue?: number | null;
+  effectTargetScope?: AutoBuildAbilityEffectTargetScope;
 }
 
 export interface AutoBuildRequiredCharacterGroup {
@@ -131,4 +144,29 @@ export function normalizeAbilityRequirementSourceScope(
   const normalizedValue = typeof value === 'string' ? value.trim() : '';
 
   return normalizedValue === 'captainAbility' ? normalizedValue : null;
+}
+
+export function normalizeAbilityEffectTargetScope(
+  value: string | null | undefined,
+): AutoBuildAbilityEffectTargetScope {
+  const normalizedValue = typeof value === 'string' ? value.trim() : '';
+
+  return normalizedValue === 'crew' ||
+    normalizedValue === 'captains' ||
+    normalizedValue === 'self' ||
+    normalizedValue === 'subs'
+    ? normalizedValue
+    : 'any';
+}
+
+export function normalizeAbilityRequirementEffectValue(
+  value: number | string | null | undefined,
+): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const nextValue = Number(value);
+
+  return Number.isFinite(nextValue) && nextValue >= 0 ? nextValue : null;
 }

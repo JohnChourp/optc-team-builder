@@ -29,6 +29,8 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
@@ -447,6 +449,8 @@ function cloneAbilityRequirement(
 ): AutoBuildAbilityRequirement {
   const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
   const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
+  const minEffectValue = normalizeAbilityRequirementEffectValue(requirement.minEffectValue);
+  const effectTargetScope = normalizeAbilityEffectTargetScope(requirement.effectTargetScope);
   const nextRequirement: AutoBuildAbilityRequirement = {
     ...requirement,
     slotTokens: [...requirement.slotTokens],
@@ -462,6 +466,18 @@ function cloneAbilityRequirement(
     nextRequirement.sourceScope = sourceScope;
   } else {
     delete nextRequirement.sourceScope;
+  }
+
+  if (minEffectValue !== null) {
+    nextRequirement.minEffectValue = minEffectValue;
+  } else {
+    delete nextRequirement.minEffectValue;
+  }
+
+  if (effectTargetScope !== 'any') {
+    nextRequirement.effectTargetScope = effectTargetScope;
+  } else {
+    delete nextRequirement.effectTargetScope;
   }
 
   return nextRequirement;
@@ -1268,7 +1284,13 @@ interface AbilityRequirementDemand {
 }
 
 function buildAbilityRequirementDemandGroupKey(requirement: AutoBuildAbilityRequirement): string {
-  return `${requirement.abilityKey.trim()}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}|${normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any'}`;
+  return [
+    requirement.abilityKey.trim(),
+    normalizeAbilityRequirementSlotScope(requirement.slotScope),
+    normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any',
+    normalizeAbilityRequirementEffectValue(requirement.minEffectValue) ?? 'none',
+    normalizeAbilityEffectTargetScope(requirement.effectTargetScope),
+  ].join('|');
 }
 
 function compareAbilityRequirementDemandStrictness(
@@ -1280,6 +1302,7 @@ function compareAbilityRequirementDemandStrictness(
 
   return (
     rightTurns - leftTurns ||
+    (right.requirement.minEffectValue ?? 0) - (left.requirement.minEffectValue ?? 0) ||
     right.requirement.slotTokens.length - left.requirement.slotTokens.length ||
     right.requirement.slotTokens.join(',').localeCompare(left.requirement.slotTokens.join(',')) ||
     left.requirementIndex - right.requirementIndex ||

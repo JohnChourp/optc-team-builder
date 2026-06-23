@@ -1,7 +1,10 @@
 import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
+  type AutoBuildAbilityEffectTargetScope,
   type NormalizedBuilderAbility,
 } from '../models/auto-team-builder-ability.models';
 
@@ -24,7 +27,7 @@ const SELECTABLE_DEBUFF_COUNTER_KEYS = new Set([
 ]);
 
 export function buildAbilityRequirementIdentity(requirement: AutoBuildAbilityRequirement): string {
-  return `${normalizeAbilityKey(requirement.abilityKey)}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}|${requirement.requiredCharacterCount}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}|${normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any'}`;
+  return `${normalizeAbilityKey(requirement.abilityKey)}|${requirement.minTurns ?? 'none'}|${requirement.slotTokens.join(',')}|${requirement.requiredCharacterCount}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}|${normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any'}|${normalizeAbilityRequirementEffectValue(requirement.minEffectValue) ?? 'none'}|${normalizeAbilityEffectTargetScope(requirement.effectTargetScope)}`;
 }
 
 export function matchesAbilityRequirement(
@@ -64,7 +67,7 @@ export function matchesAbilityRequirement(
     return false;
   }
 
-  return true;
+  return matchesAbilityRequirementMetadata(ability, requirement);
 }
 
 export function matchesAnyAbilityRequirement(
@@ -78,4 +81,57 @@ function normalizeAbilityKey(value: string): string {
   const normalizedValue = value.trim();
 
   return LEGACY_ABILITY_KEY_ALIASES[normalizedValue] ?? normalizedValue;
+}
+
+export function matchesAbilityRequirementMetadata(
+  ability: Pick<NormalizedBuilderAbility, 'minEffectValue' | 'effectTargetScope' | 'slotTokens'>,
+  requirement: Pick<
+    AutoBuildAbilityRequirement,
+    'minEffectValue' | 'effectTargetScope' | 'slotTokens'
+  >,
+): boolean {
+  const requiredEffectValue = normalizeAbilityRequirementEffectValue(requirement.minEffectValue);
+
+  if (requiredEffectValue !== null) {
+    const abilityEffectValue = normalizeAbilityRequirementEffectValue(ability.minEffectValue);
+
+    if (abilityEffectValue === null || abilityEffectValue < requiredEffectValue) {
+      return false;
+    }
+  }
+
+  if (
+    requirement.slotTokens.length &&
+    requirement.slotTokens.some((slotToken) => !ability.slotTokens.includes(slotToken))
+  ) {
+    return false;
+  }
+
+  return effectTargetScopeMatches(
+    normalizeAbilityEffectTargetScope(ability.effectTargetScope),
+    normalizeAbilityEffectTargetScope(requirement.effectTargetScope),
+  );
+}
+
+function effectTargetScopeMatches(
+  abilityScope: AutoBuildAbilityEffectTargetScope,
+  requirementScope: AutoBuildAbilityEffectTargetScope,
+): boolean {
+  if (requirementScope === 'any') {
+    return true;
+  }
+
+  if (abilityScope === 'any') {
+    return false;
+  }
+
+  if (abilityScope === 'crew') {
+    return true;
+  }
+
+  if (abilityScope === 'captains') {
+    return requirementScope === 'captains' || requirementScope === 'self';
+  }
+
+  return abilityScope === requirementScope;
 }
