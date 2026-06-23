@@ -6,6 +6,27 @@
     "saveChanges": "Save changes",
     "saveEnemy": "Save enemy"
   },
+  "abilityFilters": {
+    "categoryCount": "{{count}} abilities",
+    "clearAll": "Clear ability filters",
+    "clearSection": "Clear",
+    "copy": "Pick one or more abilities found on saved enemies. Enemies must contain every selected ability.",
+    "categories": {
+      "crewmate": "Crewmate",
+      "legacy": "Other",
+      "potential": "Potential",
+      "special": "Special",
+      "support": "Support"
+    },
+    "empty": {
+      "copy": "Clear an ability filter or choose a different combination.",
+      "title": "No saved enemies contain every selected ability."
+    },
+    "enemyCount": "{{count}} enemies",
+    "eyebrow": "Ability coverage",
+    "selected": "selected",
+    "title": "Filter saved enemies by abilities"
+  },
   "confirm": {
     "deleteSelected": "Delete {{count}} selected enemies?",
     "deleteSingle": "Delete enemy \"{{name}}\"?"
@@ -301,7 +322,8 @@
   },
   "list": {
     "title": "Saved enemies",
-    "total": "{{count}} total"
+    "total": "{{count}} total",
+    "totalFiltered": "{{count}} matching of {{total}} total"
   },
   "loading": "Loading saved enemies...",
   "selection": {

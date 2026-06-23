@@ -2,9 +2,8 @@ import '@angular/compiler';
 import { signal } from '@angular/core';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { SavedEnemiesPage } from './saved-enemies.page';
 import {
   type CharacterListItem,
   type SavedEnemy,
@@ -20,6 +19,8 @@ type SavedEnemiesPagePrivateApi = {
   readImageUrlAsDataUrl: (imageUrl: string) => Promise<string>;
   resizeImageDataUrl: (imageDataUrl: string, maxDimension: number) => Promise<string>;
 };
+type SavedEnemiesPageClass = typeof import('./saved-enemies.page').SavedEnemiesPage;
+let SavedEnemiesPage: SavedEnemiesPageClass;
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
@@ -42,7 +43,13 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonToolbar: class {},
 }));
 
+vi.mock('@ionic/angular', () => ({}));
+
 describe('SavedEnemiesPage', () => {
+  beforeAll(async () => {
+    SavedEnemiesPage = (await import('./saved-enemies.page')).SavedEnemiesPage;
+  });
+
   afterEach(() => {
     restoreJsonDownloadCapture();
     vi.clearAllMocks();
@@ -59,6 +66,147 @@ describe('SavedEnemiesPage', () => {
     expect(repository.getDatasetManifest).toHaveBeenCalledOnce();
     expect(repository.getAutoBuilderAbilityCatalog).toHaveBeenCalledOnce();
     expect(page.availableClasses()).toEqual(['Fighter', 'Slasher']);
+  });
+
+  it('builds deduped ability filters from saved enemy ability sources', async () => {
+    const enemies = buildSavedEnemies();
+    const { page } = createPage({
+      savedEnemies: [
+        {
+          ...enemies[0]!,
+          requiredAbilities: [
+            createRequirement('remove_bind', 5),
+            createRequirement('remove_bind', 3),
+          ],
+          requiredCharacterGroups: [
+            {
+              id: 'group-1',
+              abilities: [createRequirement('crewmate_recover_special_bind')],
+            },
+          ],
+          battleRequirements: [
+            {
+              id: 'battle-1',
+              title: 'Battle 1',
+              enemyMechanics: [],
+              requiredCharacterGroups: [
+                {
+                  id: 'battle-group-1',
+                  abilities: [createRequirement('support_status_effect_recovery_special_bind')],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          ...enemies[1]!,
+          requiredAbilities: [createRequirement('uncatalogued_enemy_answer')],
+        },
+      ],
+    });
+
+    await page.ngOnInit();
+
+    const groups = page.savedEnemyAbilityFilterGroups();
+
+    expect(groups.find((group) => group.category === 'special')?.abilities).toEqual([
+      expect.objectContaining({
+        enemyCount: 1,
+        identity: 'remove_bind',
+        label: 'Bind',
+      }),
+    ]);
+    expect(groups.find((group) => group.category === 'crewmate')?.abilities).toEqual([
+      expect.objectContaining({
+        identity: 'crewmate_recover_special_bind',
+        label: 'Status Effect Recovery: Special Bind',
+      }),
+    ]);
+    expect(groups.find((group) => group.category === 'support')?.abilities).toEqual([
+      expect.objectContaining({
+        identity: 'support_status_effect_recovery_special_bind',
+        label: 'Status Effect Recovery: Special Bind',
+      }),
+    ]);
+    expect(groups.find((group) => group.category === 'legacy')?.abilities).toEqual([
+      expect.objectContaining({
+        identity: 'uncatalogued_enemy_answer',
+        label: 'uncatalogued_enemy_answer',
+      }),
+    ]);
+  });
+
+  it('filters saved enemies by every selected ability key', async () => {
+    const enemies = buildSavedEnemies();
+    const { page } = createPage({
+      savedEnemies: [
+        {
+          ...enemies[0]!,
+          requiredAbilities: [
+            createRequirement('remove_bind', 5),
+            createRequirement('remove_enemy_barrier'),
+          ],
+        },
+        {
+          ...enemies[1]!,
+          requiredAbilities: [
+            createRequirement('remove_bind', 4),
+            createRequirement('remove_paralysis', 4),
+          ],
+        },
+      ],
+    });
+
+    await page.ngOnInit();
+
+    page.toggleAbilityFilter('remove_bind');
+
+    expect(page.filteredSavedEnemies().map((enemy) => enemy.id)).toEqual(['enemy-1', 'enemy-2']);
+    expect(page.savedEnemyTotalLabel()).toBe('2 matching of 2 total');
+
+    page.toggleAbilityFilter('remove_paralysis');
+
+    expect(page.filteredSavedEnemies().map((enemy) => enemy.id)).toEqual(['enemy-2']);
+    expect(page.savedEnemyTotalLabel()).toBe('1 matching of 2 total');
+  });
+
+  it('uses filtered enemies for select all and resets ability filters with selection', async () => {
+    const enemies = buildSavedEnemies();
+    const { page } = createPage({
+      savedEnemies: [
+        {
+          ...enemies[0]!,
+          requiredAbilities: [createRequirement('remove_bind')],
+        },
+        {
+          ...enemies[1]!,
+          requiredAbilities: [
+            createRequirement('remove_bind'),
+            createRequirement('remove_paralysis'),
+          ],
+        },
+      ],
+    });
+
+    await page.ngOnInit();
+    page.onSelectAllChange({
+      detail: {
+        checked: true,
+      },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.selectedEnemyIds()).toEqual(['enemy-1', 'enemy-2']);
+
+    page.toggleAbilityFilter('remove_paralysis');
+
+    expect(page.filteredSavedEnemies().map((enemy) => enemy.id)).toEqual(['enemy-2']);
+    expect(page.selectedEnemyIds()).toEqual(['enemy-2']);
+
+    page.resetSelection();
+
+    expect(page.hasAbilityFilters()).toBe(false);
+    expect(page.filteredSavedEnemies().map((enemy) => enemy.id)).toEqual(['enemy-1', 'enemy-2']);
+    expect(page.selectedEnemyIds()).toEqual([]);
   });
 
   it('opens the create modal with fresh defaults', async () => {
@@ -831,6 +979,14 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain("t('selection.selectAll')");
     expect(template).toContain("t('tools.export')");
     expect(template).toContain("t('tools.delete')");
+    expect(template).toContain('savedEnemyTotalLabel()');
+    expect(template).toContain('hasAbilityFiltersAvailable()');
+    expect(template).toContain('savedEnemyAbilityFilterGroups()');
+    expect(template).toContain('toggleAbilityFilter(ability.identity)');
+    expect(template).toContain('clearAbilityFilterCategory(group.category)');
+    expect(template).toContain("t('abilityFilters.title')");
+    expect(template).toContain("t('abilityFilters.empty.title')");
+    expect(template).toContain('filteredSavedEnemies()');
     expect(template).not.toContain("t('list.exportAll')");
     expect(template).not.toContain("t('list.addAnother')");
     expect(template).toContain("t('editor.paste.title')");
@@ -1176,6 +1332,14 @@ function createPage(overrides: { savedEnemies?: SavedEnemy[] } = {}) {
         return 'Select';
       }
 
+      if (key === 'list.total') {
+        return `${params?.['count'] ?? 0} total`;
+      }
+
+      if (key === 'list.totalFiltered') {
+        return `${params?.['count'] ?? 0} matching of ${params?.['total'] ?? 0} total`;
+      }
+
       if (key === 'editor.typesActions.selectAll') {
         return 'Select all types';
       }
@@ -1301,6 +1465,18 @@ function buildCharacter(id: number, name = `Character ${id}`): CharacterListItem
       thumbnailJapan: null,
     },
     imageUrl: `assets/offline-packs/thumbnails-glo/characters/${id}.png`,
+  };
+}
+
+function createRequirement(
+  abilityKey: string,
+  minTurns: number | null = null,
+): SavedEnemy['requiredAbilities'][number] {
+  return {
+    abilityKey,
+    minTurns,
+    slotTokens: [],
+    requiredCharacterCount: 1,
   };
 }
 

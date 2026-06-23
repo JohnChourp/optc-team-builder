@@ -168,6 +168,30 @@ interface SavedEnemyAssociatedTeamCardView {
   slots: Array<{ imageUrl: string; name: string } | null>;
 }
 
+type SavedEnemyAbilityFilterCategory =
+  | 'special'
+  | 'crewmate'
+  | 'potential'
+  | 'support'
+  | 'legacy';
+
+interface SavedEnemyAbilityFacet {
+  category: SavedEnemyAbilityFilterCategory;
+  enemyCount: number;
+  identity: string;
+  label: string;
+  selected: boolean;
+}
+
+interface SavedEnemyAbilityCategoryGroup {
+  abilityCount: number;
+  abilities: SavedEnemyAbilityFacet[];
+  category: SavedEnemyAbilityFilterCategory;
+  hasSelection: boolean;
+  label: string;
+  selectedCount: number;
+}
+
 @Component({
   selector: 'app-saved-enemies-page',
   standalone: true,
@@ -206,17 +230,45 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     'potential',
     'support',
   ];
+  private static readonly abilityFilterCategoryOrder: SavedEnemyAbilityFilterCategory[] = [
+    'special',
+    'crewmate',
+    'potential',
+    'support',
+    'legacy',
+  ];
 
   public readonly loading = signal(true);
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly savedEnemies;
+  public readonly selectedAbilityFilterIds = signal<string[]>([]);
+  public readonly selectedAbilityFilterIdSet = computed(
+    () => new Set(this.selectedAbilityFilterIds()),
+  );
+  public readonly hasAbilityFilters = computed(() => this.selectedAbilityFilterIds().length > 0);
+  public readonly selectedAbilityFilterCount = computed(
+    () => this.selectedAbilityFilterIds().length,
+  );
+  public readonly filteredSavedEnemies = computed(() => {
+    const selectedAbilityIds = this.selectedAbilityFilterIds();
+
+    if (!selectedAbilityIds.length) {
+      return this.savedEnemies();
+    }
+
+    return this.savedEnemies().filter((enemy) => {
+      const enemyAbilityIds = this.resolveSavedEnemyAbilityKeys(enemy);
+
+      return selectedAbilityIds.every((abilityId) => enemyAbilityIds.has(abilityId));
+    });
+  });
   public readonly selectedEnemyIds = signal<string[]>([]);
   public readonly selectedEnemyIdSet = computed(() => new Set(this.selectedEnemyIds()));
   public readonly selectedCount = computed(() => this.selectedEnemyIds().length);
   public readonly hasSelection = computed(() => this.selectedCount() > 0);
   public readonly allSelected = computed(() => {
-    const savedEnemies = this.savedEnemies();
+    const savedEnemies = this.filteredSavedEnemies();
     const selectedEnemyIdSet = this.selectedEnemyIdSet();
 
     return (
@@ -375,6 +427,41 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   >(() => getEnemyMechanicCatalogItems());
   public readonly abilityCatalogMap = computed(
     () => new Map(this.availableAbilityCatalogItems().map((item) => [item.key, item] as const)),
+  );
+  public readonly savedEnemyAbilityFacets = computed<SavedEnemyAbilityFacet[]>(() =>
+    this.buildSavedEnemyAbilityFacets(),
+  );
+  public readonly savedEnemyAbilityFilterGroups = computed<SavedEnemyAbilityCategoryGroup[]>(() => {
+    const facets = this.savedEnemyAbilityFacets();
+
+    return SavedEnemiesPage.abilityFilterCategoryOrder.map((category) => {
+      const abilities = facets.filter((facet) => facet.category === category);
+
+      return {
+        abilityCount: abilities.length,
+        abilities,
+        category,
+        hasSelection: abilities.some((ability) => ability.selected),
+        label: this.i18n.translate(
+          `abilityFilters.categories.${category}`,
+          undefined,
+          'saved-enemies',
+        ),
+        selectedCount: abilities.filter((ability) => ability.selected).length,
+      };
+    });
+  });
+  public readonly hasAbilityFiltersAvailable = computed(() =>
+    this.savedEnemyAbilityFilterGroups().some((group) => group.abilityCount > 0),
+  );
+  public readonly savedEnemyTotalLabel = computed(() =>
+    this.hasAbilityFilters()
+      ? this.i18n.translate(
+          'list.totalFiltered',
+          { count: this.filteredSavedEnemies().length, total: this.savedEnemies().length },
+          'saved-enemies',
+        )
+      : this.i18n.translate('list.total', { count: this.savedEnemies().length }, 'saved-enemies'),
   );
   public readonly enemyMechanicCatalogMap = computed(
     () =>
@@ -673,7 +760,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public onSelectAllChange(event: CustomEvent<{ checked: boolean }>): void {
     if (event.detail.checked) {
-      this.selectedEnemyIds.set(this.savedEnemies().map((enemy) => enemy.id));
+      this.selectedEnemyIds.set(this.filteredSavedEnemies().map((enemy) => enemy.id));
       return;
     }
 
@@ -682,6 +769,33 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public resetSelection(): void {
     this.selectedEnemyIds.set([]);
+    this.selectedAbilityFilterIds.set([]);
+  }
+
+  public isAbilityFilterSelected(identity: string): boolean {
+    return this.selectedAbilityFilterIdSet().has(identity);
+  }
+
+  public toggleAbilityFilter(identity: string): void {
+    this.setAbilityFilterSelection(identity, !this.isAbilityFilterSelected(identity));
+  }
+
+  public clearAbilityFilterCategory(category: SavedEnemyAbilityFilterCategory): void {
+    const categoryAbilityIds = new Set(
+      this.savedEnemyAbilityFacets()
+        .filter((facet) => facet.category === category)
+        .map((facet) => facet.identity),
+    );
+
+    this.setSelectedAbilityFilterIds(
+      this.selectedAbilityFilterIds().filter((abilityId) => !categoryAbilityIds.has(abilityId)),
+    );
+    this.pruneSelection();
+  }
+
+  public clearAllAbilityFilters(): void {
+    this.selectedAbilityFilterIds.set([]);
+    this.pruneSelection();
   }
 
   public openCreateModal(): void {
@@ -1625,6 +1739,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
     await this.userState.deleteEnemy(enemyId);
     this.setEnemySelection(enemyId, false);
+    this.pruneAbilityFilterSelection();
+    this.pruneSelection();
   }
 
   public exportSelectedEnemies(): void {
@@ -1636,7 +1752,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
     downloadSavedEnemiesExport(
       buildSavedEnemiesTransferPayload(
-        this.savedEnemies().filter((enemy) => selectedEnemyIdSet.has(enemy.id)),
+        this.filteredSavedEnemies().filter((enemy) => selectedEnemyIdSet.has(enemy.id)),
       ),
     );
   }
@@ -1663,6 +1779,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
     await this.userState.deleteEnemies(selectedEnemyIds);
     this.selectedEnemyIds.set([]);
+    this.pruneAbilityFilterSelection();
   }
 
   public formatAbilityRequirement(requirement: AutoBuildAbilityRequirement): string {
@@ -1844,6 +1961,127 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   private effectiveRequiredAbilities(): AutoBuildAbilityRequirement[] {
     return this.serializeRequiredAbilities();
+  }
+
+  private buildSavedEnemyAbilityFacets(): SavedEnemyAbilityFacet[] {
+    const facets = new Map<
+      string,
+      SavedEnemyAbilityFacet & {
+        enemyIds: Set<string>;
+      }
+    >();
+    const selectedAbilityIds = this.selectedAbilityFilterIdSet();
+
+    for (const enemy of this.savedEnemies()) {
+      for (const abilityKey of this.resolveSavedEnemyAbilityKeys(enemy)) {
+        const existingFacet = facets.get(abilityKey);
+
+        if (!existingFacet) {
+          const catalogItem = this.abilityCatalogMap().get(abilityKey);
+
+          facets.set(abilityKey, {
+            category: this.resolveSavedEnemyAbilityFilterCategory(catalogItem?.category),
+            enemyCount: 0,
+            enemyIds: new Set([enemy.id]),
+            identity: abilityKey,
+            label: catalogItem?.label ?? abilityKey,
+            selected: selectedAbilityIds.has(abilityKey),
+          });
+          continue;
+        }
+
+        existingFacet.enemyIds.add(enemy.id);
+      }
+    }
+
+    return [...facets.values()]
+      .map(({ enemyIds, ...facet }) => ({
+        ...facet,
+        enemyCount: enemyIds.size,
+        selected: selectedAbilityIds.has(facet.identity),
+      }))
+      .sort((left, right) => {
+        const categoryDifference =
+          SavedEnemiesPage.abilityFilterCategoryOrder.indexOf(left.category) -
+          SavedEnemiesPage.abilityFilterCategoryOrder.indexOf(right.category);
+
+        return categoryDifference || left.label.localeCompare(right.label);
+      });
+  }
+
+  private resolveSavedEnemyAbilityFilterCategory(
+    category: AutoBuildAbilityCategory | undefined,
+  ): SavedEnemyAbilityFilterCategory {
+    switch (category) {
+      case 'special':
+      case 'crewmate':
+      case 'potential':
+      case 'support':
+        return category;
+      default:
+        return 'legacy';
+    }
+  }
+
+  private resolveSavedEnemyAbilityKeys(enemy: SavedEnemy): Set<string> {
+    const abilityKeys = new Set<string>();
+    const addRequirement = (requirement: AutoBuildAbilityRequirement): void => {
+      const abilityKey = requirement.abilityKey.trim();
+
+      if (abilityKey.length) {
+        abilityKeys.add(abilityKey);
+      }
+    };
+
+    enemy.requiredAbilities.forEach(addRequirement);
+    (enemy.requiredCharacterGroups ?? []).forEach((group) =>
+      group.abilities.forEach(addRequirement),
+    );
+    (enemy.battleRequirements ?? []).forEach((battle) =>
+      battle.requiredCharacterGroups.forEach((group) => group.abilities.forEach(addRequirement)),
+    );
+
+    return abilityKeys;
+  }
+
+  private setAbilityFilterSelection(identity: string, selected: boolean): void {
+    const currentIds = this.selectedAbilityFilterIds();
+
+    if (selected) {
+      if (!currentIds.includes(identity)) {
+        this.setSelectedAbilityFilterIds([...currentIds, identity]);
+      }
+    } else {
+      this.setSelectedAbilityFilterIds(currentIds.filter((abilityId) => abilityId !== identity));
+    }
+
+    this.pruneSelection();
+  }
+
+  private setSelectedAbilityFilterIds(abilityIds: string[]): void {
+    this.selectedAbilityFilterIds.set([
+      ...new Set(
+        abilityIds.map((abilityId) => abilityId.trim()).filter((abilityId) => abilityId.length),
+      ),
+    ]);
+  }
+
+  private pruneSelection(): void {
+    const availableEnemyIds = new Set(this.filteredSavedEnemies().map((enemy) => enemy.id));
+
+    this.selectedEnemyIds.set(
+      this.selectedEnemyIds().filter((enemyId) => availableEnemyIds.has(enemyId)),
+    );
+  }
+
+  private pruneAbilityFilterSelection(): void {
+    const availableAbilityIds = new Set(
+      this.savedEnemyAbilityFacets().map((facet) => facet.identity),
+    );
+
+    this.setSelectedAbilityFilterIds(
+      this.selectedAbilityFilterIds().filter((abilityId) => availableAbilityIds.has(abilityId)),
+    );
   }
 
   private async loadEnemyImage(file: File): Promise<void> {

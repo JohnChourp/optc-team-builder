@@ -4,6 +4,153 @@
   margin-bottom: 18px;
 }
 
+.saved-enemies-ability-filter-panel {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(6, 11, 22, 0.32);
+}
+
+.saved-enemies-ability-filter-panel__head,
+.saved-enemy-ability-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.saved-enemies-ability-filter-panel__head > div,
+.saved-enemy-ability-section__head > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.saved-enemies-ability-filter-panel__head span,
+.saved-enemy-ability-section__meta span {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.saved-enemies-ability-filter-panel__head h3,
+.saved-enemy-ability-section__head h4 {
+  margin: 0;
+  color: #ffffff;
+}
+
+.saved-enemies-ability-filter-panel__head p,
+.saved-enemy-ability-section__head p,
+.saved-enemies-filter-empty span {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.66);
+}
+
+.saved-enemies-ability-filter-panel__sections {
+  display: grid;
+  gap: 12px;
+}
+
+.saved-enemy-ability-section {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.saved-enemy-ability-section__meta {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  min-width: 84px;
+}
+
+.saved-enemy-ability-section__meta strong {
+  color: #ffffff;
+  font-size: 1.25rem;
+}
+
+.saved-enemy-ability-section__meta button {
+  padding: 0;
+  border: 0;
+  color: #f5c84c;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.saved-enemy-ability-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.saved-enemy-ability-chip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  max-width: 280px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: rgba(248, 251, 255, 0.84);
+  background: rgba(255, 255, 255, 0.045);
+  text-align: left;
+  cursor: pointer;
+}
+
+.saved-enemy-ability-chip:hover,
+.saved-enemy-ability-chip:focus-visible {
+  border-color: rgba(245, 200, 76, 0.55);
+}
+
+.saved-enemy-ability-chip--selected {
+  border-color: rgba(245, 200, 76, 0.72);
+  color: #ffffff;
+  background: rgba(245, 200, 76, 0.15);
+  box-shadow: 0 0 0 1px rgba(245, 200, 76, 0.14);
+}
+
+.saved-enemy-ability-chip span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.saved-enemy-ability-chip strong {
+  align-self: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #111827;
+  background: #f5c84c;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.saved-enemies-filter-empty {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px dashed rgba(245, 200, 76, 0.42);
+  border-radius: 14px;
+  background: rgba(245, 200, 76, 0.08);
+}
+
+.saved-enemies-filter-empty strong {
+  color: #ffffff;
+}
+
 .saved-enemy-main,
 .saved-enemies-selection,
 .saved-enemies-tool-actions,
