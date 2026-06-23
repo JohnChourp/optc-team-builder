@@ -44,13 +44,12 @@
 
 .ability-filter-chip span {
   min-width: 0;
-  overflow: hidden;
+  overflow-wrap: anywhere;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  text-overflow: ellipsis;
+  line-height: 1.15;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
 .ability-filter-chip strong {

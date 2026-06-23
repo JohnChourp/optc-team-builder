@@ -36,6 +36,7 @@
     "boxName": "Box {{count}}"
   },
   "filters": {
+    "abilityRailLabel": "Ability filter categories",
     "searchPlaceholder": "Search characters by name",
     "typeLabel": "Type",
     "typePlaceholder": "Filter by type",
@@ -59,6 +60,12 @@
       "all": "All membership states",
       "inBox": "Already in box",
       "notInBox": "Not in box"
+    },
+    "captainAbility": {
+      "open": "Captain Ability filters ({{count}})",
+      "eyebrow": "Captain Ability",
+      "title": "Captain Ability filters",
+      "copy": "Filter box character results by effects parsed from each character's own Captain Ability."
     },
     "special": {
       "open": "Special filters ({{count}})",

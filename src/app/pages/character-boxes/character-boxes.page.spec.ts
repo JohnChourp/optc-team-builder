@@ -11,6 +11,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
   IonButtons: class {},
   IonContent: class {},
+  IonFooter: class {},
   IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
@@ -468,6 +469,144 @@ describe('CharacterBoxesPage', () => {
     });
   });
 
+  it('shows selected ability filters as count-only rail items', () => {
+    const { page } = createPage();
+
+    page.abilityCatalog.set({
+      abilities: [
+        createAbilityCatalogItem({
+          key: 'boost_orb',
+          label: 'Boost Orb',
+          availableSources: ['captainAbility'],
+          matchingCharacterIds: [101],
+          captainAbilityMatchingCharacterIds: [202],
+        }),
+        createAbilityCatalogItem({
+          key: 'remove_bind',
+          label: 'Remove Bind',
+          availableSources: ['specialText'],
+          matchingCharacterIds: [303],
+        }),
+        createAbilityCatalogItem({
+          key: 'crewmate_recover_paralysis',
+          label: 'Recover Paralysis',
+          category: 'crewmate',
+          availableSources: ['sailorAbilities'],
+          matchingCharacterIds: [404],
+        }),
+      ],
+    } as never);
+    page.captainAbilityDrafts.set([
+      createAbilityDraft({
+        draftId: 'captain-1',
+        abilityKey: 'boost_orb',
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      }),
+    ]);
+    page.specialAbilityDrafts.set([
+      createAbilityDraft({
+        draftId: 'special-1',
+        abilityKey: 'remove_bind',
+      }),
+    ]);
+    page.crewmateAbilityDrafts.set([
+      createAbilityDraft({
+        draftId: 'crewmate-1',
+        abilityKey: 'crewmate_recover_paralysis',
+      }),
+    ]);
+
+    expect(page.abilityFilterRailItems()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'captainAbility', count: 1, disabled: false }),
+        expect.objectContaining({ category: 'special', count: 1, disabled: false }),
+        expect.objectContaining({ category: 'crewmate', count: 1, disabled: false }),
+        expect.objectContaining({ category: 'potential', count: 0, disabled: true }),
+        expect.objectContaining({ category: 'support', count: 0, disabled: true }),
+      ]),
+    );
+    expect(page.abilityFilterRailItems().map((item) => item.category)).toEqual([
+      'captainAbility',
+      'special',
+      'crewmate',
+      'potential',
+      'support',
+    ]);
+  });
+
+  it('filters character box searches with captain ability catalog matches', async () => {
+    const { page, repository } = createPage();
+
+    page.abilityCatalog.set({
+      abilities: [
+        createAbilityCatalogItem({
+          key: 'boost_orb',
+          label: 'Boost Orb',
+          availableSources: ['captainAbility', 'specialText'],
+          matchingCharacterIds: [101, 202, 303],
+          captainAbilityMatchingCharacterIds: [202],
+        }),
+      ],
+    } as never);
+
+    await page.saveCaptainAbilityPicker([
+      createAbilityDraft({
+        draftId: 'captain-1',
+        abilityKey: 'boost_orb',
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      }),
+    ]);
+
+    expect(page.captainAbilityDrafts()).toHaveLength(1);
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: [202],
+      excludedCharacterIds: undefined,
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
+  it('clears an ability filter category from the rail and reloads results', async () => {
+    const { page, repository } = createPage();
+
+    page.specialAbilityDrafts.set([
+      createAbilityDraft({
+        draftId: 'special-1',
+        abilityKey: 'remove_bind',
+      }),
+      createAbilityDraft({
+        draftId: 'special-2',
+        abilityKey: 'remove_despair',
+      }),
+    ]);
+
+    await page.clearAbilityFilterCategory('special');
+
+    expect(page.specialAbilityDrafts()).toEqual([]);
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: undefined,
+      excludedCharacterIds: undefined,
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+  });
+
   it('selects every filtered character across result pages into the selected box', async () => {
     const favoriteIds = [1000, 1001, 202];
     const { page, repository, userState } = createPage(undefined, favoriteIds);
@@ -531,6 +670,65 @@ describe('CharacterBoxesPage', () => {
     expect(new Set(savedInput?.characterIds).size).toBe(savedInput?.characterIds.length);
     expect(savedInput?.characterIds).toEqual(expect.arrayContaining([101, 1000, 1499, 202]));
     expect(page.selectedBox()?.characterIds).toEqual(savedInput?.characterIds);
+  });
+
+  it('selects all filtered characters using ability-constrained result pages', async () => {
+    const { page, repository, userState } = createPage();
+
+    page.selectBox('box-1');
+    page.abilityCatalog.set({
+      abilities: [
+        createAbilityCatalogItem({
+          key: 'boost_orb',
+          label: 'Boost Orb',
+          availableSources: ['captainAbility', 'specialText'],
+          matchingCharacterIds: [202, 303],
+          captainAbilityMatchingCharacterIds: [202],
+        }),
+        createAbilityCatalogItem({
+          key: 'remove_bind',
+          label: 'Remove Bind',
+          availableSources: ['specialText'],
+          matchingCharacterIds: [202, 404],
+        }),
+      ],
+    } as never);
+    page.captainAbilityDrafts.set([
+      createAbilityDraft({
+        draftId: 'captain-1',
+        abilityKey: 'boost_orb',
+        slotScope: 'leader',
+        sourceScope: 'captainAbility',
+      }),
+    ]);
+    page.specialAbilityDrafts.set([
+      createAbilityDraft({
+        draftId: 'special-1',
+        abilityKey: 'remove_bind',
+      }),
+    ]);
+    repository.searchDetailedCharacters.mockResolvedValueOnce([createCharacter(202)]);
+
+    await page.selectAllFilteredCharacters();
+
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedTypesMatchMode: 'any',
+      selectedClasses: [],
+      selectedClassesMatchMode: 'any',
+      allowedCharacterIds: [202],
+      excludedCharacterIds: undefined,
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 500,
+      offset: 0,
+    });
+    expect(userState.saveCharacterBox).toHaveBeenCalledWith({
+      id: 'box-1',
+      name: 'Box 1',
+      characterIds: [101, 202],
+    });
   });
 
   it('blocks selecting all filtered characters when the cost range is invalid', async () => {
@@ -607,6 +805,7 @@ describe('CharacterBoxesPage', () => {
     expect(page.selectedSortMode()).toBe('catalog');
     expect(page.selectedIdOrder()).toBe('newest');
     expect(page.costRange()).toEqual({ min: null, max: null });
+    expect(page.captainAbilityDrafts()).toEqual([]);
     expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       selectedTypes: [],
@@ -635,6 +834,18 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain("t('editor.addFavorites'");
     expect(template).toContain("t('editor.selectAllFiltered'");
     expect(template).toContain('selectAllFilteredCharacters()');
+    expect(template).toContain('<app-ability-filter-rail');
+    expect(template).toContain('abilityFilterRailItems()');
+    expect(template).toContain('openAbilityFilterCategory($event)');
+    expect(template).toContain('clearAbilityFilterCategory($event)');
+    expect(template).toContain('<app-ability-requirement-picker');
+    expect(template).toContain('captainAbilityPickerOpen()');
+    expect(template).toContain("t('filters.captainAbility.title')");
+    expect(template).toContain('<app-special-ability-picker');
+    expect(template).toContain('specialAbilityPickerOpen()');
+    expect(template).toContain('crewmateAbilityPickerOpen()');
+    expect(template).toContain('potentialAbilityPickerOpen()');
+    expect(template).toContain('supportAbilityPickerOpen()');
     expect(template).toContain('<app-character-filter-row');
     expect(template).toContain("t('filters.typeLabel')");
     expect(template).toContain("t('filters.classLabel')");
@@ -779,4 +990,63 @@ function createCharacter(id: number, name = `Character ${id}`) {
     },
     detailImageUrl: `/characters/${id}-detail.png`,
   } as unknown as CharacterDetailRecord;
+}
+
+function createAbilityDraft(
+  overrides: Partial<{
+    draftId: string;
+    abilityKey: string;
+    minTurns: number | null;
+    slotTokens: string[];
+    requiredCharacterCount: number | null;
+    slotScope: 'any' | 'leader' | 'sub';
+    sourceScope: 'captainAbility';
+  }> & { draftId: string; abilityKey: string },
+) {
+  return {
+    minTurns: null,
+    slotTokens: [],
+    requiredCharacterCount: null,
+    ...overrides,
+  };
+}
+
+function createAbilityCatalogItem(
+  overrides: Partial<{
+    key: string;
+    label: string;
+    category: 'special' | 'crewmate' | 'potential' | 'support' | 'legacy';
+    supportsTurns: boolean;
+    supportsSlotTokens: boolean;
+    availableSlotTokens: string[];
+    availableSources: Array<
+      | 'specialText'
+      | 'superSpecialText'
+      | 'captainAbility'
+      | 'sailorAbilities'
+      | 'potentialAbilities'
+      | 'supportData'
+      | 'superTandemData'
+      | 'finalTapData'
+      | 'rushSugoSpecialData'
+    >;
+    matchCount: number;
+    matchingCharacterIds: number[];
+    captainAbilityMatchingCharacterIds: number[];
+    sampleCharacterIds: number[];
+    sampleTexts: string[];
+  }> & { key: string; label: string },
+) {
+  return {
+    category: 'special',
+    supportsTurns: false,
+    supportsSlotTokens: false,
+    availableSlotTokens: [],
+    availableSources: ['specialText'],
+    matchCount: 1,
+    matchingCharacterIds: [],
+    sampleCharacterIds: [],
+    sampleTexts: [],
+    ...overrides,
+  };
 }

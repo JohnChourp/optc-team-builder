@@ -42,19 +42,30 @@ import {
 } from '../../core/services/ability-requirement-draft.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
+  createCaptainAbilityDrafts,
   getAbilityCatalogItemsByCategory,
+  getCaptainAbilityCatalogItems,
   intersectAbilityMatchingCharacterIds,
+  resolveCaptainAbilityMatchingCharacterIds,
   resolveCategoryAbilityMatchingCharacterIds,
   resolveSpecialAbilityMatchingCharacterIds,
+  serializeCaptainAbilityDrafts,
   serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
+import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
+import {
+  AbilityFilterRailComponent,
+  type AbilityFilterRailCategory,
+  type AbilityFilterRailItem,
+} from '../../shared/ability-filter-rail/ability-filter-rail.component';
 import {
   CharacterFilterRowComponent,
   type CharacterFilterCostBound,
   type CharacterFilterOption,
 } from '../../shared/character-filter-row/character-filter-row.component';
+import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import { CharacterBoxesStylePanelsComponent } from './character-boxes-style-panels.component';
 
 const PAGE_SIZE = 48;
@@ -62,6 +73,7 @@ const FILTERED_SELECT_PAGE_SIZE = 500;
 type CharacterBoxesFavoriteFilter = 'all' | 'favorites' | 'hideFavorites';
 type CharacterBoxesMembershipFilter = 'all' | 'inBox' | 'notInBox';
 type CharacterBoxesDisplayMode = 'list' | 'compact';
+type CharacterBoxesAbilityFilterCategory = AbilityFilterRailCategory;
 
 interface CharacterBoxesCostRange {
   min: number | null;
@@ -92,8 +104,11 @@ interface CharacterBoxCharacterCardView {
     IonSpinner,
     IonTitle,
     IonToolbar,
+    AbilityFilterRailComponent,
+    AbilityRequirementPickerComponent,
     CharacterFilterRowComponent,
     CharacterBoxesStylePanelsComponent,
+    SpecialAbilityPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -118,6 +133,8 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly costRange = signal<CharacterBoxesCostRange>({ min: null, max: null });
+  public readonly captainAbilityPickerOpen = signal(false);
+  public readonly captainAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly specialAbilityPickerOpen = signal(false);
   public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly crewmateAbilityPickerOpen = signal(false);
@@ -167,6 +184,9 @@ export class CharacterBoxesPage implements OnInit {
     { value: 'newest', label: this.t('idOrder.options.newest') },
     { value: 'oldest', label: this.t('idOrder.options.oldest') },
   ]);
+  public readonly availableCaptainAbilityCatalogItems = computed(() =>
+    getCaptainAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+  );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
   );
@@ -179,10 +199,22 @@ export class CharacterBoxesPage implements OnInit {
   public readonly availableSupportAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'support'),
   );
+  public readonly captainAbilityRequirements = computed(() =>
+    serializeCaptainAbilityDrafts(
+      this.captainAbilityDrafts(),
+      this.availableCaptainAbilityCatalogItems(),
+    ),
+  );
   public readonly specialAbilityRequirements = computed(() =>
     serializeSpecialAbilityDrafts(
       this.specialAbilityDrafts(),
       this.availableSpecialAbilityCatalogItems(),
+    ),
+  );
+  public readonly captainFilterCharacterIds = computed(() =>
+    resolveCaptainAbilityMatchingCharacterIds(
+      this.captainAbilityRequirements(),
+      this.availableCaptainAbilityCatalogItems(),
     ),
   );
   public readonly specialFilterCharacterIds = computed(() =>
@@ -234,10 +266,43 @@ export class CharacterBoxesPage implements OnInit {
     ),
   );
   public readonly activeAbilityRequirements = computed(() => [
+    ...this.captainAbilityRequirements(),
     ...this.specialAbilityRequirements(),
     ...this.crewmateAbilityRequirements(),
     ...this.potentialAbilityRequirements(),
     ...this.supportAbilityRequirements(),
+  ]);
+  public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => [
+    {
+      category: 'captainAbility',
+      label: this.t('filters.captainAbility.eyebrow'),
+      count: this.captainAbilityDrafts().length,
+      disabled: !this.availableCaptainAbilityCatalogItems().length,
+    },
+    {
+      category: 'special',
+      label: this.t('filters.special.eyebrow'),
+      count: this.specialAbilityDrafts().length,
+      disabled: !this.availableSpecialAbilityCatalogItems().length,
+    },
+    {
+      category: 'crewmate',
+      label: this.t('filters.crewmate.eyebrow'),
+      count: this.crewmateAbilityDrafts().length,
+      disabled: !this.availableCrewmateAbilityCatalogItems().length,
+    },
+    {
+      category: 'potential',
+      label: this.t('filters.potential.eyebrow'),
+      count: this.potentialAbilityDrafts().length,
+      disabled: !this.availablePotentialAbilityCatalogItems().length,
+    },
+    {
+      category: 'support',
+      label: this.t('filters.support.eyebrow'),
+      count: this.supportAbilityDrafts().length,
+      disabled: !this.availableSupportAbilityCatalogItems().length,
+    },
   ]);
   public readonly totalAssignedCharacters = computed(() =>
     this.boxes().reduce((count, box) => count + box.characterIds.length, 0),
@@ -578,6 +643,34 @@ export class CharacterBoxesPage implements OnInit {
     this.displayMode.set(mode);
   }
 
+  public openCaptainAbilityPicker(): void {
+    if (!this.availableCaptainAbilityCatalogItems().length) {
+      return;
+    }
+
+    this.captainAbilityPickerOpen.set(true);
+  }
+
+  public closeCaptainAbilityPicker(): void {
+    this.captainAbilityPickerOpen.set(false);
+  }
+
+  public async saveCaptainAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.captainAbilityDrafts.set(
+      createCaptainAbilityDrafts(
+        serializeCaptainAbilityDrafts(drafts, this.availableCaptainAbilityCatalogItems()),
+        this.availableCaptainAbilityCatalogItems(),
+      ),
+    );
+    this.captainAbilityPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  public async clearCaptainAbilityFilters(): Promise<void> {
+    this.captainAbilityDrafts.set([]);
+    await this.loadCharacters(true);
+  }
+
   public openSpecialAbilityPicker(): void {
     if (!this.availableSpecialAbilityCatalogItems().length) {
       return;
@@ -698,6 +791,48 @@ export class CharacterBoxesPage implements OnInit {
     await this.loadCharacters(true);
   }
 
+  public openAbilityFilterCategory(category: CharacterBoxesAbilityFilterCategory): void {
+    switch (category) {
+      case 'captainAbility':
+        this.openCaptainAbilityPicker();
+        break;
+      case 'special':
+        this.openSpecialAbilityPicker();
+        break;
+      case 'crewmate':
+        this.openCrewmateAbilityPicker();
+        break;
+      case 'potential':
+        this.openPotentialAbilityPicker();
+        break;
+      case 'support':
+        this.openSupportAbilityPicker();
+        break;
+    }
+  }
+
+  public async clearAbilityFilterCategory(
+    category: CharacterBoxesAbilityFilterCategory,
+  ): Promise<void> {
+    switch (category) {
+      case 'captainAbility':
+        await this.clearCaptainAbilityFilters();
+        break;
+      case 'special':
+        await this.clearSpecialAbilityFilters();
+        break;
+      case 'crewmate':
+        await this.clearCrewmateAbilityFilters();
+        break;
+      case 'potential':
+        await this.clearPotentialAbilityFilters();
+        break;
+      case 'support':
+        await this.clearSupportAbilityFilters();
+        break;
+    }
+  }
+
   public async toggleFavorite(characterId: number, event?: Event): Promise<void> {
     event?.preventDefault();
     event?.stopPropagation();
@@ -727,6 +862,8 @@ export class CharacterBoxesPage implements OnInit {
     this.selectedSortMode.set('catalog');
     this.selectedIdOrder.set('newest');
     this.costRange.set({ min: null, max: null });
+    this.captainAbilityPickerOpen.set(false);
+    this.captainAbilityDrafts.set([]);
     this.specialAbilityPickerOpen.set(false);
     this.specialAbilityDrafts.set([]);
     this.crewmateAbilityPickerOpen.set(false);
@@ -836,6 +973,7 @@ export class CharacterBoxesPage implements OnInit {
         : favoriteCharacterIds;
     const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
       scopedAllowedCharacterIds,
+      this.captainFilterCharacterIds(),
       this.specialFilterCharacterIds(),
       this.crewmateFilterCharacterIds(),
       this.potentialFilterCharacterIds(),
