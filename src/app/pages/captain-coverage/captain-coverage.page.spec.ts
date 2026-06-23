@@ -82,7 +82,7 @@ describe('CaptainCoveragePage', () => {
     });
     expect(page.selectedCaptainDetail()?.id).toBe(1001);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Covered Dex Fighter']);
-    expect(page.resultCards()[0]?.coverage.boosts).toEqual({
+    expect(page.resultCards()[0]?.coverage?.boosts).toEqual({
       hp: 1.3,
       atk: 5,
     });
@@ -561,6 +561,118 @@ describe('CaptainCoveragePage', () => {
     ]);
   });
 
+  it('shows all assignable characters before selecting a Captain', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Free Browse',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const firstCandidate = createCharacter({ id: 2001, name: 'First Browse Candidate' });
+    const secondCandidate = createCharacter({ id: 2002, name: 'Second Browse Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [firstCandidate, secondCandidate],
+    });
+
+    await page.ngOnInit();
+
+    expect(page.selectedCaptainDetail()).toBeNull();
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Second Browse Candidate',
+      'First Browse Candidate',
+    ]);
+    expect(page.resultCards().map((card) => card.coverage)).toEqual([null, null]);
+    expect(page.totalMatchingCharacters()).toBe(2);
+  });
+
+  it('adds a no-Captain result to the first compatible empty sub slot', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Free Assign',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const firstCandidate = createCharacter({ id: 2001, name: 'First Assign Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [firstCandidate],
+    });
+
+    await page.ngOnInit();
+    page.assignCharacterFromResult(page.resultCards()[0]!);
+
+    expect(page.selectedCaptainDetail()).toBeNull();
+    expect(page.selectedCaptain()).toBeNull();
+    expect(page.selectedTeamSlots()[1]?.id).toBe(2001);
+  });
+
+  it('filters no-Captain results by Super Tandem and Super Types/Classes presence', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Free Super Filters',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const tandemOnly = createCharacter({
+      id: 2001,
+      name: 'Tandem Only',
+      superTandemData: {
+        requirement: 'On the last stage',
+        levels: [{ level: 5, effect: 'Boosts Tandem ATK by 2.5x.' }],
+        criteria: null,
+      },
+    });
+    const superTypeOnly = createCharacter({
+      id: 2002,
+      name: 'Super Type Only',
+      superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+    });
+    const bothCapabilities = createCharacter({
+      id: 2003,
+      name: 'Both Super Capabilities',
+      superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+      superTandemData: {
+        requirement: 'On the last stage',
+        levels: [{ level: 5, effect: 'Boosts Tandem ATK by 2.5x.' }],
+        criteria: null,
+      },
+    });
+    const noSuperCapabilities = createCharacter({
+      id: 2004,
+      name: 'No Super Capabilities',
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [tandemOnly, superTypeOnly, bothCapabilities, noSuperCapabilities],
+    });
+
+    await page.ngOnInit();
+
+    page.onRequireSuperTandemPresenceChange({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Both Super Capabilities',
+      'Tandem Only',
+    ]);
+
+    page.onRequireSuperTypesClassesPresenceChange({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Both Super Capabilities',
+    ]);
+
+    page.onRequireSuperTandemPresenceChange({
+      detail: { checked: false },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Both Super Capabilities',
+      'Super Type Only',
+    ]);
+  });
+
   it('adds Required to the rail and opens or clears its picker', async () => {
     const { page } = createPage({
       abilityCatalog: createAbilityCatalog([
@@ -897,7 +1009,10 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
 
     expect(page.selectedCaptainDetail()).toBeNull();
-    expect(page.resultCards()).toEqual([]);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Early Bind Reducer',
+      'Leader Before Filters',
+    ]);
     expect(page.abilityFilterRailItems()[1]).toMatchObject({
       category: 'special',
       disabled: false,
@@ -908,7 +1023,7 @@ describe('CaptainCoveragePage', () => {
 
     page.saveSpecialAbilityPicker([createAbilityDraft('remove_bind')]);
     expect(page.specialAbilityDrafts()).toHaveLength(1);
-    expect(page.resultCards()).toEqual([]);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
 
     page.onAbilityMatchRankingChange({
       detail: { checked: true },
@@ -1259,8 +1374,9 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('[routerLink]="[\'/characters\', captain.id]"');
     expect(template).toContain('class="selected-target"');
     expect(template).toContain('class="captain-result__boosts"');
-    expect(template).toContain('HP:{{ formatBoost(card.coverage.boosts.hp) }}');
-    expect(template).toContain('ATK:{{ formatBoost(card.coverage.boosts.atk) }}');
+    expect(template).toContain('@if (card.coverage; as coverage)');
+    expect(template).toContain('HP:{{ formatBoost(coverage.boosts.hp) }}');
+    expect(template).toContain('ATK:{{ formatBoost(coverage.boosts.atk) }}');
     expect(template).toContain('card.matchedAbilityBadges.length');
     expect(template).toContain('class="captain-result__ability-badge"');
     expect(template).toContain('selectedIdOrder()');

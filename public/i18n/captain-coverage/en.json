@@ -7,20 +7,20 @@
   },
   "empty": {
     "noCaptain": {
-      "copy": "Choose a Captain in the team slot first. Results will show sub candidates covered by that Captain ability.",
+      "copy": "Browse characters first, or choose a Captain to narrow results to units covered by that Captain ability.",
       "title": "Select a Captain"
     },
     "noResults": {
-      "copy": "No covered character fits the current team slots, cost budget, search, favorites, and ability filters.",
+      "copy": "No character fits the current team slots, cost budget, search, favorites, and ability filters.",
       "title": "No matching characters"
     }
   },
   "hero": {
     "captainsCount": "{{count}} captains",
     "charactersCount": "{{count}} characters",
-    "copy": "Pick a Captain in the team slot, then filter characters down to units covered by that Captain ability across type, class, cost, universal, and self-only clauses.",
+    "copy": "Browse every character first, or pick a Captain in the team slot to narrow results to units covered by that Captain ability across type, class, cost, universal, and self-only clauses.",
     "eyebrow": "Strict captain scope",
-    "title": "Find characters covered by your Captain"
+    "title": "Browse Captain Coverage characters"
   },
   "filters": {
     "abilityRailLabel": "Ability filters",
@@ -50,7 +50,7 @@
         "all": "All characters"
       },
       "support": {
-        "all": "Use every covered character in the local dataset.",
+        "all": "Use every character in the local dataset.",
         "noBoxes": "Create a character box to limit Captain Coverage results to that box.",
         "withCount": "Limit results to {{count}} character(s) in this box.",
         "withFavorites": "{{count}} of {{total}} character(s) in this box are currently favorites."
@@ -64,26 +64,26 @@
       "from": "Cost from",
       "to": "Cost to"
     },
-    "crewmateCopy": "Filter covered character results by Crewmate Ability tags.",
+    "crewmateCopy": "Filter character results by Crewmate Ability tags.",
     "crewmateEyebrow": "Crewmate Ability",
     "crewmateTitle": "Crewmate Ability filters",
     "favoritesOnly": "Show favorites only",
     "hideFavorites": "Hide favorites",
-    "potentialCopy": "Filter covered character results by Potential Ability tags.",
+    "potentialCopy": "Filter character results by Potential Ability tags.",
     "potentialEyebrow": "Potential Ability",
     "potentialTitle": "Potential Ability filters",
-    "specialCopy": "Filter covered character results by Special tags.",
+    "specialCopy": "Filter character results by Special tags.",
     "specialEyebrow": "Special",
     "specialTitle": "Special filters",
     "superTandemPresence": {
       "toggle": "Super Tandem",
-      "support": "Show only covered characters with structured Super Tandem data."
+      "support": "Show only characters with structured Super Tandem data."
     },
     "superTypesClassesPresence": {
       "toggle": "Super Types/Classes",
-      "support": "Show only covered characters with structured Super Type or Super Class data."
+      "support": "Show only characters with structured Super Type or Super Class data."
     },
-    "supportCopy": "Filter covered character results by Support Ability tags.",
+    "supportCopy": "Filter character results by Support Ability tags.",
     "supportEyebrow": "Support Ability",
     "supportTitle": "Support Ability filters",
     "type": {
@@ -93,16 +93,16 @@
   },
   "loading": "Loading captain data...",
   "results": {
-    "eyebrow": "Covered characters",
+    "eyebrow": "Character results",
     "openCharacterDetails": "Open character details",
     "title": "Character results",
-    "titleWithCount": "{{count}} covered characters"
+    "titleWithCount": "{{count}} matching characters"
   },
   "search": {
-    "placeholder": "Search covered characters..."
+    "placeholder": "Search character results..."
   },
   "sort": {
-    "label": "Sort character coverage results",
+    "label": "Sort character results",
     "options": {
       "catalog": "Default order",
       "captainAtkBoost": "Captain ATK boost",
