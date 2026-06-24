@@ -1,0 +1,106 @@
+name: Check OPTC DB Release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 7 * * *'
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: optc-db-release-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check upstream OPTC DB character IDs
+        id: release-check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          npm run data:check-release -- --json > release-check.json
+
+          node <<'NODE'
+          const fs = require('node:fs');
+          const result = JSON.parse(fs.readFileSync('release-check.json', 'utf8'));
+          const outputs = [
+            `release_needed=${result.releaseNeeded ? 'true' : 'false'}`,
+            `new_character_count=${result.newCharacterCount}`,
+          ];
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `${outputs.join('\n')}\n`);
+
+          const newIds =
+            result.newCharacterIds.length > 0 ? result.newCharacterIds.join(', ') : 'none';
+          const summary = [
+            '## OPTC DB release check',
+            '',
+            `- Release needed: ${result.releaseNeeded ? 'yes' : 'no'}`,
+            `- Reason: ${result.reason}`,
+            `- Source: ${result.sourceRepository}`,
+            `- Source version: local ${result.localSourceVersion}, remote ${result.remoteSourceVersion}`,
+            `- Characters: local ${result.localCharacterCount}, remote ${result.remoteCharacterCount}`,
+            `- New character IDs: ${newIds}`,
+            '',
+          ];
+
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary.join('\n'));
+          NODE
+
+      - name: Check active Android release runs
+        id: active-release
+        if: steps.release-check.outputs.release_needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          active_count="$(
+            gh run list \
+              --workflow release-android.yml \
+              --limit 20 \
+              --json status \
+              --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length'
+          )"
+          echo "active_count=${active_count}" >> "${GITHUB_OUTPUT}"
+
+          if [[ "${active_count}" != "0" ]]; then
+            {
+              echo "Android release dispatch skipped because ${active_count} release run(s) are already queued or in progress."
+              echo
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Dispatch Android release
+        if: steps.release-check.outputs.release_needed == 'true' && steps.active-release.outputs.active_count == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run release-android.yml --ref main -f bump=patch
+          {
+            echo "Dispatched Release Android with bump=patch."
+            echo
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Skip release dispatch
+        if: steps.release-check.outputs.release_needed != 'true'
+        run: |
+          {
+            echo "Release dispatch skipped because no new upstream character IDs were detected."
+            echo
+          } >> "${GITHUB_STEP_SUMMARY}"
