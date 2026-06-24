@@ -20,7 +20,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1819,
+      "matchCount": 1820,
       "matchingCharacterIds": [
         1,
         2,
@@ -1033,6 +1033,7 @@
         2355,
         2356,
         2357,
+        2363,
         2364,
         2365,
         2372,
@@ -2422,7 +2423,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 369,
+      "matchCount": 370,
       "matchingCharacterIds": [
         446,
         447,
@@ -2581,6 +2582,7 @@
         2343,
         2344,
         2357,
+        2363,
         2364,
         2365,
         2372,
@@ -4752,7 +4754,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 800,
+      "matchCount": 801,
       "matchingCharacterIds": [
         263,
         305,
@@ -5023,6 +5025,7 @@
         2355,
         2356,
         2357,
+        2363,
         2373,
         2384,
         2386,
@@ -6765,7 +6768,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 141,
+      "matchCount": 142,
       "matchingCharacterIds": [
         366,
         367,
@@ -6822,6 +6825,7 @@
         2320,
         2321,
         2349,
+        2363,
         2372,
         2400,
         2401,
@@ -6966,6 +6970,7 @@
         2320,
         2321,
         2349,
+        2363,
         2372,
         2400,
         2401,
@@ -8006,7 +8011,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 922,
+      "matchCount": 931,
       "matchingCharacterIds": [
         9,
         11,
@@ -8211,6 +8216,8 @@
         1364,
         1367,
         1368,
+        1375,
+        1376,
         1377,
         1378,
         1385,
@@ -8371,6 +8378,7 @@
         2244,
         2274,
         2275,
+        2276,
         2277,
         2279,
         2280,
@@ -8537,6 +8545,8 @@
         3075,
         3091,
         3092,
+        3101,
+        3102,
         3105,
         3106,
         3107,
@@ -8580,6 +8590,8 @@
         3266,
         3273,
         3274,
+        3279,
+        3280,
         3281,
         3282,
         3283,
@@ -8824,6 +8836,7 @@
         4250,
         4252,
         4253,
+        4256,
         4257,
         4264,
         4268,
@@ -8878,6 +8891,7 @@
         4449,
         4454,
         4457,
+        4458,
         4461,
         4462,
         4469,
@@ -9036,6 +9050,8 @@
         1338,
         1363,
         1364,
+        1375,
+        1376,
         1385,
         1386,
         1399,
@@ -9118,6 +9134,7 @@
         2234,
         2243,
         2244,
+        2276,
         2277,
         2289,
         2290,
@@ -9217,6 +9234,8 @@
         3075,
         3091,
         3092,
+        3101,
+        3102,
         3105,
         3106,
         3107,
@@ -9249,6 +9268,8 @@
         3266,
         3273,
         3274,
+        3279,
+        3280,
         3285,
         3299,
         3300,
@@ -9392,6 +9413,7 @@
         4247,
         4249,
         4250,
+        4256,
         4257,
         4268,
         4274,
@@ -9426,6 +9448,7 @@
         4446,
         4449,
         4454,
+        4458,
         4461,
         4462,
         4479,
@@ -10069,6 +10092,16 @@
           "slotTokens": []
         },
         {
+          "characterId": 1375,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
+          "characterId": 1376,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
           "characterId": 1385,
           "minEffectValue": 20,
           "effectTargetScope": "crew",
@@ -10623,6 +10656,11 @@
         {
           "characterId": 2244,
           "minEffectValue": 20,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
+          "characterId": 2276,
           "effectTargetScope": "crew",
           "slotTokens": []
         },
@@ -11287,6 +11325,16 @@
           "slotTokens": []
         },
         {
+          "characterId": 3101,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
+          "characterId": 3102,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
           "characterId": 3105,
           "minEffectValue": 10,
           "effectTargetScope": "crew",
@@ -11481,6 +11529,16 @@
         {
           "characterId": 3274,
           "minEffectValue": 20,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
+          "characterId": 3279,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
+          "characterId": 3280,
           "effectTargetScope": "crew",
           "slotTokens": []
         },
@@ -12607,6 +12665,11 @@
           "slotTokens": []
         },
         {
+          "characterId": 4256,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
           "characterId": 4257,
           "minEffectValue": 20,
           "effectTargetScope": "crew",
@@ -12639,6 +12702,11 @@
         {
           "characterId": 4290,
           "minEffectValue": 25,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
+          "characterId": 4293,
           "effectTargetScope": "crew",
           "slotTokens": []
         },
@@ -12813,6 +12881,11 @@
         {
           "characterId": 4454,
           "minEffectValue": 15,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
+          "characterId": 4458,
           "effectTargetScope": "crew",
           "slotTokens": []
         },
@@ -13356,20 +13429,15 @@
       "supportsSlotTokens": true,
       "availableSlotTokens": [
         "BOMB",
-        "CELESTIAL DRAGON",
         "DEX",
-        "FIVE ELDERS",
         "INT",
-        "NAVY",
         "PSY",
         "QCK",
-        "RAINBOW",
         "RCV",
         "SEMLA",
         "STR",
         "SUPERBOMB",
-        "TND",
-        "WANO"
+        "TND"
       ],
       "availableSources": [
         "captainAbility",
@@ -13378,7 +13446,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 987,
+      "matchCount": 988,
       "matchingCharacterIds": [
         389,
         390,
@@ -13516,6 +13584,7 @@
         2345,
         2346,
         2357,
+        2363,
         2364,
         2365,
         2370,
@@ -14438,6 +14507,7 @@
         2345,
         2346,
         2357,
+        2363,
         2364,
         2365,
         2372,
@@ -15230,8 +15300,7 @@
         {
           "characterId": 910,
           "slotTokens": [
-            "INT",
-            "PSY"
+            "INT"
           ]
         },
         {
@@ -15265,15 +15334,13 @@
         {
           "characterId": 1189,
           "slotTokens": [
-            "DEX",
-            "QCK"
+            "DEX"
           ]
         },
         {
           "characterId": 1190,
           "slotTokens": [
-            "DEX",
-            "QCK"
+            "DEX"
           ]
         },
         {
@@ -15367,8 +15434,7 @@
         {
           "characterId": 1719,
           "slotTokens": [
-            "INT",
-            "PSY"
+            "INT"
           ]
         },
         {
@@ -15382,16 +15448,14 @@
           "characterId": 1793,
           "slotTokens": [
             "DEX",
-            "QCK",
-            "STR"
+            "QCK"
           ]
         },
         {
           "characterId": 1794,
           "slotTokens": [
             "DEX",
-            "QCK",
-            "STR"
+            "QCK"
           ]
         },
         {
@@ -15551,7 +15615,6 @@
         {
           "characterId": 2075,
           "slotTokens": [
-            "DEX",
             "QCK",
             "STR"
           ]
@@ -15559,7 +15622,6 @@
         {
           "characterId": 2076,
           "slotTokens": [
-            "DEX",
             "QCK",
             "RCV",
             "STR"
@@ -15568,7 +15630,6 @@
         {
           "characterId": 2076,
           "slotTokens": [
-            "DEX",
             "QCK",
             "STR"
           ]
@@ -15804,6 +15865,14 @@
           ]
         },
         {
+          "characterId": 2363,
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "DEX",
+            "INT"
+          ]
+        },
+        {
           "characterId": 2364,
           "effectTargetScope": "crew",
           "slotTokens": [
@@ -15832,12 +15901,7 @@
         {
           "characterId": 2373,
           "slotTokens": [
-            "DEX",
-            "INT",
-            "PSY",
-            "QCK",
-            "RAINBOW",
-            "STR"
+            "PSY"
           ]
         },
         {
@@ -15865,7 +15929,6 @@
           "characterId": 2399,
           "slotTokens": [
             "DEX",
-            "STR",
             "TND"
           ]
         },
@@ -16142,7 +16205,6 @@
         {
           "characterId": 2588,
           "slotTokens": [
-            "DEX",
             "QCK",
             "RCV",
             "STR"
@@ -16151,7 +16213,6 @@
         {
           "characterId": 2588,
           "slotTokens": [
-            "DEX",
             "QCK",
             "STR"
           ]
@@ -16203,8 +16264,19 @@
         {
           "characterId": 2618,
           "slotTokens": [
-            "DEX",
+            "INT"
+          ]
+        },
+        {
+          "characterId": 2618,
+          "slotTokens": [
             "INT",
+            "STR"
+          ]
+        },
+        {
+          "characterId": 2618,
+          "slotTokens": [
             "STR"
           ]
         },
@@ -16364,7 +16436,6 @@
         },
         {
           "characterId": 2775,
-          "effectTargetScope": "self",
           "slotTokens": [
             "INT",
             "QCK"
@@ -16372,7 +16443,6 @@
         },
         {
           "characterId": 2776,
-          "effectTargetScope": "self",
           "slotTokens": [
             "INT",
             "QCK"
@@ -16382,7 +16452,6 @@
           "characterId": 2793,
           "slotTokens": [
             "DEX",
-            "INT",
             "STR"
           ]
         },
@@ -16433,14 +16502,12 @@
         {
           "characterId": 2807,
           "slotTokens": [
-            "INT",
             "TND"
           ]
         },
         {
           "characterId": 2808,
           "slotTokens": [
-            "INT",
             "TND"
           ]
         },
@@ -16475,22 +16542,19 @@
         {
           "characterId": 2831,
           "slotTokens": [
-            "RCV",
-            "STR"
+            "RCV"
           ]
         },
         {
           "characterId": 2831,
           "slotTokens": [
             "RCV",
-            "STR",
             "TND"
           ]
         },
         {
           "characterId": 2831,
           "slotTokens": [
-            "STR",
             "TND"
           ]
         },
@@ -16511,22 +16575,19 @@
         {
           "characterId": 2836,
           "slotTokens": [
-            "INT",
             "PSY"
           ]
         },
         {
           "characterId": 2837,
           "slotTokens": [
-            "INT",
             "PSY"
           ]
         },
         {
           "characterId": 2845,
           "slotTokens": [
-            "DEX",
-            "INT"
+            "DEX"
           ]
         },
         {
@@ -16640,7 +16701,6 @@
         {
           "characterId": 2879,
           "slotTokens": [
-            "PSY",
             "RCV"
           ]
         },
@@ -16664,18 +16724,19 @@
             "INT",
             "PSY",
             "QCK",
-            "RCV",
-            "STR",
-            "TND"
+            "STR"
           ]
         },
         {
           "characterId": 2894,
           "slotTokens": [
-            "PSY",
-            "RCV",
-            "STR",
-            "TND"
+            "PSY"
+          ]
+        },
+        {
+          "characterId": 2894,
+          "slotTokens": [
+            "STR"
           ]
         },
         {
@@ -16685,18 +16746,19 @@
             "INT",
             "PSY",
             "QCK",
-            "RCV",
-            "STR",
-            "TND"
+            "STR"
           ]
         },
         {
           "characterId": 2895,
           "slotTokens": [
-            "PSY",
-            "RCV",
-            "STR",
-            "TND"
+            "PSY"
+          ]
+        },
+        {
+          "characterId": 2895,
+          "slotTokens": [
+            "STR"
           ]
         },
         {
@@ -16739,7 +16801,6 @@
         {
           "characterId": 2956,
           "slotTokens": [
-            "INT",
             "STR"
           ]
         },
@@ -16760,8 +16821,6 @@
         {
           "characterId": 2974,
           "slotTokens": [
-            "INT",
-            "STR",
             "TND"
           ]
         },
@@ -16784,14 +16843,12 @@
         {
           "characterId": 2987,
           "slotTokens": [
-            "DEX",
             "TND"
           ]
         },
         {
           "characterId": 2989,
           "slotTokens": [
-            "DEX",
             "STR"
           ]
         },
@@ -16807,7 +16864,19 @@
         {
           "characterId": 2999,
           "slotTokens": [
+            "INT"
+          ]
+        },
+        {
+          "characterId": 2999,
+          "slotTokens": [
             "INT",
+            "PSY"
+          ]
+        },
+        {
+          "characterId": 2999,
+          "slotTokens": [
             "PSY"
           ]
         },
@@ -16836,8 +16905,7 @@
         {
           "characterId": 3016,
           "slotTokens": [
-            "DEX",
-            "QCK"
+            "DEX"
           ]
         },
         {
@@ -16913,7 +16981,6 @@
         },
         {
           "characterId": 3079,
-          "effectTargetScope": "self",
           "slotTokens": [
             "INT",
             "PSY"
@@ -17001,8 +17068,7 @@
         {
           "characterId": 3142,
           "slotTokens": [
-            "DEX",
-            "STR"
+            "DEX"
           ]
         },
         {
@@ -17016,7 +17082,6 @@
         {
           "characterId": 3145,
           "slotTokens": [
-            "DEX",
             "RCV",
             "TND"
           ]
@@ -17024,8 +17089,7 @@
         {
           "characterId": 3152,
           "slotTokens": [
-            "DEX",
-            "STR"
+            "DEX"
           ]
         },
         {
@@ -17044,31 +17108,24 @@
         {
           "characterId": 3156,
           "slotTokens": [
-            "DEX",
             "INT",
             "PSY",
-            "QCK",
             "RCV",
-            "STR",
             "TND"
           ]
         },
         {
           "characterId": 3157,
           "slotTokens": [
-            "DEX",
             "INT",
             "PSY",
-            "QCK",
             "RCV",
-            "STR",
             "TND"
           ]
         },
         {
           "characterId": 3158,
           "slotTokens": [
-            "DEX",
             "TND"
           ]
         },
@@ -17119,15 +17176,13 @@
         {
           "characterId": 3180,
           "slotTokens": [
-            "QCK",
-            "STR"
+            "QCK"
           ]
         },
         {
           "characterId": 3181,
           "slotTokens": [
-            "QCK",
-            "STR"
+            "QCK"
           ]
         },
         {
@@ -17191,9 +17246,7 @@
           "characterId": 3208,
           "slotTokens": [
             "INT",
-            "PSY",
-            "QCK",
-            "STR"
+            "QCK"
           ]
         },
         {
@@ -17225,7 +17278,6 @@
           "characterId": 3244,
           "slotTokens": [
             "INT",
-            "PSY",
             "RCV",
             "TND"
           ]
@@ -17234,14 +17286,12 @@
           "characterId": 3245,
           "slotTokens": [
             "INT",
-            "PSY",
             "RCV",
             "TND"
           ]
         },
         {
           "characterId": 3252,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
             "QCK",
@@ -17250,7 +17300,6 @@
         },
         {
           "characterId": 3253,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
             "QCK",
@@ -17371,7 +17420,6 @@
           "characterId": 3329,
           "slotTokens": [
             "RCV",
-            "STR",
             "TND"
           ]
         },
@@ -17399,7 +17447,7 @@
         },
         {
           "characterId": 3335,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "QCK",
             "STR"
@@ -17407,7 +17455,7 @@
         },
         {
           "characterId": 3336,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "QCK",
             "STR"
@@ -17416,8 +17464,19 @@
         {
           "characterId": 3346,
           "slotTokens": [
+            "DEX"
+          ]
+        },
+        {
+          "characterId": 3346,
+          "slotTokens": [
             "DEX",
-            "QCK",
+            "STR"
+          ]
+        },
+        {
+          "characterId": 3346,
+          "slotTokens": [
             "STR"
           ]
         },
@@ -17467,7 +17526,6 @@
         },
         {
           "characterId": 3350,
-          "effectTargetScope": "self",
           "slotTokens": [
             "INT",
             "QCK"
@@ -17494,7 +17552,7 @@
         },
         {
           "characterId": 3354,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "PSY"
           ]
@@ -17508,7 +17566,7 @@
         },
         {
           "characterId": 3355,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "PSY"
           ]
@@ -17516,14 +17574,12 @@
         {
           "characterId": 3359,
           "slotTokens": [
-            "INT",
             "PSY"
           ]
         },
         {
           "characterId": 3361,
           "slotTokens": [
-            "INT",
             "RCV",
             "TND"
           ]
@@ -17571,14 +17627,14 @@
         },
         {
           "characterId": 3390,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "STR"
           ]
         },
         {
           "characterId": 3391,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "STR"
           ]
@@ -17628,8 +17684,7 @@
         {
           "characterId": 3438,
           "slotTokens": [
-            "QCK",
-            "STR"
+            "QCK"
           ]
         },
         {
@@ -17651,7 +17706,6 @@
         {
           "characterId": 3461,
           "slotTokens": [
-            "DEX",
             "QCK",
             "STR"
           ]
@@ -17659,7 +17713,6 @@
         {
           "characterId": 3462,
           "slotTokens": [
-            "DEX",
             "QCK",
             "STR"
           ]
@@ -17885,8 +17938,7 @@
         {
           "characterId": 3546,
           "slotTokens": [
-            "DEX",
-            "STR"
+            "DEX"
           ]
         },
         {
@@ -17956,7 +18008,6 @@
         },
         {
           "characterId": 3589,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "INT",
             "PSY"
@@ -17964,7 +18015,6 @@
         },
         {
           "characterId": 3590,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "INT",
             "PSY"
@@ -18275,7 +18325,6 @@
         {
           "characterId": 3681,
           "slotTokens": [
-            "INT",
             "RCV",
             "TND"
           ]
@@ -18283,7 +18332,6 @@
         {
           "characterId": 3682,
           "slotTokens": [
-            "INT",
             "RCV",
             "TND"
           ]
@@ -18324,16 +18372,13 @@
         {
           "characterId": 3698,
           "slotTokens": [
-            "INT",
-            "QCK",
             "STR"
           ]
         },
         {
           "characterId": 3699,
           "slotTokens": [
-            "INT",
-            "QCK"
+            "INT"
           ]
         },
         {
@@ -18392,7 +18437,7 @@
         },
         {
           "characterId": 3718,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "PSY",
             "RCV",
@@ -18403,14 +18448,12 @@
         {
           "characterId": 3719,
           "slotTokens": [
-            "PSY",
             "TND"
           ]
         },
         {
           "characterId": 3720,
           "slotTokens": [
-            "PSY",
             "TND"
           ]
         },
@@ -18659,9 +18702,7 @@
           "characterId": 3787,
           "slotTokens": [
             "INT",
-            "RCV",
-            "TND",
-            "WANO"
+            "TND"
           ]
         },
         {
@@ -18674,9 +18715,7 @@
           "characterId": 3788,
           "slotTokens": [
             "INT",
-            "RCV",
-            "TND",
-            "WANO"
+            "TND"
           ]
         },
         {
@@ -18793,7 +18832,6 @@
         {
           "characterId": 3816,
           "slotTokens": [
-            "QCK",
             "TND"
           ]
         },
@@ -18829,15 +18867,14 @@
         {
           "characterId": 3828,
           "slotTokens": [
+            "PSY",
             "RCV",
             "STR"
           ]
         },
         {
           "characterId": 3828,
-          "effectTargetScope": "self",
           "slotTokens": [
-            "PSY",
             "RCV",
             "STR"
           ]
@@ -18958,15 +18995,13 @@
         {
           "characterId": 3847,
           "slotTokens": [
-            "PSY",
-            "QCK"
+            "PSY"
           ]
         },
         {
           "characterId": 3848,
           "slotTokens": [
-            "PSY",
-            "QCK"
+            "PSY"
           ]
         },
         {
@@ -18987,12 +19022,12 @@
         },
         {
           "characterId": 3851,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
           "characterId": 3852,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": []
         },
         {
@@ -19029,7 +19064,6 @@
           "characterId": 3860,
           "effectTargetScope": "crew",
           "slotTokens": [
-            "INT",
             "RCV"
           ]
         },
@@ -19037,7 +19071,6 @@
           "characterId": 3861,
           "effectTargetScope": "crew",
           "slotTokens": [
-            "INT",
             "RCV"
           ]
         },
@@ -19173,9 +19206,7 @@
             "INT",
             "PSY",
             "QCK",
-            "RCV",
-            "STR",
-            "WANO"
+            "STR"
           ]
         },
         {
@@ -19192,9 +19223,7 @@
             "INT",
             "PSY",
             "QCK",
-            "RCV",
-            "STR",
-            "WANO"
+            "STR"
           ]
         },
         {
@@ -19232,34 +19261,18 @@
         {
           "characterId": 3907,
           "slotTokens": [
-            "DEX",
-            "TND"
-          ]
-        },
-        {
-          "characterId": 3907,
-          "slotTokens": [
-            "PSY",
             "TND"
           ]
         },
         {
           "characterId": 3908,
           "slotTokens": [
-            "DEX",
-            "TND"
-          ]
-        },
-        {
-          "characterId": 3908,
-          "slotTokens": [
-            "PSY",
             "TND"
           ]
         },
         {
           "characterId": 3909,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
             "PSY",
@@ -19268,7 +19281,7 @@
         },
         {
           "characterId": 3909,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
             "TND"
@@ -19276,7 +19289,7 @@
         },
         {
           "characterId": 3909,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "PSY",
             "TND"
@@ -19284,7 +19297,7 @@
         },
         {
           "characterId": 3910,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
             "PSY",
@@ -19293,7 +19306,7 @@
         },
         {
           "characterId": 3910,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
             "TND"
@@ -19301,7 +19314,7 @@
         },
         {
           "characterId": 3910,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "PSY",
             "TND"
@@ -19325,9 +19338,7 @@
           "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
-            "PSY",
-            "QCK",
-            "STR"
+            "QCK"
           ]
         },
         {
@@ -19335,9 +19346,7 @@
           "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
-            "PSY",
-            "QCK",
-            "STR"
+            "QCK"
           ]
         },
         {
@@ -19355,7 +19364,6 @@
         },
         {
           "characterId": 3920,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "STR"
           ]
@@ -19464,17 +19472,8 @@
           ]
         },
         {
-          "characterId": 3940,
-          "slotTokens": [
-            "DEX",
-            "INT",
-            "TND",
-            "WANO"
-          ]
-        },
-        {
           "characterId": 3943,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "INT",
             "STR",
@@ -19483,7 +19482,7 @@
         },
         {
           "characterId": 3944,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "INT",
             "STR",
@@ -19501,7 +19500,6 @@
           "characterId": 3947,
           "slotTokens": [
             "RCV",
-            "STR",
             "TND"
           ]
         },
@@ -19509,7 +19507,6 @@
           "characterId": 3948,
           "slotTokens": [
             "RCV",
-            "STR",
             "TND"
           ]
         },
@@ -19590,7 +19587,7 @@
         },
         {
           "characterId": 3968,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
             "TND"
@@ -19675,8 +19672,6 @@
           "characterId": 3972,
           "effectTargetScope": "crew",
           "slotTokens": [
-            "DEX",
-            "QCK",
             "RCV",
             "SEMLA"
           ]
@@ -19685,8 +19680,6 @@
           "characterId": 3973,
           "effectTargetScope": "crew",
           "slotTokens": [
-            "DEX",
-            "QCK",
             "RCV",
             "SEMLA"
           ]
@@ -19718,8 +19711,7 @@
           "characterId": 3981,
           "slotTokens": [
             "DEX",
-            "QCK",
-            "STR"
+            "QCK"
           ]
         },
         {
@@ -19759,14 +19751,12 @@
         {
           "characterId": 3992,
           "slotTokens": [
-            "PSY",
             "TND"
           ]
         },
         {
           "characterId": 3993,
           "slotTokens": [
-            "PSY",
             "TND"
           ]
         },
@@ -20053,7 +20043,7 @@
         },
         {
           "characterId": 4063,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "QCK",
             "STR"
@@ -20125,20 +20115,14 @@
         {
           "characterId": 4075,
           "slotTokens": [
-            "DEX",
             "PSY",
-            "QCK",
-            "RCV",
-            "STR"
+            "RCV"
           ]
         },
         {
           "characterId": 4076,
           "slotTokens": [
-            "DEX",
             "INT",
-            "QCK",
-            "STR",
             "TND"
           ]
         },
@@ -20160,7 +20144,6 @@
           "characterId": 4085,
           "slotTokens": [
             "INT",
-            "PSY",
             "RCV"
           ]
         },
@@ -20183,7 +20166,6 @@
         {
           "characterId": 4091,
           "slotTokens": [
-            "INT",
             "TND"
           ]
         },
@@ -20314,19 +20296,34 @@
           "characterId": 4121,
           "effectTargetScope": "crew",
           "slotTokens": [
-            "QCK"
-          ]
-        },
-        {
-          "characterId": 4121,
-          "effectTargetScope": "self",
-          "slotTokens": [
             "INT"
           ]
         },
         {
           "characterId": 4121,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "INT",
+            "QCK"
+          ]
+        },
+        {
+          "characterId": 4121,
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "QCK"
+          ]
+        },
+        {
+          "characterId": 4122,
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "INT"
+          ]
+        },
+        {
+          "characterId": 4122,
+          "effectTargetScope": "crew",
           "slotTokens": [
             "INT",
             "QCK"
@@ -20336,21 +20333,6 @@
           "characterId": 4122,
           "effectTargetScope": "crew",
           "slotTokens": [
-            "QCK"
-          ]
-        },
-        {
-          "characterId": 4122,
-          "effectTargetScope": "self",
-          "slotTokens": [
-            "INT"
-          ]
-        },
-        {
-          "characterId": 4122,
-          "effectTargetScope": "self",
-          "slotTokens": [
-            "INT",
             "QCK"
           ]
         },
@@ -20401,8 +20383,6 @@
         {
           "characterId": 4130,
           "slotTokens": [
-            "DEX",
-            "INT",
             "RCV",
             "TND"
           ]
@@ -20410,8 +20390,6 @@
         {
           "characterId": 4131,
           "slotTokens": [
-            "DEX",
-            "INT",
             "RCV",
             "TND"
           ]
@@ -20419,7 +20397,6 @@
         {
           "characterId": 4133,
           "slotTokens": [
-            "INT",
             "STR"
           ]
         },
@@ -20427,14 +20404,12 @@
           "characterId": 4134,
           "slotTokens": [
             "DEX",
-            "INT",
             "QCK"
           ]
         },
         {
           "characterId": 4135,
           "slotTokens": [
-            "INT",
             "RCV",
             "SEMLA"
           ]
@@ -20458,7 +20433,6 @@
         {
           "characterId": 4138,
           "slotTokens": [
-            "INT",
             "PSY"
           ]
         },
@@ -20479,9 +20453,14 @@
         },
         {
           "characterId": 4140,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
+            "TND"
+          ]
+        },
+        {
+          "characterId": 4140,
+          "slotTokens": [
             "INT",
             "TND"
           ]
@@ -20505,7 +20484,6 @@
         {
           "characterId": 4143,
           "slotTokens": [
-            "DEX",
             "INT",
             "TND"
           ]
@@ -20513,15 +20491,12 @@
         {
           "characterId": 4144,
           "slotTokens": [
-            "DEX",
-            "INT"
+            "DEX"
           ]
         },
         {
           "characterId": 4145,
           "slotTokens": [
-            "DEX",
-            "INT",
             "RCV"
           ]
         },
@@ -20591,14 +20566,12 @@
         {
           "characterId": 4163,
           "slotTokens": [
-            "DEX",
             "TND"
           ]
         },
         {
           "characterId": 4164,
           "slotTokens": [
-            "DEX",
             "TND"
           ]
         },
@@ -20649,14 +20622,12 @@
         {
           "characterId": 4179,
           "slotTokens": [
-            "DEX",
             "TND"
           ]
         },
         {
           "characterId": 4181,
           "slotTokens": [
-            "DEX",
             "QCK",
             "STR"
           ]
@@ -20664,7 +20635,6 @@
         {
           "characterId": 4182,
           "slotTokens": [
-            "INT",
             "TND"
           ]
         },
@@ -20672,7 +20642,6 @@
           "characterId": 4183,
           "slotTokens": [
             "BOMB",
-            "INT",
             "RCV",
             "SUPERBOMB"
           ]
@@ -20716,14 +20685,12 @@
         {
           "characterId": 4192,
           "slotTokens": [
-            "PSY",
             "RCV"
           ]
         },
         {
           "characterId": 4193,
           "slotTokens": [
-            "DEX",
             "RCV",
             "TND"
           ]
@@ -21021,7 +20988,6 @@
           "characterId": 4253,
           "slotTokens": [
             "RCV",
-            "STR",
             "TND"
           ]
         },
@@ -21051,8 +21017,6 @@
         {
           "characterId": 4262,
           "slotTokens": [
-            "DEX",
-            "INT",
             "STR"
           ]
         },
@@ -21128,7 +21092,6 @@
         {
           "characterId": 4285,
           "slotTokens": [
-            "INT",
             "PSY"
           ]
         },
@@ -21305,7 +21268,6 @@
           "characterId": 4317,
           "slotTokens": [
             "BOMB",
-            "DEX",
             "SUPERBOMB",
             "TND"
           ]
@@ -21314,7 +21276,6 @@
           "characterId": 4318,
           "slotTokens": [
             "BOMB",
-            "DEX",
             "SUPERBOMB",
             "TND"
           ]
@@ -21359,7 +21320,6 @@
         },
         {
           "characterId": 4326,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "BOMB",
             "SUPERBOMB"
@@ -21367,7 +21327,6 @@
         },
         {
           "characterId": 4327,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "BOMB",
             "SUPERBOMB"
@@ -21414,10 +21373,8 @@
           "characterId": 4336,
           "slotTokens": [
             "DEX",
-            "QCK",
             "RCV",
-            "TND",
-            "WANO"
+            "TND"
           ]
         },
         {
@@ -21465,24 +21422,6 @@
         {
           "characterId": 4348,
           "slotTokens": [
-            "DEX",
-            "PSY",
-            "RCV",
-            "TND"
-          ]
-        },
-        {
-          "characterId": 4348,
-          "slotTokens": [
-            "DEX",
-            "RCV",
-            "TND"
-          ]
-        },
-        {
-          "characterId": 4348,
-          "slotTokens": [
-            "PSY",
             "RCV",
             "TND"
           ]
@@ -21578,7 +21517,6 @@
           "characterId": 4369,
           "slotTokens": [
             "INT",
-            "PSY",
             "TND"
           ]
         },
@@ -21600,14 +21538,12 @@
         {
           "characterId": 4373,
           "slotTokens": [
-            "DEX",
             "TND"
           ]
         },
         {
           "characterId": 4374,
           "slotTokens": [
-            "DEX",
             "TND"
           ]
         },
@@ -21645,7 +21581,6 @@
         {
           "characterId": 4382,
           "slotTokens": [
-            "DEX",
             "TND"
           ]
         },
@@ -21768,7 +21703,12 @@
         {
           "characterId": 4408,
           "slotTokens": [
-            "PSY",
+            "PSY"
+          ]
+        },
+        {
+          "characterId": 4408,
+          "slotTokens": [
             "STR"
           ]
         },
@@ -21791,9 +21731,7 @@
         },
         {
           "characterId": 4417,
-          "effectTargetScope": "crew",
           "slotTokens": [
-            "DEX",
             "RCV"
           ]
         },
@@ -21839,7 +21777,6 @@
         },
         {
           "characterId": 4425,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "BOMB",
             "QCK",
@@ -21857,7 +21794,6 @@
           "characterId": 4427,
           "slotTokens": [
             "BOMB",
-            "QCK",
             "SUPERBOMB",
             "TND"
           ]
@@ -21866,7 +21802,6 @@
           "characterId": 4428,
           "slotTokens": [
             "BOMB",
-            "PSY",
             "SUPERBOMB",
             "TND"
           ]
@@ -21926,7 +21861,6 @@
           "characterId": 4436,
           "slotTokens": [
             "INT",
-            "QCK",
             "RCV",
             "TND"
           ]
@@ -21935,7 +21869,6 @@
           "characterId": 4436,
           "slotTokens": [
             "PSY",
-            "QCK",
             "RCV",
             "TND"
           ]
@@ -21964,22 +21897,16 @@
         },
         {
           "characterId": 4442,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
-            "CELESTIAL DRAGON",
-            "FIVE ELDERS",
-            "NAVY",
             "PSY",
             "RCV"
           ]
         },
         {
           "characterId": 4443,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
-            "CELESTIAL DRAGON",
-            "FIVE ELDERS",
-            "NAVY",
             "PSY",
             "RCV"
           ]
@@ -22103,7 +22030,6 @@
         {
           "characterId": 4467,
           "slotTokens": [
-            "INT",
             "RCV",
             "SEMLA",
             "TND"
@@ -22112,7 +22038,6 @@
         {
           "characterId": 4468,
           "slotTokens": [
-            "INT",
             "RCV",
             "SEMLA",
             "TND"
@@ -22159,7 +22084,7 @@
         },
         {
           "characterId": 4475,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "INT",
             "PSY"
@@ -22167,7 +22092,7 @@
         },
         {
           "characterId": 4475,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "PSY"
           ]
@@ -22190,19 +22115,15 @@
         },
         {
           "characterId": 4480,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "BOMB",
-            "STR",
             "SUPERBOMB"
           ]
         },
         {
           "characterId": 4481,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "BOMB",
-            "STR",
             "SUPERBOMB"
           ]
         },
@@ -22332,7 +22253,6 @@
         },
         {
           "characterId": 4498,
-          "effectTargetScope": "self",
           "slotTokens": [
             "BOMB",
             "RCV",
@@ -22343,10 +22263,8 @@
         },
         {
           "characterId": 4499,
-          "effectTargetScope": "crew",
           "slotTokens": [
             "BOMB",
-            "STR",
             "SUPERBOMB"
           ]
         },
@@ -22365,7 +22283,6 @@
         {
           "characterId": 4503,
           "slotTokens": [
-            "DEX",
             "QCK",
             "TND"
           ]
@@ -22411,7 +22328,7 @@
         },
         {
           "characterId": 4515,
-          "effectTargetScope": "self",
+          "effectTargetScope": "crew",
           "slotTokens": [
             "QCK",
             "RCV",
@@ -22620,12 +22537,17 @@
           ]
         },
         {
-          "characterId": 4551,
+          "characterId": 4550,
           "slotTokens": [
-            "BOMB",
             "INT",
-            "QCK",
-            "RCV"
+            "TND"
+          ]
+        },
+        {
+          "characterId": 4550,
+          "slotTokens": [
+            "STR",
+            "TND"
           ]
         },
         {
@@ -22643,6 +22565,13 @@
           "slotTokens": [
             "BOMB",
             "INT",
+            "RCV"
+          ]
+        },
+        {
+          "characterId": 4551,
+          "slotTokens": [
+            "BOMB",
             "QCK",
             "TND"
           ]
@@ -22651,14 +22580,12 @@
           "characterId": 4552,
           "slotTokens": [
             "DEX",
-            "INT",
             "RCV"
           ]
         },
         {
           "characterId": 4553,
           "slotTokens": [
-            "INT",
             "STR",
             "TND"
           ]
@@ -22849,7 +22776,6 @@
           "characterId": 4579,
           "slotTokens": [
             "INT",
-            "PSY",
             "RCV",
             "TND"
           ]
@@ -37431,7 +37357,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 996,
+      "matchCount": 997,
       "matchingCharacterIds": [
         452,
         453,
@@ -37625,6 +37551,7 @@
         2351,
         2360,
         2362,
+        2363,
         2419,
         2420,
         2421,
@@ -38547,6 +38474,7 @@
         2349,
         2351,
         2362,
+        2363,
         2419,
         2420,
         2435,

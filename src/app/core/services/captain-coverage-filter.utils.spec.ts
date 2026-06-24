@@ -497,6 +497,59 @@ describe('resolveCaptainAllTierCoverage', () => {
     ).toBe(false);
   });
 
+  it('allows duplicate types to satisfy count-alternative crew-composition conditions', () => {
+    const captain = createCharacter({
+      id: 9008,
+      captainAbilityCoverage: {
+        entries: [
+          {
+            key: 'captain',
+            label: 'Captain Ability',
+            tiers: [
+              {
+                tier: 1,
+                kind: 'conditional',
+                scope: 'crew-wide',
+                characterConditions: {
+                  universal: true,
+                  fallbackOther: false,
+                  selfOnly: false,
+                  types: [],
+                  classes: [],
+                  characterTags: [],
+                },
+                teamConditions: [
+                  {
+                    kind: 'crew-composition',
+                    types: ['STR', 'DEX'],
+                    classes: [],
+                    characterTags: [],
+                    minCount: 2,
+                    rawClause: 'crew has 2+ [STR] or [DEX] characters',
+                  },
+                ],
+                fieldConditions: [],
+                triggerConditions: [],
+                clauses: ['boosts ATK of all characters by 5x'],
+                atkBoost: 5,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const twoStrTeam = Array.from({ length: 2 }, (_, index) =>
+      createCharacter({ id: 9880 + index, type: 'STR' }),
+    );
+
+    expect(
+      resolveCaptainAllTierCoverage(
+        captain,
+        twoStrTeam.map((character) => ({ character })),
+      ).matches,
+    ).toBe(true);
+  });
+
   it('requires each listed type for rainbow crew-composition conditions', () => {
     const captain = createCharacter({
       id: 9009,

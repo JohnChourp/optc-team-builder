@@ -397,6 +397,23 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('classifies favorable slots for non-captains as sub-member scoped', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Makes [RCV] orbs beneficial for non-captains.',
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['RCV'],
+          effectTargetScope: 'subs',
+        }),
+      ]),
+    );
+  });
+
   it('extracts favorable slot tokens and scope from only the slot effect segment', () => {
     const abilities = analyzeBuilderAbilityText(
       "Makes [STR] and [QCK] orbs beneficial for all characters, recovers 0.5x this character's RCV and makes [DEX] orbs beneficial for [INT] characters.",

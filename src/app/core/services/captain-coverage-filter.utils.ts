@@ -414,7 +414,8 @@ function crewCompositionSatisfied(
     requiredClasses.length === 0 &&
     requiredTags.length === 0 &&
     condition.minCount === requiredTypes.length &&
-    condition.exactCount === undefined
+    condition.exactCount === undefined &&
+    /\bthere\s+is\s+a\b/i.test(condition.rawClause ?? '')
   ) {
     const normalizedRequiredTypes = resolveConditionTypes(requiredTypes);
 

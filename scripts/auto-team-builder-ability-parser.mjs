@@ -1081,7 +1081,7 @@ function addCaptainFavorableSlotMatches(abilities, seen, normalizedText) {
 
 function extractFavorableSlotEffectSegment(clause) {
   const match = clause.match(
-    /\bmakes?\b[^.;]{0,160}\b(?:orbs?|slots?)\b[^.;]{0,80}\b(?:beneficial|matching|favorable)\b(?:\s+(?:for|to|of)\s+[^,.;]*?(?:characters?|crew|allies|captains?|subs?|crewmates?|non-?captains?|this character|self|own)\b)?/i,
+    /\bmakes?\b[^.;]{0,160}\b(?:orbs?|slots?)\b[^.;]{0,80}\b(?:beneficial|matching|favorable)\b(?:\s+(?:for|to|of)\s+[^,.;]*?(?:all characters?|characters?|crew|allies|subs?|crewmates?|non-?captains?|captains?|this character|self|own)\b)?/i,
   );
 
   return match ? match[0] : clause;
@@ -1110,12 +1110,12 @@ function resolveCaptainEffectTargetScope(text, fallback = 'any') {
     return 'self';
   }
 
-  if (/\b(?:captains?)\b/i.test(text)) {
-    return 'captains';
-  }
-
   if (/\b(?:subs?|crewmates?|non-?captains?)\b/i.test(text)) {
     return 'subs';
+  }
+
+  if (/\b(?:captains?)\b/i.test(text)) {
+    return 'captains';
   }
 
   if (/\b(?:all characters?|crew|allies)\b/i.test(text)) {
