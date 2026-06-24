@@ -81,9 +81,9 @@ const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
 const SAME_TYPE_CREW_CONDITION_PATTERN =
   /\b(?:(?:your\s+)?crew\s+has|you\s+have)\s+\d+\s*(?:\+|or\s+more)?\s+characters?\s+(?:of|with)\s+the\s+same\s+Type\b/i;
 const BRANCH_LABEL_PATTERN =
-  /(?<!Special\s)(?<!['’]s\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)(?<!['’]s\s)\b(?:Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Gear\s+\d+(?:\s*-\s*[A-Za-z]+)?\s+Captain|Captain Swap|Captain Shift|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const CAPTAIN_BRANCH_PATTERN =
-  /(?<!Special\s)(?<!['’]s\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
+  /(?<!Special\s)(?<!['’]s\s)\b(Always Active|Standard Captain|Powered Up Captain|Rampage Captain|Gear\s+\d+(?:\s*-\s*[A-Za-z]+)?\s+Captain|Captain Swap|Captain Shift|Captain Ability|Base Captain Ability|LLB Base Captain Ability|Limit Break Level \d+ Captain Ability|LLB Level \d+ Captain Ability):/gi;
 const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set([
   'always active',
   'standard captain',

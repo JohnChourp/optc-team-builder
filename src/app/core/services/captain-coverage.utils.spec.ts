@@ -330,6 +330,23 @@ describe('resolveCaptainCoverage', () => {
     });
   });
 
+  it('uses default captain branches instead of Gear branch boost values', () => {
+    const captain = createCharacter({
+      id: 2073,
+      captainAbility:
+        'Always Active: Boosts HP of all characters by 1.25x. Gear 2 Captain: Boosts ATK of all characters by 3x. Gear 3 Captain: Boosts ATK of all characters by 3.5x after 2 consecutive PERFECTs. Gear 4 Captain: Boosts ATK of all characters by 4x.',
+    });
+    const target = createCharacter({ id: 2074, type: 'DEX', classes: ['Fighter', 'Free Spirit'] });
+
+    const coverage = resolveCaptainCoverage(captain, target);
+
+    expect(coverage.matches).toBe(true);
+    expect(coverage.boosts).toEqual({
+      hp: 1.25,
+      atk: 0,
+    });
+  });
+
   it('keeps comma-less conditional boost clauses in full coverage', () => {
     const captainAbility =
       'Boosts ATK of all characters by 3x. If you use "Yasakani no Magatama" in this turn boosts ATK of all characters by 5x instead.';
