@@ -4162,11 +4162,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       const nextResult = await this.runCurrentAutoTeamBuild(executionOptions);
 
       if (nextResult) {
-        if (guidedSlotRole) {
-          if (
-            nextResult.relaxation.usedFallback ||
-            !this.applyGuidedAutoBuildSlot(nextResult, guidedSlotRole)
-          ) {
+        if (this.guidedAutoBuildEnabled() && nextResult.relaxation.usedFallback) {
+          this.errorMessage.set(this.resolveBuildFailureMessage());
+        } else if (guidedSlotRole) {
+          if (!this.applyGuidedAutoBuildSlot(nextResult, guidedSlotRole)) {
             this.errorMessage.set(this.resolveBuildFailureMessage());
           }
         } else {

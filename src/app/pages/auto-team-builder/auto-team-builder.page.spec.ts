@@ -271,6 +271,45 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.errorMessage()).not.toBe('');
   });
 
+  it('guided auto build rejects fallback results during final locked-team validation', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const initialSlots = createManualSlots(
+      {
+        captain: [101],
+        friendCaptain: [102],
+        sub1: [103],
+        sub2: [104],
+        sub3: [105],
+        sub4: [106],
+      },
+      {
+        captain: 101,
+        friendCaptain: 102,
+        sub1: 103,
+        sub2: 104,
+        sub3: 105,
+        sub4: 106,
+      },
+    );
+    const fallbackResult = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue({
+      ...fallbackResult,
+      relaxation: {
+        ...fallbackResult.relaxation,
+        usedFallback: true,
+      },
+    });
+    await page.ngOnInit();
+    page.manualSlots.set(initialSlots);
+    page.guidedAutoBuildEnabled.set(true);
+    await page.buildTeam();
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots()).toEqual(initialSlots);
+    expect(page.errorMessage()).not.toBe('');
+  });
+
   it('guided auto build locks optional prefilled slots before advancing', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
