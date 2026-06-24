@@ -3485,11 +3485,18 @@ function buildRejectedSubCandidateExplanationMap(
       rankedPoolByCharacterId.get(selectedCandidate.character.id) ??
       createRankedSubCandidate(selectedCandidate, input, subAbilityDemandContext, leaderCriteria);
     const rejectedCandidates: AutoBuildRejectedCandidateExplanation[] = [];
+    let includedAlreadySelectedCandidate = false;
 
     for (const rejectedEntry of rankedPool) {
       const candidate = rejectedEntry.candidate;
 
       if (candidate.character.id === selectedCandidate.character.id) {
+        continue;
+      }
+
+      const isAlreadySelected = selectedCharacterIds.has(candidate.character.id);
+
+      if (isAlreadySelected && includedAlreadySelectedCandidate) {
         continue;
       }
 
@@ -3499,7 +3506,7 @@ function buildRejectedSubCandidateExplanationMap(
         selectedCandidate,
         selectedRankedEntry,
         selectedCandidates,
-        selectedCharacterIds.has(candidate.character.id),
+        isAlreadySelected,
         rankedPoolByCharacterId,
         input,
         subAbilityDemandContext,
@@ -3509,6 +3516,10 @@ function buildRejectedSubCandidateExplanationMap(
         requiredLeaderSuperEffectMatchingSlots,
         battleRequirementAssignmentMode,
       );
+
+      if (isAlreadySelected) {
+        includedAlreadySelectedCandidate = true;
+      }
 
       rejectedCandidates.push(buildRejectedCandidateExplanation(candidate, reasons));
 
@@ -3550,18 +3561,20 @@ function resolveRejectedSubCandidateReasons(
     pushRejectedCandidateReason(reasons, 'alreadySelected');
   }
 
-  pushRejectedSubConstraintReasons(
-    reasons,
-    candidate,
-    selectedCandidate,
-    selectedCandidates,
-    input,
-    leaderCriteria,
-    leaderSlots,
-    leaderPartyConflictKeySet,
-    requiredLeaderSuperEffectMatchingSlots,
-    battleRequirementAssignmentMode,
-  );
+  if (!isAlreadySelected) {
+    pushRejectedSubConstraintReasons(
+      reasons,
+      candidate,
+      selectedCandidate,
+      selectedCandidates,
+      input,
+      leaderCriteria,
+      leaderSlots,
+      leaderPartyConflictKeySet,
+      requiredLeaderSuperEffectMatchingSlots,
+      battleRequirementAssignmentMode,
+    );
+  }
 
   if (selectedEntry.rank.demandScore > rejectedEntry.rank.demandScore) {
     pushRejectedCandidateReason(reasons, 'lowerRequirementDemand');
