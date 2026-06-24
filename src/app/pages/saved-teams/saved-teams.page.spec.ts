@@ -13,6 +13,7 @@ import {
   readJsonDownloadPayload,
   restoreJsonDownloadCapture,
 } from '../../testing/download-capture';
+import { buildSavedTeamShareCode } from './saved-teams-transfer.utils';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
@@ -358,14 +359,23 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain("t('title')");
     expect(template).toContain("t('actions.openTeam')");
     expect(template).toContain('openTeamDestinationModal(teamCard.team)');
+    expect(template).toContain('openImportModal()');
     expect(template).toContain('[isOpen]="openTeamModalOpen()"');
     expect(template).toContain('(didDismiss)="resetOpenTeamModal()"');
     expect(template).toContain("t('openTeam.destinations.auto.title')");
     expect(template).toContain("t('openTeam.destinations.captainCoverage.copy')");
     expect(template).toContain("t('openTeam.destinations.manual.title')");
     expect(template).toContain("t('actions.exportSingle')");
+    expect(template).toContain("t('actions.copyShareLink')");
+    expect(template).toContain("t('actions.copyShareCode')");
+    expect(template).toContain("t('actions.copyJson')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('tools.export')");
+    expect(template).toContain("t('tools.copyJson')");
+    expect(template).toContain('copySelectedTeamsJson()');
+    expect(template).toContain('copyTeamShareLink(teamCard.team)');
+    expect(template).toContain('copyTeamShareCode(teamCard.team)');
+    expect(template).toContain('copyTeamJson(teamCard.team)');
     expect(template).toContain("t('selection.selectAll')");
     expect(template).toContain("t('edit.actions.edit')");
     expect(template).toContain('edit.teamNameLabel');
@@ -392,10 +402,11 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('filteredSavedTeamCards()');
     expect(template).toContain('toggleAbilityFilter(section.origin, ability.identity)');
     expect(template).toContain("t('abilityFilters.title')");
-    expect(template).not.toContain('openImportModal()');
     expect(template).not.toContain("t('hero.savedEnemiesCta')");
     expect(template).not.toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
     expect(template).toContain('import-dropzone');
+    expect(template).toContain('import-paste-panel');
+    expect(template).toContain('importPastedTeams()');
   });
 
   it('exports a single saved team with the shared saved-teams payload', async () => {
@@ -410,6 +421,69 @@ describe('SavedTeamsPage', () => {
       source: 'saved-teams',
       teams: [expect.objectContaining({ id: 'team-1' })],
     });
+  });
+
+  it('copies selected saved teams as JSON to the clipboard', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const { page } = createPage();
+
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    await page.ngOnInit();
+    page.selectedTeamIds.set(['team-1']);
+
+    await page.copySelectedTeamsJson();
+
+    expect(writeText).toHaveBeenCalledOnce();
+    expect(JSON.parse(writeText.mock.calls[0]?.[0] as string)).toMatchObject({
+      schemaVersion: 1,
+      source: 'saved-teams',
+      teams: [expect.objectContaining({ id: 'team-1' })],
+    });
+    expect(page.actionFeedback()).toMatchObject({ tone: 'success' });
+  });
+
+  it('copies a self-contained manual builder share link for a saved team', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const { page } = createPage();
+
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    await page.ngOnInit();
+
+    await page.copyTeamShareLink(page.savedTeams()[0]!);
+
+    const copiedUrl = writeText.mock.calls[0]?.[0] as string;
+    const parsedUrl = new URL(copiedUrl, 'http://localhost');
+
+    expect(parsedUrl.pathname).toBe('/tabs/manual-team-builder');
+    expect(parsedUrl.searchParams.get('teamShare')).toMatch(/^[A-Za-z0-9_-]+$/u);
+    expect(page.actionFeedback()).toMatchObject({ tone: 'success' });
+  });
+
+  it('imports a pasted raw saved team share code', async () => {
+    const importedTeam = {
+      id: 'team-shared',
+      name: 'Shared Team',
+      notes: 'From link',
+      shipId: 9001,
+      slots: [101, null, null, null, null, null],
+      createdAt: '2026-03-29T12:00:00.000Z',
+      updatedAt: '2026-03-29T12:00:00.000Z',
+    };
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+    page.importTextContent.set(buildSavedTeamShareCode(importedTeam, '2026-03-29T12:00:00.000Z'));
+
+    await page.importPastedTeams();
+
+    expect(userState.mergeImportedTeams).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: 'team-shared',
+        shipId: 9001,
+        slots: [101, null, null, null, null, null],
+      }),
+    ]);
+    expect(page.importFeedback()).toMatchObject({ tone: 'success' });
   });
 
   it('resets page-local selection and edit modal state without touching saved teams', async () => {

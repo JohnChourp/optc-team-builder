@@ -1,5 +1,8 @@
 {
   "actions": {
+    "copyJson": "Copy JSON",
+    "copyShareCode": "Copy code",
+    "copyShareLink": "Share",
     "exportSingle": "Export",
     "openBuilder": "Open in team builder",
     "openTeam": "Open team"
@@ -89,10 +92,17 @@
       "generic": "The selected file could not be imported.",
       "invalidJson": "The selected file is not valid JSON.",
       "invalidPayload": "The JSON does not match the expected saved teams schema.",
+      "invalidShareCode": "The shared team link or code is invalid.",
       "unsupportedSchema": "The selected JSON is not supported by the current saved teams import schema."
     },
     "eyebrow": "Team transfer",
     "loadedFromFile": "Loaded {{fileName}}.",
+    "paste": {
+      "action": "Import pasted team",
+      "label": "Paste a saved team JSON, share link, or share code",
+      "placeholder": "Paste saved-teams JSON, a /tabs/manual-team-builder?teamShare=... link, or the raw share code."
+    },
+    "pastedSource": "pasted content",
     "processing": "Importing teams...",
     "stats": {
       "added": "Added {{count}} new teams.",
@@ -136,6 +146,17 @@
     "noShipLabel": "No ship",
     "thumbnailAlt": "Ship thumbnail for {{name}}"
   },
+  "share": {
+    "copiedCode": "Copied share code for \"{{name}}\".",
+    "copiedJson": "Copied JSON export for \"{{name}}\".",
+    "copiedLink": "Copied share link for \"{{name}}\".",
+    "copiedSelectedJson": "Copied JSON export for {{count}} selected teams.",
+    "errorTitle": "Copy failed",
+    "errors": {
+      "clipboard": "Clipboard access is unavailable. Try the download action instead."
+    },
+    "successTitle": "Copied"
+  },
   "selection": {
     "selectAll": "Select all",
     "selectAllAria": "Select all saved teams",
@@ -143,6 +164,7 @@
     "teamAria": "Select team {{name}}"
   },
   "tools": {
+    "copyJson": "Copy selected JSON",
     "delete": "Delete selected",
     "export": "Export selected",
     "import": "Import teams"

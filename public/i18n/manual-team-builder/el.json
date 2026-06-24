@@ -111,6 +111,9 @@
     "savingLabel": "Αποθήκευση...",
     "success": "Το manual team αποθηκεύτηκε."
   },
+  "shareImport": {
+    "error": "Το shared team link ή code δεν μπόρεσε να φορτωθεί."
+  },
   "ship": {
     "actions": {
       "change": "Επιλογή ship",

@@ -17,510 +17,603 @@
           <p class="section-copy">{{ t('hero.copy') }}</p>
         </section>
 
-      @if (loading()) {
-        <section class="glass-card loading-card">
-          <ion-spinner name="crescent"></ion-spinner>
-          <span>{{ t('loading') }}</span>
-        </section>
-      }
+        @if (loading()) {
+          <section class="glass-card loading-card">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>{{ t('loading') }}</span>
+          </section>
+        }
 
-      @if (!loading() && !savedTeams().length) {
-        <section class="glass-card empty-card">
-          <h2>{{ t('title') }}</h2>
-          <p>{{ t('empty') }}</p>
-        </section>
-      }
+        @if (!loading() && !savedTeams().length) {
+          <section class="glass-card empty-card">
+            <h2>{{ t('title') }}</h2>
+            <p>{{ t('empty') }}</p>
+            <ion-button fill="outline" color="warning" (click)="openImportModal()">
+              <ion-icon slot="start" [icon]="uploadIcon"></ion-icon>
+              {{ t('tools.import') }}
+            </ion-button>
+          </section>
+        }
 
-      @if (!loading() && savedTeamCards().length) {
-        <section class="glass-card section-card">
-          <div class="section-head">
-            <div>
-              <h2>{{ t('title') }}</h2>
-              <span>{{ savedTeamTotalLabel() }}</span>
-            </div>
-          </div>
-          @if (hasAbilityFiltersAvailable()) {
-            <div class="saved-teams-ability-filter-panel">
-              <div class="saved-teams-ability-filter-panel__head">
-                <div>
-                  <span>{{ t('abilityFilters.eyebrow') }}</span>
-                  <h3>{{ t('abilityFilters.title') }}</h3>
-                  <p>{{ t('abilityFilters.copy') }}</p>
-                </div>
-                <ion-button
-                  fill="clear"
-                  color="light"
-                  [disabled]="!hasAbilityFilters()"
-                  (click)="clearAllAbilityFilters()"
-                >
-                  {{ t('abilityFilters.clearAll') }}
-                </ion-button>
+        @if (!loading() && savedTeamCards().length) {
+          <section class="glass-card section-card">
+            <div class="section-head">
+              <div>
+                <h2>{{ t('title') }}</h2>
+                <span>{{ savedTeamTotalLabel() }}</span>
               </div>
-
-              <div class="saved-teams-ability-filter-panel__sections">
-                @for (section of abilityFilterSections(); track section.origin) {
-                  <section class="saved-team-ability-section">
-                    <div class="saved-team-ability-section__head">
-                      <div>
-                        <h4>{{ section.title }}</h4>
-                        <p>{{ section.copy }}</p>
-                      </div>
-                      <div class="saved-team-ability-section__meta">
-                        <strong>{{ section.selectedCount }}</strong>
-                        <span>{{ t('abilityFilters.selected') }}</span>
-                        @if (section.hasSelection) {
-                          <button type="button" (click)="clearAbilityFilterSection(section.origin)">
-                            {{ t('abilityFilters.clearSection') }}
-                          </button>
-                        }
-                      </div>
-                    </div>
-
-                    <div class="saved-team-ability-categories">
-                      @for (category of section.categories; track category.category) {
-                        @if (category.abilities.length) {
-                          <div class="saved-team-ability-category">
-                            <div class="saved-team-ability-category__label">
-                              <span>{{ category.label }}</span>
-                              <strong>{{ category.abilityCount }}</strong>
-                            </div>
-                            <div class="saved-team-ability-chip-row">
-                              @for (ability of category.abilities; track ability.identity) {
-                                <button
-                                  type="button"
-                                  class="saved-team-ability-chip"
-                                  [class.saved-team-ability-chip--selected]="ability.selected"
-                                  [attr.aria-pressed]="ability.selected"
-                                  (click)="toggleAbilityFilter(section.origin, ability.identity)"
-                                >
-                                  <span>{{ ability.label }}</span>
-                                  @if (ability.metadataLabel) {
-                                    <small>{{ ability.metadataLabel }}</small>
-                                  }
-                                  <strong>{{
-                                    t('abilityFilters.teamCount', { count: ability.teamCount })
-                                  }}</strong>
-                                </button>
-                              }
-                            </div>
-                          </div>
-                        }
-                      }
-                    </div>
-                  </section>
-                }
-              </div>
-            </div>
-          }
-          <div class="saved-teams-tools">
-            <div class="saved-teams-selection">
-              <label class="saved-teams-select-all">
-                <ion-checkbox
-                  [checked]="allSelected()"
-                  [attr.aria-label]="t('selection.selectAllAria')"
-                  (ionChange)="onSelectAllChange($event)"
-                ></ion-checkbox>
-                <span>{{ t('selection.selectAll') }}</span>
-              </label>
-              <span class="saved-teams-selection-count">{{
-                t('selection.selected', { count: selectedCount() })
-              }}</span>
-            </div>
-            <div class="saved-teams-tool-actions">
-              <ion-button fill="outline" color="light" (click)="resetPage()">
-                {{ 'common.actions.reset' | transloco }}
-              </ion-button>
-              <ion-button
-                fill="outline"
-                color="light"
-                [disabled]="!hasSelection()"
-                (click)="exportSelectedTeams()"
-              >
-                {{ t('tools.export') }}
-              </ion-button>
-              <ion-button
-                fill="outline"
-                color="danger"
-                [disabled]="!hasSelection()"
-                (click)="confirmAndDeleteSelectedTeams()"
-              >
-                {{ t('tools.delete') }}
+              <ion-button fill="outline" color="warning" (click)="openImportModal()">
+                <ion-icon slot="start" [icon]="uploadIcon"></ion-icon>
+                {{ t('tools.import') }}
               </ion-button>
             </div>
-          </div>
-          @if (hasAbilityFilters() && !filteredSavedTeamCards().length) {
-            <div class="saved-teams-filter-empty">
-              <strong>{{ t('abilityFilters.empty.title') }}</strong>
-              <span>{{ t('abilityFilters.empty.copy') }}</span>
-            </div>
-          }
-          <div class="saved-team-list">
-            @for (teamCard of filteredSavedTeamCards(); track teamCard.team.id) {
-              <article
-                class="captain-condition-panel"
-                [class.captain-condition-panel--full]="teamCard.conditionStatus.state === 'full'"
-                [class.captain-condition-panel--partial]="
-                  teamCard.conditionStatus.state === 'partial'
-                "
-                [class.captain-condition-panel--none]="teamCard.conditionStatus.state === 'none'"
-              >
-                <div class="saved-team-head">
-                  <label class="saved-team-check">
-                    <ion-checkbox
-                      [checked]="isSelected(teamCard.team.id)"
-                      [attr.aria-label]="t('selection.teamAria', { name: teamCard.team.name })"
-                      (ionChange)="onTeamSelectionChange(teamCard.team.id, $event)"
-                    ></ion-checkbox>
-                  </label>
-                  <div class="saved-team-copy">
-                    <strong>{{ teamCard.team.name }}</strong>
-                    <p>{{ teamCard.team.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
+            @if (hasAbilityFiltersAvailable()) {
+              <div class="saved-teams-ability-filter-panel">
+                <div class="saved-teams-ability-filter-panel__head">
+                  <div>
+                    <span>{{ t('abilityFilters.eyebrow') }}</span>
+                    <h3>{{ t('abilityFilters.title') }}</h3>
+                    <p>{{ t('abilityFilters.copy') }}</p>
                   </div>
-                  <div class="saved-team-actions">
-                    <ion-button
-                      fill="outline"
-                      color="warning"
-                      (click)="openTeamDestinationModal(teamCard.team)"
-                    >
-                      {{ t('actions.openTeam') }}
-                    </ion-button>
-                    <ion-button fill="clear" color="light" (click)="exportTeam(teamCard.team)">
-                      {{ t('actions.exportSingle') }}
-                    </ion-button>
-                    <ion-button fill="clear" color="warning" (click)="openEditModal(teamCard.team)">
-                      {{ t('edit.actions.edit') }}
-                    </ion-button>
-                    <ion-button
-                      fill="clear"
-                      color="danger"
-                      (click)="confirmAndDeleteTeam(teamCard.team.id)"
-                    >
-                      {{ 'common.actions.delete' | transloco }}
-                    </ion-button>
-                  </div>
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    [disabled]="!hasAbilityFilters()"
+                    (click)="clearAllAbilityFilters()"
+                  >
+                    {{ t('abilityFilters.clearAll') }}
+                  </ion-button>
                 </div>
-                <div class="saved-team-preview" [attr.aria-label]="t('preview.ariaLabel')">
-                  <div class="saved-team-ship">
-                    <span class="saved-team-ship__label">{{ t('ship.label') }}</span>
-                    <div class="saved-team-ship__content">
-                      <span
-                        class="saved-team-ship__thumb"
-                        [class.saved-team-ship__thumb--fallback]="!teamCard.hasShipThumbnail"
-                      >
-                        @if (teamCard.shipThumbUrl) {
-                          <img
-                            [src]="teamCard.shipThumbUrl"
-                            [alt]="t('ship.thumbnailAlt', { name: teamCard.shipDisplayName })"
-                            loading="lazy"
-                          />
-                        } @else {
-                          <ion-icon [icon]="shipIcon" aria-hidden="true"></ion-icon>
+
+                <div class="saved-teams-ability-filter-panel__sections">
+                  @for (section of abilityFilterSections(); track section.origin) {
+                    <section class="saved-team-ability-section">
+                      <div class="saved-team-ability-section__head">
+                        <div>
+                          <h4>{{ section.title }}</h4>
+                          <p>{{ section.copy }}</p>
+                        </div>
+                        <div class="saved-team-ability-section__meta">
+                          <strong>{{ section.selectedCount }}</strong>
+                          <span>{{ t('abilityFilters.selected') }}</span>
+                          @if (section.hasSelection) {
+                            <button
+                              type="button"
+                              (click)="clearAbilityFilterSection(section.origin)"
+                            >
+                              {{ t('abilityFilters.clearSection') }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="saved-team-ability-categories">
+                        @for (category of section.categories; track category.category) {
+                          @if (category.abilities.length) {
+                            <div class="saved-team-ability-category">
+                              <div class="saved-team-ability-category__label">
+                                <span>{{ category.label }}</span>
+                                <strong>{{ category.abilityCount }}</strong>
+                              </div>
+                              <div class="saved-team-ability-chip-row">
+                                @for (ability of category.abilities; track ability.identity) {
+                                  <button
+                                    type="button"
+                                    class="saved-team-ability-chip"
+                                    [class.saved-team-ability-chip--selected]="ability.selected"
+                                    [attr.aria-pressed]="ability.selected"
+                                    (click)="toggleAbilityFilter(section.origin, ability.identity)"
+                                  >
+                                    <span>{{ ability.label }}</span>
+                                    @if (ability.metadataLabel) {
+                                      <small>{{ ability.metadataLabel }}</small>
+                                    }
+                                    <strong>{{
+                                      t('abilityFilters.teamCount', { count: ability.teamCount })
+                                    }}</strong>
+                                  </button>
+                                }
+                              </div>
+                            </div>
+                          }
                         }
-                      </span>
-                      <span class="saved-team-ship__name">{{ teamCard.shipDisplayName }}</span>
-                    </div>
-                  </div>
-                  @for (slot of teamCard.slots; track index; let index = $index) {
-                    @if (slot; as currentSlot) {
-                      <a
-                        class="saved-team-slot saved-team-slot--filled"
-                        [routerLink]="getCharacterDetailLink(currentSlot)"
-                        [attr.aria-label]="
-                          t('preview.viewDetailsAria', { name: currentSlot.name, slot: index + 1 })
-                        "
-                      >
-                        <img [src]="currentSlot.imageUrl" [alt]="currentSlot.name" loading="lazy" />
-                      </a>
-                    } @else {
-                      <span
-                        class="saved-team-slot"
-                        [attr.aria-label]="t('preview.emptySlotAria', { slot: index + 1 })"
-                      >
-                        <img
-                          src="assets/placeholders/character-card.svg"
-                          [alt]="t('preview.emptySlotAlt')"
-                          loading="lazy"
-                        />
-                      </span>
-                    }
+                      </div>
+                    </section>
                   }
                 </div>
-                <app-captain-team-condition-status
-                  [status]="teamCard.conditionStatus"
-                  [compact]="true"
-                ></app-captain-team-condition-status>
-                <app-team-coverage-summary
-                  [captain]="teamCard.slots[0]"
-                  [friendCaptain]="teamCard.slots[1]"
-                  [members]="teamCard.slots"
-                ></app-team-coverage-summary>
-              </article>
+              </div>
             }
-          </div>
-        </section>
-      }
-    </div>
-
-    <ion-modal
-      #openTeamModal
-      [isOpen]="openTeamModalOpen()"
-      cssClass="saved-teams-open-modal"
-      (didDismiss)="resetOpenTeamModal()"
-    >
-      <ng-template>
-        <div class="open-team-modal-shell">
-          <div class="import-modal-head">
-            <div>
-              <div class="section-label">{{ t('openTeam.eyebrow') }}</div>
-              <h2>{{ t('openTeam.title') }}</h2>
-              @if (openingTeam(); as team) {
-                <p>{{ t('openTeam.copy', { name: team.name }) }}</p>
-              }
-            </div>
-
-            <ion-button
-              fill="clear"
-              color="light"
-              (click)="resetOpenTeamModal(); openTeamModal.dismiss(null, 'cancel')"
-            >
-              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
-            </ion-button>
-          </div>
-
-          @if (openingTeam(); as team) {
-            <div class="open-team-destinations">
-              <ion-button
-                class="open-team-destination"
-                fill="outline"
-                color="warning"
-                [routerLink]="['/tabs/auto-team-builder']"
-                [queryParams]="getTeamBuilderQueryParams(team)"
-                (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
-              >
-                <ion-icon slot="start" [icon]="autoBuilderIcon"></ion-icon>
-                <span>
-                  <strong>{{ t('openTeam.destinations.auto.title') }}</strong>
-                  <small>{{ t('openTeam.destinations.auto.copy') }}</small>
-                </span>
-              </ion-button>
-
-              <ion-button
-                class="open-team-destination"
-                fill="outline"
-                color="warning"
-                [routerLink]="['/tabs/captain-coverage']"
-                [queryParams]="getTeamBuilderQueryParams(team)"
-                (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
-              >
-                <ion-icon slot="start" [icon]="captainCoverageIcon"></ion-icon>
-                <span>
-                  <strong>{{ t('openTeam.destinations.captainCoverage.title') }}</strong>
-                  <small>{{ t('openTeam.destinations.captainCoverage.copy') }}</small>
-                </span>
-              </ion-button>
-
-              <ion-button
-                class="open-team-destination"
-                fill="outline"
-                color="warning"
-                [routerLink]="['/tabs/manual-team-builder']"
-                [queryParams]="getTeamBuilderQueryParams(team)"
-                (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
-              >
-                <ion-icon slot="start" [icon]="manualBuilderIcon"></ion-icon>
-                <span>
-                  <strong>{{ t('openTeam.destinations.manual.title') }}</strong>
-                  <small>{{ t('openTeam.destinations.manual.copy') }}</small>
-                </span>
-              </ion-button>
-            </div>
-          }
-
-          <div class="import-modal-actions">
-            <ion-button
-              fill="clear"
-              color="light"
-              (click)="resetOpenTeamModal(); openTeamModal.dismiss(null, 'cancel')"
-            >
-              {{ 'common.actions.cancel' | transloco }}
-            </ion-button>
-          </div>
-        </div>
-      </ng-template>
-    </ion-modal>
-
-    <ion-modal
-      #savedTeamEditModal
-      [isOpen]="editModalOpen()"
-      cssClass="saved-teams-edit-modal"
-      (didDismiss)="closeEditModal()"
-    >
-      <ng-template>
-        <ion-header class="edit-modal-header ion-no-border">
-          <ion-toolbar>
-            <div class="import-modal-head">
-              <div>
-                <div class="section-label">{{ t('edit.eyebrow') }}</div>
-                <h2>{{ t('edit.title') }}</h2>
-                <p>{{ t('edit.copy') }}</p>
+            <div class="saved-teams-tools">
+              <div class="saved-teams-selection">
+                <label class="saved-teams-select-all">
+                  <ion-checkbox
+                    [checked]="allSelected()"
+                    [attr.aria-label]="t('selection.selectAllAria')"
+                    (ionChange)="onSelectAllChange($event)"
+                  ></ion-checkbox>
+                  <span>{{ t('selection.selectAll') }}</span>
+                </label>
+                <span class="saved-teams-selection-count">{{
+                  t('selection.selected', { count: selectedCount() })
+                }}</span>
+              </div>
+              <div class="saved-teams-tool-actions">
+                <ion-button fill="outline" color="light" (click)="resetPage()">
+                  {{ 'common.actions.reset' | transloco }}
+                </ion-button>
+                <ion-button fill="outline" color="warning" (click)="openImportModal()">
+                  <ion-icon slot="start" [icon]="uploadIcon"></ion-icon>
+                  {{ t('tools.import') }}
+                </ion-button>
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  [disabled]="!hasSelection()"
+                  (click)="copySelectedTeamsJson()"
+                >
+                  <ion-icon slot="start" [icon]="copyIcon"></ion-icon>
+                  {{ t('tools.copyJson') }}
+                </ion-button>
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  [disabled]="!hasSelection()"
+                  (click)="exportSelectedTeams()"
+                >
+                  {{ t('tools.export') }}
+                </ion-button>
+                <ion-button
+                  fill="outline"
+                  color="danger"
+                  [disabled]="!hasSelection()"
+                  (click)="confirmAndDeleteSelectedTeams()"
+                >
+                  {{ t('tools.delete') }}
+                </ion-button>
               </div>
             </div>
+            @if (actionFeedback(); as feedback) {
+              <div
+                class="import-feedback"
+                [class.import-feedback--success]="feedback.tone === 'success'"
+                [class.import-feedback--warning]="feedback.tone === 'warning'"
+                [class.import-feedback--error]="feedback.tone === 'error'"
+              >
+                <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
+                <div>
+                  <strong>{{ feedback.title }}</strong>
+                  @for (detail of feedback.details; track $index) {
+                    <span>{{ detail }}</span>
+                  }
+                </div>
+              </div>
+            }
+            @if (hasAbilityFilters() && !filteredSavedTeamCards().length) {
+              <div class="saved-teams-filter-empty">
+                <strong>{{ t('abilityFilters.empty.title') }}</strong>
+                <span>{{ t('abilityFilters.empty.copy') }}</span>
+              </div>
+            }
+            <div class="saved-team-list">
+              @for (teamCard of filteredSavedTeamCards(); track teamCard.team.id) {
+                <article
+                  class="captain-condition-panel"
+                  [class.captain-condition-panel--full]="teamCard.conditionStatus.state === 'full'"
+                  [class.captain-condition-panel--partial]="
+                    teamCard.conditionStatus.state === 'partial'
+                  "
+                  [class.captain-condition-panel--none]="teamCard.conditionStatus.state === 'none'"
+                >
+                  <div class="saved-team-head">
+                    <label class="saved-team-check">
+                      <ion-checkbox
+                        [checked]="isSelected(teamCard.team.id)"
+                        [attr.aria-label]="t('selection.teamAria', { name: teamCard.team.name })"
+                        (ionChange)="onTeamSelectionChange(teamCard.team.id, $event)"
+                      ></ion-checkbox>
+                    </label>
+                    <div class="saved-team-copy">
+                      <strong>{{ teamCard.team.name }}</strong>
+                      <p>{{ teamCard.team.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
+                    </div>
+                    <div class="saved-team-actions">
+                      <ion-button
+                        fill="outline"
+                        color="warning"
+                        (click)="openTeamDestinationModal(teamCard.team)"
+                      >
+                        {{ t('actions.openTeam') }}
+                      </ion-button>
+                      <ion-button
+                        fill="clear"
+                        color="warning"
+                        (click)="copyTeamShareLink(teamCard.team)"
+                      >
+                        <ion-icon slot="start" [icon]="shareIcon"></ion-icon>
+                        {{ t('actions.copyShareLink') }}
+                      </ion-button>
+                      <ion-button
+                        fill="clear"
+                        color="light"
+                        (click)="copyTeamShareCode(teamCard.team)"
+                      >
+                        <ion-icon slot="start" [icon]="linkIcon"></ion-icon>
+                        {{ t('actions.copyShareCode') }}
+                      </ion-button>
+                      <ion-button fill="clear" color="light" (click)="copyTeamJson(teamCard.team)">
+                        <ion-icon slot="start" [icon]="copyIcon"></ion-icon>
+                        {{ t('actions.copyJson') }}
+                      </ion-button>
+                      <ion-button fill="clear" color="light" (click)="exportTeam(teamCard.team)">
+                        <ion-icon slot="start" [icon]="downloadIcon"></ion-icon>
+                        {{ t('actions.exportSingle') }}
+                      </ion-button>
+                      <ion-button
+                        fill="clear"
+                        color="warning"
+                        (click)="openEditModal(teamCard.team)"
+                      >
+                        {{ t('edit.actions.edit') }}
+                      </ion-button>
+                      <ion-button
+                        fill="clear"
+                        color="danger"
+                        (click)="confirmAndDeleteTeam(teamCard.team.id)"
+                      >
+                        {{ 'common.actions.delete' | transloco }}
+                      </ion-button>
+                    </div>
+                  </div>
+                  <div class="saved-team-preview" [attr.aria-label]="t('preview.ariaLabel')">
+                    <div class="saved-team-ship">
+                      <span class="saved-team-ship__label">{{ t('ship.label') }}</span>
+                      <div class="saved-team-ship__content">
+                        <span
+                          class="saved-team-ship__thumb"
+                          [class.saved-team-ship__thumb--fallback]="!teamCard.hasShipThumbnail"
+                        >
+                          @if (teamCard.shipThumbUrl) {
+                            <img
+                              [src]="teamCard.shipThumbUrl"
+                              [alt]="t('ship.thumbnailAlt', { name: teamCard.shipDisplayName })"
+                              loading="lazy"
+                            />
+                          } @else {
+                            <ion-icon [icon]="shipIcon" aria-hidden="true"></ion-icon>
+                          }
+                        </span>
+                        <span class="saved-team-ship__name">{{ teamCard.shipDisplayName }}</span>
+                      </div>
+                    </div>
+                    @for (slot of teamCard.slots; track index; let index = $index) {
+                      @if (slot; as currentSlot) {
+                        <a
+                          class="saved-team-slot saved-team-slot--filled"
+                          [routerLink]="getCharacterDetailLink(currentSlot)"
+                          [attr.aria-label]="
+                            t('preview.viewDetailsAria', {
+                              name: currentSlot.name,
+                              slot: index + 1,
+                            })
+                          "
+                        >
+                          <img
+                            [src]="currentSlot.imageUrl"
+                            [alt]="currentSlot.name"
+                            loading="lazy"
+                          />
+                        </a>
+                      } @else {
+                        <span
+                          class="saved-team-slot"
+                          [attr.aria-label]="t('preview.emptySlotAria', { slot: index + 1 })"
+                        >
+                          <img
+                            src="assets/placeholders/character-card.svg"
+                            [alt]="t('preview.emptySlotAlt')"
+                            loading="lazy"
+                          />
+                        </span>
+                      }
+                    }
+                  </div>
+                  <app-captain-team-condition-status
+                    [status]="teamCard.conditionStatus"
+                    [compact]="true"
+                  ></app-captain-team-condition-status>
+                  <app-team-coverage-summary
+                    [captain]="teamCard.slots[0]"
+                    [friendCaptain]="teamCard.slots[1]"
+                    [members]="teamCard.slots"
+                  ></app-team-coverage-summary>
+                </article>
+              }
+            </div>
+          </section>
+        }
+      </div>
 
-            <ion-buttons slot="end">
+      <ion-modal
+        #openTeamModal
+        [isOpen]="openTeamModalOpen()"
+        cssClass="saved-teams-open-modal"
+        (didDismiss)="resetOpenTeamModal()"
+      >
+        <ng-template>
+          <div class="open-team-modal-shell">
+            <div class="import-modal-head">
+              <div>
+                <div class="section-label">{{ t('openTeam.eyebrow') }}</div>
+                <h2>{{ t('openTeam.title') }}</h2>
+                @if (openingTeam(); as team) {
+                  <p>{{ t('openTeam.copy', { name: team.name }) }}</p>
+                }
+              </div>
+
               <ion-button
                 fill="clear"
                 color="light"
-                (click)="closeEditModal(); savedTeamEditModal.dismiss(null, 'cancel')"
+                (click)="resetOpenTeamModal(); openTeamModal.dismiss(null, 'cancel')"
               >
                 <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
               </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
+            </div>
 
-        <ion-content class="edit-modal-content">
-          <div class="edit-modal-shell">
-            <ion-input
-              [label]="t('edit.teamNameLabel')"
-              labelPlacement="stacked"
-              fill="outline"
-              [value]="editTeamName()"
-              [disabled]="savingEdit()"
-              (ionInput)="onEditTeamNameChange($event)"
-            ></ion-input>
+            @if (openingTeam(); as team) {
+              <div class="open-team-destinations">
+                <ion-button
+                  class="open-team-destination"
+                  fill="outline"
+                  color="warning"
+                  [routerLink]="['/tabs/auto-team-builder']"
+                  [queryParams]="getTeamBuilderQueryParams(team)"
+                  (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
+                >
+                  <ion-icon slot="start" [icon]="autoBuilderIcon"></ion-icon>
+                  <span>
+                    <strong>{{ t('openTeam.destinations.auto.title') }}</strong>
+                    <small>{{ t('openTeam.destinations.auto.copy') }}</small>
+                  </span>
+                </ion-button>
 
-            <ion-textarea
-              [label]="t('edit.notesLabel')"
-              labelPlacement="stacked"
-              fill="outline"
-              autoGrow="true"
-              [value]="editNotes()"
-              [disabled]="savingEdit()"
-              (ionInput)="onEditNotesChange($event)"
-            ></ion-textarea>
+                <ion-button
+                  class="open-team-destination"
+                  fill="outline"
+                  color="warning"
+                  [routerLink]="['/tabs/captain-coverage']"
+                  [queryParams]="getTeamBuilderQueryParams(team)"
+                  (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
+                >
+                  <ion-icon slot="start" [icon]="captainCoverageIcon"></ion-icon>
+                  <span>
+                    <strong>{{ t('openTeam.destinations.captainCoverage.title') }}</strong>
+                    <small>{{ t('openTeam.destinations.captainCoverage.copy') }}</small>
+                  </span>
+                </ion-button>
+
+                <ion-button
+                  class="open-team-destination"
+                  fill="outline"
+                  color="warning"
+                  [routerLink]="['/tabs/manual-team-builder']"
+                  [queryParams]="getTeamBuilderQueryParams(team)"
+                  (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
+                >
+                  <ion-icon slot="start" [icon]="manualBuilderIcon"></ion-icon>
+                  <span>
+                    <strong>{{ t('openTeam.destinations.manual.title') }}</strong>
+                    <small>{{ t('openTeam.destinations.manual.copy') }}</small>
+                  </span>
+                </ion-button>
+              </div>
+            }
+
+            <div class="import-modal-actions">
+              <ion-button
+                fill="clear"
+                color="light"
+                (click)="resetOpenTeamModal(); openTeamModal.dismiss(null, 'cancel')"
+              >
+                {{ 'common.actions.cancel' | transloco }}
+              </ion-button>
+            </div>
           </div>
-        </ion-content>
+        </ng-template>
+      </ion-modal>
 
-        <ion-footer class="edit-modal-footer">
-          <ion-toolbar>
+      <ion-modal
+        #savedTeamEditModal
+        [isOpen]="editModalOpen()"
+        cssClass="saved-teams-edit-modal"
+        (didDismiss)="closeEditModal()"
+      >
+        <ng-template>
+          <ion-header class="edit-modal-header ion-no-border">
+            <ion-toolbar>
+              <div class="import-modal-head">
+                <div>
+                  <div class="section-label">{{ t('edit.eyebrow') }}</div>
+                  <h2>{{ t('edit.title') }}</h2>
+                  <p>{{ t('edit.copy') }}</p>
+                </div>
+              </div>
+
+              <ion-buttons slot="end">
+                <ion-button
+                  fill="clear"
+                  color="light"
+                  (click)="closeEditModal(); savedTeamEditModal.dismiss(null, 'cancel')"
+                >
+                  <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                </ion-button>
+              </ion-buttons>
+            </ion-toolbar>
+          </ion-header>
+
+          <ion-content class="edit-modal-content">
+            <div class="edit-modal-shell">
+              <ion-input
+                [label]="t('edit.teamNameLabel')"
+                labelPlacement="stacked"
+                fill="outline"
+                [value]="editTeamName()"
+                [disabled]="savingEdit()"
+                (ionInput)="onEditTeamNameChange($event)"
+              ></ion-input>
+
+              <ion-textarea
+                [label]="t('edit.notesLabel')"
+                labelPlacement="stacked"
+                fill="outline"
+                autoGrow="true"
+                [value]="editNotes()"
+                [disabled]="savingEdit()"
+                (ionInput)="onEditNotesChange($event)"
+              ></ion-textarea>
+            </div>
+          </ion-content>
+
+          <ion-footer class="edit-modal-footer">
+            <ion-toolbar>
+              <div class="import-modal-actions">
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  (click)="closeEditModal(); savedTeamEditModal.dismiss(null, 'cancel')"
+                >
+                  {{ 'common.actions.cancel' | transloco }}
+                </ion-button>
+                <ion-button
+                  color="warning"
+                  [disabled]="savingEdit() || !editingTeam()"
+                  (click)="saveEditedTeam()"
+                >
+                  {{ 'common.actions.save' | transloco }}
+                </ion-button>
+              </div>
+            </ion-toolbar>
+          </ion-footer>
+        </ng-template>
+      </ion-modal>
+
+      <ion-modal
+        #savedTeamsImportModal
+        [isOpen]="importModalOpen()"
+        cssClass="saved-teams-import-modal"
+        (didDismiss)="closeImportModal()"
+      >
+        <ng-template>
+          <div class="import-modal-shell">
+            <div class="import-modal-head">
+              <div>
+                <div class="section-label">{{ t('import.eyebrow') }}</div>
+                <h2>{{ t('import.title') }}</h2>
+                <p>{{ t('import.copy') }}</p>
+              </div>
+
+              <ion-button
+                fill="clear"
+                color="light"
+                (click)="closeImportModal(); savedTeamsImportModal.dismiss(null, 'cancel')"
+              >
+                <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+              </ion-button>
+            </div>
+
+            <input
+              #importFileInput
+              type="file"
+              accept=".json,application/json"
+              hidden
+              (change)="onFileSelected($event, importFileInput)"
+            />
+
+            <button
+              type="button"
+              class="import-dropzone"
+              [class.import-dropzone--active]="draggingImportFile()"
+              (click)="openFilePicker(importFileInput)"
+              (dragover)="onImportDragOver($event)"
+              (dragleave)="onImportDragLeave($event)"
+              (drop)="onImportDrop($event)"
+            >
+              <ion-icon [icon]="uploadIcon"></ion-icon>
+              <strong>{{ t('import.dropzone.title') }}</strong>
+              <span>{{ t('import.dropzone.subtitle') }}</span>
+            </button>
+
+            @if (importFileName()) {
+              <div class="import-file-chip">
+                <ion-icon [icon]="fileIcon"></ion-icon>
+                <span>{{ importFileName() }}</span>
+              </div>
+            }
+
+            <div class="import-paste-panel">
+              <label>
+                <span>{{ t('import.paste.label') }}</span>
+                <ion-textarea
+                  [value]="importTextContent()"
+                  [placeholder]="t('import.paste.placeholder')"
+                  [disabled]="importing()"
+                  [autoGrow]="true"
+                  (ionInput)="onImportTextChange($event)"
+                ></ion-textarea>
+              </label>
+              <ion-button
+                fill="outline"
+                color="warning"
+                [disabled]="!importTextContent().trim().length || importing()"
+                (click)="importPastedTeams()"
+              >
+                {{ t('import.paste.action') }}
+              </ion-button>
+            </div>
+
+            @if (importing()) {
+              <div class="import-feedback import-feedback--progress">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>{{ t('import.processing') }}</span>
+              </div>
+            }
+
+            @if (importFeedback(); as feedback) {
+              <div
+                class="import-feedback"
+                [class.import-feedback--success]="feedback.tone === 'success'"
+                [class.import-feedback--warning]="feedback.tone === 'warning'"
+                [class.import-feedback--error]="feedback.tone === 'error'"
+              >
+                <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
+                <div>
+                  <strong>{{ feedback.title }}</strong>
+                  @for (detail of feedback.details; track $index) {
+                    <span>{{ detail }}</span>
+                  }
+                </div>
+              </div>
+            }
+
             <div class="import-modal-actions">
               <ion-button
                 fill="outline"
                 color="light"
-                (click)="closeEditModal(); savedTeamEditModal.dismiss(null, 'cancel')"
+                [disabled]="importing()"
+                (click)="openFilePicker(importFileInput)"
               >
-                {{ 'common.actions.cancel' | transloco }}
+                {{ t('import.chooseAnotherFile') }}
               </ion-button>
               <ion-button
-                color="warning"
-                [disabled]="savingEdit() || !editingTeam()"
-                (click)="saveEditedTeam()"
+                fill="clear"
+                color="light"
+                (click)="closeImportModal(); savedTeamsImportModal.dismiss(null, 'cancel')"
               >
-                {{ 'common.actions.save' | transloco }}
+                {{ 'common.actions.close' | transloco }}
               </ion-button>
             </div>
-          </ion-toolbar>
-        </ion-footer>
-      </ng-template>
-    </ion-modal>
-
-    <ion-modal
-      #savedTeamsImportModal
-      [isOpen]="importModalOpen()"
-      cssClass="saved-teams-import-modal"
-      (didDismiss)="closeImportModal()"
-    >
-      <ng-template>
-        <div class="import-modal-shell">
-          <div class="import-modal-head">
-            <div>
-              <div class="section-label">{{ t('import.eyebrow') }}</div>
-              <h2>{{ t('import.title') }}</h2>
-              <p>{{ t('import.copy') }}</p>
-            </div>
-
-            <ion-button
-              fill="clear"
-              color="light"
-              (click)="closeImportModal(); savedTeamsImportModal.dismiss(null, 'cancel')"
-            >
-              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
-            </ion-button>
           </div>
-
-          <input
-            #importFileInput
-            type="file"
-            accept=".json,application/json"
-            hidden
-            (change)="onFileSelected($event, importFileInput)"
-          />
-
-          <button
-            type="button"
-            class="import-dropzone"
-            [class.import-dropzone--active]="draggingImportFile()"
-            (click)="openFilePicker(importFileInput)"
-            (dragover)="onImportDragOver($event)"
-            (dragleave)="onImportDragLeave($event)"
-            (drop)="onImportDrop($event)"
-          >
-            <ion-icon [icon]="uploadIcon"></ion-icon>
-            <strong>{{ t('import.dropzone.title') }}</strong>
-            <span>{{ t('import.dropzone.subtitle') }}</span>
-          </button>
-
-          @if (importFileName()) {
-            <div class="import-file-chip">
-              <ion-icon [icon]="fileIcon"></ion-icon>
-              <span>{{ importFileName() }}</span>
-            </div>
-          }
-
-          @if (importing()) {
-            <div class="import-feedback import-feedback--progress">
-              <ion-spinner name="crescent"></ion-spinner>
-              <span>{{ t('import.processing') }}</span>
-            </div>
-          }
-
-          @if (importFeedback(); as feedback) {
-            <div
-              class="import-feedback"
-              [class.import-feedback--success]="feedback.tone === 'success'"
-              [class.import-feedback--warning]="feedback.tone === 'warning'"
-              [class.import-feedback--error]="feedback.tone === 'error'"
-            >
-              <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
-              <div>
-                <strong>{{ feedback.title }}</strong>
-                @for (detail of feedback.details; track $index) {
-                  <span>{{ detail }}</span>
-                }
-              </div>
-            </div>
-          }
-
-          <div class="import-modal-actions">
-            <ion-button
-              fill="outline"
-              color="light"
-              [disabled]="importing()"
-              (click)="openFilePicker(importFileInput)"
-            >
-              {{ t('import.chooseAnotherFile') }}
-            </ion-button>
-            <ion-button
-              fill="clear"
-              color="light"
-              (click)="closeImportModal(); savedTeamsImportModal.dismiss(null, 'cancel')"
-            >
-              {{ 'common.actions.close' | transloco }}
-            </ion-button>
-          </div>
-        </div>
-      </ng-template>
-    </ion-modal>
+        </ng-template>
+      </ion-modal>
     </app-saved-teams-style-panels>
   </ion-content>
 </ng-container>

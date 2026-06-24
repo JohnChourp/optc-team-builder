@@ -69,6 +69,10 @@ import {
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { UserStateService } from '../../core/services/user-state.service';
+import {
+  resolveSavedTeamFromShareInput,
+  SAVED_TEAM_SHARE_QUERY_PARAM,
+} from '../saved-teams/saved-teams-transfer.utils';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import {
   AbilityFilterRailComponent,
@@ -181,6 +185,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly currentTeamId = signal<string | null>(null);
   public readonly saveUiLocked = signal(false);
   public readonly saveFeedbackError = signal('');
+  public readonly sharedTeamFeedbackError = signal('');
   public readonly selectedShipId = signal<number | null>(null);
   public readonly maxTotalCost = signal<number | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
@@ -591,7 +596,11 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       await this.refreshShips();
     }
 
-    await this.applySavedTeamFromRoute();
+    const appliedSharedTeam = await this.applySharedTeamFromRoute();
+
+    if (!appliedSharedTeam) {
+      await this.applySavedTeamFromRoute();
+    }
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -1056,6 +1065,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
     this.saveUiLocked.set(true);
     this.saveFeedbackError.set('');
+    this.sharedTeamFeedbackError.set('');
 
     try {
       const saved = await this.userState.saveTeam({
@@ -1096,6 +1106,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.notes.set('');
     this.currentTeamId.set(null);
     this.saveFeedbackError.set('');
+    this.sharedTeamFeedbackError.set('');
     this.saveUiLocked.set(false);
   }
 
@@ -1243,7 +1254,34 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     await this.clearSavedTeamQueryParam();
   }
 
-  private async loadSavedTeam(team: SavedTeam): Promise<void> {
+  private async applySharedTeamFromRoute(): Promise<boolean> {
+    const shareInput =
+      this.route.snapshot.queryParamMap.get(SAVED_TEAM_SHARE_QUERY_PARAM)?.trim() ?? '';
+
+    if (!shareInput.length) {
+      return false;
+    }
+
+    try {
+      const team = resolveSavedTeamFromShareInput(shareInput, {
+        untitledTeamName: this.i18n.translate('common.defaults.untitledCrew'),
+      });
+
+      await this.loadSavedTeam(team, { currentTeamId: null });
+      this.sharedTeamFeedbackError.set('');
+    } catch {
+      this.sharedTeamFeedbackError.set(this.t('shareImport.error'));
+    } finally {
+      await this.clearSharedTeamQueryParam();
+    }
+
+    return true;
+  }
+
+  private async loadSavedTeam(
+    team: SavedTeam,
+    options: { currentTeamId?: string | null } = {},
+  ): Promise<void> {
     const characterIds = [
       ...new Set(
         team.slots.filter((characterId): characterId is number => typeof characterId === 'number'),
@@ -1276,8 +1314,9 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.maxTotalCost.set(null);
     this.teamName.set(team.name);
     this.notes.set(team.notes);
-    this.currentTeamId.set(team.id);
+    this.currentTeamId.set(options.currentTeamId === undefined ? team.id : options.currentTeamId);
     this.saveFeedbackError.set('');
+    this.sharedTeamFeedbackError.set('');
     this.saveUiLocked.set(false);
   }
 
@@ -1285,6 +1324,15 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     await this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private async clearSharedTeamQueryParam(): Promise<void> {
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [SAVED_TEAM_SHARE_QUERY_PARAM]: null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

@@ -106,6 +106,27 @@ Saved teams are on-device user data with this transfer payload:
 
 Team records contain id, name, six character slots, optional ship id, notes, and timestamps. Saved team schema remains v1 in this data epic; no migration is needed because no saved-team wire shape changed.
 
+Single-team share links use a separate self-contained payload encoded into the `teamShare` query parameter on `/tabs/manual-team-builder`:
+
+```json
+{
+  "schemaVersion": 1,
+  "source": "saved-team-share",
+  "exportedAt": "2026-05-16T00:00:00.000Z",
+  "team": {
+    "id": "team-1",
+    "name": "Crew",
+    "slots": [],
+    "shipId": null,
+    "notes": "",
+    "createdAt": "2026-05-16T00:00:00.000Z",
+    "updatedAt": "2026-05-16T00:00:00.000Z"
+  }
+}
+```
+
+Opening a share link preloads Manual Team Builder as an unsaved draft. Saving from that screen creates a normal local saved team.
+
 ## Migration Policy
 
 - Generated dataset compatibility is governed by `DatasetManifest.schemaVersion`.

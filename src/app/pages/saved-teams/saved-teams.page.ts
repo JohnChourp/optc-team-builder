@@ -23,8 +23,12 @@ import {
   checkmarkCircleOutline,
   closeOutline,
   cloudUploadOutline,
+  copyOutline,
   documentTextOutline,
+  downloadOutline,
+  linkOutline,
   peopleOutline,
+  shareSocialOutline,
   shieldCheckmarkOutline,
   sparklesOutline,
 } from 'ionicons/icons';
@@ -50,10 +54,14 @@ import { UserStateService } from '../../core/services/user-state.service';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import {
+  buildSavedTeamJson,
+  buildSavedTeamShareCode,
+  buildSavedTeamShareUrl,
+  buildSavedTeamsJson,
   buildSavedTeamsTransferPayload,
   clearUnavailableSavedTeamSlots,
   downloadSavedTeamsExport,
-  parseSavedTeamsImportPayload,
+  parseSavedTeamsImportContent,
   sanitizeSavedTeamsImportPayload,
   type SavedTeamsImportError,
 } from './saved-teams-transfer.utils';
@@ -197,8 +205,10 @@ export class SavedTeamsPage implements OnInit {
   public readonly importModalOpen = signal(false);
   public readonly draggingImportFile = signal(false);
   public readonly importFileName = signal('');
+  public readonly importTextContent = signal('');
   public readonly importFeedback = signal<SavedTeamsImportFeedback | null>(null);
   public readonly importing = signal(false);
+  public readonly actionFeedback = signal<SavedTeamsImportFeedback | null>(null);
   public readonly editModalOpen = signal(false);
   public readonly editingTeam = signal<SavedTeam | null>(null);
   public readonly editTeamName = signal('');
@@ -208,6 +218,10 @@ export class SavedTeamsPage implements OnInit {
   public readonly openingTeam = signal<SavedTeam | null>(null);
   public readonly uploadIcon = cloudUploadOutline;
   public readonly fileIcon = documentTextOutline;
+  public readonly copyIcon = copyOutline;
+  public readonly downloadIcon = downloadOutline;
+  public readonly linkIcon = linkOutline;
+  public readonly shareIcon = shareSocialOutline;
   public readonly closeIcon = closeOutline;
   public readonly successIcon = checkmarkCircleOutline;
   public readonly errorIcon = alertCircleOutline;
@@ -292,8 +306,46 @@ export class SavedTeamsPage implements OnInit {
     downloadSavedTeamsExport(payload);
   }
 
+  public async copySelectedTeamsJson(): Promise<void> {
+    if (!this.hasSelection()) {
+      return;
+    }
+
+    const selectedTeamIds = this.selectedTeamIdSet();
+
+    await this.copyTextToClipboardWithFeedback(
+      buildSavedTeamsJson(this.savedTeams().filter((team) => selectedTeamIds.has(team.id))),
+      this.i18n.translate(
+        'share.copiedSelectedJson',
+        { count: this.selectedCount() },
+        'saved-teams',
+      ),
+    );
+  }
+
   public exportTeam(team: SavedTeam): void {
     downloadSavedTeamsExport(buildSavedTeamsTransferPayload([team]));
+  }
+
+  public async copyTeamShareLink(team: SavedTeam): Promise<void> {
+    await this.copyTextToClipboardWithFeedback(
+      buildSavedTeamShareUrl(team),
+      this.i18n.translate('share.copiedLink', { name: team.name }, 'saved-teams'),
+    );
+  }
+
+  public async copyTeamShareCode(team: SavedTeam): Promise<void> {
+    await this.copyTextToClipboardWithFeedback(
+      buildSavedTeamShareCode(team),
+      this.i18n.translate('share.copiedCode', { name: team.name }, 'saved-teams'),
+    );
+  }
+
+  public async copyTeamJson(team: SavedTeam): Promise<void> {
+    await this.copyTextToClipboardWithFeedback(
+      buildSavedTeamJson(team),
+      this.i18n.translate('share.copiedJson', { name: team.name }, 'saved-teams'),
+    );
   }
 
   public resetPage(): void {
@@ -303,6 +355,7 @@ export class SavedTeamsPage implements OnInit {
     this.importModalOpen.set(false);
     this.openTeamModalOpen.set(false);
     this.openingTeam.set(null);
+    this.actionFeedback.set(null);
     this.resetEditState();
     this.resetImportState();
   }
@@ -366,6 +419,10 @@ export class SavedTeamsPage implements OnInit {
     this.resetImportState();
   }
 
+  public onImportTextChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.importTextContent.set((event.detail.value ?? '').toString());
+  }
+
   public onEditTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
     this.editTeamName.set((event.detail.value ?? '').trimStart());
   }
@@ -415,6 +472,19 @@ export class SavedTeamsPage implements OnInit {
     await this.importSavedTeams(file);
   }
 
+  public async importPastedTeams(): Promise<void> {
+    const rawContent = this.importTextContent().trim();
+
+    if (!rawContent.length || this.importing()) {
+      return;
+    }
+
+    await this.importSavedTeamsContent(
+      rawContent,
+      this.i18n.translate('import.pastedSource', undefined, 'saved-teams'),
+    );
+  }
+
   public onImportDragOver(event: DragEvent): void {
     event.preventDefault();
     this.draggingImportFile.set(true);
@@ -447,7 +517,11 @@ export class SavedTeamsPage implements OnInit {
   }
 
   public toggleAbilityFilter(origin: SavedTeamAbilityOrigin, identity: string): void {
-    this.setAbilityFilterSelection(origin, identity, !this.isAbilityFilterSelected(origin, identity));
+    this.setAbilityFilterSelection(
+      origin,
+      identity,
+      !this.isAbilityFilterSelected(origin, identity),
+    );
   }
 
   public clearAbilityFilterSection(origin: SavedTeamAbilityOrigin): void {
@@ -592,8 +666,37 @@ export class SavedTeamsPage implements OnInit {
   private resetImportState(): void {
     this.draggingImportFile.set(false);
     this.importFileName.set('');
+    this.importTextContent.set('');
     this.importFeedback.set(null);
     this.importing.set(false);
+  }
+
+  private async copyTextToClipboardWithFeedback(
+    text: string,
+    successMessage: string,
+  ): Promise<void> {
+    this.actionFeedback.set(null);
+
+    try {
+      const clipboard = globalThis.navigator?.clipboard;
+
+      if (!clipboard?.writeText) {
+        throw new Error('Clipboard API unavailable');
+      }
+
+      await clipboard.writeText(text);
+      this.actionFeedback.set({
+        tone: 'success',
+        title: this.i18n.translate('share.successTitle', undefined, 'saved-teams'),
+        details: [successMessage],
+      });
+    } catch {
+      this.actionFeedback.set({
+        tone: 'error',
+        title: this.i18n.translate('share.errorTitle', undefined, 'saved-teams'),
+        details: [this.i18n.translate('share.errors.clipboard', undefined, 'saved-teams')],
+      });
+    }
   }
 
   private buildAbilityFilterSection(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFilterSection {
@@ -606,7 +709,11 @@ export class SavedTeamsPage implements OnInit {
         abilityCount: abilities.length,
         abilities,
         category,
-        label: this.i18n.translate(`abilityFilters.categories.${category}`, undefined, 'saved-teams'),
+        label: this.i18n.translate(
+          `abilityFilters.categories.${category}`,
+          undefined,
+          'saved-teams',
+        ),
       };
     });
 
@@ -616,7 +723,11 @@ export class SavedTeamsPage implements OnInit {
       hasSelection: selectedIds.size > 0,
       origin,
       selectedCount: selectedIds.size,
-      title: this.i18n.translate(`abilityFilters.sections.${origin}.title`, undefined, 'saved-teams'),
+      title: this.i18n.translate(
+        `abilityFilters.sections.${origin}.title`,
+        undefined,
+        'saved-teams',
+      ),
     };
   }
 
@@ -688,8 +799,16 @@ export class SavedTeamsPage implements OnInit {
     slots: Array<CharacterDetailRecord | null>,
   ): Record<SavedTeamAbilityOrigin, Set<string>> {
     return {
-      leader: new Set(this.resolveSlotAbilities(slots, 'leader').map((ability) => this.buildAbilityIdentity(ability))),
-      crew: new Set(this.resolveSlotAbilities(slots, 'crew').map((ability) => this.buildAbilityIdentity(ability))),
+      leader: new Set(
+        this.resolveSlotAbilities(slots, 'leader').map((ability) =>
+          this.buildAbilityIdentity(ability),
+        ),
+      ),
+      crew: new Set(
+        this.resolveSlotAbilities(slots, 'crew').map((ability) =>
+          this.buildAbilityIdentity(ability),
+        ),
+      ),
     };
   }
 
@@ -754,7 +873,9 @@ export class SavedTeamsPage implements OnInit {
   }
 
   private resolveSelectedAbilitySet(origin: SavedTeamAbilityOrigin): Set<string> {
-    return origin === 'leader' ? this.selectedLeaderAbilityIdSet() : this.selectedCrewAbilityIdSet();
+    return origin === 'leader'
+      ? this.selectedLeaderAbilityIdSet()
+      : this.selectedCrewAbilityIdSet();
   }
 
   private setSelectedAbilityIds(origin: SavedTeamAbilityOrigin, abilityIds: string[]): void {
@@ -817,13 +938,17 @@ export class SavedTeamsPage implements OnInit {
   }
 
   private async importSavedTeams(file: File): Promise<void> {
-    this.importing.set(true);
     this.importFileName.set(file.name);
+
+    await this.importSavedTeamsContent(await file.text(), file.name);
+  }
+
+  private async importSavedTeamsContent(rawContent: string, sourceLabel: string): Promise<void> {
+    this.importing.set(true);
     this.importFeedback.set(null);
 
     try {
-      const rawContent = await file.text();
-      const payload = parseSavedTeamsImportPayload(rawContent);
+      const payload = parseSavedTeamsImportContent(rawContent);
       const sanitizedImport = sanitizeSavedTeamsImportPayload(payload, {
         untitledTeamName: this.i18n.translate('common.defaults.untitledCrew'),
       });
@@ -848,7 +973,7 @@ export class SavedTeamsPage implements OnInit {
         this.buildImportFeedback({
           addedCount: mergeResult.addedCount,
           duplicateIdCount: sanitizedImport.duplicateIdCount,
-          fileName: file.name,
+          fileName: sourceLabel,
           invalidTeamCount: sanitizedImport.invalidTeamCount,
           unknownSlotCount: slotSanitizeResult.unknownSlotCount,
           updatedCount: mergeResult.updatedCount,

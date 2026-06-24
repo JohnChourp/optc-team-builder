@@ -1,5 +1,8 @@
 {
   "actions": {
+    "copyJson": "Αντιγραφή JSON",
+    "copyShareCode": "Αντιγραφή code",
+    "copyShareLink": "Share",
     "exportSingle": "Εξαγωγή",
     "openBuilder": "Άνοιγμα στο team builder",
     "openTeam": "Άνοιγμα team"
@@ -89,10 +92,17 @@
       "generic": "Το αρχείο δεν μπόρεσε να εισαχθεί.",
       "invalidJson": "Το αρχείο δεν είναι έγκυρο JSON.",
       "invalidPayload": "Το JSON δεν ταιριάζει με το expected saved teams schema.",
+      "invalidShareCode": "Το shared team link ή code δεν είναι έγκυρο.",
       "unsupportedSchema": "Το selected JSON δεν υποστηρίζεται από το current saved teams import schema."
     },
     "eyebrow": "Μεταφορά ομάδων",
     "loadedFromFile": "Φορτώθηκε το {{fileName}}.",
+    "paste": {
+      "action": "Import pasted team",
+      "label": "Κάνε paste saved team JSON, share link ή share code",
+      "placeholder": "Κάνε paste saved-teams JSON, /tabs/manual-team-builder?teamShare=... link ή το raw share code."
+    },
+    "pastedSource": "pasted περιεχόμενο",
     "processing": "Γίνεται import ομάδων...",
     "stats": {
       "added": "Προστέθηκαν {{count}} νέα teams.",
@@ -136,6 +146,17 @@
     "noShipLabel": "Χωρίς ship",
     "thumbnailAlt": "Thumbnail του ship {{name}}"
   },
+  "share": {
+    "copiedCode": "Αντιγράφηκε το share code για \"{{name}}\".",
+    "copiedJson": "Αντιγράφηκε το JSON export για \"{{name}}\".",
+    "copiedLink": "Αντιγράφηκε το share link για \"{{name}}\".",
+    "copiedSelectedJson": "Αντιγράφηκε JSON export για {{count}} επιλεγμένα teams.",
+    "errorTitle": "Η αντιγραφή απέτυχε",
+    "errors": {
+      "clipboard": "Το clipboard δεν είναι διαθέσιμο. Δοκίμασε το download action."
+    },
+    "successTitle": "Αντιγράφηκε"
+  },
   "selection": {
     "selectAll": "Επίλεξε όλα",
     "selectAllAria": "Επιλογή όλων των αποθηκευμένων ομάδων",
@@ -143,6 +164,7 @@
     "teamAria": "Επιλογή της ομάδας {{name}}"
   },
   "tools": {
+    "copyJson": "Αντιγραφή selected JSON",
     "delete": "Διαγραφή επιλεγμένων",
     "export": "Εξαγωγή επιλεγμένων",
     "import": "Εισαγωγή ομάδων"
