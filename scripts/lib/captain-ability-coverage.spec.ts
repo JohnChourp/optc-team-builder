@@ -492,6 +492,17 @@ describe('extractCoverageTiers', () => {
     expect(tiers).toHaveLength(0);
   });
 
+  it('keeps comma-less conditional boost clauses in generated tiers', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of all characters by 3x. If you use "Yasakani no Magatama" in this turn boosts ATK of all characters by 5x instead.',
+    );
+
+    expect(tiers.some((tier) => tier.atkBoost === 5)).toBe(true);
+    expect(tiers.flatMap((tier) => tier.clauses ?? [])).toContain(
+      'boosts ATK of all characters by 5x',
+    );
+  });
+
   it('models Dominant Type ATK as a same-type team coverage and keeps shared HP in that tier', () => {
     const captainAbility =
       'Boosts HP of all characters by 1.25x, makes badly matching orbs beneficial for all characters, and reduces Despair duration by 6 turns. If your crew has 4+ characters of the same Type, boosts ATK of the Dominant Type characters by 4.5x.';

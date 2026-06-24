@@ -230,6 +230,43 @@ describe('Auto team builder', () => {
     expect(preparedResult?.coverage.battleRequirements?.matchesAll).toBe(true);
   });
 
+  it('does not let pure self-only captain coverage accept sub slots', () => {
+    const captain = createCharacterRecord({
+      id: 5900,
+      primaryClass: 'Fighter',
+      type: 'DEX',
+      detail: {
+        captainAbility: 'Boosts ATK of this character by 6x.',
+      },
+    });
+    const records = [
+      captain,
+      ...[5901, 5902, 5903, 5904].map((id) =>
+        createCharacterRecord({
+          id,
+          primaryClass: 'Fighter',
+          type: 'DEX',
+        }),
+      ),
+    ];
+    const input = createInput(['DEX'], ['Fighter'], {
+      manualSlots: createManualSlots(
+        {
+          captain: [5900],
+          friendCaptain: [5900],
+        },
+        {
+          captain: 5900,
+          friendCaptain: 5900,
+        },
+      ),
+    });
+
+    expect(
+      buildAutoTeamResultFromPreparedContext(prepareAutoTeamBuildContext(records), input),
+    ).toBeNull();
+  });
+
   it('normalizes HTML ability text before deriving candidate tags', () => {
     const candidate = buildAutoBuildCandidate(
       createCharacterRecord({

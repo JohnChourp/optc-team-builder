@@ -4675,6 +4675,37 @@ function matchesActiveLeaderCriteria(
       branchMode: leader.branchMode,
     }),
   }));
+  const hasDimensionScope =
+    leaderCriteria.hasClassRestriction ||
+    leaderCriteria.hasTypeRestriction ||
+    leaderCriteria.hasCharacterTagRestriction;
+
+  if (
+    !hasDimensionScope &&
+    simpleCoverageResults.some((result) => result.hasSelfOnlyCoverage) &&
+    simpleCoverageResults.every((result) => result.coverage.targetableClauseCount === 0)
+  ) {
+    return (
+      simpleCoverageResults.every((result, index) => {
+        if (!result.hasSelfOnlyCoverage) {
+          return true;
+        }
+
+        const leader = leaderCriteria.leaders[index];
+        if (!leader) {
+          return false;
+        }
+
+        return (
+          leader.candidate.character.id === candidate.character.id ||
+          targetMatchesAnyApplicableCaptainCoverageTier(
+            leader.candidate.character,
+            candidate.character,
+          )
+        );
+      }) && matchesDominantTypeScope
+    );
+  }
 
   if (simpleCoverageResults.some((result) => result.coverage.targetableClauseCount > 0)) {
     return (
@@ -4702,10 +4733,6 @@ function matchesActiveLeaderCriteria(
         characterTagKeys.includes(normalizeCaptainTagKey(tag)),
       )
     : false;
-  const hasDimensionScope =
-    leaderCriteria.hasClassRestriction ||
-    leaderCriteria.hasTypeRestriction ||
-    leaderCriteria.hasCharacterTagRestriction;
   const matchesDimensionScope = hasDimensionScope
     ? matchesClassScope || matchesTypeScope || matchesCharacterTagScope
     : true;

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-23T18:47:52.572Z",
+  "generatedAt": "2026-06-24T08:00:30.364Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -20,7 +20,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1820,
+      "matchCount": 1819,
       "matchingCharacterIds": [
         1,
         2,
@@ -1033,7 +1033,6 @@
         2355,
         2356,
         2357,
-        2363,
         2364,
         2365,
         2372,
@@ -2423,7 +2422,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 370,
+      "matchCount": 369,
       "matchingCharacterIds": [
         446,
         447,
@@ -2582,7 +2581,6 @@
         2343,
         2344,
         2357,
-        2363,
         2364,
         2365,
         2372,
@@ -4754,7 +4752,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 801,
+      "matchCount": 800,
       "matchingCharacterIds": [
         263,
         305,
@@ -5025,7 +5023,6 @@
         2355,
         2356,
         2357,
-        2363,
         2373,
         2384,
         2386,
@@ -6768,7 +6765,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 142,
+      "matchCount": 141,
       "matchingCharacterIds": [
         366,
         367,
@@ -6825,7 +6822,6 @@
         2320,
         2321,
         2349,
-        2363,
         2372,
         2400,
         2401,
@@ -6970,7 +6966,6 @@
         2320,
         2321,
         2349,
-        2363,
         2372,
         2400,
         2401,
@@ -13446,7 +13441,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 988,
+      "matchCount": 987,
       "matchingCharacterIds": [
         389,
         390,
@@ -13584,7 +13579,6 @@
         2345,
         2346,
         2357,
-        2363,
         2364,
         2365,
         2370,
@@ -14507,7 +14501,6 @@
         2345,
         2346,
         2357,
-        2363,
         2364,
         2365,
         2372,
@@ -15862,14 +15855,6 @@
           "slotTokens": [
             "DEX",
             "QCK"
-          ]
-        },
-        {
-          "characterId": 2363,
-          "effectTargetScope": "crew",
-          "slotTokens": [
-            "DEX",
-            "INT"
           ]
         },
         {
@@ -37357,7 +37342,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 997,
+      "matchCount": 996,
       "matchingCharacterIds": [
         452,
         453,
@@ -37551,7 +37536,6 @@
         2351,
         2360,
         2362,
-        2363,
         2419,
         2420,
         2421,
@@ -38474,7 +38458,6 @@
         2349,
         2351,
         2362,
-        2363,
         2419,
         2420,
         2435,

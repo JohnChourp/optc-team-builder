@@ -330,6 +330,32 @@ describe('resolveCaptainCoverage', () => {
     });
   });
 
+  it('keeps comma-less conditional boost clauses in full coverage', () => {
+    const captainAbility =
+      'Boosts ATK of all characters by 3x. If you use "Yasakani no Magatama" in this turn boosts ATK of all characters by 5x instead.';
+    const captain = createCharacter({ id: 1018, captainAbility });
+    const target = createCharacter({ id: 2018, type: 'INT', classes: ['Shooter', 'Driven'] });
+
+    expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage')).toMatchObject({
+      clauses: [
+        'Boosts ATK of all characters by 3x',
+        'boosts ATK of all characters by 5x',
+      ],
+    });
+    expect(
+      resolveCaptainCoverage(captain, target, { coverageMode: 'fullAbilityCoverage' }),
+    ).toEqual(
+      expect.objectContaining({
+        matches: true,
+        coveredClauses: [
+          'Boosts ATK of all characters by 3x',
+          'boosts ATK of all characters by 5x',
+        ],
+        targetableClauseCount: 2,
+      }),
+    );
+  });
+
   it('does not treat possessive Captain Ability removal text as a branch label', () => {
     const captainAbility =
       "Boosts ATK of Driven and Powerhouse characters by 4.5x, boosts HP of Driven and Powerhouse characters by 1.75x, increases damage received by 1.5x. If total Damage Taken is 50,000 or more, boosts ATK of Driven and Powerhouse characters by 5.25x instead, recovers 2,000 HP at the end of each turn, reduces damage received by 10% and removes the following effect from this character's Captain Ability: increases damage received by 1.5x.";

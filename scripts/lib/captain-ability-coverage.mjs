@@ -1106,13 +1106,16 @@ function findUnusedConditionStart(sentence, rawClause, usedStarts) {
 function extractEffectClausesFromConditionalSentence(sentence) {
   const effectStartPattern =
     /,\s*(?:for\s+\d+\s+turns?\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?|allows?|launches?|deals?|restores?|inflicts?)\b/i;
-  const effectStartMatch = sentence.match(effectStartPattern);
+  const commaLessBoostStartPattern = /\s+(?:for\s+\d+\s+turns?\s+)?boosts?\b/i;
+  const effectStartMatch =
+    sentence.match(effectStartPattern) ?? sentence.match(commaLessBoostStartPattern);
   if (effectStartMatch === null || effectStartMatch.index === undefined) {
     return [];
   }
 
   const effectText = sentence
-    .slice(effectStartMatch.index + 1)
+    .slice(effectStartMatch.index)
+    .replace(/^\s*,?\s*/i, '')
     .replace(/^\s*for\s+\d+\s+turns?\s+/i, '')
     .trim();
 
