@@ -3218,6 +3218,29 @@
                             <small class="reason-chip">{{ chip }}</small>
                           }
                         </div>
+                        <div
+                          class="slot-explanation"
+                          [class.slot-explanation--missing]="!slot.hasStructuredExplanation"
+                        >
+                          @if (slot.hasStructuredExplanation) {
+                            <details class="slot-explanation__details">
+                              <summary>
+                                <strong>{{ t('results.explanations.title') }}</strong>
+                                <span>{{ slot.explanationSummaryLabel }}</span>
+                              </summary>
+                              <ul>
+                                @for (detail of slot.explanationDetailLabels; track $index) {
+                                  <li>{{ detail }}</li>
+                                }
+                              </ul>
+                            </details>
+                          } @else {
+                            <div class="slot-explanation__fallback">
+                              <strong>{{ t('results.explanations.title') }}</strong>
+                              <span>{{ slot.explanationSummaryLabel }}</span>
+                            </div>
+                          }
+                        </div>
                         <app-character-ability-groups
                           [abilities]="displayBuilderAbilities(slot.character)"
                           [catalogItems]="abilityCatalog()?.abilities ?? []"

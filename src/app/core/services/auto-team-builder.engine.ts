@@ -6,6 +6,7 @@ import {
   type AutoBuildInput,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
+  type AutoBuildSlotExplanationReason,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
@@ -557,49 +558,179 @@ export function runAutoTeamBuildAttempt(
   const ignoredSuperTandemCriteriaCharacterNames = ignoredSuperTandemCriteria
     ? resolveUnsatisfiedSuperTandemCriteriaCharacterNames(attempt.slots, requestedInput)
     : [];
+  const relaxation: AutoBuildResult['relaxation'] = {
+    usedFallback: !inputsMatch(requestedInput, input) || allowedLeadersWithSuperEffects,
+    droppedTypes: requestedInput.types.filter((type) => !input.types.includes(type)),
+    droppedClasses: requestedInput.selectedClasses.filter(
+      (selectedClass) => !input.selectedClasses.includes(selectedClass),
+    ),
+    droppedCharacterTags: (requestedInput.selectedCharacterTags ?? []).filter(
+      (selectedTag) => !(input.selectedCharacterTags ?? []).includes(selectedTag),
+    ),
+    droppedCharacterNames: (requestedInput.selectedCharacterNames ?? []).filter(
+      (selectedName) => !(input.selectedCharacterNames ?? []).includes(selectedName),
+    ),
+    minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
+    allowedLeadersWithSuperEffects,
+    ...((requestedInput.requireFullCaptainAbilityCoverage ||
+      requestedInput.requireBothLeadersFullCaptainAbilityCoverage) &&
+    input.allowPartialCaptainAbilityCoverage
+      ? { ignoredCaptainAbilityCoverage: true }
+      : {}),
+    ...(requestedInput.requireFullCaptainAbilityCoverage &&
+    !input.requireFullCaptainAbilityCoverage &&
+    !input.allowPartialCaptainAbilityCoverage &&
+    !requestedInput.requireBothLeadersFullCaptainAbilityCoverage
+      ? { downgradedCaptainAbilityCoverageToSimple: true }
+      : {}),
+    ignoredLeaderSuperEffectScope: Boolean(
+      requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
+      !input.requireAllSlotsInLeaderSuperEffectScope,
+    ),
+    ignoredLeaderSuperSpecialCriteria,
+    ...(ignoredSuperSpecialCriteriaCharacterNames.length
+      ? { ignoredSuperSpecialCriteriaCharacterNames }
+      : {}),
+    ignoredSuperTandemCriteria,
+    ...(ignoredSuperTandemCriteriaCharacterNames.length
+      ? { ignoredSuperTandemCriteriaCharacterNames }
+      : {}),
+  };
 
-  return {
+  return appendFallbackExplanationReasons({
     ...attempt,
     requestedInput,
-    relaxation: {
-      usedFallback: !inputsMatch(requestedInput, input) || allowedLeadersWithSuperEffects,
-      droppedTypes: requestedInput.types.filter((type) => !input.types.includes(type)),
-      droppedClasses: requestedInput.selectedClasses.filter(
-        (selectedClass) => !input.selectedClasses.includes(selectedClass),
-      ),
-      droppedCharacterTags: (requestedInput.selectedCharacterTags ?? []).filter(
-        (selectedTag) => !(input.selectedCharacterTags ?? []).includes(selectedTag),
-      ),
-      droppedCharacterNames: (requestedInput.selectedCharacterNames ?? []).filter(
-        (selectedName) => !(input.selectedCharacterNames ?? []).includes(selectedName),
-      ),
-      minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
-      allowedLeadersWithSuperEffects,
-      ...((requestedInput.requireFullCaptainAbilityCoverage ||
-        requestedInput.requireBothLeadersFullCaptainAbilityCoverage) &&
-      input.allowPartialCaptainAbilityCoverage
-        ? { ignoredCaptainAbilityCoverage: true }
-        : {}),
-      ...(requestedInput.requireFullCaptainAbilityCoverage &&
-      !input.requireFullCaptainAbilityCoverage &&
-      !input.allowPartialCaptainAbilityCoverage &&
-      !requestedInput.requireBothLeadersFullCaptainAbilityCoverage
-        ? { downgradedCaptainAbilityCoverageToSimple: true }
-        : {}),
-      ignoredLeaderSuperEffectScope: Boolean(
-        requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
-        !input.requireAllSlotsInLeaderSuperEffectScope,
-      ),
-      ignoredLeaderSuperSpecialCriteria,
-      ...(ignoredSuperSpecialCriteriaCharacterNames.length
-        ? { ignoredSuperSpecialCriteriaCharacterNames }
-        : {}),
-      ignoredSuperTandemCriteria,
-      ...(ignoredSuperTandemCriteriaCharacterNames.length
-        ? { ignoredSuperTandemCriteriaCharacterNames }
-        : {}),
-    },
+    relaxation,
     shipSelection: null,
+  });
+}
+
+function appendFallbackExplanationReasons(result: AutoBuildResult): AutoBuildResult {
+  const fallbackReasons = buildFallbackExplanationReasons(result.relaxation);
+
+  if (!fallbackReasons.length) {
+    return result;
+  }
+
+  return {
+    ...result,
+    slots: result.slots.map((slot) => {
+      const explanation = slot.explanation;
+      const nextFallbackReasons = fallbackReasons.map(cloneExplanationReason);
+
+      if (!explanation) {
+        return {
+          ...slot,
+          explanation: {
+            primaryReason: nextFallbackReasons[0]!,
+            reasons: [],
+            fallbackReasons: nextFallbackReasons,
+          },
+        };
+      }
+
+      return {
+        ...slot,
+        explanation: {
+          ...explanation,
+          fallbackReasons: nextFallbackReasons,
+        },
+      };
+    }),
+  };
+}
+
+function buildFallbackExplanationReasons(
+  relaxation: AutoBuildResult['relaxation'],
+): AutoBuildSlotExplanationReason[] {
+  if (!relaxation.usedFallback) {
+    return [];
+  }
+
+  const reasons: AutoBuildSlotExplanationReason[] = [{ code: 'fallbackUsed' }];
+
+  if (relaxation.droppedTypes.length) {
+    reasons.push({
+      code: 'fallbackDroppedTypes',
+      params: { types: relaxation.droppedTypes, count: relaxation.droppedTypes.length },
+    });
+  }
+
+  if (relaxation.droppedClasses.length) {
+    reasons.push({
+      code: 'fallbackDroppedClasses',
+      params: { classes: relaxation.droppedClasses, count: relaxation.droppedClasses.length },
+    });
+  }
+
+  if (relaxation.droppedCharacterTags.length) {
+    reasons.push({
+      code: 'fallbackDroppedCharacterTags',
+      params: {
+        tags: relaxation.droppedCharacterTags,
+        count: relaxation.droppedCharacterTags.length,
+      },
+    });
+  }
+
+  if (relaxation.droppedCharacterNames.length) {
+    reasons.push({
+      code: 'fallbackDroppedCharacterNames',
+      params: {
+        names: relaxation.droppedCharacterNames,
+        count: relaxation.droppedCharacterNames.length,
+      },
+    });
+  }
+
+  if (relaxation.allowedLeadersWithSuperEffects) {
+    reasons.push({ code: 'fallbackAllowedSuperEffectLeaders' });
+  }
+
+  if (relaxation.ignoredLeaderSuperEffectScope) {
+    reasons.push({ code: 'fallbackIgnoredLeaderSuperScope' });
+  }
+
+  if (relaxation.ignoredLeaderSuperSpecialCriteria) {
+    reasons.push({
+      code: 'fallbackIgnoredSuperSpecialCriteria',
+      params: { names: relaxation.ignoredSuperSpecialCriteriaCharacterNames ?? [] },
+    });
+  }
+
+  if (relaxation.ignoredSuperTandemCriteria) {
+    reasons.push({
+      code: 'fallbackIgnoredSuperTandemCriteria',
+      params: { names: relaxation.ignoredSuperTandemCriteriaCharacterNames ?? [] },
+    });
+  }
+
+  if (relaxation.ignoredCaptainAbilityCoverage) {
+    reasons.push({ code: 'fallbackIgnoredCaptainAbilityCoverage' });
+  }
+
+  if (relaxation.downgradedCaptainAbilityCoverageToSimple) {
+    reasons.push({ code: 'fallbackDowngradedCaptainAbilityCoverage' });
+  }
+
+  return reasons;
+}
+
+function cloneExplanationReason(
+  reason: AutoBuildSlotExplanationReason,
+): AutoBuildSlotExplanationReason {
+  if (!reason.params) {
+    return { code: reason.code };
+  }
+
+  return {
+    code: reason.code,
+    params: Object.fromEntries(
+      Object.entries(reason.params).map(([key, value]) => [
+        key,
+        Array.isArray(value) ? [...value] : value,
+      ]),
+    ),
   };
 }
 

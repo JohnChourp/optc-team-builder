@@ -25,6 +25,8 @@ import {
   type AutoBuildProgressExclusionCounts,
   type AutoBuildSpecialScope,
   type AutoBuildSlot,
+  type AutoBuildSlotExplanation,
+  type AutoBuildSlotExplanationReason,
   type AutoBuildUtilityRole,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
@@ -284,6 +286,15 @@ interface AutoBuildSubCandidateRank {
 interface RankedAutoBuildSubCandidate {
   candidate: AutoBuildCandidate;
   rank: AutoBuildSubCandidateRank;
+}
+
+interface BuildSlotExplanationOptions {
+  role: AutoBuildSlot['role'];
+  input: AutoBuildInput;
+  isManualPick: boolean;
+  leaderCriteria: ActiveLeaderCriteria;
+  leaderSlots: AutoBuildCandidate[];
+  battleRequirementAssignmentMode: BattleRequirementAssignmentMode;
 }
 
 type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
@@ -1985,6 +1996,14 @@ export function buildAutoTeamResultFromPreparedContext(
               leaderPair.captain.reasonChips,
               manualCharacterIdSet.has(leaderPair.captain.character.id),
             ),
+            explanation: buildSlotExplanation(leaderPair.captain, {
+              role: 'captain',
+              input,
+              isManualPick: manualCharacterIdSet.has(leaderPair.captain.character.id),
+              leaderCriteria,
+              leaderSlots,
+              battleRequirementAssignmentMode,
+            }),
             captainBranchSelection: resolveLeaderBranchSelection(
               resolveLeaderCriteriaEntryForSlot('captain', leaderPair.captain, input),
               teamCandidates,
@@ -1998,6 +2017,14 @@ export function buildAutoTeamResultFromPreparedContext(
               leaderPair.friendCaptain.reasonChips,
               manualCharacterIdSet.has(leaderPair.friendCaptain.character.id),
             ),
+            explanation: buildSlotExplanation(leaderPair.friendCaptain, {
+              role: 'friendCaptain',
+              input,
+              isManualPick: manualCharacterIdSet.has(leaderPair.friendCaptain.character.id),
+              leaderCriteria,
+              leaderSlots,
+              battleRequirementAssignmentMode,
+            }),
             captainBranchSelection: resolveLeaderBranchSelection(
               resolveLeaderCriteriaEntryForSlot('friendCaptain', leaderPair.friendCaptain, input),
               teamCandidates,
@@ -2011,6 +2038,14 @@ export function buildAutoTeamResultFromPreparedContext(
               candidate.reasonChips,
               manualCharacterIdSet.has(candidate.character.id),
             ),
+            explanation: buildSlotExplanation(candidate, {
+              role: 'sub',
+              input,
+              isManualPick: manualCharacterIdSet.has(candidate.character.id),
+              leaderCriteria,
+              leaderSlots,
+              battleRequirementAssignmentMode,
+            }),
           })),
         ];
 
@@ -3622,6 +3657,314 @@ function resolveSlotReasonChips(reasonChips: string[], isManualPick: boolean): s
   }
 
   return nextChips.slice(0, 4);
+}
+
+function buildSlotExplanation(
+  candidate: AutoBuildCandidate,
+  options: BuildSlotExplanationOptions,
+): AutoBuildSlotExplanation {
+  const reasons: AutoBuildSlotExplanationReason[] = [];
+
+  if (options.isManualPick) {
+    pushExplanationReason(reasons, 'manualPick');
+  }
+
+  pushExplanationReason(
+    reasons,
+    options.role === 'captain'
+      ? 'captainRole'
+      : options.role === 'friendCaptain'
+        ? 'friendCaptainRole'
+        : 'subRole',
+  );
+
+  pushMatchedFilterReasons(reasons, candidate);
+  pushCaptainScopeReasons(reasons, candidate);
+  pushLeaderScopeReason(reasons, candidate, options);
+  pushRequirementReasons(reasons, candidate, options);
+  pushCoverageRoleReasons(reasons, candidate);
+
+  if (!options.isManualPick) {
+    pushRankingReasons(reasons, candidate, options);
+  }
+
+  const primaryReason =
+    reasons.find((reason) =>
+      [
+        'manualPick',
+        'requiredAbilityMatch',
+        'battleRequirementMatch',
+        'captainUniversalScope',
+        'captainTypeScope',
+        'captainClassScope',
+        'leaderScopeMatch',
+        'burstRole',
+        'utilityRole',
+        'consistencyRole',
+        'rankingDemand',
+      ].includes(reason.code),
+    ) ?? reasons[0]!;
+
+  return {
+    primaryReason,
+    reasons,
+    fallbackReasons: [],
+  };
+}
+
+function pushMatchedFilterReasons(
+  reasons: AutoBuildSlotExplanationReason[],
+  candidate: AutoBuildCandidate,
+): void {
+  if (candidate.matchedSelectedTypes.length) {
+    pushExplanationReason(reasons, 'selectedTypeMatch', {
+      types: candidate.matchedSelectedTypes,
+      count: candidate.matchedSelectedTypes.length,
+    });
+  }
+
+  if (candidate.matchedSelectedClasses.length) {
+    pushExplanationReason(reasons, 'selectedClassMatch', {
+      classes: candidate.matchedSelectedClasses,
+      count: candidate.matchedSelectedClasses.length,
+    });
+  }
+
+  if (candidate.matchedSelectedCharacterTags.length) {
+    pushExplanationReason(reasons, 'selectedCharacterTagMatch', {
+      tags: candidate.matchedSelectedCharacterTags,
+      count: candidate.matchedSelectedCharacterTags.length,
+    });
+  }
+
+  if (candidate.matchedSelectedCharacterNames.length) {
+    pushExplanationReason(reasons, 'selectedCharacterNameMatch', {
+      names: candidate.matchedSelectedCharacterNames,
+      count: candidate.matchedSelectedCharacterNames.length,
+    });
+  }
+}
+
+function pushCaptainScopeReasons(
+  reasons: AutoBuildSlotExplanationReason[],
+  candidate: AutoBuildCandidate,
+): void {
+  if (candidate.tags.captainScope.allCharacters) {
+    pushExplanationReason(reasons, 'captainUniversalScope');
+    return;
+  }
+
+  if (candidate.tags.captainScope.matchedSelectedTypeCount) {
+    pushExplanationReason(reasons, 'captainTypeScope', {
+      types: candidate.tags.captainScope.matchedSelectedTypes,
+      count: candidate.tags.captainScope.matchedSelectedTypeCount,
+    });
+  }
+
+  if (candidate.tags.captainScope.matchedSelectedClassCount) {
+    pushExplanationReason(reasons, 'captainClassScope', {
+      classes: candidate.tags.captainScope.matchedSelectedClasses,
+      count: candidate.tags.captainScope.matchedSelectedClassCount,
+    });
+  }
+}
+
+function pushLeaderScopeReason(
+  reasons: AutoBuildSlotExplanationReason[],
+  candidate: AutoBuildCandidate,
+  options: BuildSlotExplanationOptions,
+): void {
+  if (
+    !(
+      options.leaderCriteria.hasClassRestriction ||
+      options.leaderCriteria.hasTypeRestriction ||
+      options.leaderCriteria.hasCharacterTagRestriction ||
+      options.leaderCriteria.hasCostRestriction
+    )
+  ) {
+    return;
+  }
+
+  if (!matchesLeaderBuildScopeForAttempt(candidate, options.leaderCriteria, options.input)) {
+    return;
+  }
+
+  pushExplanationReason(reasons, 'leaderScopeMatch', {
+    classes: options.leaderCriteria.derivedAllowedClasses,
+    types: options.leaderCriteria.derivedAllowedTypes,
+    tags: options.leaderCriteria.derivedAllowedCharacterTags,
+  });
+}
+
+function pushRequirementReasons(
+  reasons: AutoBuildSlotExplanationReason[],
+  candidate: AutoBuildCandidate,
+  options: BuildSlotExplanationOptions,
+): void {
+  const matchedAbilityKeys = collectMatchedRequiredAbilityKeys(candidate, options.input);
+
+  if (matchedAbilityKeys.length) {
+    pushExplanationReason(reasons, 'requiredAbilityMatch', {
+      count: matchedAbilityKeys.length,
+      abilityKeys: matchedAbilityKeys,
+    });
+  }
+
+  const battleCoverage = collectMatchedBattleRequirementCoverage(
+    candidate,
+    options.input,
+    options.leaderSlots,
+  );
+
+  if (battleCoverage.groupCount > 0) {
+    pushExplanationReason(reasons, 'battleRequirementMatch', {
+      battleCount: battleCoverage.battleCount,
+      groupCount: battleCoverage.groupCount,
+      abilityKeys: battleCoverage.abilityKeys,
+    });
+  }
+}
+
+function collectMatchedRequiredAbilityKeys(
+  candidate: AutoBuildCandidate,
+  input: AutoBuildInput,
+): string[] {
+  const abilityKeys = [
+    ...filterIgnoredCaptainAbilityRequirements(input.requiredAbilities),
+    ...filterIgnoredCaptainAbilityRequirementGroups(input.requiredCharacterGroups).flatMap(
+      (group) => group.abilities,
+    ),
+  ]
+    .filter((requirement) => candidateMatchesAbilityRequirement(candidate, requirement))
+    .map((requirement) => requirement.abilityKey);
+
+  return [...new Set(abilityKeys)].sort((left, right) => left.localeCompare(right));
+}
+
+function collectMatchedBattleRequirementCoverage(
+  candidate: AutoBuildCandidate,
+  input: AutoBuildInput,
+  leaderSlots: AutoBuildCandidate[],
+): { abilityKeys: string[]; battleCount: number; groupCount: number } {
+  const abilityKeys = new Set<string>();
+  let battleCount = 0;
+  let groupCount = 0;
+
+  filterIgnoredCaptainAbilityBattleRequirements(input.battleRequirements).forEach((battle) => {
+    let battleMatched = false;
+
+    battle.requiredCharacterGroups.forEach((group) => {
+      if (!candidateMatchesRequiredCharacterGroup(candidate, group, leaderSlots)) {
+        return;
+      }
+
+      battleMatched = true;
+      groupCount += 1;
+      group.abilities.forEach((ability) => abilityKeys.add(ability.abilityKey));
+    });
+
+    if (battleMatched) {
+      battleCount += 1;
+    }
+  });
+
+  return {
+    abilityKeys: [...abilityKeys].sort((left, right) => left.localeCompare(right)),
+    battleCount,
+    groupCount,
+  };
+}
+
+function pushCoverageRoleReasons(
+  reasons: AutoBuildSlotExplanationReason[],
+  candidate: AutoBuildCandidate,
+): void {
+  if (candidate.tags.burstRoles.length) {
+    pushExplanationReason(reasons, 'burstRole', {
+      roles: candidate.tags.burstRoles,
+      count: candidate.tags.burstRoles.length,
+    });
+  }
+
+  if (candidate.tags.consistencyRoles.length) {
+    pushExplanationReason(reasons, 'consistencyRole', {
+      roles: candidate.tags.consistencyRoles,
+      count: candidate.tags.consistencyRoles.length,
+    });
+  }
+
+  if (candidate.tags.utilityRoles.length) {
+    pushExplanationReason(reasons, 'utilityRole', {
+      roles: candidate.tags.utilityRoles,
+      count: candidate.tags.utilityRoles.length,
+    });
+  }
+}
+
+function pushRankingReasons(
+  reasons: AutoBuildSlotExplanationReason[],
+  candidate: AutoBuildCandidate,
+  options: BuildSlotExplanationOptions,
+): void {
+  if (options.role === 'sub') {
+    const demandContext = collectSubAbilityDemandContext(
+      options.input,
+      options.battleRequirementAssignmentMode,
+      options.leaderCriteria,
+      options.leaderSlots,
+    );
+    const rank = resolveAutoFillSubCandidateRank(
+      candidate,
+      options.input,
+      demandContext,
+      options.leaderCriteria,
+    );
+
+    if (rank.demandScore > 0 || rank.leaderTagConditionScore > 0) {
+      pushExplanationReason(reasons, 'rankingDemand', {
+        demandScore: rank.demandScore,
+        leaderTagConditionScore: rank.leaderTagConditionScore,
+      });
+    }
+
+    if (rank.selectedFilterScore > 0) {
+      pushExplanationReason(reasons, 'rankingSelectedFilters', {
+        score: rank.selectedFilterScore,
+      });
+    }
+  } else {
+    const leaderRequirementScore = resolveLeaderRequirementPriorityScore(
+      candidate,
+      options.input,
+    );
+
+    if (leaderRequirementScore > 0) {
+      pushExplanationReason(reasons, 'rankingDemand', {
+        demandScore: leaderRequirementScore,
+      });
+    }
+
+    const selectedFilterScore = resolveSubSelectedFilterScore(candidate, options.input);
+
+    if (selectedFilterScore > 0) {
+      pushExplanationReason(reasons, 'rankingSelectedFilters', {
+        score: selectedFilterScore,
+      });
+    }
+  }
+
+  pushExplanationReason(reasons, 'rankingNewestId', {
+    characterId: candidate.character.id,
+    recencyScore: Number(candidate.recencyScore.toFixed(4)),
+  });
+}
+
+function pushExplanationReason(
+  reasons: AutoBuildSlotExplanationReason[],
+  code: AutoBuildSlotExplanationReason['code'],
+  params?: AutoBuildSlotExplanationReason['params'],
+): void {
+  reasons.push(params ? { code, params } : { code });
 }
 
 function resolveSpecialScope(specialText: string): AutoBuildSpecialScope {
