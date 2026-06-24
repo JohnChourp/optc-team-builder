@@ -34,3 +34,31 @@
   color: rgba(248, 251, 255, 0.66);
   line-height: 1.5;
 }
+
+.import-paste-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(248, 251, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.import-paste-panel label {
+  display: grid;
+  gap: 8px;
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.92rem;
+}
+
+.import-paste-panel ion-textarea {
+  --background: rgba(3, 8, 20, 0.48);
+  --border-radius: 14px;
+  --color: #f8fbff;
+  --highlight-color-focused: #f5c84c;
+  --padding-bottom: 12px;
+  --padding-end: 12px;
+  --padding-start: 12px;
+  --padding-top: 12px;
+  min-height: 132px;
+}

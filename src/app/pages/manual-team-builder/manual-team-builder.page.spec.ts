@@ -11,6 +11,7 @@ import {
   type DatasetManifest,
   type ShipRecord,
 } from '../../core/models/optc.models';
+import { buildSavedTeamShareCode } from '../saved-teams/saved-teams-transfer.utils';
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
@@ -157,6 +158,76 @@ describe('ManualTeamBuilderPage', () => {
     expect(router.navigate).toHaveBeenCalledWith([], {
       relativeTo: expect.any(Object),
       queryParams: { teamId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
+
+  it('loads a shared team from the route as an unsaved manual draft', async () => {
+    const sharedTeam = createSavedTeam({
+      id: 'team-from-link',
+      name: 'Shared Manual Crew',
+      notes: 'Shared notes',
+      shipId: 9002,
+      slots: [701, 702, null, 704, 705, 706],
+    });
+    const { page, router, userState } = createPage({
+      routeTeamShare: buildSavedTeamShareCode(sharedTeam, '2026-05-10T11:00:00.000Z'),
+      characters: [701, 702, 704, 705, 706].map((id) => createCharacterRecord(id)),
+    });
+
+    await page.ngOnInit();
+    await page.ionViewWillEnter();
+
+    expect(userState.readySavedTeams).not.toHaveBeenCalled();
+    expect(page.slots().map((slot) => slot?.id ?? null)).toEqual([701, 702, null, 704, 705, 706]);
+    expect(page.selectedShipId()).toBe(9002);
+    expect(page.teamName()).toBe('Shared Manual Crew');
+    expect(page.notes()).toBe('Shared notes');
+    expect(page.currentTeamId()).toBeNull();
+    expect(page.sharedTeamFeedbackError()).toBe('');
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamShare: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+
+    await page.saveTeam();
+
+    expect(userState.saveTeam).toHaveBeenCalledWith({
+      id: undefined,
+      name: 'Shared Manual Crew',
+      notes: 'Shared notes',
+      shipId: 9002,
+      slots: [701, 702, null, 704, 705, 706],
+    });
+  });
+
+  it('clears an invalid shared team route code and shows an error without changing the draft', async () => {
+    const { page, router } = createPage({ routeTeamShare: 'invalid share code' });
+
+    await page.ngOnInit();
+    page.teamName.set('Existing Draft');
+    page.slots.set([createCharacterRecord(901), null, null, null, null, null]);
+
+    await page.ionViewWillEnter();
+
+    expect(page.teamName()).toBe('Existing Draft');
+    expect(page.slots().map((slot) => slot?.id ?? null)).toEqual([
+      901,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ]);
+    expect(page.sharedTeamFeedbackError()).toBe(
+      'The shared team link or code could not be loaded.',
+    );
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.any(Object),
+      queryParams: { teamShare: null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
@@ -534,6 +605,7 @@ describe('ManualTeamBuilderPage', () => {
 function createPage(
   options: {
     characters?: CharacterDetailRecord[];
+    routeTeamShare?: string | null;
     routeTeamId?: string | null;
     savedTeams?: Array<ReturnType<typeof createSavedTeam>>;
     ships?: ShipRecord[];
@@ -638,6 +710,10 @@ function createPage(
       ) => {
         if (key === 'common.defaults.newCrew') {
           return 'New Crew';
+        }
+
+        if (key === 'common.defaults.untitledCrew') {
+          return 'Untitled Crew';
         }
 
         if (key === 'actions.assign') {
@@ -748,6 +824,10 @@ function createPage(
           return 'Manual team could not be saved.';
         }
 
+        if (key === 'shareImport.error') {
+          return 'The shared team link or code could not be loaded.';
+        }
+
         return key;
       },
     ),
@@ -758,7 +838,17 @@ function createPage(
   const route = {
     snapshot: {
       queryParamMap: {
-        get: vi.fn((key: string) => (key === 'teamId' ? (options.routeTeamId ?? null) : null)),
+        get: vi.fn((key: string) => {
+          if (key === 'teamId') {
+            return options.routeTeamId ?? null;
+          }
+
+          if (key === 'teamShare') {
+            return options.routeTeamShare ?? null;
+          }
+
+          return null;
+        }),
       },
     },
   };

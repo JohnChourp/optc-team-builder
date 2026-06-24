@@ -111,6 +111,9 @@
     "savingLabel": "Saving...",
     "success": "Manual team saved."
   },
+  "shareImport": {
+    "error": "The shared team link or code could not be loaded."
+  },
   "ship": {
     "actions": {
       "change": "Choose ship",
