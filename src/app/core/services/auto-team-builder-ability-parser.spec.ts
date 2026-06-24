@@ -381,6 +381,51 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('preserves unknown captain damage reduction without a minimum effect value', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Boosts ATK of all characters by 3x and reduces damage received by ?%.',
+      'captainAbility',
+    );
+
+    expect(abilities.find((ability) => ability.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({
+        effectTargetScope: 'crew',
+      }),
+    );
+    expect(abilities.find((ability) => ability.key === 'reduce_damage')).not.toHaveProperty(
+      'minEffectValue',
+    );
+  });
+
+  it('extracts favorable slot tokens and scope from only the slot effect segment', () => {
+    const abilities = analyzeBuilderAbilityText(
+      "Makes [STR] and [QCK] orbs beneficial for all characters, recovers 0.5x this character's RCV and makes [DEX] orbs beneficial for [INT] characters.",
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['STR', 'QCK'],
+          effectTargetScope: 'crew',
+        }),
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['DEX'],
+        }),
+      ]),
+    );
+    expect(abilities).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: expect.arrayContaining(['INT']),
+        }),
+      ]),
+    );
+  });
+
   it('keeps captain damage reduction crew-scoped when unrelated self text appears later', () => {
     const abilities = analyzeBuilderAbilityText(
       "Reduces damage received by 30%, boosts ATK of Driven characters by 2.25x and reduces this character's ATK by 90%.",

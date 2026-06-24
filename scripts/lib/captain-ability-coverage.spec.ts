@@ -484,6 +484,14 @@ describe('extractCoverageTiers', () => {
     });
   });
 
+  it('does not create ATK/HP stat tiers from RCV-only boosts that mention HP thresholds', () => {
+    const tiers = extractCoverageTiers(
+      "Boosts RCV of [PSY] characters by 1.5x depending on the crew's current HP.",
+    );
+
+    expect(tiers).toHaveLength(0);
+  });
+
   it('models Dominant Type ATK as a same-type team coverage and keeps shared HP in that tier', () => {
     const captainAbility =
       'Boosts HP of all characters by 1.25x, makes badly matching orbs beneficial for all characters, and reduces Despair duration by 6 turns. If your crew has 4+ characters of the same Type, boosts ATK of the Dominant Type characters by 4.5x.';

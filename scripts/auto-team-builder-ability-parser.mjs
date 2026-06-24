@@ -1019,19 +1019,20 @@ function addCaptainDamageReductionMatches(abilities, seen, normalizedText) {
   }
 
   for (const clause of extractCaptainEffectClauses(normalizedText)) {
-    const match = clause.match(/\breduces?\b[^.;]{0,120}\bdamage (?:received|taken)\b[^.;]{0,80}\bby\s+(\d+(?:\.\d+)?)%/i);
+    const damageReductionMatch = clause.match(
+      /\breduces?\b[^.;]{0,120}\bdamage (?:received|taken)\b/i,
+    );
 
-    if (!match) {
+    if (!damageReductionMatch) {
       continue;
     }
 
-    const minEffectValue = normalizeEffectValue(match[1]);
+    const match = clause.match(
+      /\breduces?\b[^.;]{0,120}\bdamage (?:received|taken)\b[^.;]{0,80}\bby\s+(\d+(?:\.\d+)?)%/i,
+    );
+    const minEffectValue = match ? normalizeEffectValue(match[1]) : null;
 
-    if (minEffectValue === null) {
-      continue;
-    }
-
-    addAbility(abilities, seen, {
+    const ability = {
       key: 'reduce_damage',
       label: definition.label,
       minTurns: null,
@@ -1039,9 +1040,14 @@ function addCaptainDamageReductionMatches(abilities, seen, normalizedText) {
       slotTokens: [],
       source: 'captainAbility',
       coverageMode: DEFAULT_COVERAGE_MODE,
-      minEffectValue,
       effectTargetScope: resolveCaptainDamageReductionTargetScope(clause),
-    });
+    };
+
+    if (minEffectValue !== null) {
+      ability.minEffectValue = minEffectValue;
+    }
+
+    addAbility(abilities, seen, ability);
   }
 }
 
@@ -1057,7 +1063,8 @@ function addCaptainFavorableSlotMatches(abilities, seen, normalizedText) {
       continue;
     }
 
-    const slotTokens = extractSlotTokens(clause);
+    const effectSegment = extractFavorableSlotEffectSegment(clause);
+    const slotTokens = extractSlotTokens(extractFavorableSlotTokenSegment(effectSegment));
 
     addAbility(abilities, seen, {
       key: 'make_slots_favorable',
@@ -1067,9 +1074,25 @@ function addCaptainFavorableSlotMatches(abilities, seen, normalizedText) {
       slotTokens,
       source: 'captainAbility',
       coverageMode: DEFAULT_COVERAGE_MODE,
-      effectTargetScope: resolveCaptainEffectTargetScope(clause, 'any'),
+      effectTargetScope: resolveCaptainEffectTargetScope(effectSegment, 'any'),
     });
   }
+}
+
+function extractFavorableSlotEffectSegment(clause) {
+  const match = clause.match(
+    /\bmakes?\b[^.;]{0,160}\b(?:orbs?|slots?)\b[^.;]{0,80}\b(?:beneficial|matching|favorable)\b(?:\s+(?:for|to|of)\s+[^,.;]*?(?:characters?|crew|allies|captains?|subs?|crewmates?|non-?captains?|this character|self|own)\b)?/i,
+  );
+
+  return match ? match[0] : clause;
+}
+
+function extractFavorableSlotTokenSegment(effectSegment) {
+  const match = effectSegment.match(
+    /^(.*?\b(?:orbs?|slots?)\b[^.;]{0,80}\b(?:beneficial|matching|favorable)\b)/i,
+  );
+
+  return match ? match[1] : effectSegment;
 }
 
 function extractCaptainEffectClauses(normalizedText) {

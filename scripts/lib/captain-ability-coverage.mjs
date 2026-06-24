@@ -55,6 +55,8 @@ const RARITY_SUBSET_PATTERN =
   /\brarity\s+(?:\d+\s+or\s+(?:more|less|higher|lower|\d+\+))\s+characters?\b/i;
 const ATK_CLAUSE_PATTERN = /\batk\b/i;
 const HP_CLAUSE_PATTERN = /\bhp\b/i;
+const ATK_HP_BOOSTED_STAT_PATTERN =
+  /\b(?:boosts?|adds?)\s+(?:(?:base\s+)?(?:atk|hp)|atk\s+and\s+hp)\b|\bboosts?\s+[^.;]{0,180}?\b(?:characters|units|crew)(?:'|’)?s?\s+(?:atk|hp)\b/i;
 const BOOST_TARGET_FRAGMENT_PATTERNS = [
   /\b(?:of|for)\s+([^.;]{1,220}?)\s+(?:characters|units)\b/gi,
   /\b(?:of|for)\s+(crew)\b/gi,
@@ -285,7 +287,7 @@ function isCaptainBoostScopeClause(clause) {
 
   return (
     /\bboosts?\b/i.test(normalizedClause) &&
-    /\b(?:atk|hp)\b/i.test(normalizedClause) &&
+    ATK_HP_BOOSTED_STAT_PATTERN.test(normalizedClause) &&
     (CAPTAIN_MULTIPLIER_PATTERN.test(normalizedClause) ||
       CAPTAIN_BASE_STAT_BOOST_PATTERN.test(normalizedClause)) &&
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&

@@ -408,6 +408,21 @@ function crewCompositionSatisfied(
   const requiredTypes = condition.types ?? [];
   const requiredClasses = condition.classes ?? [];
   const requiredTags = condition.characterTags ?? [];
+
+  if (
+    requiredTypes.length > 1 &&
+    requiredClasses.length === 0 &&
+    requiredTags.length === 0 &&
+    condition.minCount === requiredTypes.length &&
+    condition.exactCount === undefined
+  ) {
+    const normalizedRequiredTypes = resolveConditionTypes(requiredTypes);
+
+    return normalizedRequiredTypes.every((requiredType) =>
+      members.some((member) => resolveMemberTypes(member).includes(requiredType)),
+    );
+  }
+
   const matchCount = members.filter((member) =>
     memberSatisfiesCompositionCondition(member, requiredTypes, requiredClasses, requiredTags),
   ).length;

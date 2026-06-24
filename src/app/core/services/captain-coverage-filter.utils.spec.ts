@@ -496,6 +496,68 @@ describe('resolveCaptainAllTierCoverage', () => {
       ).matches,
     ).toBe(false);
   });
+
+  it('requires each listed type for rainbow crew-composition conditions', () => {
+    const captain = createCharacter({
+      id: 9009,
+      captainAbilityCoverage: {
+        entries: [
+          {
+            source: 'base',
+            label: null,
+            tiers: [
+              {
+                tier: 1,
+                kind: 'conditional',
+                scope: 'crew-wide',
+                characterConditions: {
+                  universal: true,
+                  fallbackOther: false,
+                  selfOnly: false,
+                  types: [],
+                  classes: [],
+                  characterTags: [],
+                },
+                teamConditions: [
+                  {
+                    kind: 'crew-composition',
+                    types: ['STR', 'DEX', 'QCK', 'PSY', 'INT'],
+                    classes: [],
+                    characterTags: [],
+                    minCount: 5,
+                    rawClause: 'there is a [STR], [DEX], [QCK], [PSY] and [INT] character in your crew',
+                  },
+                ],
+                fieldConditions: [],
+                triggerConditions: [],
+                clauses: ['boosts ATK of all characters by 5x'],
+                atkBoost: 5,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const rainbowTeam = ['STR', 'DEX', 'QCK', 'PSY', 'INT'].map((type, index) =>
+      createCharacter({ id: 9900 + index, type }),
+    );
+    const duplicateTypeTeam = Array.from({ length: 5 }, (_, index) =>
+      createCharacter({ id: 9910 + index, type: 'STR' }),
+    );
+
+    expect(
+      resolveCaptainAllTierCoverage(
+        captain,
+        rainbowTeam.map((character) => ({ character })),
+      ).matches,
+    ).toBe(true);
+    expect(
+      resolveCaptainAllTierCoverage(
+        captain,
+        duplicateTypeTeam.map((character) => ({ character })),
+      ).matches,
+    ).toBe(false);
+  });
 });
 
 function createCharacter(
