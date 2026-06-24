@@ -103,6 +103,97 @@ describe('auto team build fallback timing estimates', () => {
 });
 
 describe('runAutoTeamBuildSearch', () => {
+  it('records close rejected leader and sub candidates with structured reasons', () => {
+    const result = runAutoTeamBuildSearch(
+      [
+        createPreferredCaptainRecord(),
+        createCaptainRecord(),
+        createAlternateCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createLowCoverageSubRecord(5850),
+        createLowCoverageSubRecord(5840),
+        createLowCoverageSubRecord(5830),
+        createLowCoverageSubRecord(5820),
+      ],
+      createInput(['DEX'], ['Fighter']),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots.every((slot) => slot.explanation)).toBe(true);
+
+    const captainRejectedCandidates = result?.slots[0]?.explanation?.rejectedCandidates ?? [];
+    expect(captainRejectedCandidates).toHaveLength(2);
+    expect(captainRejectedCandidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          characterId: 5900,
+          reasons: expect.arrayContaining([{ code: 'alreadySelected' }]),
+        }),
+        expect.objectContaining({
+          characterId: 5810,
+          characterName: 'Alternate Captain',
+          reasons: expect.arrayContaining([{ code: 'rankingTieBreak' }]),
+        }),
+      ]),
+    );
+
+    const rejectedSubCandidates =
+      result?.slots
+        .filter((slot) => slot.role === 'sub')
+        .flatMap((slot) => slot.explanation?.rejectedCandidates ?? []) ?? [];
+    expect(
+      result?.slots.every(
+        (slot) => (slot.explanation?.rejectedCandidates.length ?? 0) <= 3,
+      ),
+    ).toBe(true);
+    expect(rejectedSubCandidates.length).toBeGreaterThan(0);
+    const rejectedSubReasonCodes = rejectedSubCandidates.flatMap((candidate) =>
+      candidate.reasons.map((reason) => reason.code),
+    );
+
+    expect(rejectedSubReasonCodes).toContain('alreadySelected');
+    expect(rejectedSubReasonCodes).toContain('lowerCoverageContribution');
+  });
+
+  it('records required-constraint tradeoffs for rejected sub candidates', () => {
+    const result = runAutoTeamBuildSearch(
+      [
+        createCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+        createLowCoverageSubRecord(5850),
+        createLowCoverageSubRecord(5840),
+        createLowCoverageSubRecord(5830),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requiredAbilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+      }),
+    );
+
+    expect(result).not.toBeNull();
+
+    const rejectedSubReasonCodes =
+      result?.slots
+        .filter((slot) => slot.role === 'sub')
+        .flatMap((slot) => slot.explanation?.rejectedCandidates ?? [])
+        .flatMap((candidate) => candidate.reasons.map((reason) => reason.code)) ?? [];
+
+    expect(rejectedSubReasonCodes).toContain('requiredConstraint');
+    expect(rejectedSubReasonCodes).toContain('lowerRequirementDemand');
+  });
+
   it('emits deterministic progress stages for exact and fallback attempts', () => {
     const snapshots: AutoBuildProgressSnapshot[] = [];
 
@@ -1074,6 +1165,7 @@ function createInput(
       | 'captainCharacterId'
       | 'friendCaptainCharacterId'
       | 'excludedShipIds'
+      | 'requiredAbilities'
       | 'battleRequirements'
     >
   > = {},
@@ -1088,7 +1180,7 @@ function createInput(
     selectedClasses,
     selectedCharacterTags: overrides.selectedCharacterTags ?? [],
     selectedCharacterNames: overrides.selectedCharacterNames ?? [],
-    requiredAbilities: [],
+    requiredAbilities: overrides.requiredAbilities ?? [],
     requiredCharacterGroups: [],
     enemyMechanics: [],
     battleRequirements: overrides.battleRequirements ?? [],
@@ -1449,12 +1541,50 @@ function createCaptainRecord(): CharacterDetailRecord {
   });
 }
 
+function createPreferredCaptainRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 5910,
+    name: 'Preferred Captain',
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      captainAbility:
+        'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+      specialText:
+        'Boosts orb effects of DEX and Fighter characters by 2.25x for 1 turn and changes orbs into Matching Orbs.',
+    },
+  });
+}
+
+function createAlternateCaptainRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 5810,
+    name: 'Alternate Captain',
+    primaryClass: 'Fighter',
+    secondaryClass: 'Free Spirit',
+    detail: {
+      captainAbility: 'Boosts ATK of DEX and Fighter characters by 4.5x and HP by 1.2x.',
+      specialText: 'Deals 75x character ATK in typeless damage to one enemy.',
+    },
+  });
+}
+
 function createAtkSubRecord(): CharacterDetailRecord {
   return createCharacterRecord({
     id: 5890,
     primaryClass: 'Fighter',
     detail: {
       specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.',
+    },
+  });
+}
+
+function createLowCoverageSubRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    primaryClass: 'Fighter',
+    detail: {
+      specialText: 'Deals 50x character ATK in typeless damage to one enemy.',
     },
   });
 }
@@ -1476,6 +1606,16 @@ function createUtilitySubRecord(): CharacterDetailRecord {
     detail: {
       specialText:
         'Reduces Bind and Despair duration by 5 turns and reduces Threshold Damage Reduction duration by 5 turns.',
+      builderAbilities: [
+        {
+          key: 'remove_bind',
+          label: 'Remove Bind',
+          minTurns: 5,
+          isCompleteRemoval: false,
+          slotTokens: [],
+          source: 'specialText',
+        },
+      ],
     },
   });
 }

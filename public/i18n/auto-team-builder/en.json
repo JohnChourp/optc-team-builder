@@ -773,6 +773,8 @@
       "title": "Why picked?",
       "missing": "Selection metadata is unavailable for this slot.",
       "unknown": "Selection metadata was recorded with an unknown reason.",
+      "rejectedTitle": "Close alternatives not picked",
+      "rejectedCandidateTitle": "{{name}} (#{{id}})",
       "coverageRoles": {
         "atkBoost": "ATK boost",
         "atkDown": "ATK Down clear",
@@ -822,6 +824,20 @@
         "fallbackIgnoredSuperTandemCriteria": "Fallback relaxed Super Tandem activation criteria: {{values}}.",
         "fallbackIgnoredCaptainAbilityCoverage": "Fallback relaxed full Captain Ability tier coverage.",
         "fallbackDowngradedCaptainAbilityCoverage": "Fallback downgraded Captain Ability coverage to simple scope matching."
+      },
+      "rejectedReasons": {
+        "manualSlotLocked": "Manual slot lock kept the selected unit.",
+        "alreadySelected": "Already used by another final slot.",
+        "duplicateBaseConflict": "Conflicts with unique base-character rules.",
+        "leaderScopeConstraint": "Would violate leader or activation scope.",
+        "costConstraint": "Would exceed the active cost budget.",
+        "requiredConstraint": "Would miss required coverage constraints.",
+        "lowerRequirementDemand": "Contributes less to current requirements.",
+        "lowerCoverageContribution": "Adds less burst, utility, or consistency coverage.",
+        "lowerSelectedFilterScore": "Matches fewer selected filters.",
+        "lowerLeaderCoverageScore": "Covers less leader-scope demand.",
+        "rankingTieBreak": "Lost the current ranking tie-break.",
+        "unknown": "Rejected for an unrecognized recorded reason."
       }
     },
     "captainAbilityCoverage": {

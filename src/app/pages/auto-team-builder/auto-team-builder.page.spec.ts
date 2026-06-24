@@ -674,6 +674,21 @@ describe('AutoTeamBuilderPage builder interactions', () => {
             fallbackReasons: [
               { code: 'fallbackDroppedTypes', params: { types: ['INT'], count: 1 } },
             ],
+            rejectedCandidates: [
+              {
+                characterId: 901,
+                characterName: 'Rejected Luffy',
+                reasons: [
+                  { code: 'lowerRequirementDemand' },
+                  { code: 'rankingTieBreak' },
+                ],
+              },
+              {
+                characterId: 902,
+                characterName: 'Rejected Zoro',
+                reasons: [{ code: 'duplicateBaseConflict' }],
+              },
+            ],
           },
         },
         baseline.slots[1]!,
@@ -690,6 +705,19 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       'Matches selected type coverage: DEX.',
       'Covers 1 requested ability requirement(s): remove_bind.',
       'Fallback relaxed selected type coverage: INT.',
+    ]);
+    expect(slots[0]?.rejectedCandidateLabels).toEqual([
+      {
+        title: 'Rejected Luffy (#901)',
+        reasonLabels: [
+          'Contributes less to current requirements.',
+          'Lost the current ranking tie-break.',
+        ],
+      },
+      {
+        title: 'Rejected Zoro (#902)',
+        reasonLabels: ['Conflicts with unique base-character rules.'],
+      },
     ]);
     expect(slots[1]?.hasStructuredExplanation).toBe(false);
     expect(slots[1]?.explanationSummaryLabel).toBe(

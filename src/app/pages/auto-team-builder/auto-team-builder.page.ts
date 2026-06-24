@@ -62,6 +62,7 @@ import {
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressExclusionCounts,
   type AutoBuildProgressSnapshot,
+  type AutoBuildRejectedCandidateReason,
   type AutoBuildResult,
   type AutoBuildSlotExplanationReason,
   type AutoBuildCostRange,
@@ -368,8 +369,14 @@ type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   captainBranchLabel: string | null;
   explanationSummaryLabel: string;
   explanationDetailLabels: string[];
+  rejectedCandidateLabels: RejectedCandidateExplanationView[];
   hasStructuredExplanation: boolean;
 };
+
+interface RejectedCandidateExplanationView {
+  title: string;
+  reasonLabels: string[];
+}
 
 interface AppliedManualCharacterFilters {
   selectedTypes: AutoTeamBuilderType[];
@@ -2510,6 +2517,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           captainBranchLabel: slot.captainBranchSelection?.displayName ?? null,
           explanationSummaryLabel: explanationView.summaryLabel,
           explanationDetailLabels: explanationView.detailLabels,
+          rejectedCandidateLabels: explanationView.rejectedCandidateLabels,
           hasStructuredExplanation: explanationView.hasStructuredExplanation,
         };
       }) ?? []
@@ -2519,6 +2527,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private buildSlotExplanationView(slot: AutoBuildResult['slots'][number]): {
     detailLabels: string[];
     hasStructuredExplanation: boolean;
+    rejectedCandidateLabels: RejectedCandidateExplanationView[];
     summaryLabel: string;
   } {
     const explanation = slot.explanation;
@@ -2527,6 +2536,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return {
         summaryLabel: this.t('results.explanations.missing'),
         detailLabels: [],
+        rejectedCandidateLabels: [],
         hasStructuredExplanation: false,
       };
     }
@@ -2538,8 +2548,46 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return {
       summaryLabel: this.formatSlotExplanationReason(explanation.primaryReason),
       detailLabels,
+      rejectedCandidateLabels: explanation.rejectedCandidates.map((candidate) => ({
+        title: this.t('results.explanations.rejectedCandidateTitle', {
+          name: candidate.characterName,
+          id: candidate.characterId,
+        }),
+        reasonLabels: candidate.reasons.map((reason) =>
+          this.formatRejectedCandidateReason(reason),
+        ),
+      })),
       hasStructuredExplanation: true,
     };
+  }
+
+  private formatRejectedCandidateReason(reason: AutoBuildRejectedCandidateReason): string {
+    switch (reason.code) {
+      case 'manualSlotLocked':
+        return this.t('results.explanations.rejectedReasons.manualSlotLocked');
+      case 'alreadySelected':
+        return this.t('results.explanations.rejectedReasons.alreadySelected');
+      case 'duplicateBaseConflict':
+        return this.t('results.explanations.rejectedReasons.duplicateBaseConflict');
+      case 'leaderScopeConstraint':
+        return this.t('results.explanations.rejectedReasons.leaderScopeConstraint');
+      case 'costConstraint':
+        return this.t('results.explanations.rejectedReasons.costConstraint');
+      case 'requiredConstraint':
+        return this.t('results.explanations.rejectedReasons.requiredConstraint');
+      case 'lowerRequirementDemand':
+        return this.t('results.explanations.rejectedReasons.lowerRequirementDemand');
+      case 'lowerCoverageContribution':
+        return this.t('results.explanations.rejectedReasons.lowerCoverageContribution');
+      case 'lowerSelectedFilterScore':
+        return this.t('results.explanations.rejectedReasons.lowerSelectedFilterScore');
+      case 'lowerLeaderCoverageScore':
+        return this.t('results.explanations.rejectedReasons.lowerLeaderCoverageScore');
+      case 'rankingTieBreak':
+        return this.t('results.explanations.rejectedReasons.rankingTieBreak');
+      default:
+        return this.t('results.explanations.rejectedReasons.unknown');
+    }
   }
 
   private formatSlotExplanationReason(reason: AutoBuildSlotExplanationReason): string {

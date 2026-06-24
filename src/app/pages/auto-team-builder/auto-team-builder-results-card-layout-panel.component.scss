@@ -100,3 +100,24 @@
   margin: 8px 0 0;
   padding-left: 18px;
 }
+
+.slot-explanation__rejected {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.slot-explanation__rejected ul {
+  gap: 6px;
+}
+
+.slot-explanation__rejected li {
+  display: grid;
+  gap: 2px;
+}
+
+.slot-explanation__rejected small {
+  color: rgba(248, 251, 255, 0.58);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}

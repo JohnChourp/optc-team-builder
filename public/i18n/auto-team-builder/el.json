@@ -773,6 +773,8 @@
       "title": "Why picked?",
       "missing": "Δεν υπάρχουν selection metadata για αυτό το slot.",
       "unknown": "Καταγράφηκε άγνωστος λόγος επιλογής.",
+      "rejectedTitle": "Κοντινές εναλλακτικές που δεν μπήκαν",
+      "rejectedCandidateTitle": "{{name}} (#{{id}})",
       "coverageRoles": {
         "atkBoost": "ATK boost",
         "atkDown": "ATK Down clear",
@@ -822,6 +824,20 @@
         "fallbackIgnoredSuperTandemCriteria": "Το fallback χαλάρωσε Super Tandem activation criteria: {{values}}.",
         "fallbackIgnoredCaptainAbilityCoverage": "Το fallback χαλάρωσε full Captain Ability tier coverage.",
         "fallbackDowngradedCaptainAbilityCoverage": "Το fallback γύρισε το Captain Ability coverage σε simple scope matching."
+      },
+      "rejectedReasons": {
+        "manualSlotLocked": "Το manual slot lock κράτησε το selected unit.",
+        "alreadySelected": "Χρησιμοποιείται ήδη από άλλο final slot.",
+        "duplicateBaseConflict": "Συγκρούεται με unique base-character rules.",
+        "leaderScopeConstraint": "Θα έσπαγε leader ή activation scope.",
+        "costConstraint": "Θα ξεπερνούσε το active cost budget.",
+        "requiredConstraint": "Θα έχανε required coverage constraints.",
+        "lowerRequirementDemand": "Συνεισφέρει λιγότερο στα current requirements.",
+        "lowerCoverageContribution": "Προσθέτει λιγότερο burst, utility ή consistency coverage.",
+        "lowerSelectedFilterScore": "Ταιριάζει σε λιγότερα selected filters.",
+        "lowerLeaderCoverageScore": "Καλύπτει λιγότερο leader-scope demand.",
+        "rankingTieBreak": "Έχασε στο current ranking tie-break.",
+        "unknown": "Απορρίφθηκε για άγνωστο recorded reason."
       }
     },
     "captainAbilityCoverage": {

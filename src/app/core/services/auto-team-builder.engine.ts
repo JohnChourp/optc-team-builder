@@ -625,6 +625,7 @@ function appendFallbackExplanationReasons(result: AutoBuildResult): AutoBuildRes
             primaryReason: nextFallbackReasons[0]!,
             reasons: [],
             fallbackReasons: nextFallbackReasons,
+            rejectedCandidates: [],
           },
         };
       }
