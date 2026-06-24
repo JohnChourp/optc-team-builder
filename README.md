@@ -1,6 +1,13 @@
 # OPTC Team Builder
 
-Offline-first Ionic Angular app for browsing One Piece Treasure Cruise characters and building teams on Android and iOS.
+Offline-first Ionic Angular app for browsing One Piece Treasure Cruise characters and building teams on web, Android, and iOS.
+
+## Live site
+
+- App: https://optcteambuilder.com/
+- OPTC team builder tool page: https://optcteambuilder.com/tools/optc-team-builder/
+- OPTC character database: https://optcteambuilder.com/tools/optc-character-database/
+- Team-building guide: https://optcteambuilder.com/guides/how-to-build-an-optc-team/
 
 ## What is included
 

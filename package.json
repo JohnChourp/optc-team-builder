@@ -1,6 +1,22 @@
 {
   "name": "optc-team-builder",
   "version": "0.0.51",
+  "description": "Offline-first OPTC team builder, character database, and One Piece Treasure Cruise planning tools.",
+  "homepage": "https://optcteambuilder.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnChourp/optc-team-builder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JohnChourp/optc-team-builder/issues"
+  },
+  "keywords": [
+    "optc",
+    "one-piece-treasure-cruise",
+    "team-builder",
+    "character-database",
+    "pirate-rumble"
+  ],
   "scripts": {
     "config:app": "node ./scripts/write-app-config.mjs",
     "config:app:web-strict": "node ./scripts/write-app-config.mjs --require-google-web-client-id",
