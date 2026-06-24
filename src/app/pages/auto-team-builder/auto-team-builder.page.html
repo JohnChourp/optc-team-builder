@@ -3229,7 +3229,7 @@
                                 <span>{{ slot.explanationSummaryLabel }}</span>
                               </summary>
                               <ul>
-                                @for (detail of slot.explanationDetailLabels; track detail) {
+                                @for (detail of slot.explanationDetailLabels; track $index) {
                                   <li>{{ detail }}</li>
                                 }
                               </ul>
