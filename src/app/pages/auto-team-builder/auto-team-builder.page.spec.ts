@@ -250,6 +250,53 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.errorMessage()).not.toBe('');
   });
 
+  it('guided auto build rejects fallback results without mutating manual slots', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const initialSlots = createManualSlots();
+    const fallbackResult = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue({
+      ...fallbackResult,
+      relaxation: {
+        ...fallbackResult.relaxation,
+        usedFallback: true,
+      },
+    });
+    await page.ngOnInit();
+    page.guidedAutoBuildEnabled.set(true);
+    await page.buildTeam();
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots()).toEqual(initialSlots);
+    expect(page.errorMessage()).not.toBe('');
+  });
+
+  it('guided auto build locks optional prefilled slots before advancing', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    page.manualSlots.set(createManualSlots({ captain: [101] }));
+    page.guidedAutoBuildEnabled.set(true);
+
+    expect(page.guidedAutoBuildSupportLabel()).toContain('Captain');
+
+    await page.buildTeam();
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots().find((slot) => slot.role === 'captain')).toMatchObject({
+      role: 'captain',
+      characterIds: [101],
+      requiredCharacterId: 101,
+    });
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')).toMatchObject({
+      role: 'sub1',
+      characterIds: [],
+      requiredCharacterId: null,
+    });
+    expect(page.guidedAutoBuildSupportLabel()).toContain('Sub 1');
+  });
+
   it('serializes required manual leader slots when building', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -2354,17 +2401,20 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('defaults and resets the any-friend-captain toggle to off', async () => {
+  it('defaults and resets secondary auto build toggles to off', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
 
     expect(page.allowAnyFriendCaptainAutoFill()).toBe(false);
+    expect(page.guidedAutoBuildEnabled()).toBe(false);
 
     page.allowAnyFriendCaptainAutoFill.set(true);
+    page.guidedAutoBuildEnabled.set(true);
     await page['resetPageState']();
 
     expect(page.allowAnyFriendCaptainAutoFill()).toBe(false);
+    expect(page.guidedAutoBuildEnabled()).toBe(false);
   });
 
   it('blocks builds and surfaces a clear message when the selected box is empty', async () => {

@@ -4163,7 +4163,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
       if (nextResult) {
         if (guidedSlotRole) {
-          if (!this.applyGuidedAutoBuildSlot(nextResult, guidedSlotRole)) {
+          if (
+            nextResult.relaxation.usedFallback ||
+            !this.applyGuidedAutoBuildSlot(nextResult, guidedSlotRole)
+          ) {
             this.errorMessage.set(this.resolveBuildFailureMessage());
           }
         } else {
@@ -4262,9 +4265,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private resolveNextGuidedAutoBuildSlotRole(): AutoBuildManualSlotRole | null {
     return (
       GUIDED_AUTO_BUILD_SLOT_ORDER.find(
-        (role) => this.resolveManualSlotSelection(role).characterIds.length === 0,
+        (role) => !this.isGuidedAutoBuildSlotLocked(this.resolveManualSlotSelection(role)),
       ) ?? null
     );
+  }
+
+  private isGuidedAutoBuildSlotLocked(slot: AutoBuildManualSlotSelection): boolean {
+    return slot.requiredCharacterId != null && slot.characterIds.includes(slot.requiredCharacterId);
   }
 
   private applyGuidedAutoBuildSlot(
@@ -4272,10 +4279,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     role: AutoBuildManualSlotRole,
   ): boolean {
     const resultSlot = this.resolveGuidedAutoBuildResultSlot(result, role);
+    const manualSlot = this.resolveManualSlotSelection(role);
 
     if (
       !resultSlot ||
-      this.resolveManualSlotSelection(role).characterIds.length > 0 ||
+      this.isGuidedAutoBuildSlotLocked(manualSlot) ||
+      (manualSlot.characterIds.length > 0 &&
+        !manualSlot.characterIds.includes(resultSlot.character.id)) ||
       !this.canAssignCharacterToManualSlot(role, resultSlot.character)
     ) {
       return false;
@@ -4788,6 +4798,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedExcludeCharacterBoxId.set(null);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
     this.allowAnyFriendCaptainAutoFill.set(defaultFilters.allowAnyFriendCaptainAutoFill);
+    this.guidedAutoBuildEnabled.set(false);
     this.favoriteShipsOnly.set(defaultFilters.favoriteShipsOnly);
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
     this.notes.set('');
