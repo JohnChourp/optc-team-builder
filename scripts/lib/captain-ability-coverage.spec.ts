@@ -503,6 +503,17 @@ describe('extractCoverageTiers', () => {
     );
   });
 
+  it('keeps trailing comma-less boost alternatives in generated tiers', () => {
+    const tiers = extractCoverageTiers(
+      "Boosts ATK of all characters by 3.25x. If you use 'Gomu Gomu no King Cobra' for 3 turns, on this Luffy boosts ATK of all characters by 4x at the start of the chain, by 4.25x after 3 PERFECTs in a row.",
+    );
+
+    expect(tiers.some((tier) => tier.atkBoost === 4.25)).toBe(true);
+    expect(tiers.flatMap((tier) => tier.clauses ?? [])).toContain(
+      'boosts ATK of all characters by 4.25x after 3 PERFECTs in a row',
+    );
+  });
+
   it('models Dominant Type ATK as a same-type team coverage and keeps shared HP in that tier', () => {
     const captainAbility =
       'Boosts HP of all characters by 1.25x, makes badly matching orbs beneficial for all characters, and reduces Despair duration by 6 turns. If your crew has 4+ characters of the same Type, boosts ATK of the Dominant Type characters by 4.5x.';

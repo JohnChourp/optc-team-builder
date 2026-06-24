@@ -39,6 +39,9 @@ const CAPTAIN_BASE_STAT_BOOST_PATTERN =
   /\bboosts?\s+base\b[^.;]*\b(?:ATK|HP)\b[^.;]*\bby\s+\d+(?:,\d{3})*\b/i;
 const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
   /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
+const TRAILING_CAPTAIN_BOOST_ALTERNATIVE_PATTERN =
+  /,\s*(?:or\s+)?by\s+(\d+(?:\.\d+)?)x\b((?:(?!,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\b)(?!\s+(?:and|but)\s+(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)[^,.;])*)/gi;
+const CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN = /\bby\s+\d+(?:\.\d+)?x\b/gi;
 const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
 const SELF_OVERRIDE_RIDER_PATTERN =
   /,?\s*but\s+boosts?\s+(?:atk|hp|rcv|atk\s+and\s+hp)[^,.;]*?\bof\s+this\s+character\b[^,.;]*?\bby\s+\d+(?:\.\d+)?x\b(?:\s+instead)?/gi;
@@ -1121,8 +1124,41 @@ function extractEffectClausesFromConditionalSentence(sentence) {
 
   return effectText
     .split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR)
+    .flatMap(expandTrailingCaptainBoostAlternatives)
     .map((clause) => clause.trim())
     .filter(Boolean);
+}
+
+function expandTrailingCaptainBoostAlternatives(clause) {
+  const alternatives = [...clause.matchAll(TRAILING_CAPTAIN_BOOST_ALTERNATIVE_PATTERN)];
+  if (alternatives.length === 0) {
+    return [clause];
+  }
+
+  const firstAlternative = alternatives[0];
+  const firstAlternativeIndex = firstAlternative?.index;
+  if (firstAlternativeIndex === undefined) {
+    return [clause];
+  }
+
+  const primaryClause = clause.slice(0, firstAlternativeIndex).trim();
+  const primaryMultipliers = [...primaryClause.matchAll(CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN)];
+  const primaryMultiplier = primaryMultipliers.at(-1);
+  if (primaryMultiplier?.index === undefined) {
+    return [clause];
+  }
+
+  const sharedBoostPrefix = primaryClause.slice(0, primaryMultiplier.index).trimEnd();
+  if (!/\bboosts?\b/i.test(sharedBoostPrefix) || !/\b(?:atk|hp)\b/i.test(sharedBoostPrefix)) {
+    return [clause];
+  }
+
+  return [
+    primaryClause,
+    ...alternatives.map((alternative) =>
+      normalizeCoverageClause(`${sharedBoostPrefix} by ${alternative[1]}x${alternative[2] ?? ''}`),
+    ),
+  ];
 }
 
 function parseSameTypeTeamCondition(countText, rawClause) {

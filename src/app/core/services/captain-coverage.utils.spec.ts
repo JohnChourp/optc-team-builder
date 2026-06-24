@@ -356,6 +356,30 @@ describe('resolveCaptainCoverage', () => {
     );
   });
 
+  it('keeps trailing comma-less boost alternatives in conditional full coverage', () => {
+    const captainAbility =
+      "Boosts ATK of all characters by 3.25x. If you use 'Gomu Gomu no King Cobra' for 3 turns, on this Luffy boosts ATK of all characters by 4x at the start of the chain, by 4.25x after 3 PERFECTs in a row.";
+    const captain = createCharacter({ id: 2363, captainAbility });
+    const target = createCharacter({ id: 2364, type: 'INT', classes: ['Fighter', 'Free Spirit'] });
+
+    expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage').clauses).toEqual(
+      expect.arrayContaining([
+        'boosts ATK of all characters by 4x at the start of the chain',
+        'boosts ATK of all characters by 4.25x after 3 PERFECTs in a row',
+      ]),
+    );
+    expect(
+      resolveCaptainCoverage(captain, target, { coverageMode: 'fullAbilityCoverage' }),
+    ).toEqual(
+      expect.objectContaining({
+        matches: true,
+        coveredClauses: expect.arrayContaining([
+          'boosts ATK of all characters by 4.25x after 3 PERFECTs in a row',
+        ]),
+      }),
+    );
+  });
+
   it('does not treat possessive Captain Ability removal text as a branch label', () => {
     const captainAbility =
       "Boosts ATK of Driven and Powerhouse characters by 4.5x, boosts HP of Driven and Powerhouse characters by 1.75x, increases damage received by 1.5x. If total Damage Taken is 50,000 or more, boosts ATK of Driven and Powerhouse characters by 5.25x instead, recovers 2,000 HP at the end of each turn, reduces damage received by 10% and removes the following effect from this character's Captain Ability: increases damage received by 1.5x.";
