@@ -35,7 +35,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          npm run data:check-release -- --json > release-check.json
+          npm run --silent data:check-release -- --json > release-check.json
 
           node <<'NODE'
           const fs = require('node:fs');
