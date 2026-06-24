@@ -288,6 +288,19 @@
                                           "
                                         ></ion-toggle>
                                       </div>
+
+                                      <div class="strict-toggle-row">
+                                        <div class="strict-toggle-copy">
+                                          <strong>{{ guidedAutoBuildToggleLabel() }}</strong>
+                                          <small>{{ guidedAutoBuildSupportLabel() }}</small>
+                                        </div>
+                                        <ion-toggle
+                                          color="warning"
+                                          [checked]="guidedAutoBuildEnabled()"
+                                          [disabled]="building()"
+                                          (ionChange)="onGuidedAutoBuildToggle($event)"
+                                        ></ion-toggle>
+                                      </div>
                                     </div>
 
                                     <div class="strict-toggle-row strict-toggle-row--select">

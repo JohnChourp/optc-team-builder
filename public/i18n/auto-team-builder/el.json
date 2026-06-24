@@ -211,6 +211,13 @@
       "toggle": "Επίτρεψε οποιονδήποτε Friend Captain",
       "support": "Όταν το Friend Captain είναι κενό, ψάχνει όλους τους χαρακτήρες για αυτό το slot. Το favorite auto-fill ισχύει ακόμα για Captain και subs."
     },
+    "guidedAutoBuild": {
+      "toggle": "Guided auto build",
+      "support": {
+        "next": "Χτίζει και κλειδώνει μόνο το επόμενο κενό slot: {{role}}.",
+        "complete": "Όλα τα manual slots είναι γεμάτα. Το επόμενο build κάνει validate την κλειδωμένη ομάδα."
+      }
+    },
     "favoriteShipsOnly": {
       "toggle": "Χρησιμοποίησε μόνο favorite ships",
       "support": {

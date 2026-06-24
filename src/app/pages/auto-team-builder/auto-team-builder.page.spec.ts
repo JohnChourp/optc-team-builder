@@ -106,6 +106,236 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('keeps guided auto build disabled by default', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page.guidedAutoBuildEnabled()).toBe(false);
+    expect(page.guidedAutoBuildToggleLabel()).toBe('Guided auto build');
+    expect(page.guidedAutoBuildSupportLabel()).toContain('Captain');
+  });
+
+  it('keeps normal auto build behavior when guided mode is disabled', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const result = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(result);
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    expect(page.result()).toBe(result);
+    expect(page.manualSlots().every((slot) => slot.characterIds.length === 0)).toBe(true);
+  });
+
+  it('guided auto build fills and requires only captain on the first run', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    page.onGuidedAutoBuildToggle({ detail: { checked: true } } as CustomEvent<{
+      checked: boolean;
+    }>);
+    await page.buildTeam();
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots()).toMatchObject([
+      { role: 'captain', characterIds: [101], requiredCharacterId: 101 },
+      { role: 'friendCaptain', characterIds: [], requiredCharacterId: null },
+      { role: 'sub1', characterIds: [], requiredCharacterId: null },
+      { role: 'sub2', characterIds: [], requiredCharacterId: null },
+      { role: 'sub3', characterIds: [], requiredCharacterId: null },
+      { role: 'sub4', characterIds: [], requiredCharacterId: null },
+    ]);
+    expect(page.guidedAutoBuildSupportLabel()).toContain('Sub 1');
+  });
+
+  it('guided auto build skips filled slots, then validates the locked team when complete', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const result = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(result);
+    await page.ngOnInit();
+    page.guidedAutoBuildEnabled.set(true);
+
+    const guidedSteps: Array<[AutoBuildManualSlotSelection['role'], number]> = [
+      ['captain', 101],
+      ['sub1', 103],
+      ['sub2', 104],
+      ['sub3', 105],
+      ['sub4', 106],
+      ['friendCaptain', 102],
+    ];
+
+    for (const [role, characterId] of guidedSteps) {
+      await page.buildTeam();
+
+      expect(page.manualSlots().find((slot) => slot.role === role)).toMatchObject({
+        role,
+        characterIds: [characterId],
+        requiredCharacterId: characterId,
+      });
+    }
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots()).toMatchObject([
+      { role: 'captain', characterIds: [101], requiredCharacterId: 101 },
+      { role: 'friendCaptain', characterIds: [102], requiredCharacterId: 102 },
+      { role: 'sub1', characterIds: [103], requiredCharacterId: 103 },
+      { role: 'sub2', characterIds: [104], requiredCharacterId: 104 },
+      { role: 'sub3', characterIds: [105], requiredCharacterId: 105 },
+      { role: 'sub4', characterIds: [106], requiredCharacterId: 106 },
+    ]);
+    expect(page.guidedAutoBuildSupportLabel()).toBe(
+      'All manual slots are filled. The next build validates the locked team.',
+    );
+
+    await page.buildTeam();
+
+    expect(page.result()).toBe(result);
+  });
+
+  it('guided auto build copies leader branch selection metadata', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const captain = createBranchCaptainRecord(501, 'Branch Captain', false);
+    const result = createAutoBuildResult([
+      {
+        role: 'captain',
+        character: captain,
+        reasonChips: ['Captain slot'],
+        captainBranchSelection: {
+          characterId: captain.id,
+          mode: 'character2',
+          label: 'Captain Ability (Character 2)',
+          displayName: 'Character 2',
+          source: 'auto',
+        },
+      },
+      {
+        role: 'friendCaptain',
+        character: createCharacterRecord(502),
+        reasonChips: ['Friend captain slot'],
+      },
+      { role: 'sub', character: createCharacterRecord(503), reasonChips: [] },
+      { role: 'sub', character: createCharacterRecord(504), reasonChips: [] },
+      { role: 'sub', character: createCharacterRecord(505), reasonChips: [] },
+      { role: 'sub', character: createCharacterRecord(506), reasonChips: [] },
+    ]);
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(result);
+    await page.ngOnInit();
+    page.guidedAutoBuildEnabled.set(true);
+    await page.buildTeam();
+
+    expect(page.manualSlots().find((slot) => slot.role === 'captain')).toMatchObject({
+      role: 'captain',
+      characterIds: [captain.id],
+      requiredCharacterId: captain.id,
+      branchSelections: [{ characterId: captain.id, mode: 'character2' }],
+    });
+  });
+
+  it('guided auto build failure leaves manual slots unchanged', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const initialSlots = createManualSlots({ captain: [101] }, { captain: 101 });
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(null);
+    await page.ngOnInit();
+    page.manualSlots.set(initialSlots);
+    page.guidedAutoBuildEnabled.set(true);
+    await page.buildTeam();
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots()).toEqual(initialSlots);
+    expect(page.errorMessage()).not.toBe('');
+  });
+
+  it('guided auto build rejects fallback results without mutating manual slots', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const initialSlots = createManualSlots();
+    const fallbackResult = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue({
+      ...fallbackResult,
+      relaxation: {
+        ...fallbackResult.relaxation,
+        usedFallback: true,
+      },
+    });
+    await page.ngOnInit();
+    page.guidedAutoBuildEnabled.set(true);
+    await page.buildTeam();
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots()).toEqual(initialSlots);
+    expect(page.errorMessage()).not.toBe('');
+  });
+
+  it('guided auto build rejects fallback results during final locked-team validation', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const initialSlots = createManualSlots(
+      {
+        captain: [101],
+        friendCaptain: [102],
+        sub1: [103],
+        sub2: [104],
+        sub3: [105],
+        sub4: [106],
+      },
+      {
+        captain: 101,
+        friendCaptain: 102,
+        sub1: 103,
+        sub2: 104,
+        sub3: 105,
+        sub4: 106,
+      },
+    );
+    const fallbackResult = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue({
+      ...fallbackResult,
+      relaxation: {
+        ...fallbackResult.relaxation,
+        usedFallback: true,
+      },
+    });
+    await page.ngOnInit();
+    page.manualSlots.set(initialSlots);
+    page.guidedAutoBuildEnabled.set(true);
+    await page.buildTeam();
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots()).toEqual(initialSlots);
+    expect(page.errorMessage()).not.toBe('');
+  });
+
+  it('guided auto build locks optional prefilled slots before advancing', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    page.manualSlots.set(createManualSlots({ captain: [101] }));
+    page.guidedAutoBuildEnabled.set(true);
+
+    expect(page.guidedAutoBuildSupportLabel()).toContain('Captain');
+
+    await page.buildTeam();
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots().find((slot) => slot.role === 'captain')).toMatchObject({
+      role: 'captain',
+      characterIds: [101],
+      requiredCharacterId: 101,
+    });
+    expect(page.manualSlots().find((slot) => slot.role === 'sub1')).toMatchObject({
+      role: 'sub1',
+      characterIds: [],
+      requiredCharacterId: null,
+    });
+    expect(page.guidedAutoBuildSupportLabel()).toContain('Sub 1');
+  });
+
   it('serializes required manual leader slots when building', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -2210,17 +2440,20 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('defaults and resets the any-friend-captain toggle to off', async () => {
+  it('defaults and resets secondary auto build toggles to off', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
 
     expect(page.allowAnyFriendCaptainAutoFill()).toBe(false);
+    expect(page.guidedAutoBuildEnabled()).toBe(false);
 
     page.allowAnyFriendCaptainAutoFill.set(true);
+    page.guidedAutoBuildEnabled.set(true);
     await page['resetPageState']();
 
     expect(page.allowAnyFriendCaptainAutoFill()).toBe(false);
+    expect(page.guidedAutoBuildEnabled()).toBe(false);
   });
 
   it('blocks builds and surfaces a clear message when the selected box is empty', async () => {
@@ -2848,6 +3081,8 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(normalizedTemplate).toMatch(
       /\(ionChange\)="\s*onAllowAnyFriendCaptainAutoFillToggle\(\$event\)\s*"/,
     );
+    expect(template).toContain('guidedAutoBuildToggleLabel()');
+    expect(template).toContain('(ionChange)="onGuidedAutoBuildToggle($event)"');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[value]="manualShipSearchTerm()"');
     expect(template).toContain('(ionInput)="onManualShipSearchChange($event)"');
