@@ -63,6 +63,7 @@ import {
   type AutoBuildProgressExclusionCounts,
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
+  type AutoBuildSlotExplanationReason,
   type AutoBuildCostRange,
   type AutoTeamBuilderType,
   createEmptyAutoBuildCostRange,
@@ -365,6 +366,9 @@ type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   manualSlotRole: AutoBuildManualSlotRole | null;
   characterTags: string[];
   captainBranchLabel: string | null;
+  explanationSummaryLabel: string;
+  explanationDetailLabels: string[];
+  hasStructuredExplanation: boolean;
 };
 
 interface AppliedManualCharacterFilters {
@@ -2490,6 +2494,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           subSlotIndex += 1;
         }
 
+        const explanationView = this.buildSlotExplanationView(slot);
+
         return {
           ...slot,
           trackKey:
@@ -2502,10 +2508,184 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
             (tag) => tag.trim().length > 0,
           ),
           captainBranchLabel: slot.captainBranchSelection?.displayName ?? null,
+          explanationSummaryLabel: explanationView.summaryLabel,
+          explanationDetailLabels: explanationView.detailLabels,
+          hasStructuredExplanation: explanationView.hasStructuredExplanation,
         };
       }) ?? []
     );
   });
+
+  private buildSlotExplanationView(slot: AutoBuildResult['slots'][number]): {
+    detailLabels: string[];
+    hasStructuredExplanation: boolean;
+    summaryLabel: string;
+  } {
+    const explanation = slot.explanation;
+
+    if (!explanation) {
+      return {
+        summaryLabel: this.t('results.explanations.missing'),
+        detailLabels: [],
+        hasStructuredExplanation: false,
+      };
+    }
+
+    const detailLabels = [...explanation.reasons, ...explanation.fallbackReasons].map((reason) =>
+      this.formatSlotExplanationReason(reason),
+    );
+
+    return {
+      summaryLabel: this.formatSlotExplanationReason(explanation.primaryReason),
+      detailLabels,
+      hasStructuredExplanation: true,
+    };
+  }
+
+  private formatSlotExplanationReason(reason: AutoBuildSlotExplanationReason): string {
+    switch (reason.code) {
+      case 'manualPick':
+        return this.t('results.explanations.reasons.manualPick');
+      case 'captainRole':
+        return this.t('results.explanations.reasons.captainRole');
+      case 'friendCaptainRole':
+        return this.t('results.explanations.reasons.friendCaptainRole');
+      case 'subRole':
+        return this.t('results.explanations.reasons.subRole');
+      case 'selectedTypeMatch':
+        return this.t('results.explanations.reasons.selectedTypeMatch', {
+          values: this.formatReasonStringList(reason, 'types'),
+        });
+      case 'selectedClassMatch':
+        return this.t('results.explanations.reasons.selectedClassMatch', {
+          values: this.formatReasonStringList(reason, 'classes'),
+        });
+      case 'selectedCharacterTagMatch':
+        return this.t('results.explanations.reasons.selectedCharacterTagMatch', {
+          values: this.formatReasonStringList(reason, 'tags'),
+        });
+      case 'selectedCharacterNameMatch':
+        return this.t('results.explanations.reasons.selectedCharacterNameMatch', {
+          values: this.formatReasonStringList(reason, 'names'),
+        });
+      case 'captainUniversalScope':
+        return this.t('results.explanations.reasons.captainUniversalScope');
+      case 'captainTypeScope':
+        return this.t('results.explanations.reasons.captainTypeScope', {
+          values: this.formatReasonStringList(reason, 'types'),
+        });
+      case 'captainClassScope':
+        return this.t('results.explanations.reasons.captainClassScope', {
+          values: this.formatReasonStringList(reason, 'classes'),
+        });
+      case 'leaderScopeMatch':
+        return this.t('results.explanations.reasons.leaderScopeMatch');
+      case 'requiredAbilityMatch':
+        return this.t('results.explanations.reasons.requiredAbilityMatch', {
+          count: this.getReasonNumberParam(reason, 'count'),
+          values: this.formatReasonStringList(reason, 'abilityKeys'),
+        });
+      case 'battleRequirementMatch':
+        return this.t('results.explanations.reasons.battleRequirementMatch', {
+          battleCount: this.getReasonNumberParam(reason, 'battleCount'),
+          groupCount: this.getReasonNumberParam(reason, 'groupCount'),
+          values: this.formatReasonStringList(reason, 'abilityKeys'),
+        });
+      case 'burstRole':
+        return this.t('results.explanations.reasons.burstRole', {
+          values: this.formatCoverageRoleList(reason),
+        });
+      case 'consistencyRole':
+        return this.t('results.explanations.reasons.consistencyRole', {
+          values: this.formatCoverageRoleList(reason),
+        });
+      case 'utilityRole':
+        return this.t('results.explanations.reasons.utilityRole', {
+          values: this.formatCoverageRoleList(reason),
+        });
+      case 'rankingDemand':
+        return this.t('results.explanations.reasons.rankingDemand');
+      case 'rankingSelectedFilters':
+        return this.t('results.explanations.reasons.rankingSelectedFilters');
+      case 'rankingNewestId':
+        return this.t('results.explanations.reasons.rankingNewestId');
+      case 'fallbackUsed':
+        return this.t('results.explanations.reasons.fallbackUsed');
+      case 'fallbackDroppedTypes':
+        return this.t('results.explanations.reasons.fallbackDroppedTypes', {
+          values: this.formatReasonStringList(reason, 'types'),
+        });
+      case 'fallbackDroppedClasses':
+        return this.t('results.explanations.reasons.fallbackDroppedClasses', {
+          values: this.formatReasonStringList(reason, 'classes'),
+        });
+      case 'fallbackDroppedCharacterTags':
+        return this.t('results.explanations.reasons.fallbackDroppedCharacterTags', {
+          values: this.formatReasonStringList(reason, 'tags'),
+        });
+      case 'fallbackDroppedCharacterNames':
+        return this.t('results.explanations.reasons.fallbackDroppedCharacterNames', {
+          values: this.formatReasonStringList(reason, 'names'),
+        });
+      case 'fallbackAllowedSuperEffectLeaders':
+        return this.t('results.explanations.reasons.fallbackAllowedSuperEffectLeaders');
+      case 'fallbackIgnoredLeaderSuperScope':
+        return this.t('results.explanations.reasons.fallbackIgnoredLeaderSuperScope');
+      case 'fallbackIgnoredSuperSpecialCriteria':
+        return this.t('results.explanations.reasons.fallbackIgnoredSuperSpecialCriteria', {
+          values: this.formatReasonStringList(reason, 'names'),
+        });
+      case 'fallbackIgnoredSuperTandemCriteria':
+        return this.t('results.explanations.reasons.fallbackIgnoredSuperTandemCriteria', {
+          values: this.formatReasonStringList(reason, 'names'),
+        });
+      case 'fallbackIgnoredCaptainAbilityCoverage':
+        return this.t('results.explanations.reasons.fallbackIgnoredCaptainAbilityCoverage');
+      case 'fallbackDowngradedCaptainAbilityCoverage':
+        return this.t('results.explanations.reasons.fallbackDowngradedCaptainAbilityCoverage');
+      default:
+        return this.t('results.explanations.unknown');
+    }
+  }
+
+  private formatCoverageRoleList(reason: AutoBuildSlotExplanationReason): string {
+    const roles = this.getReasonStringParamList(reason, 'roles').map((role) =>
+      this.t(`results.explanations.coverageRoles.${role}`),
+    );
+
+    return this.formatList(roles);
+  }
+
+  private formatReasonStringList(
+    reason: AutoBuildSlotExplanationReason,
+    paramKey: string,
+  ): string {
+    return this.formatList(this.getReasonStringParamList(reason, paramKey));
+  }
+
+  private formatList(values: string[]): string {
+    return values.length ? values.join(', ') : this.t('results.none');
+  }
+
+  private getReasonStringParamList(
+    reason: AutoBuildSlotExplanationReason,
+    paramKey: string,
+  ): string[] {
+    const value = reason.params?.[paramKey];
+
+    return Array.isArray(value)
+      ? value.filter((entry): entry is string => typeof entry === 'string' && entry.length > 0)
+      : [];
+  }
+
+  private getReasonNumberParam(
+    reason: AutoBuildSlotExplanationReason,
+    paramKey: string,
+  ): number {
+    const value = reason.params?.[paramKey];
+
+    return typeof value === 'number' ? value : 0;
+  }
 
   public readonly sparklesIcon = sparklesOutline;
   public readonly layersIcon = layersOutline;

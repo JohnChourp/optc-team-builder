@@ -326,6 +326,13 @@ describe('runAutoTeamBuildSearch', () => {
       ignoredLeaderSuperSpecialCriteria: false,
       ignoredSuperTandemCriteria: false,
     });
+    expect(result?.slots[0]?.explanation?.fallbackReasons.map((reason) => reason.code)).toEqual(
+      expect.arrayContaining([
+        'fallbackUsed',
+        'fallbackDroppedTypes',
+        'fallbackAllowedSuperEffectLeaders',
+      ]),
+    );
   });
 
   it('relaxes full captain coverage after exact search fails', () => {

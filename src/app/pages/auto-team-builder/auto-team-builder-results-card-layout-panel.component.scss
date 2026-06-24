@@ -56,3 +56,47 @@
   font-size: 0.9rem;
   line-height: 1.55;
 }
+
+.slot-explanation {
+  border-left: 2px solid rgba(245, 200, 76, 0.58);
+  padding: 8px 0 8px 10px;
+}
+
+.slot-explanation--missing {
+  border-left-color: rgba(248, 251, 255, 0.28);
+}
+
+.slot-explanation__details summary,
+.slot-explanation__fallback {
+  display: grid;
+  gap: 3px;
+}
+
+.slot-explanation__details summary {
+  cursor: pointer;
+}
+
+.slot-explanation__details summary::marker {
+  color: #f5c84c;
+}
+
+.slot-explanation strong {
+  color: #f5c84c;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  line-height: 1.35;
+}
+
+.slot-explanation span,
+.slot-explanation li {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.slot-explanation ul {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+}

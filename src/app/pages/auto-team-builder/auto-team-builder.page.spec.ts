@@ -656,6 +656,47 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ]);
   });
 
+  it('formats slot explanation summaries, details, and missing metadata fallback', async () => {
+    const { page } = await createPage();
+    const baseline = createAutoBuildResult();
+
+    page.result.set(
+      createAutoBuildResult([
+        {
+          ...baseline.slots[0]!,
+          explanation: {
+            primaryReason: { code: 'manualPick' },
+            reasons: [
+              { code: 'manualPick' },
+              { code: 'selectedTypeMatch', params: { types: ['DEX'], count: 1 } },
+              { code: 'requiredAbilityMatch', params: { abilityKeys: ['remove_bind'], count: 1 } },
+            ],
+            fallbackReasons: [
+              { code: 'fallbackDroppedTypes', params: { types: ['INT'], count: 1 } },
+            ],
+          },
+        },
+        baseline.slots[1]!,
+        ...baseline.slots.slice(2),
+      ]),
+    );
+
+    const slots = page.teamSlots();
+
+    expect(slots[0]?.hasStructuredExplanation).toBe(true);
+    expect(slots[0]?.explanationSummaryLabel).toBe('Locked by a manual slot choice.');
+    expect(slots[0]?.explanationDetailLabels).toEqual([
+      'Locked by a manual slot choice.',
+      'Matches selected type coverage: DEX.',
+      'Covers 1 requested ability requirement(s): remove_bind.',
+      'Fallback relaxed selected type coverage: INT.',
+    ]);
+    expect(slots[1]?.hasStructuredExplanation).toBe(false);
+    expect(slots[1]?.explanationSummaryLabel).toBe(
+      'Selection metadata is unavailable for this slot.',
+    );
+  });
+
   it('formats relaxed Super Special Criteria warnings with character names', async () => {
     const { page } = await createPage();
     const result = createAutoBuildResult();

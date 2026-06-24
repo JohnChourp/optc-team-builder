@@ -554,6 +554,86 @@ describe('Auto team builder', () => {
     ]);
   });
 
+  it('produces structured slot explanations for manual picks, filters, requirements, and ranking', () => {
+    const captain = createCharacterRecord({
+      id: 5900,
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+      },
+    });
+    const friendCaptain = createCharacterRecord({
+      id: 5899,
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x, reduces Special Cooldown of crew by 1 turn.',
+      },
+    });
+    const bindUtility = createCharacterRecord({
+      id: 5801,
+      name: 'Bind Utility',
+      primaryClass: 'Fighter',
+      detail: {
+        characterTags: ['Straw Hat Pirates'],
+        specialText: 'Reduces Bind duration by 5 turns.',
+        builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 5)],
+      },
+    });
+
+    const result = buildAutoTeamResult(
+      [
+        captain,
+        friendCaptain,
+        bindUtility,
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        manualSlots: createManualSlots({
+          captain: [captain.id],
+          friendCaptain: [friendCaptain.id],
+        }),
+        selectedCharacterTags: ['Straw Hat Pirates'],
+        selectedCharacterNames: ['bind'],
+        requiredAbilities: [
+          { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+        ],
+        battleRequirements: [createBindBattleRequirement('battle-1')],
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    if (!result) {
+      throw new Error('Expected complete auto team');
+    }
+    expect(result.slots).toHaveLength(6);
+    expect(result.slots[0]?.explanation?.reasons.map((reason) => reason.code)).toContain(
+      'manualPick',
+    );
+
+    const bindSlot = result.slots.find((slot) => slot.character.id === bindUtility.id);
+    const bindReasonCodes = bindSlot?.explanation?.reasons.map((reason) => reason.code) ?? [];
+
+    expect(bindReasonCodes).toEqual(
+      expect.arrayContaining([
+        'selectedTypeMatch',
+        'selectedClassMatch',
+        'selectedCharacterTagMatch',
+        'selectedCharacterNameMatch',
+        'requiredAbilityMatch',
+        'battleRequirementMatch',
+        'utilityRole',
+        'rankingNewestId',
+      ]),
+    );
+    expect(bindSlot?.reasonChips).toContain('Bind clear');
+  });
+
   it('requires multiple matching team slots for the same ability when the count is greater than one', () => {
     const result = buildAutoTeamResult(
       [

@@ -233,6 +233,57 @@ export interface AutoBuildShipSelection {
   reasonChips: string[];
 }
 
+export type AutoBuildSlotExplanationReasonParam =
+  | boolean
+  | number
+  | string
+  | readonly number[]
+  | readonly string[];
+
+export type AutoBuildSlotExplanationReasonCode =
+  | 'manualPick'
+  | 'captainRole'
+  | 'friendCaptainRole'
+  | 'subRole'
+  | 'selectedTypeMatch'
+  | 'selectedClassMatch'
+  | 'selectedCharacterTagMatch'
+  | 'selectedCharacterNameMatch'
+  | 'captainUniversalScope'
+  | 'captainTypeScope'
+  | 'captainClassScope'
+  | 'leaderScopeMatch'
+  | 'requiredAbilityMatch'
+  | 'battleRequirementMatch'
+  | 'burstRole'
+  | 'consistencyRole'
+  | 'utilityRole'
+  | 'rankingDemand'
+  | 'rankingSelectedFilters'
+  | 'rankingNewestId'
+  | 'fallbackUsed'
+  | 'fallbackDroppedTypes'
+  | 'fallbackDroppedClasses'
+  | 'fallbackDroppedCharacterTags'
+  | 'fallbackDroppedCharacterNames'
+  | 'fallbackAllowedSuperEffectLeaders'
+  | 'fallbackIgnoredLeaderSuperScope'
+  | 'fallbackIgnoredSuperSpecialCriteria'
+  | 'fallbackIgnoredSuperTandemCriteria'
+  | 'fallbackIgnoredCaptainAbilityCoverage'
+  | 'fallbackDowngradedCaptainAbilityCoverage';
+
+export interface AutoBuildSlotExplanationReason {
+  code: AutoBuildSlotExplanationReasonCode;
+  params?: Record<string, AutoBuildSlotExplanationReasonParam>;
+}
+
+export interface AutoBuildSlotExplanation {
+  primaryReason: AutoBuildSlotExplanationReason;
+  reasons: AutoBuildSlotExplanationReason[];
+  fallbackReasons: AutoBuildSlotExplanationReason[];
+}
+
 export interface AutoBuildSpecialScope {
   allCharacters: boolean;
   allowedClasses: string[];
@@ -348,6 +399,7 @@ export interface AutoBuildSlot {
   role: 'captain' | 'friendCaptain' | 'sub';
   character: CharacterDetailRecord;
   reasonChips: string[];
+  explanation?: AutoBuildSlotExplanation;
   captainBranchSelection?: AutoBuildCaptainBranchSelection | null;
 }
 
