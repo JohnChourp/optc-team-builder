@@ -504,7 +504,7 @@ describe('resolveCaptainAllTierCoverage', () => {
         entries: [
           {
             source: 'base',
-            label: null,
+            label: 'Captain Ability',
             tiers: [
               {
                 tier: 1,
