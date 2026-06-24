@@ -3233,6 +3233,24 @@
                                   <li>{{ detail }}</li>
                                 }
                               </ul>
+                              @if (slot.rejectedCandidateLabels.length) {
+                                <div class="slot-explanation__rejected">
+                                  <strong>{{ t('results.explanations.rejectedTitle') }}</strong>
+                                  <ul>
+                                    @for (
+                                      rejectedCandidate of slot.rejectedCandidateLabels;
+                                      track rejectedCandidate.title
+                                    ) {
+                                      <li>
+                                        <span>{{ rejectedCandidate.title }}</span>
+                                        <small>
+                                          {{ rejectedCandidate.reasonLabels.join(' ') }}
+                                        </small>
+                                      </li>
+                                    }
+                                  </ul>
+                                </div>
+                              }
                             </details>
                           } @else {
                             <div class="slot-explanation__fallback">

@@ -23,6 +23,8 @@ import {
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressExclusionCounts,
+  type AutoBuildRejectedCandidateExplanation,
+  type AutoBuildRejectedCandidateReason,
   type AutoBuildSpecialScope,
   type AutoBuildSlot,
   type AutoBuildSlotExplanation,
@@ -109,6 +111,7 @@ const CHIP_LABELS = {
   threshold: 'Threshold clear',
 } as const;
 const TEAM_SUB_SLOT_COUNT = 4;
+const REJECTED_CANDIDATE_EXPLANATION_LIMIT = 3;
 const AUTO_FILL_LEADER_OPTION_LIMIT = 8;
 const AUTO_BUILD_ATTEMPT_PROGRESS_EMIT_INTERVAL = 64;
 const MANUAL_PICK_REASON_CHIP = 'Manual pick';
@@ -288,6 +291,11 @@ interface RankedAutoBuildSubCandidate {
   rank: AutoBuildSubCandidateRank;
 }
 
+interface AutoBuildSubSelectionResult {
+  selected: AutoBuildCandidate[];
+  rejectedCandidatesByCharacterId: Map<number, AutoBuildRejectedCandidateExplanation[]>;
+}
+
 interface BuildSlotExplanationOptions {
   role: AutoBuildSlot['role'];
   input: AutoBuildInput;
@@ -295,6 +303,7 @@ interface BuildSlotExplanationOptions {
   leaderCriteria: ActiveLeaderCriteria;
   leaderSlots: AutoBuildCandidate[];
   battleRequirementAssignmentMode: BattleRequirementAssignmentMode;
+  rejectedCandidates?: AutoBuildRejectedCandidateExplanation[];
 }
 
 type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
@@ -1899,7 +1908,7 @@ export function buildAutoTeamResultFromPreparedContext(
         const constrainedSubs = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.map((role) =>
           constrainedSubSelections.get(role),
         ).filter((candidate): candidate is AutoBuildCandidate => Boolean(candidate));
-        const selectedSubs = selectSubs(
+        const selectedSubResult = selectSubs(
           subAutoFillCandidates,
           leaders,
           leaderSlots,
@@ -1911,6 +1920,7 @@ export function buildAutoTeamResultFromPreparedContext(
           currentLeaderPairProgress,
           options.onProgress,
         );
+        const selectedSubs = selectedSubResult.selected;
 
         if (selectedSubs.length < TEAM_SUB_SLOT_COUNT) {
           continue;
@@ -2003,6 +2013,14 @@ export function buildAutoTeamResultFromPreparedContext(
               leaderCriteria,
               leaderSlots,
               battleRequirementAssignmentMode,
+              rejectedCandidates: buildLeaderRejectedCandidateExplanations(
+                leaderPair.captain,
+                captainOptions,
+                input,
+                options,
+                teamCandidates,
+                manualCharacterIdSet.has(leaderPair.captain.character.id),
+              ),
             }),
             captainBranchSelection: resolveLeaderBranchSelection(
               resolveLeaderCriteriaEntryForSlot('captain', leaderPair.captain, input),
@@ -2024,6 +2042,14 @@ export function buildAutoTeamResultFromPreparedContext(
               leaderCriteria,
               leaderSlots,
               battleRequirementAssignmentMode,
+              rejectedCandidates: buildLeaderRejectedCandidateExplanations(
+                leaderPair.friendCaptain,
+                friendCaptainOptions,
+                input,
+                options,
+                teamCandidates,
+                manualCharacterIdSet.has(leaderPair.friendCaptain.character.id),
+              ),
             }),
             captainBranchSelection: resolveLeaderBranchSelection(
               resolveLeaderCriteriaEntryForSlot('friendCaptain', leaderPair.friendCaptain, input),
@@ -2045,6 +2071,8 @@ export function buildAutoTeamResultFromPreparedContext(
               leaderCriteria,
               leaderSlots,
               battleRequirementAssignmentMode,
+              rejectedCandidates:
+                selectedSubResult.rejectedCandidatesByCharacterId.get(candidate.character.id) ?? [],
             }),
           })),
         ];
@@ -2683,7 +2711,7 @@ function selectSubs(
   lockedSubs: AutoBuildCandidate[] = [],
   leaderPairProgress: AutoBuildLeaderPairProgress = {},
   onProgress?: AutoTeamBuildAttemptOptions['onProgress'],
-): AutoBuildCandidate[] {
+): AutoBuildSubSelectionResult {
   const selected = resolveUniqueCandidates(lockedSubs);
   const leaderCandidates = resolveUniqueCandidates(leaders);
   const requiredLeaderSuperEffectMatchingSlots =
@@ -2697,13 +2725,17 @@ function selectSubs(
     input.requireUniqueBaseCharacterNames && leaderCandidates[0]
       ? new Set(resolveCandidatePartyConflictKeys(leaderCandidates[0]))
       : new Set<string>();
+  const createEmptySelectionResult = (): AutoBuildSubSelectionResult => ({
+    selected: [],
+    rejectedCandidatesByCharacterId: new Map(),
+  });
 
   if (selected.length > TEAM_SUB_SLOT_COUNT) {
-    return [];
+    return createEmptySelectionResult();
   }
 
   if (selected.some((candidate) => leaderCharacterIdSet.has(candidate.character.id))) {
-    return [];
+    return createEmptySelectionResult();
   }
 
   const selectedPartyConflictKeys = new Set<string>();
@@ -2714,7 +2746,7 @@ function selectSubs(
         hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
         hasAnyPartyConflictKey(candidate, selectedPartyConflictKeys)
       ) {
-        return [];
+        return createEmptySelectionResult();
       }
 
       addCandidatePartyConflictKeys(selectedPartyConflictKeys, candidate);
@@ -2725,7 +2757,7 @@ function selectSubs(
     input.requireAllSelectedClassesPerCharacter &&
     selected.some((candidate) => !candidate.matchesAllSelectedClasses)
   ) {
-    return [];
+    return createEmptySelectionResult();
   }
 
   if (
@@ -2733,7 +2765,7 @@ function selectSubs(
       (candidate) => !matchesLeaderBuildScopeForAttempt(candidate, leaderCriteria, input),
     )
   ) {
-    return [];
+    return createEmptySelectionResult();
   }
 
   if (
@@ -2741,11 +2773,11 @@ function selectSubs(
       (candidate) => !canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input),
     )
   ) {
-    return [];
+    return createEmptySelectionResult();
   }
 
   if (!teamCostWithinBudget(input, leaderSlots[0], selected)) {
-    return [];
+    return createEmptySelectionResult();
   }
 
   if (
@@ -2756,7 +2788,7 @@ function selectSubs(
       leaderCriteria,
     )
   ) {
-    return [];
+    return createEmptySelectionResult();
   }
 
   if (
@@ -2767,7 +2799,7 @@ function selectSubs(
       requiredLeaderSuperEffectMatchingSlots,
     )
   ) {
-    return [];
+    return createEmptySelectionResult();
   }
 
   if (
@@ -2776,7 +2808,7 @@ function selectSubs(
       requiredLeaderSuperEffectMatchingSlots,
     )
   ) {
-    return [];
+    return createEmptySelectionResult();
   }
 
   const activeBattleRequirements = filterIgnoredCaptainAbilityBattleRequirements(
@@ -2816,7 +2848,7 @@ function selectSubs(
         },
         true,
       );
-      return [];
+      return createEmptySelectionResult();
     }
   }
 
@@ -2828,7 +2860,7 @@ function selectSubs(
     [...leaderSlots, ...selected],
   );
   const permanentExclusionCounts = createProgressExclusionCounts();
-  const pool = candidates
+  const rankedPool = candidates
     .filter((candidate) => {
       if (
         leaderCharacterIdSet.has(candidate.character.id) ||
@@ -2884,8 +2916,8 @@ function selectSubs(
     }))
     .sort((left, right) =>
       compareAutoFillSubCandidateRanks(left, right, input, subAbilityDemandContext),
-    )
-    .map((entry) => entry.candidate);
+    );
+  const pool = rankedPool.map((entry) => entry.candidate);
   let subSearchWorkUnits = 0;
   const currentExclusionCounts = createProgressExclusionCounts();
   const estimatedSubSearchWorkUnits = Math.max(
@@ -3350,14 +3382,380 @@ function selectSubs(
   const counterAnchoredSelection = findCounterAnchoredValidSelection();
 
   if (counterAnchoredSelection) {
-    return counterAnchoredSelection;
+    return buildSubSelectionResult(counterAnchoredSelection);
   }
 
   if ((input.battleRequirements?.length ?? 0) > 0 && battleRequirementAssignmentMode === 'strict') {
-    return [];
+    return createEmptySelectionResult();
   }
 
-  return findNewestValidSelection(0, selected, selectedIds, selectedPartyConflictKeys) ?? selected;
+  return buildSubSelectionResult(
+    findNewestValidSelection(0, selected, selectedIds, selectedPartyConflictKeys) ?? selected,
+  );
+
+  function buildSubSelectionResult(finalSelection: AutoBuildCandidate[]): AutoBuildSubSelectionResult {
+    return {
+      selected: finalSelection,
+      rejectedCandidatesByCharacterId: buildRejectedSubCandidateExplanationMap(
+        finalSelection,
+        rankedPool,
+        input,
+        subAbilityDemandContext,
+        leaderCriteria,
+        leaderSlots,
+        leaderPartyConflictKeySet,
+        requiredLeaderSuperEffectMatchingSlots,
+        battleRequirementAssignmentMode,
+      ),
+    };
+  }
+}
+
+function buildLeaderRejectedCandidateExplanations(
+  selectedCandidate: AutoBuildCandidate,
+  leaderOptions: AutoBuildCandidate[],
+  input: AutoBuildInput,
+  options: AutoTeamBuildAttemptOptions,
+  teamCandidates: AutoBuildCandidate[],
+  isManualPick: boolean,
+): AutoBuildRejectedCandidateExplanation[] {
+  const teamCharacterIds = new Set(teamCandidates.map((candidate) => candidate.character.id));
+  const selectedRequirementScore = resolveLeaderRequirementPriorityScore(selectedCandidate, input);
+  const selectedFilterScore = resolveSubSelectedFilterScore(selectedCandidate, input);
+  const rejectedCandidates: AutoBuildRejectedCandidateExplanation[] = [];
+
+  for (const candidate of leaderOptions) {
+    if (candidate.character.id === selectedCandidate.character.id) {
+      continue;
+    }
+
+    const reasons: AutoBuildRejectedCandidateReason[] = [];
+
+    if (isManualPick) {
+      pushRejectedCandidateReason(reasons, 'manualSlotLocked');
+    }
+
+    if (teamCharacterIds.has(candidate.character.id)) {
+      pushRejectedCandidateReason(reasons, 'alreadySelected');
+    }
+
+    if (selectedRequirementScore > resolveLeaderRequirementPriorityScore(candidate, input)) {
+      pushRejectedCandidateReason(reasons, 'lowerRequirementDemand');
+    }
+
+    if (selectedFilterScore > resolveSubSelectedFilterScore(candidate, input)) {
+      pushRejectedCandidateReason(reasons, 'lowerSelectedFilterScore');
+    }
+
+    if (compareAutoFillLeaderCandidates(selectedCandidate, candidate, input, options) <= 0) {
+      pushRejectedCandidateReason(reasons, 'rankingTieBreak');
+    }
+
+    rejectedCandidates.push(buildRejectedCandidateExplanation(candidate, reasons));
+
+    if (rejectedCandidates.length >= REJECTED_CANDIDATE_EXPLANATION_LIMIT) {
+      break;
+    }
+  }
+
+  return rejectedCandidates;
+}
+
+function buildRejectedSubCandidateExplanationMap(
+  selectedCandidates: AutoBuildCandidate[],
+  rankedPool: RankedAutoBuildSubCandidate[],
+  input: AutoBuildInput,
+  subAbilityDemandContext: SubAbilityDemandContext,
+  leaderCriteria: ActiveLeaderCriteria,
+  leaderSlots: AutoBuildCandidate[],
+  leaderPartyConflictKeySet: Set<string>,
+  requiredLeaderSuperEffectMatchingSlots: number | null,
+  battleRequirementAssignmentMode: BattleRequirementAssignmentMode,
+): Map<number, AutoBuildRejectedCandidateExplanation[]> {
+  const rankedPoolByCharacterId = new Map(
+    rankedPool.map((entry) => [entry.candidate.character.id, entry] as const),
+  );
+  const selectedCharacterIds = new Set(
+    selectedCandidates.map((candidate) => candidate.character.id),
+  );
+  const rejectedCandidateMap = new Map<number, AutoBuildRejectedCandidateExplanation[]>();
+
+  for (const selectedCandidate of selectedCandidates) {
+    const selectedRankedEntry =
+      rankedPoolByCharacterId.get(selectedCandidate.character.id) ??
+      createRankedSubCandidate(selectedCandidate, input, subAbilityDemandContext, leaderCriteria);
+    const rejectedCandidates: AutoBuildRejectedCandidateExplanation[] = [];
+
+    for (const rejectedEntry of rankedPool) {
+      const candidate = rejectedEntry.candidate;
+
+      if (candidate.character.id === selectedCandidate.character.id) {
+        continue;
+      }
+
+      const reasons = resolveRejectedSubCandidateReasons(
+        candidate,
+        rejectedEntry,
+        selectedCandidate,
+        selectedRankedEntry,
+        selectedCandidates,
+        selectedCharacterIds.has(candidate.character.id),
+        rankedPoolByCharacterId,
+        input,
+        subAbilityDemandContext,
+        leaderCriteria,
+        leaderSlots,
+        leaderPartyConflictKeySet,
+        requiredLeaderSuperEffectMatchingSlots,
+        battleRequirementAssignmentMode,
+      );
+
+      rejectedCandidates.push(buildRejectedCandidateExplanation(candidate, reasons));
+
+      if (rejectedCandidates.length >= REJECTED_CANDIDATE_EXPLANATION_LIMIT) {
+        break;
+      }
+    }
+
+    rejectedCandidateMap.set(selectedCandidate.character.id, rejectedCandidates);
+  }
+
+  return rejectedCandidateMap;
+}
+
+function resolveRejectedSubCandidateReasons(
+  candidate: AutoBuildCandidate,
+  rejectedEntry: RankedAutoBuildSubCandidate,
+  selectedCandidate: AutoBuildCandidate,
+  selectedEntry: RankedAutoBuildSubCandidate,
+  selectedCandidates: AutoBuildCandidate[],
+  isAlreadySelected: boolean,
+  rankedPoolByCharacterId: Map<number, RankedAutoBuildSubCandidate>,
+  input: AutoBuildInput,
+  subAbilityDemandContext: SubAbilityDemandContext,
+  leaderCriteria: ActiveLeaderCriteria,
+  leaderSlots: AutoBuildCandidate[],
+  leaderPartyConflictKeySet: Set<string>,
+  requiredLeaderSuperEffectMatchingSlots: number | null,
+  battleRequirementAssignmentMode: BattleRequirementAssignmentMode,
+): AutoBuildRejectedCandidateReason[] {
+  const reasons: AutoBuildRejectedCandidateReason[] = [];
+  const selectedWasManualLocked = !rankedPoolByCharacterId.has(selectedCandidate.character.id);
+
+  if (selectedWasManualLocked) {
+    pushRejectedCandidateReason(reasons, 'manualSlotLocked');
+  }
+
+  if (isAlreadySelected) {
+    pushRejectedCandidateReason(reasons, 'alreadySelected');
+  }
+
+  pushRejectedSubConstraintReasons(
+    reasons,
+    candidate,
+    selectedCandidate,
+    selectedCandidates,
+    input,
+    leaderCriteria,
+    leaderSlots,
+    leaderPartyConflictKeySet,
+    requiredLeaderSuperEffectMatchingSlots,
+    battleRequirementAssignmentMode,
+  );
+
+  if (selectedEntry.rank.demandScore > rejectedEntry.rank.demandScore) {
+    pushRejectedCandidateReason(reasons, 'lowerRequirementDemand');
+  }
+
+  if (selectedEntry.rank.coverageRoleScore > rejectedEntry.rank.coverageRoleScore) {
+    pushRejectedCandidateReason(reasons, 'lowerCoverageContribution');
+  }
+
+  if (selectedEntry.rank.selectedFilterScore > rejectedEntry.rank.selectedFilterScore) {
+    pushRejectedCandidateReason(reasons, 'lowerSelectedFilterScore');
+  }
+
+  if (
+    selectedEntry.rank.leaderCriteriaCoveragePreferenceScore >
+    rejectedEntry.rank.leaderCriteriaCoveragePreferenceScore
+  ) {
+    pushRejectedCandidateReason(reasons, 'lowerLeaderCoverageScore');
+  }
+
+  if (
+    !reasons.length ||
+    compareAutoFillSubCandidateRanks(
+      selectedEntry,
+      rejectedEntry,
+      input,
+      subAbilityDemandContext,
+    ) <= 0
+  ) {
+    pushRejectedCandidateReason(reasons, 'rankingTieBreak');
+  }
+
+  return reasons;
+}
+
+function pushRejectedSubConstraintReasons(
+  reasons: AutoBuildRejectedCandidateReason[],
+  candidate: AutoBuildCandidate,
+  selectedCandidate: AutoBuildCandidate,
+  selectedCandidates: AutoBuildCandidate[],
+  input: AutoBuildInput,
+  leaderCriteria: ActiveLeaderCriteria,
+  leaderSlots: AutoBuildCandidate[],
+  leaderPartyConflictKeySet: Set<string>,
+  requiredLeaderSuperEffectMatchingSlots: number | null,
+  battleRequirementAssignmentMode: BattleRequirementAssignmentMode,
+): void {
+  const replacementSubs = selectedCandidates.map((currentCandidate) =>
+    currentCandidate.character.id === selectedCandidate.character.id ? candidate : currentCandidate,
+  );
+  const otherSubs = selectedCandidates.filter(
+    (currentCandidate) => currentCandidate.character.id !== selectedCandidate.character.id,
+  );
+  const otherSubPartyConflictKeys = new Set<string>();
+
+  if (input.requireUniqueBaseCharacterNames) {
+    for (const otherSub of otherSubs) {
+      addCandidatePartyConflictKeys(otherSubPartyConflictKeys, otherSub);
+    }
+
+    if (
+      hasAnyPartyConflictKey(candidate, leaderPartyConflictKeySet) ||
+      hasAnyPartyConflictKey(candidate, otherSubPartyConflictKeys)
+    ) {
+      pushRejectedCandidateReason(reasons, 'duplicateBaseConflict');
+    }
+  }
+
+  const candidateTeam = [...leaderSlots, ...replacementSubs];
+  const shouldCheckLeaderSuperEffectScope = requiredLeaderSuperEffectMatchingSlots !== null;
+  const activeSuperEffectScope = shouldCheckLeaderSuperEffectScope
+    ? resolveActiveLeaderSuperEffectScope(candidateTeam)
+    : null;
+
+  if (
+    !matchesLeaderBuildScopeForAttempt(candidate, leaderCriteria, input) ||
+    !canCandidateJoinStrictActivationCriteriaSearch(candidate, leaderSlots, input) ||
+    (shouldCheckLeaderSuperEffectScope &&
+      (!matchesActiveSuperEffectScopePrefix(
+        candidateTeam,
+        requiredLeaderSuperEffectMatchingSlots,
+      ) ||
+        !activeSuperEffectScope?.isParseable ||
+        countLeaderSuperEffectScopeMatches(candidateTeam, activeSuperEffectScope) <
+          requiredLeaderSuperEffectMatchingSlots)) ||
+    (input.requireAllSelectedClassesPerCharacter && !candidate.matchesAllSelectedClasses) ||
+    (shouldEnforceCaptainAbilityCoverage(input) &&
+      (!canStillReachLeaderTagConditions(candidateTeam, 0, leaderCriteria) ||
+        !allSubSlotsMatchLeaderBuildScope(candidateTeam, leaderSlots, leaderCriteria) ||
+        !matchesActiveLeaderTagConditions(candidateTeam, leaderCriteria)))
+  ) {
+    pushRejectedCandidateReason(reasons, 'leaderScopeConstraint');
+  }
+
+  if (!teamCostWithinBudget(input, leaderSlots[0], replacementSubs)) {
+    pushRejectedCandidateReason(reasons, 'costConstraint');
+  }
+
+  const missesActivationCriteria =
+    (input.requireLeaderSuperSpecialCriteria || input.requireSuperTandemCriteria) &&
+    !areActiveActivationCriteriaSatisfied(leaderSlots, candidateTeam, input);
+  const shouldCheckRequiredCoverage = shouldEvaluateRejectedSubRequiredCoverage(input);
+  const coverage = shouldCheckRequiredCoverage
+    ? summarizeCoverage(
+        candidateTeam,
+        input,
+        leaderCriteria,
+        leaderSlots,
+        battleRequirementAssignmentMode,
+      )
+    : null;
+  const missesRequiredCoverage =
+    coverage !== null &&
+    ((shouldRequireAllLeaderTiersCovered(input) && !coverage.leaderCriteria.allLeaderTiersCovered) ||
+      (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) ||
+      (input.requireAllSelectedCharacterTagsInTeam && !coverage.coversAllSelectedCharacterTags) ||
+      (input.requireAllSelectedCharacterNamesInTeam && !coverage.coversAllSelectedCharacterNames) ||
+      (input.requiredAbilities.length && !coverage.abilityRequirements.matchesAll) ||
+      (input.requiredCharacterGroups.length && !coverage.requiredCharacterGroups.matchesAll) ||
+      ((input.battleRequirements?.length ?? 0) > 0 && !coverage.battleRequirements?.matchesAll));
+
+  if (missesActivationCriteria || missesRequiredCoverage) {
+    pushRejectedCandidateReason(reasons, 'requiredConstraint');
+  }
+}
+
+function shouldEvaluateRejectedSubRequiredCoverage(input: AutoBuildInput): boolean {
+  return (
+    shouldRequireAllLeaderTiersCovered(input) ||
+    input.requireAllSelectedTypesInTeam ||
+    input.requireAllSelectedCharacterTagsInTeam ||
+    input.requireAllSelectedCharacterNamesInTeam ||
+    input.requiredAbilities.length > 0 ||
+    input.requiredCharacterGroups.length > 0 ||
+    (input.battleRequirements?.length ?? 0) > 0
+  );
+}
+
+function createRankedSubCandidate(
+  candidate: AutoBuildCandidate,
+  input: AutoBuildInput,
+  subAbilityDemandContext: SubAbilityDemandContext,
+  leaderCriteria: ActiveLeaderCriteria,
+): RankedAutoBuildSubCandidate {
+  return {
+    candidate,
+    rank: resolveAutoFillSubCandidateRank(
+      candidate,
+      input,
+      subAbilityDemandContext,
+      leaderCriteria,
+    ),
+  };
+}
+
+function buildRejectedCandidateExplanation(
+  candidate: AutoBuildCandidate,
+  reasons: AutoBuildRejectedCandidateReason[],
+): AutoBuildRejectedCandidateExplanation {
+  return {
+    characterId: candidate.character.id,
+    characterName: candidate.character.name,
+    reasons: dedupeRejectedCandidateReasons(reasons).slice(0, 3),
+  };
+}
+
+function pushRejectedCandidateReason(
+  reasons: AutoBuildRejectedCandidateReason[],
+  code: AutoBuildRejectedCandidateReason['code'],
+  params?: AutoBuildRejectedCandidateReason['params'],
+): void {
+  if (reasons.some((reason) => reason.code === code)) {
+    return;
+  }
+
+  reasons.push(params ? { code, params } : { code });
+}
+
+function dedupeRejectedCandidateReasons(
+  reasons: AutoBuildRejectedCandidateReason[],
+): AutoBuildRejectedCandidateReason[] {
+  const seenCodes = new Set<AutoBuildRejectedCandidateReason['code']>();
+  const dedupedReasons: AutoBuildRejectedCandidateReason[] = [];
+
+  for (const reason of reasons) {
+    if (seenCodes.has(reason.code)) {
+      continue;
+    }
+
+    seenCodes.add(reason.code);
+    dedupedReasons.push(reason);
+  }
+
+  return dedupedReasons.length ? dedupedReasons : [{ code: 'rankingTieBreak' }];
 }
 
 function resolveAutoFillSubCandidateRank(
@@ -3709,6 +4107,7 @@ function buildSlotExplanation(
     primaryReason,
     reasons,
     fallbackReasons: [],
+    rejectedCandidates: options.rejectedCandidates?.slice(0, REJECTED_CANDIDATE_EXPLANATION_LIMIT) ?? [],
   };
 }
 

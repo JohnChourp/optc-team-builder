@@ -278,10 +278,35 @@ export interface AutoBuildSlotExplanationReason {
   params?: Record<string, AutoBuildSlotExplanationReasonParam>;
 }
 
+export type AutoBuildRejectedCandidateReasonCode =
+  | 'manualSlotLocked'
+  | 'alreadySelected'
+  | 'duplicateBaseConflict'
+  | 'leaderScopeConstraint'
+  | 'costConstraint'
+  | 'requiredConstraint'
+  | 'lowerRequirementDemand'
+  | 'lowerCoverageContribution'
+  | 'lowerSelectedFilterScore'
+  | 'lowerLeaderCoverageScore'
+  | 'rankingTieBreak';
+
+export interface AutoBuildRejectedCandidateReason {
+  code: AutoBuildRejectedCandidateReasonCode;
+  params?: Record<string, AutoBuildSlotExplanationReasonParam>;
+}
+
+export interface AutoBuildRejectedCandidateExplanation {
+  characterId: number;
+  characterName: string;
+  reasons: AutoBuildRejectedCandidateReason[];
+}
+
 export interface AutoBuildSlotExplanation {
   primaryReason: AutoBuildSlotExplanationReason;
   reasons: AutoBuildSlotExplanationReason[];
   fallbackReasons: AutoBuildSlotExplanationReason[];
+  rejectedCandidates: AutoBuildRejectedCandidateExplanation[];
 }
 
 export interface AutoBuildSpecialScope {
