@@ -102,9 +102,10 @@ const CAPTAIN_BASE_STAT_BOOST_PATTERN =
 const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
   /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
 const TRAILING_CAPTAIN_BOOST_ALTERNATIVE_PATTERN =
-  /,\s*(?:or\s+)?by\s+(\d+(?:\.\d+)?)x\b((?:(?!,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\b)(?!\s+(?:and|but)\s+(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)[^,.;])*)/gi;
+  /(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+(\d+(?:\.\d+)?)x\b((?:(?!(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+\d+(?:\.\d+)?x\b)(?!\s+(?:and|but)\s+(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)[^,;])*)/gi;
 const CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN = /\bby\s+\d+(?:\.\d+)?x\b/gi;
-const BOOST_INSTEAD_SUFFIX_PATTERN = /\bby\s+(\d+(?:\.\d+)?)x\s+instead\b/gi;
+const BOOST_INSTEAD_SUFFIX_PATTERN =
+  /\bby\s+(\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?)\s+instead\b/gi;
 const SELF_ACTIVATION_RIDER_PATTERN =
   /(?:,\s*|\s+and\s+)(?:(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure),?\s+)?this character activates their own special\b[^,.;]*/gi;
 const START_OF_FIGHT_EFFECT_PATTERN =
@@ -864,15 +865,13 @@ function normalizeCaptainBoostScopeClauseCandidates(
   clause: string,
   includeConditional: boolean,
 ): string[] {
-  const normalizedClause = stripBoostInsteadSuffix(
-    stripSelfActivationRider(stripInlineConditionalBoostRiders(clause)),
-  );
+  const normalizedClause = normalizeCoverageClause(clause);
+  const candidates =
+    includeConditional && isConditionalCaptainBoostClause(normalizedClause)
+      ? extractEffectClausesFromConditionalSentence(normalizedClause)
+      : expandTrailingCaptainBoostAlternatives(normalizedClause);
 
-  if (!includeConditional || !isConditionalCaptainBoostClause(normalizedClause)) {
-    return [normalizedClause];
-  }
-
-  return extractEffectClausesFromConditionalSentence(normalizedClause)
+  return candidates
     .map(stripInlineConditionalBoostRiders)
     .map(stripSelfActivationRider)
     .map(stripBoostInsteadSuffix);
@@ -940,7 +939,7 @@ function stripSelfActivationRider(clause: string): string {
 }
 
 function stripBoostInsteadSuffix(clause: string): string {
-  return normalizeCoverageClause(clause.replace(BOOST_INSTEAD_SUFFIX_PATTERN, 'by $1x'));
+  return normalizeCoverageClause(clause.replace(BOOST_INSTEAD_SUFFIX_PATTERN, 'by $1'));
 }
 
 function extractCaptainStartOfFightCooldownTagClauses(text: string): string[] {
@@ -1009,7 +1008,9 @@ function splitCaptainEffectClauses(text: string): string[] {
     .flatMap((clause) =>
       isConditionalCaptainBoostClause(clause)
         ? [clause]
-        : clause.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR),
+        : clause
+            .split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR)
+            .flatMap(expandTrailingCaptainBoostAlternatives),
     )
     .map(normalizeCoverageClause)
     .filter(Boolean);
@@ -1076,8 +1077,7 @@ function expandTrailingCaptainBoostAlternatives(clause: string): string[] {
   }
 
   const primaryClause = clause.slice(0, firstAlternativeIndex).trim();
-  const primaryMultipliers = [...primaryClause.matchAll(CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN)];
-  const primaryMultiplier = primaryMultipliers.at(-1);
+  const primaryMultiplier = resolvePrimaryMultiplierForTrailingAlternative(primaryClause);
   if (primaryMultiplier?.index === undefined) {
     return [clause];
   }
@@ -1087,14 +1087,49 @@ function expandTrailingCaptainBoostAlternatives(clause: string): string[] {
     return [clause];
   }
 
+  const trailingSharedSuffix = extractTrailingSharedBoostSuffix(clause, alternatives);
+
   return [
-    primaryClause,
+    normalizeCoverageClause(`${primaryClause}${trailingSharedSuffix}`),
     ...alternatives.map((alternative) =>
       normalizeCoverageClause(
-        `${sharedBoostPrefix} by ${alternative[1]}x${alternative[2] ?? ''}`,
+        `${sharedBoostPrefix} by ${alternative[1]}x${alternative[2] ?? ''}${trailingSharedSuffix}`,
       ),
     ),
   ];
+}
+
+function resolvePrimaryMultiplierForTrailingAlternative(
+  primaryClause: string,
+): RegExpMatchArray | undefined {
+  const primaryMultipliers = [...primaryClause.matchAll(CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN)];
+  if (
+    primaryMultipliers.length > 1 &&
+    /\batk\b/i.test(primaryClause) &&
+    /\bhp\b/i.test(primaryClause) &&
+    /\bstart of the chain\b/i.test(primaryClause)
+  ) {
+    return primaryMultipliers[0];
+  }
+
+  return primaryMultipliers.at(-1);
+}
+
+function extractTrailingSharedBoostSuffix(
+  clause: string,
+  alternatives: readonly RegExpMatchArray[],
+): string {
+  const finalAlternative = alternatives.at(-1);
+  if (finalAlternative?.index === undefined) {
+    return '';
+  }
+
+  const finalAlternativeEnd = finalAlternative.index + finalAlternative[0].length;
+  let suffix = clause.slice(finalAlternativeEnd).replace(/^\s*,\s*/, '').trim();
+  if (suffix && !/^(?:and|but)\b/i.test(suffix) && /\b(?:atk|hp)\b/i.test(suffix)) {
+    suffix = `and ${suffix}`;
+  }
+  return suffix ? ` ${suffix}` : '';
 }
 
 function isConditionalCaptainBoostClause(clause: string): boolean {

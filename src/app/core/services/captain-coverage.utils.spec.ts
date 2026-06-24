@@ -380,6 +380,41 @@ describe('resolveCaptainCoverage', () => {
     );
   });
 
+  it('keeps non-conditional captain boost alternatives before stripping instead riders', () => {
+    const captainAbility =
+      'Boosts ATK of Free Spirit and Fighter characters by 5x, by 5.5x instead if they have a beneficial orb, boosts HP of Fighter and Free Spirit characters by 1.3x.';
+    const captain = createCharacter({ id: 4537, captainAbility });
+    const target = createCharacter({
+      id: 4538,
+      type: 'DEX',
+      classes: ['Fighter', 'Free Spirit'],
+    });
+
+    expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage').clauses).toEqual(
+      expect.arrayContaining([
+        'Boosts ATK of Free Spirit and Fighter characters by 5x',
+        'Boosts ATK of Free Spirit and Fighter characters by 5.5x if they have a beneficial orb',
+        'boosts HP of Fighter and Free Spirit characters by 1.3x',
+      ]),
+    );
+    expect(resolveCaptainCoverage(captain, target).boosts).toEqual({
+      hp: 1.3,
+      atk: 5.5,
+    });
+  });
+
+  it('keeps conditional instead alternatives before stripping riders in runtime coverage', () => {
+    const captainAbility =
+      'Boosts HP of all characters by 1.25x. If there is a [STR], [DEX], [QCK], [PSY] and [INT] character in your crew, boosts ATK of all characters by 2.25x, by 3.9375x instead if they have a beneficial orb.';
+
+    expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage').clauses).toEqual(
+      expect.arrayContaining([
+        'boosts ATK of all characters by 2.25x',
+        'boosts ATK of all characters by 3.9375x if they have a beneficial orb',
+      ]),
+    );
+  });
+
   it('does not treat possessive Captain Ability removal text as a branch label', () => {
     const captainAbility =
       "Boosts ATK of Driven and Powerhouse characters by 4.5x, boosts HP of Driven and Powerhouse characters by 1.75x, increases damage received by 1.5x. If total Damage Taken is 50,000 or more, boosts ATK of Driven and Powerhouse characters by 5.25x instead, recovers 2,000 HP at the end of each turn, reduces damage received by 10% and removes the following effect from this character's Captain Ability: increases damage received by 1.5x.";
@@ -533,14 +568,15 @@ describe('resolveCaptainCoverage', () => {
     const fallbackOnlyCoverage = resolveCaptainCoverage(captain, fallbackOnlyTarget);
 
     expect(character1Coverage.matches).toBe(true);
-    expect(character1Coverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(character1Coverage.boosts).toEqual({ hp: 1.35, atk: 6 });
     expect(character1Coverage.coveredClauses).toEqual([
       'boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x',
+      'boosts ATK of [INT], Slasher and Free Spirit characters by 6x after the 3rd PERFECTs in a row',
       'boosts HP of [INT], Slasher and Free Spirit characters by 1.35x',
     ]);
     expect(character1Coverage.uncoveredClauses).toEqual([]);
     expect(character2Coverage.matches).toBe(true);
-    expect(character2Coverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(character2Coverage.boosts).toEqual({ hp: 1.35, atk: 6 });
     expect(fallbackOnlyCoverage.matches).toBe(false);
     expect(fallbackOnlyCoverage.uncoveredClauses).toEqual(
       expect.arrayContaining([
@@ -630,9 +666,9 @@ describe('resolveCaptainCoverage', () => {
     });
 
     expect(zoroSelfCoverage.matches).toBe(true);
-    expect(zoroSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(zoroSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 6 });
     expect(lucciSelfCoverage.matches).toBe(true);
-    expect(lucciSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(lucciSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 6 });
     expect(automaticVsSelfCoverage.matches).toBe(true);
     expect(fallbackTargetCoverage.matches).toBe(false);
     expect(fallbackTargetCoverage.uncoveredClauses).toEqual(
