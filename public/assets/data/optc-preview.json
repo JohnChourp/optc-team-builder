@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-23T12:14:56.883Z",
+  "generatedAt": "2026-06-23T18:47:52.572Z",
   "characters": [
     {
       "id": 1,
@@ -1189,27 +1189,7 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "tiers": [
-                {
-                  "tier": 1,
-                  "kind": "baseline",
-                  "scope": "none",
-                  "characterConditions": {
-                    "universal": false,
-                    "fallbackOther": false,
-                    "selfOnly": false,
-                    "types": [],
-                    "classes": [],
-                    "characterTags": []
-                  },
-                  "teamConditions": [],
-                  "fieldConditions": [],
-                  "triggerConditions": [],
-                  "clauses": [
-                    "Reduces damage received from [INT] enemies by 20%"
-                  ]
-                }
-              ]
+              "tiers": []
             }
           ]
         },
@@ -1242,7 +1222,9 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "captainAbility",
-            "coverageMode": "explicit"
+            "coverageMode": "explicit",
+            "minEffectValue": 20,
+            "effectTargetScope": "crew"
           }
         ],
         "sailorAbilities": [],
@@ -3361,29 +3343,7 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "tiers": [
-                {
-                  "tier": 1,
-                  "kind": "baseline",
-                  "scope": "subset",
-                  "characterConditions": {
-                    "universal": false,
-                    "fallbackOther": false,
-                    "selfOnly": false,
-                    "types": [
-                      "PSY"
-                    ],
-                    "classes": [],
-                    "characterTags": []
-                  },
-                  "teamConditions": [],
-                  "fieldConditions": [],
-                  "triggerConditions": [],
-                  "clauses": [
-                    "Boosts RCV of [PSY] characters by 1.2x"
-                  ]
-                }
-              ]
+              "tiers": []
             }
           ]
         },
@@ -3494,29 +3454,7 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "tiers": [
-                {
-                  "tier": 1,
-                  "kind": "baseline",
-                  "scope": "subset",
-                  "characterConditions": {
-                    "universal": false,
-                    "fallbackOther": false,
-                    "selfOnly": false,
-                    "types": [
-                      "PSY"
-                    ],
-                    "classes": [],
-                    "characterTags": []
-                  },
-                  "teamConditions": [],
-                  "fieldConditions": [],
-                  "triggerConditions": [],
-                  "clauses": [
-                    "Boosts RCV of [PSY] characters by 1.5x"
-                  ]
-                }
-              ]
+              "tiers": []
             }
           ]
         },
@@ -3721,29 +3659,7 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "tiers": [
-                {
-                  "tier": 1,
-                  "kind": "baseline",
-                  "scope": "subset",
-                  "characterConditions": {
-                    "universal": false,
-                    "fallbackOther": false,
-                    "selfOnly": false,
-                    "types": [
-                      "INT"
-                    ],
-                    "classes": [],
-                    "characterTags": []
-                  },
-                  "teamConditions": [],
-                  "fieldConditions": [],
-                  "triggerConditions": [],
-                  "clauses": [
-                    "Boosts RCV of [INT] characters by 1.5x"
-                  ]
-                }
-              ]
+              "tiers": []
             }
           ]
         },
@@ -3854,29 +3770,7 @@
             {
               "key": "captain",
               "label": "Captain Ability",
-              "tiers": [
-                {
-                  "tier": 1,
-                  "kind": "baseline",
-                  "scope": "subset",
-                  "characterConditions": {
-                    "universal": false,
-                    "fallbackOther": false,
-                    "selfOnly": false,
-                    "types": [
-                      "STR"
-                    ],
-                    "classes": [],
-                    "characterTags": []
-                  },
-                  "teamConditions": [],
-                  "fieldConditions": [],
-                  "triggerConditions": [],
-                  "clauses": [
-                    "Boosts RCV of [STR] characters by 1.5x"
-                  ]
-                }
-              ]
+              "tiers": []
             }
           ]
         },

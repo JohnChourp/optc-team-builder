@@ -20,6 +20,10 @@ import {
 } from 'ionicons/icons';
 
 import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
+  normalizeAbilityRequirementSourceScope,
+  normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
   type AutoBuildEnemyMechanicCatalogItem,
   type AutoBuildEnemyMechanicCategory,
@@ -649,7 +653,18 @@ export function mergeAbilityRequirements(
     ]
       .filter((token) => token.length > 0)
       .sort((left, right) => left.localeCompare(right));
-    const mergeKey = `${abilityKey}|${slotTokens.join(',')}`;
+    const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
+    const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
+    const minEffectValue = normalizeAbilityRequirementEffectValue(requirement.minEffectValue);
+    const effectTargetScope = normalizeAbilityEffectTargetScope(requirement.effectTargetScope);
+    const mergeKey = [
+      abilityKey,
+      slotTokens.join(','),
+      slotScope,
+      sourceScope ?? 'any',
+      minEffectValue ?? 'none',
+      effectTargetScope,
+    ].join('|');
     const minTurns = resolvePositiveInteger(requirement.minTurns);
     const requiredCharacterCount = resolvePositiveInteger(requirement.requiredCharacterCount) ?? 1;
     const existing = mergedRequirements.get(mergeKey);
@@ -668,6 +683,10 @@ export function mergeAbilityRequirements(
       minTurns,
       slotTokens,
       requiredCharacterCount,
+      ...(slotScope !== 'any' ? { slotScope } : {}),
+      ...(sourceScope ? { sourceScope } : {}),
+      ...(minEffectValue !== null ? { minEffectValue } : {}),
+      ...(effectTargetScope !== 'any' ? { effectTargetScope } : {}),
     });
   });
 
@@ -699,16 +718,27 @@ export function splitManualAbilityRequirementsFromEnemyMechanics(
           resolvePositiveInteger(derivedRequirement.minTurns)
       );
     })
-    .map((requirement) => ({
-      abilityKey: requirement.abilityKey.trim(),
-      minTurns: resolvePositiveInteger(requirement.minTurns),
-      slotTokens: [...new Set(requirement.slotTokens.map((token) => token.trim().toUpperCase()))]
-        .filter((token) => token.length > 0)
-        .sort((left, right) => left.localeCompare(right)),
-      requiredCharacterCount: resolvePositiveInteger(requirement.requiredCharacterCount) ?? 1,
-      ...(requirement.slotScope ? { slotScope: requirement.slotScope } : {}),
-      ...(requirement.sourceScope ? { sourceScope: requirement.sourceScope } : {}),
-    }));
+    .map((requirement) => {
+      const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
+      const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
+      const minEffectValue = normalizeAbilityRequirementEffectValue(requirement.minEffectValue);
+      const effectTargetScope = normalizeAbilityEffectTargetScope(requirement.effectTargetScope);
+
+      return {
+        abilityKey: requirement.abilityKey.trim(),
+        minTurns: resolvePositiveInteger(requirement.minTurns),
+        slotTokens: [
+          ...new Set(requirement.slotTokens.map((token) => token.trim().toUpperCase())),
+        ]
+          .filter((token) => token.length > 0)
+          .sort((left, right) => left.localeCompare(right)),
+        requiredCharacterCount: resolvePositiveInteger(requirement.requiredCharacterCount) ?? 1,
+        ...(slotScope !== 'any' ? { slotScope } : {}),
+        ...(sourceScope ? { sourceScope } : {}),
+        ...(minEffectValue !== null ? { minEffectValue } : {}),
+        ...(effectTargetScope !== 'any' ? { effectTargetScope } : {}),
+      };
+    });
 }
 
 export function formatEnemyMechanicSummary(
@@ -787,6 +817,10 @@ function buildAbilityIdentity(requirement: AutoBuildAbilityRequirement): string 
       .filter((token) => token.length > 0)
       .sort((left, right) => left.localeCompare(right))
       .join(','),
+    normalizeAbilityRequirementSlotScope(requirement.slotScope),
+    normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any',
+    normalizeAbilityRequirementEffectValue(requirement.minEffectValue) ?? 'none',
+    normalizeAbilityEffectTargetScope(requirement.effectTargetScope),
   ].join('|');
 }
 

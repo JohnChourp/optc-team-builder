@@ -32,6 +32,8 @@ import {
   createEmptyAutoBuildManualSlots,
 } from '../models/auto-team-builder.models';
 import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
@@ -2681,6 +2683,8 @@ export class AutoTeamBuilderService {
           : 1;
       const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
       const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
+      const minEffectValue = normalizeAbilityRequirementEffectValue(requirement.minEffectValue);
+      const effectTargetScope = normalizeAbilityEffectTargetScope(requirement.effectTargetScope);
 
       if (normalizedAbilityKey.length === 0) {
         continue;
@@ -2693,6 +2697,8 @@ export class AutoTeamBuilderService {
         requiredCharacterCount,
         ...(slotScope !== 'any' ? { slotScope } : {}),
         ...(sourceScope ? { sourceScope } : {}),
+        ...(minEffectValue !== null ? { minEffectValue } : {}),
+        ...(effectTargetScope !== 'any' ? { effectTargetScope } : {}),
       });
     }
 

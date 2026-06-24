@@ -1803,6 +1803,18 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
             undefined,
             'saved-enemies',
           ),
+        formatMinEffectValue: (value) =>
+          this.i18n.translate(
+            'editor.requirementSummary.minEffectValue',
+            { value },
+            'saved-enemies',
+          ),
+        formatEffectTargetScope: (scope) =>
+          this.i18n.translate(
+            `editor.requirementSummary.effectTargetScopes.${scope}`,
+            undefined,
+            'saved-enemies',
+          ),
       },
     );
   }

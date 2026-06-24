@@ -875,6 +875,13 @@
       },
       "sourceScopes": {
         "captainAbility": "Captain ability"
+      },
+      "minEffectValue": ">={{value}}%",
+      "effectTargetScopes": {
+        "crew": "Crew",
+        "captains": "Captains",
+        "self": "Self",
+        "subs": "Subs"
       }
     },
     "catalog": {

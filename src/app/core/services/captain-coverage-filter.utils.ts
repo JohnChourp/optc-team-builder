@@ -2,8 +2,13 @@ import {
   type AutoBuildAbilityRequirement,
   type NormalizedBuilderAbility,
 } from '../models/auto-team-builder-ability.models';
-import { type AutoBuildCaptainAbilityCoverageMode } from '../models/auto-team-builder.models';
 import {
+  AUTO_TEAM_BUILDER_TYPES,
+  type AutoBuildCaptainAbilityCoverageMode,
+  type AutoTeamBuilderType,
+} from '../models/auto-team-builder.models';
+import {
+  type CaptainCoverageTeamCondition,
   type CharacterCaptainAbilityCoverageTier,
   type CharacterDetailRecord,
   type CharacterListItem,
@@ -160,6 +165,24 @@ export function matchesCaptainCoverageRequiredTiers(
   });
 }
 
+export function targetMatchesAnyApplicableCaptainCoverageTier(
+  captain: CharacterDetailRecord | null | undefined,
+  target: CharacterListItem,
+): boolean {
+  const tiers = getCaptainCoverageTiers(captain);
+  if (!tiers.length) {
+    return true;
+  }
+  const subsetTiers = filterSubsetCaptainCoverageTiers(tiers);
+  const applicableTiers = tiers.filter(
+    (tier) => !isCaptainCoverageTierNotApplicableForTeamCoverage(tier),
+  );
+  if (!applicableTiers.length) {
+    return true;
+  }
+  return applicableTiers.some((tier) => matchesCaptainCoverageTier(tier, target, subsetTiers));
+}
+
 interface CaptainAllTierCoverageTierResult {
   tier: CharacterCaptainAbilityCoverageTier;
   matchingCandidateCount: number;
@@ -194,6 +217,7 @@ export function resolveCaptainAllTierCoverage(
     };
   }
   const subsetTiers = filterSubsetCaptainCoverageTiers(tiers);
+  const members = candidates.map((candidate) => candidate.character);
   const tierResults = tiers.map<CaptainAllTierCoverageTierResult>((tier) => {
     if (isCaptainCoverageTierNotApplicableForTeamCoverage(tier)) {
       return {
@@ -201,6 +225,14 @@ export function resolveCaptainAllTierCoverage(
         matchingCandidateCount: 0,
         matches: true,
         notApplicable: true,
+      };
+    }
+    if (!teamSatisfiesCaptainCoverageTeamConditions(tier.teamConditions, members)) {
+      return {
+        tier,
+        matchingCandidateCount: 0,
+        matches: false,
+        notApplicable: false,
       };
     }
     const matchingCandidateCount = candidates.filter((candidate) =>
@@ -306,6 +338,188 @@ export function matchesCaptainCoverageTier(
   }
 
   return matchesTierCharacterConditionsInner(tier, target);
+}
+
+export function teamSatisfiesCaptainCoverageTeamConditions(
+  teamConditions: readonly CaptainCoverageTeamCondition[],
+  members: readonly CharacterListItem[],
+): boolean {
+  const groupedConditions = new Map<string, CaptainCoverageTeamCondition[]>();
+  const ungroupedConditions: CaptainCoverageTeamCondition[] = [];
+
+  for (const condition of teamConditions) {
+    const group = condition.conditionGroup?.trim();
+    if (!group) {
+      ungroupedConditions.push(condition);
+      continue;
+    }
+    groupedConditions.set(group, [...(groupedConditions.get(group) ?? []), condition]);
+  }
+
+  return (
+    ungroupedConditions.every((condition) =>
+      captainCoverageTeamConditionSatisfied(condition, members),
+    ) &&
+    [...groupedConditions.values()].every((conditions) =>
+      conditions.some((condition) => captainCoverageTeamConditionSatisfied(condition, members)),
+    )
+  );
+}
+
+function captainCoverageTeamConditionSatisfied(
+  condition: CaptainCoverageTeamCondition,
+  members: readonly CharacterListItem[],
+): boolean {
+  if (condition.kind === 'requires-captain' || condition.kind === 'requires-friend-captain') {
+    return true;
+  }
+  if (condition.kind === 'crew-composition' || condition.kind === 'crew-count') {
+    return crewCompositionSatisfied(condition, members);
+  }
+  if (condition.kind === 'crew-exclusion') {
+    return crewExclusionSatisfied(condition, members);
+  }
+  return true;
+}
+
+function crewExclusionSatisfied(
+  condition: CaptainCoverageTeamCondition,
+  members: readonly CharacterListItem[],
+): boolean {
+  const excludedTypes = condition.types ?? [];
+  const excludedClasses = condition.classes ?? [];
+  const excludedTags = condition.characterTags ?? [];
+  if (excludedTypes.length + excludedClasses.length + excludedTags.length === 0) {
+    return true;
+  }
+  return !members.some((member) =>
+    memberSatisfiesCompositionCondition(member, excludedTypes, excludedClasses, excludedTags),
+  );
+}
+
+function crewCompositionSatisfied(
+  condition: CaptainCoverageTeamCondition,
+  members: readonly CharacterListItem[],
+): boolean {
+  if (condition.sameType) {
+    return sameTypeCrewCompositionSatisfied(condition, members);
+  }
+
+  const requiredTypes = condition.types ?? [];
+  const requiredClasses = condition.classes ?? [];
+  const requiredTags = condition.characterTags ?? [];
+
+  if (
+    requiredTypes.length > 1 &&
+    requiredClasses.length === 0 &&
+    requiredTags.length === 0 &&
+    condition.minCount === requiredTypes.length &&
+    condition.exactCount === undefined &&
+    /\bthere\s+is\s+a\b/i.test(condition.rawClause ?? '')
+  ) {
+    const normalizedRequiredTypes = resolveConditionTypes(requiredTypes);
+
+    return normalizedRequiredTypes.every((requiredType) =>
+      members.some((member) => resolveMemberTypes(member).includes(requiredType)),
+    );
+  }
+
+  const matchCount = members.filter((member) =>
+    memberSatisfiesCompositionCondition(member, requiredTypes, requiredClasses, requiredTags),
+  ).length;
+
+  if (typeof condition.exactCount === 'number' && condition.exactCount > 0) {
+    return matchCount === condition.exactCount;
+  }
+  if (typeof condition.minCount === 'number' && condition.minCount > 0) {
+    return matchCount >= condition.minCount;
+  }
+  return true;
+}
+
+function sameTypeCrewCompositionSatisfied(
+  condition: CaptainCoverageTeamCondition,
+  members: readonly CharacterListItem[],
+): boolean {
+  const allowedTypes = resolveConditionTypes(condition.types ?? []);
+  const counts = new Map<AutoTeamBuilderType, number>();
+
+  for (const member of members) {
+    for (const type of resolveMemberTypes(member)) {
+      if (allowedTypes.includes(type)) {
+        counts.set(type, (counts.get(type) ?? 0) + 1);
+      }
+    }
+  }
+
+  if (typeof condition.exactCount === 'number' && condition.exactCount > 0) {
+    const exactCount = condition.exactCount;
+
+    return [...counts.values()].some((count) => count === exactCount);
+  }
+  if (typeof condition.minCount === 'number' && condition.minCount > 0) {
+    const minCount = condition.minCount;
+
+    return [...counts.values()].some((count) => count >= minCount);
+  }
+  return [...counts.values()].some((count) => count > 0);
+}
+
+function resolveConditionTypes(types: readonly string[]): AutoTeamBuilderType[] {
+  const normalizedTypes = types
+    .map((type) => type.trim().toUpperCase())
+    .filter((type): type is AutoTeamBuilderType =>
+      AUTO_TEAM_BUILDER_TYPES.includes(type as AutoTeamBuilderType),
+    );
+
+  return normalizedTypes.length ? normalizedTypes : [...AUTO_TEAM_BUILDER_TYPES];
+}
+
+function memberSatisfiesCompositionCondition(
+  member: CharacterListItem,
+  requiredTypes: readonly string[],
+  requiredClasses: readonly string[],
+  requiredTags: readonly string[],
+): boolean {
+  const memberTypes = resolveMemberTypes(member);
+  const normalizedRequiredTypes = requiredTypes.length ? resolveConditionTypes(requiredTypes) : [];
+  const typeMatch =
+    normalizedRequiredTypes.length === 0
+      ? false
+      : normalizedRequiredTypes.some((type) => memberTypes.includes(type));
+  const classMatch =
+    requiredClasses.length === 0
+      ? false
+      : requiredClasses.some((characterClass) =>
+          member.classes.some(
+            (memberClass) => memberClass.toLowerCase() === characterClass.toLowerCase(),
+          ),
+        );
+  const detailTags = (member as CharacterListItem & { detail?: { characterTags?: string[] } })
+    .detail?.characterTags;
+  const tagMatch =
+    requiredTags.length === 0
+      ? false
+      : Array.isArray(detailTags)
+        ? requiredTags.some((tag) =>
+            detailTags.some((memberTag) => memberTag.toLowerCase() === tag.toLowerCase()),
+          )
+        : false;
+
+  if (requiredTypes.length + requiredClasses.length + requiredTags.length === 0) {
+    return false;
+  }
+
+  return typeMatch || classMatch || tagMatch;
+}
+
+function resolveMemberTypes(member: CharacterListItem): AutoTeamBuilderType[] {
+  return member.type
+    .split(',')
+    .map((entry) => entry.trim().toUpperCase())
+    .filter((entry): entry is AutoTeamBuilderType =>
+      AUTO_TEAM_BUILDER_TYPES.includes(entry as AutoTeamBuilderType),
+    );
 }
 
 function targetMatchesTeamExclusion(

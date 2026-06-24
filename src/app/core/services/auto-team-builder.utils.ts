@@ -29,6 +29,8 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
@@ -58,7 +60,10 @@ import {
   resolveCaptainCoverage,
   resolveRequiredCaptainCoverageBranchTexts,
 } from './captain-coverage.utils';
-import { resolveCaptainAllTierCoverage } from './captain-coverage-filter.utils';
+import {
+  resolveCaptainAllTierCoverage,
+  targetMatchesAnyApplicableCaptainCoverageTier,
+} from './captain-coverage-filter.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 import { cloneRequiredCharacterGroup } from './required-character-groups.utils';
 import { cloneBattleRequirements } from './auto-team-builder-battle.utils';
@@ -447,6 +452,8 @@ function cloneAbilityRequirement(
 ): AutoBuildAbilityRequirement {
   const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
   const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
+  const minEffectValue = normalizeAbilityRequirementEffectValue(requirement.minEffectValue);
+  const effectTargetScope = normalizeAbilityEffectTargetScope(requirement.effectTargetScope);
   const nextRequirement: AutoBuildAbilityRequirement = {
     ...requirement,
     slotTokens: [...requirement.slotTokens],
@@ -462,6 +469,18 @@ function cloneAbilityRequirement(
     nextRequirement.sourceScope = sourceScope;
   } else {
     delete nextRequirement.sourceScope;
+  }
+
+  if (minEffectValue !== null) {
+    nextRequirement.minEffectValue = minEffectValue;
+  } else {
+    delete nextRequirement.minEffectValue;
+  }
+
+  if (effectTargetScope !== 'any') {
+    nextRequirement.effectTargetScope = effectTargetScope;
+  } else {
+    delete nextRequirement.effectTargetScope;
   }
 
   return nextRequirement;
@@ -1268,7 +1287,13 @@ interface AbilityRequirementDemand {
 }
 
 function buildAbilityRequirementDemandGroupKey(requirement: AutoBuildAbilityRequirement): string {
-  return `${requirement.abilityKey.trim()}|${normalizeAbilityRequirementSlotScope(requirement.slotScope)}|${normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any'}`;
+  return [
+    requirement.abilityKey.trim(),
+    normalizeAbilityRequirementSlotScope(requirement.slotScope),
+    normalizeAbilityRequirementSourceScope(requirement.sourceScope) ?? 'any',
+    normalizeAbilityRequirementEffectValue(requirement.minEffectValue) ?? 'none',
+    normalizeAbilityEffectTargetScope(requirement.effectTargetScope),
+  ].join('|');
 }
 
 function compareAbilityRequirementDemandStrictness(
@@ -1280,6 +1305,7 @@ function compareAbilityRequirementDemandStrictness(
 
   return (
     rightTurns - leftTurns ||
+    (right.requirement.minEffectValue ?? 0) - (left.requirement.minEffectValue ?? 0) ||
     right.requirement.slotTokens.length - left.requirement.slotTokens.length ||
     right.requirement.slotTokens.join(',').localeCompare(left.requirement.slotTokens.join(',')) ||
     left.requirementIndex - right.requirementIndex ||
@@ -4628,7 +4654,18 @@ function matchesActiveLeaderCriteria(
 
   if (leaderCriteria.coverageMode === 'fullAbilityCoverage') {
     return (
-      branchAwareCoverageResults.every((coverage) => coverage.matches) && matchesDominantTypeScope
+      branchAwareCoverageResults.every((coverage, index) => {
+        if (coverage.targetableClauseCount > 0) {
+          return coverage.matches;
+        }
+        const leader = leaderCriteria.leaders[index];
+        return leader
+          ? targetMatchesAnyApplicableCaptainCoverageTier(
+              leader.candidate.character,
+              candidate.character,
+            )
+          : false;
+      }) && matchesDominantTypeScope
     );
   }
 
@@ -4638,6 +4675,37 @@ function matchesActiveLeaderCriteria(
       branchMode: leader.branchMode,
     }),
   }));
+  const hasDimensionScope =
+    leaderCriteria.hasClassRestriction ||
+    leaderCriteria.hasTypeRestriction ||
+    leaderCriteria.hasCharacterTagRestriction;
+
+  if (
+    !hasDimensionScope &&
+    simpleCoverageResults.some((result) => result.hasSelfOnlyCoverage) &&
+    simpleCoverageResults.every((result) => result.coverage.targetableClauseCount === 0)
+  ) {
+    return (
+      simpleCoverageResults.every((result, index) => {
+        if (!result.hasSelfOnlyCoverage) {
+          return true;
+        }
+
+        const leader = leaderCriteria.leaders[index];
+        if (!leader) {
+          return false;
+        }
+
+        return (
+          leader.candidate.character.id === candidate.character.id ||
+          targetMatchesAnyApplicableCaptainCoverageTier(
+            leader.candidate.character,
+            candidate.character,
+          )
+        );
+      }) && matchesDominantTypeScope
+    );
+  }
 
   if (simpleCoverageResults.some((result) => result.coverage.targetableClauseCount > 0)) {
     return (
@@ -4647,10 +4715,6 @@ function matchesActiveLeaderCriteria(
           : !result.hasSelfOnlyCoverage,
       ) && matchesDominantTypeScope
     );
-  }
-
-  if (simpleCoverageResults.some((result) => result.hasSelfOnlyCoverage)) {
-    return false;
   }
 
   const matchesClassScope = leaderCriteria.hasClassRestriction
@@ -4669,10 +4733,6 @@ function matchesActiveLeaderCriteria(
         characterTagKeys.includes(normalizeCaptainTagKey(tag)),
       )
     : false;
-  const hasDimensionScope =
-    leaderCriteria.hasClassRestriction ||
-    leaderCriteria.hasTypeRestriction ||
-    leaderCriteria.hasCharacterTagRestriction;
   const matchesDimensionScope = hasDimensionScope
     ? matchesClassScope || matchesTypeScope || matchesCharacterTagScope
     : true;

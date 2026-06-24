@@ -5,6 +5,7 @@ import {
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
 } from '../models/auto-team-builder-ability.models';
+import { matchesAbilityRequirementMetadata } from './auto-team-builder-ability-match.utils';
 import {
   createAbilityRequirementDrafts,
   normalizeAbilityRequirementTurns,
@@ -234,6 +235,27 @@ function resolveRequirementMatchingCharacterIds(
   useCaptainAbilityIds = false,
 ): number[] {
   const minTurns = normalizeAbilityRequirementTurns(requirement.minTurns);
+  if (useCaptainAbilityIds && captainRequirementNeedsEffectMatch(requirement)) {
+    const matches = catalogItem.captainAbilityEffectMatches ?? [];
+
+    return [
+      ...new Set(
+        matches
+          .filter((match) =>
+            matchesAbilityRequirementMetadata(
+              {
+                minEffectValue: match.minEffectValue,
+                effectTargetScope: match.effectTargetScope,
+                slotTokens: match.slotTokens,
+              },
+              requirement,
+            ),
+          )
+          .map((match) => match.characterId),
+      ),
+    ];
+  }
+
   const hasCaptainAbilityIds =
     useCaptainAbilityIds && catalogItem.captainAbilityMatchingCharacterIds !== undefined;
   const matchingCharacterIds = useCaptainAbilityIds
@@ -258,6 +280,17 @@ function resolveRequirementMatchingCharacterIds(
         .flatMap((bucket) => bucket.characterIds),
     ),
   ];
+}
+
+function captainRequirementNeedsEffectMatch(requirement: AutoBuildAbilityRequirement): boolean {
+  const hasEffectValue =
+    requirement.minEffectValue !== null && requirement.minEffectValue !== undefined;
+  const hasSlotTokens = requirement.slotTokens.length > 0;
+  const hasEffectScope = Boolean(
+    requirement.effectTargetScope && requirement.effectTargetScope !== 'any',
+  );
+
+  return hasEffectValue || hasSlotTokens || hasEffectScope;
 }
 
 export function intersectAbilityMatchingCharacterIds(
@@ -312,6 +345,8 @@ export function createCaptainAbilityDrafts(
         requiredCharacterCount: requirement.requiredCharacterCount,
         slotScope: 'leader',
         sourceScope: 'captainAbility',
+        minEffectValue: requirement.minEffectValue,
+        effectTargetScope: requirement.effectTargetScope,
       })),
   );
 }

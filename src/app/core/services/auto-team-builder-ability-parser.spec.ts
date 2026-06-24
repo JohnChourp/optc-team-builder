@@ -14,6 +14,8 @@ let analyzeBuilderAbilityText: (
   slotTokens: string[];
   source: 'specialText' | 'superSpecialText' | 'captainAbility' | 'sailorAbilities';
   coverageMode?: 'explicit' | 'selectedDebuff';
+  minEffectValue?: number | null;
+  effectTargetScope?: 'any' | 'crew' | 'captains' | 'self' | 'subs';
 }>;
 let extractPrimaryAbilityBranchText: (value: unknown) => string;
 let normalizeLegacyAbilityText: (value: unknown) => string;
@@ -348,6 +350,110 @@ describe('auto team builder ability parser', () => {
     expect(abilityKeys).not.toContain('boost_max_hp');
     expect(new Set(abilities.map((ability) => ability.source))).toEqual(
       new Set(['captainAbility']),
+    );
+  });
+
+  it('extracts structured captain utility metadata for damage reduction and favorable slots', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Reduces damage received by 20%, makes [RCV] orbs beneficial for all characters and makes [INT] slots favorable for this character.',
+      'captainAbility',
+    );
+
+    expect(abilities.find((ability) => ability.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({
+        minEffectValue: 20,
+        effectTargetScope: 'crew',
+      }),
+    );
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['RCV'],
+          effectTargetScope: 'crew',
+        }),
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['INT'],
+          effectTargetScope: 'self',
+        }),
+      ]),
+    );
+  });
+
+  it('preserves unknown captain damage reduction without a minimum effect value', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Boosts ATK of all characters by 3x and reduces damage received by ?%.',
+      'captainAbility',
+    );
+
+    expect(abilities.find((ability) => ability.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({
+        effectTargetScope: 'crew',
+      }),
+    );
+    expect(abilities.find((ability) => ability.key === 'reduce_damage')).not.toHaveProperty(
+      'minEffectValue',
+    );
+  });
+
+  it('classifies favorable slots for non-captains as sub-member scoped', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Makes [RCV] orbs beneficial for non-captains.',
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['RCV'],
+          effectTargetScope: 'subs',
+        }),
+      ]),
+    );
+  });
+
+  it('extracts favorable slot tokens and scope from only the slot effect segment', () => {
+    const abilities = analyzeBuilderAbilityText(
+      "Makes [STR] and [QCK] orbs beneficial for all characters, recovers 0.5x this character's RCV and makes [DEX] orbs beneficial for [INT] characters.",
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['STR', 'QCK'],
+          effectTargetScope: 'crew',
+        }),
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['DEX'],
+        }),
+      ]),
+    );
+    expect(abilities).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: expect.arrayContaining(['INT']),
+        }),
+      ]),
+    );
+  });
+
+  it('keeps captain damage reduction crew-scoped when unrelated self text appears later', () => {
+    const abilities = analyzeBuilderAbilityText(
+      "Reduces damage received by 30%, boosts ATK of Driven characters by 2.25x and reduces this character's ATK by 90%.",
+      'captainAbility',
+    );
+
+    expect(abilities.find((ability) => ability.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({
+        minEffectValue: 30,
+        effectTargetScope: 'crew',
+      }),
     );
   });
 
@@ -857,6 +963,50 @@ describe('auto team builder ability parser', () => {
         category: 'special',
         matchingCharacterIds: [910002],
         matchCount: 1,
+      }),
+    );
+  });
+
+  it('indexes structured captain utility matches in the ability catalog', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 910003,
+        detail: {
+          specialText: null,
+          captainAbility:
+            'Reduces damage received by 10%, makes [RCV] orbs beneficial for all characters.',
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({
+        captainAbilityMatchingCharacterIds: [910003],
+        captainAbilityEffectMatches: [
+          {
+            characterId: 910003,
+            minEffectValue: 10,
+            effectTargetScope: 'crew',
+            slotTokens: [],
+          },
+        ],
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'make_slots_favorable')).toEqual(
+      expect.objectContaining({
+        supportsSlotTokens: true,
+        availableSlotTokens: ['RCV'],
+        captainAbilityMatchingCharacterIds: [910003],
+        captainAbilityEffectMatches: [
+          {
+            characterId: 910003,
+            effectTargetScope: 'crew',
+            slotTokens: ['RCV'],
+          },
+        ],
       }),
     );
   });

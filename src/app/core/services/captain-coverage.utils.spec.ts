@@ -330,6 +330,108 @@ describe('resolveCaptainCoverage', () => {
     });
   });
 
+  it('uses default captain branches instead of Gear branch boost values', () => {
+    const captain = createCharacter({
+      id: 2073,
+      captainAbility:
+        'Always Active: Boosts HP of all characters by 1.25x. Gear 2 Captain: Boosts ATK of all characters by 3x. Gear 3 Captain: Boosts ATK of all characters by 3.5x after 2 consecutive PERFECTs. Gear 4 Captain: Boosts ATK of all characters by 4x.',
+    });
+    const target = createCharacter({ id: 2074, type: 'DEX', classes: ['Fighter', 'Free Spirit'] });
+
+    const coverage = resolveCaptainCoverage(captain, target);
+
+    expect(coverage.matches).toBe(true);
+    expect(coverage.boosts).toEqual({
+      hp: 1.25,
+      atk: 0,
+    });
+  });
+
+  it('keeps comma-less conditional boost clauses in full coverage', () => {
+    const captainAbility =
+      'Boosts ATK of all characters by 3x. If you use "Yasakani no Magatama" in this turn boosts ATK of all characters by 5x instead.';
+    const captain = createCharacter({ id: 1018, captainAbility });
+    const target = createCharacter({ id: 2018, type: 'INT', classes: ['Shooter', 'Driven'] });
+
+    expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage')).toMatchObject({
+      clauses: [
+        'Boosts ATK of all characters by 3x',
+        'boosts ATK of all characters by 5x',
+      ],
+    });
+    expect(
+      resolveCaptainCoverage(captain, target, { coverageMode: 'fullAbilityCoverage' }),
+    ).toEqual(
+      expect.objectContaining({
+        matches: true,
+        coveredClauses: [
+          'Boosts ATK of all characters by 3x',
+          'boosts ATK of all characters by 5x',
+        ],
+        targetableClauseCount: 2,
+      }),
+    );
+  });
+
+  it('keeps trailing comma-less boost alternatives in conditional full coverage', () => {
+    const captainAbility =
+      "Boosts ATK of all characters by 3.25x. If you use 'Gomu Gomu no King Cobra' for 3 turns, on this Luffy boosts ATK of all characters by 4x at the start of the chain, by 4.25x after 3 PERFECTs in a row.";
+    const captain = createCharacter({ id: 2363, captainAbility });
+    const target = createCharacter({ id: 2364, type: 'INT', classes: ['Fighter', 'Free Spirit'] });
+
+    expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage').clauses).toEqual(
+      expect.arrayContaining([
+        'boosts ATK of all characters by 4x at the start of the chain',
+        'boosts ATK of all characters by 4.25x after 3 PERFECTs in a row',
+      ]),
+    );
+    expect(
+      resolveCaptainCoverage(captain, target, { coverageMode: 'fullAbilityCoverage' }),
+    ).toEqual(
+      expect.objectContaining({
+        matches: true,
+        coveredClauses: expect.arrayContaining([
+          'boosts ATK of all characters by 4.25x after 3 PERFECTs in a row',
+        ]),
+      }),
+    );
+  });
+
+  it('keeps non-conditional captain boost alternatives before stripping instead riders', () => {
+    const captainAbility =
+      'Boosts ATK of Free Spirit and Fighter characters by 5x, by 5.5x instead if they have a beneficial orb, boosts HP of Fighter and Free Spirit characters by 1.3x.';
+    const captain = createCharacter({ id: 4537, captainAbility });
+    const target = createCharacter({
+      id: 4538,
+      type: 'DEX',
+      classes: ['Fighter', 'Free Spirit'],
+    });
+
+    expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage').clauses).toEqual(
+      expect.arrayContaining([
+        'Boosts ATK of Free Spirit and Fighter characters by 5x',
+        'Boosts ATK of Free Spirit and Fighter characters by 5.5x if they have a beneficial orb',
+        'boosts HP of Fighter and Free Spirit characters by 1.3x',
+      ]),
+    );
+    expect(resolveCaptainCoverage(captain, target).boosts).toEqual({
+      hp: 1.3,
+      atk: 5.5,
+    });
+  });
+
+  it('keeps conditional instead alternatives before stripping riders in runtime coverage', () => {
+    const captainAbility =
+      'Boosts HP of all characters by 1.25x. If there is a [STR], [DEX], [QCK], [PSY] and [INT] character in your crew, boosts ATK of all characters by 2.25x, by 3.9375x instead if they have a beneficial orb.';
+
+    expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage').clauses).toEqual(
+      expect.arrayContaining([
+        'boosts ATK of all characters by 2.25x',
+        'boosts ATK of all characters by 3.9375x if they have a beneficial orb',
+      ]),
+    );
+  });
+
   it('does not treat possessive Captain Ability removal text as a branch label', () => {
     const captainAbility =
       "Boosts ATK of Driven and Powerhouse characters by 4.5x, boosts HP of Driven and Powerhouse characters by 1.75x, increases damage received by 1.5x. If total Damage Taken is 50,000 or more, boosts ATK of Driven and Powerhouse characters by 5.25x instead, recovers 2,000 HP at the end of each turn, reduces damage received by 10% and removes the following effect from this character's Captain Ability: increases damage received by 1.5x.";
@@ -425,7 +527,7 @@ describe('resolveCaptainCoverage', () => {
       'reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns',
     ]);
     expect(resolveCaptainCoverage(captain, qckTaggedNonFreeSpiritTarget).uncoveredClauses).toEqual([
-      'If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x',
+      'boosts ATK of Free Spirit characters by 7x',
     ]);
   });
 
@@ -483,14 +585,15 @@ describe('resolveCaptainCoverage', () => {
     const fallbackOnlyCoverage = resolveCaptainCoverage(captain, fallbackOnlyTarget);
 
     expect(character1Coverage.matches).toBe(true);
-    expect(character1Coverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(character1Coverage.boosts).toEqual({ hp: 1.35, atk: 6 });
     expect(character1Coverage.coveredClauses).toEqual([
       'boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x',
+      'boosts ATK of [INT], Slasher and Free Spirit characters by 6x after the 3rd PERFECTs in a row',
       'boosts HP of [INT], Slasher and Free Spirit characters by 1.35x',
     ]);
     expect(character1Coverage.uncoveredClauses).toEqual([]);
     expect(character2Coverage.matches).toBe(true);
-    expect(character2Coverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(character2Coverage.boosts).toEqual({ hp: 1.35, atk: 6 });
     expect(fallbackOnlyCoverage.matches).toBe(false);
     expect(fallbackOnlyCoverage.uncoveredClauses).toEqual(
       expect.arrayContaining([
@@ -580,9 +683,9 @@ describe('resolveCaptainCoverage', () => {
     });
 
     expect(zoroSelfCoverage.matches).toBe(true);
-    expect(zoroSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(zoroSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 6 });
     expect(lucciSelfCoverage.matches).toBe(true);
-    expect(lucciSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 5.5 });
+    expect(lucciSelfCoverage.boosts).toEqual({ hp: 1.35, atk: 6 });
     expect(automaticVsSelfCoverage.matches).toBe(true);
     expect(fallbackTargetCoverage.matches).toBe(false);
     expect(fallbackTargetCoverage.uncoveredClauses).toEqual(
@@ -794,7 +897,7 @@ describe('resolveCaptainCoverage', () => {
     expect(drivenCoverage.matches).toBe(false);
   });
 
-  it('ignores Kid team-count tags and non-boost riders while keeping type/class boost coverage', () => {
+  it('uses conditional base ATK target tags without treating team-count tags as targets', () => {
     const captain = createCharacter({
       id: 4549,
       captainAbility: kidAimedDamnedPunkCaptainAbility,
@@ -805,18 +908,19 @@ describe('resolveCaptainCoverage', () => {
       id: 3001,
       type: 'STR',
       classes: ['Shooter', 'Free Spirit'],
-      characterTags: ['Worst Generation'],
+      characterTags: ['Worst Generation', 'Paramythia-type'],
     });
     const untaggedBoostedTarget = createCharacter({
       id: 3003,
       type: 'STR',
       classes: ['Shooter', 'Free Spirit'],
+      characterTags: ['Paramythia-type'],
     });
     const taggedUnboostedTarget = createCharacter({
       id: 3004,
       type: 'QCK',
       classes: ['Shooter', 'Free Spirit'],
-      characterTags: ['Kid Pirates'],
+      characterTags: ['Kid Pirates', 'Paramythia-type'],
     });
     const nonMatchingTarget = createCharacter({
       id: 3002,
@@ -834,7 +938,10 @@ describe('resolveCaptainCoverage', () => {
       hp: 1.3,
       atk: 5,
     });
-    expect(matchingCoverage.chips).toEqual([{ kind: 'type', label: 'STR' }]);
+    expect(matchingCoverage.chips).toEqual([
+      { kind: 'type', label: 'STR' },
+      { kind: 'tag', label: 'Paramythia-type' },
+    ]);
     expect(matchingCoverage.neutralNotes).toEqual([]);
     expect(untaggedBoostedCoverage.matches).toBe(true);
     expect(taggedUnboostedCoverage.matches).toBe(false);
@@ -858,12 +965,13 @@ describe('resolveCaptainCoverage', () => {
       id: 3005,
       type: 'STR',
       classes: ['Shooter', 'Free Spirit'],
-      characterTags: ['Land of Wano Arc'],
+      characterTags: ['Land of Wano Arc', 'Paramythia-type'],
     });
     const untaggedBoostedTarget = createCharacter({
       id: 3006,
       type: 'STR',
       classes: ['Shooter', 'Free Spirit'],
+      characterTags: ['Paramythia-type'],
     });
 
     const taggedCoverage = resolveCaptainCoverage(captain, taggedBoostedTarget, {

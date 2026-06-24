@@ -1,4 +1,6 @@
 import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityRequirement,
@@ -55,6 +57,8 @@ function normalizeRequiredCharacterGroupAbility(
     : [];
   const slotScope = normalizeAbilityRequirementSlotScope(requirement.slotScope);
   const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
+  const minEffectValue = normalizeAbilityRequirementEffectValue(requirement.minEffectValue);
+  const effectTargetScope = normalizeAbilityEffectTargetScope(requirement.effectTargetScope);
   const normalized: AutoBuildAbilityRequirement = {
     abilityKey,
     minTurns,
@@ -68,6 +72,14 @@ function normalizeRequiredCharacterGroupAbility(
 
   if (sourceScope) {
     normalized.sourceScope = sourceScope;
+  }
+
+  if (minEffectValue !== null) {
+    normalized.minEffectValue = minEffectValue;
+  }
+
+  if (effectTargetScope !== 'any') {
+    normalized.effectTargetScope = effectTargetScope;
   }
 
   return normalized;

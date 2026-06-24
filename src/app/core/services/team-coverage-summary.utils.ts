@@ -1,5 +1,4 @@
 import {
-  type CaptainCoverageTeamCondition,
   type CaptainCoverageTierKind,
   type CharacterCaptainAbilityCoverageTier,
   type CharacterDetailRecord,
@@ -12,6 +11,7 @@ import {
 import {
   getCaptainCoverageTiers,
   matchesCaptainCoverageTier,
+  teamSatisfiesCaptainCoverageTeamConditions,
 } from './captain-coverage-filter.utils';
 import { buildCaptainCoverageTierView } from './captain-coverage-tier-view.utils';
 
@@ -141,7 +141,7 @@ function teamCoversTier(
   ) {
     return false;
   }
-  if (!teamSatisfiesTeamConditions(tier.teamConditions, members)) {
+  if (!teamSatisfiesCaptainCoverageTeamConditions(tier.teamConditions, members)) {
     return false;
   }
   if (tierHasOnlyTeamTargeting(tier)) {
@@ -175,94 +175,6 @@ function tierHasOnlyTeamTargeting(tier: CharacterCaptainAbilityCoverageTier): bo
     !conditions.selfOnly &&
     !hasSubsetCondition
   );
-}
-
-function teamSatisfiesTeamConditions(
-  teamConditions: readonly CaptainCoverageTeamCondition[],
-  members: readonly CharacterListItem[],
-): boolean {
-  // `requires-captain` / `requires-friend-captain` are about whether the captain is *this*
-  // character — that role is already implicit in how we use this util (captain vs friend tier
-  // coverage). Treat those as satisfied here.
-  return teamConditions.every((condition) => {
-    if (condition.kind === 'requires-captain' || condition.kind === 'requires-friend-captain') {
-      return true;
-    }
-    if (condition.kind === 'crew-composition' || condition.kind === 'crew-count') {
-      return crewCompositionSatisfied(condition, members);
-    }
-    if (condition.kind === 'crew-exclusion') {
-      return crewExclusionSatisfied(condition, members);
-    }
-    return true;
-  });
-}
-
-function crewExclusionSatisfied(
-  condition: CaptainCoverageTeamCondition,
-  members: readonly CharacterListItem[],
-): boolean {
-  const excludedTypes = condition.types ?? [];
-  const excludedClasses = condition.classes ?? [];
-  const excludedTags = condition.characterTags ?? [];
-  if (excludedTypes.length + excludedClasses.length + excludedTags.length === 0) {
-    return true;
-  }
-  return !members.some((member) =>
-    memberSatisfiesCompositionCondition(member, excludedTypes, excludedClasses, excludedTags),
-  );
-}
-
-function crewCompositionSatisfied(
-  condition: CaptainCoverageTeamCondition,
-  members: readonly CharacterListItem[],
-): boolean {
-  if (condition.sameType) {
-    return sameTypeCrewCompositionSatisfied(condition, members);
-  }
-
-  const requiredTypes = condition.types ?? [];
-  const requiredClasses = condition.classes ?? [];
-  const requiredTags = condition.characterTags ?? [];
-  const matchCount = members.filter((member) =>
-    memberSatisfiesCompositionCondition(member, requiredTypes, requiredClasses, requiredTags),
-  ).length;
-
-  if (typeof condition.exactCount === 'number' && condition.exactCount > 0) {
-    return matchCount === condition.exactCount;
-  }
-  if (typeof condition.minCount === 'number' && condition.minCount > 0) {
-    return matchCount >= condition.minCount;
-  }
-  return true;
-}
-
-function sameTypeCrewCompositionSatisfied(
-  condition: CaptainCoverageTeamCondition,
-  members: readonly CharacterListItem[],
-): boolean {
-  const allowedTypes = resolveConditionTypes(condition.types ?? []);
-  const counts = new Map<AutoTeamBuilderType, number>();
-
-  for (const member of members) {
-    for (const type of resolveMemberTypes(member)) {
-      if (allowedTypes.includes(type)) {
-        counts.set(type, (counts.get(type) ?? 0) + 1);
-      }
-    }
-  }
-
-  if (typeof condition.exactCount === 'number' && condition.exactCount > 0) {
-    const exactCount = condition.exactCount;
-
-    return [...counts.values()].some((count) => count === exactCount);
-  }
-  if (typeof condition.minCount === 'number' && condition.minCount > 0) {
-    const minCount = condition.minCount;
-
-    return [...counts.values()].some((count) => count >= minCount);
-  }
-  return [...counts.values()].some((count) => count > 0);
 }
 
 function allMembersShareOneType(

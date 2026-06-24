@@ -267,6 +267,94 @@ describe('special ability filter utils', () => {
     ).toEqual([20]);
   });
 
+  it('filters captain ability matches by structured effect metadata', () => {
+    const catalogItems: AutoBuildAbilityCatalogItem[] = [
+      ...CATALOG_ITEMS,
+      {
+        key: 'reduce_damage',
+        label: 'Reduce Damage',
+        category: 'special',
+        groupLabel: 'Damage Reduction',
+        groupOrder: 3,
+        effectOrder: 1,
+        supportsTurns: false,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['captainAbility'],
+        matchCount: 3,
+        matchingCharacterIds: [101, 202, 303],
+        captainAbilityMatchingCharacterIds: [101, 202, 303],
+        captainAbilityEffectMatches: [
+          { characterId: 101, minEffectValue: 10, effectTargetScope: 'crew', slotTokens: [] },
+          { characterId: 202, minEffectValue: 30, effectTargetScope: 'captains', slotTokens: [] },
+          { characterId: 303, minEffectValue: 30, effectTargetScope: 'self', slotTokens: [] },
+        ],
+        sampleCharacterIds: [],
+        sampleTexts: [],
+      },
+    ];
+
+    expect(
+      resolveCaptainAbilityMatchingCharacterIds(
+        [
+          {
+            abilityKey: 'reduce_damage',
+            minTurns: null,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            sourceScope: 'captainAbility',
+            minEffectValue: 20,
+            effectTargetScope: 'self',
+          },
+        ],
+        catalogItems,
+      ),
+    ).toEqual([303, 202]);
+  });
+
+  it('filters captain favorable-slot matches by selected slot tokens', () => {
+    const catalogItems: AutoBuildAbilityCatalogItem[] = [
+      ...CATALOG_ITEMS,
+      {
+        key: 'make_slots_favorable',
+        label: 'Make Slots Favorable',
+        category: 'special',
+        groupLabel: 'Slot',
+        groupOrder: 4,
+        effectOrder: 2,
+        supportsTurns: false,
+        supportsSlotTokens: true,
+        availableSlotTokens: ['INT', 'RCV'],
+        availableSources: ['captainAbility'],
+        matchCount: 2,
+        matchingCharacterIds: [101, 202],
+        captainAbilityMatchingCharacterIds: [101, 202],
+        captainAbilityEffectMatches: [
+          { characterId: 101, effectTargetScope: 'crew', slotTokens: ['RCV'] },
+          { characterId: 202, effectTargetScope: 'crew', slotTokens: ['INT'] },
+        ],
+        sampleCharacterIds: [],
+        sampleTexts: [],
+      },
+    ];
+
+    expect(
+      resolveCaptainAbilityMatchingCharacterIds(
+        [
+          {
+            abilityKey: 'make_slots_favorable',
+            minTurns: null,
+            slotTokens: ['RCV'],
+            requiredCharacterCount: 1,
+            sourceScope: 'captainAbility',
+            effectTargetScope: 'crew',
+          },
+        ],
+        catalogItems,
+      ),
+    ).toEqual([101]);
+  });
+
   it('serializes category drafts with normalized strict-and fields', () => {
     const drafts = createCategoryAbilityDrafts(
       [

@@ -22,9 +22,12 @@ import {
 } from 'ionicons/icons';
 
 import {
+  normalizeAbilityEffectTargetScope,
+  normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
   type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilityEffectTargetScope,
   type AutoBuildAbilityRequirement,
   type AutoBuildAbilityRequirementSourceScope,
   type AutoBuildAbilitySlotScope,
@@ -38,6 +41,8 @@ export interface AbilityRequirementDraft {
   requiredCharacterCount: number | null;
   slotScope?: AutoBuildAbilitySlotScope;
   sourceScope?: AutoBuildAbilityRequirementSourceScope;
+  minEffectValue?: number | null;
+  effectTargetScope?: AutoBuildAbilityEffectTargetScope;
 }
 
 export interface AbilityRequirementVisualMeta {
@@ -52,6 +57,8 @@ export interface AbilityRequirementSummaryFormatter {
   formatTurns(count: number): string;
   formatSlotScope?(scope: AutoBuildAbilitySlotScope): string;
   formatSourceScope?(scope: AutoBuildAbilityRequirementSourceScope): string;
+  formatMinEffectValue?(value: number): string;
+  formatEffectTargetScope?(scope: AutoBuildAbilityEffectTargetScope): string;
 }
 
 export interface AbilityRequirementMiniBadge {
@@ -331,6 +338,12 @@ export function createAbilityRequirementDraft(
     ...(normalizeAbilityRequirementSourceScope(requirement?.sourceScope)
       ? { sourceScope: normalizeAbilityRequirementSourceScope(requirement?.sourceScope)! }
       : {}),
+    ...(normalizeAbilityRequirementEffectValue(requirement?.minEffectValue) !== null
+      ? { minEffectValue: normalizeAbilityRequirementEffectValue(requirement?.minEffectValue)! }
+      : {}),
+    ...(normalizeAbilityEffectTargetScope(requirement?.effectTargetScope) !== 'any'
+      ? { effectTargetScope: normalizeAbilityEffectTargetScope(requirement?.effectTargetScope) }
+      : {}),
   };
 }
 
@@ -346,6 +359,12 @@ function cloneAbilityRequirementDraft(
     slotScope: normalizeAbilityRequirementSlotScope(draft.slotScope),
     ...(normalizeAbilityRequirementSourceScope(draft.sourceScope)
       ? { sourceScope: normalizeAbilityRequirementSourceScope(draft.sourceScope)! }
+      : {}),
+    ...(normalizeAbilityRequirementEffectValue(draft.minEffectValue) !== null
+      ? { minEffectValue: normalizeAbilityRequirementEffectValue(draft.minEffectValue)! }
+      : {}),
+    ...(normalizeAbilityEffectTargetScope(draft.effectTargetScope) !== 'any'
+      ? { effectTargetScope: normalizeAbilityEffectTargetScope(draft.effectTargetScope) }
       : {}),
   };
 }
@@ -460,6 +479,8 @@ export function serializeAbilityRequirementDrafts(
       : (resolvePositiveInteger(draft.requiredCharacterCount) ?? 1);
     const slotScope = normalizeAbilityRequirementSlotScope(draft.slotScope);
     const sourceScope = normalizeAbilityRequirementSourceScope(draft.sourceScope);
+    const minEffectValue = normalizeAbilityRequirementEffectValue(draft.minEffectValue);
+    const effectTargetScope = normalizeAbilityEffectTargetScope(draft.effectTargetScope);
     const nextRequirement: AutoBuildAbilityRequirement = {
       abilityKey,
       minTurns,
@@ -467,6 +488,8 @@ export function serializeAbilityRequirementDrafts(
       requiredCharacterCount,
       ...(slotScope !== 'any' ? { slotScope } : {}),
       ...(sourceScope ? { sourceScope } : {}),
+      ...(minEffectValue !== null ? { minEffectValue } : {}),
+      ...(effectTargetScope !== 'any' ? { effectTargetScope } : {}),
     };
 
     if (!dedupe) {
@@ -474,7 +497,7 @@ export function serializeAbilityRequirementDrafts(
       continue;
     }
 
-    const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}|${slotScope}|${sourceScope ?? 'any'}`;
+    const identity = `${abilityKey}|${minTurns ?? 'none'}|${slotTokens.join(',')}|${slotScope}|${sourceScope ?? 'any'}|${minEffectValue ?? 'none'}|${effectTargetScope}`;
     const existingRequirement = requirements.get(identity);
 
     if (existingRequirement) {
@@ -517,6 +540,18 @@ export function formatAbilityRequirementSummary(
 
   if (sourceScope) {
     suffixes.push(formatter.formatSourceScope?.(sourceScope) ?? sourceScope);
+  }
+
+  const minEffectValue = normalizeAbilityRequirementEffectValue(requirement.minEffectValue);
+
+  if (minEffectValue !== null) {
+    suffixes.push(formatter.formatMinEffectValue?.(minEffectValue) ?? `${minEffectValue}%`);
+  }
+
+  const effectTargetScope = normalizeAbilityEffectTargetScope(requirement.effectTargetScope);
+
+  if (effectTargetScope !== 'any') {
+    suffixes.push(formatter.formatEffectTargetScope?.(effectTargetScope) ?? effectTargetScope);
   }
 
   if (requirement.slotTokens.length > 0) {

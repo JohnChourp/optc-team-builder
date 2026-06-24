@@ -26,7 +26,7 @@
   { "key": "reduce_damage_over_threshold", "label": "Reduce Damage Over A Certain Amount", "groupLabel": "Damage Reduction", "groupOrder": 3, "effectOrder": 2 },
   { "key": "nullify_damage", "label": "Nullify Damage", "groupLabel": "Damage Reduction", "groupOrder": 3, "effectOrder": 3 },
   { "key": "lock_slots", "label": "Lock Slots", "groupLabel": "Slot", "groupOrder": 4, "effectOrder": 1 },
-  { "key": "make_slots_favorable", "label": "Make Slots Favorable", "groupLabel": "Slot", "groupOrder": 4, "effectOrder": 2 },
+  { "key": "make_slots_favorable", "label": "Make Slots Favorable", "groupLabel": "Slot", "groupOrder": 4, "effectOrder": 2, "supportsSlotTokens": true },
   { "key": "change_slot_chance", "label": "Change Slot Chance", "groupLabel": "Slot", "groupOrder": 4, "effectOrder": 3 },
   { "key": "swap_slots", "label": "Swap Slots", "groupLabel": "Slot", "groupOrder": 4, "effectOrder": 4 },
   { "key": "change_slots", "label": "Change Slots", "groupLabel": "Slot Change", "groupOrder": 5, "effectOrder": 1 },
