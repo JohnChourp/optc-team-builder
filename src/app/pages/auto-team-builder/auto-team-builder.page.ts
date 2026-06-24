@@ -452,6 +452,14 @@ const CHARACTER_PICKER_PAGE_SIZE = 100;
 const SIMILAR_MANUAL_PICK_CANDIDATE_LIMIT = 10_000;
 const SHIP_PICKER_PAGE_SIZE = 10;
 const SHIP_PICKER_SCROLL_LOAD_THRESHOLD_PX = 144;
+const GUIDED_AUTO_BUILD_SLOT_ORDER: AutoBuildManualSlotRole[] = [
+  'captain',
+  'sub1',
+  'sub2',
+  'sub3',
+  'sub4',
+  'friendCaptain',
+];
 const EXTRA_DROP_ANY_ABILITY_KEY = 'extra_drop_any';
 const EXTRA_DROP_GUARANTEED_ABILITY_KEY = 'extra_drop_guaranteed';
 const EXTRA_DROP_ABILITY_KEY_SET = new Set([
@@ -709,6 +717,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);
   public readonly favoritesOnly = signal(false);
   public readonly allowAnyFriendCaptainAutoFill = signal(false);
+  public readonly guidedAutoBuildEnabled = signal(false);
   public readonly favoriteShipsOnly = signal(false);
   public readonly teamName = signal('');
   public readonly notes = signal('');
@@ -1603,6 +1612,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly allowAnyFriendCaptainAutoFillSupportLabel = computed(() =>
     this.t('filters.allowAnyFriendCaptainAutoFill.support'),
   );
+  public readonly guidedAutoBuildToggleLabel = computed(() =>
+    this.t('filters.guidedAutoBuild.toggle'),
+  );
+  public readonly guidedAutoBuildSupportLabel = computed(() => {
+    const nextRole = this.resolveNextGuidedAutoBuildSlotRole();
+
+    return nextRole
+      ? this.t('filters.guidedAutoBuild.support.next', {
+          role: this.getManualSlotTitle(nextRole),
+        })
+      : this.t('filters.guidedAutoBuild.support.complete');
+  });
   public readonly favoriteShipsOnlyToggleLabel = computed(() =>
     this.t('filters.favoriteShipsOnly.toggle'),
   );
@@ -3196,6 +3217,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.resetBuildState();
   }
 
+  public onGuidedAutoBuildToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.guidedAutoBuildEnabled.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
   public onCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
     const nextValue = typeof event.detail.value === 'string' ? event.detail.value.trim() : '';
 
@@ -4130,57 +4156,25 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
         getWorkerCount: () => this.userState.resolveAutoTeamBuilderWorkerCount(),
       };
-      const nextResult = await this.autoTeamBuilder.buildTeam(
-        this.selectedClasses(),
-        this.selectedTypes(),
-        {
-          candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
-          selectedCharacterTags: this.selectedCharacterTags(),
-          selectedCharacterNames: this.selectedCharacterNames(),
-          requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
-          requireAllSelectedClassesPerCharacter:
-            this.derivedRequireAllSelectedClassesPerCharacter(),
-          requireAllSelectedCharacterTagsInTeam:
-            this.derivedRequireAllSelectedCharacterTagsInTeam(),
-          requireAllSelectedCharacterNamesInTeam:
-            this.derivedRequireAllSelectedCharacterNamesInTeam(),
-          requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
-          requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
-          requireBothLeadersFullCaptainAbilityCoverage:
-            this.requireBothLeadersFullCaptainAbilityCoverage(),
-          strictSuperSpecialCriteriaCoverage: this.requireSuperSpecialCriteriaCoverage(),
-          strictSuperTandemCriteriaCoverage: this.requireSuperTandemCriteriaCoverage(),
-          requireUniqueBaseCharacterNames: true,
-          requiredAbilities: this.pageRequiredAbilities(),
-          requiredCharacterGroups: [],
-          battleRequirements: this.pageBattleRequirements(),
-          enemyMechanics: this.pageEnemyMechanics(),
-          favoritesOnly: this.favoritesOnly(),
-          allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
-          favoriteCharacterIds: this.favoriteCharacterIds(),
-          favoriteShipsOnly: this.favoriteShipsOnly(),
-          favoriteShipIds: this.favoriteShipIds(),
-          leaderBoostFilters: this.leaderBoostFilters(),
-          leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
-          leaderCostRange: createEmptyAutoBuildCostRange(),
-          subCostRange: createEmptyAutoBuildCostRange(),
-          maxTotalCost: null,
-          manualSlots: this.serializeManualSlots(),
-          excludedCharacterIds: this.effectiveExcludedCharacterIds(),
-          manualShipId: this.selectedManualShipId(),
-          requireManualShip: this.requireManualShip(),
-          excludedShipIds: this.excludedShipIds(),
-        },
-        executionOptions,
-      );
+      const guidedSlotRole = this.guidedAutoBuildEnabled()
+        ? this.resolveNextGuidedAutoBuildSlotRole()
+        : null;
+      const nextResult = await this.runCurrentAutoTeamBuild(executionOptions);
 
       if (nextResult) {
-        for (const slot of nextResult.slots) this.cacheCharacterRecord(slot.character);
+        if (guidedSlotRole) {
+          if (!this.applyGuidedAutoBuildSlot(nextResult, guidedSlotRole)) {
+            this.errorMessage.set(this.resolveBuildFailureMessage());
+          }
+        } else {
+          for (const slot of nextResult.slots) this.cacheCharacterRecord(slot.character);
+
+          this.result.set(nextResult);
+        }
       } else {
         this.errorMessage.set(this.resolveBuildFailureMessage());
       }
 
-      this.result.set(nextResult);
       void this.scrollToBottom();
     } catch (error) {
       if (isAutoTeamBuildCancelledError(error)) {
@@ -4218,6 +4212,115 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.stopBuildProgressTicker();
       this.building.set(false);
     }
+  }
+
+  private runCurrentAutoTeamBuild(
+    executionOptions: AutoTeamBuildExecutionOptions,
+  ): Promise<AutoBuildResult | null> {
+    return this.autoTeamBuilder.buildTeam(
+      this.selectedClasses(),
+      this.selectedTypes(),
+      {
+        candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
+        selectedCharacterTags: this.selectedCharacterTags(),
+        selectedCharacterNames: this.selectedCharacterNames(),
+        requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
+        requireAllSelectedClassesPerCharacter: this.derivedRequireAllSelectedClassesPerCharacter(),
+        requireAllSelectedCharacterTagsInTeam: this.derivedRequireAllSelectedCharacterTagsInTeam(),
+        requireAllSelectedCharacterNamesInTeam: this.derivedRequireAllSelectedCharacterNamesInTeam(),
+        requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
+        requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
+        requireBothLeadersFullCaptainAbilityCoverage:
+          this.requireBothLeadersFullCaptainAbilityCoverage(),
+        strictSuperSpecialCriteriaCoverage: this.requireSuperSpecialCriteriaCoverage(),
+        strictSuperTandemCriteriaCoverage: this.requireSuperTandemCriteriaCoverage(),
+        requireUniqueBaseCharacterNames: true,
+        requiredAbilities: this.pageRequiredAbilities(),
+        requiredCharacterGroups: [],
+        battleRequirements: this.pageBattleRequirements(),
+        enemyMechanics: this.pageEnemyMechanics(),
+        favoritesOnly: this.favoritesOnly(),
+        allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
+        favoriteCharacterIds: this.favoriteCharacterIds(),
+        favoriteShipsOnly: this.favoriteShipsOnly(),
+        favoriteShipIds: this.favoriteShipIds(),
+        leaderBoostFilters: this.leaderBoostFilters(),
+        leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
+        leaderCostRange: createEmptyAutoBuildCostRange(),
+        subCostRange: createEmptyAutoBuildCostRange(),
+        maxTotalCost: null,
+        manualSlots: this.serializeManualSlots(),
+        excludedCharacterIds: this.effectiveExcludedCharacterIds(),
+        manualShipId: this.selectedManualShipId(),
+        requireManualShip: this.requireManualShip(),
+        excludedShipIds: this.excludedShipIds(),
+      },
+      executionOptions,
+    );
+  }
+
+  private resolveNextGuidedAutoBuildSlotRole(): AutoBuildManualSlotRole | null {
+    return (
+      GUIDED_AUTO_BUILD_SLOT_ORDER.find(
+        (role) => this.resolveManualSlotSelection(role).characterIds.length === 0,
+      ) ?? null
+    );
+  }
+
+  private applyGuidedAutoBuildSlot(
+    result: AutoBuildResult,
+    role: AutoBuildManualSlotRole,
+  ): boolean {
+    const resultSlot = this.resolveGuidedAutoBuildResultSlot(result, role);
+
+    if (
+      !resultSlot ||
+      this.resolveManualSlotSelection(role).characterIds.length > 0 ||
+      !this.canAssignCharacterToManualSlot(role, resultSlot.character)
+    ) {
+      return false;
+    }
+
+    this.cacheCharacterRecord(resultSlot.character);
+    this.manualSlots.update((currentSlots) =>
+      currentSlots.map((slot) => {
+        if (slot.role !== role) {
+          return slot;
+        }
+
+        const characterIds = [resultSlot.character.id];
+        const branchSelections = this.resolveNextManualSlotBranchSelections(
+          { ...slot, characterIds },
+          resultSlot.character.id,
+          resultSlot.captainBranchSelection?.mode ?? null,
+        );
+
+        return {
+          ...slot,
+          characterIds,
+          requiredCharacterId: resultSlot.character.id,
+          ...(branchSelections ? { branchSelections } : { branchSelections: undefined }),
+        };
+      }),
+    );
+    this.activeManualSlotRole.set(role);
+    this.currentTeamId.set(null);
+    this.resetSaveFeedbackState();
+
+    return true;
+  }
+
+  private resolveGuidedAutoBuildResultSlot(
+    result: AutoBuildResult,
+    role: AutoBuildManualSlotRole,
+  ): AutoBuildResult['slots'][number] | null {
+    if (role === 'captain' || role === 'friendCaptain') {
+      return result.slots.find((slot) => slot.role === role) ?? null;
+    }
+
+    const subIndex = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.indexOf(role);
+
+    return result.slots.filter((slot) => slot.role === 'sub')[subIndex] ?? null;
   }
 
   public cancelBuild(): void {

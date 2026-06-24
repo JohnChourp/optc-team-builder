@@ -211,6 +211,13 @@
       "toggle": "Allow any Friend Captain",
       "support": "When Friend Captain is empty, search all characters for that slot. Favorite auto-fill still applies to Captain and subs."
     },
+    "guidedAutoBuild": {
+      "toggle": "Guided auto build",
+      "support": {
+        "next": "Build and lock only the next empty slot: {{role}}.",
+        "complete": "All manual slots are filled. The next build validates the locked team."
+      }
+    },
     "favoriteShipsOnly": {
       "toggle": "Use favorite ships only",
       "support": {
