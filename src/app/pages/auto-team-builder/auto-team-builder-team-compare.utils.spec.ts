@@ -101,6 +101,62 @@ describe('auto-team-builder-team-compare utils', () => {
     });
   });
 
+  it('keeps embedded generated-team characters when a preset also has saved-team import data', () => {
+    const result = createAutoBuildResult();
+    const generatedExport = buildAutoTeamExportPayload(
+      result,
+      [],
+      101,
+      102,
+      '2026-06-25T08:00:00.000Z',
+    );
+    const savedTeam = createSavedTeam('preset-saved', [101, 102, 103, 104, 105, 106], 9001);
+    const presetPayload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: result.input.types,
+      selectedClasses: result.input.selectedClasses,
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createEmptyAutoBuildManualSlots(),
+      lockedCharacterIds: [],
+      lockedCharacters: [],
+      selectedLeaderIds: [],
+      captainLeaderId: null,
+      friendCaptainLeaderId: null,
+      generatedTeamExport: generatedExport,
+      savedTeamImport: buildSavedTeamsTransferPayload(
+        [savedTeam],
+        '2026-06-25T08:00:00.000Z',
+      ),
+      exportedAt: '2026-06-25T08:00:00.000Z',
+    });
+
+    const seed = parseAutoTeamCompareImportPayload(JSON.stringify(presetPayload));
+    const snapshot = buildAutoTeamCompareSnapshotFromImportedSeed(
+      seed,
+      new Map(),
+      null,
+      createCatalogItems(),
+    );
+
+    expect(seed).toMatchObject({
+      label: 'Saved Team preset-saved',
+      shipId: 9001,
+      slotIds: [101, 102, 103, 104, 105, 106],
+    });
+    expect(snapshot.ship).toMatchObject({ id: 9001, name: 'Ship 9001' });
+    expect(snapshot.missingCharacterCount).toBe(0);
+    expect(snapshot.slots[0]).toMatchObject({
+      characterId: 101,
+      character: { id: 101, name: 'Character 101' },
+    });
+  });
+
   it('reuses embedded generated-team characters when the local repository map is incomplete', () => {
     const catalogItems = createCatalogItems();
     const generatedExport = buildAutoTeamExportPayload(

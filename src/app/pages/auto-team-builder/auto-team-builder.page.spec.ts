@@ -3101,6 +3101,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('(click)="downloadSavedTeamImportJson()"');
     expect(template).toContain('compare-launch-card');
     expect(template).not.toContain('[disabled]="!canDownloadTeamJson()"');
+    expect(normalizedTemplate).toContain(
+      '#compareImportInput type="file" hidden accept="application/json,.json"',
+    );
     expect(normalizedTemplate).toMatch(
       /@if\s*\(\s*!building\(\)\s*\)\s*\{\s*<section class="glass-card compare-launch-card"/,
     );
@@ -5106,6 +5109,15 @@ describe('AutoTeamBuilder compare panel', () => {
       seed: null,
       snapshot: null,
     });
+    expect(readCompareSessionState()).toMatchObject({
+      sides: {
+        b: {
+          importDraft: 'not-json',
+          importedLabel: '',
+          importedRawContent: '',
+        },
+      },
+    });
   });
 
   it('ignores stale saved-team loads after the side source changes', async () => {
@@ -5172,6 +5184,84 @@ describe('AutoTeamBuilder compare panel', () => {
       state: { source: 'current' },
       snapshot: null,
       error: '',
+      loading: false,
+    });
+  });
+
+  it('clears loading when an imported draft changes during a pending import', async () => {
+    const { page, repository } = await createPage();
+    const pendingCharacter = createDeferred<CharacterDetailRecord | null>();
+    const validPayload = JSON.stringify(
+      createSavedTeam('imported-team', {
+        shipId: 9002,
+        slots: [101, 102, 103, 104, 105, 106],
+      }),
+    );
+
+    repository.getCharacterById.mockReturnValue(pendingCharacter.promise);
+
+    await page.ngOnInit();
+    page.toggleCompareMode();
+    page.onCompareImportDraftChange('b', { detail: { value: validPayload } } as CustomEvent<{
+      value: string;
+    }>);
+    const importPromise = page.applyCompareImportDraft('b');
+    await flushAsyncCompareWork();
+
+    expect(page.compareSidePayload('b').loading).toBe(true);
+
+    page.onCompareImportDraftChange('b', { detail: { value: 'edited while loading' } } as CustomEvent<{
+      value: string;
+    }>);
+    pendingCharacter.resolve(createCharacterRecord(101));
+    await importPromise;
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: {
+        source: 'imported',
+        importDraft: 'edited while loading',
+      },
+      snapshot: null,
+      loading: false,
+    });
+  });
+
+  it('restarts compare loads after swapping a pending saved-team side', async () => {
+    const { page, repository } = await createPage();
+    const pendingCharacter = createDeferred<CharacterDetailRecord | null>();
+
+    repository.getCharacterById.mockReturnValue(pendingCharacter.promise);
+
+    await page.ngOnInit();
+    page.toggleCompareMode();
+    page.onCompareSideSourceChange('b', { detail: { value: 'saved' } } as CustomEvent<{
+      value: string;
+    }>);
+    await flushAsyncCompareWork();
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: { source: 'saved' },
+      loading: true,
+    });
+
+    page.swapCompareSides();
+    await flushAsyncCompareWork();
+
+    expect(page.compareSidePayload('a')).toMatchObject({
+      state: { source: 'saved' },
+      loading: true,
+    });
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: { source: 'current' },
+      loading: false,
+    });
+
+    pendingCharacter.resolve(createCharacterRecord(101));
+    await flushAsyncCompareWork();
+
+    expect(page.compareSidePayload('a')).toMatchObject({
+      state: { source: 'saved', savedTeamId: 'team-1' },
+      snapshot: { id: 'team-1' },
       loading: false,
     });
   });
@@ -7630,6 +7720,12 @@ function createDeferred<T>(): {
 function writeCompareSessionState(state: unknown): void {
   ensureSessionStorage();
   globalThis.sessionStorage.setItem('autoTeamBuilder.compareState.v1', JSON.stringify(state));
+}
+
+function readCompareSessionState(): unknown {
+  ensureSessionStorage();
+
+  return JSON.parse(globalThis.sessionStorage.getItem('autoTeamBuilder.compareState.v1') ?? '{}');
 }
 
 function ensureSessionStorage(): void {

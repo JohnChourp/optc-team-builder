@@ -30,6 +30,7 @@ export type AutoTeamCompareSide = 'a' | 'b';
 export interface AutoTeamCompareImportedSeed {
   label: string;
   shipId: number | null;
+  ship?: ShipRecord | null;
   slotIds: Array<number | null>;
   characters?: CharacterDetailRecord[];
 }
@@ -159,6 +160,7 @@ function buildSeedFromSavedTeam(team: SavedTeam): AutoTeamCompareImportedSeed {
   return {
     label: team.name.trim() || 'Imported saved team',
     shipId: normalizePositiveInteger(team.shipId),
+    ship: null,
     slotIds: normalizeSlotIds(team.slots),
     characters: [],
   };
@@ -189,6 +191,7 @@ function buildSeedFromAutoTeamExport(
   return {
     label: 'Imported generated team',
     shipId: normalizePositiveInteger(payload.shipSelection?.ship.id),
+    ship: payload.shipSelection?.ship ?? null,
     slotIds,
     characters,
   };
@@ -198,13 +201,23 @@ function buildSeedFromAutoTeamSelection(
   payload: AutoTeamSelectionExportPayload,
 ): AutoTeamCompareImportedSeed {
   const embeddedSavedTeam = payload.savedTeamImport?.teams?.[0];
+  const generatedSeed = payload.generatedTeamExport
+    ? buildSeedFromAutoTeamExport(payload.generatedTeamExport)
+    : null;
 
   if (embeddedSavedTeam) {
-    return buildSeedFromSavedTeam(embeddedSavedTeam);
+    const savedSeed = buildSeedFromSavedTeam(embeddedSavedTeam);
+
+    return {
+      ...savedSeed,
+      shipId: savedSeed.shipId ?? generatedSeed?.shipId ?? null,
+      ship: generatedSeed?.ship ?? savedSeed.ship ?? null,
+      characters: generatedSeed?.characters ?? savedSeed.characters,
+    };
   }
 
-  if (payload.generatedTeamExport) {
-    return buildSeedFromAutoTeamExport(payload.generatedTeamExport);
+  if (generatedSeed) {
+    return generatedSeed;
   }
 
   throw new AutoTeamCompareImportError('compare.import.errors.noTeam');
@@ -347,7 +360,7 @@ export function buildAutoTeamCompareSnapshotFromImportedSeed(
     slotIds: seed.slotIds,
     characterMap: mergeCharacterMaps(characterMap, seed.characters ?? []),
     shipId: seed.shipId,
-    ship,
+    ship: ship ?? seed.ship ?? null,
     catalogItems,
   });
 }

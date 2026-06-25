@@ -291,18 +291,39 @@ function createAutoTeamCompareSidePayload(
 function cloneAutoTeamCompareSidePayload(
   payload: AutoTeamCompareSidePayload,
 ): AutoTeamCompareSidePayload {
+  const seed = payload.seed
+    ? {
+        ...payload.seed,
+        slotIds: [...payload.seed.slotIds],
+      }
+    : null;
+
+  if (seed?.characters) {
+    seed.characters = [...seed.characters];
+  }
+
   return {
     state: { ...payload.state },
-    seed: payload.seed
-      ? {
-          ...payload.seed,
-          slotIds: [...payload.seed.slotIds],
-        }
-      : null,
+    seed,
     snapshot: payload.snapshot,
     error: payload.error,
     loading: payload.loading,
   };
+}
+
+function settleSwappedComparePayload(
+  payload: AutoTeamCompareSidePayload,
+): AutoTeamCompareSidePayload {
+  const clonedPayload = cloneAutoTeamCompareSidePayload(payload);
+
+  return clonedPayload.loading
+    ? {
+        ...clonedPayload,
+        snapshot: null,
+        error: '',
+        loading: false,
+      }
+    : clonedPayload;
 }
 
 function normalizeCompareSource(value: unknown): AutoTeamCompareSource {
@@ -3492,12 +3513,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   ): void {
     const importDraft = event.detail.value ?? '';
 
+    if (this.compareSidePayload(side).loading) {
+      this.nextCompareRequestToken(side);
+    }
+
     this.updateCompareSidePayload(side, (payload) => ({
       ...payload,
       state: {
         ...payload.state,
         importDraft,
       },
+      loading: false,
     }));
     this.persistCompareSessionState();
   }
@@ -3529,10 +3555,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.nextCompareRequestToken('a');
     this.nextCompareRequestToken('b');
     this.compareSidePayloads.update((current) => ({
-      a: cloneAutoTeamCompareSidePayload(current.b),
-      b: cloneAutoTeamCompareSidePayload(current.a),
+      a: settleSwappedComparePayload(current.b),
+      b: settleSwappedComparePayload(current.a),
     }));
     this.persistCompareSessionState();
+    void this.refreshAllCompareSnapshots();
   }
 
   private updateCompareSidePayload(
@@ -3593,7 +3620,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         payload.state.importedLabel || this.t('compare.import.restoredPayload'),
         requestToken,
       );
+      return;
     }
+
+    this.updateCompareSidePayload(side, (current) => ({
+      ...current,
+      loading: false,
+    }));
   }
 
   private async refreshSavedCompareSnapshot(
@@ -3765,6 +3798,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         error: this.t(errorKey),
         loading: false,
       }));
+      this.persistCompareSessionState();
     }
   }
 
