@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 
 const GUIDED_GREP = '@guided-auto-build';
 const { scopedProject, userArgs } = parseRunnerArgs(process.argv.slice(2));
-const projectArgs = scopedProject ? ['--project', scopedProject] : [];
+const projectArgs = scopedProject ? [`--project=${scopedProject}`] : [];
 const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 function parseRunnerArgs(args) {
