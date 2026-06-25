@@ -95,7 +95,7 @@ import {
 import { CaptainCoverageStylePanelsComponent } from './captain-coverage-style-panels.component';
 
 const MAX_CAPTAIN_LOOKUP_COUNT = 12000;
-const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 5;
+const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 6;
 const CAPTAIN_ABILITY_FILTER_CATEGORY: AbilityFilterRailCategory = 'captainAbility';
 
 type CaptainCoverageSortMode =
@@ -160,6 +160,11 @@ export class CaptainCoveragePage implements OnInit {
   public readonly selectedCaptainDetail = signal<CharacterDetailRecord | null>(null);
   public readonly selectedTeamSlots =
     signal<Array<CharacterListItem | null>>(createEmptyTeamSlots());
+  public readonly selectedFriendCaptainDetail = computed<CharacterDetailRecord | null>(() => {
+    const friendCaptain = this.selectedTeamSlots()[1];
+
+    return friendCaptain ? (this.allCharacterDetailsById().get(friendCaptain.id) ?? null) : null;
+  });
   public readonly activeTeamSlotIndex = signal(0);
   public readonly teamPickerOpen = signal(false);
   public readonly teamName = signal('');
@@ -521,7 +526,10 @@ export class CaptainCoveragePage implements OnInit {
     this.saveUiLocked() ? this.t('team.save.savingLabel') : this.t('team.save.action'),
   );
   public readonly teamBudgetCost = computed(() =>
-    this.selectedTeamSlots().reduce((total, character) => total + (character?.cost ?? 0), 0),
+    this.selectedTeamSlots().reduce(
+      (total, character, index) => (index === 1 ? total : total + (character?.cost ?? 0)),
+      0,
+    ),
   );
   public readonly teamRemainingCost = computed(() => {
     const maxTotalCost = this.maxTotalCost();
@@ -553,7 +561,8 @@ export class CaptainCoveragePage implements OnInit {
     }
 
     const activeIndex = this.activeTeamSlotIndex();
-    const currentSlotCost = this.selectedTeamSlots()[activeIndex]?.cost ?? 0;
+    const currentSlotCost =
+      activeIndex === 1 ? 0 : (this.selectedTeamSlots()[activeIndex]?.cost ?? 0);
 
     return Math.max(0, maxTotalCost - this.teamBudgetCost() + currentSlotCost);
   });
@@ -561,7 +570,9 @@ export class CaptainCoveragePage implements OnInit {
     this.teamSlotLabel(this.activeTeamSlotIndex()),
   );
   public readonly activeTeamSlotAllowedCharacterIds = computed(() =>
-    this.activeTeamSlotIndex() === 0 ? this.allowedCaptainIds() : null,
+    this.activeTeamSlotIndex() === 0 || this.activeTeamSlotIndex() === 1
+      ? this.allowedCaptainIds()
+      : null,
   );
   public readonly teamConditionStatus = computed<CaptainTeamConditionStatus | null>(() => {
     const captain = this.selectedCaptainDetail();
@@ -571,6 +582,7 @@ export class CaptainCoveragePage implements OnInit {
     }
 
     const slots = this.resolveSelectedTeamSlotDetails();
+    const friendCaptain = this.selectedFriendCaptainDetail();
 
     return resolveCaptainTeamConditionStatus({
       expectedSlotCount: CAPTAIN_COVERAGE_TEAM_SLOT_COUNT,
@@ -581,6 +593,15 @@ export class CaptainCoveragePage implements OnInit {
           label: this.t('team.slots.captain'),
           character: captain,
         },
+        ...(friendCaptain
+          ? [
+              {
+                role: 'friendCaptain' as const,
+                label: this.t('team.slots.friendCaptain'),
+                character: friendCaptain,
+              },
+            ]
+          : []),
       ],
       slotLabels: Array.from({ length: CAPTAIN_COVERAGE_TEAM_SLOT_COUNT }, (_value, index) =>
         this.teamSlotLabel(index),
@@ -679,7 +700,7 @@ export class CaptainCoveragePage implements OnInit {
       return;
     }
 
-    if (index === 0 && !this.allowedCaptainIds().includes(character.id)) {
+    if ((index === 0 || index === 1) && !this.allowedCaptainIds().includes(character.id)) {
       return;
     }
 
@@ -1092,7 +1113,13 @@ export class CaptainCoveragePage implements OnInit {
   }
 
   public teamSlotLabel(index: number): string {
-    return index === 0 ? this.t('team.slots.captain') : this.t('team.slots.sub', { index });
+    if (index === 0) {
+      return this.t('team.slots.captain');
+    }
+    if (index === 1) {
+      return this.t('team.slots.friendCaptain');
+    }
+    return this.t('team.slots.sub', { index: index - 1 });
   }
 
   public canAssignTeamSlotCharacter(
@@ -1101,7 +1128,7 @@ export class CaptainCoveragePage implements OnInit {
   ): boolean {
     const maxTotalCost = this.maxTotalCost();
 
-    if (maxTotalCost === null) {
+    if (maxTotalCost === null || index === 1) {
       return true;
     }
 
@@ -1195,7 +1222,7 @@ export class CaptainCoveragePage implements OnInit {
   }
 
   private findAssignableSubSlotIndex(character: CharacterListItem): number | null {
-    for (let index = 1; index < CAPTAIN_COVERAGE_TEAM_SLOT_COUNT; index += 1) {
+    for (let index = 2; index < CAPTAIN_COVERAGE_TEAM_SLOT_COUNT; index += 1) {
       if (this.selectedTeamSlots()[index] || !this.canAssignTeamSlotCharacter(index, character)) {
         continue;
       }
@@ -1286,7 +1313,7 @@ export class CaptainCoveragePage implements OnInit {
 
   private loadSavedTeamDraft(team: SavedTeam): void {
     const characterDetailsById = this.allCharacterDetailsById();
-    const sourceSlotIndexes = [0, 2, 3, 4, 5];
+    const sourceSlotIndexes = [0, 1, 2, 3, 4, 5];
     const selectedSlots = sourceSlotIndexes.map((slotIndex) => {
       const characterId = team.slots[slotIndex];
 
@@ -1322,11 +1349,11 @@ export class CaptainCoveragePage implements OnInit {
 
     return [
       captainId,
-      captainId,
-      slots[1]?.id ?? null,
+      slots[1]?.id ?? captainId,
       slots[2]?.id ?? null,
       slots[3]?.id ?? null,
       slots[4]?.id ?? null,
+      slots[5]?.id ?? null,
     ];
   }
 
