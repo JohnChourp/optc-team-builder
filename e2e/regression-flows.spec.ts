@@ -8,15 +8,14 @@ import {
   expectIonValue,
   parseSavedTeamShareCode,
   seedBrowserState,
+  setAutoTeamBuilderGuidedMode,
   setIonSelect,
   setIonTextarea,
   waitForAppReady,
 } from './regression-fixtures';
 
 test.describe('high-value regression flows', () => {
-  test.describe.configure({ mode: 'serial' });
-
-  test('guided auto build locks only the next empty slot @serial-guided', async ({
+  test('guided auto build locks only the next empty slot @guided-auto-build', async ({
     page,
     browserName,
   }) => {
@@ -35,6 +34,7 @@ test.describe('high-value regression flows', () => {
 
     const guidedToggle = page.getByTestId('guided-auto-build-toggle');
     await guidedToggle.click();
+    await setAutoTeamBuilderGuidedMode(page, true);
     await expect(guidedToggle).toHaveAttribute('data-guided-enabled', 'true');
     await expect(page.getByTestId('auto-build-submit')).toBeEnabled();
     await page.getByTestId('auto-build-submit').click();
