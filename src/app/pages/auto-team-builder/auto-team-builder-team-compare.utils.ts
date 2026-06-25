@@ -31,6 +31,7 @@ export interface AutoTeamCompareImportedSeed {
   label: string;
   shipId: number | null;
   slotIds: Array<number | null>;
+  characters?: CharacterDetailRecord[];
 }
 
 export interface AutoTeamCompareSlotSnapshot {
@@ -51,6 +52,7 @@ export interface AutoTeamCompareSnapshot {
   label: string;
   source: AutoTeamCompareSource;
   slots: AutoTeamCompareSlotSnapshot[];
+  shipId: number | null;
   ship: ShipRecord | null;
   metrics: AutoTeamCompareMetricSnapshot[];
   missingCharacterCount: number;
@@ -158,6 +160,7 @@ function buildSeedFromSavedTeam(team: SavedTeam): AutoTeamCompareImportedSeed {
     label: team.name.trim() || 'Imported saved team',
     shipId: normalizePositiveInteger(team.shipId),
     slotIds: normalizeSlotIds(team.slots),
+    characters: [],
   };
 }
 
@@ -168,12 +171,18 @@ function buildSeedFromAutoTeamExport(
     { length: AUTO_BUILD_MANUAL_SLOT_ROLES.length },
     () => null,
   );
+  const characters: CharacterDetailRecord[] = [];
 
   for (const slot of payload.team ?? []) {
     const slotIndex = normalizeSlotIndex(slot.slotIndex);
+    const characterId = normalizePositiveInteger(slot.character?.id);
 
     if (slotIndex !== null) {
-      slotIds[slotIndex] = normalizePositiveInteger(slot.character?.id);
+      slotIds[slotIndex] = characterId;
+    }
+
+    if (slot.character && characterId !== null) {
+      characters.push(slot.character);
     }
   }
 
@@ -181,6 +190,7 @@ function buildSeedFromAutoTeamExport(
     label: 'Imported generated team',
     shipId: normalizePositiveInteger(payload.shipSelection?.ship.id),
     slotIds,
+    characters,
   };
 }
 
@@ -300,6 +310,7 @@ export function buildAutoTeamCompareSnapshotFromCurrent(
     source: 'current',
     slotIds: AUTO_BUILD_MANUAL_SLOT_ROLES.map((role) => slotMap.get(role)?.id ?? null),
     characterMap: new Map([...slotMap.values()].map((character) => [character.id, character])),
+    shipId: normalizePositiveInteger(favoriteShip?.id),
     ship: favoriteShip,
     catalogItems,
   });
@@ -317,6 +328,7 @@ export function buildAutoTeamCompareSnapshotFromSavedTeam(
     source: 'saved',
     slotIds: normalizeSlotIds(team.slots),
     characterMap,
+    shipId: normalizePositiveInteger(team.shipId),
     ship,
     catalogItems,
   });
@@ -333,10 +345,26 @@ export function buildAutoTeamCompareSnapshotFromImportedSeed(
     label: seed.label,
     source: 'imported',
     slotIds: seed.slotIds,
-    characterMap,
+    characterMap: mergeCharacterMaps(characterMap, seed.characters ?? []),
+    shipId: seed.shipId,
     ship,
     catalogItems,
   });
+}
+
+function mergeCharacterMaps(
+  characterMap: ReadonlyMap<number, CharacterDetailRecord>,
+  embeddedCharacters: readonly CharacterDetailRecord[],
+): Map<number, CharacterDetailRecord> {
+  const mergedMap = new Map(characterMap);
+
+  for (const character of embeddedCharacters) {
+    if (!mergedMap.has(character.id)) {
+      mergedMap.set(character.id, character);
+    }
+  }
+
+  return mergedMap;
 }
 
 function buildAutoTeamCompareSnapshot(options: {
@@ -345,6 +373,7 @@ function buildAutoTeamCompareSnapshot(options: {
   source: AutoTeamCompareSource;
   slotIds: Array<number | null>;
   characterMap: ReadonlyMap<number, CharacterDetailRecord>;
+  shipId: number | null;
   ship: ShipRecord | null;
   catalogItems: readonly AutoBuildAbilityCatalogItem[];
 }): AutoTeamCompareSnapshot {
@@ -368,26 +397,30 @@ function buildAutoTeamCompareSnapshot(options: {
     label: options.label,
     source: options.source,
     slots,
+    shipId: options.shipId,
     ship: options.ship,
-    metrics: buildMetrics(characters, options.ship, options.catalogItems),
+    metrics: buildMetrics(slots, options.shipId, options.catalogItems),
     missingCharacterCount: slots.filter((slot) => slot.missing).length,
   };
 }
 
 function buildMetrics(
-  characters: readonly CharacterDetailRecord[],
-  ship: ShipRecord | null,
+  slots: readonly AutoTeamCompareSlotSnapshot[],
+  shipId: number | null,
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
 ): AutoTeamCompareMetricSnapshot[] {
+  const characters = slots
+    .map((slot) => slot.character)
+    .filter((character): character is CharacterDetailRecord => character !== null);
   const catalogMap = new Map(catalogItems.map((item) => [item.key, item] as const));
   const typeSet = new Set<string>();
   const classSet = new Set<string>();
   const abilityKeySet = new Set<string>();
   const categoryCounts = new Map<AutoBuildAbilityCategory, Set<string>>();
   const summary = resolveTeamCoverageSummary({
-    captain: characters[0] ?? null,
-    friendCaptain: characters[1] ?? null,
-    members: characters,
+    captain: slots[0]?.character ?? null,
+    friendCaptain: slots[1]?.character ?? null,
+    members: slots.map((slot) => slot.character),
   });
 
   for (const category of ABILITY_CATEGORY_KEYS) {
@@ -431,7 +464,7 @@ function buildMetrics(
       'captainTierCoverage',
       summary.tiers.filter((tier) => tier.captureSource !== 'none').length,
     ),
-    metric('ship', ship ? 1 : 0),
+    metric('ship', shipId ? 1 : 0),
   ];
 }
 
@@ -470,7 +503,7 @@ export function buildAutoTeamCompareDiff(
     slotRows,
     metricRows: [
       buildChangedSlotMetricRow(changedSlotCount),
-      ...buildMetricRows(a.metrics, b.metrics),
+      ...buildMetricRows(a, b),
     ],
   };
 }
@@ -499,13 +532,18 @@ function buildChangedSlotMetricRow(changedSlotCount: number): AutoTeamCompareMet
 }
 
 function buildMetricRows(
-  aMetrics: readonly AutoTeamCompareMetricSnapshot[],
-  bMetrics: readonly AutoTeamCompareMetricSnapshot[],
+  a: AutoTeamCompareSnapshot,
+  b: AutoTeamCompareSnapshot,
 ): AutoTeamCompareMetricDiffRow[] {
-  const bMetricMap = new Map(bMetrics.map((item) => [item.key, item] as const));
+  const bMetricMap = new Map(b.metrics.map((item) => [item.key, item] as const));
 
-  return aMetrics.map((aMetric) => {
+  return a.metrics.map((aMetric) => {
     const bMetric = bMetricMap.get(aMetric.key) ?? metric(aMetric.key, 0);
+
+    if (aMetric.key === 'ship') {
+      return buildShipMetricRow(a, b, aMetric, bMetric);
+    }
+
     const delta = bMetric.value - aMetric.value;
 
     return {
@@ -520,6 +558,41 @@ function buildMetricRows(
       tone: delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'neutral',
     };
   });
+}
+
+function buildShipMetricRow(
+  a: AutoTeamCompareSnapshot,
+  b: AutoTeamCompareSnapshot,
+  aMetric: AutoTeamCompareMetricSnapshot,
+  bMetric: AutoTeamCompareMetricSnapshot,
+): AutoTeamCompareMetricDiffRow {
+  const shipChanged = a.shipId !== b.shipId;
+  const presenceDelta = bMetric.value - aMetric.value;
+  const delta = presenceDelta !== 0 ? presenceDelta : shipChanged ? 1 : 0;
+
+  return {
+    key: 'ship',
+    labelKey: aMetric.labelKey,
+    aValue: aMetric.value,
+    bValue: bMetric.value,
+    aDisplayValue: formatShipValue(a),
+    bDisplayValue: formatShipValue(b),
+    delta,
+    deltaLabel: presenceDelta !== 0 ? formatDelta(presenceDelta) : shipChanged ? 'changed' : '0',
+    tone: delta !== 0 ? 'negative' : 'neutral',
+  };
+}
+
+function formatShipValue(snapshot: AutoTeamCompareSnapshot): string {
+  if (snapshot.ship) {
+    return `${snapshot.ship.name} (#${snapshot.ship.id})`;
+  }
+
+  if (snapshot.shipId) {
+    return `#${snapshot.shipId}`;
+  }
+
+  return 'No';
 }
 
 function formatMetricValue(key: AutoTeamCompareMetricKey, value: number): string {

@@ -1,3 +1,27 @@
+.compare-launch-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.compare-launch-card__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.compare-launch-card__copy strong {
+  color: #f8fbff;
+  font-size: 1rem;
+}
+
+.compare-launch-card__copy span {
+  color: rgba(248, 251, 255, 0.68);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
 .compare-card {
   display: grid;
   gap: 18px;
@@ -193,6 +217,11 @@
 }
 
 @media (max-width: 860px) {
+  .compare-launch-card {
+    display: grid;
+    justify-items: stretch;
+  }
+
   .compare-card__head,
   .compare-card__actions {
     display: grid;

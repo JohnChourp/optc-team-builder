@@ -101,6 +101,31 @@ describe('auto-team-builder-team-compare utils', () => {
     });
   });
 
+  it('reuses embedded generated-team characters when the local repository map is incomplete', () => {
+    const catalogItems = createCatalogItems();
+    const generatedExport = buildAutoTeamExportPayload(
+      createAutoBuildResult(),
+      [],
+      101,
+      102,
+      '2026-06-25T08:00:00.000Z',
+    );
+    const seed = parseAutoTeamCompareImportPayload(JSON.stringify(generatedExport));
+
+    const snapshot = buildAutoTeamCompareSnapshotFromImportedSeed(
+      seed,
+      new Map(),
+      createShipRecord(9001),
+      catalogItems,
+    );
+
+    expect(snapshot.missingCharacterCount).toBe(0);
+    expect(snapshot.slots[0]).toMatchObject({
+      characterId: 101,
+      character: { id: 101, name: 'Character 101' },
+    });
+  });
+
   it('builds slot diffs for changed, unchanged, and one-side-empty slots', () => {
     const catalogItems = createCatalogItems();
     const characterMap = createCharacterMap([101, 102, 103, 104, 105, 106, 107]);
@@ -178,6 +203,41 @@ describe('auto-team-builder-team-compare utils', () => {
       deltaLabel: '+2',
     });
     expect(diff.metricRows.find((row) => row.key === 'captainTierCoverage')).toBeDefined();
+  });
+
+  it('marks ship metric changed when both sides have different ship identities', () => {
+    const catalogItems = createCatalogItems();
+    const left = buildAutoTeamCompareSnapshotFromImportedSeed(
+      {
+        label: 'Left',
+        shipId: 9001,
+        slotIds: [101, 102, 103, 104, 105, 106],
+      },
+      createCharacterMap([101, 102, 103, 104, 105, 106]),
+      createShipRecord(9001),
+      catalogItems,
+    );
+    const right = buildAutoTeamCompareSnapshotFromImportedSeed(
+      {
+        label: 'Right',
+        shipId: 9002,
+        slotIds: [101, 102, 103, 104, 105, 106],
+      },
+      createCharacterMap([101, 102, 103, 104, 105, 106]),
+      createShipRecord(9002),
+      catalogItems,
+    );
+
+    expect(buildAutoTeamCompareDiff(left, right).metricRows.find((row) => row.key === 'ship'))
+      .toMatchObject({
+        aValue: 1,
+        bValue: 1,
+        aDisplayValue: 'Ship 9001 (#9001)',
+        bDisplayValue: 'Ship 9002 (#9002)',
+        delta: 1,
+        deltaLabel: 'changed',
+        tone: 'negative',
+      });
   });
 
   it('keeps missing imported character ids visible as side-specific snapshot warnings', () => {

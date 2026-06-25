@@ -3099,6 +3099,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('(click)="downloadSelectionJson()"');
     expect(template).not.toContain('(click)="downloadTeamJson()"');
     expect(template).not.toContain('(click)="downloadSavedTeamImportJson()"');
+    expect(template).toContain('compare-launch-card');
+    expect(template).not.toContain('[disabled]="!canDownloadTeamJson()"');
+    expect(normalizedTemplate).toMatch(
+      /@if\s*\(\s*!building\(\)\s*\)\s*\{\s*<section class="glass-card compare-launch-card"/,
+    );
+    expect(normalizedTemplate).toMatch(/@if\s*\(\s*result\(\);\s*as current\s*\)/);
     expect(template).not.toContain('slot.abilityChips');
     expect(template).not.toContain('slot.snippet');
     expect(template).toContain('<app-ability-filter-rail');
@@ -4974,6 +4980,40 @@ describe('AutoTeamBuilder compare panel', () => {
     expect(autoTeamBuilder.buildTeam).not.toHaveBeenCalled();
   });
 
+  it('opens compare mode without a current result and compares saved/imported sources', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    autoTeamBuilder.buildTeam.mockClear();
+
+    page.toggleCompareMode();
+    page.onCompareSideSourceChange('a', { detail: { value: 'saved' } } as CustomEvent<{
+      value: string;
+    }>);
+    page.onCompareImportDraftChange(
+      'b',
+      {
+        detail: {
+          value: JSON.stringify(
+            createSavedTeam('imported-team', {
+              shipId: 9002,
+              slots: [101, 102, 103, 104, 105, 106],
+            }),
+          ),
+        },
+      } as CustomEvent<{ value: string }>,
+    );
+    await page.applyCompareImportDraft('b');
+    await flushAsyncCompareWork();
+
+    expect(page.result()).toBeNull();
+    expect(page.compareModeOpen()).toBe(true);
+    expect(autoTeamBuilder.buildTeam).not.toHaveBeenCalled();
+    expect(page.compareSideSnapshot('a')).toMatchObject({ id: 'team-1' });
+    expect(page.compareSideSnapshot('b')).toMatchObject({ label: 'Saved Team imported-team' });
+    expect(page.compareDiff()).toMatchObject({ changedSlotCount: 1 });
+  });
+
   it('hydrates saved-team source data and compares it against the current generated team', async () => {
     const { page, repository } = await createPage();
 
@@ -5015,8 +5055,123 @@ describe('AutoTeamBuilder compare panel', () => {
     await page.applyCompareImportDraft('b');
 
     expect(page.compareSidePayload('b')).toMatchObject({
+      state: {
+        source: 'imported',
+        importDraft: 'not-json',
+        importedRawContent: '',
+      },
+      seed: null,
       snapshot: null,
       error: 'This payload is not a supported saved team, share link, preset, or team export.',
+      loading: false,
+    });
+  });
+
+  it('clears stale imported compare content after an invalid payload replaces it', async () => {
+    const { page } = await createPage();
+    const validPayload = JSON.stringify(
+      createSavedTeam('imported-team', {
+        shipId: 9002,
+        slots: [101, 102, 103, 104, 105, 106],
+      }),
+    );
+
+    await page.ngOnInit();
+    page.toggleCompareMode();
+    page.onCompareImportDraftChange('b', { detail: { value: validPayload } } as CustomEvent<{
+      value: string;
+    }>);
+    await page.applyCompareImportDraft('b');
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: {
+        importedRawContent: validPayload,
+      },
+      snapshot: {
+        label: 'Saved Team imported-team',
+      },
+    });
+
+    page.onCompareImportDraftChange('b', { detail: { value: 'not-json' } } as CustomEvent<{
+      value: string;
+    }>);
+    await page.applyCompareImportDraft('b');
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: {
+        importDraft: 'not-json',
+        importedLabel: '',
+        importedRawContent: '',
+      },
+      seed: null,
+      snapshot: null,
+    });
+  });
+
+  it('ignores stale saved-team loads after the side source changes', async () => {
+    const { page, repository } = await createPage();
+    const pendingCharacter = createDeferred<CharacterDetailRecord | null>();
+
+    repository.getCharacterById.mockReturnValue(pendingCharacter.promise);
+
+    await page.ngOnInit();
+    page.toggleCompareMode();
+    page.onCompareSideSourceChange('b', { detail: { value: 'saved' } } as CustomEvent<{
+      value: string;
+    }>);
+    await flushAsyncCompareWork();
+
+    expect(page.compareSidePayload('b').loading).toBe(true);
+
+    page.onCompareSideSourceChange('b', { detail: { value: 'current' } } as CustomEvent<{
+      value: string;
+    }>);
+    pendingCharacter.resolve(createCharacterRecord(101));
+    await flushAsyncCompareWork();
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: { source: 'current' },
+      snapshot: null,
+      error: '',
+      loading: false,
+    });
+  });
+
+  it('ignores stale imported compare loads after the side source changes', async () => {
+    const { page, repository } = await createPage();
+    const pendingCharacter = createDeferred<CharacterDetailRecord | null>();
+    const validPayload = JSON.stringify(
+      createSavedTeam('imported-team', {
+        shipId: 9002,
+        slots: [101, 102, 103, 104, 105, 106],
+      }),
+    );
+
+    repository.getCharacterById.mockReturnValue(pendingCharacter.promise);
+
+    await page.ngOnInit();
+    page.toggleCompareMode();
+    page.onCompareImportDraftChange('b', { detail: { value: validPayload } } as CustomEvent<{
+      value: string;
+    }>);
+    const importPromise = page.applyCompareImportDraft('b');
+    await flushAsyncCompareWork();
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: { source: 'imported', importDraft: validPayload },
+      loading: true,
+    });
+
+    page.onCompareSideSourceChange('b', { detail: { value: 'current' } } as CustomEvent<{
+      value: string;
+    }>);
+    pendingCharacter.resolve(createCharacterRecord(101));
+    await importPromise;
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: { source: 'current' },
+      snapshot: null,
+      error: '',
       loading: false,
     });
   });
@@ -7451,6 +7606,25 @@ function flushAsyncCompareWork(): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, 0);
   });
+}
+
+function createDeferred<T>(): {
+  promise: Promise<T>;
+  resolve(value: T): void;
+  reject(error: unknown): void;
+} {
+  let resolvePromise: (value: T) => void = () => {};
+  let rejectPromise: (error: unknown) => void = () => {};
+  const promise = new Promise<T>((resolve, reject) => {
+    resolvePromise = resolve;
+    rejectPromise = reject;
+  });
+
+  return {
+    promise,
+    resolve: resolvePromise,
+    reject: rejectPromise,
+  };
 }
 
 function writeCompareSessionState(state: unknown): void {

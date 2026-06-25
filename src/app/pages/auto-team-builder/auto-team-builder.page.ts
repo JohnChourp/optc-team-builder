@@ -847,6 +847,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     a: createAutoTeamCompareSidePayload('current'),
     b: createAutoTeamCompareSidePayload('current'),
   });
+  private readonly compareRequestTokens: Record<AutoTeamCompareSide, number> = { a: 0, b: 0 };
   public readonly compareDiff = computed<AutoTeamCompareDiff | null>(() => {
     const left = this.resolveCompareSideSnapshot('a');
     const right = this.resolveCompareSideSnapshot('b');
@@ -3390,13 +3391,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     row: AutoTeamCompareMetricDiffRow,
     side: AutoTeamCompareSide,
   ): string {
-    const value = side === 'a' ? row.aValue : row.bValue;
-
     if (row.key === 'ship') {
-      return this.t(value > 0 ? 'compare.shipPresence.present' : 'compare.shipPresence.absent');
+      const value = side === 'a' ? row.aDisplayValue : row.bDisplayValue;
+
+      return value === 'No' ? this.t('compare.shipPresence.absent') : value;
     }
 
     return side === 'a' ? row.aDisplayValue : row.bDisplayValue;
+  }
+
+  public compareMetricDeltaLabel(row: AutoTeamCompareMetricDiffRow): string {
+    return row.key === 'ship' && row.deltaLabel === 'changed'
+      ? this.t('compare.changed')
+      : row.deltaLabel;
   }
 
   public compareSideSummary(side: AutoTeamCompareSide): string {
@@ -3455,6 +3462,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       seed: source === 'imported' ? payload.seed : null,
       snapshot: source === payload.state.source ? payload.snapshot : null,
       error: '',
+      loading: false,
     }));
     this.persistCompareSessionState();
     void this.refreshCompareSideSnapshot(side);
@@ -3518,6 +3526,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public swapCompareSides(): void {
+    this.nextCompareRequestToken('a');
+    this.nextCompareRequestToken('b');
     this.compareSidePayloads.update((current) => ({
       a: cloneAutoTeamCompareSidePayload(current.b),
       b: cloneAutoTeamCompareSidePayload(current.a),
@@ -3559,6 +3569,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private async refreshCompareSideSnapshot(side: AutoTeamCompareSide): Promise<void> {
     const payload = this.compareSidePayload(side);
+    const requestToken = this.nextCompareRequestToken(side);
 
     if (payload.state.source === 'current') {
       this.updateCompareSidePayload(side, (current) => ({
@@ -3571,7 +3582,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     if (payload.state.source === 'saved') {
-      await this.refreshSavedCompareSnapshot(side);
+      await this.refreshSavedCompareSnapshot(side, requestToken);
       return;
     }
 
@@ -3580,24 +3591,41 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         side,
         payload.state.importedRawContent,
         payload.state.importedLabel || this.t('compare.import.restoredPayload'),
+        requestToken,
       );
     }
   }
 
-  private async refreshSavedCompareSnapshot(side: AutoTeamCompareSide): Promise<void> {
+  private async refreshSavedCompareSnapshot(
+    side: AutoTeamCompareSide,
+    requestToken: number,
+  ): Promise<void> {
     await this.userState.readySavedTeams();
+
+    if (!this.isCompareRequestCurrent(side, requestToken)) {
+      return;
+    }
+
     const payload = this.compareSidePayload(side);
     const fallbackTeam = this.savedTeams()[0] ?? null;
     const savedTeamId = payload.state.savedTeamId || fallbackTeam?.id || '';
     const savedTeam = this.savedTeams().find((team) => team.id === savedTeamId) ?? fallbackTeam;
 
     if (!savedTeam) {
+      if (!this.isCompareRequestCurrent(side, requestToken)) {
+        return;
+      }
+
       this.updateCompareSidePayload(side, (current) => ({
         ...current,
         snapshot: null,
         error: this.t('compare.empty.noSavedTeams'),
         loading: false,
       }));
+      return;
+    }
+
+    if (payload.state.source !== 'saved') {
       return;
     }
 
@@ -3624,6 +3652,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         this.availableAbilityCatalogItems(),
       );
 
+      if (
+        !this.isCompareRequestCurrent(side, requestToken) ||
+        this.compareSideState(side).source !== 'saved' ||
+        this.compareSideState(side).savedTeamId !== savedTeam.id
+      ) {
+        return;
+      }
+
       this.updateCompareSidePayload(side, (current) => ({
         ...current,
         snapshot,
@@ -3632,6 +3668,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       }));
       this.persistCompareSessionState();
     } catch {
+      if (
+        !this.isCompareRequestCurrent(side, requestToken) ||
+        this.compareSideState(side).source !== 'saved'
+      ) {
+        return;
+      }
+
       this.updateCompareSidePayload(side, (current) => ({
         ...current,
         snapshot: null,
@@ -3645,9 +3688,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     side: AutoTeamCompareSide,
     rawContent: string,
     sourceLabel: string,
+    requestToken = this.nextCompareRequestToken(side),
   ): Promise<void> {
     this.updateCompareSidePayload(side, (payload) => ({
       ...payload,
+      state: {
+        ...payload.state,
+        source: 'imported',
+        importDraft: rawContent,
+      },
       error: '',
       loading: true,
     }));
@@ -3663,6 +3712,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         this.resolveCompareShip(seed.shipId),
         this.availableAbilityCatalogItems(),
       );
+
+      const currentState = this.compareSideState(side);
+
+      if (
+        !this.isCompareRequestCurrent(side, requestToken) ||
+        currentState.source !== 'imported' ||
+        currentState.importDraft !== rawContent
+      ) {
+        return;
+      }
 
       this.updateCompareSidePayload(side, (payload) => ({
         ...payload,
@@ -3680,6 +3739,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       }));
       this.persistCompareSessionState();
     } catch (error) {
+      if (
+        !this.isCompareRequestCurrent(side, requestToken) ||
+        this.compareSideState(side).source !== 'imported'
+      ) {
+        return;
+      }
+
       const errorKey =
         error instanceof AutoTeamCompareImportError
           ? error.key
@@ -3687,6 +3753,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
       this.updateCompareSidePayload(side, (payload) => ({
         ...payload,
+        state: {
+          ...payload.state,
+          source: 'imported',
+          importDraft: rawContent,
+          importedLabel: '',
+          importedRawContent: '',
+        },
+        seed: null,
         snapshot: null,
         error: this.t(errorKey),
         loading: false,
@@ -3721,6 +3795,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return snapshot.missingCharacterCount > 0
       ? this.t('compare.errors.missingCharacters', { count: snapshot.missingCharacterCount })
       : '';
+  }
+
+  private nextCompareRequestToken(side: AutoTeamCompareSide): number {
+    this.compareRequestTokens[side] += 1;
+
+    return this.compareRequestTokens[side];
+  }
+
+  private isCompareRequestCurrent(side: AutoTeamCompareSide, requestToken: number): boolean {
+    return this.compareRequestTokens[side] === requestToken;
   }
 
   private persistCompareSessionState(): void {
@@ -5388,6 +5472,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       });
 
       this.currentTeamId.set(saved.id);
+      await this.refreshAllCompareSnapshots();
     } catch (error) {
       console.error(error);
 

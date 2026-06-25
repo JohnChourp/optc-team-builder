@@ -2695,7 +2695,236 @@
           }
 
           <app-auto-team-builder-results-panel>
-            @if (!building() && result(); as current) {
+            @if (!building()) {
+              <section class="glass-card compare-launch-card">
+                <div class="compare-launch-card__copy">
+                  <strong>{{ t('compare.title') }}</strong>
+                  <span>{{ t('compare.copy') }}</span>
+                </div>
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  class="download-team-button"
+                  (click)="toggleCompareMode()"
+                >
+                  <ion-icon slot="start" [icon]="compareIcon"></ion-icon>
+                  {{
+                    compareModeOpen() ? t('compare.actions.hide') : t('compare.actions.show')
+                  }}
+                </ion-button>
+              </section>
+
+              @if (compareModeOpen()) {
+                <section class="glass-card compare-card">
+                  <div class="compare-card__head">
+                    <div class="slot-grid__header">
+                      <h2>{{ t('compare.title') }}</h2>
+                      <p>{{ t('compare.copy') }}</p>
+                    </div>
+                    <div class="compare-card__actions">
+                      <ion-button fill="outline" color="light" (click)="swapCompareSides()">
+                        <ion-icon slot="start" [icon]="compareSwapIcon"></ion-icon>
+                        {{ t('compare.actions.swap') }}
+                      </ion-button>
+                    </div>
+                  </div>
+
+                  <div class="compare-selector-grid">
+                    @for (side of compareSides; track side) {
+                      <article class="compare-side-card">
+                        <div class="compare-side-card__head">
+                          <strong>{{ compareSideTitle(side) }}</strong>
+                          <span class="role-pill">{{
+                            compareSourceLabel(compareSideState(side).source)
+                          }}</span>
+                        </div>
+                        <ion-select
+                          interface="popover"
+                          fill="outline"
+                          [label]="t('compare.fields.source')"
+                          labelPlacement="stacked"
+                          [value]="compareSideState(side).source"
+                          (ionChange)="onCompareSideSourceChange(side, $event)"
+                        >
+                          <ion-select-option value="current">{{
+                            t('compare.sources.current')
+                          }}</ion-select-option>
+                          <ion-select-option value="saved">{{
+                            t('compare.sources.saved')
+                          }}</ion-select-option>
+                          <ion-select-option value="imported">{{
+                            t('compare.sources.imported')
+                          }}</ion-select-option>
+                        </ion-select>
+
+                        @if (compareSideState(side).source === 'saved') {
+                          <ion-select
+                            interface="popover"
+                            fill="outline"
+                            [label]="t('compare.fields.savedTeam')"
+                            labelPlacement="stacked"
+                            [value]="compareSideState(side).savedTeamId"
+                            [disabled]="!savedTeams().length"
+                            (ionChange)="onCompareSavedTeamChange(side, $event)"
+                          >
+                            @for (team of savedTeams(); track team.id) {
+                              <ion-select-option [value]="team.id">
+                                {{ team.name }}
+                              </ion-select-option>
+                            }
+                          </ion-select>
+                        }
+
+                        @if (compareSideState(side).source === 'imported') {
+                          <input
+                            #compareImportInput
+                            type="file"
+                            accept="application/json,.json"
+                            class="visually-hidden-file"
+                            (change)="onCompareImportFileSelected(side, $event, compareImportInput)"
+                          />
+                          <ion-textarea
+                            [label]="t('compare.fields.importPayload')"
+                            labelPlacement="stacked"
+                            fill="outline"
+                            autoGrow="true"
+                            [value]="compareSideState(side).importDraft"
+                            (ionInput)="onCompareImportDraftChange(side, $event)"
+                          ></ion-textarea>
+                          <div class="compare-import-actions">
+                            <ion-button
+                              fill="outline"
+                              color="light"
+                              size="small"
+                              (click)="openPresetFilePicker(compareImportInput)"
+                            >
+                              <ion-icon slot="start" [icon]="compareImportIcon"></ion-icon>
+                              {{ t('compare.actions.chooseFile') }}
+                            </ion-button>
+                            <ion-button
+                              fill="outline"
+                              color="warning"
+                              size="small"
+                              [disabled]="!compareSideState(side).importDraft.trim().length"
+                              (click)="applyCompareImportDraft(side)"
+                            >
+                              {{ t('compare.actions.usePayload') }}
+                            </ion-button>
+                          </div>
+                        }
+
+                        <p
+                          class="compare-side-card__summary"
+                          [class.compare-error-state]="compareSidePayload(side).error"
+                        >
+                          {{ compareSideSummary(side) }}
+                        </p>
+                      </article>
+                    }
+                  </div>
+
+                  @if (compareDiff(); as diff) {
+                    <div class="compare-metric-grid">
+                      @for (row of diff.metricRows; track row.key) {
+                        <article
+                          class="compare-metric-chip"
+                          [class.compare-metric-chip--positive]="row.tone === 'positive'"
+                          [class.compare-metric-chip--negative]="row.tone === 'negative'"
+                        >
+                          <span>{{ t(row.labelKey) }}</span>
+                          <div class="compare-metric-chip__values">
+                            <small class="coverage-chip"
+                              >{{ t('compare.sideAShort') }}:
+                              {{ compareMetricDisplayValue(row, 'a') }}</small
+                            >
+                            <small class="coverage-chip"
+                              >{{ t('compare.sideBShort') }}:
+                              {{ compareMetricDisplayValue(row, 'b') }}</small
+                            >
+                          </div>
+                          <strong class="compare-delta">{{ compareMetricDeltaLabel(row) }}</strong>
+                        </article>
+                      }
+                    </div>
+
+                    <div class="compare-slot-list">
+                      @for (row of diff.slotRows; track row.role) {
+                        <article
+                          class="compare-slot-row"
+                          [class.compare-slot-row--changed]="row.changed"
+                        >
+                          <div class="compare-slot-row__role">{{ t(row.labelKey) }}</div>
+                          <div
+                            class="compare-slot-cell"
+                            [class.compare-slot-cell--empty]="!row.a.character"
+                          >
+                            @if (row.a.character; as character) {
+                              <img
+                                [src]="character.imageUrl"
+                                [alt]="character.name"
+                                loading="lazy"
+                              />
+                              <div class="compare-slot-cell__copy">
+                                <strong>{{ character.name }}</strong>
+                                <span>#{{ character.id }} · {{ character.type }}</span>
+                                <small>
+                                  {{ character.primaryClass }}
+                                  @if (character.secondaryClass) {
+                                    · {{ character.secondaryClass }}
+                                  }
+                                </small>
+                              </div>
+                            } @else {
+                              <div class="compare-slot-cell__copy">
+                                <strong>{{ t('compare.emptySlot') }}</strong>
+                                @if (row.a.missing) {
+                                  <span>{{ t('compare.missingCharacter') }}</span>
+                                }
+                              </div>
+                            }
+                          </div>
+                          <div
+                            class="compare-slot-cell"
+                            [class.compare-slot-cell--empty]="!row.b.character"
+                          >
+                            @if (row.b.character; as character) {
+                              <img
+                                [src]="character.imageUrl"
+                                [alt]="character.name"
+                                loading="lazy"
+                              />
+                              <div class="compare-slot-cell__copy">
+                                <strong>{{ character.name }}</strong>
+                                <span>#{{ character.id }} · {{ character.type }}</span>
+                                <small>
+                                  {{ character.primaryClass }}
+                                  @if (character.secondaryClass) {
+                                    · {{ character.secondaryClass }}
+                                  }
+                                </small>
+                              </div>
+                            } @else {
+                              <div class="compare-slot-cell__copy">
+                                <strong>{{ t('compare.emptySlot') }}</strong>
+                                @if (row.b.missing) {
+                                  <span>{{ t('compare.missingCharacter') }}</span>
+                                }
+                              </div>
+                            }
+                          </div>
+                          <div class="compare-slot-row__status">
+                            {{ row.changed ? t('compare.changed') : t('compare.same') }}
+                          </div>
+                        </article>
+                      }
+                    </div>
+                  } @else {
+                    <p class="compare-empty-state">{{ t('compare.empty.selectBoth') }}</p>
+                  }
+                </section>
+              }
+
+              @if (result(); as current) {
               @if (resultUsesFallback()) {
                 <section class="glass-card fallback-card">
                   <div class="slot-grid__header">
@@ -3068,231 +3297,8 @@
                   >
                     {{ downloadSelectionJsonLabel() }}
                   </ion-button>
-                  <ion-button
-                    fill="outline"
-                    color="light"
-                    class="download-team-button"
-                    [disabled]="!canDownloadTeamJson()"
-                    (click)="toggleCompareMode()"
-                  >
-                    <ion-icon slot="start" [icon]="compareIcon"></ion-icon>
-                    {{
-                      compareModeOpen()
-                        ? t('compare.actions.hide')
-                        : t('compare.actions.show')
-                    }}
-                  </ion-button>
                 </div>
               </section>
-              @if (compareModeOpen()) {
-                <section class="glass-card compare-card">
-                  <div class="compare-card__head">
-                    <div class="slot-grid__header">
-                      <h2>{{ t('compare.title') }}</h2>
-                      <p>{{ t('compare.copy') }}</p>
-                    </div>
-                    <div class="compare-card__actions">
-                      <ion-button fill="outline" color="light" (click)="swapCompareSides()">
-                        <ion-icon slot="start" [icon]="compareSwapIcon"></ion-icon>
-                        {{ t('compare.actions.swap') }}
-                      </ion-button>
-                    </div>
-                  </div>
-
-                  <div class="compare-selector-grid">
-                    @for (side of compareSides; track side) {
-                      <article class="compare-side-card">
-                        <div class="compare-side-card__head">
-                          <strong>{{ compareSideTitle(side) }}</strong>
-                          <span class="role-pill">{{
-                            compareSourceLabel(compareSideState(side).source)
-                          }}</span>
-                        </div>
-                        <ion-select
-                          interface="popover"
-                          fill="outline"
-                          [label]="t('compare.fields.source')"
-                          labelPlacement="stacked"
-                          [value]="compareSideState(side).source"
-                          (ionChange)="onCompareSideSourceChange(side, $event)"
-                        >
-                          <ion-select-option value="current">{{
-                            t('compare.sources.current')
-                          }}</ion-select-option>
-                          <ion-select-option value="saved">{{
-                            t('compare.sources.saved')
-                          }}</ion-select-option>
-                          <ion-select-option value="imported">{{
-                            t('compare.sources.imported')
-                          }}</ion-select-option>
-                        </ion-select>
-
-                        @if (compareSideState(side).source === 'saved') {
-                          <ion-select
-                            interface="popover"
-                            fill="outline"
-                            [label]="t('compare.fields.savedTeam')"
-                            labelPlacement="stacked"
-                            [value]="compareSideState(side).savedTeamId"
-                            [disabled]="!savedTeams().length"
-                            (ionChange)="onCompareSavedTeamChange(side, $event)"
-                          >
-                            @for (team of savedTeams(); track team.id) {
-                              <ion-select-option [value]="team.id">
-                                {{ team.name }}
-                              </ion-select-option>
-                            }
-                          </ion-select>
-                        }
-
-                        @if (compareSideState(side).source === 'imported') {
-                          <input
-                            #compareImportInput
-                            type="file"
-                            accept="application/json,.json"
-                            class="visually-hidden-file"
-                            (change)="onCompareImportFileSelected(side, $event, compareImportInput)"
-                          />
-                          <ion-textarea
-                            [label]="t('compare.fields.importPayload')"
-                            labelPlacement="stacked"
-                            fill="outline"
-                            autoGrow="true"
-                            [value]="compareSideState(side).importDraft"
-                            (ionInput)="onCompareImportDraftChange(side, $event)"
-                          ></ion-textarea>
-                          <div class="compare-import-actions">
-                            <ion-button
-                              fill="outline"
-                              color="light"
-                              size="small"
-                              (click)="openPresetFilePicker(compareImportInput)"
-                            >
-                              <ion-icon slot="start" [icon]="compareImportIcon"></ion-icon>
-                              {{ t('compare.actions.chooseFile') }}
-                            </ion-button>
-                            <ion-button
-                              fill="outline"
-                              color="warning"
-                              size="small"
-                              [disabled]="!compareSideState(side).importDraft.trim().length"
-                              (click)="applyCompareImportDraft(side)"
-                            >
-                              {{ t('compare.actions.usePayload') }}
-                            </ion-button>
-                          </div>
-                        }
-
-                        <p
-                          class="compare-side-card__summary"
-                          [class.compare-error-state]="compareSidePayload(side).error"
-                        >
-                          {{ compareSideSummary(side) }}
-                        </p>
-                      </article>
-                    }
-                  </div>
-
-                  @if (compareDiff(); as diff) {
-                    <div class="compare-metric-grid">
-                      @for (row of diff.metricRows; track row.key) {
-                        <article
-                          class="compare-metric-chip"
-                          [class.compare-metric-chip--positive]="row.tone === 'positive'"
-                          [class.compare-metric-chip--negative]="row.tone === 'negative'"
-                        >
-                          <span>{{ t(row.labelKey) }}</span>
-                          <div class="compare-metric-chip__values">
-                            <small class="coverage-chip"
-                              >{{ t('compare.sideAShort') }}:
-                              {{ compareMetricDisplayValue(row, 'a') }}</small
-                            >
-                            <small class="coverage-chip"
-                              >{{ t('compare.sideBShort') }}:
-                              {{ compareMetricDisplayValue(row, 'b') }}</small
-                            >
-                          </div>
-                          <strong class="compare-delta">{{ row.deltaLabel }}</strong>
-                        </article>
-                      }
-                    </div>
-
-                    <div class="compare-slot-list">
-                      @for (row of diff.slotRows; track row.role) {
-                        <article
-                          class="compare-slot-row"
-                          [class.compare-slot-row--changed]="row.changed"
-                        >
-                          <div class="compare-slot-row__role">{{ t(row.labelKey) }}</div>
-                          <div
-                            class="compare-slot-cell"
-                            [class.compare-slot-cell--empty]="!row.a.character"
-                          >
-                            @if (row.a.character; as character) {
-                              <img
-                                [src]="character.imageUrl"
-                                [alt]="character.name"
-                                loading="lazy"
-                              />
-                              <div class="compare-slot-cell__copy">
-                                <strong>{{ character.name }}</strong>
-                                <span>#{{ character.id }} · {{ character.type }}</span>
-                                <small>
-                                  {{ character.primaryClass }}
-                                  @if (character.secondaryClass) {
-                                    · {{ character.secondaryClass }}
-                                  }
-                                </small>
-                              </div>
-                            } @else {
-                              <div class="compare-slot-cell__copy">
-                                <strong>{{ t('compare.emptySlot') }}</strong>
-                                @if (row.a.missing) {
-                                  <span>{{ t('compare.missingCharacter') }}</span>
-                                }
-                              </div>
-                            }
-                          </div>
-                          <div
-                            class="compare-slot-cell"
-                            [class.compare-slot-cell--empty]="!row.b.character"
-                          >
-                            @if (row.b.character; as character) {
-                              <img
-                                [src]="character.imageUrl"
-                                [alt]="character.name"
-                                loading="lazy"
-                              />
-                              <div class="compare-slot-cell__copy">
-                                <strong>{{ character.name }}</strong>
-                                <span>#{{ character.id }} · {{ character.type }}</span>
-                                <small>
-                                  {{ character.primaryClass }}
-                                  @if (character.secondaryClass) {
-                                    · {{ character.secondaryClass }}
-                                  }
-                                </small>
-                              </div>
-                            } @else {
-                              <div class="compare-slot-cell__copy">
-                                <strong>{{ t('compare.emptySlot') }}</strong>
-                                @if (row.b.missing) {
-                                  <span>{{ t('compare.missingCharacter') }}</span>
-                                }
-                              </div>
-                            }
-                          </div>
-                          <div class="compare-slot-row__status">
-                            {{ row.changed ? t('compare.changed') : t('compare.same') }}
-                          </div>
-                        </article>
-                      }
-                    </div>
-                  } @else {
-                    <p class="compare-empty-state">{{ t('compare.empty.selectBoth') }}</p>
-                  }
-                </section>
-              }
               @if (current.shipSelection; as shipSelection) {
                 <section class="glass-card result-ship-card">
                   <div
@@ -3519,6 +3525,7 @@
                   </article>
                 }
               </section>
+            }
             }
           </app-auto-team-builder-results-panel>
         </app-auto-team-builder-loading-panel>
