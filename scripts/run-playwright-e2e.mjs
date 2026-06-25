@@ -2,10 +2,33 @@
 import { spawnSync } from 'node:child_process';
 
 const GUIDED_GREP = '@guided-auto-build';
-const userArgs = process.argv.slice(2);
-const scopedProject = (process.env.E2E_PROJECT ?? '').trim();
+const { scopedProject, userArgs } = parseRunnerArgs(process.argv.slice(2));
 const projectArgs = scopedProject ? ['--project', scopedProject] : [];
 const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+
+function parseRunnerArgs(args) {
+  const remainingArgs = [];
+  let project = (process.env.E2E_PROJECT ?? '').trim();
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === '--e2e-project') {
+      project = args[index + 1] ?? '';
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--e2e-project=')) {
+      project = arg.slice('--e2e-project='.length);
+      continue;
+    }
+
+    remainingArgs.push(arg);
+  }
+
+  return { scopedProject: project.trim(), userArgs: remainingArgs };
+}
 
 function runPlaywright(args, env = {}) {
   const result = spawnSync(npxBin, ['playwright', 'test', ...args], {

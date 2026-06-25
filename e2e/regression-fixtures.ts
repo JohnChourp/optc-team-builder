@@ -126,30 +126,6 @@ export async function seedBrowserState(page: Page, teams = SEEDED_SAVED_TEAMS): 
   }, teams);
 }
 
-export async function setAutoTeamBuilderGuidedMode(
-  page: Page,
-  enabled: boolean,
-): Promise<void> {
-  await page.locator('app-auto-team-builder-page').evaluate((element, nextEnabled) => {
-    const testabilityApi = window as unknown as {
-      ng?: {
-        getComponent?: (target: Element) => {
-          guidedAutoBuildEnabled?: { set: (value: boolean) => void };
-        } | null;
-        applyChanges?: (target: Element) => void;
-      };
-    };
-    const component = testabilityApi.ng?.getComponent?.(element);
-
-    if (!component?.guidedAutoBuildEnabled) {
-      throw new Error('Auto Team Builder guided mode test hook is unavailable.');
-    }
-
-    component.guidedAutoBuildEnabled.set(nextEnabled);
-    testabilityApi.ng?.applyChanges?.(element);
-  }, enabled);
-}
-
 export async function waitForAppReady(page: Page): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
   await page.locator('ion-app').first().waitFor({ state: 'attached', timeout: 45_000 });

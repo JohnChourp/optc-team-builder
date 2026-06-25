@@ -69,7 +69,7 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run Playwright (${{ matrix.browser }})
-        run: E2E_PROJECT=${{ matrix.browser }} node ./scripts/run-playwright-e2e.mjs
+        run: node ./scripts/run-playwright-e2e.mjs --e2e-project=${{ matrix.browser }}
         env:
           CI: 'true'
 
