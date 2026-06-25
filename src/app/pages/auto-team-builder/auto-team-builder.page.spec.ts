@@ -3107,6 +3107,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(normalizedTemplate).toMatch(
       /@if\s*\(\s*!building\(\)\s*\)\s*\{\s*<section class="glass-card compare-launch-card"/,
     );
+    expect(template).toContain("t('compare.guideLink')");
     expect(normalizedTemplate).toMatch(/@if\s*\(\s*result\(\);\s*as current\s*\)/);
     expect(template).not.toContain('slot.abilityChips');
     expect(template).not.toContain('slot.snippet');
@@ -3165,6 +3166,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       /\(ionChange\)="\s*onAllowAnyFriendCaptainAutoFillToggle\(\$event\)\s*"/,
     );
     expect(template).toContain('guidedAutoBuildToggleLabel()');
+    expect(template).toContain("t('filters.guidedAutoBuild.guideLink')");
     expect(template).toContain('(ionChange)="onGuidedAutoBuildToggle($event)"');
     expect(template).toContain('favoriteShipsOnlyToggleLabel()');
     expect(template).toContain('[value]="manualShipSearchTerm()"');

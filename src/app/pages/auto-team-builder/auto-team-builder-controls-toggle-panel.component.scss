@@ -45,6 +45,20 @@
   overflow-wrap: anywhere;
 }
 
+.strict-toggle-link {
+  width: fit-content;
+  color: #f5c84c;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.strict-toggle-link:hover,
+.strict-toggle-link:focus-visible {
+  text-decoration: underline;
+}
+
 .strict-toggle-select {
   width: 100%;
   min-width: 0;

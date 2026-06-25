@@ -74,6 +74,7 @@ const publicRoutes = [
       { label: 'OPTC team builder tool', path: 'tools/optc-team-builder' },
       { label: 'OPTC character database', path: 'tools/optc-character-database' },
       { label: 'How to build an OPTC team', path: 'guides/how-to-build-an-optc-team' },
+      { label: 'Guided build, compare mode, and team sharing', path: 'guides/guided-build-compare-team-sharing' },
       { label: 'Open the public sitemap', path: 'sitemap.html' },
     ],
   },
@@ -292,6 +293,26 @@ const publicRoutes = [
       { label: 'Check captain coverage', path: 'tabs/captain-coverage' },
       { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
       { label: 'Browse OPTC characters', path: 'tabs/characters' },
+    ],
+  },
+  {
+    path: 'guides/guided-build-compare-team-sharing',
+    title: 'Guided Build, Compare Mode, and Team Sharing | OPTC Team Builder',
+    description:
+      'Learn how to use guided Auto Team Builder, compare current, saved, and imported teams, and move saved teams with JSON, share links, and share codes.',
+    heading: 'Guided Build, Compare Mode, and Team Sharing',
+    schemaType: 'WebPage',
+    paragraphs: [
+      'Guided auto build is for players who want Auto Team Builder to fill one crew slot at a time. Enable it before building, then the app fills and locks the next empty manual slot, starting from Captain and continuing through the sub slots.',
+      'Compare mode helps review two team sources side by side. You can compare the current generated team, a saved team on this device, or an imported payload, then review slot changes, filled slots, ability counts, Captain Ability tier coverage, and ship differences.',
+      'Saved Teams transfer supports schema v1 saved-teams JSON, saved-team share links, and raw saved-team share codes. Compare mode can also read raw saved-team JSON, Auto Team Builder preset JSON, and generated team JSON.',
+      'A common flow is to build with guided mode, save the result, share it from Saved Teams, and open the share link on another device. The link preloads Manual Team Builder as an unsaved draft, and saving from there creates a normal local saved team.',
+      'Saved teams remain local to the current browser or app install unless you export, share, import, or sync them. Unsupported schema versions and malformed share codes are rejected instead of being imported silently.',
+    ],
+    links: [
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+      { label: 'Open Saved Teams', path: 'tabs/saved-teams' },
+      { label: 'Read the team-building guide', path: 'guides/how-to-build-an-optc-team' },
     ],
   },
   {

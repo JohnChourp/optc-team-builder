@@ -80,6 +80,10 @@
     "savedEnemiesCta": "Open saved enemies",
     "title": "Your saved teams stay on-device and are ready to load back into the builder."
   },
+  "guide": {
+    "cta": "Read the sharing guide",
+    "importLink": "Learn supported JSON, share link, and share code formats"
+  },
   "import": {
     "chooseAnotherFile": "Choose another file",
     "copy": "Import an export JSON from the Saved Teams page and merge it with the current on-device teams.",

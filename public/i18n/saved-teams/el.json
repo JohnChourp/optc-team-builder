@@ -80,6 +80,10 @@
     "savedEnemiesCta": "Άνοιγμα saved enemies",
     "title": "Οι αποθηκευμένες ομάδες σου μένουν στη συσκευή και είναι έτοιμες να φορτωθούν ξανά στον builder."
   },
+  "guide": {
+    "cta": "Διάβασε τον οδηγό sharing",
+    "importLink": "Μάθε τα supported JSON, share link και share code formats"
+  },
   "import": {
     "chooseAnotherFile": "Διάλεξε άλλο αρχείο",
     "copy": "Κάνε import export JSON από τη Saved Teams σελίδα για merge με τα υπάρχοντα αποθηκευμένα teams της συσκευής.",

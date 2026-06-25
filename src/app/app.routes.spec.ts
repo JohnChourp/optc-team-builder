@@ -184,6 +184,7 @@ describe('app routes', () => {
       'tools/optc-rumble-team-builder',
       'tools/optc-character-database',
       'guides/how-to-build-an-optc-team',
+      'guides/guided-build-compare-team-sharing',
       'guides/optc-pirate-rumble-team-building',
     ];
 

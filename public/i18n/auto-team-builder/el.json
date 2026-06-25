@@ -213,6 +213,7 @@
     },
     "guidedAutoBuild": {
       "toggle": "Guided auto build",
+      "guideLink": "Διάβασε τον οδηγό guided build και sharing",
       "support": {
         "next": "Χτίζει και κλειδώνει μόνο το επόμενο κενό slot: {{role}}.",
         "complete": "Όλα τα manual slots είναι γεμάτα. Το επόμενο build κάνει validate την κλειδωμένη ομάδα."
@@ -749,6 +750,7 @@
   "compare": {
     "title": "Σύγκριση ομάδων",
     "copy": "Δες αλλαγές ανά slot και summary deltas χωρίς να ξανατρέξεις το current result.",
+    "guideLink": "Διάβασε τον οδηγό compare και team sharing",
     "sideA": "Team A",
     "sideB": "Team B",
     "sideAShort": "A",
