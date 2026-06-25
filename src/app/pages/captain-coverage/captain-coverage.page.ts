@@ -561,8 +561,12 @@ export class CaptainCoveragePage implements OnInit {
     }
 
     const activeIndex = this.activeTeamSlotIndex();
+    if (activeIndex === 1) {
+      return null;
+    }
+
     const currentSlotCost =
-      activeIndex === 1 ? 0 : (this.selectedTeamSlots()[activeIndex]?.cost ?? 0);
+      this.selectedTeamSlots()[activeIndex]?.cost ?? 0;
 
     return Math.max(0, maxTotalCost - this.teamBudgetCost() + currentSlotCost);
   });

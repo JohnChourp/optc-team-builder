@@ -1147,6 +1147,13 @@ describe('CaptainCoveragePage', () => {
     expect(page.selectedCaptain()).toBeNull();
 
     await page.saveTeamSlotSelection(cheapLeader);
+    page.openTeamSlotPicker(1);
+
+    expect(page.teamPickerMaxCost()).toBeNull();
+
+    await page.saveTeamSlotSelection(expensiveLeader);
+    expect(page.selectedTeamSlots()[1]?.id).toBe(1002);
+
     page.openTeamSlotPicker(2);
 
     expect(page.teamPickerMaxCost()).toBe(20);
