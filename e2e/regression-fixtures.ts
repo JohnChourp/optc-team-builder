@@ -169,6 +169,17 @@ export async function setIonToggle(locator: Locator, checked: boolean): Promise<
       }),
     );
   }, checked);
+
+  await expect
+    .poll(() =>
+      locator.evaluate((element) =>
+        Boolean((element as HTMLElement & { checked?: boolean }).checked),
+      ),
+    )
+    .toBe(checked);
+  await expect(locator).toHaveAttribute('data-guided-enabled', checked ? 'true' : 'false');
+  await locator.page().waitForTimeout(100);
+  await expect(locator).toHaveAttribute('data-guided-enabled', checked ? 'true' : 'false');
 }
 
 export async function setIonSelect(locator: Locator, value: string | string[]): Promise<void> {

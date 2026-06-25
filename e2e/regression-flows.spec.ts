@@ -15,6 +15,8 @@ import {
 } from './regression-fixtures';
 
 test.describe('high-value regression flows', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('guided auto build locks only the next empty slot @guided-auto-build', async ({
     page,
     browserName,
@@ -33,7 +35,6 @@ test.describe('high-value regression flows', () => {
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
 
     const guidedToggle = page.getByTestId('guided-auto-build-toggle');
-    await guidedToggle.click();
     await setIonToggle(guidedToggle, true);
     await expect(guidedToggle).toHaveAttribute('data-guided-enabled', 'true');
     await expect(page.getByTestId('auto-build-submit')).toBeEnabled();
