@@ -28,7 +28,12 @@
           <section class="glass-card empty-card">
             <h2>{{ t('title') }}</h2>
             <p>{{ t('empty') }}</p>
-            <ion-button fill="outline" color="warning" (click)="openImportModal()">
+            <ion-button
+              data-testid="saved-teams-import-open"
+              fill="outline"
+              color="warning"
+              (click)="openImportModal()"
+            >
               <ion-icon slot="start" [icon]="uploadIcon"></ion-icon>
               {{ t('tools.import') }}
             </ion-button>
@@ -42,7 +47,12 @@
                 <h2>{{ t('title') }}</h2>
                 <span>{{ savedTeamTotalLabel() }}</span>
               </div>
-              <ion-button fill="outline" color="warning" (click)="openImportModal()">
+              <ion-button
+                data-testid="saved-teams-import-open"
+                fill="outline"
+                color="warning"
+                (click)="openImportModal()"
+              >
                 <ion-icon slot="start" [icon]="uploadIcon"></ion-icon>
                 {{ t('tools.import') }}
               </ion-button>
@@ -141,7 +151,12 @@
                 <ion-button fill="outline" color="light" (click)="resetPage()">
                   {{ 'common.actions.reset' | transloco }}
                 </ion-button>
-                <ion-button fill="outline" color="warning" (click)="openImportModal()">
+                <ion-button
+                  data-testid="saved-teams-import-open"
+                  fill="outline"
+                  color="warning"
+                  (click)="openImportModal()"
+                >
                   <ion-icon slot="start" [icon]="uploadIcon"></ion-icon>
                   {{ t('tools.import') }}
                 </ion-button>
@@ -175,6 +190,7 @@
             @if (actionFeedback(); as feedback) {
               <div
                 class="import-feedback"
+                data-testid="saved-teams-action-feedback"
                 [class.import-feedback--success]="feedback.tone === 'success'"
                 [class.import-feedback--warning]="feedback.tone === 'warning'"
                 [class.import-feedback--error]="feedback.tone === 'error'"
@@ -225,6 +241,7 @@
                         {{ t('actions.openTeam') }}
                       </ion-button>
                       <ion-button
+                        [attr.data-testid]="'saved-team-share-link-' + teamCard.team.id"
                         fill="clear"
                         color="warning"
                         (click)="copyTeamShareLink(teamCard.team)"
@@ -233,6 +250,7 @@
                         {{ t('actions.copyShareLink') }}
                       </ion-button>
                       <ion-button
+                        [attr.data-testid]="'saved-team-share-code-' + teamCard.team.id"
                         fill="clear"
                         color="light"
                         (click)="copyTeamShareCode(teamCard.team)"
@@ -240,11 +258,21 @@
                         <ion-icon slot="start" [icon]="linkIcon"></ion-icon>
                         {{ t('actions.copyShareCode') }}
                       </ion-button>
-                      <ion-button fill="clear" color="light" (click)="copyTeamJson(teamCard.team)">
+                      <ion-button
+                        [attr.data-testid]="'saved-team-copy-json-' + teamCard.team.id"
+                        fill="clear"
+                        color="light"
+                        (click)="copyTeamJson(teamCard.team)"
+                      >
                         <ion-icon slot="start" [icon]="copyIcon"></ion-icon>
                         {{ t('actions.copyJson') }}
                       </ion-button>
-                      <ion-button fill="clear" color="light" (click)="exportTeam(teamCard.team)">
+                      <ion-button
+                        [attr.data-testid]="'saved-team-export-' + teamCard.team.id"
+                        fill="clear"
+                        color="light"
+                        (click)="exportTeam(teamCard.team)"
+                      >
                         <ion-icon slot="start" [icon]="downloadIcon"></ion-icon>
                         {{ t('actions.exportSingle') }}
                       </ion-button>
@@ -522,6 +550,7 @@
 
             <input
               #importFileInput
+              data-testid="saved-teams-import-file"
               type="file"
               accept=".json,application/json"
               hidden
@@ -553,6 +582,7 @@
               <label>
                 <span>{{ t('import.paste.label') }}</span>
                 <ion-textarea
+                  data-testid="saved-teams-import-payload"
                   [value]="importTextContent()"
                   [placeholder]="t('import.paste.placeholder')"
                   [disabled]="importing()"
@@ -561,6 +591,7 @@
                 ></ion-textarea>
               </label>
               <ion-button
+                data-testid="saved-teams-import-paste"
                 fill="outline"
                 color="warning"
                 [disabled]="!importTextContent().trim().length || importing()"
@@ -580,6 +611,7 @@
             @if (importFeedback(); as feedback) {
               <div
                 class="import-feedback"
+                data-testid="saved-teams-import-feedback"
                 [class.import-feedback--success]="feedback.tone === 'success'"
                 [class.import-feedback--warning]="feedback.tone === 'warning'"
                 [class.import-feedback--error]="feedback.tone === 'error'"
