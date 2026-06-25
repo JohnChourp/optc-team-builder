@@ -746,6 +746,82 @@
       "noTypeCoverage": "Δεν υπάρχει type coverage"
     }
   },
+  "compare": {
+    "title": "Σύγκριση ομάδων",
+    "copy": "Δες αλλαγές ανά slot και summary deltas χωρίς να ξανατρέξεις το current result.",
+    "sideA": "Team A",
+    "sideB": "Team B",
+    "sideAShort": "A",
+    "sideBShort": "B",
+    "loading": "Φορτώνει team data...",
+    "snapshotSummary": "{{name}} · {{filled}} γεμάτα slots",
+    "changed": "Άλλαξε",
+    "same": "Ίδιο",
+    "emptySlot": "Empty",
+    "missingCharacter": "Δεν βρέθηκαν character data",
+    "actions": {
+      "show": "Σύγκριση ομάδων",
+      "hide": "Κλείσιμο σύγκρισης",
+      "swap": "Swap A/B",
+      "chooseFile": "Επιλογή JSON",
+      "usePayload": "Χρήση payload"
+    },
+    "sources": {
+      "current": "Current generated",
+      "saved": "Saved team",
+      "imported": "Imported payload"
+    },
+    "fields": {
+      "source": "Source",
+      "savedTeam": "Saved team",
+      "importPayload": "Saved-team share link, share code, preset JSON ή team JSON"
+    },
+    "shipPresence": {
+      "present": "Ναι",
+      "absent": "Όχι"
+    },
+    "empty": {
+      "current": "Χτίσε πρώτα ομάδα για να συγκρίνεις το current generated result.",
+      "savedSelection": "Διάλεξε saved team για αυτή την πλευρά.",
+      "noSavedTeams": "Δεν υπάρχουν saved teams σε αυτή τη συσκευή.",
+      "imported": "Κάνε paste ή διάλεξε supported team payload για αυτή την πλευρά.",
+      "selectBoth": "Διάλεξε δύο ομάδες για να δεις slot και metric διαφορές."
+    },
+    "import": {
+      "pastedPayload": "Pasted payload",
+      "restoredPayload": "Restored payload",
+      "errors": {
+        "empty": "Κάνε paste ένα supported team payload πριν την εισαγωγή.",
+        "invalid": "Το payload δεν είναι supported saved team, share link, preset ή team export.",
+        "noTeam": "Το preset δεν περιέχει embedded generated ή saved team."
+      }
+    },
+    "errors": {
+      "loadFailed": "Δεν φορτώθηκαν τα team data για αυτή την πλευρά.",
+      "missingCharacters": "{{count}} character(s) δεν φορτώθηκαν και εμφανίζονται ως empty."
+    },
+    "slots": {
+      "captain": "Captain",
+      "friendCaptain": "Friend Captain",
+      "sub1": "Sub 1",
+      "sub2": "Sub 2",
+      "sub3": "Sub 3",
+      "sub4": "Sub 4"
+    },
+    "metrics": {
+      "changedSlots": "Changed slots",
+      "filledSlots": "Filled slots",
+      "uniqueTypes": "Unique types",
+      "uniqueClasses": "Unique classes",
+      "uniqueAbilities": "Unique abilities",
+      "specialAbilities": "Special abilities",
+      "crewmateAbilities": "Crewmate abilities",
+      "potentialAbilities": "Potential abilities",
+      "supportAbilities": "Support abilities",
+      "captainTierCoverage": "Captain tiers",
+      "ship": "Ship"
+    }
+  },
   "results": {
     "candidatePool": {
       "default": "Χτίστηκε από όλο το local pool.",

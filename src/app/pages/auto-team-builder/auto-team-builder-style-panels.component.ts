@@ -39,13 +39,15 @@ const resultsPanelsTemplate = `
     <app-auto-team-builder-results-chip-panel>
       <app-auto-team-builder-results-report-panel>
         <app-auto-team-builder-results-save-panel>
-          <app-auto-team-builder-results-ship-panel>
-            <app-auto-team-builder-results-card-layout-panel>
-              <app-auto-team-builder-results-card-action-panel>
-                <ng-content></ng-content>
-              </app-auto-team-builder-results-card-action-panel>
-            </app-auto-team-builder-results-card-layout-panel>
-          </app-auto-team-builder-results-ship-panel>
+          <app-auto-team-builder-results-comparison-panel>
+            <app-auto-team-builder-results-ship-panel>
+              <app-auto-team-builder-results-card-layout-panel>
+                <app-auto-team-builder-results-card-action-panel>
+                  <ng-content></ng-content>
+                </app-auto-team-builder-results-card-action-panel>
+              </app-auto-team-builder-results-card-layout-panel>
+            </app-auto-team-builder-results-ship-panel>
+          </app-auto-team-builder-results-comparison-panel>
         </app-auto-team-builder-results-save-panel>
       </app-auto-team-builder-results-report-panel>
     </app-auto-team-builder-results-chip-panel>
@@ -617,6 +619,16 @@ export class AutoTeamBuilderResultsReportPanelComponent {}
 export class AutoTeamBuilderResultsSavePanelComponent {}
 
 @Component({
+  selector: 'app-auto-team-builder-results-comparison-panel',
+  standalone: true,
+  encapsulation: ViewEncapsulation.None,
+  template: projectedTemplate,
+  styleUrl: './auto-team-builder-results-comparison-panel.component.scss',
+  host: panelHost,
+})
+export class AutoTeamBuilderResultsComparisonPanelComponent {}
+
+@Component({
   selector: 'app-auto-team-builder-results-ship-panel',
   standalone: true,
   encapsulation: ViewEncapsulation.None,
@@ -654,6 +666,7 @@ export class AutoTeamBuilderResultsCardActionPanelComponent {}
     AutoTeamBuilderResultsCardActionPanelComponent,
     AutoTeamBuilderResultsCardLayoutPanelComponent,
     AutoTeamBuilderResultsChipPanelComponent,
+    AutoTeamBuilderResultsComparisonPanelComponent,
     AutoTeamBuilderResultsHeaderPanelComponent,
     AutoTeamBuilderResultsReportPanelComponent,
     AutoTeamBuilderResultsSavePanelComponent,

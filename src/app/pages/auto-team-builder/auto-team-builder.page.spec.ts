@@ -58,6 +58,11 @@ vi.mock('@ionic/angular', () => ({
 
 afterEach(() => {
   vi.useRealTimers();
+  try {
+    globalThis.sessionStorage?.clear();
+  } catch {
+    // Session storage is only available in browser-like test environments.
+  }
 });
 
 describe('AutoTeamBuilderPage builder interactions', () => {
@@ -4947,6 +4952,151 @@ describe('AutoTeamBuilderPage offline save', () => {
   });
 });
 
+describe('AutoTeamBuilder compare panel', () => {
+  it('opens and closes compare mode without rebuilding the current result', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    autoTeamBuilder.buildTeam.mockClear();
+
+    page.toggleCompareMode();
+
+    expect(page.compareModeOpen()).toBe(true);
+    expect(autoTeamBuilder.buildTeam).not.toHaveBeenCalled();
+    expect(page.compareDiff()).toMatchObject({
+      changedSlotCount: 0,
+    });
+
+    page.toggleCompareMode();
+
+    expect(page.compareModeOpen()).toBe(false);
+    expect(autoTeamBuilder.buildTeam).not.toHaveBeenCalled();
+  });
+
+  it('hydrates saved-team source data and compares it against the current generated team', async () => {
+    const { page, repository } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.toggleCompareMode();
+
+    page.onCompareSideSourceChange('b', { detail: { value: 'saved' } } as CustomEvent<{
+      value: string;
+    }>);
+    await flushAsyncCompareWork();
+
+    expect(page.compareSideState('b')).toMatchObject({
+      source: 'saved',
+      savedTeamId: 'team-1',
+    });
+    expect(repository.getCharacterById).toHaveBeenCalledWith(101);
+    expect(page.compareSideSnapshot('b')).toMatchObject({
+      id: 'team-1',
+      label: 'Saved Team team-1',
+      missingCharacterCount: 0,
+    });
+    expect(page.compareDiff()?.changedSlotCount).toBe(1);
+  });
+
+  it('shows inline import errors for invalid compare payloads', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.toggleCompareMode();
+
+    page.onCompareSideSourceChange('b', { detail: { value: 'imported' } } as CustomEvent<{
+      value: string;
+    }>);
+    page.onCompareImportDraftChange('b', { detail: { value: 'not-json' } } as CustomEvent<{
+      value: string;
+    }>);
+    await page.applyCompareImportDraft('b');
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      snapshot: null,
+      error: 'This payload is not a supported saved team, share link, preset, or team export.',
+      loading: false,
+    });
+  });
+
+  it('swaps current and imported compare sides with their loaded state', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+    page.toggleCompareMode();
+    page.onCompareImportDraftChange(
+      'b',
+      {
+        detail: {
+          value: JSON.stringify(
+            createSavedTeam('imported-team', {
+              shipId: 9002,
+              slots: [101, 102, 103, 104, 105, 106],
+            }),
+          ),
+        },
+      } as CustomEvent<{ value: string }>,
+    );
+
+    await page.applyCompareImportDraft('b');
+    page.swapCompareSides();
+
+    expect(page.compareSideState('a')).toMatchObject({
+      source: 'imported',
+      importedLabel: 'Saved Team imported-team',
+    });
+    expect(page.compareSideSnapshot('a')).toMatchObject({
+      label: 'Saved Team imported-team',
+      ship: { id: 9002 },
+    });
+    expect(page.compareSideState('b')).toMatchObject({
+      source: 'current',
+    });
+    expect(page.compareDiff()?.changedSlotCount).toBe(0);
+  });
+
+  it('restores compare open state and selected sources from session storage', async () => {
+    writeCompareSessionState({
+      open: true,
+      sides: {
+        a: {
+          source: 'saved',
+          savedTeamId: 'team-with-missing-data',
+          importDraft: '',
+          importedLabel: '',
+          importedRawContent: '',
+        },
+        b: {
+          source: 'current',
+          savedTeamId: '',
+          importDraft: '',
+          importedLabel: '',
+          importedRawContent: '',
+        },
+      },
+    });
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page.compareModeOpen()).toBe(true);
+    expect(page.compareSideState('a')).toMatchObject({
+      source: 'saved',
+      savedTeamId: 'team-with-missing-data',
+    });
+    expect(page.compareSideSnapshot('a')).toMatchObject({
+      id: 'team-with-missing-data',
+      missingCharacterCount: 1,
+    });
+    expect(page.compareSidePayload('a').error).toBe(
+      '1 character(s) could not be loaded and are shown as empty.',
+    );
+  });
+});
+
 describe('AutoTeamBuilder export helpers', () => {
   it('builds the expected export payload for dual leaders with favorite flags', () => {
     const result = createAutoBuildResult();
@@ -7297,6 +7447,43 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
   });
 });
 
+function flushAsyncCompareWork(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+function writeCompareSessionState(state: unknown): void {
+  ensureSessionStorage();
+  globalThis.sessionStorage.setItem('autoTeamBuilder.compareState.v1', JSON.stringify(state));
+}
+
+function ensureSessionStorage(): void {
+  try {
+    if (globalThis.sessionStorage) {
+      return;
+    }
+  } catch {
+    // Fall through to installing the test shim.
+  }
+
+  const store = new Map<string, string>();
+
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: {
+      get length() {
+        return store.size;
+      },
+      clear: () => store.clear(),
+      getItem: (key: string) => store.get(key) ?? null,
+      key: (index: number) => [...store.keys()][index] ?? null,
+      removeItem: (key: string) => store.delete(key),
+      setItem: (key: string, value: string) => store.set(key, value),
+    } satisfies Storage,
+  });
+}
+
 function createBuilderAbility(
   key: string,
 ): CharacterDetailRecord['detail']['builderAbilities'][number] {
@@ -7689,6 +7876,7 @@ async function createPage(
     getAutoBuilderCandidates: ReturnType<typeof vi.fn>;
     getAvailableCharacterTags: ReturnType<typeof vi.fn>;
     getShips: ReturnType<typeof vi.fn>;
+    getCharacterById: ReturnType<typeof vi.fn>;
     getCharactersByIds: ReturnType<typeof vi.fn>;
     searchDetailedCharacters: ReturnType<typeof vi.fn>;
     searchCharacters: ReturnType<typeof vi.fn>;
@@ -7818,6 +8006,9 @@ async function createPage(
       .fn()
       .mockResolvedValue(['Straw Hat Pirates', 'Minks', 'Worst Generation']),
     getShips: vi.fn().mockResolvedValue([createShipRecord(9001), createShipRecord(9002)]),
+    getCharacterById: vi.fn().mockImplementation(async (characterId: number) =>
+      characterId > 0 && characterId < 900 ? createCharacterRecord(characterId) : null,
+    ),
     getCharactersByIds: vi
       .fn()
       .mockImplementation(async (characterIds: number[]) =>

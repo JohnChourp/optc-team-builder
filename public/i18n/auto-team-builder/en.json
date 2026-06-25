@@ -746,6 +746,82 @@
       "noTypeCoverage": "No type coverage"
     }
   },
+  "compare": {
+    "title": "Compare teams",
+    "copy": "Check slot changes and summary deltas without rebuilding the current result.",
+    "sideA": "Team A",
+    "sideB": "Team B",
+    "sideAShort": "A",
+    "sideBShort": "B",
+    "loading": "Loading team data...",
+    "snapshotSummary": "{{name}} · {{filled}} filled slots",
+    "changed": "Changed",
+    "same": "Same",
+    "emptySlot": "Empty",
+    "missingCharacter": "Character data unavailable",
+    "actions": {
+      "show": "Compare teams",
+      "hide": "Hide compare",
+      "swap": "Swap A/B",
+      "chooseFile": "Choose JSON",
+      "usePayload": "Use payload"
+    },
+    "sources": {
+      "current": "Current generated",
+      "saved": "Saved team",
+      "imported": "Imported payload"
+    },
+    "fields": {
+      "source": "Source",
+      "savedTeam": "Saved team",
+      "importPayload": "Saved-team share link, share code, preset JSON, or team JSON"
+    },
+    "shipPresence": {
+      "present": "Yes",
+      "absent": "No"
+    },
+    "empty": {
+      "current": "Build a team first to compare the current generated result.",
+      "savedSelection": "Choose a saved team for this side.",
+      "noSavedTeams": "No saved teams exist on this device yet.",
+      "imported": "Paste or choose a supported team payload for this side.",
+      "selectBoth": "Choose two comparable teams to see slot and metric differences."
+    },
+    "import": {
+      "pastedPayload": "Pasted payload",
+      "restoredPayload": "Restored payload",
+      "errors": {
+        "empty": "Paste a supported team payload before importing.",
+        "invalid": "This payload is not a supported saved team, share link, preset, or team export.",
+        "noTeam": "This preset does not include an embedded generated or saved team."
+      }
+    },
+    "errors": {
+      "loadFailed": "Team data could not be loaded for this side.",
+      "missingCharacters": "{{count}} character(s) could not be loaded and are shown as empty."
+    },
+    "slots": {
+      "captain": "Captain",
+      "friendCaptain": "Friend Captain",
+      "sub1": "Sub 1",
+      "sub2": "Sub 2",
+      "sub3": "Sub 3",
+      "sub4": "Sub 4"
+    },
+    "metrics": {
+      "changedSlots": "Changed slots",
+      "filledSlots": "Filled slots",
+      "uniqueTypes": "Unique types",
+      "uniqueClasses": "Unique classes",
+      "uniqueAbilities": "Unique abilities",
+      "specialAbilities": "Special abilities",
+      "crewmateAbilities": "Crewmate abilities",
+      "potentialAbilities": "Potential abilities",
+      "supportAbilities": "Support abilities",
+      "captainTierCoverage": "Captain tiers",
+      "ship": "Ship"
+    }
+  },
   "results": {
     "candidatePool": {
       "default": "Built from the full local pool.",
