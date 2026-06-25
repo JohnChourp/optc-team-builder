@@ -43,6 +43,7 @@
 
                 <div class="manual-team-fields">
                   <ion-input
+                    data-testid="manual-team-name"
                     [label]="t('fields.name')"
                     labelPlacement="stacked"
                     fill="outline"
@@ -51,6 +52,7 @@
                     (ionInput)="onTeamNameChange($event)"
                   ></ion-input>
                   <ion-textarea
+                    data-testid="manual-team-notes"
                     [label]="t('fields.notes')"
                     labelPlacement="stacked"
                     fill="outline"
@@ -99,6 +101,7 @@
                   @for (slot of slots(); track index; let index = $index) {
                     <article
                       class="manual-team-slot"
+                      [attr.data-testid]="'manual-team-slot-' + index"
                       [class.manual-team-slot--active]="selectedSlotIndex() === index"
                       [class.manual-team-slot--empty]="!slot"
                       [class.manual-team-slot--drop-target]="slotIsDropTarget(index)"
@@ -260,7 +263,11 @@
                 }
 
                 @if (sharedTeamFeedbackError()) {
-                  <section class="manual-team-feedback manual-team-feedback--error" role="alert">
+                  <section
+                    class="manual-team-feedback manual-team-feedback--error"
+                    data-testid="manual-share-error"
+                    role="alert"
+                  >
                     <ion-icon [icon]="errorIcon"></ion-icon>
                     <div>
                       <strong>{{ sharedTeamFeedbackError() }}</strong>

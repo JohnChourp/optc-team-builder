@@ -9,14 +9,17 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
   reporter: isCI ? [['list'], ['html', { open: 'never' }]] : [['list']],
+  outputDir: 'test-results',
   timeout: 60_000,
   expect: { timeout: 15_000 },
+  workers: 1,
 
   use: {
     baseURL,
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
     actionTimeout: 15_000,
     navigationTimeout: 45_000,
   },

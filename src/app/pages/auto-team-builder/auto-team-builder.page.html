@@ -52,6 +52,7 @@
                                     <div class="fixed-type-card">
                                       <span>{{ t('filters.types.label') }}</span>
                                       <ion-select
+                                        data-testid="auto-build-types"
                                         interface="popover"
                                         [multiple]="true"
                                         fill="outline"
@@ -295,6 +296,7 @@
                                           <small>{{ guidedAutoBuildSupportLabel() }}</small>
                                         </div>
                                         <ion-toggle
+                                          data-testid="guided-auto-build-toggle"
                                           color="warning"
                                           [checked]="guidedAutoBuildEnabled()"
                                           [disabled]="building()"
@@ -824,6 +826,7 @@
                                             <button
                                               type="button"
                                               class="manual-slot-card"
+                                              [attr.data-testid]="'auto-manual-slot-' + slotCard.role"
                                               [class.manual-slot-card--active]="slotCard.isActive"
                                               [class.manual-slot-card--leader]="
                                                 slotCard.isLeaderSlot
@@ -2528,6 +2531,7 @@
 
                                   <div class="build-submit-row">
                                     <ion-button
+                                      data-testid="auto-build-submit"
                                       color="warning"
                                       class="build-submit-button"
                                       [disabled]="buildDisabled()"
@@ -2702,6 +2706,7 @@
                   <span>{{ t('compare.copy') }}</span>
                 </div>
                 <ion-button
+                  data-testid="compare-toggle"
                   fill="outline"
                   color="light"
                   class="download-team-button"
@@ -2722,7 +2727,12 @@
                       <p>{{ t('compare.copy') }}</p>
                     </div>
                     <div class="compare-card__actions">
-                      <ion-button fill="outline" color="light" (click)="swapCompareSides()">
+                      <ion-button
+                        data-testid="compare-swap"
+                        fill="outline"
+                        color="light"
+                        (click)="swapCompareSides()"
+                      >
                         <ion-icon slot="start" [icon]="compareSwapIcon"></ion-icon>
                         {{ t('compare.actions.swap') }}
                       </ion-button>
@@ -2731,7 +2741,10 @@
 
                   <div class="compare-selector-grid">
                     @for (side of compareSides; track side) {
-                      <article class="compare-side-card">
+                      <article
+                        class="compare-side-card"
+                        [attr.data-testid]="'compare-side-' + side"
+                      >
                         <div class="compare-side-card__head">
                           <strong>{{ compareSideTitle(side) }}</strong>
                           <span class="role-pill">{{
@@ -2739,6 +2752,7 @@
                           }}</span>
                         </div>
                         <ion-select
+                          [attr.data-testid]="'compare-source-' + side"
                           interface="popover"
                           fill="outline"
                           [label]="t('compare.fields.source')"
@@ -2759,6 +2773,7 @@
 
                         @if (compareSideState(side).source === 'saved') {
                           <ion-select
+                            [attr.data-testid]="'compare-saved-team-' + side"
                             interface="popover"
                             fill="outline"
                             [label]="t('compare.fields.savedTeam')"
@@ -2785,6 +2800,7 @@
                             (change)="onCompareImportFileSelected(side, $event, compareImportInput)"
                           />
                           <ion-textarea
+                            [attr.data-testid]="'compare-import-payload-' + side"
                             [label]="t('compare.fields.importPayload')"
                             labelPlacement="stacked"
                             fill="outline"
@@ -2803,6 +2819,7 @@
                               {{ t('compare.actions.chooseFile') }}
                             </ion-button>
                             <ion-button
+                              [attr.data-testid]="'compare-use-payload-' + side"
                               fill="outline"
                               color="warning"
                               size="small"
@@ -2816,6 +2833,7 @@
 
                         <p
                           class="compare-side-card__summary"
+                          [attr.data-testid]="'compare-summary-' + side"
                           [class.compare-error-state]="compareSidePayload(side).error"
                         >
                           {{ compareSideSummary(side) }}
@@ -2825,7 +2843,7 @@
                   </div>
 
                   @if (compareDiff(); as diff) {
-                    <div class="compare-metric-grid">
+                    <div class="compare-metric-grid" data-testid="compare-metric-grid">
                       @for (row of diff.metricRows; track row.key) {
                         <article
                           class="compare-metric-chip"
@@ -2848,7 +2866,7 @@
                       }
                     </div>
 
-                    <div class="compare-slot-list">
+                    <div class="compare-slot-list" data-testid="compare-slot-list">
                       @for (row of diff.slotRows; track row.role) {
                         <article
                           class="compare-slot-row"
@@ -2920,7 +2938,9 @@
                       }
                     </div>
                   } @else {
-                    <p class="compare-empty-state">{{ t('compare.empty.selectBoth') }}</p>
+                    <p class="compare-empty-state" data-testid="compare-empty-state">
+                      {{ t('compare.empty.selectBoth') }}
+                    </p>
                   }
                 </section>
               }
