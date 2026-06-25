@@ -5071,6 +5071,8 @@ describe('AutoTeamBuilder compare panel', () => {
   });
 
   it('clears stale imported compare content after an invalid payload replaces it', async () => {
+    ensureSessionStorage();
+
     const { page } = await createPage();
     const validPayload = JSON.stringify(
       createSavedTeam('imported-team', {
