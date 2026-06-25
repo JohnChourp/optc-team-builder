@@ -602,7 +602,7 @@ describe('CaptainCoveragePage', () => {
 
     expect(page.selectedCaptainDetail()).toBeNull();
     expect(page.selectedCaptain()).toBeNull();
-    expect(page.selectedTeamSlots()[1]?.id).toBe(2001);
+    expect(page.selectedTeamSlots()[2]?.id).toBe(2001);
   });
 
   it('filters no-Captain results by Super Tandem and Super Types/Classes presence', async () => {
@@ -1089,7 +1089,7 @@ describe('CaptainCoveragePage', () => {
     await page.saveTeamSlotSelection(leader);
     page.assignCharacterFromResult(page.resultCards()[0]);
 
-    expect(page.selectedTeamSlots()[1]?.id).toBe(2001);
+    expect(page.selectedTeamSlots()[2]?.id).toBe(2001);
   });
 
   it('defaults result ordering to newest ID and lets ID order switch to oldest', async () => {
@@ -1149,13 +1149,20 @@ describe('CaptainCoveragePage', () => {
     await page.saveTeamSlotSelection(cheapLeader);
     page.openTeamSlotPicker(1);
 
+    expect(page.teamPickerMaxCost()).toBeNull();
+
+    await page.saveTeamSlotSelection(expensiveLeader);
+    expect(page.selectedTeamSlots()[1]?.id).toBe(1002);
+
+    page.openTeamSlotPicker(2);
+
     expect(page.teamPickerMaxCost()).toBe(20);
 
     await page.saveTeamSlotSelection(expensiveSub);
-    expect(page.selectedTeamSlots()[1]).toBeNull();
+    expect(page.selectedTeamSlots()[2]).toBeNull();
 
     await page.saveTeamSlotSelection(fittingSub);
-    expect(page.selectedTeamSlots()[1]?.id).toBe(2002);
+    expect(page.selectedTeamSlots()[2]?.id).toBe(2002);
   });
 
   it('formats captain boost values without multiplier suffixes', () => {
@@ -1172,25 +1179,33 @@ describe('CaptainCoveragePage', () => {
       name: 'Leader',
       captainAbility: 'Boosts ATK of all characters by 5x.',
     });
+    const friendCaptain = createCharacter({
+      id: 1002,
+      name: 'Friend Captain',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
     const subs = [2001, 2002, 2003, 2004].map((id) => createCharacter({ id }));
     const { page } = createPage({
-      captains: [leader],
-      characters: [leader, ...subs],
+      captains: [leader, friendCaptain],
+      characters: [leader, friendCaptain, ...subs],
     });
 
     await page.ngOnInit();
     await page.saveTeamSlotSelection(leader);
+    page.openTeamSlotPicker(1);
+    await page.saveTeamSlotSelection(friendCaptain);
 
     expect(page.teamConditionStatus()?.state).toBe('pending');
 
     for (const [index, sub] of subs.entries()) {
-      page.openTeamSlotPicker(index + 1);
+      page.openTeamSlotPicker(index + 2);
       await page.saveTeamSlotSelection(sub);
     }
 
     expect(page.teamConditionStatus()?.state).toBe('full');
     expect(page.teamConditionStatus()?.passedLeaderLabels).toEqual([
       'captain-coverage.team.slots.captain',
+      'captain-coverage.team.slots.friendCaptain',
     ]);
   });
 
@@ -1213,7 +1228,7 @@ describe('CaptainCoveragePage', () => {
     await page.saveTeamSlotSelection(leader);
 
     for (const [index, sub] of subs.entries()) {
-      page.openTeamSlotPicker(index + 1);
+      page.openTeamSlotPicker(index + 2);
       await page.saveTeamSlotSelection(sub);
     }
 
@@ -1234,7 +1249,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.currentTeamId()).toBeNull();
   });
 
-  it('loads a saved team route as a captain coverage draft and ignores Friend Captain', async () => {
+  it('loads a saved team route as a captain coverage draft and preserves Friend Captain', async () => {
     const leader = createCharacter({
       id: 1001,
       name: 'Saved Leader',
@@ -1242,7 +1257,7 @@ describe('CaptainCoveragePage', () => {
     });
     const friendCaptain = createCharacter({
       id: 1002,
-      name: 'Ignored Friend Captain',
+      name: 'Saved Friend Captain',
       captainAbility: 'Boosts HP of all characters by 1.3x.',
     });
     const subs = [2001, 2002, 2003, 2004].map((id) => createCharacter({ id }));
@@ -1263,7 +1278,7 @@ describe('CaptainCoveragePage', () => {
 
     expect(userState.readySavedTeams).toHaveBeenCalledOnce();
     expect(page.selectedTeamSlots().map((slot) => slot?.id ?? null)).toEqual([
-      1001, 2001, 2002, 2003, 2004,
+      1001, 1002, 2001, 2002, 2003, 2004,
     ]);
     expect(page.selectedCaptainDetail()?.id).toBe(1001);
     expect(page.teamName()).toBe('Coverage Import');
@@ -1290,7 +1305,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     page.teamName.set('Existing Coverage Draft');
-    page.selectedTeamSlots.set([leader, null, null, null, null]);
+    page.selectedTeamSlots.set([leader, null, null, null, null, null]);
     page.selectedCaptainDetail.set(leader);
 
     await page.ngOnInit();
@@ -1298,6 +1313,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.teamName()).toBe('Existing Coverage Draft');
     expect(page.selectedTeamSlots().map((slot) => slot?.id ?? null)).toEqual([
       1001,
+      null,
       null,
       null,
       null,

@@ -126,7 +126,7 @@
       "addToTeam": "Προσθήκη στο team"
     },
     "captainRequired": "Επίλεξε Captain",
-    "copy": "Διάλεξε Captain και τέσσερα subs με συνολικό cost budget. Το Friend Captain cost δεν μετράει.",
+    "copy": "Διάλεξε Captain, Friend Captain και τέσσερα subs με συνολικό cost budget. Το Friend Captain cost δεν μετράει.",
     "cost": {
       "active": "{{used}} / {{max}} cost. Μένουν {{remaining}}.",
       "default": "Χωρίς max team cost",
@@ -153,6 +153,7 @@
     },
     "slots": {
       "captain": "Captain",
+      "friendCaptain": "Friend Captain",
       "sub": "Sub {{index}}"
     },
     "title": "Χτίσιμο από Captain"

@@ -126,7 +126,7 @@
       "addToTeam": "Add to team"
     },
     "captainRequired": "Select Captain",
-    "copy": "Choose a Captain and four subs against a total cost budget. Friend Captain cost is not counted.",
+    "copy": "Choose a Captain, Friend Captain, and four subs against a total cost budget. Friend Captain cost is not counted.",
     "cost": {
       "active": "{{used}} / {{max}} cost used. {{remaining}} remaining.",
       "default": "No max team cost",
@@ -153,6 +153,7 @@
     },
     "slots": {
       "captain": "Captain",
+      "friendCaptain": "Friend Captain",
       "sub": "Sub {{index}}"
     },
     "title": "Build from a Captain"
