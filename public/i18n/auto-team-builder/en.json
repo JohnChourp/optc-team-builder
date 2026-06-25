@@ -213,6 +213,7 @@
     },
     "guidedAutoBuild": {
       "toggle": "Guided auto build",
+      "guideLink": "Read the guided build and sharing guide",
       "support": {
         "next": "Build and lock only the next empty slot: {{role}}.",
         "complete": "All manual slots are filled. The next build validates the locked team."
@@ -749,6 +750,7 @@
   "compare": {
     "title": "Compare teams",
     "copy": "Check slot changes and summary deltas without rebuilding the current result.",
+    "guideLink": "Read the compare and team sharing guide",
     "sideA": "Team A",
     "sideB": "Team B",
     "sideAShort": "A",

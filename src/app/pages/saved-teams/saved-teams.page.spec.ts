@@ -369,6 +369,8 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain("t('actions.copyShareLink')");
     expect(template).toContain("t('actions.copyShareCode')");
     expect(template).toContain("t('actions.copyJson')");
+    expect(template).toContain("t('guide.cta')");
+    expect(template).toContain("t('guide.importLink')");
     expect(template).toContain("'common.actions.reset' | transloco");
     expect(template).toContain("t('tools.export')");
     expect(template).toContain("t('tools.copyJson')");

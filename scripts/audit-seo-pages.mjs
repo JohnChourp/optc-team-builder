@@ -27,6 +27,7 @@ const publicToolPaths = new Set([
   'tools/optc-rumble-team-builder',
   'tools/optc-character-database',
   'guides/how-to-build-an-optc-team',
+  'guides/guided-build-compare-team-sharing',
   'guides/optc-pirate-rumble-team-building',
   'privacy',
   'cookies',
@@ -224,6 +225,7 @@ function auditRootFallbackHtml(html, htmlPath) {
     'tools/optc-team-builder',
     'tools/optc-character-database',
     'guides/how-to-build-an-optc-team',
+    'guides/guided-build-compare-team-sharing',
   ]) {
     const expectedHref = buildAbsoluteUrl(routePath);
 

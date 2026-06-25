@@ -8,6 +8,7 @@ Offline-first Ionic Angular app for browsing One Piece Treasure Cruise character
 - OPTC team builder tool page: https://optcteambuilder.com/tools/optc-team-builder/
 - OPTC character database: https://optcteambuilder.com/tools/optc-character-database/
 - Team-building guide: https://optcteambuilder.com/guides/how-to-build-an-optc-team/
+- Guided build, compare mode, and team sharing guide: https://optcteambuilder.com/guides/guided-build-compare-team-sharing/
 
 ## What is included
 

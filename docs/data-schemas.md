@@ -127,6 +127,8 @@ Single-team share links use a separate self-contained payload encoded into the `
 
 Opening a share link preloads Manual Team Builder as an unsaved draft. Saving from that screen creates a normal local saved team.
 
+For the user-facing flow across guided builds, compare mode, saved-team JSON, share links, and share codes, see `/guides/guided-build-compare-team-sharing/`.
+
 ## Migration Policy
 
 - Generated dataset compatibility is governed by `DatasetManifest.schemaVersion`.

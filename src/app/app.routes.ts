@@ -432,6 +432,51 @@ export const routes: Routes = [
     loadComponent: loadSeoContentPage,
   },
   {
+    path: 'guides/guided-build-compare-team-sharing',
+    data: {
+      contentIcon: 'flash',
+      seo: {
+        title: 'Guided Build, Compare Mode, and Team Sharing | OPTC Team Builder',
+        description:
+          'Learn how to use guided Auto Team Builder, compare current, saved, and imported teams, and move saved teams with JSON, share links, and share codes.',
+        canonicalPath: 'guides/guided-build-compare-team-sharing',
+      },
+      content: {
+        eyebrow: 'Feature guide',
+        title: 'Guided Build, Compare Mode, and Team Sharing',
+        summary:
+          'Use guided auto build to fill one crew slot at a time, compare team sources side by side, and move saved teams between devices with supported local transfer formats.',
+        sections: [
+          {
+            title: 'Guided auto build',
+            copy: 'Turn on Guided auto build when you want the builder to fill and lock only the next empty slot. It starts with Captain, then advances through subs while keeping earlier picks locked; when all manual slots are filled, the next build validates the locked team.',
+          },
+          {
+            title: 'Compare mode sources',
+            copy: 'Compare mode can use the current generated team, a team already saved on this device, or an imported payload. Use it to check changed slots, filled slots, ability counts, Captain Ability tier coverage, and ship differences before saving or rebuilding.',
+          },
+          {
+            title: 'Supported transfer formats',
+            copy: 'Saved Teams import accepts schema v1 saved-teams JSON, a saved-team share link, or a raw saved-team share code. Compare mode also accepts raw saved-team JSON, Auto Team Builder preset JSON, and generated team JSON.',
+          },
+          {
+            title: 'Example flows',
+            copy: 'Build a team with guided mode, save it, share it from Saved Teams, then open the share link on another device to preload Manual Team Builder as an unsaved draft. You can also paste the same share code into Saved Teams import or Compare mode.',
+          },
+          {
+            title: 'Current limits',
+            copy: 'Saved teams are local to the current browser or app install unless you export, share, import, or sync them. Unsupported schema versions and malformed share codes are rejected instead of being imported silently.',
+          },
+        ],
+        links: [
+          { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },
+          { label: 'Open Saved Teams', route: '/tabs/saved-teams' },
+        ],
+      },
+    },
+    loadComponent: loadSeoContentPage,
+  },
+  {
     path: 'guides/optc-pirate-rumble-team-building',
     data: {
       contentIcon: 'rumble',
