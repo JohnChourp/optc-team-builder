@@ -157,18 +157,29 @@ export async function waitForAppReady(page: Page): Promise<void> {
 }
 
 export async function setIonToggle(locator: Locator, checked: boolean): Promise<void> {
-  await locator.evaluate(async (element, nextChecked) => {
+  await locator.evaluate(async (element) => {
     await (element as { componentOnReady?: () => Promise<unknown> }).componentOnReady?.();
-    const target = element as HTMLElement & { checked?: boolean };
-    target.checked = nextChecked;
-    target.dispatchEvent(
-      new CustomEvent('ionChange', {
-        bubbles: true,
-        composed: true,
-        detail: { checked: nextChecked },
-      }),
+  });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const currentValue = await locator.evaluate((element) =>
+      Boolean((element as HTMLElement & { checked?: boolean }).checked),
     );
-  }, checked);
+
+    if (currentValue === checked) {
+      break;
+    }
+
+    await locator.focus();
+    await locator.page().keyboard.press('Space');
+    await expect
+      .poll(() =>
+        locator.evaluate((element) =>
+          Boolean((element as HTMLElement & { checked?: boolean }).checked),
+        ),
+      )
+      .toBe(checked);
+  }
 
   await expect
     .poll(() =>
