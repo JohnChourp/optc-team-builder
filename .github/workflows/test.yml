@@ -69,7 +69,11 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run Playwright (${{ matrix.browser }})
-        run: npx playwright test --project=${{ matrix.browser }}
+        run: |
+          npx playwright test --project=${{ matrix.browser }} --grep-invert @serial-guided
+          if [ "${{ matrix.browser }}" = "chromium" ]; then
+            npx playwright test --project=chromium --grep @serial-guided --workers=1
+          fi
         env:
           CI: 'true'
 

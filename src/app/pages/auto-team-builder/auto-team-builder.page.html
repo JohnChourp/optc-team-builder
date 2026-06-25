@@ -297,6 +297,9 @@
                                         </div>
                                         <ion-toggle
                                           data-testid="guided-auto-build-toggle"
+                                          [attr.data-guided-enabled]="
+                                            guidedAutoBuildEnabled() ? 'true' : 'false'
+                                          "
                                           color="warning"
                                           [checked]="guidedAutoBuildEnabled()"
                                           [disabled]="building()"

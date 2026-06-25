@@ -132,7 +132,8 @@ export async function waitForAppReady(page: Page): Promise<void> {
 }
 
 export async function setIonToggle(locator: Locator, checked: boolean): Promise<void> {
-  await locator.evaluate((element, nextChecked) => {
+  await locator.evaluate(async (element, nextChecked) => {
+    await (element as { componentOnReady?: () => Promise<unknown> }).componentOnReady?.();
     const target = element as HTMLElement & { checked?: boolean };
     target.checked = nextChecked;
     target.dispatchEvent(

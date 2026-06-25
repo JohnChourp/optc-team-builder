@@ -12,3 +12,7 @@ Regression tests seed only browser-local Capacitor Preferences keys:
 - `CapacitorStorage.savedTeams`
 
 Keep new scenarios deterministic. Prefer stable seeded teams and `data-testid` hooks over incidental Ionic popover structure, visual pixels, network timing, or generated class names. Failure traces, screenshots, videos, the HTML report, and `test-results/` are uploaded by CI for debugging.
+
+The guided Auto Team Builder worker test is tagged `@serial-guided` and is run by
+the E2E scripts as an isolated Chromium pass. Keep worker-heavy guided scenarios
+behind that tag so the rest of the browser matrix can stay parallel locally.

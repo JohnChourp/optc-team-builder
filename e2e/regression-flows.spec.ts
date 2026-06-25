@@ -15,7 +15,12 @@ import {
 } from './regression-fixtures';
 
 test.describe('high-value regression flows', () => {
-  test('guided auto build locks only the next empty slot', async ({ page, browserName }) => {
+  test.describe.configure({ mode: 'serial' });
+
+  test('guided auto build locks only the next empty slot @serial-guided', async ({
+    page,
+    browserName,
+  }) => {
     test.skip(
       browserName !== 'chromium',
       'Guided Auto Team Builder worker coverage is exercised in Chromium; cross-browser render stability is covered by smoke tests.',
@@ -29,14 +34,14 @@ test.describe('high-value regression flows', () => {
     await expect(page.getByText('Guided auto build')).toBeVisible();
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
 
-    await setIonToggle(page.getByTestId('guided-auto-build-toggle'), true);
+    const guidedToggle = page.getByTestId('guided-auto-build-toggle');
     await expect
-      .poll(() =>
-        page.getByTestId('guided-auto-build-toggle').evaluate((element) => {
-          return Boolean((element as { checked?: boolean }).checked);
-        }),
-      )
-      .toBe(true);
+      .poll(async () => {
+        await setIonToggle(guidedToggle, true);
+
+        return guidedToggle.getAttribute('data-guided-enabled');
+      })
+      .toBe('true');
     await expect(page.getByTestId('auto-build-submit')).toBeEnabled();
     await page.getByTestId('auto-build-submit').click();
 
