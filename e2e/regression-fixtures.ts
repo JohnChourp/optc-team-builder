@@ -170,8 +170,17 @@ export async function setIonToggle(locator: Locator, checked: boolean): Promise<
       break;
     }
 
-    await locator.focus();
-    await locator.page().keyboard.press('Space');
+    await locator.evaluate((element, nextChecked) => {
+      const target = element as HTMLElement & { checked?: boolean };
+      target.checked = nextChecked;
+      target.dispatchEvent(
+        new CustomEvent('ionChange', {
+          bubbles: true,
+          composed: true,
+          detail: { checked: nextChecked },
+        }),
+      );
+    }, checked);
     await expect
       .poll(() =>
         locator.evaluate((element) =>
