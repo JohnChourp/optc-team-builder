@@ -8,6 +8,7 @@ import {
   expectIonValue,
   parseSavedTeamShareCode,
   seedBrowserState,
+  setIonToggle,
   setIonSelect,
   setIonTextarea,
   waitForAppReady,
@@ -28,7 +29,7 @@ test.describe('high-value regression flows', () => {
     await expect(page.getByText('Guided auto build')).toBeVisible();
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
 
-    await page.getByTestId('guided-auto-build-toggle').click();
+    await setIonToggle(page.getByTestId('guided-auto-build-toggle'), true);
     await expect
       .poll(() =>
         page.getByTestId('guided-auto-build-toggle').evaluate((element) => {
