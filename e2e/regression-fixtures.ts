@@ -129,6 +129,31 @@ export async function seedBrowserState(page: Page, teams = SEEDED_SAVED_TEAMS): 
 export async function waitForAppReady(page: Page): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
   await page.locator('ion-app').first().waitFor({ state: 'attached', timeout: 45_000 });
+  await page.waitForFunction(
+    () => {
+      const testabilityApi = window as unknown as {
+        getAllAngularTestabilities?: () => Array<{
+          whenStable: (callback: () => void) => void;
+        }>;
+      };
+      const testabilities = testabilityApi.getAllAngularTestabilities?.() ?? [];
+
+      if (!testabilities.length) {
+        return true;
+      }
+
+      return Promise.all(
+        testabilities.map(
+          (testability) =>
+            new Promise<void>((resolve) => {
+              testability.whenStable(resolve);
+            }),
+        ),
+      ).then(() => true);
+    },
+    undefined,
+    { timeout: 45_000 },
+  );
 }
 
 export async function setIonToggle(locator: Locator, checked: boolean): Promise<void> {
