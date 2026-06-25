@@ -8,7 +8,6 @@ import {
   expectIonValue,
   parseSavedTeamShareCode,
   seedBrowserState,
-  setIonToggle,
   setIonSelect,
   setIonTextarea,
   waitForAppReady,
@@ -35,13 +34,8 @@ test.describe('high-value regression flows', () => {
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
 
     const guidedToggle = page.getByTestId('guided-auto-build-toggle');
-    await expect
-      .poll(async () => {
-        await setIonToggle(guidedToggle, true);
-
-        return guidedToggle.getAttribute('data-guided-enabled');
-      })
-      .toBe('true');
+    await guidedToggle.click();
+    await expect(guidedToggle).toHaveAttribute('data-guided-enabled', 'true');
     await expect(page.getByTestId('auto-build-submit')).toBeEnabled();
     await page.getByTestId('auto-build-submit').click();
 
