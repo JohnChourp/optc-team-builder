@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { dataImportSources } from './import-optc-data.mjs';
 import {
+  buildReleaseTriggerReport,
   buildReleaseCheckResult,
   checkOptcReleaseNeeded,
   evaluateLegacyDataSource,
   extractCharacterIdsFromSeed,
+  formatReleaseTriggerSummary,
   parseReleaseCheckArgs,
   resolveReleaseCheckOptions,
 } from './check-optc-release-needed.mjs';
@@ -131,6 +133,128 @@ describe('check-optc-release-needed', () => {
 
     expect(result.releaseNeeded).toBe(true);
     expect(result.newCharacterIds).toEqual([3]);
+  });
+
+  it('builds a skipped report for a no-change release check', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '36',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }],
+    });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'skipped',
+        dispatchRelease: 'skipped',
+        skipRelease: 'success',
+      },
+    });
+
+    expect(report).toMatchObject({
+      schemaVersion: 1,
+      status: 'skipped',
+      reason: 'no-new-upstream-characters',
+      dispatch: {
+        releaseNeeded: false,
+        releaseDispatched: false,
+      },
+    });
+    expect(formatReleaseTriggerSummary(report)).toContain(
+      '## OPTC DB release trigger report',
+    );
+  });
+
+  it('builds a released report when the Android release workflow is dispatched', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      activeReleaseCount: '0',
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'success',
+        dispatchRelease: 'success',
+        skipRelease: 'skipped',
+      },
+    });
+
+    expect(report).toMatchObject({
+      status: 'released',
+      reason: 'release-dispatched',
+      comparison: {
+        newCharacterIds: [3],
+        newCharacterCount: 1,
+      },
+      dispatch: {
+        releaseNeeded: true,
+        releaseDispatched: true,
+        activeReleaseCount: 0,
+      },
+    });
+  });
+
+  it('builds a skipped report when an Android release run is already active', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      activeReleaseCount: '2',
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'success',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+
+    expect(report).toMatchObject({
+      status: 'skipped',
+      reason: 'active-release-running',
+      dispatch: {
+        releaseNeeded: true,
+        releaseDispatched: false,
+        activeReleaseCount: 2,
+      },
+    });
+  });
+
+  it('builds a failed report when fixture validation fails before the live check', () => {
+    const report = buildReleaseTriggerReport({
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'failure',
+        releaseCheck: 'skipped',
+        activeRelease: 'skipped',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+
+    expect(report).toMatchObject({
+      status: 'failed',
+      reason: 'fixture-validation-failed',
+      releaseCheck: null,
+      comparison: null,
+    });
   });
 
   it('replays the bundled no-change fixture without requesting a release', async () => {

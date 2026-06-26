@@ -16,6 +16,12 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    outputs:
+      run_status: ${{ steps.release-trigger-report.outputs.run_status }}
+      run_reason: ${{ steps.release-trigger-report.outputs.run_reason }}
+      release_needed: ${{ steps.release-trigger-report.outputs.release_needed }}
+      new_character_count: ${{ steps.release-trigger-report.outputs.new_character_count }}
+      release_dispatched: ${{ steps.release-trigger-report.outputs.release_dispatched }}
 
     steps:
       - name: Checkout repository
@@ -31,6 +37,7 @@ jobs:
         run: npm ci
 
       - name: Validate release detector fixtures
+        id: fixture-validation
         run: |
           npm run test:release-check
           npm run --silent data:check-release -- --fixture=no-change --json
@@ -57,22 +64,6 @@ jobs:
           ];
 
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `${outputs.join('\n')}\n`);
-
-          const newIds =
-            result.newCharacterIds.length > 0 ? result.newCharacterIds.join(', ') : 'none';
-          const summary = [
-            '## OPTC DB release check',
-            '',
-            `- Release needed: ${result.releaseNeeded ? 'yes' : 'no'}`,
-            `- Reason: ${result.reason}`,
-            `- Source: ${result.sourceRepository}`,
-            `- Source version: local ${result.localSourceVersion}, remote ${result.remoteSourceVersion}`,
-            `- Characters: local ${result.localCharacterCount}, remote ${result.remoteCharacterCount}`,
-            `- New character IDs: ${newIds}`,
-            '',
-          ];
-
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary.join('\n'));
           NODE
 
       - name: Check active Android release runs
@@ -90,28 +81,70 @@ jobs:
           )"
           echo "active_count=${active_count}" >> "${GITHUB_OUTPUT}"
 
-          if [[ "${active_count}" != "0" ]]; then
-            {
-              echo "Android release dispatch skipped because ${active_count} release run(s) are already queued or in progress."
-              echo
-            } >> "${GITHUB_STEP_SUMMARY}"
-          fi
-
       - name: Dispatch Android release
+        id: dispatch-release
         if: steps.release-check.outputs.release_needed == 'true' && steps.active-release.outputs.active_count == '0'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh workflow run release-android.yml --ref main -f bump=patch
-          {
-            echo "Dispatched Release Android with bump=patch."
-            echo
-          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Skip release dispatch
+        id: skip-release
         if: steps.release-check.outputs.release_needed != 'true'
         run: |
-          {
-            echo "Release dispatch skipped because no new upstream character IDs were detected."
-            echo
-          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "Release dispatch skipped because no new upstream character IDs were detected."
+
+      - name: Write release trigger report
+        id: release-trigger-report
+        if: ${{ always() }}
+        env:
+          RELEASE_CHECK_RESULT_PATH: release-check.json
+          FIXTURE_VALIDATION_OUTCOME: ${{ steps.fixture-validation.outcome }}
+          RELEASE_CHECK_OUTCOME: ${{ steps.release-check.outcome }}
+          ACTIVE_RELEASE_OUTCOME: ${{ steps.active-release.outcome }}
+          DISPATCH_RELEASE_OUTCOME: ${{ steps.dispatch-release.outcome }}
+          SKIP_RELEASE_OUTCOME: ${{ steps.skip-release.outcome }}
+          ACTIVE_RELEASE_COUNT: ${{ steps.active-release.outputs.active_count }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+
+          import {
+            buildReleaseTriggerReportFromEnv,
+            formatReleaseTriggerSummary,
+          } from './scripts/check-optc-release-needed.mjs';
+
+          let releaseCheckResult = null;
+          const resultPath = process.env.RELEASE_CHECK_RESULT_PATH;
+
+          if (resultPath && existsSync(resultPath)) {
+            try {
+              releaseCheckResult = JSON.parse(readFileSync(resultPath, 'utf8'));
+            } catch (error) {
+              console.warn(`Could not parse ${resultPath}: ${error.message}`);
+            }
+          }
+
+          const report = buildReleaseTriggerReportFromEnv({ releaseCheckResult });
+          writeFileSync('release-trigger-outcome.json', `${JSON.stringify(report, null, 2)}\n`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, formatReleaseTriggerSummary(report));
+
+          const outputs = [
+            `run_status=${report.status}`,
+            `run_reason=${report.reason}`,
+            `release_needed=${report.dispatch.releaseNeeded ? 'true' : 'false'}`,
+            `new_character_count=${report.comparison?.newCharacterCount ?? 0}`,
+            `release_dispatched=${report.dispatch.releaseDispatched ? 'true' : 'false'}`,
+          ];
+
+          appendFileSync(process.env.GITHUB_OUTPUT, `${outputs.join('\n')}\n`);
+          NODE
+
+      - name: Upload release trigger report artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-trigger-outcome
+          path: release-trigger-outcome.json
+          if-no-files-found: error
