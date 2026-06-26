@@ -730,6 +730,28 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('tracks open explanation details separately from collapsed summaries', async () => {
+    const { page } = await createPage();
+
+    page.result.set(createAutoBuildResult());
+    const [slot] = page.teamSlots();
+
+    expect(slot).toBeDefined();
+    expect(page.isSlotExplanationOpen(slot!.trackKey)).toBe(false);
+
+    page.onSlotExplanationToggle(slot!.trackKey, {
+      currentTarget: { open: true },
+    } as unknown as Event);
+
+    expect(page.isSlotExplanationOpen(slot!.trackKey)).toBe(true);
+
+    page.onSlotExplanationToggle(slot!.trackKey, {
+      currentTarget: { open: false },
+    } as unknown as Event);
+
+    expect(page.isSlotExplanationOpen(slot!.trackKey)).toBe(false);
+  });
+
   it('formats relaxed Super Special Criteria warnings with character names', async () => {
     const { page } = await createPage();
     const result = createAutoBuildResult();
@@ -4983,6 +5005,32 @@ describe('AutoTeamBuilder compare panel', () => {
 
     expect(page.compareModeOpen()).toBe(false);
     expect(autoTeamBuilder.buildTeam).not.toHaveBeenCalled();
+  });
+
+  it('caches the current compare snapshot until the generated result changes', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.result.set(createAutoBuildResult());
+
+    const firstSnapshot = page.currentCompareSnapshot();
+    const secondSnapshot = page.currentCompareSnapshot();
+
+    expect(firstSnapshot).not.toBeNull();
+    expect(secondSnapshot).toBe(firstSnapshot);
+
+    page.result.set(
+      createAutoBuildResult([
+        { role: 'captain', character: createCharacterRecord(201), reasonChips: [] },
+        { role: 'friendCaptain', character: createCharacterRecord(202), reasonChips: [] },
+        { role: 'sub', character: createCharacterRecord(203), reasonChips: [] },
+        { role: 'sub', character: createCharacterRecord(204), reasonChips: [] },
+        { role: 'sub', character: createCharacterRecord(205), reasonChips: [] },
+        { role: 'sub', character: createCharacterRecord(206), reasonChips: [] },
+      ]),
+    );
+
+    expect(page.currentCompareSnapshot()).not.toBe(firstSnapshot);
   });
 
   it('opens compare mode without a current result and compares saved/imported sources', async () => {

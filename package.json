@@ -42,6 +42,7 @@
     "audit:dead-code": "npx tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false && npx knip --include files,exports,types",
     "perf:dataset": "node ./scripts/benchmark-dataset.mjs",
     "perf:ability-filters": "node ./scripts/perf-ability-filters.mjs",
+    "perf:explanation-compare": "node ./scripts/perf-explanation-compare.mjs",
     "i18n:extract": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager extract --project optc-team-builder",
     "i18n:find": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager find --project optc-team-builder --translations-path public/i18n",
     "i18n:validate": "node ./scripts/audit-i18n.mjs",
