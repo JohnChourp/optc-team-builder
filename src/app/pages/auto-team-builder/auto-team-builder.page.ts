@@ -860,6 +860,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly candidatePoolBoxFeedback = signal<PresetImportFeedback | null>(null);
   public readonly manualSimilarPickFeedback = signal('');
   public readonly loadedEnemyPresetName = signal<string | null>(null);
+  public readonly openExplanationSlotKeys = signal<ReadonlySet<string>>(new Set());
   public readonly compareModeOpen = signal(false);
   public readonly compareSides = AUTO_TEAM_COMPARE_SIDES;
   public readonly compareSidePayloads = signal<
@@ -920,6 +921,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly availableAbilityCatalogItems = computed(
     () => this.abilityCatalog()?.abilities ?? [],
   );
+  public readonly currentCompareSnapshot = computed<AutoTeamCompareSnapshot | null>(() => {
+    const current = this.result();
+
+    return current
+      ? buildAutoTeamCompareSnapshotFromCurrent(
+          current,
+          current.shipSelection?.ship ?? null,
+          this.availableAbilityCatalogItems(),
+        )
+      : null;
+  });
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.availableAbilityCatalogItems(), 'special'),
   );
@@ -3400,6 +3412,26 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return this.resolveCompareSideSnapshot(side);
   }
 
+  public isSlotExplanationOpen(trackKey: string): boolean {
+    return this.openExplanationSlotKeys().has(trackKey);
+  }
+
+  public onSlotExplanationToggle(trackKey: string, event: Event): void {
+    const isOpen = (event.currentTarget as HTMLDetailsElement | null)?.open ?? false;
+
+    this.openExplanationSlotKeys.update((currentKeys) => {
+      const nextKeys = new Set(currentKeys);
+
+      if (isOpen) {
+        nextKeys.add(trackKey);
+      } else {
+        nextKeys.delete(trackKey);
+      }
+
+      return nextKeys;
+    });
+  }
+
   public compareSideTitle(side: AutoTeamCompareSide): string {
     return side === 'a' ? this.t('compare.sideA') : this.t('compare.sideB');
   }
@@ -3576,15 +3608,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const payload = this.compareSidePayloads()[side];
 
     if (payload.state.source === 'current') {
-      const current = this.result();
-
-      return current
-        ? buildAutoTeamCompareSnapshotFromCurrent(
-            current,
-            current.shipSelection?.ship ?? null,
-            this.availableAbilityCatalogItems(),
-          )
-        : null;
+      return this.currentCompareSnapshot();
     }
 
     return payload.snapshot;

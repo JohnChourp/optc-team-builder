@@ -133,6 +133,11 @@ const ABILITY_CATEGORY_KEYS: AutoBuildAbilityCategory[] = [
   'support',
 ];
 
+const catalogMapCache = new WeakMap<
+  readonly AutoBuildAbilityCatalogItem[],
+  ReadonlyMap<string, AutoBuildAbilityCatalogItem>
+>();
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -425,7 +430,7 @@ function buildMetrics(
   const characters = slots
     .map((slot) => slot.character)
     .filter((character): character is CharacterDetailRecord => character !== null);
-  const catalogMap = new Map(catalogItems.map((item) => [item.key, item] as const));
+  const catalogMap = resolveCatalogMap(catalogItems);
   const typeSet = new Set<string>();
   const classSet = new Set<string>();
   const abilityKeySet = new Set<string>();
@@ -479,6 +484,22 @@ function buildMetrics(
     ),
     metric('ship', shipId ? 1 : 0),
   ];
+}
+
+function resolveCatalogMap(
+  catalogItems: readonly AutoBuildAbilityCatalogItem[],
+): ReadonlyMap<string, AutoBuildAbilityCatalogItem> {
+  const cachedMap = catalogMapCache.get(catalogItems);
+
+  if (cachedMap) {
+    return cachedMap;
+  }
+
+  const catalogMap = new Map(catalogItems.map((item) => [item.key, item] as const));
+
+  catalogMapCache.set(catalogItems, catalogMap);
+
+  return catalogMap;
 }
 
 function resolveDisplayAbilities(character: CharacterDetailRecord): NormalizedBuilderAbility[] {

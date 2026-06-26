@@ -3490,33 +3490,46 @@
                           [class.slot-explanation--missing]="!slot.hasStructuredExplanation"
                         >
                           @if (slot.hasStructuredExplanation) {
-                            <details class="slot-explanation__details">
+                            <details
+                              class="slot-explanation__details"
+                              [open]="isSlotExplanationOpen(slot.trackKey)"
+                              [attr.data-testid]="'slot-explanation-' + slot.trackKey"
+                              [attr.data-slot-explanation-open]="
+                                isSlotExplanationOpen(slot.trackKey) ? 'true' : 'false'
+                              "
+                              (toggle)="onSlotExplanationToggle(slot.trackKey, $event)"
+                            >
                               <summary>
                                 <strong>{{ t('results.explanations.title') }}</strong>
                                 <span>{{ slot.explanationSummaryLabel }}</span>
                               </summary>
-                              <ul>
-                                @for (detail of slot.explanationDetailLabels; track $index) {
-                                  <li>{{ detail }}</li>
+                              @if (isSlotExplanationOpen(slot.trackKey)) {
+                                <ul data-testid="slot-explanation-detail-list">
+                                  @for (detail of slot.explanationDetailLabels; track $index) {
+                                    <li>{{ detail }}</li>
+                                  }
+                                </ul>
+                                @if (slot.rejectedCandidateLabels.length) {
+                                  <div
+                                    class="slot-explanation__rejected"
+                                    data-testid="slot-explanation-rejected-list"
+                                  >
+                                    <strong>{{ t('results.explanations.rejectedTitle') }}</strong>
+                                    <ul>
+                                      @for (
+                                        rejectedCandidate of slot.rejectedCandidateLabels;
+                                        track rejectedCandidate.title
+                                      ) {
+                                        <li>
+                                          <span>{{ rejectedCandidate.title }}</span>
+                                          <small>
+                                            {{ rejectedCandidate.reasonLabels.join(' ') }}
+                                          </small>
+                                        </li>
+                                      }
+                                    </ul>
+                                  </div>
                                 }
-                              </ul>
-                              @if (slot.rejectedCandidateLabels.length) {
-                                <div class="slot-explanation__rejected">
-                                  <strong>{{ t('results.explanations.rejectedTitle') }}</strong>
-                                  <ul>
-                                    @for (
-                                      rejectedCandidate of slot.rejectedCandidateLabels;
-                                      track rejectedCandidate.title
-                                    ) {
-                                      <li>
-                                        <span>{{ rejectedCandidate.title }}</span>
-                                        <small>
-                                          {{ rejectedCandidate.reasonLabels.join(' ') }}
-                                        </small>
-                                      </li>
-                                    }
-                                  </ul>
-                                </div>
                               }
                             </details>
                           } @else {

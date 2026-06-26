@@ -59,6 +59,44 @@ describe('auto-team-builder-team-compare utils', () => {
     });
   });
 
+  it('parses a large saved-team transfer payload and builds comparable snapshots', () => {
+    const catalogItems = createCatalogItems();
+    const savedTeams = Array.from({ length: 500 }, (_, index) =>
+      createSavedTeam(
+        `bulk-${index + 1}`,
+        [101, 102, 103, 104, 105, 106].map((id) => id + (index % 2)),
+        index % 2 === 0 ? 9001 : 9002,
+      ),
+    );
+    const transferJson = JSON.stringify(
+      buildSavedTeamsTransferPayload(savedTeams, '2026-06-25T08:00:00.000Z'),
+    );
+
+    const seed = parseAutoTeamCompareImportPayload(transferJson);
+    const importedSnapshot = buildAutoTeamCompareSnapshotFromImportedSeed(
+      seed,
+      createCharacterMap([101, 102, 103, 104, 105, 106]),
+      createShipRecord(9001),
+      catalogItems,
+    );
+    const currentSnapshot = buildAutoTeamCompareSnapshotFromCurrent(
+      createAutoBuildResult(),
+      createShipRecord(9001),
+      catalogItems,
+    );
+    const diff = buildAutoTeamCompareDiff(currentSnapshot, importedSnapshot);
+
+    expect(transferJson.length).toBeGreaterThan(50_000);
+    expect(seed).toMatchObject({
+      label: 'Saved Team bulk-1',
+      shipId: 9001,
+      slotIds: [101, 102, 103, 104, 105, 106],
+    });
+    expect(importedSnapshot.missingCharacterCount).toBe(0);
+    expect(importedSnapshot.slots).toHaveLength(6);
+    expect(diff.metricRows.length).toBeGreaterThan(0);
+  });
+
   it('parses auto-builder preset JSON and generated team JSON with zero-based slot indexes', () => {
     const result = createAutoBuildResult();
     const generatedExport = buildAutoTeamExportPayload(
