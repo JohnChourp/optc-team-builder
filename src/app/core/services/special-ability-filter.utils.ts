@@ -17,6 +17,19 @@ interface SerializeCategoryAbilityDraftOptions {
   dedupe?: boolean;
 }
 
+interface CatalogAbilityIndex {
+  captainAbilityItems: AutoBuildAbilityCatalogItem[];
+  captainAbilityKeys: Set<string>;
+  catalogMap: Map<string, AutoBuildAbilityCatalogItem>;
+  categoryItems: Map<AutoBuildAbilityCategory, AutoBuildAbilityCatalogItem[]>;
+  categoryKeys: Map<AutoBuildAbilityCategory, Set<string>>;
+}
+
+const catalogAbilityIndexCache = new WeakMap<
+  readonly AutoBuildAbilityCatalogItem[],
+  CatalogAbilityIndex
+>();
+
 function sortCatalogItems(
   items: readonly AutoBuildAbilityCatalogItem[],
 ): AutoBuildAbilityCatalogItem[] {
@@ -30,18 +43,70 @@ function sortCatalogItems(
   );
 }
 
+function getCatalogAbilityIndex(
+  catalogItems: readonly AutoBuildAbilityCatalogItem[],
+): CatalogAbilityIndex {
+  const existingIndex = catalogAbilityIndexCache.get(catalogItems);
+
+  if (existingIndex) {
+    return existingIndex;
+  }
+
+  const captainAbilityItems = sortCatalogItems(
+    catalogItems.filter((item) => item.availableSources.includes('captainAbility')),
+  );
+  const index: CatalogAbilityIndex = {
+    captainAbilityItems,
+    captainAbilityKeys: new Set(captainAbilityItems.map((item) => item.key)),
+    catalogMap: new Map(catalogItems.map((item) => [item.key, item] as const)),
+    categoryItems: new Map(),
+    categoryKeys: new Map(),
+  };
+
+  catalogAbilityIndexCache.set(catalogItems, index);
+
+  return index;
+}
+
+function getCategoryAbilityItems(
+  catalogItems: readonly AutoBuildAbilityCatalogItem[],
+  category: AutoBuildAbilityCategory,
+): AutoBuildAbilityCatalogItem[] {
+  const index = getCatalogAbilityIndex(catalogItems);
+  const existingItems = index.categoryItems.get(category);
+
+  if (existingItems) {
+    return existingItems;
+  }
+
+  const items = sortCatalogItems(catalogItems.filter((item) => item.category === category));
+  index.categoryItems.set(category, items);
+
+  return items;
+}
+
 function getCategoryAbilityKeys(
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
   category: AutoBuildAbilityCategory,
 ): Set<string> {
-  return new Set(getAbilityCatalogItemsByCategory(catalogItems, category).map((item) => item.key));
+  const index = getCatalogAbilityIndex(catalogItems);
+  const existingKeys = index.categoryKeys.get(category);
+
+  if (existingKeys) {
+    return existingKeys;
+  }
+
+  const keys = new Set(getCategoryAbilityItems(catalogItems, category).map((item) => item.key));
+  index.categoryKeys.set(category, keys);
+
+  return keys;
 }
 
 export function getAbilityCatalogItemsByCategory(
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
   category: AutoBuildAbilityCategory,
 ): AutoBuildAbilityCatalogItem[] {
-  return sortCatalogItems(catalogItems.filter((item) => item.category === category));
+  return [...getCategoryAbilityItems(catalogItems, category)];
 }
 
 export function isCaptainAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
@@ -51,9 +116,7 @@ export function isCaptainAbilityRequirement(requirement: AutoBuildAbilityRequire
 export function getCaptainAbilityCatalogItems(
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
 ): AutoBuildAbilityCatalogItem[] {
-  return sortCatalogItems(
-    catalogItems.filter((item) => item.availableSources.includes('captainAbility')),
-  );
+  return [...getCatalogAbilityIndex(catalogItems).captainAbilityItems];
 }
 
 export function createCategoryAbilityDrafts(
@@ -62,7 +125,7 @@ export function createCategoryAbilityDrafts(
   category: AutoBuildAbilityCategory,
 ): AbilityRequirementDraft[] {
   const categoryKeys = getCategoryAbilityKeys(catalogItems, category);
-  const catalogMap = new Map(catalogItems.map((item) => [item.key, item] as const));
+  const { catalogMap } = getCatalogAbilityIndex(catalogItems);
 
   return createAbilityRequirementDrafts(
     requirements
@@ -91,6 +154,7 @@ export function serializeCategoryAbilityDrafts(
   options: SerializeCategoryAbilityDraftOptions = {},
 ): AutoBuildAbilityRequirement[] {
   const categoryKeys = getCategoryAbilityKeys(catalogItems, category);
+  const { catalogMap } = getCatalogAbilityIndex(catalogItems);
 
   return serializeAbilityRequirementDrafts(
     drafts.filter(
@@ -100,7 +164,7 @@ export function serializeCategoryAbilityDrafts(
     ),
     {
       dedupe: options.dedupe ?? true,
-      catalogMap: new Map(catalogItems.map((item) => [item.key, item] as const)),
+      catalogMap,
     },
   );
 }
@@ -120,7 +184,7 @@ export function resolveCategoryAbilityMatchingCharacterIds(
     return undefined;
   }
 
-  const catalogMap = new Map(catalogItems.map((item) => [item.key, item] as const));
+  const { catalogMap } = getCatalogAbilityIndex(catalogItems);
   const groupedRequirements = groupCategoryRequirements(categoryRequirements);
   let matchingIds: Set<number> | null = null;
 
@@ -151,9 +215,7 @@ export function resolveCaptainAbilityMatchingCharacterIds(
   requirements: readonly AutoBuildAbilityRequirement[],
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
 ): number[] | undefined {
-  const captainAbilityKeys = new Set(
-    getCaptainAbilityCatalogItems(catalogItems).map((item) => item.key),
-  );
+  const { captainAbilityKeys, catalogMap } = getCatalogAbilityIndex(catalogItems);
   const captainRequirements = requirements.filter(
     (requirement) =>
       captainAbilityKeys.has(requirement.abilityKey) &&
@@ -164,7 +226,6 @@ export function resolveCaptainAbilityMatchingCharacterIds(
     return undefined;
   }
 
-  const catalogMap = new Map(catalogItems.map((item) => [item.key, item] as const));
   const groupedRequirements = groupCategoryRequirements(captainRequirements);
   let matchingIds: Set<number> | null = null;
 
@@ -302,9 +363,10 @@ export function intersectAbilityMatchingCharacterIds(
     return undefined;
   }
 
-  let intersection = [...definedLists[0]];
+  let intersection = [...new Set(definedLists[0])];
+  const comparisonLists = definedLists.slice(1).sort((left, right) => left.length - right.length);
 
-  for (const ids of definedLists.slice(1)) {
+  for (const ids of comparisonLists) {
     const idSet = new Set(ids);
     intersection = intersection.filter((id) => idSet.has(id));
 
@@ -327,9 +389,7 @@ export function createCaptainAbilityDrafts(
   requirements: readonly AutoBuildAbilityRequirement[],
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
 ): AbilityRequirementDraft[] {
-  const captainAbilityKeys = new Set(
-    getCaptainAbilityCatalogItems(catalogItems).map((item) => item.key),
-  );
+  const { captainAbilityKeys } = getCatalogAbilityIndex(catalogItems);
 
   return createAbilityRequirementDrafts(
     requirements
@@ -364,9 +424,7 @@ export function serializeCaptainAbilityDrafts(
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
   options: SerializeCategoryAbilityDraftOptions = {},
 ): AutoBuildAbilityRequirement[] {
-  const captainAbilityKeys = new Set(
-    getCaptainAbilityCatalogItems(catalogItems).map((item) => item.key),
-  );
+  const { captainAbilityKeys, catalogMap } = getCatalogAbilityIndex(catalogItems);
 
   return serializeAbilityRequirementDrafts(
     drafts
@@ -378,7 +436,7 @@ export function serializeCaptainAbilityDrafts(
       })),
     {
       dedupe: options.dedupe ?? true,
-      catalogMap: new Map(catalogItems.map((item) => [item.key, item] as const)),
+      catalogMap,
     },
   ).map((requirement) => ({
     ...requirement,

@@ -100,6 +100,8 @@ interface SavedTeamAbilityFacet {
   teamCount: number;
 }
 
+type SavedTeamAbilityFacetBase = Omit<SavedTeamAbilityFacet, 'selected'>;
+
 interface SavedTeamAbilityCategoryGroup {
   abilityCount: number;
   abilities: SavedTeamAbilityFacet[];
@@ -169,6 +171,12 @@ export class SavedTeamsPage implements OnInit {
   public readonly selectedAbilityFilterCount = computed(
     () => this.selectedLeaderAbilityIds().length + this.selectedCrewAbilityIds().length,
   );
+  private readonly abilityFacetBasesByOrigin = computed<
+    Record<SavedTeamAbilityOrigin, SavedTeamAbilityFacetBase[]>
+  >(() => ({
+    leader: this.buildAbilityFacetBases('leader'),
+    crew: this.buildAbilityFacetBases('crew'),
+  }));
   public readonly filteredSavedTeamCards = computed(() =>
     this.savedTeamCards().filter((teamCard) => this.matchesSelectedAbilityFilters(teamCard)),
   );
@@ -700,7 +708,7 @@ export class SavedTeamsPage implements OnInit {
   }
 
   private buildAbilityFilterSection(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFilterSection {
-    const facets = this.buildAbilityFacets(origin);
+    const facets = this.resolveAbilityFacets(origin);
     const selectedIds = this.resolveSelectedAbilitySet(origin);
     const categories = SAVED_TEAM_ABILITY_CATEGORIES.map((category) => {
       const abilities = facets.filter((facet) => facet.category === category);
@@ -731,9 +739,17 @@ export class SavedTeamsPage implements OnInit {
     };
   }
 
-  private buildAbilityFacets(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFacet[] {
-    const facets = new Map<string, SavedTeamAbilityFacet & { teamIds: Set<string> }>();
+  private resolveAbilityFacets(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFacet[] {
     const selectedIds = this.resolveSelectedAbilitySet(origin);
+
+    return this.abilityFacetBasesByOrigin()[origin].map((facet) => ({
+      ...facet,
+      selected: selectedIds.has(facet.identity),
+    }));
+  }
+
+  private buildAbilityFacetBases(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFacetBase[] {
+    const facets = new Map<string, SavedTeamAbilityFacetBase & { teamIds: Set<string> }>();
 
     for (const teamCard of this.savedTeamCards()) {
       const teamAbilityIdentities = new Set<string>();
@@ -762,7 +778,6 @@ export class SavedTeamsPage implements OnInit {
             label: ability.label,
             metadataLabel: this.formatAbilityMetadata(ability),
             minTurns: ability.minTurns,
-            selected: selectedIds.has(identity),
             slotTokens: [...ability.slotTokens],
             source: ability.source,
             teamCount: 0,
@@ -779,7 +794,6 @@ export class SavedTeamsPage implements OnInit {
     return [...facets.values()]
       .map(({ teamIds, ...facet }) => ({
         ...facet,
-        selected: selectedIds.has(facet.identity),
         teamCount: teamIds.size,
       }))
       .sort((left, right) => {

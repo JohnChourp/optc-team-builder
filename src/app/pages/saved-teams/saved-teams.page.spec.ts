@@ -402,6 +402,8 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('[routerLink]="getCharacterDetailLink(currentSlot)"');
     expect(template).toContain('abilityFilterSections()');
     expect(template).toContain('filteredSavedTeamCards()');
+    expect(template).toContain('data-testid="saved-teams-ability-filter-panel"');
+    expect(template).toContain("'saved-team-ability-chip-'");
     expect(template).toContain('toggleAbilityFilter(section.origin, ability.identity)');
     expect(template).toContain("t('abilityFilters.title')");
     expect(template).not.toContain("t('hero.savedEnemiesCta')");

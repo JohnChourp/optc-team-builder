@@ -68,7 +68,7 @@
               </ion-button>
             </div>
             @if (hasAbilityFiltersAvailable()) {
-              <div class="saved-teams-ability-filter-panel">
+              <div class="saved-teams-ability-filter-panel" data-testid="saved-teams-ability-filter-panel">
                 <div class="saved-teams-ability-filter-panel__head">
                   <div>
                     <span>{{ t('abilityFilters.eyebrow') }}</span>
@@ -120,6 +120,12 @@
                                   <button
                                     type="button"
                                     class="saved-team-ability-chip"
+                                    [attr.data-testid]="
+                                      'saved-team-ability-chip-' +
+                                      section.origin +
+                                      '-' +
+                                      ability.identity
+                                    "
                                     [class.saved-team-ability-chip--selected]="ability.selected"
                                     [attr.aria-pressed]="ability.selected"
                                     (click)="toggleAbilityFilter(section.origin, ability.identity)"

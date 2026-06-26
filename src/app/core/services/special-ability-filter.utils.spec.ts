@@ -174,6 +174,15 @@ describe('special ability filter utils', () => {
     ).toEqual(['crewmate_atk_boost_fighter', 'crewmate_hp_recovery_eot']);
   });
 
+  it('returns defensive category copies from the catalog index cache', () => {
+    const firstResult = getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'crewmate');
+    firstResult.pop();
+
+    expect(
+      getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'crewmate').map((item) => item.key),
+    ).toEqual(['crewmate_atk_boost_fighter', 'crewmate_hp_recovery_eot']);
+  });
+
   it('keeps Territory selectable for true Special and Super Special providers', () => {
     expect(
       getAbilityCatalogItemsByCategory(CATALOG_ITEMS, 'special').map((item) => item.key),

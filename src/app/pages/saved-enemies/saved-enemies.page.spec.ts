@@ -982,6 +982,8 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain('savedEnemyTotalLabel()');
     expect(template).toContain('hasAbilityFiltersAvailable()');
     expect(template).toContain('savedEnemyAbilityFilterGroups()');
+    expect(template).toContain('data-testid="saved-enemies-ability-filter-panel"');
+    expect(template).toContain("'saved-enemy-ability-chip-' + ability.identity");
     expect(template).toContain('toggleAbilityFilter(ability.identity)');
     expect(template).toContain('clearAbilityFilterCategory(group.category)');
     expect(template).toContain("t('abilityFilters.title')");

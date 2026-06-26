@@ -80,6 +80,7 @@
                         <button
                           type="button"
                           class="special-ability-tile"
+                          [attr.data-testid]="'special-ability-tile-' + tile.item.key"
                           [class.special-ability-tile--selected]="tile.isSelected"
                           (click)="toggleCatalogItem(tile.item)"
                         >
@@ -164,7 +165,7 @@
           >
             {{ 'common.actions.cancel' | transloco }}
           </ion-button>
-          <ion-button color="warning" (click)="save()">
+          <ion-button color="warning" data-testid="special-ability-picker-save" (click)="save()">
             {{ 'common.actions.save' | transloco }}
           </ion-button>
         </div>

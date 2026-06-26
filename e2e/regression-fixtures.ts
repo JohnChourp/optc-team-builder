@@ -160,46 +160,36 @@ export async function setIonToggle(locator: Locator, checked: boolean): Promise<
   await locator.evaluate(async (element) => {
     await (element as { componentOnReady?: () => Promise<unknown> }).componentOnReady?.();
   });
+  await locator.scrollIntoViewIfNeeded();
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const currentValue = await locator.evaluate((element) =>
-      Boolean((element as HTMLElement & { checked?: boolean }).checked),
-    );
+    const currentValue = await readIonToggleChecked(locator);
 
     if (currentValue === checked) {
       break;
     }
 
-    await locator.evaluate((element, nextChecked) => {
-      const target = element as HTMLElement & { checked?: boolean };
-      target.checked = nextChecked;
-      target.dispatchEvent(
-        new CustomEvent('ionChange', {
-          bubbles: true,
-          composed: true,
-          detail: { checked: nextChecked },
-        }),
-      );
-    }, checked);
-    await expect
-      .poll(() =>
-        locator.evaluate((element) =>
-          Boolean((element as HTMLElement & { checked?: boolean }).checked),
-        ),
-      )
-      .toBe(checked);
+    await locator.focus();
+    await locator.page().keyboard.press('Space');
+
+    try {
+      await expect.poll(() => readIonToggleChecked(locator), { timeout: 5_000 }).toBe(checked);
+      break;
+    } catch {
+      await locator.click({ force: true });
+    }
   }
 
-  await expect
-    .poll(() =>
-      locator.evaluate((element) =>
-        Boolean((element as HTMLElement & { checked?: boolean }).checked),
-      ),
-    )
-    .toBe(checked);
+  await expect.poll(() => readIonToggleChecked(locator)).toBe(checked);
   await expect(locator).toHaveAttribute('data-guided-enabled', checked ? 'true' : 'false');
   await locator.page().waitForTimeout(100);
   await expect(locator).toHaveAttribute('data-guided-enabled', checked ? 'true' : 'false');
+}
+
+async function readIonToggleChecked(locator: Locator): Promise<boolean> {
+  return locator.evaluate((element) =>
+    Boolean((element as HTMLElement & { checked?: boolean }).checked),
+  );
 }
 
 export async function setIonSelect(locator: Locator, value: string | string[]): Promise<void> {
