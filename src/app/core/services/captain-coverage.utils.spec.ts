@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { type CharacterDetailRecord } from '../models/optc.models';
+import captainContractCases from './fixtures/captain-contract-cases.json';
 import {
   resolveCaptainBoostScope,
   resolveCaptainCoverageBranchDisplay,
@@ -16,6 +17,38 @@ describe('resolveCaptainCoverage', () => {
     "Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [RCV] orbs at the start of the fight, boosts ATK of [STR], Driven and Cerebral characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [STR], Driven and Cerebral characters by 1.35x, and makes [STR] and [RCV] orbs beneficial for all characters. If crew uses a special to reduce enemies' Threshold Damage Reduction, reduces the duration by 2 additional turns.";
   const blackbeardEmperorCaptainAbility =
     'Launches the following effect at start of fight: reduces Special Cooldown of [Blackbeard Pirates], [Four Emperors] and [Worst Generation] characters by 5 turns, reduces Special Cooldown of [QCK] and Free Spirit characters by 2 turns. Boosts ATK of [QCK] and Free Spirit characters by 6x, boosts HP of [QCK] and Free Spirit characters by 1.3x. If your crew has 6+ Free Spirit characters and field has Territory: [QCK], boosts ATK of Free Spirit characters by 7x instead.';
+
+  for (const contractCase of captainContractCases.cases) {
+    it(`runtime contract: ${contractCase.id}`, () => {
+      const captain = createCharacter({
+        id: 910000,
+        captainAbility: contractCase.captainAbility,
+      });
+
+      for (const runtimeTarget of contractCase.runtimeTargets ?? []) {
+        const coverage = resolveCaptainCoverage(
+          captain,
+          createCharacter({
+            id: runtimeTarget.target.id,
+            type: runtimeTarget.target.type,
+            classes: runtimeTarget.target.classes,
+            characterTags: runtimeTarget.target.characterTags,
+          }),
+          { coverageMode: 'simpleBoostScope' },
+        );
+
+        expect(coverage.matches, `${contractCase.id}: ${runtimeTarget.label} match drifted`).toBe(
+          runtimeTarget.expected.matches,
+        );
+        expect(coverage.boosts, `${contractCase.id}: ${runtimeTarget.label} boost drifted`).toEqual(
+          runtimeTarget.expected.boosts,
+        );
+        expect(coverage.chips, `${contractCase.id}: ${runtimeTarget.label} chip drifted`).toEqual(
+          runtimeTarget.expected.chips,
+        );
+      }
+    });
+  }
 
   it('treats all-character captain clauses as universal coverage', () => {
     const captain = createCharacter({

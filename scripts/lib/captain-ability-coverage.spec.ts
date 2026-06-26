@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import captainContractCases from '../../src/app/core/services/fixtures/captain-contract-cases.json';
 import {
   buildCaptainAbilityCoverage,
   extractCoverageTiers,
@@ -36,7 +37,45 @@ describe('buildCaptainAbilityCoverage', () => {
   });
 });
 
+type CaptainContractCase = (typeof captainContractCases.cases)[number];
+type CaptainContractCoverageTier = CaptainContractCase['expectedCoverageTiers'][number];
+
+function createCaptainCoverageTierMatcher(tier: CaptainContractCoverageTier) {
+  return expect.objectContaining({
+    tier: tier.tier,
+    kind: tier.kind,
+    scope: tier.scope,
+    ...(Object.hasOwn(tier, 'atkBoost') ? { atkBoost: tier.atkBoost } : {}),
+    ...(Object.hasOwn(tier, 'hpBoost') ? { hpBoost: tier.hpBoost } : {}),
+    characterConditions: expect.objectContaining(tier.characterConditions),
+    teamConditions: expect.arrayContaining(
+      tier.teamConditions.map((condition) => expect.objectContaining(condition)),
+    ),
+    fieldConditions: expect.arrayContaining(
+      tier.fieldConditions.map((condition) => expect.objectContaining(condition)),
+    ),
+    triggerConditions: expect.arrayContaining(
+      tier.triggerConditions.map((condition) => expect.objectContaining(condition)),
+    ),
+  });
+}
+
 describe('extractCoverageTiers', () => {
+  for (const contractCase of captainContractCases.cases) {
+    it(`coverage contract: ${contractCase.id}`, () => {
+      const tiers = extractCoverageTiers(contractCase.captainAbility);
+
+      expect(tiers, `${contractCase.id} tier count drifted`).toHaveLength(
+        contractCase.expectedCoverageTiers.length,
+      );
+      expect(tiers, `${contractCase.id} tier semantics drifted`).toEqual(
+        expect.arrayContaining(
+          contractCase.expectedCoverageTiers.map(createCaptainCoverageTierMatcher),
+        ),
+      );
+    });
+  }
+
   it('strips "but boosts ATK of this character" self-override rider so the crew clause surfaces', () => {
     const tiers = extractCoverageTiers(
       'Boosts ATK of [STR], [DEX] and [QCK] characters by 2.5x, but boosts ATK of this character by 4x',

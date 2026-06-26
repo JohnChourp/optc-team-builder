@@ -1,0 +1,408 @@
+{
+  "cases": [
+    {
+      "id": "single-tier",
+      "name": "Single Tier Type And Class Captain",
+      "captainAbility": "Boosts ATK of [DEX] and Fighter characters by 5x and boosts HP of [DEX] and Fighter characters by 1.3x.",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 5,
+        "captainHpBoost": 1.3,
+        "captainAverageBoost": 3.15
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "baseline",
+          "scope": "subset",
+          "atkBoost": 5,
+          "hpBoost": 1.3,
+          "characterConditions": {
+            "universal": false,
+            "types": ["DEX"],
+            "classes": ["Fighter"],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "covered by type",
+          "target": {
+            "id": 910101,
+            "type": "DEX",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 5,
+              "hp": 1.3
+            },
+            "chips": [
+              {
+                "kind": "type",
+                "label": "DEX"
+              }
+            ]
+          }
+        },
+        {
+          "label": "covered by class",
+          "target": {
+            "id": 910102,
+            "type": "QCK",
+            "classes": ["Fighter", "Driven"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 5,
+              "hp": 1.3
+            },
+            "chips": [
+              {
+                "kind": "class",
+                "label": "Fighter"
+              }
+            ]
+          }
+        },
+        {
+          "label": "uncovered by type or class",
+          "target": {
+            "id": 910103,
+            "type": "QCK",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": false,
+            "boosts": {
+              "atk": 0,
+              "hp": 0
+            },
+            "chips": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "multi-tier",
+      "name": "Default Plus Conditional Captain Tiers",
+      "captainAbility": "Boosts ATK of all characters by 4x, boosts HP of all characters by 1.2x. If your crew has 5+ [DEX] characters, boosts ATK of [DEX] characters by 5.5x instead. If HP is below 50% at the start of the turn, boosts ATK of Fighter characters by 6x instead.",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 4,
+        "captainHpBoost": 1.2,
+        "captainAverageBoost": 2.6
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "baseline",
+          "scope": "crew-wide",
+          "atkBoost": 4,
+          "hpBoost": 1.2,
+          "characterConditions": {
+            "universal": true,
+            "types": [],
+            "classes": [],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        },
+        {
+          "tier": 2,
+          "kind": "conditional",
+          "scope": "subset",
+          "atkBoost": 5.5,
+          "characterConditions": {
+            "universal": false,
+            "types": ["DEX"],
+            "classes": [],
+            "characterTags": []
+          },
+          "teamConditions": [
+            {
+              "kind": "crew-composition",
+              "minCount": 5,
+              "types": ["DEX"],
+              "classes": [],
+              "characterTags": []
+            }
+          ],
+          "fieldConditions": [],
+          "triggerConditions": []
+        },
+        {
+          "tier": 3,
+          "kind": "conditional",
+          "scope": "subset",
+          "atkBoost": 6,
+          "characterConditions": {
+            "universal": false,
+            "types": [],
+            "classes": ["Fighter"],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": [
+            {
+              "kind": "hp-below",
+              "hpPercent": 50
+            }
+          ]
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "covered by default crew-wide tier",
+          "target": {
+            "id": 910201,
+            "type": "INT",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 4,
+              "hp": 1.2
+            },
+            "chips": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "branch-label",
+      "name": "Default Branch Labels Ignore Powered Up Self Override",
+      "captainAbility": "Always Active: Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x. Standard Captain: Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x. Powered Up Captain: Boosts ATK of this character by 12x, boosts ATK of [STR], [DEX] and [QCK] characters by 5x.",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 3.5,
+        "captainHpBoost": 1.3,
+        "captainAverageBoost": 2.4
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "baseline",
+          "scope": "subset",
+          "atkBoost": 3.5,
+          "hpBoost": 1.3,
+          "characterConditions": {
+            "universal": false,
+            "types": ["DEX", "STR", "QCK"],
+            "classes": [],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        },
+        {
+          "tier": 2,
+          "kind": "conditional",
+          "scope": "subset",
+          "atkBoost": 5,
+          "characterConditions": {
+            "universal": false,
+            "types": ["DEX", "STR", "QCK"],
+            "classes": [],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": [
+            {
+              "kind": "captain-branch-state",
+              "branchLabel": "Powered Up Captain"
+            }
+          ]
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "uses standard branch boost",
+          "target": {
+            "id": 910301,
+            "type": "DEX",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 3.5,
+              "hp": 1.3
+            },
+            "chips": [
+              {
+                "kind": "type",
+                "label": "DEX"
+              }
+            ]
+          }
+        },
+        {
+          "label": "rejects off-branch type",
+          "target": {
+            "id": 910302,
+            "type": "INT",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": false,
+            "boosts": {
+              "atk": 0,
+              "hp": 0
+            },
+            "chips": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "utility-effect",
+      "name": "Captain Utility Metadata",
+      "captainAbility": "Boosts ATK of [QCK] and Free Spirit characters by 4.5x, boosts HP of [QCK] and Free Spirit characters by 1.2x, reduces damage received by 20%, and makes [RCV] orbs beneficial for all characters.",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 4.5,
+        "captainHpBoost": 1.2,
+        "captainAverageBoost": 2.85
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "baseline",
+          "scope": "subset",
+          "atkBoost": 4.5,
+          "hpBoost": 1.2,
+          "characterConditions": {
+            "universal": false,
+            "types": ["QCK"],
+            "classes": ["Free Spirit"],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        }
+      ],
+      "expectedParserAbilities": [
+        {
+          "key": "reduce_damage",
+          "source": "captainAbility",
+          "coverageMode": "explicit",
+          "minEffectValue": 20,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
+          "key": "make_slots_favorable",
+          "source": "captainAbility",
+          "coverageMode": "explicit",
+          "effectTargetScope": "crew",
+          "slotTokens": ["RCV"]
+        }
+      ],
+      "expectedCatalogEffects": [
+        {
+          "key": "reduce_damage",
+          "captainAbilityEffectMatches": [
+            {
+              "characterId": 910404,
+              "minEffectValue": 20,
+              "effectTargetScope": "crew",
+              "slotTokens": []
+            }
+          ]
+        },
+        {
+          "key": "make_slots_favorable",
+          "captainAbilityEffectMatches": [
+            {
+              "characterId": 910404,
+              "effectTargetScope": "crew",
+              "slotTokens": ["RCV"]
+            }
+          ]
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "covered by class utility captain",
+          "target": {
+            "id": 910401,
+            "type": "DEX",
+            "classes": ["Free Spirit", "Shooter"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 4.5,
+              "hp": 1.2
+            },
+            "chips": [
+              {
+                "kind": "class",
+                "label": "Free Spirit"
+              }
+            ]
+          }
+        }
+      ],
+      "abilityRequirementChecks": [
+        {
+          "label": "damage reduction meets lower crew requirement",
+          "abilityKey": "reduce_damage",
+          "requirement": {
+            "abilityKey": "reduce_damage",
+            "minEffectValue": 10,
+            "effectTargetScope": "crew"
+          },
+          "matches": true
+        },
+        {
+          "label": "damage reduction rejects higher minimum",
+          "abilityKey": "reduce_damage",
+          "requirement": {
+            "abilityKey": "reduce_damage",
+            "minEffectValue": 25,
+            "effectTargetScope": "crew"
+          },
+          "matches": false
+        },
+        {
+          "label": "favorable slots match requested token",
+          "abilityKey": "make_slots_favorable",
+          "requirement": {
+            "abilityKey": "make_slots_favorable",
+            "slotTokens": ["RCV"],
+            "effectTargetScope": "crew"
+          },
+          "matches": true
+        },
+        {
+          "label": "favorable slots reject absent token",
+          "abilityKey": "make_slots_favorable",
+          "requirement": {
+            "abilityKey": "make_slots_favorable",
+            "slotTokens": ["INT"],
+            "effectTargetScope": "crew"
+          },
+          "matches": false
+        }
+      ]
+    }
+  ]
+}
