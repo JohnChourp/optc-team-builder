@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, devices } from 'playwright';
@@ -7,9 +8,7 @@ import { chromium, devices } from 'playwright';
 const appRoot = process.cwd();
 const port = Number(process.env.PERF_PORT ?? process.env.E2E_PORT ?? 8436);
 const baseURL = process.env.PERF_BASE_URL ?? process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
-const artifactDir =
-  process.env.PERF_ARTIFACT_DIR ??
-  '/Users/john/Downloads/projects/optc-team-builder-brain/live-artifacts/869dvr7x5';
+const artifactDir = process.env.PERF_ARTIFACT_DIR ?? resolveDefaultArtifactDir();
 const runLabel = sanitizeSegment(process.env.PERF_RUN_LABEL ?? 'explanation-compare');
 const shouldAssert = process.env.PERF_ASSERT !== '0';
 const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -152,6 +151,14 @@ function sanitizeSegment(value) {
   return value.trim().replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'perf';
 }
 
+function resolveDefaultArtifactDir() {
+  const siblingBrainDir = path.resolve(appRoot, '..', 'optc-team-builder-brain');
+
+  return existsSync(siblingBrainDir)
+    ? path.join(siblingBrainDir, 'live-artifacts', '869dvr7x5')
+    : path.join(appRoot, 'perf-artifacts', 'explanation-compare');
+}
+
 function resolveGitHead() {
   const result = spawnSync('git', ['rev-parse', '--short', 'HEAD'], {
     cwd: appRoot,
@@ -284,23 +291,15 @@ async function injectAutoTeamFixture(page) {
 async function measureCompare(page, viewportLabel) {
   const openStart = performance.now();
 
-  await applyCompareSnapshots(page, 'saved');
+  await applySavedCompareSnapshots(page);
   console.log(`[perf:explanation-compare] ${viewportLabel}: saved compare snapshots applied`);
-  await page.waitForFunction(
-    () => document.querySelectorAll('.compare-metric-chip').length > 0,
-    undefined,
-    { timeout: 45_000 },
-  );
+  await waitForCompareRender(page, 'Perf Compare Team B', 'saved');
   const compareOpenMs = performance.now() - openStart;
 
   const importStart = performance.now();
-  await applyCompareSnapshots(page, 'imported');
-  console.log(`[perf:explanation-compare] ${viewportLabel}: imported compare snapshot applied`);
-  await page.waitForFunction(
-    () => document.querySelectorAll('.compare-metric-chip').length > 0,
-    undefined,
-    { timeout: 45_000 },
-  );
+  await applyImportedComparePayload(page);
+  console.log(`[perf:explanation-compare] ${viewportLabel}: imported compare payload applied`);
+  await waitForCompareRender(page, 'Perf Compare Team 1', 'imported');
   const compareImportMs = performance.now() - importStart;
   console.log(`[perf:explanation-compare] ${viewportLabel}: compare timings collected`);
 
@@ -318,14 +317,11 @@ async function measureCompare(page, viewportLabel) {
   };
 }
 
-async function applyCompareSnapshots(page, mode) {
+async function applySavedCompareSnapshots(page) {
   const left = buildCompareSnapshot('Perf Compare Team A', 'saved', 0);
-  const right =
-    mode === 'imported'
-      ? buildCompareSnapshot('Imported Perf Compare Team B', 'imported', 1)
-      : buildCompareSnapshot('Perf Compare Team B', 'saved', 1);
+  const right = buildCompareSnapshot('Perf Compare Team B', 'saved', 1);
   const applied = await page.evaluate(
-    ({ leftSnapshot, rightSnapshot, nextMode, rawContent }) => {
+    ({ leftSnapshot, rightSnapshot }) => {
       const host = document.querySelector('app-auto-team-builder-page');
       const debugApi = window.ng;
       const component = host && debugApi?.getComponent?.(host);
@@ -351,11 +347,11 @@ async function applyCompareSnapshots(page, mode) {
         },
         b: {
           state: {
-            source: nextMode,
-            savedTeamId: nextMode === 'saved' ? 'perf-compare-team-b' : '',
-            importDraft: nextMode === 'imported' ? rawContent : '',
-            importedLabel: nextMode === 'imported' ? rightSnapshot.label : '',
-            importedRawContent: nextMode === 'imported' ? rawContent : '',
+            source: 'saved',
+            savedTeamId: 'perf-compare-team-b',
+            importDraft: '',
+            importedLabel: '',
+            importedRawContent: '',
           },
           seed: null,
           snapshot: rightSnapshot,
@@ -368,12 +364,97 @@ async function applyCompareSnapshots(page, mode) {
 
       return true;
     },
-    { leftSnapshot: left, rightSnapshot: right, nextMode: mode, rawContent: importedPayload },
+    { leftSnapshot: left, rightSnapshot: right },
   );
 
   if (!applied) {
     throw new Error('Could not apply compare snapshots through Angular dev-mode debug API.');
   }
+}
+
+async function applyImportedComparePayload(page) {
+  const left = buildCompareSnapshot('Perf Compare Team A', 'saved', 0);
+  const applied = await page.evaluate(
+    async ({ leftSnapshot, rawContent }) => {
+      const host = document.querySelector('app-auto-team-builder-page');
+      const debugApi = window.ng;
+      const component = host && debugApi?.getComponent?.(host);
+
+      if (
+        !component?.compareModeOpen?.set ||
+        !component?.compareSidePayloads?.set ||
+        typeof component.applyCompareImportRawContent !== 'function'
+      ) {
+        return false;
+      }
+
+      component.compareModeOpen.set(true);
+      component.compareSidePayloads.set({
+        a: {
+          state: {
+            source: 'saved',
+            savedTeamId: 'perf-compare-team-a',
+            importDraft: '',
+            importedLabel: '',
+            importedRawContent: '',
+          },
+          seed: null,
+          snapshot: leftSnapshot,
+          error: '',
+          loading: false,
+        },
+        b: {
+          state: {
+            source: 'imported',
+            savedTeamId: '',
+            importDraft: rawContent,
+            importedLabel: '',
+            importedRawContent: '',
+          },
+          seed: null,
+          snapshot: null,
+          error: '',
+          loading: false,
+        },
+      });
+      await component.applyCompareImportRawContent(
+        'b',
+        rawContent,
+        'Perf imported transfer payload',
+      );
+      debugApi.applyChanges?.(component);
+      debugApi.applyChanges?.(host);
+
+      return true;
+    },
+    { leftSnapshot: left, rawContent: importedPayload },
+  );
+
+  if (!applied) {
+    throw new Error('Could not apply imported compare payload through the component import path.');
+  }
+}
+
+async function waitForCompareRender(page, expectedLabel, expectedSource) {
+  await page.waitForFunction(
+    ({ label, source }) => {
+      const host = document.querySelector('app-auto-team-builder-page');
+      const component = host && window.ng?.getComponent?.(host);
+      const payload = component?.compareSidePayload?.('b');
+      const summaryText =
+        document.querySelector('[data-testid="compare-summary-b"]')?.textContent ?? '';
+
+      return (
+        payload?.state?.source === source &&
+        payload?.loading === false &&
+        payload?.snapshot?.label === label &&
+        document.querySelectorAll('.compare-metric-chip').length > 0 &&
+        summaryText.includes(label)
+      );
+    },
+    { label: expectedLabel, source: expectedSource },
+    { timeout: 45_000 },
+  );
 }
 
 async function readRenderDiagnostics(page) {
@@ -400,7 +481,7 @@ async function measureExplanations(page, viewportLabel) {
     path: path.join(artifactDir, `${runLabel}-${viewportLabel}-result-collapsed.png`),
   });
   const firstStart = performance.now();
-  await openExplanationDetails(page, 1);
+  await setOpenExplanationDetails(page, 1);
   await page.waitForFunction(
     () => Boolean(document.querySelector('[data-testid="slot-explanation-detail-list"] li')),
     undefined,
@@ -409,8 +490,17 @@ async function measureExplanations(page, viewportLabel) {
   await waitForAngular(page);
   const firstExplanationToggleMs = performance.now() - firstStart;
 
+  await setOpenExplanationDetails(page, 0);
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll('.slot-explanation__details[open]').length === 0 &&
+      document.querySelectorAll('[data-testid="slot-explanation-detail-list"]').length === 0,
+    undefined,
+    { timeout: 15_000 },
+  );
+
   const allStart = performance.now();
-  await openExplanationDetails(page, detailCount);
+  await setOpenExplanationDetails(page, detailCount);
 
   await page.waitForFunction(
     (expectedCount) =>
@@ -438,8 +528,8 @@ async function measureExplanations(page, viewportLabel) {
   };
 }
 
-async function openExplanationDetails(page, count) {
-  const openedCount = await page.evaluate((requestedCount) => {
+async function setOpenExplanationDetails(page, count) {
+  const result = await page.evaluate((requestedCount) => {
     const host = document.querySelector('app-auto-team-builder-page');
     const debugApi = window.ng;
     const component = host && debugApi?.getComponent?.(host);
@@ -453,18 +543,21 @@ async function openExplanationDetails(page, count) {
     }
 
     if (!component?.openExplanationSlotKeys?.set || !keys.length) {
-      return 0;
+      return { availableCount: 0, openedCount: 0 };
     }
 
     component.openExplanationSlotKeys.set(new Set(keys.slice(0, requestedCount)));
     debugApi.applyChanges?.(component);
     debugApi.applyChanges?.(host);
 
-    return Math.min(requestedCount, keys.length);
+    return {
+      availableCount: keys.length,
+      openedCount: Math.min(requestedCount, keys.length),
+    };
   }, count);
 
-  if (!openedCount) {
-    throw new Error('Could not open explanation detail state through Angular dev-mode debug API.');
+  if (!result.availableCount) {
+    throw new Error('Could not update explanation detail state through Angular dev-mode debug API.');
   }
 }
 

@@ -24,9 +24,11 @@ Playwright so filtered and debug workflows behave like direct Playwright usage.
 `npm run perf:explanation-compare` measures Auto Team Builder compare rendering
 and explanation-detail expansion with deterministic large fixtures. It starts a
 local dev server when `PERF_BASE_URL` is not already serving, writes screenshots
-and JSON to `PERF_ARTIFACT_DIR` (default:
-`/Users/john/Downloads/projects/optc-team-builder-brain/live-artifacts/869dvr7x5`),
-and fails when the pragmatic budgets regress:
+and JSON to `PERF_ARTIFACT_DIR`, and fails when the pragmatic budgets regress.
+When `PERF_ARTIFACT_DIR` is not set, local OPTC workspace checkouts use the
+sibling brain repo at `../optc-team-builder-brain/live-artifacts/869dvr7x5`;
+other machines fall back to `perf-artifacts/explanation-compare` under this
+repo.
 
 - desktop compare open `<=800ms`, imported compare apply `<=1200ms`
 - mobile compare open `<=1000ms`, imported compare apply `<=1500ms`
