@@ -11,21 +11,9 @@ import {
   normalizeCharacters,
   resolveImportSource,
 } from './import-optc-data.mjs';
+import { releaseTriggerPolicy } from './lib/release-trigger-policy.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
-const defaultDataDir = path.join(rootDir, 'public', 'assets', 'data');
-const defaultManifestPath = path.join(defaultDataDir, 'optc-manifest.json');
-const defaultSeedPath = path.join(defaultDataDir, 'optc-seed.sql');
-const defaultReleaseCheckFixturesDir = path.join(__dirname, 'fixtures', 'release-check');
-
-const releaseCheckFixtureFiles = {
-  manifestPath: 'local-manifest.json',
-  seedPath: 'local-seed.sql',
-  remoteVersionPath: 'remote-version.js',
-  remoteUnitsPath: 'remote-units.js',
-};
 
 const requestHeaders = {
   'User-Agent': 'optc-team-builder-release-check',
@@ -36,7 +24,7 @@ const noop = () => undefined;
 
 export function parseReleaseCheckArgs(args = process.argv.slice(2)) {
   const options = {
-    source: '2shankz',
+    source: releaseTriggerPolicy.defaultSource,
     json: false,
   };
 
@@ -97,13 +85,13 @@ export function resolveReleaseCheckOptions(options = {}) {
   const resolvedOptions = { ...options };
 
   if (fixtureDir) {
-    for (const [optionKey, fixtureFileName] of Object.entries(releaseCheckFixtureFiles)) {
+    for (const [optionKey, fixtureFileName] of Object.entries(releaseTriggerPolicy.fixtures.files)) {
       resolvedOptions[optionKey] ??= path.join(fixtureDir, fixtureFileName);
     }
   }
 
-  resolvedOptions.manifestPath ??= defaultManifestPath;
-  resolvedOptions.seedPath ??= defaultSeedPath;
+  resolvedOptions.manifestPath ??= releaseTriggerPolicy.localDataset.manifestPath;
+  resolvedOptions.seedPath ??= releaseTriggerPolicy.localDataset.seedPath;
 
   if (Boolean(resolvedOptions.remoteVersionPath) !== Boolean(resolvedOptions.remoteUnitsPath)) {
     throw new Error(
@@ -127,7 +115,7 @@ function resolveReleaseCheckFixtureDir(options) {
       throw new Error(`Invalid fixture name: ${fixture}`);
     }
 
-    return path.join(defaultReleaseCheckFixturesDir, fixture);
+    return path.join(releaseTriggerPolicy.fixtures.directory, fixture);
   }
 
   return fixtureDir || null;
@@ -203,10 +191,13 @@ export function buildReleaseCheckResult({
     .filter((characterId) => Number.isInteger(characterId) && characterId > 0)
     .sort((left, right) => left - right);
   const newCharacterIds = remoteCharacterIds.filter((characterId) => !localIdSet.has(characterId));
+  const releaseNeeded = newCharacterIds.length > 0;
 
   return {
-    releaseNeeded: newCharacterIds.length > 0,
-    reason: newCharacterIds.length > 0 ? 'new-upstream-characters' : 'no-new-upstream-characters',
+    releaseNeeded,
+    reason: releaseNeeded
+      ? releaseTriggerPolicy.decision.releaseReason
+      : releaseTriggerPolicy.decision.skipReason,
     source: source.key,
     sourceRepository: source.repository,
     localSourceVersion,
@@ -272,9 +263,9 @@ export function buildReleaseTriggerReport({
   activeReleaseCount = null,
   workflow = {},
   generatedAt = new Date().toISOString(),
-  dispatchWorkflow = 'release-android.yml',
-  dispatchRef = 'main',
-  dispatchBump = 'patch',
+  dispatchWorkflow = releaseTriggerPolicy.dispatch.workflow,
+  dispatchRef = releaseTriggerPolicy.dispatch.ref,
+  dispatchBump = releaseTriggerPolicy.dispatch.bump,
 } = {}) {
   const steps = normalizeStepOutcomes(stepOutcomes);
   const activeCount = parseOptionalNumber(activeReleaseCount);
@@ -282,34 +273,34 @@ export function buildReleaseTriggerReport({
   const newCharacterCount = Number(releaseCheckResult?.newCharacterCount ?? 0);
   const releaseDispatched = steps.dispatchRelease === 'success';
 
-  let status = 'skipped';
-  let reason = 'no-new-upstream-characters';
+  let status = releaseTriggerPolicy.report.statuses.skipped;
+  let reason = releaseTriggerPolicy.report.reasons.noNewUpstreamCharacters;
 
   if (isFailedStepOutcome(steps.fixtureValidation)) {
-    status = 'failed';
-    reason = 'fixture-validation-failed';
+    status = releaseTriggerPolicy.report.statuses.failed;
+    reason = releaseTriggerPolicy.report.reasons.fixtureValidationFailed;
   } else if (isFailedStepOutcome(steps.releaseCheck)) {
-    status = 'failed';
-    reason = 'detector-failed';
+    status = releaseTriggerPolicy.report.statuses.failed;
+    reason = releaseTriggerPolicy.report.reasons.detectorFailed;
   } else if (isFailedStepOutcome(steps.activeRelease)) {
-    status = 'failed';
-    reason = 'active-release-check-failed';
+    status = releaseTriggerPolicy.report.statuses.failed;
+    reason = releaseTriggerPolicy.report.reasons.activeReleaseCheckFailed;
   } else if (isFailedStepOutcome(steps.dispatchRelease)) {
-    status = 'failed';
-    reason = 'dispatch-failed';
+    status = releaseTriggerPolicy.report.statuses.failed;
+    reason = releaseTriggerPolicy.report.reasons.dispatchFailed;
   } else if (releaseDispatched) {
-    status = 'released';
-    reason = 'release-dispatched';
+    status = releaseTriggerPolicy.report.statuses.released;
+    reason = releaseTriggerPolicy.report.reasons.releaseDispatched;
   } else if (releaseNeeded && activeCount !== null && activeCount > 0) {
-    status = 'skipped';
-    reason = 'active-release-running';
+    status = releaseTriggerPolicy.report.statuses.skipped;
+    reason = releaseTriggerPolicy.report.reasons.activeReleaseRunning;
   } else if (releaseNeeded && !releaseDispatched) {
-    status = 'failed';
-    reason = 'active-release-check-failed';
+    status = releaseTriggerPolicy.report.statuses.failed;
+    reason = releaseTriggerPolicy.report.reasons.activeReleaseCheckFailed;
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: releaseTriggerPolicy.report.schemaVersion,
     generatedAt,
     status,
     reason,
@@ -356,6 +347,9 @@ export function buildReleaseTriggerReportFromEnv({
       dispatchRelease: env.DISPATCH_RELEASE_OUTCOME,
       skipRelease: env.SKIP_RELEASE_OUTCOME,
     },
+    dispatchWorkflow: env.RELEASE_DISPATCH_WORKFLOW || releaseTriggerPolicy.dispatch.workflow,
+    dispatchRef: env.RELEASE_DISPATCH_REF || releaseTriggerPolicy.dispatch.ref,
+    dispatchBump: env.RELEASE_DISPATCH_BUMP || releaseTriggerPolicy.dispatch.bump,
   });
 }
 
@@ -447,12 +441,12 @@ async function readRemoteDatasetSnapshot(source, options = {}) {
     readRemoteSourceFile({
       filePath: options.remoteVersionPath,
       source,
-      relativePath: 'common/data/version.js',
+      relativePath: releaseTriggerPolicy.upstream.versionPath,
     }),
     readRemoteSourceFile({
       filePath: options.remoteUnitsPath,
       source,
-      relativePath: 'common/data/units.js',
+      relativePath: releaseTriggerPolicy.upstream.unitsPath,
     }),
   ]);
   const unitsWindow = evaluateLegacyDataSource(unitsSource);
@@ -473,7 +467,7 @@ function readRemoteSourceFile({ filePath, source, relativePath }) {
 
 export async function checkOptcReleaseNeeded(options = {}) {
   const resolvedOptions = resolveReleaseCheckOptions(options);
-  const source = resolveImportSource(resolvedOptions.source ?? '2shankz');
+  const source = resolveImportSource(resolvedOptions.source ?? releaseTriggerPolicy.defaultSource);
   const localSnapshot = await readLocalDatasetSnapshot(resolvedOptions);
   const remoteSnapshot = await readRemoteDatasetSnapshot(source, resolvedOptions);
 

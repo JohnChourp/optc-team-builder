@@ -36,6 +36,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Read release trigger policy
+        id: release-policy
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync } from 'node:fs';
+
+          import { buildReleasePolicyGitHubOutputs } from './scripts/lib/release-trigger-policy.mjs';
+
+          const outputs = buildReleasePolicyGitHubOutputs();
+
+          for (const [key, value] of Object.entries(outputs)) {
+            appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`);
+          }
+          NODE
+
       - name: Validate release detector fixtures
         id: fixture-validation
         run: |
@@ -71,13 +86,15 @@ jobs:
         if: steps.release-check.outputs.release_needed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
+          ACTIVE_STATUSES_JSON: ${{ steps.release-policy.outputs.active_statuses_json }}
         run: |
           active_count="$(
             gh run list \
-              --workflow release-android.yml \
+              --workflow "${RELEASE_WORKFLOW}" \
               --limit 20 \
               --json status \
-              --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length'
+              --jq "${ACTIVE_STATUSES_JSON} as \$activeStatuses | [.[] | select(.status as \$status | \$activeStatuses | index(\$status))] | length"
           )"
           echo "active_count=${active_count}" >> "${GITHUB_OUTPUT}"
 
@@ -86,8 +103,11 @@ jobs:
         if: steps.release-check.outputs.release_needed == 'true' && steps.active-release.outputs.active_count == '0'
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
+          RELEASE_REF: ${{ steps.release-policy.outputs.release_ref }}
+          RELEASE_BUMP: ${{ steps.release-policy.outputs.release_bump }}
         run: |
-          gh workflow run release-android.yml --ref main -f bump=patch
+          gh workflow run "${RELEASE_WORKFLOW}" --ref "${RELEASE_REF}" -f "bump=${RELEASE_BUMP}"
 
       - name: Skip release dispatch
         id: skip-release
@@ -106,6 +126,9 @@ jobs:
           DISPATCH_RELEASE_OUTCOME: ${{ steps.dispatch-release.outcome }}
           SKIP_RELEASE_OUTCOME: ${{ steps.skip-release.outcome }}
           ACTIVE_RELEASE_COUNT: ${{ steps.active-release.outputs.active_count }}
+          RELEASE_DISPATCH_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
+          RELEASE_DISPATCH_REF: ${{ steps.release-policy.outputs.release_ref }}
+          RELEASE_DISPATCH_BUMP: ${{ steps.release-policy.outputs.release_bump }}
         run: |
           node --input-type=module <<'NODE'
           import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';

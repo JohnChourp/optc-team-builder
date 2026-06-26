@@ -11,13 +11,86 @@ import {
   parseReleaseCheckArgs,
   resolveReleaseCheckOptions,
 } from './check-optc-release-needed.mjs';
+import {
+  buildReleasePolicyGitHubOutputs,
+  releaseTriggerPolicy,
+  validateReleaseTriggerPolicy,
+} from './lib/release-trigger-policy.mjs';
 
 describe('check-optc-release-needed', () => {
   it('defaults to the 2shankz source and JSON output off', () => {
     expect(parseReleaseCheckArgs([])).toMatchObject({
-      source: '2shankz',
+      source: releaseTriggerPolicy.defaultSource,
       json: false,
     });
+  });
+
+  it('exposes the versioned release trigger policy for detector and workflow consumers', () => {
+    expect(releaseTriggerPolicy).toMatchObject({
+      schemaVersion: 1,
+      defaultSource: '2shankz',
+      decision: {
+        strategy: 'missing-character-ids',
+        releaseReason: 'new-upstream-characters',
+        skipReason: 'no-new-upstream-characters',
+        ignoredChangeClasses: [
+          'source-version-only',
+          'image-only',
+          'filter-only',
+          'same-id-edits',
+        ],
+      },
+      dispatch: {
+        workflow: 'release-android.yml',
+        ref: 'main',
+        bump: 'patch',
+        activeStatuses: ['queued', 'in_progress'],
+      },
+      report: {
+        schemaVersion: 1,
+      },
+    });
+    expect(releaseTriggerPolicy.localDataset.manifestPath).toMatch(/public[/\\]assets[/\\]data[/\\]optc-manifest\.json$/);
+    expect(releaseTriggerPolicy.localDataset.seedPath).toMatch(/public[/\\]assets[/\\]data[/\\]optc-seed\.sql$/);
+    expect(releaseTriggerPolicy.upstream).toEqual({
+      versionPath: 'common/data/version.js',
+      unitsPath: 'common/data/units.js',
+    });
+    expect(buildReleasePolicyGitHubOutputs()).toEqual({
+      release_workflow: 'release-android.yml',
+      release_ref: 'main',
+      release_bump: 'patch',
+      active_statuses_json: '["queued","in_progress"]',
+    });
+    expect(Object.isFrozen(releaseTriggerPolicy)).toBe(true);
+    expect(Object.isFrozen(releaseTriggerPolicy.dispatch.activeStatuses)).toBe(true);
+  });
+
+  it('validates release trigger policy invariants before consumers use config values', () => {
+    expect(() =>
+      validateReleaseTriggerPolicy({
+        ...releaseTriggerPolicy,
+        schemaVersion: 2,
+      }),
+    ).toThrow('schemaVersion must be 1');
+    expect(() =>
+      validateReleaseTriggerPolicy({
+        ...releaseTriggerPolicy,
+        decision: {
+          ...releaseTriggerPolicy.decision,
+          strategy: 'source-version',
+        },
+      }),
+    ).toThrow('decision.strategy must be one of missing-character-ids');
+    expect(() =>
+      validateReleaseTriggerPolicy({
+        ...releaseTriggerPolicy,
+        decision: {
+          ...releaseTriggerPolicy.decision,
+          releaseReason: 'changed-release-reason',
+        },
+      }),
+    ).toThrow('decision.releaseReason must match report reasons');
   });
 
   it('resolves bundled fixture paths from the fixture name', () => {
