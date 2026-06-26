@@ -18,6 +18,14 @@ const rootDir = path.resolve(__dirname, '..');
 const defaultDataDir = path.join(rootDir, 'public', 'assets', 'data');
 const defaultManifestPath = path.join(defaultDataDir, 'optc-manifest.json');
 const defaultSeedPath = path.join(defaultDataDir, 'optc-seed.sql');
+const defaultReleaseCheckFixturesDir = path.join(__dirname, 'fixtures', 'release-check');
+
+const releaseCheckFixtureFiles = {
+  manifestPath: 'local-manifest.json',
+  seedPath: 'local-seed.sql',
+  remoteVersionPath: 'remote-version.js',
+  remoteUnitsPath: 'remote-units.js',
+};
 
 const requestHeaders = {
   'User-Agent': 'optc-team-builder-release-check',
@@ -30,8 +38,6 @@ export function parseReleaseCheckArgs(args = process.argv.slice(2)) {
   const options = {
     source: '2shankz',
     json: false,
-    manifestPath: defaultManifestPath,
-    seedPath: defaultSeedPath,
   };
 
   for (const arg of args) {
@@ -41,17 +47,37 @@ export function parseReleaseCheckArgs(args = process.argv.slice(2)) {
     }
 
     if (arg.startsWith('--source=')) {
-      options.source = arg.split('=')[1];
+      options.source = readOptionValue(arg, '--source');
       continue;
     }
 
     if (arg.startsWith('--manifest-path=')) {
-      options.manifestPath = path.resolve(arg.split('=')[1]);
+      options.manifestPath = path.resolve(readOptionValue(arg, '--manifest-path'));
       continue;
     }
 
     if (arg.startsWith('--seed-path=')) {
-      options.seedPath = path.resolve(arg.split('=')[1]);
+      options.seedPath = path.resolve(readOptionValue(arg, '--seed-path'));
+      continue;
+    }
+
+    if (arg.startsWith('--fixture=')) {
+      options.fixture = readOptionValue(arg, '--fixture');
+      continue;
+    }
+
+    if (arg.startsWith('--fixture-dir=')) {
+      options.fixtureDir = path.resolve(readOptionValue(arg, '--fixture-dir'));
+      continue;
+    }
+
+    if (arg.startsWith('--remote-version-path=')) {
+      options.remoteVersionPath = path.resolve(readOptionValue(arg, '--remote-version-path'));
+      continue;
+    }
+
+    if (arg.startsWith('--remote-units-path=')) {
+      options.remoteUnitsPath = path.resolve(readOptionValue(arg, '--remote-units-path'));
       continue;
     }
 
@@ -59,7 +85,52 @@ export function parseReleaseCheckArgs(args = process.argv.slice(2)) {
   }
 
   resolveImportSource(options.source);
-  return options;
+  return resolveReleaseCheckOptions(options);
+}
+
+function readOptionValue(arg, optionName) {
+  return arg.slice(`${optionName}=`.length);
+}
+
+export function resolveReleaseCheckOptions(options = {}) {
+  const fixtureDir = resolveReleaseCheckFixtureDir(options);
+  const resolvedOptions = { ...options };
+
+  if (fixtureDir) {
+    for (const [optionKey, fixtureFileName] of Object.entries(releaseCheckFixtureFiles)) {
+      resolvedOptions[optionKey] ??= path.join(fixtureDir, fixtureFileName);
+    }
+  }
+
+  resolvedOptions.manifestPath ??= defaultManifestPath;
+  resolvedOptions.seedPath ??= defaultSeedPath;
+
+  if (Boolean(resolvedOptions.remoteVersionPath) !== Boolean(resolvedOptions.remoteUnitsPath)) {
+    throw new Error(
+      'Both --remote-version-path and --remote-units-path are required when replaying captured upstream files.',
+    );
+  }
+
+  return resolvedOptions;
+}
+
+function resolveReleaseCheckFixtureDir(options) {
+  const fixture = String(options.fixture ?? '').trim();
+  const fixtureDir = String(options.fixtureDir ?? '').trim();
+
+  if (fixture && fixtureDir) {
+    throw new Error('Use either --fixture or --fixture-dir, not both.');
+  }
+
+  if (fixture) {
+    if (!/^[a-z0-9][a-z0-9_-]*$/i.test(fixture)) {
+      throw new Error(`Invalid fixture name: ${fixture}`);
+    }
+
+    return path.join(defaultReleaseCheckFixturesDir, fixture);
+  }
+
+  return fixtureDir || null;
 }
 
 export function extractCharacterIdsFromSeed(sql) {
@@ -183,10 +254,18 @@ async function readLocalDatasetSnapshot(options) {
   };
 }
 
-async function readRemoteDatasetSnapshot(source) {
+async function readRemoteDatasetSnapshot(source, options = {}) {
   const [versionSource, unitsSource] = await Promise.all([
-    fetchText(buildSourceFileUrl(source, 'common/data/version.js'), source),
-    fetchText(buildSourceFileUrl(source, 'common/data/units.js'), source),
+    readRemoteSourceFile({
+      filePath: options.remoteVersionPath,
+      source,
+      relativePath: 'common/data/version.js',
+    }),
+    readRemoteSourceFile({
+      filePath: options.remoteUnitsPath,
+      source,
+      relativePath: 'common/data/units.js',
+    }),
   ]);
   const unitsWindow = evaluateLegacyDataSource(unitsSource);
 
@@ -196,13 +275,19 @@ async function readRemoteDatasetSnapshot(source) {
   };
 }
 
+function readRemoteSourceFile({ filePath, source, relativePath }) {
+  if (filePath) {
+    return readFile(filePath, 'utf8');
+  }
+
+  return fetchText(buildSourceFileUrl(source, relativePath), source);
+}
+
 export async function checkOptcReleaseNeeded(options = {}) {
-  const source = resolveImportSource(options.source ?? '2shankz');
-  const localSnapshot = await readLocalDatasetSnapshot({
-    manifestPath: options.manifestPath ?? defaultManifestPath,
-    seedPath: options.seedPath ?? defaultSeedPath,
-  });
-  const remoteSnapshot = await readRemoteDatasetSnapshot(source);
+  const resolvedOptions = resolveReleaseCheckOptions(options);
+  const source = resolveImportSource(resolvedOptions.source ?? '2shankz');
+  const localSnapshot = await readLocalDatasetSnapshot(resolvedOptions);
+  const remoteSnapshot = await readRemoteDatasetSnapshot(source, resolvedOptions);
 
   return buildReleaseCheckResult({
     source,

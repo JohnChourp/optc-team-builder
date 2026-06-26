@@ -32,6 +32,9 @@ jobs:
       - name: Captain contract script tests
         run: npm run test:captain-contracts
 
+      - name: Release detector replay tests
+        run: npm run test:release-check
+
       - name: Drive sync backend tests
         run: npm run test:drive-sync-server
 
