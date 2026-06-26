@@ -157,6 +157,34 @@ This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workf
 - If you see both `Deploy GitHub Pages` and `pages-build-deployment` for the same SHA, the repo Pages settings regressed back to legacy mode and need to be switched to workflow mode.
 - `PAGES_ENABLEMENT_TOKEN` is no longer part of the normal setup for this repo.
 
+## Release detector replay
+
+The scheduled `Check OPTC DB Release` workflow uses `npm run data:check-release` to
+compare committed character IDs with upstream OPTC DB IDs. The detector can also
+replay compact local fixtures without fetching upstream data:
+
+```bash
+npm run data:check-release -- --fixture=no-change --json
+npm run data:check-release -- --fixture=new-character --json
+node scripts/check-optc-release-needed.mjs --fixture=error --json
+```
+
+`no-change` must return `releaseNeeded=false`; `new-character` must return
+`releaseNeeded=true`; `error` is intentionally malformed and must exit nonzero.
+
+To replay captured upstream files during an incident, keep the local manifest and
+seed defaults or point at custom local files, then pass both remote paths:
+
+```bash
+npm run data:check-release -- --json \
+  --remote-version-path=/path/to/common/data/version.js \
+  --remote-units-path=/path/to/common/data/units.js
+```
+
+For a fully custom replay directory, use `--fixture-dir=/path/to/replay`. The
+directory must contain `local-manifest.json`, `local-seed.sql`,
+`remote-version.js`, and `remote-units.js`.
+
 Android releases should now run from the manual `Release Android` GitHub Actions workflow.
 
 Required repository or environment secrets:

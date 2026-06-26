@@ -33,6 +33,7 @@
     "test": "ng test",
     "test:ci": "ng test --watch=false",
     "test:captain-contracts": "vitest run scripts/import-optc-data.spec.ts scripts/lib/captain-ability-coverage.spec.ts",
+    "test:release-check": "vitest run scripts/check-optc-release-needed.spec.ts",
     "test:drive-sync-server": "vitest run server/drive-sync-server.spec.mjs",
     "test:e2e": "node ./scripts/run-playwright-e2e.mjs",
     "test:e2e:install": "playwright install --with-deps",

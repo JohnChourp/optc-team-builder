@@ -30,6 +30,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate release detector fixtures
+        run: |
+          npm run test:release-check
+          npm run --silent data:check-release -- --fixture=no-change --json
+          npm run --silent data:check-release -- --fixture=new-character --json
+
+          if npm run --silent data:check-release -- --fixture=error --json; then
+            echo "Expected the release detector error fixture to fail." >&2
+            exit 1
+          fi
+
       - name: Check upstream OPTC DB character IDs
         id: release-check
         env:
