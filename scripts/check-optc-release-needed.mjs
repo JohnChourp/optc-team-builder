@@ -218,6 +218,194 @@ export function buildReleaseCheckResult({
   };
 }
 
+function normalizeStepOutcome(outcome) {
+  const normalized = String(outcome ?? '').trim();
+  return normalized || 'skipped';
+}
+
+function normalizeStepOutcomes(stepOutcomes = {}) {
+  return {
+    fixtureValidation: normalizeStepOutcome(stepOutcomes.fixtureValidation),
+    releaseCheck: normalizeStepOutcome(stepOutcomes.releaseCheck),
+    activeRelease: normalizeStepOutcome(stepOutcomes.activeRelease),
+    dispatchRelease: normalizeStepOutcome(stepOutcomes.dispatchRelease),
+    skipRelease: normalizeStepOutcome(stepOutcomes.skipRelease),
+  };
+}
+
+function isFailedStepOutcome(outcome) {
+  return !['success', 'skipped'].includes(normalizeStepOutcome(outcome));
+}
+
+function parseOptionalNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function buildWorkflowMetadata(env = process.env) {
+  const repository = env.GITHUB_REPOSITORY ?? '';
+  const runId = env.GITHUB_RUN_ID ?? '';
+  const serverUrl = env.GITHUB_SERVER_URL ?? 'https://github.com';
+  const runUrl = repository && runId ? `${serverUrl}/${repository}/actions/runs/${runId}` : '';
+
+  return {
+    name: env.GITHUB_WORKFLOW ?? '',
+    repository,
+    runId,
+    runNumber: env.GITHUB_RUN_NUMBER ?? '',
+    runAttempt: env.GITHUB_RUN_ATTEMPT ?? '',
+    runUrl,
+    actor: env.GITHUB_ACTOR ?? '',
+    eventName: env.GITHUB_EVENT_NAME ?? '',
+    ref: env.GITHUB_REF ?? '',
+    sha: env.GITHUB_SHA ?? '',
+  };
+}
+
+export function buildReleaseTriggerReport({
+  releaseCheckResult = null,
+  stepOutcomes = {},
+  activeReleaseCount = null,
+  workflow = {},
+  generatedAt = new Date().toISOString(),
+  dispatchWorkflow = 'release-android.yml',
+  dispatchRef = 'main',
+  dispatchBump = 'patch',
+} = {}) {
+  const steps = normalizeStepOutcomes(stepOutcomes);
+  const activeCount = parseOptionalNumber(activeReleaseCount);
+  const releaseNeeded = releaseCheckResult?.releaseNeeded === true;
+  const newCharacterCount = Number(releaseCheckResult?.newCharacterCount ?? 0);
+  const releaseDispatched = steps.dispatchRelease === 'success';
+
+  let status = 'skipped';
+  let reason = 'no-new-upstream-characters';
+
+  if (isFailedStepOutcome(steps.fixtureValidation)) {
+    status = 'failed';
+    reason = 'fixture-validation-failed';
+  } else if (isFailedStepOutcome(steps.releaseCheck)) {
+    status = 'failed';
+    reason = 'detector-failed';
+  } else if (isFailedStepOutcome(steps.activeRelease)) {
+    status = 'failed';
+    reason = 'active-release-check-failed';
+  } else if (isFailedStepOutcome(steps.dispatchRelease)) {
+    status = 'failed';
+    reason = 'dispatch-failed';
+  } else if (releaseDispatched) {
+    status = 'released';
+    reason = 'release-dispatched';
+  } else if (releaseNeeded && activeCount !== null && activeCount > 0) {
+    status = 'skipped';
+    reason = 'active-release-running';
+  } else if (releaseNeeded && !releaseDispatched) {
+    status = 'failed';
+    reason = 'active-release-check-failed';
+  }
+
+  return {
+    schemaVersion: 1,
+    generatedAt,
+    status,
+    reason,
+    workflow,
+    releaseCheck: releaseCheckResult,
+    comparison: releaseCheckResult
+      ? {
+          source: releaseCheckResult.source,
+          sourceRepository: releaseCheckResult.sourceRepository,
+          localSourceVersion: releaseCheckResult.localSourceVersion,
+          remoteSourceVersion: releaseCheckResult.remoteSourceVersion,
+          localCharacterCount: releaseCheckResult.localCharacterCount,
+          remoteCharacterCount: releaseCheckResult.remoteCharacterCount,
+          newCharacterIds: releaseCheckResult.newCharacterIds ?? [],
+          newCharacterCount,
+        }
+      : null,
+    dispatch: {
+      releaseWorkflow: dispatchWorkflow,
+      ref: dispatchRef,
+      bump: dispatchBump,
+      releaseNeeded,
+      releaseDispatched,
+      activeReleaseCount: activeCount,
+    },
+    steps,
+  };
+}
+
+export function buildReleaseTriggerReportFromEnv({
+  env = process.env,
+  releaseCheckResult = null,
+  generatedAt,
+} = {}) {
+  return buildReleaseTriggerReport({
+    releaseCheckResult,
+    activeReleaseCount: env.ACTIVE_RELEASE_COUNT,
+    workflow: buildWorkflowMetadata(env),
+    generatedAt,
+    stepOutcomes: {
+      fixtureValidation: env.FIXTURE_VALIDATION_OUTCOME,
+      releaseCheck: env.RELEASE_CHECK_OUTCOME,
+      activeRelease: env.ACTIVE_RELEASE_OUTCOME,
+      dispatchRelease: env.DISPATCH_RELEASE_OUTCOME,
+      skipRelease: env.SKIP_RELEASE_OUTCOME,
+    },
+  });
+}
+
+function formatYesNo(value) {
+  return value ? 'yes' : 'no';
+}
+
+function formatList(values) {
+  return values.length > 0 ? values.join(', ') : 'none';
+}
+
+export function formatReleaseTriggerSummary(report) {
+  const lines = [
+    '## OPTC DB release trigger report',
+    '',
+    `- Status: ${report.status}`,
+    `- Reason: ${report.reason}`,
+    `- Release needed: ${formatYesNo(report.dispatch.releaseNeeded)}`,
+    `- Release dispatched: ${formatYesNo(report.dispatch.releaseDispatched)}`,
+    `- Active Release Android runs: ${report.dispatch.activeReleaseCount ?? 'unknown'}`,
+  ];
+
+  if (report.comparison) {
+    lines.push(
+      `- Source: ${report.comparison.sourceRepository}`,
+      `- Source version: local ${report.comparison.localSourceVersion}, remote ${report.comparison.remoteSourceVersion}`,
+      `- Characters: local ${report.comparison.localCharacterCount}, remote ${report.comparison.remoteCharacterCount}`,
+      `- New character IDs: ${formatList(report.comparison.newCharacterIds)}`,
+    );
+  }
+
+  if (report.workflow.runUrl) {
+    lines.push(`- Run: ${report.workflow.runUrl}`);
+  }
+
+  lines.push(
+    '',
+    '### Step outcomes',
+    '',
+    `- Fixture validation: ${report.steps.fixtureValidation}`,
+    `- Release detector: ${report.steps.releaseCheck}`,
+    `- Active release guard: ${report.steps.activeRelease}`,
+    `- Release dispatch: ${report.steps.dispatchRelease}`,
+    `- Skip branch: ${report.steps.skipRelease}`,
+    '',
+  );
+
+  return lines.join('\n');
+}
+
 async function fetchText(url, source) {
   const response = await fetch(url, { headers: buildRequestHeaders() });
 
