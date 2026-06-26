@@ -4,6 +4,7 @@
       <button
         type="button"
         class="ability-filter-chip"
+        [attr.data-testid]="'ability-filter-chip-' + item.category"
         [class.ability-filter-chip--active]="item.count > 0"
         [disabled]="isDisabled(item)"
         (click)="open(item)"

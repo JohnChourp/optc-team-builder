@@ -120,6 +120,8 @@ describe('SpecialAbilityPickerComponent', () => {
     expect(template).toContain('@if (row.supportsTurns)');
     expect(template).toContain('onRequiredTurnsChange(row.draft.draftId, $event)');
     expect(template).toContain('min="0"');
+    expect(template).toContain("'special-ability-tile-' + tile.item.key");
+    expect(template).toContain('data-testid="special-ability-picker-save"');
   });
 });
 

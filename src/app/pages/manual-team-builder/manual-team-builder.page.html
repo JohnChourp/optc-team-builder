@@ -136,6 +136,7 @@
                                 size="small"
                                 color="light"
                                 class="manual-team-slot__edit"
+                                [attr.data-testid]="'manual-team-slot-edit-' + index"
                                 [title]="t('actions.editSlot', { slot: index + 1 })"
                                 [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
                                 (click)="$event.stopPropagation(); openCharacterPicker(index)"
@@ -230,6 +231,7 @@
                           size="small"
                           color="light"
                           class="manual-team-slot__edit"
+                          [attr.data-testid]="'manual-team-slot-edit-' + index"
                           [title]="t('actions.editSlot', { slot: index + 1 })"
                           [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
                           (click)="$event.stopPropagation(); openCharacterPicker(index)"
@@ -614,9 +616,10 @@
                   } @else {
                     <div class="manual-team-candidates">
                       @for (candidateCard of candidateCards(); track candidateCard.character.id) {
-                        <article
-                          class="manual-team-candidate"
-                          [class.manual-team-candidate--selected]="
+                          <article
+                            class="manual-team-candidate"
+                            [attr.data-testid]="'manual-team-candidate-' + candidateCard.character.id"
+                            [class.manual-team-candidate--selected]="
                             candidateCard.isAssignedToActiveSlot
                           "
                           [class.manual-team-candidate--assigned-other]="

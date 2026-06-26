@@ -50,7 +50,10 @@
             </div>
           </div>
           @if (hasAbilityFiltersAvailable()) {
-            <div class="saved-enemies-ability-filter-panel">
+            <div
+              class="saved-enemies-ability-filter-panel"
+              data-testid="saved-enemies-ability-filter-panel"
+            >
               <div class="saved-enemies-ability-filter-panel__head">
                 <div>
                   <span>{{ t('abilityFilters.eyebrow') }}</span>
@@ -101,6 +104,7 @@
                           <button
                             type="button"
                             class="saved-enemy-ability-chip"
+                            [attr.data-testid]="'saved-enemy-ability-chip-' + ability.identity"
                             [class.saved-enemy-ability-chip--selected]="ability.selected"
                             [attr.aria-pressed]="ability.selected"
                             (click)="toggleAbilityFilter(ability.identity)"

@@ -183,6 +183,8 @@ interface SavedEnemyAbilityFacet {
   selected: boolean;
 }
 
+type SavedEnemyAbilityFacetBase = Omit<SavedEnemyAbilityFacet, 'selected'>;
+
 interface SavedEnemyAbilityCategoryGroup {
   abilityCount: number;
   abilities: SavedEnemyAbilityFacet[];
@@ -242,6 +244,18 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly savedEnemies;
+  private readonly savedEnemyAbilityKeySets = computed(
+    () =>
+      new Map(
+        this.savedEnemies().map((enemy) => [
+          enemy.id,
+          this.resolveSavedEnemyAbilityKeys(enemy),
+        ]),
+      ),
+  );
+  private readonly savedEnemyAbilityFacetBases = computed<SavedEnemyAbilityFacetBase[]>(() =>
+    this.buildSavedEnemyAbilityFacetBases(),
+  );
   public readonly selectedAbilityFilterIds = signal<string[]>([]);
   public readonly selectedAbilityFilterIdSet = computed(
     () => new Set(this.selectedAbilityFilterIds()),
@@ -258,7 +272,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     }
 
     return this.savedEnemies().filter((enemy) => {
-      const enemyAbilityIds = this.resolveSavedEnemyAbilityKeys(enemy);
+      const enemyAbilityIds = this.savedEnemyAbilityKeySets().get(enemy.id) ?? new Set<string>();
 
       return selectedAbilityIds.every((abilityId) => enemyAbilityIds.has(abilityId));
     });
@@ -1976,16 +1990,25 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private buildSavedEnemyAbilityFacets(): SavedEnemyAbilityFacet[] {
+    const selectedAbilityIds = this.selectedAbilityFilterIdSet();
+
+    return this.savedEnemyAbilityFacetBases().map((facet) => ({
+      ...facet,
+      selected: selectedAbilityIds.has(facet.identity),
+    }));
+  }
+
+  private buildSavedEnemyAbilityFacetBases(): SavedEnemyAbilityFacetBase[] {
     const facets = new Map<
       string,
-      SavedEnemyAbilityFacet & {
+      SavedEnemyAbilityFacetBase & {
         enemyIds: Set<string>;
       }
     >();
-    const selectedAbilityIds = this.selectedAbilityFilterIdSet();
+    const enemyAbilityKeySets = this.savedEnemyAbilityKeySets();
 
     for (const enemy of this.savedEnemies()) {
-      for (const abilityKey of this.resolveSavedEnemyAbilityKeys(enemy)) {
+      for (const abilityKey of enemyAbilityKeySets.get(enemy.id) ?? new Set<string>()) {
         const existingFacet = facets.get(abilityKey);
 
         if (!existingFacet) {
@@ -1997,7 +2020,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
             enemyIds: new Set([enemy.id]),
             identity: abilityKey,
             label: catalogItem?.label ?? abilityKey,
-            selected: selectedAbilityIds.has(abilityKey),
           });
           continue;
         }
@@ -2010,7 +2032,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       .map(({ enemyIds, ...facet }) => ({
         ...facet,
         enemyCount: enemyIds.size,
-        selected: selectedAbilityIds.has(facet.identity),
       }))
       .sort((left, right) => {
         const categoryDifference =
@@ -2088,7 +2109,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   private pruneAbilityFilterSelection(): void {
     const availableAbilityIds = new Set(
-      this.savedEnemyAbilityFacets().map((facet) => facet.identity),
+      this.savedEnemyAbilityFacetBases().map((facet) => facet.identity),
     );
 
     this.setSelectedAbilityFilterIds(

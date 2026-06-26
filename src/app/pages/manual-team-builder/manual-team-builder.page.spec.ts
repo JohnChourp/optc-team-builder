@@ -53,6 +53,8 @@ describe('ManualTeamBuilderPage', () => {
     expect(template).toContain('manual-team-summary-card');
     expect(template).toContain('manual-team-picker__filters');
     expect(template).toContain('manual-team-picker-slot-rail');
+    expect(template).toContain("'manual-team-slot-edit-' + index");
+    expect(template).toContain("'manual-team-candidate-' + candidateCard.character.id");
     expect(template).toContain('manual-team-clear-zone');
     expect(template).toContain('<app-ability-filter-rail');
     expect(template).toContain('<app-ability-requirement-picker');
