@@ -166,11 +166,24 @@ replay compact local fixtures without fetching upstream data:
 ```bash
 npm run data:check-release -- --fixture=no-change --json
 npm run data:check-release -- --fixture=new-character --json
+npm run data:check-release -- --fixture=active-release-running --json
+npm run data:check-release -- --fixture=upstream-shape-drift --json
 node scripts/check-optc-release-needed.mjs --fixture=error --json
 ```
 
 `no-change` must return `releaseNeeded=false`; `new-character` must return
-`releaseNeeded=true`; `error` is intentionally malformed and must exit nonzero.
+`releaseNeeded=true`; `active-release-running` must return `releaseNeeded=true`
+so the workflow report can replay the blocked active-release branch;
+`upstream-shape-drift` must return `releaseNeeded=false` even with a newer
+source version and object/variant shape drift; `error` is intentionally
+malformed and must exit nonzero.
+
+Bundled fixture directories live under `scripts/fixtures/release-check/`. Each
+directory must contain `local-manifest.json`, `local-seed.sql`,
+`remote-version.js`, and `remote-units.js`. Keep fixtures compact, name them for
+the release decision branch they cover, and add matching expectations to
+`scripts/check-optc-release-needed.spec.ts` before wiring them into the workflow
+fixture-validation step.
 
 To replay captured upstream files during an incident, keep the local manifest and
 seed defaults or point at custom local files, then pass both remote paths:

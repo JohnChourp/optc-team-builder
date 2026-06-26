@@ -55,13 +55,31 @@ jobs:
         id: fixture-validation
         run: |
           npm run test:release-check
-          npm run --silent data:check-release -- --fixture=no-change --json
-          npm run --silent data:check-release -- --fixture=new-character --json
 
+          valid_fixtures=(
+            no-change
+            new-character
+            active-release-running
+            upstream-shape-drift
+          )
+
+          for fixture in "${valid_fixtures[@]}"; do
+            echo "::group::Release detector fixture: ${fixture}"
+            npm run --silent data:check-release -- --fixture="${fixture}" --json || {
+              exit_code=$?
+              echo "::endgroup::"
+              exit "${exit_code}"
+            }
+            echo "::endgroup::"
+          done
+
+          echo "::group::Release detector fixture: error (expected failure)"
           if npm run --silent data:check-release -- --fixture=error --json; then
+            echo "::endgroup::"
             echo "Expected the release detector error fixture to fail." >&2
             exit 1
           fi
+          echo "::endgroup::"
 
       - name: Check upstream OPTC DB character IDs
         id: release-check
