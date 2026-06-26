@@ -14,11 +14,9 @@ const abilityCatalog = JSON.parse(
   await readFile(path.join(appRoot, 'public/assets/data/optc-auto-builder-abilities.json'), 'utf8'),
 );
 const selectedAbilities = selectAbilityKeys(abilityCatalog.abilities);
+const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const server = await ensureServer();
-
-await mkdir(artifactDir, { recursive: true });
-
-const browser = await chromium.launch();
+let browser;
 const consoleMessages = [];
 const pageErrors = [];
 const results = {
@@ -35,6 +33,9 @@ const results = {
 };
 
 try {
+  await mkdir(artifactDir, { recursive: true });
+  browser = await chromium.launch();
+
   for (const viewport of [
     {
       label: 'desktop',
@@ -80,17 +81,17 @@ try {
     results.viewportRuns.push(run);
     await context.close();
   }
-} finally {
-  await browser.close();
-  if (server) {
-    server.kill('SIGTERM');
-  }
-}
 
-await writeFile(
-  path.join(artifactDir, `${runLabel}-performance.json`),
-  `${JSON.stringify(results, null, 2)}\n`,
-);
+  await writeFile(
+    path.join(artifactDir, `${runLabel}-performance.json`),
+    `${JSON.stringify(results, null, 2)}\n`,
+  );
+} finally {
+  if (browser) {
+    await browser.close();
+  }
+  await stopServer(server);
+}
 
 function sanitizeSegment(value) {
   return value.trim().replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'ability-filter';
@@ -110,7 +111,7 @@ async function ensureServer() {
     return null;
   }
 
-  const child = spawn('npm', ['start', '--', '--host', '127.0.0.1', '--port', String(port)], {
+  const child = spawn(npmBin, ['start', '--', '--host', '127.0.0.1', '--port', String(port)], {
     cwd: appRoot,
     env: process.env,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -122,9 +123,30 @@ async function ensureServer() {
     await waitForServer();
     return child;
   } catch (error) {
-    child.kill('SIGTERM');
+    await stopServer(child);
     throw error;
   }
+}
+
+async function stopServer(child) {
+  if (!child || child.killed || child.exitCode !== null) {
+    return;
+  }
+
+  child.kill('SIGTERM');
+  await new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill('SIGKILL');
+      }
+      resolve();
+    }, 5_000);
+
+    child.once('exit', () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+  });
 }
 
 async function serverResponds() {
