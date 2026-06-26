@@ -310,6 +310,36 @@ describe('check-optc-release-needed', () => {
     });
   });
 
+  it('builds the active-release blocked report from the bundled active-release-running fixture', async () => {
+    const releaseCheckResult = await checkOptcReleaseNeeded({ fixture: 'active-release-running' });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      activeReleaseCount: '1',
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'success',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+
+    expect(report).toMatchObject({
+      status: 'skipped',
+      reason: 'active-release-running',
+      comparison: {
+        newCharacterIds: [3],
+        newCharacterCount: 1,
+      },
+      dispatch: {
+        releaseNeeded: true,
+        releaseDispatched: false,
+        activeReleaseCount: 1,
+      },
+    });
+  });
+
   it('builds a failed report when fixture validation fails before the live check', () => {
     const report = buildReleaseTriggerReport({
       generatedAt: '2026-06-26T00:00:00.000Z',
@@ -330,8 +360,10 @@ describe('check-optc-release-needed', () => {
     });
   });
 
-  it('replays the bundled no-change fixture without requesting a release', async () => {
-    await expect(checkOptcReleaseNeeded({ fixture: 'no-change' })).resolves.toMatchObject({
+  const replayFixtureCases = [
+    {
+      fixture: 'no-change',
+      branch: 'no new upstream IDs',
       releaseNeeded: false,
       reason: 'no-new-upstream-characters',
       localSourceVersion: '36',
@@ -340,11 +372,10 @@ describe('check-optc-release-needed', () => {
       remoteCharacterCount: 2,
       newCharacterIds: [],
       newCharacterCount: 0,
-    });
-  });
-
-  it('replays the bundled new-character fixture and requests a release', async () => {
-    await expect(checkOptcReleaseNeeded({ fixture: 'new-character' })).resolves.toMatchObject({
+    },
+    {
+      fixture: 'new-character',
+      branch: 'new upstream ID detected',
       releaseNeeded: true,
       reason: 'new-upstream-characters',
       localSourceVersion: '36',
@@ -353,8 +384,41 @@ describe('check-optc-release-needed', () => {
       remoteCharacterCount: 3,
       newCharacterIds: [3],
       newCharacterCount: 1,
+    },
+    {
+      fixture: 'active-release-running',
+      branch: 'new upstream ID blocked by active release guard',
+      releaseNeeded: true,
+      reason: 'new-upstream-characters',
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterCount: 2,
+      remoteCharacterCount: 3,
+      newCharacterIds: [3],
+      newCharacterCount: 1,
+    },
+    {
+      fixture: 'upstream-shape-drift',
+      branch: 'source and object shape drift with no new upstream IDs',
+      releaseNeeded: false,
+      reason: 'no-new-upstream-characters',
+      localSourceVersion: '36',
+      remoteSourceVersion: '38',
+      localCharacterCount: 2,
+      remoteCharacterCount: 2,
+      newCharacterIds: [],
+      newCharacterCount: 0,
+    },
+  ];
+
+  for (const fixtureCase of replayFixtureCases) {
+    it(`replays the bundled ${fixtureCase.fixture} fixture: ${fixtureCase.branch}`, async () => {
+      const { fixture, branch, ...expectedResult } = fixtureCase;
+
+      expect(branch.length).toBeGreaterThan(0);
+      await expect(checkOptcReleaseNeeded({ fixture })).resolves.toMatchObject(expectedResult);
     });
-  });
+  }
 
   it('fails deterministically for the malformed error fixture', async () => {
     await expect(checkOptcReleaseNeeded({ fixture: 'error' })).rejects.toThrow();
