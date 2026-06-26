@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import captainContractCases from './fixtures/captain-contract-cases.json';
+
 let analyzeBuilderAbilityText: (
   value: unknown,
   source: 'specialText' | 'superSpecialText' | 'captainAbility' | 'sailorAbilities',
@@ -92,6 +94,53 @@ function extractAbilityKeys(
 }
 
 describe('auto team builder ability parser', () => {
+  it('parser contract: utility-effect', () => {
+    const contractCase = getCaptainContractCase('utility-effect');
+    const abilities = analyzeBuilderAbilityText(contractCase.captainAbility, 'captainAbility');
+
+    expect(abilities, 'utility-effect parser ability metadata drifted').toEqual(
+      expect.arrayContaining(
+        (contractCase.expectedParserAbilities ?? []).map((ability) =>
+          expect.objectContaining(ability),
+        ),
+      ),
+    );
+    expect(extractAbilityKeys(abilities), 'utility-effect should not expose stat boosts').not.toEqual(
+      expect.arrayContaining(['boost_atk', 'boost_max_hp']),
+    );
+  });
+
+  it('parser catalog contract: utility-effect', async () => {
+    const contractCase = getCaptainContractCase('utility-effect');
+    const characters: ParserCharacters = [
+      {
+        id: 910404,
+        detail: {
+          specialText: null,
+          captainAbility: contractCase.captainAbility,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    for (const expectedCatalogEffect of contractCase.expectedCatalogEffects ?? []) {
+      const catalogItem = catalog.find((item) => item.key === expectedCatalogEffect.key);
+
+      expect(catalogItem, `${expectedCatalogEffect.key} catalog entry should exist`).toEqual(
+        expect.objectContaining({
+          captainAbilityMatchingCharacterIds: [910404],
+          captainAbilityEffectMatches: expect.arrayContaining(
+            expectedCatalogEffect.captainAbilityEffectMatches.map((effectMatch) =>
+              expect.objectContaining(effectMatch),
+            ),
+          ),
+        }),
+      );
+    }
+  });
+
   it('normalizes legacy HTML ability text without dropping branch labels', () => {
     expect(
       normalizeLegacyAbilityText(
@@ -1777,3 +1826,13 @@ describe('auto team builder ability parser', () => {
     expect(characters[0]?.detail.builderAbilities).toEqual([]);
   });
 });
+
+function getCaptainContractCase(caseId: string) {
+  const contractCase = captainContractCases.cases.find((item) => item.id === caseId);
+
+  if (!contractCase) {
+    throw new Error(`Missing captain contract case "${caseId}".`);
+  }
+
+  return contractCase;
+}

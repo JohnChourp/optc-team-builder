@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import captainContractCases from '../src/app/core/services/fixtures/captain-contract-cases.json';
 import {
   applyShipThumbnailOverrides,
   buildDeterministicCharacterAssetsMap,
@@ -430,6 +431,36 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(character.captainAverageBoost).toBe(1.2);
   });
 
+  for (const caseId of ['single-tier', 'multi-tier', 'branch-label', 'utility-effect']) {
+    it(`generated contract: ${caseId}`, () => {
+      const contractCase = getCaptainContractCase(caseId);
+      const [character] = normalizeCharacters(
+        [createCaptainContractUnitTuple(contractCase.name)],
+        {
+          1: {
+            captain: {
+              base: contractCase.captainAbility,
+            },
+          },
+        },
+        [],
+        new Map(),
+      );
+
+      expect(character, `${caseId} generated boosts drifted`).toMatchObject(
+        contractCase.expectedGeneratedBoosts,
+      );
+      expect(
+        character.detail.captainAbilityCoverage?.entries[0]?.tiers,
+        `${caseId} generated captain coverage tiers drifted`,
+      ).toEqual(
+        expect.arrayContaining(
+          contractCase.expectedCoverageTiers.map(createCaptainCoverageTierMatcher),
+        ),
+      );
+    });
+  }
+
   it('supports object-based unit maps from the 2shankz source', () => {
     const [character] = normalizeCharacters(
       {
@@ -844,3 +875,57 @@ describe('import-optc-data ship thumbnail pack', () => {
     ]);
   });
 });
+
+type CaptainContractCase = (typeof captainContractCases.cases)[number];
+type CaptainContractCoverageTier = CaptainContractCase['expectedCoverageTiers'][number];
+
+function getCaptainContractCase(caseId: string) {
+  const contractCase = captainContractCases.cases.find((item) => item.id === caseId);
+
+  if (!contractCase) {
+    throw new Error(`Missing captain contract case "${caseId}".`);
+  }
+
+  return contractCase;
+}
+
+function createCaptainContractUnitTuple(name: string) {
+  return [
+    name,
+    'DEX',
+    ['Fighter'],
+    6,
+    55,
+    4,
+    5,
+    99,
+    5_000_000,
+    1000,
+    500,
+    100,
+    3000,
+    1500,
+    300,
+    1,
+  ];
+}
+
+function createCaptainCoverageTierMatcher(tier: CaptainContractCoverageTier) {
+  return expect.objectContaining({
+    tier: tier.tier,
+    kind: tier.kind,
+    scope: tier.scope,
+    ...(Object.hasOwn(tier, 'atkBoost') ? { atkBoost: tier.atkBoost } : {}),
+    ...(Object.hasOwn(tier, 'hpBoost') ? { hpBoost: tier.hpBoost } : {}),
+    characterConditions: expect.objectContaining(tier.characterConditions),
+    teamConditions: expect.arrayContaining(
+      tier.teamConditions.map((condition) => expect.objectContaining(condition)),
+    ),
+    fieldConditions: expect.arrayContaining(
+      tier.fieldConditions.map((condition) => expect.objectContaining(condition)),
+    ),
+    triggerConditions: expect.arrayContaining(
+      tier.triggerConditions.map((condition) => expect.objectContaining(condition)),
+    ),
+  });
+}

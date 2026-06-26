@@ -29,6 +29,9 @@ jobs:
       - name: Angular unit tests
         run: npm run test:ci
 
+      - name: Captain contract script tests
+        run: npm run test:captain-contracts
+
       - name: Drive sync backend tests
         run: npm run test:drive-sync-server
 
