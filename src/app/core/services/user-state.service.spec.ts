@@ -378,6 +378,96 @@ describe('UserStateService saved teams', () => {
     expect(service.favoriteCharacterIds()).toEqual([]);
   });
 
+  it('repairs corrupted saved teams storage in place while keeping stable records', async () => {
+    const { service, setCalls } = await createService([
+      createTeam('team-1', 'Slashers'),
+      null,
+      { name: 'Missing stable id', slots: [101] },
+      {
+        id: ' legacy-team ',
+        name: '',
+        notes: 42,
+        shipId: 'bad',
+        slots: [101, 'bad', 202, 0, null, 303, 404],
+        createdAt: 'bad-date',
+        updatedAt: '',
+      },
+    ]);
+
+    expect(service.savedTeams().map((team) => team.id)).toEqual(['team-1', 'legacy-team']);
+    expect(service.savedTeams()[1]).toMatchObject({
+      id: 'legacy-team',
+      name: 'Untitled Crew',
+      notes: '',
+      shipId: null,
+      slots: [101, null, 202, null, null, 303],
+    });
+    expect(service.savedTeamsStorageRecovery()).toEqual({
+      droppedCount: 2,
+      repairedCount: 1,
+      reset: false,
+    });
+    expect(JSON.parse(setCalls.find((call) => call.key === 'savedTeams')?.value ?? '[]')).toEqual(
+      service.savedTeams(),
+    );
+  });
+
+  it('resets non-array saved teams storage and persists an empty array', async () => {
+    const store = new Map<string, string>([['savedTeams', '{"schemaVersion":1}']]);
+    const setCalls: Array<{ key: string; value: string }> = [];
+
+    preferences.get.mockImplementation(async ({ key }) => ({
+      value: store.get(key) ?? null,
+    }));
+    preferences.set.mockImplementation(async ({ key, value }) => {
+      setCalls.push({ key, value });
+      store.set(key, value);
+    });
+
+    const service = new UserStateService(
+      { translate: vi.fn((key: string) => key) } as never,
+      preferences as unknown as PreferencesAdapterService,
+    );
+
+    await service.readySavedTeams();
+
+    expect(service.savedTeams()).toEqual([]);
+    expect(service.savedTeamsStorageRecovery()).toEqual({
+      droppedCount: 0,
+      repairedCount: 0,
+      reset: true,
+    });
+    expect(setCalls).toEqual([{ key: 'savedTeams', value: '[]' }]);
+  });
+
+  it('resets invalid saved teams JSON and persists an empty array', async () => {
+    const store = new Map<string, string>([['savedTeams', 'not-json']]);
+    const setCalls: Array<{ key: string; value: string }> = [];
+
+    preferences.get.mockImplementation(async ({ key }) => ({
+      value: store.get(key) ?? null,
+    }));
+    preferences.set.mockImplementation(async ({ key, value }) => {
+      setCalls.push({ key, value });
+      store.set(key, value);
+    });
+
+    const service = new UserStateService(
+      { translate: vi.fn((key: string) => key) } as never,
+      preferences as unknown as PreferencesAdapterService,
+    );
+
+    await service.readySavedTeams();
+
+    expect(service.savedTeams()).toEqual([]);
+    expect(service.savedTeamsStorageRecovery()).toEqual({
+      droppedCount: 0,
+      repairedCount: 0,
+      reset: true,
+    });
+    expect(setCalls).toEqual([{ key: 'savedTeams', value: '[]' }]);
+  });
+
   it('merges imported teams by id and keeps untouched teams behind them', async () => {
     const { service, setCalls } = await createService([
       createTeam('team-1', 'Original one'),

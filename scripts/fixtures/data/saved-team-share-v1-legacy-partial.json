@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "source": "saved-team-share",
+  "exportedAt": "2026-06-01T00:00:00.000Z",
+  "team": {
+    "id": "legacy-share-partial",
+    "name": "",
+    "slots": [101, "bad", 102],
+    "shipId": -1,
+    "notes": 9001,
+    "createdAt": "bad-date",
+    "updatedAt": ""
+  }
+}

@@ -90,6 +90,24 @@ describe('SavedTeamsPage', () => {
     });
   });
 
+  it('shows storage recovery warnings from repaired local saved teams', async () => {
+    const { page } = createPage({
+      storageRecovery: {
+        droppedCount: 2,
+        repairedCount: 1,
+        reset: false,
+      },
+    });
+
+    await page.ngOnInit();
+
+    expect(page.actionFeedback()).toEqual({
+      details: ['Repaired 1 saved teams.', 'Removed 2 corrupted saved-team records.'],
+      title: 'Saved teams storage repaired',
+      tone: 'warning',
+    });
+  });
+
   it('hydrates captain condition status for saved team cards', async () => {
     const { page } = createPage({
       savedTeams: [
@@ -575,6 +593,11 @@ function createPage(
   overrides: {
     characterAbilities?: Record<number, NormalizedBuilderAbility[]>;
     savedTeams?: ReturnType<typeof buildSavedTeams>;
+    storageRecovery?: {
+      droppedCount: number;
+      repairedCount: number;
+      reset: boolean;
+    } | null;
   } = {},
 ) {
   const savedTeams = signal(overrides.savedTeams ?? buildSavedTeams());
@@ -582,6 +605,7 @@ function createPage(
     ready: vi.fn().mockResolvedValue(undefined),
     readySavedTeams: vi.fn().mockResolvedValue(undefined),
     savedTeams,
+    savedTeamsStorageRecovery: signal(overrides.storageRecovery ?? null),
     deleteTeam: vi.fn().mockImplementation(async (teamId: string) => {
       savedTeams.set(savedTeams().filter((team) => team.id !== teamId));
     }),
@@ -732,6 +756,22 @@ function createPage(
 
       if (key === 'import.errors.generic') {
         return 'Generic import error';
+      }
+
+      if (key === 'storageRecovery.title') {
+        return 'Saved teams storage repaired';
+      }
+
+      if (key === 'storageRecovery.reset') {
+        return 'Local saved-teams storage was invalid and has been reset.';
+      }
+
+      if (key === 'storageRecovery.repaired') {
+        return `Repaired ${params?.['count'] ?? 0} saved teams.`;
+      }
+
+      if (key === 'storageRecovery.dropped') {
+        return `Removed ${params?.['count'] ?? 0} corrupted saved-team records.`;
       }
 
       if (key === 'ship.noShipLabel') {

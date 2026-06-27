@@ -81,6 +81,12 @@ export interface ResolvedAutoTeamBuilderWorkerPreference extends AutoTeamBuilder
   manualMaxPercent: number;
 }
 
+export interface SavedTeamsStorageRecoverySummary {
+  droppedCount: number;
+  repairedCount: number;
+  reset: boolean;
+}
+
 type UserStateHydrationDomain =
   | 'favorites'
   | 'favoriteShips'
@@ -99,6 +105,9 @@ export class UserStateService {
   public readonly recentCharacterIds = signal<number[]>([]);
   public readonly characterBoxes = signal<CharacterBox[]>([]);
   public readonly savedTeams = signal<SavedTeam[]>([]);
+  public readonly savedTeamsStorageRecovery = signal<SavedTeamsStorageRecoverySummary | null>(
+    null,
+  );
   public readonly savedEnemies = signal<SavedEnemy[]>([]);
   public readonly savedRumbleTeams = signal<SavedRumbleTeam[]>([]);
   public readonly crewForgeImageProfiles = computed<CrewForgeImageProfile[]>(() => [
@@ -165,8 +174,14 @@ export class UserStateService {
 
   public async readySavedTeams(): Promise<void> {
     await this.ensureHydrated('savedTeams', async () => {
-      const teams = await this.readJson<SavedTeam[]>(SAVED_TEAMS_KEY, []);
-      this.savedTeams.set(teams.map((team) => this.normalizeSavedTeam(team)));
+      const result = await this.readSavedTeamsFromStorage();
+
+      this.savedTeams.set(result.teams);
+      this.savedTeamsStorageRecovery.set(result.summary);
+
+      if (result.shouldPersist) {
+        await this.persistJson(SAVED_TEAMS_KEY, result.teams);
+      }
     });
   }
 
@@ -1057,6 +1072,84 @@ export class UserStateService {
     }
   }
 
+  private async readSavedTeamsFromStorage(): Promise<{
+    shouldPersist: boolean;
+    summary: SavedTeamsStorageRecoverySummary | null;
+    teams: SavedTeam[];
+  }> {
+    const { value } = await this.preferences.get({ key: SAVED_TEAMS_KEY });
+
+    if (!value) {
+      return {
+        shouldPersist: false,
+        summary: null,
+        teams: [],
+      };
+    }
+
+    let parsedValue: unknown;
+
+    try {
+      parsedValue = JSON.parse(value) as unknown;
+    } catch {
+      return {
+        shouldPersist: true,
+        summary: {
+          droppedCount: 0,
+          repairedCount: 0,
+          reset: true,
+        },
+        teams: [],
+      };
+    }
+
+    if (!Array.isArray(parsedValue)) {
+      return {
+        shouldPersist: true,
+        summary: {
+          droppedCount: 0,
+          repairedCount: 0,
+          reset: true,
+        },
+        teams: [],
+      };
+    }
+
+    const teams: SavedTeam[] = [];
+    let droppedCount = 0;
+    let repairedCount = 0;
+
+    parsedValue.forEach((entry) => {
+      const normalizedTeam = this.normalizePersistedSavedTeam(entry);
+
+      if (!normalizedTeam) {
+        droppedCount += 1;
+        return;
+      }
+
+      if (!this.savedTeamMatchesStoredEntry(normalizedTeam, entry)) {
+        repairedCount += 1;
+      }
+
+      teams.push(normalizedTeam);
+    });
+
+    const summary =
+      droppedCount > 0 || repairedCount > 0
+        ? {
+            droppedCount,
+            repairedCount,
+            reset: false,
+          }
+        : null;
+
+    return {
+      shouldPersist: Boolean(summary),
+      summary,
+      teams,
+    };
+  }
+
   private async persistJson(key: string, value: unknown): Promise<void> {
     await this.preferences.set({ key, value: JSON.stringify(value) });
     await this.markSyncScopedLocalChange(key);
@@ -1135,10 +1228,7 @@ export class UserStateService {
     return Math.max(1, Math.floor(detectedCoreCount * AUTO_TEAM_BUILDER_MANUAL_WORKER_MAX_RATIO));
   }
 
-  private normalizeSavedTeam(
-    team: Pick<SavedTeam, 'name' | 'notes' | 'shipId' | 'slots'> & Partial<SavedTeam>,
-    existing?: SavedTeam,
-  ): SavedTeam {
+  private normalizeSavedTeam(team: Partial<SavedTeam>, existing?: SavedTeam): SavedTeam {
     const now = new Date().toISOString();
 
     return {
@@ -1150,6 +1240,48 @@ export class UserStateService {
       createdAt: this.normalizeTimestamp(team.createdAt, existing?.createdAt ?? now),
       updatedAt: this.normalizeTimestamp(team.updatedAt, now),
     };
+  }
+
+  private normalizePersistedSavedTeam(value: unknown): SavedTeam | null {
+    if (!this.isRecord(value)) {
+      return null;
+    }
+
+    const id = this.normalizeEntityId(value['id'] as string | undefined);
+
+    if (!id) {
+      return null;
+    }
+
+    return this.normalizeSavedTeam({
+      id,
+      name: typeof value['name'] === 'string' ? value['name'] : undefined,
+      notes: typeof value['notes'] === 'string' ? value['notes'] : undefined,
+      shipId: value['shipId'] as number | null | undefined,
+      slots: Array.isArray(value['slots'])
+        ? (value['slots'] as Array<number | null>)
+        : undefined,
+      createdAt: typeof value['createdAt'] === 'string' ? value['createdAt'] : undefined,
+      updatedAt: typeof value['updatedAt'] === 'string' ? value['updatedAt'] : undefined,
+    });
+  }
+
+  private savedTeamMatchesStoredEntry(team: SavedTeam, value: unknown): boolean {
+    if (!this.isRecord(value)) {
+      return false;
+    }
+
+    return (
+      value['id'] === team.id &&
+      value['name'] === team.name &&
+      value['shipId'] === team.shipId &&
+      value['notes'] === team.notes &&
+      value['createdAt'] === team.createdAt &&
+      value['updatedAt'] === team.updatedAt &&
+      Array.isArray(value['slots']) &&
+      value['slots'].length === team.slots.length &&
+      value['slots'].every((slot, index) => slot === team.slots[index])
+    );
   }
 
   private normalizeCharacterBox(
@@ -1892,6 +2024,10 @@ export class UserStateService {
     }
 
     return normalizedValue;
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
   }
 
   private createTeamId(): string {

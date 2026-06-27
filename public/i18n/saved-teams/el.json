@@ -120,6 +120,12 @@
     "warningTitle": "Το import ολοκληρώθηκε με παρατηρήσεις"
   },
   "loading": "Φόρτωση αποθηκευμένων ομάδων...",
+  "storageRecovery": {
+    "dropped": "Αφαιρέθηκαν {{count}} corrupted saved-team records.",
+    "repaired": "Επιδιορθώθηκαν {{count}} saved teams.",
+    "reset": "Το local saved-teams storage δεν ήταν έγκυρο και έγινε reset.",
+    "title": "Το saved teams storage επιδιορθώθηκε"
+  },
   "openTeam": {
     "copy": "Διάλεξε πού θα ανοίξει το \"{{name}}\".",
     "destinations": {
