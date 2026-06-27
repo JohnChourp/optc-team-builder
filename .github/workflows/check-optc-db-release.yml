@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   actions: write
+  issues: write
 
 concurrency:
   group: optc-db-release-check
@@ -189,3 +190,9 @@ jobs:
           name: release-trigger-outcome
           path: release-trigger-outcome.json
           if-no-files-found: error
+
+      - name: Notify maintainers about release trigger outcome
+        if: ${{ always() }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/notify-release-trigger-outcome.mjs --report=release-trigger-outcome.json
