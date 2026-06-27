@@ -142,9 +142,19 @@ function issueMatchesNotificationThread(issue, notification) {
 }
 
 async function findNotificationIssue({ repository, token, notification, fetchImpl }) {
-  const url = `https://api.github.com/repos/${repository}/issues?state=open&per_page=100`;
-  const issues = await githubRequest({ url, token, fetchImpl });
-  return issues.find((issue) => issueMatchesNotificationThread(issue, notification)) ?? null;
+  let page = 1;
+
+  while (true) {
+    const url = `https://api.github.com/repos/${repository}/issues?state=open&per_page=100&page=${page}`;
+    const issues = await githubRequest({ url, token, fetchImpl });
+    const matchingIssue = issues.find((issue) => issueMatchesNotificationThread(issue, notification));
+
+    if (matchingIssue || issues.length < 100) {
+      return matchingIssue ?? null;
+    }
+
+    page += 1;
+  }
 }
 
 async function createNotificationIssue({ repository, token, notification, fetchImpl }) {

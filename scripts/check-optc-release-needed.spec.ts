@@ -663,6 +663,68 @@ describe('check-optc-release-needed', () => {
     expect(JSON.parse(calls[1].options.body).body).toContain('fixture-validation-failed');
   });
 
+  it('paginates notification issue lookup before creating duplicate threads', async () => {
+    const report = buildReleaseTriggerReport({
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'failure',
+        releaseCheck: 'skipped',
+        activeRelease: 'skipped',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+    const firstPage = Array.from({ length: 100 }, (_, index) => ({
+      number: index + 1,
+      title: `Other issue ${index + 1}`,
+      body: '',
+      html_url: `https://github.com/JohnChourp/optc-team-builder/issues/${index + 1}`,
+    }));
+    const calls = [];
+    const fetchImpl = async (url, options = {}) => {
+      calls.push({ url, options });
+
+      if (calls.length === 1) {
+        return buildMockGitHubResponse(firstPage);
+      }
+
+      if (calls.length === 2) {
+        return buildMockGitHubResponse([
+          {
+            number: 142,
+            title: releaseTriggerPolicy.notification.issueTitle,
+            body: releaseTriggerPolicy.notification.issueMarker,
+            html_url: 'https://github.com/JohnChourp/optc-team-builder/issues/142',
+          },
+        ]);
+      }
+
+      return buildMockGitHubResponse({
+        html_url: 'https://github.com/JohnChourp/optc-team-builder/issues/142#issuecomment-1',
+      });
+    };
+
+    await expect(
+      sendReleaseTriggerNotification({
+        report,
+        env: {
+          GITHUB_REPOSITORY: 'JohnChourp/optc-team-builder',
+          GITHUB_TOKEN: 'token',
+        },
+        fetchImpl,
+        logger: { info: () => undefined },
+      }),
+    ).resolves.toMatchObject({
+      sent: true,
+      action: 'commented',
+      issueNumber: 142,
+    });
+    expect(calls).toHaveLength(3);
+    expect(calls[0].url).toContain('page=1');
+    expect(calls[1].url).toContain('page=2');
+    expect(calls[2].url).toBe('https://api.github.com/repos/JohnChourp/optc-team-builder/issues/142/comments');
+  });
+
   const replayFixtureCases = [
     {
       fixture: 'no-change',
