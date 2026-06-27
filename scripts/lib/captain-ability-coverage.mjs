@@ -33,6 +33,10 @@ const SHARED_CAPTAIN_BOOST_MULTIPLIER_PATTERN =
   /\b(boosts?\s+(?:ATK|HP)\s+of\s+)((?:(?!\bby\s+\d).)+?)(\s+and\s+boosts?\s+(?:ATK|HP)\s+of\s+(?:(?!\bby\s+\d).)+?)(\s+by\s+(\d+(?:\.\d+)?)x)\b/gi;
 const CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
+const INLINE_CAPTAIN_BOOST_CONDITION_PATTERN = /\b(?:if|when)\b/i;
+const INLINE_CAPTAIN_BOOST_CONDITION_SUFFIX_PATTERN = /\s+\b(?:if|when)\b[^.;]*$/i;
+const BENEFICIAL_ORB_INLINE_CONDITION_PATTERN =
+  /\bif\b(?:(?!\s+and\s+their\s+(?:ATK|HP|RCV)\b)[^.;,])*\bbeneficial\s+orb\b/i;
 const CAPTAIN_MULTIPLIER_PATTERN =
   /\bby\s+(?:a\s+further\s+|an?\s+additional\s+|another\s+)?\d+(?:\.\d+)?x\b/i;
 const CAPTAIN_BASE_STAT_BOOST_PATTERN =
@@ -218,9 +222,10 @@ function extractCaptainBoostScopeClauses(text, includeConditional) {
     .flatMap((clause) => normalizeCaptainBoostScopeClauseCandidates(clause, includeConditional))
     .filter(
       (clause) =>
-        (includeConditional || !isConditionalCaptainBoostClause(clause)) &&
+        (includeConditional || !isConditionGatedCaptainBoostClause(clause)) &&
         isCaptainBoostScopeClause(clause),
-    );
+    )
+    .map(stripInlineConditionSuffix);
 
   if (!includeConditional) {
     return boostClauses;
@@ -286,6 +291,18 @@ function isConditionalCaptainBoostClause(clause) {
   return CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN.test(clause.trim());
 }
 
+function isConditionGatedCaptainBoostClause(clause) {
+  return isConditionalCaptainBoostClause(clause) || isInlineConditionGatedCaptainBoostClause(clause);
+}
+
+function isInlineConditionGatedCaptainBoostClause(clause) {
+  const normalizedClause = normalizeCoverageClause(clause);
+  const conditionIndex = normalizedClause.search(INLINE_CAPTAIN_BOOST_CONDITION_PATTERN);
+  const multiplierIndex = normalizedClause.search(CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN);
+
+  return conditionIndex > multiplierIndex && multiplierIndex >= 0;
+}
+
 function isCaptainBoostScopeClause(clause) {
   const normalizedClause = normalizeCoverageClause(clause);
 
@@ -326,6 +343,14 @@ function stripSelfActivationRider(clause) {
 
 function stripBoostInsteadSuffix(clause) {
   return normalizeCoverageClause(clause.replace(BOOST_INSTEAD_SUFFIX_PATTERN, 'by $1'));
+}
+
+function stripInlineConditionSuffix(clause) {
+  return normalizeCoverageClause(
+    clause
+      .replace(BENEFICIAL_ORB_INLINE_CONDITION_PATTERN, '')
+      .replace(INLINE_CAPTAIN_BOOST_CONDITION_SUFFIX_PATTERN, ''),
+  );
 }
 
 function extractCaptainStartOfFightCooldownTagClauses(text) {
@@ -497,6 +522,7 @@ export function extractCoverageTiers(captainText) {
     (clause) => !defaultBoostClauses.includes(clause),
   );
   const conditionalTiers = extractConditionalSentenceClusters(normalizedCaptainText)
+    .concat(extractInlineConditionalBoostClusters(normalizedCaptainText))
     .map((cluster) => buildConditionalTier(cluster))
     .filter((tier) => tier !== null)
     .filter((tier) => !isUnactionableTriggerOnlyTier(tier));
@@ -683,7 +709,8 @@ function resolveCaptainTierEffectClauses(captainText) {
     .map(stripSelfOverrideRider)
     .map(stripSelfActivationRider)
     .map(stripBoostInsteadSuffix)
-    .filter((clause) => !isConditionalCaptainBoostClause(clause))
+    .filter((clause) => !isConditionGatedCaptainBoostClause(clause))
+    .map(stripInlineConditionSuffix)
     .filter(isCaptainTierEffectClause)
     .map(normalizeCoverageClause);
 }
@@ -892,6 +919,7 @@ function buildConditionalTier(cluster) {
     .map(stripSelfOverrideRider)
     .map(stripSelfActivationRider)
     .map(stripBoostInsteadSuffix)
+    .map(stripInlineConditionSuffix)
     .filter(isCaptainTierEffectClause)
     .map(normalizeCoverageClause);
 
@@ -937,6 +965,55 @@ function extractConditionalSentenceClusters(text) {
     .map((sentence) => sentence.trim())
     .filter((sentence) => sentence.length > 0 && isConditionalCaptainBoostClause(sentence))
     .map((sentence) => buildConditionalCluster(sentence));
+}
+
+function extractInlineConditionalBoostClusters(text) {
+  return splitCaptainSentences(text.replace(BRANCH_LABEL_PATTERN, '. '))
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0 && !isConditionalCaptainBoostClause(sentence))
+    .flatMap((sentence) => splitCaptainEffectClauses(sentence))
+    .flatMap((clause) => normalizeCaptainBoostScopeClauseCandidates(clause, true))
+    .filter(isInlineConditionGatedCaptainBoostClause)
+    .filter(isCaptainTierEffectClause)
+    .map((clause) => buildInlineConditionalCluster(clause));
+}
+
+function buildInlineConditionalCluster(clause) {
+  const conditionText = extractInlineConditionText(clause);
+
+  return {
+    sentence: clause,
+    clauses: [clause],
+    teamConditions: [],
+    fieldConditions: [],
+    triggerConditions: resolveInlineConditionTriggers(conditionText),
+  };
+}
+
+function extractInlineConditionText(clause) {
+  return normalizeCoverageClause(
+    clause.match(BENEFICIAL_ORB_INLINE_CONDITION_PATTERN)?.[0] ??
+      clause.match(INLINE_CAPTAIN_BOOST_CONDITION_SUFFIX_PATTERN)?.[0] ??
+      '',
+  );
+}
+
+function resolveInlineConditionTriggers(conditionText) {
+  if (!conditionText) {
+    return [];
+  }
+
+  const hpTrigger = parseHpThresholdTrigger(conditionText);
+  if (hpTrigger) {
+    return [hpTrigger];
+  }
+
+  return [
+    {
+      kind: 'other',
+      rawClause: conditionText,
+    },
+  ];
 }
 
 function buildConditionalCluster(sentence) {
@@ -990,13 +1067,9 @@ function buildConditionalCluster(sentence) {
     triggerConditions.push(buildActionSpecialTrigger('action-special-perfect', sentence));
   }
 
-  const hpThreshold = sentence.match(HP_THRESHOLD_PATTERN);
+  const hpThreshold = parseHpThresholdTrigger(sentence);
   if (hpThreshold !== null) {
-    triggerConditions.push({
-      kind: hpThreshold[1].toLowerCase() === 'below' ? 'hp-below' : 'hp-above',
-      hpPercent: Number(hpThreshold[2]),
-      rawClause: hpThreshold[0],
-    });
+    triggerConditions.push(hpThreshold);
   }
 
   if (DEFEATED_ENEMY_PATTERN.test(sentence)) {
@@ -1128,6 +1201,28 @@ function extractEffectClausesFromConditionalSentence(sentence) {
     .flatMap(expandTrailingCaptainBoostAlternatives)
     .map((clause) => clause.trim())
     .filter(Boolean);
+}
+
+function parseHpThresholdTrigger(text) {
+  const hpThreshold = text.match(HP_THRESHOLD_PATTERN);
+  if (hpThreshold !== null) {
+    return {
+      kind: hpThreshold[1].toLowerCase() === 'below' ? 'hp-below' : 'hp-above',
+      hpPercent: Number(hpThreshold[2]),
+      rawClause: hpThreshold[0],
+    };
+  }
+
+  const reversedHpThreshold = text.match(/\bHP\s+is\s+(\d+)\s*%\s+or\s+(below|above)\b/i);
+  if (reversedHpThreshold !== null) {
+    return {
+      kind: reversedHpThreshold[2].toLowerCase() === 'below' ? 'hp-below' : 'hp-above',
+      hpPercent: Number(reversedHpThreshold[1]),
+      rawClause: reversedHpThreshold[0],
+    };
+  }
+
+  return null;
 }
 
 function expandTrailingCaptainBoostAlternatives(clause) {

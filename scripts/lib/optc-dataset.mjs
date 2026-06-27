@@ -13,6 +13,9 @@ const sharedCaptainBoostMultiplierPattern =
   /\b(boosts?\s+(?:ATK|HP)\s+of\s+)((?:(?!\bby\s+\d).)+?)(\s+and\s+boosts?\s+(?:ATK|HP)\s+of\s+(?:(?!\bby\s+\d).)+?)(\s+by\s+(\d+(?:\.\d+)?)x)\b/gi;
 const conditionalCaptainBoostPrefixPattern =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
+const inlineCaptainBoostConditionPattern = /\b(?:if|when)\b/i;
+const inlineConditionalBoostRiderPattern =
+  /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
 const defaultCaptainBranchLabels = new Set(['always active', 'standard captain']);
 const preferredDefaultCaptainVariantKeys = [
   'base',
@@ -166,13 +169,15 @@ function extractHighestCaptainBoost(text, stat) {
 }
 
 function extractDefaultCaptainBoostClauses(text) {
-  return splitCaptainEffectClauses(text).filter(
-    (clause) =>
-      !isConditionalCaptainBoostClause(clause) &&
-      /\bboosts?\b/i.test(clause) &&
-      /\b(?:atk|hp)\b/i.test(clause) &&
-      /\bby\s+\d+(?:\.\d+)?x\b/i.test(clause),
-  );
+  return splitCaptainEffectClauses(text)
+    .map(stripInlineConditionalBoostRiders)
+    .filter(
+      (clause) =>
+        !isConditionGatedCaptainBoostClause(clause) &&
+        /\bboosts?\b/i.test(clause) &&
+        /\b(?:atk|hp)\b/i.test(clause) &&
+        /\bby\s+\d+(?:\.\d+)?x\b/i.test(clause),
+    );
 }
 
 function splitCaptainEffectClauses(text) {
@@ -214,6 +219,23 @@ function splitCaptainSentences(text) {
 
 function isConditionalCaptainBoostClause(clause) {
   return conditionalCaptainBoostPrefixPattern.test(clause.trim());
+}
+
+function stripInlineConditionalBoostRiders(clause) {
+  return clause.replace(inlineConditionalBoostRiderPattern, '').trim();
+}
+
+function isConditionGatedCaptainBoostClause(clause) {
+  const normalizedClause = clause.trim();
+
+  if (isConditionalCaptainBoostClause(normalizedClause)) {
+    return true;
+  }
+
+  const conditionIndex = normalizedClause.search(inlineCaptainBoostConditionPattern);
+  const multiplierIndex = normalizedClause.search(/\bby\s+\d+(?:\.\d+)?x\b/i);
+
+  return conditionIndex > multiplierIndex && multiplierIndex >= 0;
 }
 
 function isSelfOnlyCaptainBoostMatch(matchText) {

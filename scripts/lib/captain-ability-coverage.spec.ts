@@ -558,17 +558,31 @@ describe('extractCoverageTiers', () => {
       'Boosts ATK of Free Spirit and Fighter characters by 5x, by 5.5x instead if they have a beneficial orb, boosts HP of Fighter and Free Spirit characters by 1.3x.',
     );
 
-    expect(tiers).toHaveLength(1);
+    expect(tiers).toHaveLength(2);
     expect(tiers[0]).toMatchObject({
-      atkBoost: 5.5,
+      kind: 'baseline',
+      atkBoost: 5,
       hpBoost: 1.3,
     });
     expect(tiers[0]?.clauses).toEqual(
       expect.arrayContaining([
-        'Boosts ATK of Free Spirit and Fighter characters by 5.5x if they have a beneficial orb',
+        'Boosts ATK of Free Spirit and Fighter characters by 5x',
         'boosts HP of Fighter and Free Spirit characters by 1.3x',
       ]),
     );
+    expect(tiers[1]).toMatchObject({
+      kind: 'conditional',
+      atkBoost: 5.5,
+      triggerConditions: [
+        {
+          kind: 'other',
+          rawClause: 'if they have a beneficial orb',
+        },
+      ],
+    });
+    expect(tiers[1]?.clauses).toEqual([
+      'Boosts ATK of Free Spirit and Fighter characters by 5.5x',
+    ]);
   });
 
   it('keeps shared stat riders after expanded captain boost alternatives', () => {
@@ -576,13 +590,28 @@ describe('extractCoverageTiers', () => {
       'Boosts ATK of Driven characters by 3.25x, by 3.9x instead if they have a beneficial orb, and their HP by 1.2x.',
     );
 
-    expect(tiers).toHaveLength(1);
+    expect(tiers).toHaveLength(2);
     expect(tiers[0]).toMatchObject({
-      atkBoost: 3.9,
+      kind: 'baseline',
+      atkBoost: 3.25,
       hpBoost: 1.2,
     });
     expect(tiers[0]?.clauses).toContain(
-      'Boosts ATK of Driven characters by 3.9x if they have a beneficial orb and their HP by 1.2x',
+      'Boosts ATK of Driven characters by 3.25x and their HP by 1.2x',
+    );
+    expect(tiers[1]).toMatchObject({
+      kind: 'conditional',
+      atkBoost: 3.9,
+      hpBoost: 1.2,
+      triggerConditions: [
+        {
+          kind: 'other',
+          rawClause: 'if they have a beneficial orb',
+        },
+      ],
+    });
+    expect(tiers[1]?.clauses).toContain(
+      'Boosts ATK of Driven characters by 3.9x and their HP by 1.2x',
     );
   });
 
@@ -591,13 +620,28 @@ describe('extractCoverageTiers', () => {
       'Boosts ATK of [QCK] characters by 2.5x, by 3x instead if they have a beneficial orb, their HP by 1.25x.',
     );
 
-    expect(tiers).toHaveLength(1);
+    expect(tiers).toHaveLength(2);
     expect(tiers[0]).toMatchObject({
-      atkBoost: 3,
+      kind: 'baseline',
+      atkBoost: 2.5,
       hpBoost: 1.25,
     });
     expect(tiers[0]?.clauses).toContain(
-      'Boosts ATK of [QCK] characters by 3x if they have a beneficial orb and their HP by 1.25x',
+      'Boosts ATK of [QCK] characters by 2.5x and their HP by 1.25x',
+    );
+    expect(tiers[1]).toMatchObject({
+      kind: 'conditional',
+      atkBoost: 3,
+      hpBoost: 1.25,
+      triggerConditions: [
+        {
+          kind: 'other',
+          rawClause: 'if they have a beneficial orb',
+        },
+      ],
+    });
+    expect(tiers[1]?.clauses).toContain(
+      'Boosts ATK of [QCK] characters by 3x and their HP by 1.25x',
     );
   });
 
@@ -638,17 +682,26 @@ describe('extractCoverageTiers', () => {
       'Boosts ATK of Driven characters by 4.5x if they have a beneficial orb, by 3.75x otherwise and their HP by 1.4x.',
     );
 
-    expect(tiers).toHaveLength(1);
+    expect(tiers).toHaveLength(2);
     expect(tiers[0]).toMatchObject({
-      atkBoost: 4.5,
+      kind: 'baseline',
+      atkBoost: 3.75,
       hpBoost: 1.4,
     });
-    expect(tiers[0]?.clauses).toEqual(
-      expect.arrayContaining([
-        'Boosts ATK of Driven characters by 4.5x if they have a beneficial orb',
-        'Boosts ATK of Driven characters by 3.75x otherwise and their HP by 1.4x',
-      ]),
+    expect(tiers[0]?.clauses).toContain(
+      'Boosts ATK of Driven characters by 3.75x otherwise and their HP by 1.4x',
     );
+    expect(tiers[1]).toMatchObject({
+      kind: 'conditional',
+      atkBoost: 4.5,
+      triggerConditions: [
+        {
+          kind: 'other',
+          rawClause: 'if they have a beneficial orb',
+        },
+      ],
+    });
+    expect(tiers[1]?.clauses).toEqual(['Boosts ATK of Driven characters by 4.5x']);
   });
 
   it('keeps ranged alternative multipliers intact', () => {
@@ -656,17 +709,31 @@ describe('extractCoverageTiers', () => {
       'Boosts ATK of Cerebral characters by 5x-5.5x, by 5.25x-5.775x instead if they have a beneficial orb, boosts HP of Cerebral characters by 1.25x.',
     );
 
-    expect(tiers).toHaveLength(1);
+    expect(tiers).toHaveLength(2);
     expect(tiers[0]).toMatchObject({
-      atkBoost: 5.25,
+      kind: 'baseline',
+      atkBoost: 5,
       hpBoost: 1.25,
     });
     expect(tiers[0]?.clauses).toEqual(
       expect.arrayContaining([
         'Boosts ATK of Cerebral characters by 5x-5.5x',
-        'Boosts ATK of Cerebral characters by 5.25x-5.775x if they have a beneficial orb',
+        'boosts HP of Cerebral characters by 1.25x',
       ]),
     );
+    expect(tiers[1]).toMatchObject({
+      kind: 'conditional',
+      atkBoost: 5.25,
+      triggerConditions: [
+        {
+          kind: 'other',
+          rawClause: 'if they have a beneficial orb',
+        },
+      ],
+    });
+    expect(tiers[1]?.clauses).toEqual([
+      'Boosts ATK of Cerebral characters by 5.25x-5.775x',
+    ]);
   });
 
   it('models Dominant Type ATK as a same-type team coverage and keeps shared HP in that tier', () => {

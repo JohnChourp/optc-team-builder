@@ -443,13 +443,13 @@ describe('resolveCaptainCoverage', () => {
     expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage').clauses).toEqual(
       expect.arrayContaining([
         'Boosts ATK of Free Spirit and Fighter characters by 5x',
-        'Boosts ATK of Free Spirit and Fighter characters by 5.5x if they have a beneficial orb',
+        'Boosts ATK of Free Spirit and Fighter characters by 5.5x',
         'boosts HP of Fighter and Free Spirit characters by 1.3x',
       ]),
     );
     expect(resolveCaptainCoverage(captain, target).boosts).toEqual({
       hp: 1.3,
-      atk: 5.5,
+      atk: 5,
     });
   });
 
@@ -460,7 +460,7 @@ describe('resolveCaptainCoverage', () => {
     expect(resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage').clauses).toEqual(
       expect.arrayContaining([
         'boosts ATK of all characters by 2.25x',
-        'boosts ATK of all characters by 3.9375x if they have a beneficial orb',
+        'boosts ATK of all characters by 3.9375x',
       ]),
     );
   });

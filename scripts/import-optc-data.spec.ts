@@ -431,9 +431,8 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(character.captainAverageBoost).toBe(1.2);
   });
 
-  for (const caseId of ['single-tier', 'multi-tier', 'branch-label', 'utility-effect']) {
-    it(`generated contract: ${caseId}`, () => {
-      const contractCase = getCaptainContractCase(caseId);
+  for (const contractCase of captainContractCases.cases) {
+    it(`generated contract: ${contractCase.id}`, () => {
       const [character] = normalizeCharacters(
         [createCaptainContractUnitTuple(contractCase.name)],
         {
@@ -447,12 +446,12 @@ describe('import-optc-data ship thumbnail pack', () => {
         new Map(),
       );
 
-      expect(character, `${caseId} generated boosts drifted`).toMatchObject(
+      expect(character, `${contractCase.id} generated boosts drifted`).toMatchObject(
         contractCase.expectedGeneratedBoosts,
       );
       expect(
         character.detail.captainAbilityCoverage?.entries[0]?.tiers,
-        `${caseId} generated captain coverage tiers drifted`,
+        `${contractCase.id} generated captain coverage tiers drifted`,
       ).toEqual(
         expect.arrayContaining(
           contractCase.expectedCoverageTiers.map(createCaptainCoverageTierMatcher),
