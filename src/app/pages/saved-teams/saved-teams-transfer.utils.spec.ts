@@ -1,4 +1,6 @@
 import '@angular/compiler';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
@@ -181,6 +183,62 @@ describe('Saved teams transfer utils', () => {
     ]);
   });
 
+  it('repairs legacy v1 partial fixture records and skips unrecoverable teams', () => {
+    const payload = parseSavedTeamsImportPayload(
+      readFixture('saved-teams-v1-legacy-partial.json'),
+    );
+    const sanitized = sanitizeSavedTeamsImportPayload(payload, {
+      now: '2026-06-27T12:00:00.000Z',
+      untitledTeamName: 'Untitled Crew',
+    });
+
+    expect(sanitized.invalidTeamCount).toBe(2);
+    expect(sanitized.duplicateIdCount).toBe(0);
+    expect(sanitized.teams).toEqual([
+      {
+        id: 'legacy-minimal',
+        name: 'Untitled Crew',
+        notes: '',
+        shipId: null,
+        slots: [101, null, 102, null, null, 103],
+        createdAt: '2026-06-27T12:00:00.000Z',
+        updatedAt: '2026-06-27T12:00:00.000Z',
+      },
+      {
+        id: 'legacy-partial',
+        name: 'Legacy Partial Crew',
+        notes: '',
+        shipId: null,
+        slots: [null, null, null, null, null, null],
+        createdAt: '2026-06-27T12:00:00.000Z',
+        updatedAt: '2026-06-27T12:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('repairs legacy v1 partial share payloads through saved-team import parsing', () => {
+    const parsed = parseSavedTeamsImportContent(
+      readFixture('saved-team-share-v1-legacy-partial.json'),
+    );
+    const sanitized = sanitizeSavedTeamsImportPayload(parsed, {
+      now: '2026-06-27T12:00:00.000Z',
+      untitledTeamName: 'Untitled Crew',
+    });
+
+    expect(sanitized.invalidTeamCount).toBe(0);
+    expect(sanitized.teams).toEqual([
+      {
+        id: 'legacy-share-partial',
+        name: 'Untitled Crew',
+        notes: '',
+        shipId: null,
+        slots: [null, null, null, null, null, null],
+        createdAt: '2026-06-01T00:00:00.000Z',
+        updatedAt: '2026-06-01T00:00:00.000Z',
+      },
+    ]);
+  });
+
   it('clears unavailable character ids from imported slots', () => {
     const result = clearUnavailableSavedTeamSlots(
       [
@@ -201,3 +259,7 @@ describe('Saved teams transfer utils', () => {
     expect(result.teams[0]?.slots).toEqual([101, null, null, 202, null, 404]);
   });
 });
+
+function readFixture(fileName: string): string {
+  return readFileSync(resolve(process.cwd(), 'scripts/fixtures/data', fileName), 'utf8');
+}

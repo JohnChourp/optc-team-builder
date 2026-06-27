@@ -120,6 +120,12 @@
     "warningTitle": "Import completed with warnings"
   },
   "loading": "Loading saved teams...",
+  "storageRecovery": {
+    "dropped": "Removed {{count}} corrupted saved-team records.",
+    "repaired": "Repaired {{count}} saved teams.",
+    "reset": "Local saved-teams storage was invalid and has been reset.",
+    "title": "Saved teams storage repaired"
+  },
   "openTeam": {
     "copy": "Choose where to open \"{{name}}\".",
     "destinations": {

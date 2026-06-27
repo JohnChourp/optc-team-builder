@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "source": "saved-teams",
+  "exportedAt": "not-a-date",
+  "teams": [
+    {
+      "id": "legacy-minimal",
+      "slots": [101, "bad", 102, 0, null, 103, 104]
+    },
+    null,
+    {
+      "name": "Missing stable id",
+      "slots": [101]
+    },
+    {
+      "id": "legacy-partial",
+      "name": "  Legacy Partial Crew  ",
+      "shipId": "bad",
+      "notes": 123,
+      "createdAt": "",
+      "updatedAt": "bad-date"
+    }
+  ]
+}

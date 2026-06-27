@@ -34,6 +34,24 @@
           </section>
         }
 
+        @if (!loading() && actionFeedback(); as feedback) {
+          <div
+            class="import-feedback"
+            data-testid="saved-teams-action-feedback"
+            [class.import-feedback--success]="feedback.tone === 'success'"
+            [class.import-feedback--warning]="feedback.tone === 'warning'"
+            [class.import-feedback--error]="feedback.tone === 'error'"
+          >
+            <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
+            <div>
+              <strong>{{ feedback.title }}</strong>
+              @for (detail of feedback.details; track $index) {
+                <span>{{ detail }}</span>
+              }
+            </div>
+          </div>
+        }
+
         @if (!loading() && !savedTeams().length) {
           <section class="glass-card empty-card">
             <h2>{{ t('title') }}</h2>
@@ -203,23 +221,6 @@
                 </ion-button>
               </div>
             </div>
-            @if (actionFeedback(); as feedback) {
-              <div
-                class="import-feedback"
-                data-testid="saved-teams-action-feedback"
-                [class.import-feedback--success]="feedback.tone === 'success'"
-                [class.import-feedback--warning]="feedback.tone === 'warning'"
-                [class.import-feedback--error]="feedback.tone === 'error'"
-              >
-                <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
-                <div>
-                  <strong>{{ feedback.title }}</strong>
-                  @for (detail of feedback.details; track $index) {
-                    <span>{{ detail }}</span>
-                  }
-                </div>
-              </div>
-            }
             @if (hasAbilityFilters() && !filteredSavedTeamCards().length) {
               <div class="saved-teams-filter-empty">
                 <strong>{{ t('abilityFilters.empty.title') }}</strong>

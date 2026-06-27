@@ -248,11 +248,13 @@ export class SavedTeamsPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await Promise.all([this.userState.readySavedTeams(), this.i18n.preloadScope('saved-teams')]);
+    this.applySavedTeamsStorageRecoveryFeedback();
     await this.refreshSavedTeamCards();
   }
 
   public async ionViewWillEnter(): Promise<void> {
     await Promise.all([this.userState.readySavedTeams(), this.i18n.preloadScope('saved-teams')]);
+    this.applySavedTeamsStorageRecoveryFeedback();
     await this.refreshSavedTeamCards();
   }
 
@@ -1072,6 +1074,46 @@ export class SavedTeamsPage implements OnInit {
       ),
       details,
     };
+  }
+
+  private applySavedTeamsStorageRecoveryFeedback(): void {
+    const summary = this.userState.consumeSavedTeamsStorageRecovery();
+
+    if (!summary) {
+      return;
+    }
+
+    const details: string[] = [];
+
+    if (summary.reset) {
+      details.push(this.i18n.translate('storageRecovery.reset', undefined, 'saved-teams'));
+    }
+
+    if (summary.repairedCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'storageRecovery.repaired',
+          { count: summary.repairedCount },
+          'saved-teams',
+        ),
+      );
+    }
+
+    if (summary.droppedCount > 0) {
+      details.push(
+        this.i18n.translate(
+          'storageRecovery.dropped',
+          { count: summary.droppedCount },
+          'saved-teams',
+        ),
+      );
+    }
+
+    this.actionFeedback.set({
+      details,
+      title: this.i18n.translate('storageRecovery.title', undefined, 'saved-teams'),
+      tone: 'warning',
+    });
   }
 
   private resolveImportError(error: SavedTeamsImportError | Error | unknown): string {

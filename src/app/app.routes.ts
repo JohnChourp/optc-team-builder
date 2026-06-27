@@ -457,7 +457,7 @@ export const routes: Routes = [
           },
           {
             title: 'Supported transfer formats',
-            copy: 'Saved Teams import accepts schema v1 saved-teams JSON, a saved-team share link, or a raw saved-team share code. Compare mode also accepts raw saved-team JSON, Auto Team Builder preset JSON, and generated team JSON.',
+            copy: 'Saved Teams import accepts schema v1 saved-teams JSON, a saved-team share link, or a raw saved-team share code. Stable-id v1 team records can be repaired when optional fields are missing or stale; unsupported schemas, malformed share codes, and teams without a stable id are rejected.',
           },
           {
             title: 'Example flows',
@@ -465,7 +465,7 @@ export const routes: Routes = [
           },
           {
             title: 'Current limits',
-            copy: 'Saved teams are local to the current browser or app install unless you export, share, import, or sync them. Unsupported schema versions and malformed share codes are rejected instead of being imported silently.',
+            copy: 'Saved teams are local to the current browser or app install unless you export, share, import, or sync them. Corrupted local saved-team storage is repaired in place when possible, and unrecoverable records are removed with a warning instead of breaking the page.',
           },
         ],
         links: [

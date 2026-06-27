@@ -80,7 +80,7 @@ function normalizeImportedTeamSlots(value: unknown): Array<number | null> {
 function cloneSavedTeam(team: SavedTeam): SavedTeam {
   return {
     ...team,
-    slots: [...team.slots],
+    slots: Array.isArray(team.slots) ? [...team.slots] : [],
   };
 }
 

@@ -104,7 +104,14 @@ Saved teams are on-device user data with this transfer payload:
 }
 ```
 
-Team records contain id, name, six character slots, optional ship id, notes, and timestamps. Saved team schema remains v1 in this data epic; no migration is needed because no saved-team wire shape changed.
+Team records contain id, name, six character slots, optional ship id, notes, and timestamps. Saved team schema remains v1 in this data epic.
+
+The v1 compatibility contract is strict at the payload boundary and forgiving inside stable team records:
+
+- Supported payloads must use `schemaVersion: 1` with source `saved-teams`, or `schemaVersion: 1` with source `saved-team-share` for single-team share payloads.
+- Repairable v1 team records must have a stable string `id`. Missing names become the app's untitled crew label, invalid notes become empty text, invalid ship ids are cleared, slots are padded or truncated to six positions, invalid slot values are cleared, and invalid timestamps fall back to the payload timestamp or the current import time.
+- Unrecoverable team records without a stable id, non-object records, malformed JSON, malformed share codes, unsupported sources, and unsupported schema versions are rejected instead of imported silently.
+- Corrupted local `savedTeams` storage is repaired in place on load. Valid or repairable stable-id teams are kept, unrecoverable records are removed, invalid/non-array storage resets to an empty saved-team list, and the cleaned state is written back locally.
 
 Single-team share links use a separate self-contained payload encoded into the `teamShare` query parameter on `/tabs/manual-team-builder`:
 
@@ -135,7 +142,12 @@ For the user-facing flow across guided builds, compare mode, saved-team JSON, sh
 - User backups use their payload-level `schemaVersion`.
 - Unsupported user backup versions must fail with the existing typed import errors.
 - If a future saved-team or saved-enemy schema changes, add a migration or an explicit unsupported-schema error before accepting the new payload.
+- Saved-team v1 compatibility is covered by compact fixtures for current, legacy/partial, and share payload shapes.
 
 ## Fixtures
 
 Small local fixtures live in `scripts/fixtures/data`. They are intended for tests and local development only, not as production data sources.
+
+- `saved-teams-v1.json`: current Saved Teams transfer payload.
+- `saved-teams-v1-legacy-partial.json`: Saved Teams transfer payload with repairable partial records and invalid records.
+- `saved-team-share-v1-legacy-partial.json`: single-team share payload with repairable partial fields.
