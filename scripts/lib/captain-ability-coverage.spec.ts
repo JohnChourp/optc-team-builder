@@ -736,6 +736,107 @@ describe('extractCoverageTiers', () => {
     ]);
   });
 
+  it('keeps inline alternatives inside prefixed conditions as separate trigger-gated tiers', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts HP of all characters by 1.25x. If there is a [STR], [DEX], [QCK], [PSY] and [INT] character in your crew, boosts ATK of all characters by 2.25x, by 3.9375x instead if they have a beneficial orb.',
+    );
+
+    expect(tiers).toHaveLength(2);
+    expect(tiers[0]).toMatchObject({
+      kind: 'baseline-and-conditional',
+      atkBoost: 2.25,
+      hpBoost: 1.25,
+      teamConditions: [
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 5,
+          types: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+        }),
+      ],
+      triggerConditions: [],
+    });
+    expect(tiers[1]).toMatchObject({
+      kind: 'baseline-and-conditional',
+      atkBoost: 3.9375,
+      hpBoost: 1.25,
+      teamConditions: [
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 5,
+          types: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+        }),
+      ],
+      triggerConditions: [
+        {
+          kind: 'other',
+          rawClause: 'if they have a beneficial orb',
+        },
+      ],
+    });
+  });
+
+  it('preserves target restrictions on inline conditional tiers', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of Driven and Slasher characters by 4x, by 6x instead if they are a Cost 40 or less character.',
+    );
+
+    expect(tiers).toHaveLength(2);
+    expect(tiers[1]).toMatchObject({
+      kind: 'conditional',
+      atkBoost: 6,
+      characterConditions: expect.objectContaining({
+        classes: ['Driven', 'Slasher'],
+        costRange: { max: 40 },
+      }),
+      triggerConditions: [],
+    });
+  });
+
+  it('models inline crew-composition gates as team conditions', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of all characters by 3x if you have a Striker, Shooter, Fighter and Slasher on your crew.',
+    );
+
+    expect(tiers).toHaveLength(1);
+    expect(tiers[0]).toMatchObject({
+      kind: 'conditional',
+      atkBoost: 3,
+      teamConditions: [
+        expect.objectContaining({
+          kind: 'crew-composition',
+          minCount: 4,
+          classes: ['Fighter', 'Shooter', 'Slasher', 'Striker'],
+        }),
+      ],
+      triggerConditions: [],
+    });
+  });
+
+  it('keeps HP threshold triggers when inline alternatives carry shared decimal HP riders', () => {
+    const tiers = extractCoverageTiers(
+      'Boosts ATK of Driven characters by 3x, by 3.5x instead if HP is above 70% at the start of the turn, their HP by 1.25x.',
+    );
+
+    expect(tiers).toHaveLength(2);
+    expect(tiers[0]).toMatchObject({
+      kind: 'baseline',
+      atkBoost: 3,
+      hpBoost: 1.25,
+    });
+    expect(tiers[1]).toMatchObject({
+      kind: 'conditional',
+      atkBoost: 3.5,
+      hpBoost: 1.25,
+      triggerConditions: [
+        {
+          kind: 'hp-above',
+          hpPercent: 70,
+          rawClause: 'HP is above 70%',
+        },
+      ],
+    });
+  });
+
   it('models Dominant Type ATK as a same-type team coverage and keeps shared HP in that tier', () => {
     const captainAbility =
       'Boosts HP of all characters by 1.25x, makes badly matching orbs beneficial for all characters, and reduces Despair duration by 6 turns. If your crew has 4+ characters of the same Type, boosts ATK of the Dominant Type characters by 4.5x.';

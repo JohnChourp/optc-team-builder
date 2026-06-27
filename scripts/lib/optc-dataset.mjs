@@ -15,7 +15,11 @@ const conditionalCaptainBoostPrefixPattern =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
 const inlineCaptainBoostConditionPattern = /\b(?:if|when)\b/i;
 const inlineConditionalBoostRiderPattern =
-  /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
+  /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?\s+instead\b[^,.;]*/gi;
+const trailingCaptainBoostAlternativePattern =
+  /(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+(\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?)(?:\s+instead)?\b((?:(?!(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?\b)(?!\s+(?:and|but)\s+(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)[^,;])*)/gi;
+const captainBoostMultiplierValuePattern =
+  /\bby\s+\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?\b/gi;
 const defaultCaptainBranchLabels = new Set(['always active', 'standard captain']);
 const preferredDefaultCaptainVariantKeys = [
   'base',
@@ -185,7 +189,9 @@ function splitCaptainEffectClauses(text) {
     .flatMap((clause) =>
       isConditionalCaptainBoostClause(clause)
         ? [clause]
-        : clause.split(captainEffectClauseSeparator),
+        : clause
+            .split(captainEffectClauseSeparator)
+            .flatMap(expandTrailingCaptainBoostAlternatives),
     )
     .map((clause) => clause.trim())
     .filter(Boolean);
@@ -222,7 +228,75 @@ function isConditionalCaptainBoostClause(clause) {
 }
 
 function stripInlineConditionalBoostRiders(clause) {
-  return clause.replace(inlineConditionalBoostRiderPattern, '').trim();
+  return normalizeCaptainBoostClause(clause.replace(inlineConditionalBoostRiderPattern, ''));
+}
+
+function expandTrailingCaptainBoostAlternatives(clause) {
+  const alternatives = [...clause.matchAll(trailingCaptainBoostAlternativePattern)];
+  if (alternatives.length === 0) {
+    return [clause];
+  }
+
+  const firstAlternative = alternatives[0];
+  const firstAlternativeIndex = firstAlternative?.index;
+  if (firstAlternativeIndex === undefined) {
+    return [clause];
+  }
+
+  const primaryClause = clause.slice(0, firstAlternativeIndex).trim();
+  const primaryMultiplier = resolvePrimaryMultiplierForTrailingAlternative(primaryClause);
+  if (primaryMultiplier?.index === undefined) {
+    return [clause];
+  }
+
+  const sharedBoostPrefix = primaryClause.slice(0, primaryMultiplier.index).trimEnd();
+  if (!/\bboosts?\b/i.test(sharedBoostPrefix) || !/\b(?:atk|hp)\b/i.test(sharedBoostPrefix)) {
+    return [clause];
+  }
+
+  const trailingSharedSuffix = extractTrailingSharedBoostSuffix(clause, alternatives);
+
+  return [
+    normalizeCaptainBoostClause(`${primaryClause}${trailingSharedSuffix}`),
+    ...alternatives.map((alternative) =>
+      normalizeCaptainBoostClause(
+        `${sharedBoostPrefix} by ${alternative[1]}${alternative[2] ?? ''}${trailingSharedSuffix}`,
+      ),
+    ),
+  ];
+}
+
+function resolvePrimaryMultiplierForTrailingAlternative(primaryClause) {
+  const primaryMultipliers = [...primaryClause.matchAll(captainBoostMultiplierValuePattern)];
+  captainBoostMultiplierValuePattern.lastIndex = 0;
+  if (
+    primaryMultipliers.length > 1 &&
+    /\batk\b/i.test(primaryClause) &&
+    /\bhp\b/i.test(primaryClause) &&
+    /\bstart of the chain\b/i.test(primaryClause)
+  ) {
+    return primaryMultipliers[0];
+  }
+
+  return primaryMultipliers.at(-1);
+}
+
+function extractTrailingSharedBoostSuffix(clause, alternatives) {
+  const finalAlternative = alternatives.at(-1);
+  if (finalAlternative?.index === undefined) {
+    return '';
+  }
+
+  const finalAlternativeEnd = finalAlternative.index + finalAlternative[0].length;
+  let suffix = clause.slice(finalAlternativeEnd).replace(/^\s*,\s*/, '').trim();
+  if (suffix && !/^(?:and|but)\b/i.test(suffix) && /\b(?:atk|hp)\b/i.test(suffix)) {
+    suffix = `and ${suffix}`;
+  }
+  return suffix ? ` ${suffix}` : '';
+}
+
+function normalizeCaptainBoostClause(clause) {
+  return String(clause ?? '').replace(/\s+/g, ' ').replace(/\s+([,.;:])/g, '$1').trim();
 }
 
 function isConditionGatedCaptainBoostClause(clause) {
@@ -232,10 +306,28 @@ function isConditionGatedCaptainBoostClause(clause) {
     return true;
   }
 
-  const conditionIndex = normalizedClause.search(inlineCaptainBoostConditionPattern);
+  const conditionIndex = findInlineConditionIndex(normalizedClause);
   const multiplierIndex = normalizedClause.search(/\bby\s+\d+(?:\.\d+)?x\b/i);
 
   return conditionIndex > multiplierIndex && multiplierIndex >= 0;
+}
+
+function findInlineConditionIndex(clause) {
+  const multiplierMatch = captainBoostMultiplierValuePattern.exec(clause);
+  captainBoostMultiplierValuePattern.lastIndex = 0;
+  if (multiplierMatch?.index === undefined) {
+    return -1;
+  }
+
+  const conditionPattern = new RegExp(inlineCaptainBoostConditionPattern, 'gi');
+  let conditionMatch;
+  while ((conditionMatch = conditionPattern.exec(clause)) !== null) {
+    if ((conditionMatch.index ?? -1) > multiplierMatch.index) {
+      return conditionMatch.index;
+    }
+  }
+
+  return -1;
 }
 
 function isSelfOnlyCaptainBoostMatch(matchText) {

@@ -42,10 +42,11 @@ const CAPTAIN_MULTIPLIER_PATTERN =
 const CAPTAIN_BASE_STAT_BOOST_PATTERN =
   /\bboosts?\s+base\b[^.;]*\b(?:ATK|HP)\b[^.;]*\bby\s+\d+(?:,\d{3})*\b/i;
 const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
-  /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
+  /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?\s+instead\b[^,.;]*/gi;
 const TRAILING_CAPTAIN_BOOST_ALTERNATIVE_PATTERN =
-  /(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+(\d+(?:\.\d+)?)x\b((?:(?!(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+\d+(?:\.\d+)?x\b)(?!\s+(?:and|but)\s+(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)[^,;])*)/gi;
-const CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN = /\bby\s+\d+(?:\.\d+)?x\b/gi;
+  /(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+(\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?)(?:\s+instead)?\b((?:(?!(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?\b)(?!\s+(?:and|but)\s+(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)[^,;])*)/gi;
+const CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN =
+  /\bby\s+\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?\b/gi;
 const BOOST_INSTEAD_SUFFIX_PATTERN =
   /\bby\s+(\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?)\s+instead\b/gi;
 const SELF_OVERRIDE_RIDER_PATTERN =
@@ -297,7 +298,7 @@ function isConditionGatedCaptainBoostClause(clause) {
 
 function isInlineConditionGatedCaptainBoostClause(clause) {
   const normalizedClause = normalizeCoverageClause(clause);
-  const conditionIndex = normalizedClause.search(INLINE_CAPTAIN_BOOST_CONDITION_PATTERN);
+  const conditionIndex = findInlineConditionIndex(normalizedClause);
   const multiplierIndex = normalizedClause.search(CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN);
 
   return conditionIndex > multiplierIndex && multiplierIndex >= 0;
@@ -346,10 +347,13 @@ function stripBoostInsteadSuffix(clause) {
 }
 
 function stripInlineConditionSuffix(clause) {
+  const conditionText = extractInlineConditionText(clause);
+  if (!conditionText || shouldPreserveInlineConditionInTierClause(conditionText)) {
+    return normalizeCoverageClause(clause);
+  }
+
   return normalizeCoverageClause(
-    clause
-      .replace(BENEFICIAL_ORB_INLINE_CONDITION_PATTERN, '')
-      .replace(INLINE_CAPTAIN_BOOST_CONDITION_SUFFIX_PATTERN, ''),
+    clause.replace(conditionText, ''),
   );
 }
 
@@ -485,6 +489,8 @@ const CREW_TEAM_ALT_SAME_TYPE_PATTERN =
 // Rainbow / presence-all phrasing: "there is/are a [STR], [DEX] ... character(s) in your crew".
 const CREW_TEAM_RAINBOW_PATTERN =
   /\bthere(?:'?s|\s+is|\s+are)\s+a?\s*((?:\[[A-Z]{3}\][\s,/]*(?:and\s+)?){2,5})\s*characters?\s+in\s+your\s+crew\b/gi;
+const CREW_TEAM_CLASS_PRESENCE_PATTERN =
+  /\byou\s+have\s+a\s+([^.;]{1,220}?)\s+on\s+your\s+crew\b/gi;
 // Negative crew presence: "there are no [PSY] or [INT] characters on/in your crew".
 const CREW_TEAM_EXCLUSION_PATTERN =
   /\bthere\s+(?:are\s+no|aren'?t(?:\s+any)?)\s+([^,.;]{1,220}?)\s+(?:characters|units)\s+(?:on|in)\s+your\s+crew\b/gi;
@@ -970,31 +976,129 @@ function extractConditionalSentenceClusters(text) {
 function extractInlineConditionalBoostClusters(text) {
   return splitCaptainSentences(text.replace(BRANCH_LABEL_PATTERN, '. '))
     .map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.length > 0 && !isConditionalCaptainBoostClause(sentence))
-    .flatMap((sentence) => splitCaptainEffectClauses(sentence))
-    .flatMap((clause) => normalizeCaptainBoostScopeClauseCandidates(clause, true))
-    .filter(isInlineConditionGatedCaptainBoostClause)
-    .filter(isCaptainTierEffectClause)
-    .map((clause) => buildInlineConditionalCluster(clause));
+    .filter((sentence) => sentence.length > 0)
+    .flatMap((sentence) =>
+      splitCaptainEffectClauses(sentence).flatMap((clause) =>
+        normalizeCaptainBoostScopeClauseCandidates(clause, true).map((candidate) => ({
+          sentence,
+          clause: candidate,
+        })),
+      ),
+    )
+    .filter(({ clause }) => isInlineConditionGatedCaptainBoostClause(clause))
+    .filter(({ clause }) => isCaptainTierEffectClause(clause))
+    .map(({ sentence, clause }) => buildInlineConditionalCluster(sentence, clause));
 }
 
-function buildInlineConditionalCluster(clause) {
+function buildInlineConditionalCluster(sentence, clause) {
   const conditionText = extractInlineConditionText(clause);
+  const outerMetadata = isConditionalCaptainBoostClause(sentence)
+    ? resolveConditionalSentenceMetadata(sentence)
+    : createEmptyConditionalMetadata();
+  const inlineMetadata = resolveInlineConditionMetadata(conditionText);
 
   return {
     sentence: clause,
     clauses: [clause],
-    teamConditions: [],
-    fieldConditions: [],
-    triggerConditions: resolveInlineConditionTriggers(conditionText),
+    teamConditions: dedupeConditionObjects([
+      ...outerMetadata.teamConditions,
+      ...inlineMetadata.teamConditions,
+    ]),
+    fieldConditions: dedupeConditionObjects([
+      ...outerMetadata.fieldConditions,
+      ...inlineMetadata.fieldConditions,
+    ]),
+    triggerConditions: dedupeConditionObjects([
+      ...outerMetadata.triggerConditions,
+      ...inlineMetadata.triggerConditions,
+    ]),
   };
 }
 
+function createEmptyConditionalMetadata() {
+  return {
+    teamConditions: [],
+    fieldConditions: [],
+    triggerConditions: [],
+  };
+}
+
+function resolveInlineConditionMetadata(conditionText) {
+  if (!conditionText || shouldPreserveInlineConditionInTierClause(conditionText)) {
+    return createEmptyConditionalMetadata();
+  }
+
+  const metadata = resolveConditionalSentenceMetadata(conditionText);
+  if (
+    metadata.teamConditions.length > 0 ||
+    metadata.fieldConditions.length > 0 ||
+    metadata.triggerConditions.length > 0
+  ) {
+    return metadata;
+  }
+
+  return {
+    ...createEmptyConditionalMetadata(),
+    triggerConditions: [
+      {
+        kind: 'other',
+        rawClause: conditionText,
+      },
+    ],
+  };
+}
+
+function dedupeConditionObjects(conditions) {
+  const seen = new Set();
+  return conditions.filter((condition) => {
+    const key = JSON.stringify(condition);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
 function extractInlineConditionText(clause) {
-  return normalizeCoverageClause(
-    clause.match(BENEFICIAL_ORB_INLINE_CONDITION_PATTERN)?.[0] ??
-      clause.match(INLINE_CAPTAIN_BOOST_CONDITION_SUFFIX_PATTERN)?.[0] ??
-      '',
+  const normalizedClause = normalizeCoverageClause(clause);
+  const conditionIndex = findInlineConditionIndex(normalizedClause);
+  if (conditionIndex === -1) {
+    return '';
+  }
+
+  let conditionText = normalizedClause.slice(conditionIndex);
+  const sharedStatRiderIndex = conditionText.search(
+    /\s+(?:,?\s*)?(?:and\s+)?their\s+(?:ATK|HP|RCV)\s+by\b/i,
+  );
+  if (sharedStatRiderIndex > 0) {
+    conditionText = conditionText.slice(0, sharedStatRiderIndex);
+  }
+
+  return normalizeCoverageClause(conditionText);
+}
+
+function findInlineConditionIndex(clause) {
+  const multiplierMatch = CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN.exec(clause);
+  CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN.lastIndex = 0;
+  if (multiplierMatch?.index === undefined) {
+    return -1;
+  }
+
+  const conditionPattern = new RegExp(INLINE_CAPTAIN_BOOST_CONDITION_PATTERN, 'gi');
+  let conditionMatch;
+  while ((conditionMatch = conditionPattern.exec(clause)) !== null) {
+    if ((conditionMatch.index ?? -1) > multiplierMatch.index) {
+      return conditionMatch.index;
+    }
+  }
+
+  return -1;
+}
+
+function shouldPreserveInlineConditionInTierClause(conditionText) {
+  return /\b(?:if|when)\s+(?:they|the\s+characters?|characters?|units?|crewmates?)\s+(?:are|is)\s+(?:a\s+)?(?:Cost|Rarity)\b/i.test(
+    conditionText,
   );
 }
 
@@ -1017,6 +1121,19 @@ function resolveInlineConditionTriggers(conditionText) {
 }
 
 function buildConditionalCluster(sentence) {
+  const metadata = resolveConditionalSentenceMetadata(sentence);
+  const clauses = extractEffectClausesFromConditionalSentence(sentence).filter(
+    (clause) => !isInlineConditionGatedCaptainBoostClause(clause),
+  );
+
+  return {
+    sentence,
+    clauses,
+    ...metadata,
+  };
+}
+
+function resolveConditionalSentenceMetadata(sentence) {
   const teamConditions = [];
   const fieldConditions = [];
   const triggerConditions = [];
@@ -1049,6 +1166,10 @@ function buildConditionalCluster(sentence) {
   CREW_TEAM_RAINBOW_PATTERN.lastIndex = 0;
   while ((match = CREW_TEAM_RAINBOW_PATTERN.exec(sentence)) !== null) {
     teamConditions.push(parseRainbowTeamCondition(match[1], match[0]));
+  }
+  CREW_TEAM_CLASS_PRESENCE_PATTERN.lastIndex = 0;
+  while ((match = CREW_TEAM_CLASS_PRESENCE_PATTERN.exec(sentence)) !== null) {
+    teamConditions.push(parseCrewPresenceCondition(match[1], match[0]));
   }
   CREW_TEAM_EXCLUSION_PATTERN.lastIndex = 0;
   while ((match = CREW_TEAM_EXCLUSION_PATTERN.exec(sentence)) !== null) {
@@ -1091,14 +1212,7 @@ function buildConditionalCluster(sentence) {
 
   const groupedTeamConditions = applyAlternativeTeamConditionGroups(sentence, teamConditions);
 
-  // The conditional sentence keeps the whole "If X, ..." block as a single token in the regular
-  // splitter — bypass that and extract just the effect portion (after the condition's trailing
-  // comma, optionally past a "for N turns" rider).
-  const clauses = extractEffectClausesFromConditionalSentence(sentence);
-
   return {
-    sentence,
-    clauses,
     teamConditions: groupedTeamConditions,
     fieldConditions,
     triggerConditions,
@@ -1254,7 +1368,7 @@ function expandTrailingCaptainBoostAlternatives(clause) {
     normalizeCoverageClause(`${primaryClause}${trailingSharedSuffix}`),
     ...alternatives.map((alternative) =>
       normalizeCoverageClause(
-        `${sharedBoostPrefix} by ${alternative[1]}x${alternative[2] ?? ''}${trailingSharedSuffix}`,
+        `${sharedBoostPrefix} by ${alternative[1]}${alternative[2] ?? ''}${trailingSharedSuffix}`,
       ),
     ),
   ];
@@ -1350,6 +1464,43 @@ function parseRainbowTeamCondition(typeListText, rawClause) {
     types,
     classes: [],
     characterTags: [],
+    rawClause,
+  };
+}
+
+function parseCrewPresenceCondition(descriptor, rawClause) {
+  const types = [];
+  const classes = [];
+  const characterTags = [];
+
+  for (const typeLabel of AUTO_TEAM_BUILDER_TYPES) {
+    if (new RegExp(`\\[${typeLabel}\\]`, 'i').test(descriptor)) {
+      types.push(typeLabel);
+    }
+  }
+  for (const classLabel of AUTO_TEAM_BUILDER_CLASSES) {
+    if (new RegExp(`\\b${escapeRegExp(classLabel)}s?\\b`, 'i').test(descriptor)) {
+      classes.push(classLabel);
+    }
+  }
+
+  const tagMatches = [...descriptor.matchAll(BRACKETED_LABEL_PATTERN)].map((tag) => tag[1]);
+  for (const tag of tagMatches) {
+    const lowerTag = tag.toLowerCase();
+    if (
+      !AUTO_TEAM_BUILDER_TYPES.some((typeLabel) => typeLabel.toLowerCase() === lowerTag) &&
+      !AUTO_TEAM_BUILDER_CLASSES.some((classLabel) => classLabel.toLowerCase() === lowerTag)
+    ) {
+      characterTags.push(tag);
+    }
+  }
+
+  return {
+    kind: 'crew-composition',
+    minCount: types.length + classes.length + characterTags.length || undefined,
+    types,
+    classes,
+    characterTags,
     rawClause,
   };
 }
