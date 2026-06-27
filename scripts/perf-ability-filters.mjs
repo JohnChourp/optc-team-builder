@@ -88,7 +88,7 @@ try {
   );
 } finally {
   if (browser) {
-    await browser.close();
+    await closeBrowser(browser);
   }
   await stopServer(server);
 }
@@ -114,6 +114,7 @@ async function ensureServer() {
   const child = spawn(npmBin, ['start', '--', '--host', '127.0.0.1', '--port', String(port)], {
     cwd: appRoot,
     env: process.env,
+    detached: process.platform !== 'win32',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   child.stdout.on('data', (chunk) => process.stdout.write(chunk));
@@ -133,11 +134,11 @@ async function stopServer(child) {
     return;
   }
 
-  child.kill('SIGTERM');
+  killServerProcess(child, 'SIGTERM');
   await new Promise((resolve) => {
     const timeout = setTimeout(() => {
       if (child.exitCode === null && child.signalCode === null) {
-        child.kill('SIGKILL');
+        killServerProcess(child, 'SIGKILL');
       }
       resolve();
     }, 5_000);
@@ -147,6 +148,26 @@ async function stopServer(child) {
       resolve();
     });
   });
+}
+
+function killServerProcess(child, signal) {
+  if (process.platform !== 'win32' && child.pid) {
+    try {
+      process.kill(-child.pid, signal);
+      return;
+    } catch {
+      // Fall back to the npm wrapper process below.
+    }
+  }
+
+  child.kill(signal);
+}
+
+async function closeBrowser(activeBrowser) {
+  await Promise.race([
+    activeBrowser.close(),
+    new Promise((resolve) => setTimeout(resolve, 5_000)),
+  ]);
 }
 
 async function serverResponds() {
