@@ -182,6 +182,236 @@
       ]
     },
     {
+      "id": "multi-stat-atk-hp",
+      "name": "Multi Stat ATK And HP Captain",
+      "captainAbility": "Boosts ATK and HP of [DEX] characters by 2x.",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 2,
+        "captainHpBoost": 2,
+        "captainAverageBoost": 2
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "baseline",
+          "scope": "subset",
+          "atkBoost": 2,
+          "hpBoost": 2,
+          "characterConditions": {
+            "universal": false,
+            "types": ["DEX"],
+            "classes": [],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "covered by multi-stat type",
+          "target": {
+            "id": 910501,
+            "type": "DEX",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 2,
+              "hp": 2
+            },
+            "chips": [
+              {
+                "kind": "type",
+                "label": "DEX"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "prefix-team-gated-atk-hp",
+      "name": "Prefix Team Gated ATK And HP Captain",
+      "captainAbility": "If there is a [STR], [DEX] and [PSY] character in your crew, boosts ATK of [STR], [DEX] and [PSY] characters by 4x and their HP by 1.35x and makes [DEX], [RCV] and [TND] orbs beneficial for all characters.",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 0,
+        "captainHpBoost": 0,
+        "captainAverageBoost": 0
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "conditional",
+          "scope": "subset",
+          "atkBoost": 4,
+          "hpBoost": 1.35,
+          "characterConditions": {
+            "universal": false,
+            "types": ["DEX", "STR", "PSY"],
+            "classes": [],
+            "characterTags": []
+          },
+          "teamConditions": [
+            {
+              "kind": "crew-composition",
+              "minCount": 3,
+              "types": ["DEX", "STR", "PSY"],
+              "classes": [],
+              "characterTags": []
+            }
+          ],
+          "fieldConditions": [],
+          "triggerConditions": []
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "does not expose team-gated boost as default simple coverage",
+          "target": {
+            "id": 910601,
+            "type": "DEX",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": false,
+            "boosts": {
+              "atk": 0,
+              "hp": 0
+            },
+            "chips": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "inline-hp-gated-atk",
+      "name": "Inline HP Gated ATK Captain",
+      "captainAbility": "Boosts ATK of [PSY] characters by 3x if HP is above 99% at the start of the turn.",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 0,
+        "captainHpBoost": 0,
+        "captainAverageBoost": 0
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "conditional",
+          "scope": "subset",
+          "atkBoost": 3,
+          "characterConditions": {
+            "universal": false,
+            "types": ["PSY"],
+            "classes": [],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": [
+            {
+              "kind": "hp-above",
+              "hpPercent": 99
+            }
+          ]
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "does not expose HP-gated boost as default simple coverage",
+          "target": {
+            "id": 910701,
+            "type": "PSY",
+            "classes": ["Fighter", "Powerhouse"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": false,
+            "boosts": {
+              "atk": 0,
+              "hp": 0
+            },
+            "chips": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "inline-beneficial-orb-instead",
+      "name": "Inline Beneficial Orb Alternative Captain",
+      "captainAbility": "Boosts HP of Shooter characters by 1.5x and boosts ATK of Shooter characters by 2x, by 3x instead if they have a beneficial orb.",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 2,
+        "captainHpBoost": 1.5,
+        "captainAverageBoost": 1.75
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "baseline",
+          "scope": "subset",
+          "atkBoost": 2,
+          "hpBoost": 1.5,
+          "characterConditions": {
+            "universal": false,
+            "types": [],
+            "classes": ["Shooter"],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        },
+        {
+          "tier": 2,
+          "kind": "conditional",
+          "scope": "subset",
+          "atkBoost": 3,
+          "characterConditions": {
+            "universal": false,
+            "types": [],
+            "classes": ["Shooter"],
+            "characterTags": []
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": [
+            {
+              "kind": "other",
+              "rawClause": "if they have a beneficial orb"
+            }
+          ]
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "uses only default ATK before beneficial-orb alternative",
+          "target": {
+            "id": 910801,
+            "type": "DEX",
+            "classes": ["Shooter", "Free Spirit"],
+            "characterTags": []
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 2,
+              "hp": 1.5
+            },
+            "chips": [
+              {
+                "kind": "class",
+                "label": "Shooter"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "id": "branch-label",
       "name": "Default Branch Labels Ignore Powered Up Self Override",
       "captainAbility": "Always Active: Boosts HP of [STR], [DEX] and [QCK] characters by 1.3x. Standard Captain: Boosts ATK of [STR], [DEX] and [QCK] characters by 3.5x. Powered Up Captain: Boosts ATK of this character by 12x, boosts ATK of [STR], [DEX] and [QCK] characters by 5x.",

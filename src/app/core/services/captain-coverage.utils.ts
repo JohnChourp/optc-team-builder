@@ -95,15 +95,20 @@ const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
   /,\s+(?=(?:(?:and|but)\s+)?(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)|\s+(?:and|but)\s+(?=(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)/gi;
 const CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
+const INLINE_CAPTAIN_BOOST_CONDITION_PATTERN = /\b(?:if|when)\b/i;
+const INLINE_CAPTAIN_BOOST_CONDITION_SUFFIX_PATTERN = /\s+\b(?:if|when)\b[^.;]*$/i;
+const BENEFICIAL_ORB_INLINE_CONDITION_PATTERN =
+  /\bif\b(?:(?!\s+and\s+their\s+(?:ATK|HP|RCV)\b)[^.;,])*\bbeneficial\s+orb\b/i;
 const CAPTAIN_MULTIPLIER_PATTERN =
   /\bby\s+(?:a\s+further\s+|an?\s+additional\s+|another\s+)?\d+(?:\.\d+)?x\b/i;
 const CAPTAIN_BASE_STAT_BOOST_PATTERN =
   /\bboosts?\s+base\b[^.;]*\b(?:ATK|HP)\b[^.;]*\bby\s+\d+(?:,\d{3})*\b/i;
 const INLINE_CONDITIONAL_BOOST_RIDER_PATTERN =
-  /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x\s+instead\b[^,.;]*/gi;
+  /,\s*(?:or\s+)?by\s+\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?\s+instead\b[^,.;]*/gi;
 const TRAILING_CAPTAIN_BOOST_ALTERNATIVE_PATTERN =
-  /(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+(\d+(?:\.\d+)?)x\b((?:(?!(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+\d+(?:\.\d+)?x\b)(?!\s+(?:and|but)\s+(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)[^,;])*)/gi;
-const CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN = /\bby\s+\d+(?:\.\d+)?x\b/gi;
+  /(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+(\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?)(?:\s+instead)?\b((?:(?!(?:,\s*(?:(?:or|and)\s+)?|\s+and\s+)by\s+\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?\b)(?!\s+(?:and|but)\s+(?:boosts?|reduces?|cuts?|makes?|changes?|increases?|decreases?|adds?|recovers?|heals?|sets?|guarantees?)\b)[^,;])*)/gi;
+const CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN =
+  /\bby\s+\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?\b/gi;
 const BOOST_INSTEAD_SUFFIX_PATTERN =
   /\bby\s+(\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?)\s+instead\b/gi;
 const SELF_ACTIVATION_RIDER_PATTERN =
@@ -850,9 +855,10 @@ function extractCaptainBoostScopeClauses(text: string, includeConditional: boole
     .flatMap((clause) => normalizeCaptainBoostScopeClauseCandidates(clause, includeConditional))
     .filter(
       (clause) =>
-        (includeConditional || !isConditionalCaptainBoostClause(clause)) &&
+        (includeConditional || !isConditionGatedCaptainBoostClause(clause)) &&
         isCaptainBoostScopeClause(clause),
-    );
+    )
+    .map(stripInlineConditionSuffix);
 
   if (!includeConditional) {
     return boostClauses;
@@ -940,6 +946,17 @@ function stripSelfActivationRider(clause: string): string {
 
 function stripBoostInsteadSuffix(clause: string): string {
   return normalizeCoverageClause(clause.replace(BOOST_INSTEAD_SUFFIX_PATTERN, 'by $1'));
+}
+
+function stripInlineConditionSuffix(clause: string): string {
+  const conditionText = extractInlineConditionText(clause);
+  if (!conditionText || shouldPreserveInlineConditionInTierClause(conditionText)) {
+    return normalizeCoverageClause(clause);
+  }
+
+  return normalizeCoverageClause(
+    clause.replace(conditionText, ''),
+  );
 }
 
 function extractCaptainStartOfFightCooldownTagClauses(text: string): string[] {
@@ -1093,7 +1110,7 @@ function expandTrailingCaptainBoostAlternatives(clause: string): string[] {
     normalizeCoverageClause(`${primaryClause}${trailingSharedSuffix}`),
     ...alternatives.map((alternative) =>
       normalizeCoverageClause(
-        `${sharedBoostPrefix} by ${alternative[1]}x${alternative[2] ?? ''}${trailingSharedSuffix}`,
+        `${sharedBoostPrefix} by ${alternative[1]}${alternative[2] ?? ''}${trailingSharedSuffix}`,
       ),
     ),
   ];
@@ -1134,6 +1151,60 @@ function extractTrailingSharedBoostSuffix(
 
 function isConditionalCaptainBoostClause(clause: string): boolean {
   return CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN.test(clause.trim());
+}
+
+function isConditionGatedCaptainBoostClause(clause: string): boolean {
+  return isConditionalCaptainBoostClause(clause) || isInlineConditionGatedCaptainBoostClause(clause);
+}
+
+function isInlineConditionGatedCaptainBoostClause(clause: string): boolean {
+  const normalizedClause = normalizeCoverageClause(clause);
+  const conditionIndex = findInlineConditionIndex(normalizedClause);
+  const multiplierIndex = normalizedClause.search(CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN);
+
+  return conditionIndex > multiplierIndex && multiplierIndex >= 0;
+}
+
+function extractInlineConditionText(clause: string): string {
+  const normalizedClause = normalizeCoverageClause(clause);
+  const conditionIndex = findInlineConditionIndex(normalizedClause);
+  if (conditionIndex === -1) {
+    return '';
+  }
+
+  let conditionText = normalizedClause.slice(conditionIndex);
+  const sharedStatRiderIndex = conditionText.search(
+    /\s+(?:,?\s*)?(?:and\s+)?their\s+(?:ATK|HP|RCV)\s+by\b/i,
+  );
+  if (sharedStatRiderIndex > 0) {
+    conditionText = conditionText.slice(0, sharedStatRiderIndex);
+  }
+
+  return normalizeCoverageClause(conditionText);
+}
+
+function findInlineConditionIndex(clause: string): number {
+  const multiplierPattern = new RegExp(CAPTAIN_BOOST_MULTIPLIER_VALUE_PATTERN);
+  const multiplierMatch = multiplierPattern.exec(clause);
+  if (multiplierMatch?.index === undefined) {
+    return -1;
+  }
+
+  const conditionPattern = new RegExp(INLINE_CAPTAIN_BOOST_CONDITION_PATTERN, 'gi');
+  let conditionMatch: RegExpExecArray | null;
+  while ((conditionMatch = conditionPattern.exec(clause)) !== null) {
+    if ((conditionMatch.index ?? -1) > multiplierMatch.index) {
+      return conditionMatch.index;
+    }
+  }
+
+  return -1;
+}
+
+function shouldPreserveInlineConditionInTierClause(conditionText: string): boolean {
+  return /\b(?:if|when)\s+(?:they|the\s+characters?|characters?|units?|crewmates?)\s+(?:are|is)\s+(?:a\s+)?(?:Cost|Rarity)\b/i.test(
+    conditionText,
+  );
 }
 
 function extractCaptainBoost(clause: string, stat: 'atk' | 'hp'): number {

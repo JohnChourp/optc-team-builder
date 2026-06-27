@@ -355,6 +355,57 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(character.captainAverageBoost).toBe(3.325);
   });
 
+  it('preserves default boost fields around inline conditional alternatives', () => {
+    const buildCharacter = (captainAbility) =>
+      normalizeCharacters(
+        [createCaptainContractUnitTuple('Inline Default Boost Tester')],
+        {
+          1: {
+            captain: {
+              base: captainAbility,
+            },
+          },
+        },
+        [],
+        new Map(),
+      )[0];
+
+    expect(
+      buildCharacter(
+        'Boosts ATK of Cerebral characters by 5x-5.5x, by 5.25x-5.775x instead if they have a beneficial orb, boosts HP of Cerebral characters by 1.25x.',
+      ),
+    ).toMatchObject({
+      captainHpBoost: 1.25,
+      captainAtkBoost: 5,
+      captainAverageBoost: 3.125,
+    });
+    expect(
+      buildCharacter(
+        'Boosts ATK of Driven characters by 4.5x if they have a beneficial orb, by 3.75x otherwise and their HP by 1.4x.',
+      ),
+    ).toMatchObject({
+      captainHpBoost: 1.4,
+      captainAtkBoost: 3.75,
+      captainAverageBoost: 2.575,
+    });
+    expect(
+      buildCharacter('Boosts ATK of Free Spirit characters by 5x, by 5.25x if there is a Marked enemy.'),
+    ).toMatchObject({
+      captainHpBoost: 0,
+      captainAtkBoost: 5,
+      captainAverageBoost: 2.5,
+    });
+    expect(
+      buildCharacter(
+        'Boosts ATK of [PSY] characters by 3x if HP is above 99% at the start of the turn.',
+      ),
+    ).toMatchObject({
+      captainHpBoost: 0,
+      captainAtkBoost: 0,
+      captainAverageBoost: 0,
+    });
+  });
+
   it('ignores additionally-labeled Action Special captain boosts when precomputing defaults', () => {
     const [character] = normalizeCharacters(
       [
@@ -431,9 +482,8 @@ describe('import-optc-data ship thumbnail pack', () => {
     expect(character.captainAverageBoost).toBe(1.2);
   });
 
-  for (const caseId of ['single-tier', 'multi-tier', 'branch-label', 'utility-effect']) {
-    it(`generated contract: ${caseId}`, () => {
-      const contractCase = getCaptainContractCase(caseId);
+  for (const contractCase of captainContractCases.cases) {
+    it(`generated contract: ${contractCase.id}`, () => {
       const [character] = normalizeCharacters(
         [createCaptainContractUnitTuple(contractCase.name)],
         {
@@ -447,12 +497,12 @@ describe('import-optc-data ship thumbnail pack', () => {
         new Map(),
       );
 
-      expect(character, `${caseId} generated boosts drifted`).toMatchObject(
+      expect(character, `${contractCase.id} generated boosts drifted`).toMatchObject(
         contractCase.expectedGeneratedBoosts,
       );
       expect(
         character.detail.captainAbilityCoverage?.entries[0]?.tiers,
-        `${caseId} generated captain coverage tiers drifted`,
+        `${contractCase.id} generated captain coverage tiers drifted`,
       ).toEqual(
         expect.arrayContaining(
           contractCase.expectedCoverageTiers.map(createCaptainCoverageTierMatcher),
