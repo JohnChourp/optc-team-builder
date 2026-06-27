@@ -1,0 +1,129 @@
+name: Performance Budgets
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseline_run_id:
+        description: Optional successful Performance Budgets run ID to compare against
+        required: false
+        type: string
+  schedule:
+    - cron: '23 6 * * 1-5'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: performance-budgets
+  cancel-in-progress: false
+
+jobs:
+  performance-budgets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Resolve baseline report
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASELINE_RUN_ID: ${{ github.event.inputs.baseline_run_id }}
+        run: |
+          mkdir -p perf-artifacts/baseline
+          baseline_run_id="${BASELINE_RUN_ID:-}"
+
+          if [[ -z "${baseline_run_id}" ]]; then
+            baseline_run_id="$(
+              gh run list \
+                --workflow performance-budgets.yml \
+                --branch main \
+                --status success \
+                --limit 20 \
+                --json databaseId \
+                --jq '.[0].databaseId // ""'
+            )"
+          fi
+
+          if [[ -z "${baseline_run_id}" ]]; then
+            echo "No previous successful Performance Budgets run found." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          if gh run download "${baseline_run_id}" --name performance-budget-report --dir perf-artifacts/baseline; then
+            baseline_report_path="$(find perf-artifacts/baseline -name performance-budget-report.json -type f | head -n 1)"
+
+            if [[ -n "${baseline_report_path}" ]]; then
+              echo "baseline_report_path=${baseline_report_path}" >> "${GITHUB_OUTPUT}"
+              echo "Using baseline report from run ${baseline_run_id}." >> "${GITHUB_STEP_SUMMARY}"
+            else
+              echo "Run ${baseline_run_id} had no performance-budget-report.json artifact." >> "${GITHUB_STEP_SUMMARY}"
+            fi
+          else
+            echo "No downloadable baseline artifact found for run ${baseline_run_id}." >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Ability filter performance
+        env:
+          CI: 'true'
+          PERF_ASSERT: '0'
+          PERF_ARTIFACT_DIR: ${{ github.workspace }}/perf-artifacts/current/ability
+          PERF_RUN_LABEL: ability-filter
+        run: npm run perf:ability-filters
+
+      - name: Explanation and compare performance
+        env:
+          CI: 'true'
+          PERF_ASSERT: '0'
+          PERF_ARTIFACT_DIR: ${{ github.workspace }}/perf-artifacts/current/explanation
+          PERF_RUN_LABEL: explanation-compare
+        run: npm run perf:explanation-compare
+
+      - name: Build performance budget report
+        env:
+          BASELINE_REPORT_PATH: ${{ steps.baseline.outputs.baseline_report_path }}
+        run: |
+          report_args=(
+            --current-dir perf-artifacts/current
+            --output perf-artifacts/performance-budget-report.json
+          )
+
+          if [[ -n "${BASELINE_REPORT_PATH}" ]]; then
+            report_args+=(--baseline-report "${BASELINE_REPORT_PATH}")
+          fi
+
+          npm run perf:budget-report -- "${report_args[@]}"
+
+      - name: Upload performance budget artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-budget-report
+          path: |
+            perf-artifacts/performance-budget-report.json
+            perf-artifacts/current/
+          if-no-files-found: error
+          retention-days: 30
