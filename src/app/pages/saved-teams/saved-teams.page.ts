@@ -1077,7 +1077,7 @@ export class SavedTeamsPage implements OnInit {
   }
 
   private applySavedTeamsStorageRecoveryFeedback(): void {
-    const summary = this.userState.savedTeamsStorageRecovery();
+    const summary = this.userState.consumeSavedTeamsStorageRecovery();
 
     if (!summary) {
       return;

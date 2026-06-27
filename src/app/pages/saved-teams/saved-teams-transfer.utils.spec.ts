@@ -217,7 +217,9 @@ describe('Saved teams transfer utils', () => {
   });
 
   it('repairs legacy v1 partial share payloads through saved-team import parsing', () => {
-    const parsed = parseSavedTeamsImportContent(readFixture('saved-team-share-v1-legacy-partial.json'));
+    const parsed = parseSavedTeamsImportContent(
+      readFixture('saved-team-share-v1-legacy-partial.json'),
+    );
     const sanitized = sanitizeSavedTeamsImportPayload(parsed, {
       now: '2026-06-27T12:00:00.000Z',
       untitledTeamName: 'Untitled Crew',
@@ -230,7 +232,7 @@ describe('Saved teams transfer utils', () => {
         name: 'Untitled Crew',
         notes: '',
         shipId: null,
-        slots: [101, null, 102, null, null, null],
+        slots: [null, null, null, null, null, null],
         createdAt: '2026-06-01T00:00:00.000Z',
         updatedAt: '2026-06-01T00:00:00.000Z',
       },

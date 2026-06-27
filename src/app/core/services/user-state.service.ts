@@ -185,6 +185,14 @@ export class UserStateService {
     });
   }
 
+  public consumeSavedTeamsStorageRecovery(): SavedTeamsStorageRecoverySummary | null {
+    const summary = this.savedTeamsStorageRecovery();
+
+    this.savedTeamsStorageRecovery.set(null);
+
+    return summary;
+  }
+
   public async readySavedEnemies(): Promise<void> {
     await this.ensureHydrated('savedEnemies', async () => {
       const enemies = await this.readJson<SavedEnemy[]>(SAVED_ENEMIES_KEY, []);

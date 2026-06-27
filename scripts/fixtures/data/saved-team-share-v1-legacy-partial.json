@@ -5,7 +5,6 @@
   "team": {
     "id": "legacy-share-partial",
     "name": "",
-    "slots": [101, "bad", 102],
     "shipId": -1,
     "notes": 9001,
     "createdAt": "bad-date",

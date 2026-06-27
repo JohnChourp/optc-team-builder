@@ -108,6 +108,38 @@ describe('SavedTeamsPage', () => {
     });
   });
 
+  it('consumes storage recovery warnings after the first display', async () => {
+    const { page, userState } = createPage({
+      storageRecovery: {
+        droppedCount: 1,
+        repairedCount: 0,
+        reset: false,
+      },
+    });
+
+    await page.ngOnInit();
+
+    expect(page.actionFeedback()).toMatchObject({
+      title: 'Saved teams storage repaired',
+      tone: 'warning',
+    });
+
+    page.actionFeedback.set({
+      details: ['Copied.'],
+      title: 'Copied',
+      tone: 'success',
+    });
+
+    await page.ionViewWillEnter();
+
+    expect(userState.consumeSavedTeamsStorageRecovery).toHaveBeenCalledTimes(2);
+    expect(page.actionFeedback()).toEqual({
+      details: ['Copied.'],
+      title: 'Copied',
+      tone: 'success',
+    });
+  });
+
   it('hydrates captain condition status for saved team cards', async () => {
     const { page } = createPage({
       savedTeams: [
@@ -601,11 +633,19 @@ function createPage(
   } = {},
 ) {
   const savedTeams = signal(overrides.savedTeams ?? buildSavedTeams());
+  const savedTeamsStorageRecovery = signal(overrides.storageRecovery ?? null);
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     readySavedTeams: vi.fn().mockResolvedValue(undefined),
     savedTeams,
-    savedTeamsStorageRecovery: signal(overrides.storageRecovery ?? null),
+    savedTeamsStorageRecovery,
+    consumeSavedTeamsStorageRecovery: vi.fn().mockImplementation(() => {
+      const summary = savedTeamsStorageRecovery();
+
+      savedTeamsStorageRecovery.set(null);
+
+      return summary;
+    }),
     deleteTeam: vi.fn().mockImplementation(async (teamId: string) => {
       savedTeams.set(savedTeams().filter((team) => team.id !== teamId));
     }),
