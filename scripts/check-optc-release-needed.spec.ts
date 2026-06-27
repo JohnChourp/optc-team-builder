@@ -16,6 +16,10 @@ import {
   releaseTriggerPolicy,
   validateReleaseTriggerPolicy,
 } from './lib/release-trigger-policy.mjs';
+import {
+  buildReleaseTriggerNotification,
+  sendReleaseTriggerNotification,
+} from './lib/release-trigger-notifications.mjs';
 
 describe('check-optc-release-needed', () => {
   it('defaults to the 2shankz source and JSON output off', () => {
@@ -64,6 +68,20 @@ describe('check-optc-release-needed', () => {
     });
     expect(Object.isFrozen(releaseTriggerPolicy)).toBe(true);
     expect(Object.isFrozen(releaseTriggerPolicy.dispatch.activeStatuses)).toBe(true);
+    expect(releaseTriggerPolicy.notification).toMatchObject({
+      sink: 'github-issue',
+      issueTitle: 'OPTC DB release trigger notifications',
+      issueMarker: '<!-- optc-release-trigger-notifications -->',
+      quietReasons: ['no-new-upstream-characters'],
+      severities: {
+        'release-dispatched': 'info',
+        'active-release-running': 'warning',
+        'fixture-validation-failed': 'error',
+        'detector-failed': 'error',
+        'active-release-check-failed': 'error',
+        'dispatch-failed': 'error',
+      },
+    });
   });
 
   it('validates release trigger policy invariants before consumers use config values', () => {
@@ -91,6 +109,15 @@ describe('check-optc-release-needed', () => {
         },
       }),
     ).toThrow('decision.releaseReason must match report reasons');
+    expect(() =>
+      validateReleaseTriggerPolicy({
+        ...releaseTriggerPolicy,
+        notification: {
+          ...releaseTriggerPolicy.notification,
+          sink: 'webhook',
+        },
+      }),
+    ).toThrow('notification.sink must be one of github-issue');
   });
 
   it('resolves bundled fixture paths from the fixture name', () => {
@@ -278,6 +305,82 @@ describe('check-optc-release-needed', () => {
     });
   });
 
+  it('keeps routine no-change release-trigger reports quiet', async () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '36',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }],
+    });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'skipped',
+        dispatchRelease: 'skipped',
+        skipRelease: 'success',
+      },
+    });
+    const fetchImpl = () => {
+      throw new Error('quiet notification must not call GitHub');
+    };
+
+    expect(buildReleaseTriggerNotification(report)).toMatchObject({
+      shouldNotify: false,
+      reason: 'no-new-upstream-characters',
+    });
+    await expect(
+      sendReleaseTriggerNotification({
+        report,
+        fetchImpl,
+        logger: { info: () => undefined },
+      }),
+    ).resolves.toMatchObject({
+      sent: false,
+      action: 'skipped',
+    });
+  });
+
+  it('formats release-dispatched reports as info notifications', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      activeReleaseCount: '0',
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      workflow: {
+        repository: 'JohnChourp/optc-team-builder',
+        runUrl: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/123',
+        sha: 'abc123',
+      },
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'success',
+        dispatchRelease: 'success',
+        skipRelease: 'skipped',
+      },
+    });
+    const notification = buildReleaseTriggerNotification(report);
+
+    expect(notification).toMatchObject({
+      shouldNotify: true,
+      reason: 'release-dispatched',
+      severity: 'info',
+    });
+    expect(notification.body).toContain('Release dispatched: yes');
+    expect(notification.body).toContain('New character IDs: 3');
+    expect(notification.body).toContain('release-trigger-outcome');
+  });
+
   it('builds a skipped report when an Android release run is already active', () => {
     const releaseCheckResult = buildReleaseCheckResult({
       source: dataImportSources['2shankz'],
@@ -307,6 +410,34 @@ describe('check-optc-release-needed', () => {
         releaseDispatched: false,
         activeReleaseCount: 2,
       },
+    });
+  });
+
+  it('formats active-release blocked reports as warning notifications', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      activeReleaseCount: '2',
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'success',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+
+    expect(buildReleaseTriggerNotification(report)).toMatchObject({
+      shouldNotify: true,
+      reason: 'active-release-running',
+      severity: 'warning',
     });
   });
 
@@ -358,6 +489,240 @@ describe('check-optc-release-needed', () => {
       releaseCheck: null,
       comparison: null,
     });
+  });
+
+  it('formats release-trigger failure reasons as error notifications', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    });
+    const failureCases = [
+      {
+        reason: 'fixture-validation-failed',
+        releaseCheckResult: null,
+        stepOutcomes: {
+          fixtureValidation: 'failure',
+          releaseCheck: 'skipped',
+          activeRelease: 'skipped',
+          dispatchRelease: 'skipped',
+          skipRelease: 'skipped',
+        },
+      },
+      {
+        reason: 'detector-failed',
+        releaseCheckResult: null,
+        stepOutcomes: {
+          fixtureValidation: 'success',
+          releaseCheck: 'failure',
+          activeRelease: 'skipped',
+          dispatchRelease: 'skipped',
+          skipRelease: 'skipped',
+        },
+      },
+      {
+        reason: 'active-release-check-failed',
+        releaseCheckResult,
+        stepOutcomes: {
+          fixtureValidation: 'success',
+          releaseCheck: 'success',
+          activeRelease: 'failure',
+          dispatchRelease: 'skipped',
+          skipRelease: 'skipped',
+        },
+      },
+      {
+        reason: 'dispatch-failed',
+        releaseCheckResult,
+        activeReleaseCount: '0',
+        stepOutcomes: {
+          fixtureValidation: 'success',
+          releaseCheck: 'success',
+          activeRelease: 'success',
+          dispatchRelease: 'failure',
+          skipRelease: 'skipped',
+        },
+      },
+    ];
+
+    for (const failureCase of failureCases) {
+      const { reason, ...reportInput } = failureCase;
+      const report = buildReleaseTriggerReport({
+        generatedAt: '2026-06-26T00:00:00.000Z',
+        ...reportInput,
+      });
+
+      expect(report.reason).toBe(reason);
+      expect(buildReleaseTriggerNotification(report)).toMatchObject({
+        shouldNotify: true,
+        reason,
+        severity: 'error',
+      });
+    }
+  });
+
+  it('creates the notification issue when no thread exists', async () => {
+    const report = buildReleaseTriggerReport({
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'failure',
+        releaseCheck: 'skipped',
+        activeRelease: 'skipped',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+    const calls = [];
+    const fetchImpl = async (url, options = {}) => {
+      calls.push({ url, options });
+
+      if (calls.length === 1) {
+        return buildMockGitHubResponse([]);
+      }
+
+      return buildMockGitHubResponse({
+        number: 42,
+        html_url: 'https://github.com/JohnChourp/optc-team-builder/issues/42',
+      });
+    };
+
+    await expect(
+      sendReleaseTriggerNotification({
+        report,
+        env: {
+          GITHUB_REPOSITORY: 'JohnChourp/optc-team-builder',
+          GITHUB_TOKEN: 'token',
+        },
+        fetchImpl,
+        logger: { info: () => undefined },
+      }),
+    ).resolves.toMatchObject({
+      sent: true,
+      action: 'created',
+      issueNumber: 42,
+    });
+    expect(calls).toHaveLength(2);
+    expect(calls[0].url).toContain('/issues?state=open');
+    expect(calls[1].url).toBe('https://api.github.com/repos/JohnChourp/optc-team-builder/issues');
+    expect(JSON.parse(calls[1].options.body)).toMatchObject({
+      title: releaseTriggerPolicy.notification.issueTitle,
+    });
+    expect(JSON.parse(calls[1].options.body).body).toContain(releaseTriggerPolicy.notification.issueMarker);
+  });
+
+  it('comments on the existing notification issue thread', async () => {
+    const report = buildReleaseTriggerReport({
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'failure',
+        releaseCheck: 'skipped',
+        activeRelease: 'skipped',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+    const calls = [];
+    const fetchImpl = async (url, options = {}) => {
+      calls.push({ url, options });
+
+      if (calls.length === 1) {
+        return buildMockGitHubResponse([
+          {
+            number: 42,
+            title: releaseTriggerPolicy.notification.issueTitle,
+            body: releaseTriggerPolicy.notification.issueMarker,
+            html_url: 'https://github.com/JohnChourp/optc-team-builder/issues/42',
+          },
+        ]);
+      }
+
+      return buildMockGitHubResponse({
+        html_url: 'https://github.com/JohnChourp/optc-team-builder/issues/42#issuecomment-1',
+      });
+    };
+
+    await expect(
+      sendReleaseTriggerNotification({
+        report,
+        env: {
+          GITHUB_REPOSITORY: 'JohnChourp/optc-team-builder',
+          GITHUB_TOKEN: 'token',
+        },
+        fetchImpl,
+        logger: { info: () => undefined },
+      }),
+    ).resolves.toMatchObject({
+      sent: true,
+      action: 'commented',
+      issueNumber: 42,
+    });
+    expect(calls).toHaveLength(2);
+    expect(calls[1].url).toBe('https://api.github.com/repos/JohnChourp/optc-team-builder/issues/42/comments');
+    expect(JSON.parse(calls[1].options.body).body).toContain('fixture-validation-failed');
+  });
+
+  it('paginates notification issue lookup before creating duplicate threads', async () => {
+    const report = buildReleaseTriggerReport({
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'failure',
+        releaseCheck: 'skipped',
+        activeRelease: 'skipped',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+    const firstPage = Array.from({ length: 100 }, (_, index) => ({
+      number: index + 1,
+      title: `Other issue ${index + 1}`,
+      body: '',
+      html_url: `https://github.com/JohnChourp/optc-team-builder/issues/${index + 1}`,
+    }));
+    const calls = [];
+    const fetchImpl = async (url, options = {}) => {
+      calls.push({ url, options });
+
+      if (calls.length === 1) {
+        return buildMockGitHubResponse(firstPage);
+      }
+
+      if (calls.length === 2) {
+        return buildMockGitHubResponse([
+          {
+            number: 142,
+            title: releaseTriggerPolicy.notification.issueTitle,
+            body: releaseTriggerPolicy.notification.issueMarker,
+            html_url: 'https://github.com/JohnChourp/optc-team-builder/issues/142',
+          },
+        ]);
+      }
+
+      return buildMockGitHubResponse({
+        html_url: 'https://github.com/JohnChourp/optc-team-builder/issues/142#issuecomment-1',
+      });
+    };
+
+    await expect(
+      sendReleaseTriggerNotification({
+        report,
+        env: {
+          GITHUB_REPOSITORY: 'JohnChourp/optc-team-builder',
+          GITHUB_TOKEN: 'token',
+        },
+        fetchImpl,
+        logger: { info: () => undefined },
+      }),
+    ).resolves.toMatchObject({
+      sent: true,
+      action: 'commented',
+      issueNumber: 142,
+    });
+    expect(calls).toHaveLength(3);
+    expect(calls[0].url).toContain('page=1');
+    expect(calls[1].url).toContain('page=2');
+    expect(calls[2].url).toBe('https://api.github.com/repos/JohnChourp/optc-team-builder/issues/142/comments');
   });
 
   const replayFixtureCases = [
@@ -424,3 +789,13 @@ describe('check-optc-release-needed', () => {
     await expect(checkOptcReleaseNeeded({ fixture: 'error' })).rejects.toThrow();
   });
 });
+
+function buildMockGitHubResponse(payload, ok = true, status = 200) {
+  const text = JSON.stringify(payload);
+
+  return {
+    ok,
+    status,
+    text: async () => text,
+  };
+}

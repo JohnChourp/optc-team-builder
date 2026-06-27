@@ -57,6 +57,14 @@ const dataDir = path.join(rootDir, 'public', 'assets', 'data');
  *     }>,
  *     reasons: Readonly<Record<string, ReleaseTriggerReason>>,
  *   }>,
+ *   notification: Readonly<{
+ *     sink: 'github-issue',
+ *     issueTitle: string,
+ *     issueMarker: string,
+ *     quietReasons: readonly ReleaseTriggerReason[],
+ *     notifyReasons: readonly ReleaseTriggerReason[],
+ *     severities: Readonly<Record<ReleaseTriggerReason, 'info' | 'warning' | 'error'>>,
+ *   }>,
  * }>} ReleaseTriggerPolicyV1
  */
 
@@ -114,6 +122,28 @@ const releaseTriggerPolicyV1 = {
       detectorFailed: 'detector-failed',
       activeReleaseCheckFailed: 'active-release-check-failed',
       dispatchFailed: 'dispatch-failed',
+    },
+  },
+  notification: {
+    sink: 'github-issue',
+    issueTitle: 'OPTC DB release trigger notifications',
+    issueMarker: '<!-- optc-release-trigger-notifications -->',
+    quietReasons: ['no-new-upstream-characters'],
+    notifyReasons: [
+      'release-dispatched',
+      'active-release-running',
+      'fixture-validation-failed',
+      'detector-failed',
+      'active-release-check-failed',
+      'dispatch-failed',
+    ],
+    severities: {
+      'release-dispatched': 'info',
+      'active-release-running': 'warning',
+      'fixture-validation-failed': 'error',
+      'detector-failed': 'error',
+      'active-release-check-failed': 'error',
+      'dispatch-failed': 'error',
     },
   },
 };
@@ -184,6 +214,31 @@ function validateReleaseTriggerReasons(policy) {
   }
 }
 
+function validateReleaseTriggerNotification(policy) {
+  const notification = policy.notification;
+  const reasonValues = Object.values(policy.report.reasons);
+
+  assertPlainObject(notification, 'notification');
+  assertAllowedString(notification.sink, ['github-issue'], 'notification.sink');
+  assertString(notification.issueTitle, 'notification.issueTitle');
+  assertString(notification.issueMarker, 'notification.issueMarker');
+  assertStringArray(notification.quietReasons, 'notification.quietReasons');
+  assertStringArray(notification.notifyReasons, 'notification.notifyReasons');
+  assertPlainObject(notification.severities, 'notification.severities');
+
+  for (const reason of [...notification.quietReasons, ...notification.notifyReasons]) {
+    if (!reasonValues.includes(reason)) {
+      throw new Error(
+        `Invalid release trigger policy: notification reason ${reason} must match a report reason.`,
+      );
+    }
+  }
+
+  for (const reason of notification.notifyReasons) {
+    assertAllowedString(notification.severities[reason], ['info', 'warning', 'error'], `notification.severities.${reason}`);
+  }
+}
+
 /**
  * Validates the policy shape before consumers use its values.
  *
@@ -235,6 +290,7 @@ export function validateReleaseTriggerPolicy(policy) {
   assertAllowedString(policy.report.statuses.failed, ['failed'], 'report.statuses.failed');
   assertPlainObject(policy.report.reasons, 'report.reasons');
   validateReleaseTriggerReasons(policy);
+  validateReleaseTriggerNotification(policy);
 
   return policy;
 }
