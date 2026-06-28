@@ -9,8 +9,9 @@ maintainers can pick the smallest useful path without rereading prior audits.
 
 | Change type | Lightweight validation | Deep validation | What it proves | Artifact location |
 | --- | --- | --- | --- | --- |
-| Captain ability parser, generated captain metadata, captain matching, or ability requirement matching | `npm run test:captain-contracts` | `npm run test:ci -- --include src/app/core/services/auto-team-builder-ability-parser.spec.ts --include src/app/core/services/captain-coverage.utils.spec.ts --include src/app/core/services/auto-team-builder-ability-match.utils.spec.ts --include scripts/import-optc-data.spec.ts --include scripts/lib/captain-ability-coverage.spec.ts` plus `npm run test:ci` when shared runtime code changed | The script-side parser and runtime captain coverage stay aligned on the shared golden captain cases | Test output only |
-| Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters` | `npm run perf:ability-filters` plus focused unit specs for the touched page or utility | Deterministic desktop/mobile ability-filter timings stay inside budgets and screenshots/JSON are captured for comparison | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` |
+| Captain ability parser or generated captain metadata | `npm run test:captain-contracts` | `npm run test:captain-contracts` plus `npm run test:ci -- --include src/app/core/services/auto-team-builder-ability-parser.spec.ts --include scripts/import-optc-data.spec.ts --include scripts/lib/captain-ability-coverage.spec.ts`; add full `npm run test:ci` when shared runtime code changed | The script-side parser, generated import boosts, and generated coverage tiers stay aligned on the shared golden captain cases | Test output only |
+| Runtime captain matching or ability requirement matching | `npm run test:ci -- --include src/app/core/services/captain-coverage.utils.spec.ts --include src/app/core/services/auto-team-builder-ability-match.utils.spec.ts` | Lightweight runtime specs plus `npm run test:captain-contracts`; add full `npm run test:ci` when shared utilities or page behavior changed | Angular runtime captain coverage and ability matching stay aligned with generated captain metadata | Test output only |
+| Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters` | Run `npm run perf:ability-filters`, collect the companion explanation result, then run `npm run perf:budget-report -- --current-dir /path/to/current`; add focused unit specs for the touched page or utility | Deterministic desktop/mobile ability-filter timings are captured, and hard budgets are enforced by the budget report | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` |
 | Auto Team Builder explanation detail or compare rendering performance | `PERF_ASSERT=0 npm run perf:explanation-compare` | `npm run perf:explanation-compare` plus focused Auto Team Builder specs | Compare-panel rendering, imported compare apply, and explanation expansion stay inside pragmatic browser budgets | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dvr7x5`, with other machines using `perf-artifacts/explanation-compare` |
 | Release-candidate performance confidence | Manual `Performance Budgets` workflow dispatch | Scheduled/manual `Performance Budgets` workflow with an explicit `baseline_run_id`, then inspect the uploaded report | The ability-filter and explanation/compare harnesses both ran on GitHub Actions, hard budgets passed, and baseline warnings were surfaced | GitHub Actions artifact `performance-budget-report` |
 | OPTC DB release-detector logic, fixtures, workflow dispatch rules, or upstream replay support | `npm run test:release-check` | Run each bundled fixture plus the live check: `npm run data:check-release -- --fixture=no-change --json`, `npm run data:check-release -- --fixture=new-character --json`, `npm run data:check-release -- --fixture=active-release-running --json`, `npm run data:check-release -- --fixture=upstream-shape-drift --json`, `node scripts/check-optc-release-needed.mjs --fixture=error --json`, and `npm run data:check-release -- --json` | Missing upstream character IDs are the only release trigger, fixture branches remain replayable, and the live upstream read still works | Command output; workflow artifact `release-trigger-outcome` after Actions runs |
@@ -41,16 +42,16 @@ for an OPTC task, belongs in the brain repo under
 
 ### Captain Contracts
 
-Run the focused contract gate before changing captain parser or runtime matching
-logic:
+Run the focused contract gate before changing captain parser or generated
+captain metadata logic:
 
 ```bash
 npm run test:captain-contracts
 ```
 
 This runs the script-side import and captain coverage specs that protect the
-golden captain matrix. Add runtime `test:ci -- --include ...` specs when the
-change crosses into Angular services or page behavior.
+golden captain matrix. Use the runtime row in the decision table when the change
+crosses into Angular matching services or page behavior.
 
 ### Browser Performance
 
@@ -66,9 +67,22 @@ Explanation/compare harness:
 PERF_ARTIFACT_DIR=/path/to/artifacts PERF_RUN_LABEL=local-explanation npm run perf:explanation-compare
 ```
 
-Set `PERF_ASSERT=0` when collecting timing evidence without failing the command
-on budget regressions. Leave assertions enabled when the run is a merge gate or
-release-candidate confidence check.
+`perf:ability-filters` records timings and screenshots but does not enforce hard
+budgets by itself. To enforce ability-filter budgets locally, place the ability
+result under a shared current directory, include an explanation/compare result,
+then run the budget report:
+
+```bash
+PERF_ARTIFACT_DIR=perf-artifacts/current/ability npm run perf:ability-filters
+PERF_ARTIFACT_DIR=perf-artifacts/current/explanation PERF_ASSERT=0 npm run perf:explanation-compare
+npm run perf:budget-report -- --current-dir perf-artifacts/current
+```
+
+`perf:explanation-compare` enforces its own budgets unless `PERF_ASSERT=0` is
+set. Use `PERF_ASSERT=0` when collecting timing evidence without failing the
+command on budget regressions. Leave assertions enabled when the explanation
+and compare harness itself is the merge gate or release-candidate confidence
+check.
 
 ### Performance Budgets
 
