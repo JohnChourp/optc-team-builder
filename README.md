@@ -36,6 +36,12 @@ Required runtime:
 - Angular 22 also supports Node `^22.22.3` and `>=26.0.0`, as reflected in `package.json` engines.
 - If `ionic serve` or `npm run build` reports that Node `24.13.1` is unsupported, switch to a supported version first, for example `nvm install && nvm use`.
 
+Maintainer validation guide:
+
+- `docs/maintainer-validation-guide.md` explains which contract, performance,
+  release-detector, release-readiness, broad UI, and docs-only validation path
+  to run for each class of change.
+
 Install dependencies:
 
 ```bash

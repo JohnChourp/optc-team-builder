@@ -1,5 +1,10 @@
 # Browser Regression Coverage
 
+For the full maintainer decision table across contract tests, performance
+harnesses, release-detector replay, release-readiness summaries, broad UI
+validation, and docs-only checks, start with
+`../docs/maintainer-validation-guide.md`.
+
 The Playwright suite has two layers:
 
 - `smoke.spec.ts` checks route render, navigation, and cross-browser console stability.
