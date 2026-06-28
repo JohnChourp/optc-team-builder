@@ -39,6 +39,26 @@ a runnable command that must be proven through the UI. UI evidence, when needed
 for an OPTC task, belongs in the brain repo under
 `../optc-team-builder-brain/live-artifacts/<task-id>/`.
 
+## PR Traceability
+
+Human-authored pull requests must keep the PR template fields filled before
+review or merge:
+
+- `ClickUp task:` must include the ClickUp task URL for ClickUp-backed work.
+  Use `none - <reason>` only for human PRs that are intentionally not tied to
+  ClickUp.
+- `Evidence:` must point at durable evidence, usually a brain audit under
+  `../optc-team-builder-brain/audits/`, a `live-artifacts/<task-id>/` path when
+  live evidence exists, or a GitHub Actions artifact/run.
+- `Verification:` must list concrete commands, CI checks, or review gates.
+
+The `PR Traceability` workflow enforces those fields for human-authored PRs,
+rejects placeholder evidence or verification, and only accepts workspace-scoped
+ClickUp URLs for the OPTC workspace when a workspace segment is present. Short
+ClickUp task URLs may use regular task IDs or ClickUp custom task IDs.
+Bot-authored dependency or automation PRs are skipped so routine update PRs do
+not fail only because no ClickUp task exists.
+
 ## Command Details
 
 ### Captain Contracts
