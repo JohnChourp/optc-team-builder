@@ -73,10 +73,14 @@ function stripMarkdown(value) {
     .trim();
 }
 
+function hasSubstantiveText(value) {
+  return /[\p{L}\p{N}]/u.test(String(value ?? ''));
+}
+
 function isPlaceholder(value) {
   const stripped = stripMarkdown(value).replace(/^<((?:https?:\/\/|\/)[^>]+)>$/, '$1');
 
-  if (!stripped || /^<[^>]+>$/.test(stripped)) {
+  if (!stripped || /^<[^>]+>$/.test(stripped) || !hasSubstantiveText(stripped)) {
     return true;
   }
 
@@ -88,7 +92,12 @@ function hasNonClickUpSentinel(value) {
   const match = stripped.match(/^none\s*[-:]\s*(.+)$/i);
   const reason = match?.[1]?.trim() ?? '';
 
-  return Boolean(reason) && !/^<[^>]+>$/.test(reason) && !QUALIFIED_PLACEHOLDER_PATTERN.test(reason);
+  return (
+    Boolean(reason) &&
+    !/^<[^>]+>$/.test(reason) &&
+    hasSubstantiveText(reason) &&
+    !QUALIFIED_PLACEHOLDER_PATTERN.test(reason)
+  );
 }
 
 function validateClickUpUrl(rawUrl) {
