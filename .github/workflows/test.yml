@@ -17,10 +17,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Resolve brain ref
+        id: brain-ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          ref="main"
+          for candidate in "${branch%-app}" "${branch}"; do
+            if git ls-remote --exit-code --heads https://github.com/JohnChourp/optc-team-builder-brain.git "${candidate}" >/dev/null 2>&1; then
+              ref="${candidate}"
+              break
+            fi
+          done
+          echo "ref=${ref}" >> "${GITHUB_OUTPUT}"
+
       - name: Checkout brain
         uses: actions/checkout@v7
         with:
           repository: JohnChourp/optc-team-builder-brain
+          ref: ${{ steps.brain-ref.outputs.ref }}
           path: _linked/optc-team-builder-brain
 
       - name: Setup Node
