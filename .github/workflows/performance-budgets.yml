@@ -7,6 +7,11 @@ on:
         description: Optional successful Performance Budgets run ID to compare against
         required: false
         type: string
+      fail_on_regression:
+        description: Fail the workflow when hard performance budgets are exceeded
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: '23 6 * * 1-5'
 
@@ -86,6 +91,38 @@ jobs:
             echo "No downloadable baseline artifact found for run ${baseline_run_id}." >> "${GITHUB_STEP_SUMMARY}"
           fi
 
+      - name: Download recent performance history
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p perf-artifacts/history
+          run_ids="$(
+            gh run list \
+              --workflow performance-budgets.yml \
+              --branch main \
+              --status completed \
+              --limit 12 \
+              --json databaseId \
+              --jq '.[].databaseId'
+          )"
+
+          if [[ -z "${run_ids}" ]]; then
+            echo "No previous completed Performance Budgets runs found for history." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          for run_id in ${run_ids}; do
+            run_dir="perf-artifacts/history/run-${run_id}"
+            mkdir -p "${run_dir}"
+
+            if gh run download "${run_id}" --name performance-budget-report --dir "${run_dir}"; then
+              echo "Downloaded performance history from run ${run_id}." >> "${GITHUB_STEP_SUMMARY}"
+            else
+              rm -rf "${run_dir}"
+              echo "No downloadable performance report artifact found for run ${run_id}." >> "${GITHUB_STEP_SUMMARY}"
+            fi
+          done
+
       - name: Ability filter performance
         env:
           CI: 'true'
@@ -105,10 +142,13 @@ jobs:
       - name: Build performance budget report
         env:
           BASELINE_REPORT_PATH: ${{ steps.baseline.outputs.baseline_report_path }}
+          FAIL_ON_REGRESSION: ${{ github.event.inputs.fail_on_regression || 'false' }}
         run: |
           report_args=(
             --current-dir perf-artifacts/current
             --output perf-artifacts/performance-budget-report.json
+            --summary perf-artifacts/performance-budget-summary.md
+            --report-only
           )
 
           if [[ -n "${BASELINE_REPORT_PATH}" ]]; then
@@ -116,6 +156,22 @@ jobs:
           fi
 
           npm run perf:budget-report -- "${report_args[@]}"
+          cat perf-artifacts/performance-budget-summary.md >> "${GITHUB_STEP_SUMMARY}"
+
+          if [[ "${FAIL_ON_REGRESSION}" == "true" ]]; then
+            node -e "const fs = require('node:fs'); const report = JSON.parse(fs.readFileSync('perf-artifacts/performance-budget-report.json', 'utf8')); const failures = Array.isArray(report.hardBudgetFailures) ? report.hardBudgetFailures.length : 0; if (failures > 0) { console.error('Hard performance budgets failed for ' + failures + ' metric(s).'); process.exit(1); }"
+          fi
+
+      - name: Build performance trend history
+        if: always()
+        run: |
+          npm run perf:budget-history -- \
+            --current-report perf-artifacts/performance-budget-report.json \
+            --history-dir perf-artifacts/history \
+            --output perf-artifacts/performance-budget-history.json \
+            --summary perf-artifacts/performance-budget-history.md
+
+          cat perf-artifacts/performance-budget-history.md >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload performance budget artifacts
         if: always()
@@ -124,6 +180,9 @@ jobs:
           name: performance-budget-report
           path: |
             perf-artifacts/performance-budget-report.json
+            perf-artifacts/performance-budget-summary.md
+            perf-artifacts/performance-budget-history.json
+            perf-artifacts/performance-budget-history.md
             perf-artifacts/current/
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90

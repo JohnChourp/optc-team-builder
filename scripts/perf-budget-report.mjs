@@ -471,6 +471,9 @@ function parseArgs(argv) {
       case '--summary':
         options.summaryPath = readValue();
         break;
+      case '--report-only':
+        options.reportOnly = true;
+        break;
       default:
         throw new Error(`Unknown option: ${arg}`);
     }
@@ -496,7 +499,7 @@ export async function runCli(argv = process.argv.slice(2), env = process.env) {
     process.stdout.write(markdown);
   }
 
-  if (report.hardBudgetFailures.length) {
+  if (report.hardBudgetFailures.length && !options.reportOnly) {
     process.exitCode = 1;
   }
 
