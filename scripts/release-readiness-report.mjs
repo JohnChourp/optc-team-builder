@@ -87,7 +87,13 @@ function normalizeCandidate(value) {
 }
 
 function normalizeTests(value) {
-  return requireArray(value, 'tests').map((entry, index) => {
+  const tests = requireArray(value, 'tests');
+
+  if (tests.length === 0) {
+    throw new Error('Invalid release-readiness source: tests must include at least one entry.');
+  }
+
+  return tests.map((entry, index) => {
     const test = requireObject(entry, `tests[${index}]`);
 
     return {
@@ -369,8 +375,21 @@ function tableCell(value) {
   return formatNullable(value).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n/g, '<br>');
 }
 
-function formatEvidenceLink(item) {
-  const target = item.url ?? item.path ?? null;
+function rebaseMarkdownPath(targetPath, { sourceDir, outputDir } = {}) {
+  if (!targetPath || !sourceDir || !outputDir || path.isAbsolute(targetPath) || /^[a-z][a-z0-9+.-]*:/i.test(targetPath)) {
+    return targetPath;
+  }
+
+  const rebasedPath = path.relative(outputDir, path.resolve(sourceDir, targetPath));
+  return (rebasedPath || '.').split(path.sep).join(path.posix.sep);
+}
+
+function formatEvidencePath(targetPath, options) {
+  return rebaseMarkdownPath(targetPath, options);
+}
+
+function formatEvidenceLink(item, options) {
+  const target = item.url ?? formatEvidencePath(item.path, options) ?? null;
 
   if (!target) {
     return item.label;
@@ -395,7 +414,7 @@ function formatFailures(title, items) {
   ];
 }
 
-export function formatReleaseReadinessMarkdown(report) {
+export function formatReleaseReadinessMarkdown(report, options = {}) {
   const lines = [
     '# Release Readiness Summary',
     '',
@@ -428,7 +447,7 @@ export function formatReleaseReadinessMarkdown(report) {
   for (const test of report.tests) {
     lines.push(
       `| ${tableCell(test.name)} | ${tableCell(test.status)} | ${tableCell(
-        test.url ?? test.path,
+        test.url ?? formatEvidencePath(test.path, options),
       )} | ${tableCell(test.notes)} |`,
     );
   }
@@ -438,7 +457,7 @@ export function formatReleaseReadinessMarkdown(report) {
     '## Performance',
     '',
     `- Status: ${report.performance.status}`,
-    `- Source: ${formatNullable(report.performance.sourcePath)}`,
+    `- Source: ${formatNullable(formatEvidencePath(report.performance.sourcePath, options))}`,
     `- Metrics: ${formatNullable(report.performance.summary.metricCount)} total, ${formatNullable(
       report.performance.summary.budgetedMetricCount,
     )} budgeted`,
@@ -459,7 +478,7 @@ export function formatReleaseReadinessMarkdown(report) {
     lines.push(
       `- Status: ${report.releaseTrigger.status}`,
       `- Reason: ${formatNullable(report.releaseTrigger.reason)}`,
-      `- Source: ${formatNullable(report.releaseTrigger.sourcePath)}`,
+      `- Source: ${formatNullable(formatEvidencePath(report.releaseTrigger.sourcePath, options))}`,
       `- Release needed: ${formatYesNo(report.releaseTrigger.releaseNeeded)}`,
       `- Release dispatched: ${formatYesNo(report.releaseTrigger.releaseDispatched)}`,
       `- Active release count: ${formatNullable(report.releaseTrigger.activeReleaseCount)}`,
@@ -474,24 +493,30 @@ export function formatReleaseReadinessMarkdown(report) {
     '',
     '## Audit Evidence',
     '',
-    ...formatListOrNone(report.audits, (item) => `- ${formatEvidenceLink(item)}${item.notes ? ` - ${item.notes}` : ''}`),
+    ...formatListOrNone(
+      report.audits,
+      (item) => `- ${formatEvidenceLink(item, options)}${item.notes ? ` - ${item.notes}` : ''}`,
+    ),
     '',
     '## Docs',
     '',
-    ...formatListOrNone(report.docs, (item) => `- ${formatEvidenceLink(item)}${item.notes ? ` - ${item.notes}` : ''}`),
+    ...formatListOrNone(
+      report.docs,
+      (item) => `- ${formatEvidenceLink(item, options)}${item.notes ? ` - ${item.notes}` : ''}`,
+    ),
     '',
     '## Blockers',
     '',
     ...formatListOrNone(
       report.blockers,
-      (item) => `- ${formatEvidenceLink(item)}${item.reason ? ` - ${item.reason}` : ''}`,
+      (item) => `- ${formatEvidenceLink(item, options)}${item.reason ? ` - ${item.reason}` : ''}`,
     ),
     '',
     '## Waivers',
     '',
     ...formatListOrNone(
       report.waivers,
-      (item) => `- ${formatEvidenceLink(item)} - ${item.reason}; approved by ${item.approver}`,
+      (item) => `- ${formatEvidenceLink(item, options)} - ${item.reason}; approved by ${item.approver}`,
     ),
     '',
     '## Sign-off Checklist',
@@ -553,9 +578,16 @@ function parseArgs(argv) {
 
 export async function runCli(argv = process.argv.slice(2)) {
   const options = parseArgs(argv);
+  const sourceDir = path.dirname(path.resolve(options.sourcePath));
+  const markdownOptions = options.outputPath
+    ? {
+        sourceDir,
+        outputDir: path.dirname(path.resolve(options.outputPath)),
+      }
+    : {};
   const source = await loadReleaseReadinessSource(options.sourcePath);
   const report = buildReleaseReadinessReport(source, { generatedAt: options.generatedAt });
-  const markdown = formatReleaseReadinessMarkdown(report);
+  const markdown = formatReleaseReadinessMarkdown(report, markdownOptions);
 
   if (options.outputPath) {
     await mkdir(path.dirname(path.resolve(options.outputPath)), { recursive: true });
@@ -569,16 +601,15 @@ export async function runCli(argv = process.argv.slice(2)) {
     await writeFile(options.jsonOutputPath, `${JSON.stringify(report, null, 2)}\n`);
   }
 
-  if (report.decision.status === 'blocked') {
-    process.exitCode = 1;
-  }
-
   return report;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    await runCli();
+    const report = await runCli();
+    if (report.decision.status === 'blocked') {
+      process.exitCode = 1;
+    }
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;

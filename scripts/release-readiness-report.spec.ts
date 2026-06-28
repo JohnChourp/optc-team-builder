@@ -36,6 +36,10 @@ async function buildFixtureReport(name: string) {
   return buildReleaseReadinessReport(source, { generatedAt });
 }
 
+function markdownRelativePath(fromDir: string, targetPath: string) {
+  return path.relative(fromDir, targetPath).split(path.sep).join(path.posix.sep);
+}
+
 describe('release-readiness-report', () => {
   it('renders the ready fixture to the expected markdown contract', async () => {
     const report = await buildFixtureReport('ready-source.json');
@@ -87,7 +91,16 @@ describe('release-readiness-report', () => {
       jsonPath,
     ]);
 
-    await expect(readFile(markdownPath, 'utf8')).resolves.toContain('# Release Readiness Summary');
+    const markdown = await readFile(markdownPath, 'utf8');
+    const rebasedPerformancePath = markdownRelativePath(outputDir, path.join(fixtureDir, 'performance-budget-passed.json'));
+    const rebasedAuditPath = markdownRelativePath(
+      outputDir,
+      path.resolve(fixtureDir, '../../../../optc-team-builder-brain/audits/869dwc0hh-performance-budget-tracking.md'),
+    );
+
+    expect(markdown).toContain('# Release Readiness Summary');
+    expect(markdown).toContain(`- Source: ${rebasedPerformancePath}`);
+    expect(markdown).toContain(`[Performance budget tracking audit](${rebasedAuditPath})`);
     await expect(readFile(jsonPath, 'utf8')).resolves.toContain('"status": "ready"');
     expect(report.decision.status).toBe('ready');
   });
@@ -111,6 +124,27 @@ describe('release-readiness-report', () => {
         waivers: [],
       }),
     ).toThrow('tests[0].status must be one of passed, warning, failed, blocked');
+  });
+
+  it('rejects empty test evidence before marking a candidate ready', () => {
+    expect(() =>
+      buildReleaseReadinessReport({
+        candidate: { label: 'candidate' },
+        tests: [],
+        performance: {
+          status: 'passed',
+          sourcePath: 'performance-budget-passed.json',
+          summary: {},
+          hardBudgetFailures: [],
+          baselineDeltaWarnings: [],
+        },
+        releaseTrigger: null,
+        audits: [],
+        docs: [],
+        blockers: [],
+        waivers: [],
+      }),
+    ).toThrow('tests must include at least one entry');
   });
 
   it('rejects unknown release-trigger statuses before deciding readiness', () => {
@@ -150,5 +184,40 @@ describe('release-readiness-report', () => {
     ]);
 
     expect(stdout.trim()).toBe('1');
+  });
+
+  it('does not set process exitCode when imported runCli returns a blocked report', async () => {
+    const outputDir = await makeTempDir();
+    const previousExitCode = process.exitCode;
+    process.exitCode = undefined;
+
+    try {
+      const report = await runCli([
+        '--source',
+        path.join(fixtureDir, 'blocked-source.json'),
+        '--output',
+        path.join(outputDir, 'blocked-summary.md'),
+      ]);
+
+      expect(report.decision.status).toBe('blocked');
+      expect(process.exitCode).toBeUndefined();
+    } finally {
+      process.exitCode = previousExitCode;
+    }
+  });
+
+  it('sets a non-zero exit code for blocked reports in direct CLI execution', async () => {
+    const outputDir = await makeTempDir();
+    const modulePath = path.join(import.meta.dirname, 'release-readiness-report.mjs');
+
+    await expect(
+      execFileAsync(process.execPath, [
+        modulePath,
+        '--source',
+        path.join(fixtureDir, 'blocked-source.json'),
+        '--output',
+        path.join(outputDir, 'blocked-summary.md'),
+      ]),
+    ).rejects.toMatchObject({ code: 1 });
   });
 });
