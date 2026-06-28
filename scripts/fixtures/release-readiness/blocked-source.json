@@ -1,0 +1,26 @@
+{
+  "candidate": {
+    "label": "v0.0.62 release candidate",
+    "ref": "main",
+    "sha": "3a77259d"
+  },
+  "tests": [
+    {
+      "name": "GitHub Test workflow",
+      "status": "failed",
+      "url": "https://github.com/JohnChourp/optc-team-builder/actions/runs/301",
+      "notes": "Chromium e2e failed."
+    }
+  ],
+  "performanceBudgetReportPath": "performance-budget-failed.json",
+  "releaseTriggerReportPath": "release-trigger-failed.json",
+  "audits": [],
+  "docs": [],
+  "blockers": [
+    {
+      "label": "Remote Chromium e2e failure",
+      "reason": "The release candidate cannot ship until the failed main check is fixed."
+    }
+  ],
+  "waivers": []
+}

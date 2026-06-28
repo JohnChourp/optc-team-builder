@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-28T00:00:00.000Z",
+  "status": "warning",
+  "workflow": {
+    "runUrl": "https://github.com/JohnChourp/optc-team-builder/actions/runs/101"
+  },
+  "baseline": {
+    "workflow": {
+      "runUrl": "https://github.com/JohnChourp/optc-team-builder/actions/runs/90"
+    }
+  },
+  "summary": {
+    "metricCount": 22,
+    "budgetedMetricCount": 16,
+    "hardBudgetFailureCount": 0,
+    "baselineDeltaWarningCount": 1
+  },
+  "hardBudgetFailures": [],
+  "baselineDeltaWarnings": [
+    {
+      "metricId": "ability-filters.desktop.saved-teams.firsttogglems",
+      "message": "ability-filters desktop Saved Teams first ability toggle: 401ms vs baseline 250ms (60.4% increase)"
+    }
+  ]
+}

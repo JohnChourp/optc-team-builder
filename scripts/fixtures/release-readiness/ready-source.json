@@ -1,0 +1,33 @@
+{
+  "candidate": {
+    "label": "v0.0.62 release candidate",
+    "ref": "main",
+    "sha": "3a77259d",
+    "notes": "Fixture candidate for release-readiness report coverage."
+  },
+  "tests": [
+    {
+      "name": "GitHub Test workflow",
+      "status": "passed",
+      "url": "https://github.com/JohnChourp/optc-team-builder/actions/runs/300",
+      "notes": "Unit, release-check, drive-sync, dataset perf, and e2e gates passed."
+    }
+  ],
+  "performanceBudgetReportPath": "performance-budget-passed.json",
+  "releaseTriggerReportPath": "release-trigger-skipped.json",
+  "audits": [
+    {
+      "label": "Performance budget tracking audit",
+      "path": "../../../../optc-team-builder-brain/audits/869dwc0hh-performance-budget-tracking.md",
+      "notes": "Recurring perf evidence source."
+    }
+  ],
+  "docs": [
+    {
+      "label": "OPTC DB auto release runbook",
+      "path": "../../../../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md"
+    }
+  ],
+  "blockers": [],
+  "waivers": []
+}

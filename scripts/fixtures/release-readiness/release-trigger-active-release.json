@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-28T00:00:00.000Z",
+  "status": "skipped",
+  "reason": "active-release-running",
+  "workflow": {
+    "runUrl": "https://github.com/JohnChourp/optc-team-builder/actions/runs/202"
+  },
+  "comparison": {
+    "newCharacterCount": 3
+  },
+  "dispatch": {
+    "releaseNeeded": true,
+    "releaseDispatched": false,
+    "activeReleaseCount": 1
+  }
+}
