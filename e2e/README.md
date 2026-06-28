@@ -30,13 +30,20 @@ Playwright so filtered and debug workflows behave like direct Playwright usage.
 browser-timing guardrails. It runs on weekday schedules from `main` and supports
 manual dispatch as the release-candidate preflight path. The workflow runs both
 browser harnesses with `PERF_ASSERT=0`, then `npm run perf:budget-report`
-decides the final pass/fail result after the JSON and screenshots have been
-written. Normal pull requests are not blocked by these noisy browser timings.
+writes the current report after the JSON and screenshots have been captured.
+Scheduled and default manual runs are report-only, so noisy browser regressions
+surface in the summary and artifacts without blocking unrelated work. Set the
+manual `fail_on_regression` input to `true` when a release-candidate preflight
+should fail on hard-budget misses.
 
 The workflow uploads one `performance-budget-report` artifact. It contains:
 
 - `performance-budget-report.json` with schema version, workflow metadata,
   metric rows, hard-budget failures, and baseline-delta warnings.
+- `performance-budget-summary.md` with the current maintainer-readable summary.
+- `performance-budget-history.json` with recent run metadata and per-metric
+  trend rows.
+- `performance-budget-history.md` with the trend summary for maintainers.
 - `current/ability/` with the ability-filter timing JSON and screenshots.
 - `current/explanation/` with the explanation/compare timing JSON and
   screenshots.
@@ -48,7 +55,8 @@ exists, the run still enforces hard budgets and establishes the first artifact
 baseline.
 
 Baseline deltas are warnings, not failures, when a metric rises by at least 35%
-and 100ms. Hard budgets fail the workflow.
+and 100ms. Hard budgets mark the report as failed. They fail the workflow only
+when `fail_on_regression=true`.
 
 `npm run perf:explanation-compare` measures Auto Team Builder compare rendering
 and explanation-detail expansion with deterministic large fixtures. It starts a
@@ -77,3 +85,10 @@ Page-ready timings are reported for before/after context but are not
 hard-budgeted.
 
 Set `PERF_ASSERT=0` to collect artifacts without failing on the budgets.
+
+Build the current report and trend history locally from collected artifacts with:
+
+```bash
+npm run perf:budget-report -- --current-dir perf-artifacts/current --output perf-artifacts/performance-budget-report.json --summary perf-artifacts/performance-budget-summary.md --report-only
+npm run perf:budget-history -- --current-report perf-artifacts/performance-budget-report.json --history-dir perf-artifacts/history --output perf-artifacts/performance-budget-history.json --summary perf-artifacts/performance-budget-history.md
+```

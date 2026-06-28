@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   buildPerformanceBudgetReport,
   formatPerformanceBudgetSummary,
+  runCli,
 } from './perf-budget-report.mjs';
 
 let tempDirs: string[] = [];
@@ -190,5 +191,32 @@ describe('perf-budget-report', () => {
     expect(serialized).toContain('explanation-performance.json');
     await writeFile(path.join(rootDir, 'report.json'), `${serialized}\n`);
     await expect(readFile(path.join(rootDir, 'report.json'), 'utf8')).resolves.toContain('"schemaVersion":1');
+  });
+
+  it('supports report-only CLI output without failing the process on hard-budget misses', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult({
+        desktopSavedTeamsToggle: 801,
+      }),
+    );
+    const outputPath = path.join(rootDir, 'report.json');
+    const summaryPath = path.join(rootDir, 'summary.md');
+    process.exitCode = undefined;
+
+    await runCli([
+      '--current-dir',
+      currentDir,
+      '--output',
+      outputPath,
+      '--summary',
+      summaryPath,
+      '--report-only',
+    ]);
+
+    await expect(readFile(outputPath, 'utf8')).resolves.toContain('"status": "failed"');
+    await expect(readFile(summaryPath, 'utf8')).resolves.toContain('Hard Budget Failures');
+    expect(process.exitCode).toBeUndefined();
   });
 });
