@@ -41,6 +41,8 @@ Maintainer validation guide:
 - `docs/maintainer-validation-guide.md` explains which contract, performance,
   release-detector, release-readiness, broad UI, and docs-only validation path
   to run for each class of change.
+- `npm run docs:integrity` validates Markdown links, anchors, and referenced
+  files across this app repo and the sibling brain repo.
 
 Install dependencies:
 

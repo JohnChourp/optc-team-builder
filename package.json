@@ -41,6 +41,7 @@
     "test:e2e:firefox": "node ./scripts/run-playwright-e2e.mjs --e2e-project=firefox",
     "test:e2e:webkit": "node ./scripts/run-playwright-e2e.mjs --e2e-project=webkit",
     "audit:dead-code": "npx tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false && npx knip --include files,exports,types",
+    "docs:integrity": "OPTC_BRAIN_DIR=${OPTC_BRAIN_DIR:-../optc-team-builder-brain}; node \"$OPTC_BRAIN_DIR/scripts/audit-docs-integrity.mjs\" --app . --brain \"$OPTC_BRAIN_DIR\"",
     "perf:dataset": "node ./scripts/benchmark-dataset.mjs",
     "perf:ability-filters": "node ./scripts/perf-ability-filters.mjs",
     "perf:explanation-compare": "node ./scripts/perf-explanation-compare.mjs",

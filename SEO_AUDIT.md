@@ -14,7 +14,7 @@ Date: 2026-04-26
 - `src/app/layout/tabs.page.ts`
 - `src/app/layout/tabs.page.html`
 - `src/app/pages/characters/characters.page.html`
-- `src/app/pages/team-builder/team-builder.page.html`
+- `src/app/pages/manual-team-builder/manual-team-builder.page.html`
 - `src/app/pages/auto-team-builder/auto-team-builder.page.html`
 - `src/app/pages/crew-forge/crew-forge.page.html`
 - `scripts/generate-seo-pages.mjs`
@@ -36,10 +36,10 @@ Date: 2026-04-26
 - `src/app/app.component.ts`
 - `src/app/app.component.spec.ts`
 - `src/app/app.routes.spec.ts`
-- `src/app/pages/team-builder/team-builder.page.html`
-- `src/app/pages/team-builder/team-builder.page.scss`
+- `src/app/pages/manual-team-builder/manual-team-builder.page.html`
+- `src/app/pages/manual-team-builder/manual-team-builder.page.scss`
 - `public/i18n/characters/en.json`
-- `public/i18n/team-builder/en.json`
+- `public/i18n/manual-team-builder/en.json`
 - `public/i18n/auto-team-builder/en.json`
 - `SEO_AUDIT.md`
 
