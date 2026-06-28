@@ -78,19 +78,21 @@ function hasSubstantiveText(value) {
 }
 
 function isPlaceholder(value) {
-  const stripped = stripMarkdown(value).replace(/^<((?:https?:\/\/|\/)[^>]+)>$/, '$1');
+  const stripped = stripMarkdown(value).replace(/[.,;:!?]+$/, '');
+  const normalized = stripped.replace(/^<((?:https?:\/\/|\/)[^>]+)>$/, '$1');
+  const isUnnormalizedAnglePlaceholder = normalized === stripped && /^<[^>]+>$/.test(stripped);
 
-  if (!stripped || /^<[^>]+>$/.test(stripped) || !hasSubstantiveText(stripped)) {
+  if (!normalized || isUnnormalizedAnglePlaceholder || !hasSubstantiveText(normalized)) {
     return true;
   }
 
-  return PLACEHOLDER_PATTERN.test(stripped) || QUALIFIED_PLACEHOLDER_PATTERN.test(stripped);
+  return PLACEHOLDER_PATTERN.test(normalized) || QUALIFIED_PLACEHOLDER_PATTERN.test(normalized);
 }
 
 function hasNonClickUpSentinel(value) {
   const stripped = stripMarkdown(value);
   const match = stripped.match(/^none\s*[-:]\s*(.+)$/i);
-  const reason = match?.[1]?.trim() ?? '';
+  const reason = (match?.[1]?.trim() ?? '').replace(/[.,;:!?]+$/, '');
 
   return (
     Boolean(reason) &&
@@ -134,16 +136,25 @@ function validateClickUpUrl(rawUrl) {
   return false;
 }
 
-function hasValidClickUpReference(value) {
+function getClickUpReferenceStatus(value) {
+  const status = {
+    hasAny: false,
+    hasValid: false,
+    hasInvalid: false,
+  };
+
   for (const match of String(value ?? '').matchAll(CLICKUP_URL_PATTERN)) {
+    status.hasAny = true;
     const candidate = match[0].replace(/[.,;:!?]+$/, '');
 
     if (validateClickUpUrl(candidate)) {
-      return true;
+      status.hasValid = true;
+    } else {
+      status.hasInvalid = true;
     }
   }
 
-  return false;
+  return status;
 }
 
 function validateTraceability(pr) {
@@ -151,9 +162,12 @@ function validateTraceability(pr) {
   const clickupTask = extractField(body, 'ClickUp task');
   const evidence = extractField(body, 'Evidence');
   const verification = extractField(body, 'Verification');
+  const clickupStatus = getClickUpReferenceStatus(clickupTask);
   const failures = [];
 
-  if (!hasValidClickUpReference(clickupTask) && !hasNonClickUpSentinel(clickupTask)) {
+  if (clickupStatus.hasInvalid) {
+    failures.push(`ClickUp task contains a non-task URL or a URL outside workspace ${OPTC_CLICKUP_WORKSPACE_ID}.`);
+  } else if (!clickupStatus.hasValid && !hasNonClickUpSentinel(clickupTask)) {
     failures.push(
       `ClickUp task must include a https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/... URL, a short alphanumeric https://app.clickup.com/t/... task URL, or "none - <reason>".`,
     );
