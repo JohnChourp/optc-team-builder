@@ -7,6 +7,7 @@ export const RELEASE_READINESS_SCHEMA_VERSION = 1;
 
 const TEST_STATUSES = new Set(['passed', 'warning', 'failed', 'blocked']);
 const PERFORMANCE_STATUSES = new Set(['passed', 'warning', 'failed']);
+const RELEASE_TRIGGER_STATUSES = new Set(['skipped', 'released', 'failed']);
 const RELEASE_TRIGGER_BLOCKING_STATUSES = new Set(['failed']);
 
 function isObject(value) {
@@ -215,7 +216,7 @@ function normalizeReleaseTriggerReport(report, sourcePath) {
   }
 
   const trigger = requireObject(report, 'release trigger report');
-  const status = requireNonEmptyString(trigger.status, 'releaseTriggerReport.status').toLowerCase();
+  const status = normalizeStatus(trigger.status, RELEASE_TRIGGER_STATUSES, 'releaseTriggerReport.status');
 
   return {
     sourcePath,
@@ -259,6 +260,10 @@ export function decideReleaseReadiness({ tests, performance, releaseTrigger, blo
 
   if (releaseTrigger && RELEASE_TRIGGER_BLOCKING_STATUSES.has(releaseTrigger.status)) {
     blockingReasons.push(`Release trigger failed: ${releaseTrigger.reason ?? releaseTrigger.status}`);
+  }
+
+  if (releaseTrigger?.status === 'skipped' && releaseTrigger.releaseNeeded && !releaseTrigger.releaseDispatched) {
+    blockingReasons.push(`Release trigger blocked dispatch: ${releaseTrigger.reason ?? 'skipped'}`);
   }
 
   if (blockingReasons.length > 0) {
@@ -571,7 +576,7 @@ export async function runCli(argv = process.argv.slice(2)) {
   return report;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     await runCli();
   } catch (error) {

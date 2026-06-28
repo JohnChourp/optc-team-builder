@@ -1,6 +1,9 @@
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { promisify } from 'node:util';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -13,6 +16,7 @@ import {
 
 const fixtureDir = path.join(import.meta.dirname, 'fixtures', 'release-readiness');
 const generatedAt = '2026-06-28T00:00:00.000Z';
+const execFileAsync = promisify(execFile);
 
 let tempDirs: string[] = [];
 
@@ -61,6 +65,13 @@ describe('release-readiness-report', () => {
     ]);
   });
 
+  it('blocks active-release skips that found releasable data but did not dispatch', async () => {
+    const report = await buildFixtureReport('active-release-source.json');
+
+    expect(report.decision.status).toBe('blocked');
+    expect(report.decision.reasons).toContain('Release trigger blocked dispatch: active-release-running');
+  });
+
   it('writes markdown and json output from the CLI', async () => {
     const outputDir = await makeTempDir();
     const markdownPath = path.join(outputDir, 'release-readiness-summary.md');
@@ -100,5 +111,44 @@ describe('release-readiness-report', () => {
         waivers: [],
       }),
     ).toThrow('tests[0].status must be one of passed, warning, failed, blocked');
+  });
+
+  it('rejects unknown release-trigger statuses before deciding readiness', () => {
+    expect(() =>
+      buildReleaseReadinessReport({
+        candidate: { label: 'candidate' },
+        tests: [{ name: 'CI', status: 'passed' }],
+        performance: {
+          status: 'passed',
+          sourcePath: 'performance-budget-passed.json',
+          summary: {},
+          hardBudgetFailures: [],
+          baselineDeltaWarnings: [],
+        },
+        releaseTrigger: {
+          status: 'failure',
+          sourcePath: 'release-trigger-outcome.json',
+          dispatch: {
+            releaseNeeded: true,
+            releaseDispatched: false,
+          },
+        },
+        audits: [],
+        docs: [],
+        blockers: [],
+        waivers: [],
+      }),
+    ).toThrow('releaseTriggerReport.status must be one of skipped, released, failed');
+  });
+
+  it('can be imported from an inline ESM script without executing CLI detection', async () => {
+    const moduleUrl = pathToFileURL(path.join(import.meta.dirname, 'release-readiness-report.mjs')).href;
+    const { stdout } = await execFileAsync(process.execPath, [
+      '--input-type=module',
+      '--eval',
+      `const mod = await import(${JSON.stringify(moduleUrl)}); console.log(mod.RELEASE_READINESS_SCHEMA_VERSION);`,
+    ]);
+
+    expect(stdout.trim()).toBe('1');
   });
 });

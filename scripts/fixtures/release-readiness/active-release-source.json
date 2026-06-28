@@ -1,0 +1,20 @@
+{
+  "candidate": {
+    "label": "v0.0.62 release candidate",
+    "ref": "main",
+    "sha": "3a77259d"
+  },
+  "tests": [
+    {
+      "name": "GitHub Test workflow",
+      "status": "passed",
+      "url": "https://github.com/JohnChourp/optc-team-builder/actions/runs/300"
+    }
+  ],
+  "performanceBudgetReportPath": "performance-budget-passed.json",
+  "releaseTriggerReportPath": "release-trigger-active-release.json",
+  "audits": [],
+  "docs": [],
+  "blockers": [],
+  "waivers": []
+}
