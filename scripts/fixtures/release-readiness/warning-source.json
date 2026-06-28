@@ -1,0 +1,26 @@
+{
+  "candidate": {
+    "label": "v0.0.62 release candidate",
+    "ref": "main",
+    "sha": "3a77259d"
+  },
+  "tests": [
+    {
+      "name": "GitHub Test workflow",
+      "status": "passed",
+      "url": "https://github.com/JohnChourp/optc-team-builder/actions/runs/300"
+    }
+  ],
+  "performanceBudgetReportPath": "performance-budget-warning.json",
+  "releaseTriggerReportPath": "release-trigger-skipped.json",
+  "audits": [],
+  "docs": [],
+  "blockers": [],
+  "waivers": [
+    {
+      "label": "Baseline timing warning accepted for release candidate",
+      "reason": "The hard budgets still pass and the timing warning is load-sensitive.",
+      "approver": "maintainer"
+    }
+  ]
+}

@@ -35,6 +35,9 @@ jobs:
       - name: Release detector replay tests
         run: npm run test:release-check
 
+      - name: Release readiness report tests
+        run: npm run test:release-readiness
+
       - name: Drive sync backend tests
         run: npm run test:drive-sync-server
 
