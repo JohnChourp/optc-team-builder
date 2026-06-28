@@ -7,7 +7,7 @@ const CLICKUP_URL_PATTERN = /https:\/\/app\.clickup\.com\/t\/[^\s<>)]+/g;
 const PLACEHOLDER_PATTERN =
   /^(?:todo|tbd|n\/a|na|none|not applicable|pending|to be added|add later|link later|fill in|fixme|xxx|[-_.\s]+)$/i;
 const QUALIFIED_PLACEHOLDER_PATTERN =
-  /\b(?:todo|tbd|n\/a|none|not applicable|pending|to be added|add later|link later|fill in|fixme|xxx)\b/i;
+  /^(?:todo|tbd|n\/a|na|none|not applicable|pending|to be added|add later|link later|fill in|fixme|xxx)\b/i;
 
 function readEvent() {
   const eventPath = process.env.GITHUB_EVENT_PATH;
@@ -124,7 +124,7 @@ function validateClickUpUrl(rawUrl) {
       return false;
     }
 
-    return /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(segments[1]);
+    return /^[A-Za-z0-9]+$/.test(segments[1]);
   }
 
   if (segments.length === 3) {
