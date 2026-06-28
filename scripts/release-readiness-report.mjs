@@ -361,7 +361,7 @@ function formatYesNo(value) {
 }
 
 function tableCell(value) {
-  return formatNullable(value).replace(/\|/g, '\\|').replace(/\n/g, '<br>');
+  return formatNullable(value).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n/g, '<br>');
 }
 
 function formatEvidenceLink(item) {
