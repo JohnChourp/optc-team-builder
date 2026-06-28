@@ -155,7 +155,7 @@ function validateTraceability(pr) {
 
   if (!hasValidClickUpReference(clickupTask) && !hasNonClickUpSentinel(clickupTask)) {
     failures.push(
-      `ClickUp task must include a https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/... URL, a https://app.clickup.com/t/... custom task URL, or "none - <reason>".`,
+      `ClickUp task must include a https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/... URL, a short alphanumeric https://app.clickup.com/t/... task URL, or "none - <reason>".`,
     );
   }
 
