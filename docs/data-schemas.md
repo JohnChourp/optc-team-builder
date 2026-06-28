@@ -34,6 +34,12 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
 - `characterTags` drive tag filters and captain coverage requirements
 - `builderAbilities` are canonical ability entries used by Auto Team Builder and Captain Coverage filters
 
+For normal upstream records, `detail.characterId` must match the row `id`.
+Reserved manual overlay records (`id >= 900000`) may instead store an existing
+canonical character id in `detail.characterId` when they represent a linked
+variant that must remain selectable by its internal id while sharing canonical
+search and conflict behavior with an upstream record.
+
 Captain ability data is stored as:
 
 - `captainAbility`: default display text

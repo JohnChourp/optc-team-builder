@@ -55,6 +55,77 @@ describe('dataset integrity checks', () => {
     );
     expect(() => validateDatasetIntegrity(input)).toThrow(DatasetIntegrityError);
   });
+
+  it('accepts reserved manual linked variants with an existing canonical detail id', () => {
+    const input = createIntegrityInput({
+      characters: [
+        createCharacter({ id: 101 }),
+        createCharacter({
+          id: 900005,
+          name: 'Clashing Blades St. Ethanbaron V. Nusjuro',
+          detail: {
+            characterId: 101,
+            captainAbility: null,
+            specialText: 'Manual linked variant text.',
+            rumbleData: null,
+          },
+        }),
+      ],
+    });
+
+    expect(validateDatasetIntegrity(input)).toEqual({
+      ok: true,
+      errors: [],
+    });
+  });
+
+  it('rejects non-manual characters whose detail id differs from the row id', () => {
+    const input = createIntegrityInput({
+      characters: [
+        createCharacter({ id: 101 }),
+        createCharacter({
+          id: 102,
+          name: 'Bad linked upstream character',
+          detail: {
+            characterId: 101,
+            captainAbility: null,
+            specialText: 'Invalid linked upstream text.',
+            rumbleData: null,
+          },
+        }),
+      ],
+    });
+    const report = buildDatasetIntegrityReport(input);
+
+    expect(report.ok).toBe(false);
+    expect(report.errors).toContain('character 102 detail.characterId must match the character id.');
+    expect(() => validateDatasetIntegrity(input)).toThrow(DatasetIntegrityError);
+  });
+
+  it('rejects reserved manual linked variants whose canonical detail id is missing', () => {
+    const input = createIntegrityInput({
+      characters: [
+        createCharacter({ id: 101 }),
+        createCharacter({
+          id: 900005,
+          name: 'Missing Canonical Manual Variant',
+          detail: {
+            characterId: 999999,
+            captainAbility: null,
+            specialText: 'Manual linked variant text.',
+            rumbleData: null,
+          },
+        }),
+      ],
+    });
+    const report = buildDatasetIntegrityReport(input);
+
+    expect(report.ok).toBe(false);
+    expect(report.errors).toContain(
+      'character 900005 detail.characterId references unknown canonical character id 999999.',
+    );
+    expect(() => validateDatasetIntegrity(input)).toThrow(DatasetIntegrityError);
+  });
 });
 
 function createIntegrityInput(overrides = {}) {
