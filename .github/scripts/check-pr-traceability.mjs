@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const REQUIRED_FIELDS = ['ClickUp task', 'Evidence', 'Verification'];
 const OPTC_CLICKUP_WORKSPACE_ID = '90121749478';
-const CLICKUP_URL_PATTERN = /https:\/\/app\.clickup\.com\/t\/[^\s<>)]+/g;
+const CLICKUP_URL_PATTERN = /https:\/\/app\.clickup\.com\/t\/[^\s<>).,;:!?]+/g;
 const PLACEHOLDER_PATTERN =
   /^(?:todo|tbd|n\/a|na|none|not applicable|pending|to be added|add later|link later|fill in|fixme|xxx|[-_.\s]+)$/i;
 const QUALIFIED_PLACEHOLDER_PATTERN =
@@ -126,7 +126,7 @@ function validateClickUpUrl(rawUrl) {
       return false;
     }
 
-    return /^[A-Za-z0-9]+$/.test(segments[1]);
+    return /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(segments[1]);
   }
 
   if (segments.length === 3) {
@@ -169,7 +169,7 @@ function validateTraceability(pr) {
     failures.push(`ClickUp task contains a non-task URL or a URL outside workspace ${OPTC_CLICKUP_WORKSPACE_ID}.`);
   } else if (!clickupStatus.hasValid && !hasNonClickUpSentinel(clickupTask)) {
     failures.push(
-      `ClickUp task must include a https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/... URL, a short alphanumeric https://app.clickup.com/t/... task URL, or "none - <reason>".`,
+      `ClickUp task must include a https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/... URL, a short https://app.clickup.com/t/... task URL, or "none - <reason>".`,
     );
   }
 

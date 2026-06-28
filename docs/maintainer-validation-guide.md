@@ -54,7 +54,8 @@ review or merge:
 
 The `PR Traceability` workflow enforces those fields for human-authored PRs,
 rejects placeholder evidence or verification, and only accepts workspace-scoped
-ClickUp URLs for the OPTC workspace when a workspace segment is present.
+ClickUp URLs for the OPTC workspace when a workspace segment is present. Short
+ClickUp task URLs may use regular task IDs or ClickUp custom task IDs.
 Bot-authored dependency or automation PRs are skipped so routine update PRs do
 not fail only because no ClickUp task exists.
 
