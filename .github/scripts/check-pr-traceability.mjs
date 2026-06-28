@@ -2,9 +2,12 @@
 import { readFileSync } from 'node:fs';
 
 const REQUIRED_FIELDS = ['ClickUp task', 'Evidence', 'Verification'];
-const CLICKUP_URL_PATTERN = /https:\/\/app\.clickup\.com\/t\/(?:\d+\/)?[A-Za-z0-9]+/;
+const OPTC_CLICKUP_WORKSPACE_ID = '90121749478';
+const CLICKUP_URL_PATTERN = /https:\/\/app\.clickup\.com\/t\/[^\s<>)]+/g;
 const PLACEHOLDER_PATTERN =
   /^(?:todo|tbd|n\/a|na|none|not applicable|pending|to be added|add later|link later|fill in|fixme|xxx|[-_.\s]+)$/i;
+const QUALIFIED_PLACEHOLDER_PATTERN =
+  /\b(?:todo|tbd|n\/a|not applicable|pending|to be added|add later|link later|fill in|fixme|xxx)\b/i;
 
 function readEvent() {
   const eventPath = process.env.GITHUB_EVENT_PATH;
@@ -71,13 +74,64 @@ function stripMarkdown(value) {
 }
 
 function isPlaceholder(value) {
-  const stripped = stripMarkdown(value);
+  const stripped = stripMarkdown(value).replace(/^<((?:https?:\/\/|\/)[^>]+)>$/, '$1');
 
   if (!stripped || /^<[^>]+>$/.test(stripped)) {
     return true;
   }
 
-  return PLACEHOLDER_PATTERN.test(stripped);
+  return PLACEHOLDER_PATTERN.test(stripped) || QUALIFIED_PLACEHOLDER_PATTERN.test(stripped);
+}
+
+function hasNonClickUpSentinel(value) {
+  const stripped = stripMarkdown(value);
+  const match = stripped.match(/^none\s*[-:]\s*(.+)$/i);
+
+  return Boolean(match?.[1]?.trim()) && !QUALIFIED_PLACEHOLDER_PATTERN.test(match[1]);
+}
+
+function validateClickUpUrl(rawUrl) {
+  let parsed;
+
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return false;
+  }
+
+  if (parsed.origin !== 'https://app.clickup.com') {
+    return false;
+  }
+
+  const segments = parsed.pathname.split('/').filter(Boolean);
+
+  if (segments[0] !== 't') {
+    return false;
+  }
+
+  if (segments.length === 2) {
+    if (segments[1] === OPTC_CLICKUP_WORKSPACE_ID) {
+      return false;
+    }
+
+    return /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(segments[1]);
+  }
+
+  if (segments.length === 3) {
+    return segments[1] === OPTC_CLICKUP_WORKSPACE_ID && /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(segments[2]);
+  }
+
+  return false;
+}
+
+function hasValidClickUpReference(value) {
+  for (const match of String(value ?? '').matchAll(CLICKUP_URL_PATTERN)) {
+    if (validateClickUpUrl(match[0])) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function validateTraceability(pr) {
@@ -87,8 +141,10 @@ function validateTraceability(pr) {
   const verification = extractField(body, 'Verification');
   const failures = [];
 
-  if (!CLICKUP_URL_PATTERN.test(clickupTask)) {
-    failures.push('ClickUp task must include a https://app.clickup.com/t/... URL.');
+  if (!hasValidClickUpReference(clickupTask) && !hasNonClickUpSentinel(clickupTask)) {
+    failures.push(
+      `ClickUp task must include a https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/... URL, a https://app.clickup.com/t/... custom task URL, or "none - <reason>".`,
+    );
   }
 
   if (isPlaceholder(evidence)) {
