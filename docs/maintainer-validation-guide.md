@@ -11,6 +11,7 @@ maintainers can pick the smallest useful path without rereading prior audits.
 | --- | --- | --- | --- | --- |
 | Captain ability parser or generated captain metadata | `npm run test:captain-contracts` plus `npm run test:ci -- --include src/app/core/services/auto-team-builder-ability-parser.spec.ts` | Lightweight parser/generated gates plus `npm run test:ci -- --include scripts/import-optc-data.spec.ts --include scripts/lib/captain-ability-coverage.spec.ts`; add full `npm run test:ci` when shared runtime code changed | The builder-ability parser, script-side import boosts, and generated coverage tiers stay aligned on the shared golden captain cases | Test output only |
 | Runtime captain matching or ability requirement matching | `npm run test:ci -- --include src/app/core/services/captain-coverage.utils.spec.ts --include src/app/core/services/auto-team-builder-ability-match.utils.spec.ts` | Lightweight runtime specs plus `npm run test:captain-contracts`; add full `npm run test:ci` when shared utilities or page behavior changed | Angular runtime captain coverage and ability matching stay aligned with generated captain metadata | Test output only |
+| Manual-character overlays or dataset integrity checks | `npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts` | Lightweight manual-character specs plus `npx vitest run scripts --reporter=dot`; add `npm run test:captain-contracts` when generated ability metadata is touched | Manual overlays, linked canonical ids, generated dataset integrity, and broad script sweeps stay trustworthy | Test output only |
 | Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters` | Run `npm run perf:ability-filters`, collect the companion explanation result, then run `npm run perf:budget-report -- --current-dir /path/to/current`; add focused unit specs for the touched page or utility | Deterministic desktop/mobile ability-filter timings are captured, and hard budgets are enforced by the budget report | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` |
 | Auto Team Builder explanation detail or compare rendering performance | `PERF_ASSERT=0 npm run perf:explanation-compare` | `npm run perf:explanation-compare` plus focused Auto Team Builder specs | Compare-panel rendering, imported compare apply, and explanation expansion stay inside pragmatic browser budgets | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dvr7x5`, with other machines using `perf-artifacts/explanation-compare` |
 | Release-candidate performance confidence | Manual `Performance Budgets` workflow dispatch | Scheduled/manual `Performance Budgets` workflow with an explicit `baseline_run_id`, then inspect the uploaded report | The ability-filter and explanation/compare harnesses both ran on GitHub Actions, hard budgets passed, and baseline warnings were surfaced | GitHub Actions artifact `performance-budget-report` |
@@ -53,6 +54,26 @@ npm run test:ci -- --include src/app/core/services/auto-team-builder-ability-par
 These commands cover the script-side import/captain coverage specs and the
 Angular builder-ability parser spec. Use the runtime row in the decision table
 when the change crosses into captain matching services or page behavior.
+
+### Manual Character Dataset Integrity
+
+Run the focused manual-character script gate before changing the manual overlay,
+upsert, apply, or dataset-integrity contract:
+
+```bash
+npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts
+```
+
+Use the broad script sweep when the change affects shared script validation or
+when a focused script failure was previously quarantined:
+
+```bash
+npx vitest run scripts --reporter=dot
+```
+
+Reserved manual ids (`>= 900000`) may keep a distinct existing canonical
+`detail.characterId` for linked variants. Non-manual rows still require
+`detail.characterId` to match the row id.
 
 ### Browser Performance
 

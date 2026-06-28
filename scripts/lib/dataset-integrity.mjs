@@ -9,6 +9,8 @@ export class DatasetIntegrityError extends Error {
   }
 }
 
+const MANUAL_CHARACTER_ID_MIN = 900000;
+
 export function validateDatasetIntegrity({
   characters,
   ships,
@@ -50,6 +52,7 @@ export function buildDatasetIntegrityReport({
 
 function validateCharacters(characters, errors) {
   const characterIds = new Set();
+  const detailReferences = [];
 
   if (!Array.isArray(characters) || characters.length === 0) {
     errors.push('characters must be a non-empty array.');
@@ -83,14 +86,38 @@ function validateCharacters(characters, errors) {
 
     const detailCharacterId = normalizePositiveInteger(character.detail.characterId);
 
-    if (characterId !== null && detailCharacterId !== characterId) {
-      errors.push(
-        `character ${characterId} detail.characterId must match the character id.`,
-      );
+    if (characterId !== null) {
+      detailReferences.push({
+        characterId,
+        detailCharacterId,
+      });
     }
   });
 
+  detailReferences.forEach(({ characterId, detailCharacterId }) => {
+    if (detailCharacterId === characterId) {
+      return;
+    }
+
+    if (isManualCharacterId(characterId) && detailCharacterId !== null) {
+      if (characterIds.has(detailCharacterId)) {
+        return;
+      }
+
+      errors.push(
+        `character ${characterId} detail.characterId references unknown canonical character id ${detailCharacterId}.`,
+      );
+      return;
+    }
+
+    errors.push(`character ${characterId} detail.characterId must match the character id.`);
+  });
+
   return characterIds;
+}
+
+function isManualCharacterId(value) {
+  return Number.isInteger(value) && value >= MANUAL_CHARACTER_ID_MIN;
 }
 
 function validateShips(ships, errors) {
