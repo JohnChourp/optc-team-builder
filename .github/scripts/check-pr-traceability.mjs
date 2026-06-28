@@ -86,8 +86,9 @@ function isPlaceholder(value) {
 function hasNonClickUpSentinel(value) {
   const stripped = stripMarkdown(value);
   const match = stripped.match(/^none\s*[-:]\s*(.+)$/i);
+  const reason = match?.[1]?.trim() ?? '';
 
-  return Boolean(match?.[1]?.trim()) && !QUALIFIED_PLACEHOLDER_PATTERN.test(match[1]);
+  return Boolean(reason) && !/^<[^>]+>$/.test(reason) && !QUALIFIED_PLACEHOLDER_PATTERN.test(reason);
 }
 
 function validateClickUpUrl(rawUrl) {
@@ -110,7 +111,7 @@ function validateClickUpUrl(rawUrl) {
   }
 
   if (segments.length === 2) {
-    if (segments[1] === OPTC_CLICKUP_WORKSPACE_ID) {
+    if (segments[1] === OPTC_CLICKUP_WORKSPACE_ID || /^\d+$/.test(segments[1])) {
       return false;
     }
 
