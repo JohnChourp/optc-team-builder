@@ -206,6 +206,58 @@ describe('check-docs-integrity', () => {
     );
   });
 
+  it('fails non-HTTPS OPTC public URLs and still validates their public paths', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'Old non-canonical route: http://optcteambuilder.com/tabs/team-builder/',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: 'OPTC public URL must use HTTPS canonical origin: http://optcteambuilder.com/tabs/team-builder/',
+        }),
+        expect.objectContaining({
+          message: 'Unknown OPTC public URL path: http://optcteambuilder.com/tabs/team-builder/',
+        }),
+      ]),
+    );
+  });
+
+  it('does not duplicate stale URL failures from Markdown link destinations', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '[Old route](https://optcteambuilder.com/tabs/team-builder/)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([
+      expect.objectContaining({
+        message: 'Unknown OPTC public URL path: https://optcteambuilder.com/tabs/team-builder/',
+      }),
+    ]);
+  });
+
+  it('accepts published public assets in public URL and absolute Markdown links', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'Public favicon: https://optcteambuilder.com/brand/favicon-master-v2-optimized.png',
+        '[Verification file](/google84ad253f26cc78d3.html)',
+      ].join('\n'),
+      'optc-team-builder/public/brand/favicon-master-v2-optimized.png': 'fake png',
+      'optc-team-builder/public/google84ad253f26cc78d3.html': '<html></html>\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
   it('does not treat lookalike domains as canonical OPTC public URLs', async () => {
     const result = await runWorkspace({
       'optc-team-builder/README.md': [

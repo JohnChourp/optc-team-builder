@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { access, readdir, readFile } from 'node:fs/promises';
+import { access, readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const OPTC_CLICKUP_WORKSPACE_ID = '90121749478';
 const OPTC_PUBLIC_ORIGIN = 'https://optcteambuilder.com';
+const OPTC_PUBLIC_HOST = 'optcteambuilder.com';
 const CLICKUP_ORIGIN = 'https://app.clickup.com';
 const IGNORE_NEXT_LINE_PATTERN = /<!--\s*docs-integrity-ignore-next-line:\s*(.+?)\s*-->/iu;
 const MARKDOWN_REFERENCE_PATTERN = /^\s{0,3}\[([^\]\n]+)\]:\s*(\S+)/u;
@@ -146,7 +147,7 @@ export async function checkDocsIntegrity(options = {}) {
     }
 
     for (const target of urlTargets) {
-      validateExternalUrlTarget({ target, doc: parsed, failures });
+      await validateExternalUrlTarget({ target, doc: parsed, appRoot, failures });
     }
   }
 
@@ -264,6 +265,7 @@ async function readDoc(doc, docCache) {
     lines,
     scanText,
     linkScanText: maskInlineCodeSpans(scanText),
+    urlScanText: maskMarkdownDestinations(scanText),
     ignoredLines,
     anchors: collectAnchors(anchorLines),
   };
@@ -455,10 +457,10 @@ function extractCodeSpanTargets(parsed) {
 function extractUrlTargets(parsed) {
   const targets = [];
 
-  for (const match of parsed.scanText.matchAll(URL_PATTERN)) {
+  for (const match of parsed.urlScanText.matchAll(URL_PATTERN)) {
     targets.push({
       raw: trimTrailingUrlPunctuation(match[0] ?? ''),
-      line: lineNumberAt(parsed.scanText, match.index ?? 0),
+      line: lineNumberAt(parsed.urlScanText, match.index ?? 0),
       kind: 'url',
     });
   }
@@ -468,6 +470,13 @@ function extractUrlTargets(parsed) {
 
 function maskInlineCodeSpans(text) {
   return text.split('\n').map(maskInlineCodeSpansInLine).join('\n');
+}
+
+function maskMarkdownDestinations(text) {
+  return text
+    .split('\n')
+    .map((line) => maskReferenceDefinitionDestinationInLine(maskInlineLinkDestinationsInLine(maskInlineCodeSpansInLine(line))))
+    .join('\n');
 }
 
 async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot, docCache, failures }) {
@@ -488,7 +497,7 @@ async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot,
   const parsedTarget = parseTarget(target.raw);
 
   if (isExternalScheme(parsedTarget.path)) {
-    validateExternalUrlTarget({ target, doc, failures });
+    await validateExternalUrlTarget({ target, doc, appRoot, failures });
     return;
   }
 
@@ -519,7 +528,7 @@ async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot,
       return;
     }
 
-    validateAbsoluteRoute({ rawPath: parsedTarget.path, target, doc, failures });
+    await validateAbsoluteRoute({ rawPath: parsedTarget.path, target, doc, appRoot, failures });
     return;
   }
 
@@ -584,7 +593,7 @@ async function validateCodeSpanTarget({ target, doc, appRoot, brainRoot, failure
   }
 
   if (isExternalScheme(target.raw)) {
-    validateExternalUrlTarget({ target, doc, failures });
+    await validateExternalUrlTarget({ target, doc, appRoot, failures });
     return;
   }
 
@@ -619,7 +628,7 @@ async function validateCodeSpanTarget({ target, doc, appRoot, brainRoot, failure
   }
 }
 
-function validateExternalUrlTarget({ target, doc, failures }) {
+async function validateExternalUrlTarget({ target, doc, appRoot, failures }) {
   if (shouldIgnoreLineForDoc(doc, target.line)) {
     return;
   }
@@ -627,8 +636,8 @@ function validateExternalUrlTarget({ target, doc, failures }) {
   const raw = trimTrailingUrlPunctuation(target.raw);
   const parsedUrl = parseHttpUrl(raw);
 
-  if (parsedUrl?.origin === OPTC_PUBLIC_ORIGIN) {
-    validateOptcPublicUrl({ raw, target, doc, failures });
+  if (parsedUrl?.hostname === OPTC_PUBLIC_HOST) {
+    await validateOptcPublicUrl({ raw, target, doc, appRoot, failures });
   }
 
   if (parsedUrl?.origin === CLICKUP_ORIGIN && parsedUrl.pathname.startsWith('/t/')) {
@@ -636,7 +645,7 @@ function validateExternalUrlTarget({ target, doc, failures }) {
   }
 }
 
-function validateOptcPublicUrl({ raw, target, doc, failures }) {
+async function validateOptcPublicUrl({ raw, target, doc, appRoot, failures }) {
   let parsed;
 
   try {
@@ -648,7 +657,20 @@ function validateOptcPublicUrl({ raw, target, doc, failures }) {
 
   const publicPath = normalizePublicPath(parsed.pathname);
 
-  if (KNOWN_PUBLIC_PATHS.has(publicPath) || /^characters\/(?:[1-9]\d*|:id)$/u.test(publicPath)) {
+  if (parsed.origin !== OPTC_PUBLIC_ORIGIN) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `OPTC public URL must use HTTPS canonical origin: ${raw}`,
+    });
+  }
+
+  if (
+    KNOWN_PUBLIC_PATHS.has(publicPath) ||
+    /^characters\/(?:[1-9]\d*|:id)$/u.test(publicPath) ||
+    (await isPublishedPublicAsset(publicPath, appRoot))
+  ) {
     return;
   }
 
@@ -711,10 +733,15 @@ export function isValidClickUpTaskUrl(rawUrl) {
   return false;
 }
 
-function validateAbsoluteRoute({ rawPath, target, doc, failures }) {
+async function validateAbsoluteRoute({ rawPath, target, doc, appRoot, failures }) {
   const publicPath = normalizePublicPath(rawPath);
 
-  if (!publicPath || KNOWN_PUBLIC_PATHS.has(publicPath) || /^characters\/(?:[1-9]\d*|:id)$/u.test(publicPath)) {
+  if (
+    !publicPath ||
+    KNOWN_PUBLIC_PATHS.has(publicPath) ||
+    /^characters\/(?:[1-9]\d*|:id)$/u.test(publicPath) ||
+    (await isPublishedPublicAsset(publicPath, appRoot))
+  ) {
     return;
   }
 
@@ -1029,6 +1056,47 @@ function maskInlineCodeSpansInLine(line) {
   return result;
 }
 
+function maskInlineLinkDestinationsInLine(line) {
+  let result = line;
+
+  for (let index = 0; index < line.length; index += 1) {
+    if (line[index] !== '[' && !(line[index] === '!' && line[index + 1] === '[')) {
+      continue;
+    }
+
+    const labelStart = line[index] === '!' ? index + 1 : index;
+    const labelEnd = findClosingBracket(line, labelStart);
+
+    if (labelEnd === -1 || line[labelEnd + 1] !== '(') {
+      continue;
+    }
+
+    const parsedDestination = parseParenthesizedDestination(line, labelEnd + 1);
+
+    if (parsedDestination) {
+      result = maskRange(result, parsedDestination.destinationStart, parsedDestination.destinationEnd);
+      index = parsedDestination.endIndex;
+    }
+  }
+
+  return result;
+}
+
+function maskReferenceDefinitionDestinationInLine(line) {
+  const match = line.match(/^(\s{0,3}\[[^\]\n]+\]:\s*)(\S+)/u);
+
+  if (!match?.[1] || !match[2]) {
+    return line;
+  }
+
+  const destinationStart = match[1].length;
+  return maskRange(line, destinationStart, destinationStart + match[2].length);
+}
+
+function maskRange(value, start, end) {
+  return `${value.slice(0, start)}${' '.repeat(end - start)}${value.slice(end)}`;
+}
+
 function extractInlineLinks(line) {
   const links = [];
 
@@ -1084,6 +1152,7 @@ function parseParenthesizedDestination(line, openIndex) {
   let cursor = openIndex + 1;
   let depth = 1;
   let destination = '';
+  const destinationStart = cursor;
 
   while (cursor < line.length) {
     const char = line[cursor];
@@ -1097,6 +1166,8 @@ function parseParenthesizedDestination(line, openIndex) {
       if (depth === 0) {
         return {
           destination: destination.trim(),
+          destinationStart,
+          destinationEnd: cursor,
           endIndex: cursor,
         };
       }
@@ -1181,6 +1252,26 @@ async function pathExists(filePath) {
   try {
     await access(filePath);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+async function isPublishedPublicAsset(publicPath, appRoot) {
+  if (!publicPath || !hasKnownFileExtension(publicPath)) {
+    return false;
+  }
+
+  const publicRoot = path.join(appRoot, 'public');
+  const assetPath = path.join(publicRoot, publicPath);
+
+  if (!isInsideOrEqualDirectory(assetPath, publicRoot)) {
+    return false;
+  }
+
+  try {
+    const assetStat = await stat(assetPath);
+    return assetStat.isFile();
   } catch {
     return false;
   }
