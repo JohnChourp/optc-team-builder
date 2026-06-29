@@ -123,8 +123,9 @@ const KNOWN_PUBLIC_PATHS = new Set([
 export async function checkDocsIntegrity(options = {}) {
   const appRoot = path.resolve(options.appRoot ?? process.cwd());
   const brainRoot = path.resolve(options.brainRoot ?? path.join(appRoot, '..', 'optc-team-builder-brain'));
+  const appOnly = Boolean(options.appOnly);
   const failures = [];
-  const docs = await collectMarkdownDocs({ appRoot, brainRoot, failures });
+  const docs = await collectMarkdownDocs({ appRoot, brainRoot, failures, includeBrain: !appOnly });
   const docCache = new Map();
 
   for (const doc of docs) {
@@ -157,15 +158,20 @@ export async function checkDocsIntegrity(options = {}) {
   return {
     appRoot,
     brainRoot,
+    appOnly,
     checkedFiles: docs.length,
     failures,
   };
 }
 
-async function collectMarkdownDocs({ appRoot, brainRoot, failures }) {
+async function collectMarkdownDocs({ appRoot, brainRoot, failures, includeBrain }) {
   const docs = [];
   await collectMarkdownUnder(appRoot, appRoot, docs, 'app', failures, true);
-  await collectMarkdownUnder(brainRoot, brainRoot, docs, 'brain', failures, true);
+
+  if (includeBrain) {
+    await collectMarkdownUnder(brainRoot, brainRoot, docs, 'brain', failures, true);
+  }
+
   docs.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
   return docs;
 }
@@ -647,7 +653,7 @@ async function validateExternalUrlTarget({ target, doc, appRoot, failures }) {
     await validateOptcPublicUrl({ raw, target, doc, appRoot, failures });
   }
 
-  if (parsedUrl?.origin === CLICKUP_ORIGIN && parsedUrl.pathname.startsWith('/t/')) {
+  if (parsedUrl?.hostname === 'app.clickup.com' && parsedUrl.pathname.startsWith('/t/')) {
     validateClickUpReference({ raw, target, doc, failures });
   }
 }
@@ -684,7 +690,7 @@ async function validateOptcPublicUrl({ raw, target, doc, appRoot, failures }) {
 
   if (
     KNOWN_PUBLIC_PATHS.has(publicPath) ||
-    /^characters\/(?:[1-9]\d*|:id)$/u.test(publicPath) ||
+    isKnownCharacterPath(publicPath) ||
     (await isPublishedPublicAsset(publicPath, appRoot))
   ) {
     return;
@@ -701,7 +707,11 @@ async function validateOptcPublicUrl({ raw, target, doc, appRoot, failures }) {
 function validateClickUpReference({ raw, target, doc, failures }) {
   const lineText = doc.lines?.[target.line - 1] ?? '';
 
-  if (lineText.includes('...') && raw === `https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/`) {
+  if (
+    doc.relativePath === '.github/pull_request_template.md' &&
+    lineText.includes('...') &&
+    raw === `https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/`
+  ) {
     return;
   }
 
@@ -755,7 +765,7 @@ async function validateAbsoluteRoute({ rawPath, target, doc, appRoot, failures }
   if (
     !publicPath ||
     KNOWN_PUBLIC_PATHS.has(publicPath) ||
-    /^characters\/(?:[1-9]\d*|:id)$/u.test(publicPath) ||
+    isKnownCharacterPath(publicPath) ||
     (await isPublishedPublicAsset(publicPath, appRoot))
   ) {
     return;
@@ -767,6 +777,10 @@ async function validateAbsoluteRoute({ rawPath, target, doc, appRoot, failures }
     line: target.line,
     message: `Unknown absolute app/public path: ${rawPath}`,
   });
+}
+
+function isKnownCharacterPath(publicPath) {
+  return /^characters\/(?:[1-9]\d*|:id)(?:\/edit)?$/u.test(publicPath);
 }
 
 function validateAnchor({ anchor, targetDoc, target, doc, failures }) {
@@ -1385,8 +1399,10 @@ function addFailure({ failures, doc, line, message }) {
 }
 
 export function formatFailures(result) {
+  const scope = result.appOnly ? 'app docs' : 'app and brain docs';
+
   if (result.failures.length === 0) {
-    return `[docs:integrity] checked ${result.checkedFiles} Markdown files across app and brain docs.`;
+    return `[docs:integrity] checked ${result.checkedFiles} Markdown files across ${scope}.`;
   }
 
   return [
@@ -1422,6 +1438,11 @@ export function parseArgs(args) {
 
     if (arg.startsWith('--brain-root=')) {
       options.brainRoot = arg.slice('--brain-root='.length);
+      continue;
+    }
+
+    if (arg === '--app-only') {
+      options.appOnly = true;
       continue;
     }
 

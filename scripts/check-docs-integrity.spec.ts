@@ -125,6 +125,7 @@ describe('check-docs-integrity', () => {
         '[Saved teams](/tabs/saved-teams)',
         '[Saved enemies](/tabs/saved-enemies)',
         '[Character boxes](/tabs/character-boxes)',
+        '[Character edit](/characters/123/edit)',
       ].join('\n'),
     });
 
@@ -191,6 +192,7 @@ describe('check-docs-integrity', () => {
         '',
         'Old route: https://optcteambuilder.com/tabs/team-builder/',
         'Wrong workspace: https://app.clickup.com/t/123456789/not-this-task',
+        'Wrong protocol: http://app.clickup.com/t/90121749478/869dwc3zd',
       ].join('\n'),
     });
 
@@ -201,6 +203,9 @@ describe('check-docs-integrity', () => {
         }),
         expect.objectContaining({
           message: 'Invalid ClickUp task URL for OPTC workspace: https://app.clickup.com/t/123456789/not-this-task',
+        }),
+        expect.objectContaining({
+          message: 'Invalid ClickUp task URL for OPTC workspace: http://app.clickup.com/t/90121749478/869dwc3zd',
         }),
       ]),
     );
@@ -335,6 +340,20 @@ describe('check-docs-integrity', () => {
         message: expect.stringContaining('Unable to scan requested brain docs root'),
       }),
     );
+  });
+
+  it('supports app-only scans when the private brain root is unavailable', async () => {
+    const rootDir = await mkdtemp(path.join(os.tmpdir(), 'optc-docs-integrity-app-only-'));
+    tempDirs.push(rootDir);
+    const appRoot = path.join(rootDir, 'optc-team-builder');
+    const brainRoot = path.join(rootDir, 'missing-brain');
+    await mkdir(appRoot, { recursive: true });
+    await writeFile(path.join(appRoot, 'README.md'), '# App\n');
+
+    const result = await checkDocsIntegrity({ appRoot, brainRoot, appOnly: true });
+
+    expect(result.failures).toEqual([]);
+    expect(formatFailures(result)).toContain('checked 1 Markdown files across app docs');
   });
 
   it('ignores headings inside fenced code when validating anchors', async () => {
@@ -602,6 +621,22 @@ describe('check-docs-integrity', () => {
         message: 'Live artifact path must use live-artifacts/<task-id>/...: live-artifacts/final.png',
       }),
     ]);
+  });
+
+  it('rejects ClickUp placeholders outside the PR template', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'Placeholder task: https://app.clickup.com/t/90121749478/...',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Invalid ClickUp task URL for OPTC workspace: https://app.clickup.com/t/90121749478/',
+      }),
+    );
   });
 
   it('validates Markdown live artifact links by shape only', async () => {
