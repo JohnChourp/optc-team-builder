@@ -1,0 +1,81 @@
+name: Docs Integrity
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  docs-integrity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Note app-only validation for untrusted PR
+        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
+        run: |
+          echo "::notice::Running app-only Docs Integrity because this pull_request context cannot receive RELEASE_PUSH_TOKEN for the private optc-team-builder-brain repo. Full app+brain docs integrity still runs for trusted PRs and main pushes."
+
+      - name: Checkout app
+        uses: actions/checkout@v7
+        with:
+          path: optc-team-builder
+
+      - name: Checkout sibling brain
+        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
+        shell: bash
+        env:
+          SIBLING_CHECKOUT_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          ref="refs/heads/${branch}"
+          repo="https://github.com/JohnChourp/optc-team-builder-brain.git"
+          if [[ -z "${SIBLING_CHECKOUT_TOKEN:-}" ]]; then
+            echo "::error::SIBLING_CHECKOUT_TOKEN is empty. Configure RELEASE_PUSH_TOKEN with read access to the private optc-team-builder-brain repo."
+            exit 1
+          fi
+
+          basic_token="$(printf 'x-access-token:%s' "$SIBLING_CHECKOUT_TOKEN" | base64 -w 0)"
+          auth_header="AUTHORIZATION: basic ${basic_token}"
+
+          if ! git -c "http.https://github.com/.extraheader=${auth_header}" ls-remote "$repo" "refs/heads/main" >/dev/null 2>&1; then
+            echo "::error::Unable to read private sibling repo JohnChourp/optc-team-builder-brain. Check RELEASE_PUSH_TOKEN access."
+            exit 1
+          fi
+
+          if git -c "http.https://github.com/.extraheader=${auth_header}" ls-remote "$repo" "$ref" | awk -v ref="$ref" '$2 == ref { found = 1 } END { exit found ? 0 : 1 }'; then
+            sibling_branch="$branch"
+          else
+            sibling_branch="main"
+          fi
+
+          git -c "http.https://github.com/.extraheader=${auth_header}" clone --depth 1 --branch "$sibling_branch" "$repo" optc-team-builder-brain
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: optc-team-builder/.nvmrc
+          cache: npm
+          cache-dependency-path: optc-team-builder/package-lock.json
+
+      - name: Install dependencies
+        working-directory: optc-team-builder
+        run: npm ci
+
+      - name: Check full docs integrity
+        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
+        working-directory: optc-team-builder
+        run: npm run docs:integrity -- --brain-root ../optc-team-builder-brain
+
+      - name: Check app-only docs integrity
+        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
+        working-directory: optc-team-builder
+        run: npm run docs:integrity -- --app-only
+
+      - name: Docs integrity script tests
+        working-directory: optc-team-builder
+        run: npm run test:docs-integrity

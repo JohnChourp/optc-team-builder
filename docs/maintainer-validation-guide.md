@@ -18,7 +18,7 @@ maintainers can pick the smallest useful path without rereading prior audits.
 | OPTC DB release-detector logic, fixtures, workflow dispatch rules, or upstream replay support | `npm run test:release-check` | Run each successful bundled fixture plus the live check, and verify `node scripts/check-optc-release-needed.mjs --fixture=error --json` exits nonzero | Missing upstream character IDs are the only release trigger, fixture branches remain replayable, malformed fixture handling still fails, and the live upstream read still works | Command output; workflow artifact `release-trigger-outcome` after Actions runs |
 | Release-readiness summary schema, report formatting, sign-off policy, or release evidence wiring | `npm run test:release-readiness` | `npm run test:release-readiness` plus `npm run release:readiness -- --source /path/to/source.json --output /path/to/summary.md --json-output /path/to/summary.json` using current evidence | Candidate status, tests, performance report, release-trigger report, blockers, and waivers produce the intended ready/blocked decision | Paths passed to `--output` and `--json-output` |
 | Broad app UI behavior, routing, saved-team/share flows, or regression-prone user journeys | Focused `npm run test:ci -- --include ...` for touched components/services | `npm run test:ci`, `npm run test:e2e:chromium`, `npm run i18n:validate`, and `npm run build`; use all browser projects when browser-specific behavior changed | Angular units, deterministic Chromium journeys, translation keys, and production build health remain intact | Playwright reports and `test-results/` in CI |
-| Docs-only, runbook-only, or audit-only changes | `git diff --check` | Add targeted command validation only when command examples or workflow references changed | Markdown has no whitespace errors and examples stay scoped to the changed documentation | None |
+| Docs-only, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain` plus `git diff --check` | Add targeted command validation only when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, and whitespace stay valid across app and brain docs | None |
 
 ## Lightweight vs Deep Runs
 
@@ -218,6 +218,23 @@ npm run release:readiness -- \
 must point at downloaded local JSON files, resolved relative to the source file.
 Use links for auxiliary CI runs, QA notes, brain audits, and artifact pages
 instead of copying all evidence inline.
+
+### Docs Integrity
+
+Use the shared docs checker before merging README, guide, runbook, or audit
+changes:
+
+```bash
+npm run docs:integrity -- --brain-root ../optc-team-builder-brain
+```
+
+The checker scans committed Markdown docs in both repos for broken Markdown
+links and anchors, explicit repo file references, stale OPTC public URLs, and
+ClickUp task URL shape. It syntax-checks `live-artifacts/<task-id>/...`
+references without requiring ignored local screenshots to exist. For intentional
+historical or generated references, place
+`<!-- docs-integrity-ignore-next-line: <reason> -->` immediately before the
+line.
 
 ## Ownership Rule
 

@@ -1,0 +1,1492 @@
+#!/usr/bin/env node
+import { access, readdir, readFile, stat } from 'node:fs/promises';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const OPTC_CLICKUP_WORKSPACE_ID = '90121749478';
+const OPTC_PUBLIC_ORIGIN = 'https://optcteambuilder.com';
+const OPTC_PUBLIC_HOST = 'optcteambuilder.com';
+const OPTC_PUBLIC_HOSTS = new Set([OPTC_PUBLIC_HOST, `www.${OPTC_PUBLIC_HOST}`]);
+const CLICKUP_ORIGIN = 'https://app.clickup.com';
+const IGNORE_NEXT_LINE_PATTERN = /<!--\s*docs-integrity-ignore-next-line:\s*(.+?)\s*-->/iu;
+const MARKDOWN_REFERENCE_PATTERN = /^\s{0,3}\[([^\]\n]+)\]:\s*(\S+)/u;
+const MARKDOWN_REFERENCE_USE_PATTERN = /!?\[([^\]\n]+)\]\[([^\]\n]*)\]/gu;
+const SHORTCUT_REFERENCE_PATTERN = /(^|[^\]!])\[([^\]\n]+)\](?!\(|\[)/gu;
+const CODE_SPAN_PATTERN = /`([^`\n]+)`/gu;
+const URL_PATTERN = /\bhttps?:\/\/[^\s<>)"'`]+/giu;
+const HEADER_PATTERN = /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/u;
+const HTML_ANCHOR_PATTERN = /\b(?:id|name)=["']([^"']+)["']/giu;
+
+const GENERATED_DIRS = new Set([
+  '.angular',
+  '.git',
+  'coverage',
+  'dist',
+  'live-artifacts',
+  'node_modules',
+  'perf-artifacts',
+  'playwright-report',
+  'test-results',
+  'tmp-worktrees',
+  'www',
+]);
+
+const BRAIN_ONLY_IGNORED_DIRS = new Set(['.claude', '.codex']);
+
+const REPO_ROOT_PREFIXES = [
+  '.github/',
+  'android/',
+  'audits/',
+  'docs/',
+  'e2e/',
+  'ios/',
+  'public/',
+  'scripts/',
+  'server/',
+  'src/',
+];
+
+const ROOT_FILE_NAMES = new Set([
+  '.env.example',
+  '.node-version',
+  '.nvmrc',
+  'AGENTS.md',
+  'CLAUDE.md',
+  'LICENSE',
+  'README.md',
+  'SECURITY.md',
+  'SEO_AUDIT.md',
+  'angular.json',
+  'capacitor.config.ts',
+  'ionic.config.json',
+  'knip.json',
+  'ngsw-config.json',
+  'package-lock.json',
+  'package.json',
+  'playwright.config.ts',
+  'transloco.config.ts',
+  'tsconfig.app.json',
+  'tsconfig.json',
+  'tsconfig.spec.json',
+]);
+
+const OPTIONAL_FILE_REFERENCES = new Set(['MEMORY.md', 'CLAUDE_MEMORY.md']);
+const GENERATED_FILE_REFERENCES = new Set([
+  'android/app/build',
+  'android/app/build/',
+  'android/app/src/main/assets',
+  'android/app/src/main/assets/',
+  'ios/App/App/public',
+  'ios/App/App/public/',
+  'performance-budget-history.md',
+  'performance-budget-history.json',
+  'performance-budget-report.json',
+  'performance-budget-summary.md',
+  'public/app-config.js',
+]);
+
+const KNOWN_PUBLIC_PATHS = new Set([
+  '',
+  'cookies',
+  'guides/guided-build-compare-team-sharing',
+  'guides/how-to-build-an-optc-team',
+  'guides/optc-pirate-rumble-team-building',
+  'privacy',
+  'robots.txt',
+  'sitemap.html',
+  'sitemap.xml',
+  'tabs/account',
+  'tabs/auto-team-builder',
+  'tabs/auto-team-builder-rumble',
+  'tabs/captain-coverage',
+  'tabs/character-boxes',
+  'tabs/characters',
+  'tabs/collection',
+  'tabs/cookies',
+  'tabs/crew-forge',
+  'tabs/drive-sync',
+  'tabs/manual-team-builder',
+  'tabs/privacy',
+  'tabs/rumble-characters',
+  'tabs/saved-enemies',
+  'tabs/saved-rumble-teams',
+  'tabs/saved-teams',
+  'tabs/settings',
+  'tabs/terms',
+  'terms',
+  'tools/optc-auto-team-builder',
+  'tools/optc-character-database',
+  'tools/optc-rumble-team-builder',
+  'tools/optc-team-builder',
+]);
+
+export async function checkDocsIntegrity(options = {}) {
+  const appRoot = path.resolve(options.appRoot ?? process.cwd());
+  const brainRoot = path.resolve(options.brainRoot ?? path.join(appRoot, '..', 'optc-team-builder-brain'));
+  const appOnly = Boolean(options.appOnly);
+  const failures = [];
+  const docs = await collectMarkdownDocs({ appRoot, brainRoot, failures, includeBrain: !appOnly });
+  const docCache = new Map();
+
+  for (const doc of docs) {
+    const parsed = await readDoc(doc, docCache);
+    const linkTargets = extractMarkdownLinkTargets(parsed);
+    const codeSpanTargets = extractCodeSpanTargets(parsed);
+    const urlTargets = extractUrlTargets(parsed);
+
+    for (const target of linkTargets) {
+      await validateMarkdownTarget({
+        target,
+        doc,
+        parsed,
+        appRoot,
+        brainRoot,
+        appOnly,
+        docCache,
+        failures,
+      });
+    }
+
+    for (const target of codeSpanTargets) {
+      await validateCodeSpanTarget({ target, doc: parsed, appRoot, brainRoot, appOnly, failures });
+    }
+
+    for (const target of urlTargets) {
+      await validateExternalUrlTarget({ target, doc: parsed, appRoot, failures });
+    }
+  }
+
+  return {
+    appRoot,
+    brainRoot,
+    appOnly,
+    checkedFiles: docs.length,
+    failures,
+  };
+}
+
+async function collectMarkdownDocs({ appRoot, brainRoot, failures, includeBrain }) {
+  const docs = [];
+  await collectMarkdownUnder(appRoot, appRoot, docs, 'app', failures, true);
+
+  if (includeBrain) {
+    await collectMarkdownUnder(brainRoot, brainRoot, docs, 'brain', failures, true);
+  }
+
+  docs.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+  return docs;
+}
+
+async function collectMarkdownUnder(root, currentDir, docs, repoName, failures, isRoot = false) {
+  let entries;
+
+  try {
+    entries = await readdir(currentDir, { withFileTypes: true });
+  } catch (error) {
+    if (isRoot) {
+      failures.push({
+        file: '.',
+        repo: repoName,
+        line: 1,
+        message: `Unable to scan requested ${repoName} docs root: ${root} (${error instanceof Error ? error.message : String(error)})`,
+      });
+    }
+
+    return;
+  }
+
+  for (const entry of entries) {
+    if (GENERATED_DIRS.has(entry.name) || (repoName === 'brain' && BRAIN_ONLY_IGNORED_DIRS.has(entry.name))) {
+      continue;
+    }
+
+    const absolutePath = path.join(currentDir, entry.name);
+
+    if (entry.isDirectory()) {
+      await collectMarkdownUnder(root, absolutePath, docs, repoName, failures);
+      continue;
+    }
+
+    if (entry.isFile() && entry.name.toLowerCase().endsWith('.md')) {
+      docs.push({
+        absolutePath,
+        repoName,
+        repoRoot: root,
+        relativePath: normalizePath(path.relative(root, absolutePath)),
+      });
+    }
+  }
+}
+
+async function readDoc(doc, docCache) {
+  const cached = docCache.get(doc.absolutePath);
+
+  if (cached) {
+    return cached;
+  }
+
+  const text = await readFile(doc.absolutePath, 'utf8');
+  const lines = text.split(/\r?\n/u);
+  const ignoredLines = new Set();
+  const scanLines = [];
+  let inFence = false;
+  let fenceMarker = '';
+  const anchorLines = [];
+  let previousVisibleContentLine = '';
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const lineNumber = index + 1;
+    const line = lines[index];
+    const ignoreMatch = line.match(IGNORE_NEXT_LINE_PATTERN);
+
+    if (ignoreMatch?.[1]?.trim()) {
+      ignoredLines.add(lineNumber + 1);
+    }
+
+    const fenceMatch = line.match(/^\s*(`{3,}|~{3,})/u);
+
+    if (fenceMatch) {
+      if (!inFence) {
+        inFence = true;
+        fenceMarker = fenceMatch[1] ?? '';
+      } else if (isClosingFence(fenceMatch[1] ?? '', fenceMarker)) {
+        inFence = false;
+        fenceMarker = '';
+      }
+
+      scanLines.push('');
+      anchorLines.push('');
+      continue;
+    }
+
+    const visibleLine = inFence || isIndentedCodeLine(line, previousVisibleContentLine) ? '' : line;
+    scanLines.push(visibleLine);
+    anchorLines.push(visibleLine);
+
+    if (visibleLine.trim()) {
+      previousVisibleContentLine = visibleLine;
+    }
+  }
+
+  const scanText = scanLines.join('\n');
+  const parsed = {
+    ...doc,
+    text,
+    lines,
+    scanText,
+    linkScanText: maskInlineCodeSpans(scanText),
+    urlScanText: maskMarkdownDestinations(scanText),
+    ignoredLines,
+    anchors: collectAnchors(anchorLines),
+  };
+  docCache.set(doc.absolutePath, parsed);
+  return parsed;
+}
+
+function collectAnchors(lines) {
+  const anchors = new Set();
+  const slugCounts = new Map();
+  let previousVisibleLine = '';
+
+  for (const line of lines) {
+    if (/^\s{0,3}(?:=+|-+)\s*$/u.test(line) && previousVisibleLine.trim()) {
+      addAnchorForHeading({ anchors, slugCounts, heading: previousVisibleLine });
+      previousVisibleLine = '';
+      continue;
+    }
+
+    for (const match of line.matchAll(HTML_ANCHOR_PATTERN)) {
+      if (match[1]) {
+        anchors.add(match[1]);
+      }
+    }
+
+    const header = line.match(HEADER_PATTERN);
+
+    if (!header) {
+      previousVisibleLine = line;
+      continue;
+    }
+
+    addAnchorForHeading({ anchors, slugCounts, heading: header[2] ?? '' });
+    previousVisibleLine = line;
+  }
+
+  return anchors;
+}
+
+function addAnchorForHeading({ anchors, slugCounts, heading }) {
+  const baseSlug = slugifyHeading(heading);
+
+  if (!baseSlug) {
+    return;
+  }
+
+  const count = slugCounts.get(baseSlug) ?? 0;
+  const slug = count === 0 ? baseSlug : `${baseSlug}-${count}`;
+  slugCounts.set(baseSlug, count + 1);
+  anchors.add(slug);
+}
+
+export function slugifyHeading(value) {
+  return stripHtmlTagsForSlug(String(value))
+    .replace(/\[([^\]]+)\]\([^)]+\)/gu, '$1')
+    .replace(/[`*~]/gu, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}\s_-]/gu, '')
+    .replace(/\s+/gu, '-')
+    .replace(/-+/gu, '-')
+    .replace(/^-|-$/gu, '');
+}
+
+function stripHtmlTagsForSlug(value) {
+  let output = '';
+  let inTag = false;
+
+  for (const char of value) {
+    if (char === '<') {
+      inTag = true;
+      continue;
+    }
+
+    if (char === '>' && inTag) {
+      inTag = false;
+      continue;
+    }
+
+    if (!inTag) {
+      output += char;
+    }
+  }
+
+  return output;
+}
+
+function extractMarkdownLinkTargets(parsed) {
+  const targets = [];
+  const definitions = new Map();
+
+  parsed.linkScanText.split('\n').forEach((line, index) => {
+    for (const rawDestination of extractInlineLinks(line)) {
+      targets.push({
+        raw: cleanMarkdownTarget(rawDestination),
+        line: index + 1,
+        kind: 'markdown-link',
+      });
+    }
+  });
+
+  parsed.linkScanText.split('\n').forEach((line, index) => {
+    const match = line.match(MARKDOWN_REFERENCE_PATTERN);
+
+    if (match) {
+      const label = match[1] ?? '';
+
+      if (label.startsWith('^')) {
+        return;
+      }
+
+      definitions.set(normalizeReferenceLabel(label), {
+        line: index + 1,
+        raw: cleanMarkdownTarget(match[2] ?? ''),
+      });
+      targets.push({
+        raw: cleanMarkdownTarget(match[2] ?? ''),
+        line: index + 1,
+        kind: 'markdown-reference',
+      });
+    }
+  });
+
+  parsed.linkScanText.split('\n').forEach((line, index) => {
+    if (MARKDOWN_REFERENCE_PATTERN.test(line)) {
+      return;
+    }
+
+    for (const match of line.matchAll(MARKDOWN_REFERENCE_USE_PATTERN)) {
+      if (line[(match.index ?? 0) - 1] === '\\') {
+        continue;
+      }
+
+      if (isCompactGameToken(match[1] ?? '') && isCompactGameToken(match[2] ?? '') && match[1] !== match[2]) {
+        continue;
+      }
+
+      const label = normalizeReferenceLabel(match[2] || match[1] || '');
+
+      if (!definitions.has(label)) {
+        targets.push({
+          raw: label,
+          line: index + 1,
+          kind: 'missing-reference-definition',
+        });
+      }
+    }
+
+    for (const match of line.matchAll(SHORTCUT_REFERENCE_PATTERN)) {
+      if (match[1] === '\\') {
+        continue;
+      }
+
+      const label = normalizeReferenceLabel(match[2] ?? '');
+
+      if (shouldTreatAsShortcutReference(label) && !definitions.has(label)) {
+        targets.push({
+          raw: label,
+          line: index + 1,
+          kind: 'missing-reference-definition',
+        });
+      }
+    }
+  });
+
+  return targets;
+}
+
+function extractCodeSpanTargets(parsed) {
+  const targets = [];
+
+  for (const match of parsed.scanText.matchAll(CODE_SPAN_PATTERN)) {
+    const raw = normalizeCodeSpan(match[1] ?? '');
+
+    if (!raw || !isFileReferenceCandidate(raw, parsed)) {
+      continue;
+    }
+
+    targets.push({
+      raw,
+      line: lineNumberAt(parsed.scanText, match.index ?? 0),
+      kind: 'code-span',
+    });
+  }
+
+  return targets;
+}
+
+function extractUrlTargets(parsed) {
+  const targets = [];
+
+  for (const match of parsed.urlScanText.matchAll(URL_PATTERN)) {
+    targets.push({
+      raw: trimTrailingUrlPunctuation(match[0] ?? ''),
+      line: lineNumberAt(parsed.urlScanText, match.index ?? 0),
+      kind: 'url',
+    });
+  }
+
+  return targets;
+}
+
+function maskInlineCodeSpans(text) {
+  return text.split('\n').map(maskInlineCodeSpansInLine).join('\n');
+}
+
+function maskMarkdownDestinations(text) {
+  return text
+    .split('\n')
+    .map((line) => maskReferenceDefinitionDestinationInLine(maskInlineLinkDestinationsInLine(maskInlineCodeSpansInLine(line))))
+    .join('\n');
+}
+
+async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot, appOnly, docCache, failures }) {
+  if (shouldIgnoreLine(parsed, target.line)) {
+    return;
+  }
+
+  if (target.kind === 'missing-reference-definition') {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Missing reference-style link definition: ${target.raw}`,
+    });
+    return;
+  }
+
+  if (!target.raw) {
+    return;
+  }
+
+  const parsedTarget = parseTarget(target.raw);
+
+  if (isExternalScheme(parsedTarget.path)) {
+    await validateExternalUrlTarget({ target, doc, appRoot, failures });
+    return;
+  }
+
+  if (appOnly && isBrainRepoReference(parsedTarget.path)) {
+    return;
+  }
+
+  if (!parsedTarget.path && parsedTarget.hash) {
+    validateAnchor({ anchor: parsedTarget.hash, targetDoc: parsed, target, doc, failures });
+    return;
+  }
+
+  if (isLiveArtifactReference(parsedTarget.path)) {
+    validateLiveArtifactReference({ value: parsedTarget.path, target, doc, failures });
+    return;
+  }
+
+  if (parsedTarget.path.startsWith('/')) {
+    const repoRootPath = path.join(doc.repoRoot, decodePath(parsedTarget.path.slice(1)));
+
+    if (await pathExists(repoRootPath)) {
+      await validateResolvedMarkdownPath({
+        targetPath: repoRootPath,
+        parsedTarget,
+        target,
+        doc,
+        appRoot,
+        brainRoot,
+        docCache,
+        failures,
+      });
+      return;
+    }
+
+    await validateAbsoluteRoute({ rawPath: parsedTarget.path, target, doc, appRoot, failures });
+    return;
+  }
+
+  const targetPath = resolveMarkdownPath(doc, parsedTarget.path, appRoot, brainRoot);
+  await validateResolvedMarkdownPath({
+    targetPath,
+    parsedTarget,
+    target,
+    doc,
+    appRoot,
+    brainRoot,
+    docCache,
+    failures,
+  });
+}
+
+async function validateResolvedMarkdownPath({ targetPath, parsedTarget, target, doc, appRoot, brainRoot, docCache, failures }) {
+  if (!isInsideCheckedRoots(targetPath, appRoot, brainRoot)) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Linked file resolves outside checked repos: ${target.raw}`,
+    });
+    return;
+  }
+
+  const targetExists = await pathExists(targetPath);
+
+  if (!targetExists) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Missing linked file: ${target.raw}`,
+    });
+    return;
+  }
+
+  if (parsedTarget.hash && targetPath.toLowerCase().endsWith('.md')) {
+    const targetDoc = await readDoc(
+      {
+        absolutePath: targetPath,
+        repoName: repoNameForPath(targetPath, appRoot, brainRoot),
+        repoRoot: targetPath.startsWith(brainRoot) ? brainRoot : appRoot,
+        relativePath: normalizePath(path.relative(targetPath.startsWith(brainRoot) ? brainRoot : appRoot, targetPath)),
+      },
+      docCache,
+    );
+    validateAnchor({ anchor: parsedTarget.hash, targetDoc, target, doc, failures });
+  }
+}
+
+async function validateCodeSpanTarget({ target, doc, appRoot, brainRoot, appOnly, failures }) {
+  if (shouldIgnoreLineForDoc(doc, target.line)) {
+    return;
+  }
+
+  if (isLiveArtifactReference(target.raw)) {
+    validateLiveArtifactReference({ value: target.raw, target, doc, failures });
+    return;
+  }
+
+  if (isExternalScheme(target.raw)) {
+    await validateExternalUrlTarget({ target, doc, appRoot, failures });
+    return;
+  }
+
+  if (appOnly && isBrainRepoReference(target.raw)) {
+    return;
+  }
+
+  if (OPTIONAL_FILE_REFERENCES.has(target.raw)) {
+    return;
+  }
+
+  if (GENERATED_FILE_REFERENCES.has(target.raw)) {
+    return;
+  }
+
+  const resolvedPaths = resolveFileReferenceCandidates(doc, target.raw, appRoot, brainRoot);
+  const found = await firstExistingPath(resolvedPaths);
+
+  if (found && !isInsideCheckedRoots(found, appRoot, brainRoot)) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Referenced file resolves outside checked repos: ${target.raw}`,
+    });
+    return;
+  }
+
+  if (!found) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Missing referenced file: ${target.raw}`,
+    });
+  }
+}
+
+async function validateExternalUrlTarget({ target, doc, appRoot, failures }) {
+  if (shouldIgnoreLineForDoc(doc, target.line)) {
+    return;
+  }
+
+  const raw = trimTrailingUrlPunctuation(target.raw);
+  const parsedUrl = parseHttpUrl(raw);
+
+  if (parsedUrl && OPTC_PUBLIC_HOSTS.has(parsedUrl.hostname)) {
+    await validateOptcPublicUrl({ raw, target, doc, appRoot, failures });
+  }
+
+  if (parsedUrl?.hostname === 'app.clickup.com' && parsedUrl.pathname.startsWith('/t/')) {
+    validateClickUpReference({ raw, target, doc, failures });
+  }
+}
+
+async function validateOptcPublicUrl({ raw, target, doc, appRoot, failures }) {
+  let parsed;
+
+  try {
+    parsed = new URL(raw);
+  } catch {
+    addFailure({ failures, doc, line: target.line, message: `Invalid OPTC public URL: ${raw}` });
+    return;
+  }
+
+  const publicPath = publicPathForUrl(parsed);
+
+  if (parsed.origin !== OPTC_PUBLIC_ORIGIN) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `OPTC public URL must use HTTPS canonical origin: ${raw}`,
+    });
+  }
+
+  if (parsed.hash.startsWith('#/')) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `OPTC public URL must not use hash routing: ${raw}`,
+    });
+  }
+
+  if (
+    KNOWN_PUBLIC_PATHS.has(publicPath) ||
+    isKnownCharacterPath(publicPath) ||
+    (await isPublishedPublicAsset(publicPath, appRoot))
+  ) {
+    return;
+  }
+
+  addFailure({
+    failures,
+    doc,
+    line: target.line,
+    message: `Unknown OPTC public URL path: ${raw}`,
+  });
+}
+
+function validateClickUpReference({ raw, target, doc, failures }) {
+  const lineText = doc.lines?.[target.line - 1] ?? '';
+
+  if (
+    doc.relativePath === '.github/pull_request_template.md' &&
+    lineText.includes('...') &&
+    raw === `https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/`
+  ) {
+    return;
+  }
+
+  if (!isValidClickUpTaskUrl(raw)) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Invalid ClickUp task URL for OPTC workspace: ${raw}`,
+    });
+  }
+}
+
+export function isValidClickUpTaskUrl(rawUrl) {
+  let parsed;
+
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return false;
+  }
+
+  if (parsed.origin !== 'https://app.clickup.com') {
+    return false;
+  }
+
+  const segments = parsed.pathname.split('/').filter(Boolean);
+
+  if (segments[0] !== 't') {
+    return false;
+  }
+
+  if (segments.length === 2) {
+    if (segments[1] === OPTC_CLICKUP_WORKSPACE_ID || /^\d+$/u.test(segments[1])) {
+      return false;
+    }
+
+    return /^[A-Za-z0-9][A-Za-z0-9_-]*$/u.test(segments[1] ?? '');
+  }
+
+  if (segments.length === 3) {
+    return segments[1] === OPTC_CLICKUP_WORKSPACE_ID && /^[A-Za-z0-9][A-Za-z0-9_-]*$/u.test(segments[2] ?? '');
+  }
+
+  return false;
+}
+
+async function validateAbsoluteRoute({ rawPath, target, doc, appRoot, failures }) {
+  const publicPath = normalizePublicPath(rawPath);
+
+  if (
+    !publicPath ||
+    KNOWN_PUBLIC_PATHS.has(publicPath) ||
+    isKnownCharacterPath(publicPath) ||
+    (await isPublishedPublicAsset(publicPath, appRoot))
+  ) {
+    return;
+  }
+
+  addFailure({
+    failures,
+    doc,
+    line: target.line,
+    message: `Unknown absolute app/public path: ${rawPath}`,
+  });
+}
+
+function isKnownCharacterPath(publicPath) {
+  return /^characters\/(?:[1-9]\d*|:id)(?:\/edit)?$/u.test(publicPath);
+}
+
+function validateAnchor({ anchor, targetDoc, target, doc, failures }) {
+  const normalizedAnchor = decodeUriFragment(anchor);
+
+  if (targetDoc.anchors.has(normalizedAnchor)) {
+    return;
+  }
+
+  addFailure({
+    failures,
+    doc,
+    line: target.line,
+    message: `Missing Markdown anchor "#${anchor}" in ${targetDoc.relativePath}.`,
+  });
+}
+
+function cleanMarkdownTarget(rawTarget) {
+  let target = String(rawTarget ?? '').trim();
+
+  if (target.startsWith('<')) {
+    const closingIndex = target.indexOf('>');
+
+    if (closingIndex !== -1) {
+      return unescapeMarkdownDestination(target.slice(1, closingIndex));
+    }
+  }
+
+  const titleMatch = target.match(/^(\S+)\s+(?:["'][\s\S]*["']|\([^)]*\))$/u);
+
+  if (titleMatch) {
+    target = titleMatch[1] ?? target;
+  }
+
+  return unescapeMarkdownDestination(trimTrailingUrlPunctuation(target));
+}
+
+function normalizeCodeSpan(rawTarget) {
+  const normalized = String(rawTarget ?? '')
+    .trim()
+    .replace(/^(?:File|Path):\s*/iu, '')
+    .replace(/#L\d+(?:-L?\d+)?$/iu, '')
+    .replace(/:\d+(?:-\d+)?(?::\d+)?$/u, '')
+    .replace(/[.,;:!?]+$/u, '');
+
+  if (isExternalScheme(normalized)) {
+    return normalized;
+  }
+
+  return normalized.replace(/#[A-Za-z0-9][A-Za-z0-9._~!$&'()*+,;=:@/?%-]*$/u, '');
+}
+
+function isFileReferenceCandidate(value, doc) {
+  if (!value || value.length > 220) {
+    return false;
+  }
+
+  if (/[{}*|$\n\r<>]/u.test(value) || /\s/u.test(value)) {
+    return false;
+  }
+
+  if (/^(?:npm|npx|node|git|curl|if|for|while|export|source)\b/u.test(value)) {
+    return false;
+  }
+
+  if (/^[A-Z0-9_]+=/u.test(value) || value.startsWith('~')) {
+    return false;
+  }
+
+  if (isLiveArtifactReference(value) || isExternalScheme(value)) {
+    return true;
+  }
+
+  if (/^\d+\.md$/u.test(value) || /^completed_\d+\.md$/u.test(value)) {
+    return false;
+  }
+
+  if (
+    value.startsWith('../optc-team-builder/') ||
+    value.startsWith('../optc-team-builder-brain/') ||
+    value.startsWith('optc-team-builder/') ||
+    value.startsWith('optc-team-builder-brain/')
+  ) {
+    return true;
+  }
+
+  if (value.startsWith('./') || value.startsWith('../')) {
+    return hasKnownFileExtension(value);
+  }
+
+  if (REPO_ROOT_PREFIXES.some((prefix) => value.startsWith(prefix))) {
+    return true;
+  }
+
+  if (ROOT_FILE_NAMES.has(value)) {
+    return true;
+  }
+
+  if (/^[A-Za-z0-9][A-Za-z0-9_-]+\.md$/u.test(value)) {
+    return true;
+  }
+
+  return isBareSameDirectoryFileCandidate(value, doc);
+}
+
+function isBareSameDirectoryFileCandidate(value, doc) {
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*\.[A-Za-z0-9]+$/u.test(value) || !hasKnownFileExtension(value)) {
+    return false;
+  }
+
+  if (GENERATED_FILE_REFERENCES.has(value)) {
+    return false;
+  }
+
+  const relativePath = normalizePath(doc?.relativePath ?? '');
+  const directory = path.posix.dirname(relativePath);
+
+  return relativePath.endsWith('/README.md') && (directory === 'e2e' || directory.startsWith('scripts/fixtures/'));
+}
+
+function resolveMarkdownPath(doc, targetPath, appRoot, brainRoot) {
+  const value = decodePath(targetPath);
+  const siblingPath = resolveSiblingRepoReference(value, appRoot, brainRoot);
+
+  if (siblingPath) {
+    return siblingPath;
+  }
+
+  if (value.startsWith('../optc-team-builder/')) {
+    return path.join(appRoot, value.slice('../optc-team-builder/'.length));
+  }
+
+  if (value.startsWith('../optc-team-builder-brain/')) {
+    return path.join(brainRoot, value.slice('../optc-team-builder-brain/'.length));
+  }
+
+  if (value.startsWith('optc-team-builder/')) {
+    return path.join(appRoot, value.slice('optc-team-builder/'.length));
+  }
+
+  if (value.startsWith('optc-team-builder-brain/')) {
+    return path.join(brainRoot, value.slice('optc-team-builder-brain/'.length));
+  }
+
+  return path.resolve(path.dirname(doc.absolutePath), value);
+}
+
+function resolveFileReferenceCandidates(doc, rawPath, appRoot, brainRoot) {
+  const value = decodePath(rawPath);
+  const siblingPath = resolveSiblingRepoReference(value, appRoot, brainRoot);
+
+  if (siblingPath) {
+    return [siblingPath];
+  }
+
+  if (value.startsWith('../optc-team-builder/')) {
+    return [path.join(appRoot, value.slice('../optc-team-builder/'.length))];
+  }
+
+  if (value.startsWith('../optc-team-builder-brain/')) {
+    return [path.join(brainRoot, value.slice('../optc-team-builder-brain/'.length))];
+  }
+
+  if (value.startsWith('optc-team-builder/')) {
+    return [path.join(appRoot, value.slice('optc-team-builder/'.length))];
+  }
+
+  if (value.startsWith('optc-team-builder-brain/')) {
+    return [path.join(brainRoot, value.slice('optc-team-builder-brain/'.length))];
+  }
+
+  if (value.startsWith('./') || value.startsWith('../')) {
+    return [path.resolve(path.dirname(doc.absolutePath), value)];
+  }
+
+  const candidates = [path.resolve(path.dirname(doc.absolutePath), value)];
+
+  if (REPO_ROOT_PREFIXES.some((prefix) => value.startsWith(prefix)) || ROOT_FILE_NAMES.has(value)) {
+    candidates.unshift(path.join(doc.repoRoot, value));
+  }
+
+  if (/^[^/]+\.md$/iu.test(value)) {
+    candidates.unshift(path.join(doc.repoRoot, value));
+  }
+
+  if (doc.repoName === 'brain' && appLikelyRootPath(value)) {
+    candidates.push(path.join(appRoot, value));
+  }
+
+  if (doc.repoName === 'app' && brainLikelyRootPath(value)) {
+    candidates.push(path.join(brainRoot, value));
+  }
+
+  return [...new Set(candidates)];
+}
+
+function appLikelyRootPath(value) {
+  return /^(?:android|docs|e2e|ios|public|scripts|server|src|\.github)\//u.test(value) || ROOT_FILE_NAMES.has(value);
+}
+
+function brainLikelyRootPath(value) {
+  return /^(?:audits|live-artifacts|\.github)\//u.test(value);
+}
+
+function isBrainRepoReference(value) {
+  const normalized = normalizePath(decodePath(value ?? ''));
+  const segments = normalized.split('/').filter(Boolean);
+  return segments.includes('optc-team-builder-brain');
+}
+
+function parseTarget(rawTarget) {
+  const hashIndex = rawTarget.indexOf('#');
+
+  if (hashIndex === -1) {
+    return { path: rawTarget, hash: '' };
+  }
+
+  return {
+    path: rawTarget.slice(0, hashIndex),
+    hash: rawTarget.slice(hashIndex + 1),
+  };
+}
+
+function isExternalScheme(value) {
+  return /^[a-z][a-z0-9+.-]*:/iu.test(value);
+}
+
+function isLiveArtifactReference(value) {
+  return value === 'live-artifacts' || value.includes('live-artifacts/');
+}
+
+function isValidLiveArtifactReference(value) {
+  const rawNormalized = normalizePath(value)
+    .replace(/^optc-team-builder-brain\//u, '')
+    .replace(/^\.\.\/optc-team-builder-brain\//u, '');
+  const markerIndex = rawNormalized.indexOf('live-artifacts/');
+  const normalized = markerIndex === -1 ? rawNormalized : rawNormalized.slice(markerIndex);
+
+  if (normalized === 'live-artifacts' || normalized === 'live-artifacts/') {
+    return true;
+  }
+
+  return /^live-artifacts\/[A-Za-z0-9_-]+(?:\/.*)?$/u.test(normalized);
+}
+
+function resolveSiblingRepoReference(value, appRoot, brainRoot) {
+  const normalized = normalizePath(value);
+  const segments = normalized.split('/').filter(Boolean);
+  const brainIndex = segments.indexOf('optc-team-builder-brain');
+
+  if (brainIndex !== -1) {
+    return path.join(brainRoot, ...segments.slice(brainIndex + 1));
+  }
+
+  const appIndex = segments.indexOf('optc-team-builder');
+
+  if (appIndex !== -1) {
+    return path.join(appRoot, ...segments.slice(appIndex + 1));
+  }
+
+  return null;
+}
+
+function validateLiveArtifactReference({ value, target, doc, failures }) {
+  if (!isValidLiveArtifactReference(value)) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Live artifact path must use live-artifacts/<task-id>/...: ${value}`,
+    });
+  }
+}
+
+function normalizeReferenceLabel(value) {
+  return String(value ?? '').trim().replace(/\s+/gu, ' ').toLowerCase();
+}
+
+function isCompactGameToken(value) {
+  return /^[A-Z0-9+ -]+$/u.test(String(value ?? '').trim()) || /^[0-9-]+$/u.test(String(value ?? '').trim());
+}
+
+function shouldTreatAsShortcutReference(label) {
+  if (!label || label.startsWith('^') || isCompactGameToken(label)) {
+    return false;
+  }
+
+  return /\b(?:audit|doc|docs|guide|readme|release|report|runbook|script|task|workflow)\b/iu.test(label);
+}
+
+function isClosingFence(candidateMarker, openingMarker) {
+  return candidateMarker[0] === openingMarker[0] && candidateMarker.length >= openingMarker.length;
+}
+
+function isIndentedCodeLine(line, previousVisibleContentLine = '') {
+  const isIndented = /^(?: {4}|\t)/u.test(line);
+  const isNestedListItem = /^\s{4,}(?:[-*+]|\d+\.)\s+/u.test(line);
+  const previousListIndent = listMarkerIndent(previousVisibleContentLine);
+  const currentIndent = indentationWidth(line);
+  const continuesListItem =
+    previousListIndent !== null && currentIndent > previousListIndent && currentIndent < previousListIndent + 8;
+  return isIndented && !isNestedListItem && !continuesListItem;
+}
+
+function listMarkerIndent(line) {
+  const match = line.match(/^(\s*)(?:[-*+]|\d+\.)\s+/u);
+  return match ? indentationWidth(match[1] ?? '') : null;
+}
+
+function indentationWidth(value) {
+  let width = 0;
+
+  for (const char of value.match(/^\s*/u)?.[0] ?? '') {
+    width += char === '\t' ? 4 : 1;
+  }
+
+  return width;
+}
+
+function maskInlineCodeSpansInLine(line) {
+  let result = '';
+  let index = 0;
+
+  while (index < line.length) {
+    if (line[index] !== '`') {
+      result += line[index];
+      index += 1;
+      continue;
+    }
+
+    let tickCount = 1;
+
+    while (line[index + tickCount] === '`') {
+      tickCount += 1;
+    }
+
+    const marker = '`'.repeat(tickCount);
+    const endIndex = line.indexOf(marker, index + tickCount);
+
+    if (endIndex === -1) {
+      result += line[index];
+      index += 1;
+      continue;
+    }
+
+    const spanLength = endIndex + tickCount - index;
+    result += ' '.repeat(spanLength);
+    index += spanLength;
+  }
+
+  return result;
+}
+
+function maskInlineLinkDestinationsInLine(line) {
+  let result = line;
+
+  for (let index = 0; index < line.length; index += 1) {
+    if (line[index] !== '[' && !(line[index] === '!' && line[index + 1] === '[')) {
+      continue;
+    }
+
+    const labelStart = line[index] === '!' ? index + 1 : index;
+    const labelEnd = findClosingBracket(line, labelStart);
+
+    if (labelEnd === -1 || line[labelEnd + 1] !== '(') {
+      continue;
+    }
+
+    const parsedDestination = parseParenthesizedDestination(line, labelEnd + 1);
+
+    if (parsedDestination) {
+      result = maskRange(result, parsedDestination.destinationStart, parsedDestination.destinationEnd);
+      index = parsedDestination.endIndex;
+    }
+  }
+
+  return result;
+}
+
+function maskReferenceDefinitionDestinationInLine(line) {
+  const match = line.match(/^(\s{0,3}\[([^\]\n]+)\]:\s*)(\S+)/u);
+
+  if (!match?.[1] || !match[2] || !match[3]) {
+    return line;
+  }
+
+  if (match[2].startsWith('^')) {
+    return line;
+  }
+
+  const destinationStart = match[1].length;
+  return maskRange(line, destinationStart, destinationStart + match[3].length);
+}
+
+function maskRange(value, start, end) {
+  return `${value.slice(0, start)}${' '.repeat(end - start)}${value.slice(end)}`;
+}
+
+function extractInlineLinks(line) {
+  const links = [];
+
+  for (let index = 0; index < line.length; index += 1) {
+    if (line[index] !== '[' && !(line[index] === '!' && line[index + 1] === '[')) {
+      continue;
+    }
+
+    const labelStart = line[index] === '!' ? index + 1 : index;
+    const labelEnd = findClosingBracket(line, labelStart);
+
+    if (labelEnd === -1 || line[labelEnd + 1] !== '(') {
+      continue;
+    }
+
+    const parsedDestination = parseParenthesizedDestination(line, labelEnd + 1);
+
+    if (parsedDestination) {
+      links.push(parsedDestination.destination);
+      index = parsedDestination.endIndex;
+    }
+  }
+
+  return links;
+}
+
+function findClosingBracket(line, openIndex) {
+  let depth = 0;
+
+  for (let index = openIndex; index < line.length; index += 1) {
+    const char = line[index];
+    const previous = line[index - 1];
+
+    if (previous === '\\') {
+      continue;
+    }
+
+    if (char === '[') {
+      depth += 1;
+    } else if (char === ']') {
+      depth -= 1;
+
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return -1;
+}
+
+function parseParenthesizedDestination(line, openIndex) {
+  let cursor = openIndex + 1;
+  let depth = 1;
+  let destination = '';
+  const destinationStart = cursor;
+
+  while (cursor < line.length) {
+    const char = line[cursor];
+    const previous = line[cursor - 1];
+
+    if (char === '(' && previous !== '\\') {
+      depth += 1;
+    } else if (char === ')' && previous !== '\\') {
+      depth -= 1;
+
+      if (depth === 0) {
+        return {
+          destination: destination.trim(),
+          destinationStart,
+          destinationEnd: cursor,
+          endIndex: cursor,
+        };
+      }
+    }
+
+    destination += char;
+    cursor += 1;
+  }
+
+  return null;
+}
+
+function isInsideCheckedRoots(filePath, appRoot, brainRoot) {
+  return isInsideOrEqualDirectory(filePath, appRoot) || isInsideOrEqualDirectory(filePath, brainRoot);
+}
+
+function isInsideOrEqualDirectory(filePath, root) {
+  const relative = path.relative(root, filePath);
+  return relative === '' || (Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function unescapeMarkdownDestination(value) {
+  return String(value ?? '').replace(/\\([\\`*_[\]{}()#+\-.!>])/gu, '$1');
+}
+
+function parseHttpUrl(value) {
+  if (!/^https?:\/\//iu.test(value)) {
+    return null;
+  }
+
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+}
+
+function hasKnownFileExtension(value) {
+  return /\.(?:css|html|ico|jpeg|jpg|js|json|md|mjs|png|scss|sh|sql|svg|toml|ts|txt|webmanifest|webp|xml|ya?ml)$/iu.test(value);
+}
+
+function normalizePublicPath(rawPath) {
+  const decoded = decodePath(rawPath).split(/[?#]/u)[0] ?? '';
+  return decoded.replace(/^\/+/u, '').replace(/\/+$/u, '');
+}
+
+function publicPathForUrl(parsed) {
+  if (parsed.hash.startsWith('#/')) {
+    return normalizePublicPath(parsed.hash.slice(1));
+  }
+
+  return normalizePublicPath(parsed.pathname);
+}
+
+function decodeUriFragment(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function decodePath(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function trimTrailingUrlPunctuation(value) {
+  return String(value ?? '').replace(/[.,;:!?`]+$/u, '');
+}
+
+function normalizePath(value) {
+  return value.split(path.sep).join('/');
+}
+
+async function firstExistingPath(paths) {
+  for (const candidate of paths) {
+    if (await pathExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+async function pathExists(filePath) {
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function isPublishedPublicAsset(publicPath, appRoot) {
+  if (!publicPath) {
+    return false;
+  }
+
+  const publicRoot = path.join(appRoot, 'public');
+  const assetPath = path.join(publicRoot, publicPath);
+
+  if (!isInsideOrEqualDirectory(assetPath, publicRoot)) {
+    return false;
+  }
+
+  try {
+    const assetStat = await stat(assetPath);
+    return assetStat.isFile();
+  } catch {
+    return false;
+  }
+}
+
+function repoNameForPath(filePath, appRoot, brainRoot) {
+  if (filePath.startsWith(brainRoot)) {
+    return 'brain';
+  }
+
+  if (filePath.startsWith(appRoot)) {
+    return 'app';
+  }
+
+  return 'external';
+}
+
+function lineNumberAt(text, index) {
+  return text.slice(0, index).split('\n').length;
+}
+
+function shouldIgnoreLine(parsed, line) {
+  return parsed.ignoredLines.has(line);
+}
+
+function shouldIgnoreLineForDoc(doc, line) {
+  return Boolean(doc.ignoredLines?.has(line));
+}
+
+function addFailure({ failures, doc, line, message }) {
+  if (shouldIgnoreLineForDoc(doc, line)) {
+    return;
+  }
+
+  failures.push({
+    file: doc.relativePath,
+    repo: doc.repoName,
+    line,
+    message,
+  });
+}
+
+export function formatFailures(result) {
+  const scope = result.appOnly ? 'app docs' : 'app and brain docs';
+
+  if (result.failures.length === 0) {
+    return `[docs:integrity] checked ${result.checkedFiles} Markdown files across ${scope}.`;
+  }
+
+  return [
+    `[docs:integrity] found ${result.failures.length} docs integrity issue(s):`,
+    ...result.failures.map(
+      (failure) => `- ${failure.repo}:${failure.file}:${failure.line} - ${failure.message}`,
+    ),
+  ].join('\n');
+}
+
+export function parseArgs(args) {
+  const options = {};
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === '--app-root') {
+      options.appRoot = args[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--app-root=')) {
+      options.appRoot = arg.slice('--app-root='.length);
+      continue;
+    }
+
+    if (arg === '--brain-root') {
+      options.brainRoot = args[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--brain-root=')) {
+      options.brainRoot = arg.slice('--brain-root='.length);
+      continue;
+    }
+
+    if (arg === '--app-only') {
+      options.appOnly = true;
+      continue;
+    }
+
+    throw new Error(`Unknown argument: ${arg}`);
+  }
+
+  return options;
+}
+
+export async function runCli(args = process.argv.slice(2), io = console) {
+  const result = await checkDocsIntegrity(parseArgs(args));
+  const output = formatFailures(result);
+
+  if (result.failures.length > 0) {
+    io.error(output);
+    return 1;
+  }
+
+  io.log(output);
+  return 0;
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+  runCli()
+    .then((exitCode) => {
+      process.exitCode = exitCode;
+    })
+    .catch((error) => {
+      console.error(`[docs:integrity] ${error instanceof Error ? error.message : String(error)}`);
+      process.exitCode = 1;
+    });
+}
