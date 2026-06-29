@@ -480,6 +480,10 @@ function maskMarkdownDestinations(text) {
 }
 
 async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot, docCache, failures }) {
+  if (shouldIgnoreLine(parsed, target.line)) {
+    return;
+  }
+
   if (target.kind === 'missing-reference-definition') {
     addFailure({
       failures,
@@ -490,7 +494,7 @@ async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot,
     return;
   }
 
-  if (!target.raw || shouldIgnoreLine(parsed, target.line)) {
+  if (!target.raw) {
     return;
   }
 
@@ -655,7 +659,7 @@ async function validateOptcPublicUrl({ raw, target, doc, appRoot, failures }) {
     return;
   }
 
-  const publicPath = normalizePublicPath(parsed.pathname);
+  const publicPath = publicPathForUrl(parsed);
 
   if (parsed.origin !== OPTC_PUBLIC_ORIGIN) {
     addFailure({
@@ -663,6 +667,15 @@ async function validateOptcPublicUrl({ raw, target, doc, appRoot, failures }) {
       doc,
       line: target.line,
       message: `OPTC public URL must use HTTPS canonical origin: ${raw}`,
+    });
+  }
+
+  if (parsed.hash.startsWith('#/')) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `OPTC public URL must not use hash routing: ${raw}`,
     });
   }
 
@@ -1214,6 +1227,14 @@ function normalizePublicPath(rawPath) {
   return decoded.replace(/^\/+/u, '').replace(/\/+$/u, '');
 }
 
+function publicPathForUrl(parsed) {
+  if (parsed.hash.startsWith('#/')) {
+    return normalizePublicPath(parsed.hash.slice(1));
+  }
+
+  return normalizePublicPath(parsed.pathname);
+}
+
 function decodeUriFragment(value) {
   try {
     return decodeURIComponent(value);
@@ -1258,7 +1279,7 @@ async function pathExists(filePath) {
 }
 
 async function isPublishedPublicAsset(publicPath, appRoot) {
-  if (!publicPath || !hasKnownFileExtension(publicPath)) {
+  if (!publicPath) {
     return false;
   }
 

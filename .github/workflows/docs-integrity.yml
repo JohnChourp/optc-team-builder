@@ -26,9 +26,10 @@ jobs:
         run: |
           set -euo pipefail
           branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          ref="refs/heads/${branch}"
           repo="https://github.com/JohnChourp/optc-team-builder-brain.git"
           auth_header="AUTHORIZATION: bearer ${SIBLING_CHECKOUT_TOKEN}"
-          if git -c "http.https://github.com/.extraheader=${auth_header}" ls-remote --exit-code --heads "$repo" "$branch" >/dev/null 2>&1; then
+          if git -c "http.https://github.com/.extraheader=${auth_header}" ls-remote "$repo" "$ref" | awk -v ref="$ref" '$2 == ref { found = 1 } END { exit found ? 0 : 1 }'; then
             git -c "http.https://github.com/.extraheader=${auth_header}" clone --depth 1 --branch "$branch" "$repo" optc-team-builder-brain
           else
             git -c "http.https://github.com/.extraheader=${auth_header}" clone --depth 1 --branch main "$repo" optc-team-builder-brain

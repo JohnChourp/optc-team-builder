@@ -250,12 +250,39 @@ describe('check-docs-integrity', () => {
         '',
         'Public favicon: https://optcteambuilder.com/brand/favicon-master-v2-optimized.png',
         '[Verification file](/google84ad253f26cc78d3.html)',
+        '[ICO](/favicon.ico)',
+        '[Manifest](/manifest.webmanifest)',
+        '[SVG](/assets/placeholders/character-card.svg)',
       ].join('\n'),
       'optc-team-builder/public/brand/favicon-master-v2-optimized.png': 'fake png',
       'optc-team-builder/public/google84ad253f26cc78d3.html': '<html></html>\n',
+      'optc-team-builder/public/favicon.ico': 'fake ico',
+      'optc-team-builder/public/manifest.webmanifest': '{}\n',
+      'optc-team-builder/public/assets/placeholders/character-card.svg': '<svg></svg>\n',
     });
 
     expect(result.failures).toEqual([]);
+  });
+
+  it('fails legacy hash-routed OPTC public URLs and validates the hash path', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'Legacy hash route: https://optcteambuilder.com/#/tabs/team-builder/',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: 'OPTC public URL must not use hash routing: https://optcteambuilder.com/#/tabs/team-builder/',
+        }),
+        expect.objectContaining({
+          message: 'Unknown OPTC public URL path: https://optcteambuilder.com/#/tabs/team-builder/',
+        }),
+      ]),
+    );
   });
 
   it('does not treat lookalike domains as canonical OPTC public URLs', async () => {
@@ -405,6 +432,19 @@ describe('check-docs-integrity', () => {
         message: 'Missing reference-style link definition: release guide',
       }),
     );
+  });
+
+  it('honors next-line ignores for likely missing shortcut references', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '<!-- docs-integrity-ignore-next-line: literal historical shortcut syntax -->',
+        'See [Release guide].',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
   });
 
   it('ignores escaped reference labels', async () => {
