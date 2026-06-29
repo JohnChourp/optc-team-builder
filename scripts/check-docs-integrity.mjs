@@ -7,8 +7,7 @@ const OPTC_CLICKUP_WORKSPACE_ID = '90121749478';
 const OPTC_PUBLIC_ORIGIN = 'https://optcteambuilder.com';
 const CLICKUP_ORIGIN = 'https://app.clickup.com';
 const IGNORE_NEXT_LINE_PATTERN = /<!--\s*docs-integrity-ignore-next-line:\s*(.+?)\s*-->/iu;
-const MARKDOWN_LINK_PATTERN = /!?\[[^\]\n]*\]\(([^)\n]+)\)/gu;
-const MARKDOWN_REFERENCE_PATTERN = /^\s{0,3}\[([^\]\n]+)\]:\s+(\S+)/u;
+const MARKDOWN_REFERENCE_PATTERN = /^\s{0,3}\[([^\]\n]+)\]:\s*(\S+)/u;
 const MARKDOWN_REFERENCE_USE_PATTERN = /!?\[([^\]\n]+)\]\[([^\]\n]*)\]/gu;
 const SHORTCUT_REFERENCE_PATTERN = /(^|[^\]!])\[([^\]\n]+)\](?!\(|\[)/gu;
 const CODE_SPAN_PATTERN = /`([^`\n]+)`/gu;
@@ -258,8 +257,15 @@ async function readDoc(doc, docCache) {
 function collectAnchors(lines) {
   const anchors = new Set();
   const slugCounts = new Map();
+  let previousVisibleLine = '';
 
   for (const line of lines) {
+    if (/^\s{0,3}(?:=+|-+)\s*$/u.test(line) && previousVisibleLine.trim()) {
+      addAnchorForHeading({ anchors, slugCounts, heading: previousVisibleLine });
+      previousVisibleLine = '';
+      continue;
+    }
+
     for (const match of line.matchAll(HTML_ID_PATTERN)) {
       if (match[1]) {
         anchors.add(match[1]);
@@ -269,17 +275,28 @@ function collectAnchors(lines) {
     const header = line.match(HEADER_PATTERN);
 
     if (!header) {
+      previousVisibleLine = line;
       continue;
     }
 
-    const baseSlug = slugifyHeading(header[2] ?? '');
-    const count = slugCounts.get(baseSlug) ?? 0;
-    const slug = count === 0 ? baseSlug : `${baseSlug}-${count}`;
-    slugCounts.set(baseSlug, count + 1);
-    anchors.add(slug);
+    addAnchorForHeading({ anchors, slugCounts, heading: header[2] ?? '' });
+    previousVisibleLine = line;
   }
 
   return anchors;
+}
+
+function addAnchorForHeading({ anchors, slugCounts, heading }) {
+  const baseSlug = slugifyHeading(heading);
+
+  if (!baseSlug) {
+    return;
+  }
+
+  const count = slugCounts.get(baseSlug) ?? 0;
+  const slug = count === 0 ? baseSlug : `${baseSlug}-${count}`;
+  slugCounts.set(baseSlug, count + 1);
+  anchors.add(slug);
 }
 
 export function slugifyHeading(value) {
@@ -321,13 +338,15 @@ function extractMarkdownLinkTargets(parsed) {
   const targets = [];
   const definitions = new Map();
 
-  for (const match of parsed.linkScanText.matchAll(MARKDOWN_LINK_PATTERN)) {
-    targets.push({
-      raw: cleanMarkdownTarget(match[1] ?? ''),
-      line: lineNumberAt(parsed.linkScanText, match.index ?? 0),
-      kind: 'markdown-link',
-    });
-  }
+  parsed.linkScanText.split('\n').forEach((line, index) => {
+    for (const rawDestination of extractInlineLinks(line)) {
+      targets.push({
+        raw: cleanMarkdownTarget(rawDestination),
+        line: index + 1,
+        kind: 'markdown-link',
+      });
+    }
+  });
 
   parsed.linkScanText.split('\n').forEach((line, index) => {
     const match = line.match(MARKDOWN_REFERENCE_PATTERN);
@@ -423,10 +442,7 @@ function extractUrlTargets(parsed) {
 }
 
 function maskInlineCodeSpans(text) {
-  return text
-    .split('\n')
-    .map((line) => line.replace(/`[^`\n]*`/gu, (match) => ' '.repeat(match.length)))
-    .join('\n');
+  return text.split('\n').map(maskInlineCodeSpansInLine).join('\n');
 }
 
 async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot, docCache, failures }) {
@@ -691,7 +707,7 @@ function cleanMarkdownTarget(rawTarget) {
     }
   }
 
-  const titleMatch = target.match(/^(\S+)\s+["'][\s\S]*["']$/u);
+  const titleMatch = target.match(/^(\S+)\s+(?:["'][\s\S]*["']|\([^)]*\))$/u);
 
   if (titleMatch) {
     target = titleMatch[1] ?? target;
@@ -927,7 +943,121 @@ function isClosingFence(candidateMarker, openingMarker) {
 }
 
 function isIndentedCodeLine(line) {
-  return /^(?: {4}|\t)/u.test(line);
+  return /^(?: {4}|\t)/u.test(line) && !/^\s{4,}(?:[-*+]|\d+\.)\s+/u.test(line);
+}
+
+function maskInlineCodeSpansInLine(line) {
+  let result = '';
+  let index = 0;
+
+  while (index < line.length) {
+    if (line[index] !== '`') {
+      result += line[index];
+      index += 1;
+      continue;
+    }
+
+    let tickCount = 1;
+
+    while (line[index + tickCount] === '`') {
+      tickCount += 1;
+    }
+
+    const marker = '`'.repeat(tickCount);
+    const endIndex = line.indexOf(marker, index + tickCount);
+
+    if (endIndex === -1) {
+      result += line[index];
+      index += 1;
+      continue;
+    }
+
+    const spanLength = endIndex + tickCount - index;
+    result += ' '.repeat(spanLength);
+    index += spanLength;
+  }
+
+  return result;
+}
+
+function extractInlineLinks(line) {
+  const links = [];
+
+  for (let index = 0; index < line.length; index += 1) {
+    if (line[index] !== '[' && !(line[index] === '!' && line[index + 1] === '[')) {
+      continue;
+    }
+
+    const labelStart = line[index] === '!' ? index + 1 : index;
+    const labelEnd = findClosingBracket(line, labelStart);
+
+    if (labelEnd === -1 || line[labelEnd + 1] !== '(') {
+      continue;
+    }
+
+    const parsedDestination = parseParenthesizedDestination(line, labelEnd + 1);
+
+    if (parsedDestination) {
+      links.push(parsedDestination.destination);
+      index = parsedDestination.endIndex;
+    }
+  }
+
+  return links;
+}
+
+function findClosingBracket(line, openIndex) {
+  let depth = 0;
+
+  for (let index = openIndex; index < line.length; index += 1) {
+    const char = line[index];
+    const previous = line[index - 1];
+
+    if (previous === '\\') {
+      continue;
+    }
+
+    if (char === '[') {
+      depth += 1;
+    } else if (char === ']') {
+      depth -= 1;
+
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return -1;
+}
+
+function parseParenthesizedDestination(line, openIndex) {
+  let cursor = openIndex + 1;
+  let depth = 1;
+  let destination = '';
+
+  while (cursor < line.length) {
+    const char = line[cursor];
+    const previous = line[cursor - 1];
+
+    if (char === '(' && previous !== '\\') {
+      depth += 1;
+    } else if (char === ')' && previous !== '\\') {
+      depth -= 1;
+
+      if (depth === 0) {
+        return {
+          destination: destination.trim(),
+          endIndex: cursor,
+        };
+      }
+    }
+
+    destination += char;
+    cursor += 1;
+  }
+
+  return null;
 }
 
 function unescapeMarkdownDestination(value) {
@@ -951,7 +1081,7 @@ function hasKnownFileExtension(value) {
 }
 
 function normalizePublicPath(rawPath) {
-  const decoded = decodePath(rawPath);
+  const decoded = decodePath(rawPath).split(/[?#]/u)[0] ?? '';
   return decoded.replace(/^\/+/u, '').replace(/\/+$/u, '');
 }
 

@@ -97,6 +97,27 @@ describe('check-docs-integrity', () => {
     expect(result.failures).toEqual([]);
   });
 
+  it('accepts known public routes with query strings', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/docs/data-schemas.md': [
+        '# Schemas',
+        '',
+        '[Shared team](/tabs/manual-team-builder?teamShare=abc123)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('accepts Markdown links with parenthesized titles', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': '# App\n\n[Guide](docs/guide.md (title))\n',
+      'optc-team-builder/docs/guide.md': '# Guide\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
   it('fails stale repo-relative code-span file references', async () => {
     const result = await runWorkspace({
       'optc-team-builder/SEO_AUDIT.md': [
@@ -207,6 +228,23 @@ describe('check-docs-integrity', () => {
     expect(result.failures).toEqual([]);
   });
 
+  it('still validates links inside nested Markdown lists', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '- Parent',
+        '    - [Missing nested guide](docs/missing.md)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Missing linked file: docs/missing.md',
+      }),
+    );
+  });
+
   it('fails missing reference-style link definitions', async () => {
     const result = await runWorkspace({
       'optc-team-builder/README.md': [
@@ -237,6 +275,21 @@ describe('check-docs-integrity', () => {
         message: 'Missing reference-style link definition: release guide',
       }),
     );
+  });
+
+  it('accepts reference definitions without a space after the colon', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'See [the guide][guide].',
+        '',
+        '[guide]:docs/guide.md',
+      ].join('\n'),
+      'optc-team-builder/docs/guide.md': '# Guide\n',
+    });
+
+    expect(result.failures).toEqual([]);
   });
 
   it('does not treat compact OPTC game notation as reference-style links', async () => {
@@ -327,6 +380,27 @@ describe('check-docs-integrity', () => {
         'Inline examples such as `` `[missing](docs/nope.md)` `` are not rendered links.',
         'Future audit drafts may use `1234.md` before becoming `completed_1234.md`.',
       ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('ignores multi-backtick inline-code Markdown examples', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder-brain/audits/task.md': [
+        '# Task',
+        '',
+        'Literal double-backtick example: ``[missing](docs/nope.md)``.',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('collects Setext headings as Markdown anchors', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': '# App\n\n[Usage](docs/guide.md#usage)\n',
+      'optc-team-builder/docs/guide.md': 'Usage\n-----\n',
     });
 
     expect(result.failures).toEqual([]);
