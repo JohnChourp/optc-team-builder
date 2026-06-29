@@ -75,6 +75,28 @@ describe('check-docs-integrity', () => {
     );
   });
 
+  it('honors configured sibling roots for deep relative brain links', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/scripts/fixtures/release-readiness/expected-ready-summary.md': [
+        '# Expected',
+        '',
+        '[Brain audit](../../../../optc-team-builder-brain/audits/task.md)',
+      ].join('\n'),
+      'optc-team-builder-brain/audits/task.md': '# Task\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('resolves repo-root Markdown links to files before treating them as public routes', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': '# App\n\n[Guide](/docs/guide.md#usage)\n',
+      'optc-team-builder/docs/guide.md': '# Guide\n\n## Usage\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
   it('fails stale repo-relative code-span file references', async () => {
     const result = await runWorkspace({
       'optc-team-builder/SEO_AUDIT.md': [
@@ -169,6 +191,22 @@ describe('check-docs-integrity', () => {
     );
   });
 
+  it('ignores Markdown links inside tilde and indented code blocks', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '~~~md',
+        '[Missing](docs/nope.md)',
+        '~~~',
+        '',
+        '    [Also missing](docs/also-nope.md)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
   it('fails missing reference-style link definitions', async () => {
     const result = await runWorkspace({
       'optc-team-builder/README.md': [
@@ -181,6 +219,22 @@ describe('check-docs-integrity', () => {
     expect(result.failures).toContainEqual(
       expect.objectContaining({
         message: 'Missing reference-style link definition: missing-guide',
+      }),
+    );
+  });
+
+  it('fails likely missing shortcut reference definitions', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'See [Release guide].',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Missing reference-style link definition: release guide',
       }),
     );
   });

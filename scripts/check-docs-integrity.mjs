@@ -10,6 +10,7 @@ const IGNORE_NEXT_LINE_PATTERN = /<!--\s*docs-integrity-ignore-next-line:\s*(.+?
 const MARKDOWN_LINK_PATTERN = /!?\[[^\]\n]*\]\(([^)\n]+)\)/gu;
 const MARKDOWN_REFERENCE_PATTERN = /^\s{0,3}\[([^\]\n]+)\]:\s+(\S+)/u;
 const MARKDOWN_REFERENCE_USE_PATTERN = /!?\[([^\]\n]+)\]\[([^\]\n]*)\]/gu;
+const SHORTCUT_REFERENCE_PATTERN = /(^|[^\]!])\[([^\]\n]+)\](?!\(|\[)/gu;
 const CODE_SPAN_PATTERN = /`([^`\n]+)`/gu;
 const URL_PATTERN = /\bhttps?:\/\/[^\s<>)"'`]+/giu;
 const HEADER_PATTERN = /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/u;
@@ -207,6 +208,7 @@ async function readDoc(doc, docCache) {
   const ignoredLines = new Set();
   const scanLines = [];
   let inFence = false;
+  let fenceMarker = '';
   const anchorLines = [];
 
   for (let index = 0; index < lines.length; index += 1) {
@@ -218,14 +220,23 @@ async function readDoc(doc, docCache) {
       ignoredLines.add(lineNumber + 1);
     }
 
-    if (/^\s*```/u.test(line)) {
-      inFence = !inFence;
+    const fenceMatch = line.match(/^\s*(`{3,}|~{3,})/u);
+
+    if (fenceMatch) {
+      if (!inFence) {
+        inFence = true;
+        fenceMarker = fenceMatch[1] ?? '';
+      } else if (isClosingFence(fenceMatch[1] ?? '', fenceMarker)) {
+        inFence = false;
+        fenceMarker = '';
+      }
+
       scanLines.push('');
       anchorLines.push('');
       continue;
     }
 
-    const visibleLine = inFence ? '' : line;
+    const visibleLine = inFence || isIndentedCodeLine(line) ? '' : line;
     scanLines.push(visibleLine);
     anchorLines.push(visibleLine);
   }
@@ -360,6 +371,18 @@ function extractMarkdownLinkTargets(parsed) {
         });
       }
     }
+
+    for (const match of line.matchAll(SHORTCUT_REFERENCE_PATTERN)) {
+      const label = normalizeReferenceLabel(match[2] ?? '');
+
+      if (shouldTreatAsShortcutReference(label) && !definitions.has(label)) {
+        targets.push({
+          raw: label,
+          line: index + 1,
+          kind: 'missing-reference-definition',
+        });
+      }
+    }
   });
 
   return targets;
@@ -439,11 +462,40 @@ async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot,
   }
 
   if (parsedTarget.path.startsWith('/')) {
+    const repoRootPath = path.join(doc.repoRoot, decodePath(parsedTarget.path.slice(1)));
+
+    if (await pathExists(repoRootPath)) {
+      await validateResolvedMarkdownPath({
+        targetPath: repoRootPath,
+        parsedTarget,
+        target,
+        doc,
+        appRoot,
+        brainRoot,
+        docCache,
+        failures,
+      });
+      return;
+    }
+
     validateAbsoluteRoute({ rawPath: parsedTarget.path, target, doc, failures });
     return;
   }
 
   const targetPath = resolveMarkdownPath(doc, parsedTarget.path, appRoot, brainRoot);
+  await validateResolvedMarkdownPath({
+    targetPath,
+    parsedTarget,
+    target,
+    doc,
+    appRoot,
+    brainRoot,
+    docCache,
+    failures,
+  });
+}
+
+async function validateResolvedMarkdownPath({ targetPath, parsedTarget, target, doc, appRoot, brainRoot, docCache, failures }) {
   const targetExists = await pathExists(targetPath);
 
   if (!targetExists) {
@@ -635,7 +687,7 @@ function cleanMarkdownTarget(rawTarget) {
     const closingIndex = target.indexOf('>');
 
     if (closingIndex !== -1) {
-      return target.slice(1, closingIndex);
+      return unescapeMarkdownDestination(target.slice(1, closingIndex));
     }
   }
 
@@ -708,6 +760,11 @@ function isFileReferenceCandidate(value) {
 
 function resolveMarkdownPath(doc, targetPath, appRoot, brainRoot) {
   const value = decodePath(targetPath);
+  const siblingPath = resolveSiblingRepoReference(value, appRoot, brainRoot);
+
+  if (siblingPath) {
+    return siblingPath;
+  }
 
   if (value.startsWith('../optc-team-builder/')) {
     return path.join(appRoot, value.slice('../optc-team-builder/'.length));
@@ -730,6 +787,11 @@ function resolveMarkdownPath(doc, targetPath, appRoot, brainRoot) {
 
 function resolveFileReferenceCandidates(doc, rawPath, appRoot, brainRoot) {
   const value = decodePath(rawPath);
+  const siblingPath = resolveSiblingRepoReference(value, appRoot, brainRoot);
+
+  if (siblingPath) {
+    return [siblingPath];
+  }
 
   if (value.startsWith('../optc-team-builder/')) {
     return [path.join(appRoot, value.slice('../optc-team-builder/'.length))];
@@ -815,6 +877,24 @@ function isValidLiveArtifactReference(value) {
   return /^live-artifacts\/[A-Za-z0-9_-]+(?:\/.*)?$/u.test(normalized);
 }
 
+function resolveSiblingRepoReference(value, appRoot, brainRoot) {
+  const normalized = normalizePath(value);
+  const segments = normalized.split('/').filter(Boolean);
+  const brainIndex = segments.indexOf('optc-team-builder-brain');
+
+  if (brainIndex !== -1) {
+    return path.join(brainRoot, ...segments.slice(brainIndex + 1));
+  }
+
+  const appIndex = segments.indexOf('optc-team-builder');
+
+  if (appIndex !== -1) {
+    return path.join(appRoot, ...segments.slice(appIndex + 1));
+  }
+
+  return null;
+}
+
 function validateLiveArtifactReference({ value, target, doc, failures }) {
   if (!isValidLiveArtifactReference(value)) {
     addFailure({
@@ -832,6 +912,22 @@ function normalizeReferenceLabel(value) {
 
 function isCompactGameToken(value) {
   return /^[A-Z0-9+ -]+$/u.test(String(value ?? '').trim()) || /^[0-9-]+$/u.test(String(value ?? '').trim());
+}
+
+function shouldTreatAsShortcutReference(label) {
+  if (!label || label.startsWith('^') || isCompactGameToken(label)) {
+    return false;
+  }
+
+  return /\b(?:audit|doc|docs|guide|readme|release|report|runbook|script|task|workflow)\b/iu.test(label);
+}
+
+function isClosingFence(candidateMarker, openingMarker) {
+  return candidateMarker[0] === openingMarker[0] && candidateMarker.length >= openingMarker.length;
+}
+
+function isIndentedCodeLine(line) {
+  return /^(?: {4}|\t)/u.test(line);
 }
 
 function unescapeMarkdownDestination(value) {
