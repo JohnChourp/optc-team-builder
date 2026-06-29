@@ -38,6 +38,9 @@ jobs:
       - name: Release readiness report tests
         run: npm run test:release-readiness
 
+      - name: Docs integrity script tests
+        run: npm run test:docs-integrity
+
       - name: Drive sync backend tests
         run: npm run test:drive-sync-server
 
@@ -67,7 +70,7 @@ jobs:
         run: npm ci
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
