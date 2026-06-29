@@ -227,6 +227,27 @@ describe('check-docs-integrity', () => {
     );
   });
 
+  it('fails www OPTC public URLs and still validates their public paths', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'Old www route: https://www.optcteambuilder.com/tabs/team-builder/',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: 'OPTC public URL must use HTTPS canonical origin: https://www.optcteambuilder.com/tabs/team-builder/',
+        }),
+        expect.objectContaining({
+          message: 'Unknown OPTC public URL path: https://www.optcteambuilder.com/tabs/team-builder/',
+        }),
+      ]),
+    );
+  });
+
   it('does not duplicate stale URL failures from Markdown link destinations', async () => {
     const result = await runWorkspace({
       'optc-team-builder/README.md': [
@@ -389,6 +410,24 @@ describe('check-docs-integrity', () => {
     );
   });
 
+  it('validates links on nested list continuation lines', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '- Parent',
+        '    - Child:',
+        '      [Missing nested continuation](docs/missing.md)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Missing linked file: docs/missing.md',
+      }),
+    );
+  });
+
   it('preserves nested code blocks under list items', async () => {
     const result = await runWorkspace({
       'optc-team-builder/README.md': [
@@ -396,6 +435,20 @@ describe('check-docs-integrity', () => {
         '',
         '- Example:',
         '        [Not a real link](docs/missing.md)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('preserves nested code blocks under nested list items', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '- Parent',
+        '    - Example:',
+        '            [Not a real nested link](docs/missing.md)',
       ].join('\n'),
     });
 
@@ -503,6 +556,22 @@ describe('check-docs-integrity', () => {
     expect(result.failures).toEqual([]);
   });
 
+  it('keeps URLs at the start of footnotes visible to URL checks', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '[^1]: https://optcteambuilder.com/tabs/team-builder/',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Unknown OPTC public URL path: https://optcteambuilder.com/tabs/team-builder/',
+      }),
+    );
+  });
+
   it('treats generic URI schemes as external links', async () => {
     const result = await runWorkspace({
       'optc-team-builder/README.md': [
@@ -565,6 +634,19 @@ describe('check-docs-integrity', () => {
     expect(result.failures).toEqual([]);
   });
 
+  it('accepts Markdown fragments on code-span file references', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'Source: `docs/guide.md#usage`.',
+      ].join('\n'),
+      'optc-team-builder/docs/guide.md': '# Guide\n\n## Usage\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
   it('treats parent-relative code-span paths as file references', async () => {
     const result = await runWorkspace({
       'optc-team-builder/docs/nested/page.md': [
@@ -588,6 +670,24 @@ describe('check-docs-integrity', () => {
         message: 'Missing referenced file: guide.md',
       }),
     );
+  });
+
+  it('checks bare same-directory code-span filenames with known extensions', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/e2e/README.md': [
+        '# E2E',
+        '',
+        'Existing spec: `smoke.spec.ts`.',
+        'Missing fixture: `sample-characters.json`.',
+      ].join('\n'),
+      'optc-team-builder/e2e/smoke.spec.ts': 'export {};\n',
+    });
+
+    expect(result.failures).toEqual([
+      expect.objectContaining({
+        message: 'Missing referenced file: sample-characters.json',
+      }),
+    ]);
   });
 
   it('allows generated Markdown artifact filenames', async () => {

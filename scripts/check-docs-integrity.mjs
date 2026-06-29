@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 const OPTC_CLICKUP_WORKSPACE_ID = '90121749478';
 const OPTC_PUBLIC_ORIGIN = 'https://optcteambuilder.com';
 const OPTC_PUBLIC_HOST = 'optcteambuilder.com';
+const OPTC_PUBLIC_HOSTS = new Set([OPTC_PUBLIC_HOST, `www.${OPTC_PUBLIC_HOST}`]);
 const CLICKUP_ORIGIN = 'https://app.clickup.com';
 const IGNORE_NEXT_LINE_PATTERN = /<!--\s*docs-integrity-ignore-next-line:\s*(.+?)\s*-->/iu;
 const MARKDOWN_REFERENCE_PATTERN = /^\s{0,3}\[([^\]\n]+)\]:\s*(\S+)/u;
@@ -78,6 +79,8 @@ const GENERATED_FILE_REFERENCES = new Set([
   'ios/App/App/public',
   'ios/App/App/public/',
   'performance-budget-history.md',
+  'performance-budget-history.json',
+  'performance-budget-report.json',
   'performance-budget-summary.md',
   'public/app-config.js',
 ]);
@@ -440,7 +443,7 @@ function extractCodeSpanTargets(parsed) {
   for (const match of parsed.scanText.matchAll(CODE_SPAN_PATTERN)) {
     const raw = normalizeCodeSpan(match[1] ?? '');
 
-    if (!raw || !isFileReferenceCandidate(raw)) {
+    if (!raw || !isFileReferenceCandidate(raw, parsed)) {
       continue;
     }
 
@@ -640,7 +643,7 @@ async function validateExternalUrlTarget({ target, doc, appRoot, failures }) {
   const raw = trimTrailingUrlPunctuation(target.raw);
   const parsedUrl = parseHttpUrl(raw);
 
-  if (parsedUrl?.hostname === OPTC_PUBLIC_HOST) {
+  if (parsedUrl && OPTC_PUBLIC_HOSTS.has(parsedUrl.hostname)) {
     await validateOptcPublicUrl({ raw, target, doc, appRoot, failures });
   }
 
@@ -802,15 +805,21 @@ function cleanMarkdownTarget(rawTarget) {
 }
 
 function normalizeCodeSpan(rawTarget) {
-  return String(rawTarget ?? '')
+  const normalized = String(rawTarget ?? '')
     .trim()
     .replace(/^(?:File|Path):\s*/iu, '')
     .replace(/#L\d+(?:-L?\d+)?$/iu, '')
     .replace(/:\d+(?:-\d+)?(?::\d+)?$/u, '')
     .replace(/[.,;:!?]+$/u, '');
+
+  if (isExternalScheme(normalized)) {
+    return normalized;
+  }
+
+  return normalized.replace(/#[A-Za-z0-9][A-Za-z0-9._~!$&'()*+,;=:@/?%-]*$/u, '');
 }
 
-function isFileReferenceCandidate(value) {
+function isFileReferenceCandidate(value, doc) {
   if (!value || value.length > 220) {
     return false;
   }
@@ -856,7 +865,26 @@ function isFileReferenceCandidate(value) {
     return true;
   }
 
-  return /^[A-Za-z0-9][A-Za-z0-9_-]+\.md$/u.test(value);
+  if (/^[A-Za-z0-9][A-Za-z0-9_-]+\.md$/u.test(value)) {
+    return true;
+  }
+
+  return isBareSameDirectoryFileCandidate(value, doc);
+}
+
+function isBareSameDirectoryFileCandidate(value, doc) {
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*\.[A-Za-z0-9]+$/u.test(value) || !hasKnownFileExtension(value)) {
+    return false;
+  }
+
+  if (GENERATED_FILE_REFERENCES.has(value)) {
+    return false;
+  }
+
+  const relativePath = normalizePath(doc?.relativePath ?? '');
+  const directory = path.posix.dirname(relativePath);
+
+  return relativePath.endsWith('/README.md') && (directory === 'e2e' || directory.startsWith('scripts/fixtures/'));
 }
 
 function resolveMarkdownPath(doc, targetPath, appRoot, brainRoot) {
@@ -1030,9 +1058,26 @@ function isClosingFence(candidateMarker, openingMarker) {
 function isIndentedCodeLine(line, previousVisibleContentLine = '') {
   const isIndented = /^(?: {4}|\t)/u.test(line);
   const isNestedListItem = /^\s{4,}(?:[-*+]|\d+\.)\s+/u.test(line);
-  const continuesListItem = /^\s{0,3}(?:[-*+]|\d+\.)\s+/u.test(previousVisibleContentLine);
-  const spaceIndent = line.match(/^ */u)?.[0]?.length ?? 0;
-  return isIndented && !isNestedListItem && !(continuesListItem && spaceIndent < 8);
+  const previousListIndent = listMarkerIndent(previousVisibleContentLine);
+  const currentIndent = indentationWidth(line);
+  const continuesListItem =
+    previousListIndent !== null && currentIndent > previousListIndent && currentIndent < previousListIndent + 8;
+  return isIndented && !isNestedListItem && !continuesListItem;
+}
+
+function listMarkerIndent(line) {
+  const match = line.match(/^(\s*)(?:[-*+]|\d+\.)\s+/u);
+  return match ? indentationWidth(match[1] ?? '') : null;
+}
+
+function indentationWidth(value) {
+  let width = 0;
+
+  for (const char of value.match(/^\s*/u)?.[0] ?? '') {
+    width += char === '\t' ? 4 : 1;
+  }
+
+  return width;
 }
 
 function maskInlineCodeSpansInLine(line) {
@@ -1096,14 +1141,18 @@ function maskInlineLinkDestinationsInLine(line) {
 }
 
 function maskReferenceDefinitionDestinationInLine(line) {
-  const match = line.match(/^(\s{0,3}\[[^\]\n]+\]:\s*)(\S+)/u);
+  const match = line.match(/^(\s{0,3}\[([^\]\n]+)\]:\s*)(\S+)/u);
 
-  if (!match?.[1] || !match[2]) {
+  if (!match?.[1] || !match[2] || !match[3]) {
+    return line;
+  }
+
+  if (match[2].startsWith('^')) {
     return line;
   }
 
   const destinationStart = match[1].length;
-  return maskRange(line, destinationStart, destinationStart + match[2].length);
+  return maskRange(line, destinationStart, destinationStart + match[3].length);
 }
 
 function maskRange(value, start, end) {
@@ -1219,7 +1268,7 @@ function parseHttpUrl(value) {
 }
 
 function hasKnownFileExtension(value) {
-  return /\.(?:css|html|jpeg|jpg|js|json|md|mjs|png|scss|sh|sql|toml|ts|txt|webp|xml|ya?ml)$/iu.test(value);
+  return /\.(?:css|html|ico|jpeg|jpg|js|json|md|mjs|png|scss|sh|sql|svg|toml|ts|txt|webmanifest|webp|xml|ya?ml)$/iu.test(value);
 }
 
 function normalizePublicPath(rawPath) {

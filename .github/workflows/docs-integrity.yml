@@ -28,12 +28,26 @@ jobs:
           branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           ref="refs/heads/${branch}"
           repo="https://github.com/JohnChourp/optc-team-builder-brain.git"
-          auth_header="AUTHORIZATION: bearer ${SIBLING_CHECKOUT_TOKEN}"
-          if git -c "http.https://github.com/.extraheader=${auth_header}" ls-remote "$repo" "$ref" | awk -v ref="$ref" '$2 == ref { found = 1 } END { exit found ? 0 : 1 }'; then
-            git -c "http.https://github.com/.extraheader=${auth_header}" clone --depth 1 --branch "$branch" "$repo" optc-team-builder-brain
-          else
-            git -c "http.https://github.com/.extraheader=${auth_header}" clone --depth 1 --branch main "$repo" optc-team-builder-brain
+          if [[ -z "${SIBLING_CHECKOUT_TOKEN:-}" ]]; then
+            echo "::error::SIBLING_CHECKOUT_TOKEN is empty. Configure RELEASE_PUSH_TOKEN with read access to the private optc-team-builder-brain repo."
+            exit 1
           fi
+
+          basic_token="$(printf 'x-access-token:%s' "$SIBLING_CHECKOUT_TOKEN" | base64 -w 0)"
+          auth_header="AUTHORIZATION: basic ${basic_token}"
+
+          if ! git -c "http.https://github.com/.extraheader=${auth_header}" ls-remote "$repo" "refs/heads/main" >/dev/null 2>&1; then
+            echo "::error::Unable to read private sibling repo JohnChourp/optc-team-builder-brain. Check RELEASE_PUSH_TOKEN access."
+            exit 1
+          fi
+
+          if git -c "http.https://github.com/.extraheader=${auth_header}" ls-remote "$repo" "$ref" | awk -v ref="$ref" '$2 == ref { found = 1 } END { exit found ? 0 : 1 }'; then
+            sibling_branch="$branch"
+          else
+            sibling_branch="main"
+          fi
+
+          git -c "http.https://github.com/.extraheader=${auth_header}" clone --depth 1 --branch "$sibling_branch" "$repo" optc-team-builder-brain
 
       - name: Setup Node
         uses: actions/setup-node@v6
