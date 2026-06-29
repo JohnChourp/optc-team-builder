@@ -393,6 +393,10 @@ function extractMarkdownLinkTargets(parsed) {
     }
 
     for (const match of line.matchAll(MARKDOWN_REFERENCE_USE_PATTERN)) {
+      if (line[(match.index ?? 0) - 1] === '\\') {
+        continue;
+      }
+
       if (isCompactGameToken(match[1] ?? '') && isCompactGameToken(match[2] ?? '') && match[1] !== match[2]) {
         continue;
       }
@@ -409,6 +413,10 @@ function extractMarkdownLinkTargets(parsed) {
     }
 
     for (const match of line.matchAll(SHORTCUT_REFERENCE_PATTERN)) {
+      if (match[1] === '\\') {
+        continue;
+      }
+
       const label = normalizeReferenceLabel(match[2] ?? '');
 
       if (shouldTreatAsShortcutReference(label) && !definitions.has(label)) {
@@ -909,7 +917,7 @@ function parseTarget(rawTarget) {
 }
 
 function isExternalScheme(value) {
-  return /^(?:https?:|mailto:|tel:|app:)/iu.test(value);
+  return /^[a-z][a-z0-9+.-]*:/iu.test(value);
 }
 
 function isLiveArtifactReference(value) {
@@ -983,7 +991,8 @@ function isIndentedCodeLine(line, previousVisibleContentLine = '') {
   const isIndented = /^(?: {4}|\t)/u.test(line);
   const isNestedListItem = /^\s{4,}(?:[-*+]|\d+\.)\s+/u.test(line);
   const continuesListItem = /^\s{0,3}(?:[-*+]|\d+\.)\s+/u.test(previousVisibleContentLine);
-  return isIndented && !isNestedListItem && !continuesListItem;
+  const spaceIndent = line.match(/^ */u)?.[0]?.length ?? 0;
+  return isIndented && !isNestedListItem && !(continuesListItem && spaceIndent < 8);
 }
 
 function maskInlineCodeSpansInLine(line) {

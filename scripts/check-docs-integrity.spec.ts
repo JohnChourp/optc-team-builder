@@ -310,6 +310,19 @@ describe('check-docs-integrity', () => {
     );
   });
 
+  it('preserves nested code blocks under list items', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '- Example:',
+        '        [Not a real link](docs/missing.md)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
   it('fails missing reference-style link definitions', async () => {
     const result = await runWorkspace({
       'optc-team-builder/README.md': [
@@ -340,6 +353,19 @@ describe('check-docs-integrity', () => {
         message: 'Missing reference-style link definition: release guide',
       }),
     );
+  });
+
+  it('ignores escaped reference labels', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        String.raw`Literal shortcut: \[Release guide].`,
+        String.raw`Literal full reference: \[the guide][missing].`,
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
   });
 
   it('accepts reference definitions without a space after the colon', async () => {
@@ -380,6 +406,19 @@ describe('check-docs-integrity', () => {
         '[^1]: Footnote prose is not a link definition.',
       ].join('\n'),
       'optc-team-builder/docs/guide.md': '# Guide\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('treats generic URI schemes as external links', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '[Editor](vscode://file/docs/guide.md)',
+        '[Mobile deep link](capacitor://localhost/tabs/characters)',
+      ].join('\n'),
     });
 
     expect(result.failures).toEqual([]);
