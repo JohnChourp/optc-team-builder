@@ -4,6 +4,9 @@ This guide is the first stop when choosing validation for OPTC Team Builder
 changes. It groups the app's contract tests, browser performance harnesses,
 release-detector checks, release-readiness reporting, and broad UI validation so
 maintainers can pick the smallest useful path without rereading prior audits.
+Use `docs/feature-coverage-map.md` when you need to find the owner and current
+coverage assets for a specific product or operational flow before choosing one
+of the validation paths below.
 
 ## Decision Table
 
