@@ -219,6 +219,7 @@ async function readDoc(doc, docCache) {
     text,
     lines,
     scanText: scanLines.join('\n'),
+    linkScanText: maskInlineCodeSpans(scanLines.join('\n')),
     ignoredLines,
     anchors,
   };
@@ -269,15 +270,15 @@ export function slugifyHeading(value) {
 function extractMarkdownLinkTargets(parsed) {
   const targets = [];
 
-  for (const match of parsed.scanText.matchAll(MARKDOWN_LINK_PATTERN)) {
+  for (const match of parsed.linkScanText.matchAll(MARKDOWN_LINK_PATTERN)) {
     targets.push({
       raw: cleanMarkdownTarget(match[1] ?? ''),
-      line: lineNumberAt(parsed.scanText, match.index ?? 0),
+      line: lineNumberAt(parsed.linkScanText, match.index ?? 0),
       kind: 'markdown-link',
     });
   }
 
-  parsed.scanText.split('\n').forEach((line, index) => {
+  parsed.linkScanText.split('\n').forEach((line, index) => {
     const match = line.match(MARKDOWN_REFERENCE_PATTERN);
 
     if (match) {
@@ -324,6 +325,13 @@ function extractUrlTargets(parsed) {
   }
 
   return targets;
+}
+
+function maskInlineCodeSpans(text) {
+  return text
+    .split('\n')
+    .map((line) => line.replace(/`[^`\n]*`/gu, (match) => ' '.repeat(match.length)))
+    .join('\n');
 }
 
 async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot, docCache, failures }) {
@@ -460,6 +468,12 @@ function validateOptcPublicUrl({ raw, target, doc, failures }) {
 }
 
 function validateClickUpReference({ raw, target, doc, failures }) {
+  const lineText = doc.lines?.[target.line - 1] ?? '';
+
+  if (lineText.includes('...') && raw === `https://app.clickup.com/t/${OPTC_CLICKUP_WORKSPACE_ID}/`) {
+    return;
+  }
+
   if (!isValidClickUpTaskUrl(raw)) {
     addFailure({
       failures,
@@ -581,6 +595,10 @@ function isFileReferenceCandidate(value) {
 
   if (isLiveArtifactReference(value) || isExternalScheme(value)) {
     return true;
+  }
+
+  if (/^\d+\.md$/u.test(value) || /^completed_\d+\.md$/u.test(value)) {
+    return false;
   }
 
   if (

@@ -132,6 +132,22 @@ describe('check-docs-integrity', () => {
       }),
     ]);
   });
+
+  it('ignores inline-code Markdown examples, numeric template filenames, and PR placeholder URLs', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder-brain/.github/pull_request_template.md': [
+        'ClickUp task: https://app.clickup.com/t/90121749478/... or none - <reason>',
+      ].join('\n'),
+      'optc-team-builder-brain/audits/task.md': [
+        '# Task',
+        '',
+        'Inline examples such as `` `[missing](docs/nope.md)` `` are not rendered links.',
+        'Future audit drafts may use `1234.md` before becoming `completed_1234.md`.',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
 });
 
 describe('isValidClickUpTaskUrl', () => {
