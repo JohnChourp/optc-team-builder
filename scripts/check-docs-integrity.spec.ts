@@ -348,12 +348,25 @@ describe('check-docs-integrity', () => {
     const appRoot = path.join(rootDir, 'optc-team-builder');
     const brainRoot = path.join(rootDir, 'missing-brain');
     await mkdir(appRoot, { recursive: true });
-    await writeFile(path.join(appRoot, 'README.md'), '# App\n');
+    await writeFile(
+      path.join(appRoot, 'README.md'),
+      [
+        '# App',
+        '',
+        '[Brain audit](../optc-team-builder-brain/audits/task.md)',
+        'Brain code reference: `../optc-team-builder-brain/audits/task.md`.',
+      ].join('\n'),
+    );
+    await mkdir(path.join(appRoot, 'docs'), { recursive: true });
+    await writeFile(
+      path.join(appRoot, 'docs/guide.md'),
+      '# Guide\n\n[Deep brain audit](../../optc-team-builder-brain/audits/task.md)\n',
+    );
 
     const result = await checkDocsIntegrity({ appRoot, brainRoot, appOnly: true });
 
     expect(result.failures).toEqual([]);
-    expect(formatFailures(result)).toContain('checked 1 Markdown files across app docs');
+    expect(formatFailures(result)).toContain('checked 2 Markdown files across app docs');
   });
 
   it('ignores headings inside fenced code when validating anchors', async () => {

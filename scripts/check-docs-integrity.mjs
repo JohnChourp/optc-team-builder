@@ -141,13 +141,14 @@ export async function checkDocsIntegrity(options = {}) {
         parsed,
         appRoot,
         brainRoot,
+        appOnly,
         docCache,
         failures,
       });
     }
 
     for (const target of codeSpanTargets) {
-      await validateCodeSpanTarget({ target, doc: parsed, appRoot, brainRoot, failures });
+      await validateCodeSpanTarget({ target, doc: parsed, appRoot, brainRoot, appOnly, failures });
     }
 
     for (const target of urlTargets) {
@@ -488,7 +489,7 @@ function maskMarkdownDestinations(text) {
     .join('\n');
 }
 
-async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot, docCache, failures }) {
+async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot, appOnly, docCache, failures }) {
   if (shouldIgnoreLine(parsed, target.line)) {
     return;
   }
@@ -511,6 +512,10 @@ async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot,
 
   if (isExternalScheme(parsedTarget.path)) {
     await validateExternalUrlTarget({ target, doc, appRoot, failures });
+    return;
+  }
+
+  if (appOnly && isBrainRepoReference(parsedTarget.path)) {
     return;
   }
 
@@ -595,7 +600,7 @@ async function validateResolvedMarkdownPath({ targetPath, parsedTarget, target, 
   }
 }
 
-async function validateCodeSpanTarget({ target, doc, appRoot, brainRoot, failures }) {
+async function validateCodeSpanTarget({ target, doc, appRoot, brainRoot, appOnly, failures }) {
   if (shouldIgnoreLineForDoc(doc, target.line)) {
     return;
   }
@@ -607,6 +612,10 @@ async function validateCodeSpanTarget({ target, doc, appRoot, brainRoot, failure
 
   if (isExternalScheme(target.raw)) {
     await validateExternalUrlTarget({ target, doc, appRoot, failures });
+    return;
+  }
+
+  if (appOnly && isBrainRepoReference(target.raw)) {
     return;
   }
 
@@ -983,6 +992,12 @@ function appLikelyRootPath(value) {
 
 function brainLikelyRootPath(value) {
   return /^(?:audits|live-artifacts|\.github)\//u.test(value);
+}
+
+function isBrainRepoReference(value) {
+  const normalized = normalizePath(decodePath(value ?? ''));
+  const segments = normalized.split('/').filter(Boolean);
+  return segments.includes('optc-team-builder-brain');
 }
 
 function parseTarget(rawTarget) {
