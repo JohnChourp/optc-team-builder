@@ -109,6 +109,27 @@ describe('check-docs-integrity', () => {
     expect(result.failures).toEqual([]);
   });
 
+  it('accepts generated public route aliases', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': '# App\n\n[Drive sync](/tabs/drive-sync/)\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('rejects relative Markdown links that resolve outside checked repos', async () => {
+    const result = await runWorkspace({
+      'outside.md': '# Outside\n',
+      'optc-team-builder/README.md': '# App\n\n[Outside](../outside.md)\n',
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Linked file resolves outside checked repos: ../outside.md',
+      }),
+    );
+  });
+
   it('accepts Markdown links with parenthesized titles', async () => {
     const result = await runWorkspace({
       'optc-team-builder/README.md': '# App\n\n[Guide](docs/guide.md (title))\n',
@@ -245,6 +266,23 @@ describe('check-docs-integrity', () => {
     );
   });
 
+  it('validates links on list continuation lines', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '- See:',
+        '    [Missing guide](docs/missing.md)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Missing linked file: docs/missing.md',
+      }),
+    );
+  });
+
   it('fails missing reference-style link definitions', async () => {
     const result = await runWorkspace({
       'optc-team-builder/README.md': [
@@ -364,6 +402,19 @@ describe('check-docs-integrity', () => {
         'Source: `scripts/example.mjs#L10`.',
       ].join('\n'),
       'optc-team-builder/scripts/example.mjs': 'export {};\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('treats parent-relative code-span paths as file references', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/docs/nested/page.md': [
+        '# Nested',
+        '',
+        'Parent guide: `../guide.md`.',
+      ].join('\n'),
+      'optc-team-builder/docs/guide.md': '# Guide\n',
     });
 
     expect(result.failures).toEqual([]);

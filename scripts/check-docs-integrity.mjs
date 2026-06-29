@@ -94,9 +94,13 @@ const KNOWN_PUBLIC_PATHS = new Set([
   'tabs/auto-team-builder-rumble',
   'tabs/captain-coverage',
   'tabs/characters',
+  'tabs/cookies',
   'tabs/crew-forge',
+  'tabs/drive-sync',
   'tabs/manual-team-builder',
+  'tabs/privacy',
   'tabs/rumble-characters',
+  'tabs/terms',
   'terms',
   'tools/optc-auto-team-builder',
   'tools/optc-character-database',
@@ -209,6 +213,7 @@ async function readDoc(doc, docCache) {
   let inFence = false;
   let fenceMarker = '';
   const anchorLines = [];
+  let previousVisibleContentLine = '';
 
   for (let index = 0; index < lines.length; index += 1) {
     const lineNumber = index + 1;
@@ -235,9 +240,13 @@ async function readDoc(doc, docCache) {
       continue;
     }
 
-    const visibleLine = inFence || isIndentedCodeLine(line) ? '' : line;
+    const visibleLine = inFence || isIndentedCodeLine(line, previousVisibleContentLine) ? '' : line;
     scanLines.push(visibleLine);
     anchorLines.push(visibleLine);
+
+    if (visibleLine.trim()) {
+      previousVisibleContentLine = visibleLine;
+    }
   }
 
   const scanText = scanLines.join('\n');
@@ -512,6 +521,16 @@ async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot,
 }
 
 async function validateResolvedMarkdownPath({ targetPath, parsedTarget, target, doc, appRoot, brainRoot, docCache, failures }) {
+  if (!isInsideCheckedRoots(targetPath, appRoot, brainRoot)) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Linked file resolves outside checked repos: ${target.raw}`,
+    });
+    return;
+  }
+
   const targetExists = await pathExists(targetPath);
 
   if (!targetExists) {
@@ -759,7 +778,7 @@ function isFileReferenceCandidate(value) {
     return true;
   }
 
-  if (value.startsWith('./')) {
+  if (value.startsWith('./') || value.startsWith('../')) {
     return hasKnownFileExtension(value);
   }
 
@@ -942,8 +961,11 @@ function isClosingFence(candidateMarker, openingMarker) {
   return candidateMarker[0] === openingMarker[0] && candidateMarker.length >= openingMarker.length;
 }
 
-function isIndentedCodeLine(line) {
-  return /^(?: {4}|\t)/u.test(line) && !/^\s{4,}(?:[-*+]|\d+\.)\s+/u.test(line);
+function isIndentedCodeLine(line, previousVisibleContentLine = '') {
+  const isIndented = /^(?: {4}|\t)/u.test(line);
+  const isNestedListItem = /^\s{4,}(?:[-*+]|\d+\.)\s+/u.test(line);
+  const continuesListItem = /^\s{0,3}(?:[-*+]|\d+\.)\s+/u.test(previousVisibleContentLine);
+  return isIndented && !isNestedListItem && !continuesListItem;
 }
 
 function maskInlineCodeSpansInLine(line) {
@@ -1058,6 +1080,15 @@ function parseParenthesizedDestination(line, openIndex) {
   }
 
   return null;
+}
+
+function isInsideCheckedRoots(filePath, appRoot, brainRoot) {
+  return isInsideOrEqualDirectory(filePath, appRoot) || isInsideOrEqualDirectory(filePath, brainRoot);
+}
+
+function isInsideOrEqualDirectory(filePath, root) {
+  const relative = path.relative(root, filePath);
+  return relative === '' || (Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
 function unescapeMarkdownDestination(value) {
