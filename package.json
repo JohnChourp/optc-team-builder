@@ -101,7 +101,7 @@
     "@jsverse/transloco": "^8.4.0",
     "ionicons": "^8.0.13",
     "lottie-web": "^5.13.0",
-    "ngx-lottie": "^21.2.0",
+    "ngx-lottie": "^22.0.0",
     "rxjs": "~7.8.0",
     "sql.js": "^1.14.1",
     "tesseract.js": "^7.0.0",
