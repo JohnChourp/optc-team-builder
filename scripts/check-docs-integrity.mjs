@@ -15,7 +15,7 @@ const SHORTCUT_REFERENCE_PATTERN = /(^|[^\]!])\[([^\]\n]+)\](?!\(|\[)/gu;
 const CODE_SPAN_PATTERN = /`([^`\n]+)`/gu;
 const URL_PATTERN = /\bhttps?:\/\/[^\s<>)"'`]+/giu;
 const HEADER_PATTERN = /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/u;
-const HTML_ID_PATTERN = /\bid=["']([^"']+)["']/giu;
+const HTML_ANCHOR_PATTERN = /\b(?:id|name)=["']([^"']+)["']/giu;
 
 const GENERATED_DIRS = new Set([
   '.angular',
@@ -288,7 +288,7 @@ function collectAnchors(lines) {
       continue;
     }
 
-    for (const match of line.matchAll(HTML_ID_PATTERN)) {
+    for (const match of line.matchAll(HTML_ANCHOR_PATTERN)) {
       if (match[1]) {
         anchors.add(match[1]);
       }
@@ -324,10 +324,10 @@ function addAnchorForHeading({ anchors, slugCounts, heading }) {
 export function slugifyHeading(value) {
   return stripHtmlTagsForSlug(String(value))
     .replace(/\[([^\]]+)\]\([^)]+\)/gu, '$1')
-    .replace(/[`*_~]/gu, '')
+    .replace(/[`*~]/gu, '')
     .trim()
     .toLowerCase()
-    .replace(/[^\p{Letter}\p{Number}\s-]/gu, '')
+    .replace(/[^\p{Letter}\p{Number}\s_-]/gu, '')
     .replace(/\s+/gu, '-')
     .replace(/-+/gu, '-')
     .replace(/^-|-$/gu, '');

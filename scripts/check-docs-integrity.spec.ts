@@ -738,6 +738,22 @@ describe('check-docs-integrity', () => {
 
     expect(result.failures).toEqual([]);
   });
+
+  it('preserves underscores in heading anchors and collects named HTML anchors', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '[Crew Forge](docs/anchors.md#crew_forge)',
+        '[Release notes](docs/anchors.md#release-notes)',
+      ].join('\n'),
+      'optc-team-builder/docs/anchors.md': ['# Anchors', '', '## crew_forge', '', '<a name="release-notes"></a>'].join(
+        '\n',
+      ),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
 });
 
 describe('isValidClickUpTaskUrl', () => {

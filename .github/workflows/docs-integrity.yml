@@ -14,12 +14,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Note skipped private sibling validation for fork PR
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        run: |
+          echo "::notice::Skipping Docs Integrity for forked PRs because pull_request workflows do not expose RELEASE_PUSH_TOKEN for the private optc-team-builder-brain repo. Maintainers must validate full app+brain docs integrity from a trusted branch before merge."
+
       - name: Checkout app
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         uses: actions/checkout@v7
         with:
           path: optc-team-builder
 
       - name: Checkout sibling brain
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         shell: bash
         env:
           SIBLING_CHECKOUT_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN || github.token }}
@@ -50,6 +57,7 @@ jobs:
           git -c "http.https://github.com/.extraheader=${auth_header}" clone --depth 1 --branch "$sibling_branch" "$repo" optc-team-builder-brain
 
       - name: Setup Node
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         uses: actions/setup-node@v6
         with:
           node-version-file: optc-team-builder/.nvmrc
@@ -57,13 +65,16 @@ jobs:
           cache-dependency-path: optc-team-builder/package-lock.json
 
       - name: Install dependencies
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         working-directory: optc-team-builder
         run: npm ci
 
       - name: Check docs integrity
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         working-directory: optc-team-builder
         run: npm run docs:integrity -- --brain-root ../optc-team-builder-brain
 
       - name: Docs integrity script tests
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         working-directory: optc-team-builder
         run: npm run test:docs-integrity
