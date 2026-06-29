@@ -24,8 +24,11 @@ Date: 2026-04-26
 - `public/404.html`
 - `.github/workflows/deploy-pages.yml`
 - `.github/workflows/release-android.yml`
+<!-- docs-integrity-ignore-next-line: historical sibling project evidence from the original SEO audit, not part of this checkout -->
 - `../DokkanTeamBuilder/index.html`
+<!-- docs-integrity-ignore-next-line: historical sibling project evidence from the original SEO audit, not part of this checkout -->
 - `../DokkanTeamBuilder/sitemap.xml`
+<!-- docs-integrity-ignore-next-line: historical sibling project evidence from the original SEO audit, not part of this checkout -->
 - `../DokkanTeamBuilder/sitemap.html`
 
 ## Files Changed

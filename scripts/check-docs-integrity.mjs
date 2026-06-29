@@ -4,9 +4,12 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const OPTC_CLICKUP_WORKSPACE_ID = '90121749478';
+const OPTC_PUBLIC_ORIGIN = 'https://optcteambuilder.com';
+const CLICKUP_ORIGIN = 'https://app.clickup.com';
 const IGNORE_NEXT_LINE_PATTERN = /<!--\s*docs-integrity-ignore-next-line:\s*(.+?)\s*-->/iu;
 const MARKDOWN_LINK_PATTERN = /!?\[[^\]\n]*\]\(([^)\n]+)\)/gu;
-const MARKDOWN_REFERENCE_PATTERN = /^\s{0,3}\[[^\]\n]+\]:\s+(\S+)/u;
+const MARKDOWN_REFERENCE_PATTERN = /^\s{0,3}\[([^\]\n]+)\]:\s+(\S+)/u;
+const MARKDOWN_REFERENCE_USE_PATTERN = /!?\[([^\]\n]+)\]\[([^\]\n]*)\]/gu;
 const CODE_SPAN_PATTERN = /`([^`\n]+)`/gu;
 const URL_PATTERN = /\bhttps?:\/\/[^\s<>)"'`]+/giu;
 const HEADER_PATTERN = /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/u;
@@ -84,6 +87,7 @@ const KNOWN_PUBLIC_PATHS = new Set([
   'guides/optc-pirate-rumble-team-building',
   'privacy',
   'robots.txt',
+  'sitemap.html',
   'sitemap.xml',
   'tabs/account',
   'tabs/auto-team-builder',
@@ -104,7 +108,7 @@ export async function checkDocsIntegrity(options = {}) {
   const appRoot = path.resolve(options.appRoot ?? process.cwd());
   const brainRoot = path.resolve(options.brainRoot ?? path.join(appRoot, '..', 'optc-team-builder-brain'));
   const failures = [];
-  const docs = await collectMarkdownDocs({ appRoot, brainRoot });
+  const docs = await collectMarkdownDocs({ appRoot, brainRoot, failures });
   const docCache = new Map();
 
   for (const doc of docs) {
@@ -142,20 +146,29 @@ export async function checkDocsIntegrity(options = {}) {
   };
 }
 
-async function collectMarkdownDocs({ appRoot, brainRoot }) {
+async function collectMarkdownDocs({ appRoot, brainRoot, failures }) {
   const docs = [];
-  await collectMarkdownUnder(appRoot, appRoot, docs, 'app');
-  await collectMarkdownUnder(brainRoot, brainRoot, docs, 'brain');
+  await collectMarkdownUnder(appRoot, appRoot, docs, 'app', failures, true);
+  await collectMarkdownUnder(brainRoot, brainRoot, docs, 'brain', failures, true);
   docs.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
   return docs;
 }
 
-async function collectMarkdownUnder(root, currentDir, docs, repoName) {
+async function collectMarkdownUnder(root, currentDir, docs, repoName, failures, isRoot = false) {
   let entries;
 
   try {
     entries = await readdir(currentDir, { withFileTypes: true });
-  } catch {
+  } catch (error) {
+    if (isRoot) {
+      failures.push({
+        file: '.',
+        repo: repoName,
+        line: 1,
+        message: `Unable to scan requested ${repoName} docs root: ${root} (${error instanceof Error ? error.message : String(error)})`,
+      });
+    }
+
     return;
   }
 
@@ -167,7 +180,7 @@ async function collectMarkdownUnder(root, currentDir, docs, repoName) {
     const absolutePath = path.join(currentDir, entry.name);
 
     if (entry.isDirectory()) {
-      await collectMarkdownUnder(root, absolutePath, docs, repoName);
+      await collectMarkdownUnder(root, absolutePath, docs, repoName, failures);
       continue;
     }
 
@@ -193,8 +206,8 @@ async function readDoc(doc, docCache) {
   const lines = text.split(/\r?\n/u);
   const ignoredLines = new Set();
   const scanLines = [];
-  const anchors = collectAnchors(lines);
   let inFence = false;
+  const anchorLines = [];
 
   for (let index = 0; index < lines.length; index += 1) {
     const lineNumber = index + 1;
@@ -208,20 +221,24 @@ async function readDoc(doc, docCache) {
     if (/^\s*```/u.test(line)) {
       inFence = !inFence;
       scanLines.push('');
+      anchorLines.push('');
       continue;
     }
 
-    scanLines.push(inFence ? '' : line);
+    const visibleLine = inFence ? '' : line;
+    scanLines.push(visibleLine);
+    anchorLines.push(visibleLine);
   }
 
+  const scanText = scanLines.join('\n');
   const parsed = {
     ...doc,
     text,
     lines,
-    scanText: scanLines.join('\n'),
-    linkScanText: maskInlineCodeSpans(scanLines.join('\n')),
+    scanText,
+    linkScanText: maskInlineCodeSpans(scanText),
     ignoredLines,
-    anchors,
+    anchors: collectAnchors(anchorLines),
   };
   docCache.set(doc.absolutePath, parsed);
   return parsed;
@@ -255,8 +272,7 @@ function collectAnchors(lines) {
 }
 
 export function slugifyHeading(value) {
-  return String(value)
-    .replace(/<[^>]+>/gu, '')
+  return stripHtmlTagsForSlug(String(value))
     .replace(/\[([^\]]+)\]\([^)]+\)/gu, '$1')
     .replace(/[`*_~]/gu, '')
     .trim()
@@ -267,8 +283,32 @@ export function slugifyHeading(value) {
     .replace(/^-|-$/gu, '');
 }
 
+function stripHtmlTagsForSlug(value) {
+  let output = '';
+  let inTag = false;
+
+  for (const char of value) {
+    if (char === '<') {
+      inTag = true;
+      continue;
+    }
+
+    if (char === '>' && inTag) {
+      inTag = false;
+      continue;
+    }
+
+    if (!inTag) {
+      output += char;
+    }
+  }
+
+  return output;
+}
+
 function extractMarkdownLinkTargets(parsed) {
   const targets = [];
+  const definitions = new Map();
 
   for (const match of parsed.linkScanText.matchAll(MARKDOWN_LINK_PATTERN)) {
     targets.push({
@@ -282,11 +322,43 @@ function extractMarkdownLinkTargets(parsed) {
     const match = line.match(MARKDOWN_REFERENCE_PATTERN);
 
     if (match) {
+      const label = match[1] ?? '';
+
+      if (label.startsWith('^')) {
+        return;
+      }
+
+      definitions.set(normalizeReferenceLabel(label), {
+        line: index + 1,
+        raw: cleanMarkdownTarget(match[2] ?? ''),
+      });
       targets.push({
-        raw: cleanMarkdownTarget(match[1] ?? ''),
+        raw: cleanMarkdownTarget(match[2] ?? ''),
         line: index + 1,
         kind: 'markdown-reference',
       });
+    }
+  });
+
+  parsed.linkScanText.split('\n').forEach((line, index) => {
+    if (MARKDOWN_REFERENCE_PATTERN.test(line)) {
+      return;
+    }
+
+    for (const match of line.matchAll(MARKDOWN_REFERENCE_USE_PATTERN)) {
+      if (isCompactGameToken(match[1] ?? '') && isCompactGameToken(match[2] ?? '') && match[1] !== match[2]) {
+        continue;
+      }
+
+      const label = normalizeReferenceLabel(match[2] || match[1] || '');
+
+      if (!definitions.has(label)) {
+        targets.push({
+          raw: label,
+          line: index + 1,
+          kind: 'missing-reference-definition',
+        });
+      }
     }
   });
 
@@ -335,6 +407,16 @@ function maskInlineCodeSpans(text) {
 }
 
 async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot, docCache, failures }) {
+  if (target.kind === 'missing-reference-definition') {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Missing reference-style link definition: ${target.raw}`,
+    });
+    return;
+  }
+
   if (!target.raw || shouldIgnoreLine(parsed, target.line)) {
     return;
   }
@@ -348,6 +430,11 @@ async function validateMarkdownTarget({ target, doc, parsed, appRoot, brainRoot,
 
   if (!parsedTarget.path && parsedTarget.hash) {
     validateAnchor({ anchor: parsedTarget.hash, targetDoc: parsed, target, doc, failures });
+    return;
+  }
+
+  if (isLiveArtifactReference(parsedTarget.path)) {
+    validateLiveArtifactReference({ value: parsedTarget.path, target, doc, failures });
     return;
   }
 
@@ -389,15 +476,7 @@ async function validateCodeSpanTarget({ target, doc, appRoot, brainRoot, failure
   }
 
   if (isLiveArtifactReference(target.raw)) {
-    if (!isValidLiveArtifactReference(target.raw)) {
-      addFailure({
-        failures,
-        doc,
-        line: target.line,
-        message: `Live artifact path must use live-artifacts/<task-id>/...: ${target.raw}`,
-      });
-    }
-
+    validateLiveArtifactReference({ value: target.raw, target, doc, failures });
     return;
   }
 
@@ -433,12 +512,13 @@ function validateExternalUrlTarget({ target, doc, failures }) {
   }
 
   const raw = trimTrailingUrlPunctuation(target.raw);
+  const parsedUrl = parseHttpUrl(raw);
 
-  if (raw.startsWith('https://optcteambuilder.com')) {
+  if (parsedUrl?.origin === OPTC_PUBLIC_ORIGIN) {
     validateOptcPublicUrl({ raw, target, doc, failures });
   }
 
-  if (raw.startsWith('https://app.clickup.com/t/')) {
+  if (parsedUrl?.origin === CLICKUP_ORIGIN && parsedUrl.pathname.startsWith('/t/')) {
     validateClickUpReference({ raw, target, doc, failures });
   }
 }
@@ -565,14 +645,15 @@ function cleanMarkdownTarget(rawTarget) {
     target = titleMatch[1] ?? target;
   }
 
-  return trimTrailingUrlPunctuation(target);
+  return unescapeMarkdownDestination(trimTrailingUrlPunctuation(target));
 }
 
 function normalizeCodeSpan(rawTarget) {
   return String(rawTarget ?? '')
     .trim()
     .replace(/^(?:File|Path):\s*/iu, '')
-    .replace(/:\d+(?::\d+)?$/u, '')
+    .replace(/#L\d+(?:-L?\d+)?$/iu, '')
+    .replace(/:\d+(?:-\d+)?(?::\d+)?$/u, '')
     .replace(/[.,;:!?]+$/u, '');
 }
 
@@ -721,15 +802,52 @@ function isLiveArtifactReference(value) {
 }
 
 function isValidLiveArtifactReference(value) {
-  const normalized = normalizePath(value)
+  const rawNormalized = normalizePath(value)
     .replace(/^optc-team-builder-brain\//u, '')
     .replace(/^\.\.\/optc-team-builder-brain\//u, '');
+  const markerIndex = rawNormalized.indexOf('live-artifacts/');
+  const normalized = markerIndex === -1 ? rawNormalized : rawNormalized.slice(markerIndex);
 
   if (normalized === 'live-artifacts' || normalized === 'live-artifacts/') {
     return true;
   }
 
   return /^live-artifacts\/[A-Za-z0-9_-]+(?:\/.*)?$/u.test(normalized);
+}
+
+function validateLiveArtifactReference({ value, target, doc, failures }) {
+  if (!isValidLiveArtifactReference(value)) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Live artifact path must use live-artifacts/<task-id>/...: ${value}`,
+    });
+  }
+}
+
+function normalizeReferenceLabel(value) {
+  return String(value ?? '').trim().replace(/\s+/gu, ' ').toLowerCase();
+}
+
+function isCompactGameToken(value) {
+  return /^[A-Z0-9+ -]+$/u.test(String(value ?? '').trim()) || /^[0-9-]+$/u.test(String(value ?? '').trim());
+}
+
+function unescapeMarkdownDestination(value) {
+  return String(value ?? '').replace(/\\([\\`*_[\]{}()#+\-.!>])/gu, '$1');
+}
+
+function parseHttpUrl(value) {
+  if (!/^https?:\/\//iu.test(value)) {
+    return null;
+  }
+
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
 }
 
 function hasKnownFileExtension(value) {

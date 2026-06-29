@@ -45,6 +45,7 @@ describe('check-docs-integrity', () => {
         'Evidence lives in `../optc-team-builder-brain/audits/869dwc3zd-docs-integrity.md`.',
         'Local screenshots may live in `../optc-team-builder-brain/live-artifacts/869dwc3zd/post.png`.',
         'Public route: https://optcteambuilder.com/tabs/manual-team-builder/',
+        'Human sitemap: https://optcteambuilder.com/sitemap.html',
         'Task: https://app.clickup.com/t/90121749478/869dwc3zd',
       ].join('\n'),
       'optc-team-builder/docs/guide.md': '# Valid Heading\n',
@@ -114,6 +115,104 @@ describe('check-docs-integrity', () => {
     );
   });
 
+  it('does not treat lookalike domains as canonical OPTC public URLs', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'External lookalike host: https://optcteambuilder.com.evil.example/tabs/team-builder/',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('fails when a requested docs root cannot be scanned', async () => {
+    const rootDir = await mkdtemp(path.join(os.tmpdir(), 'optc-docs-integrity-missing-root-'));
+    tempDirs.push(rootDir);
+    const appRoot = path.join(rootDir, 'optc-team-builder');
+    const brainRoot = path.join(rootDir, 'missing-brain');
+    await mkdir(appRoot, { recursive: true });
+    await writeFile(path.join(appRoot, 'README.md'), '# App\n');
+
+    const result = await checkDocsIntegrity({ appRoot, brainRoot });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        repo: 'brain',
+        file: '.',
+        message: expect.stringContaining('Unable to scan requested brain docs root'),
+      }),
+    );
+  });
+
+  it('ignores headings inside fenced code when validating anchors', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'See [fake](docs/example.md#fake-heading).',
+      ].join('\n'),
+      'optc-team-builder/docs/example.md': [
+        '# Example',
+        '',
+        '```md',
+        '## Fake Heading',
+        '```',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Missing Markdown anchor "#fake-heading" in docs/example.md.',
+      }),
+    );
+  });
+
+  it('fails missing reference-style link definitions', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'See [the guide][missing-guide].',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Missing reference-style link definition: missing-guide',
+      }),
+    );
+  });
+
+  it('does not treat compact OPTC game notation as reference-style links', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder-brain/CAPTAIN_ABILITY_COVERAGE_GUIDE.md': [
+        '# Captain Guide',
+        '',
+        'Orb flip [STR][INT] (all).',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('validates reference-style link definitions and ignores footnotes', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'See [the guide][guide].',
+        '',
+        '[guide]: docs/guide.md',
+        '[^1]: Footnote prose is not a link definition.',
+      ].join('\n'),
+      'optc-team-builder/docs/guide.md': '# Guide\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
   it('honors next-line ignores and validates live artifact path shape only', async () => {
     const result = await runWorkspace({
       'optc-team-builder-brain/README.md': [
@@ -131,6 +230,36 @@ describe('check-docs-integrity', () => {
         message: 'Live artifact path must use live-artifacts/<task-id>/...: live-artifacts/final.png',
       }),
     ]);
+  });
+
+  it('validates Markdown live artifact links by shape only', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder-brain/audits/task.md': [
+        '# Audit',
+        '',
+        '[Accepted artifact](../live-artifacts/869dwc3zd/final.png)',
+        '[Bad artifact](../live-artifacts/final.png)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([
+      expect.objectContaining({
+        message: 'Live artifact path must use live-artifacts/<task-id>/...: ../live-artifacts/final.png',
+      }),
+    ]);
+  });
+
+  it('accepts line anchors on code-span file references', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'Source: `scripts/example.mjs#L10`.',
+      ].join('\n'),
+      'optc-team-builder/scripts/example.mjs': 'export {};\n',
+    });
+
+    expect(result.failures).toEqual([]);
   });
 
   it('ignores inline-code Markdown examples, numeric template filenames, and PR placeholder URLs', async () => {

@@ -45,3 +45,7 @@ jobs:
       - name: Check docs integrity
         working-directory: optc-team-builder
         run: npm run docs:integrity -- --brain-root ../optc-team-builder-brain
+
+      - name: Docs integrity script tests
+        working-directory: optc-team-builder
+        run: npm run test:docs-integrity

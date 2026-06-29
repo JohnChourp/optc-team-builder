@@ -49,6 +49,7 @@
     "test:perf-budget": "vitest run scripts/perf-budget-report.spec.ts scripts/perf-budget-history.spec.ts",
     "release:readiness": "node ./scripts/release-readiness-report.mjs",
     "test:release-readiness": "vitest run scripts/release-readiness-report.spec.ts",
+    "test:docs-integrity": "vitest run scripts/check-docs-integrity.spec.ts",
     "docs:integrity": "node ./scripts/check-docs-integrity.mjs",
     "i18n:extract": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager extract --project optc-team-builder",
     "i18n:find": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager find --project optc-team-builder --translations-path public/i18n",
