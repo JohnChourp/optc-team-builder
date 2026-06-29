@@ -117,6 +117,20 @@ describe('check-docs-integrity', () => {
     expect(result.failures).toEqual([]);
   });
 
+  it('accepts declared app tab routes', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        '[Saved teams](/tabs/saved-teams)',
+        '[Saved enemies](/tabs/saved-enemies)',
+        '[Character boxes](/tabs/character-boxes)',
+      ].join('\n'),
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
   it('rejects relative Markdown links that resolve outside checked repos', async () => {
     const result = await runWorkspace({
       'outside.md': '# Outside\n',
@@ -126,6 +140,19 @@ describe('check-docs-integrity', () => {
     expect(result.failures).toContainEqual(
       expect.objectContaining({
         message: 'Linked file resolves outside checked repos: ../outside.md',
+      }),
+    );
+  });
+
+  it('rejects code-span paths that resolve outside checked repos', async () => {
+    const result = await runWorkspace({
+      'outside.md': '# Outside\n',
+      'optc-team-builder/README.md': '# App\n\nOutside reference: `../outside.md`.\n',
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Referenced file resolves outside checked repos: ../outside.md',
       }),
     );
   });
@@ -415,6 +442,30 @@ describe('check-docs-integrity', () => {
         'Parent guide: `../guide.md`.',
       ].join('\n'),
       'optc-team-builder/docs/guide.md': '# Guide\n',
+    });
+
+    expect(result.failures).toEqual([]);
+  });
+
+  it('checks lowercase bare Markdown code-span filenames', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/docs/page.md': '# Page\n\nSee `guide.md`.\n',
+    });
+
+    expect(result.failures).toContainEqual(
+      expect.objectContaining({
+        message: 'Missing referenced file: guide.md',
+      }),
+    );
+  });
+
+  it('allows generated Markdown artifact filenames', async () => {
+    const result = await runWorkspace({
+      'optc-team-builder/e2e/README.md': [
+        '# E2E',
+        '',
+        'Artifacts include `performance-budget-summary.md` and `performance-budget-history.md`.',
+      ].join('\n'),
     });
 
     expect(result.failures).toEqual([]);

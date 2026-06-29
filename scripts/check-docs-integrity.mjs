@@ -76,6 +76,8 @@ const GENERATED_FILE_REFERENCES = new Set([
   'android/app/src/main/assets/',
   'ios/App/App/public',
   'ios/App/App/public/',
+  'performance-budget-history.md',
+  'performance-budget-summary.md',
   'public/app-config.js',
 ]);
 
@@ -93,13 +95,19 @@ const KNOWN_PUBLIC_PATHS = new Set([
   'tabs/auto-team-builder',
   'tabs/auto-team-builder-rumble',
   'tabs/captain-coverage',
+  'tabs/character-boxes',
   'tabs/characters',
+  'tabs/collection',
   'tabs/cookies',
   'tabs/crew-forge',
   'tabs/drive-sync',
   'tabs/manual-team-builder',
   'tabs/privacy',
   'tabs/rumble-characters',
+  'tabs/saved-enemies',
+  'tabs/saved-rumble-teams',
+  'tabs/saved-teams',
+  'tabs/settings',
   'tabs/terms',
   'terms',
   'tools/optc-auto-team-builder',
@@ -583,6 +591,16 @@ async function validateCodeSpanTarget({ target, doc, appRoot, brainRoot, failure
   const resolvedPaths = resolveFileReferenceCandidates(doc, target.raw, appRoot, brainRoot);
   const found = await firstExistingPath(resolvedPaths);
 
+  if (found && !isInsideCheckedRoots(found, appRoot, brainRoot)) {
+    addFailure({
+      failures,
+      doc,
+      line: target.line,
+      message: `Referenced file resolves outside checked repos: ${target.raw}`,
+    });
+    return;
+  }
+
   if (!found) {
     addFailure({
       failures,
@@ -790,7 +808,7 @@ function isFileReferenceCandidate(value) {
     return true;
   }
 
-  return /^[A-Z0-9][A-Z0-9_-]+\.md$/u.test(value);
+  return /^[A-Za-z0-9][A-Za-z0-9_-]+\.md$/u.test(value);
 }
 
 function resolveMarkdownPath(doc, targetPath, appRoot, brainRoot) {
