@@ -292,13 +292,19 @@ export function buildReleaseTriggerReport({
     isFailedStepOutcome(steps.releaseCheck) ||
     isFailedStepOutcome(steps.activeRelease) ||
     isFailedStepOutcome(steps.dispatchRelease);
-  const blockedByActiveRelease = !failedPrerequisite && releaseNeeded && !releaseDispatched && activeCount !== null && activeCount > 0;
   const blockedByVerificationOnly = !failedPrerequisite && releaseNeeded && !releaseDispatched && verificationOnly;
+  const blockedByActiveRelease =
+    !failedPrerequisite &&
+    releaseNeeded &&
+    !releaseDispatched &&
+    !blockedByVerificationOnly &&
+    activeCount !== null &&
+    activeCount > 0;
   const dispatchBlocked = blockedByActiveRelease || blockedByVerificationOnly;
-  const dispatchBlockReason = blockedByActiveRelease
-    ? releaseTriggerPolicy.report.reasons.activeReleaseRunning
-    : blockedByVerificationOnly
-      ? releaseTriggerPolicy.report.reasons.verificationOnly
+  const dispatchBlockReason = blockedByVerificationOnly
+    ? releaseTriggerPolicy.report.reasons.verificationOnly
+    : blockedByActiveRelease
+      ? releaseTriggerPolicy.report.reasons.activeReleaseRunning
       : null;
 
   let status = releaseTriggerPolicy.report.statuses.skipped;
@@ -319,12 +325,12 @@ export function buildReleaseTriggerReport({
   } else if (releaseDispatched) {
     status = releaseTriggerPolicy.report.statuses.released;
     reason = releaseTriggerPolicy.report.reasons.releaseDispatched;
-  } else if (blockedByActiveRelease) {
-    status = releaseTriggerPolicy.report.statuses.skipped;
-    reason = releaseTriggerPolicy.report.reasons.activeReleaseRunning;
   } else if (blockedByVerificationOnly) {
     status = releaseTriggerPolicy.report.statuses.skipped;
     reason = releaseTriggerPolicy.report.reasons.verificationOnly;
+  } else if (blockedByActiveRelease) {
+    status = releaseTriggerPolicy.report.statuses.skipped;
+    reason = releaseTriggerPolicy.report.reasons.activeReleaseRunning;
   } else if (releaseNeeded && !releaseDispatched) {
     status = releaseTriggerPolicy.report.statuses.failed;
     reason = releaseTriggerPolicy.report.reasons.activeReleaseCheckFailed;

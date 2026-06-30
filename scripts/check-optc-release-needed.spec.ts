@@ -405,6 +405,45 @@ describe('check-optc-release-needed', () => {
     });
   });
 
+  it('keeps verification-only reports quiet even when a release run is already active', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      activeReleaseCount: '2',
+      dispatchMode: 'verify-only',
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'success',
+        verifyOnlyDispatch: 'skipped',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+
+    expect(report).toMatchObject({
+      status: 'skipped',
+      reason: 'verification-only',
+      dispatch: {
+        mode: 'verify-only',
+        activeReleaseCount: 2,
+        blocked: true,
+        blockReason: 'verification-only',
+      },
+    });
+    expect(buildReleaseTriggerNotification(report)).toMatchObject({
+      shouldNotify: false,
+      reason: 'verification-only',
+    });
+  });
+
   it('keeps routine no-change release-trigger reports quiet', async () => {
     const releaseCheckResult = buildReleaseCheckResult({
       source: dataImportSources['2shankz'],
