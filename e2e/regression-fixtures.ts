@@ -1,84 +1,30 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-export interface E2eSavedTeam {
-  id: string;
-  name: string;
-  slots: Array<number | null>;
-  shipId: number | null;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import {
+  SHARED_FIXTURE_EXPORTED_AT,
+  buildSavedTeamFixture,
+  buildSavedTeamShareCode,
+  buildSavedTeamShareUrl,
+  buildSavedTeamsTransferJson,
+  buildSavedTeamsTransferPayload,
+  buildSeededSavedTeamFixtures,
+  type SharedSavedTeamFixture,
+  type SharedSavedTeamsTransferPayload,
+} from '../scripts/fixtures/shared/saved-team-fixtures';
 
-export interface SavedTeamsTransferPayload {
-  schemaVersion: 1;
-  source: 'saved-teams';
-  exportedAt: string;
-  teams: E2eSavedTeam[];
-}
+export type E2eSavedTeam = SharedSavedTeamFixture;
+export type SavedTeamsTransferPayload = SharedSavedTeamsTransferPayload;
 
-export const E2E_EXPORTED_AT = '2026-06-25T00:00:00.000Z';
+export const E2E_EXPORTED_AT = SHARED_FIXTURE_EXPORTED_AT;
+export const SEEDED_SAVED_TEAMS: E2eSavedTeam[] = buildSeededSavedTeamFixtures();
+export const IMPORTED_SAVED_TEAM: E2eSavedTeam = buildSavedTeamFixture('importedCrew');
 
-export const SEEDED_SAVED_TEAMS: E2eSavedTeam[] = [
-  {
-    id: 'e2e-regression-crew-a',
-    name: 'E2E Regression Crew A',
-    slots: [5056, 4551, 4520, 4408, 4267, null],
-    shipId: null,
-    notes: 'Seeded by browser regression tests.',
-    createdAt: E2E_EXPORTED_AT,
-    updatedAt: E2E_EXPORTED_AT,
-  },
-  {
-    id: 'e2e-regression-crew-b',
-    name: 'E2E Regression Crew B',
-    slots: [4265, 4090, 5056, null, null, null],
-    shipId: null,
-    notes: 'Second seeded team for compare source selection.',
-    createdAt: E2E_EXPORTED_AT,
-    updatedAt: E2E_EXPORTED_AT,
-  },
-];
-
-export const IMPORTED_SAVED_TEAM: E2eSavedTeam = {
-  id: 'e2e-imported-crew',
-  name: 'E2E Imported Crew',
-  slots: [4090, 4265, 4520, null, null, null],
-  shipId: null,
-  notes: 'Imported by browser regression tests.',
-  createdAt: E2E_EXPORTED_AT,
-  updatedAt: E2E_EXPORTED_AT,
+export {
+  buildSavedTeamShareCode,
+  buildSavedTeamShareUrl,
+  buildSavedTeamsTransferJson,
+  buildSavedTeamsTransferPayload,
 };
-
-export function buildSavedTeamsTransferPayload(
-  teams: E2eSavedTeam[],
-): SavedTeamsTransferPayload {
-  return {
-    schemaVersion: 1,
-    source: 'saved-teams',
-    exportedAt: E2E_EXPORTED_AT,
-    teams: teams.map((team) => ({ ...team, slots: [...team.slots] })),
-  };
-}
-
-export function buildSavedTeamsTransferJson(teams: E2eSavedTeam[]): string {
-  return JSON.stringify(buildSavedTeamsTransferPayload(teams), null, 2);
-}
-
-export function buildSavedTeamShareCode(team: E2eSavedTeam): string {
-  const payload = {
-    schemaVersion: 1,
-    source: 'saved-team-share',
-    exportedAt: E2E_EXPORTED_AT,
-    team,
-  };
-
-  return Buffer.from(JSON.stringify(payload), 'utf8')
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/u, '');
-}
 
 export function parseSavedTeamShareCode(shareCode: string): {
   schemaVersion: number;
@@ -97,13 +43,6 @@ export function parseSavedTeamShareCode(shareCode: string): {
     exportedAt: string;
     team: E2eSavedTeam;
   };
-}
-
-export function buildSavedTeamShareUrl(team: E2eSavedTeam, origin = 'http://127.0.0.1:4200') {
-  const url = new URL('/tabs/manual-team-builder', origin);
-  url.searchParams.set('teamShare', buildSavedTeamShareCode(team));
-
-  return url.toString();
 }
 
 export async function seedBrowserState(page: Page, teams = SEEDED_SAVED_TEAMS): Promise<void> {

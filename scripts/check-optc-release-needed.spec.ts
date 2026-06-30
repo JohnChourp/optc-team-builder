@@ -20,6 +20,11 @@ import {
   buildReleaseTriggerNotification,
   sendReleaseTriggerNotification,
 } from './lib/release-trigger-notifications.mjs';
+import {
+  MALFORMED_RELEASE_CHECK_FIXTURE,
+  RELEASE_CHECK_FIXTURE_FILE_NAMES,
+  RELEASE_CHECK_REPLAY_FIXTURE_CASES,
+} from './fixtures/shared/release-check-fixtures.mjs';
 
 describe('check-optc-release-needed', () => {
   it('defaults to the 2shankz source and JSON output off', () => {
@@ -127,10 +132,26 @@ describe('check-optc-release-needed', () => {
       fixture: 'no-change',
       json: true,
     });
-    expect(options.manifestPath).toMatch(/scripts[/\\]fixtures[/\\]release-check[/\\]no-change[/\\]local-manifest\.json$/);
-    expect(options.seedPath).toMatch(/scripts[/\\]fixtures[/\\]release-check[/\\]no-change[/\\]local-seed\.sql$/);
-    expect(options.remoteVersionPath).toMatch(/scripts[/\\]fixtures[/\\]release-check[/\\]no-change[/\\]remote-version\.js$/);
-    expect(options.remoteUnitsPath).toMatch(/scripts[/\\]fixtures[/\\]release-check[/\\]no-change[/\\]remote-units\.js$/);
+    expect(
+      normalizePath(options.manifestPath).endsWith(
+        `scripts/fixtures/release-check/no-change/${RELEASE_CHECK_FIXTURE_FILE_NAMES.manifestPath}`,
+      ),
+    ).toBe(true);
+    expect(
+      normalizePath(options.seedPath).endsWith(
+        `scripts/fixtures/release-check/no-change/${RELEASE_CHECK_FIXTURE_FILE_NAMES.seedPath}`,
+      ),
+    ).toBe(true);
+    expect(
+      normalizePath(options.remoteVersionPath).endsWith(
+        `scripts/fixtures/release-check/no-change/${RELEASE_CHECK_FIXTURE_FILE_NAMES.remoteVersionPath}`,
+      ),
+    ).toBe(true);
+    expect(
+      normalizePath(options.remoteUnitsPath).endsWith(
+        `scripts/fixtures/release-check/no-change/${RELEASE_CHECK_FIXTURE_FILE_NAMES.remoteUnitsPath}`,
+      ),
+    ).toBe(true);
   });
 
   it('rejects unknown options', () => {
@@ -725,60 +746,9 @@ describe('check-optc-release-needed', () => {
     expect(calls[2].url).toBe('https://api.github.com/repos/JohnChourp/optc-team-builder/issues/142/comments');
   });
 
-  const replayFixtureCases = [
-    {
-      fixture: 'no-change',
-      branch: 'no new upstream IDs',
-      releaseNeeded: false,
-      reason: 'no-new-upstream-characters',
-      localSourceVersion: '36',
-      remoteSourceVersion: '36',
-      localCharacterCount: 2,
-      remoteCharacterCount: 2,
-      newCharacterIds: [],
-      newCharacterCount: 0,
-    },
-    {
-      fixture: 'new-character',
-      branch: 'new upstream ID detected',
-      releaseNeeded: true,
-      reason: 'new-upstream-characters',
-      localSourceVersion: '36',
-      remoteSourceVersion: '37',
-      localCharacterCount: 2,
-      remoteCharacterCount: 3,
-      newCharacterIds: [3],
-      newCharacterCount: 1,
-    },
-    {
-      fixture: 'active-release-running',
-      branch: 'new upstream ID blocked by active release guard',
-      releaseNeeded: true,
-      reason: 'new-upstream-characters',
-      localSourceVersion: '36',
-      remoteSourceVersion: '37',
-      localCharacterCount: 2,
-      remoteCharacterCount: 3,
-      newCharacterIds: [3],
-      newCharacterCount: 1,
-    },
-    {
-      fixture: 'upstream-shape-drift',
-      branch: 'source and object shape drift with no new upstream IDs',
-      releaseNeeded: false,
-      reason: 'no-new-upstream-characters',
-      localSourceVersion: '36',
-      remoteSourceVersion: '38',
-      localCharacterCount: 2,
-      remoteCharacterCount: 2,
-      newCharacterIds: [],
-      newCharacterCount: 0,
-    },
-  ];
-
-  for (const fixtureCase of replayFixtureCases) {
+  for (const fixtureCase of RELEASE_CHECK_REPLAY_FIXTURE_CASES) {
     it(`replays the bundled ${fixtureCase.fixture} fixture: ${fixtureCase.branch}`, async () => {
-      const { fixture, branch, ...expectedResult } = fixtureCase;
+      const { fixture, branch, expectedResult } = fixtureCase;
 
       expect(branch.length).toBeGreaterThan(0);
       await expect(checkOptcReleaseNeeded({ fixture })).resolves.toMatchObject(expectedResult);
@@ -786,7 +756,9 @@ describe('check-optc-release-needed', () => {
   }
 
   it('fails deterministically for the malformed error fixture', async () => {
-    await expect(checkOptcReleaseNeeded({ fixture: 'error' })).rejects.toThrow();
+    await expect(
+      checkOptcReleaseNeeded({ fixture: MALFORMED_RELEASE_CHECK_FIXTURE }),
+    ).rejects.toThrow();
   });
 });
 
@@ -798,4 +770,8 @@ function buildMockGitHubResponse(payload, ok = true, status = 200) {
     status,
     text: async () => text,
   };
+}
+
+function normalizePath(value: unknown) {
+  return String(value).replace(/\\/g, '/');
 }
