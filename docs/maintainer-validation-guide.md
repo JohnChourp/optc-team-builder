@@ -6,7 +6,9 @@ release-detector checks, release-readiness reporting, and broad UI validation so
 maintainers can pick the smallest useful path without rereading prior audits.
 Use `docs/feature-coverage-map.md` when you need to find the owner and current
 coverage assets for a specific product or operational flow before choosing one
-of the validation paths below.
+of the validation paths below. Use `docs/fixture-ownership-guide.md` before
+adding or moving fixtures across browser, contract, performance, release-check,
+or release-readiness suites.
 
 ## Decision Table
 
@@ -246,3 +248,7 @@ workflow, release report, artifact path, or maintainer command, update this
 guide in the same PR. The owner of the changed harness or workflow owns keeping
 the decision table, command examples, artifact locations, and lightweight/deep
 guidance current.
+
+When a PR adds, removes, renames, or materially changes checked-in fixtures or
+shared fixture builders, update `docs/fixture-ownership-guide.md` in the same
+PR with the owner, consumers, and regeneration rule.
