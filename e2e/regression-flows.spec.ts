@@ -40,8 +40,8 @@ test.describe('high-value regression flows', () => {
     browserName,
   }) => {
     test.skip(
-      browserName !== 'chromium',
-      'Full guided Auto Team Builder worker state transition remains tracked as a browser-specific exception; Firefox/WebKit run the guided controls subset.',
+      browserName === 'firefox',
+      'Full guided Auto Team Builder worker state transition remains tracked as a Firefox-specific exception; Firefox runs the guided controls subset.',
     );
     test.setTimeout(120_000);
     await seedBrowserState(page, []);
