@@ -157,7 +157,7 @@ function walkSuites(suites, titlePath, failures) {
             title,
             retryCount,
             status: result.status ?? 'unknown',
-            errorSignature: normalizeErrorSignature(result.error?.message ?? result.errors?.[0]?.message ?? result.status ?? 'unknown failure'),
+            errorSignature: normalizeErrorSignature(failureMessage(result, test.expectedStatus)),
           });
         }
       }
@@ -169,7 +169,23 @@ function walkSuites(suites, titlePath, failures) {
 
 function isFailingResult(result, expectedStatus = 'passed') {
   const status = result.status ?? '';
-  return status === 'failed' || status === 'timedOut' || status === 'interrupted' || (expectedStatus === 'passed' && status !== 'passed' && status !== 'skipped');
+  if (!status || status === 'skipped') {
+    return false;
+  }
+
+  if (status === 'timedOut' || status === 'interrupted') {
+    return true;
+  }
+
+  return status !== expectedStatus;
+}
+
+function failureMessage(result, expectedStatus = 'passed') {
+  return (
+    result.error?.message ??
+    result.errors?.[0]?.message ??
+    `Expected ${expectedStatus}, received ${result.status ?? 'unknown'}`
+  );
 }
 
 export function normalizeErrorSignature(value) {

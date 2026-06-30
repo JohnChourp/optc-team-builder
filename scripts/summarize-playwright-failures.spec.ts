@@ -105,4 +105,46 @@ describe('summarize Playwright failures', () => {
       process.chdir(previousCwd);
     }
   });
+
+  it('summarizes unexpected passes from expected-failure tests', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'optc-playwright-summary-'));
+    tempDirs.push(tempDir);
+    await mkdir(path.join(tempDir, 'test-results'), { recursive: true });
+    await writeFile(
+      path.join(tempDir, 'test-results', 'results.json'),
+      JSON.stringify({
+        suites: [
+          {
+            specs: [
+              {
+                title: 'expected failure unexpectedly passes',
+                file: 'e2e/example.spec.ts',
+                tests: [
+                  {
+                    projectName: 'chromium',
+                    expectedStatus: 'failed',
+                    results: [{ status: 'passed', retry: 0 }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const previousCwd = process.cwd();
+    process.chdir(tempDir);
+    try {
+      const summary = await summarizePlaywrightFailures({ inputs: [path.join(tempDir, 'test-results')] });
+
+      expect(summary.groupCount).toBe(1);
+      expect(summary.failures[0]).toMatchObject({
+        status: 'passed',
+        errorSignature: 'Expected failed, received passed',
+      });
+    } finally {
+      process.chdir(previousCwd);
+    }
+  });
 });

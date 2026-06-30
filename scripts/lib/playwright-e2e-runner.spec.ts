@@ -67,6 +67,18 @@ describe('playwright e2e runner planning', () => {
     ).toThrow('one native --project filter');
   });
 
+  it('requires explicit browser scope for active quarantine mode', () => {
+    expect(() =>
+      buildRunPlan({
+        rawArgs: ['--quarantine-mode=exclude'],
+        quarantineConfig: {
+          tags: ['@quarantined:chromium-case'],
+          entries: [{ tag: '@quarantined:chromium-case', browsers: ['chromium'] }],
+        },
+      }),
+    ).toThrow('requires --e2e-project');
+  });
+
   it('can route generated artifacts under an explicit base directory', () => {
     const plan = buildRunPlan({
       rawArgs: ['--e2e-project=firefox'],

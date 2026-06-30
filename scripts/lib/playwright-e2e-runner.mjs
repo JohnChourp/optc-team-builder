@@ -94,6 +94,10 @@ export function buildRunPlan({ rawArgs = [], env = process.env, quarantineConfig
   const quarantineTags = quarantineTagsForProject(quarantineConfig, scopedProject);
   const quarantineGrep = buildQuarantineGrep(quarantineTags);
 
+  if (quarantineMode !== 'off' && !scopedProject && activeQuarantineTags(quarantineConfig).length > 0) {
+    throw new Error('Quarantine mode requires --e2e-project or one native --project filter when active quarantine entries exist.');
+  }
+
   if (quarantineMode === 'only') {
     if (quarantineTags.length === 0 || !quarantineGrep) {
       return {
@@ -170,6 +174,14 @@ function quarantineTagsForProject(quarantineConfig, scopedProject) {
     .filter((entry) => Array.isArray(entry.browsers) && entry.browsers.includes(scopedProject))
     .map((entry) => entry.tag)
     .filter(Boolean);
+}
+
+function activeQuarantineTags(quarantineConfig) {
+  if (Array.isArray(quarantineConfig.entries)) {
+    return quarantineConfig.entries.map((entry) => entry.tag).filter(Boolean);
+  }
+
+  return quarantineConfig.tags ?? [];
 }
 
 function collectNativeProjects(args) {
