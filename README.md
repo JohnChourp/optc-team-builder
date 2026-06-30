@@ -46,12 +46,16 @@ Maintainer validation guide:
 
 Install dependencies:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm install
 ```
 
 Configure local app secrets:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 cp .env.example .env.local
 ```
@@ -61,12 +65,16 @@ For iOS builds, also fill `APP_GOOGLE_IOS_CLIENT_ID`.
 
 Import everything in one run:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run data:import:all
 ```
 
 Import everything from the upstream `optc-db` source instead of the default `2shankz` source:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run data:import:all -- --source=optc-db
 ```
@@ -75,18 +83,24 @@ The one-shot command above already includes every supported image pack. The lowe
 
 Import metadata plus global thumbnails:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run data:import:all -- --download-images=thumbnails-glo
 ```
 
 Import metadata plus all thumbnail packs, including ship thumbnails:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run data:import:all -- --download-images=thumbnails
 ```
 
 Import metadata plus every supported offline image pack:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run data:import:all
 ```
@@ -101,12 +115,16 @@ Supported `--download-images` modes:
 
 You can combine the source selector with any image download mode, for example:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run data:import:all -- --source=optc-db --download-images=thumbnails
 ```
 
 If GitHub responds with `403` while listing image packs, export `GITHUB_TOKEN` or `GH_TOKEN` before running any `--download-images=...` import mode:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 export GITHUB_TOKEN=your_github_token
 npm run data:import:all
@@ -114,30 +132,40 @@ npm run data:import:all
 
 Run the app in the browser:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm start
 ```
 
 Create a production build:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run build
 ```
 
 Build and sync the native projects:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run build:mobile
 ```
 
 Build the GitHub Pages artifact locally:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run build:pages
 ```
 
 Build locally with GA4 injected from environment:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 APP_GA4_MEASUREMENT_ID=G-XXXXXXXXXX npm run build:pages
 ```
@@ -171,6 +199,8 @@ The scheduled `Check OPTC DB Release` workflow uses `npm run data:check-release`
 compare committed character IDs with upstream OPTC DB IDs. The detector can also
 replay compact local fixtures without fetching upstream data:
 
+Command status: CI-executable; the `error` fixture is expected to exit nonzero.
+<!-- docs-command: ci-executable -->
 ```bash
 npm run data:check-release -- --fixture=no-change --json
 npm run data:check-release -- --fixture=new-character --json
@@ -196,6 +226,8 @@ fixture-validation step.
 To replay captured upstream files during an incident, keep the local manifest and
 seed defaults or point at custom local files, then pass both remote paths:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run data:check-release -- --json \
   --remote-version-path=/path/to/common/data/version.js \
@@ -241,6 +273,8 @@ The workflow:
 
 Local fallback signing setup:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 ./scripts/setup-release-signing.sh
 source ~/.android/optc-team-builder/release-signing.env
@@ -248,6 +282,8 @@ source ~/.android/optc-team-builder/release-signing.env
 
 Local fallback release command:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 ../optc-team-builder-brain/.codex/skills/optc-team-builder-android-release/scripts/run_release.sh --project "$(pwd)" --bump patch
 ```

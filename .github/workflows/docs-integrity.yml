@@ -71,11 +71,25 @@ jobs:
         working-directory: optc-team-builder
         run: npm run docs:integrity -- --brain-root ../optc-team-builder-brain
 
+      - name: Check full docs commands
+        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
+        working-directory: optc-team-builder
+        run: npm run docs:commands -- --brain-root ../optc-team-builder-brain
+
       - name: Check app-only docs integrity
         if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
         working-directory: optc-team-builder
         run: npm run docs:integrity -- --app-only
 
+      - name: Check app-only docs commands
+        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
+        working-directory: optc-team-builder
+        run: npm run docs:commands -- --app-only
+
       - name: Docs integrity script tests
         working-directory: optc-team-builder
         run: npm run test:docs-integrity
+
+      - name: Docs command script tests
+        working-directory: optc-team-builder
+        run: npm run test:docs-commands
