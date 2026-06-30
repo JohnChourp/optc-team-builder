@@ -76,4 +76,33 @@ describe('summarize Playwright failures', () => {
       'Error at <path> timed out <n>ms',
     );
   });
+
+  it('summarizes report-level Playwright errors', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'optc-playwright-summary-'));
+    tempDirs.push(tempDir);
+    await mkdir(path.join(tempDir, 'test-results'), { recursive: true });
+    await writeFile(
+      path.join(tempDir, 'test-results', 'results.json'),
+      JSON.stringify({
+        errors: [{ message: 'Error: global setup failed at /home/runner/work/optc-team-builder/setup.ts:188' }],
+        suites: [],
+      }),
+    );
+
+    const previousCwd = process.cwd();
+    process.chdir(tempDir);
+    try {
+      const summary = await summarizePlaywrightFailures({ inputs: [path.join(tempDir, 'test-results')] });
+
+      expect(summary.groupCount).toBe(1);
+      expect(summary.failures[0]).toMatchObject({
+        browser: 'unknown',
+        file: 'global',
+        title: 'Playwright report error',
+        errorSignature: 'Error: global setup failed at <path>',
+      });
+    } finally {
+      process.chdir(previousCwd);
+    }
+  });
 });

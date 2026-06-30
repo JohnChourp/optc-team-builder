@@ -45,7 +45,14 @@ describe('playwright quarantine metadata', () => {
 
   it('builds a grep expression for multiple tags', () => {
     expect(buildQuarantineGrep(['@quarantined:b-case', '@quarantined:a-case'])).toBe(
-      '@quarantined:a-case|@quarantined:b-case',
+      '(?:^|\\s)(?:@quarantined:a-case|@quarantined:b-case)(?=\\s|$)',
     );
+  });
+
+  it('does not match longer quarantine tags with the same prefix', () => {
+    const grep = new RegExp(buildQuarantineGrep(['@quarantined:foo']));
+
+    expect(grep.test('case @quarantined:foo')).toBe(true);
+    expect(grep.test('case @quarantined:foo-bar')).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildRunPlan, parseRunnerArgs } from './playwright-e2e-runner.mjs';
+import { assertValidQuarantineConfig, buildRunPlan, parseRunnerArgs } from './playwright-e2e-runner.mjs';
 
 describe('playwright e2e runner planning', () => {
   it('passes the scoped project as one Playwright argument', () => {
@@ -19,7 +19,7 @@ describe('playwright e2e runner planning', () => {
       quarantineConfig: { tags: ['@quarantined:case'], grep: '@quarantined:case' },
     });
 
-    expect(plan.runs[0]!.args).not.toContain('--grep-invert=@quarantined:case');
+    expect(plan.runs[0]!.args.some((arg) => arg.startsWith('--grep-invert='))).toBe(false);
   });
 
   it('adds quarantine exclusion when requested', () => {
@@ -32,7 +32,7 @@ describe('playwright e2e runner planning', () => {
     });
 
     expect(plan.runs).toHaveLength(2);
-    expect(plan.runs[0]!.args).toContain('--grep-invert=@quarantined:case');
+    expect(plan.runs[0]!.args).toContain('--grep-invert=(?:^|\\s)(?:@quarantined:case)(?=\\s|$)');
     expect(plan.runs[0]!.args).toContain('--pass-with-no-tests');
   });
 
@@ -45,7 +45,26 @@ describe('playwright e2e runner planning', () => {
       },
     });
 
-    expect(plan.runs[0]!.args).not.toContain('--grep-invert=@quarantined:chromium-case');
+    expect(plan.runs[0]!.args.some((arg) => arg.includes('@quarantined:chromium-case'))).toBe(false);
+  });
+
+  it('honors native Playwright project filters when quarantine mode is explicit', () => {
+    const plan = buildRunPlan({
+      rawArgs: ['--project=firefox', '--quarantine-mode=exclude', 'e2e/regression-flows.spec.ts'],
+      quarantineConfig: {
+        tags: ['@quarantined:chromium-case'],
+        entries: [{ tag: '@quarantined:chromium-case', browsers: ['chromium'] }],
+      },
+    });
+
+    expect(plan.runs).toHaveLength(1);
+    expect(plan.runs[0]!.args).toEqual(['--project=firefox', 'e2e/regression-flows.spec.ts']);
+  });
+
+  it('rejects multi-project native filters in quarantine mode', () => {
+    expect(() =>
+      parseRunnerArgs(['--project=firefox', '--project=webkit', '--quarantine-mode=exclude']),
+    ).toThrow('one native --project filter');
   });
 
   it('can route generated artifacts under an explicit base directory', () => {
@@ -73,5 +92,11 @@ describe('playwright e2e runner planning', () => {
 
   it('validates quarantine mode values', () => {
     expect(() => parseRunnerArgs(['--quarantine-mode=bad'])).toThrow('Unsupported quarantine mode');
+  });
+
+  it('fails fast when loaded quarantine metadata is invalid', () => {
+    expect(() => assertValidQuarantineConfig({ failures: ['Spec tag @quarantined:missing is missing.'] })).toThrow(
+      'Invalid Playwright quarantine metadata',
+    );
   });
 });

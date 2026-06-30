@@ -2,7 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 
-import { buildRunPlan } from './lib/playwright-e2e-runner.mjs';
+import { assertValidQuarantineConfig, buildRunPlan } from './lib/playwright-e2e-runner.mjs';
 import { loadQuarantineConfig } from './lib/playwright-quarantine.mjs';
 
 const npxCommand =
@@ -34,6 +34,13 @@ function runPlaywright(args, env = {}) {
 }
 
 const quarantineConfig = await loadQuarantineConfig();
+try {
+  assertValidQuarantineConfig(quarantineConfig);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
+
 const plan = buildRunPlan({
   rawArgs: process.argv.slice(2),
   env: process.env,

@@ -92,6 +92,17 @@ export function renderFailureSummaryMarkdown(summary) {
 
 export function collectFailures(report) {
   const failures = [];
+  for (const error of report.errors ?? []) {
+    failures.push({
+      browser: 'unknown',
+      file: 'global',
+      title: 'Playwright report error',
+      retryCount: 0,
+      status: 'failed',
+      errorSignature: normalizeErrorSignature(error.message ?? error.stack ?? JSON.stringify(error)),
+    });
+  }
+
   walkSuites(report.suites ?? [], [], failures);
   return failures;
 }
@@ -137,7 +148,7 @@ function walkSuites(suites, titlePath, failures) {
         const retryCount = Math.max(...(test.results ?? []).map((result) => Number(result.retry ?? 0)), 0);
         const browser = test.projectName ?? spec.projectName ?? 'unknown';
         const file = normalizePath(spec.file ?? suite.file ?? 'unknown');
-        const title = [...nextTitlePath, spec.title].filter(Boolean).join(' › ');
+        const title = [...nextTitlePath, spec.title].filter(Boolean).join(' > ');
 
         for (const result of failingResults) {
           failures.push({
@@ -176,7 +187,17 @@ export function normalizeErrorSignature(value) {
 }
 
 function escapeMarkdownCell(value) {
-  return String(value).replace(/\|/gu, '\\|').replace(/\r?\n/gu, ' ');
+  return String(value).replace(/[\\|\r\n]/gu, (char) => {
+    if (char === '\\') {
+      return '\\\\';
+    }
+
+    if (char === '|') {
+      return '\\|';
+    }
+
+    return ' ';
+  });
 }
 
 function normalizePath(value) {

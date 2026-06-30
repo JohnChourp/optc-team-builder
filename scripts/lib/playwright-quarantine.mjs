@@ -14,7 +14,7 @@ export function escapeRegExp(value) {
 
 export function buildQuarantineGrep(tags) {
   const uniqueTags = [...new Set(tags)].sort();
-  return uniqueTags.length > 0 ? uniqueTags.map(escapeRegExp).join('|') : '';
+  return uniqueTags.length > 0 ? `(?:^|\\s)(?:${uniqueTags.map(escapeRegExp).join('|')})(?=\\s|$)` : '';
 }
 
 export async function loadQuarantineConfig(options = {}) {
