@@ -23,7 +23,7 @@ or release-readiness suites.
 | OPTC DB release-detector logic, fixtures, workflow dispatch rules, or upstream replay support | `npm run test:release-check` | Run each successful bundled fixture plus the live check, and verify `node scripts/check-optc-release-needed.mjs --fixture=error --json` exits nonzero | Missing upstream character IDs are the only release trigger, fixture branches remain replayable, malformed fixture handling still fails, and the live upstream read still works | Command output; workflow artifact `release-trigger-outcome` after Actions runs |
 | Release-readiness summary schema, report formatting, sign-off policy, or release evidence wiring | `npm run test:release-readiness` | `npm run test:release-readiness` plus `npm run release:readiness -- --source /path/to/source.json --output /path/to/summary.md --json-output /path/to/summary.json` using current evidence | Candidate status, tests, performance report, release-trigger report, blockers, and waivers produce the intended ready/blocked decision | Paths passed to `--output` and `--json-output` |
 | Broad app UI behavior, routing, saved-team/share flows, or regression-prone user journeys | Focused `npm run test:ci -- --include ...` for touched components/services | `npm run test:ci`, `npm run test:e2e:chromium`, `npm run i18n:validate`, and `npm run build`; use all browser projects when browser-specific behavior changed | Angular units, deterministic Chromium journeys, translation keys, and production build health remain intact; browser flakes follow the `e2e/README.md` quarantine workflow before any coverage is excluded from blocking CI | Playwright reports, `test-results/`, and failure-summary artifacts in CI |
-| Docs-only, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain` plus `git diff --check` | Add targeted command validation only when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, and whitespace stay valid across app and brain docs | None |
+| Docs-only, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, plus `git diff --check` | Add targeted command validation when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, documented maintainer commands, and whitespace stay valid across app and brain docs | None |
 
 ## Lightweight vs Deep Runs
 
@@ -66,13 +66,24 @@ not fail only because no ClickUp task exists.
 
 ## Command Details
 
+Fenced shell examples below include a command status. `CI-executable` commands
+are part of the docs command verification allowlist; `manual/illustrative`
+commands remain documented for maintainers but are not executed by that gate.
+
 ### Captain Contracts
 
 Run the focused contract gates before changing captain parser or generated
 captain metadata logic:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run test:captain-contracts
+```
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
 npm run test:ci -- --include src/app/core/services/auto-team-builder-ability-parser.spec.ts
 ```
 
@@ -85,6 +96,8 @@ when the change crosses into captain matching services or page behavior.
 Run the focused manual-character script gate before changing the manual overlay,
 upsert, apply, or dataset-integrity contract:
 
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
 ```bash
 npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts
 ```
@@ -92,6 +105,8 @@ npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-characte
 Use the broad script sweep when the change affects shared script validation or
 when a focused script failure was previously quarantined:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npx vitest run scripts --reporter=dot
 ```
@@ -104,12 +119,16 @@ Reserved manual ids (`>= 900000`) may keep a distinct existing canonical
 
 Ability-filter harness:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 PERF_ARTIFACT_DIR=/path/to/artifacts PERF_RUN_LABEL=local-ability npm run perf:ability-filters
 ```
 
 Explanation/compare harness:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 PERF_ARTIFACT_DIR=/path/to/artifacts PERF_RUN_LABEL=local-explanation npm run perf:explanation-compare
 ```
@@ -119,6 +138,8 @@ budgets by itself. To enforce ability-filter budgets locally, place the ability
 result under a shared current directory, include an explanation/compare result,
 then run the budget report:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 PERF_ARTIFACT_DIR=perf-artifacts/current/ability npm run perf:ability-filters
 PERF_ARTIFACT_DIR=perf-artifacts/current/explanation PERF_ASSERT=0 npm run perf:explanation-compare
@@ -137,6 +158,8 @@ Use the `Performance Budgets` GitHub Actions workflow for recurring or release
 candidate performance evidence. The workflow runs both browser harnesses,
 combines them with:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run perf:budget-report
 ```
@@ -151,6 +174,8 @@ remain warnings.
 
 To rebuild the scheduled report locally from collected harness output:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run perf:budget-report -- --current-dir perf-artifacts/current --output perf-artifacts/performance-budget-report.json --summary perf-artifacts/performance-budget-summary.md --report-only
 npm run perf:budget-history -- --current-report perf-artifacts/performance-budget-report.json --history-dir perf-artifacts/history --output perf-artifacts/performance-budget-history.json --summary perf-artifacts/performance-budget-history.md
@@ -160,6 +185,8 @@ npm run perf:budget-history -- --current-report perf-artifacts/performance-budge
 
 Use the focused test first:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run test:release-check
 ```
@@ -167,6 +194,8 @@ npm run test:release-check
 Replay bundled branches before changing release-detector logic or workflow
 dispatch policy:
 
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
 ```bash
 npm run data:check-release -- --fixture=no-change --json
 npm run data:check-release -- --fixture=new-character --json
@@ -175,23 +204,26 @@ npm run data:check-release -- --fixture=upstream-shape-drift --json
 ```
 
 The `error` fixture is intentionally malformed and should exit nonzero. Keep it
-as an expected-failure check, matching the workflow guard:
+as an expected-failure check:
 
+Command status: CI-executable; this command is expected to exit nonzero.
+<!-- docs-command: ci-executable -->
 ```bash
-if node scripts/check-optc-release-needed.mjs --fixture=error --json; then
-  echo "Expected the release detector error fixture to fail." >&2
-  exit 1
-fi
+node scripts/check-optc-release-needed.mjs --fixture=error --json
 ```
 
 Use the live check when validating current upstream state:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run data:check-release -- --json
 ```
 
 For captured upstream incident replay, pass both remote files together:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run data:check-release -- --json \
   --remote-version-path=/path/to/common/data/version.js \
@@ -206,12 +238,16 @@ directory that contains `local-manifest.json`, `local-seed.sql`,
 
 Use the report tests first:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run test:release-readiness
 ```
 
 Render a real candidate summary from collected evidence:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run release:readiness -- \
   --source /path/to/release-readiness-source.json \
@@ -229,8 +265,19 @@ instead of copying all evidence inline.
 Use the shared docs checker before merging README, guide, runbook, or audit
 changes:
 
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
 ```bash
 npm run docs:integrity -- --brain-root ../optc-team-builder-brain
+```
+
+For untrusted pull requests that cannot receive the private brain checkout, CI
+also exercises the app-only docs path:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run docs:integrity -- --app-only
 ```
 
 The checker scans committed Markdown docs in both repos for broken Markdown
@@ -240,6 +287,13 @@ references without requiring ignored local screenshots to exist. For intentional
 historical or generated references, place
 `<!-- docs-integrity-ignore-next-line: <reason> -->` immediately before the
 line.
+
+Use `npm run docs:commands -- --brain-root ../optc-team-builder-brain` when a
+PR adds, removes, or changes maintainer command examples. The docs-command gate
+requires each fenced shell example in active maintainer docs to be labeled as
+`CI-executable` or `manual/illustrative`; it executes only the allowlisted
+CI-executable commands and leaves release, secret-dependent, live-network,
+server, signing, and artifact-collection examples as manual guidance.
 
 ## Ownership Rule
 

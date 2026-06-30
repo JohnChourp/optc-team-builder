@@ -41,6 +41,9 @@ jobs:
       - name: Docs integrity script tests
         run: npm run test:docs-integrity
 
+      - name: Docs command script tests
+        run: npm run test:docs-commands
+
       - name: Drive sync backend tests
         run: npm run test:drive-sync-server
 
