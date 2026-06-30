@@ -34,6 +34,34 @@ describe('playwright e2e runner planning', () => {
     expect(plan.runs).toHaveLength(2);
     expect(plan.runs[0]!.args).toContain('--grep-invert=(?:^|\\s)(?:@quarantined:case)(?=\\s|$)');
     expect(plan.runs[0]!.args).toContain('--pass-with-no-tests');
+    expect(plan.runs[1]!.args).toEqual([
+      '--project=chromium',
+      '--grep',
+      '@guided-auto-build',
+      '--workers',
+      '1',
+      '--grep-invert=(?:^|\\s)(?:@quarantined:case)(?=\\s|$)',
+      '--pass-with-no-tests',
+    ]);
+  });
+
+  it('adds a serialized guided leg for scoped non-Chromium browser runs', () => {
+    const plan = buildRunPlan({
+      rawArgs: ['--e2e-project=firefox', '--quarantine-mode=exclude'],
+      quarantineConfig: { tags: [], grep: '' },
+    });
+
+    expect(plan.runs).toHaveLength(2);
+    expect(plan.runs[0]!.args).toEqual(['--project=firefox', '--grep-invert', '@guided-auto-build']);
+    expect(plan.runs[0]!.env).toMatchObject({
+      PLAYWRIGHT_HTML_REPORT: 'playwright-report/firefox-main',
+      PLAYWRIGHT_OUTPUT_DIR: 'test-results/firefox-main',
+    });
+    expect(plan.runs[1]!.args).toEqual(['--project=firefox', '--grep', '@guided-auto-build', '--workers', '1']);
+    expect(plan.runs[1]!.env).toMatchObject({
+      PLAYWRIGHT_HTML_REPORT: 'playwright-report/firefox-guided',
+      PLAYWRIGHT_OUTPUT_DIR: 'test-results/firefox-guided',
+    });
   });
 
   it('honors browser-specific quarantine metadata', () => {
@@ -46,6 +74,7 @@ describe('playwright e2e runner planning', () => {
     });
 
     expect(plan.runs[0]!.args.some((arg) => arg.includes('@quarantined:chromium-case'))).toBe(false);
+    expect(plan.runs[1]!.args.some((arg) => arg.includes('@quarantined:chromium-case'))).toBe(false);
   });
 
   it('honors native Playwright project filters when quarantine mode is explicit', () => {
@@ -87,8 +116,12 @@ describe('playwright e2e runner planning', () => {
     });
 
     expect(plan.runs[0]!.env).toMatchObject({
-      PLAYWRIGHT_HTML_REPORT: '../optc-team-builder-brain/live-artifacts/task/post/playwright-report/firefox',
-      PLAYWRIGHT_OUTPUT_DIR: '../optc-team-builder-brain/live-artifacts/task/post/test-results/firefox',
+      PLAYWRIGHT_HTML_REPORT: '../optc-team-builder-brain/live-artifacts/task/post/playwright-report/firefox-main',
+      PLAYWRIGHT_OUTPUT_DIR: '../optc-team-builder-brain/live-artifacts/task/post/test-results/firefox-main',
+    });
+    expect(plan.runs[1]!.env).toMatchObject({
+      PLAYWRIGHT_HTML_REPORT: '../optc-team-builder-brain/live-artifacts/task/post/playwright-report/firefox-guided',
+      PLAYWRIGHT_OUTPUT_DIR: '../optc-team-builder-brain/live-artifacts/task/post/test-results/firefox-guided',
     });
   });
 

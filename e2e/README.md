@@ -19,10 +19,14 @@ Regression tests seed only browser-local Capacitor Preferences keys:
 Keep new scenarios deterministic. Prefer stable seeded teams and `data-testid` hooks over incidental Ionic popover structure, visual pixels, network timing, or generated class names. Failure traces, screenshots, videos, the HTML report, and `test-results/` are uploaded by CI for debugging.
 
 CI already runs each browser project with one worker through `playwright.config.ts`.
-The default E2E wrapper isolates the Chromium guided-build worker scenario in a
-second Playwright run with separate report/output directories. When developers
-pass flags or file filters through npm, the wrapper delegates directly to
-Playwright so filtered and debug workflows behave like direct Playwright usage.
+For scoped browser runs, the E2E wrapper first runs the non-guided suite and then
+runs `@guided-auto-build` as a serialized second leg with separate
+report/output directories. Firefox and WebKit keep a guided controls subset in
+the blocking matrix. The full guided worker state-transition case remains an
+explicit browser-specific exception and is kept visible by the non-blocking
+quarantine job until it meets the restoration criteria. When developers pass
+flags or file filters through npm, the wrapper delegates directly to Playwright
+so filtered and debug workflows behave like direct Playwright usage.
 
 ## Flake Triage And Quarantine
 

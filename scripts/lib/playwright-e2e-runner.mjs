@@ -127,12 +127,16 @@ export function buildRunPlan({ rawArgs = [], env = process.env, quarantineConfig
     };
   }
 
-  if (scopedProject && scopedProject !== 'chromium') {
+  if (scopedProject) {
     return {
       runs: [
         {
           args: withQuarantineFilter([...projectArgs, '--grep-invert', GUIDED_GREP], quarantineMode, quarantineGrep),
-          env: artifactEnv(scopedProject, env),
+          env: artifactEnv(`${scopedProject}-main`, env),
+        },
+        {
+          args: withQuarantineFilter([...projectArgs, '--grep', GUIDED_GREP, '--workers', '1'], quarantineMode, quarantineGrep),
+          env: artifactEnv(`${scopedProject}-guided`, env),
         },
       ],
     };

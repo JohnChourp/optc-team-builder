@@ -155,6 +155,26 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.guidedAutoBuildSupportLabel()).toContain('Sub 1');
   });
 
+  it('guided auto build uses the submit-time mode while the async build resolves', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockImplementation(async () => {
+      page.guidedAutoBuildEnabled.set(false);
+
+      return createAutoBuildResult();
+    });
+    await page.ngOnInit();
+    page.guidedAutoBuildEnabled.set(true);
+    await page.buildTeam();
+
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots().find((slot) => slot.role === 'captain')).toMatchObject({
+      role: 'captain',
+      characterIds: [101],
+      requiredCharacterId: 101,
+    });
+  });
+
   it('guided auto build skips filled slots, then validates the locked team when complete', async () => {
     const { page, autoTeamBuilder } = await createPage();
     const result = createAutoBuildResult();
