@@ -21,14 +21,12 @@ Keep new scenarios deterministic. Prefer stable seeded teams and `data-testid` h
 CI already runs each browser project with one worker through `playwright.config.ts`.
 For scoped browser runs, the E2E wrapper first runs the non-guided suite and then
 runs `@guided-auto-build` as a serialized second leg with separate
-report/output directories. WebKit runs the full guided worker transition in the
-blocking scoped run. Firefox keeps a guided controls subset in the blocking
-matrix while its full worker transition remains a documented browser-specific
-exception. Chromium keeps the full guided worker case visible through the
-non-blocking quarantine job until it meets the restoration criteria. When
-developers pass flags or file filters through npm, the wrapper delegates
-directly to Playwright so filtered and debug workflows behave like direct
-Playwright usage.
+report/output directories. Firefox and WebKit keep a guided controls subset in
+the blocking matrix. The full guided worker state-transition case remains an
+explicit browser-specific exception and is kept visible by the non-blocking
+Chromium quarantine job until it meets the restoration criteria. When developers
+pass flags or file filters through npm, the wrapper delegates directly to
+Playwright so filtered and debug workflows behave like direct Playwright usage.
 
 ## Flake Triage And Quarantine
 

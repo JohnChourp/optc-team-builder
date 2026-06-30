@@ -100,7 +100,31 @@ export async function setIonToggle(locator: Locator, checked: boolean): Promise<
     await (element as { componentOnReady?: () => Promise<unknown> }).componentOnReady?.();
   });
   await locator.scrollIntoViewIfNeeded();
-  await dispatchIonToggleChange(locator, checked);
+
+  for (const action of [
+    () => locator.click(),
+    async () => {
+      await locator.focus();
+      await locator.page().keyboard.press('Space');
+    },
+    () => locator.locator('input').click({ force: true, timeout: 5_000 }),
+  ]) {
+    if (await ionToggleMatches(locator, checked)) {
+      break;
+    }
+
+    try {
+      await action();
+      await expect.poll(() => ionToggleMatches(locator, checked), { timeout: 5_000 }).toBe(true);
+      break;
+    } catch {
+      // Try the next real interaction path before falling back to Ionic's event contract.
+    }
+  }
+
+  if (!(await ionToggleMatches(locator, checked))) {
+    await dispatchIonToggleChange(locator, checked);
+  }
 
   await expect.poll(() => ionToggleMatches(locator, checked)).toBe(true);
   await expect(locator).toHaveAttribute('data-guided-enabled', checked ? 'true' : 'false');
