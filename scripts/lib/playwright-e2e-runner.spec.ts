@@ -32,8 +32,11 @@ describe('playwright e2e runner planning', () => {
     });
 
     expect(plan.runs).toHaveLength(2);
-    expect(plan.runs[0]!.args).toContain('--grep-invert=(?:^|\\s)(?:@quarantined:case)(?=\\s|$)');
-    expect(plan.runs[0]!.args).toContain('--pass-with-no-tests');
+    expect(plan.runs[0]!.args).toEqual([
+      '--project=chromium',
+      '--grep-invert=(?:@guided-auto-build)|(?:(?:^|\\s)(?:@quarantined:case)(?=\\s|$))',
+      '--pass-with-no-tests',
+    ]);
     expect(plan.runs[1]!.args).toEqual([
       '--project=chromium',
       '--grep',

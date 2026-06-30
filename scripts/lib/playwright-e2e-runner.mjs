@@ -162,7 +162,49 @@ export function withQuarantineFilter(args, quarantineMode, quarantineGrep) {
     return args;
   }
 
-  return [...args, `--grep-invert=${quarantineGrep}`, '--pass-with-no-tests'];
+  const { args: argsWithoutGrepInvert, grepInvertPatterns } = extractGrepInvertPatterns(args);
+  return [
+    ...argsWithoutGrepInvert,
+    `--grep-invert=${combineGrepPatterns([...grepInvertPatterns, quarantineGrep])}`,
+    '--pass-with-no-tests',
+  ];
+}
+
+function extractGrepInvertPatterns(args) {
+  const argsWithoutGrepInvert = [];
+  const grepInvertPatterns = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === '--grep-invert') {
+      const pattern = args[index + 1];
+      if (pattern) {
+        grepInvertPatterns.push(pattern);
+      }
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--grep-invert=')) {
+      grepInvertPatterns.push(arg.slice('--grep-invert='.length));
+      continue;
+    }
+
+    argsWithoutGrepInvert.push(arg);
+  }
+
+  return { args: argsWithoutGrepInvert, grepInvertPatterns };
+}
+
+function combineGrepPatterns(patterns) {
+  const uniquePatterns = [...new Set(patterns.filter(Boolean))];
+
+  if (uniquePatterns.length === 1) {
+    return uniquePatterns[0];
+  }
+
+  return uniquePatterns.map((pattern) => `(?:${pattern})`).join('|');
 }
 
 function quarantineTagsForProject(quarantineConfig, scopedProject) {
