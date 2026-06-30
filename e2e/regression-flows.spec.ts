@@ -17,13 +17,31 @@ import {
 test.describe('high-value regression flows', () => {
   test.describe.configure({ mode: 'serial' });
 
+  test('guided auto build controls expose the next-slot state @guided-auto-build @guided-auto-build-controls', async ({
+    page,
+  }) => {
+    await seedBrowserState(page, []);
+
+    await page.goto('/tabs/auto-team-builder');
+    await waitForAppReady(page);
+
+    await expect(page.getByText('Guided auto build')).toBeVisible();
+    await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
+
+    const guidedToggle = page.getByTestId('guided-auto-build-toggle');
+    await setIonToggle(guidedToggle, true);
+    await expect(guidedToggle).toHaveAttribute('data-guided-enabled', 'true');
+    await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
+    await expect(page.getByTestId('auto-build-submit')).toBeEnabled();
+  });
+
   test('guided auto build locks only the next empty slot @guided-auto-build @quarantined:guided-auto-build-toggle', async ({
     page,
     browserName,
   }) => {
     test.skip(
       browserName !== 'chromium',
-      'Guided Auto Team Builder worker coverage is exercised in Chromium; cross-browser render stability is covered by smoke tests.',
+      'Full guided Auto Team Builder worker state transition remains tracked as a browser-specific exception; Firefox/WebKit run the guided controls subset.',
     );
     test.setTimeout(120_000);
     await seedBrowserState(page, []);

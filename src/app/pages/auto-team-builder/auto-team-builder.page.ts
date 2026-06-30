@@ -5054,13 +5054,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
         getWorkerCount: () => this.userState.resolveAutoTeamBuilderWorkerCount(),
       };
-      const guidedSlotRole = this.guidedAutoBuildEnabled()
+      const guidedAutoBuildActive = this.guidedAutoBuildEnabled();
+      const guidedSlotRole = guidedAutoBuildActive
         ? this.resolveNextGuidedAutoBuildSlotRole()
         : null;
       const nextResult = await this.runCurrentAutoTeamBuild(executionOptions);
 
       if (nextResult) {
-        if (this.guidedAutoBuildEnabled() && nextResult.relaxation.usedFallback) {
+        if (guidedAutoBuildActive && nextResult.relaxation.usedFallback) {
           this.errorMessage.set(this.resolveBuildFailureMessage());
         } else if (guidedSlotRole) {
           if (!this.applyGuidedAutoBuildSlot(nextResult, guidedSlotRole)) {

@@ -108,20 +108,22 @@ export async function setIonToggle(locator: Locator, checked: boolean): Promise<
       await locator.page().keyboard.press('Space');
     },
     () => locator.locator('input').click({ force: true, timeout: 5_000 }),
-    () => dispatchIonToggleChange(locator, checked),
   ]) {
     if (await ionToggleMatches(locator, checked)) {
       break;
     }
 
-    await action();
-
     try {
+      await action();
       await expect.poll(() => ionToggleMatches(locator, checked), { timeout: 5_000 }).toBe(true);
       break;
     } catch {
-      // Try the next interaction path before failing with the final assertion.
+      // Try the next real interaction path before falling back to Ionic's event contract.
     }
+  }
+
+  if (!(await ionToggleMatches(locator, checked))) {
+    await dispatchIonToggleChange(locator, checked);
   }
 
   await expect.poll(() => ionToggleMatches(locator, checked)).toBe(true);
