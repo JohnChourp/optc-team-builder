@@ -12,7 +12,11 @@ const dataDir = path.join(rootDir, 'public', 'assets', 'data');
  */
 
 /**
- * @typedef {'no-new-upstream-characters' | 'new-upstream-characters' | 'release-dispatched' | 'active-release-running' | 'fixture-validation-failed' | 'detector-failed' | 'active-release-check-failed' | 'dispatch-failed'} ReleaseTriggerReason
+ * @typedef {'no-new-upstream-characters' | 'new-upstream-characters' | 'release-dispatched' | 'active-release-running' | 'verification-only' | 'fixture-validation-failed' | 'detector-failed' | 'active-release-check-failed' | 'dispatch-failed'} ReleaseTriggerReason
+ */
+
+/**
+ * @typedef {'verify-only' | 'dispatch-if-needed'} ReleaseDispatchMode
  */
 
 /**
@@ -47,6 +51,12 @@ const dataDir = path.join(rootDir, 'public', 'assets', 'data');
  *     ref: string,
  *     bump: string,
  *     activeStatuses: readonly string[],
+ *     modes: Readonly<{
+ *       verifyOnly: ReleaseDispatchMode,
+ *       dispatchIfNeeded: ReleaseDispatchMode,
+ *     }>,
+ *     manualDefaultMode: ReleaseDispatchMode,
+ *     scheduledMode: ReleaseDispatchMode,
  *   }>,
  *   report: Readonly<{
  *     schemaVersion: 1,
@@ -63,7 +73,7 @@ const dataDir = path.join(rootDir, 'public', 'assets', 'data');
  *     issueMarker: string,
  *     quietReasons: readonly ReleaseTriggerReason[],
  *     notifyReasons: readonly ReleaseTriggerReason[],
- *     severities: Readonly<Record<ReleaseTriggerReason, 'info' | 'warning' | 'error'>>,
+ *     severities: Readonly<Partial<Record<ReleaseTriggerReason, 'info' | 'warning' | 'error'>>>,
  *   }>,
  * }>} ReleaseTriggerPolicyV1
  */
@@ -105,6 +115,12 @@ const releaseTriggerPolicyV1 = {
     ref: 'main',
     bump: 'patch',
     activeStatuses: ['queued', 'in_progress'],
+    modes: {
+      verifyOnly: 'verify-only',
+      dispatchIfNeeded: 'dispatch-if-needed',
+    },
+    manualDefaultMode: 'verify-only',
+    scheduledMode: 'dispatch-if-needed',
   },
   report: {
     schemaVersion: 1,
@@ -118,6 +134,7 @@ const releaseTriggerPolicyV1 = {
       newUpstreamCharacters: 'new-upstream-characters',
       releaseDispatched: 'release-dispatched',
       activeReleaseRunning: 'active-release-running',
+      verificationOnly: 'verification-only',
       fixtureValidationFailed: 'fixture-validation-failed',
       detectorFailed: 'detector-failed',
       activeReleaseCheckFailed: 'active-release-check-failed',
@@ -128,7 +145,7 @@ const releaseTriggerPolicyV1 = {
     sink: 'github-issue',
     issueTitle: 'OPTC DB release trigger notifications',
     issueMarker: '<!-- optc-release-trigger-notifications -->',
-    quietReasons: ['no-new-upstream-characters'],
+    quietReasons: ['no-new-upstream-characters', 'verification-only'],
     notifyReasons: [
       'release-dispatched',
       'active-release-running',
@@ -195,6 +212,7 @@ function validateReleaseTriggerReasons(policy) {
     'newUpstreamCharacters',
     'releaseDispatched',
     'activeReleaseRunning',
+    'verificationOnly',
     'fixtureValidationFailed',
     'detectorFailed',
     'activeReleaseCheckFailed',
@@ -279,6 +297,19 @@ export function validateReleaseTriggerPolicy(policy) {
   assertString(policy.dispatch.ref, 'dispatch.ref');
   assertString(policy.dispatch.bump, 'dispatch.bump');
   assertStringArray(policy.dispatch.activeStatuses, 'dispatch.activeStatuses');
+  assertPlainObject(policy.dispatch.modes, 'dispatch.modes');
+  assertAllowedString(policy.dispatch.modes.verifyOnly, ['verify-only'], 'dispatch.modes.verifyOnly');
+  assertAllowedString(policy.dispatch.modes.dispatchIfNeeded, ['dispatch-if-needed'], 'dispatch.modes.dispatchIfNeeded');
+  assertAllowedString(
+    policy.dispatch.manualDefaultMode,
+    Object.values(policy.dispatch.modes),
+    'dispatch.manualDefaultMode',
+  );
+  assertAllowedString(
+    policy.dispatch.scheduledMode,
+    Object.values(policy.dispatch.modes),
+    'dispatch.scheduledMode',
+  );
 
   assertPlainObject(policy.report, 'report');
   if (policy.report.schemaVersion !== 1) {
@@ -305,6 +336,10 @@ export function buildReleasePolicyGitHubOutputs(policy = releaseTriggerPolicy) {
     release_ref: policy.dispatch.ref,
     release_bump: policy.dispatch.bump,
     active_statuses_json: JSON.stringify(policy.dispatch.activeStatuses),
+    release_dispatch_mode_verify_only: policy.dispatch.modes.verifyOnly,
+    release_dispatch_mode_dispatch_if_needed: policy.dispatch.modes.dispatchIfNeeded,
+    release_manual_dispatch_default: policy.dispatch.manualDefaultMode,
+    release_scheduled_dispatch_mode: policy.dispatch.scheduledMode,
   };
 }
 

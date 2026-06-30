@@ -219,6 +219,7 @@ function normalizeStepOutcomes(stepOutcomes = {}) {
     fixtureValidation: normalizeStepOutcome(stepOutcomes.fixtureValidation),
     releaseCheck: normalizeStepOutcome(stepOutcomes.releaseCheck),
     activeRelease: normalizeStepOutcome(stepOutcomes.activeRelease),
+    verifyOnlyDispatch: normalizeStepOutcome(stepOutcomes.verifyOnlyDispatch),
     dispatchRelease: normalizeStepOutcome(stepOutcomes.dispatchRelease),
     skipRelease: normalizeStepOutcome(stepOutcomes.skipRelease),
   };
@@ -257,6 +258,17 @@ function buildWorkflowMetadata(env = process.env) {
   };
 }
 
+export function normalizeReleaseDispatchMode(mode, policy = releaseTriggerPolicy) {
+  const normalized = String(mode ?? '').trim() || policy.dispatch.scheduledMode;
+  const allowedModes = Object.values(policy.dispatch.modes);
+
+  if (!allowedModes.includes(normalized)) {
+    throw new Error(`Invalid release dispatch mode: ${normalized}. Expected one of ${allowedModes.join(', ')}.`);
+  }
+
+  return normalized;
+}
+
 export function buildReleaseTriggerReport({
   releaseCheckResult = null,
   stepOutcomes = {},
@@ -266,12 +278,28 @@ export function buildReleaseTriggerReport({
   dispatchWorkflow = releaseTriggerPolicy.dispatch.workflow,
   dispatchRef = releaseTriggerPolicy.dispatch.ref,
   dispatchBump = releaseTriggerPolicy.dispatch.bump,
+  dispatchMode = releaseTriggerPolicy.dispatch.scheduledMode,
 } = {}) {
   const steps = normalizeStepOutcomes(stepOutcomes);
   const activeCount = parseOptionalNumber(activeReleaseCount);
   const releaseNeeded = releaseCheckResult?.releaseNeeded === true;
   const newCharacterCount = Number(releaseCheckResult?.newCharacterCount ?? 0);
   const releaseDispatched = steps.dispatchRelease === 'success';
+  const normalizedDispatchMode = normalizeReleaseDispatchMode(dispatchMode);
+  const verificationOnly = normalizedDispatchMode === releaseTriggerPolicy.dispatch.modes.verifyOnly;
+  const failedPrerequisite =
+    isFailedStepOutcome(steps.fixtureValidation) ||
+    isFailedStepOutcome(steps.releaseCheck) ||
+    isFailedStepOutcome(steps.activeRelease) ||
+    isFailedStepOutcome(steps.dispatchRelease);
+  const blockedByActiveRelease = !failedPrerequisite && releaseNeeded && !releaseDispatched && activeCount !== null && activeCount > 0;
+  const blockedByVerificationOnly = !failedPrerequisite && releaseNeeded && !releaseDispatched && verificationOnly;
+  const dispatchBlocked = blockedByActiveRelease || blockedByVerificationOnly;
+  const dispatchBlockReason = blockedByActiveRelease
+    ? releaseTriggerPolicy.report.reasons.activeReleaseRunning
+    : blockedByVerificationOnly
+      ? releaseTriggerPolicy.report.reasons.verificationOnly
+      : null;
 
   let status = releaseTriggerPolicy.report.statuses.skipped;
   let reason = releaseTriggerPolicy.report.reasons.noNewUpstreamCharacters;
@@ -291,9 +319,12 @@ export function buildReleaseTriggerReport({
   } else if (releaseDispatched) {
     status = releaseTriggerPolicy.report.statuses.released;
     reason = releaseTriggerPolicy.report.reasons.releaseDispatched;
-  } else if (releaseNeeded && activeCount !== null && activeCount > 0) {
+  } else if (blockedByActiveRelease) {
     status = releaseTriggerPolicy.report.statuses.skipped;
     reason = releaseTriggerPolicy.report.reasons.activeReleaseRunning;
+  } else if (blockedByVerificationOnly) {
+    status = releaseTriggerPolicy.report.statuses.skipped;
+    reason = releaseTriggerPolicy.report.reasons.verificationOnly;
   } else if (releaseNeeded && !releaseDispatched) {
     status = releaseTriggerPolicy.report.statuses.failed;
     reason = releaseTriggerPolicy.report.reasons.activeReleaseCheckFailed;
@@ -322,9 +353,12 @@ export function buildReleaseTriggerReport({
       releaseWorkflow: dispatchWorkflow,
       ref: dispatchRef,
       bump: dispatchBump,
+      mode: normalizedDispatchMode,
       releaseNeeded,
       releaseDispatched,
       activeReleaseCount: activeCount,
+      blocked: dispatchBlocked,
+      blockReason: dispatchBlockReason,
     },
     steps,
   };
@@ -344,12 +378,14 @@ export function buildReleaseTriggerReportFromEnv({
       fixtureValidation: env.FIXTURE_VALIDATION_OUTCOME,
       releaseCheck: env.RELEASE_CHECK_OUTCOME,
       activeRelease: env.ACTIVE_RELEASE_OUTCOME,
+      verifyOnlyDispatch: env.VERIFY_ONLY_DISPATCH_OUTCOME,
       dispatchRelease: env.DISPATCH_RELEASE_OUTCOME,
       skipRelease: env.SKIP_RELEASE_OUTCOME,
     },
     dispatchWorkflow: env.RELEASE_DISPATCH_WORKFLOW || releaseTriggerPolicy.dispatch.workflow,
     dispatchRef: env.RELEASE_DISPATCH_REF || releaseTriggerPolicy.dispatch.ref,
     dispatchBump: env.RELEASE_DISPATCH_BUMP || releaseTriggerPolicy.dispatch.bump,
+    dispatchMode: env.RELEASE_DISPATCH_MODE || releaseTriggerPolicy.dispatch.scheduledMode,
   });
 }
 
@@ -369,6 +405,9 @@ export function formatReleaseTriggerSummary(report) {
     `- Reason: ${report.reason}`,
     `- Release needed: ${formatYesNo(report.dispatch.releaseNeeded)}`,
     `- Release dispatched: ${formatYesNo(report.dispatch.releaseDispatched)}`,
+    `- Release dispatch mode: ${report.dispatch.mode}`,
+    `- Release dispatch blocked: ${formatYesNo(report.dispatch.blocked)}`,
+    `- Release dispatch block reason: ${report.dispatch.blockReason ?? 'none'}`,
     `- Active Release Android runs: ${report.dispatch.activeReleaseCount ?? 'unknown'}`,
   ];
 
@@ -392,6 +431,7 @@ export function formatReleaseTriggerSummary(report) {
     `- Fixture validation: ${report.steps.fixtureValidation}`,
     `- Release detector: ${report.steps.releaseCheck}`,
     `- Active release guard: ${report.steps.activeRelease}`,
+    `- Verification-only guard: ${report.steps.verifyOnlyDispatch}`,
     `- Release dispatch: ${report.steps.dispatchRelease}`,
     `- Skip branch: ${report.steps.skipRelease}`,
     '',

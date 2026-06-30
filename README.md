@@ -223,6 +223,13 @@ the release decision branch they cover, and add matching expectations to
 `scripts/check-optc-release-needed.spec.ts` before wiring them into the workflow
 fixture-validation step.
 
+Manual `Check OPTC DB Release` workflow dispatches default to
+`release_dispatch_mode=verify-only`, which produces the normal
+`release-trigger-outcome` report but blocks `Release Android` dispatch even when
+new upstream IDs are found. Choose `dispatch-if-needed` only when the manual
+workflow run is meant to start a production Android release if the detector
+finds releasable data.
+
 To replay captured upstream files during an incident, keep the local manifest and
 seed defaults or point at custom local files, then pass both remote paths:
 

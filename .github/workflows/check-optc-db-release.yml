@@ -2,6 +2,15 @@ name: Check OPTC DB Release
 
 on:
   workflow_dispatch:
+    inputs:
+      release_dispatch_mode:
+        description: 'Use verify-only for safe report generation, or dispatch-if-needed to run Release Android when new IDs exist.'
+        required: true
+        type: choice
+        default: verify-only
+        options:
+          - verify-only
+          - dispatch-if-needed
   schedule:
     - cron: '37 7 * * *'
 
@@ -22,6 +31,8 @@ jobs:
       release_needed: ${{ steps.release-trigger-report.outputs.release_needed }}
       new_character_count: ${{ steps.release-trigger-report.outputs.new_character_count }}
       release_dispatched: ${{ steps.release-trigger-report.outputs.release_dispatched }}
+      release_dispatch_mode: ${{ steps.release-trigger-report.outputs.release_dispatch_mode }}
+      release_dispatch_blocked: ${{ steps.release-trigger-report.outputs.release_dispatch_blocked }}
 
     steps:
       - name: Checkout repository
@@ -50,6 +61,30 @@ jobs:
             appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`);
           }
           NODE
+
+      - name: Resolve release dispatch mode
+        id: release-dispatch-mode
+        env:
+          REQUESTED_RELEASE_DISPATCH_MODE: ${{ github.event.inputs.release_dispatch_mode }}
+          VERIFY_ONLY_MODE: ${{ steps.release-policy.outputs.release_dispatch_mode_verify_only }}
+          DISPATCH_IF_NEEDED_MODE: ${{ steps.release-policy.outputs.release_dispatch_mode_dispatch_if_needed }}
+          SCHEDULED_MODE: ${{ steps.release-policy.outputs.release_scheduled_dispatch_mode }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            release_dispatch_mode="${REQUESTED_RELEASE_DISPATCH_MODE:-${VERIFY_ONLY_MODE}}"
+          else
+            release_dispatch_mode="${SCHEDULED_MODE:-${DISPATCH_IF_NEEDED_MODE}}"
+          fi
+
+          case "${release_dispatch_mode}" in
+            "${VERIFY_ONLY_MODE}"|"${DISPATCH_IF_NEEDED_MODE}")
+              echo "release_dispatch_mode=${release_dispatch_mode}" >> "${GITHUB_OUTPUT}"
+              ;;
+            *)
+              echo "Invalid release dispatch mode: ${release_dispatch_mode}" >&2
+              exit 1
+              ;;
+          esac
 
       - name: Validate release detector fixtures
         id: fixture-validation
@@ -118,7 +153,7 @@ jobs:
 
       - name: Dispatch Android release
         id: dispatch-release
-        if: steps.release-check.outputs.release_needed == 'true' && steps.active-release.outputs.active_count == '0'
+        if: steps.release-check.outputs.release_needed == 'true' && steps.active-release.outputs.active_count == '0' && steps.release-dispatch-mode.outputs.release_dispatch_mode == 'dispatch-if-needed'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
@@ -126,6 +161,12 @@ jobs:
           RELEASE_BUMP: ${{ steps.release-policy.outputs.release_bump }}
         run: |
           gh workflow run "${RELEASE_WORKFLOW}" --ref "${RELEASE_REF}" -f "bump=${RELEASE_BUMP}"
+
+      - name: Block release dispatch for verification-only mode
+        id: verify-only-dispatch
+        if: steps.release-check.outputs.release_needed == 'true' && steps.active-release.outputs.active_count == '0' && steps.release-dispatch-mode.outputs.release_dispatch_mode == 'verify-only'
+        run: |
+          echo "Release dispatch blocked because this manual run is verification-only."
 
       - name: Skip release dispatch
         id: skip-release
@@ -142,11 +183,13 @@ jobs:
           RELEASE_CHECK_OUTCOME: ${{ steps.release-check.outcome }}
           ACTIVE_RELEASE_OUTCOME: ${{ steps.active-release.outcome }}
           DISPATCH_RELEASE_OUTCOME: ${{ steps.dispatch-release.outcome }}
+          VERIFY_ONLY_DISPATCH_OUTCOME: ${{ steps.verify-only-dispatch.outcome }}
           SKIP_RELEASE_OUTCOME: ${{ steps.skip-release.outcome }}
           ACTIVE_RELEASE_COUNT: ${{ steps.active-release.outputs.active_count }}
           RELEASE_DISPATCH_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
           RELEASE_DISPATCH_REF: ${{ steps.release-policy.outputs.release_ref }}
           RELEASE_DISPATCH_BUMP: ${{ steps.release-policy.outputs.release_bump }}
+          RELEASE_DISPATCH_MODE: ${{ steps.release-dispatch-mode.outputs.release_dispatch_mode }}
         run: |
           node --input-type=module <<'NODE'
           import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -177,6 +220,8 @@ jobs:
             `release_needed=${report.dispatch.releaseNeeded ? 'true' : 'false'}`,
             `new_character_count=${report.comparison?.newCharacterCount ?? 0}`,
             `release_dispatched=${report.dispatch.releaseDispatched ? 'true' : 'false'}`,
+            `release_dispatch_mode=${report.dispatch.mode}`,
+            `release_dispatch_blocked=${report.dispatch.blocked ? 'true' : 'false'}`,
           ];
 
           appendFileSync(process.env.GITHUB_OUTPUT, `${outputs.join('\n')}\n`);
