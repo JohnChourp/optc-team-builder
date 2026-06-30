@@ -43,7 +43,7 @@ function markdownRelativePath(fromDir: string, targetPath: string) {
 describe('release-readiness-report', () => {
   it('renders the ready fixture to the expected markdown contract', async () => {
     const report = await buildFixtureReport('ready-source.json');
-    const expected = await readFile(path.join(fixtureDir, 'expected-ready-summary.md'), 'utf8');
+    const expected = (await readFile(path.join(fixtureDir, 'expected-ready-summary.md'), 'utf8')).replace(/\r\n/g, '\n');
 
     expect(report.decision.status).toBe('ready');
     expect(formatReleaseReadinessMarkdown(report)).toBe(expected);

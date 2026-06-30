@@ -1,4 +1,4 @@
-import { Inject, Injectable, computed, signal } from '@angular/core';
+import { Inject, Injectable, InjectionToken, Optional, computed, signal } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import {
   SocialLogin,
@@ -11,6 +11,19 @@ import { APP_SYNC_CONFIG, type AppSyncConfig } from '../sync/app-sync.config';
 const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const GOOGLE_DEFAULT_SCOPES = ['email', 'profile', GOOGLE_DRIVE_SCOPE];
 const SOCIAL_LOGIN_OAUTH_STATE_KEY = 'social_login_oauth_pending';
+
+type GoogleSocialLoginClient = Pick<
+  typeof SocialLogin,
+  'getAuthorizationCode' | 'initialize' | 'isLoggedIn' | 'login' | 'logout'
+>;
+
+export const GOOGLE_SOCIAL_LOGIN_CLIENT = new InjectionToken<GoogleSocialLoginClient>(
+  'GOOGLE_SOCIAL_LOGIN_CLIENT',
+  {
+    factory: () => SocialLogin,
+    providedIn: 'root',
+  },
+);
 
 export interface GoogleAccountProfile {
   email: string | null;
@@ -146,8 +159,15 @@ export class GoogleAccountService {
   private authorizationState: GoogleAuthorizationState | null = null;
   private initialized = false;
   private readonly readyPromise: Promise<void>;
+  private readonly socialLogin: GoogleSocialLoginClient;
 
-  public constructor(@Inject(APP_SYNC_CONFIG) private readonly config: AppSyncConfig) {
+  public constructor(
+    @Inject(APP_SYNC_CONFIG) private readonly config: AppSyncConfig,
+    @Optional()
+    @Inject(GOOGLE_SOCIAL_LOGIN_CLIENT)
+    socialLogin: GoogleSocialLoginClient | null = null,
+  ) {
+    this.socialLogin = socialLogin ?? SocialLogin;
     this.readyPromise = this.initialize();
   }
 
@@ -232,7 +252,7 @@ export class GoogleAccountService {
     }
 
     try {
-      const result = await SocialLogin.login({
+      const result = await this.socialLogin.login({
         provider: 'google',
         options: this.buildLoginOptions(forcePrompt),
       });
@@ -294,7 +314,7 @@ export class GoogleAccountService {
     }
 
     try {
-      await SocialLogin.logout({ provider: 'google' });
+      await this.socialLogin.logout({ provider: 'google' });
     } catch {
       // Ignore logout failures and clear local account state anyway.
     } finally {
@@ -418,7 +438,7 @@ export class GoogleAccountService {
     }
 
     if (!this.initialized) {
-      await SocialLogin.initialize({
+      await this.socialLogin.initialize({
         google: {
           iOSClientId: this.config.googleIosClientId || undefined,
           iOSServerClientId: this.config.googleWebClientId || undefined,
@@ -548,7 +568,7 @@ export class GoogleAccountService {
 
   private async refreshAuthorizationState(): Promise<GoogleAuthorizationState | null> {
     try {
-      const { isLoggedIn } = await SocialLogin.isLoggedIn({ provider: 'google' });
+      const { isLoggedIn } = await this.socialLogin.isLoggedIn({ provider: 'google' });
 
       if (!isLoggedIn) {
         this.authorizationState = null;
@@ -557,7 +577,7 @@ export class GoogleAccountService {
         return null;
       }
 
-      const authorizationCode = await SocialLogin.getAuthorizationCode({ provider: 'google' });
+      const authorizationCode = await this.socialLogin.getAuthorizationCode({ provider: 'google' });
       const accessToken = normalizeOptionalString(authorizationCode.accessToken);
       const profile = mapProfileFromJwt(authorizationCode.jwt ?? null);
 

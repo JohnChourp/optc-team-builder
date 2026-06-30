@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { socialLogin } from '../../../test-mocks/social-login';
 
 import { GoogleAccountService } from './google-account.service';
+import type { AppSyncConfig } from '../sync/app-sync.config';
 
 describe('GoogleAccountService', () => {
   beforeEach(() => {
@@ -34,7 +35,7 @@ describe('GoogleAccountService', () => {
       }),
     });
 
-    const service = new GoogleAccountService({
+    const service = createService({
       googleDriveFolderName: 'OPTC Team Builder',
       googleIosClientId: '',
       googleWebClientId: '123456.apps.googleusercontent.com',
@@ -86,7 +87,7 @@ describe('GoogleAccountService', () => {
       },
     });
 
-    const service = new GoogleAccountService({
+    const service = createService({
       googleDriveFolderName: 'OPTC Team Builder',
       googleIosClientId: '',
       googleWebClientId: '123456.apps.googleusercontent.com',
@@ -157,7 +158,7 @@ describe('GoogleAccountService', () => {
 
     vi.stubGlobal('BroadcastChannel', BroadcastChannelStub);
 
-    const service = new GoogleAccountService({
+    const service = createService({
       googleDriveFolderName: 'OPTC Team Builder',
       googleIosClientId: '',
       googleWebClientId: '123456.apps.googleusercontent.com',
@@ -189,7 +190,7 @@ describe('GoogleAccountService', () => {
     socialLogin.isLoggedIn.mockResolvedValue({ isLoggedIn: true });
     socialLogin.getAuthorizationCode.mockRejectedValue(new Error('Token expired'));
 
-    const service = new GoogleAccountService({
+    const service = createService({
       googleDriveFolderName: 'OPTC Team Builder',
       googleIosClientId: '',
       googleWebClientId: '123456.apps.googleusercontent.com',
@@ -225,7 +226,7 @@ describe('GoogleAccountService', () => {
       ),
     );
 
-    const service = new GoogleAccountService({
+    const service = createService({
       googleDriveBackendUrl: 'http://localhost:8787',
       googleDriveFolderName: 'OPTC Team Builder',
       googleIosClientId: '',
@@ -265,7 +266,7 @@ describe('GoogleAccountService', () => {
       ),
     );
 
-    const service = new GoogleAccountService({
+    const service = createService({
       googleDriveBackendUrl: 'http://localhost:8787',
       googleDriveFolderName: 'OPTC Team Builder',
       googleIosClientId: '',
@@ -283,6 +284,10 @@ describe('GoogleAccountService', () => {
     );
   });
 });
+
+function createService(config: AppSyncConfig): GoogleAccountService {
+  return new GoogleAccountService(config, socialLogin);
+}
 
 function buildIdToken(payload: Record<string, unknown>): string {
   return `header.${encodeJwtPayload(payload)}.signature`;

@@ -1422,11 +1422,11 @@ describe('CaptainCoveragePage', () => {
     const tierStyles = readFileSync(
       resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage-tier-panel.component.scss'),
       'utf8',
-    );
+    ).replace(/\r\n/g, '\n');
     const responsiveStyles = readFileSync(
       resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage-responsive-panel.component.scss'),
       'utf8',
-    );
+    ).replace(/\r\n/g, '\n');
 
     expect(tierStyles).toContain('.results-toolbar__heading,\n.coverage-ability-filters');
     expect(responsiveStyles).toContain('.results-toolbar__heading,\n  .coverage-ability-filters');
