@@ -24,6 +24,33 @@ second Playwright run with separate report/output directories. When developers
 pass flags or file filters through npm, the wrapper delegates directly to
 Playwright so filtered and debug workflows behave like direct Playwright usage.
 
+## Flake Triage And Quarantine
+
+Treat a browser failure as a regression when it reproduces locally, fails the
+same assertion across retries, points at changed product code, or leaves the UI
+in a state a user could hit. Treat it as a flake candidate only after the failure
+is isolated to timing, browser infrastructure, or an interaction helper and a
+fresh rerun on the same commit passes without code changes.
+
+Quarantine is a temporary, explicit exception for repeated unstable cases. To
+quarantine a test, add an `@quarantined:<case-id>` tag to the test title and add
+the same tag to `quarantine.json` with the affected browser list, reason,
+tracking URL, first-seen evidence, owner, and restoration criteria. The metadata
+validator fails when a spec tag and `quarantine.json` drift.
+
+CI keeps quarantined coverage visible without blocking unrelated work:
+
+- the normal browser matrix runs `scripts/run-playwright-e2e.mjs` with
+  `--quarantine-mode=exclude`
+- the non-blocking quarantine matrix runs with `--quarantine-mode=only`
+- both paths upload `playwright-report/`, `test-results/`, JSON reporter output,
+  and the generated failure summary
+
+Restore a quarantined test by fixing or stabilizing the root cause, removing the
+title tag and metadata entry in the same PR, and proving the restored case with
+the affected browser command plus the regular CI matrix. Do not leave stale
+metadata behind after a test is restored.
+
 ## Opt-in Performance Guardrails
 
 `Performance Budgets` is the recurring GitHub Actions workflow for these

@@ -1,37 +1,20 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 
-const GUIDED_GREP = '@guided-auto-build';
-const { scopedProject, userArgs } = parseRunnerArgs(process.argv.slice(2));
-const projectArgs = scopedProject ? [`--project=${scopedProject}`] : [];
-const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+import { assertValidQuarantineConfig, buildRunPlan } from './lib/playwright-e2e-runner.mjs';
+import { loadQuarantineConfig } from './lib/playwright-quarantine.mjs';
 
-function parseRunnerArgs(args) {
-  const remainingArgs = [];
-  let project = (process.env.E2E_PROJECT ?? '').trim();
-
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-
-    if (arg === '--e2e-project') {
-      project = args[index + 1] ?? '';
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--e2e-project=')) {
-      project = arg.slice('--e2e-project='.length);
-      continue;
-    }
-
-    remainingArgs.push(arg);
-  }
-
-  return { scopedProject: project.trim(), userArgs: remainingArgs };
-}
+const npxCommand =
+  process.platform === 'win32'
+    ? {
+        command: process.execPath,
+        prefixArgs: [path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npx-cli.js')],
+      }
+    : { command: 'npx', prefixArgs: [] };
 
 function runPlaywright(args, env = {}) {
-  const result = spawnSync(npxBin, ['playwright', 'test', ...args], {
+  const result = spawnSync(npxCommand.command, [...npxCommand.prefixArgs, 'playwright', 'test', ...args], {
     env: { ...process.env, ...env },
     stdio: 'inherit',
   });
@@ -50,23 +33,24 @@ function runPlaywright(args, env = {}) {
   }
 }
 
-function artifactEnv(name) {
-  return {
-    PLAYWRIGHT_HTML_REPORT: `playwright-report/${name}`,
-    PLAYWRIGHT_OUTPUT_DIR: `test-results/${name}`,
-  };
+const quarantineConfig = await loadQuarantineConfig();
+try {
+  assertValidQuarantineConfig(quarantineConfig);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
 }
 
-if (userArgs.length > 0) {
-  runPlaywright([...projectArgs, ...userArgs]);
-  process.exit(0);
+const plan = buildRunPlan({
+  rawArgs: process.argv.slice(2),
+  env: process.env,
+  quarantineConfig,
+});
+
+if (plan.message) {
+  console.log(plan.message);
 }
 
-if (scopedProject && scopedProject !== 'chromium') {
-  runPlaywright([...projectArgs, '--grep-invert', GUIDED_GREP], artifactEnv(scopedProject));
-  process.exit(0);
+for (const run of plan.runs) {
+  runPlaywright(run.args, run.env);
 }
-
-const nonGuidedName = scopedProject ? `${scopedProject}-main` : 'main';
-runPlaywright([...projectArgs, '--grep-invert', GUIDED_GREP], artifactEnv(nonGuidedName));
-runPlaywright(['--project', 'chromium', '--grep', GUIDED_GREP, '--workers', '1'], artifactEnv('chromium-guided'));

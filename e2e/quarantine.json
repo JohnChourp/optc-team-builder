@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "tag": "@quarantined:guided-auto-build-toggle",
+      "browsers": ["chromium"],
+      "reason": "Repeated Chromium guided Auto Team Builder failures around the Ionic guided-mode toggle and next-slot state transition while the same path can pass on a clean rerun.",
+      "trackingUrl": "https://app.clickup.com/t/90121749478/869dwc3za",
+      "firstSeenAt": "2026-06-29",
+      "firstSeenEvidence": "https://github.com/JohnChourp/optc-team-builder/actions/runs/28385874618",
+      "owner": "Browser regression maintainers",
+      "restorationCriteria": "Remove this quarantine after the guided-toggle interaction is stabilized and the unquarantined Chromium guided run passes three consecutive CI/default-branch runs."
+    }
+  ]
+}

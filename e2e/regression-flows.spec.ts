@@ -17,7 +17,7 @@ import {
 test.describe('high-value regression flows', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test('guided auto build locks only the next empty slot @guided-auto-build', async ({
+  test('guided auto build locks only the next empty slot @guided-auto-build @quarantined:guided-auto-build-toggle', async ({
     page,
     browserName,
   }) => {
