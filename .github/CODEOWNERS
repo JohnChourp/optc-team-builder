@@ -11,6 +11,7 @@
 /angular.json @JohnChourp
 /capacitor.config.ts @JohnChourp
 /ionic.config.json @JohnChourp
+/ngsw-config.json @JohnChourp
 /playwright.config.ts @JohnChourp
 /vitest.config.mjs @JohnChourp
 /tsconfig*.json @JohnChourp
@@ -38,6 +39,9 @@
 
 /scripts/check-docs-*.mjs @JohnChourp
 /scripts/check-docs-*.spec.ts @JohnChourp
+/scripts/generate-seo-pages.mjs @JohnChourp
+/scripts/audit-seo-pages.mjs @JohnChourp
+/scripts/audit-i18n.mjs @JohnChourp
 /docs/ @JohnChourp
 /README.md @JohnChourp
 /SECURITY.md @JohnChourp
@@ -53,6 +57,7 @@
 
 /scripts/fixtures/ @JohnChourp
 /scripts/data/ @JohnChourp
+/scripts/auto-team-builder-ability-parser.mjs @JohnChourp
 /scripts/import-optc-data.mjs @JohnChourp
 /scripts/import-optc-data.spec.ts @JohnChourp
 /scripts/apply-manual-characters.mjs @JohnChourp
@@ -66,10 +71,16 @@
 /scripts/lib/captain-ability-coverage.spec.ts @JohnChourp
 
 /public/assets/data/ @JohnChourp
+/public/assets/exact-character-images/ @JohnChourp
+/public/assets/offline-packs/ @JohnChourp
 /public/app-config.example.js @JohnChourp
 /scripts/write-app-config.mjs @JohnChourp
 /server/ @JohnChourp
 
+/src/main.ts @JohnChourp
+/src/index.html @JohnChourp
+/src/styles.scss @JohnChourp
+/src/theme/ @JohnChourp
 /src/app/ @JohnChourp
 /src/types/ @JohnChourp
 /public/i18n/ @JohnChourp

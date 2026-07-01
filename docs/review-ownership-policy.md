@@ -25,10 +25,10 @@ through the available GitHub plan/API path.
 | OPTC DB release detector | `scripts/check-optc-release-needed.mjs`, `scripts/lib/release-trigger-*.mjs`, `scripts/fixtures/release-check/` | `@JohnChourp` | The scheduled detector can dispatch releases incorrectly, skip needed updates, or lose failure evidence. |
 | Release readiness | `scripts/release-readiness-report.mjs`, `scripts/fixtures/release-readiness/` | `@JohnChourp` | Release sign-off summaries can misclassify blockers, waivers, or required evidence. |
 | Performance guardrails | `scripts/perf-*.mjs`, performance workflows | `@JohnChourp` | Browser budget regressions can stop being measured or can fail without actionable evidence. |
-| Docs and command verification | `docs/`, `README.md`, `scripts/check-docs-*.mjs` | `@JohnChourp` | Maintainer instructions, command allowlists, or cross-repo links can drift from runnable reality. |
+| Docs, SEO, and command verification | `docs/`, `README.md`, docs checkers, SEO page scripts, i18n validator | `@JohnChourp` | Maintainer instructions, command allowlists, public SEO pages, translation validation, or cross-repo links can drift from runnable reality. |
 | Browser regression coverage | `e2e/`, Playwright runner/quarantine scripts | `@JohnChourp` | Flaky or missing browser coverage can hide regressions in guided build, transfer, and saved-team flows. |
-| Shared fixtures and data import | `scripts/fixtures/`, `scripts/data/`, import/manual-character scripts, generated public data | `@JohnChourp` | Test fixtures, generated dataset rules, or manual overlays can diverge from app behavior. |
-| Major app runtime | `src/app/`, `src/types/`, `public/i18n/` | `@JohnChourp` | User-facing routing, state, copy, and core builder behavior can change without the maintainer who owns validation context. |
+| Shared fixtures and data import | `scripts/fixtures/`, `scripts/data/`, parser/import/manual-character scripts, generated public data and image packs | `@JohnChourp` | Test fixtures, generated dataset rules, images, or manual overlays can diverge from app behavior. |
+| Major app runtime | Angular entrypoints, global styles, `src/app/`, `src/types/`, `public/i18n/` | `@JohnChourp` | User-facing routing, bootstrap providers, state, copy, and core builder behavior can change without the maintainer who owns validation context. |
 | Server and app config | `server/`, `scripts/write-app-config.mjs`, `public/app-config.example.js` | `@JohnChourp` | Drive sync, config generation, or web build setup can break across environments. |
 
 ## Cross-Repo Escalation
