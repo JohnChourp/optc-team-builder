@@ -5,17 +5,15 @@ import { spawnSync } from "node:child_process";
 const projectRoot = process.cwd();
 const i18nRoot = path.join(projectRoot, "public", "i18n");
 const srcRoot = path.join(projectRoot, "src", "app");
-const validatorScript = path.join(
+const validatorBin = path.join(
   projectRoot,
   "..",
   "codex_utilities",
   "Downloads",
   "projects",
   "node_modules",
-  "@jsverse",
+  ".bin",
   "transloco-validator",
-  "src",
-  "index.js",
 );
 const validatorArgs = collectTranslationJsonFiles(i18nRoot).map((file) =>
   path.relative(projectRoot, file).replace(/\\/g, "/"),
@@ -26,8 +24,12 @@ if (validatorArgs.length === 0) {
   process.exit(1);
 }
 
-const validatorResult = spawnSync(process.execPath, [validatorScript, ...validatorArgs], {
+const validatorCommand = [quoteShellArg(validatorBin), ...validatorArgs.map(quoteShellArg)].join(
+  " ",
+);
+const validatorResult = spawnSync(validatorCommand, {
   cwd: projectRoot,
+  shell: true,
   stdio: "inherit",
 });
 
@@ -147,6 +149,10 @@ function collectTranslationJsonFiles(rootDir) {
   }
 
   return files.sort((left, right) => left.localeCompare(right));
+}
+
+function quoteShellArg(value) {
+  return `"${String(value).replace(/"/g, '\\"')}"`;
 }
 
 function scanTemplateFiles(rootDir, rootTranslationTree, scopeTranslationTrees) {

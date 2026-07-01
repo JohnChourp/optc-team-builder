@@ -981,6 +981,7 @@ export class SavedTeamsPage implements OnInit {
       const sanitizedImport = sanitizeSavedTeamsImportPayload(payload, {
         untitledTeamName: this.i18n.translate('common.defaults.untitledCrew'),
       });
+      const previousSavedTeams = this.savedTeams();
       const mergeResult = await this.userState.mergeImportedTeams(sanitizedImport.teams);
       const feedbackStats: SavedTeamsImportFeedbackStats = {
         addedCount: mergeResult.addedCount,
@@ -996,16 +997,19 @@ export class SavedTeamsPage implements OnInit {
         sanitizedImport,
         feedbackStats,
         importSequence,
-      ).catch(() => {
+        previousSavedTeams,
+      ).catch(async () => {
+        try {
+          await this.rollbackUnverifiedImportedTeams(sanitizedImport.teams, previousSavedTeams);
+        } catch {
+          // Best-effort rollback only; the feedback still needs to reflect cleanup uncertainty.
+        }
+
         if (this.importSequence !== importSequence) {
           return;
         }
 
-        this.importFeedback.set({
-          tone: 'error',
-          title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
-          details: [this.i18n.translate('import.errors.generic', undefined, 'saved-teams')],
-        });
+        this.importFeedback.set(this.buildImportCleanupWarning(feedbackStats));
       });
     } catch (error) {
       this.importFeedback.set({
@@ -1022,6 +1026,7 @@ export class SavedTeamsPage implements OnInit {
     sanitizedImport: SavedTeamsImportResult,
     feedbackStats: SavedTeamsImportFeedbackStats,
     importSequence: number,
+    previousSavedTeams: SavedTeam[],
   ): Promise<void> {
     const candidateCharacterIds = [
       ...new Set(
@@ -1038,14 +1043,18 @@ export class SavedTeamsPage implements OnInit {
       new Set(availableCharacters.map((character) => character.id)),
     );
 
-    if (this.importSequence !== importSequence) {
-      return;
-    }
-
     if (slotSanitizeResult.unknownSlotCount > 0) {
-      await this.userState.mergeImportedTeams(slotSanitizeResult.teams);
+      const cleanupTeams = this.buildUnavailableSlotCleanupTeams(
+        sanitizedImport.teams,
+        slotSanitizeResult.teams,
+      );
+
+      if (cleanupTeams.length > 0) {
+        await this.userState.mergeImportedTeams(cleanupTeams);
+      }
 
       if (this.importSequence !== importSequence) {
+        await this.refreshSavedTeamCards();
         return;
       }
 
@@ -1121,6 +1130,89 @@ export class SavedTeamsPage implements OnInit {
       ),
       details,
     };
+  }
+
+  private buildImportCleanupWarning(
+    stats: SavedTeamsImportFeedbackStats,
+  ): SavedTeamsImportFeedback {
+    return {
+      tone: 'warning',
+      title: this.i18n.translate('import.warningTitle', undefined, 'saved-teams'),
+      details: [
+        ...this.buildImportFeedback(stats).details,
+        this.i18n.translate('import.errors.generic', undefined, 'saved-teams'),
+      ],
+    };
+  }
+
+  private buildUnavailableSlotCleanupTeams(
+    importedTeams: SavedTeam[],
+    cleanedTeams: SavedTeam[],
+  ): SavedTeam[] {
+    const importedTeamMap = new Map(importedTeams.map((team) => [team.id, team] as const));
+    const cleanedTeamMap = new Map(cleanedTeams.map((team) => [team.id, team] as const));
+
+    return this.savedTeams().flatMap((currentTeam) => {
+      const importedTeam = importedTeamMap.get(currentTeam.id);
+      const cleanedTeam = cleanedTeamMap.get(currentTeam.id);
+
+      if (!importedTeam || !cleanedTeam) {
+        return [];
+      }
+
+      if (!this.savedTeamSlotsEqual(currentTeam.slots, importedTeam.slots)) {
+        return [];
+      }
+
+      if (this.savedTeamSlotsEqual(currentTeam.slots, cleanedTeam.slots)) {
+        return [];
+      }
+
+      return [
+        {
+          ...currentTeam,
+          slots: [...cleanedTeam.slots],
+        },
+      ];
+    });
+  }
+
+  private async rollbackUnverifiedImportedTeams(
+    importedTeams: SavedTeam[],
+    previousSavedTeams: SavedTeam[],
+  ): Promise<void> {
+    const importedTeamMap = new Map(importedTeams.map((team) => [team.id, team] as const));
+    const previousTeamMap = new Map(previousSavedTeams.map((team) => [team.id, team] as const));
+    const teamsToRestore: SavedTeam[] = [];
+    const teamIdsToDelete: string[] = [];
+
+    for (const currentTeam of this.savedTeams()) {
+      const importedTeam = importedTeamMap.get(currentTeam.id);
+
+      if (!importedTeam || !this.savedTeamSlotsEqual(currentTeam.slots, importedTeam.slots)) {
+        continue;
+      }
+
+      const previousTeam = previousTeamMap.get(currentTeam.id);
+
+      if (previousTeam) {
+        teamsToRestore.push(previousTeam);
+      } else {
+        teamIdsToDelete.push(currentTeam.id);
+      }
+    }
+
+    if (teamsToRestore.length) {
+      await this.userState.mergeImportedTeams(teamsToRestore);
+    }
+
+    if (teamIdsToDelete.length) {
+      await this.userState.deleteTeams(teamIdsToDelete);
+    }
+  }
+
+  private savedTeamSlotsEqual(left: Array<number | null>, right: Array<number | null>): boolean {
+    return left.length === right.length && left.every((slotId, index) => slotId === right[index]);
   }
 
   private applySavedTeamsStorageRecoveryFeedback(): void {

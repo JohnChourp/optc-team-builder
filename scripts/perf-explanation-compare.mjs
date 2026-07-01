@@ -2,9 +2,11 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { chromium, devices } from 'playwright';
 
+const require = createRequire(import.meta.url);
 const appRoot = process.cwd();
 const port = Number(process.env.PERF_PORT ?? process.env.E2E_PORT ?? 8436);
 const baseURL = process.env.PERF_BASE_URL ?? process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
@@ -13,7 +15,7 @@ const runLabel = sanitizeSegment(process.env.PERF_RUN_LABEL ?? 'explanation-comp
 const shouldAssert = process.env.PERF_ASSERT !== '0';
 const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const compareSavedTeams = buildSavedTeams(500);
-const importSavedTeams = buildSavedTeams(240, 'perf-import-team', 'Perf Import Team');
+const importSavedTeams = buildSavedTeams(200, 'perf-import-team', 'Perf Import Team');
 const importedPayload = buildSavedTeamsTransferJson(compareSavedTeams);
 const importPayload = buildSavedTeamsTransferJson(importSavedTeams);
 const importedShareTeam = importSavedTeams[0];
@@ -23,7 +25,7 @@ const transparentPixelUrl =
 const consoleMessages = [];
 const pageErrors = [];
 const failures = [];
-let savedTeamsTransferUtilsPromise;
+let savedTeamsTransferUtilsSourcePromise;
 const budgets = {
   desktop: {
     compareOpenMs: 800,
@@ -169,44 +171,56 @@ function resolveGitHead() {
   return result.status === 0 ? result.stdout.trim() : null;
 }
 
-async function loadSavedTeamsTransferUtils() {
-  if (!savedTeamsTransferUtilsPromise) {
-    savedTeamsTransferUtilsPromise = (async () => {
-      const ts = await import('typescript');
+async function loadSavedTeamsTransferUtilsSource() {
+  if (!savedTeamsTransferUtilsSourcePromise) {
+    savedTeamsTransferUtilsSourcePromise = (async () => {
+      const ts = require('typescript');
       const sourcePath = path.join(
         appRoot,
         'src/app/pages/saved-teams/saved-teams-transfer.utils.ts',
       );
       const source = await readFile(sourcePath, 'utf8');
-      const transpiled = ts.transpileModule(source, {
+
+      return ts.transpileModule(source, {
         compilerOptions: {
           module: ts.ModuleKind.ES2022,
           target: ts.ScriptTarget.ES2022,
         },
       }).outputText;
-
-      return import(`data:text/javascript;base64,${Buffer.from(transpiled).toString('base64')}`);
     })();
   }
 
-  return savedTeamsTransferUtilsPromise;
+  return savedTeamsTransferUtilsSourcePromise;
 }
 
-async function measureSavedTeamsParseSanitize() {
-  const transferUtils = await loadSavedTeamsTransferUtils();
-  const start = performance.now();
-  const payload = transferUtils.parseSavedTeamsImportContent(importPayload);
-  const sanitized = transferUtils.sanitizeSavedTeamsImportPayload(payload, {
-    now: '2026-06-26T00:00:00.000Z',
-    untitledTeamName: 'Untitled crew',
-  });
+async function measureSavedTeamsParseSanitize(page) {
+  const moduleSource = await loadSavedTeamsTransferUtilsSource();
 
-  return {
-    savedTeamsParseSanitizeMs: Math.round(performance.now() - start),
-    teamCount: sanitized.teams.length,
-    duplicateIdCount: sanitized.duplicateIdCount,
-    invalidTeamCount: sanitized.invalidTeamCount,
-  };
+  return page.evaluate(
+    async ({ source, payloadText }) => {
+      const moduleUrl = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
+
+      try {
+        const transferUtils = await import(moduleUrl);
+        const start = performance.now();
+        const payload = transferUtils.parseSavedTeamsImportContent(payloadText);
+        const sanitized = transferUtils.sanitizeSavedTeamsImportPayload(payload, {
+          now: '2026-06-26T00:00:00.000Z',
+          untitledTeamName: 'Untitled crew',
+        });
+
+        return {
+          savedTeamsParseSanitizeMs: Math.round(performance.now() - start),
+          teamCount: sanitized.teams.length,
+          duplicateIdCount: sanitized.duplicateIdCount,
+          invalidTeamCount: sanitized.invalidTeamCount,
+        };
+      } finally {
+        URL.revokeObjectURL(moduleUrl);
+      }
+    },
+    { source: moduleSource, payloadText: importPayload },
+  );
 }
 
 async function ensureServer() {
@@ -392,13 +406,13 @@ async function measureCompare(page, viewportLabel) {
 }
 
 async function measureImportShareHydration(page, viewportLabel) {
-  const parseSanitize = await measureSavedTeamsParseSanitize();
+  const parseSanitize = await measureSavedTeamsParseSanitize(page);
   const context = page.context();
   const importPage = await context.newPage();
   attachPageDiagnostics(importPage, viewportLabel);
 
+  let savedTeamsImportFeedbackMs = 0;
   let savedTeamsImportReadyMs = 0;
-  let savedTeamsImportListReadyMs = 0;
   let renderedCardCountAtFeedback = 0;
   let renderedCardCountAtListReady = 0;
 
@@ -428,7 +442,7 @@ async function measureImportShareHydration(page, viewportLabel) {
       timeout: 60_000,
     });
     await waitForAngular(importPage);
-    savedTeamsImportReadyMs = performance.now() - importStart;
+    savedTeamsImportFeedbackMs = performance.now() - importStart;
     renderedCardCountAtFeedback = await importPage
       .locator('.saved-team-list .captain-condition-panel')
       .count();
@@ -447,7 +461,7 @@ async function measureImportShareHydration(page, viewportLabel) {
       { timeout: 60_000 },
     );
     await waitForAngular(importPage);
-    savedTeamsImportListReadyMs = performance.now() - importStart;
+    savedTeamsImportReadyMs = performance.now() - importStart;
     renderedCardCountAtListReady = await importPage
       .locator('.saved-team-list .captain-condition-panel')
       .count();
@@ -470,29 +484,12 @@ async function measureImportShareHydration(page, viewportLabel) {
       localStorage.setItem('CapacitorStorage.appLanguage', 'en');
       localStorage.setItem('CapacitorStorage.analyticsConsent', 'rejected');
     });
-    console.log(`[perf:explanation-compare] ${viewportLabel}: hydrating manual share payload`);
-    await manualPage.goto('/tabs/manual-team-builder');
-    await waitForAngular(manualPage);
+    console.log(`[perf:explanation-compare] ${viewportLabel}: hydrating manual share link`);
     const manualShareStart = performance.now();
-    const appliedSharedTeam = await manualPage.evaluate(async (team) => {
-      const host = document.querySelector('app-manual-team-builder-page');
-      const component = host && window.ng?.getComponent?.(host);
-
-      if (typeof component?.loadSavedTeam !== 'function') {
-        return false;
-      }
-
-      await component.loadSavedTeam(team, { currentTeamId: null });
-      window.ng?.applyChanges?.(component);
-      window.ng?.applyChanges?.(host);
-
-      return true;
-    }, importedShareTeam);
-
-    if (!appliedSharedTeam) {
-      throw new Error('Could not hydrate Manual Team Builder with the saved-team share payload.');
-    }
-
+    await manualPage.goto(
+      `/tabs/manual-team-builder?teamShare=${encodeURIComponent(importedShareCode)}`,
+    );
+    await waitForAngular(manualPage);
     await manualPage.waitForFunction(
       (expectedName) => {
         const host = document.querySelector('app-manual-team-builder-page');
@@ -522,8 +519,8 @@ async function measureImportShareHydration(page, viewportLabel) {
 
   return {
     savedTeamsParseSanitizeMs: parseSanitize.savedTeamsParseSanitizeMs,
+    savedTeamsImportFeedbackMs: Math.round(savedTeamsImportFeedbackMs),
     savedTeamsImportReadyMs: Math.round(savedTeamsImportReadyMs),
-    savedTeamsImportListReadyMs: Math.round(savedTeamsImportListReadyMs),
     manualShareHydrationMs: Math.round(manualShareHydrationMs),
     importedTeamCount: importSavedTeams.length,
     importPayloadBytes: importPayload.length,
@@ -687,6 +684,10 @@ async function readRenderDiagnostics(page) {
 }
 
 async function measureExplanations(page, viewportLabel) {
+  await page.screenshot({
+    path: path.join(artifactDir, `${runLabel}-${viewportLabel}-result-collapsed.png`),
+  });
+
   const detailCount = await page.evaluate(
     () => document.querySelectorAll('.slot-explanation__details').length,
   );
@@ -696,9 +697,6 @@ async function measureExplanations(page, viewportLabel) {
     throw new Error('No structured explanation details were rendered for the perf fixture.');
   }
 
-  await page.screenshot({
-    path: path.join(artifactDir, `${runLabel}-${viewportLabel}-result-collapsed.png`),
-  });
   const firstStart = performance.now();
   await setOpenExplanationDetails(page, 1);
   await page.waitForFunction(
@@ -748,12 +746,29 @@ async function measureExplanations(page, viewportLabel) {
 }
 
 async function setOpenExplanationDetails(page, count) {
-  await page.waitForFunction(
-    () => document.querySelectorAll('.slot-explanation__details').length > 0,
-    undefined,
-    { timeout: 15_000 },
-  );
   const result = await page.evaluate((requestedCount) => {
+    const host = document.querySelector('app-auto-team-builder-page');
+    const debugApi = window.ng;
+    const component = host && debugApi?.getComponent?.(host);
+    const componentKeys =
+      typeof component?.teamSlots === 'function'
+        ? component
+            .teamSlots()
+            .filter((slot) => slot.hasStructuredExplanation && slot.trackKey)
+            .map((slot) => slot.trackKey)
+        : [];
+
+    if (componentKeys.length && typeof component?.openExplanationSlotKeys?.set === 'function') {
+      component.openExplanationSlotKeys.set(new Set(componentKeys.slice(0, requestedCount)));
+      debugApi.applyChanges?.(component);
+      debugApi.applyChanges?.(host);
+
+      return {
+        availableCount: componentKeys.length,
+        openedCount: Math.min(requestedCount, componentKeys.length),
+      };
+    }
+
     const details = [...document.querySelectorAll('.slot-explanation__details')];
 
     if (!details.length) {

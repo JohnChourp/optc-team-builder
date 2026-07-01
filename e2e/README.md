@@ -94,6 +94,8 @@ explanation-detail expansion, heavy Saved Teams import, and saved-team
 share-link hydration with deterministic large fixtures. It starts a local dev
 server when `PERF_BASE_URL` is not already serving, writes screenshots and JSON
 to `PERF_ARTIFACT_DIR`, and fails when the pragmatic budgets regress.
+Saved-team import ready is the list-ready timing after imported cards render;
+first feedback timing is also recorded in JSON for diagnosis.
 When `PERF_ARTIFACT_DIR` is not set, local OPTC workspace checkouts use the
 sibling brain repo at `../optc-team-builder-brain/live-artifacts/869dvr7x5`;
 other machines fall back to `perf-artifacts/explanation-compare` under this
