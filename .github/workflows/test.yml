@@ -32,6 +32,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout trusted router
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .ci-router-base
+
       - name: Resolve diff range
         id: diff
         shell: bash
@@ -51,18 +58,104 @@ jobs:
 
       - name: Route checks
         id: route
+        shell: bash
         run: |
-          node ./scripts/ci-check-routing.mjs \
-            --base "${{ steps.diff.outputs.base_sha }}" \
-            --head "${{ steps.diff.outputs.head_sha }}" \
+          set -euo pipefail
+
+          base_sha="${{ steps.diff.outputs.base_sha }}"
+          head_sha="${{ steps.diff.outputs.head_sha }}"
+          full_script_suites="ci-routing,captain-contracts,release-check,release-readiness,docs-integrity,docs-commands,drive-sync-server,perf-budget,e2e-triage"
+          full_script_matrix='{"include":[{"suite":"ci-routing","label":"CI routing tests","command":"npm run test:ci-routing"},{"suite":"captain-contracts","label":"Captain contract script tests","command":"npm run test:captain-contracts"},{"suite":"release-check","label":"Release detector replay tests","command":"npm run test:release-check"},{"suite":"release-readiness","label":"Release readiness report tests","command":"npm run test:release-readiness"},{"suite":"docs-integrity","label":"Docs integrity script tests","command":"npm run test:docs-integrity"},{"suite":"docs-commands","label":"Docs command script tests","command":"npm run test:docs-commands"},{"suite":"drive-sync-server","label":"Drive sync backend tests","command":"npm run test:drive-sync-server"},{"suite":"perf-budget","label":"Performance budget script tests","command":"npm run test:perf-budget"},{"suite":"e2e-triage","label":"Playwright routing and quarantine tests","command":"npm run test:e2e-triage"}]}'
+
+          write_full_plan() {
+            local reason="$1"
+            local changed_files_json="$2"
+            {
+              echo "full_plan=true"
+              echo "categories=full-risk"
+              echo "reasons=${reason}"
+              echo "run_angular=true"
+              echo "run_script_suites=true"
+              echo "run_dataset_perf=true"
+              echo "run_e2e=true"
+              echo "run_quarantine=true"
+              echo "script_suites=${full_script_suites}"
+              echo "script_matrix=${full_script_matrix}"
+              echo "changed_files_json=${changed_files_json}"
+            } >> "${GITHUB_OUTPUT}"
+
+            {
+              echo "# CI check routing"
+              echo
+              echo "Full plan: yes"
+              echo "Categories: full-risk"
+              echo "Reasons: ${reason}"
+              echo
+              echo "| Check group | Runs |"
+              echo "| --- | --- |"
+              echo "| Angular unit tests | yes |"
+              echo "| Script suites | ${full_script_suites} |"
+              echo "| Dataset performance guard | yes |"
+              echo "| Blocking browser e2e | yes |"
+              echo "| Quarantine browser e2e | yes |"
+              echo
+              echo "## Changed files"
+              echo
+              node --input-type=module -e 'const files = JSON.parse(process.argv[1]); if (files.length === 0) { console.log("- none detected"); } else { for (const file of files) console.log("- `" + file.replace(/`/g, "\\`") + "`"); }' "${changed_files_json}"
+            } > ci-check-routing-summary.md
+          }
+
+          if ! name_status="$(git diff --name-status --diff-filter=ACMRTD "${base_sha}...${head_sha}" 2>&1)"; then
+            reason="$(printf '%s' "git diff unavailable: ${name_status}" | tr '\r\n' ' ' | sed 's/[[:space:]][[:space:]]*/ /g')"
+            write_full_plan "${reason}" "[]"
+            exit 0
+          fi
+
+          changed_files_json="$(
+            NAME_STATUS="${name_status}" node --input-type=module -e 'const files = []; for (const line of (process.env.NAME_STATUS || "").split(/\r?\n/u)) { if (!line.trim()) continue; const [status, ...paths] = line.split("\t"); if (/^[CR]/u.test(status) && paths.length >= 2) { files.push(paths[0], paths[1]); } else if (paths.length >= 1) { files.push(paths[0]); } } console.log(JSON.stringify([...new Set(files)].sort()));'
+          )"
+
+          critical_change="$(
+            node --input-type=module -e "const files = JSON.parse(process.argv[1]); const critical = files.some((file) => file === 'package.json' || file === 'package-lock.json' || file.startsWith('.github/workflows/') || file === 'scripts/ci-check-routing.mjs' || file === 'scripts/ci-check-routing.spec.ts'); console.log(critical ? 'true' : 'false');" "${changed_files_json}"
+          )"
+
+          if [[ "${critical_change}" == "true" ]]; then
+            write_full_plan "dependency, workflow, or routing changes fail closed before running PR-modified router code" "${changed_files_json}"
+            exit 0
+          fi
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            router_script=".ci-router-base/scripts/ci-check-routing.mjs"
+          else
+            router_script="./scripts/ci-check-routing.mjs"
+          fi
+
+          if [[ ! -f "${router_script}" ]]; then
+            write_full_plan "trusted routing script is unavailable on the base ref" "${changed_files_json}"
+            exit 0
+          fi
+
+          node "${router_script}" \
+            --base "${base_sha}" \
+            --head "${head_sha}" \
             --format github-output
 
       - name: Summarize routing
         run: |
-          node ./scripts/ci-check-routing.mjs \
-            --base "${{ steps.diff.outputs.base_sha }}" \
-            --head "${{ steps.diff.outputs.head_sha }}" \
-            --format markdown | tee ci-check-routing-summary.md
+          if [[ ! -f ci-check-routing-summary.md ]]; then
+            if [[ "${GITHUB_EVENT_NAME}" == "pull_request" && -f .ci-router-base/scripts/ci-check-routing.mjs ]]; then
+              router_script=".ci-router-base/scripts/ci-check-routing.mjs"
+            else
+              router_script="./scripts/ci-check-routing.mjs"
+            fi
+
+            node "${router_script}" \
+              --base "${{ steps.diff.outputs.base_sha }}" \
+              --head "${{ steps.diff.outputs.head_sha }}" \
+              --format markdown > ci-check-routing-summary.md
+          fi
+
+          cat ci-check-routing-summary.md
           cat ci-check-routing-summary.md >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload routing summary

@@ -31,12 +31,22 @@ describe('ci-check-routing', () => {
     const plan = buildCheckPlan([
       'scripts/auto-team-builder-ability-parser.mjs',
       'scripts/data/special-ability-definitions.json',
+      'src/app/core/services/fixtures/captain-contract-cases.json',
     ]);
 
     expect(plan.fullPlan).toBe(false);
     expect(plan.runAngular).toBe(true);
     expect(plan.runDatasetPerf).toBe(true);
     expect(plan.scriptSuites).toEqual(['captain-contracts']);
+  });
+
+  it('routes Markdown fixtures before generic docs rules', () => {
+    const plan = buildCheckPlan(['scripts/fixtures/release-readiness/expected-ready-summary.md']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['release-readiness']);
   });
 
   it('routes e2e runner changes to browser jobs and triage tests', () => {

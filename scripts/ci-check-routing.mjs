@@ -147,15 +147,16 @@ function isE2ePath(filePath) {
 
 function isCaptainContractPath(filePath) {
   return (
-    filePath.startsWith('scripts/') &&
-    (filePath === 'scripts/import-optc-data.mjs' ||
-    filePath === 'scripts/import-optc-data.spec.ts' ||
-    filePath === 'scripts/auto-team-builder-ability-parser.mjs' ||
-    filePath === 'scripts/lib/captain-ability-coverage.mjs' ||
-    filePath === 'scripts/lib/captain-ability-coverage.spec.ts' ||
-    filePath.includes('captain') ||
-    filePath.includes('ability-correction') ||
-      filePath.includes('ability-definitions'))
+    filePath === 'src/app/core/services/fixtures/captain-contract-cases.json' ||
+    (filePath.startsWith('scripts/') &&
+      (filePath === 'scripts/import-optc-data.mjs' ||
+        filePath === 'scripts/import-optc-data.spec.ts' ||
+        filePath === 'scripts/auto-team-builder-ability-parser.mjs' ||
+        filePath === 'scripts/lib/captain-ability-coverage.mjs' ||
+        filePath === 'scripts/lib/captain-ability-coverage.spec.ts' ||
+        filePath.includes('captain') ||
+        filePath.includes('ability-correction') ||
+        filePath.includes('ability-definitions')))
   );
 }
 
@@ -232,22 +233,6 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       continue;
     }
 
-    if (isDocsPath(filePath)) {
-      categories.add('docs');
-      for (const suite of DOCS_SCRIPT_SUITES) {
-        addScriptSuite(scriptSuites, suite);
-      }
-      continue;
-    }
-
-    if (isDocsScriptPath(filePath)) {
-      categories.add('docs-tooling');
-      for (const suite of DOCS_SCRIPT_SUITES) {
-        addScriptSuite(scriptSuites, suite);
-      }
-      continue;
-    }
-
     if (isReleaseCheckPath(filePath)) {
       categories.add('release-check');
       addScriptSuite(scriptSuites, 'release-check');
@@ -260,9 +245,25 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       continue;
     }
 
+    if (isDocsScriptPath(filePath)) {
+      categories.add('docs-tooling');
+      for (const suite of DOCS_SCRIPT_SUITES) {
+        addScriptSuite(scriptSuites, suite);
+      }
+      continue;
+    }
+
     if (isPerfPath(filePath)) {
       categories.add('performance-tooling');
       addScriptSuite(scriptSuites, 'perf-budget');
+      continue;
+    }
+
+    if (isDocsPath(filePath)) {
+      categories.add('docs');
+      for (const suite of DOCS_SCRIPT_SUITES) {
+        addScriptSuite(scriptSuites, suite);
+      }
       continue;
     }
 
