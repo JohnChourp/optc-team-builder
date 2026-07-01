@@ -15,7 +15,9 @@ import {
 } from '../../core/models/optc.models';
 import { resolveTeamCoverageSummary } from '../../core/services/team-coverage-summary.utils';
 import {
-  parseSavedTeamsImportContent,
+  buildSavedTeamsTransferPayloadFromSharePayload,
+  parseSavedTeamsImportPayloadValue,
+  parseSavedTeamSharePayloadValue,
   parseSavedTeamShareInput,
 } from '../saved-teams/saved-teams-transfer.utils';
 import {
@@ -278,7 +280,12 @@ export function parseAutoTeamCompareImportPayload(
   }
 
   try {
-    const savedTeamsPayload = parseSavedTeamsImportContent(trimmedContent);
+    const savedTeamsPayload =
+      isRecord(parsedPayload) && parsedPayload['source'] === 'saved-team-share'
+        ? buildSavedTeamsTransferPayloadFromSharePayload(
+            parseSavedTeamSharePayloadValue(parsedPayload),
+          )
+        : parseSavedTeamsImportPayloadValue(parsedPayload);
     const [team] = savedTeamsPayload.teams;
 
     if (!team) {

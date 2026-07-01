@@ -64,6 +64,7 @@ import {
   parseSavedTeamsImportContent,
   sanitizeSavedTeamsImportPayload,
   type SavedTeamsImportError,
+  type SavedTeamsImportResult,
 } from './saved-teams-transfer.utils';
 import { SavedTeamsStylePanelsComponent } from './saved-teams-style-panels.component';
 
@@ -82,6 +83,15 @@ interface SavedTeamsImportFeedback {
   details: string[];
   title: string;
   tone: 'error' | 'success' | 'warning';
+}
+
+interface SavedTeamsImportFeedbackStats {
+  addedCount: number;
+  duplicateIdCount: number;
+  fileName: string;
+  invalidTeamCount: number;
+  unknownSlotCount: number;
+  updatedCount: number;
 }
 
 type SavedTeamAbilityOrigin = 'leader' | 'crew';
@@ -237,6 +247,7 @@ export class SavedTeamsPage implements OnInit {
   public readonly autoBuilderIcon = sparklesOutline;
   public readonly captainCoverageIcon = shieldCheckmarkOutline;
   public readonly manualBuilderIcon = peopleOutline;
+  private importSequence = 0;
 
   public constructor(
     private readonly userState: UserStateService,
@@ -960,6 +971,8 @@ export class SavedTeamsPage implements OnInit {
   }
 
   private async importSavedTeamsContent(rawContent: string, sourceLabel: string): Promise<void> {
+    const importSequence = ++this.importSequence;
+
     this.importing.set(true);
     this.importFeedback.set(null);
 
@@ -968,33 +981,32 @@ export class SavedTeamsPage implements OnInit {
       const sanitizedImport = sanitizeSavedTeamsImportPayload(payload, {
         untitledTeamName: this.i18n.translate('common.defaults.untitledCrew'),
       });
-      const candidateCharacterIds = [
-        ...new Set(
-          sanitizedImport.teams.flatMap((team) =>
-            team.slots.filter((slotId): slotId is number => typeof slotId === 'number'),
-          ),
-        ),
-      ];
-      const availableCharacters = candidateCharacterIds.length
-        ? await this.repository.getCharactersByIds(candidateCharacterIds)
-        : [];
-      const slotSanitizeResult = clearUnavailableSavedTeamSlots(
-        sanitizedImport.teams,
-        new Set(availableCharacters.map((character) => character.id)),
-      );
-      const mergeResult = await this.userState.mergeImportedTeams(slotSanitizeResult.teams);
+      const mergeResult = await this.userState.mergeImportedTeams(sanitizedImport.teams);
+      const feedbackStats: SavedTeamsImportFeedbackStats = {
+        addedCount: mergeResult.addedCount,
+        duplicateIdCount: sanitizedImport.duplicateIdCount,
+        fileName: sourceLabel,
+        invalidTeamCount: sanitizedImport.invalidTeamCount,
+        unknownSlotCount: 0,
+        updatedCount: mergeResult.updatedCount,
+      };
 
-      await this.refreshSavedTeamCards();
-      this.importFeedback.set(
-        this.buildImportFeedback({
-          addedCount: mergeResult.addedCount,
-          duplicateIdCount: sanitizedImport.duplicateIdCount,
-          fileName: sourceLabel,
-          invalidTeamCount: sanitizedImport.invalidTeamCount,
-          unknownSlotCount: slotSanitizeResult.unknownSlotCount,
-          updatedCount: mergeResult.updatedCount,
-        }),
-      );
+      this.importFeedback.set(this.buildImportFeedback(feedbackStats));
+      void this.reconcileImportedTeamSlotsAfterFeedback(
+        sanitizedImport,
+        feedbackStats,
+        importSequence,
+      ).catch(() => {
+        if (this.importSequence !== importSequence) {
+          return;
+        }
+
+        this.importFeedback.set({
+          tone: 'error',
+          title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
+          details: [this.i18n.translate('import.errors.generic', undefined, 'saved-teams')],
+        });
+      });
     } catch (error) {
       this.importFeedback.set({
         tone: 'error',
@@ -1006,14 +1018,49 @@ export class SavedTeamsPage implements OnInit {
     }
   }
 
-  private buildImportFeedback(stats: {
-    addedCount: number;
-    duplicateIdCount: number;
-    fileName: string;
-    invalidTeamCount: number;
-    unknownSlotCount: number;
-    updatedCount: number;
-  }): SavedTeamsImportFeedback {
+  private async reconcileImportedTeamSlotsAfterFeedback(
+    sanitizedImport: SavedTeamsImportResult,
+    feedbackStats: SavedTeamsImportFeedbackStats,
+    importSequence: number,
+  ): Promise<void> {
+    const candidateCharacterIds = [
+      ...new Set(
+        sanitizedImport.teams.flatMap((team) =>
+          team.slots.filter((slotId): slotId is number => typeof slotId === 'number'),
+        ),
+      ),
+    ];
+    const availableCharacters = candidateCharacterIds.length
+      ? await this.repository.getCharactersByIds(candidateCharacterIds)
+      : [];
+    const slotSanitizeResult = clearUnavailableSavedTeamSlots(
+      sanitizedImport.teams,
+      new Set(availableCharacters.map((character) => character.id)),
+    );
+
+    if (this.importSequence !== importSequence) {
+      return;
+    }
+
+    if (slotSanitizeResult.unknownSlotCount > 0) {
+      await this.userState.mergeImportedTeams(slotSanitizeResult.teams);
+
+      if (this.importSequence !== importSequence) {
+        return;
+      }
+
+      this.importFeedback.set(
+        this.buildImportFeedback({
+          ...feedbackStats,
+          unknownSlotCount: slotSanitizeResult.unknownSlotCount,
+        }),
+      );
+    }
+
+    await this.refreshSavedTeamCards();
+  }
+
+  private buildImportFeedback(stats: SavedTeamsImportFeedbackStats): SavedTeamsImportFeedback {
     const details = [
       this.i18n.translate('import.loadedFromFile', { fileName: stats.fileName }, 'saved-teams'),
     ];

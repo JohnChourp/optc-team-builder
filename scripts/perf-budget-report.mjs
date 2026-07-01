@@ -79,6 +79,27 @@ const EXPLANATION_METRICS = Object.freeze([
     budgets: { desktop: 1200, mobile: 1500 },
   },
   {
+    area: 'Import/share hydration',
+    sourcePath: ['timings', 'importShareHydration'],
+    metricKey: 'savedTeamsParseSanitizeMs',
+    metricLabel: 'saved-team parse/sanitize',
+    budgets: { desktop: 500, mobile: 500 },
+  },
+  {
+    area: 'Import/share hydration',
+    sourcePath: ['timings', 'importShareHydration'],
+    metricKey: 'savedTeamsImportReadyMs',
+    metricLabel: 'saved-team import ready',
+    budgets: { desktop: 3000, mobile: 4000 },
+  },
+  {
+    area: 'Import/share hydration',
+    sourcePath: ['timings', 'importShareHydration'],
+    metricKey: 'manualShareHydrationMs',
+    metricLabel: 'manual share-link hydration',
+    budgets: { desktop: 1800, mobile: 2500 },
+  },
+  {
     area: 'Explanations',
     sourcePath: ['timings', 'explanations'],
     metricKey: 'firstExplanationToggleMs',
@@ -363,6 +384,9 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
         explanationCompare: {
           compareOpenMs: { desktop: 800, mobile: 1000 },
           compareImportMs: { desktop: 1200, mobile: 1500 },
+          savedTeamsParseSanitizeMs: { desktop: 500, mobile: 500 },
+          savedTeamsImportReadyMs: { desktop: 3000, mobile: 4000 },
+          manualShareHydrationMs: { desktop: 1800, mobile: 2500 },
           firstExplanationToggleMs: { desktop: 300, mobile: 450 },
           allExplanationToggleMs: { desktop: 900, mobile: 1200 },
         },

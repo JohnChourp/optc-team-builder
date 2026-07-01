@@ -619,6 +619,58 @@ describe('SavedTeamsPage', () => {
     );
     expect(page.savedTeams().some((team) => team.id === 'team-3')).toBe(true);
   });
+
+  it('shows import feedback before asynchronously clearing unavailable imported slots', async () => {
+    const { page, repository, userState } = createPage();
+    let resolveLookup: (characters: ReturnType<typeof createCharacter>[]) => void = () => {};
+    const characterLookup = new Promise<ReturnType<typeof createCharacter>[]>((resolve) => {
+      resolveLookup = resolve;
+    });
+
+    repository.getCharactersByIds.mockReturnValueOnce(characterLookup);
+
+    await page.ngOnInit();
+
+    await page['importSavedTeams'](
+      new File(
+        [
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'saved-teams',
+            exportedAt: '2026-03-29T12:00:00.000Z',
+            teams: [
+              {
+                id: 'team-3',
+                name: 'Imported Team',
+                notes: 'Imported notes',
+                shipId: 9001,
+                slots: [101, 999999, null, null, null, null],
+                createdAt: '2026-03-29T12:00:00.000Z',
+                updatedAt: '2026-03-29T12:00:00.000Z',
+              },
+            ],
+          }),
+        ],
+        'teams.json',
+        { type: 'application/json' },
+      ),
+    );
+
+    expect(userState.mergeImportedTeams).toHaveBeenCalledTimes(1);
+    expect(page.importFeedback()?.details).not.toContain('Cleared 1 unknown character slots.');
+
+    resolveLookup([createCharacter(101, 'Unit 101')]);
+    await flushPromises();
+
+    expect(userState.mergeImportedTeams).toHaveBeenCalledTimes(2);
+    expect(userState.mergeImportedTeams).toHaveBeenLastCalledWith([
+      expect.objectContaining({
+        id: 'team-3',
+        slots: [101, null, null, null, null, null],
+      }),
+    ]);
+    expect(page.importFeedback()?.details).toContain('Cleared 1 unknown character slots.');
+  });
 });
 
 function createPage(
@@ -883,6 +935,12 @@ function buildSavedTeams() {
       updatedAt: '2026-03-29T11:00:00.000Z',
     },
   ];
+}
+
+async function flushPromises(turns = 6): Promise<void> {
+  for (let index = 0; index < turns; index += 1) {
+    await Promise.resolve();
+  }
 }
 
 function createCharacter(

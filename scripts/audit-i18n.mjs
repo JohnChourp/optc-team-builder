@@ -5,23 +5,36 @@ import { spawnSync } from "node:child_process";
 const projectRoot = process.cwd();
 const i18nRoot = path.join(projectRoot, "public", "i18n");
 const srcRoot = path.join(projectRoot, "src", "app");
-const validatorBin = path.join(
+const validatorScript = path.join(
   projectRoot,
   "..",
   "codex_utilities",
   "Downloads",
   "projects",
   "node_modules",
-  ".bin",
+  "@jsverse",
   "transloco-validator",
+  "src",
+  "index.js",
 );
-const validatorCommand = `"${validatorBin}" public/i18n/*.json public/i18n/**/*.json`;
+const validatorArgs = collectTranslationJsonFiles(i18nRoot).map((file) =>
+  path.relative(projectRoot, file).replace(/\\/g, "/"),
+);
 
-const validatorResult = spawnSync(validatorCommand, {
+if (validatorArgs.length === 0) {
+  console.error(`[i18n-audit] No translation JSON files found under ${i18nRoot}`);
+  process.exit(1);
+}
+
+const validatorResult = spawnSync(process.execPath, [validatorScript, ...validatorArgs], {
   cwd: projectRoot,
-  shell: true,
   stdio: "inherit",
 });
+
+if (validatorResult.error) {
+  console.error(`[i18n-audit] Failed to start transloco-validator: ${validatorResult.error.message}`);
+  process.exit(1);
+}
 
 if (validatorResult.status !== 0) {
   process.exit(validatorResult.status ?? 1);
@@ -124,6 +137,16 @@ function scanTypeScriptFiles(rootDir, rootTranslationTree, scopeTranslationTrees
   }
 
   return findings;
+}
+
+function collectTranslationJsonFiles(rootDir) {
+  const files = [];
+
+  for (const file of walkFiles(rootDir, [".json"])) {
+    files.push(file);
+  }
+
+  return files.sort((left, right) => left.localeCompare(right));
 }
 
 function scanTemplateFiles(rootDir, rootTranslationTree, scopeTranslationTrees) {
