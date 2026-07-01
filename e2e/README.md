@@ -50,6 +50,13 @@ CI keeps quarantined coverage visible without blocking unrelated work:
 - both paths upload `playwright-report/`, `test-results/`, JSON reporter output,
   and the generated failure summary
 
+The `Test` workflow does not start these browser matrices for every file
+change. `scripts/ci-check-routing.mjs` selects them for app runtime, e2e,
+Playwright, quarantine, package, dependency, workflow, routing-script,
+missing-diff, and unclassified changes. Docs-only and unrelated script-only
+changes stay on their focused script checks so browser lead time is reserved for
+changes the browser suite can actually prove.
+
 Restore a quarantined test by fixing or stabilizing the root cause, removing the
 title tag and metadata entry in the same PR, and proving the restored case with
 the affected browser command plus the regular CI matrix. Do not leave stale

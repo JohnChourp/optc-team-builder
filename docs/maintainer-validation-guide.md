@@ -25,6 +25,7 @@ paths and you need the reviewer routing and cross-repo escalation rule.
 | OPTC DB release-detector logic, fixtures, workflow dispatch rules, or upstream replay support | `npm run test:release-check` | Run each successful bundled fixture plus the live check, and verify `node scripts/check-optc-release-needed.mjs --fixture=error --json` exits nonzero | Missing upstream character IDs are the only release trigger, fixture branches remain replayable, malformed fixture handling still fails, manual workflow dispatch defaults to report-only verification, and the live upstream read still works | Command output; workflow artifact `release-trigger-outcome` after Actions runs |
 | Release-readiness summary schema, report formatting, sign-off policy, or release evidence wiring | `npm run test:release-readiness` | `npm run test:release-readiness` plus `npm run release:readiness -- --source /path/to/source.json --output /path/to/summary.md --json-output /path/to/summary.json` using current evidence | Candidate status, tests, performance report, release-trigger report, blockers, and waivers produce the intended ready/blocked decision | Paths passed to `--output` and `--json-output` |
 | Release-note source, generated release-note Markdown, or release-note workflow routing | `node ../optc-team-builder-brain/scripts/generate-release-notes.mjs --source ../optc-team-builder-brain/audits/release-notes/<period>-source.json --evidence-index ../optc-team-builder-brain/audits/evidence-index.json --output docs/release-notes/<period>.md --check` with `<period>` replaced by the touched release period, plus docs integrity | Generator tests plus full app/brain docs integrity when changing source schema, generated Markdown, or release-note links | Release notes stay generated from workspace-scoped ClickUp evidence and brain audits instead of drifting into hand-edited summaries | Generated `docs/release-notes/<period>.md` and brain source JSON |
+| CI routing, dependency, workflow, or package changes | `npm run test:ci-routing` plus a YAML parse of the touched workflow | Full local validation for the changed routing surface, then rely on the PR `Test` workflow to prove the selected GitHub jobs | The executable routing rules stay fail-closed and the workflow still emits check-selection evidence before running targeted jobs | `ci-check-routing-summary` workflow artifact |
 | Broad app UI behavior, routing, saved-team/share flows, or regression-prone user journeys | Focused `npm run test:ci -- --include ...` for touched components/services | `npm run test:ci`, scoped `npm run test:e2e:*` browser runs, `npm run i18n:validate`, and `npm run build`; use all browser projects when browser-specific behavior changed | Angular units, deterministic cross-browser journeys, translation keys, and production build health remain intact; browser flakes follow the `e2e/README.md` quarantine workflow before any coverage is excluded from blocking CI | Playwright reports, `test-results/`, and failure-summary artifacts in CI |
 | Docs-only, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, plus `git diff --check` | Add targeted command validation when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, documented maintainer commands, and whitespace stay valid across app and brain docs | None |
 
@@ -46,6 +47,33 @@ Docs-only edits do not need live serve or browser screenshots unless they change
 a runnable command that must be proven through the UI. UI evidence, when needed
 for an OPTC task, belongs in the brain repo under
 `../optc-team-builder-brain/live-artifacts/<task-id>/`.
+
+## Executable CI Routing
+
+The `Test` workflow uses `scripts/ci-check-routing.mjs` as the source of truth
+for selecting pull-request and `main` push checks. The workflow first records a
+`ci-check-routing-summary` artifact, then runs only the selected job groups.
+
+Routing defaults are:
+
+- docs-only changes run the docs script tests and skip Angular and browser jobs
+- release-detector changes run the release-check suite
+- release-readiness changes run the release-readiness suite
+- performance tooling changes run the performance-budget script tests
+- app runtime changes run Angular unit tests and the blocking browser matrix
+- e2e, Playwright, or quarantine changes run the blocking and quarantine browser
+  matrices plus the e2e triage script tests
+- server changes run the drive-sync backend tests
+- source-data changes under `scripts/data/` run source-data validation tests
+- package, dependency, workflow, routing-script, missing-diff, or unclassified
+  changes fail closed to the full plan
+
+This reduces common docs/script PR lead time by avoiding six browser jobs that
+do not cover those surfaces. Runtime changes still get blocking cross-browser
+coverage, and workflow/dependency changes keep the full historical confidence
+path. When investigating a surprising route, run `npm run test:ci-routing` and
+inspect the workflow's `ci-check-routing-summary` artifact before changing the
+YAML.
 
 ## PR Traceability
 
