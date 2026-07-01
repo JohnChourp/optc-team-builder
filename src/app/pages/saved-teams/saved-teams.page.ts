@@ -575,6 +575,12 @@ export class SavedTeamsPage implements OnInit {
       this.repository.getDetailedCharactersByIds(characterIds),
       this.repository.getShips(),
     ]);
+
+    if (this.savedTeams() !== teams) {
+      this.loading.set(false);
+      return;
+    }
+
     const characterMap = new Map(characters.map((character) => [character.id, character] as const));
     const shipMap = new Map(ships.map((ship) => [ship.id, ship] as const));
 
@@ -1000,8 +1006,14 @@ export class SavedTeamsPage implements OnInit {
         updatedCount: mergeResult.updatedCount,
       };
 
-      await this.refreshSavedTeamCards();
       this.importFeedback.set(this.buildImportFeedback(feedbackStats));
+      setTimeout(() => {
+        setTimeout(() => {
+          void this.refreshSavedTeamCards().catch(() => {
+            this.loading.set(false);
+          });
+        }, 0);
+      }, 0);
     } catch (error) {
       this.importFeedback.set({
         tone: 'error',

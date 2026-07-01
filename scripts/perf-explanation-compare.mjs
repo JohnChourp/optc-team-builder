@@ -441,18 +441,12 @@ async function measureImportShareHydration(page, viewportLabel) {
       state: 'visible',
       timeout: 60_000,
     });
-    await waitForAngular(importPage);
     savedTeamsImportFeedbackMs = performance.now() - importStart;
     renderedCardCountAtFeedback = await importPage
       .locator('.saved-team-list .captain-condition-panel')
       .count();
 
-    await importPage.screenshot({
-      path: path.join(artifactDir, `${runLabel}-${viewportLabel}-saved-teams-import-feedback.png`),
-      fullPage: true,
-      timeout: 10_000,
-    });
-
+    await waitForAngular(importPage);
     await importPage.waitForFunction(
       (expectedCount) =>
         document.querySelectorAll('.saved-team-list .captain-condition-panel').length ===
@@ -465,6 +459,12 @@ async function measureImportShareHydration(page, viewportLabel) {
     renderedCardCountAtListReady = await importPage
       .locator('.saved-team-list .captain-condition-panel')
       .count();
+
+    await importPage.screenshot({
+      path: path.join(artifactDir, `${runLabel}-${viewportLabel}-saved-teams-import-feedback.png`),
+      fullPage: true,
+      timeout: 10_000,
+    });
 
     await importPage.screenshot({
       path: path.join(artifactDir, `${runLabel}-${viewportLabel}-saved-teams-import-list-ready.png`),

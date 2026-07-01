@@ -620,6 +620,59 @@ describe('SavedTeamsPage', () => {
     expect(page.savedTeams().some((team) => team.id === 'team-3')).toBe(true);
   });
 
+  it('shows import feedback before refreshing imported team cards', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+    const initialCardRefreshCount = repository.getDetailedCharactersByIds.mock.calls.length;
+
+    const importPromise = page['importSavedTeams'](
+      new File(
+        [
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'saved-teams',
+            exportedAt: '2026-03-29T12:00:00.000Z',
+            teams: [
+              {
+                id: 'team-3',
+                name: 'Imported Team',
+                notes: 'Imported notes',
+                shipId: 9001,
+                slots: [101, null, null, null, null, null],
+                createdAt: '2026-03-29T12:00:00.000Z',
+                updatedAt: '2026-03-29T12:00:00.000Z',
+              },
+            ],
+          }),
+        ],
+        'teams.json',
+        { type: 'application/json' },
+      ),
+    );
+
+    await flushPromises();
+    await importPromise;
+
+    expect(page.importFeedback()).toEqual(
+      expect.objectContaining({
+        tone: 'success',
+      }),
+    );
+    expect(page.importing()).toBe(false);
+    expect(repository.getDetailedCharactersByIds).toHaveBeenCalledTimes(initialCardRefreshCount);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(repository.getDetailedCharactersByIds).toHaveBeenCalledTimes(initialCardRefreshCount);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await flushPromises();
+
+    expect(repository.getDetailedCharactersByIds).toHaveBeenCalledTimes(
+      initialCardRefreshCount + 1,
+    );
+  });
+
   it('clears unavailable imported slots before persisting imported teams', async () => {
     const { page, repository, userState } = createPage();
     let resolveLookup: (characters: ReturnType<typeof createCharacter>[]) => void = () => {};
