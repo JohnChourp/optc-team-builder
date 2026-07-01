@@ -7,6 +7,8 @@
 /.github/ @JohnChourp
 /package.json @JohnChourp
 /package-lock.json @JohnChourp
+/.env.example @JohnChourp
+/.node-version @JohnChourp
 /.nvmrc @JohnChourp
 /angular.json @JohnChourp
 /capacitor.config.ts @JohnChourp
@@ -14,9 +16,11 @@
 /ngsw-config.json @JohnChourp
 /playwright.config.ts @JohnChourp
 /vitest.config.mjs @JohnChourp
+/transloco.config.ts @JohnChourp
 /tsconfig*.json @JohnChourp
 /eslint.config.mjs @JohnChourp
 
+/scripts/ @JohnChourp
 /android/ @JohnChourp
 /ios/ @JohnChourp
 /scripts/release-and-tag.sh @JohnChourp
@@ -70,6 +74,7 @@
 /scripts/lib/captain-ability-coverage.mjs @JohnChourp
 /scripts/lib/captain-ability-coverage.spec.ts @JohnChourp
 
+/public/ @JohnChourp
 /public/assets/data/ @JohnChourp
 /public/assets/exact-character-images/ @JohnChourp
 /public/assets/offline-packs/ @JohnChourp
@@ -77,6 +82,7 @@
 /scripts/write-app-config.mjs @JohnChourp
 /server/ @JohnChourp
 
+/src/ @JohnChourp
 /src/main.ts @JohnChourp
 /src/index.html @JohnChourp
 /src/styles.scss @JohnChourp
