@@ -134,6 +134,39 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `${outputs.join('\n')}\n`);
           NODE
 
+      - name: Download recent upstream monitor history
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p upstream-monitor-artifacts/history
+          run_ids="$(
+            gh run list \
+              --workflow check-optc-db-release.yml \
+              --branch main \
+              --status completed \
+              --limit 12 \
+              --json databaseId \
+              --jq '.[].databaseId'
+          )"
+
+          if [[ -z "${run_ids}" ]]; then
+            echo "No previous completed Check OPTC DB Release runs found for upstream monitor history." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          for run_id in ${run_ids}; do
+            run_dir="upstream-monitor-artifacts/history/run-${run_id}"
+            mkdir -p "${run_dir}"
+
+            if gh run download "${run_id}" --name upstream-monitor-report --dir "${run_dir}"; then
+              echo "Downloaded upstream monitor history from run ${run_id}." >> "${GITHUB_STEP_SUMMARY}"
+            else
+              rm -rf "${run_dir}"
+              echo "No upstream monitor artifact found for run ${run_id}." >> "${GITHUB_STEP_SUMMARY}"
+            fi
+          done
+
       - name: Check active Android release runs
         id: active-release
         if: steps.release-check.outputs.release_needed == 'true'
@@ -235,6 +268,31 @@ jobs:
           path: release-trigger-outcome.json
           if-no-files-found: error
 
+      - name: Write upstream monitor report
+        id: upstream-monitor
+        if: ${{ always() }}
+        run: |
+          mkdir -p upstream-monitor-artifacts/current
+
+          npm run --silent data:monitor-upstream -- \
+            --release-check release-check.json \
+            --history-dir upstream-monitor-artifacts/history \
+            --output upstream-monitor-artifacts/current/upstream-monitor-report.json \
+            --summary upstream-monitor-artifacts/current/upstream-monitor-summary.md
+
+          cat upstream-monitor-artifacts/current/upstream-monitor-summary.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload upstream monitor report artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: upstream-monitor-report
+          path: |
+            upstream-monitor-artifacts/current/upstream-monitor-report.json
+            upstream-monitor-artifacts/current/upstream-monitor-summary.md
+          if-no-files-found: error
+          retention-days: 90
+
   notify:
     runs-on: ubuntu-latest
     needs: check
@@ -259,7 +317,18 @@ jobs:
           name: release-trigger-outcome
           path: .
 
+      - name: Download upstream monitor report artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: upstream-monitor-report
+          path: .
+
       - name: Notify maintainers about release trigger outcome
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/notify-release-trigger-outcome.mjs --report=release-trigger-outcome.json
+
+      - name: Notify maintainers about upstream freshness and drift
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/notify-upstream-monitor.mjs --report=upstream-monitor-report.json

@@ -59,6 +59,7 @@
     "i18n:validate": "node ./scripts/audit-i18n.mjs",
     "data:import:all": "node ./scripts/import-optc-data.mjs --download-images=all",
     "data:check-release": "node ./scripts/check-optc-release-needed.mjs",
+    "data:monitor-upstream": "node ./scripts/check-optc-upstream-monitor.mjs",
     "data:apply-manual": "node ./scripts/apply-manual-characters.mjs",
     "data:upsert-manual-character": "node ./scripts/upsert-manual-character.mjs",
     "build:ionic": "npm run build",
