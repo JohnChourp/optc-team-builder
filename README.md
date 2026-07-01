@@ -43,6 +43,8 @@ Maintainer validation guide:
   to run for each class of change.
 - `docs/feature-coverage-map.md` maps major product and operational flows to
   their tests, docs, performance checks, evidence, and owning area.
+- `docs/release-notes/` publishes user-facing release summaries generated from
+  ClickUp and brain-audit evidence.
 - `docs/review-ownership-policy.md` explains CODEOWNERS review routing,
   cross-repo escalation, and the branch-protection limitation for required
   reviews.
