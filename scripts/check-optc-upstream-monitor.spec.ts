@@ -230,6 +230,27 @@ describe('check-optc-upstream-monitor', () => {
     await expect(readFile(summaryPath, 'utf8')).resolves.toContain('OPTC DB upstream freshness and drift monitor');
   });
 
+  it('writes a failed CLI report for unreadable release-check JSON', async () => {
+    const rootDir = await makeTempDir();
+    const releaseCheckPath = path.join(rootDir, 'release-check.json');
+    const outputPath = path.join(rootDir, 'upstream-monitor-report.json');
+    const summaryPath = path.join(rootDir, 'upstream-monitor-summary.md');
+    await writeFile(releaseCheckPath, 'not json');
+
+    await runCli([
+      '--release-check',
+      releaseCheckPath,
+      '--output',
+      outputPath,
+      '--summary',
+      summaryPath,
+      '--generated-at',
+      '2026-07-01T00:00:00.000Z',
+    ]);
+
+    await expect(readFile(outputPath, 'utf8')).resolves.toContain('"id": "release-check-missing"');
+  });
+
   it('loads nested history artifact reports for CLI comparisons', async () => {
     const rootDir = await makeTempDir();
     const historyRoot = path.join(rootDir, 'history');

@@ -546,7 +546,11 @@ async function readReleaseCheckResult(releaseCheckPath) {
     return null;
   }
 
-  return JSON.parse(await readFile(releaseCheckPath, 'utf8'));
+  try {
+    return JSON.parse(await readFile(releaseCheckPath, 'utf8'));
+  } catch {
+    return null;
+  }
 }
 
 export async function runCli(argv = process.argv.slice(2), env = process.env) {
