@@ -84,6 +84,15 @@ interface SavedTeamsImportFeedback {
   tone: 'error' | 'success' | 'warning';
 }
 
+interface SavedTeamsImportFeedbackStats {
+  addedCount: number;
+  duplicateIdCount: number;
+  fileName: string;
+  invalidTeamCount: number;
+  unknownSlotCount: number;
+  updatedCount: number;
+}
+
 type SavedTeamAbilityOrigin = 'leader' | 'crew';
 type SavedTeamAbilityCategory = 'captain' | 'special' | 'crewmate' | 'potential' | 'support';
 
@@ -237,7 +246,6 @@ export class SavedTeamsPage implements OnInit {
   public readonly autoBuilderIcon = sparklesOutline;
   public readonly captainCoverageIcon = shieldCheckmarkOutline;
   public readonly manualBuilderIcon = peopleOutline;
-
   public constructor(
     private readonly userState: UserStateService,
     private readonly repository: OptcRepositoryService,
@@ -567,6 +575,12 @@ export class SavedTeamsPage implements OnInit {
       this.repository.getDetailedCharactersByIds(characterIds),
       this.repository.getShips(),
     ]);
+
+    if (this.savedTeams() !== teams) {
+      this.loading.set(false);
+      return;
+    }
+
     const characterMap = new Map(characters.map((character) => [character.id, character] as const));
     const shipMap = new Map(ships.map((ship) => [ship.id, ship] as const));
 
@@ -983,18 +997,23 @@ export class SavedTeamsPage implements OnInit {
         new Set(availableCharacters.map((character) => character.id)),
       );
       const mergeResult = await this.userState.mergeImportedTeams(slotSanitizeResult.teams);
+      const feedbackStats: SavedTeamsImportFeedbackStats = {
+        addedCount: mergeResult.addedCount,
+        duplicateIdCount: sanitizedImport.duplicateIdCount,
+        fileName: sourceLabel,
+        invalidTeamCount: sanitizedImport.invalidTeamCount,
+        unknownSlotCount: slotSanitizeResult.unknownSlotCount,
+        updatedCount: mergeResult.updatedCount,
+      };
 
-      await this.refreshSavedTeamCards();
-      this.importFeedback.set(
-        this.buildImportFeedback({
-          addedCount: mergeResult.addedCount,
-          duplicateIdCount: sanitizedImport.duplicateIdCount,
-          fileName: sourceLabel,
-          invalidTeamCount: sanitizedImport.invalidTeamCount,
-          unknownSlotCount: slotSanitizeResult.unknownSlotCount,
-          updatedCount: mergeResult.updatedCount,
-        }),
-      );
+      this.importFeedback.set(this.buildImportFeedback(feedbackStats));
+      setTimeout(() => {
+        setTimeout(() => {
+          void this.refreshSavedTeamCards().catch(() => {
+            this.loading.set(false);
+          });
+        }, 0);
+      }, 0);
     } catch (error) {
       this.importFeedback.set({
         tone: 'error',
@@ -1006,14 +1025,7 @@ export class SavedTeamsPage implements OnInit {
     }
   }
 
-  private buildImportFeedback(stats: {
-    addedCount: number;
-    duplicateIdCount: number;
-    fileName: string;
-    invalidTeamCount: number;
-    unknownSlotCount: number;
-    updatedCount: number;
-  }): SavedTeamsImportFeedback {
+  private buildImportFeedback(stats: SavedTeamsImportFeedbackStats): SavedTeamsImportFeedback {
     const details = [
       this.i18n.translate('import.loadedFromFile', { fileName: stats.fileName }, 'saved-teams'),
     ];

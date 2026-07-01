@@ -111,12 +111,7 @@ async function ensureServer() {
     return null;
   }
 
-  const child = spawn(npmBin, ['start', '--', '--host', '127.0.0.1', '--port', String(port)], {
-    cwd: appRoot,
-    env: process.env,
-    detached: process.platform !== 'win32',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  const child = spawnNpmStartServer();
   child.stdout.on('data', (chunk) => process.stdout.write(chunk));
   child.stderr.on('data', (chunk) => process.stderr.write(chunk));
 
@@ -127,6 +122,20 @@ async function ensureServer() {
     await stopServer(child);
     throw error;
   }
+}
+
+function spawnNpmStartServer() {
+  const args = ['start', '--', '--host', '127.0.0.1', '--port', String(port)];
+  const command = process.platform === 'win32' ? process.env.ComSpec ?? 'cmd.exe' : npmBin;
+  const commandArgs =
+    process.platform === 'win32' ? ['/d', '/s', '/c', [npmBin, ...args].join(' ')] : args;
+
+  return spawn(command, commandArgs, {
+    cwd: appRoot,
+    env: process.env,
+    detached: process.platform !== 'win32',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 }
 
 async function stopServer(child) {
@@ -151,6 +160,11 @@ async function stopServer(child) {
 }
 
 function killServerProcess(child, signal) {
+  if (process.platform === 'win32' && child.pid) {
+    spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
+    return;
+  }
+
   if (process.platform !== 'win32' && child.pid) {
     try {
       process.kill(-child.pid, signal);

@@ -76,8 +76,8 @@ The workflow uploads one `performance-budget-report` artifact. It contains:
   trend rows.
 - `performance-budget-history.md` with the trend summary for maintainers.
 - `current/ability/` with the ability-filter timing JSON and screenshots.
-- `current/explanation/` with the explanation/compare timing JSON and
-  screenshots.
+- `current/explanation/` with the explanation/compare/import-share timing JSON
+  and screenshots.
 
 On scheduled runs, the report compares against the latest successful
 `Performance Budgets` artifact on `main`. On manual runs, pass
@@ -89,10 +89,13 @@ Baseline deltas are warnings, not failures, when a metric rises by at least 35%
 and 100ms. Hard budgets mark the report as failed. They fail the workflow only
 when `fail_on_regression=true`.
 
-`npm run perf:explanation-compare` measures Auto Team Builder compare rendering
-and explanation-detail expansion with deterministic large fixtures. It starts a
-local dev server when `PERF_BASE_URL` is not already serving, writes screenshots
-and JSON to `PERF_ARTIFACT_DIR`, and fails when the pragmatic budgets regress.
+`npm run perf:explanation-compare` measures Auto Team Builder compare rendering,
+explanation-detail expansion, heavy Saved Teams import, and saved-team
+share-link hydration with deterministic large fixtures. It starts a local dev
+server when `PERF_BASE_URL` is not already serving, writes screenshots and JSON
+to `PERF_ARTIFACT_DIR`, and fails when the pragmatic budgets regress.
+Saved-team import ready is the list-ready timing after imported cards render;
+first feedback timing is also recorded in JSON for diagnosis.
 When `PERF_ARTIFACT_DIR` is not set, local OPTC workspace checkouts use the
 sibling brain repo at `../optc-team-builder-brain/live-artifacts/869dvr7x5`;
 other machines fall back to `perf-artifacts/explanation-compare` under this
@@ -100,6 +103,9 @@ repo.
 
 - desktop compare open `<=800ms`, imported compare apply `<=1200ms`
 - mobile compare open `<=1000ms`, imported compare apply `<=1500ms`
+- saved-team parse/sanitize `<=500ms` desktop and mobile
+- saved-team import ready `<=3000ms` desktop and `<=4000ms` mobile
+- manual share-link hydration `<=1800ms` desktop and `<=2500ms` mobile
 - desktop first/all explanation toggles `<=300ms` / `<=900ms`
 - mobile first/all explanation toggles `<=450ms` / `<=1200ms`
 

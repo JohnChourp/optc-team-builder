@@ -83,6 +83,11 @@ function explanationResult() {
         viewport: 'desktop',
         timings: {
           compare: { compareOpenMs: 60, compareImportMs: 70 },
+          importShareHydration: {
+            savedTeamsParseSanitizeMs: 20,
+            savedTeamsImportReadyMs: 900,
+            manualShareHydrationMs: 500,
+          },
           explanations: { firstExplanationToggleMs: 20, allExplanationToggleMs: 40 },
         },
       },
@@ -90,6 +95,11 @@ function explanationResult() {
         viewport: 'mobile',
         timings: {
           compare: { compareOpenMs: 80, compareImportMs: 90 },
+          importShareHydration: {
+            savedTeamsParseSanitizeMs: 25,
+            savedTeamsImportReadyMs: 1000,
+            manualShareHydrationMs: 600,
+          },
           explanations: { firstExplanationToggleMs: 30, allExplanationToggleMs: 50 },
         },
       },
@@ -114,8 +124,8 @@ describe('perf-budget-report', () => {
     const report = await buildPerformanceBudgetReport({ currentDir });
 
     expect(report.status).toBe('passed');
-    expect(report.summary.metricCount).toBe(22);
-    expect(report.summary.budgetedMetricCount).toBe(16);
+    expect(report.summary.metricCount).toBe(28);
+    expect(report.summary.budgetedMetricCount).toBe(22);
     expect(report.hardBudgetFailures).toEqual([]);
     expect(report.baseline).toBeNull();
     expect(report.metricRows).toContainEqual(
@@ -123,6 +133,13 @@ describe('perf-budget-report', () => {
         id: 'ability-filters.desktop.saved-teams.firsttogglems',
         actualMs: 200,
         budgetMs: 800,
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'explanation-compare.desktop.import-share-hydration.savedteamsimportreadyms',
+        actualMs: 900,
+        budgetMs: 3000,
       }),
     );
   });
@@ -143,7 +160,7 @@ describe('perf-budget-report', () => {
         metricId: 'ability-filters.desktop.saved-teams.firsttogglems',
       }),
     ]);
-    expect(report.metricRows).toHaveLength(22);
+    expect(report.metricRows).toHaveLength(28);
   });
 
   it('warns on large baseline deltas without failing when hard budgets pass', async () => {
