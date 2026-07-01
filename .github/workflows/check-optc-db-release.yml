@@ -136,19 +136,23 @@ jobs:
 
       - name: Download recent upstream monitor history
         if: ${{ always() }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p upstream-monitor-artifacts/history
-          run_ids="$(
+          if ! run_ids="$(
             gh run list \
               --workflow check-optc-db-release.yml \
               --branch main \
               --status completed \
-              --limit 12 \
+              --limit 45 \
               --json databaseId \
               --jq '.[].databaseId'
-          )"
+          )"; then
+            echo "Could not list previous Check OPTC DB Release runs; upstream monitor will run without downloaded history." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
 
           if [[ -z "${run_ids}" ]]; then
             echo "No previous completed Check OPTC DB Release runs found for upstream monitor history." >> "${GITHUB_STEP_SUMMARY}"
@@ -317,18 +321,20 @@ jobs:
           name: release-trigger-outcome
           path: .
 
-      - name: Download upstream monitor report artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: upstream-monitor-report
-          path: .
-
       - name: Notify maintainers about release trigger outcome
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/notify-release-trigger-outcome.mjs --report=release-trigger-outcome.json
 
+      - name: Download upstream monitor report artifact
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: upstream-monitor-report
+          path: .
+
       - name: Notify maintainers about upstream freshness and drift
+        if: ${{ hashFiles('upstream-monitor-report.json') != '' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/notify-upstream-monitor.mjs --report=upstream-monitor-report.json

@@ -233,11 +233,39 @@ export async function readUpstreamMonitorHistory(historyDir) {
 }
 
 function scheduledReports(historyReports) {
-  return historyReports.filter((report) => report.workflow?.eventName === 'schedule');
+  return historyReports
+    .filter((report) => report.workflow?.eventName === 'schedule')
+    .sort((left, right) => parseDate(left.generatedAt) - parseDate(right.generatedAt));
 }
 
-function buildStaleUpstreamWarning({ current, historyReports, generatedAt, policy }) {
-  const matching = scheduledReports(historyReports).filter(
+function isScheduledWorkflow(workflow) {
+  return workflow?.eventName === 'schedule';
+}
+
+function trailingMatchingScheduledReports(historyReports, predicate) {
+  const reports = scheduledReports(historyReports);
+  const matching = [];
+
+  for (let index = reports.length - 1; index >= 0; index -= 1) {
+    const report = reports[index];
+
+    if (!predicate(report)) {
+      break;
+    }
+
+    matching.unshift(report);
+  }
+
+  return matching;
+}
+
+function buildStaleUpstreamWarning({ current, historyReports, generatedAt, policy, workflow }) {
+  if (!isScheduledWorkflow(workflow)) {
+    return null;
+  }
+
+  const matching = trailingMatchingScheduledReports(
+    historyReports,
     (report) =>
       report.current.remoteSourceVersion === current.remoteSourceVersion &&
       report.current.remoteCharacterCount === current.remoteCharacterCount,
@@ -258,7 +286,7 @@ function buildStaleUpstreamWarning({ current, historyReports, generatedAt, polic
   return {
     id: 'stale-upstream',
     severity: 'warning',
-    message: `Upstream version ${current.remoteSourceVersion} and ${current.remoteCharacterCount} normalized characters have stayed unchanged for ${formatDays(stableDays)} across ${sampleCount} scheduled samples.`,
+    message: `Upstream version ${current.remoteSourceVersion} and ${current.remoteCharacterCount} normalized characters have stayed unchanged for ${formatDays(stableDays)} across ${sampleCount} contiguous scheduled samples.`,
     details: {
       stableDays: Number(stableDays.toFixed(2)),
       sampleCount,
@@ -306,12 +334,16 @@ function buildShapeDriftWarning({ current, historyReports, policy }) {
   };
 }
 
-function buildPersistentLagWarning({ current, historyReports, policy }) {
+function buildPersistentLagWarning({ current, historyReports, policy, workflow }) {
+  if (!isScheduledWorkflow(workflow)) {
+    return null;
+  }
+
   if (current.newCharacterCount <= 0 || current.newCharacterIds.length === 0) {
     return null;
   }
 
-  const matching = scheduledReports(historyReports).filter((report) =>
+  const matching = trailingMatchingScheduledReports(historyReports, (report) =>
     sameIdList(report.current.newCharacterIds, current.newCharacterIds),
   );
   const sampleCount = matching.length + 1;
@@ -323,7 +355,7 @@ function buildPersistentLagWarning({ current, historyReports, policy }) {
   return {
     id: 'persistent-local-lag',
     severity: 'warning',
-    message: `${current.newCharacterCount} new upstream character ID(s) have persisted across ${sampleCount} scheduled samples: ${formatList(
+    message: `${current.newCharacterCount} new upstream character ID(s) have persisted across ${sampleCount} contiguous scheduled samples: ${formatList(
       current.newCharacterIds.slice(0, policy.maxNewCharacterSample),
     )}.`,
     details: {
@@ -364,6 +396,7 @@ export function buildUpstreamMonitorReport({
 } = {}) {
   const normalizedReleaseCheck = normalizeReleaseCheckResult(releaseCheckResult);
   const current = buildCurrentSignals(normalizedReleaseCheck, policy);
+  const workflow = buildWorkflowMetadata(env);
   const warnings = [];
 
   if (!current) {
@@ -375,9 +408,9 @@ export function buildUpstreamMonitorReport({
     });
   } else {
     for (const warning of [
-      buildStaleUpstreamWarning({ current, historyReports, generatedAt, policy }),
+      buildStaleUpstreamWarning({ current, historyReports, generatedAt, policy, workflow }),
       buildShapeDriftWarning({ current, historyReports, policy }),
-      buildPersistentLagWarning({ current, historyReports, policy }),
+      buildPersistentLagWarning({ current, historyReports, policy, workflow }),
     ]) {
       if (warning) {
         warnings.push(warning);
@@ -395,7 +428,7 @@ export function buildUpstreamMonitorReport({
     schemaVersion: UPSTREAM_MONITOR_SCHEMA_VERSION,
     generatedAt,
     status,
-    workflow: buildWorkflowMetadata(env),
+    workflow,
     policy,
     current,
     history: buildHistorySummary(historyReports, policy),

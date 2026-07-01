@@ -56,6 +56,13 @@ function historyReport(generatedAt: string, overrides: Record<string, unknown> =
   });
 }
 
+const scheduledEnv = {
+  GITHUB_WORKFLOW: 'Check OPTC DB Release',
+  GITHUB_EVENT_NAME: 'schedule',
+  GITHUB_REPOSITORY: 'JohnChourp/optc-team-builder',
+  GITHUB_RUN_ID: '10000000',
+};
+
 describe('check-optc-upstream-monitor', () => {
   it('keeps routine no-change runs quiet without enough history', () => {
     const report = buildUpstreamMonitorReport({
@@ -76,6 +83,7 @@ describe('check-optc-upstream-monitor', () => {
         historyReport('2026-06-08T00:00:00.000Z'),
         historyReport('2026-06-20T00:00:00.000Z'),
       ],
+      env: scheduledEnv,
     });
 
     expect(report.status).toBe('warning');
@@ -85,6 +93,43 @@ describe('check-optc-upstream-monitor', () => {
         severity: 'warning',
       }),
     ]);
+  });
+
+  it('does not use manual runs to complete stale-upstream scheduled sample windows', () => {
+    const report = buildUpstreamMonitorReport({
+      releaseCheckResult: releaseCheckResult(),
+      generatedAt: '2026-07-01T00:00:00.000Z',
+      historyReports: [
+        historyReport('2026-06-08T00:00:00.000Z'),
+        historyReport('2026-06-20T00:00:00.000Z'),
+      ],
+      env: {
+        ...scheduledEnv,
+        GITHUB_EVENT_NAME: 'workflow_dispatch',
+      },
+    });
+
+    expect(report.status).toBe('passed');
+    expect(report.warnings).toEqual([]);
+  });
+
+  it('requires a contiguous trailing scheduled window for stale-upstream warnings', () => {
+    const report = buildUpstreamMonitorReport({
+      releaseCheckResult: releaseCheckResult(),
+      generatedAt: '2026-07-01T00:00:00.000Z',
+      historyReports: [
+        historyReport('2026-06-08T00:00:00.000Z'),
+        historyReport('2026-06-20T00:00:00.000Z', {
+          remoteSourceVersion: '37',
+          remoteCharacterCount: 4590,
+        }),
+        historyReport('2026-06-30T00:00:00.000Z'),
+      ],
+      env: scheduledEnv,
+    });
+
+    expect(report.status).toBe('passed');
+    expect(report.warnings).toEqual([]);
   });
 
   it('warns on material normalized shape drift without new upstream IDs', () => {
@@ -138,6 +183,7 @@ describe('check-optc-upstream-monitor', () => {
           newCharacterCount: newIds.length,
         }),
       ],
+      env: scheduledEnv,
     });
 
     expect(report.status).toBe('warning');
@@ -215,7 +261,7 @@ describe('check-optc-upstream-monitor', () => {
       summaryPath,
       '--generated-at',
       '2026-07-01T00:00:00.000Z',
-    ]);
+    ], scheduledEnv);
 
     await expect(readFile(outputPath, 'utf8')).resolves.toContain('"id": "stale-upstream"');
   });
@@ -242,6 +288,7 @@ describe('notify-upstream-monitor', () => {
         historyReport('2026-06-08T00:00:00.000Z'),
         historyReport('2026-06-20T00:00:00.000Z'),
       ],
+      env: scheduledEnv,
     });
     const calls: Array<{ url: string; options: { body?: string } }> = [];
     const fetchImpl = async (url: string, options: { body?: string } = {}) => {
