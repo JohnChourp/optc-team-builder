@@ -8,7 +8,9 @@ Use `docs/feature-coverage-map.md` when you need to find the owner and current
 coverage assets for a specific product or operational flow before choosing one
 of the validation paths below. Use `docs/fixture-ownership-guide.md` before
 adding or moving fixtures across browser, contract, performance, release-check,
-or release-readiness suites.
+or release-readiness suites. Use `docs/review-ownership-policy.md` when a
+change touches critical release, CI, fixture, data, evidence, or app-runtime
+paths and you need the reviewer routing and cross-repo escalation rule.
 
 ## Decision Table
 
@@ -63,6 +65,18 @@ ClickUp URLs for the OPTC workspace when a workspace segment is present. Short
 ClickUp task URLs may use regular task IDs or ClickUp custom task IDs.
 Bot-authored dependency or automation PRs are skipped so routine update PRs do
 not fail only because no ClickUp task exists.
+
+## Review Ownership
+
+Critical app paths are routed through `.github/CODEOWNERS` and documented in
+`docs/review-ownership-policy.md`. The current owner route is `@JohnChourp`
+because the implementation audit found no other repository collaborators.
+
+`CODEOWNERS` requests the right review, but required-review enforcement still
+depends on GitHub branch protection or repository rulesets. Until that setting
+is enabled, maintainers should treat the owner request and the PR traceability
+fields as the review gate for release automation, CI, shared fixtures, evidence
+docs, generated data, and major user-facing flows.
 
 ## Command Details
 

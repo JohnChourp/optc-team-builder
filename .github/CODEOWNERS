@@ -1,0 +1,92 @@
+# OPTC review ownership routing.
+# These entries request review from the current human maintainer for critical
+# app, release, CI, evidence, fixture, data, and user-facing paths. Strict
+# required-review enforcement still depends on GitHub branch protection or
+# repository rulesets.
+
+/.github/ @JohnChourp
+/package.json @JohnChourp
+/package-lock.json @JohnChourp
+/.env.example @JohnChourp
+/.node-version @JohnChourp
+/.nvmrc @JohnChourp
+/angular.json @JohnChourp
+/capacitor.config.ts @JohnChourp
+/ionic.config.json @JohnChourp
+/ngsw-config.json @JohnChourp
+/playwright.config.ts @JohnChourp
+/vitest.config.mjs @JohnChourp
+/transloco.config.ts @JohnChourp
+/tsconfig*.json @JohnChourp
+/eslint.config.mjs @JohnChourp
+
+/scripts/ @JohnChourp
+/android/ @JohnChourp
+/ios/ @JohnChourp
+/scripts/release-and-tag.sh @JohnChourp
+/scripts/setup-release-signing.sh @JohnChourp
+/scripts/bump-version.sh @JohnChourp
+
+/scripts/check-optc-release-needed.mjs @JohnChourp
+/scripts/check-optc-release-needed.spec.ts @JohnChourp
+/scripts/notify-release-trigger-outcome.mjs @JohnChourp
+/scripts/lib/release-trigger-*.mjs @JohnChourp
+/scripts/fixtures/release-check/ @JohnChourp
+
+/scripts/release-readiness-report.mjs @JohnChourp
+/scripts/release-readiness-report.spec.ts @JohnChourp
+/scripts/fixtures/release-readiness/ @JohnChourp
+
+/scripts/perf-*.mjs @JohnChourp
+/scripts/perf-*.spec.ts @JohnChourp
+/scripts/benchmark-dataset.mjs @JohnChourp
+
+/scripts/check-docs-*.mjs @JohnChourp
+/scripts/check-docs-*.spec.ts @JohnChourp
+/scripts/generate-seo-pages.mjs @JohnChourp
+/scripts/audit-seo-pages.mjs @JohnChourp
+/scripts/audit-i18n.mjs @JohnChourp
+/docs/ @JohnChourp
+/README.md @JohnChourp
+/SECURITY.md @JohnChourp
+/SEO_AUDIT.md @JohnChourp
+
+/e2e/ @JohnChourp
+/scripts/run-playwright-e2e.mjs @JohnChourp
+/scripts/summarize-playwright-failures.mjs @JohnChourp
+/scripts/summarize-playwright-failures.spec.ts @JohnChourp
+/scripts/validate-playwright-quarantine.mjs @JohnChourp
+/scripts/lib/playwright-*.mjs @JohnChourp
+/scripts/lib/playwright-*.spec.ts @JohnChourp
+
+/scripts/fixtures/ @JohnChourp
+/scripts/data/ @JohnChourp
+/scripts/auto-team-builder-ability-parser.mjs @JohnChourp
+/scripts/import-optc-data.mjs @JohnChourp
+/scripts/import-optc-data.spec.ts @JohnChourp
+/scripts/apply-manual-characters.mjs @JohnChourp
+/scripts/upsert-manual-character.mjs @JohnChourp
+/scripts/upsert-manual-character.spec.ts @JohnChourp
+/scripts/lib/*dataset*.mjs @JohnChourp
+/scripts/lib/*dataset*.spec.ts @JohnChourp
+/scripts/lib/manual-character-*.mjs @JohnChourp
+/scripts/lib/manual-character-*.spec.ts @JohnChourp
+/scripts/lib/captain-ability-coverage.mjs @JohnChourp
+/scripts/lib/captain-ability-coverage.spec.ts @JohnChourp
+
+/public/ @JohnChourp
+/public/assets/data/ @JohnChourp
+/public/assets/exact-character-images/ @JohnChourp
+/public/assets/offline-packs/ @JohnChourp
+/public/app-config.example.js @JohnChourp
+/scripts/write-app-config.mjs @JohnChourp
+/server/ @JohnChourp
+
+/src/ @JohnChourp
+/src/main.ts @JohnChourp
+/src/index.html @JohnChourp
+/src/styles.scss @JohnChourp
+/src/theme/ @JohnChourp
+/src/app/ @JohnChourp
+/src/types/ @JohnChourp
+/public/i18n/ @JohnChourp
