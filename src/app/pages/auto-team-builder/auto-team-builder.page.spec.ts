@@ -5135,7 +5135,9 @@ describe('AutoTeamBuilder compare panel', () => {
       },
       seed: null,
       snapshot: null,
-      error: 'This payload is not a supported saved team, share link, preset, or team export.',
+      error:
+        'This payload is not a supported saved team, share link, preset, or team export. ' +
+        'import.diagnosticCode import.recovery.invalidShareJson',
       loading: false,
     });
   });
