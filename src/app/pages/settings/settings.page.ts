@@ -65,6 +65,7 @@ import {
   buildSavedTeamsTransferPayload,
   downloadSavedTeamsExport,
   parseSavedTeamsImportPayload,
+  resolveSavedTeamsImportDiagnostic,
   type SavedTeamsImportError,
 } from '../saved-teams/saved-teams-transfer.utils';
 import {
@@ -1802,7 +1803,7 @@ export class SettingsPage implements OnInit {
       this.savedTeamsFeedback.set({
         tone: 'error',
         title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
-        details: [this.resolveSavedTeamsImportError(error)],
+        details: this.resolveSavedTeamsImportErrorDetails(error),
       });
     } finally {
       this.savedTeamsImporting.set(false);
@@ -1900,6 +1901,22 @@ export class SettingsPage implements OnInit {
     }
 
     return this.i18n.translate('import.errors.generic', undefined, 'saved-teams');
+  }
+
+  private resolveSavedTeamsImportErrorDetails(
+    error: SavedTeamsImportError | Error | unknown,
+  ): string[] {
+    const details = [this.resolveSavedTeamsImportError(error)];
+    const diagnostic = resolveSavedTeamsImportDiagnostic(error);
+
+    if (diagnostic) {
+      details.push(
+        this.i18n.translate('import.diagnosticCode', { code: diagnostic.code }, 'saved-teams'),
+        this.i18n.translate(diagnostic.recoveryKey, undefined, 'saved-teams'),
+      );
+    }
+
+    return details;
   }
 
   private async importSavedRumbleTeamsContent(input: {

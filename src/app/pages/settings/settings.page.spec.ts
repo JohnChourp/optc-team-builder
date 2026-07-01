@@ -425,6 +425,25 @@ describe('SettingsPage', () => {
     });
   });
 
+  it('shows safe saved-team import diagnostics from offline management failures', async () => {
+    const { page } = createPage();
+
+    await page.onSavedTeamsFileSelected(
+      createFileEvent(buildFile('saved-teams.json', '{"schemaVersion":')),
+      { value: '' } as HTMLInputElement,
+    );
+
+    expect(page.savedTeamsFeedback()).toEqual({
+      tone: 'error',
+      title: 'Import failed',
+      details: [
+        'The selected file is not valid JSON.',
+        'Diagnostic code: SAVED_TEAMS_INVALID_JSON.',
+        'Recovery for import.recovery.invalidJson',
+      ],
+    });
+  });
+
   it('imports character boxes from settings and sanitizes unknown character ids', async () => {
     const { page, repository, userState } = createPage();
 
@@ -1186,12 +1205,27 @@ function createPage() {
         return `Loaded ${params?.['fileName'] ?? ''}.`;
       }
 
+      if (key === 'import.errorTitle') {
+        return 'Import failed';
+      }
+
+      if (key === 'import.errors.invalidJson') {
+        return 'The selected file is not valid JSON.';
+      }
+
+      if (key === 'import.diagnosticCode') {
+        return `Diagnostic code: ${params?.['code'] ?? ''}.`;
+      }
+
+      if (key.startsWith('import.recovery.')) {
+        return `Recovery for ${key}`;
+      }
+
       if (
         key === 'import.warningTitle' ||
         key === 'bulkImport.warningTitle' ||
         key === 'import.successTitle' ||
         key === 'bulkImport.successTitle' ||
-        key === 'import.errorTitle' ||
         key === 'bulkImport.errorTitle'
       ) {
         return key;

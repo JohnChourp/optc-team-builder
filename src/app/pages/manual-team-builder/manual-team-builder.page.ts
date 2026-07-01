@@ -71,6 +71,7 @@ import {
 import { UserStateService } from '../../core/services/user-state.service';
 import {
   resolveSavedTeamFromShareInput,
+  resolveSavedTeamsImportDiagnostic,
   SAVED_TEAM_SHARE_QUERY_PARAM,
 } from '../saved-teams/saved-teams-transfer.utils';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
@@ -186,6 +187,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly saveUiLocked = signal(false);
   public readonly saveFeedbackError = signal('');
   public readonly sharedTeamFeedbackError = signal('');
+  public readonly sharedTeamFeedbackDetails = signal<string[]>([]);
   public readonly selectedShipId = signal<number | null>(null);
   public readonly maxTotalCost = signal<number | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
@@ -573,6 +575,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     await Promise.all([
       this.userState.readyFavoriteShipIds(),
       this.i18n.preloadScope('manual-team-builder'),
+      this.i18n.preloadScope('saved-teams'),
       this.i18n.preloadScope('ship-picker'),
     ]);
     const [ships, summary, abilityCatalog, availableCharacterTags] = await Promise.all([
@@ -1066,6 +1069,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.saveUiLocked.set(true);
     this.saveFeedbackError.set('');
     this.sharedTeamFeedbackError.set('');
+    this.sharedTeamFeedbackDetails.set([]);
 
     try {
       const saved = await this.userState.saveTeam({
@@ -1107,6 +1111,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.currentTeamId.set(null);
     this.saveFeedbackError.set('');
     this.sharedTeamFeedbackError.set('');
+    this.sharedTeamFeedbackDetails.set([]);
     this.saveUiLocked.set(false);
   }
 
@@ -1269,8 +1274,11 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
       await this.loadSavedTeam(team, { currentTeamId: null });
       this.sharedTeamFeedbackError.set('');
-    } catch {
-      this.sharedTeamFeedbackError.set(this.t('shareImport.error'));
+      this.sharedTeamFeedbackDetails.set([]);
+    } catch (error) {
+      const details = this.resolveSharedTeamImportErrorDetails(error);
+      this.sharedTeamFeedbackError.set(details[0] ?? this.t('shareImport.error'));
+      this.sharedTeamFeedbackDetails.set(details.slice(1));
     } finally {
       await this.clearSharedTeamQueryParam();
     }
@@ -1317,6 +1325,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.currentTeamId.set(options.currentTeamId === undefined ? team.id : options.currentTeamId);
     this.saveFeedbackError.set('');
     this.sharedTeamFeedbackError.set('');
+    this.sharedTeamFeedbackDetails.set([]);
     this.saveUiLocked.set(false);
   }
 
@@ -1679,5 +1688,19 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
   private t(key: string, params?: Record<string, string | number>): string {
     return this.i18n.translate(key, params, 'manual-team-builder');
+  }
+
+  private resolveSharedTeamImportErrorDetails(error: Error | unknown): string[] {
+    const details = [this.t('shareImport.error')];
+    const diagnostic = resolveSavedTeamsImportDiagnostic(error);
+
+    if (diagnostic) {
+      details.push(
+        this.i18n.translate('import.diagnosticCode', { code: diagnostic.code }, 'saved-teams'),
+        this.i18n.translate(diagnostic.recoveryKey, undefined, 'saved-teams'),
+      );
+    }
+
+    return details;
   }
 }

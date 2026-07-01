@@ -21,6 +21,7 @@ import {
   buildAutoTeamSelectionExportPayload,
 } from './auto-team-builder-export.utils';
 import {
+  AutoTeamCompareImportError,
   buildAutoTeamCompareDiff,
   buildAutoTeamCompareSnapshotFromCurrent,
   buildAutoTeamCompareSnapshotFromImportedSeed,
@@ -57,6 +58,41 @@ describe('auto-team-builder-team-compare utils', () => {
       shipId: 9001,
       slotIds: [101, 102, 103, null, 105, 106],
     });
+  });
+
+  it('forwards safe diagnostics for invalid imported compare payloads', () => {
+    expectCompareDiagnostic(
+      () => parseAutoTeamCompareImportPayload(''),
+      'compare.import.errors.empty',
+      'SAVED_TEAMS_EMPTY_INPUT',
+      'import.recovery.emptyInput',
+    );
+    expectCompareDiagnostic(
+      () => parseAutoTeamCompareImportPayload('{"schemaVersion":'),
+      'compare.import.errors.invalid',
+      'SAVED_TEAMS_INVALID_JSON',
+      'import.recovery.invalidJson',
+    );
+    expectCompareDiagnostic(
+      () => parseAutoTeamCompareImportPayload('not a valid share code'),
+      'compare.import.errors.invalid',
+      'SAVED_TEAMS_INVALID_SHARE_CODE',
+      'import.recovery.invalidShareCode',
+    );
+    expectCompareDiagnostic(
+      () =>
+        parseAutoTeamCompareImportPayload(
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'saved-teams',
+            exportedAt: '2026-06-25T08:00:00.000Z',
+            teams: [],
+          }),
+        ),
+      'compare.import.errors.noTeam',
+      'SAVED_TEAMS_NO_IMPORTABLE_TEAM',
+      'import.recovery.noImportableTeam',
+    );
   });
 
   it('parses a large saved-team transfer payload and builds comparable snapshots', () => {
@@ -559,6 +595,27 @@ function createCatalogItem(
     sampleCharacterIds: [101],
     sampleTexts: [key],
   };
+}
+
+function expectCompareDiagnostic(
+  run: () => unknown,
+  key: string,
+  code: string,
+  recoveryKey: string,
+): void {
+  try {
+    run();
+  } catch (error) {
+    expect(error).toBeInstanceOf(AutoTeamCompareImportError);
+    expect(error).toMatchObject({
+      key,
+      diagnostic: { code, recoveryKey },
+    });
+    expect(String(error)).not.toContain('Saved Team team-1');
+    return;
+  }
+
+  throw new Error(`Expected ${key} compare diagnostic`);
 }
 
 function createCharacterMap(ids: number[]): Map<number, CharacterDetailRecord> {

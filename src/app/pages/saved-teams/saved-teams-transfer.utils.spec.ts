@@ -15,6 +15,7 @@ import {
   downloadSavedTeamsExport,
   parseSavedTeamsImportContent,
   parseSavedTeamsImportPayload,
+  resolveSavedTeamFromShareInput,
   SavedTeamsImportError,
   sanitizeSavedTeamsImportPayload,
 } from './saved-teams-transfer.utils';
@@ -129,6 +130,89 @@ describe('Saved teams transfer utils', () => {
     );
     expect(() => parseSavedTeamsImportContent('not a valid share code')).toThrow(
       'import.errors.invalidShareCode',
+    );
+  });
+
+  it('classifies import and share failures with safe diagnostics', () => {
+    expectImportDiagnostic(
+      () => parseSavedTeamsImportContent(''),
+      'import.errors.empty',
+      'SAVED_TEAMS_EMPTY_INPUT',
+      'import.recovery.emptyInput',
+    );
+    expectImportDiagnostic(
+      () => parseSavedTeamsImportContent('{"schemaVersion":'),
+      'import.errors.invalidJson',
+      'SAVED_TEAMS_INVALID_JSON',
+      'import.recovery.invalidJson',
+    );
+    expectImportDiagnostic(
+      () => parseSavedTeamsImportContent('not a valid share code'),
+      'import.errors.invalidShareCode',
+      'SAVED_TEAMS_INVALID_SHARE_CODE',
+      'import.recovery.invalidShareCode',
+    );
+    expectImportDiagnostic(
+      () => parseSavedTeamsImportContent(toBase64Url('{')),
+      'import.errors.invalidShareJson',
+      'SAVED_TEAMS_INVALID_SHARE_JSON',
+      'import.recovery.invalidShareJson',
+    );
+    expectImportDiagnostic(
+      () =>
+        parseSavedTeamsImportContent(
+          JSON.stringify({ schemaVersion: 2, source: 'saved-teams' }),
+        ),
+      'import.errors.unsupportedSchema',
+      'SAVED_TEAMS_UNSUPPORTED_SCHEMA',
+      'import.recovery.unsupportedSchema',
+    );
+    expectImportDiagnostic(
+      () =>
+        parseSavedTeamsImportContent(
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'saved-teams',
+            exportedAt: '2026-03-29T10:00:00.000Z',
+            teams: null,
+          }),
+        ),
+      'import.errors.invalidPayload',
+      'SAVED_TEAMS_INVALID_PAYLOAD',
+      'import.recovery.invalidPayload',
+    );
+    expectImportDiagnostic(
+      () =>
+        parseSavedTeamsImportContent(
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'saved-team-share',
+            exportedAt: '2026-03-29T10:00:00.000Z',
+            team: null,
+          }),
+        ),
+      'import.errors.invalidSharePayload',
+      'SAVED_TEAMS_INVALID_SHARE_PAYLOAD',
+      'import.recovery.invalidSharePayload',
+    );
+    expectImportDiagnostic(
+      () =>
+        resolveSavedTeamFromShareInput(
+          buildSavedTeamShareCode(
+            {
+              ...team,
+              id: '',
+            },
+            '2026-03-29T10:00:00.000Z',
+          ),
+          {
+            now: '2026-03-29T10:00:00.000Z',
+            untitledTeamName: 'Untitled Crew',
+          },
+        ),
+      'import.errors.noImportableTeam',
+      'SAVED_TEAMS_NO_IMPORTABLE_TEAM',
+      'import.recovery.noImportableTeam',
     );
   });
 
@@ -262,4 +346,31 @@ describe('Saved teams transfer utils', () => {
 
 function readFixture(fileName: string): string {
   return readFileSync(resolve(process.cwd(), 'scripts/fixtures/data', fileName), 'utf8');
+}
+
+function toBase64Url(value: string): string {
+  return globalThis.btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/u, '');
+}
+
+function expectImportDiagnostic(
+  run: () => unknown,
+  key: string,
+  code: string,
+  recoveryKey: string,
+): void {
+  try {
+    run();
+  } catch (error) {
+    expect(error).toBeInstanceOf(SavedTeamsImportError);
+    expect(error).toMatchObject({
+      key,
+      diagnosticCode: code,
+      diagnostic: { code, recoveryKey },
+    });
+    expect(String(error)).not.toContain('Slashers');
+    expect(String(error)).not.toContain('Burst');
+    return;
+  }
+
+  throw new Error(`Expected ${key} diagnostic`);
 }

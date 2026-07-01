@@ -2926,6 +2926,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.i18n.preloadScope('auto-team-builder'),
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('enemy-mechanics-picker'),
+      this.i18n.preloadScope('saved-teams'),
     ]);
     this.restoreCompareSessionState();
     const shipsPromise =
@@ -3803,11 +3804,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         return;
       }
 
-      const errorKey =
-        error instanceof AutoTeamCompareImportError
-          ? error.key
-          : 'compare.import.errors.invalid';
-
       this.updateCompareSidePayload(side, (payload) => ({
         ...payload,
         state: {
@@ -3819,7 +3815,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         },
         seed: null,
         snapshot: null,
-        error: this.t(errorKey),
+        error: this.resolveCompareImportError(error),
         loading: false,
       }));
       this.persistCompareSessionState();
@@ -3853,6 +3849,22 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return snapshot.missingCharacterCount > 0
       ? this.t('compare.errors.missingCharacters', { count: snapshot.missingCharacterCount })
       : '';
+  }
+
+  private resolveCompareImportError(error: Error | unknown): string {
+    const errorKey =
+      error instanceof AutoTeamCompareImportError ? error.key : 'compare.import.errors.invalid';
+    const details = [this.t(errorKey)];
+    const diagnostic = error instanceof AutoTeamCompareImportError ? error.diagnostic : null;
+
+    if (diagnostic) {
+      details.push(
+        this.i18n.translate('import.diagnosticCode', { code: diagnostic.code }, 'saved-teams'),
+        this.i18n.translate(diagnostic.recoveryKey, undefined, 'saved-teams'),
+      );
+    }
+
+    return details.join(' ');
   }
 
   private nextCompareRequestToken(side: AutoTeamCompareSide): number {
