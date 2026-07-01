@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildCheckPlan, formatGitHubOutput, getChangedFiles, renderMarkdown } from './ci-check-routing.mjs';
+import { buildCheckPlan, formatGitHubOutput, getChangedFiles, parseNameStatusOutput, renderMarkdown } from './ci-check-routing.mjs';
 
 describe('ci-check-routing', () => {
   it('routes docs-only changes to docs script suites only', () => {
@@ -15,13 +15,28 @@ describe('ci-check-routing', () => {
   });
 
   it('routes runtime changes to Angular and blocking browser e2e', () => {
-    const plan = buildCheckPlan(['src/app/pages/saved-teams/saved-teams.page.ts']);
+    const plan = buildCheckPlan([
+      'src/app/pages/saved-teams/saved-teams.page.ts',
+      'src/app/core/services/captain-coverage.utils.ts',
+    ]);
 
     expect(plan.fullPlan).toBe(false);
     expect(plan.runAngular).toBe(true);
     expect(plan.runE2e).toBe(true);
     expect(plan.runQuarantine).toBe(false);
     expect(plan.scriptSuites).toEqual([]);
+  });
+
+  it('runs Angular tests for captain parser and generated metadata changes', () => {
+    const plan = buildCheckPlan([
+      'scripts/auto-team-builder-ability-parser.mjs',
+      'scripts/data/special-ability-definitions.json',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(true);
+    expect(plan.runDatasetPerf).toBe(true);
+    expect(plan.scriptSuites).toEqual(['captain-contracts']);
   });
 
   it('routes e2e runner changes to browser jobs and triage tests', () => {
@@ -53,6 +68,7 @@ describe('ci-check-routing', () => {
     expect(plan.runQuarantine).toBe(true);
     expect(plan.runDatasetPerf).toBe(true);
     expect(plan.scriptSuites).toEqual([
+      'ci-routing',
       'captain-contracts',
       'release-check',
       'release-readiness',
@@ -70,11 +86,40 @@ describe('ci-check-routing', () => {
     expect(buildCheckPlan([]).fullPlan).toBe(true);
   });
 
+  it('includes both sides of renamed files before routing', () => {
+    expect(parseNameStatusOutput('R100\tsrc/app/foo.ts\tdocs/foo.md\nM\tREADME.md\n')).toEqual([
+      'src/app/foo.ts',
+      'docs/foo.md',
+      'README.md',
+    ]);
+
+    const plan = buildCheckPlan(parseNameStatusOutput('R100\tsrc/app/foo.ts\tdocs/foo.md\n'));
+    expect(plan.runAngular).toBe(true);
+    expect(plan.runE2e).toBe(true);
+  });
+
   it('returns diff-unavailable when base or head is missing', () => {
     const result = getChangedFiles({ base: '', head: 'abc123' });
 
     expect(result.diffUnavailable).toBe(true);
     expect(result.changedFiles).toEqual([]);
+  });
+
+  it('sanitizes diff errors before writing GitHub outputs', () => {
+    const result = getChangedFiles({
+      base: 'base',
+      head: 'head',
+      execFile: () => {
+        throw new Error('fatal: bad revision\nusage: git diff');
+      },
+    });
+    const plan = buildCheckPlan(result.changedFiles, { diffUnavailable: result.diffUnavailable });
+    plan.reasons.push(result.reason);
+
+    const output = formatGitHubOutput(plan);
+    expect(output).toContain('fatal: bad revision usage: git diff');
+    expect(output).not.toContain('fatal: bad revision\nusage: git diff');
+    expect(output.split('\n')).not.toContain('usage: git diff');
   });
 
   it('renders GitHub outputs and Markdown summaries', () => {

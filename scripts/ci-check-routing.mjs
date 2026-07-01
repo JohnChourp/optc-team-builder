@@ -7,6 +7,10 @@ import { fileURLToPath } from 'node:url';
 const ALL_ZERO_SHA_PATTERN = /^0+$/u;
 
 export const SCRIPT_SUITES = {
+  'ci-routing': {
+    label: 'CI routing tests',
+    command: 'npm run test:ci-routing',
+  },
   'captain-contracts': {
     label: 'Captain contract script tests',
     command: 'npm run test:captain-contracts',
@@ -51,6 +55,10 @@ function normalizePath(value) {
 
 function uniqueSorted(values) {
   return [...new Set(values)].sort();
+}
+
+function sanitizeOutputValue(value) {
+  return String(value ?? '').replace(/\0/gu, '').replace(/\r?\n/gu, ' ').trim();
 }
 
 function addScriptSuite(suites, suite) {
@@ -139,14 +147,15 @@ function isE2ePath(filePath) {
 
 function isCaptainContractPath(filePath) {
   return (
-    filePath === 'scripts/import-optc-data.mjs' ||
+    filePath.startsWith('scripts/') &&
+    (filePath === 'scripts/import-optc-data.mjs' ||
     filePath === 'scripts/import-optc-data.spec.ts' ||
     filePath === 'scripts/auto-team-builder-ability-parser.mjs' ||
     filePath === 'scripts/lib/captain-ability-coverage.mjs' ||
     filePath === 'scripts/lib/captain-ability-coverage.spec.ts' ||
     filePath.includes('captain') ||
     filePath.includes('ability-correction') ||
-    filePath.includes('ability-definitions')
+      filePath.includes('ability-definitions'))
   );
 }
 
@@ -267,6 +276,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isCaptainContractPath(filePath)) {
       categories.add('captain-contracts');
+      runAngular = true;
+      if (isDatasetPath(filePath)) {
+        runDatasetPerf = true;
+      }
       addScriptSuite(scriptSuites, 'captain-contracts');
       continue;
     }
@@ -319,12 +332,12 @@ export function getChangedFiles({ base, head, cwd = process.cwd(), execFile = ex
   }
 
   try {
-    const output = execFile('git', ['diff', '--name-only', '--diff-filter=ACMRTD', `${base}...${head}`], {
+    const output = execFile('git', ['diff', '--name-status', '--diff-filter=ACMRTD', `${base}...${head}`], {
       cwd,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    return { changedFiles: output.split(/\r?\n/u).filter(Boolean), diffUnavailable: false, reason: '' };
+    return { changedFiles: parseNameStatusOutput(output), diffUnavailable: false, reason: '' };
   } catch (error) {
     return {
       changedFiles: [],
@@ -332,6 +345,29 @@ export function getChangedFiles({ base, head, cwd = process.cwd(), execFile = ex
       reason: error instanceof Error ? error.message : 'git diff failed',
     };
   }
+}
+
+export function parseNameStatusOutput(output) {
+  const changedFiles = [];
+
+  for (const rawLine of String(output ?? '').split(/\r?\n/u)) {
+    const line = rawLine.trim();
+    if (!line) {
+      continue;
+    }
+
+    const [status, ...paths] = line.split('\t');
+    if (/^[CR]/u.test(status) && paths.length >= 2) {
+      changedFiles.push(paths[0], paths[1]);
+      continue;
+    }
+
+    if (paths.length >= 1) {
+      changedFiles.push(paths[0]);
+    }
+  }
+
+  return changedFiles;
 }
 
 export function renderMarkdown(plan) {
@@ -383,7 +419,7 @@ function githubOutputLines(plan) {
 
 export function formatGitHubOutput(plan) {
   return `${githubOutputLines(plan)
-    .map(([key, value]) => `${key}=${value}`)
+    .map(([key, value]) => `${key}=${sanitizeOutputValue(value)}`)
     .join('\n')}\n`;
 }
 
@@ -442,7 +478,7 @@ async function main() {
   const plan = buildCheckPlan(diff.changedFiles, { diffUnavailable: diff.diffUnavailable });
 
   if (diff.reason && diff.diffUnavailable && !plan.reasons.includes(diff.reason)) {
-    plan.reasons.push(diff.reason);
+    plan.reasons.push(sanitizeOutputValue(diff.reason));
   }
 
   if (options.format === 'github-output') {
