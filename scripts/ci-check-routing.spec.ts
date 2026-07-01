@@ -36,8 +36,16 @@ describe('ci-check-routing', () => {
 
     expect(plan.fullPlan).toBe(false);
     expect(plan.runAngular).toBe(true);
-    expect(plan.runDatasetPerf).toBe(true);
-    expect(plan.scriptSuites).toEqual(['captain-contracts']);
+    expect(plan.runDatasetPerf).toBe(false);
+    expect(plan.scriptSuites).toEqual(['captain-contracts', 'source-data']);
+  });
+
+  it('routes source data inputs to validation instead of dataset performance only', () => {
+    const plan = buildCheckPlan(['scripts/data/manual-characters.json', 'scripts/data/party-conflict-overrides.json']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runDatasetPerf).toBe(false);
+    expect(plan.scriptSuites).toEqual(['source-data']);
   });
 
   it('routes Markdown fixtures before generic docs rules', () => {
@@ -85,6 +93,7 @@ describe('ci-check-routing', () => {
       'docs-integrity',
       'docs-commands',
       'drive-sync-server',
+      'source-data',
       'perf-budget',
       'e2e-triage',
     ]);

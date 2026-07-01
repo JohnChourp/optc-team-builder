@@ -64,6 +64,7 @@ Routing defaults are:
 - e2e, Playwright, or quarantine changes run the blocking and quarantine browser
   matrices plus the e2e triage script tests
 - server changes run the drive-sync backend tests
+- source-data changes under `scripts/data/` run source-data validation tests
 - package, dependency, workflow, routing-script, missing-diff, or unclassified
   changes fail closed to the full plan
 

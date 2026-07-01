@@ -35,6 +35,11 @@ export const SCRIPT_SUITES = {
     label: 'Drive sync backend tests',
     command: 'npm run test:drive-sync-server',
   },
+  'source-data': {
+    label: 'Source data validation tests',
+    command:
+      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/upsert-manual-character.spec.ts',
+  },
   'perf-budget': {
     label: 'Performance budget script tests',
     command: 'npm run test:perf-budget',
@@ -163,9 +168,12 @@ function isCaptainContractPath(filePath) {
 function isDatasetPath(filePath) {
   return (
     filePath === 'scripts/benchmark-dataset.mjs' ||
-    filePath.startsWith('scripts/data/') ||
     filePath.startsWith('src/assets/data/')
   );
+}
+
+function isSourceDataPath(filePath) {
+  return filePath.startsWith('scripts/data/');
 }
 
 function isRuntimePath(filePath) {
@@ -278,10 +286,17 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isCaptainContractPath(filePath)) {
       categories.add('captain-contracts');
       runAngular = true;
-      if (isDatasetPath(filePath)) {
-        runDatasetPerf = true;
+      if (isSourceDataPath(filePath)) {
+        categories.add('source-data');
+        addScriptSuite(scriptSuites, 'source-data');
       }
       addScriptSuite(scriptSuites, 'captain-contracts');
+      continue;
+    }
+
+    if (isSourceDataPath(filePath)) {
+      categories.add('source-data');
+      addScriptSuite(scriptSuites, 'source-data');
       continue;
     }
 
