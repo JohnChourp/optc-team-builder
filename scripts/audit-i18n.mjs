@@ -18,18 +18,19 @@ const validatorBin = path.join(
 const validatorArgs = collectTranslationJsonFiles(i18nRoot).map((file) =>
   path.relative(projectRoot, file).replace(/\\/g, "/"),
 );
+const validatorCommand =
+  process.platform === "win32" && existsSync(`${validatorBin}.cmd`)
+    ? `${validatorBin}.cmd`
+    : validatorBin;
 
 if (validatorArgs.length === 0) {
   console.error(`[i18n-audit] No translation JSON files found under ${i18nRoot}`);
   process.exit(1);
 }
 
-const validatorCommand = [quoteShellArg(validatorBin), ...validatorArgs.map(quoteShellArg)].join(
-  " ",
-);
-const validatorResult = spawnSync(validatorCommand, {
+const validatorResult = spawnSync(validatorCommand, validatorArgs, {
   cwd: projectRoot,
-  shell: true,
+  shell: process.platform === "win32",
   stdio: "inherit",
 });
 
@@ -149,10 +150,6 @@ function collectTranslationJsonFiles(rootDir) {
   }
 
   return files.sort((left, right) => left.localeCompare(right));
-}
-
-function quoteShellArg(value) {
-  return `"${String(value).replace(/"/g, '\\"')}"`;
 }
 
 function scanTemplateFiles(rootDir, rootTranslationTree, scopeTranslationTrees) {
