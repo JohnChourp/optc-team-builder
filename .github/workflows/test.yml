@@ -10,8 +10,106 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Select checks
+    runs-on: ubuntu-latest
+    outputs:
+      full_plan: ${{ steps.route.outputs.full_plan }}
+      categories: ${{ steps.route.outputs.categories }}
+      reasons: ${{ steps.route.outputs.reasons }}
+      run_angular: ${{ steps.route.outputs.run_angular }}
+      run_script_suites: ${{ steps.route.outputs.run_script_suites }}
+      run_dataset_perf: ${{ steps.route.outputs.run_dataset_perf }}
+      run_e2e: ${{ steps.route.outputs.run_e2e }}
+      run_quarantine: ${{ steps.route.outputs.run_quarantine }}
+      script_suites: ${{ steps.route.outputs.script_suites }}
+      script_matrix: ${{ steps.route.outputs.script_matrix }}
+      changed_files_json: ${{ steps.route.outputs.changed_files_json }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve diff range
+        id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+          else
+            base_sha="${{ github.event.before }}"
+            head_sha="${GITHUB_SHA}"
+          fi
+
+          echo "base_sha=${base_sha}" >> "${GITHUB_OUTPUT}"
+          echo "head_sha=${head_sha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Route checks
+        id: route
+        run: |
+          node ./scripts/ci-check-routing.mjs \
+            --base "${{ steps.diff.outputs.base_sha }}" \
+            --head "${{ steps.diff.outputs.head_sha }}" \
+            --format github-output
+
+      - name: Summarize routing
+        run: |
+          node ./scripts/ci-check-routing.mjs \
+            --base "${{ steps.diff.outputs.base_sha }}" \
+            --head "${{ steps.diff.outputs.head_sha }}" \
+            --format markdown | tee ci-check-routing-summary.md
+          cat ci-check-routing-summary.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload routing summary
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-check-routing-summary
+          path: ci-check-routing-summary.md
+          retention-days: 14
+
   test:
     runs-on: ubuntu-latest
+    needs: changes
+
+    steps:
+      - name: Note skipped Angular tests
+        if: needs.changes.outputs.run_angular != 'true'
+        run: |
+          echo "Angular unit tests skipped by targeted CI routing."
+          echo "Categories: ${{ needs.changes.outputs.categories }}"
+
+      - name: Checkout
+        if: needs.changes.outputs.run_angular == 'true'
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        if: needs.changes.outputs.run_angular == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        if: needs.changes.outputs.run_angular == 'true'
+        run: npm ci
+
+      - name: Angular unit tests
+        if: needs.changes.outputs.run_angular == 'true'
+        run: npm run test:ci
+
+  script-suites:
+    name: Script suite (${{ matrix.suite }})
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.run_script_suites == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.script_matrix) }}
 
     steps:
       - name: Checkout
@@ -26,26 +124,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Angular unit tests
-        run: npm run test:ci
+      - name: ${{ matrix.label }}
+        run: ${{ matrix.command }}
 
-      - name: Captain contract script tests
-        run: npm run test:captain-contracts
+  dataset-performance:
+    name: Dataset performance guard
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.run_dataset_perf == 'true'
 
-      - name: Release detector replay tests
-        run: npm run test:release-check
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - name: Release readiness report tests
-        run: npm run test:release-readiness
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
 
-      - name: Docs integrity script tests
-        run: npm run test:docs-integrity
-
-      - name: Docs command script tests
-        run: npm run test:docs-commands
-
-      - name: Drive sync backend tests
-        run: npm run test:drive-sync-server
+      - name: Install dependencies
+        run: npm ci
 
       - name: Dataset performance guard
         run: npm run perf:dataset -- --assert
@@ -53,7 +152,8 @@ jobs:
   e2e:
     name: Cross-browser e2e (${{ matrix.browser }})
     runs-on: ubuntu-latest
-    needs: test
+    needs: changes
+    if: needs.changes.outputs.run_e2e == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -64,7 +164,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -110,7 +210,8 @@ jobs:
   e2e-quarantine:
     name: Quarantined browser e2e (${{ matrix.browser }})
     runs-on: ubuntu-latest
-    needs: test
+    needs: changes
+    if: needs.changes.outputs.run_quarantine == 'true'
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -122,7 +223,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
