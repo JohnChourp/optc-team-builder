@@ -93,12 +93,17 @@
     },
     "errorTitle": "Το import απέτυχε",
     "errors": {
+      "empty": "Δεν δόθηκε περιεχόμενο για saved team import.",
       "generic": "Το αρχείο δεν μπόρεσε να εισαχθεί.",
       "invalidJson": "Το αρχείο δεν είναι έγκυρο JSON.",
       "invalidPayload": "Το JSON δεν ταιριάζει με το expected saved teams schema.",
       "invalidShareCode": "Το shared team link ή code δεν είναι έγκυρο.",
+      "invalidShareJson": "Το shared team code έγινε decode, αλλά το payload JSON δεν είναι έγκυρο.",
+      "invalidSharePayload": "Το shared team payload δεν έχει τα required fields.",
+      "noImportableTeam": "Το payload δεν περιέχει importable saved team.",
       "unsupportedSchema": "Το selected JSON δεν υποστηρίζεται από το current saved teams import schema."
     },
+    "diagnosticCode": "Diagnostic code: {{code}}.",
     "eyebrow": "Μεταφορά ομάδων",
     "loadedFromFile": "Φορτώθηκε το {{fileName}}.",
     "paste": {
@@ -108,6 +113,16 @@
     },
     "pastedSource": "pasted περιεχόμενο",
     "processing": "Γίνεται import ομάδων...",
+    "recovery": {
+      "emptyInput": "Recovery: κάνε paste saved-teams JSON export, saved-team share link ή raw share code.",
+      "invalidJson": "Recovery: κάνε ξανά export τα teams ή διόρθωσε το JSON syntax πριν ξαναδοκιμάσεις.",
+      "invalidPayload": "Recovery: χρησιμοποίησε saved-teams export με schemaVersion, source, exportedAt και teams array.",
+      "invalidShareCode": "Recovery: αντέγραψε ξανά ολόκληρο το share link ή raw share code χωρίς spaces ή έξτρα κείμενο.",
+      "invalidShareJson": "Recovery: φτιάξε νέο share link από τα Saved Teams· αυτό το code κάνει decode αλλά δεν είναι valid share payload JSON.",
+      "invalidSharePayload": "Recovery: φτιάξε νέο saved-team share link· το decoded payload λείπει required share fields.",
+      "noImportableTeam": "Recovery: διάλεξε payload με τουλάχιστον ένα saved team που έχει stable id.",
+      "unsupportedSchema": "Recovery: κάνε import schema v1 saved-teams ή saved-team-share payload από το current app."
+    },
     "stats": {
       "added": "Προστέθηκαν {{count}} νέα teams.",
       "duplicates": "Συγχωνεύτηκαν {{count}} duplicate ids από το import.",

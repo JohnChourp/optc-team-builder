@@ -72,6 +72,7 @@ describe('ManualTeamBuilderPage', () => {
 
     expect(i18n.preloadScope).toHaveBeenCalledWith('manual-team-builder');
     expect(i18n.preloadScope).toHaveBeenCalledWith('ship-picker');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('saved-teams');
     expect(repository.getShips).toHaveBeenCalledOnce();
     expect(repository.getDatasetManifest).toHaveBeenCalledOnce();
     expect(repository.getAutoBuilderAbilityCatalog).toHaveBeenCalledOnce();
@@ -227,6 +228,10 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.sharedTeamFeedbackError()).toBe(
       'The shared team link or code could not be loaded.',
     );
+    expect(page.sharedTeamFeedbackDetails()).toEqual([
+      'Diagnostic code: SAVED_TEAMS_INVALID_SHARE_CODE.',
+      'Recovery for import.recovery.invalidShareCode',
+    ]);
     expect(router.navigate).toHaveBeenCalledWith([], {
       relativeTo: expect.any(Object),
       queryParams: { teamShare: null },
@@ -828,6 +833,14 @@ function createPage(
 
         if (key === 'shareImport.error') {
           return 'The shared team link or code could not be loaded.';
+        }
+
+        if (key === 'import.diagnosticCode') {
+          return `Diagnostic code: ${params?.['code'] ?? ''}.`;
+        }
+
+        if (key.startsWith('import.recovery.')) {
+          return `Recovery for ${key}`;
         }
 
         return key;

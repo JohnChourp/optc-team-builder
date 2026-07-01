@@ -32,11 +32,84 @@ export interface SavedTeamsUnavailableSlotResult {
   unknownSlotCount: number;
 }
 
+export type SavedTeamsImportDiagnosticCode =
+  | 'SAVED_TEAMS_EMPTY_INPUT'
+  | 'SAVED_TEAMS_INVALID_JSON'
+  | 'SAVED_TEAMS_INVALID_SHARE_CODE'
+  | 'SAVED_TEAMS_INVALID_SHARE_JSON'
+  | 'SAVED_TEAMS_UNSUPPORTED_SCHEMA'
+  | 'SAVED_TEAMS_INVALID_PAYLOAD'
+  | 'SAVED_TEAMS_INVALID_SHARE_PAYLOAD'
+  | 'SAVED_TEAMS_NO_IMPORTABLE_TEAM';
+
+export interface SavedTeamsImportDiagnostic {
+  code: SavedTeamsImportDiagnosticCode;
+  recoveryKey: string;
+}
+
+const SAVED_TEAMS_IMPORT_DIAGNOSTICS: Record<
+  SavedTeamsImportDiagnosticCode,
+  SavedTeamsImportDiagnostic
+> = {
+  SAVED_TEAMS_EMPTY_INPUT: {
+    code: 'SAVED_TEAMS_EMPTY_INPUT',
+    recoveryKey: 'import.recovery.emptyInput',
+  },
+  SAVED_TEAMS_INVALID_JSON: {
+    code: 'SAVED_TEAMS_INVALID_JSON',
+    recoveryKey: 'import.recovery.invalidJson',
+  },
+  SAVED_TEAMS_INVALID_SHARE_CODE: {
+    code: 'SAVED_TEAMS_INVALID_SHARE_CODE',
+    recoveryKey: 'import.recovery.invalidShareCode',
+  },
+  SAVED_TEAMS_INVALID_SHARE_JSON: {
+    code: 'SAVED_TEAMS_INVALID_SHARE_JSON',
+    recoveryKey: 'import.recovery.invalidShareJson',
+  },
+  SAVED_TEAMS_UNSUPPORTED_SCHEMA: {
+    code: 'SAVED_TEAMS_UNSUPPORTED_SCHEMA',
+    recoveryKey: 'import.recovery.unsupportedSchema',
+  },
+  SAVED_TEAMS_INVALID_PAYLOAD: {
+    code: 'SAVED_TEAMS_INVALID_PAYLOAD',
+    recoveryKey: 'import.recovery.invalidPayload',
+  },
+  SAVED_TEAMS_INVALID_SHARE_PAYLOAD: {
+    code: 'SAVED_TEAMS_INVALID_SHARE_PAYLOAD',
+    recoveryKey: 'import.recovery.invalidSharePayload',
+  },
+  SAVED_TEAMS_NO_IMPORTABLE_TEAM: {
+    code: 'SAVED_TEAMS_NO_IMPORTABLE_TEAM',
+    recoveryKey: 'import.recovery.noImportableTeam',
+  },
+};
+
 export class SavedTeamsImportError extends Error {
-  public constructor(public readonly key: string) {
+  public readonly diagnostic: SavedTeamsImportDiagnostic;
+  public readonly diagnosticCode: SavedTeamsImportDiagnosticCode;
+
+  public constructor(
+    public readonly key: string,
+    diagnosticCode: SavedTeamsImportDiagnosticCode = 'SAVED_TEAMS_INVALID_PAYLOAD',
+  ) {
     super(key);
     this.name = 'SavedTeamsImportError';
+    this.diagnostic = SAVED_TEAMS_IMPORT_DIAGNOSTICS[diagnosticCode];
+    this.diagnosticCode = this.diagnostic.code;
   }
+}
+
+export function getSavedTeamsImportDiagnostic(
+  code: SavedTeamsImportDiagnosticCode,
+): SavedTeamsImportDiagnostic {
+  return SAVED_TEAMS_IMPORT_DIAGNOSTICS[code];
+}
+
+export function resolveSavedTeamsImportDiagnostic(
+  error: Error | unknown,
+): SavedTeamsImportDiagnostic | null {
+  return error instanceof SavedTeamsImportError ? error.diagnostic : null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -99,7 +172,10 @@ function decodeUtf8Base64Url(value: string): string {
   const normalizedValue = value.trim();
 
   if (!/^[A-Za-z0-9_-]+$/u.test(normalizedValue)) {
-    throw new SavedTeamsImportError('import.errors.invalidShareCode');
+    throw new SavedTeamsImportError(
+      'import.errors.invalidShareCode',
+      'SAVED_TEAMS_INVALID_SHARE_CODE',
+    );
   }
 
   const base64Value = normalizedValue
@@ -113,7 +189,10 @@ function decodeUtf8Base64Url(value: string): string {
 
     return new TextDecoder().decode(bytes);
   } catch {
-    throw new SavedTeamsImportError('import.errors.invalidShareCode');
+    throw new SavedTeamsImportError(
+      'import.errors.invalidShareCode',
+      'SAVED_TEAMS_INVALID_SHARE_CODE',
+    );
   }
 }
 
@@ -125,7 +204,7 @@ function extractShareCodeFromInput(rawContent: string): string {
   const trimmedContent = rawContent.trim();
 
   if (!trimmedContent.length) {
-    throw new SavedTeamsImportError('import.errors.invalidPayload');
+    throw new SavedTeamsImportError('import.errors.empty', 'SAVED_TEAMS_EMPTY_INPUT');
   }
 
   try {
@@ -187,15 +266,24 @@ export function encodeSavedTeamSharePayload(payload: SavedTeamSharePayload): str
 
 export function parseSavedTeamSharePayloadValue(parsedPayload: unknown): SavedTeamSharePayload {
   if (!isRecord(parsedPayload)) {
-    throw new SavedTeamsImportError('import.errors.invalidPayload');
+    throw new SavedTeamsImportError(
+      'import.errors.invalidSharePayload',
+      'SAVED_TEAMS_INVALID_SHARE_PAYLOAD',
+    );
   }
 
   if (parsedPayload['schemaVersion'] !== 1 || parsedPayload['source'] !== 'saved-team-share') {
-    throw new SavedTeamsImportError('import.errors.unsupportedSchema');
+    throw new SavedTeamsImportError(
+      'import.errors.unsupportedSchema',
+      'SAVED_TEAMS_UNSUPPORTED_SCHEMA',
+    );
   }
 
   if (typeof parsedPayload['exportedAt'] !== 'string' || !isRecord(parsedPayload['team'])) {
-    throw new SavedTeamsImportError('import.errors.invalidPayload');
+    throw new SavedTeamsImportError(
+      'import.errors.invalidSharePayload',
+      'SAVED_TEAMS_INVALID_SHARE_PAYLOAD',
+    );
   }
 
   return {
@@ -216,7 +304,10 @@ export function decodeSavedTeamShareCode(shareCode: string): SavedTeamSharePaylo
       throw error;
     }
 
-    throw new SavedTeamsImportError('import.errors.invalidShareCode');
+    throw new SavedTeamsImportError(
+      'import.errors.invalidShareJson',
+      'SAVED_TEAMS_INVALID_SHARE_JSON',
+    );
   }
 
   return parseSavedTeamSharePayloadValue(parsedPayload);
@@ -270,7 +361,7 @@ export function parseSavedTeamsImportContent(rawContent: string): SavedTeamsTran
   const trimmedContent = rawContent.trim();
 
   if (!trimmedContent.length) {
-    throw new SavedTeamsImportError('import.errors.invalidPayload');
+    throw new SavedTeamsImportError('import.errors.empty', 'SAVED_TEAMS_EMPTY_INPUT');
   }
 
   if (trimmedContent.startsWith('{') || trimmedContent.startsWith('[')) {
@@ -279,7 +370,7 @@ export function parseSavedTeamsImportContent(rawContent: string): SavedTeamsTran
     try {
       parsedPayload = JSON.parse(trimmedContent) as unknown;
     } catch {
-      throw new SavedTeamsImportError('import.errors.invalidJson');
+      throw new SavedTeamsImportError('import.errors.invalidJson', 'SAVED_TEAMS_INVALID_JSON');
     }
 
     if (isRecord(parsedPayload) && parsedPayload['source'] === 'saved-team-share') {
@@ -305,7 +396,10 @@ export function resolveSavedTeamFromShareInput(
   const [team] = sanitizedImport.teams;
 
   if (!team) {
-    throw new SavedTeamsImportError('import.errors.invalidPayload');
+    throw new SavedTeamsImportError(
+      'import.errors.noImportableTeam',
+      'SAVED_TEAMS_NO_IMPORTABLE_TEAM',
+    );
   }
 
   return cloneSavedTeam(team);
@@ -367,7 +461,7 @@ export function parseSavedTeamsImportPayload(rawContent: string): SavedTeamsTran
   try {
     parsedPayload = JSON.parse(rawContent) as unknown;
   } catch {
-    throw new SavedTeamsImportError('import.errors.invalidJson');
+    throw new SavedTeamsImportError('import.errors.invalidJson', 'SAVED_TEAMS_INVALID_JSON');
   }
 
   return parseSavedTeamsImportPayloadValue(parsedPayload);
@@ -377,15 +471,18 @@ export function parseSavedTeamsImportPayloadValue(
   parsedPayload: unknown,
 ): SavedTeamsTransferPayload {
   if (!isRecord(parsedPayload)) {
-    throw new SavedTeamsImportError('import.errors.invalidPayload');
+    throw new SavedTeamsImportError('import.errors.invalidPayload', 'SAVED_TEAMS_INVALID_PAYLOAD');
   }
 
   if (parsedPayload['schemaVersion'] !== 1 || parsedPayload['source'] !== 'saved-teams') {
-    throw new SavedTeamsImportError('import.errors.unsupportedSchema');
+    throw new SavedTeamsImportError(
+      'import.errors.unsupportedSchema',
+      'SAVED_TEAMS_UNSUPPORTED_SCHEMA',
+    );
   }
 
   if (typeof parsedPayload['exportedAt'] !== 'string' || !Array.isArray(parsedPayload['teams'])) {
-    throw new SavedTeamsImportError('import.errors.invalidPayload');
+    throw new SavedTeamsImportError('import.errors.invalidPayload', 'SAVED_TEAMS_INVALID_PAYLOAD');
   }
 
   return {

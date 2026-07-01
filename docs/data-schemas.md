@@ -119,6 +119,21 @@ The v1 compatibility contract is strict at the payload boundary and forgiving in
 - Unrecoverable team records without a stable id, non-object records, malformed JSON, malformed share codes, unsupported sources, and unsupported schema versions are rejected instead of imported silently.
 - Corrupted local `savedTeams` storage is repaired in place on load. Valid or repairable stable-id teams are kept, unrecoverable records are removed, invalid/non-array storage resets to an empty saved-team list, and the cleaned state is written back locally.
 
+Import and share failures are surfaced through safe diagnostic codes plus short recovery guidance on Saved Teams import, Settings saved-team import, Manual Team Builder share-route import, and Auto Team Builder compare import:
+
+| Code | Meaning | Recovery class |
+| --- | --- | --- |
+| `SAVED_TEAMS_EMPTY_INPUT` | The import/share field was empty. | Choose a JSON export or paste the full share link/code. |
+| `SAVED_TEAMS_INVALID_JSON` | A JSON-looking payload could not be parsed. | Re-export the file and avoid editing the JSON by hand. |
+| `SAVED_TEAMS_INVALID_SHARE_CODE` | The share link/code was malformed or could not be decoded. | Copy the full share link/code again. |
+| `SAVED_TEAMS_INVALID_SHARE_JSON` | The share code decoded, but its payload was not valid JSON. | Generate a new share link from the source team. |
+| `SAVED_TEAMS_UNSUPPORTED_SCHEMA` | The schema version or source is not supported. | Import a current saved-team export or supported share link. |
+| `SAVED_TEAMS_INVALID_PAYLOAD` | The saved-team transfer payload shape is incomplete. | Re-export from Saved Teams or Settings. |
+| `SAVED_TEAMS_INVALID_SHARE_PAYLOAD` | The decoded share payload is missing required share fields. | Generate a new share link from Manual Team Builder or Saved Teams. |
+| `SAVED_TEAMS_NO_IMPORTABLE_TEAM` | The payload parsed, but no stable team could be imported. | Re-share or re-export a saved team with a stable id. |
+
+Diagnostics must stay redacted. Error objects and user-facing diagnostic lines may include only the translation key, diagnostic code, and recovery class. They must not include raw JSON, share codes, URLs, team names, notes, decoded payload text, or slot contents.
+
 Single-team share links use a separate self-contained payload encoded into the `teamShare` query parameter on `/tabs/manual-team-builder`:
 
 ```json

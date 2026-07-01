@@ -36,6 +36,12 @@
   font-size: 1.1rem;
 }
 
+.manual-team-feedback div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .manual-team-feedback--success {
   border: 1px solid rgba(76, 201, 240, 0.22);
   background: rgba(76, 201, 240, 0.1);

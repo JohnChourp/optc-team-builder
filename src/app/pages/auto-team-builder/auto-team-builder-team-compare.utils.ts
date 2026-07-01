@@ -16,9 +16,12 @@ import {
 import { resolveTeamCoverageSummary } from '../../core/services/team-coverage-summary.utils';
 import {
   buildSavedTeamsTransferPayloadFromSharePayload,
+  getSavedTeamsImportDiagnostic,
   parseSavedTeamsImportPayloadValue,
   parseSavedTeamSharePayloadValue,
   parseSavedTeamShareInput,
+  SavedTeamsImportError,
+  type SavedTeamsImportDiagnostic,
 } from '../saved-teams/saved-teams-transfer.utils';
 import {
   parseAutoTeamSelectionImportPayload,
@@ -88,7 +91,10 @@ export interface AutoTeamCompareDiff {
 }
 
 export class AutoTeamCompareImportError extends Error {
-  public constructor(public readonly key: string) {
+  public constructor(
+    public readonly key: string,
+    public readonly diagnostic: SavedTeamsImportDiagnostic | null = null,
+  ) {
     super(key);
     this.name = 'AutoTeamCompareImportError';
   }
@@ -227,14 +233,20 @@ function buildSeedFromAutoTeamSelection(
     return generatedSeed;
   }
 
-  throw new AutoTeamCompareImportError('compare.import.errors.noTeam');
+  throw new AutoTeamCompareImportError(
+    'compare.import.errors.noTeam',
+    getSavedTeamsImportDiagnostic('SAVED_TEAMS_NO_IMPORTABLE_TEAM'),
+  );
 }
 
 function parseJson(rawContent: string): unknown {
   try {
     return JSON.parse(rawContent) as unknown;
   } catch {
-    throw new AutoTeamCompareImportError('compare.import.errors.invalid');
+    throw new AutoTeamCompareImportError(
+      'compare.import.errors.invalid',
+      getSavedTeamsImportDiagnostic('SAVED_TEAMS_INVALID_JSON'),
+    );
   }
 }
 
@@ -244,14 +256,20 @@ export function parseAutoTeamCompareImportPayload(
   const trimmedContent = rawContent.trim();
 
   if (!trimmedContent.length) {
-    throw new AutoTeamCompareImportError('compare.import.errors.empty');
+    throw new AutoTeamCompareImportError(
+      'compare.import.errors.empty',
+      getSavedTeamsImportDiagnostic('SAVED_TEAMS_EMPTY_INPUT'),
+    );
   }
 
   if (!trimmedContent.startsWith('{') && !trimmedContent.startsWith('[')) {
     try {
       return buildSeedFromSavedTeam(parseSavedTeamShareInput(trimmedContent).team);
-    } catch {
-      throw new AutoTeamCompareImportError('compare.import.errors.invalid');
+    } catch (error) {
+      throw new AutoTeamCompareImportError(
+        'compare.import.errors.invalid',
+        error instanceof SavedTeamsImportError ? error.diagnostic : null,
+      );
     }
   }
 
@@ -289,7 +307,10 @@ export function parseAutoTeamCompareImportPayload(
     const [team] = savedTeamsPayload.teams;
 
     if (!team) {
-      throw new AutoTeamCompareImportError('compare.import.errors.noTeam');
+      throw new AutoTeamCompareImportError(
+        'compare.import.errors.noTeam',
+        getSavedTeamsImportDiagnostic('SAVED_TEAMS_NO_IMPORTABLE_TEAM'),
+      );
     }
 
     return buildSeedFromSavedTeam(team);
@@ -298,7 +319,10 @@ export function parseAutoTeamCompareImportPayload(
       throw error;
     }
 
-    throw new AutoTeamCompareImportError('compare.import.errors.invalid');
+    throw new AutoTeamCompareImportError(
+      'compare.import.errors.invalid',
+      error instanceof SavedTeamsImportError ? error.diagnostic : null,
+    );
   }
 }
 

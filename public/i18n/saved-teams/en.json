@@ -93,12 +93,17 @@
     },
     "errorTitle": "Import failed",
     "errors": {
+      "empty": "No saved team import content was provided.",
       "generic": "The selected file could not be imported.",
       "invalidJson": "The selected file is not valid JSON.",
       "invalidPayload": "The JSON does not match the expected saved teams schema.",
       "invalidShareCode": "The shared team link or code is invalid.",
+      "invalidShareJson": "The shared team code decoded, but its payload is not valid JSON.",
+      "invalidSharePayload": "The shared team payload is missing required fields.",
+      "noImportableTeam": "The payload does not include an importable saved team.",
       "unsupportedSchema": "The selected JSON is not supported by the current saved teams import schema."
     },
+    "diagnosticCode": "Diagnostic code: {{code}}.",
     "eyebrow": "Team transfer",
     "loadedFromFile": "Loaded {{fileName}}.",
     "paste": {
@@ -108,6 +113,16 @@
     },
     "pastedSource": "pasted content",
     "processing": "Importing teams...",
+    "recovery": {
+      "emptyInput": "Recovery: paste a saved-teams JSON export, a saved-team share link, or a raw share code.",
+      "invalidJson": "Recovery: export the teams again or fix the JSON syntax before retrying.",
+      "invalidPayload": "Recovery: use a saved-teams export that includes schemaVersion, source, exportedAt, and a teams array.",
+      "invalidShareCode": "Recovery: copy the full share link or raw share code again without spaces or extra text.",
+      "invalidShareJson": "Recovery: create a new share link from Saved Teams; this code decodes but is not valid share payload JSON.",
+      "invalidSharePayload": "Recovery: create a new saved-team share link; the decoded payload is missing required share fields.",
+      "noImportableTeam": "Recovery: choose a payload with at least one saved team that has a stable id.",
+      "unsupportedSchema": "Recovery: import a schema v1 saved-teams or saved-team-share payload from the current app."
+    },
     "stats": {
       "added": "Added {{count}} new teams.",
       "duplicates": "Collapsed {{count}} duplicate ids from the import.",

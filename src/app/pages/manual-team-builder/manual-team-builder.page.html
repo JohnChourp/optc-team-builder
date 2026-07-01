@@ -273,6 +273,9 @@
                     <ion-icon [icon]="errorIcon"></ion-icon>
                     <div>
                       <strong>{{ sharedTeamFeedbackError() }}</strong>
+                      @for (detail of sharedTeamFeedbackDetails(); track $index) {
+                        <span>{{ detail }}</span>
+                      }
                     </div>
                   </section>
                 }

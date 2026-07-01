@@ -280,6 +280,36 @@ must point at downloaded local JSON files, resolved relative to the source file.
 Use links for auxiliary CI runs, QA notes, brain audits, and artifact pages
 instead of copying all evidence inline.
 
+### Saved-Team Import Diagnostics
+
+When a user reports a saved-team import, share-link, Manual Team Builder route
+share, or Auto Team Builder compare import failure, ask for the visible
+diagnostic code or a screenshot of the failure banner. Do not ask for raw JSON,
+share codes, full URLs, team names, notes, or decoded payload text unless a
+separate privacy-reviewed support path is explicitly approved.
+
+Classify the report by the code shown in the UI:
+
+- `SAVED_TEAMS_EMPTY_INPUT`: have the user select a file or paste the full
+  share link/code.
+- `SAVED_TEAMS_INVALID_JSON`: have the user re-export the JSON and retry with
+  the unedited file.
+- `SAVED_TEAMS_INVALID_SHARE_CODE`: have the user copy the full share link/code
+  again.
+- `SAVED_TEAMS_INVALID_SHARE_JSON`: have the user generate a fresh share link
+  from the source team.
+- `SAVED_TEAMS_UNSUPPORTED_SCHEMA`: confirm the export came from the current
+  app version or a supported v1 saved-team/share payload.
+- `SAVED_TEAMS_INVALID_PAYLOAD`: have the user re-export from Saved Teams or
+  Settings.
+- `SAVED_TEAMS_INVALID_SHARE_PAYLOAD`: have the user generate a fresh share
+  link instead of editing the encoded payload.
+- `SAVED_TEAMS_NO_IMPORTABLE_TEAM`: have the user re-share or re-export a saved
+  team that still has a stable id.
+
+If the screenshot shows only a generic error without one of these codes, treat
+that as a diagnostics regression in the import surface that produced it.
+
 ### Docs Integrity
 
 Use the shared docs checker before merging README, guide, runbook, or audit

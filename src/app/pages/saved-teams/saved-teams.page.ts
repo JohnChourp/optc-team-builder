@@ -62,6 +62,7 @@ import {
   clearUnavailableSavedTeamSlots,
   downloadSavedTeamsExport,
   parseSavedTeamsImportContent,
+  resolveSavedTeamsImportDiagnostic,
   sanitizeSavedTeamsImportPayload,
   type SavedTeamsImportError,
 } from './saved-teams-transfer.utils';
@@ -1018,7 +1019,7 @@ export class SavedTeamsPage implements OnInit {
       this.importFeedback.set({
         tone: 'error',
         title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
-        details: [this.resolveImportError(error as SavedTeamsImportError)],
+        details: this.resolveImportErrorDetails(error as SavedTeamsImportError),
       });
     } finally {
       this.importing.set(false);
@@ -1134,5 +1135,19 @@ export class SavedTeamsPage implements OnInit {
     }
 
     return this.i18n.translate('import.errors.generic', undefined, 'saved-teams');
+  }
+
+  private resolveImportErrorDetails(error: SavedTeamsImportError | Error | unknown): string[] {
+    const details = [this.resolveImportError(error)];
+    const diagnostic = resolveSavedTeamsImportDiagnostic(error);
+
+    if (diagnostic) {
+      details.push(
+        this.i18n.translate('import.diagnosticCode', { code: diagnostic.code }, 'saved-teams'),
+        this.i18n.translate(diagnostic.recoveryKey, undefined, 'saved-teams'),
+      );
+    }
+
+    return details;
   }
 }

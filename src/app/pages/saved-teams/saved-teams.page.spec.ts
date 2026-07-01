@@ -620,6 +620,29 @@ describe('SavedTeamsPage', () => {
     expect(page.savedTeams().some((team) => team.id === 'team-3')).toBe(true);
   });
 
+  it('shows safe diagnostic details for corrupted import payloads', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    await page['importSavedTeams'](
+      new File(['{"schemaVersion":1,"source":"saved-teams",'], 'broken-teams.json', {
+        type: 'application/json',
+      }),
+    );
+
+    expect(page.importFeedback()).toEqual({
+      tone: 'error',
+      title: 'Import failed',
+      details: [
+        'The selected file is not valid JSON.',
+        'Diagnostic code: SAVED_TEAMS_INVALID_JSON.',
+        'Recovery for import.recovery.invalidJson',
+      ],
+    });
+    expect(page.importFeedback()?.details.join(' ')).not.toContain('schemaVersion');
+  });
+
   it('shows import feedback before refreshing imported team cards', async () => {
     const { page, repository } = createPage();
 
@@ -903,6 +926,18 @@ function createPage(
 
       if (key === 'import.errors.generic') {
         return 'Generic import error';
+      }
+
+      if (key === 'import.errors.invalidJson') {
+        return 'The selected file is not valid JSON.';
+      }
+
+      if (key === 'import.diagnosticCode') {
+        return `Diagnostic code: ${params?.['code'] ?? ''}.`;
+      }
+
+      if (key.startsWith('import.recovery.')) {
+        return `Recovery for ${key}`;
       }
 
       if (key === 'storageRecovery.title') {
