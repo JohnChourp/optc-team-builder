@@ -165,31 +165,39 @@ function buildCurrentSignals(releaseCheckResult, policy) {
 }
 
 function normalizeHistoryReport(report) {
-  if (!isObject(report) || report.schemaVersion !== UPSTREAM_MONITOR_SCHEMA_VERSION || !isObject(report.current)) {
+  if (!isObject(report) || report.schemaVersion !== UPSTREAM_MONITOR_SCHEMA_VERSION) {
     return null;
+  }
+
+  const normalizedReport = {
+    generatedAt: String(report.generatedAt ?? ''),
+    status: String(report.status ?? 'unknown'),
+    workflow: isObject(report.workflow) ? report.workflow : {},
+    current: null,
+  };
+
+  if (!isObject(report.current)) {
+    return normalizedReport;
   }
 
   const remoteCharacterCount = toInteger(report.current.remoteCharacterCount);
   const localCharacterCount = toInteger(report.current.localCharacterCount);
 
   if (remoteCharacterCount === null || localCharacterCount === null) {
-    return null;
+    return normalizedReport;
   }
 
-  return {
-    generatedAt: String(report.generatedAt ?? ''),
-    status: String(report.status ?? 'unknown'),
-    workflow: isObject(report.workflow) ? report.workflow : {},
-    current: {
-      remoteSourceVersion: String(report.current.remoteSourceVersion ?? 'unknown'),
-      localSourceVersion: String(report.current.localSourceVersion ?? 'unknown'),
-      remoteCharacterCount,
-      localCharacterCount,
-      newCharacterCount: toInteger(report.current.newCharacterCount) ?? sortIds(report.current.newCharacterIds).length,
-      newCharacterIds: sortIds(report.current.newCharacterIds),
-      detectorReason: String(report.current.detectorReason ?? 'unknown'),
-    },
+  normalizedReport.current = {
+    remoteSourceVersion: String(report.current.remoteSourceVersion ?? 'unknown'),
+    localSourceVersion: String(report.current.localSourceVersion ?? 'unknown'),
+    remoteCharacterCount,
+    localCharacterCount,
+    newCharacterCount: toInteger(report.current.newCharacterCount) ?? sortIds(report.current.newCharacterIds).length,
+    newCharacterIds: sortIds(report.current.newCharacterIds),
+    detectorReason: String(report.current.detectorReason ?? 'unknown'),
   };
+
+  return normalizedReport;
 }
 
 async function collectJsonFiles(rootDir) {
@@ -267,6 +275,7 @@ function buildStaleUpstreamWarning({ current, historyReports, generatedAt, polic
   const matching = trailingMatchingScheduledReports(
     historyReports,
     (report) =>
+      report.current &&
       report.current.remoteSourceVersion === current.remoteSourceVersion &&
       report.current.remoteCharacterCount === current.remoteCharacterCount,
   );
@@ -304,7 +313,7 @@ function buildShapeDriftWarning({ current, historyReports, policy }) {
 
   const recentCounts = scheduledReports(historyReports)
     .slice(-policy.shapeDrift.historyWindow)
-    .map((report) => report.current.remoteCharacterCount)
+    .map((report) => report.current?.remoteCharacterCount)
     .filter((count) => Number.isFinite(count));
 
   if (recentCounts.length < policy.shapeDrift.minScheduledSamples) {
@@ -343,8 +352,9 @@ function buildPersistentLagWarning({ current, historyReports, policy, workflow }
     return null;
   }
 
-  const matching = trailingMatchingScheduledReports(historyReports, (report) =>
-    sameIdList(report.current.newCharacterIds, current.newCharacterIds),
+  const matching = trailingMatchingScheduledReports(
+    historyReports,
+    (report) => report.current && sameIdList(report.current.newCharacterIds, current.newCharacterIds),
   );
   const sampleCount = matching.length + 1;
 
@@ -374,10 +384,10 @@ function buildHistorySummary(historyReports, policy) {
     status: report.status,
     eventName: report.workflow?.eventName ?? null,
     runUrl: report.workflow?.runUrl ?? null,
-    remoteSourceVersion: report.current.remoteSourceVersion,
-    remoteCharacterCount: report.current.remoteCharacterCount,
-    newCharacterCount: report.current.newCharacterCount,
-    detectorReason: report.current.detectorReason,
+    remoteSourceVersion: report.current?.remoteSourceVersion ?? null,
+    remoteCharacterCount: report.current?.remoteCharacterCount ?? null,
+    newCharacterCount: report.current?.newCharacterCount ?? null,
+    detectorReason: report.current?.detectorReason ?? null,
   }));
 
   return {

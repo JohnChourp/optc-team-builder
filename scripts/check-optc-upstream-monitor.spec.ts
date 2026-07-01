@@ -56,6 +56,18 @@ function historyReport(generatedAt: string, overrides: Record<string, unknown> =
   });
 }
 
+function failedHistoryReport(generatedAt: string) {
+  return buildUpstreamMonitorReport({
+    generatedAt,
+    env: {
+      GITHUB_WORKFLOW: 'Check OPTC DB Release',
+      GITHUB_EVENT_NAME: 'schedule',
+      GITHUB_REPOSITORY: 'JohnChourp/optc-team-builder',
+      GITHUB_RUN_ID: generatedAt.replace(/\D/g, '').slice(0, 8),
+    },
+  });
+}
+
 const scheduledEnv = {
   GITHUB_WORKFLOW: 'Check OPTC DB Release',
   GITHUB_EVENT_NAME: 'schedule',
@@ -132,6 +144,22 @@ describe('check-optc-upstream-monitor', () => {
     expect(report.warnings).toEqual([]);
   });
 
+  it('treats failed scheduled history reports as stale-upstream window breakers', () => {
+    const report = buildUpstreamMonitorReport({
+      releaseCheckResult: releaseCheckResult(),
+      generatedAt: '2026-07-01T00:00:00.000Z',
+      historyReports: [
+        historyReport('2026-06-08T00:00:00.000Z'),
+        failedHistoryReport('2026-06-20T00:00:00.000Z'),
+        historyReport('2026-06-30T00:00:00.000Z'),
+      ],
+      env: scheduledEnv,
+    });
+
+    expect(report.status).toBe('passed');
+    expect(report.warnings).toEqual([]);
+  });
+
   it('warns on material normalized shape drift without new upstream IDs', () => {
     const report = buildUpstreamMonitorReport({
       releaseCheckResult: releaseCheckResult({
@@ -192,6 +220,36 @@ describe('check-optc-upstream-monitor', () => {
         id: 'persistent-local-lag',
       }),
     ]);
+  });
+
+  it('treats failed scheduled history reports as persistent-lag window breakers', () => {
+    const newIds = [4578, 4579];
+    const report = buildUpstreamMonitorReport({
+      releaseCheckResult: releaseCheckResult({
+        releaseNeeded: true,
+        reason: 'new-upstream-characters',
+        remoteSourceVersion: '37',
+        remoteCharacterCount: 4579,
+        newCharacterIds: newIds,
+        newCharacterCount: newIds.length,
+      }),
+      generatedAt: '2026-07-01T00:00:00.000Z',
+      historyReports: [
+        historyReport('2026-06-29T00:00:00.000Z', {
+          releaseNeeded: true,
+          reason: 'new-upstream-characters',
+          remoteSourceVersion: '37',
+          remoteCharacterCount: 4579,
+          newCharacterIds: newIds,
+          newCharacterCount: newIds.length,
+        }),
+        failedHistoryReport('2026-06-30T00:00:00.000Z'),
+      ],
+      env: scheduledEnv,
+    });
+
+    expect(report.status).toBe('passed');
+    expect(report.warnings).toEqual([]);
   });
 
   it('fails the monitor report when release detector output is missing', () => {
