@@ -32,6 +32,7 @@ import {
   resolveNonNegativeInteger,
   type AbilityRequirementDraft,
 } from '../../core/services/ability-requirement-draft.utils';
+import { applyIonicModalDialogLabel } from '../a11y/ionic-modal-dialog-label.utils';
 
 interface CategoryAbilityTileView {
   item: AutoBuildAbilityCatalogItem;
@@ -150,6 +151,10 @@ export class SpecialAbilityPickerComponent implements OnChanges {
           left.groupOrder - right.groupOrder || left.groupLabel.localeCompare(right.groupLabel),
       );
   });
+
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
+  }
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes['catalogItems']) {

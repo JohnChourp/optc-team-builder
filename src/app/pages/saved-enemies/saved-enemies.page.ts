@@ -42,6 +42,7 @@ import {
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
 import {
   AbilityFilterRailComponent,
@@ -810,6 +811,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public clearAllAbilityFilters(): void {
     this.selectedAbilityFilterIds.set([]);
     this.pruneSelection();
+  }
+
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
   }
 
   public openCreateModal(): void {

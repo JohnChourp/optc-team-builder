@@ -18,7 +18,7 @@
 
         <div class="hero-actions">
           <ion-button color="warning" (click)="openCreateModal()">
-            <ion-icon slot="start" [icon]="addIcon"></ion-icon>
+            <ion-icon slot="start" [icon]="addIcon" aria-hidden="true"></ion-icon>
             {{ t('hero.createCta') }}
           </ion-button>
         </div>
@@ -26,7 +26,7 @@
 
       @if (loading()) {
         <section class="glass-card loading-card">
-          <ion-spinner name="crescent"></ion-spinner>
+          <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
           <span>{{ t('loading') }}</span>
         </section>
       }
@@ -288,10 +288,18 @@
       #savedEnemyEditorModal
       [isOpen]="editorOpen()"
       cssClass="saved-enemies-editor-modal"
+      [attr.aria-label]="editingEnemy() ? t('editor.editTitle') : t('editor.createTitle')"
+      (didPresent)="
+        labelModalDialog($event, editingEnemy() ? t('editor.editTitle') : t('editor.createTitle'))
+      "
       (didDismiss)="closeEditor()"
     >
       <ng-template>
-        <ion-header class="editor-modal-header ion-no-border">
+        <ion-header
+          class="editor-modal-header ion-no-border"
+          role="group"
+          [attr.aria-label]="editingEnemy() ? t('editor.editTitle') : t('editor.createTitle')"
+        >
           <ion-toolbar>
             <div class="editor-modal-head">
               <div>
@@ -307,9 +315,10 @@
               <ion-button
                 fill="clear"
                 color="light"
+                [attr.aria-label]="'common.actions.close' | transloco"
                 (click)="closeEditor(); savedEnemyEditorModal.dismiss(null, 'cancel')"
               >
-                <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
               </ion-button>
             </ion-buttons>
           </ion-toolbar>
@@ -415,8 +424,10 @@
                     color="warning"
                     [disabled]="savingEnemy()"
                     (click)="openTeamAssociationPicker()"
+                    (keydown.enter)="openTeamAssociationPicker()"
+                    (keydown.space)="openTeamAssociationPicker(); $event.preventDefault()"
                   >
-                    <ion-icon slot="start" [icon]="addIcon"></ion-icon>
+                    <ion-icon slot="start" [icon]="addIcon" aria-hidden="true"></ion-icon>
                     {{
                       associatedTeamIds().length
                         ? t('editor.associatedTeams.manage')
@@ -827,10 +838,16 @@
               #parsedAbilitySelectionModal
               [isOpen]="parsedAbilitySelectionOpen()"
               cssClass="saved-enemies-editor-modal"
+              [attr.aria-label]="t('editor.paste.selection.title')"
+              (didPresent)="labelModalDialog($event, t('editor.paste.selection.title'))"
               (didDismiss)="closeParsedAbilitySelection()"
             >
               <ng-template>
-                <ion-header class="editor-modal-header ion-no-border">
+                <ion-header
+                  class="editor-modal-header ion-no-border"
+                  role="group"
+                  [attr.aria-label]="t('editor.paste.selection.title')"
+                >
                   <ion-toolbar>
                     <div class="editor-modal-head">
                       <div>
@@ -846,12 +863,17 @@
                       <ion-button
                         fill="clear"
                         color="light"
+                        [attr.aria-label]="'common.actions.close' | transloco"
                         (click)="
                           closeParsedAbilitySelection();
                           parsedAbilitySelectionModal.dismiss(null, 'cancel')
                         "
                       >
-                        <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                        <ion-icon
+                          slot="icon-only"
+                          [icon]="closeIcon"
+                          aria-hidden="true"
+                        ></ion-icon>
                       </ion-button>
                     </ion-buttons>
                   </ion-toolbar>
@@ -928,7 +950,11 @@
                   </div>
                 </ion-content>
 
-                <ion-footer class="editor-modal-footer">
+                <ion-footer
+                  class="editor-modal-footer"
+                  role="group"
+                  [attr.aria-label]="t('editor.paste.selection.title')"
+                >
                   <ion-toolbar>
                     <div class="editor-modal-actions">
                       <ion-button
@@ -958,10 +984,16 @@
               #teamAssociationPickerModal
               [isOpen]="teamAssociationPickerOpen()"
               cssClass="enemy-team-association-modal"
+              [attr.aria-label]="t('teamAssociation.title')"
+              (didPresent)="labelModalDialog($event, t('teamAssociation.title'))"
               (didDismiss)="closeTeamAssociationPicker()"
             >
               <ng-template>
-                <ion-header class="team-association-modal__header ion-no-border">
+                <ion-header
+                  class="team-association-modal__header ion-no-border"
+                  role="group"
+                  [attr.aria-label]="t('teamAssociation.title')"
+                >
                   <ion-toolbar>
                     <div class="team-association-modal__head">
                       <div>
@@ -985,12 +1017,17 @@
                       <ion-button
                         fill="clear"
                         color="light"
+                        [attr.aria-label]="'common.actions.close' | transloco"
                         (click)="
                           closeTeamAssociationPicker();
                           teamAssociationPickerModal.dismiss(null, 'cancel')
                         "
                       >
-                        <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                        <ion-icon
+                          slot="icon-only"
+                          [icon]="closeIcon"
+                          aria-hidden="true"
+                        ></ion-icon>
                       </ion-button>
                     </ion-buttons>
                   </ion-toolbar>
@@ -1132,7 +1169,11 @@
                   </div>
                 </ion-content>
 
-                <ion-footer class="team-association-modal__footer">
+                <ion-footer
+                  class="team-association-modal__footer"
+                  role="group"
+                  [attr.aria-label]="t('teamAssociation.title')"
+                >
                   <ion-toolbar>
                     <div class="team-association-modal__footer-row">
                       <div class="team-association-modal__footer-summary">
@@ -1174,7 +1215,11 @@
           </div>
         </ion-content>
 
-        <ion-footer class="editor-modal-footer">
+        <ion-footer
+          class="editor-modal-footer"
+          role="group"
+          [attr.aria-label]="editingEnemy() ? t('editor.editTitle') : t('editor.createTitle')"
+        >
           <ion-toolbar>
             <div class="editor-modal-actions">
               <ion-button

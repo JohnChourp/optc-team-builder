@@ -57,6 +57,33 @@
   --padding-end: 8px;
 }
 
+.manual-team-slot__edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(248, 251, 255, 0.78);
+  cursor: pointer;
+}
+
+.manual-team-slot__edit:hover,
+.manual-team-slot__edit:focus-visible {
+  outline: none;
+  background: rgba(245, 200, 76, 0.12);
+  color: #f5c84c;
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.22);
+}
+
+.manual-team-slot__edit ion-icon {
+  font-size: 18px;
+  pointer-events: none;
+}
+
 .manual-team-slot__meta,
 .manual-team-slot__stats,
 .manual-team-scope-chip-row {

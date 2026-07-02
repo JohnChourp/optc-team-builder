@@ -85,6 +85,7 @@ import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
 import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
+import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 import {
   ManualTeamBuilderPickerPanelComponent,
   ManualTeamBuilderWorkbenchPanelComponent,
@@ -662,6 +663,10 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.candidateMaxCost.set(null);
     this.clearAbilityFilterDrafts();
     await this.refreshCandidates();
+  }
+
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
   }
 
   public async openCharacterPicker(index: number): Promise<void> {

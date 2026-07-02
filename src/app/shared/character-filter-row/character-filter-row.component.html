@@ -100,6 +100,7 @@
       <span>{{ favoritesOnlyLabel }}</span>
       <ion-toggle
         color="warning"
+        [attr.aria-label]="favoritesOnlyLabel"
         [disabled]="disabled"
         [checked]="favoritesOnly"
         (ionChange)="onFavoritesOnlyChange($event)"
@@ -114,6 +115,7 @@
       <span>{{ hideFavoritesLabel }}</span>
       <ion-toggle
         color="warning"
+        [attr.aria-label]="hideFavoritesLabel"
         [disabled]="disabled"
         [checked]="hideFavorites"
         (ionChange)="onHideFavoritesChange($event)"

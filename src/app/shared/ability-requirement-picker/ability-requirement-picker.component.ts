@@ -49,6 +49,7 @@ import {
   type AutoBuildLeaderBoostRange,
   type AutoBuildLeaderBoostRanges,
 } from '../../core/models/auto-team-builder.models';
+import { applyIonicModalDialogLabel } from '../a11y/ionic-modal-dialog-label.utils';
 import { AbilityRequirementPickerStylePanelsComponent } from './ability-requirement-picker-style-panels.component';
 
 interface AbilityRequirementCatalogTileView {
@@ -209,6 +210,10 @@ export class AbilityRequirementPickerComponent implements OnChanges {
       };
     }),
   );
+
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
+  }
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes['catalogItems']) {

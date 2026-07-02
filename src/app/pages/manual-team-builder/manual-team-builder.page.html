@@ -23,7 +23,7 @@
 
           @if (loading()) {
             <section class="glass-card loading-card">
-              <ion-spinner name="crescent"></ion-spinner>
+              <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
               <span>{{ t('loading') }}</span>
             </section>
           } @else {
@@ -139,10 +139,8 @@
                               </a>
                             </span>
                             <div class="manual-team-slot__actions">
-                              <ion-button
-                                fill="clear"
-                                size="small"
-                                color="light"
+                              <button
+                                type="button"
                                 class="manual-team-slot__edit"
                                 [attr.data-testid]="'manual-team-slot-edit-' + index"
                                 [title]="t('actions.editSlot', { slot: index + 1 })"
@@ -150,11 +148,10 @@
                                 (click)="$event.stopPropagation(); openCharacterPicker(index)"
                               >
                                 <ion-icon
-                                  slot="icon-only"
                                   [icon]="editIcon"
                                   aria-hidden="true"
                                 ></ion-icon>
-                              </ion-button>
+                              </button>
                               <ion-button
                                 fill="clear"
                                 size="small"
@@ -238,10 +235,8 @@
                           <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
                           <small>{{ t('slots.empty') }}</small>
                         </span>
-                        <ion-button
-                          fill="clear"
-                          size="small"
-                          color="light"
+                        <button
+                          type="button"
                           class="manual-team-slot__edit"
                           [attr.data-testid]="'manual-team-slot-edit-' + index"
                           [title]="t('actions.editSlot', { slot: index + 1 })"
@@ -249,11 +244,10 @@
                           (click)="$event.stopPropagation(); openCharacterPicker(index)"
                         >
                           <ion-icon
-                            slot="icon-only"
                             [icon]="editIcon"
                             aria-hidden="true"
                           ></ion-icon>
-                        </ion-button>
+                        </button>
                       }
                     </div>
                   }
@@ -381,10 +375,18 @@
           #characterPickerModal
           [isOpen]="pickerModalOpen()"
           cssClass="pick-editor-modal"
+          [attr.aria-label]="t('picker.title', { slot: selectedSlotIndex() + 1 })"
+          (didPresent)="
+            labelModalDialog($event, t('picker.title', { slot: selectedSlotIndex() + 1 }))
+          "
           (didDismiss)="closeCharacterPicker()"
         >
           <ng-template>
-            <ion-header class="pick-editor-modal__header ion-no-border">
+            <ion-header
+              class="pick-editor-modal__header ion-no-border"
+              role="group"
+              [attr.aria-label]="t('picker.title', { slot: selectedSlotIndex() + 1 })"
+            >
               <ion-toolbar>
                 <div class="pick-editor-modal__head">
                   <div>
@@ -625,7 +627,7 @@
                     </div>
                   } @else if (candidatesLoading()) {
                     <div class="manual-team-empty">
-                      <ion-spinner name="crescent"></ion-spinner>
+                      <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
                       {{ t('picker.loading') }}
                     </div>
                   } @else if (!candidateCards().length) {
