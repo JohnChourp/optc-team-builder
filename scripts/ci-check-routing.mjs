@@ -150,6 +150,10 @@ function isSavedTeamCodecPath(filePath) {
   );
 }
 
+function isSavedTeamCodecRuntimePath(filePath) {
+  return filePath === 'src/app/pages/saved-teams/saved-teams-transfer.utils.ts';
+}
+
 function isPerfPath(filePath) {
   return (
     filePath === 'scripts/perf-budget-report.mjs' ||
@@ -298,6 +302,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isSavedTeamCodecPath(filePath)) {
       categories.add('saved-team-codecs');
       addScriptSuite(scriptSuites, 'saved-team-codecs');
+      if (isSavedTeamCodecRuntimePath(filePath)) {
+        categories.add('runtime');
+        runAngular = true;
+        runE2e = true;
+      }
       if (isDocsPath(filePath)) {
         for (const suite of DOCS_SCRIPT_SUITES) {
           addScriptSuite(scriptSuites, suite);

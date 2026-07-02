@@ -106,6 +106,18 @@ describe('Saved team codec fuzz invariants', () => {
     }
   });
 
+  it('keeps the canonical v1 transfer fixture on the focused codec route', () => {
+    const payload = parseSavedTeamsImportPayload(readFixture('saved-teams-v1.json'));
+    const sanitized = sanitizeSavedTeamsImportPayload(payload, SANITIZE_OPTIONS);
+
+    expect(payload.schemaVersion).toBe(1);
+    expect(payload.source).toBe('saved-teams');
+    expect(sanitized.invalidTeamCount).toBe(0);
+    expect(sanitized.duplicateIdCount).toBe(0);
+    expect(sanitized.teams.length).toBeGreaterThan(0);
+    sanitized.teams.forEach(expectSavedTeamInvariants);
+  });
+
   it('keeps duplicate ids last-write-wins after repair', () => {
     const legacyCase = CORPUS.legacyPayloads[0]!;
     const mutationCase = CORPUS.mutationPayloads[0]!;
