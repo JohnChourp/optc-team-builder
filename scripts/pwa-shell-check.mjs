@@ -26,13 +26,14 @@ const TEMP_ROOT = path.join(ROOT_DIR, 'dist', `.pwa-shell-check-${process.pid}-$
 const RELEASE_A_DIR = path.join(TEMP_ROOT, 'release-a');
 const RELEASE_B_DIR = path.join(TEMP_ROOT, 'release-b');
 const ROUTES = [
-  '/',
-  '/tabs/characters',
-  '/tabs/auto-team-builder',
-  '/tabs/saved-teams',
-  '/tabs/settings',
-  '/guides/guided-build-compare-team-sharing',
+  { path: '/', expectedText: /OPTC Team Builder/iu },
+  { path: '/tabs/characters', expectedText: /OPTC Character Vault/iu },
+  { path: '/tabs/auto-team-builder', expectedText: /Auto Team Builder/iu },
+  { path: '/tabs/saved-teams', expectedText: /Saved Teams/iu },
+  { path: '/tabs/settings', expectedText: /Manage language|offline data|Settings/iu },
+  { path: '/guides/guided-build-compare-team-sharing', expectedText: /Guided Build|Compare Mode|Team Sharing/iu },
 ];
+const ROUTE_PATHS = ROUTES.map((route) => route.path);
 const SERVICE_WORKER_READY_TIMEOUT_MS = 45_000;
 const APP_READY_TIMEOUT_MS = 45_000;
 
@@ -146,11 +147,6 @@ function patchReleaseMarker(releaseDir, label) {
     ? original.replace(/<meta name="pwa-shell-release" content="[^"]*">/u, marker)
     : original.replace(/<\/head>/iu, `  ${marker}\n</head>`);
   fs.writeFileSync(indexPath, next, 'utf8');
-
-  const workerPath = path.join(releaseDir, 'ngsw-worker.js');
-  if (fs.existsSync(workerPath)) {
-    fs.appendFileSync(workerPath, `\n/* pwa-shell-check:${label} */\n`, 'utf8');
-  }
 }
 
 function contentTypeFor(filePath) {
@@ -261,6 +257,21 @@ async function waitForAppReady(page) {
     .waitFor({ state: 'visible', timeout: APP_READY_TIMEOUT_MS });
 }
 
+async function assertRouteRendered(page, route) {
+  const pathname = new URL(page.url()).pathname;
+  if (pathname !== route.path) {
+    throw new Error(`expected route ${route.path} to render, browser is at ${pathname}`);
+  }
+
+  const contentText = await page
+    .locator('ion-content:not(.tabs-menu__content)')
+    .first()
+    .innerText({ timeout: APP_READY_TIMEOUT_MS });
+  if (!route.expectedText.test(contentText)) {
+    throw new Error(`route ${route.path} did not render expected content ${route.expectedText}`);
+  }
+}
+
 async function waitForServiceWorkerControl(page) {
   const result = await page.evaluate(async (timeoutMs) => {
     if (!('serviceWorker' in navigator)) {
@@ -315,25 +326,45 @@ async function waitForServiceWorkerControl(page) {
   });
 }
 
-async function sendNgswMessage(page, action) {
+async function sendNgswOperation(page, action) {
   return page.evaluate(
-    ({ action: actionName }) =>
+    ({ action: actionName, timeoutMs }) =>
       new Promise((resolve) => {
         const controller = navigator.serviceWorker.controller;
         if (!controller) {
           resolve({ ok: false, reason: 'missing-controller' });
           return;
         }
-        const channel = new MessageChannel();
-        const timer = setTimeout(() => resolve({ ok: false, reason: 'timeout' }), 15_000);
-        channel.port1.onmessage = (event) => {
+        const nonce = Math.round(Math.random() * 10_000_000);
+        const finish = (result) => {
           clearTimeout(timer);
-          resolve({ ok: true, data: event.data });
+          navigator.serviceWorker.removeEventListener('message', handleMessage);
+          resolve(result);
         };
-        controller.postMessage({ action: actionName }, [channel.port2]);
+        const handleMessage = (event) => {
+          const data = event.data;
+          if (data?.type !== 'OPERATION_COMPLETED' || data.nonce !== nonce) {
+            return;
+          }
+          if (data.error) {
+            finish({ ok: false, nonce, error: String(data.error) });
+            return;
+          }
+          finish({ ok: true, nonce, result: Boolean(data.result) });
+        };
+        const timer = setTimeout(() => finish({ ok: false, nonce, reason: 'timeout' }), timeoutMs);
+        navigator.serviceWorker.addEventListener('message', handleMessage);
+        controller.postMessage({ action: actionName, nonce });
       }),
-    { action },
+    { action, timeoutMs: 15_000 },
   );
+}
+
+function assertNgswOperationSucceeded(action, result) {
+  if (result.ok && result.result === true) {
+    return;
+  }
+  throw new Error(`${action} did not complete successfully: ${JSON.stringify(result)}`);
 }
 
 async function serviceWorkerState(page) {
@@ -401,14 +432,15 @@ async function verifyOnlineRoutes(browser, baseURL, diagnostics) {
   const results = [];
   try {
     for (const route of ROUTES) {
-      const response = await page.goto(`${baseURL}${route}`, { waitUntil: 'domcontentloaded' });
+      const response = await page.goto(`${baseURL}${route.path}`, { waitUntil: 'domcontentloaded' });
       if (!response?.ok()) {
-        throw new Error(`online ${route} returned ${response?.status() ?? 'no response'}`);
+        throw new Error(`online ${route.path} returned ${response?.status() ?? 'no response'}`);
       }
       await waitForAppReady(page);
+      await assertRouteRendered(page, route);
       const title = await page.title();
-      const screenshotPath = await screenshot(page, 'online', route);
-      results.push({ route, status: response.status(), title, screenshot: screenshotPath });
+      const screenshotPath = await screenshot(page, 'online', route.path);
+      results.push({ route: route.path, status: response.status(), title, screenshot: screenshotPath });
     }
   } finally {
     await context.close();
@@ -435,11 +467,12 @@ async function verifyOfflineRoutes(browser, baseURL, diagnostics) {
     await screenshot(page, 'controlled', '/');
     await context.setOffline(true);
     for (const route of ROUTES) {
-      await page.goto(`${baseURL}${route}`, { waitUntil: 'domcontentloaded' });
+      await page.goto(`${baseURL}${route.path}`, { waitUntil: 'domcontentloaded' });
       await waitForAppReady(page);
+      await assertRouteRendered(page, route);
       const title = await page.title();
-      const screenshotPath = await screenshot(page, 'offline', route);
-      results.push({ route, title, screenshot: screenshotPath });
+      const screenshotPath = await screenshot(page, 'offline', route.path);
+      results.push({ route: route.path, title, screenshot: screenshotPath });
     }
     await context.setOffline(false);
     return { serviceWorker, appConfigWarmup, results };
@@ -474,8 +507,10 @@ async function verifyUpgrade(browser, serverHandle, diagnostics) {
         active: registration?.active?.scriptURL ?? '',
       };
     });
-    const checkResult = await sendNgswMessage(page, 'CHECK_FOR_UPDATES');
-    const activateResult = await sendNgswMessage(page, 'ACTIVATE_UPDATE');
+    const checkResult = await sendNgswOperation(page, 'CHECK_FOR_UPDATES');
+    assertNgswOperationSucceeded('CHECK_FOR_UPDATES', checkResult);
+    const activateResult = await sendNgswOperation(page, 'ACTIVATE_UPDATE');
+    assertNgswOperationSucceeded('ACTIVATE_UPDATE', activateResult);
     await page.waitForTimeout(1500);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await waitForAppReady(page);
@@ -558,8 +593,9 @@ async function main() {
   const serverHandle = await startStaticServer(RELEASE_A_DIR);
   const diagnostics = { consoleErrors: [], pageErrors: [], requestFailures: [] };
   const startedAt = new Date().toISOString();
-  const browser = await chromium.launch({ headless: process.env.PWA_SHELL_HEADLESS !== '0' });
+  let browser;
   try {
+    browser = await chromium.launch({ headless: process.env.PWA_SHELL_HEADLESS !== '0' });
     const manifest = await verifyManifest(serverHandle.baseURL);
     const onlineRoutes = await verifyOnlineRoutes(browser, serverHandle.baseURL, diagnostics);
     const offlineRoutes = await verifyOfflineRoutes(browser, serverHandle.baseURL, diagnostics);
@@ -573,7 +609,7 @@ async function main() {
       startedAt,
       completedAt: new Date().toISOString(),
       baseURL: serverHandle.baseURL,
-      routes: ROUTES,
+      routes: ROUTE_PATHS,
       manifest,
       onlineRoutes,
       offlineRoutes,
@@ -589,7 +625,7 @@ async function main() {
         '',
         `Task: 869dwc7wk`,
         `Status: passed`,
-        `Routes: ${ROUTES.join(', ')}`,
+        `Routes: ${ROUTE_PATHS.join(', ')}`,
         `Service worker: ${offlineRoutes.serviceWorker.scriptURL}`,
         `Upgrade: ${upgrade.releaseBefore} -> ${upgrade.releaseAfter}`,
         `Screenshots: ${path.relative(ARTIFACT_DIR, SCREENSHOT_DIR).replace(/\\/gu, '/')}/`,
@@ -611,7 +647,9 @@ async function main() {
     writeArtifact('pwa-shell-report.json', `${JSON.stringify(failure, null, 2)}\n`);
     throw error;
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
     await serverHandle.close();
     fs.rmSync(TEMP_ROOT, { recursive: true, force: true });
   }

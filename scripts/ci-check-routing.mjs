@@ -158,6 +158,7 @@ function isPwaShellPath(filePath) {
   return (
     filePath === 'ngsw-config.json' ||
     filePath === 'src/app/app.config.ts' ||
+    filePath === 'src/main.ts' ||
     filePath === 'src/index.html' ||
     filePath === 'public/manifest.webmanifest' ||
     filePath.startsWith('public/brand/pwa-icon-') ||

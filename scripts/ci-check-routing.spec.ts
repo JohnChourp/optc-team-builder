@@ -67,7 +67,7 @@ describe('ci-check-routing', () => {
   });
 
   it('routes PWA shell changes to the install offline and upgrade safety suite', () => {
-    const plan = buildCheckPlan(['ngsw-config.json', 'public/manifest.webmanifest', 'scripts/pwa-shell-check.mjs']);
+    const plan = buildCheckPlan(['ngsw-config.json', 'src/main.ts', 'public/manifest.webmanifest', 'scripts/pwa-shell-check.mjs']);
 
     expect(plan.fullPlan).toBe(false);
     expect(plan.runAngular).toBe(true);
