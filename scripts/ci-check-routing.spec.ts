@@ -103,6 +103,18 @@ describe('ci-check-routing', () => {
     expect(plan.scriptSuites).toEqual(['maintainer-doctor']);
   });
 
+  it('routes dataset digest changes to the focused digest suite', () => {
+    const plan = buildCheckPlan([
+      'scripts/dataset-change-digest.mjs',
+      'scripts/dataset-change-digest.spec.ts',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['dataset-digest']);
+  });
+
   it('routes PWA shell changes to the install offline and upgrade safety suite', () => {
     const plan = buildCheckPlan(['ngsw-config.json', 'src/main.ts', 'public/manifest.webmanifest', 'scripts/pwa-shell-check.mjs']);
 
@@ -135,6 +147,7 @@ describe('ci-check-routing', () => {
     expect(plan.scriptSuites).toEqual([
       'ci-routing',
       'maintainer-doctor',
+      'dataset-digest',
       'saved-team-codecs',
       'captain-contracts',
       'release-check',

@@ -22,6 +22,7 @@ script, or workflow prerequisite looks suspect.
 | Captain ability parser or generated captain metadata | `npm run test:captain-contracts` plus `npm run test:ci -- --include src/app/core/services/auto-team-builder-ability-parser.spec.ts` | Lightweight parser/generated gates plus `npm run test:ci -- --include scripts/import-optc-data.spec.ts --include scripts/lib/captain-ability-coverage.spec.ts`; add full `npm run test:ci` when shared runtime code changed | The builder-ability parser, script-side import boosts, and generated coverage tiers stay aligned on the shared golden captain cases | Test output only |
 | Runtime captain matching or ability requirement matching | `npm run test:ci -- --include src/app/core/services/captain-coverage.utils.spec.ts --include src/app/core/services/auto-team-builder-ability-match.utils.spec.ts` | Lightweight runtime specs plus `npm run test:captain-contracts`; add full `npm run test:ci` when shared utilities or page behavior changed | Angular runtime captain coverage and ability matching stay aligned with generated captain metadata | Test output only |
 | Manual-character overlays or dataset integrity checks | `npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts` | Lightweight manual-character specs plus `npx vitest run scripts --reporter=dot`; add `npm run test:captain-contracts` when generated ability metadata is touched | Manual overlays, linked canonical ids, generated dataset integrity, and broad script sweeps stay trustworthy | Test output only |
+| Dataset-change digest schema, generated-data review summary, or PR digest workflow | `npm run test:dataset-digest` | Focused digest tests plus one real `npm run dataset:digest -- --base-ref origin/main --head-ref HEAD --output /tmp/dataset-change-digest.md --json-output /tmp/dataset-change-digest.json`; add captain/source-data gates for parser changes | Parser/import PRs get a scan-friendly summary of manifest counts, generated records, captain tiers, builder abilities, ability catalog deltas, and suspicious churn | GitHub Actions artifact `dataset-change-digest`; local paths passed to `--output` and `--json-output` |
 | Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters` | Run `npm run perf:ability-filters`, collect the companion explanation/import-share result, then run `npm run perf:budget-report -- --current-dir /path/to/current`; add focused unit specs for the touched page or utility | Deterministic desktop/mobile ability-filter timings are captured, and hard budgets are enforced by the budget report | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` |
 | Auto Team Builder explanation detail, compare rendering, or import/share hydration performance | `PERF_ASSERT=0 npm run perf:explanation-compare` | `npm run perf:explanation-compare` plus focused Auto Team Builder, Saved Teams, or Manual Team Builder specs | Compare-panel rendering, imported compare apply, explanation expansion, heavy saved-team import, and share-link hydration stay inside pragmatic browser budgets | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dvr7x5`, with other machines using `perf-artifacts/explanation-compare` |
 | Guided build, compare mode, saved-team sharing, or import accessibility | Focused page specs plus `npm run test:e2e:chromium -- --grep "@accessibility"` | Focused accessibility slice plus full `npm run test:e2e:chromium`, `npm run i18n:validate` for copy changes, and `npm run build` | Guided toggles/submits, compare saved/imported/error/swap controls, saved-team share/import feedback, modal focus recovery, dialog names, live-region semantics, and manual share hydration remain keyboard reachable and structurally axe-clean for the targeted flows | Playwright reports and task-scoped live evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` |
@@ -64,6 +65,7 @@ Routing defaults are:
 
 - docs-only changes run the docs script tests and skip Angular and browser jobs
 - maintainer doctor changes run the focused doctor script tests
+- dataset-change digest changes run the focused digest script tests
 - release-detector changes run the release-check suite
 - release-readiness changes run the release-readiness suite
 - performance tooling changes run the performance-budget script tests
@@ -185,6 +187,37 @@ npx vitest run scripts --reporter=dot
 Reserved manual ids (`>= 900000`) may keep a distinct existing canonical
 `detail.characterId` for linked variants. Non-manual rows still require
 `detail.characterId` to match the row id.
+
+### Dataset Change Digests
+
+Run the digest tests before changing the digest schema, renderer, or workflow:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run test:dataset-digest
+```
+
+Generate a local review digest from two git refs when checking a parser/import
+branch before PR:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run dataset:digest -- --base-ref origin/main --head-ref HEAD --output /tmp/dataset-change-digest.md --json-output /tmp/dataset-change-digest.json
+```
+
+The PR workflow publishes the same Markdown and JSON as the
+`dataset-change-digest` artifact and writes the Markdown to the GitHub step
+summary. Trusted same-repo PRs also get one sticky bot comment; fork and
+Dependabot PRs use the artifact/summary path only.
+
+Routine parser/import changes should have small, explainable deltas tied to the
+changed parser rule, source-data correction, or generated dataset update. Large
+character movement, broad captain-tier churn, broad builder-ability churn,
+ability catalog spikes, or generated character changes without a manifest
+`sourceVersion` change should trigger a closer review against the focused parser
+tests and raw generated SQL/JSON diff.
 
 ### Browser Performance
 
