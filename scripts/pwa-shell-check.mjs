@@ -207,7 +207,7 @@ function startStaticServer(initialRoot) {
 function isIgnorableConsoleError(text) {
   const ignorable = [
     /Failed to load resource:.*app-config\.js/iu,
-    /Failed to load resource: net::ERR_(?:FAILED|ABORTED)/iu,
+    /Failed to load resource: net::ERR_(?:FAILED|ABORTED|INTERNET_DISCONNECTED)/iu,
     /Failed to load resource: the server responded with a status of 504 \(Gateway Timeout\)/iu,
     /accounts\.google\.com/iu,
     /Google Identity Services/iu,
