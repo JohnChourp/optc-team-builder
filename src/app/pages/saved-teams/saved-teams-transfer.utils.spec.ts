@@ -5,6 +5,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 import {
+  SAVED_TEAM_SHARE_SCHEMA_VERSION,
+  SAVED_TEAM_SHARE_SOURCE,
+  SAVED_TEAMS_TRANSFER_SCHEMA_VERSION,
+  SAVED_TEAMS_TRANSFER_SOURCE,
   buildSavedTeamShareCode,
   buildSavedTeamSharePayload,
   buildSavedTeamShareUrl,
@@ -30,6 +34,13 @@ describe('Saved teams transfer utils', () => {
     createdAt: '2026-03-29T10:00:00.000Z',
     updatedAt: '2026-03-29T10:00:00.000Z',
   };
+
+  it('exposes the current saved-team payload contract markers', () => {
+    expect(SAVED_TEAMS_TRANSFER_SCHEMA_VERSION).toBe(1);
+    expect(SAVED_TEAMS_TRANSFER_SOURCE).toBe('saved-teams');
+    expect(SAVED_TEAM_SHARE_SCHEMA_VERSION).toBe(1);
+    expect(SAVED_TEAM_SHARE_SOURCE).toBe('saved-team-share');
+  });
 
   it('builds the transfer payload and export filename', () => {
     const payload = buildSavedTeamsTransferPayload([team], '2026-03-29T14:05:09.000Z');

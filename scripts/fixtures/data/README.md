@@ -1,6 +1,8 @@
 # Data Fixtures
 
 Small JSON fixtures for local development and focused tests. They mirror the public v1 shapes used by generated datasets and user transfer payloads without depending on the full OPTC import.
+Saved-team payload fixture changes must follow
+[`docs/saved-team-schema-lifecycle.md`](../../../docs/saved-team-schema-lifecycle.md).
 
 - `sample-characters.json`: normalized character records with captain coverage, tags, and builder abilities.
 - `sample-ships.json`: normalized ship records.

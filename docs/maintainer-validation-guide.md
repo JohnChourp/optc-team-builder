@@ -312,6 +312,11 @@ instead of copying all evidence inline.
 
 ### Saved-Team Import Diagnostics
 
+Saved-team payload versioning, migration, and embedded backup rules are defined
+in `docs/saved-team-schema-lifecycle.md`. Consult that contract before changing
+Saved Teams import/export, share links/codes, Settings all-data embedding, Drive
+backup behavior, or Auto Team Builder preset embedding.
+
 When a user reports a saved-team import, share-link, Manual Team Builder route
 share, or Auto Team Builder compare import failure, ask for the visible
 diagnostic code or a screenshot of the failure banner. Do not ask for raw JSON,

@@ -15,6 +15,7 @@ import {
 } from '../../core/models/optc.models';
 import { resolveTeamCoverageSummary } from '../../core/services/team-coverage-summary.utils';
 import {
+  SAVED_TEAM_SHARE_SOURCE,
   buildSavedTeamsTransferPayloadFromSharePayload,
   getSavedTeamsImportDiagnostic,
   parseSavedTeamsImportPayloadValue,
@@ -299,7 +300,7 @@ export function parseAutoTeamCompareImportPayload(
 
   try {
     const savedTeamsPayload =
-      isRecord(parsedPayload) && parsedPayload['source'] === 'saved-team-share'
+      isRecord(parsedPayload) && parsedPayload['source'] === SAVED_TEAM_SHARE_SOURCE
         ? buildSavedTeamsTransferPayloadFromSharePayload(
             parseSavedTeamSharePayloadValue(parsedPayload),
           )

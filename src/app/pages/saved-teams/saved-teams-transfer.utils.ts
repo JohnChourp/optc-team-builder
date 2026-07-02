@@ -1,17 +1,21 @@
 import { type SavedTeam } from '../../core/models/optc.models';
 
 export const SAVED_TEAM_SHARE_QUERY_PARAM = 'teamShare';
+export const SAVED_TEAMS_TRANSFER_SCHEMA_VERSION = 1;
+export const SAVED_TEAMS_TRANSFER_SOURCE = 'saved-teams';
+export const SAVED_TEAM_SHARE_SCHEMA_VERSION = 1;
+export const SAVED_TEAM_SHARE_SOURCE = 'saved-team-share';
 
 export interface SavedTeamsTransferPayload {
-  schemaVersion: 1;
-  source: 'saved-teams';
+  schemaVersion: typeof SAVED_TEAMS_TRANSFER_SCHEMA_VERSION;
+  source: typeof SAVED_TEAMS_TRANSFER_SOURCE;
   exportedAt: string;
   teams: SavedTeam[];
 }
 
 export interface SavedTeamSharePayload {
-  schemaVersion: 1;
-  source: 'saved-team-share';
+  schemaVersion: typeof SAVED_TEAM_SHARE_SCHEMA_VERSION;
+  source: typeof SAVED_TEAM_SHARE_SOURCE;
   exportedAt: string;
   team: SavedTeam;
 }
@@ -241,8 +245,8 @@ export function buildSavedTeamsTransferPayload(
   exportedAt = new Date().toISOString(),
 ): SavedTeamsTransferPayload {
   return {
-    schemaVersion: 1,
-    source: 'saved-teams',
+    schemaVersion: SAVED_TEAMS_TRANSFER_SCHEMA_VERSION,
+    source: SAVED_TEAMS_TRANSFER_SOURCE,
     exportedAt,
     teams: teams.map((team) => cloneSavedTeam(team)),
   };
@@ -253,8 +257,8 @@ export function buildSavedTeamSharePayload(
   exportedAt = new Date().toISOString(),
 ): SavedTeamSharePayload {
   return {
-    schemaVersion: 1,
-    source: 'saved-team-share',
+    schemaVersion: SAVED_TEAM_SHARE_SCHEMA_VERSION,
+    source: SAVED_TEAM_SHARE_SOURCE,
     exportedAt,
     team: cloneSavedTeam(team),
   };
@@ -272,7 +276,10 @@ export function parseSavedTeamSharePayloadValue(parsedPayload: unknown): SavedTe
     );
   }
 
-  if (parsedPayload['schemaVersion'] !== 1 || parsedPayload['source'] !== 'saved-team-share') {
+  if (
+    parsedPayload['schemaVersion'] !== SAVED_TEAM_SHARE_SCHEMA_VERSION ||
+    parsedPayload['source'] !== SAVED_TEAM_SHARE_SOURCE
+  ) {
     throw new SavedTeamsImportError(
       'import.errors.unsupportedSchema',
       'SAVED_TEAMS_UNSUPPORTED_SCHEMA',
@@ -287,8 +294,8 @@ export function parseSavedTeamSharePayloadValue(parsedPayload: unknown): SavedTe
   }
 
   return {
-    schemaVersion: 1,
-    source: 'saved-team-share',
+    schemaVersion: SAVED_TEAM_SHARE_SCHEMA_VERSION,
+    source: SAVED_TEAM_SHARE_SOURCE,
     exportedAt: parsedPayload['exportedAt'],
     team: parsedPayload['team'] as unknown as SavedTeam,
   };
@@ -373,7 +380,7 @@ export function parseSavedTeamsImportContent(rawContent: string): SavedTeamsTran
       throw new SavedTeamsImportError('import.errors.invalidJson', 'SAVED_TEAMS_INVALID_JSON');
     }
 
-    if (isRecord(parsedPayload) && parsedPayload['source'] === 'saved-team-share') {
+    if (isRecord(parsedPayload) && parsedPayload['source'] === SAVED_TEAM_SHARE_SOURCE) {
       return buildSavedTeamsTransferPayloadFromSharePayload(
         parseSavedTeamSharePayloadValue(parsedPayload),
       );
@@ -474,7 +481,10 @@ export function parseSavedTeamsImportPayloadValue(
     throw new SavedTeamsImportError('import.errors.invalidPayload', 'SAVED_TEAMS_INVALID_PAYLOAD');
   }
 
-  if (parsedPayload['schemaVersion'] !== 1 || parsedPayload['source'] !== 'saved-teams') {
+  if (
+    parsedPayload['schemaVersion'] !== SAVED_TEAMS_TRANSFER_SCHEMA_VERSION ||
+    parsedPayload['source'] !== SAVED_TEAMS_TRANSFER_SOURCE
+  ) {
     throw new SavedTeamsImportError(
       'import.errors.unsupportedSchema',
       'SAVED_TEAMS_UNSUPPORTED_SCHEMA',
@@ -486,8 +496,8 @@ export function parseSavedTeamsImportPayloadValue(
   }
 
   return {
-    schemaVersion: 1,
-    source: 'saved-teams',
+    schemaVersion: SAVED_TEAMS_TRANSFER_SCHEMA_VERSION,
+    source: SAVED_TEAMS_TRANSFER_SOURCE,
     exportedAt: parsedPayload['exportedAt'],
     teams: parsedPayload['teams'] as SavedTeam[],
   };

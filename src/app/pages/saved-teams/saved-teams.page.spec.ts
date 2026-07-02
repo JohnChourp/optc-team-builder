@@ -463,6 +463,18 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('importPastedTeams()');
   });
 
+  it('keeps the import modal content scrollable for long diagnostics', () => {
+    const stylesheet = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/saved-teams/saved-teams-modal-panel.component.scss'),
+      'utf8',
+    );
+
+    expect(stylesheet).toContain('ion-modal.saved-teams-import-modal::part(content)');
+    expect(stylesheet).toMatch(
+      /\.import-modal-shell\s*\{[\s\S]*height:\s*100%;[\s\S]*overflow:\s*auto;/u,
+    );
+  });
+
   it('exports a single saved team with the shared saved-teams payload', async () => {
     const { page } = createPage();
     const downloads = captureJsonDownloads();
