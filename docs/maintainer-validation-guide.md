@@ -21,6 +21,7 @@ script, or workflow prerequisite looks suspect.
 | --- | --- | --- | --- | --- |
 | Captain ability parser or generated captain metadata | `npm run test:captain-contracts` plus `npm run test:ci -- --include src/app/core/services/auto-team-builder-ability-parser.spec.ts` | Lightweight parser/generated gates plus `npm run test:ci -- --include scripts/import-optc-data.spec.ts --include scripts/lib/captain-ability-coverage.spec.ts`; add full `npm run test:ci` when shared runtime code changed | The builder-ability parser, script-side import boosts, and generated coverage tiers stay aligned on the shared golden captain cases | Test output only |
 | Runtime captain matching or ability requirement matching | `npm run test:ci -- --include src/app/core/services/captain-coverage.utils.spec.ts --include src/app/core/services/auto-team-builder-ability-match.utils.spec.ts` | Lightweight runtime specs plus `npm run test:captain-contracts`; add full `npm run test:ci` when shared utilities or page behavior changed | Angular runtime captain coverage and ability matching stay aligned with generated captain metadata | Test output only |
+| Auto Team Builder recommendation quality or explanation trust benchmark | `npm run test:ci -- --include src/app/core/services/auto-team-builder.recommendation-benchmark.spec.ts` | Focused benchmark plus engine/service specs when scoring, filtering, fallback, or explanation reason logic changes | Representative team-building cases still pick sensible utility and leader-scope teams, explain fallback, and fail with structural coverage context instead of incidental UI ordering | Test output only |
 | Manual-character overlays or dataset integrity checks | `npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts` | Lightweight manual-character specs plus `npx vitest run scripts --reporter=dot`; add `npm run test:captain-contracts` when generated ability metadata is touched | Manual overlays, linked canonical ids, generated dataset integrity, and broad script sweeps stay trustworthy | Test output only |
 | Dataset-change digest schema, generated-data review summary, or PR digest workflow | `npm run test:dataset-digest` | Focused digest tests plus one real `npm run dataset:digest -- --base-ref origin/main --head-ref HEAD --output /tmp/dataset-change-digest.md --json-output /tmp/dataset-change-digest.json`; add captain/source-data gates for parser changes | Parser/import PRs get a scan-friendly summary of manifest counts, generated records, captain tiers, builder abilities, ability catalog deltas, and suspicious churn | GitHub Actions artifact `dataset-change-digest`; local paths passed to `--output` and `--json-output` |
 | Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters`; use `npm run perf:mobile-pickers` for narrow picker/list responsiveness evidence | Run `npm run perf:ability-filters`, collect the companion explanation/import-share result, then run `npm run perf:budget-report -- --current-dir /path/to/current`; add `npm run perf:mobile-pickers` plus focused unit specs when the change targets mobile pickers, long saved collections, or modal filter lists | Deterministic desktop/mobile ability-filter timings are captured, mobile picker/list screenshots and soft warnings are recorded, and hard budgets are enforced by the budget report for the budgeted harnesses | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` or `test-results/mobile-picker-performance` |
@@ -49,6 +50,15 @@ Use a deep run when any of these are true:
 - the change changes command examples that operators will copy during incidents
 - a prior lightweight run fails or produces surprising output
 - the PR is a release-candidate or post-merge recovery path
+
+When intentional recommendation scoring changes land, update
+`src/app/core/services/auto-team-builder.recommendation-benchmark.spec.ts` in
+the same PR as the scoring change. Keep each benchmark expectation tied to a
+named scenario, prefer slot IDs and structural coverage/explanation reason
+codes over UI text, and record why the new recommendation is more trustworthy
+in the PR or linked audit. Do not loosen the benchmark only to preserve a new
+ordering unless the new ordering is intentional and still satisfies the
+scenario's coverage properties.
 
 Docs-only edits do not need live serve or browser screenshots unless they change
 a runnable command that must be proven through the UI. UI evidence, when needed
