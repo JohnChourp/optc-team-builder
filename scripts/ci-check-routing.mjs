@@ -11,6 +11,10 @@ export const SCRIPT_SUITES = {
     label: 'CI routing tests',
     command: 'npm run test:ci-routing',
   },
+  'saved-team-codecs': {
+    label: 'Saved-team codec fuzz tests',
+    command: 'npm run test:saved-team-codecs',
+  },
   'captain-contracts': {
     label: 'Captain contract script tests',
     command: 'npm run test:captain-contracts',
@@ -130,6 +134,24 @@ function isDocsScriptPath(filePath) {
     filePath === 'scripts/check-docs-commands.mjs' ||
     filePath === 'scripts/check-docs-commands.spec.ts'
   );
+}
+
+function isSavedTeamCodecPath(filePath) {
+  return (
+    filePath === 'docs/saved-team-schema-lifecycle.md' ||
+    filePath === 'scripts/fixtures/data/README.md' ||
+    filePath === 'scripts/fixtures/data/saved-teams-v1.json' ||
+    filePath === 'scripts/fixtures/data/saved-teams-v1-legacy-partial.json' ||
+    filePath === 'scripts/fixtures/data/saved-team-share-v1-legacy-partial.json' ||
+    filePath === 'scripts/fixtures/data/saved-team-codec-fuzz-corpus.json' ||
+    filePath === 'src/app/pages/saved-teams/saved-teams-transfer.utils.ts' ||
+    filePath === 'src/app/pages/saved-teams/saved-teams-transfer.utils.spec.ts' ||
+    filePath === 'src/app/pages/saved-teams/saved-teams-codec-fuzz.spec.ts'
+  );
+}
+
+function isSavedTeamCodecRuntimePath(filePath) {
+  return filePath === 'src/app/pages/saved-teams/saved-teams-transfer.utils.ts';
 }
 
 function isPerfPath(filePath) {
@@ -273,6 +295,22 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       categories.add('docs-tooling');
       for (const suite of DOCS_SCRIPT_SUITES) {
         addScriptSuite(scriptSuites, suite);
+      }
+      continue;
+    }
+
+    if (isSavedTeamCodecPath(filePath)) {
+      categories.add('saved-team-codecs');
+      addScriptSuite(scriptSuites, 'saved-team-codecs');
+      if (isSavedTeamCodecRuntimePath(filePath)) {
+        categories.add('runtime');
+        runAngular = true;
+        runE2e = true;
+      }
+      if (isDocsPath(filePath)) {
+        for (const suite of DOCS_SCRIPT_SUITES) {
+          addScriptSuite(scriptSuites, suite);
+        }
       }
       continue;
     }

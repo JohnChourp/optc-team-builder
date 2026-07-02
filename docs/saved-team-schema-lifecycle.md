@@ -91,9 +91,13 @@ current, legacy/partial, and share-payload compatibility coverage:
 - `saved-teams-v1.json`
 - `saved-teams-v1-legacy-partial.json`
 - `saved-team-share-v1-legacy-partial.json`
+- `saved-team-codec-fuzz-corpus.json`
 
 The focused transfer specs must cover the exported markers, current payload
 builders, unsupported-schema rejection, repairable legacy v1 records, and share
 payload conversion into normal saved-team imports. Settings all-data and Auto
 Team Builder compare/preset tests should reference the same v1 payload contract
-instead of defining a separate saved-team schema.
+instead of defining a separate saved-team schema. The deterministic codec fuzz
+suite must also keep round-trip, mutation, truncation, malformed-field,
+duplicate-id, fixed-slot, share-code/share-url, and diagnostic-redaction
+invariants in regular targeted CI through `npm run test:saved-team-codecs`.

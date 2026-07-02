@@ -48,6 +48,31 @@ describe('ci-check-routing', () => {
     expect(plan.scriptSuites).toEqual(['source-data']);
   });
 
+  it('routes saved-team codec fixtures and docs to the focused fuzz suite', () => {
+    const plan = buildCheckPlan([
+      'src/app/pages/saved-teams/saved-teams-codec-fuzz.spec.ts',
+      'scripts/fixtures/data/saved-team-codec-fuzz-corpus.json',
+      'scripts/fixtures/data/saved-teams-v1.json',
+      'docs/saved-team-schema-lifecycle.md',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.runQuarantine).toBe(false);
+    expect(plan.scriptSuites).toEqual(['saved-team-codecs', 'docs-integrity', 'docs-commands']);
+  });
+
+  it('keeps browser coverage for saved-team transfer runtime changes', () => {
+    const plan = buildCheckPlan(['src/app/pages/saved-teams/saved-teams-transfer.utils.ts']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(true);
+    expect(plan.runE2e).toBe(true);
+    expect(plan.runQuarantine).toBe(false);
+    expect(plan.scriptSuites).toEqual(['saved-team-codecs']);
+  });
+
   it('routes Markdown fixtures before generic docs rules', () => {
     const plan = buildCheckPlan(['scripts/fixtures/release-readiness/expected-ready-summary.md']);
 
@@ -97,6 +122,7 @@ describe('ci-check-routing', () => {
     expect(plan.runDatasetPerf).toBe(true);
     expect(plan.scriptSuites).toEqual([
       'ci-routing',
+      'saved-team-codecs',
       'captain-contracts',
       'release-check',
       'release-readiness',

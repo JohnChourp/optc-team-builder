@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "source": "saved-team-codec-fuzz-corpus",
+  "exportedAt": "2026-07-02T00:00:00.000Z",
+  "validTeams": [
+    {
+      "id": "codec-valid-minimal",
+      "name": "Codec Valid Minimal",
+      "slots": [101, null, null, null, null, null],
+      "shipId": null,
+      "notes": "",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    },
+    {
+      "id": "codec-valid-full",
+      "name": "Codec Valid Full",
+      "slots": [101, 202, 303, 404, 505, 606],
+      "shipId": 9001,
+      "notes": "Synthetic full slot payload.",
+      "createdAt": "2026-07-02T01:02:03.000Z",
+      "updatedAt": "2026-07-02T04:05:06.000Z"
+    },
+    {
+      "id": "codec-valid-unicode",
+      "name": "Codec \u039a\u03b1\u03bb\u03b7\u03bc\u03b5\u03c1\u03b1 Crew",
+      "slots": [777, null, 888, null, 999, null],
+      "shipId": null,
+      "notes": "Synthetic unicode note \u2713",
+      "createdAt": "2026-07-02T07:08:09.000Z",
+      "updatedAt": "2026-07-02T10:11:12.000Z"
+    }
+  ],
+  "legacyPayloads": [
+    {
+      "label": "legacy partial fields and duplicate ids",
+      "payload": {
+        "schemaVersion": 1,
+        "source": "saved-teams",
+        "exportedAt": "not-a-date",
+        "teams": [
+          {
+            "id": " legacy-one ",
+            "name": "",
+            "slots": [101, "bad", 0, -1, null, 202, 303],
+            "shipId": "bad",
+            "notes": 42,
+            "createdAt": "",
+            "updatedAt": "bad-date"
+          },
+          null,
+          {
+            "name": "Missing stable id",
+            "slots": [101]
+          },
+          {
+            "id": "legacy-one",
+            "name": " Last Duplicate Wins ",
+            "slots": [404, 505],
+            "shipId": 9002,
+            "notes": "  duplicate replacement  ",
+            "createdAt": "2026-07-02T02:00:00.000Z",
+            "updatedAt": "2026-07-02T03:00:00.000Z"
+          }
+        ]
+      },
+      "expectedInvalidTeamCount": 2,
+      "expectedDuplicateIdCount": 1
+    }
+  ],
+  "mutationPayloads": [
+    {
+      "label": "boundary optional fields",
+      "payload": {
+        "schemaVersion": 1,
+        "source": "saved-teams",
+        "exportedAt": "2026-07-02T00:00:00.000Z",
+        "teams": [
+          false,
+          [],
+          {
+            "id": "boundary-team",
+            "name": "   ",
+            "slots": [1, 1.5, 2, 0, 3, -4, 4],
+            "shipId": 0,
+            "notes": ["not", "a", "string"],
+            "createdAt": "bad-date",
+            "updatedAt": null
+          },
+          {
+            "id": "boundary-team",
+            "name": "Boundary Replacement",
+            "slots": [6, 5, 4, 3, 2, 1],
+            "shipId": 321,
+            "notes": "replacement",
+            "createdAt": "2026-07-02T05:00:00.000Z",
+            "updatedAt": "2026-07-02T06:00:00.000Z"
+          }
+        ]
+      },
+      "expectedInvalidTeamCount": 2,
+      "expectedDuplicateIdCount": 1
+    }
+  ],
+  "malformedImportContents": [
+    {
+      "label": "truncated json",
+      "raw": "{\"schemaVersion\":1,\"source\":\"saved-teams\",\"teams\":[{\"id\":\"secret-team\",\"name\":\"Hidden Crew\"}",
+      "diagnosticCode": "SAVED_TEAMS_INVALID_JSON",
+      "forbiddenFragments": ["secret-team", "Hidden Crew"]
+    },
+    {
+      "label": "unsupported schema with private fields",
+      "raw": "{\"schemaVersion\":99,\"source\":\"saved-teams\",\"exportedAt\":\"2026-07-02T00:00:00.000Z\",\"teams\":[{\"id\":\"private-team\",\"name\":\"Private Crew\",\"notes\":\"Private Note\"}]}",
+      "diagnosticCode": "SAVED_TEAMS_UNSUPPORTED_SCHEMA",
+      "forbiddenFragments": ["private-team", "Private Crew", "Private Note"]
+    },
+    {
+      "label": "unsupported source with private fields",
+      "raw": "{\"schemaVersion\":1,\"source\":\"other-source\",\"exportedAt\":\"2026-07-02T00:00:00.000Z\",\"teams\":[{\"id\":\"source-team\",\"name\":\"Source Crew\"}]}",
+      "diagnosticCode": "SAVED_TEAMS_UNSUPPORTED_SCHEMA",
+      "forbiddenFragments": ["source-team", "Source Crew"]
+    },
+    {
+      "label": "malformed raw share code",
+      "raw": "not a valid share code Hidden Crew Secret Note",
+      "diagnosticCode": "SAVED_TEAMS_INVALID_SHARE_CODE",
+      "forbiddenFragments": ["Hidden Crew", "Secret Note"]
+    }
+  ],
+  "shareInputForms": ["raw-code", "query-string", "absolute-url", "relative-url"]
+}
