@@ -123,6 +123,19 @@ describe('SpecialAbilityPickerComponent', () => {
     expect(template).toContain("'special-ability-tile-' + tile.item.key");
     expect(template).toContain('data-testid="special-ability-picker-save"');
   });
+
+  it('keeps grouped catalog sections eligible for narrow-modal render containment', () => {
+    const stylesheet = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/shared/special-ability-picker/special-ability-picker.component.scss',
+      ),
+      'utf8',
+    );
+
+    expect(stylesheet).toContain('content-visibility: auto');
+    expect(stylesheet).toContain('contain-intrinsic-block-size: 220px');
+  });
 });
 
 function createComponent(): SpecialAbilityPickerComponent {

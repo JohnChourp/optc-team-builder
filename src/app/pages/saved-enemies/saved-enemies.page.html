@@ -17,7 +17,11 @@
         <p class="section-copy">{{ t('hero.copy') }}</p>
 
         <div class="hero-actions">
-          <ion-button color="warning" (click)="openCreateModal()">
+          <ion-button
+            color="warning"
+            data-testid="saved-enemies-create-open"
+            (click)="openCreateModal()"
+          >
             <ion-icon slot="start" [icon]="addIcon" aria-hidden="true"></ion-icon>
             {{ t('hero.createCta') }}
           </ion-button>
@@ -35,7 +39,11 @@
         <section class="glass-card empty-card">
           <h2>{{ t('empty.title') }}</h2>
           <p>{{ t('empty.copy') }}</p>
-          <ion-button color="warning" (click)="openCreateModal()">
+          <ion-button
+            color="warning"
+            data-testid="saved-enemies-create-open"
+            (click)="openCreateModal()"
+          >
             {{ t('empty.cta') }}
           </ion-button>
         </section>
@@ -572,6 +580,7 @@
                     fill="outline"
                     color="light"
                     size="small"
+                    data-testid="saved-enemies-character-image-picker-open"
                     [disabled]="savingEnemy() || processingEnemyImage()"
                     (click)="openCharacterImagePicker()"
                   >

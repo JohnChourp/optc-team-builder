@@ -193,6 +193,8 @@
 .saved-enemy-list article {
   display: grid;
   gap: 14px;
+  content-visibility: auto;
+  contain-intrinsic-block-size: 360px;
   padding: 16px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.03);
