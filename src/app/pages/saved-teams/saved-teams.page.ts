@@ -51,6 +51,7 @@ import {
 } from '../../core/services/captain-team-condition-status.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import {
@@ -275,6 +276,10 @@ export class SavedTeamsPage implements OnInit {
 
   public getTeamBuilderQueryParams(team: Pick<SavedTeam, 'id'>): { teamId: string } {
     return { teamId: team.id };
+  }
+
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
   }
 
   public openTeamDestinationModal(team: SavedTeam): void {

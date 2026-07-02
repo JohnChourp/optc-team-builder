@@ -3,18 +3,25 @@
     #characterImagePickerModal
     [isOpen]="isOpen"
     cssClass="character-image-picker-modal"
+    [attr.aria-label]="title"
+    (didPresent)="labelModalDialog($event, title)"
     (didDismiss)="onModalDidDismiss()"
   >
     <ng-template>
-      <ion-header class="character-image-picker-header ion-no-border">
+      <ion-header
+        class="character-image-picker-header ion-no-border"
+        role="group"
+        [attr.aria-label]="title"
+      >
         <ion-toolbar>
           <ion-buttons slot="end">
             <ion-button
               fill="clear"
               color="light"
+              [attr.aria-label]="'common.actions.close' | transloco"
               (click)="cancel(); characterImagePickerModal.dismiss(null, 'cancel')"
             >
-              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+              <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
             </ion-button>
           </ion-buttons>
         </ion-toolbar>
@@ -228,7 +235,7 @@
 
             @if (loading()) {
               <div class="character-image-picker-empty">
-                <ion-spinner name="crescent"></ion-spinner>
+                <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
                 <p>{{ t('catalog.loading') }}</p>
               </div>
             } @else if (!characters().length) {
@@ -265,7 +272,7 @@
                   (click)="loadMore()"
                 >
                   @if (loadingMore()) {
-                    <ion-spinner slot="start" name="crescent"></ion-spinner>
+                    <ion-spinner slot="start" name="crescent" aria-hidden="true"></ion-spinner>
                   }
                   {{ t('actions.loadMore') }}
                 </ion-button>
@@ -275,7 +282,7 @@
         </div>
       </ion-content>
 
-      <ion-footer class="character-image-picker-footer">
+      <ion-footer class="character-image-picker-footer" role="group" [attr.aria-label]="title">
         <ion-toolbar>
           <div class="character-image-picker-footer__actions">
             <ion-button

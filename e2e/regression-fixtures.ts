@@ -18,6 +18,30 @@ export type SavedTeamsTransferPayload = SharedSavedTeamsTransferPayload;
 export const E2E_EXPORTED_AT = SHARED_FIXTURE_EXPORTED_AT;
 export const SEEDED_SAVED_TEAMS: E2eSavedTeam[] = buildSeededSavedTeamFixtures();
 export const IMPORTED_SAVED_TEAM: E2eSavedTeam = buildSavedTeamFixture('importedCrew');
+export const SEEDED_SAVED_ENEMIES = [
+  {
+    id: 'e2e-legacy-a11y-boss',
+    name: 'E2E Legacy A11y Boss',
+    notes: 'Seeded by browser accessibility tests.',
+    rawEnemyText: '',
+    imageDataUrl: null,
+    selectedTypes: ['DEX'],
+    selectedClasses: ['Fighter'],
+    selectedCharacterTags: [],
+    selectedCharacterNames: [],
+    requiredAbilities: [],
+    requiredCharacterGroups: [],
+    battleRequirements: [],
+    enemyMechanics: [],
+    requireAllSelectedTypesInTeam: false,
+    requireAllSelectedClassesPerCharacter: false,
+    requireAllSelectedCharacterTagsInTeam: false,
+    requireAllSelectedCharacterNamesInTeam: false,
+    associatedTeamIds: ['e2e-regression-crew-a'],
+    createdAt: E2E_EXPORTED_AT,
+    updatedAt: E2E_EXPORTED_AT,
+  },
+];
 
 export {
   buildSavedTeamShareCode,
@@ -25,6 +49,11 @@ export {
   buildSavedTeamsTransferJson,
   buildSavedTeamsTransferPayload,
 };
+
+interface SeededBrowserState {
+  teams: E2eSavedTeam[];
+  enemies: typeof SEEDED_SAVED_ENEMIES;
+}
 
 export function parseSavedTeamShareCode(shareCode: string): {
   schemaVersion: number;
@@ -45,24 +74,32 @@ export function parseSavedTeamShareCode(shareCode: string): {
   };
 }
 
-export async function seedBrowserState(page: Page, teams = SEEDED_SAVED_TEAMS): Promise<void> {
-  await page.addInitScript((seededTeams: E2eSavedTeam[]) => {
-    localStorage.setItem('CapacitorStorage.appLanguage', 'en');
-    localStorage.setItem('CapacitorStorage.analyticsConsent', 'rejected');
-    localStorage.setItem('CapacitorStorage.savedTeams', JSON.stringify(seededTeams));
+export async function seedBrowserState(
+  page: Page,
+  teams = SEEDED_SAVED_TEAMS,
+  enemies = [] as typeof SEEDED_SAVED_ENEMIES,
+): Promise<void> {
+  await page.addInitScript(
+    (seededState: SeededBrowserState) => {
+      localStorage.setItem('CapacitorStorage.appLanguage', 'en');
+      localStorage.setItem('CapacitorStorage.analyticsConsent', 'rejected');
+      localStorage.setItem('CapacitorStorage.savedTeams', JSON.stringify(seededState.teams));
+      localStorage.setItem('CapacitorStorage.savedEnemies', JSON.stringify(seededState.enemies));
 
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: {
-        async writeText(text: string) {
-          (window as unknown as { __e2eClipboard?: string }).__e2eClipboard = String(text);
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          async writeText(text: string) {
+            (window as unknown as { __e2eClipboard?: string }).__e2eClipboard = String(text);
+          },
+          async readText() {
+            return (window as unknown as { __e2eClipboard?: string }).__e2eClipboard ?? '';
+          },
         },
-        async readText() {
-          return (window as unknown as { __e2eClipboard?: string }).__e2eClipboard ?? '';
-        },
-      },
-    });
-  }, teams);
+      });
+    },
+    { teams, enemies },
+  );
 }
 
 export async function waitForAppReady(page: Page): Promise<void> {

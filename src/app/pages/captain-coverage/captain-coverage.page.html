@@ -14,7 +14,7 @@
       <section class="coverage-summary glass-card">
         <div class="coverage-summary__copy">
           <div class="section-label">
-            <ion-icon [icon]="coverageIcon"></ion-icon>
+            <ion-icon [icon]="coverageIcon" aria-hidden="true"></ion-icon>
             <span>{{ t('hero.eyebrow') }}</span>
           </div>
           <h1>{{ t('hero.title') }}</h1>
@@ -23,11 +23,11 @@
 
         <div class="coverage-summary__meta">
           <div class="meta-pill">
-            <ion-icon [icon]="targetIcon"></ion-icon>
+            <ion-icon [icon]="targetIcon" aria-hidden="true"></ion-icon>
             <span>{{ t('hero.charactersCount', { count: summary()?.characterCount ?? 0 }) }}</span>
           </div>
           <div class="meta-pill">
-            <ion-icon [icon]="checkIcon"></ion-icon>
+            <ion-icon [icon]="checkIcon" aria-hidden="true"></ion-icon>
             <span>{{ t('hero.captainsCount', { count: allCaptains().length }) }}</span>
           </div>
         </div>
@@ -126,14 +126,14 @@
           ></ion-input>
 
           <ion-button color="warning" [disabled]="saveDisabled()" (click)="saveTeam()">
-            <ion-icon slot="start" [icon]="saveIcon"></ion-icon>
+            <ion-icon slot="start" [icon]="saveIcon" aria-hidden="true"></ion-icon>
             {{ saveButtonLabel() }}
           </ion-button>
         </div>
 
         @if (currentTeamId() && !saveFeedbackError()) {
           <section class="coverage-save-feedback coverage-save-feedback--success">
-            <ion-icon [icon]="checkIcon"></ion-icon>
+            <ion-icon [icon]="checkIcon" aria-hidden="true"></ion-icon>
             <div>
               <strong>{{ t('team.save.success') }}</strong>
               <ion-button fill="clear" color="warning" [routerLink]="['/tabs/saved-teams']">
@@ -145,7 +145,7 @@
 
         @if (saveFeedbackError()) {
           <section class="coverage-save-feedback coverage-save-feedback--error" role="alert">
-            <ion-icon [icon]="errorIcon"></ion-icon>
+            <ion-icon [icon]="errorIcon" aria-hidden="true"></ion-icon>
             <div>
               <strong>{{ saveFeedbackError() }}</strong>
             </div>
@@ -218,6 +218,7 @@
               <span>{{ t('filters.bestAbilityMatchesFirst') }}</span>
               <ion-toggle
                 justify="space-between"
+                [attr.aria-label]="t('filters.bestAbilityMatchesFirst')"
                 [checked]="abilityMatchRankingEnabled()"
                 [disabled]="abilityMatchRankingDisabled()"
                 (ionChange)="onAbilityMatchRankingChange($event)"
@@ -234,6 +235,7 @@
               </div>
               <ion-toggle
                 justify="space-between"
+                [attr.aria-label]="t('filters.superTandemPresence.toggle')"
                 [checked]="requireSuperTandemPresence()"
                 [disabled]="loading()"
                 (ionChange)="onRequireSuperTandemPresenceChange($event)"
@@ -250,6 +252,7 @@
               </div>
               <ion-toggle
                 justify="space-between"
+                [attr.aria-label]="t('filters.superTypesClassesPresence.toggle')"
                 [checked]="requireSuperTypesClassesPresence()"
                 [disabled]="loading()"
                 (ionChange)="onRequireSuperTypesClassesPresenceChange($event)"
@@ -495,7 +498,7 @@
 
         @if (loading()) {
           <div class="panel-empty panel-empty--large">
-            <ion-spinner name="crescent"></ion-spinner>
+            <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
             <span>{{ t('loading') }}</span>
           </div>
         } @else if (!resultCards().length) {

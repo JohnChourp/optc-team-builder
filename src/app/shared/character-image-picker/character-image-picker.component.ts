@@ -48,6 +48,7 @@ import {
   serializeCategoryAbilityDrafts,
   serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
+import { applyIonicModalDialogLabel } from '../a11y/ionic-modal-dialog-label.utils';
 import {
   AbilityFilterRailComponent,
   type AbilityFilterRailCategory,
@@ -198,6 +199,10 @@ export class CharacterImagePickerComponent implements OnChanges {
     private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly userState: UserStateService,
   ) {}
+
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
+  }
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {

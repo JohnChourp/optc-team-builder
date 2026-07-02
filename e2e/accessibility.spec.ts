@@ -1,8 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import {
   IMPORTED_SAVED_TEAM,
+  SEEDED_SAVED_ENEMIES,
   SEEDED_SAVED_TEAMS,
   buildSavedTeamsTransferJson,
   expectIonValue,
@@ -142,9 +143,86 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
       'Import failed',
     );
 
+    await expectModalDialogName(importModal);
     await expectNoAxeViolations(page, '.saved-teams-import-modal');
   });
+
+  test('legacy core screens expose keyboard paths and scoped semantics', async ({ page }) => {
+    await seedBrowserState(page, SEEDED_SAVED_TEAMS, SEEDED_SAVED_ENEMIES);
+
+    await page.goto('/tabs/manual-team-builder');
+    await waitForAppReady(page);
+    await expect(page.getByTestId('manual-team-name')).toBeVisible();
+    await expectNoAxeViolations(page, '.manual-team-builder-shell');
+
+    const manualSlotEdit = page.getByTestId('manual-team-slot-edit-0');
+    await manualSlotEdit.focus();
+    await page.keyboard.press('Space');
+    const manualPicker = page.locator('ion-modal.pick-editor-modal.show-modal');
+    await expect(manualPicker).toBeVisible();
+    await expect(
+      manualPicker.getByRole('button', { name: /close character picker/i }),
+    ).toBeVisible();
+    await expectModalDialogName(manualPicker);
+    await expectNoAxeViolations(page, 'ion-modal.pick-editor-modal');
+    await manualPicker.getByRole('button', { name: /close character picker/i }).click();
+
+    await page.goto('/tabs/saved-teams');
+    await waitForAppReady(page);
+    await expect(page.getByText('E2E Regression Crew A')).toBeVisible();
+    await expectNoAxeViolations(page, '.saved-teams-shell');
+
+    await page.goto('/tabs/saved-enemies');
+    await waitForAppReady(page);
+    await expect(page.getByText('Loading saved enemies...')).toBeHidden({ timeout: 45_000 });
+    await expect(page.getByText('E2E Legacy A11y Boss')).toBeVisible();
+    await expectNoAxeViolations(page, '.saved-enemies-shell');
+
+    const savedEnemyEdit = page.getByRole('button', { name: 'Edit' }).first();
+    await savedEnemyEdit.focus();
+    await page.keyboard.press('Space');
+    const savedEnemyEditor = page.locator('ion-modal.saved-enemies-editor-modal.show-modal');
+    await expect(savedEnemyEditor).toBeVisible();
+    await expect(savedEnemyEditor.getByRole('button', { name: 'Close' })).toBeVisible();
+    await expectModalDialogName(savedEnemyEditor);
+    await expectNoAxeViolations(page, 'ion-modal.saved-enemies-editor-modal');
+
+    await savedEnemyEditor.getByRole('button', { name: /manage linked teams/i }).press('Space');
+    const teamAssociationPicker = page.locator('ion-modal.enemy-team-association-modal.show-modal');
+    await expect(teamAssociationPicker).toBeVisible();
+    await expect(teamAssociationPicker.getByRole('button', { name: 'Close' })).toBeVisible();
+    await expectModalDialogName(teamAssociationPicker);
+    await expectNoAxeViolations(page, 'ion-modal.enemy-team-association-modal');
+
+    await page.goto('/tabs/captain-coverage');
+    await waitForAppReady(page);
+    await expect(page.locator('.coverage-team-slot').first()).toBeVisible();
+    await expectNoAxeViolations(page, '.captain-coverage-shell');
+
+    const firstCoverageSlot = page.locator('.coverage-team-slot').first();
+    await firstCoverageSlot.focus();
+    await page.keyboard.press('Enter');
+    const captainPicker = page.locator('ion-modal.character-image-picker-modal.show-modal');
+    await expect(captainPicker).toBeVisible();
+    await expect(captainPicker.getByRole('button', { name: 'Close' })).toBeVisible();
+    await expectModalDialogName(captainPicker);
+    await expectNoAxeViolations(page, 'ion-modal.character-image-picker-modal');
+  });
 });
+
+async function expectModalDialogName(modal: Locator): Promise<void> {
+  await expect
+    .poll(() =>
+      modal.evaluate((element) => {
+        const dialogElement =
+          element.querySelector('[role="dialog"]') ??
+          element.shadowRoot?.querySelector('[role="dialog"]');
+
+        return dialogElement?.getAttribute('aria-label')?.trim() ?? '';
+      }),
+    )
+    .not.toBe('');
+}
 
 async function expectNoAxeViolations(page: Page, selector: string): Promise<void> {
   const results = await new AxeBuilder({ page })

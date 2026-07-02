@@ -21,7 +21,7 @@
               color="warning"
               [routerLink]="['/guides/guided-build-compare-team-sharing']"
             >
-              <ion-icon slot="start" [icon]="fileIcon"></ion-icon>
+              <ion-icon slot="start" [icon]="fileIcon" aria-hidden="true"></ion-icon>
               {{ t('guide.cta') }}
             </ion-button>
           </div>
@@ -29,7 +29,7 @@
 
         @if (loading()) {
           <section class="glass-card loading-card">
-            <ion-spinner name="crescent"></ion-spinner>
+            <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
             <span>{{ t('loading') }}</span>
           </section>
         }
@@ -205,7 +205,7 @@
                   [disabled]="!hasSelection()"
                   (click)="copySelectedTeamsJson()"
                 >
-                  <ion-icon slot="start" [icon]="copyIcon"></ion-icon>
+                  <ion-icon slot="start" [icon]="copyIcon" aria-hidden="true"></ion-icon>
                   {{ t('tools.copyJson') }}
                 </ion-button>
                 <ion-button
@@ -286,7 +286,7 @@
                         color="light"
                         (click)="copyTeamJson(teamCard.team)"
                       >
-                        <ion-icon slot="start" [icon]="copyIcon"></ion-icon>
+                        <ion-icon slot="start" [icon]="copyIcon" aria-hidden="true"></ion-icon>
                         {{ t('actions.copyJson') }}
                       </ion-button>
                       <ion-button
@@ -295,7 +295,7 @@
                         color="light"
                         (click)="exportTeam(teamCard.team)"
                       >
-                        <ion-icon slot="start" [icon]="downloadIcon"></ion-icon>
+                        <ion-icon slot="start" [icon]="downloadIcon" aria-hidden="true"></ion-icon>
                         {{ t('actions.exportSingle') }}
                       </ion-button>
                       <ion-button
@@ -387,6 +387,8 @@
         #openTeamModal
         [isOpen]="openTeamModalOpen()"
         cssClass="saved-teams-open-modal"
+        [attr.aria-label]="t('openTeam.title')"
+        (didPresent)="labelModalDialog($event, t('openTeam.title'))"
         (didDismiss)="resetOpenTeamModal()"
       >
         <ng-template>
@@ -403,9 +405,10 @@
               <ion-button
                 fill="clear"
                 color="light"
+                [attr.aria-label]="'common.actions.close' | transloco"
                 (click)="resetOpenTeamModal(); openTeamModal.dismiss(null, 'cancel')"
               >
-                <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
               </ion-button>
             </div>
 
@@ -419,7 +422,7 @@
                   [queryParams]="getTeamBuilderQueryParams(team)"
                   (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
                 >
-                  <ion-icon slot="start" [icon]="autoBuilderIcon"></ion-icon>
+                  <ion-icon slot="start" [icon]="autoBuilderIcon" aria-hidden="true"></ion-icon>
                   <span>
                     <strong>{{ t('openTeam.destinations.auto.title') }}</strong>
                     <small>{{ t('openTeam.destinations.auto.copy') }}</small>
@@ -434,7 +437,11 @@
                   [queryParams]="getTeamBuilderQueryParams(team)"
                   (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
                 >
-                  <ion-icon slot="start" [icon]="captainCoverageIcon"></ion-icon>
+                  <ion-icon
+                    slot="start"
+                    [icon]="captainCoverageIcon"
+                    aria-hidden="true"
+                  ></ion-icon>
                   <span>
                     <strong>{{ t('openTeam.destinations.captainCoverage.title') }}</strong>
                     <small>{{ t('openTeam.destinations.captainCoverage.copy') }}</small>
@@ -449,7 +456,7 @@
                   [queryParams]="getTeamBuilderQueryParams(team)"
                   (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
                 >
-                  <ion-icon slot="start" [icon]="manualBuilderIcon"></ion-icon>
+                  <ion-icon slot="start" [icon]="manualBuilderIcon" aria-hidden="true"></ion-icon>
                   <span>
                     <strong>{{ t('openTeam.destinations.manual.title') }}</strong>
                     <small>{{ t('openTeam.destinations.manual.copy') }}</small>
@@ -475,10 +482,16 @@
         #savedTeamEditModal
         [isOpen]="editModalOpen()"
         cssClass="saved-teams-edit-modal"
+        [attr.aria-label]="t('edit.title')"
+        (didPresent)="labelModalDialog($event, t('edit.title'))"
         (didDismiss)="closeEditModal()"
       >
         <ng-template>
-          <ion-header class="edit-modal-header ion-no-border">
+          <ion-header
+            class="edit-modal-header ion-no-border"
+            role="group"
+            [attr.aria-label]="t('edit.title')"
+          >
             <ion-toolbar>
               <div class="import-modal-head">
                 <div>
@@ -492,9 +505,10 @@
                 <ion-button
                   fill="clear"
                   color="light"
+                  [attr.aria-label]="'common.actions.close' | transloco"
                   (click)="closeEditModal(); savedTeamEditModal.dismiss(null, 'cancel')"
                 >
-                  <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                  <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
                 </ion-button>
               </ion-buttons>
             </ion-toolbar>
@@ -523,7 +537,11 @@
             </div>
           </ion-content>
 
-          <ion-footer class="edit-modal-footer">
+          <ion-footer
+            class="edit-modal-footer"
+            role="group"
+            [attr.aria-label]="t('edit.title')"
+          >
             <ion-toolbar>
               <div class="import-modal-actions">
                 <ion-button
@@ -551,7 +569,7 @@
         [isOpen]="importModalOpen()"
         cssClass="saved-teams-import-modal"
         [attr.aria-label]="t('import.title')"
-        (didPresent)="focusImportDropzone()"
+        (didPresent)="labelModalDialog($event, t('import.title')); focusImportDropzone()"
         (didDismiss)="closeImportModal()"
       >
         <ng-template>
@@ -636,7 +654,7 @@
 
             @if (importing()) {
               <div class="import-feedback import-feedback--progress">
-                <ion-spinner name="crescent"></ion-spinner>
+                <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
                 <span>{{ t('import.processing') }}</span>
               </div>
             }

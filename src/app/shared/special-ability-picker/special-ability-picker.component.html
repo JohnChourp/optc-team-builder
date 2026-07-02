@@ -3,15 +3,21 @@
     #specialAbilityPickerModal
     [isOpen]="isOpen"
     cssClass="special-ability-picker-modal"
+    [attr.aria-label]="title"
+    (didPresent)="labelModalDialog($event, title)"
     (didDismiss)="onModalDidDismiss()"
   >
     <ng-template>
-      <ion-header class="special-ability-picker-header ion-no-border">
+      <ion-header
+        class="special-ability-picker-header ion-no-border"
+        role="group"
+        [attr.aria-label]="title"
+      >
         <ion-toolbar>
           <div class="special-ability-picker-head">
             <div>
               <div class="section-label">
-                <ion-icon [icon]="pickerIcon"></ion-icon>
+                <ion-icon [icon]="pickerIcon" aria-hidden="true"></ion-icon>
                 <span>{{ eyebrow }}</span>
               </div>
               <h2>{{ title }}</h2>
@@ -23,9 +29,10 @@
             <ion-button
               fill="clear"
               color="light"
+              [attr.aria-label]="'common.actions.close' | transloco"
               (click)="cancel(); specialAbilityPickerModal.dismiss(null, 'cancel')"
             >
-              <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+              <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
             </ion-button>
           </ion-buttons>
         </ion-toolbar>
