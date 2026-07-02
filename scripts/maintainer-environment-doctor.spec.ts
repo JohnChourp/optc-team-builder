@@ -12,6 +12,7 @@ import {
   REQUIRED_PACKAGE_SCRIPTS,
   evaluateMaintainerEnvironment,
   renderTextReport,
+  resolvePlaywrightCacheRoot,
   runCli,
 } from './maintainer-environment-doctor.mjs';
 
@@ -160,6 +161,47 @@ describe('maintainer-environment-doctor', () => {
     expect(report.ok).toBe(false);
     expect(report.checks.find((check) => check.id === 'app/script/perf:budget-report')?.status).toBe('fail');
     expect(report.checks.find((check) => check.id === 'app/path/scripts/perf-budget-report.mjs')?.status).toBe('fail');
+  });
+
+  it('fails when a required maintainer package script points at the wrong command', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace({
+      scriptOverrides: {
+        'test:captain-contracts': 'node -e "process.exit(0)"',
+      },
+    });
+
+    const report = evaluateHealthy(appRoot, brainRoot);
+    const scriptCheck = report.checks.find((check) => check.id === 'app/script/test:captain-contracts');
+
+    expect(report.ok).toBe(false);
+    expect(scriptCheck?.status).toBe('fail');
+    expect(scriptCheck?.detail).toContain('instead of');
+  });
+
+  it('resolves hermetic Playwright browser installs inside node_modules', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+    await mkdir(path.join(appRoot, 'node_modules', 'playwright'), { recursive: true });
+    await mkdir(path.join(appRoot, 'node_modules', 'playwright-core', '.local-browsers'), { recursive: true });
+
+    expect(resolvePlaywrightCacheRoot(appRoot, { PLAYWRIGHT_BROWSERS_PATH: '0' })).toBe(
+      path.join(appRoot, 'node_modules', 'playwright-core', '.local-browsers'),
+    );
+
+    const report = evaluateMaintainerEnvironment(
+      {
+        appRoot,
+        brainRoot,
+        profile: 'local',
+      },
+      {
+        nodeVersion: 'v24.15.0',
+        npmVersion: '11.13.0',
+        env: { PLAYWRIGHT_BROWSERS_PATH: '0' },
+      },
+    );
+
+    expect(report.ok).toBe(true);
+    expect(report.checks.find((check) => check.id === 'local/playwright-cache')?.status).toBe('pass');
   });
 
   it('allows app-only checks when the brain checkout is intentionally unavailable', async () => {

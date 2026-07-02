@@ -25,51 +25,67 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
   {
     name: 'test:captain-contracts',
     group: 'contract',
+    expectedCommand: 'vitest run scripts/import-optc-data.spec.ts scripts/lib/captain-ability-coverage.spec.ts',
     fix: 'Restore the captain contract package script used by parser and generated metadata validation.',
   },
   {
     name: 'perf:ability-filters',
     group: 'performance',
+    expectedCommand: 'node ./scripts/perf-ability-filters.mjs',
     fix: 'Restore the ability-filter performance harness package script.',
   },
   {
     name: 'perf:explanation-compare',
     group: 'performance',
+    expectedCommand: 'node ./scripts/perf-explanation-compare.mjs',
     fix: 'Restore the explanation/compare performance harness package script.',
   },
   {
     name: 'perf:budget-report',
     group: 'performance',
+    expectedCommand: 'node ./scripts/perf-budget-report.mjs',
     fix: 'Restore the performance budget report package script.',
+  },
+  {
+    name: 'perf:budget-history',
+    group: 'performance',
+    expectedCommand: 'node ./scripts/perf-budget-history.mjs',
+    fix: 'Restore the performance budget history package script used by the scheduled Performance Budgets workflow.',
   },
   {
     name: 'test:perf-budget',
     group: 'performance',
+    expectedCommand: 'vitest run scripts/perf-budget-report.spec.ts scripts/perf-budget-history.spec.ts',
     fix: 'Restore the performance budget unit test package script.',
   },
   {
     name: 'test:release-check',
     group: 'release-check',
+    expectedCommand: 'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts',
     fix: 'Restore the release detector replay package script.',
   },
   {
     name: 'data:check-release',
     group: 'release-check',
+    expectedCommand: 'node ./scripts/check-optc-release-needed.mjs',
     fix: 'Restore the local OPTC DB release-check package script.',
   },
   {
     name: 'data:monitor-upstream',
     group: 'release-check',
+    expectedCommand: 'node ./scripts/check-optc-upstream-monitor.mjs',
     fix: 'Restore the upstream freshness and drift monitor package script.',
   },
   {
     name: 'docs:integrity',
     group: 'docs',
+    expectedCommand: 'node ./scripts/check-docs-integrity.mjs',
     fix: 'Restore the docs integrity package script.',
   },
   {
     name: 'docs:commands',
     group: 'docs',
+    expectedCommand: 'node ./scripts/check-docs-commands.mjs',
     fix: 'Restore the docs command verification package script.',
   },
 ];
@@ -305,7 +321,7 @@ function packageScriptChecks(packageJson) {
       return makeCheck({
         id: `app/script/${script.name}`,
         group: script.group,
-        status: 'warn',
+        status: 'fail',
         label: `package script: ${script.name}`,
         detail: `${script.name} exists but runs "${scripts[script.name]}" instead of "${script.expectedCommand}".`,
         fix: `Confirm the command still covers the maintainer workflow, or restore: ${script.expectedCommand}`,
@@ -427,6 +443,26 @@ function runtimeChecks({ appRoot, packageJson, nodeVersion, npmVersion }) {
   return checks;
 }
 
+export function resolvePlaywrightCacheRoot(appRoot, env, platform = process.platform) {
+  if (env.PLAYWRIGHT_BROWSERS_PATH === '0') {
+    return path.join(appRoot, 'node_modules', 'playwright-core', '.local-browsers');
+  }
+
+  if (env.PLAYWRIGHT_BROWSERS_PATH) {
+    return env.PLAYWRIGHT_BROWSERS_PATH;
+  }
+
+  if (platform === 'win32') {
+    return env.LOCALAPPDATA ? path.join(env.LOCALAPPDATA, 'ms-playwright') : '';
+  }
+
+  if (platform === 'darwin') {
+    return env.HOME ? path.join(env.HOME, 'Library', 'Caches', 'ms-playwright') : '';
+  }
+
+  return env.HOME ? path.join(env.HOME, '.cache', 'ms-playwright') : '';
+}
+
 function localProfileChecks(appRoot, env) {
   const checks = [];
   const nodeModules = path.join(appRoot, 'node_modules');
@@ -456,12 +492,7 @@ function localProfileChecks(appRoot, env) {
     }),
   );
 
-  const cacheRoot =
-    env.PLAYWRIGHT_BROWSERS_PATH && env.PLAYWRIGHT_BROWSERS_PATH !== '0'
-      ? env.PLAYWRIGHT_BROWSERS_PATH
-      : process.platform === 'win32'
-        ? path.join(env.LOCALAPPDATA ?? '', 'ms-playwright')
-        : path.join(env.HOME ?? '', '.cache', 'ms-playwright');
+  const cacheRoot = resolvePlaywrightCacheRoot(appRoot, env);
 
   checks.push(
     makeCheck({
