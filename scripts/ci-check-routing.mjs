@@ -15,6 +15,10 @@ export const SCRIPT_SUITES = {
     label: 'Maintainer environment doctor tests',
     command: 'npm run test:maintainer-doctor',
   },
+  'dataset-digest': {
+    label: 'Dataset change digest tests',
+    command: 'npm run test:dataset-digest',
+  },
   'saved-team-codecs': {
     label: 'Saved-team codec fuzz tests',
     command: 'npm run test:saved-team-codecs',
@@ -144,6 +148,13 @@ function isMaintainerDoctorPath(filePath) {
   return (
     filePath === 'scripts/maintainer-environment-doctor.mjs' ||
     filePath === 'scripts/maintainer-environment-doctor.spec.ts'
+  );
+}
+
+function isDatasetDigestPath(filePath) {
+  return (
+    filePath === 'scripts/dataset-change-digest.mjs' ||
+    filePath === 'scripts/dataset-change-digest.spec.ts'
   );
 }
 
@@ -313,6 +324,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isMaintainerDoctorPath(filePath)) {
       categories.add('maintainer-doctor');
       addScriptSuite(scriptSuites, 'maintainer-doctor');
+      continue;
+    }
+
+    if (isDatasetDigestPath(filePath)) {
+      categories.add('dataset-digest');
+      addScriptSuite(scriptSuites, 'dataset-digest');
       continue;
     }
 

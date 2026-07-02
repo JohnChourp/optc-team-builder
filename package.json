@@ -55,6 +55,8 @@
     "test:release-readiness": "vitest run scripts/release-readiness-report.spec.ts",
     "doctor:maintainer": "node ./scripts/maintainer-environment-doctor.mjs",
     "test:maintainer-doctor": "vitest run scripts/maintainer-environment-doctor.spec.ts",
+    "dataset:digest": "node ./scripts/dataset-change-digest.mjs",
+    "test:dataset-digest": "vitest run scripts/dataset-change-digest.spec.ts",
     "test:docs-integrity": "vitest run scripts/check-docs-integrity.spec.ts",
     "docs:integrity": "node ./scripts/check-docs-integrity.mjs",
     "test:docs-commands": "vitest run scripts/check-docs-commands.spec.ts",
