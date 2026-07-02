@@ -3,6 +3,7 @@
     "assign": "Assign",
     "assigned": "Assigned",
     "editSlot": "Επεξεργασία slot {{slot}}",
+    "viewSlotDetails": "Προβολή λεπτομερειών για {{name}} στο slot {{slot}}",
     "save": "Αποθήκευση manual team"
   },
   "builder": {

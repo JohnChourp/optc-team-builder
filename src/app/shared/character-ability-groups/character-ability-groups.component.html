@@ -4,7 +4,11 @@
       class="character-ability-groups"
       [class.character-ability-groups--collapsed]="displayMode === 'collapsed'"
     >
-      <div class="ability-table" [style.--ability-column-count]="table.categories.length">
+      <div
+        class="ability-table"
+        role="table"
+        [style.--ability-column-count]="table.categories.length"
+      >
         <div class="ability-table__header" role="row">
           @for (category of table.categories; track category.key) {
             <div class="ability-table__category" role="columnheader">
@@ -14,7 +18,7 @@
           }
         </div>
 
-        <div class="ability-table__body">
+        <div class="ability-table__body" role="rowgroup">
           @for (row of table.rows; track row.key) {
             <div class="ability-table__row" role="row">
               @for (cell of row.cells; track cell.key) {

@@ -14,7 +14,7 @@
         <section class="hero-card glass-card">
           <div class="hero-copy">
             <div class="section-label">
-              <ion-icon [icon]="sparklesIcon"></ion-icon>
+              <ion-icon [icon]="sparklesIcon" aria-hidden="true"></ion-icon>
               <span>{{ builderLabel() }}</span>
             </div>
             <h1 class="section-title">{{ titleLabel() }}</h1>
@@ -23,13 +23,13 @@
 
           <div class="hero-meta">
             <div class="meta-pill">
-              <ion-icon [icon]="layersIcon"></ion-icon>
+              <ion-icon [icon]="layersIcon" aria-hidden="true"></ion-icon>
               <span>{{
                 t('hero.meta.availableClasses', { count: availableClasses().length })
               }}</span>
             </div>
             <div class="meta-pill">
-              <ion-icon [icon]="coverageIcon"></ion-icon>
+              <ion-icon [icon]="coverageIcon" aria-hidden="true"></ion-icon>
               <span>{{ teamStructureLabel() }}</span>
             </div>
           </div>
@@ -251,6 +251,7 @@
                                           <small>{{ favoritesOnlySupportLabel() }}</small>
                                         </div>
                                         <ion-toggle
+                                          [attr.aria-label]="favoritesOnlyToggleLabel()"
                                           color="warning"
                                           [checked]="favoritesOnly()"
                                           [disabled]="building()"
@@ -264,6 +265,7 @@
                                           <small>{{ favoriteShipsOnlySupportLabel() }}</small>
                                         </div>
                                         <ion-toggle
+                                          [attr.aria-label]="favoriteShipsOnlyToggleLabel()"
                                           color="warning"
                                           [checked]="favoriteShipsOnly()"
                                           [disabled]="building()"
@@ -281,6 +283,9 @@
                                           }}</small>
                                         </div>
                                         <ion-toggle
+                                          [attr.aria-label]="
+                                            allowAnyFriendCaptainAutoFillToggleLabel()
+                                          "
                                           color="warning"
                                           [checked]="allowAnyFriendCaptainAutoFill()"
                                           [disabled]="building()"
@@ -305,6 +310,7 @@
                                         </div>
                                         <ion-toggle
                                           data-testid="guided-auto-build-toggle"
+                                          [attr.aria-label]="guidedAutoBuildToggleLabel()"
                                           [attr.data-guided-enabled]="
                                             guidedAutoBuildEnabled() ? 'true' : 'false'
                                           "
@@ -1500,6 +1506,9 @@
                                                         }}</small>
                                                       </div>
                                                       <ion-toggle
+                                                        [attr.aria-label]="
+                                                          t('ships.requireToggle.label')
+                                                        "
                                                         color="warning"
                                                         [checked]="requireManualShip()"
                                                         [disabled]="building()"
@@ -2722,37 +2731,41 @@
                     {{ t('compare.guideLink') }}
                   </a>
                 </div>
-                <ion-button
+                <button
+                  type="button"
                   data-testid="compare-toggle"
-                  fill="outline"
-                  color="light"
-                  class="download-team-button"
+                  class="download-team-button compare-toggle-button"
+                  aria-controls="auto-team-builder-compare-panel"
+                  [attr.aria-expanded]="compareModeOpen() ? 'true' : 'false'"
                   (click)="toggleCompareMode()"
                 >
-                  <ion-icon slot="start" [icon]="compareIcon"></ion-icon>
+                  <ion-icon [icon]="compareIcon" aria-hidden="true"></ion-icon>
                   {{
                     compareModeOpen() ? t('compare.actions.hide') : t('compare.actions.show')
                   }}
-                </ion-button>
+                </button>
               </section>
 
               @if (compareModeOpen()) {
-                <section class="glass-card compare-card">
+                <section
+                  id="auto-team-builder-compare-panel"
+                  class="glass-card compare-card"
+                >
                   <div class="compare-card__head">
                     <div class="slot-grid__header">
                       <h2>{{ t('compare.title') }}</h2>
                       <p>{{ t('compare.copy') }}</p>
                     </div>
                     <div class="compare-card__actions">
-                      <ion-button
+                      <button
+                        type="button"
                         data-testid="compare-swap"
-                        fill="outline"
-                        color="light"
+                        class="compare-action-button"
                         (click)="swapCompareSides()"
                       >
-                        <ion-icon slot="start" [icon]="compareSwapIcon"></ion-icon>
+                        <ion-icon [icon]="compareSwapIcon" aria-hidden="true"></ion-icon>
                         {{ t('compare.actions.swap') }}
-                      </ion-button>
+                      </button>
                     </div>
                   </div>
 
@@ -2832,19 +2845,22 @@
                               size="small"
                               (click)="openPresetFilePicker(compareImportInput)"
                             >
-                              <ion-icon slot="start" [icon]="compareImportIcon"></ion-icon>
+                              <ion-icon
+                                slot="start"
+                                [icon]="compareImportIcon"
+                                aria-hidden="true"
+                              ></ion-icon>
                               {{ t('compare.actions.chooseFile') }}
                             </ion-button>
-                            <ion-button
+                            <button
+                              type="button"
                               [attr.data-testid]="'compare-use-payload-' + side"
-                              fill="outline"
-                              color="warning"
-                              size="small"
+                              class="compare-action-button compare-action-button--warning"
                               [disabled]="!compareSideState(side).importDraft.trim().length"
                               (click)="applyCompareImportDraft(side)"
                             >
                               {{ t('compare.actions.usePayload') }}
-                            </ion-button>
+                            </button>
                           </div>
                         }
 
@@ -2852,6 +2868,8 @@
                           class="compare-side-card__summary"
                           [attr.data-testid]="'compare-summary-' + side"
                           [class.compare-error-state]="compareSidePayload(side).error"
+                          [attr.role]="compareSidePayload(side).error ? 'alert' : 'status'"
+                          [attr.aria-live]="compareSidePayload(side).error ? 'assertive' : 'polite'"
                         >
                           {{ compareSideSummary(side) }}
                         </p>
@@ -2955,7 +2973,12 @@
                       }
                     </div>
                   } @else {
-                    <p class="compare-empty-state" data-testid="compare-empty-state">
+                    <p
+                      class="compare-empty-state"
+                      data-testid="compare-empty-state"
+                      role="status"
+                      aria-live="polite"
+                    >
                       {{ t('compare.empty.selectBoth') }}
                     </p>
                   }

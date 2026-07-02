@@ -86,6 +86,7 @@
   },
   "import": {
     "chooseAnotherFile": "Choose another file",
+    "close": "Close import dialog",
     "copy": "Import an export JSON from the Saved Teams page and merge it with the current on-device teams.",
     "dropzone": {
       "subtitle": "Import merges by id and updates existing saved teams.",

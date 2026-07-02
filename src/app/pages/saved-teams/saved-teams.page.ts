@@ -1,4 +1,4 @@
-import { Component, type OnInit, computed, signal } from '@angular/core';
+import { Component, type ElementRef, type OnInit, ViewChild, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonButton,
@@ -166,6 +166,8 @@ const SAVED_TEAM_ABILITY_CATEGORIES: SavedTeamAbilityCategory[] = [
   styleUrl: './saved-teams.page.scss',
 })
 export class SavedTeamsPage implements OnInit {
+  @ViewChild('importDropzone') private importDropzone?: ElementRef<HTMLButtonElement>;
+
   public readonly loading = signal(true);
   public readonly savedTeams;
   public readonly savedTeamCards = signal<SavedTeamPreviewCard[]>([]);
@@ -433,6 +435,13 @@ export class SavedTeamsPage implements OnInit {
     this.importModalOpen.set(true);
   }
 
+  public focusImportDropzone(): void {
+    globalThis.setTimeout(() => {
+      this.syncImportModalDialogLabel();
+      this.importDropzone?.nativeElement.focus();
+    });
+  }
+
   public closeImportModal(): void {
     this.importModalOpen.set(false);
     this.resetImportState();
@@ -694,6 +703,25 @@ export class SavedTeamsPage implements OnInit {
     this.importTextContent.set('');
     this.importFeedback.set(null);
     this.importing.set(false);
+  }
+
+  private syncImportModalDialogLabel(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const modal = document.querySelector<HTMLElement>('ion-modal.saved-teams-import-modal');
+    const dialog =
+      modal?.shadowRoot?.querySelector<HTMLElement>('[role="dialog"]') ??
+      modal?.querySelector<HTMLElement>('[role="dialog"]') ??
+      document.querySelector<HTMLElement>(
+        '.saved-teams-import-modal[role="dialog"], .saved-teams-import-modal [role="dialog"]',
+      );
+
+    dialog?.setAttribute(
+      'aria-label',
+      this.i18n.translate('import.title', undefined, 'saved-teams'),
+    );
   }
 
   private async copyTextToClipboardWithFeedback(

@@ -36,6 +36,82 @@
   text-decoration: underline;
 }
 
+.compare-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid rgba(248, 251, 255, 0.45);
+  border-radius: 6px;
+  background: transparent;
+  color: #f8fbff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.compare-toggle-button:hover,
+.compare-toggle-button:focus-visible {
+  border-color: rgba(245, 200, 76, 0.76);
+  color: #f5c84c;
+  outline: none;
+}
+
+.compare-toggle-button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.24);
+}
+
+.compare-toggle-button ion-icon {
+  font-size: 1rem;
+}
+
+.compare-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 7px 12px;
+  border: 1px solid rgba(248, 251, 255, 0.42);
+  border-radius: 6px;
+  background: transparent;
+  color: #f8fbff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.compare-action-button--warning {
+  border-color: rgba(245, 200, 76, 0.62);
+  color: #f5c84c;
+}
+
+.compare-action-button:hover,
+.compare-action-button:focus-visible {
+  border-color: rgba(245, 200, 76, 0.78);
+  color: #f5c84c;
+  outline: none;
+}
+
+.compare-action-button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.24);
+}
+
+.compare-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.compare-action-button ion-icon {
+  font-size: 0.95rem;
+}
+
 .compare-card {
   display: grid;
   gap: 18px;

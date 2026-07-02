@@ -116,6 +116,7 @@
     "@angular/build": "^22.0.4",
     "@angular/cli": "^22.0.4",
     "@angular/compiler-cli": "^22.0.4",
+    "@axe-core/playwright": "^4.12.1",
     "@jsverse/transloco-utils": "^8.3.0",
     "@playwright/test": "^1.61.1",
     "@types/node": "^26.0.1",

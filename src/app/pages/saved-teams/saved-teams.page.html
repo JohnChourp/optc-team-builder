@@ -41,8 +41,13 @@
             [class.import-feedback--success]="feedback.tone === 'success'"
             [class.import-feedback--warning]="feedback.tone === 'warning'"
             [class.import-feedback--error]="feedback.tone === 'error'"
+            [attr.role]="feedback.tone === 'error' ? 'alert' : 'status'"
+            [attr.aria-live]="feedback.tone === 'error' ? 'assertive' : 'polite'"
           >
-            <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
+            <ion-icon
+              [icon]="feedback.tone === 'error' ? errorIcon : successIcon"
+              aria-hidden="true"
+            ></ion-icon>
             <div>
               <strong>{{ feedback.title }}</strong>
               @for (detail of feedback.details; track $index) {
@@ -56,15 +61,15 @@
           <section class="glass-card empty-card">
             <h2>{{ t('title') }}</h2>
             <p>{{ t('empty') }}</p>
-            <ion-button
+            <button
+              type="button"
               data-testid="saved-teams-import-open"
-              fill="outline"
-              color="warning"
+              class="saved-team-native-button saved-team-native-button--warning"
               (click)="openImportModal()"
             >
-              <ion-icon slot="start" [icon]="uploadIcon"></ion-icon>
+              <ion-icon [icon]="uploadIcon" aria-hidden="true"></ion-icon>
               {{ t('tools.import') }}
-            </ion-button>
+            </button>
           </section>
         }
 
@@ -75,15 +80,15 @@
                 <h2>{{ t('title') }}</h2>
                 <span>{{ savedTeamTotalLabel() }}</span>
               </div>
-              <ion-button
+              <button
+                type="button"
                 data-testid="saved-teams-import-open"
-                fill="outline"
-                color="warning"
+                class="saved-team-native-button saved-team-native-button--warning"
                 (click)="openImportModal()"
               >
-                <ion-icon slot="start" [icon]="uploadIcon"></ion-icon>
+                <ion-icon [icon]="uploadIcon" aria-hidden="true"></ion-icon>
                 {{ t('tools.import') }}
-              </ion-button>
+              </button>
             </div>
             @if (hasAbilityFiltersAvailable()) {
               <div class="saved-teams-ability-filter-panel" data-testid="saved-teams-ability-filter-panel">
@@ -185,15 +190,15 @@
                 <ion-button fill="outline" color="light" (click)="resetPage()">
                   {{ 'common.actions.reset' | transloco }}
                 </ion-button>
-                <ion-button
-                  data-testid="saved-teams-import-open"
-                  fill="outline"
-                  color="warning"
-                  (click)="openImportModal()"
-                >
-                  <ion-icon slot="start" [icon]="uploadIcon"></ion-icon>
-                  {{ t('tools.import') }}
-                </ion-button>
+                  <button
+                    type="button"
+                    data-testid="saved-teams-import-open"
+                    class="saved-team-native-button saved-team-native-button--warning"
+                    (click)="openImportModal()"
+                  >
+                    <ion-icon [icon]="uploadIcon" aria-hidden="true"></ion-icon>
+                    {{ t('tools.import') }}
+                  </button>
                 <ion-button
                   fill="outline"
                   color="light"
@@ -257,24 +262,24 @@
                       >
                         {{ t('actions.openTeam') }}
                       </ion-button>
-                      <ion-button
+                      <button
+                        type="button"
                         [attr.data-testid]="'saved-team-share-link-' + teamCard.team.id"
-                        fill="clear"
-                        color="warning"
+                        class="saved-team-native-button saved-team-native-button--clear-warning"
                         (click)="copyTeamShareLink(teamCard.team)"
                       >
-                        <ion-icon slot="start" [icon]="shareIcon"></ion-icon>
+                        <ion-icon [icon]="shareIcon" aria-hidden="true"></ion-icon>
                         {{ t('actions.copyShareLink') }}
-                      </ion-button>
-                      <ion-button
+                      </button>
+                      <button
+                        type="button"
                         [attr.data-testid]="'saved-team-share-code-' + teamCard.team.id"
-                        fill="clear"
-                        color="light"
+                        class="saved-team-native-button saved-team-native-button--clear"
                         (click)="copyTeamShareCode(teamCard.team)"
                       >
-                        <ion-icon slot="start" [icon]="linkIcon"></ion-icon>
+                        <ion-icon [icon]="linkIcon" aria-hidden="true"></ion-icon>
                         {{ t('actions.copyShareCode') }}
-                      </ion-button>
+                      </button>
                       <ion-button
                         [attr.data-testid]="'saved-team-copy-json-' + teamCard.team.id"
                         fill="clear"
@@ -545,6 +550,8 @@
         #savedTeamsImportModal
         [isOpen]="importModalOpen()"
         cssClass="saved-teams-import-modal"
+        [attr.aria-label]="t('import.title')"
+        (didPresent)="focusImportDropzone()"
         (didDismiss)="closeImportModal()"
       >
         <ng-template>
@@ -552,7 +559,7 @@
             <div class="import-modal-head">
               <div>
                 <div class="section-label">{{ t('import.eyebrow') }}</div>
-                <h2>{{ t('import.title') }}</h2>
+                <h2 id="saved-teams-import-title">{{ t('import.title') }}</h2>
                 <p>{{ t('import.copy') }}</p>
                 <a
                   class="import-guide-link"
@@ -566,9 +573,10 @@
               <ion-button
                 fill="clear"
                 color="light"
+                [attr.aria-label]="t('import.close')"
                 (click)="closeImportModal(); savedTeamsImportModal.dismiss(null, 'cancel')"
               >
-                <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
               </ion-button>
             </div>
 
@@ -582,6 +590,7 @@
             />
 
             <button
+              #importDropzone
               type="button"
               class="import-dropzone"
               [class.import-dropzone--active]="draggingImportFile()"
@@ -590,14 +599,14 @@
               (dragleave)="onImportDragLeave($event)"
               (drop)="onImportDrop($event)"
             >
-              <ion-icon [icon]="uploadIcon"></ion-icon>
+              <ion-icon [icon]="uploadIcon" aria-hidden="true"></ion-icon>
               <strong>{{ t('import.dropzone.title') }}</strong>
               <span>{{ t('import.dropzone.subtitle') }}</span>
             </button>
 
             @if (importFileName()) {
               <div class="import-file-chip">
-                <ion-icon [icon]="fileIcon"></ion-icon>
+                <ion-icon [icon]="fileIcon" aria-hidden="true"></ion-icon>
                 <span>{{ importFileName() }}</span>
               </div>
             }
@@ -639,8 +648,13 @@
                 [class.import-feedback--success]="feedback.tone === 'success'"
                 [class.import-feedback--warning]="feedback.tone === 'warning'"
                 [class.import-feedback--error]="feedback.tone === 'error'"
+                [attr.role]="feedback.tone === 'error' ? 'alert' : 'status'"
+                [attr.aria-live]="feedback.tone === 'error' ? 'assertive' : 'polite'"
               >
-                <ion-icon [icon]="feedback.tone === 'error' ? errorIcon : successIcon"></ion-icon>
+                <ion-icon
+                  [icon]="feedback.tone === 'error' ? errorIcon : successIcon"
+                  aria-hidden="true"
+                ></ion-icon>
                 <div>
                   <strong>{{ feedback.title }}</strong>
                   @for (detail of feedback.details; track $index) {
