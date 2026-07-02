@@ -14,7 +14,7 @@
         <div class="page-shell manual-team-builder-shell">
           <section class="glass-card hero-card">
             <div class="section-label">
-              <ion-icon [icon]="pageIcon"></ion-icon>
+              <ion-icon [icon]="pageIcon" aria-hidden="true"></ion-icon>
               <span>{{ t('hero.eyebrow') }}</span>
             </div>
             <h1 class="section-title">{{ t('hero.title') }}</h1>
@@ -70,7 +70,7 @@
                       <strong>{{ selectedShipLabel() }}</strong>
                     </div>
                     <ion-button fill="outline" color="light" (click)="openShipPicker()">
-                      <ion-icon slot="start" [icon]="shipIcon"></ion-icon>
+                      <ion-icon slot="start" [icon]="shipIcon" aria-hidden="true"></ion-icon>
                       {{ t('ship.actions.change') }}
                     </ion-button>
                   </div>
@@ -99,7 +99,7 @@
 
                 <div class="manual-team-slots">
                   @for (slot of slots(); track index; let index = $index) {
-                    <article
+                    <div
                       class="manual-team-slot"
                       [attr.data-testid]="'manual-team-slot-' + index"
                       [class.manual-team-slot--active]="selectedSlotIndex() === index"
@@ -107,12 +107,7 @@
                       [class.manual-team-slot--drop-target]="slotIsDropTarget(index)"
                       [class.manual-team-slot--drop-invalid]="slotIsInvalidDropTarget(index)"
                       [class.manual-team-slot--validation]="slotHasValidation(index)"
-                      [attr.role]="slot ? 'link' : null"
-                      [attr.tabindex]="slot ? '0' : null"
                       [attr.draggable]="slot ? 'true' : null"
-                      (click)="openSlotDetail(index)"
-                      (keydown.enter)="openSlotDetail(index)"
-                      (keydown.space)="$event.preventDefault(); openSlotDetail(index)"
                       (dragstart)="onSlotDragStart($event, index)"
                       (dragend)="onDragEnd()"
                       (dragover)="onSlotDragOver($event, index)"
@@ -121,14 +116,27 @@
                     >
                       @if (slot) {
                         <div class="manual-team-slot__media">
-                          <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
-                          <span class="type-pill">{{ slot.type }}</span>
+                          <a
+                            class="manual-team-slot__detail-target"
+                            [routerLink]="getCharacterDetailLink(slot)"
+                            [attr.aria-label]="
+                              t('actions.viewSlotDetails', { slot: index + 1, name: slot.name })
+                            "
+                          >
+                            <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
+                            <span class="type-pill">{{ slot.type }}</span>
+                          </a>
                         </div>
                         <div class="manual-team-slot__body">
                           <div class="manual-team-slot__head">
                             <span>
                               <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
-                              <small>{{ slot.name }}</small>
+                              <a
+                                class="manual-team-slot__name-link"
+                                [routerLink]="getCharacterDetailLink(slot)"
+                              >
+                                {{ slot.name }}
+                              </a>
                             </span>
                             <div class="manual-team-slot__actions">
                               <ion-button
@@ -141,7 +149,11 @@
                                 [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
                                 (click)="$event.stopPropagation(); openCharacterPicker(index)"
                               >
-                                <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                                <ion-icon
+                                  slot="icon-only"
+                                  [icon]="editIcon"
+                                  aria-hidden="true"
+                                ></ion-icon>
                               </ion-button>
                               <ion-button
                                 fill="clear"
@@ -236,10 +248,14 @@
                           [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
                           (click)="$event.stopPropagation(); openCharacterPicker(index)"
                         >
-                          <ion-icon slot="icon-only" [icon]="editIcon"></ion-icon>
+                          <ion-icon
+                            slot="icon-only"
+                            [icon]="editIcon"
+                            aria-hidden="true"
+                          ></ion-icon>
                         </ion-button>
                       }
-                    </article>
+                    </div>
                   }
                 </div>
 
@@ -251,13 +267,13 @@
                   (dragover)="onClearDropZoneDragOver($event)"
                   (drop)="onClearDropZoneDrop($event)"
                 >
-                  <ion-icon [icon]="trashIcon"></ion-icon>
+                  <ion-icon [icon]="trashIcon" aria-hidden="true"></ion-icon>
                   <span>{{ t('drag.clearZone') }}</span>
                 </div>
 
                 @if (dragFeedbackMessage()) {
                   <section class="manual-team-feedback manual-team-feedback--error" role="alert">
-                    <ion-icon [icon]="errorIcon"></ion-icon>
+                    <ion-icon [icon]="errorIcon" aria-hidden="true"></ion-icon>
                     <div>
                       <strong>{{ dragFeedbackMessage() }}</strong>
                     </div>
@@ -270,7 +286,7 @@
                     data-testid="manual-share-error"
                     role="alert"
                   >
-                    <ion-icon [icon]="errorIcon"></ion-icon>
+                    <ion-icon [icon]="errorIcon" aria-hidden="true"></ion-icon>
                     <div>
                       <strong>{{ sharedTeamFeedbackError() }}</strong>
                       @for (detail of sharedTeamFeedbackDetails(); track $index) {
@@ -282,7 +298,7 @@
 
                 @if (currentTeamId()) {
                   <section class="manual-team-feedback manual-team-feedback--success">
-                    <ion-icon [icon]="successIcon"></ion-icon>
+                    <ion-icon [icon]="successIcon" aria-hidden="true"></ion-icon>
                     <div>
                       <strong>{{ t('save.success') }}</strong>
                     </div>
@@ -291,7 +307,7 @@
 
                 @if (saveFeedbackError()) {
                   <section class="manual-team-feedback manual-team-feedback--error" role="alert">
-                    <ion-icon [icon]="errorIcon"></ion-icon>
+                    <ion-icon [icon]="errorIcon" aria-hidden="true"></ion-icon>
                     <div>
                       <strong>{{ t('save.error') }}</strong>
                     </div>
@@ -373,7 +389,7 @@
                 <div class="pick-editor-modal__head">
                   <div>
                     <div class="section-label">
-                      <ion-icon [icon]="editIcon"></ion-icon>
+                      <ion-icon [icon]="editIcon" aria-hidden="true"></ion-icon>
                       <span>{{ t('picker.eyebrow') }}</span>
                     </div>
                     <h2>{{ t('picker.title', { slot: selectedSlotIndex() + 1 }) }}</h2>
@@ -388,7 +404,7 @@
                     [attr.aria-label]="t('picker.close')"
                     (click)="closeCharacterPicker(); characterPickerModal.dismiss(null, 'cancel')"
                   >
-                    <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
+                    <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
                   </ion-button>
                 </ion-buttons>
               </ion-toolbar>
@@ -598,7 +614,7 @@
                       [disabled]="!hasActiveCandidateFilters()"
                       (click)="clearCandidateFilters()"
                     >
-                      <ion-icon slot="start" [icon]="filterIcon"></ion-icon>
+                      <ion-icon slot="start" [icon]="filterIcon" aria-hidden="true"></ion-icon>
                       {{ t('picker.filters.clear') }}
                     </ion-button>
                   </div>

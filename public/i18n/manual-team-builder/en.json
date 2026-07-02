@@ -3,6 +3,7 @@
     "assign": "Assign",
     "assigned": "Assigned",
     "editSlot": "Edit slot {{slot}}",
+    "viewSlotDetails": "View details for {{name}} in slot {{slot}}",
     "save": "Save manual team"
   },
   "builder": {

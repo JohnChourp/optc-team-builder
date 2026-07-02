@@ -86,6 +86,7 @@
   },
   "import": {
     "chooseAnotherFile": "Διάλεξε άλλο αρχείο",
+    "close": "Κλείσιμο παραθύρου εισαγωγής",
     "copy": "Κάνε import export JSON από τη Saved Teams σελίδα για merge με τα υπάρχοντα αποθηκευμένα teams της συσκευής.",
     "dropzone": {
       "subtitle": "Το import κάνει merge by id και ενημερώνει υπάρχοντα teams.",

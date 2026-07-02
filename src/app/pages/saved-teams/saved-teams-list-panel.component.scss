@@ -39,3 +39,45 @@
   justify-content: flex-end;
   gap: 4px;
 }
+
+.saved-team-native-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #f8fbff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.saved-team-native-button--warning {
+  border-color: rgba(245, 200, 76, 0.62);
+  color: #f5c84c;
+}
+
+.saved-team-native-button--clear-warning {
+  color: #f5c84c;
+}
+
+.saved-team-native-button:hover,
+.saved-team-native-button:focus-visible {
+  border-color: rgba(245, 200, 76, 0.78);
+  color: #f5c84c;
+  outline: none;
+}
+
+.saved-team-native-button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.24);
+}
+
+.saved-team-native-button ion-icon {
+  font-size: 0.95rem;
+}

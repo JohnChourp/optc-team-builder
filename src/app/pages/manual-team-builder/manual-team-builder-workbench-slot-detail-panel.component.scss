@@ -13,13 +13,32 @@
 }
 
 .manual-team-slot__head strong,
-.manual-team-slot__head small {
+.manual-team-slot__head small,
+.manual-team-slot__name-link {
   overflow-wrap: anywhere;
 }
 
-.manual-team-slot__head small {
+.manual-team-slot__head small,
+.manual-team-slot__name-link {
   color: rgba(248, 251, 255, 0.76);
   line-height: 1.35;
+}
+
+.manual-team-slot__name-link {
+  width: fit-content;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.manual-team-slot__name-link:hover,
+.manual-team-slot__name-link:focus-visible {
+  color: #f5c84c;
+  outline: none;
+  text-decoration: underline;
+}
+
+.manual-team-slot__name-link:focus-visible {
+  box-shadow: 0 0 0 3px rgba(245, 200, 76, 0.24);
 }
 
 .manual-team-slot__actions {

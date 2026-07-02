@@ -9,6 +9,11 @@ The Playwright suite has two layers:
 
 - `smoke.spec.ts` checks route render, navigation, and cross-browser console stability.
 - `regression-flows.spec.ts` covers high-value user journeys that have crossed feature boundaries: guided Auto Team Builder, compare sources, saved-team transfer, share links/codes, and invalid payload handling.
+- `accessibility.spec.ts` covers the guided build, compare, saved-team sharing,
+  import modal, and share-link hydration accessibility slice with keyboard
+  activation checks, explicit state/feedback assertions, and focused axe scans
+  for serious structural regressions. The axe helper intentionally excludes
+  `color-contrast`; contrast reviews remain a separate visual/design pass.
 
 Regression tests seed only browser-local Capacitor Preferences keys:
 
@@ -27,6 +32,10 @@ explicit browser-specific exception and is kept visible by the non-blocking
 Chromium quarantine job until it meets the restoration criteria. When developers
 pass flags or file filters through npm, the wrapper delegates directly to
 Playwright so filtered and debug workflows behave like direct Playwright usage.
+Run the focused accessibility slice locally with
+`npm run test:e2e:chromium -- --grep "@accessibility"` before changing guided
+controls, compare import/swap UI, saved-team share/import feedback, or manual
+builder share hydration.
 
 ## Flake Triage And Quarantine
 
