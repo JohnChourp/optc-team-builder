@@ -649,6 +649,9 @@ function hasMeaningfulChanges(report) {
   return (
     report.manifest.sourceVersion.changed ||
     Object.values(report.manifest.countDeltas).some((entry) => entry.delta !== 0) ||
+    report.manifest.packs.addedCount > 0 ||
+    report.manifest.packs.removedCount > 0 ||
+    report.manifest.packs.changedCount > 0 ||
     report.characters.addedCount > 0 ||
     report.characters.removedCount > 0 ||
     report.characters.changedCount > 0 ||

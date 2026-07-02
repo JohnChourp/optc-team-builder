@@ -121,6 +121,36 @@ describe('dataset-change-digest', () => {
     expect(report.unresolvedImages.changedCount).toBe(0);
   });
 
+  it('marks manifest pack-only changes as changed', async () => {
+    const baseDir = await makeTempDir();
+    const headDir = await makeTempDir();
+    const character = createCharacter({
+      id: 101,
+      name: 'Monkey D. Luffy',
+      captainMultiplier: 4,
+      builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind')],
+    });
+
+    await writeDataset(baseDir, {
+      sourceVersion: '100',
+      characters: [character],
+      abilities: [createCatalogAbility('remove_bind', [101])],
+      packs: [createPack({ checksum: 'old-checksum', fileCount: 10 })],
+    });
+    await writeDataset(headDir, {
+      sourceVersion: '100',
+      characters: [character],
+      abilities: [createCatalogAbility('remove_bind', [101])],
+      packs: [createPack({ checksum: 'new-checksum', fileCount: 11 })],
+    });
+
+    const report = await buildDatasetChangeDigest({ baseDir, headDir });
+
+    expect(report.status).toBe('changed');
+    expect(report.manifest.packs.changedCount).toBe(1);
+    expect(report.characters.changedCount).toBe(0);
+  });
+
   it('writes markdown and JSON from the CLI', async () => {
     const baseDir = await makeTempDir();
     const headDir = await makeTempDir();
@@ -164,16 +194,18 @@ async function writeDataset(
     characters,
     abilities,
     ships = [createShip()],
+    packs = [],
   }: {
     generatedAt?: string;
     sourceVersion: string;
     characters: ReturnType<typeof createCharacter>[];
     abilities: ReturnType<typeof createCatalogAbility>[];
     ships?: ReturnType<typeof createShip>[];
+    packs?: ReturnType<typeof createPack>[];
   },
 ) {
   await mkdir(dir, { recursive: true });
-  const manifest = buildManifest(characters, ships, sourceVersion, [], generatedAt);
+  const manifest = buildManifest(characters, ships, sourceVersion, packs, generatedAt);
   const seedSql = createSqlSeed(characters, ships, manifest);
   const abilityCatalog = buildAutoBuilderAbilityCatalog(generatedAt, sourceVersion, abilities);
   const preview = buildPreviewPayload(generatedAt, characters, ships);
@@ -292,5 +324,18 @@ function createShip() {
     name: 'Thousand Sunny',
     thumb: null,
     description: 'Default ship.',
+  };
+}
+
+function createPack({ checksum, fileCount }: { checksum: string; fileCount: number }) {
+  return {
+    key: 'thumbnailsGlo',
+    id: 'thumbnails-glo',
+    label: 'Global thumbnails',
+    localBasePath: 'assets/offline-packs/thumbnails-glo',
+    fileCount,
+    totalBytes: fileCount * 100,
+    installed: true,
+    checksum,
   };
 }
