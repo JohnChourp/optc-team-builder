@@ -101,7 +101,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: read
+      pull-requests: write
 
     steps:
       - name: Download digest artifact
@@ -135,14 +135,20 @@ jobs:
               | tail -n 1
           )"
 
+          body="$(cat "${body_file}")"
+
           if [[ -n "${comment_id}" ]]; then
             gh api \
               --method PATCH \
               "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" \
-              --field "body=@${body_file}" >/dev/null
+              --raw-field body="${body}" >/dev/null || {
+                echo "Digest comment update was not permitted; artifact and step summary remain available." >> "${GITHUB_STEP_SUMMARY}"
+              }
           else
             gh api \
               --method POST \
               "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
-              --field "body=@${body_file}" >/dev/null
+              --raw-field body="${body}" >/dev/null || {
+                echo "Digest comment creation was not permitted; artifact and step summary remain available." >> "${GITHUB_STEP_SUMMARY}"
+              }
           fi
