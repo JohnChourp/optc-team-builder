@@ -278,6 +278,8 @@ describe('CharacterImagePickerComponent', () => {
     expect(template).not.toContain('value="idDesc"');
     expect(template).not.toContain('value="idAsc"');
     expect(template).not.toContain('character-image-picker-filter-row');
+    expect(template).toContain("'character-image-picker-card-' + character.id");
+    expect(template).toContain('data-testid="character-image-picker-load-more"');
     expect(template).toContain('(click)="selectCharacter(character)"');
     expect(template).toContain('(click)="loadMore()"');
     expect(template).toContain('(click)="save()"');

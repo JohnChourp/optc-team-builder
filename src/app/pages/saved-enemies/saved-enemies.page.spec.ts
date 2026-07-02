@@ -996,6 +996,8 @@ describe('SavedEnemiesPage', () => {
     expect(template).toContain("t('editor.paste.selection.actions.parse')");
     expect(template).toContain("t('editor.image.title')");
     expect(template).toContain("t('editor.image.chooseCharacter')");
+    expect(template).toContain('data-testid="saved-enemies-create-open"');
+    expect(template).toContain('data-testid="saved-enemies-character-image-picker-open"');
     expect(template).toContain('(click)="resetSelection()"');
     expect(template).toContain('(click)="exportSelectedEnemies()"');
     expect(template).toContain('(click)="confirmAndDeleteSelectedEnemies()"');
@@ -1032,6 +1034,19 @@ describe('SavedEnemiesPage', () => {
     expect(template).not.toContain("t('bulkImport.action')");
     expect(template).not.toContain('(click)="openImportModal()"');
     expect(template).not.toContain('onImportFileSelected($event, importFileInput)');
+  });
+
+  it('keeps saved-enemy cards eligible for narrow-list render containment', () => {
+    const stylesheet = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/pages/saved-enemies/saved-enemies-list-panel.component.scss',
+      ),
+      'utf8',
+    );
+
+    expect(stylesheet).toContain('content-visibility: auto');
+    expect(stylesheet).toContain('contain-intrinsic-block-size: 360px');
   });
 });
 

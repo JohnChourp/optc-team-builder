@@ -249,6 +249,7 @@
                   <button
                     type="button"
                     class="character-image-card"
+                    [attr.data-testid]="'character-image-picker-card-' + character.id"
                     [class.character-image-card--selected]="selectedCharacterId() === character.id"
                     [attr.aria-label]="character.name"
                     [attr.title]="character.name"
@@ -268,6 +269,7 @@
                 <ion-button
                   fill="outline"
                   color="warning"
+                  data-testid="character-image-picker-load-more"
                   [disabled]="loadingMore() || applyingSelection"
                   (click)="loadMore()"
                 >

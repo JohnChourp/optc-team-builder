@@ -73,6 +73,8 @@
 
 .special-ability-section {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  content-visibility: auto;
+  contain-intrinsic-block-size: 220px;
   padding-top: 1rem;
 }
 

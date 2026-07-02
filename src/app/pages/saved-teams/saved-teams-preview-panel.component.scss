@@ -6,6 +6,8 @@
 .saved-team-list article {
   display: grid;
   gap: 6px;
+  content-visibility: auto;
+  contain-intrinsic-block-size: 320px;
   padding: 14px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);

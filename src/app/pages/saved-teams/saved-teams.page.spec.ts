@@ -463,6 +463,16 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('importPastedTeams()');
   });
 
+  it('keeps saved-team cards eligible for narrow-list render containment', () => {
+    const stylesheet = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/saved-teams/saved-teams-preview-panel.component.scss'),
+      'utf8',
+    );
+
+    expect(stylesheet).toContain('content-visibility: auto');
+    expect(stylesheet).toContain('contain-intrinsic-block-size: 320px');
+  });
+
   it('keeps the import modal content scrollable for long diagnostics', () => {
     const stylesheet = readFileSync(
       resolve(process.cwd(), 'src/app/pages/saved-teams/saved-teams-modal-panel.component.scss'),
