@@ -34,6 +34,10 @@ const ALLOWED_COMMANDS = new Map(
       'npm run docs:integrity -- --brain-root ../optc-team-builder-brain',
       { cwd: 'app', expected: 'zero', requiresBrain: true },
     ],
+    [
+      'npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain',
+      { cwd: 'app', expected: 'zero', requiresBrain: true },
+    ],
     ['npm run docs:integrity -- --app-only', { cwd: 'app', expected: 'zero' }],
     [
       'node scripts/audit-docs-integrity.mjs --brain . --app ../optc-team-builder',

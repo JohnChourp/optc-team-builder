@@ -11,6 +11,9 @@ adding or moving fixtures across browser, contract, performance, release-check,
 or release-readiness suites. Use `docs/review-ownership-policy.md` when a
 change touches critical release, CI, fixture, data, evidence, or app-runtime
 paths and you need the reviewer routing and cross-repo escalation rule.
+Use `npm run doctor:maintainer -- --profile=ci --brain-root
+../optc-team-builder-brain` first when a local setup, sibling checkout, package
+script, or workflow prerequisite looks suspect.
 
 ## Decision Table
 
@@ -27,6 +30,7 @@ paths and you need the reviewer routing and cross-repo escalation rule.
 | OPTC DB release-detector logic, fixtures, workflow dispatch rules, or upstream replay support | `npm run test:release-check` | Run each successful bundled fixture plus the live check, and verify `node scripts/check-optc-release-needed.mjs --fixture=error --json` exits nonzero | Missing upstream character IDs are the only release trigger, fixture branches remain replayable, malformed fixture handling still fails, manual workflow dispatch defaults to report-only verification, and the live upstream read still works | Command output; workflow artifact `release-trigger-outcome` after Actions runs |
 | Release-readiness summary schema, report formatting, sign-off policy, or release evidence wiring | `npm run test:release-readiness` | `npm run test:release-readiness` plus `npm run release:readiness -- --source /path/to/source.json --output /path/to/summary.md --json-output /path/to/summary.json` using current evidence | Candidate status, tests, performance report, release-trigger report, blockers, and waivers produce the intended ready/blocked decision | Paths passed to `--output` and `--json-output` |
 | Release-note source, generated release-note Markdown, or release-note workflow routing | `node ../optc-team-builder-brain/scripts/generate-release-notes.mjs --source ../optc-team-builder-brain/audits/release-notes/<period>-source.json --evidence-index ../optc-team-builder-brain/audits/evidence-index.json --output docs/release-notes/<period>.md --check` with `<period>` replaced by the touched release period, plus docs integrity | Generator tests plus full app/brain docs integrity when changing source schema, generated Markdown, or release-note links | Release notes stay generated from workspace-scoped ClickUp evidence and brain audits instead of drifting into hand-edited summaries | Generated `docs/release-notes/<period>.md` and brain source JSON |
+| Maintainer environment, sibling checkout, or validation prerequisite drift | `npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain` | Doctor command plus `npm run test:maintainer-doctor`; add docs command and integrity checks when command examples or workflow references changed | Node/npm engines, app/brain layout, required workflow files, contract/performance/release-check scripts, release fixtures, brain evidence paths, and instruction parity are ready before deeper validation | Doctor output only |
 | CI routing, dependency, workflow, or package changes | `npm run test:ci-routing` plus a YAML parse of the touched workflow | Full local validation for the changed routing surface, then rely on the PR `Test` workflow to prove the selected GitHub jobs | The executable routing rules stay fail-closed and the workflow still emits check-selection evidence before running targeted jobs | `ci-check-routing-summary` workflow artifact |
 | Broad app UI behavior, routing, saved-team/share flows, or regression-prone user journeys | Focused `npm run test:ci -- --include ...` for touched components/services | `npm run test:ci`, scoped `npm run test:e2e:*` browser runs, `npm run i18n:validate`, and `npm run build`; use all browser projects when browser-specific behavior changed | Angular units, deterministic cross-browser journeys, translation keys, and production build health remain intact; browser flakes follow the `e2e/README.md` quarantine workflow before any coverage is excluded from blocking CI | Playwright reports, `test-results/`, and failure-summary artifacts in CI |
 | Docs-only, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, plus `git diff --check` | Add targeted command validation when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, documented maintainer commands, and whitespace stay valid across app and brain docs | None |
@@ -59,6 +63,7 @@ for selecting pull-request and `main` push checks. The workflow first records a
 Routing defaults are:
 
 - docs-only changes run the docs script tests and skip Angular and browser jobs
+- maintainer doctor changes run the focused doctor script tests
 - release-detector changes run the release-check suite
 - release-readiness changes run the release-readiness suite
 - performance tooling changes run the performance-budget script tests
@@ -120,6 +125,21 @@ docs, generated data, and major user-facing flows.
 Fenced shell examples below include a command status. `CI-executable` commands
 are part of the docs command verification allowlist; `manual/illustrative`
 commands remain documented for maintainers but are not executed by that gate.
+
+### Maintainer Environment Doctor
+
+Run the doctor before deeper validation when local setup, sibling checkout
+layout, package scripts, or workflow prerequisites might have drifted:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain
+```
+
+Use the default local profile when checking a workstation before browser,
+performance, or PWA work; it also reports missing `node_modules`, Playwright
+package installation, and browser cache setup with concrete fix guidance.
 
 ### Captain Contracts
 
