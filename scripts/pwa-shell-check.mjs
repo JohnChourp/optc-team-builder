@@ -135,8 +135,9 @@ function regenerateNgsw(releaseDir, label) {
 function copyRelease(sourceDir, targetDir, label) {
   fs.rmSync(targetDir, { recursive: true, force: true });
   fs.cpSync(sourceDir, targetDir, { recursive: true });
-  patchReleaseMarker(targetDir, label);
+  const metadata = patchReleaseMarker(targetDir, label);
   regenerateNgsw(targetDir, `ngsw-${label}`);
+  return metadata;
 }
 
 function patchReleaseMarker(releaseDir, label) {
@@ -147,6 +148,37 @@ function patchReleaseMarker(releaseDir, label) {
     ? original.replace(/<meta name="pwa-shell-release" content="[^"]*">/u, marker)
     : original.replace(/<\/head>/iu, `  ${marker}\n</head>`);
   fs.writeFileSync(indexPath, next, 'utf8');
+
+  return {
+    label,
+    changedBundles: label === 'release-b' ? patchReleaseBundle(releaseDir, indexPath, label) : [],
+  };
+}
+
+function patchReleaseBundle(releaseDir, indexPath, label) {
+  const index = fs.readFileSync(indexPath, 'utf8');
+  const match = index.match(/\bhref="([^"]*styles-[^"]+\.css)"/iu);
+  if (!match) {
+    throw new Error(`Unable to find stylesheet bundle in ${indexPath}`);
+  }
+
+  const originalRelativePath = decodeURIComponent(match[1].replace(/^\/+/u, ''));
+  const originalPath = path.join(releaseDir, originalRelativePath);
+  if (!fs.existsSync(originalPath)) {
+    throw new Error(`Unable to patch missing bundle ${originalRelativePath}`);
+  }
+
+  const parsed = path.parse(originalRelativePath);
+  const nextRelativePath = path
+    .join(parsed.dir, `${parsed.name}-pwa-${label}${parsed.ext}`)
+    .replace(/\\/gu, '/');
+  const nextPath = path.join(releaseDir, nextRelativePath);
+  const marker = `:root { --pwa-shell-changed-bundle: ${label}; }`;
+  const originalBundle = fs.readFileSync(originalPath, 'utf8');
+  fs.writeFileSync(nextPath, `${originalBundle}\n${marker}\n`, 'utf8');
+  fs.writeFileSync(indexPath, index.replaceAll(match[1], nextRelativePath), 'utf8');
+
+  return [{ from: originalRelativePath, to: nextRelativePath, marker: label }];
 }
 
 function contentTypeFor(filePath) {
@@ -326,6 +358,22 @@ async function waitForServiceWorkerControl(page) {
   });
 }
 
+async function fetchAppConfig(page, cacheMode = 'default') {
+  return page.evaluate(async (mode) => {
+    try {
+      const response = await fetch('/app-config.js', { cache: mode });
+      const text = await response.text();
+      return { ok: response.ok, status: response.status, bytes: text.length };
+    } catch (error) {
+      return {
+        ok: false,
+        status: 0,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }, cacheMode);
+}
+
 async function sendNgswOperation(page, action) {
   return page.evaluate(
     ({ action: actionName, timeoutMs }) =>
@@ -360,11 +408,33 @@ async function sendNgswOperation(page, action) {
   );
 }
 
-function assertNgswOperationSucceeded(action, result) {
-  if (result.ok && result.result === true) {
+function assertNgswOperationCompleted(action, result, options = {}) {
+  const requireTrue = options.requireTrue ?? false;
+  if (result.ok && (!requireTrue || result.result === true)) {
     return;
   }
   throw new Error(`${action} did not complete successfully: ${JSON.stringify(result)}`);
+}
+
+function readPngDimensions(buffer) {
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (buffer.length < 24 || !buffer.subarray(0, 8).equals(signature) || buffer.toString('ascii', 12, 16) !== 'IHDR') {
+    throw new Error('invalid PNG signature or IHDR chunk');
+  }
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+  };
+}
+
+function parseManifestIconSizes(value) {
+  return String(value || '')
+    .split(/\s+/u)
+    .map((size) => {
+      const match = size.match(/^(\d+)x(\d+)$/u);
+      return match ? { width: Number(match[1]), height: Number(match[2]), label: size } : null;
+    })
+    .filter(Boolean);
 }
 
 async function serviceWorkerState(page) {
@@ -374,6 +444,18 @@ async function serviceWorkerState(page) {
       return response.ok ? response.text() : `status=${response.status}`;
     })
     .catch((error) => `unavailable: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+async function changedBundleMarker(page) {
+  return page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--pwa-shell-changed-bundle').trim());
+}
+
+async function assertChangedBundleLoaded(page, label) {
+  const marker = await changedBundleMarker(page);
+  if (marker !== label) {
+    throw new Error(`expected changed bundle marker ${label}, received ${marker || 'none'}`);
+  }
+  return marker;
 }
 
 async function screenshot(page, phase, route) {
@@ -404,14 +486,32 @@ async function verifyManifest(baseURL) {
     for (const icon of manifest.icons ?? []) {
       const iconUrl = new URL(icon.src, `${baseURL}/`).pathname;
       const iconResponse = await api.get(iconUrl);
+      const body = await iconResponse.body();
+      const declaredSizes = parseManifestIconSizes(icon.sizes);
+      let bitmap = null;
+      if (iconResponse.ok()) {
+        try {
+          bitmap = readPngDimensions(body);
+        } catch (error) {
+          errors.push(`icon ${icon.src} is not a valid PNG: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
       iconResults.push({
         src: icon.src,
         sizes: icon.sizes,
         status: iconResponse.status(),
         contentType: iconResponse.headers()['content-type'] ?? '',
+        bytes: body.length,
+        bitmap,
       });
       if (!iconResponse.ok()) {
         errors.push(`icon ${icon.src} returned ${iconResponse.status()}`);
+      }
+      if (declaredSizes.length === 0) {
+        errors.push(`icon ${icon.src} has no concrete sizes`);
+      }
+      if (bitmap && !declaredSizes.some((size) => size.width === bitmap.width && size.height === bitmap.height)) {
+        errors.push(`icon ${icon.src} bitmap is ${bitmap.width}x${bitmap.height}, not ${icon.sizes}`);
       }
     }
 
@@ -422,6 +522,36 @@ async function verifyManifest(baseURL) {
     return { manifest, iconResults };
   } finally {
     await api.dispose();
+  }
+}
+
+async function verifyManifestLink(browser, baseURL, diagnostics) {
+  const context = await browser.newContext({ serviceWorkers: 'allow', viewport: { width: 1024, height: 768 } });
+  const page = await context.newPage();
+  attachPageDiagnostics(page, diagnostics, 'manifest-link');
+  try {
+    await page.goto(`${baseURL}/`, { waitUntil: 'domcontentloaded' });
+    await waitForAppReady(page);
+    const manifestLink = await page.evaluate(() => {
+      const link = document.querySelector('link[rel~="manifest"]');
+      return link
+        ? {
+            href: link.getAttribute('href') ?? '',
+            resolvedHref: link.href,
+          }
+        : null;
+    });
+    if (!manifestLink) {
+      throw new Error('index.html is missing link[rel~="manifest"]');
+    }
+
+    const resolved = new URL(manifestLink.resolvedHref);
+    if (resolved.pathname !== '/manifest.webmanifest') {
+      throw new Error(`manifest link points to ${resolved.pathname}, expected /manifest.webmanifest`);
+    }
+    return manifestLink;
+  } finally {
+    await context.close();
   }
 }
 
@@ -457,15 +587,16 @@ async function verifyOfflineRoutes(browser, baseURL, diagnostics) {
     await page.goto(`${baseURL}/`, { waitUntil: 'domcontentloaded' });
     await waitForAppReady(page);
     const serviceWorker = await waitForServiceWorkerControl(page);
-    const appConfigWarmup = await page.evaluate(async () => {
-      const response = await fetch('/app-config.js', { cache: 'reload' });
-      return { ok: response.ok, status: response.status };
-    });
+    const appConfigWarmup = await fetchAppConfig(page, 'reload');
     if (!appConfigWarmup.ok) {
-      throw new Error(`app-config.js warmup returned ${appConfigWarmup.status}`);
+      throw new Error(`app-config.js warmup failed: ${JSON.stringify(appConfigWarmup)}`);
     }
     await screenshot(page, 'controlled', '/');
     await context.setOffline(true);
+    const appConfigOffline = await fetchAppConfig(page);
+    if (!appConfigOffline.ok) {
+      throw new Error(`app-config.js offline fetch failed: ${JSON.stringify(appConfigOffline)}`);
+    }
     for (const route of ROUTES) {
       await page.goto(`${baseURL}${route.path}`, { waitUntil: 'domcontentloaded' });
       await waitForAppReady(page);
@@ -475,7 +606,7 @@ async function verifyOfflineRoutes(browser, baseURL, diagnostics) {
       results.push({ route: route.path, title, screenshot: screenshotPath });
     }
     await context.setOffline(false);
-    return { serviceWorker, appConfigWarmup, results };
+    return { serviceWorker, appConfigWarmup, appConfigOffline, results };
   } finally {
     await context.setOffline(false).catch(() => {});
     await context.close();
@@ -508,9 +639,9 @@ async function verifyUpgrade(browser, serverHandle, diagnostics) {
       };
     });
     const checkResult = await sendNgswOperation(page, 'CHECK_FOR_UPDATES');
-    assertNgswOperationSucceeded('CHECK_FOR_UPDATES', checkResult);
+    assertNgswOperationCompleted('CHECK_FOR_UPDATES', checkResult, { requireTrue: true });
     const activateResult = await sendNgswOperation(page, 'ACTIVATE_UPDATE');
-    assertNgswOperationSucceeded('ACTIVATE_UPDATE', activateResult);
+    assertNgswOperationCompleted('ACTIVATE_UPDATE', activateResult);
     await page.waitForTimeout(1500);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await waitForAppReady(page);
@@ -526,6 +657,7 @@ async function verifyUpgrade(browser, serverHandle, diagnostics) {
       if (releaseAfter !== 'release-b') {
         throw new Error(`expected release-b after upgrade, received ${releaseAfter}`);
       }
+      const bundleMarker = await assertChangedBundleLoaded(nextPage, 'release-b');
       const afterScreenshot = await screenshot(nextPage, 'upgrade-after', '/');
       const stateAfter = await serviceWorkerState(nextPage);
       return {
@@ -535,12 +667,14 @@ async function verifyUpgrade(browser, serverHandle, diagnostics) {
         registrationUpdate,
         checkResult,
         activateResult,
+        bundleMarker,
         stateBefore,
         stateAfter,
         screenshots: [beforeScreenshot, afterScreenshot],
       };
     }
 
+    const bundleMarker = await assertChangedBundleLoaded(page, 'release-b');
     const afterScreenshot = await screenshot(page, 'upgrade-after', '/');
     const stateAfter = await serviceWorkerState(page);
     return {
@@ -550,6 +684,7 @@ async function verifyUpgrade(browser, serverHandle, diagnostics) {
       registrationUpdate,
       checkResult,
       activateResult,
+      bundleMarker,
       stateBefore,
       stateAfter,
       screenshots: [beforeScreenshot, afterScreenshot],
@@ -587,8 +722,10 @@ async function main() {
     throw new Error(`Production build did not produce Angular service worker files under ${DIST_DIR}`);
   }
 
-  copyRelease(DIST_DIR, RELEASE_A_DIR, 'release-a');
-  copyRelease(DIST_DIR, RELEASE_B_DIR, 'release-b');
+  const releases = {
+    releaseA: copyRelease(DIST_DIR, RELEASE_A_DIR, 'release-a'),
+    releaseB: copyRelease(DIST_DIR, RELEASE_B_DIR, 'release-b'),
+  };
 
   const serverHandle = await startStaticServer(RELEASE_A_DIR);
   const diagnostics = { consoleErrors: [], pageErrors: [], requestFailures: [] };
@@ -597,6 +734,7 @@ async function main() {
   try {
     browser = await chromium.launch({ headless: process.env.PWA_SHELL_HEADLESS !== '0' });
     const manifest = await verifyManifest(serverHandle.baseURL);
+    const manifestLink = await verifyManifestLink(browser, serverHandle.baseURL, diagnostics);
     const onlineRoutes = await verifyOnlineRoutes(browser, serverHandle.baseURL, diagnostics);
     const offlineRoutes = await verifyOfflineRoutes(browser, serverHandle.baseURL, diagnostics);
     const upgrade = await verifyUpgrade(browser, serverHandle, diagnostics);
@@ -609,8 +747,10 @@ async function main() {
       startedAt,
       completedAt: new Date().toISOString(),
       baseURL: serverHandle.baseURL,
+      releases,
       routes: ROUTE_PATHS,
       manifest,
+      manifestLink,
       onlineRoutes,
       offlineRoutes,
       upgrade,
