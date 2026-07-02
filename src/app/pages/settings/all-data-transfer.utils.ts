@@ -1,6 +1,10 @@
 import { type OptcbxFavoritesExportPayload } from '../characters/characters-favorites.utils';
 import { type FavoriteShipsTransferPayload } from './favorite-ships-transfer.utils';
-import { type SavedTeamsTransferPayload } from '../saved-teams/saved-teams-transfer.utils';
+import {
+  SAVED_TEAMS_TRANSFER_SCHEMA_VERSION,
+  SAVED_TEAMS_TRANSFER_SOURCE,
+  type SavedTeamsTransferPayload,
+} from '../saved-teams/saved-teams-transfer.utils';
 import { type SavedRumbleTeamsTransferPayload } from '../saved-rumble-teams/saved-rumble-teams-transfer.utils';
 import { type SavedEnemiesTransferPayload } from '../saved-enemies/saved-enemies-transfer.utils';
 import { type CharacterBoxesTransferPayload } from '../character-boxes/character-boxes-transfer.utils';
@@ -291,7 +295,10 @@ export function parseAllDataImportCandidate(rawContent: string): AllDataImportCa
     };
   }
 
-  if (parsedPayload['schemaVersion'] === 1 && source === 'saved-teams') {
+  if (
+    parsedPayload['schemaVersion'] === SAVED_TEAMS_TRANSFER_SCHEMA_VERSION &&
+    source === SAVED_TEAMS_TRANSFER_SOURCE
+  ) {
     return {
       kind: 'saved-teams',
       payload: parsedPayload,

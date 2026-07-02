@@ -99,6 +99,11 @@ Import/export supports the saved enemies transfer payload:
 
 ## Saved Teams
 
+The saved-team format lifecycle is governed by
+[`docs/saved-team-schema-lifecycle.md`](saved-team-schema-lifecycle.md). Keep
+that contract, the exported format markers, fixtures, and tests aligned whenever
+saved-team payload support changes.
+
 Saved teams are on-device user data with this transfer payload:
 
 ```json
@@ -162,7 +167,8 @@ For the user-facing flow across guided builds, compare mode, saved-team JSON, sh
 - Generated dataset compatibility is governed by `DatasetManifest.schemaVersion`.
 - User backups use their payload-level `schemaVersion`.
 - Unsupported user backup versions must fail with the existing typed import errors.
-- If a future saved-team or saved-enemy schema changes, add a migration or an explicit unsupported-schema error before accepting the new payload.
+- If a future saved-team schema changes, follow the saved-team lifecycle contract before accepting the new payload.
+- If a future saved-enemy schema changes, add a migration or an explicit unsupported-schema error before accepting the new payload.
 - Saved-team v1 compatibility is covered by compact fixtures for current, legacy/partial, and share payload shapes.
 
 ## Fixtures

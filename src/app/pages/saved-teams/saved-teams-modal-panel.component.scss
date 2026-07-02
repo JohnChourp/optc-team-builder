@@ -15,12 +15,23 @@ ion-modal.saved-teams-open-modal::part(content) {
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
 }
 
+ion-modal.saved-teams-import-modal::part(content) {
+  overflow: auto;
+}
+
 .edit-modal-shell,
 .import-modal-shell,
 .open-team-modal-shell {
   display: grid;
   gap: 18px;
   color: #f8fbff;
+}
+
+.import-modal-shell {
+  box-sizing: border-box;
+  height: 100%;
+  overflow: auto;
+  padding: 22px;
 }
 
 .edit-modal-shell,

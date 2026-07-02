@@ -27,7 +27,7 @@ validation harnesses, or release evidence.
 | `e2e/regression-fixtures.ts` | Browser regression owners | `e2e/regression-flows.spec.ts` | Keep Playwright-only helpers here; move only reusable data builders to `scripts/fixtures/shared/`. |
 | `scripts/fixtures/release-check/<fixture>/` | OPTC DB release-detector owners | `npm run test:release-check`, release detector replay, and workflow fixture validation | Add a new directory only for a distinct release branch or captured upstream failure. Each directory must include the four files named by shared release-check metadata. |
 | `src/app/core/services/fixtures/captain-contract-cases.json` | Captain parser and captain coverage owners | script-side captain contract tests and Angular captain coverage/matching specs | Add a case for a new captain wording class; update expected generated boosts and tiers together. |
-| `scripts/fixtures/data/*.json` | Saved Teams, Saved Enemies, and compact dataset owners | transfer compatibility specs and local development checks | Keep files small and schema-focused. Add a file only for a distinct persisted payload edge case. |
+| `scripts/fixtures/data/*.json` | Saved Teams, Saved Enemies, and compact dataset owners | transfer compatibility specs and local development checks | Keep files small and schema-focused. For saved-team payloads, follow `docs/saved-team-schema-lifecycle.md`; add a file only for a distinct persisted payload edge case. |
 | `scripts/fixtures/release-readiness/*` | Release readiness owners | `npm run test:release-readiness` | Update source JSON and expected Markdown together when the report schema or maintainer summary contract changes. |
 | performance harness fixture builders in `scripts/perf-ability-filters.mjs` and `scripts/perf-explanation-compare.mjs` | Performance budget owners | browser performance harnesses, import/share hydration timings, and `Performance Budgets` workflow | Keep large generated fixtures local to the harness until another suite needs the same data shape. Store run output as artifacts, not checked-in fixtures. |
 
@@ -49,7 +49,8 @@ payloads should stay near the suite that owns their file format.
 Use the smallest validation path that covers the changed owner:
 
 - shared saved-team fixtures: `npm run test:e2e:chromium` plus focused saved
-  team transfer tests when transfer utilities change
+  team transfer tests when transfer utilities or the saved-team schema lifecycle
+  contract change
 - shared release-check fixtures: `npm run test:release-check`
 - fixture ownership docs: `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`
 - broad shared fixture changes: `npm run test:ci` and `git diff --check`
