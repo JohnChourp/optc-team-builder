@@ -48,6 +48,10 @@ export const SCRIPT_SUITES = {
     label: 'Playwright routing and quarantine tests',
     command: 'npm run test:e2e-triage',
   },
+  'pwa-shell': {
+    label: 'PWA shell safety tests',
+    command: 'npm run test:pwa-shell',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -147,6 +151,17 @@ function isE2ePath(filePath) {
     filePath === 'scripts/summarize-playwright-failures.mjs' ||
     filePath === 'scripts/summarize-playwright-failures.spec.ts' ||
     filePath.startsWith('scripts/lib/playwright-')
+  );
+}
+
+function isPwaShellPath(filePath) {
+  return (
+    filePath === 'ngsw-config.json' ||
+    filePath === 'src/app/app.config.ts' ||
+    filePath === 'src/index.html' ||
+    filePath === 'public/manifest.webmanifest' ||
+    filePath.startsWith('public/brand/pwa-icon-') ||
+    filePath === 'scripts/pwa-shell-check.mjs'
   );
 }
 
@@ -280,6 +295,16 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       runE2e = true;
       runQuarantine = true;
       addScriptSuite(scriptSuites, 'e2e-triage');
+      continue;
+    }
+
+    if (isPwaShellPath(filePath)) {
+      categories.add('pwa-shell');
+      addScriptSuite(scriptSuites, 'pwa-shell');
+      if (isRuntimePath(filePath)) {
+        runAngular = true;
+        runE2e = true;
+      }
       continue;
     }
 

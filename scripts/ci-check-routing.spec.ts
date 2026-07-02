@@ -66,6 +66,16 @@ describe('ci-check-routing', () => {
     expect(plan.scriptSuites).toEqual(['e2e-triage']);
   });
 
+  it('routes PWA shell changes to the install offline and upgrade safety suite', () => {
+    const plan = buildCheckPlan(['ngsw-config.json', 'public/manifest.webmanifest', 'scripts/pwa-shell-check.mjs']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(true);
+    expect(plan.runE2e).toBe(true);
+    expect(plan.runQuarantine).toBe(false);
+    expect(plan.scriptSuites).toEqual(['pwa-shell']);
+  });
+
   it('routes release and performance tooling to focused script suites', () => {
     const plan = buildCheckPlan([
       'scripts/check-optc-release-needed.mjs',
@@ -96,6 +106,7 @@ describe('ci-check-routing', () => {
       'source-data',
       'perf-budget',
       'e2e-triage',
+      'pwa-shell',
     ]);
   });
 
