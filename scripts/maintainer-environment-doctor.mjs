@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 const DEFAULT_PROFILE = 'local';
 const VALID_PROFILES = new Set(['ci', 'local']);
 const DEFAULT_BRAIN_ROOT = '../optc-team-builder-brain';
+const LIVE_ARTIFACTS_IGNORE_SENTINEL = 'live-artifacts/__maintainer-doctor-sentinel__';
+export const REQUIRED_PLAYWRIGHT_BROWSERS = ['chromium', 'firefox', 'webkit'];
 
 export const REQUIRED_PACKAGE_SCRIPTS = [
   {
@@ -463,6 +465,40 @@ export function resolvePlaywrightCacheRoot(appRoot, env, platform = process.plat
   return env.HOME ? path.join(env.HOME, '.cache', 'ms-playwright') : '';
 }
 
+function directoryHasFiles(directoryPath) {
+  try {
+    const entries = fs.readdirSync(directoryPath, { withFileTypes: true });
+    return entries.some((entry) => {
+      const entryPath = path.join(directoryPath, entry.name);
+      return entry.isFile() || (entry.isDirectory() && directoryHasFiles(entryPath));
+    });
+  } catch {
+    return false;
+  }
+}
+
+export function findInstalledPlaywrightBrowsers(cacheRoot) {
+  if (!cacheRoot || !isDirectory(cacheRoot)) {
+    return [];
+  }
+
+  let entries = [];
+  try {
+    entries = fs.readdirSync(cacheRoot, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  return REQUIRED_PLAYWRIGHT_BROWSERS.filter((browserName) =>
+    entries.some((entry) => {
+      if (!entry.isDirectory() || !entry.name.startsWith(`${browserName}-`)) {
+        return false;
+      }
+      return directoryHasFiles(path.join(cacheRoot, entry.name));
+    }),
+  );
+}
+
 function localProfileChecks(appRoot, env) {
   const checks = [];
   const nodeModules = path.join(appRoot, 'node_modules');
@@ -493,17 +529,19 @@ function localProfileChecks(appRoot, env) {
   );
 
   const cacheRoot = resolvePlaywrightCacheRoot(appRoot, env);
+  const installedBrowsers = findInstalledPlaywrightBrowsers(cacheRoot);
+  const missingBrowsers = REQUIRED_PLAYWRIGHT_BROWSERS.filter((browserName) => !installedBrowsers.includes(browserName));
 
   checks.push(
     makeCheck({
       id: 'local/playwright-cache',
       group: 'local',
-      status: cacheRoot && isDirectory(cacheRoot) ? 'pass' : 'warn',
+      status: missingBrowsers.length === 0 ? 'pass' : 'warn',
       label: 'Playwright browser cache',
       detail:
-        cacheRoot && isDirectory(cacheRoot)
-          ? `Playwright browser cache exists at ${cacheRoot}.`
-          : 'Playwright browser cache was not found for this machine.',
+        missingBrowsers.length === 0
+          ? `Playwright browser payloads are installed at ${cacheRoot}: ${installedBrowsers.join(', ')}.`
+          : `Playwright browser payloads are missing or incomplete for: ${missingBrowsers.join(', ')}.`,
       fix: 'Run npm run test:e2e:install before browser, PWA, or performance harness work.',
     }),
   );
@@ -512,9 +550,8 @@ function localProfileChecks(appRoot, env) {
 }
 
 function liveArtifactsIgnored(brainRoot) {
-  const relativePath = 'live-artifacts/869dwc7wr/';
   if (isDirectory(path.join(brainRoot, '.git'))) {
-    const result = spawnSync('git', ['-C', brainRoot, 'check-ignore', '-q', '--', relativePath], {
+    const result = spawnSync('git', ['-C', brainRoot, 'check-ignore', '-q', '--', LIVE_ARTIFACTS_IGNORE_SENTINEL], {
       stdio: 'ignore',
     });
     return result.status === 0;
@@ -524,7 +561,9 @@ function liveArtifactsIgnored(brainRoot) {
   return gitignore
     .split(/\r?\n/u)
     .map((line) => line.trim())
-    .includes('live-artifacts/');
+    .some((line) =>
+      ['live-artifacts', 'live-artifacts/', 'live-artifacts/**', '/live-artifacts', '/live-artifacts/', '/live-artifacts/**'].includes(line),
+    );
 }
 
 function brainChecks({ brainRoot, appOnly }) {
@@ -556,6 +595,7 @@ function brainChecks({ brainRoot, appOnly }) {
   const checks = REQUIRED_BRAIN_PATHS.map((item) => pathCheck(brainRoot, item, 'brain'));
   const agents = readTextIfExists(path.join(brainRoot, 'AGENTS.md'));
   const claude = readTextIfExists(path.join(brainRoot, 'CLAUDE.md'));
+  const artifactsIgnored = liveArtifactsIgnored(brainRoot);
   checks.push(
     makeCheck({
       id: 'brain/agents-claude-parity',
@@ -574,11 +614,9 @@ function brainChecks({ brainRoot, appOnly }) {
     makeCheck({
       id: 'brain/live-artifacts-ignore',
       group: 'brain',
-      status: liveArtifactsIgnored(brainRoot) ? 'pass' : 'fail',
+      status: artifactsIgnored ? 'pass' : 'fail',
       label: 'live-artifacts ignored',
-      detail: liveArtifactsIgnored(brainRoot)
-        ? 'live-artifacts/<task-id>/ paths are ignored by Git.'
-        : 'live-artifacts/<task-id>/ paths are not ignored by Git.',
+      detail: artifactsIgnored ? 'live-artifacts/ paths are ignored by Git.' : 'live-artifacts/ paths are not ignored by Git.',
       fix: 'Add live-artifacts/ to the brain repo .gitignore before collecting local screenshots or logs.',
     }),
   );

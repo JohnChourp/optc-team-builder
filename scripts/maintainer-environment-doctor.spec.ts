@@ -11,6 +11,7 @@ import {
   REQUIRED_BRAIN_PATHS,
   REQUIRED_PACKAGE_SCRIPTS,
   evaluateMaintainerEnvironment,
+  findInstalledPlaywrightBrowsers,
   renderTextReport,
   resolvePlaywrightCacheRoot,
   runCli,
@@ -181,11 +182,15 @@ describe('maintainer-environment-doctor', () => {
   it('resolves hermetic Playwright browser installs inside node_modules', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
     await mkdir(path.join(appRoot, 'node_modules', 'playwright'), { recursive: true });
-    await mkdir(path.join(appRoot, 'node_modules', 'playwright-core', '.local-browsers'), { recursive: true });
+    const cacheRoot = path.join(appRoot, 'node_modules', 'playwright-core', '.local-browsers');
+    await writeWorkspaceFile(appRoot, 'node_modules/playwright-core/.local-browsers/chromium-1200/chrome-win/chrome.exe');
+    await writeWorkspaceFile(appRoot, 'node_modules/playwright-core/.local-browsers/firefox-1500/firefox/firefox.exe');
+    await writeWorkspaceFile(appRoot, 'node_modules/playwright-core/.local-browsers/webkit-2100/pw_run.sh');
 
     expect(resolvePlaywrightCacheRoot(appRoot, { PLAYWRIGHT_BROWSERS_PATH: '0' })).toBe(
-      path.join(appRoot, 'node_modules', 'playwright-core', '.local-browsers'),
+      cacheRoot,
     );
+    expect(findInstalledPlaywrightBrowsers(cacheRoot)).toEqual(['chromium', 'firefox', 'webkit']);
 
     const report = evaluateMaintainerEnvironment(
       {
@@ -202,6 +207,43 @@ describe('maintainer-environment-doctor', () => {
 
     expect(report.ok).toBe(true);
     expect(report.checks.find((check) => check.id === 'local/playwright-cache')?.status).toBe('pass');
+  });
+
+  it('warns when the Playwright cache root exists without browser payloads', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+    await mkdir(path.join(appRoot, 'node_modules', 'playwright'), { recursive: true });
+    await mkdir(path.join(appRoot, 'node_modules', 'playwright-core', '.local-browsers'), { recursive: true });
+
+    const report = evaluateMaintainerEnvironment(
+      {
+        appRoot,
+        brainRoot,
+        profile: 'local',
+      },
+      {
+        nodeVersion: 'v24.15.0',
+        npmVersion: '11.13.0',
+        env: { PLAYWRIGHT_BROWSERS_PATH: '0' },
+      },
+    );
+    const cacheCheck = report.checks.find((check) => check.id === 'local/playwright-cache');
+
+    expect(report.ok).toBe(true);
+    expect(cacheCheck?.status).toBe('warn');
+    expect(cacheCheck?.detail).toContain('chromium, firefox, webkit');
+    expect(cacheCheck?.fix).toContain('npm run test:e2e:install');
+  });
+
+  it('fails when the brain repo only ignores a task-specific live-artifacts path', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+    await writeWorkspaceFile(brainRoot, '.gitignore', 'live-artifacts/869dwc7wr/\n');
+
+    const report = evaluateHealthy(appRoot, brainRoot);
+    const ignoreCheck = report.checks.find((check) => check.id === 'brain/live-artifacts-ignore');
+
+    expect(report.ok).toBe(false);
+    expect(ignoreCheck?.status).toBe('fail');
+    expect(ignoreCheck?.fix).toContain('live-artifacts/');
   });
 
   it('allows app-only checks when the brain checkout is intentionally unavailable', async () => {
