@@ -53,6 +53,8 @@
     "test:perf-budget": "vitest run scripts/perf-budget-report.spec.ts scripts/perf-budget-history.spec.ts",
     "release:readiness": "node ./scripts/release-readiness-report.mjs",
     "test:release-readiness": "vitest run scripts/release-readiness-report.spec.ts",
+    "doctor:maintainer": "node ./scripts/maintainer-environment-doctor.mjs",
+    "test:maintainer-doctor": "vitest run scripts/maintainer-environment-doctor.spec.ts",
     "test:docs-integrity": "vitest run scripts/check-docs-integrity.spec.ts",
     "docs:integrity": "node ./scripts/check-docs-integrity.mjs",
     "test:docs-commands": "vitest run scripts/check-docs-commands.spec.ts",

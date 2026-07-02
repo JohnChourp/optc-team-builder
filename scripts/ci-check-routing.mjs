@@ -11,6 +11,10 @@ export const SCRIPT_SUITES = {
     label: 'CI routing tests',
     command: 'npm run test:ci-routing',
   },
+  'maintainer-doctor': {
+    label: 'Maintainer environment doctor tests',
+    command: 'npm run test:maintainer-doctor',
+  },
   'saved-team-codecs': {
     label: 'Saved-team codec fuzz tests',
     command: 'npm run test:saved-team-codecs',
@@ -133,6 +137,13 @@ function isDocsScriptPath(filePath) {
     filePath === 'scripts/check-docs-integrity.spec.ts' ||
     filePath === 'scripts/check-docs-commands.mjs' ||
     filePath === 'scripts/check-docs-commands.spec.ts'
+  );
+}
+
+function isMaintainerDoctorPath(filePath) {
+  return (
+    filePath === 'scripts/maintainer-environment-doctor.mjs' ||
+    filePath === 'scripts/maintainer-environment-doctor.spec.ts'
   );
 }
 
@@ -296,6 +307,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       for (const suite of DOCS_SCRIPT_SUITES) {
         addScriptSuite(scriptSuites, suite);
       }
+      continue;
+    }
+
+    if (isMaintainerDoctorPath(filePath)) {
+      categories.add('maintainer-doctor');
+      addScriptSuite(scriptSuites, 'maintainer-doctor');
       continue;
     }
 

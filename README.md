@@ -49,6 +49,18 @@ Maintainer validation guide:
   cross-repo escalation, and the branch-protection limitation for required
   reviews.
 
+Check the maintainer environment before choosing a validation path. The CI
+profile verifies shared app/brain layout, package scripts, contract,
+performance, release-check, docs, and evidence assumptions without requiring a
+machine-local browser cache; omit `--profile=ci` when checking local browser
+and dependency prerequisites too.
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain
+```
+
 Install dependencies:
 
 Command status: manual/illustrative.
