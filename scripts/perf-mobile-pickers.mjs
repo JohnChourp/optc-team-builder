@@ -41,7 +41,7 @@ const baseURL = process.env.PERF_BASE_URL ?? process.env.E2E_BASE_URL ?? `http:/
 const artifactDir =
   process.env.PERF_ARTIFACT_DIR ?? path.join(appRoot, 'test-results/mobile-picker-performance');
 const runLabel = sanitizeSegment(process.env.PERF_RUN_LABEL ?? 'mobile-pickers');
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const abilityCatalog = JSON.parse(
   await readFile(path.join(appRoot, 'public/assets/data/optc-auto-builder-abilities.json'), 'utf8'),
 );
@@ -199,12 +199,7 @@ async function ensureServer() {
     return null;
   }
 
-  const child = spawn(npmCommand, ['start', '--', '--host', '127.0.0.1', '--port', String(port)], {
-    cwd: appRoot,
-    env: process.env,
-    detached: process.platform !== 'win32',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  const child = spawnNpmStartServer();
   child.stdout.on('data', (chunk) => process.stdout.write(chunk));
   child.stderr.on('data', (chunk) => process.stderr.write(chunk));
 
@@ -215,6 +210,20 @@ async function ensureServer() {
     await stopServer(child);
     throw error;
   }
+}
+
+function spawnNpmStartServer() {
+  const args = ['start', '--', '--host', '127.0.0.1', '--port', String(port)];
+  const command = process.platform === 'win32' ? process.env.ComSpec ?? 'cmd.exe' : npmBin;
+  const commandArgs =
+    process.platform === 'win32' ? ['/d', '/s', '/c', [npmBin, ...args].join(' ')] : args;
+
+  return spawn(command, commandArgs, {
+    cwd: appRoot,
+    env: process.env,
+    detached: process.platform !== 'win32',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 }
 
 async function serverResponds() {
