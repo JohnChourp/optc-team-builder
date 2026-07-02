@@ -42,6 +42,7 @@
     "test:e2e:firefox": "node ./scripts/run-playwright-e2e.mjs --e2e-project=firefox",
     "test:e2e:webkit": "node ./scripts/run-playwright-e2e.mjs --e2e-project=webkit",
     "test:e2e-triage": "vitest run scripts/lib/playwright-quarantine.spec.ts scripts/lib/playwright-e2e-runner.spec.ts scripts/summarize-playwright-failures.spec.ts && node ./scripts/validate-playwright-quarantine.mjs",
+    "test:pwa-shell": "node ./scripts/pwa-shell-check.mjs",
     "audit:dead-code": "npx tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false && npx knip --include files,exports,types",
     "perf:dataset": "node ./scripts/benchmark-dataset.mjs",
     "perf:ability-filters": "node ./scripts/perf-ability-filters.mjs",
