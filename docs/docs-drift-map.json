@@ -181,6 +181,7 @@
       "featurePaths": [
         "scripts/check-optc-release-needed.mjs",
         "scripts/check-optc-upstream-monitor.mjs",
+        "scripts/release-detector-status.mjs",
         "scripts/lib/release-trigger-",
         "scripts/fixtures/release-check/",
         ".github/workflows/check-optc-db-release.yml"
@@ -192,7 +193,7 @@
         "../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md"
       ],
       "owner": "Release detector and notification policy",
-      "notes": "Detector, fixture, policy, notification, or workflow changes should update release runbook and validation docs."
+      "notes": "Detector, status artifact, fixture, policy, notification, or workflow changes should update release runbook and validation docs."
     },
     {
       "id": "release-readiness",
