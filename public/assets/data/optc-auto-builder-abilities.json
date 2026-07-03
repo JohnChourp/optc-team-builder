@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-30T11:05:53.804Z",
+  "generatedAt": "2026-07-03T10:18:46.962Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -3385,7 +3385,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1333,
+      "matchCount": 1336,
       "matchingCharacterIds": [
         209,
         210,
@@ -4716,8 +4716,11 @@
         4594,
         4595,
         4596,
+        4597,
+        4598,
         4599,
         4601,
+        4607,
         5013,
         5014
       ],
@@ -5738,7 +5741,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 11,
+      "matchCount": 9,
       "matchingCharacterIds": [
         3176,
         3177,
@@ -5748,9 +5751,7 @@
         4125,
         4126,
         4127,
-        4128,
-        4597,
-        4598
+        4128
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -7054,7 +7055,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 102,
+      "matchCount": 103,
       "matchingCharacterIds": [
         366,
         367,
@@ -7157,7 +7158,8 @@
         4460,
         4478,
         4486,
-        4524
+        4524,
+        4598
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -7259,7 +7261,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 173,
+      "matchCount": 174,
       "matchingCharacterIds": [
         2535,
         2536,
@@ -7433,7 +7435,8 @@
         4576,
         4588,
         4589,
-        4599
+        4599,
+        4607
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -7489,7 +7492,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 309,
+      "matchCount": 311,
       "matchingCharacterIds": [
         3365,
         3371,
@@ -7799,6 +7802,8 @@
         4591,
         4594,
         4596,
+        4598,
+        4599,
         4600
       ],
       "turnMatchingCharacterIds": [],
@@ -7863,7 +7868,8 @@
         4544,
         4545,
         4546,
-        4594
+        4594,
+        4598
       ],
       "sampleCharacterIds": [
         3365,
@@ -7919,7 +7925,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 47,
+      "matchCount": 48,
       "matchingCharacterIds": [
         4040,
         4041,
@@ -7967,7 +7973,8 @@
         4532,
         4544,
         4578,
-        4593
+        4593,
+        4600
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -8948,7 +8955,7 @@
         4597,
         4598,
         4599,
-        4601,
+        4607,
         5013,
         5014,
         5054,
@@ -9479,6 +9486,7 @@
         4594,
         4595,
         4598,
+        4607,
         5054,
         5055
       ],
@@ -13040,6 +13048,12 @@
         {
           "characterId": 4598,
           "minEffectValue": 20,
+          "effectTargetScope": "crew",
+          "slotTokens": []
+        },
+        {
+          "characterId": 4607,
+          "minEffectValue": 50,
           "effectTargetScope": "crew",
           "slotTokens": []
         },
@@ -34535,7 +34549,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 326,
+      "matchCount": 325,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -34860,7 +34874,6 @@
         4588,
         4589,
         4598,
-        4600,
         5031,
         5032
       ],
@@ -35191,8 +35204,7 @@
             4495,
             4519,
             4570,
-            4583,
-            4600
+            4583
           ]
         },
         {
@@ -36017,7 +36029,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 113,
+      "matchCount": 114,
       "matchingCharacterIds": [
         1189,
         1190,
@@ -36131,7 +36143,8 @@
         4562,
         4569,
         4576,
-        4599
+        4599,
+        4607
       ],
       "turnMatchingCharacterIds": [
         {
@@ -36234,7 +36247,8 @@
             4512,
             4543,
             4569,
-            4599
+            4599,
+            4607
           ]
         },
         {
@@ -36641,32 +36655,16 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility",
         "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 3,
-      "matchingCharacterIds": [
-        4597,
-        4600,
-        4601
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "captainAbilityMatchingCharacterIds": [
-        4597
-      ],
-      "sampleCharacterIds": [
-        4597,
-        4600,
-        4601
-      ],
-      "sampleTexts": [
-        "Reduces crew's Switch Effect and VS Effect gauge by 2 at start of quest, boosts [QCK] and [INT] characters' HP by 1.3x, ATK by 5x, makes their [QCK][INT][RCV] slots have matching slot effects, completely removes crew's Remove SFX applied by the enemy, and tapping on this character with a [RCV] slot will reduce all enemies' DEF Up duration by 3 turns",
-        "Allows crew to perform Super Tandem with [RCV] slots for 2 turns, boosts the chain multiplier by +1.1 for 1 turn, reduces all enemies' damage reduction (except Threshold Damage Reduction) duration by 6 turns, reduces crew's \"ATK Down when chain multiplier is below certain amount\" by 3 turns, and boosts the ATK of the next final tap performed by crew by 40% (similar effects can stack, up to 200%; the effect will be spent during the final tap when attacking with all available characters regardless of the type/class requirement of the effect). If 4 or more [Blackbeard Pirates] characters are on the crew, further increases crew's chain multiplier additive boost effect (except multiplicative boost) by +0.7 (this effect also applies to additive chain multiplier boost from this Special), and sets all enemies' DEF to 0 for 1 turn ignoring immunity to DEF Down, immunity to all status effects, or immunity excluding certain status effect (reduces all enemies' DEF by 85% for 1 turn otherwise)",
-        "Reduces all enemies' DEF by 95% for 1 turn, reduces crew's decrease chain multiplier growth rate and Paralysis duration by 6 turns, and boosts [QCK] characters' ATK when landing a successful strike by 1.5x for 1 turn after landing 4 PERFECT strikes in a row in this turn. If crew's End of Turn Healing status has 5 or more turns or crew's HP is 30% or below when Special is launched, applies \"Territory: [QCK]\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 1 turn"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "inflict_poison",
@@ -37321,17 +37319,15 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility",
-        "specialText"
+        "captainAbility"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 3,
+      "matchCount": 2,
       "matchingCharacterIds": [
         3895,
-        3896,
-        4597
+        3896
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -37340,13 +37336,11 @@
       ],
       "sampleCharacterIds": [
         3895,
-        3896,
-        4597
+        3896
       ],
       "sampleTexts": [
         "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn.",
-        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn.",
-        "Reduces crew's Despair duration by 7 turns, and boosts damage dealt to delayed and increased damage taken enemies by 2.5x for 3 turns. If field has \"Territory: Free Spirit class\" and 4 or more [Blackbeard Pirates] [Four Emperors] characters are on the crew, boosts [QCK] and [INT] characters' slot effects by 3x for 3 turns (boosts their slot effects by 2.5x for 1 turn otherwise). If an [INT] is set as Support for character, applies Weakened status (increase damage taken by 1.3x for all enemies, damage further increased by 1.25x if enemy has Increase Damage Taken) to all enemies for 1 turn, then after that, becomes \"Van Ogre & Catarina Devon\" for 3 turns"
+        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn."
       ]
     },
     {
@@ -37404,25 +37398,16 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility"
+        "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4597
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "captainAbilityMatchingCharacterIds": [
-        4597
-      ],
-      "sampleCharacterIds": [
-        4597
-      ],
-      "sampleTexts": [
-        "Reduces crew's Switch Effect and VS Effect gauge by 2 at start of quest, boosts [QCK] and [INT] characters' HP by 1.3x, ATK by 5x, makes their [QCK][INT][RCV] slots have matching slot effects, completely removes crew's Remove SFX applied by the enemy, and tapping on this character with a [RCV] slot will reduce all enemies' DEF Up duration by 3 turns"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "reduce_special_charge",
@@ -37441,7 +37426,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 998,
+      "matchCount": 999,
       "matchingCharacterIds": [
         452,
         453,
@@ -38440,7 +38425,8 @@
         4594,
         4595,
         4598,
-        4599
+        4599,
+        4607
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -39103,7 +39089,8 @@
         4585,
         4591,
         4595,
-        4598
+        4598,
+        4607
       ],
       "sampleCharacterIds": [
         452,
@@ -40605,7 +40592,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 171,
+      "matchCount": 172,
       "matchingCharacterIds": [
         577,
         578,
@@ -40777,7 +40764,8 @@
         4528,
         4531,
         4554,
-        4555
+        4555,
+        4599
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -41458,7 +41446,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 19,
+      "matchCount": 18,
       "matchingCharacterIds": [
         3339,
         3661,
@@ -41477,8 +41465,7 @@
         4365,
         4387,
         4432,
-        4576,
-        4601
+        4576
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -42735,17 +42722,11 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4599
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [
-        4599
-      ],
-      "sampleTexts": [
-        "Reduces character's Special Reverse by 2 turns. Tapping on this character with a [TND] slot will apply -5% [QCK] and [INT] Resistance to all enemies for 1 turn"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_recover_remove_sfx",
@@ -42763,17 +42744,11 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4597
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [
-        4597
-      ],
-      "sampleTexts": [
-        "Makes crew immune to Remove SFX. Boosts [QCK] and [INT] characters' base stats by 70, and makes their [RCV][TND] slots have matching slot effects"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_recover_paralysis",
@@ -43434,7 +43409,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1123,
+      "matchCount": 1124,
       "matchingCharacterIds": [
         4,
         12,
@@ -44558,6 +44533,7 @@
         4597,
         4598,
         4601,
+        4607,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -44592,17 +44568,11 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4597
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [
-        4597
-      ],
-      "sampleTexts": [
-        "Makes crew immune to Remove SFX. Boosts [QCK] and [INT] characters' base stats by 70, and makes their [RCV][TND] slots have matching slot effects"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "crewmate_slot_carry_over",
@@ -44642,7 +44612,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 94,
+      "matchCount": 95,
       "matchingCharacterIds": [
         924,
         1292,
@@ -44737,7 +44707,8 @@
         4512,
         4530,
         4531,
-        4591
+        4591,
+        4607
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -44970,7 +44941,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 363,
+      "matchCount": 364,
       "matchingCharacterIds": [
         20,
         22,
@@ -45333,6 +45304,7 @@
         4593,
         4598,
         4600,
+        4607,
         5054,
         5055
       ],
@@ -45713,7 +45685,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 63,
+      "matchCount": 64,
       "matchingCharacterIds": [
         410,
         450,
@@ -45777,7 +45749,8 @@
         4523,
         4533,
         4556,
-        4565
+        4565,
+        4601
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -46738,7 +46711,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 288,
+      "matchCount": 289,
       "matchingCharacterIds": [
         20,
         22,
@@ -47026,6 +46999,7 @@
         4573,
         4574,
         4575,
+        4607,
         5054,
         5055
       ],
@@ -47983,7 +47957,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 285,
+      "matchCount": 286,
       "matchingCharacterIds": [
         20,
         22,
@@ -48268,6 +48242,7 @@
         4593,
         4598,
         4600,
+        4607,
         5054,
         5055
       ],
@@ -50589,7 +50564,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 153,
+      "matchCount": 154,
       "matchingCharacterIds": [
         20,
         75,
@@ -50743,7 +50718,8 @@
         4511,
         4515,
         4516,
-        4543
+        4543,
+        4607
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -50947,7 +50923,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 127,
+      "matchCount": 128,
       "matchingCharacterIds": [
         8,
         259,
@@ -51075,7 +51051,8 @@
         4317,
         4318,
         4359,
-        4528
+        4528,
+        4607
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -54289,7 +54266,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 56,
+      "matchCount": 55,
       "matchingCharacterIds": [
         367,
         645,
@@ -54345,8 +54322,7 @@
         4363,
         4499,
         4548,
-        4593,
-        4599
+        4593
       ],
       "turnMatchingCharacterIds": [
         {
@@ -57101,7 +57077,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 9,
+      "matchCount": 10,
       "matchingCharacterIds": [
         2513,
         3439,
@@ -57111,7 +57087,8 @@
         4168,
         4282,
         4480,
-        4481
+        4481,
+        4599
       ],
       "turnMatchingCharacterIds": [
         {
@@ -57124,7 +57101,8 @@
             4168,
             4282,
             4480,
-            4481
+            4481,
+            4599
           ]
         },
         {
@@ -57165,7 +57143,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 822,
+      "matchCount": 823,
       "matchingCharacterIds": [
         4,
         16,
@@ -57988,6 +57966,7 @@
         4584,
         4588,
         4589,
+        4607,
         5055
       ],
       "turnMatchingCharacterIds": [],
@@ -58493,7 +58472,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 180,
+      "matchCount": 181,
       "matchingCharacterIds": [
         253,
         306,
@@ -58674,7 +58653,8 @@
         4528,
         4542,
         4585,
-        4586
+        4586,
+        4601
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -59644,7 +59624,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 182,
+      "matchCount": 183,
       "matchingCharacterIds": [
         557,
         558,
@@ -59827,7 +59807,8 @@
         4524,
         4534,
         4547,
-        4586
+        4586,
+        4597
       ],
       "turnMatchingCharacterIds": [
         {
@@ -59885,7 +59866,8 @@
             3813,
             3980,
             4030,
-            4534
+            4534,
+            4597
           ]
         },
         {
@@ -59966,7 +59948,8 @@
           "minTurns": 6,
           "characterIds": [
             4445,
-            4516
+            4516,
+            4597
           ]
         },
         {
@@ -60073,22 +60056,37 @@
             4493,
             4502,
             4547,
-            4586
+            4586,
+            4597
           ]
         }
       ],
       "captainAbilityMatchingCharacterIds": [
         4166,
         4167,
-        4262
+        4262,
+        4597
       ],
       "captainAbilityTurnMatchingCharacterIds": [
+        {
+          "minTurns": 3,
+          "characterIds": [
+            4597
+          ]
+        },
+        {
+          "minTurns": 6,
+          "characterIds": [
+            4597
+          ]
+        },
         {
           "minTurns": 99,
           "characterIds": [
             4166,
             4167,
-            4262
+            4262,
+            4597
           ]
         }
       ],
