@@ -22,6 +22,7 @@ const importedShareTeam = importSavedTeams[0];
 const importedShareCode = buildSavedTeamShareCode(importedShareTeam);
 const transparentPixelUrl =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+const explanationDetailStateTimeoutMs = 15_000;
 const consoleMessages = [];
 const pageErrors = [];
 const failures = [];
@@ -746,7 +747,35 @@ async function measureExplanations(page, viewportLabel) {
 }
 
 async function setOpenExplanationDetails(page, count) {
-  const result = await page.evaluate((requestedCount) => {
+  const startedAt = performance.now();
+  let result = { availableCount: 0, openedCount: 0, method: 'none' };
+
+  while (performance.now() - startedAt < explanationDetailStateTimeoutMs) {
+    result = await applyOpenExplanationDetailsState(page, count);
+
+    if (result.availableCount) {
+      await waitForAngular(page);
+      return;
+    }
+
+    await page.waitForTimeout(100);
+  }
+
+  const diagnostics = await readRenderDiagnostics(page).catch((error) => ({
+    error: error instanceof Error ? error.message : String(error),
+  }));
+
+  throw new Error(
+    `Could not update explanation detail state through rendered details elements. Diagnostics: ${JSON.stringify({
+      requestedCount: count,
+      result,
+      diagnostics,
+    })}`,
+  );
+}
+
+async function applyOpenExplanationDetailsState(page, count) {
+  return page.evaluate((requestedCount) => {
     const host = document.querySelector('app-auto-team-builder-page');
     const debugApi = window.ng;
     const component = host && debugApi?.getComponent?.(host);
@@ -766,6 +795,7 @@ async function setOpenExplanationDetails(page, count) {
       return {
         availableCount: componentKeys.length,
         openedCount: Math.min(requestedCount, componentKeys.length),
+        method: 'component',
       };
     }
 
@@ -787,14 +817,9 @@ async function setOpenExplanationDetails(page, count) {
     return {
       availableCount: details.length,
       openedCount: Math.min(requestedCount, details.length),
+      method: 'details',
     };
   }, count);
-
-  if (!result.availableCount) {
-    throw new Error('Could not update explanation detail state through rendered details elements.');
-  }
-
-  await waitForAngular(page);
 }
 
 async function waitForAngular(page) {
