@@ -1,7 +1,7 @@
 {
   "actions": {
-    "assign": "Assign",
-    "assigned": "Assigned",
+    "assign": "Ανάθεση",
+    "assigned": "Ανατέθηκε",
     "editSlot": "Επεξεργασία slot {{slot}}",
     "viewSlotDetails": "Προβολή λεπτομερειών για {{name}} στο slot {{slot}}",
     "save": "Αποθήκευση manual team"
@@ -20,7 +20,7 @@
   "costBudget": {
     "label": "Cost budget",
     "range": {
-      "max": "Max team cost",
+      "max": "Μέγιστο team cost",
       "overBudget": "{{used}} / {{max}} cost. Καθάρισε slot ή αύξησε το max cost."
     },
     "support": {
@@ -34,7 +34,7 @@
   },
   "hero": {
     "copy": "Φτιάξε και αποθήκευσε μια γνωστή ομάδα χωρίς να τρέξεις automatic builder.",
-    "eyebrow": "Fixed crew builder",
+    "eyebrow": "Στήσιμο fixed team",
     "title": "Manual Team Builder"
   },
   "loading": "Φόρτωση manual team builder...",
@@ -44,12 +44,12 @@
     "costBlocked": "Αυτός ο χαρακτήρας ξεπερνά το max team cost {{max}} για το active slot.",
     "copy": "Αναζήτησε στο catalog και βάλε χαρακτήρα στο active fixed slot.",
     "empty": "Δεν βρέθηκαν χαρακτήρες για αυτό το manual team search.",
-    "eyebrow": "Slot picker",
+    "eyebrow": "Επιλογή slot",
     "filters": {
-      "abilityRailLabel": "Manual team ability filter categories",
-      "anyClass": "Any class",
-      "anyTag": "Any tag",
-      "anyType": "Any type",
+      "abilityRailLabel": "Κατηγορίες ability filters για manual team",
+      "anyClass": "Όλα τα classes",
+      "anyTag": "Όλα τα tags",
+      "anyType": "Όλα τα types",
       "captainAbility": {
         "copy": "Φίλτραρε τους slot candidates με effects από το Captain Ability κάθε χαρακτήρα.",
         "eyebrow": "Captain Ability",
@@ -63,8 +63,8 @@
         "eyebrow": "Crewmate Ability",
         "title": "Crewmate Ability filters"
       },
-      "maxCost": "Max cost",
-      "minCost": "Min cost",
+      "maxCost": "Μέγιστο cost",
+      "minCost": "Ελάχιστο cost",
       "potential": {
         "copy": "Διάλεξε Potential effects. Οι slot candidates πρέπει να καλύπτουν κάθε selected effect.",
         "eyebrow": "Potential Ability",
@@ -85,7 +85,7 @@
     },
     "loading": "Φόρτωση matching χαρακτήρων...",
     "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
-    "title": "Assign slot {{slot}}"
+    "title": "Ανάθεση slot {{slot}}"
   },
   "captainHelper": {
     "branchLabel": "Captain branch",
@@ -140,7 +140,7 @@
     "metrics": {
       "atk": {
         "label": "ATK",
-        "support": "Max attack στα filled slots"
+        "support": "Μέγιστο attack στα γεμάτα slots"
       },
       "cost": {
         "label": "Cost",
@@ -149,25 +149,25 @@
         "valueWithMax": "{{used}} / {{max}}"
       },
       "filled": {
-        "label": "Filled",
+        "label": "Γεμάτα",
         "value": "{{filled}} / {{total}}"
       },
       "hp": {
         "label": "HP",
-        "support": "Max health στα filled slots"
+        "support": "Μέγιστο health στα γεμάτα slots"
       },
       "rcv": {
         "label": "RCV",
-        "support": "Max recovery στα filled slots"
+        "support": "Μέγιστο recovery στα γεμάτα slots"
       }
     },
-    "title": "Team summary"
+    "title": "Σύνοψη team"
   },
   "validation": {
     "captain": {
       "ability": {
         "copy": "Ο {{name}} δεν έχει captain ability data, οπότε δεν γίνεται coverage verification.",
-        "title": "{{role}} data missing"
+        "title": "Λείπουν data για {{role}}"
       },
       "coverage": {
         "copy": "Δεν καλύπτονται: {{slots}}.",
@@ -175,15 +175,15 @@
       },
       "missing": {
         "copy": "Βάλε και τα δύο leader slots για captain coverage validation.",
-        "title": "{{role}} missing"
+        "title": "Λείπει {{role}}"
       },
       "tags": {
         "copy": "Ένα ή περισσότερα captain tag conditions δεν καλύπτονται.",
-        "title": "{{role}} conditions not met"
+        "title": "Δεν καλύπτονται τα conditions του {{role}}"
       }
     },
     "cost": {
-      "title": "Cost budget exceeded"
+      "title": "Ξεπεράστηκε το cost budget"
     }
   },
   "title": "Manual Team Builder"

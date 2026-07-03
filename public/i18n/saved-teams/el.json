@@ -1,11 +1,11 @@
 {
   "actions": {
     "copyJson": "Αντιγραφή JSON",
-    "copyShareCode": "Αντιγραφή code",
-    "copyShareLink": "Share",
+    "copyShareCode": "Αντιγραφή share code",
+    "copyShareLink": "Αντιγραφή share link",
     "exportSingle": "Εξαγωγή",
-    "openBuilder": "Άνοιγμα στο team builder",
-    "openTeam": "Άνοιγμα team"
+    "openBuilder": "Άνοιγμα στο Team Builder",
+    "openTeam": "Άνοιγμα saved team"
   },
   "abilityFilters": {
     "clearAll": "Καθαρισμός ability filters",
@@ -81,53 +81,53 @@
     "title": "Οι αποθηκευμένες ομάδες σου μένουν στη συσκευή και είναι έτοιμες να φορτωθούν ξανά στον builder."
   },
   "guide": {
-    "cta": "Διάβασε τον οδηγό sharing",
-    "importLink": "Μάθε τα supported JSON, share link και share code formats"
+    "cta": "Διάβασε τον οδηγό για sharing",
+    "importLink": "Δες τα supported JSON, share link και share code formats"
   },
   "import": {
     "chooseAnotherFile": "Διάλεξε άλλο αρχείο",
     "close": "Κλείσιμο παραθύρου εισαγωγής",
-    "copy": "Κάνε import export JSON από τη Saved Teams σελίδα για merge με τα υπάρχοντα αποθηκευμένα teams της συσκευής.",
+    "copy": "Εισήγαγε export JSON από τη σελίδα Saved Teams και κάνε merge με τα υπάρχοντα αποθηκευμένα teams της συσκευής.",
     "dropzone": {
       "subtitle": "Το import κάνει merge by id και ενημερώνει υπάρχοντα teams.",
       "title": "Κάνε drop ή επίλεξε αρχείο JSON"
     },
-    "errorTitle": "Το import απέτυχε",
+    "errorTitle": "Η εισαγωγή απέτυχε",
     "errors": {
       "empty": "Δεν δόθηκε περιεχόμενο για saved team import.",
       "generic": "Το αρχείο δεν μπόρεσε να εισαχθεί.",
       "invalidJson": "Το αρχείο δεν είναι έγκυρο JSON.",
-      "invalidPayload": "Το JSON δεν ταιριάζει με το expected saved teams schema.",
-      "invalidShareCode": "Το shared team link ή code δεν είναι έγκυρο.",
-      "invalidShareJson": "Το shared team code έγινε decode, αλλά το payload JSON δεν είναι έγκυρο.",
-      "invalidSharePayload": "Το shared team payload δεν έχει τα required fields.",
-      "noImportableTeam": "Το payload δεν περιέχει importable saved team.",
-      "unsupportedSchema": "Το selected JSON δεν υποστηρίζεται από το current saved teams import schema."
+      "invalidPayload": "Το JSON δεν ταιριάζει με το expected saved-teams schema.",
+      "invalidShareCode": "Το share link ή share code δεν είναι έγκυρο.",
+      "invalidShareJson": "Το share code έγινε decode, αλλά το payload JSON δεν είναι έγκυρο.",
+      "invalidSharePayload": "Το share payload δεν έχει τα required fields.",
+      "noImportableTeam": "Το payload δεν περιέχει saved team που μπορεί να εισαχθεί.",
+      "unsupportedSchema": "Το selected JSON δεν υποστηρίζεται από το current saved-teams import schema."
     },
-    "diagnosticCode": "Diagnostic code: {{code}}.",
+    "diagnosticCode": "Κωδικός diagnostic: {{code}}.",
     "eyebrow": "Μεταφορά ομάδων",
     "loadedFromFile": "Φορτώθηκε το {{fileName}}.",
     "paste": {
-      "action": "Import pasted team",
+      "action": "Εισαγωγή pasted team",
       "label": "Κάνε paste saved team JSON, share link ή share code",
       "placeholder": "Κάνε paste saved-teams JSON, /tabs/manual-team-builder?teamShare=... link ή το raw share code."
     },
-    "pastedSource": "pasted περιεχόμενο",
-    "processing": "Γίνεται import ομάδων...",
+    "pastedSource": "Επικολλημένο περιεχόμενο",
+    "processing": "Γίνεται εισαγωγή ομάδων...",
     "recovery": {
-      "emptyInput": "Recovery: κάνε paste saved-teams JSON export, saved-team share link ή raw share code.",
-      "invalidJson": "Recovery: κάνε ξανά export τα teams ή διόρθωσε το JSON syntax πριν ξαναδοκιμάσεις.",
-      "invalidPayload": "Recovery: χρησιμοποίησε saved-teams export με schemaVersion, source, exportedAt και teams array.",
-      "invalidShareCode": "Recovery: αντέγραψε ξανά ολόκληρο το share link ή raw share code χωρίς spaces ή έξτρα κείμενο.",
-      "invalidShareJson": "Recovery: φτιάξε νέο share link από τα Saved Teams· αυτό το code κάνει decode αλλά δεν είναι valid share payload JSON.",
-      "invalidSharePayload": "Recovery: φτιάξε νέο saved-team share link· το decoded payload λείπει required share fields.",
-      "noImportableTeam": "Recovery: διάλεξε payload με τουλάχιστον ένα saved team που έχει stable id.",
-      "unsupportedSchema": "Recovery: κάνε import schema v1 saved-teams ή saved-team-share payload από το current app."
+      "emptyInput": "Ανάκτηση: κάνε paste saved-teams JSON export, saved-team share link ή raw share code.",
+      "invalidJson": "Ανάκτηση: κάνε ξανά export τα teams ή διόρθωσε το JSON syntax πριν ξαναδοκιμάσεις.",
+      "invalidPayload": "Ανάκτηση: χρησιμοποίησε saved-teams export με schemaVersion, source, exportedAt και teams array.",
+      "invalidShareCode": "Ανάκτηση: αντέγραψε ξανά ολόκληρο το share link ή raw share code χωρίς spaces ή έξτρα κείμενο.",
+      "invalidShareJson": "Ανάκτηση: φτιάξε νέο share link από τα Saved Teams· αυτό το code κάνει decode αλλά δεν είναι valid share payload JSON.",
+      "invalidSharePayload": "Ανάκτηση: φτιάξε νέο saved-team share link· το decoded payload λείπει required share fields.",
+      "noImportableTeam": "Ανάκτηση: διάλεξε payload με τουλάχιστον ένα saved team που έχει stable id.",
+      "unsupportedSchema": "Ανάκτηση: κάνε import schema v1 saved-teams ή saved-team-share payload από το current app."
     },
     "stats": {
       "added": "Προστέθηκαν {{count}} νέα teams.",
-      "duplicates": "Συγχωνεύτηκαν {{count}} duplicate ids από το import.",
-      "invalid": "Αγνοήθηκαν {{count}} invalid teams.",
+      "duplicates": "Συγχωνεύτηκαν {{count}} duplicate ids από την εισαγωγή.",
+      "invalid": "Αγνοήθηκαν {{count}} μη έγκυρα teams.",
       "unknownSlots": "Καθαρίστηκαν {{count}} unknown character slots.",
       "updated": "Ενημερώθηκαν {{count}} υπάρχοντα teams."
     },

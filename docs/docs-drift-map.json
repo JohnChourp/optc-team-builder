@@ -31,19 +31,21 @@
       "name": "Manual Team Builder",
       "featurePaths": [
         "src/app/pages/manual-team-builder/",
+        "public/i18n/manual-team-builder/",
         "src/app/core/services/team-coverage-summary.utils.ts",
         "src/app/shared/team-coverage-summary/",
         "src/app/shared/character-ability-groups/"
       ],
-      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/copy-review-checklist.md"],
       "owner": "Manual builder UI and team summary",
-      "notes": "Manual-builder workflow, share hydration, or coverage-summary changes should keep the guide and validation map aligned."
+      "notes": "Manual-builder workflow, share hydration, coverage-summary, or copy changes should keep the guide, validation map, and bilingual copy checklist aligned."
     },
     {
       "id": "auto-team-builder",
       "name": "Auto Team Builder search, requirements, guided build, compare, and explanations",
       "featurePaths": [
         "src/app/pages/auto-team-builder/",
+        "public/i18n/auto-team-builder/",
         "src/app/core/services/auto-team-builder",
         "src/app/shared/ability-requirement-picker/",
         "src/app/core/services/ability-requirement-draft.utils.ts"
@@ -52,11 +54,12 @@
         "README.md",
         "docs/feature-coverage-map.md",
         "docs/maintainer-validation-guide.md",
+        "docs/copy-review-checklist.md",
         "../optc-team-builder-brain/audits/869dvr7x5-explanation-compare-performance.md",
         "../optc-team-builder-brain/audits/869dwc7ww-recommendation-quality-benchmark.md"
       ],
       "owner": "Auto builder engine, worker, requirements, compare, and recommendation trust",
-      "notes": "Auto-builder logic, scoring, fallback, compare, explanation, or guided-control changes need mapped validation and evidence updates."
+      "notes": "Auto-builder logic, scoring, fallback, compare, explanation, guided-control, or copy changes need mapped validation and evidence updates."
     },
     {
       "id": "captain-coverage",
@@ -82,14 +85,15 @@
       "name": "Saved Teams, share links, export, import, and compatibility repair",
       "featurePaths": [
         "src/app/pages/saved-teams/",
+        "public/i18n/saved-teams/",
         "scripts/fixtures/data/saved-team-codec-fuzz-corpus.json",
         "scripts/fixtures/data/saved-teams-v1-legacy-partial.json",
         "scripts/fixtures/data/saved-teams-v1.json",
         "scripts/fixtures/data/saved-team-share-v1-legacy-partial.json"
       ],
-      "docsPaths": ["docs/saved-team-schema-lifecycle.md", "docs/data-schemas.md", "docs/feature-coverage-map.md"],
+      "docsPaths": ["docs/saved-team-schema-lifecycle.md", "docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/copy-review-checklist.md"],
       "owner": "Saved team persistence, transfer contracts, and import/share hydration",
-      "notes": "Saved-team schema, transfer, import, share, and compatibility changes should update schema and lifecycle docs."
+      "notes": "Saved-team schema, transfer, import, share, compatibility, or copy changes should update schema, lifecycle, and bilingual copy docs."
     },
     {
       "id": "saved-enemies",
@@ -192,18 +196,19 @@
         "docs/maintainer-operations.md",
         "docs/feature-coverage-map.md",
         "docs/maintainer-validation-guide.md",
+        "docs/copy-review-checklist.md",
         "../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md"
       ],
       "owner": "Release detector and notification policy",
-      "notes": "Detector, status artifact, fixture, policy, notification, or workflow changes should update release runbook and validation docs."
+      "notes": "Detector, status artifact, fixture, policy, notification, workflow, or maintainer-facing release copy changes should update release runbook, validation docs, and copy guidance."
     },
     {
       "id": "release-readiness",
       "name": "Release readiness reporting",
       "featurePaths": ["scripts/release-readiness-report.mjs", "scripts/fixtures/release-readiness/"],
-      "docsPaths": ["docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwc0wc-release-readiness-summary.md"],
+      "docsPaths": ["docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/copy-review-checklist.md", "../optc-team-builder-brain/audits/869dwc0wc-release-readiness-summary.md"],
       "owner": "Release readiness report contract",
-      "notes": "Readiness source schema, rendering, or sign-off policy changes should update report guidance and evidence docs."
+      "notes": "Readiness source schema, rendering, sign-off policy, or maintainer-facing copy changes should update report guidance and evidence docs."
     },
     {
       "id": "post-merge-smoke-pack",
