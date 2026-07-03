@@ -4,6 +4,8 @@ This policy turns the current OPTC maintenance surface into checked-in review
 routing. The app repository uses `.github/CODEOWNERS` to request the current
 human maintainer on changes that affect release automation, CI, shared
 fixtures, generated data, maintainer docs, and major user-facing flows.
+Use `docs/maintainer-operations.md` as the public operations landing page before
+following the narrower owner routes below.
 
 The only current repository collaborator found during the implementation audit
 is `@JohnChourp`, so every critical route currently resolves to that reviewer.
