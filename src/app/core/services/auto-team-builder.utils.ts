@@ -4112,18 +4112,21 @@ function buildSlotExplanation(
     'consistencyRole',
     'rankingDemand',
   ]);
-  const hasLowerSelectedFilterAlternative = options.rejectedCandidates?.some((candidate) =>
-    candidate.reasons.some((reason) => reason.code === 'lowerSelectedFilterScore'),
-  );
-  const hasRankingTieBreakAlternative = options.rejectedCandidates?.some((candidate) =>
-    candidate.reasons.some((reason) => reason.code === 'rankingTieBreak'),
+  const hasLowerSelectedFilterAlternative =
+    options.role === 'sub' &&
+    options.rejectedCandidates?.some((candidate) =>
+      candidate.reasons.some((reason) => reason.code === 'lowerSelectedFilterScore'),
+    );
+  const hasPureRankingTieBreakAlternative = options.rejectedCandidates?.some(
+    (candidate) =>
+      candidate.reasons.length === 1 && candidate.reasons[0]?.code === 'rankingTieBreak',
   );
 
   if (hasLowerSelectedFilterAlternative) {
     primaryReasonCodes.add('rankingSelectedFilters');
   }
 
-  if (hasRankingTieBreakAlternative) {
+  if (hasPureRankingTieBreakAlternative) {
     primaryReasonCodes.add('rankingNewestId');
   }
 
