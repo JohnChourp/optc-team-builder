@@ -1,0 +1,65 @@
+name: Guide Discoverability
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * 2'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/guide-discoverability.yml'
+      - 'README.md'
+      - 'docs/**'
+      - 'scripts/generate-seo-pages.mjs'
+      - 'scripts/audit-seo-pages.mjs'
+      - 'scripts/verify-guide-discoverability.mjs'
+      - 'scripts/verify-guide-discoverability.spec.ts'
+      - 'src/app/app.routes.ts'
+      - 'src/app/pages/seo-content/**'
+      - 'src/app/pages/auto-team-builder/auto-team-builder.page.html'
+      - 'src/app/pages/saved-teams/saved-teams.page.html'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build GitHub Pages artifact
+        env:
+          APP_GA4_MEASUREMENT_ID: ${{ secrets.APP_GA4_MEASUREMENT_ID }}
+          APP_GOOGLE_WEB_CLIENT_ID: ${{ secrets.APP_GOOGLE_WEB_CLIENT_ID }}
+          APP_GOOGLE_IOS_CLIENT_ID: ${{ secrets.APP_GOOGLE_IOS_CLIENT_ID }}
+        run: npm run build:pages
+
+      - name: Verify guide discoverability
+        run: npm run discoverability:verify
+
+      - name: Test guide discoverability verifier
+        run: npm run test:discoverability
+
+      - name: Upload discoverability report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: guide-discoverability-report
+          path: dist/optc-team-builder/browser/guide-discoverability-report.json
+          if-no-files-found: warn
+          retention-days: 14

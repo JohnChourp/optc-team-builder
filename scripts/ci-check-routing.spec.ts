@@ -156,12 +156,25 @@ describe('ci-check-routing', () => {
       'docs-integrity',
       'docs-commands',
       'docs-drift',
+      'discoverability',
       'drive-sync-server',
       'source-data',
       'perf-budget',
       'e2e-triage',
       'pwa-shell',
     ]);
+  });
+
+  it('routes guide discoverability verifier changes to the focused suite', () => {
+    const plan = buildCheckPlan([
+      'scripts/verify-guide-discoverability.mjs',
+      'scripts/verify-guide-discoverability.spec.ts',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['discoverability']);
   });
 
   it('fails closed for unknown paths and missing diff data', () => {

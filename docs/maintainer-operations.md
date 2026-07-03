@@ -34,6 +34,7 @@ that private detail.
 | Add, move, or repair fixtures | [Fixture ownership guide](fixture-ownership-guide.md) | Task audit when fixture policy or release evidence changes |
 | Review dependency, workflow, browser-test, performance, release-check, or native-tooling updates | [Dependency maintenance policy](dependency-maintenance-policy.md) | Brain audit for the maintenance task and post-merge workflow checks |
 | Run quick confidence after a risky merge | [Post-merge smoke pack](post-merge-smoke-pack.md) | Task audit and `live-artifacts/<task-id>/` when ClickUp-backed evidence is needed |
+| Audit public guide and help discoverability | `npm run discoverability:verify` after `npm run build:pages` | Guide-discoverability workflow artifact and task audit when route/link ownership changes |
 | Keep docs from drifting after feature changes | [Docs drift map](docs-drift-map.json) and the docs-only row in the [validation guide](maintainer-validation-guide.md) | Brain docs-integrity audit or task-specific closeout |
 | Open or review human PRs | [Review ownership policy](review-ownership-policy.md) and PR traceability fields | Brain audit, live-artifact directory, and CI run links referenced from the PR |
 | Triage OPTC DB release detection | [Release detector replay](../README.md#release-detector-replay) and the latest `release-detector-status` Actions artifact | `../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` and release-trigger audits |

@@ -33,6 +33,7 @@ const ALLOWED_COMMANDS = new Map(
     ['node scripts/check-optc-release-needed.mjs --fixture=error --json', { cwd: 'app', expected: 'nonzero' }],
     ['npm run test:docs-integrity', { cwd: 'app', expected: 'zero' }],
     ['npm run test:docs-drift', { cwd: 'app', expected: 'zero' }],
+    ['npm run test:discoverability', { cwd: 'app', expected: 'zero' }],
     [
       'npm run docs:integrity -- --brain-root ../optc-team-builder-brain',
       { cwd: 'app', expected: 'zero', requiresBrain: true },
