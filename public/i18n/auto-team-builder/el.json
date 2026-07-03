@@ -195,7 +195,7 @@
         "active": "Χρησιμοποιούνται {{used}} / {{max}} cost. Μένουν {{remaining}} cost για Captain και subs."
       },
       "range": {
-        "max": "Team cost limit",
+        "max": "Όριο team cost",
         "overBudget": "Τα manual picks χρησιμοποιούν {{used}} cost, πάνω από το όριο {{max}}."
       }
     },
@@ -212,8 +212,8 @@
       "support": "Όταν το Friend Captain είναι κενό, ψάχνει όλους τους χαρακτήρες για αυτό το slot. Το favorite auto-fill ισχύει ακόμα για Captain και subs."
     },
     "guidedAutoBuild": {
-      "toggle": "Guided auto build",
-      "guideLink": "Διάβασε τον οδηγό guided build και sharing",
+      "toggle": "Καθοδηγούμενο auto build",
+      "guideLink": "Διάβασε τον οδηγό για guided build και sharing",
       "support": {
         "next": "Χτίζει και κλειδώνει μόνο το επόμενο κενό slot: {{role}}.",
         "complete": "Όλα τα manual slots είναι γεμάτα. Το επόμενο build κάνει validate την κλειδωμένη ομάδα."
@@ -451,16 +451,16 @@
     "copyModal": {
       "eyebrow": "Manual copy",
       "title": "Αντιγραφή manual picks",
-      "copy": "Διάλεξε picks από ένα slot και αντίγραψέ τα σε ένα ή περισσότερα target slots.",
+      "copy": "Διάλεξε picks από ένα slot και αντίγραψέ τα σε ένα ή περισσότερα slots προορισμού.",
       "source": {
-        "title": "Source slot",
+        "title": "Slot προέλευσης",
         "copy": "Διάλεξε το slot και τα OR picks που θέλεις να αντιγράψεις.",
         "empty": "Αυτό το slot δεν έχει OR picks για αντιγραφή."
       },
       "targets": {
-        "title": "Target slots",
-        "copy": "Τα copied picks ενώνονται με τα υπάρχοντα choices και τα διπλότυπα αγνοούνται.",
-        "sourceLabel": "Τρέχον source slot"
+        "title": "Slots προορισμού",
+        "copy": "Τα αντιγραμμένα picks ενώνονται με τα υπάρχοντα choices και τα διπλότυπα αγνοούνται.",
+        "sourceLabel": "Τρέχον slot προέλευσης"
       },
       "actions": {
         "open": "Αντιγραφή picks",
@@ -468,7 +468,7 @@
       }
     },
     "slotSelection": {
-      "activeSummary": "Active slot: {{role}} ({{count}} picks)",
+      "activeSummary": "Ενεργό slot: {{role}} ({{count}} picks)",
       "assignedTo": "Υπάρχει ήδη στα {{slots}}.",
       "costBudget": "Αυτό το pick δεν χωράει στο remaining team cost.",
       "excluded": "Τα excluded picks δεν μπορούν να μπουν στα τελικά team slots.",
@@ -732,7 +732,7 @@
       "consistency": "Consistency",
       "leaderClasses": "Leader classes",
       "leaderScope": "Leader scope",
-      "leaderSource": "Leader source",
+      "leaderSource": "Πηγή leader",
       "leaderTags": "Leader tags",
       "leaderTypes": "Leader types",
       "matchedRequirements": "Matched ability requirements",
@@ -749,32 +749,32 @@
   },
   "compare": {
     "title": "Σύγκριση ομάδων",
-    "copy": "Δες αλλαγές ανά slot και summary deltas χωρίς να ξανατρέξεις το current result.",
-    "guideLink": "Διάβασε τον οδηγό compare και team sharing",
+    "copy": "Έλεγξε αλλαγές ανά slot και συνολικά deltas χωρίς να ξανατρέξεις το current result.",
+    "guideLink": "Διάβασε τον οδηγό για compare και team sharing",
     "sideA": "Team A",
     "sideB": "Team B",
     "sideAShort": "A",
     "sideBShort": "B",
-    "loading": "Φορτώνει team data...",
+    "loading": "Φορτώνονται team data...",
     "snapshotSummary": "{{name}} · {{filled}} γεμάτα slots",
     "changed": "Άλλαξε",
     "same": "Ίδιο",
-    "emptySlot": "Empty",
-    "missingCharacter": "Δεν βρέθηκαν character data",
+    "emptySlot": "Κενό",
+    "missingCharacter": "Δεν υπάρχουν character data",
     "actions": {
       "show": "Σύγκριση ομάδων",
       "hide": "Κλείσιμο σύγκρισης",
-      "swap": "Swap A/B",
+      "swap": "Αντιστροφή A/B",
       "chooseFile": "Επιλογή JSON",
       "usePayload": "Χρήση payload"
     },
     "sources": {
-      "current": "Current generated",
+      "current": "Τρέχουσα generated ομάδα",
       "saved": "Saved team",
-      "imported": "Imported payload"
+      "imported": "Εισαγμένο payload"
     },
     "fields": {
-      "source": "Source",
+      "source": "Πηγή",
       "savedTeam": "Saved team",
       "importPayload": "Saved-team share link, share code, preset JSON ή team JSON"
     },
@@ -787,11 +787,11 @@
       "savedSelection": "Διάλεξε saved team για αυτή την πλευρά.",
       "noSavedTeams": "Δεν υπάρχουν saved teams σε αυτή τη συσκευή.",
       "imported": "Κάνε paste ή διάλεξε supported team payload για αυτή την πλευρά.",
-      "selectBoth": "Διάλεξε δύο ομάδες για να δεις slot και metric διαφορές."
+      "selectBoth": "Διάλεξε δύο ομάδες για να δεις διαφορές σε slots και metrics."
     },
     "import": {
-      "pastedPayload": "Pasted payload",
-      "restoredPayload": "Restored payload",
+      "pastedPayload": "Επικολλημένο payload",
+      "restoredPayload": "Ανακτημένο payload",
       "errors": {
         "empty": "Κάνε paste ένα supported team payload πριν την εισαγωγή.",
         "invalid": "Το payload δεν είναι supported saved team, share link, preset ή team export.",
@@ -800,7 +800,7 @@
     },
     "errors": {
       "loadFailed": "Δεν φορτώθηκαν τα team data για αυτή την πλευρά.",
-      "missingCharacters": "{{count}} character(s) δεν φορτώθηκαν και εμφανίζονται ως empty."
+      "missingCharacters": "{{count}} character(s) δεν φορτώθηκαν και εμφανίζονται ως κενά."
     },
     "slots": {
       "captain": "Captain",
@@ -811,11 +811,11 @@
       "sub4": "Sub 4"
     },
     "metrics": {
-      "changedSlots": "Changed slots",
-      "filledSlots": "Filled slots",
-      "uniqueTypes": "Unique types",
-      "uniqueClasses": "Unique classes",
-      "uniqueAbilities": "Unique abilities",
+      "changedSlots": "Αλλαγμένα slots",
+      "filledSlots": "Γεμάτα slots",
+      "uniqueTypes": "Μοναδικά types",
+      "uniqueClasses": "Μοναδικά classes",
+      "uniqueAbilities": "Μοναδικά abilities",
       "specialAbilities": "Special abilities",
       "crewmateAbilities": "Crewmate abilities",
       "potentialAbilities": "Potential abilities",
@@ -974,7 +974,7 @@
     },
     "ship": {
       "manualSource": "Manual ship",
-      "recommendedSource": "Auto selected ship"
+      "recommendedSource": "Προτεινόμενο ship"
     }
   },
   "errors": {
