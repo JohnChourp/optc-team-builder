@@ -29,6 +29,7 @@ that private detail.
 | Need | Public entry point | Private or durable evidence |
 | --- | --- | --- |
 | Choose validation for a change | [Maintainer validation guide](maintainer-validation-guide.md) | Brain audit for the ClickUp task when the work needs durable closeout evidence |
+| Understand app and brain ownership across data import, runtime matching, release detection, and audits | [Cross-repo architecture map](cross-repo-architecture-map.md) | Task audit and `../optc-team-builder-brain/audits/evidence-index.md` when the map changes |
 | Find the owner and coverage for a product or operational flow | [Feature coverage map](feature-coverage-map.md) | Related task audit and `../optc-team-builder-brain/audits/evidence-index.md` |
 | Add, move, or repair fixtures | [Fixture ownership guide](fixture-ownership-guide.md) | Task audit when fixture policy or release evidence changes |
 | Review dependency, workflow, browser-test, performance, release-check, or native-tooling updates | [Dependency maintenance policy](dependency-maintenance-policy.md) | Brain audit for the maintenance task and post-merge workflow checks |

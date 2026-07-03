@@ -68,6 +68,7 @@
         "src/app/core/services/fixtures/captain-contract-cases.json"
       ],
       "docsPaths": [
+        "docs/cross-repo-architecture-map.md",
         "docs/feature-coverage-map.md",
         "docs/maintainer-validation-guide.md",
         "../optc-team-builder-brain/CAPTAIN_ABILITY_COVERAGE_CLARIFICATION.md",
@@ -171,7 +172,7 @@
         "scripts/lib/optc-dataset.mjs",
         "scripts/data/"
       ],
-      "docsPaths": ["docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "docsPaths": ["docs/cross-repo-architecture-map.md", "docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
       "owner": "Dataset import and manual override ownership",
       "notes": "Importer, source-data, overlay, manual-character, or generated-data integrity changes should update schema and validation docs."
     },
@@ -187,6 +188,7 @@
         ".github/workflows/check-optc-db-release.yml"
       ],
       "docsPaths": [
+        "docs/cross-repo-architecture-map.md",
         "docs/maintainer-operations.md",
         "docs/feature-coverage-map.md",
         "docs/maintainer-validation-guide.md",
@@ -264,7 +266,7 @@
         "docs/docs-drift-map.json",
         ".github/workflows/docs-integrity.yml"
       ],
-      "docsPaths": ["docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/docs-drift-map.json", "../optc-team-builder-brain/audits/869dwc3zd-docs-integrity.md"],
+      "docsPaths": ["docs/cross-repo-architecture-map.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/docs-drift-map.json", "../optc-team-builder-brain/audits/869dwc3zd-docs-integrity.md"],
       "owner": "Docs/reference, drift, and maintainer-command hygiene",
       "notes": "Docs validation tooling, mapping, command examples, or workflow changes should update this map and maintainer guidance."
     },
