@@ -9,6 +9,7 @@ Offline-first Ionic Angular app for browsing One Piece Treasure Cruise character
 - OPTC character database: https://optcteambuilder.com/tools/optc-character-database/
 - Team-building guide: https://optcteambuilder.com/guides/how-to-build-an-optc-team/
 - Guided build, compare mode, and team sharing guide: https://optcteambuilder.com/guides/guided-build-compare-team-sharing/
+- Public sitemap: https://optcteambuilder.com/sitemap.html
 
 ## What is included
 
@@ -220,6 +221,10 @@ This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workf
 - Pushes to `main`, including Android release commits like `release: vX.Y.Z`, trigger the Pages workflow automatically.
 - If you see both `Deploy GitHub Pages` and `pages-build-deployment` for the same SHA, the repo Pages settings regressed back to legacy mode and need to be switched to workflow mode.
 - `PAGES_ENABLEMENT_TOKEN` is no longer part of the normal setup for this repo.
+- Public guide discoverability is checked by `npm run discoverability:verify`
+  against the generated Pages artifact. The scheduled `Guide Discoverability`
+  workflow repeats that audit weekly and on relevant `main` changes so guide
+  sitemap, metadata, source-doc, and in-app help links do not silently drift.
 
 ## Release detector replay
 

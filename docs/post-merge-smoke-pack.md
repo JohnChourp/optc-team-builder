@@ -34,7 +34,7 @@ npm run test:e2e:chromium -- --grep "@post-merge-smoke"
 
 | Scenario | Pass expectation | Evidence |
 | --- | --- | --- |
-| Public guide/help route | The team-building guide and guided/compare/share guide render with their expected headings. | Playwright output, failure screenshot/video, or a task-scoped screenshot under `../optc-team-builder-brain/live-artifacts/<task-id>/`. |
+| Public guide/help route | The team-building guide and `/guides/guided-build-compare-team-sharing` render with their expected headings. | Playwright output, failure screenshot/video, or a task-scoped screenshot under `../optc-team-builder-brain/live-artifacts/<task-id>/`. |
 | Guided/compare/share path | Guided auto build exposes the next-slot state; compare mode accepts saved and imported teams; Saved Teams export/share/import remains intact. | Playwright output and artifacts from the `@post-merge-smoke` subset. |
 | Release-check handoff | Maintainer prerequisites pass and the no-change release fixture reports no release-needed branch. | Command output or CI logs from the doctor and release fixture commands. |
 

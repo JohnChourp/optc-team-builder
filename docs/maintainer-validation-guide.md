@@ -538,6 +538,28 @@ requires each fenced shell example in active maintainer docs to be labeled as
 CI-executable commands and leaves release, secret-dependent, live-network,
 server, signing, and artifact-collection examples as manual guidance.
 
+### Guide Discoverability
+
+Use the guide discoverability verifier when public guide routes, SEO page
+generation, sitemap handling, README live-site links, or in-app help entry
+points change. Build the Pages artifact first so the verifier can inspect the
+generated sitemap, canonical metadata, fallback HTML, and structured data.
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run build:pages
+npm run discoverability:verify
+```
+
+For script-only changes to the verifier, run the focused spec:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run test:discoverability
+```
+
 ### Docs Drift
 
 Use the docs drift guard before merging mapped feature/workflow changes:

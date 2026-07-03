@@ -47,6 +47,10 @@ export const SCRIPT_SUITES = {
     label: 'Docs drift script tests',
     command: 'npm run test:docs-drift',
   },
+  discoverability: {
+    label: 'Guide discoverability tests',
+    command: 'npm run test:discoverability',
+  },
   'drive-sync-server': {
     label: 'Drive sync backend tests',
     command: 'npm run test:drive-sync-server',
@@ -150,6 +154,13 @@ function isDocsScriptPath(filePath) {
     filePath === 'scripts/check-docs-drift.mjs' ||
     filePath === 'scripts/check-docs-drift.spec.ts' ||
     filePath === 'docs/docs-drift-map.json'
+  );
+}
+
+function isDiscoverabilityPath(filePath) {
+  return (
+    filePath === 'scripts/verify-guide-discoverability.mjs' ||
+    filePath === 'scripts/verify-guide-discoverability.spec.ts'
   );
 }
 
@@ -327,6 +338,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       for (const suite of DOCS_SCRIPT_SUITES) {
         addScriptSuite(scriptSuites, suite);
       }
+      continue;
+    }
+
+    if (isDiscoverabilityPath(filePath)) {
+      categories.add('guide-discoverability');
+      addScriptSuite(scriptSuites, 'discoverability');
       continue;
     }
 
