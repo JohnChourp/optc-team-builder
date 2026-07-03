@@ -233,9 +233,13 @@ describe('release-detector-status', () => {
 
     expect(report.status).toBe('failed');
     expect(report.reason).toBe('status-input-unavailable');
+    expect(report.dataset.newCharacterCount).toBeNull();
+    expect(report.dataset.deltaSummary).toBe('dataset comparison unavailable');
     expect(report.inputErrors).toHaveLength(2);
     await expect(readFile(outputPath, 'utf8')).resolves.toContain('"status": "failed"');
-    await expect(readFile(summaryPath, 'utf8')).resolves.toContain('## Input Errors');
+    const summary = await readFile(summaryPath, 'utf8');
+    expect(summary).toContain('- New upstream character count: n/a');
+    expect(summary).toContain('## Input Errors');
   });
 
   it('can be imported without executing CLI detection', async () => {

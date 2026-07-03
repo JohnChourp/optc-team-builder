@@ -80,7 +80,9 @@ function normalizeDataset(releaseTriggerReport = {}, upstreamMonitorReport = {})
   const monitorCurrent = isObject(upstreamMonitorReport.current) ? upstreamMonitorReport.current : null;
   const source = comparison ?? releaseCheck ?? monitorCurrent ?? {};
   const newCharacterIds = normalizeIds(source.newCharacterIds);
-  const newCharacterCount = optionalNumber(source.newCharacterCount) ?? newCharacterIds.length;
+  const reportedNewCharacterCount = optionalNumber(source.newCharacterCount);
+  const newCharacterCount =
+    reportedNewCharacterCount ?? (Array.isArray(source.newCharacterIds) ? newCharacterIds.length : null);
   const sample = newCharacterIds.slice(0, RELEASE_DETECTOR_STATUS_NEW_ID_SAMPLE_LIMIT);
   const localCharacterCount = optionalNumber(source.localCharacterCount);
   const upstreamCharacterCount = optionalNumber(source.remoteCharacterCount);
@@ -99,7 +101,7 @@ function normalizeDataset(releaseTriggerReport = {}, upstreamMonitorReport = {})
     characterCountDelta: countDelta,
     newCharacterCount,
     newCharacterIdSample: sample,
-    newCharacterIdsTruncated: newCharacterCount > sample.length,
+    newCharacterIdsTruncated: newCharacterCount !== null && newCharacterCount > sample.length,
     deltaSummary: summarizeDatasetDelta({
       localDatasetVersion,
       upstreamDatasetVersion,
