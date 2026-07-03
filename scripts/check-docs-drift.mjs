@@ -404,6 +404,47 @@ async function readAcknowledgementFromEvent(eventPath) {
   }
 }
 
+export async function readAcknowledgementFromAssociatedPullRequest({
+  fetchImpl = globalThis.fetch,
+  githubRepository = process.env.GITHUB_REPOSITORY,
+  githubSha = process.env.GITHUB_SHA,
+  githubToken = process.env.GITHUB_TOKEN,
+} = {}) {
+  if (!githubRepository || !githubSha || typeof fetchImpl !== 'function') {
+    return '';
+  }
+
+  try {
+    const headers = {
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+    if (githubToken) {
+      headers.Authorization = `Bearer ${githubToken}`;
+    }
+
+    const response = await fetchImpl(`https://api.github.com/repos/${githubRepository}/commits/${githubSha}/pulls`, {
+      headers,
+    });
+
+    if (!response?.ok) {
+      return '';
+    }
+
+    const pullRequests = await response.json();
+    for (const pullRequest of Array.isArray(pullRequests) ? pullRequests : []) {
+      const acknowledgement = extractDocsDriftAcknowledgement(pullRequest?.body ?? '');
+      if (acknowledgement) {
+        return acknowledgement;
+      }
+    }
+  } catch {
+    return '';
+  }
+
+  return '';
+}
+
 export async function checkDocsDrift(options = {}) {
   const appRoot = path.resolve(options.appRoot ?? process.cwd());
   const brainRoot = path.resolve(options.brainRoot ?? path.join(appRoot, '..', 'optc-team-builder-brain'));
@@ -433,7 +474,13 @@ export async function checkDocsDrift(options = {}) {
   const acknowledgement =
     options.acknowledgement ??
     (extractDocsDriftAcknowledgement(options.prBody ?? '') ||
-      (await readAcknowledgementFromEvent(options.eventPath ?? process.env.GITHUB_EVENT_PATH)));
+      (await readAcknowledgementFromEvent(options.eventPath ?? process.env.GITHUB_EVENT_PATH)) ||
+      (await readAcknowledgementFromAssociatedPullRequest({
+        fetchImpl: options.fetchImpl,
+        githubRepository: options.githubRepository,
+        githubSha: options.githubSha,
+        githubToken: options.githubToken,
+      })));
   const hasAcknowledgement = isSubstantiveAcknowledgement(acknowledgement);
   const findings = [];
 

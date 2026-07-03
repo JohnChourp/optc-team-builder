@@ -539,9 +539,9 @@ changed files, and fails when a feature/workflow moves without a matching
 PR body's `Docs drift acknowledgement:` field with a concrete reason; blank,
 placeholder, or `none - ...` text does not count as an acknowledgement.
 When the mapped docs update lives only in a paired brain PR, use the same field
-to name the brain PR or audit; squash/merge commit messages carry that
-acknowledgement into the `main` push workflow where the PR body is no longer
-available.
+to name the brain PR or audit. On `main` pushes, CI recovers the merged PR body
+from GitHub for that same acknowledgement; the squash/merge commit message is a
+fallback when the associated PR body cannot be read.
 
 ## Ownership Rule
 

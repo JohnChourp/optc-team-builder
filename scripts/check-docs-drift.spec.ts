@@ -299,6 +299,46 @@ describe('check-docs-drift', () => {
     expect(result.hasAcknowledgement).toBe(false);
   });
 
+  it('recovers acknowledgements from the pull request associated with a push commit', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+    const fetchCalls: Array<{ url: string; headers: Record<string, string> }> = [];
+
+    const result = await checkDocsDrift({
+      appRoot,
+      brainRoot,
+      map: baseMap(),
+      changedFiles: ['src/app/pages/manual-team-builder/manual-team-builder.page.ts'],
+      brainChangedFiles: [],
+      githubRepository: 'JohnChourp/optc-team-builder',
+      githubSha: 'abc123',
+      githubToken: 'test-token',
+      fetchImpl: async (url: string, init: { headers: Record<string, string> }) => {
+        fetchCalls.push({ url, headers: init.headers });
+        return {
+          ok: true,
+          json: async () => [
+            {
+              body: 'Docs drift acknowledgement: PR body confirms this is a no-doc internal refactor.',
+            },
+          ],
+        };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.findings).toHaveLength(1);
+    expect(result.hasAcknowledgement).toBe(true);
+    expect(fetchCalls).toEqual([
+      {
+        url: 'https://api.github.com/repos/JohnChourp/optc-team-builder/commits/abc123/pulls',
+        headers: expect.objectContaining({
+          Accept: 'application/vnd.github+json',
+          Authorization: 'Bearer test-token',
+        }),
+      },
+    ]);
+  });
+
   it('rejects missing mapped docs paths before evaluating drift', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
     const map = baseMap();

@@ -83,6 +83,7 @@ jobs:
         shell: bash
         env:
           EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           if [[ "${GITHUB_EVENT_NAME}" == "push" && -n "${EVENT_BEFORE:-}" && ! "${EVENT_BEFORE}" =~ ^0+$ ]]; then
