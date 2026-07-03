@@ -4111,11 +4111,17 @@ function buildSlotExplanation(
     'utilityRole',
     'consistencyRole',
     'rankingDemand',
-    'rankingSelectedFilters',
   ]);
+  const hasLowerSelectedFilterAlternative = options.rejectedCandidates?.some((candidate) =>
+    candidate.reasons.some((reason) => reason.code === 'lowerSelectedFilterScore'),
+  );
   const hasRankingTieBreakAlternative = options.rejectedCandidates?.some((candidate) =>
     candidate.reasons.some((reason) => reason.code === 'rankingTieBreak'),
   );
+
+  if (hasLowerSelectedFilterAlternative) {
+    primaryReasonCodes.add('rankingSelectedFilters');
+  }
 
   if (hasRankingTieBreakAlternative) {
     primaryReasonCodes.add('rankingNewestId');
