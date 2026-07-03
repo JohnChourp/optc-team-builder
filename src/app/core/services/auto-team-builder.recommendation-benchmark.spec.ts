@@ -98,7 +98,7 @@ const BENCHMARK_CASES: RecommendationBenchmarkCase[] = [
   {
     caseId: 'pure-tie-break-stays-honest',
     records: createTieBreakBenchmarkRecords(),
-    input: createInput(['DEX'], ['Fighter'], {
+    input: createInput([], [], {
       manualSlots: createManualSlots({
         captain: [7401],
         friendCaptain: [7402],
@@ -109,6 +109,7 @@ const BENCHMARK_CASES: RecommendationBenchmarkCase[] = [
       const tieBreakSlot = expectSlot(result, 7414);
       const tieBreakReasonCodes = reasonCodes(tieBreakSlot);
 
+      expect(tieBreakSlot.explanation?.primaryReason.code).toBe('rankingNewestId');
       expect(tieBreakReasonCodes).toContain('rankingNewestId');
       for (const forbiddenReasonCode of [
         'requiredAbilityMatch',
@@ -180,6 +181,12 @@ const BENCHMARK_CASES: RecommendationBenchmarkCase[] = [
               reason.params['types'].includes('INT'),
           ),
         ).toBe(false);
+
+        const selectedTypeReason = slot.explanation?.reasons.find(
+          (reason) => reason.code === 'selectedTypeMatch',
+        );
+        expect(selectedTypeReason?.params?.['types']).toEqual(['DEX']);
+        expect(selectedTypeReason?.params?.['count']).toBe(1);
       }
     },
   },
@@ -342,8 +349,8 @@ function createLeaderScopeBenchmarkRecords(): CharacterDetailRecord[] {
 
 function createTieBreakBenchmarkRecords(): CharacterDetailRecord[] {
   return [
-    createLeader(7401, 'Tie Break DEX Captain'),
-    createLeader(7402, 'Tie Break DEX Friend'),
+    createNeutralLeader(7401, 'Tie Break DEX Captain'),
+    createNeutralLeader(7402, 'Tie Break DEX Friend'),
     createTieBreakSub(7410, 'Tie Break Candidate A'),
     createTieBreakSub(7411, 'Tie Break Candidate B'),
     createTieBreakSub(7412, 'Tie Break Candidate C'),
@@ -373,7 +380,7 @@ function createTieBreakSub(
 ): CharacterDetailRecord {
   return createSub(id, name, {
     ...overrides,
-    specialText: 'Boosts orb effects of DEX characters by 2.25x for 1 turn.',
+    specialText: 'Deals 100x character ATK in type damage to one enemy.',
   });
 }
 
@@ -406,6 +413,18 @@ function createLeader(id: number, name: string): CharacterDetailRecord {
       captainAbility:
         'Boosts ATK of DEX and Fighter characters by 5.25x and HP by 1.3x.',
       specialText: 'Boosts base ATK of DEX and Fighter characters by 1000 for 1 turn.',
+    },
+  });
+}
+
+function createNeutralLeader(id: number, name: string): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name,
+    primaryClass: 'Fighter',
+    detail: {
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+      specialText: 'Deals 100x character ATK in type damage to one enemy.',
     },
   });
 }

@@ -4113,6 +4113,8 @@ function buildSlotExplanation(
         'utilityRole',
         'consistencyRole',
         'rankingDemand',
+        'rankingSelectedFilters',
+        'rankingNewestId',
       ].includes(reason.code),
     ) ?? reasons[0]!;
 
