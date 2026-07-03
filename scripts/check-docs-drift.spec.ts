@@ -268,6 +268,37 @@ describe('check-docs-drift', () => {
     expect(result.hasAcknowledgement).toBe(true);
   });
 
+  it('ignores acknowledgements from non-head commits in a batched push event', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+    const eventPath = path.join(appRoot, '..', 'batched-push-event.json');
+    await writeFile(
+      eventPath,
+      JSON.stringify({
+        head_commit: {
+          message: 'Fix manual builder internals without docs',
+        },
+        commits: [
+          {
+            message: 'Docs drift acknowledgement: unrelated commit in the same push batch.',
+          },
+        ],
+      }),
+    );
+
+    const result = await checkDocsDrift({
+      appRoot,
+      brainRoot,
+      map: baseMap(),
+      changedFiles: ['src/app/pages/manual-team-builder/manual-team-builder.page.ts'],
+      brainChangedFiles: [],
+      eventPath,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.findings).toHaveLength(1);
+    expect(result.hasAcknowledgement).toBe(false);
+  });
+
   it('rejects missing mapped docs paths before evaluating drift', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
     const map = baseMap();

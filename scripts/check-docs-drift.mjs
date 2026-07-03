@@ -389,11 +389,7 @@ async function readAcknowledgementFromEvent(eventPath) {
 
   try {
     const event = JSON.parse(await readFile(eventPath, 'utf8'));
-    const candidates = [
-      event.pull_request?.body,
-      event.head_commit?.message,
-      ...(Array.isArray(event.commits) ? event.commits.map((commit) => commit?.message) : []),
-    ];
+    const candidates = [event.pull_request?.body, event.head_commit?.message];
 
     for (const candidate of candidates) {
       const acknowledgement = extractDocsDriftAcknowledgement(candidate ?? '');
