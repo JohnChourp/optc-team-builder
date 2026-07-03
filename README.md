@@ -38,6 +38,9 @@ Required runtime:
 
 Maintainer validation guide:
 
+- `docs/maintainer-operations.md` is the public-safe landing page for
+  maintainer operations, routing public guidance separately from private
+  ClickUp, audit, and live-artifact evidence.
 - `docs/maintainer-validation-guide.md` explains which contract, performance,
   release-detector, release-readiness, broad UI, and docs-only validation path
   to run for each class of change.
@@ -273,6 +276,8 @@ npm run data:check-release -- --json \
 For a fully custom replay directory, use `--fixture-dir=/path/to/replay`. The
 directory must contain `local-manifest.json`, `local-seed.sql`,
 `remote-version.js`, and `remote-units.js`.
+
+## Android release workflow
 
 Android releases should now run from the manual `Release Android` GitHub Actions workflow.
 

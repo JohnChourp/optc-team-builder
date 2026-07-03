@@ -186,6 +186,7 @@
         ".github/workflows/check-optc-db-release.yml"
       ],
       "docsPaths": [
+        "docs/maintainer-operations.md",
         "docs/feature-coverage-map.md",
         "docs/maintainer-validation-guide.md",
         "../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md"
@@ -197,7 +198,7 @@
       "id": "release-readiness",
       "name": "Release readiness reporting",
       "featurePaths": ["scripts/release-readiness-report.mjs", "scripts/fixtures/release-readiness/"],
-      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwc0wc-release-readiness-summary.md"],
+      "docsPaths": ["docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwc0wc-release-readiness-summary.md"],
       "owner": "Release readiness report contract",
       "notes": "Readiness source schema, rendering, or sign-off policy changes should update report guidance and evidence docs."
     },
@@ -226,7 +227,7 @@
         "docs/docs-drift-map.json",
         ".github/workflows/docs-integrity.yml"
       ],
-      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/docs-drift-map.json", "../optc-team-builder-brain/audits/869dwc3zd-docs-integrity.md"],
+      "docsPaths": ["docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/docs-drift-map.json", "../optc-team-builder-brain/audits/869dwc3zd-docs-integrity.md"],
       "owner": "Docs/reference, drift, and maintainer-command hygiene",
       "notes": "Docs validation tooling, mapping, command examples, or workflow changes should update this map and maintainer guidance."
     },
@@ -234,7 +235,7 @@
       "id": "pr-traceability",
       "name": "PR traceability",
       "featurePaths": [".github/pull_request_template.md", ".github/scripts/check-pr-traceability.mjs", ".github/workflows/pr-traceability.yml"],
-      "docsPaths": ["docs/maintainer-validation-guide.md", "docs/review-ownership-policy.md", "../optc-team-builder-brain/audits/869dwc3zc-pr-traceability.md"],
+      "docsPaths": ["docs/maintainer-operations.md", "docs/maintainer-validation-guide.md", "docs/review-ownership-policy.md", "../optc-team-builder-brain/audits/869dwc3zc-pr-traceability.md"],
       "owner": "PR evidence, verification, and ClickUp routing",
       "notes": "PR template, workflow, or traceability rule changes should keep reviewer guidance and evidence docs aligned."
     },
@@ -242,7 +243,7 @@
       "id": "seo-pages",
       "name": "SEO pages and GitHub Pages deploy",
       "featurePaths": ["src/app/pages/seo-content/", "scripts/generate-seo-pages.mjs", "scripts/audit-seo-pages.mjs", ".github/workflows/deploy-pages.yml"],
-      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "docsPaths": ["README.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
       "owner": "SEO content and Pages deployment",
       "notes": "Public SEO content, route, generation, audit, or deployment changes should update public-site docs and validation guidance."
     },
@@ -257,7 +258,7 @@
         "android/",
         "ios/"
       ],
-      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "docsPaths": ["README.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
       "owner": "Native release and version ownership",
       "notes": "Native release, signing, versioning, or platform metadata changes should update release guidance and validation docs."
     }
