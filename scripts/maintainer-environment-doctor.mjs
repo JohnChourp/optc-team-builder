@@ -63,7 +63,8 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
   {
     name: 'test:release-check',
     group: 'release-check',
-    expectedCommand: 'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts',
+    expectedCommand:
+      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts',
     fix: 'Restore the release detector replay package script.',
   },
   {
@@ -77,6 +78,12 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     group: 'release-check',
     expectedCommand: 'node ./scripts/check-optc-upstream-monitor.mjs',
     fix: 'Restore the upstream freshness and drift monitor package script.',
+  },
+  {
+    name: 'data:backtest-release',
+    group: 'release-check',
+    expectedCommand: 'node ./scripts/backtest-optc-release-detector.mjs',
+    fix: 'Restore the historical release detector backtest package script.',
   },
   {
     name: 'docs:integrity',
@@ -120,7 +127,10 @@ export const REQUIRED_APP_PATHS = [
   { relativePath: 'scripts/perf-budget-history.mjs', kind: 'file', group: 'performance' },
   { relativePath: 'scripts/check-optc-release-needed.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/check-optc-upstream-monitor.mjs', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/backtest-optc-release-detector.mjs', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/backtest-optc-release-detector.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/fixtures/shared/release-check-fixtures.mjs', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/fixtures/release-check/history/corpus.json', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/check-docs-commands.mjs', kind: 'file', group: 'docs' },
   { relativePath: 'scripts/check-docs-integrity.mjs', kind: 'file', group: 'docs' },
   { relativePath: 'scripts/check-docs-drift.mjs', kind: 'file', group: 'docs' },

@@ -31,7 +31,7 @@ script, or workflow prerequisite looks suspect.
 | Guided build, compare mode, saved-team sharing, or import accessibility | Focused page specs plus `npm run test:e2e:chromium -- --grep "@accessibility"` | Focused accessibility slice plus full `npm run test:e2e:chromium`, `npm run i18n:validate` for copy changes, and `npm run build` | Guided toggles/submits, compare saved/imported/error/swap controls, saved-team share/import feedback, modal focus recovery, dialog names, live-region semantics, and manual share hydration remain keyboard reachable and structurally axe-clean for the targeted flows | Playwright reports and task-scoped live evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` |
 | PWA installability, offline app-shell entry, service-worker cache config, or stale-shell upgrade behavior | `PWA_SHELL_ARTIFACT_DIR=../optc-team-builder-brain/live-artifacts/<task-id>/pwa-shell npm run test:pwa-shell` | PWA shell check plus `npm run build`, browser e2e for touched routes, and docs integrity when recovery guidance changes | Manifest and icon prerequisites, Angular service-worker registration/control, offline entry for high-value routes, and stale-shell upgrade recovery stay repeatable from production build output | `PWA_SHELL_ARTIFACT_DIR` when set; otherwise local OPTC checkouts use `../optc-team-builder-brain/live-artifacts/869dwc7wk/pwa-shell`, with CI/standalone checkouts using `test-results/pwa-shell` |
 | Release-candidate performance confidence | Manual `Performance Budgets` workflow dispatch | Scheduled/manual `Performance Budgets` workflow with an explicit `baseline_run_id`, then inspect the uploaded report | The ability-filter and explanation/compare harnesses both ran on GitHub Actions, hard-budget results were recorded, and baseline warnings were surfaced | GitHub Actions artifact `performance-budget-report` |
-| OPTC DB release-detector logic, fixtures, workflow dispatch rules, or upstream replay support | `npm run test:release-check` | Run each successful bundled fixture plus the live check, and verify `node scripts/check-optc-release-needed.mjs --fixture=error --json` exits nonzero | Missing upstream character IDs are the only release trigger, fixture branches remain replayable, malformed fixture handling still fails, manual workflow dispatch defaults to report-only verification, and the live upstream read still works | Command output; workflow artifact `release-trigger-outcome` after Actions runs |
+| OPTC DB release-detector logic, fixtures, workflow dispatch rules, historical backtests, or upstream replay support | `npm run test:release-check` | Run `npm run data:backtest-release -- --json`, each successful bundled fixture, the live check, and verify `node scripts/check-optc-release-needed.mjs --fixture=error --json` exits nonzero | Missing upstream character IDs are the only release trigger, historical snapshots keep expected release/no-release decisions stable, fixture branches remain replayable, malformed fixture handling still fails, manual workflow dispatch defaults to report-only verification, and the live upstream read still works | Command output; workflow artifact `release-trigger-outcome` after Actions runs |
 | Release-readiness summary schema, report formatting, sign-off policy, or release evidence wiring | `npm run test:release-readiness` | `npm run test:release-readiness` plus `npm run release:readiness -- --source /path/to/source.json --output /path/to/summary.md --json-output /path/to/summary.json` using current evidence | Candidate status, tests, performance report, release-trigger report, blockers, and waivers produce the intended ready/blocked decision | Paths passed to `--output` and `--json-output` |
 | Release-note source, generated release-note Markdown, or release-note workflow routing | `node ../optc-team-builder-brain/scripts/generate-release-notes.mjs --source ../optc-team-builder-brain/audits/release-notes/<period>-source.json --evidence-index ../optc-team-builder-brain/audits/evidence-index.json --output docs/release-notes/<period>.md --check` with `<period>` replaced by the touched release period, plus docs integrity | Generator tests plus full app/brain docs integrity when changing source schema, generated Markdown, or release-note links | Release notes stay generated from workspace-scoped ClickUp evidence and brain audits instead of drifting into hand-edited summaries | Generated `docs/release-notes/<period>.md` and brain source JSON |
 | Maintainer environment, sibling checkout, or validation prerequisite drift | `npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain` | Doctor command plus `npm run test:maintainer-doctor`; add docs command and integrity checks when command examples or workflow references changed | Node/npm engines, app/brain layout, required workflow files, contract/performance/release-check scripts, release fixtures, brain evidence paths, and instruction parity are ready before deeper validation | Doctor output only |
@@ -361,6 +361,15 @@ Command status: manual/illustrative.
 npm run test:release-check
 ```
 
+Backtest historical local/upstream snapshots before changing release-detector
+logic:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run data:backtest-release -- --json
+```
+
 Replay bundled branches before changing release-detector logic or workflow
 dispatch policy:
 
@@ -409,6 +418,12 @@ npm run data:check-release -- --json \
 Use `--fixture-dir` as the alternative when replaying a full custom local
 directory that contains `local-manifest.json`, `local-seed.sql`,
 `remote-version.js`, and `remote-units.js`.
+
+The historical corpus is `scripts/fixtures/release-check/history/corpus.json`.
+It stores exact local and upstream character ID sets as compressed ranges plus
+commit metadata. Use `--case=<id>` to reproduce one historical decision, and
+mark `expected.mismatchClassification` as `policy-drift` only when a future
+release-policy change intentionally invalidates the old expected outcome.
 
 ### Release Readiness
 

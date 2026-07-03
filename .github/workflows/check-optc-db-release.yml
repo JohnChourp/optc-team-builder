@@ -90,6 +90,7 @@ jobs:
         id: fixture-validation
         run: |
           npm run test:release-check
+          npm run --silent data:backtest-release -- --json
 
           valid_fixtures=(
             no-change

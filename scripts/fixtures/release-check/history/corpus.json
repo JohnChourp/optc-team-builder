@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "description": "Historical OPTC DB release-detector backtest corpus. Snapshots store exact character ID sets as compressed ranges, with source commits identifying the full upstream/local data used to derive them.",
+  "source": "2shankz",
+  "sourceRepository": "2Shankz/optc-db.github.io",
+  "snapshots": {
+    "local-v0.0.63": {
+      "kind": "local",
+      "label": "OPTC Team Builder v0.0.63 generated data",
+      "commit": "a896d3ec98ef3025c3b7f60d8d0d7497cdf1ef7e",
+      "generatedAt": "2026-06-30T11:05:53.804Z",
+      "sourceVersion": "36",
+      "characterIds": {
+        "ranges": [[1, 3053], [3056, 3083], [3085, 3115], [3117, 3118], [3120, 3130], [3134, 3154], [3156, 3231], [3233, 3249], [3251, 3378], [3380, 3436], [3438, 3592], [3594, 3601], [3605, 3661], [3663, 3782], [3784, 3825], [3828, 4012], [4019, 4069], [4071, 4159], [4162, 4174], [4176, 4402], [4404, 4579], [4583, 4601], [5013, 5014], [5029, 5032], [5046, 5047], [5054, 5056]]
+      }
+    },
+    "local-v0.0.62": {
+      "kind": "local",
+      "label": "OPTC Team Builder v0.0.62 generated data",
+      "commit": "398d0972b191e1d500170a0318f5d8e97f935eb4",
+      "generatedAt": "2026-06-26T08:41:57.309Z",
+      "sourceVersion": "36",
+      "characterIds": {
+        "ranges": [[1, 3053], [3056, 3083], [3085, 3115], [3117, 3118], [3120, 3130], [3134, 3154], [3156, 3231], [3233, 3249], [3251, 3378], [3380, 3436], [3438, 3592], [3594, 3601], [3605, 3661], [3663, 3782], [3784, 3825], [3828, 4012], [4019, 4069], [4071, 4159], [4162, 4174], [4176, 4402], [4404, 4579], [4583, 4601], [5013, 5014], [5029, 5032], [5046, 5047], [5054, 5056]]
+      }
+    },
+    "local-v0.0.61": {
+      "kind": "local",
+      "label": "OPTC Team Builder v0.0.61 generated data",
+      "commit": "d9da4b8f09532ca7c5bd94372f92b96b3cbf7d99",
+      "generatedAt": "2026-06-25T13:01:51.453Z",
+      "sourceVersion": "36",
+      "characterIds": {
+        "ranges": [[1, 3053], [3056, 3083], [3085, 3115], [3117, 3118], [3120, 3130], [3134, 3154], [3156, 3231], [3233, 3249], [3251, 3378], [3380, 3436], [3438, 3592], [3594, 3601], [3605, 3661], [3663, 3782], [3784, 3825], [3828, 4012], [4019, 4069], [4071, 4159], [4162, 4174], [4176, 4402], [4404, 4579], [4583, 4596], [5013, 5014], [5029, 5032], [5046, 5047], [5054, 5056]]
+      }
+    },
+    "local-v0.0.57": {
+      "kind": "local",
+      "label": "OPTC Team Builder v0.0.57 generated data",
+      "commit": "3731d6a4d83d57fd82186cc68e4133f45d550beb",
+      "generatedAt": "2026-06-25T09:44:51.487Z",
+      "sourceVersion": "36",
+      "characterIds": {
+        "ranges": [[1, 3053], [3056, 3083], [3085, 3115], [3117, 3118], [3120, 3130], [3134, 3154], [3156, 3231], [3233, 3249], [3251, 3378], [3380, 3436], [3438, 3592], [3594, 3601], [3605, 3661], [3663, 3782], [3784, 3825], [3828, 4012], [4019, 4069], [4071, 4159], [4162, 4174], [4176, 4402], [4404, 4579], [4583, 4596], [5013, 5014], [5029, 5032], [5046, 5047], [5054, 5056]]
+      }
+    },
+    "upstream-2026-07-03-jul-rumble": {
+      "kind": "upstream",
+      "label": "2026-07-03 Jul Rumble Batch",
+      "commit": "6c03d51f5a8ec9467c8b01366d3279bd7e0fd4e4",
+      "commitDate": "2026-07-03T02:36:02Z",
+      "sourceVersion": "36",
+      "characterIds": {
+        "ranges": [[1, 3053], [3056, 3083], [3085, 3115], [3117, 3118], [3120, 3130], [3134, 3154], [3156, 3231], [3233, 3249], [3251, 3378], [3380, 3436], [3438, 3592], [3594, 3601], [3605, 3661], [3663, 3782], [3784, 3825], [3828, 4012], [4019, 4069], [4071, 4159], [4162, 4174], [4176, 4402], [4404, 4579], [4583, 4601], 4607, [5013, 5014], [5029, 5032], [5046, 5047], [5054, 5056]]
+      }
+    },
+    "upstream-2026-06-26-jun-eom": {
+      "kind": "upstream",
+      "label": "2026-06-26 Jun EoM Batch",
+      "commit": "2b8902af03edfe63b5cf822f281aad5306ba662b",
+      "commitDate": "2026-06-26T03:42:51Z",
+      "sourceVersion": "36",
+      "characterIds": {
+        "ranges": [[1, 3053], [3056, 3083], [3085, 3115], [3117, 3118], [3120, 3130], [3134, 3154], [3156, 3231], [3233, 3249], [3251, 3378], [3380, 3436], [3438, 3592], [3594, 3601], [3605, 3661], [3663, 3782], [3784, 3825], [3828, 4012], [4019, 4069], [4071, 4159], [4162, 4174], [4176, 4402], [4404, 4579], [4583, 4601], [5013, 5014], [5029, 5032], [5046, 5047], [5054, 5056]]
+      }
+    },
+    "upstream-2026-06-12-jun-tm": {
+      "kind": "upstream",
+      "label": "2026-06-12 Jun TM Batch",
+      "commit": "430e3382d04d3a2f224cf9da7767683170b226e1",
+      "commitDate": "2026-06-12T02:37:31Z",
+      "sourceVersion": "36",
+      "characterIds": {
+        "ranges": [[1, 3053], [3056, 3083], [3085, 3115], [3117, 3118], [3120, 3130], [3134, 3154], [3156, 3231], [3233, 3249], [3251, 3378], [3380, 3436], [3438, 3592], [3594, 3601], [3605, 3661], [3663, 3782], [3784, 3825], [3828, 4012], [4019, 4069], [4071, 4159], [4162, 4174], [4176, 4402], [4404, 4579], [4583, 4593], [5013, 5014], [5029, 5032], [5046, 5047], [5054, 5056]]
+      }
+    },
+    "upstream-2026-06-05-jun-rumble": {
+      "kind": "upstream",
+      "label": "2026-06-05 Jun Rumble Batch",
+      "commit": "fee788c21649886e3acb4ce1f1657335d0a434c8",
+      "commitDate": "2026-06-05T02:02:33Z",
+      "sourceVersion": "36",
+      "characterIds": {
+        "ranges": [[1, 3053], [3056, 3083], [3085, 3115], [3117, 3118], [3120, 3130], [3134, 3154], [3156, 3231], [3233, 3249], [3251, 3378], [3380, 3436], [3438, 3592], [3594, 3601], [3605, 3661], [3663, 3782], [3784, 3825], [3828, 4012], [4019, 4069], [4071, 4159], [4162, 4174], [4176, 4402], [4404, 4579], [4583, 4588], 4590, [5013, 5014], [5029, 5032], [5046, 5047], [5054, 5056]]
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "current-v063-vs-2026-07-03-jul-rumble",
+      "title": "Current local v0.0.63 data sees the 2026-07-03 Jul Rumble upstream addition",
+      "localSnapshot": "local-v0.0.63",
+      "remoteSnapshot": "upstream-2026-07-03-jul-rumble",
+      "expected": {
+        "releaseNeeded": true,
+        "reason": "new-upstream-characters",
+        "newCharacterIds": [4607]
+      }
+    },
+    {
+      "id": "v062-vs-2026-06-26-jun-eom",
+      "title": "v0.0.62 already covered the 2026-06-26 Jun EoM upstream snapshot",
+      "localSnapshot": "local-v0.0.62",
+      "remoteSnapshot": "upstream-2026-06-26-jun-eom",
+      "expected": {
+        "releaseNeeded": false,
+        "reason": "no-new-upstream-characters",
+        "newCharacterIds": []
+      }
+    },
+    {
+      "id": "v061-vs-2026-06-26-jun-eom",
+      "title": "v0.0.61 would have requested the 2026-06-26 Jun EoM upstream IDs",
+      "localSnapshot": "local-v0.0.61",
+      "remoteSnapshot": "upstream-2026-06-26-jun-eom",
+      "expected": {
+        "releaseNeeded": true,
+        "reason": "new-upstream-characters",
+        "newCharacterIds": [4597, 4598, 4599, 4600, 4601]
+      }
+    },
+    {
+      "id": "v057-vs-2026-06-12-jun-tm",
+      "title": "v0.0.57 does not release for an older upstream snapshot with fewer IDs",
+      "localSnapshot": "local-v0.0.57",
+      "remoteSnapshot": "upstream-2026-06-12-jun-tm",
+      "expected": {
+        "releaseNeeded": false,
+        "reason": "no-new-upstream-characters",
+        "newCharacterIds": []
+      }
+    }
+  ]
+}

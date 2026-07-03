@@ -23,9 +23,10 @@ validation harnesses, or release evidence.
 | Source | Owner | Consumers | Regeneration rule |
 | --- | --- | --- | --- |
 | `scripts/fixtures/shared/saved-team-fixtures.ts` | Saved Teams transfer and browser regression owners | `e2e/regression-fixtures.ts` and future transfer/import tests that need the same deterministic teams | Edit builder records directly when the public v1 saved-team shape changes; keep IDs stable unless the scenario itself changes. |
-| `scripts/fixtures/shared/release-check-fixtures.mjs` | OPTC DB release-detector owners | `scripts/check-optc-release-needed.spec.ts` and future release workflow tests | Update metadata when adding/removing bundled replay directories or changing expected detector outcomes. |
+| `scripts/fixtures/shared/release-check-fixtures.mjs` | OPTC DB release-detector owners | `scripts/check-optc-release-needed.spec.ts`, `scripts/backtest-optc-release-detector.spec.ts`, and release workflow tests | Update metadata when adding/removing bundled replay directories, historical corpus references, or expected detector outcomes. |
 | `e2e/regression-fixtures.ts` | Browser regression owners | `e2e/regression-flows.spec.ts` | Keep Playwright-only helpers here; move only reusable data builders to `scripts/fixtures/shared/`. |
 | `scripts/fixtures/release-check/<fixture>/` | OPTC DB release-detector owners | `npm run test:release-check`, release detector replay, and workflow fixture validation | Add a new directory only for a distinct release branch or captured upstream failure. Each directory must include the four files named by shared release-check metadata. |
+| `scripts/fixtures/release-check/history/corpus.json` | OPTC DB release-detector owners | `npm run data:backtest-release -- --json` and `npm run test:release-check` | Add a case when a real local release commit and exact upstream commit prove a release/no-release decision that should remain stable. Store exact ID sets as compressed ranges and cite the source commits. |
 | `src/app/core/services/fixtures/captain-contract-cases.json` | Captain parser and captain coverage owners | script-side captain contract tests and Angular captain coverage/matching specs | Add a case for a new captain wording class; update expected generated boosts and tiers together. |
 | `scripts/fixtures/data/*.json` | Saved Teams, Saved Enemies, and compact dataset owners | transfer compatibility specs and local development checks | Keep files small and schema-focused. For saved-team payloads, follow `docs/saved-team-schema-lifecycle.md`; add a file only for a distinct persisted payload edge case. |
 | `scripts/fixtures/release-readiness/*` | Release readiness owners | `npm run test:release-readiness` | Update source JSON and expected Markdown together when the report schema or maintainer summary contract changes. |
@@ -51,6 +52,6 @@ Use the smallest validation path that covers the changed owner:
 - shared saved-team fixtures: `npm run test:e2e:chromium` plus focused saved
   team transfer tests when transfer utilities or the saved-team schema lifecycle
   contract change
-- shared release-check fixtures: `npm run test:release-check`
+- shared release-check fixtures or historical corpus: `npm run test:release-check` plus `npm run data:backtest-release -- --json`
 - fixture ownership docs: `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`
 - broad shared fixture changes: `npm run test:ci` and `git diff --check`

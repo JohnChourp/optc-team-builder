@@ -28,6 +28,7 @@ const ALLOWED_COMMANDS = new Map(
     ['npm run data:check-release -- --fixture=new-character --json', { cwd: 'app', expected: 'zero' }],
     ['npm run data:check-release -- --fixture=active-release-running --json', { cwd: 'app', expected: 'zero' }],
     ['npm run data:check-release -- --fixture=upstream-shape-drift --json', { cwd: 'app', expected: 'zero' }],
+    ['npm run data:backtest-release -- --json', { cwd: 'app', expected: 'zero' }],
     ['node scripts/check-optc-release-needed.mjs --fixture=error --json', { cwd: 'app', expected: 'nonzero' }],
     ['npm run test:docs-integrity', { cwd: 'app', expected: 'zero' }],
     ['npm run test:docs-drift', { cwd: 'app', expected: 'zero' }],

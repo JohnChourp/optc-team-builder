@@ -221,6 +221,7 @@ replay compact local fixtures without fetching upstream data:
 Command status: CI-executable; the `error` fixture is expected to exit nonzero.
 <!-- docs-command: ci-executable -->
 ```bash
+npm run data:backtest-release -- --json
 npm run data:check-release -- --fixture=no-change --json
 npm run data:check-release -- --fixture=new-character --json
 npm run data:check-release -- --fixture=active-release-running --json
@@ -234,6 +235,15 @@ so the workflow report can replay the blocked active-release branch;
 `upstream-shape-drift` must return `releaseNeeded=false` even with a newer
 source version and object/variant shape drift; `error` is intentionally
 malformed and must exit nonzero.
+
+The historical backtest corpus lives at
+`scripts/fixtures/release-check/history/corpus.json`. It stores exact historical
+local and upstream character ID sets as compressed ranges, with commit metadata
+for the source local release data and upstream `2Shankz/optc-db.github.io`
+snapshots. Use `--case=<id>` for a single historical replay or
+`--corpus=/path/to/corpus.json` when testing a proposed corpus before checking it
+in. Any unexpected divergence is classified as a detector bug unless the case
+explicitly documents `policy-drift`.
 
 Bundled fixture directories live under `scripts/fixtures/release-check/`. Each
 directory must contain `local-manifest.json`, `local-seed.sql`,
