@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 
 const APP_DOCS = [
   'README.md',
+  'docs/post-merge-smoke-pack.md',
   'docs/maintainer-validation-guide.md',
   'docs/fixture-ownership-guide.md',
   'e2e/README.md',

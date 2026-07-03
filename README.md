@@ -48,6 +48,8 @@ Maintainer validation guide:
 - `docs/maintainer-validation-guide.md` explains which contract, performance,
   release-detector, release-readiness, broad UI, and docs-only validation path
   to run for each class of change.
+- `docs/post-merge-smoke-pack.md` defines the quick post-merge smoke pack for
+  release-critical guide, guided/compare/share, and release-check handoff paths.
 - `docs/feature-coverage-map.md` maps major product and operational flows to
   their tests, docs, performance checks, evidence, and owning area.
 - `docs/docs-drift-map.json` maps those flows to documentation entry points so

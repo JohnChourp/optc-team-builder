@@ -17,7 +17,7 @@ import {
 test.describe('high-value regression flows', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test('guided auto build controls expose the next-slot state @guided-auto-build @guided-auto-build-controls', async ({
+  test('guided auto build controls expose the next-slot state @guided-auto-build @guided-auto-build-controls @post-merge-smoke', async ({
     page,
   }) => {
     await seedBrowserState(page, []);
@@ -64,7 +64,7 @@ test.describe('high-value regression flows', () => {
     await expect(page.locator('.result-slot-card')).toHaveCount(0);
   });
 
-  test('compare mode supports saved and imported sources with readable diffs', async ({ page }) => {
+  test('compare mode supports saved and imported sources with readable diffs @post-merge-smoke', async ({ page }) => {
     await seedBrowserState(page);
 
     await page.goto('/tabs/auto-team-builder');
@@ -94,7 +94,7 @@ test.describe('high-value regression flows', () => {
     await expect(page.getByTestId('compare-summary-b')).toContainText('E2E Regression Crew A');
   });
 
-  test('saved-team export, share import, and invalid payload handling stay intact', async ({
+  test('saved-team export, share import, and invalid payload handling stay intact @post-merge-smoke', async ({
     page,
   }) => {
     await seedBrowserState(page, [SEEDED_SAVED_TEAMS[0]!]);

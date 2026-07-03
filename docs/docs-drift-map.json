@@ -204,6 +204,14 @@
       "notes": "Readiness source schema, rendering, or sign-off policy changes should update report guidance and evidence docs."
     },
     {
+      "id": "post-merge-smoke-pack",
+      "name": "Post-merge smoke pack",
+      "featurePaths": ["docs/post-merge-smoke-pack.md", "package.json", "e2e/smoke.spec.ts", "e2e/regression-flows.spec.ts"],
+      "docsPaths": ["README.md", "docs/post-merge-smoke-pack.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Post-merge web and release-adjacent confidence ownership",
+      "notes": "Smoke-pack script, guide-route coverage, guided/compare/share smoke tags, or post-merge evidence rules should keep the maintainer routing docs aligned."
+    },
+    {
       "id": "dependency-maintenance",
       "name": "Dependency maintenance and tooling updates",
       "featurePaths": [
