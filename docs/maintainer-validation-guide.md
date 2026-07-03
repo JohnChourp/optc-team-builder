@@ -68,6 +68,12 @@ in the PR or linked audit. Do not loosen the benchmark only to preserve a new
 ordering unless the new ordering is intentional and still satisfies the
 scenario's coverage properties.
 
+Ambiguous recommendation cases should stay explicit in that benchmark. Ties
+must show the current tie-break reason instead of inventing requirement value;
+near-ties must identify the material edge that separated otherwise comparable
+candidates; fallback cases must preserve requested-vs-used input and explain
+which strict filters were relaxed.
+
 Docs-only edits do not need live serve or browser screenshots unless they change
 a runnable command that must be proven through the UI. UI evidence, when needed
 for an OPTC task, belongs in the brain repo under

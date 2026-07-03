@@ -16,6 +16,7 @@ import { type CharacterDetailRecord } from '../models/optc.models';
 import { runAutoTeamBuildSearch } from './auto-team-builder.engine';
 
 type BenchmarkAssertion = (result: AutoBuildResult) => void;
+type BenchmarkSlot = AutoBuildResult['slots'][number];
 
 interface RecommendationBenchmarkCase {
   caseId: string;
@@ -94,6 +95,101 @@ const BENCHMARK_CASES: RecommendationBenchmarkCase[] = [
       expect(result.coverage.leaderCriteria.derivedAllowedClasses).toEqual(['Fighter']);
     },
   },
+  {
+    caseId: 'pure-tie-break-stays-honest',
+    records: createTieBreakBenchmarkRecords(),
+    input: createInput([], [], {
+      manualSlots: createManualSlots({
+        captain: [7401],
+        friendCaptain: [7402],
+      }),
+    }),
+    expectedSlotIds: [7401, 7402, 7414, 7413, 7412, 7411],
+    assertResult: (result) => {
+      const tieBreakSlot = expectSlot(result, 7414);
+      const tieBreakReasonCodes = reasonCodes(tieBreakSlot);
+
+      expect(tieBreakSlot.explanation?.primaryReason.code).toBe('rankingNewestId');
+      expect(tieBreakReasonCodes).toContain('rankingNewestId');
+      for (const forbiddenReasonCode of [
+        'requiredAbilityMatch',
+        'battleRequirementMatch',
+        'utilityRole',
+      ]) {
+        expect(tieBreakReasonCodes).not.toContain(forbiddenReasonCode);
+      }
+      expect(rejectedReasonCodesFor(tieBreakSlot, 7410)).toContain('rankingTieBreak');
+    },
+  },
+  {
+    caseId: 'near-equal-material-edge-is-explained',
+    records: createNearEqualBenchmarkRecords(),
+    input: createInput(['DEX'], ['Fighter'], {
+      manualSlots: createManualSlots({
+        captain: [7501],
+        friendCaptain: [7502],
+      }),
+      selectedCharacterTags: ['Straw Hat Pirates'],
+    }),
+    expectedSlotIds: [7501, 7502, 7510, 7514, 7513, 7512],
+    assertResult: (result) => {
+      const materialEdgeSlot = expectSlot(result, 7510);
+      const materialEdgeReasonCodes = reasonCodes(materialEdgeSlot);
+
+      expect(materialEdgeReasonCodes).toEqual(
+        expect.arrayContaining(['selectedCharacterTagMatch', 'rankingSelectedFilters']),
+      );
+      expect(rejectedReasonCodesFor(materialEdgeSlot, 7511)).toContain(
+        'lowerSelectedFilterScore',
+      );
+    },
+  },
+  {
+    caseId: 'fallback-relaxation-does-not-claim-dropped-coverage',
+    records: createAmbiguousFallbackBenchmarkRecords(),
+    input: createInput(['DEX', 'INT'], ['Fighter'], {
+      manualSlots: createManualSlots({
+        captain: [7601],
+        friendCaptain: [7602],
+      }),
+      requireAllSelectedTypesInTeam: true,
+    }),
+    expectedSlotIds: [7601, 7602, 7613, 7612, 7611, 7610],
+    assertResult: (result) => {
+      expect(result.requestedInput.types).toEqual(['DEX', 'INT']);
+      expect(result.input.types).toEqual(['DEX']);
+      expect(result.relaxation.usedFallback).toBe(true);
+      expect(result.relaxation.droppedTypes).toEqual(['INT']);
+
+      for (const slot of result.slots) {
+        expect(slot.explanation?.fallbackReasons.map((reason) => reason.code)).toEqual(
+          expect.arrayContaining(['fallbackUsed', 'fallbackDroppedTypes']),
+        );
+        expect(
+          slot.explanation?.fallbackReasons.some(
+            (reason) =>
+              reason.code === 'fallbackDroppedTypes' &&
+              Array.isArray(reason.params?.['types']) &&
+              reason.params['types'].includes('INT'),
+          ),
+        ).toBe(true);
+        expect(
+          slot.explanation?.reasons.some(
+            (reason) =>
+              reason.code === 'selectedTypeMatch' &&
+              Array.isArray(reason.params?.['types']) &&
+              reason.params['types'].includes('INT'),
+          ),
+        ).toBe(false);
+
+        const selectedTypeReason = slot.explanation?.reasons.find(
+          (reason) => reason.code === 'selectedTypeMatch',
+        );
+        expect(selectedTypeReason?.params?.['types']).toEqual(['DEX']);
+        expect(selectedTypeReason?.params?.['count']).toBe(1);
+      }
+    },
+  },
 ];
 
 describe('Auto Team Builder recommendation quality benchmark', () => {
@@ -123,14 +219,16 @@ function createInput(
       | 'requiredAbilities'
       | 'requireAllSelectedTypesInTeam'
       | 'requireUniqueBaseCharacterNames'
+      | 'selectedCharacterNames'
+      | 'selectedCharacterTags'
     >
   > = {},
 ): AutoBuildInput {
   return {
     types,
     selectedClasses,
-    selectedCharacterTags: [],
-    selectedCharacterNames: [],
+    selectedCharacterTags: overrides.selectedCharacterTags ?? [],
+    selectedCharacterNames: overrides.selectedCharacterNames ?? [],
     requiredAbilities: overrides.requiredAbilities ?? [],
     requiredCharacterGroups: [],
     enemyMechanics: [],
@@ -249,6 +347,63 @@ function createLeaderScopeBenchmarkRecords(): CharacterDetailRecord[] {
   ];
 }
 
+function createTieBreakBenchmarkRecords(): CharacterDetailRecord[] {
+  return [
+    createNeutralLeader(7401, 'Tie Break DEX Captain'),
+    createNeutralLeader(7402, 'Tie Break DEX Friend'),
+    createTieBreakSub(7410, 'Tie Break Candidate A'),
+    createTieBreakSub(7411, 'Tie Break Candidate B'),
+    createTieBreakSub(7412, 'Tie Break Candidate C'),
+    createTieBreakSub(7413, 'Tie Break Candidate D'),
+    createTieBreakSub(7414, 'Tie Break Candidate E'),
+  ];
+}
+
+function createNearEqualBenchmarkRecords(): CharacterDetailRecord[] {
+  return [
+    createLeader(7501, 'Near Equal DEX Captain'),
+    createLeader(7502, 'Near Equal DEX Friend'),
+    createTieBreakSub(7510, 'Near Equal Straw Hat Utility', {
+      characterTags: ['Straw Hat Pirates'],
+    }),
+    createTieBreakSub(7511, 'Near Equal Generic A'),
+    createTieBreakSub(7512, 'Near Equal Generic B'),
+    createTieBreakSub(7513, 'Near Equal Generic C'),
+    createTieBreakSub(7514, 'Near Equal Generic D'),
+  ];
+}
+
+function createTieBreakSub(
+  id: number,
+  name: string,
+  overrides: { characterTags?: string[] } = {},
+): CharacterDetailRecord {
+  return createSub(id, name, {
+    ...overrides,
+    specialText: 'Deals 100x character ATK in type damage to one enemy.',
+  });
+}
+
+function createAmbiguousFallbackBenchmarkRecords(): CharacterDetailRecord[] {
+  return [
+    createLeader(7601, 'Ambiguous Fallback DEX Captain'),
+    createLeader(7602, 'Ambiguous Fallback DEX Friend'),
+    createSub(7610, 'Ambiguous Fallback Utility', {
+      builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 5)],
+      specialText: 'Reduces Bind duration by 5 turns.',
+    }),
+    createSub(7611, 'Ambiguous Fallback Orb Booster', {
+      specialText: 'Boosts orb effects of DEX characters by 2.25x for 1 turn.',
+    }),
+    createSub(7612, 'Ambiguous Fallback Attack Booster', {
+      specialText: 'Boosts ATK of Fighter characters by 2.25x for 1 turn.',
+    }),
+    createSub(7613, 'Ambiguous Fallback Consistency', {
+      specialText: 'Changes BLOCK orbs into Matching Orbs and reduces crew paralysis by 5 turns.',
+    }),
+  ];
+}
+
 function createLeader(id: number, name: string): CharacterDetailRecord {
   return createCharacterRecord({
     id,
@@ -262,12 +417,25 @@ function createLeader(id: number, name: string): CharacterDetailRecord {
   });
 }
 
+function createNeutralLeader(id: number, name: string): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name,
+    primaryClass: 'Fighter',
+    detail: {
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+      specialText: 'Deals 100x character ATK in type damage to one enemy.',
+    },
+  });
+}
+
 function createSub(
   id: number,
   name: string,
   overrides: {
     builderAbilities?: NormalizedBuilderAbility[];
     captainAverageBoost?: number;
+    characterTags?: string[];
     specialText?: string;
   } = {},
 ): CharacterDetailRecord {
@@ -278,6 +446,7 @@ function createSub(
     primaryClass: 'Fighter',
     detail: {
       builderAbilities: overrides.builderAbilities ?? [],
+      characterTags: overrides.characterTags ?? [],
       specialText: overrides.specialText ?? null,
     },
   });
@@ -385,5 +554,28 @@ function slotFallbackReasonCodes(result: AutoBuildResult, characterId: number): 
     result.slots
       .find((slot) => slot.character.id === characterId)
       ?.explanation?.fallbackReasons.map((reason) => reason.code) ?? []
+  );
+}
+
+function expectSlot(result: AutoBuildResult, characterId: number): BenchmarkSlot {
+  const slot = result.slots.find((candidateSlot) => candidateSlot.character.id === characterId);
+
+  expect(slot).toBeDefined();
+  if (!slot) {
+    throw new Error(`Expected benchmark slot for character ${characterId}.`);
+  }
+
+  return slot;
+}
+
+function reasonCodes(slot: BenchmarkSlot): string[] {
+  return slot.explanation?.reasons.map((reason) => reason.code) ?? [];
+}
+
+function rejectedReasonCodesFor(slot: BenchmarkSlot, characterId: number): string[] {
+  return (
+    slot.explanation?.rejectedCandidates
+      .find((candidate) => candidate.characterId === characterId)
+      ?.reasons.map((reason) => reason.code) ?? []
   );
 }

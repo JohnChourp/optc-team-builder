@@ -4099,22 +4099,39 @@ function buildSlotExplanation(
     pushRankingReasons(reasons, candidate, options);
   }
 
+  const primaryReasonCodes = new Set<AutoBuildSlotExplanationReason['code']>([
+    'manualPick',
+    'requiredAbilityMatch',
+    'battleRequirementMatch',
+    'captainUniversalScope',
+    'captainTypeScope',
+    'captainClassScope',
+    'leaderScopeMatch',
+    'burstRole',
+    'utilityRole',
+    'consistencyRole',
+    'rankingDemand',
+  ]);
+  const hasLowerSelectedFilterAlternative =
+    options.role === 'sub' &&
+    options.rejectedCandidates?.some((candidate) =>
+      candidate.reasons.some((reason) => reason.code === 'lowerSelectedFilterScore'),
+    );
+  const hasPureRankingTieBreakAlternative = options.rejectedCandidates?.some(
+    (candidate) =>
+      candidate.reasons.length === 1 && candidate.reasons[0]?.code === 'rankingTieBreak',
+  );
+
+  if (hasLowerSelectedFilterAlternative) {
+    primaryReasonCodes.add('rankingSelectedFilters');
+  }
+
+  if (hasPureRankingTieBreakAlternative) {
+    primaryReasonCodes.add('rankingNewestId');
+  }
+
   const primaryReason =
-    reasons.find((reason) =>
-      [
-        'manualPick',
-        'requiredAbilityMatch',
-        'battleRequirementMatch',
-        'captainUniversalScope',
-        'captainTypeScope',
-        'captainClassScope',
-        'leaderScopeMatch',
-        'burstRole',
-        'utilityRole',
-        'consistencyRole',
-        'rankingDemand',
-      ].includes(reason.code),
-    ) ?? reasons[0]!;
+    reasons.find((reason) => primaryReasonCodes.has(reason.code)) ?? reasons[0]!;
 
   return {
     primaryReason,
