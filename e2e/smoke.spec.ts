@@ -95,6 +95,29 @@ test.describe('cross-browser smoke', () => {
     const count = await navItems.count();
     expect(count, 'expected at least 3 nav items in side menu').toBeGreaterThanOrEqual(3);
   });
+
+  test('public guide routes render release-critical help paths @post-merge-smoke', async ({ page }) => {
+    const guideRoutes = [
+      {
+        path: '/guides/how-to-build-an-optc-team',
+        heading: 'How to Build an OPTC Team',
+      },
+      {
+        path: '/guides/guided-build-compare-team-sharing',
+        heading: 'Guided Build, Compare Mode, and Team Sharing',
+      },
+    ];
+
+    for (const route of guideRoutes) {
+      await page.goto(route.path, { waitUntil: 'domcontentloaded' });
+      await waitForAppReady(page);
+
+      await expect(page.getByRole('heading', { name: route.heading })).toBeVisible({
+        timeout: NETWORK_IDLE_TIMEOUT,
+      });
+      await expect(getPageContent(page)).toBeVisible({ timeout: NETWORK_IDLE_TIMEOUT });
+    }
+  });
 });
 
 function isIgnorableConsoleError(text: string): boolean {
