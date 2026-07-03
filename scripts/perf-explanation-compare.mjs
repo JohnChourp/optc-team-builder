@@ -719,9 +719,11 @@ async function readRenderDiagnostics(page) {
 }
 
 async function measureExplanations(page, viewportLabel) {
+  await ensureAutoTeamFixtureRendered(page);
   await page.screenshot({
     path: path.join(artifactDir, `${runLabel}-${viewportLabel}-result-collapsed.png`),
   });
+  await ensureAutoTeamFixtureRendered(page);
 
   const detailCount = await page.evaluate(
     () => document.querySelectorAll('.slot-explanation__details').length,
