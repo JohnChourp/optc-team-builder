@@ -75,6 +75,7 @@ export async function verifyGuideDiscoverability({
   const guideResults = [];
   const sitemapXml = await readRequiredTextFile(path.join(outputDir, 'sitemap.xml'), errors);
   const sitemapHtml = await readRequiredTextFile(path.join(outputDir, 'sitemap.html'), errors);
+  const appRoutes = await readRequiredTextFile(path.join(appRoot, 'src', 'app', 'app.routes.ts'), errors);
   const sitemapUrls = extractSitemapUrls(sitemapXml);
 
   for (const guide of GUIDE_DISCOVERABILITY_INVENTORY) {
@@ -87,6 +88,7 @@ export async function verifyGuideDiscoverability({
     expectText(sitemapHtml, canonicalUrl, guideErrors, `${guide.id}: sitemap.html`);
     expectText(sitemapHtml, guide.heading, guideErrors, `${guide.id}: sitemap.html`);
     auditGeneratedGuidePage({ guide, html, canonicalUrl, htmlPath, guideErrors });
+    auditAppRouteRegistration({ guide, appRoutes, guideErrors });
     await auditSourceHints({ appRoot, guide, guideErrors });
 
     for (const error of guideErrors) {
@@ -154,11 +156,24 @@ function auditGeneratedGuidePage({ guide, html, canonicalUrl, htmlPath, guideErr
     guideErrors.push(`${guide.id}: ${relativeHtmlPath} title must be "${guide.title}".`);
   }
 
-  if (!html.includes(guide.heading)) {
+  const fallbackText = extractFallbackMainText(html);
+
+  if (!fallbackText.includes(guide.heading)) {
     guideErrors.push(`${guide.id}: ${relativeHtmlPath} fallback content must include "${guide.heading}".`);
   }
 
   auditJsonLd({ guide, jsonLd, canonicalUrl, relativeHtmlPath, guideErrors });
+}
+
+function auditAppRouteRegistration({ guide, appRoutes, guideErrors }) {
+  expectText(appRoutes, `path: '${guide.path}'`, guideErrors, `${guide.id}: src/app/app.routes.ts`);
+  expectText(
+    appRoutes,
+    `canonicalPath: '${guide.path}'`,
+    guideErrors,
+    `${guide.id}: src/app/app.routes.ts`,
+  );
+  expectText(appRoutes, `title: '${guide.title}'`, guideErrors, `${guide.id}: src/app/app.routes.ts`);
 }
 
 async function auditSourceHints({ appRoot, guide, guideErrors }) {
@@ -244,6 +259,17 @@ function extractAttributeValues(html, tagPattern, attributeName) {
 
       return tag.match(attributePattern)?.[1] ?? '';
     });
+}
+
+function extractFallbackMainText(html) {
+  const mainHtml =
+    html.match(/<app-root\b[^>]*>[\s\S]*?<main\b[^>]*>([\s\S]*?)<\/main>[\s\S]*?<\/app-root>/iu)?.[1] ??
+    html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/iu)?.[1] ??
+    '';
+
+  return decodeHtmlText(mainHtml.replace(/<[^>]*>/gu, ' '))
+    .replace(/\s+/gu, ' ')
+    .trim();
 }
 
 function expectContains(values, expected, errors, label) {

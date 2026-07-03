@@ -89,6 +89,23 @@ async function createFixture(tmp: string) {
     await writeFixtureFile(appRoot, file, [...hints].map((hint) => `fixture ${hint}`).join('\n'));
   }
 
+  await writeFixtureFile(
+    appRoot,
+    'src/app/app.routes.ts',
+    GUIDE_DISCOVERABILITY_INVENTORY.map(
+      (guide) => `
+{
+  path: '${guide.path}',
+  data: {
+    seo: {
+      title: '${guide.title}',
+      canonicalPath: '${guide.path}',
+    },
+  },
+}`,
+    ).join('\n'),
+  );
+
   return { appRoot, outputDir };
 }
 
@@ -133,6 +150,57 @@ describe('verifyGuideDiscoverability', () => {
         ),
         expect.stringContaining(
           'guided-compare-sharing-guide: src/app/pages/saved-teams/saved-teams.page.html must reference /guides/guided-build-compare-team-sharing',
+        ),
+      ]),
+    );
+  });
+
+  it('rejects a guide page that only includes the heading outside fallback content', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'guide-discoverability-'));
+    const { appRoot, outputDir } = await createFixture(root);
+    const guide = GUIDE_DISCOVERABILITY_INVENTORY[0];
+    await writeFixtureFile(
+      outputDir,
+      `${guide.path}/index.html`,
+      buildGuideHtml({
+        canonicalUrl: `https://optcteambuilder.com/${guide.path}/`,
+        title: guide.title,
+        heading: 'Generic fallback content',
+      }).replace('Generic fallback content guide.', `${guide.heading} guide.`),
+    );
+
+    const { errors, report } = await verifyGuideDiscoverability({
+      appRoot,
+      outputDir,
+      reportPath: path.join(root, 'report.json'),
+    });
+
+    expect(report.status).toBe('failed');
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          `fallback content must include "${guide.heading}".`,
+        ),
+      ]),
+    );
+  });
+
+  it('rejects a guide inventory item that is missing from Angular routes', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'guide-discoverability-'));
+    const { appRoot, outputDir } = await createFixture(root);
+    await writeFixtureFile(appRoot, 'src/app/app.routes.ts', "path: 'tabs/auto-team-builder'");
+
+    const { errors, report } = await verifyGuideDiscoverability({
+      appRoot,
+      outputDir,
+      reportPath: path.join(root, 'report.json'),
+    });
+
+    expect(report.status).toBe('failed');
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "team-building-guide: src/app/app.routes.ts must include path: 'guides/how-to-build-an-optc-team'.",
         ),
       ]),
     );

@@ -15,6 +15,25 @@ on:
       - 'scripts/audit-seo-pages.mjs'
       - 'scripts/verify-guide-discoverability.mjs'
       - 'scripts/verify-guide-discoverability.spec.ts'
+      - 'src/index.html'
+      - 'src/app/app.routes.ts'
+      - 'src/app/pages/seo-content/**'
+      - 'src/app/pages/auto-team-builder/auto-team-builder.page.html'
+      - 'src/app/pages/saved-teams/saved-teams.page.html'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/guide-discoverability.yml'
+      - 'README.md'
+      - 'docs/**'
+      - 'scripts/generate-seo-pages.mjs'
+      - 'scripts/audit-seo-pages.mjs'
+      - 'scripts/verify-guide-discoverability.mjs'
+      - 'scripts/verify-guide-discoverability.spec.ts'
+      - 'src/index.html'
       - 'src/app/app.routes.ts'
       - 'src/app/pages/seo-content/**'
       - 'src/app/pages/auto-team-builder/auto-team-builder.page.html'
