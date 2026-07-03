@@ -65,3 +65,5 @@ export const RELEASE_CHECK_REPLAY_FIXTURE_CASES = [
 ];
 
 export const MALFORMED_RELEASE_CHECK_FIXTURE = 'error';
+
+export const HISTORICAL_RELEASE_CHECK_BACKTEST_CORPUS = 'scripts/fixtures/release-check/history/corpus.json';

@@ -122,6 +122,8 @@ function isWorkflowOrDependencyPath(filePath) {
 
 function isReleaseCheckPath(filePath) {
   return (
+    filePath === 'scripts/backtest-optc-release-detector.mjs' ||
+    filePath === 'scripts/backtest-optc-release-detector.spec.ts' ||
     filePath === 'scripts/check-optc-release-needed.mjs' ||
     filePath === 'scripts/check-optc-release-needed.spec.ts' ||
     filePath === 'scripts/check-optc-upstream-monitor.mjs' ||
