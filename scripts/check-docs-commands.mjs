@@ -30,8 +30,13 @@ const ALLOWED_COMMANDS = new Map(
     ['npm run data:check-release -- --fixture=upstream-shape-drift --json', { cwd: 'app', expected: 'zero' }],
     ['node scripts/check-optc-release-needed.mjs --fixture=error --json', { cwd: 'app', expected: 'nonzero' }],
     ['npm run test:docs-integrity', { cwd: 'app', expected: 'zero' }],
+    ['npm run test:docs-drift', { cwd: 'app', expected: 'zero' }],
     [
       'npm run docs:integrity -- --brain-root ../optc-team-builder-brain',
+      { cwd: 'app', expected: 'zero', requiresBrain: true },
+    ],
+    [
+      'npm run docs:drift -- --base-ref origin/main --head-ref HEAD --brain-root ../optc-team-builder-brain',
       { cwd: 'app', expected: 'zero', requiresBrain: true },
     ],
     [
@@ -40,6 +45,7 @@ const ALLOWED_COMMANDS = new Map(
     ],
     ['npm run test:dataset-digest', { cwd: 'app', expected: 'zero' }],
     ['npm run docs:integrity -- --app-only', { cwd: 'app', expected: 'zero' }],
+    ['npm run docs:drift -- --base-ref origin/main --head-ref HEAD --app-only', { cwd: 'app', expected: 'zero' }],
     [
       'node scripts/audit-docs-integrity.mjs --brain . --app ../optc-team-builder',
       { cwd: 'brain', expected: 'zero', requiresBrain: true },

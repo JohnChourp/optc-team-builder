@@ -11,6 +11,8 @@ adding or moving fixtures across browser, contract, performance, release-check,
 or release-readiness suites. Use `docs/review-ownership-policy.md` when a
 change touches critical release, CI, fixture, data, evidence, or app-runtime
 paths and you need the reviewer routing and cross-repo escalation rule.
+Use `docs/docs-drift-map.json` when a feature/workflow path moves and you need
+the required docs entry points that should move with it.
 Use `npm run doctor:maintainer -- --profile=ci --brain-root
 ../optc-team-builder-brain` first when a local setup, sibling checkout, package
 script, or workflow prerequisite looks suspect.
@@ -35,7 +37,7 @@ script, or workflow prerequisite looks suspect.
 | Maintainer environment, sibling checkout, or validation prerequisite drift | `npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain` | Doctor command plus `npm run test:maintainer-doctor`; add docs command and integrity checks when command examples or workflow references changed | Node/npm engines, app/brain layout, required workflow files, contract/performance/release-check scripts, release fixtures, brain evidence paths, and instruction parity are ready before deeper validation | Doctor output only |
 | CI routing, dependency, workflow, or package changes | `npm run test:ci-routing` plus a YAML parse of the touched workflow | Full local validation for the changed routing surface, then rely on the PR `Test` workflow to prove the selected GitHub jobs | The executable routing rules stay fail-closed and the workflow still emits check-selection evidence before running targeted jobs | `ci-check-routing-summary` workflow artifact |
 | Broad app UI behavior, routing, saved-team/share flows, or regression-prone user journeys | Focused `npm run test:ci -- --include ...` for touched components/services | `npm run test:ci`, scoped `npm run test:e2e:*` browser runs, `npm run i18n:validate`, and `npm run build`; use all browser projects when browser-specific behavior changed | Angular units, deterministic cross-browser journeys, translation keys, and production build health remain intact; browser flakes follow the `e2e/README.md` quarantine workflow before any coverage is excluded from blocking CI | Playwright reports, `test-results/`, and failure-summary artifacts in CI |
-| Docs-only, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, plus `git diff --check` | Add targeted command validation when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, documented maintainer commands, and whitespace stay valid across app and brain docs | None |
+| Docs drift map, docs guardrails, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, `npm run docs:drift -- --base-ref origin/main --head-ref HEAD --brain-root ../optc-team-builder-brain`, plus `git diff --check` | Add `npm run test:docs-drift` when the map or detector changes; add targeted command validation when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, documented maintainer commands, mapped feature-to-doc ownership, and whitespace stay valid across app and brain docs | None |
 
 ## Lightweight vs Deep Runs
 
@@ -74,6 +76,8 @@ for selecting pull-request and `main` push checks. The workflow first records a
 Routing defaults are:
 
 - docs-only changes run the docs script tests and skip Angular and browser jobs
+- docs-drift map or detector changes run the docs drift script tests with the
+  other docs script suites
 - maintainer doctor changes run the focused doctor script tests
 - dataset-change digest changes run the focused digest script tests
 - release-detector changes run the release-check suite
@@ -502,6 +506,39 @@ requires each fenced shell example in active maintainer docs to be labeled as
 CI-executable commands and leaves release, secret-dependent, live-network,
 server, signing, and artifact-collection examples as manual guidance.
 
+### Docs Drift
+
+Use the docs drift guard before merging mapped feature/workflow changes:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run docs:drift -- --base-ref origin/main --head-ref HEAD --brain-root ../optc-team-builder-brain
+```
+
+For untrusted pull requests that cannot receive the private brain checkout, CI
+also exercises the app-only drift path:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run docs:drift -- --base-ref origin/main --head-ref HEAD --app-only
+```
+
+Run the focused drift tests after changing the map or detector:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run test:docs-drift
+```
+
+The guard reads `docs/docs-drift-map.json`, compares mapped `featurePaths` to
+changed files, and fails when a feature/workflow moves without a matching
+`docsPaths` touch. If a refactor intentionally needs no docs change, fill the
+PR body's `Docs drift acknowledgement:` field with a concrete reason; blank,
+placeholder, or `none - ...` text does not count as an acknowledgement.
+
 ## Ownership Rule
 
 When a PR adds, removes, renames, or materially changes a validation harness,
@@ -509,6 +546,11 @@ workflow, release report, artifact path, or maintainer command, update this
 guide in the same PR. The owner of the changed harness or workflow owns keeping
 the decision table, command examples, artifact locations, and lightweight/deep
 guidance current.
+
+When a PR adds, removes, renames, or materially changes a mapped product or
+maintainer workflow, update `docs/docs-drift-map.json` and the mapped docs entry
+points in the same PR, or record a concrete `Docs drift acknowledgement:` in
+the PR body when the change is an internal refactor with no docs impact.
 
 When a PR adds, removes, renames, or materially changes checked-in fixtures or
 shared fixture builders, update `docs/fixture-ownership-guide.md` in the same

@@ -43,6 +43,8 @@ Maintainer validation guide:
   to run for each class of change.
 - `docs/feature-coverage-map.md` maps major product and operational flows to
   their tests, docs, performance checks, evidence, and owning area.
+- `docs/docs-drift-map.json` maps those flows to documentation entry points so
+  PR checks can flag likely stale docs when mapped features move.
 - `docs/release-notes/` publishes user-facing release summaries generated from
   ClickUp and brain-audit evidence.
 - `docs/review-ownership-policy.md` explains CODEOWNERS review routing,
