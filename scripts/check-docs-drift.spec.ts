@@ -19,6 +19,16 @@ afterEach(async () => {
   tempDirs = [];
 });
 
+function checkDocsDriftForTest(options: Record<string, unknown>) {
+  return checkDocsDrift({
+    eventPath: '',
+    githubRepository: '',
+    githubSha: '',
+    githubToken: '',
+    ...options,
+  });
+}
+
 async function makeWorkspace(files: Record<string, string> = {}) {
   const rootDir = await mkdtemp(path.join(os.tmpdir(), 'optc-docs-drift-'));
   tempDirs.push(rootDir);
@@ -71,7 +81,7 @@ describe('check-docs-drift', () => {
   it('flags mapped feature changes without mapped docs changes', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map: baseMap(),
@@ -92,7 +102,7 @@ describe('check-docs-drift', () => {
   it('passes when a mapped app docs path changes with the feature path', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map: baseMap(),
@@ -110,7 +120,7 @@ describe('check-docs-drift', () => {
   it('passes when a mapped brain docs path changes with the feature path', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map: baseMap(),
@@ -126,7 +136,7 @@ describe('check-docs-drift', () => {
     const { appRoot, brainRoot } = await makeWorkspace();
     await rm(brainRoot, { recursive: true, force: true });
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       appOnly: true,
@@ -172,14 +182,14 @@ describe('check-docs-drift', () => {
       ],
     };
 
-    const autoResult = await checkDocsDrift({
+    const autoResult = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map,
       changedFiles: ['src/app/core/services/auto-team-builder.engine.ts'],
       brainChangedFiles: [],
     });
-    const rumbleResult = await checkDocsDrift({
+    const rumbleResult = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map,
@@ -204,7 +214,7 @@ describe('check-docs-drift', () => {
         ].join('\n'),
     });
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map: baseMap(),
@@ -222,7 +232,7 @@ describe('check-docs-drift', () => {
   it('accepts a substantive PR-body acknowledgement for intentional no-doc changes', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map: baseMap(),
@@ -254,7 +264,7 @@ describe('check-docs-drift', () => {
       }),
     );
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map: baseMap(),
@@ -285,7 +295,7 @@ describe('check-docs-drift', () => {
       }),
     );
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map: baseMap(),
@@ -303,7 +313,7 @@ describe('check-docs-drift', () => {
     const { appRoot, brainRoot } = await makeWorkspace();
     const fetchCalls: Array<{ url: string; headers: Record<string, string> }> = [];
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map: baseMap(),
@@ -344,7 +354,7 @@ describe('check-docs-drift', () => {
     const map = baseMap();
     map.entries[0].docsPaths = ['docs/missing.md'];
 
-    const result = await checkDocsDrift({
+    const result = await checkDocsDriftForTest({
       appRoot,
       brainRoot,
       map,
