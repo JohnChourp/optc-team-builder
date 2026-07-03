@@ -110,13 +110,13 @@ const BENCHMARK_CASES: RecommendationBenchmarkCase[] = [
       const tieBreakReasonCodes = reasonCodes(tieBreakSlot);
 
       expect(tieBreakReasonCodes).toContain('rankingNewestId');
-      expect(tieBreakReasonCodes).toEqual(
-        expect.not.arrayContaining([
-          'requiredAbilityMatch',
-          'battleRequirementMatch',
-          'utilityRole',
-        ]),
-      );
+      for (const forbiddenReasonCode of [
+        'requiredAbilityMatch',
+        'battleRequirementMatch',
+        'utilityRole',
+      ]) {
+        expect(tieBreakReasonCodes).not.toContain(forbiddenReasonCode);
+      }
       expect(rejectedReasonCodesFor(tieBreakSlot, 7410)).toContain('rankingTieBreak');
     },
   },
@@ -138,7 +138,7 @@ const BENCHMARK_CASES: RecommendationBenchmarkCase[] = [
       expect(materialEdgeReasonCodes).toEqual(
         expect.arrayContaining(['selectedCharacterTagMatch', 'rankingSelectedFilters']),
       );
-      expect(rejectedReasonCodesFor(materialEdgeSlot, 7514)).toContain(
+      expect(rejectedReasonCodesFor(materialEdgeSlot, 7511)).toContain(
         'lowerSelectedFilterScore',
       );
     },
@@ -164,6 +164,14 @@ const BENCHMARK_CASES: RecommendationBenchmarkCase[] = [
         expect(slot.explanation?.fallbackReasons.map((reason) => reason.code)).toEqual(
           expect.arrayContaining(['fallbackUsed', 'fallbackDroppedTypes']),
         );
+        expect(
+          slot.explanation?.fallbackReasons.some(
+            (reason) =>
+              reason.code === 'fallbackDroppedTypes' &&
+              Array.isArray(reason.params?.['types']) &&
+              reason.params['types'].includes('INT'),
+          ),
+        ).toBe(true);
         expect(
           slot.explanation?.reasons.some(
             (reason) =>
