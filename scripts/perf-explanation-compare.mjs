@@ -23,6 +23,7 @@ const importedShareCode = buildSavedTeamShareCode(importedShareTeam);
 const transparentPixelUrl =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 const explanationDetailStateTimeoutMs = 15_000;
+const explanationSlotCount = 6;
 const consoleMessages = [];
 const pageErrors = [];
 const failures = [];
@@ -62,7 +63,7 @@ const results = {
     importedPayloadBytes: importedPayload.length,
     importPayloadBytes: importPayload.length,
     importedShareCodeBytes: importedShareCode.length,
-    explanationSlotCount: 6,
+    explanationSlotCount,
     explanationReasonsPerSlot: 12,
     fallbackReasonsPerSlot: 6,
     rejectedCandidatesPerSlot: 8,
@@ -113,19 +114,9 @@ try {
     await page.getByTestId('auto-build-submit').waitFor({ state: 'visible', timeout: 45_000 });
     await page.waitForTimeout(250);
     await injectAutoTeamFixture(page);
-    await page.waitForFunction(
-      () => {
-        const host = document.querySelector('app-auto-team-builder-page');
-        const component = host && window.ng?.getComponent?.(host);
-
-        return (
-          component?.result?.()?.slots?.length === 6 &&
-          document.querySelectorAll('.slot-explanation__details').length === 6
-        );
-      },
-      undefined,
-      { timeout: 45_000 },
-    );
+    await waitForAutoTeamFixtureRender(page);
+    await page.waitForTimeout(500);
+    await ensureAutoTeamFixtureRendered(page);
     console.log(`[perf:explanation-compare] ${viewport.label}: ${JSON.stringify(await readRenderDiagnostics(page))}`);
 
     console.log(`[perf:explanation-compare] ${viewport.label}: measuring explanations`);
@@ -365,6 +356,7 @@ async function injectAutoTeamFixture(page) {
 
     component.building?.set?.(false);
     component.errorMessage?.set?.('');
+    component.openExplanationSlotKeys?.set?.(new Set());
     component.result.set(fixture);
     debugApi.applyChanges?.(component);
     debugApi.applyChanges?.(host);
@@ -375,6 +367,48 @@ async function injectAutoTeamFixture(page) {
   if (!injected) {
     throw new Error('Could not inject Auto Team Builder perf fixture through Angular dev-mode debug API.');
   }
+}
+
+async function ensureAutoTeamFixtureRendered(page) {
+  if (await isAutoTeamFixtureRendered(page)) {
+    return;
+  }
+
+  await injectAutoTeamFixture(page);
+  await waitForAutoTeamFixtureRender(page);
+}
+
+async function isAutoTeamFixtureRendered(page) {
+  return page.evaluate((expectedSlotCount) => {
+    const host = document.querySelector('app-auto-team-builder-page');
+    const component = host && window.ng?.getComponent?.(host);
+    const building = typeof component?.building === 'function' ? component.building() : false;
+
+    return (
+      building === false &&
+      component?.result?.()?.slots?.length === expectedSlotCount &&
+      document.querySelectorAll('.slot-explanation__details').length === expectedSlotCount
+    );
+  }, explanationSlotCount);
+}
+
+async function waitForAutoTeamFixtureRender(page) {
+  await page.waitForFunction(
+    (expectedSlotCount) => {
+      const host = document.querySelector('app-auto-team-builder-page');
+      const component = host && window.ng?.getComponent?.(host);
+      const building = typeof component?.building === 'function' ? component.building() : false;
+
+      return (
+        building === false &&
+        component?.result?.()?.slots?.length === expectedSlotCount &&
+        document.querySelectorAll('.slot-explanation__details').length === expectedSlotCount
+      );
+    },
+    explanationSlotCount,
+    { timeout: 45_000 },
+  );
+  await waitForAngular(page);
 }
 
 async function measureCompare(page, viewportLabel) {
@@ -751,11 +785,21 @@ async function setOpenExplanationDetails(page, count) {
   let result = { availableCount: 0, openedCount: 0, method: 'none' };
 
   while (performance.now() - startedAt < explanationDetailStateTimeoutMs) {
+    await ensureAutoTeamFixtureRendered(page);
     result = await applyOpenExplanationDetailsState(page, count);
 
     if (result.availableCount) {
       await waitForAngular(page);
-      return;
+      const confirmedState = await readExplanationDetailsState(page);
+
+      if (
+        confirmedState.availableCount &&
+        confirmedState.openedCount === Math.min(count, confirmedState.availableCount)
+      ) {
+        return;
+      }
+
+      result = { ...result, confirmedState };
     }
 
     await page.waitForTimeout(100);
@@ -820,6 +864,17 @@ async function applyOpenExplanationDetailsState(page, count) {
       method: 'details',
     };
   }, count);
+}
+
+async function readExplanationDetailsState(page) {
+  return page.evaluate(() => {
+    const details = [...document.querySelectorAll('.slot-explanation__details')];
+
+    return {
+      availableCount: details.length,
+      openedCount: details.filter((detail) => detail.open).length,
+    };
+  });
 }
 
 async function waitForAngular(page) {
