@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 
 const REQUIRED_FIELDS = ['ClickUp task', 'Evidence', 'Verification'];
+const FIELD_BOUNDARIES = [...REQUIRED_FIELDS, 'Docs drift acknowledgement'];
 const OPTC_CLICKUP_WORKSPACE_ID = '90121749478';
 const CLICKUP_URL_PATTERN = /https:\/\/app\.clickup\.com\/t\/[^\s<>).,;:!?]+/g;
 const PLACEHOLDER_PATTERN =
@@ -31,8 +32,8 @@ function fieldLinePattern(label) {
   return new RegExp(`^\\s*(?:[-*]\\s*)?(?:\\*\\*)?${escaped}(?:\\*\\*)?\\s*:\\s*(.*)$`, 'i');
 }
 
-function startsAnyRequiredField(line) {
-  return REQUIRED_FIELDS.some((label) => fieldLinePattern(label).test(line));
+function startsAnyFieldBoundary(line) {
+  return FIELD_BOUNDARIES.some((label) => fieldLinePattern(label).test(line));
 }
 
 function extractField(body, label) {
@@ -51,7 +52,7 @@ function extractField(body, label) {
     for (let nextIndex = index + 1; nextIndex < lines.length; nextIndex += 1) {
       const nextLine = lines[nextIndex];
 
-      if (startsAnyRequiredField(nextLine) || /^#{1,6}\s+/.test(nextLine)) {
+      if (startsAnyFieldBoundary(nextLine) || /^#{1,6}\s+/.test(nextLine)) {
         break;
       }
 

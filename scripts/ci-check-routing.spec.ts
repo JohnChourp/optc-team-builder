@@ -11,7 +11,7 @@ describe('ci-check-routing', () => {
     expect(plan.runE2e).toBe(false);
     expect(plan.runQuarantine).toBe(false);
     expect(plan.runDatasetPerf).toBe(false);
-    expect(plan.scriptSuites).toEqual(['docs-integrity', 'docs-commands']);
+    expect(plan.scriptSuites).toEqual(['docs-integrity', 'docs-commands', 'docs-drift']);
   });
 
   it('routes runtime changes to Angular and blocking browser e2e', () => {
@@ -60,7 +60,7 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(false);
     expect(plan.runE2e).toBe(false);
     expect(plan.runQuarantine).toBe(false);
-    expect(plan.scriptSuites).toEqual(['saved-team-codecs', 'docs-integrity', 'docs-commands']);
+    expect(plan.scriptSuites).toEqual(['saved-team-codecs', 'docs-integrity', 'docs-commands', 'docs-drift']);
   });
 
   it('keeps browser coverage for saved-team transfer runtime changes', () => {
@@ -154,6 +154,7 @@ describe('ci-check-routing', () => {
       'release-readiness',
       'docs-integrity',
       'docs-commands',
+      'docs-drift',
       'drive-sync-server',
       'source-data',
       'perf-budget',

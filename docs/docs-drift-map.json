@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "description": "Maps OPTC Team Builder product and maintainer workflows to the documentation entry points that should move with them.",
+  "entries": [
+    {
+      "id": "character-catalog",
+      "name": "Character catalog, favorites, and import feedback",
+      "featurePaths": [
+        "src/app/pages/characters/",
+        "src/app/core/services/optc-repository.service.ts",
+        "src/app/core/services/character-catalog-cache.service.ts"
+      ],
+      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "App catalog and data runtime",
+      "notes": "Catalog, favorites, import feedback, and data-read changes should keep the public app overview and validation routing aligned."
+    },
+    {
+      "id": "character-detail-overrides",
+      "name": "Character detail, edit, and local overrides",
+      "featurePaths": [
+        "src/app/pages/character-detail/",
+        "src/app/pages/character-edit/",
+        "src/app/core/services/character-overrides.service.ts"
+      ],
+      "docsPaths": ["docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Character detail and local override ownership",
+      "notes": "Override schema, transfer, or detail/edit behavior changes should update schema and validation docs."
+    },
+    {
+      "id": "manual-team-builder",
+      "name": "Manual Team Builder",
+      "featurePaths": [
+        "src/app/pages/manual-team-builder/",
+        "src/app/core/services/team-coverage-summary.utils.ts",
+        "src/app/shared/team-coverage-summary/",
+        "src/app/shared/character-ability-groups/"
+      ],
+      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Manual builder UI and team summary",
+      "notes": "Manual-builder workflow, share hydration, or coverage-summary changes should keep the guide and validation map aligned."
+    },
+    {
+      "id": "auto-team-builder",
+      "name": "Auto Team Builder search, requirements, guided build, compare, and explanations",
+      "featurePaths": [
+        "src/app/pages/auto-team-builder/",
+        "src/app/core/services/auto-team-builder",
+        "src/app/shared/ability-requirement-picker/",
+        "src/app/core/services/ability-requirement-draft.utils.ts"
+      ],
+      "docsPaths": [
+        "README.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "../optc-team-builder-brain/audits/869dvr7x5-explanation-compare-performance.md",
+        "../optc-team-builder-brain/audits/869dwc7ww-recommendation-quality-benchmark.md"
+      ],
+      "owner": "Auto builder engine, worker, requirements, compare, and recommendation trust",
+      "notes": "Auto-builder logic, scoring, fallback, compare, explanation, or guided-control changes need mapped validation and evidence updates."
+    },
+    {
+      "id": "captain-coverage",
+      "name": "Captain Coverage and captain ability semantics",
+      "featurePaths": [
+        "src/app/pages/captain-coverage/",
+        "src/app/core/services/captain-coverage",
+        "src/app/core/services/captain-team-condition-status.utils.ts",
+        "src/app/core/services/fixtures/captain-contract-cases.json"
+      ],
+      "docsPaths": [
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "../optc-team-builder-brain/CAPTAIN_ABILITY_COVERAGE_CLARIFICATION.md",
+        "../optc-team-builder-brain/CAPTAIN_ABILITY_TIER_COVERAGE_PLAN.md"
+      ],
+      "owner": "Captain parser, generated tiers, and runtime matching",
+      "notes": "Captain semantic changes should keep tier/coverage guidance and validation routing in sync."
+    },
+    {
+      "id": "saved-teams",
+      "name": "Saved Teams, share links, export, import, and compatibility repair",
+      "featurePaths": [
+        "src/app/pages/saved-teams/",
+        "scripts/fixtures/data/saved-team-codec-fuzz-corpus.json",
+        "scripts/fixtures/data/saved-teams-v1-legacy-partial.json",
+        "scripts/fixtures/data/saved-teams-v1.json",
+        "scripts/fixtures/data/saved-team-share-v1-legacy-partial.json"
+      ],
+      "docsPaths": ["docs/saved-team-schema-lifecycle.md", "docs/data-schemas.md", "docs/feature-coverage-map.md"],
+      "owner": "Saved team persistence, transfer contracts, and import/share hydration",
+      "notes": "Saved-team schema, transfer, import, share, and compatibility changes should update schema and lifecycle docs."
+    },
+    {
+      "id": "saved-enemies",
+      "name": "Saved Enemies and associated team links",
+      "featurePaths": ["src/app/pages/saved-enemies/"],
+      "docsPaths": ["docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Saved enemy modeling and saved-team association",
+      "notes": "Saved-enemy persistence, parsing, association, or import/export changes should keep schema and validation docs current."
+    },
+    {
+      "id": "character-boxes",
+      "name": "Character Boxes and box transfer",
+      "featurePaths": ["src/app/pages/character-boxes/"],
+      "docsPaths": ["docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Box management and transfer format",
+      "notes": "Box management, transfer, import, or character-link behavior changes should update schema and validation docs."
+    },
+    {
+      "id": "settings-local-data",
+      "name": "Settings, local data transfer, inventory capture, and favorite ships",
+      "featurePaths": [
+        "src/app/pages/settings/",
+        "src/app/core/services/user-state.service.ts",
+        "src/app/core/services/user-data-transfer.service.ts",
+        "src/app/core/services/inventory-capture-import.service.ts"
+      ],
+      "docsPaths": ["docs/data-schemas.md", "scripts/fixtures/data/README.md", "docs/feature-coverage-map.md"],
+      "owner": "Local storage, backup, and import/export contracts",
+      "notes": "Local data contract, backup, inventory capture, or transfer changes should update schema and fixture docs."
+    },
+    {
+      "id": "account-drive-sync",
+      "name": "Account and Google Drive sync",
+      "featurePaths": [
+        "src/app/pages/account/",
+        "src/app/pages/drive-sync/",
+        "src/app/core/services/google-account.service.ts",
+        "src/app/core/services/drive-backup.service.ts",
+        "src/app/core/services/drive-sync-state.service.ts",
+        "server/drive-sync-server.mjs"
+      ],
+      "docsPaths": ["server/README.md", "docs/feature-coverage-map.md", "../optc-team-builder-brain/DRIVE_SYNC_PROFILE_NAVIGATION_CLARIFICATION.md"],
+      "owner": "Account, OAuth config, and Drive backup",
+      "notes": "Auth, backup, review, redirect, or server changes should keep Drive runbooks and server docs aligned."
+    },
+    {
+      "id": "pirate-rumble",
+      "name": "Pirate Rumble character ranking, auto builder, and saved Rumble teams",
+      "featurePaths": [
+        "src/app/pages/rumble-characters/",
+        "src/app/pages/auto-team-builder-rumble/",
+        "src/app/pages/saved-rumble-teams/",
+        "src/app/core/services/auto-team-builder-rumble"
+      ],
+      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Rumble ranking and team optimization",
+      "notes": "Rumble ranking, builder, saved-team, focus, or service changes should update validation and ownership docs."
+    },
+    {
+      "id": "crew-forge",
+      "name": "Crew Forge screenshot import and profile matching",
+      "featurePaths": [
+        "src/app/pages/crew-forge/",
+        "src/app/core/services/crew-forge-image-import.service.ts",
+        "src/app/core/data/crew-forge-built-in-profiles.ts"
+      ],
+      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Crew Forge OCR/profile matching",
+      "notes": "Screenshot import, built-in profile, matching, or export changes should update ownership and validation docs."
+    },
+    {
+      "id": "dataset-import-manual-characters",
+      "name": "Data import, manual characters, and generated dataset integrity",
+      "featurePaths": [
+        "scripts/import-optc-data.mjs",
+        "scripts/apply-manual-characters.mjs",
+        "scripts/upsert-manual-character.mjs",
+        "scripts/lib/dataset-integrity.mjs",
+        "scripts/lib/manual-character-overlay.mjs",
+        "scripts/lib/optc-dataset.mjs",
+        "scripts/data/"
+      ],
+      "docsPaths": ["docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Dataset import and manual override ownership",
+      "notes": "Importer, source-data, overlay, manual-character, or generated-data integrity changes should update schema and validation docs."
+    },
+    {
+      "id": "release-detector",
+      "name": "OPTC DB release detector and release-trigger notifications",
+      "featurePaths": [
+        "scripts/check-optc-release-needed.mjs",
+        "scripts/check-optc-upstream-monitor.mjs",
+        "scripts/lib/release-trigger-",
+        "scripts/fixtures/release-check/",
+        ".github/workflows/check-optc-db-release.yml"
+      ],
+      "docsPaths": [
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md"
+      ],
+      "owner": "Release detector and notification policy",
+      "notes": "Detector, fixture, policy, notification, or workflow changes should update release runbook and validation docs."
+    },
+    {
+      "id": "release-readiness",
+      "name": "Release readiness reporting",
+      "featurePaths": ["scripts/release-readiness-report.mjs", "scripts/fixtures/release-readiness/"],
+      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwc0wc-release-readiness-summary.md"],
+      "owner": "Release readiness report contract",
+      "notes": "Readiness source schema, rendering, or sign-off policy changes should update report guidance and evidence docs."
+    },
+    {
+      "id": "performance-budgets",
+      "name": "Performance budgets and trend reporting",
+      "featurePaths": [
+        "scripts/perf-ability-filters.mjs",
+        "scripts/perf-explanation-compare.mjs",
+        "scripts/perf-mobile-pickers.mjs",
+        "scripts/perf-budget-report.mjs",
+        "scripts/perf-budget-history.mjs",
+        ".github/workflows/performance-budgets.yml"
+      ],
+      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwc0hh-performance-budget-tracking.md"],
+      "owner": "Browser performance, import/share hydration, and trend ownership",
+      "notes": "Performance harness, budget, trend, or workflow changes should update validation guidance and evidence."
+    },
+    {
+      "id": "docs-quality",
+      "name": "Docs integrity, docs commands, docs drift, and cross-repo reference hygiene",
+      "featurePaths": [
+        "scripts/check-docs-integrity.mjs",
+        "scripts/check-docs-commands.mjs",
+        "scripts/check-docs-drift.mjs",
+        "docs/docs-drift-map.json",
+        ".github/workflows/docs-integrity.yml"
+      ],
+      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/docs-drift-map.json", "../optc-team-builder-brain/audits/869dwc3zd-docs-integrity.md"],
+      "owner": "Docs/reference, drift, and maintainer-command hygiene",
+      "notes": "Docs validation tooling, mapping, command examples, or workflow changes should update this map and maintainer guidance."
+    },
+    {
+      "id": "pr-traceability",
+      "name": "PR traceability",
+      "featurePaths": [".github/pull_request_template.md", ".github/scripts/check-pr-traceability.mjs", ".github/workflows/pr-traceability.yml"],
+      "docsPaths": ["docs/maintainer-validation-guide.md", "docs/review-ownership-policy.md", "../optc-team-builder-brain/audits/869dwc3zc-pr-traceability.md"],
+      "owner": "PR evidence, verification, and ClickUp routing",
+      "notes": "PR template, workflow, or traceability rule changes should keep reviewer guidance and evidence docs aligned."
+    },
+    {
+      "id": "seo-pages",
+      "name": "SEO pages and GitHub Pages deploy",
+      "featurePaths": ["src/app/pages/seo-content/", "scripts/generate-seo-pages.mjs", "scripts/audit-seo-pages.mjs", ".github/workflows/deploy-pages.yml"],
+      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "SEO content and Pages deployment",
+      "notes": "Public SEO content, route, generation, audit, or deployment changes should update public-site docs and validation guidance."
+    },
+    {
+      "id": "android-release",
+      "name": "Android release workflow",
+      "featurePaths": [
+        ".github/workflows/release-android.yml",
+        "scripts/release-and-tag.sh",
+        "scripts/bump-version.sh",
+        "scripts/setup-release-signing.sh",
+        "android/",
+        "ios/"
+      ],
+      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Native release and version ownership",
+      "notes": "Native release, signing, versioning, or platform metadata changes should update release guidance and validation docs."
+    }
+  ]
+}

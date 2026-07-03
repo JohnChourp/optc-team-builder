@@ -90,6 +90,12 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     expectedCommand: 'node ./scripts/check-docs-commands.mjs',
     fix: 'Restore the docs command verification package script.',
   },
+  {
+    name: 'docs:drift',
+    group: 'docs',
+    expectedCommand: 'node ./scripts/check-docs-drift.mjs',
+    fix: 'Restore the docs drift package script.',
+  },
 ];
 
 export const REQUIRED_APP_PATHS = [
@@ -117,6 +123,8 @@ export const REQUIRED_APP_PATHS = [
   { relativePath: 'scripts/fixtures/shared/release-check-fixtures.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/check-docs-commands.mjs', kind: 'file', group: 'docs' },
   { relativePath: 'scripts/check-docs-integrity.mjs', kind: 'file', group: 'docs' },
+  { relativePath: 'scripts/check-docs-drift.mjs', kind: 'file', group: 'docs' },
+  { relativePath: 'docs/docs-drift-map.json', kind: 'file', group: 'docs' },
 ];
 
 export const RELEASE_CHECK_FIXTURE_NAMES = [

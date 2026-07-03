@@ -43,6 +43,10 @@ export const SCRIPT_SUITES = {
     label: 'Docs command script tests',
     command: 'npm run test:docs-commands',
   },
+  'docs-drift': {
+    label: 'Docs drift script tests',
+    command: 'npm run test:docs-drift',
+  },
   'drive-sync-server': {
     label: 'Drive sync backend tests',
     command: 'npm run test:drive-sync-server',
@@ -68,7 +72,7 @@ export const SCRIPT_SUITES = {
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
 
-const DOCS_SCRIPT_SUITES = ['docs-integrity', 'docs-commands'];
+const DOCS_SCRIPT_SUITES = ['docs-integrity', 'docs-commands', 'docs-drift'];
 
 function normalizePath(value) {
   return String(value ?? '').replace(/\\/gu, '/').replace(/^\.\/+/u, '').trim();
@@ -140,7 +144,10 @@ function isDocsScriptPath(filePath) {
     filePath === 'scripts/check-docs-integrity.mjs' ||
     filePath === 'scripts/check-docs-integrity.spec.ts' ||
     filePath === 'scripts/check-docs-commands.mjs' ||
-    filePath === 'scripts/check-docs-commands.spec.ts'
+    filePath === 'scripts/check-docs-commands.spec.ts' ||
+    filePath === 'scripts/check-docs-drift.mjs' ||
+    filePath === 'scripts/check-docs-drift.spec.ts' ||
+    filePath === 'docs/docs-drift-map.json'
   );
 }
 

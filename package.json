@@ -60,6 +60,8 @@
     "test:dataset-digest": "vitest run scripts/dataset-change-digest.spec.ts",
     "test:docs-integrity": "vitest run scripts/check-docs-integrity.spec.ts",
     "docs:integrity": "node ./scripts/check-docs-integrity.mjs",
+    "test:docs-drift": "vitest run scripts/check-docs-drift.spec.ts",
+    "docs:drift": "node ./scripts/check-docs-drift.mjs",
     "test:docs-commands": "vitest run scripts/check-docs-commands.spec.ts",
     "docs:commands": "node ./scripts/check-docs-commands.mjs",
     "i18n:extract": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager extract --project optc-team-builder",
