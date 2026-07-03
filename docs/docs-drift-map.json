@@ -203,6 +203,34 @@
       "notes": "Readiness source schema, rendering, or sign-off policy changes should update report guidance and evidence docs."
     },
     {
+      "id": "dependency-maintenance",
+      "name": "Dependency maintenance and tooling updates",
+      "featurePaths": [
+        ".github/dependabot.yml",
+        "package.json",
+        "package-lock.json",
+        ".github/workflows/",
+        "playwright.config.ts",
+        "e2e/",
+        "scripts/run-playwright-e2e.mjs",
+        "scripts/perf-",
+        "scripts/check-optc-release-needed.mjs",
+        "scripts/check-optc-upstream-monitor.mjs",
+        "scripts/release-readiness-report.mjs",
+        "android/"
+      ],
+      "docsPaths": [
+        "docs/dependency-maintenance-policy.md",
+        "docs/maintainer-operations.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "docs/review-ownership-policy.md",
+        "../optc-team-builder-brain/audits/869dwcbb3-dependency-maintenance.md"
+      ],
+      "owner": "Dependency cadence, update review, and rollback policy",
+      "notes": "Dependabot, package, workflow, Playwright, performance, release-check, release-readiness, or native-tooling updates should keep the dependency maintenance policy and validation routing aligned."
+    },
+    {
       "id": "performance-budgets",
       "name": "Performance budgets and trend reporting",
       "featurePaths": [

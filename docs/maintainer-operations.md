@@ -31,6 +31,7 @@ that private detail.
 | Choose validation for a change | [Maintainer validation guide](maintainer-validation-guide.md) | Brain audit for the ClickUp task when the work needs durable closeout evidence |
 | Find the owner and coverage for a product or operational flow | [Feature coverage map](feature-coverage-map.md) | Related task audit and `../optc-team-builder-brain/audits/evidence-index.md` |
 | Add, move, or repair fixtures | [Fixture ownership guide](fixture-ownership-guide.md) | Task audit when fixture policy or release evidence changes |
+| Review dependency, workflow, browser-test, performance, release-check, or native-tooling updates | [Dependency maintenance policy](dependency-maintenance-policy.md) | Brain audit for the maintenance task and post-merge workflow checks |
 | Keep docs from drifting after feature changes | [Docs drift map](docs-drift-map.json) and the docs-only row in the [validation guide](maintainer-validation-guide.md) | Brain docs-integrity audit or task-specific closeout |
 | Open or review human PRs | [Review ownership policy](review-ownership-policy.md) and PR traceability fields | Brain audit, live-artifact directory, and CI run links referenced from the PR |
 | Triage OPTC DB release detection | [Release detector replay](../README.md#release-detector-replay) | `../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` and release-trigger audits |
