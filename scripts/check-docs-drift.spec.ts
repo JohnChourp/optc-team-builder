@@ -238,6 +238,36 @@ describe('check-docs-drift', () => {
     expect(result.hasAcknowledgement).toBe(true);
   });
 
+  it('accepts a substantive push commit acknowledgement when PR body is unavailable', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+    const eventPath = path.join(appRoot, '..', 'push-event.json');
+    await writeFile(
+      eventPath,
+      JSON.stringify({
+        head_commit: {
+          message: [
+            'Fix manual builder internals (#123)',
+            '',
+            'Docs drift acknowledgement: paired brain PR records the mapped maintainer evidence update.',
+          ].join('\n'),
+        },
+      }),
+    );
+
+    const result = await checkDocsDrift({
+      appRoot,
+      brainRoot,
+      map: baseMap(),
+      changedFiles: ['src/app/pages/manual-team-builder/manual-team-builder.page.ts'],
+      brainChangedFiles: [],
+      eventPath,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.findings).toHaveLength(1);
+    expect(result.hasAcknowledgement).toBe(true);
+  });
+
   it('rejects missing mapped docs paths before evaluating drift', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
     const map = baseMap();

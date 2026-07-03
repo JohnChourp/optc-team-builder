@@ -79,7 +79,6 @@
       "name": "Saved Teams, share links, export, import, and compatibility repair",
       "featurePaths": [
         "src/app/pages/saved-teams/",
-        "src/app/pages/manual-team-builder/manual-team-builder.page.ts",
         "scripts/fixtures/data/saved-teams-v1.json",
         "scripts/fixtures/data/saved-team-share-v1-legacy-partial.json"
       ],

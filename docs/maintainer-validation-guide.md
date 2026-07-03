@@ -538,6 +538,10 @@ changed files, and fails when a feature/workflow moves without a matching
 `docsPaths` touch. If a refactor intentionally needs no docs change, fill the
 PR body's `Docs drift acknowledgement:` field with a concrete reason; blank,
 placeholder, or `none - ...` text does not count as an acknowledgement.
+When the mapped docs update lives only in a paired brain PR, use the same field
+to name the brain PR or audit; squash/merge commit messages carry that
+acknowledgement into the `main` push workflow where the PR body is no longer
+available.
 
 ## Ownership Rule
 
@@ -550,7 +554,8 @@ guidance current.
 When a PR adds, removes, renames, or materially changes a mapped product or
 maintainer workflow, update `docs/docs-drift-map.json` and the mapped docs entry
 points in the same PR, or record a concrete `Docs drift acknowledgement:` in
-the PR body when the change is an internal refactor with no docs impact.
+the PR body when the change is an internal refactor with no docs impact or the
+mapped docs update is intentionally landing through the paired brain PR.
 
 When a PR adds, removes, renames, or materially changes checked-in fixtures or
 shared fixture builders, update `docs/fixture-ownership-guide.md` in the same
