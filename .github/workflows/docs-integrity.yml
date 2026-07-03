@@ -81,9 +81,15 @@ jobs:
         if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
         working-directory: optc-team-builder
         shell: bash
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
         run: |
           set -euo pipefail
-          base_ref="origin/${GITHUB_BASE_REF:-main}"
+          if [[ "${GITHUB_EVENT_NAME}" == "push" && -n "${EVENT_BEFORE:-}" && ! "${EVENT_BEFORE}" =~ ^0+$ ]]; then
+            base_ref="${EVENT_BEFORE}"
+          else
+            base_ref="origin/${GITHUB_BASE_REF:-main}"
+          fi
           npm run docs:drift -- --base-ref "${base_ref}" --head-ref HEAD --brain-root ../optc-team-builder-brain
 
       - name: Check app-only docs integrity
@@ -100,9 +106,15 @@ jobs:
         if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
         working-directory: optc-team-builder
         shell: bash
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
         run: |
           set -euo pipefail
-          base_ref="origin/${GITHUB_BASE_REF:-main}"
+          if [[ "${GITHUB_EVENT_NAME}" == "push" && -n "${EVENT_BEFORE:-}" && ! "${EVENT_BEFORE}" =~ ^0+$ ]]; then
+            base_ref="${EVENT_BEFORE}"
+          else
+            base_ref="origin/${GITHUB_BASE_REF:-main}"
+          fi
           npm run docs:drift -- --base-ref "${base_ref}" --head-ref HEAD --app-only
 
       - name: Docs integrity script tests

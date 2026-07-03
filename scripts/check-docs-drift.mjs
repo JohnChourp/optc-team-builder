@@ -6,6 +6,8 @@ import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
 const DEFAULT_MAP_PATH = 'docs/docs-drift-map.json';
+const ALL_ZERO_SHA_PATTERN = /^0+$/u;
+const BRAIN_DOCS_PREFIX = '../optc-team-builder-brain/';
 const PLACEHOLDER_PATTERN =
   /^(?:todo|tbd|n\/a|na|none|not applicable|pending|to be added|add later|link later|fill in|fixme|xxx|[-_.\s]+)$/iu;
 const QUALIFIED_PLACEHOLDER_PATTERN =
@@ -51,8 +53,8 @@ function resolveAppPath(appRoot, relativePath) {
 function resolveDocsPath({ appRoot, brainRoot, relativePath }) {
   const normalized = normalizePath(relativePath);
 
-  if (normalized.startsWith('../optc-team-builder-brain/')) {
-    return path.resolve(brainRoot, ...normalized.slice('../optc-team-builder-brain/'.length).split('/'));
+  if (normalized.startsWith(BRAIN_DOCS_PREFIX)) {
+    return path.resolve(brainRoot, ...normalized.slice(BRAIN_DOCS_PREFIX.length).split('/'));
   }
 
   return resolveAppPath(appRoot, normalized);
@@ -65,8 +67,8 @@ function isSafeAppRelativePath(value) {
 
 function isSafeDocsPath(value) {
   const normalized = normalizePath(value);
-  if (normalized.startsWith('../optc-team-builder-brain/')) {
-    return !normalized.slice('../optc-team-builder-brain/'.length).split('/').includes('..');
+  if (normalized.startsWith(BRAIN_DOCS_PREFIX)) {
+    return !normalized.slice(BRAIN_DOCS_PREFIX.length).split('/').includes('..');
   }
   return isSafeAppRelativePath(value);
 }
@@ -81,7 +83,10 @@ export async function loadDocsDriftMap({ appRoot = process.cwd(), mapPath = DEFA
   return JSON.parse(text);
 }
 
-export async function validateDocsDriftMap(map, { appRoot = process.cwd(), brainRoot = path.join(appRoot, '..', 'optc-team-builder-brain') } = {}) {
+export async function validateDocsDriftMap(
+  map,
+  { appRoot = process.cwd(), brainRoot = path.join(appRoot, '..', 'optc-team-builder-brain'), appOnly = false } = {},
+) {
   const errors = [];
 
   if (!isObject(map)) {
@@ -136,6 +141,7 @@ export async function validateDocsDriftMap(map, { appRoot = process.cwd(), brain
       root: appRoot,
       brainRoot,
       kind: 'docs',
+      appOnly,
       errors,
     });
   }
@@ -143,7 +149,7 @@ export async function validateDocsDriftMap(map, { appRoot = process.cwd(), brain
   return errors;
 }
 
-async function validateMappedPaths({ paths, pathLabel, root, brainRoot, kind, errors }) {
+async function validateMappedPaths({ paths, pathLabel, root, brainRoot, kind, appOnly = false, errors }) {
   if (!Array.isArray(paths) || paths.length === 0) {
     pushError(errors, pathLabel, 'must be a non-empty array');
     return;
@@ -158,6 +164,7 @@ async function validateMappedPaths({ paths, pathLabel, root, brainRoot, kind, er
     }
 
     const normalized = normalizePath(rawPath);
+    const isBrainDocsPath = kind === 'docs' && normalized.startsWith(BRAIN_DOCS_PREFIX);
 
     if (kind === 'feature' && !isSafeAppRelativePath(normalized)) {
       pushError(errors, itemLabel, 'must be an app repo relative path');
@@ -169,13 +176,17 @@ async function validateMappedPaths({ paths, pathLabel, root, brainRoot, kind, er
       continue;
     }
 
+    if (appOnly && isBrainDocsPath) {
+      continue;
+    }
+
     const resolvedPath =
       kind === 'docs'
         ? resolveDocsPath({ appRoot: root, brainRoot: brainRoot ?? path.join(root, '..', 'optc-team-builder-brain'), relativePath: normalized })
         : resolveAppPath(root, normalized);
 
     const expectedRoot =
-      kind === 'docs' && normalized.startsWith('../optc-team-builder-brain/')
+      isBrainDocsPath
         ? path.resolve(brainRoot ?? path.join(root, '..', 'optc-team-builder-brain'))
         : path.resolve(root);
 
@@ -206,23 +217,46 @@ function hasTrackedPrefix(root, normalizedPath, execFile = execFileSync) {
 }
 
 export function getChangedFiles({ baseRef, headRef, cwd = process.cwd(), execFile = execFileSync } = {}) {
-  if (!baseRef || !headRef) {
+  if (!baseRef || !headRef || ALL_ZERO_SHA_PATTERN.test(baseRef) || ALL_ZERO_SHA_PATTERN.test(headRef)) {
     return { changedFiles: [], error: 'both baseRef and headRef are required' };
   }
 
   try {
-    const output = execFile('git', ['diff', '--name-only', '--diff-filter=ACMRTD', `${baseRef}...${headRef}`], {
+    const output = execFile('git', ['diff', '--name-status', '--diff-filter=ACMRTD', `${baseRef}...${headRef}`], {
       cwd,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    return { changedFiles: uniqueSorted(output.split(/\r?\n/u)), error: '' };
+    return { changedFiles: parseNameStatusOutput(output), error: '' };
   } catch (error) {
     return {
       changedFiles: [],
       error: error instanceof Error ? error.message : 'git diff failed',
     };
   }
+}
+
+export function parseNameStatusOutput(output) {
+  const changedFiles = [];
+
+  for (const rawLine of String(output ?? '').split(/\r?\n/u)) {
+    const line = rawLine.trim();
+    if (!line) {
+      continue;
+    }
+
+    const [status, ...paths] = line.split('\t');
+    if (/^[CR]/u.test(status) && paths.length >= 2) {
+      changedFiles.push(paths[0], paths[1]);
+      continue;
+    }
+
+    if (paths.length >= 1) {
+      changedFiles.push(paths[0]);
+    }
+  }
+
+  return uniqueSorted(changedFiles);
 }
 
 function readGitBranch(cwd, execFile = execFileSync) {
@@ -264,7 +298,7 @@ function getSiblingBrainChangedFiles({ brainRoot, execFile = execFileSync } = {}
   };
 }
 
-function pathMatchesPattern(changedPath, mappedPath) {
+function pathMatchesPattern(changedPath, mappedPath, allMappedPaths = []) {
   const changed = normalizePath(changedPath);
   const mapped = normalizePath(mappedPath);
 
@@ -276,11 +310,31 @@ function pathMatchesPattern(changedPath, mappedPath) {
     return changed.startsWith(mapped);
   }
 
-  return changed === mapped || changed.startsWith(`${mapped}/`);
+  if (changed === mapped || changed.startsWith(`${mapped}/`)) {
+    return true;
+  }
+
+  if (path.posix.extname(mapped) || !changed.startsWith(mapped)) {
+    return false;
+  }
+
+  return !allMappedPaths.some((rawCandidate) => {
+    const candidate = normalizePath(rawCandidate);
+    return (
+      candidate &&
+      candidate !== mapped &&
+      candidate.length > mapped.length &&
+      candidate.startsWith(mapped) &&
+      pathMatchesPattern(changed, candidate)
+    );
+  });
 }
 
-function entryHasChangedPath(entry, changedFiles, key) {
-  return entry[key].some((mappedPath) => changedFiles.some((changedFile) => pathMatchesPattern(changedFile, mappedPath)));
+function entryHasChangedPath(entry, changedFiles, key, entries) {
+  const allMappedPaths = entries.flatMap((candidate) => (Array.isArray(candidate[key]) ? candidate[key] : []));
+  return entry[key].some((mappedPath) =>
+    changedFiles.some((changedFile) => pathMatchesPattern(changedFile, mappedPath, allMappedPaths)),
+  );
 }
 
 export function extractDocsDriftAcknowledgement(body) {
@@ -345,7 +399,7 @@ export async function checkDocsDrift(options = {}) {
   const appRoot = path.resolve(options.appRoot ?? process.cwd());
   const brainRoot = path.resolve(options.brainRoot ?? path.join(appRoot, '..', 'optc-team-builder-brain'));
   const map = options.map ?? (await loadDocsDriftMap({ appRoot, mapPath: options.mapPath ?? DEFAULT_MAP_PATH }));
-  const mapErrors = await validateDocsDriftMap(map, { appRoot, brainRoot });
+  const mapErrors = await validateDocsDriftMap(map, { appRoot, brainRoot, appOnly: options.appOnly });
   const errors = [...mapErrors];
   let appChangedFiles = options.changedFiles ? uniqueSorted(options.changedFiles) : [];
   let brainChangedFiles = options.brainChangedFiles ? uniqueSorted(options.brainChangedFiles) : [];
@@ -376,8 +430,8 @@ export async function checkDocsDrift(options = {}) {
 
   if (errors.length === 0) {
     for (const entry of map.entries) {
-      const featureChanged = entryHasChangedPath(entry, changedFiles, 'featurePaths');
-      const docsChanged = entryHasChangedPath(entry, changedFiles, 'docsPaths');
+      const featureChanged = entryHasChangedPath(entry, changedFiles, 'featurePaths', map.entries);
+      const docsChanged = entryHasChangedPath(entry, changedFiles, 'docsPaths', map.entries);
 
       if (featureChanged && !docsChanged) {
         findings.push({
@@ -387,7 +441,13 @@ export async function checkDocsDrift(options = {}) {
           featurePaths: entry.featurePaths,
           docsPaths: entry.docsPaths,
           changedFeatureFiles: changedFiles.filter((changedFile) =>
-            entry.featurePaths.some((mappedPath) => pathMatchesPattern(changedFile, mappedPath)),
+            entry.featurePaths.some((mappedPath) =>
+              pathMatchesPattern(
+                changedFile,
+                mappedPath,
+                map.entries.flatMap((candidate) => (Array.isArray(candidate.featurePaths) ? candidate.featurePaths : [])),
+              ),
+            ),
           ),
         });
       }

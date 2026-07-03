@@ -8,6 +8,7 @@ import {
   checkDocsDrift,
   extractDocsDriftAcknowledgement,
   formatDocsDriftResult,
+  getChangedFiles,
   isSubstantiveAcknowledgement,
 } from './check-docs-drift.mjs';
 
@@ -119,6 +120,103 @@ describe('check-docs-drift', () => {
 
     expect(result.ok).toBe(true);
     expect(result.findings).toEqual([]);
+  });
+
+  it('does not require brain docs files to exist in app-only mode', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+    await rm(brainRoot, { recursive: true, force: true });
+
+    const result = await checkDocsDrift({
+      appRoot,
+      brainRoot,
+      appOnly: true,
+      map: baseMap(),
+      changedFiles: [
+        'src/app/pages/manual-team-builder/manual-team-builder.page.ts',
+        'docs/maintainer-validation-guide.md',
+      ],
+      brainChangedFiles: [],
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it('matches extensionless filename prefixes without shadowing more specific prefixes', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace({
+      'optc-team-builder/src/app/core/services/auto-team-builder/.keep': '',
+      'optc-team-builder/src/app/core/services/auto-team-builder.engine.ts': 'export const auto = true;\n',
+      'optc-team-builder/src/app/core/services/auto-team-builder-rumble/.keep': '',
+      'optc-team-builder/src/app/core/services/auto-team-builder-rumble.engine.ts': 'export const rumble = true;\n',
+    });
+
+    const map = {
+      schemaVersion: 1,
+      entries: [
+        {
+          id: 'auto-team-builder',
+          name: 'Auto Team Builder',
+          featurePaths: ['src/app/core/services/auto-team-builder'],
+          docsPaths: ['docs/feature-coverage-map.md'],
+          owner: 'Auto owner',
+          notes: 'Auto builder service prefixes need docs coverage.',
+        },
+        {
+          id: 'pirate-rumble',
+          name: 'Pirate Rumble',
+          featurePaths: ['src/app/core/services/auto-team-builder-rumble'],
+          docsPaths: ['docs/maintainer-validation-guide.md'],
+          owner: 'Rumble owner',
+          notes: 'Rumble service prefixes need docs coverage.',
+        },
+      ],
+    };
+
+    const autoResult = await checkDocsDrift({
+      appRoot,
+      brainRoot,
+      map,
+      changedFiles: ['src/app/core/services/auto-team-builder.engine.ts'],
+      brainChangedFiles: [],
+    });
+    const rumbleResult = await checkDocsDrift({
+      appRoot,
+      brainRoot,
+      map,
+      changedFiles: ['src/app/core/services/auto-team-builder-rumble.engine.ts'],
+      brainChangedFiles: [],
+    });
+
+    expect(autoResult.findings.map((finding) => finding.id)).toEqual(['auto-team-builder']);
+    expect(rumbleResult.findings.map((finding) => finding.id)).toEqual(['pirate-rumble']);
+  });
+
+  it('includes both paths from rename diff records before checking drift', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+    const diff = getChangedFiles({
+      baseRef: 'base',
+      headRef: 'head',
+      cwd: appRoot,
+      execFile: () =>
+        [
+          'R100\tsrc/app/pages/manual-team-builder/manual-team-builder.page.ts\tsrc/app/pages/manual-builder/manual-team-builder.page.ts',
+          '',
+        ].join('\n'),
+    });
+
+    const result = await checkDocsDrift({
+      appRoot,
+      brainRoot,
+      map: baseMap(),
+      changedFiles: diff.changedFiles,
+      brainChangedFiles: [],
+    });
+
+    expect(diff.changedFiles).toEqual([
+      'src/app/pages/manual-builder/manual-team-builder.page.ts',
+      'src/app/pages/manual-team-builder/manual-team-builder.page.ts',
+    ]);
+    expect(result.findings.map((finding) => finding.id)).toEqual(['manual-builder']);
   });
 
   it('accepts a substantive PR-body acknowledgement for intentional no-doc changes', async () => {
