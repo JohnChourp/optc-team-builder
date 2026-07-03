@@ -64,7 +64,7 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     name: 'test:release-check',
     group: 'release-check',
     expectedCommand:
-      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts',
+      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts',
     fix: 'Restore the release detector replay package script.',
   },
   {

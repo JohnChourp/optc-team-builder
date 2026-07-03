@@ -287,6 +287,31 @@ jobs:
 
           cat upstream-monitor-artifacts/current/upstream-monitor-summary.md >> "${GITHUB_STEP_SUMMARY}"
 
+      - name: Write release detector status artifact
+        id: release-detector-status
+        if: ${{ always() }}
+        run: |
+          mkdir -p release-detector-status
+
+          npm run --silent release:detector-status -- \
+            --release-trigger-report release-trigger-outcome.json \
+            --upstream-monitor-report upstream-monitor-artifacts/current/upstream-monitor-report.json \
+            --output release-detector-status/release-detector-status.json \
+            --summary release-detector-status/release-detector-status.md
+
+          cat release-detector-status/release-detector-status.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload release detector status artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-detector-status
+          path: |
+            release-detector-status/release-detector-status.json
+            release-detector-status/release-detector-status.md
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Upload upstream monitor report artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@v7

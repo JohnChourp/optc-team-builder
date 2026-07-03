@@ -266,6 +266,12 @@ new upstream IDs are found. Choose `dispatch-if-needed` only when the manual
 workflow run is meant to start a production Android release if the detector
 finds releasable data.
 
+Every workflow run also uploads `release-detector-status`, a compact JSON and
+Markdown Actions artifact for maintainers. It surfaces the latest detector
+status, release-needed verdict, local and upstream dataset versions, character
+count delta, new upstream ID sample, upstream monitor warning IDs, and the run
+URL without requiring raw workflow-log inspection.
+
 To replay captured upstream files during an incident, keep the local manifest and
 seed defaults or point at custom local files, then pass both remote paths:
 

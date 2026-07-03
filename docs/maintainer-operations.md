@@ -34,7 +34,7 @@ that private detail.
 | Review dependency, workflow, browser-test, performance, release-check, or native-tooling updates | [Dependency maintenance policy](dependency-maintenance-policy.md) | Brain audit for the maintenance task and post-merge workflow checks |
 | Keep docs from drifting after feature changes | [Docs drift map](docs-drift-map.json) and the docs-only row in the [validation guide](maintainer-validation-guide.md) | Brain docs-integrity audit or task-specific closeout |
 | Open or review human PRs | [Review ownership policy](review-ownership-policy.md) and PR traceability fields | Brain audit, live-artifact directory, and CI run links referenced from the PR |
-| Triage OPTC DB release detection | [Release detector replay](../README.md#release-detector-replay) | `../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` and release-trigger audits |
+| Triage OPTC DB release detection | [Release detector replay](../README.md#release-detector-replay) and the latest `release-detector-status` Actions artifact | `../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` and release-trigger audits |
 | Summarize release readiness | Release-readiness row in the [validation guide](maintainer-validation-guide.md) | `../optc-team-builder-brain/audits/869dwc0wc-release-readiness-summary.md` or the current release-candidate audit |
 | Publish user-facing release notes | [Release notes README](release-notes/README.md) | Source JSON and generation evidence in the brain repo |
 | Run Android release operations | [Android release workflow](../README.md#android-release-workflow) | Release skill output, GitHub Actions run, and task/release audit |
