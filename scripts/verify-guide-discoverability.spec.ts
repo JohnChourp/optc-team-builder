@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   GUIDE_DISCOVERABILITY_INVENTORY,
+  resolveGuideDiscoverabilityCliPaths,
   verifyGuideDiscoverability,
 } from './verify-guide-discoverability.mjs';
 
@@ -204,5 +205,21 @@ describe('verifyGuideDiscoverability', () => {
         ),
       ]),
     );
+  });
+
+  it('resolves SEO_OUTPUT_DIR for CLI artifact verification', () => {
+    const seoOutputDir = path.join(os.tmpdir(), 'guide-discoverability-seo-output');
+    const overrideOutputDir = path.join(os.tmpdir(), 'guide-discoverability-override-output');
+
+    expect(resolveGuideDiscoverabilityCliPaths({ SEO_OUTPUT_DIR: seoOutputDir })).toEqual({
+      outputDir: seoOutputDir,
+      reportPath: path.join(seoOutputDir, 'guide-discoverability-report.json'),
+    });
+    expect(
+      resolveGuideDiscoverabilityCliPaths({
+        SEO_OUTPUT_DIR: seoOutputDir,
+        GUIDE_DISCOVERABILITY_OUTPUT_DIR: overrideOutputDir,
+      }).outputDir,
+    ).toBe(overrideOutputDir);
   });
 });

@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const defaultOutputDir = path.join(projectRoot, 'dist', 'optc-team-builder', 'browser');
-const defaultReportPath = path.join(defaultOutputDir, 'guide-discoverability-report.json');
 const siteBaseUrl = normalizeSiteBaseUrl(
   process.env.SEO_SITE_BASE_URL ?? 'https://optcteambuilder.com',
 );
@@ -67,10 +66,12 @@ export const GUIDE_DISCOVERABILITY_INVENTORY = [
 export async function verifyGuideDiscoverability({
   appRoot = projectRoot,
   outputDir = defaultOutputDir,
-  reportPath = defaultReportPath,
+  reportPath = undefined,
   siteBaseUrl: rawSiteBaseUrl = siteBaseUrl,
 } = {}) {
   const normalizedSiteBaseUrl = normalizeSiteBaseUrl(rawSiteBaseUrl);
+  const resolvedReportPath =
+    reportPath === undefined ? path.join(outputDir, 'guide-discoverability-report.json') : reportPath;
   const errors = [];
   const guideResults = [];
   const sitemapXml = await readRequiredTextFile(path.join(outputDir, 'sitemap.xml'), errors);
@@ -112,12 +113,23 @@ export async function verifyGuideDiscoverability({
     status: errors.length === 0 ? 'ok' : 'failed',
   };
 
-  if (reportPath) {
-    await mkdir(path.dirname(reportPath), { recursive: true });
-    await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+  if (resolvedReportPath) {
+    await mkdir(path.dirname(resolvedReportPath), { recursive: true });
+    await writeFile(resolvedReportPath, `${JSON.stringify(report, null, 2)}\n`);
   }
 
   return { errors, report };
+}
+
+export function resolveGuideDiscoverabilityCliPaths(env = process.env) {
+  const outputDir = path.resolve(
+    env.GUIDE_DISCOVERABILITY_OUTPUT_DIR ?? env.SEO_OUTPUT_DIR ?? defaultOutputDir,
+  );
+  const reportPath = path.resolve(
+    env.GUIDE_DISCOVERABILITY_REPORT ?? path.join(outputDir, 'guide-discoverability-report.json'),
+  );
+
+  return { outputDir, reportPath };
 }
 
 function auditGeneratedGuidePage({ guide, html, canonicalUrl, htmlPath, guideErrors }) {
@@ -317,8 +329,7 @@ function isDirectRun() {
 }
 
 if (isDirectRun()) {
-  const outputDir = path.resolve(process.env.GUIDE_DISCOVERABILITY_OUTPUT_DIR ?? defaultOutputDir);
-  const reportPath = path.resolve(process.env.GUIDE_DISCOVERABILITY_REPORT ?? defaultReportPath);
+  const { outputDir, reportPath } = resolveGuideDiscoverabilityCliPaths();
   const { errors, report } = await verifyGuideDiscoverability({ outputDir, reportPath });
 
   if (errors.length > 0) {

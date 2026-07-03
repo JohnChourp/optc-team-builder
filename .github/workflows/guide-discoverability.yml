@@ -64,7 +64,7 @@ jobs:
       - name: Build GitHub Pages artifact
         env:
           APP_GA4_MEASUREMENT_ID: ${{ secrets.APP_GA4_MEASUREMENT_ID }}
-          APP_GOOGLE_WEB_CLIENT_ID: ${{ secrets.APP_GOOGLE_WEB_CLIENT_ID }}
+          APP_GOOGLE_WEB_CLIENT_ID: ${{ secrets.APP_GOOGLE_WEB_CLIENT_ID || '000000000000-guide-discoverability-pr.apps.googleusercontent.com' }}
           APP_GOOGLE_IOS_CLIENT_ID: ${{ secrets.APP_GOOGLE_IOS_CLIENT_ID }}
         run: npm run build:pages
 
