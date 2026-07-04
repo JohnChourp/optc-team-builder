@@ -709,6 +709,39 @@ describe('SettingsPage', () => {
     });
   });
 
+  it('shows storage diagnostics when import all detects a saved-team persistence failure', async () => {
+    const { page, userState } = createPage();
+
+    userState.mergeImportedTeams.mockRejectedValueOnce(
+      new BrowserStoragePersistenceError('BROWSER_STORAGE_QUOTA_EXCEEDED'),
+    );
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          'saved-team.json',
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'saved-teams',
+            exportedAt: '2026-04-12T09:00:00.000Z',
+            teams: [createTeam('team-single', [1001, null, null, null, null, null])],
+          }),
+        ),
+      ),
+      { value: '' } as HTMLInputElement,
+    );
+
+    expect(page.allDataFeedback()).toEqual({
+      tone: 'error',
+      title: 'All data import failed',
+      details: [
+        'Browser storage is full.',
+        'Diagnostic code: BROWSER_STORAGE_QUOTA_EXCEEDED.',
+        'Recovery for storageFailures.recovery.quota',
+      ],
+    });
+  });
+
   it('imports a single character boxes export through import all', async () => {
     const { page, userState } = createPage();
 
@@ -831,6 +864,45 @@ describe('SettingsPage', () => {
     ]);
     expect(page.allDataFeedback()).toMatchObject({
       tone: 'warning',
+    });
+  });
+
+  it('shows storage diagnostics when all-data saved teams fail persistence', async () => {
+    const { page, userState } = createPage();
+
+    userState.mergeImportedTeams.mockRejectedValueOnce(
+      new BrowserStoragePersistenceError('BROWSER_STORAGE_QUOTA_EXCEEDED'),
+    );
+
+    await page.onAllDataFileSelected(
+      createFileEvent(
+        buildFile(
+          'all-data-storage-failure.json',
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'all-data',
+            exportedAt: '2026-04-12T09:00:00.000Z',
+            savedTeams: {
+              schemaVersion: 1,
+              source: 'saved-teams',
+              exportedAt: '2026-04-12T09:00:00.000Z',
+              teams: [createTeam('team-quota', [1001, null, null, null, null, null])],
+            },
+          }),
+        ),
+      ),
+      { value: '' } as HTMLInputElement,
+    );
+
+    expect(page.allDataFeedback()).toEqual({
+      tone: 'error',
+      title: 'All data import failed',
+      details: [
+        'Loaded from all-data-storage-failure.json.',
+        'Saved Teams: Browser storage is full.',
+        'Saved Teams: Diagnostic code: BROWSER_STORAGE_QUOTA_EXCEEDED.',
+        'Saved Teams: Recovery for storageFailures.recovery.quota',
+      ],
     });
   });
 

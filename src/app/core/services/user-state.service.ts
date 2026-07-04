@@ -1160,6 +1160,11 @@ export class UserStateService {
   }
 
   private async persistJson(key: string, value: unknown): Promise<void> {
+    await this.writeJsonToPreferences(key, value);
+    await this.markSyncScopedLocalChange(key);
+  }
+
+  private async writeJsonToPreferences(key: string, value: unknown): Promise<void> {
     try {
       await this.preferences.set({ key, value: JSON.stringify(value) });
     } catch (error) {
@@ -1169,8 +1174,6 @@ export class UserStateService {
 
       throw error;
     }
-
-    await this.markSyncScopedLocalChange(key);
   }
 
   private async markSyncScopedLocalChange(key: string): Promise<void> {
@@ -1192,8 +1195,9 @@ export class UserStateService {
   }
 
   private async replaceSavedTeams(teams: SavedTeam[]): Promise<void> {
-    await this.persistJson(SAVED_TEAMS_KEY, teams);
+    await this.writeJsonToPreferences(SAVED_TEAMS_KEY, teams);
     this.savedTeams.set(teams);
+    await this.markSyncScopedLocalChange(SAVED_TEAMS_KEY);
   }
 
   private async replaceCharacterBoxes(boxes: CharacterBox[]): Promise<void> {

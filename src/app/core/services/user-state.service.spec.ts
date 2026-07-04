@@ -503,6 +503,39 @@ describe('UserStateService saved teams', () => {
     expect(service.savedTeams().map((team) => team.id)).toEqual(['team-1']);
   });
 
+  it('updates saved-team state after storage succeeds when sync metadata marking fails', async () => {
+    const store = new Map<string, string>([
+      ['savedTeams', JSON.stringify([createTeam('team-1', 'Slashers')])],
+    ]);
+    const driveSyncState = {
+      markLocalChange: vi.fn().mockRejectedValue(new Error('sync metadata unavailable')),
+    };
+
+    preferences.get.mockImplementation(async ({ key }) => ({
+      value: store.get(key) ?? null,
+    }));
+    preferences.set.mockImplementation(async ({ key, value }) => {
+      store.set(key, value);
+    });
+
+    const service = new UserStateService(
+      { translate: vi.fn((key: string) => key) } as never,
+      preferences as unknown as PreferencesAdapterService,
+      driveSyncState as never,
+    );
+
+    await service.readySavedTeams();
+
+    await expect(service.mergeImportedTeams([createTeam('team-2', 'Import')])).rejects.toThrow(
+      'sync metadata unavailable',
+    );
+    expect(JSON.parse(store.get('savedTeams') ?? '[]')).toEqual([
+      expect.objectContaining({ id: 'team-2' }),
+      expect.objectContaining({ id: 'team-1' }),
+    ]);
+    expect(service.savedTeams().map((team) => team.id)).toEqual(['team-2', 'team-1']);
+  });
+
   it('merges imported teams by id and keeps untouched teams behind them', async () => {
     const { service, setCalls } = await createService([
       createTeam('team-1', 'Original one'),

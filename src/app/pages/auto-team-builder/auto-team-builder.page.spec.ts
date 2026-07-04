@@ -5520,6 +5520,19 @@ describe('AutoTeamBuilder compare panel', () => {
       });
     }
   });
+
+  it('clears compare storage feedback after successful session persistence', async () => {
+    ensureSessionStorage();
+    globalThis.sessionStorage.setItem('autoTeamBuilder.compareState.v1', '{"open":true,"sides":');
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    expect(page.compareStorageFeedback()?.title).toBe('Compare session reset');
+
+    page.toggleCompareMode();
+
+    expect(page.compareStorageFeedback()).toBeNull();
+  });
 });
 
 describe('AutoTeamBuilder export helpers', () => {

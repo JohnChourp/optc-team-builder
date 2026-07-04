@@ -96,7 +96,7 @@ interface CombinedImportSectionFeedback {
 
 interface CombinedImportSectionError {
   label: string;
-  message: string;
+  messages: string[];
 }
 
 @Component({
@@ -1032,7 +1032,7 @@ export class SettingsPage implements OnInit {
       this.allDataFeedback.set({
         tone: 'error',
         title: this.i18n.translate('management.allData.feedback.errorTitle', undefined, 'settings'),
-        details: [this.resolveAllDataImportError(error)],
+        details: this.resolveAllDataImportErrorDetails(error),
       });
     } finally {
       this.allDataImporting.set(false);
@@ -1093,7 +1093,7 @@ export class SettingsPage implements OnInit {
             fileName,
           }),
         successfulSections,
-        resolveError: (error) => this.resolveSavedTeamsImportError(error),
+        resolveError: (error) => this.resolveSavedTeamsImportErrorDetails(error),
       });
     }
 
@@ -1167,7 +1167,7 @@ export class SettingsPage implements OnInit {
   private async collectAllDataSectionResult(options: {
     failedSections: CombinedImportSectionError[];
     label: string;
-    resolveError: (error: unknown) => string;
+    resolveError: (error: unknown) => string | string[];
     run: () => Promise<TransferFeedback>;
     successfulSections: CombinedImportSectionFeedback[];
   }): Promise<void> {
@@ -1177,9 +1177,11 @@ export class SettingsPage implements OnInit {
         feedback: await options.run(),
       });
     } catch (error) {
+      const resolvedError = options.resolveError(error);
+
       options.failedSections.push({
         label: options.label,
-        message: options.resolveError(error),
+        messages: Array.isArray(resolvedError) ? resolvedError : [resolvedError],
       });
     }
   }
@@ -1195,7 +1197,9 @@ export class SettingsPage implements OnInit {
         `${label}: ${feedback.title}`,
         ...feedback.details.map((detail) => `${label}: ${detail}`),
       ]),
-      ...failedSections.map(({ label, message }) => `${label}: ${message}`),
+      ...failedSections.flatMap(({ label, messages }) =>
+        messages.map((message) => `${label}: ${message}`),
+      ),
     ];
     const hasWarnings = successfulSections.some(({ feedback }) => feedback.tone === 'warning');
     const hasErrors = failedSections.length > 0;
@@ -1260,6 +1264,21 @@ export class SettingsPage implements OnInit {
     }
 
     return this.i18n.translate('management.allData.errors.generic', undefined, 'settings');
+  }
+
+  private resolveAllDataImportErrorDetails(error: unknown): string[] {
+    const diagnostic =
+      resolveSavedTeamsImportDiagnostic(error) ?? resolveBrowserStorageFailureDiagnostic(error);
+
+    if (!diagnostic) {
+      return [this.resolveAllDataImportError(error)];
+    }
+
+    return [
+      this.resolveSavedTeamsImportError(error),
+      this.i18n.translate('import.diagnosticCode', { code: diagnostic.code }, 'saved-teams'),
+      this.i18n.translate(diagnostic.recoveryKey, undefined, 'saved-teams'),
+    ];
   }
 
   private async importFavorites(file: File): Promise<void> {

@@ -3891,13 +3891,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           },
         } satisfies AutoTeamCompareSessionState),
       );
-      if (
-        this.compareStorageFeedback()?.details.some((detail) =>
-          detail.includes('BROWSER_STORAGE_'),
-        )
-      ) {
-        this.compareStorageFeedback.set(null);
-      }
+      this.compareStorageFeedback.set(null);
     } catch (error) {
       const code = classifyBrowserStorageFailure(error) ?? 'BROWSER_STORAGE_UNAVAILABLE';
 
