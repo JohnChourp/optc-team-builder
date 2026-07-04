@@ -23,6 +23,7 @@ async function makeWorkspace(files: Record<string, string>) {
 
   const defaultFiles: Record<string, string> = {
     'optc-team-builder/README.md': '# App\n',
+    'optc-team-builder/docs/branch-lifecycle-policy.md': '# Branch lifecycle\n',
     'optc-team-builder/docs/post-merge-smoke-pack.md': '# Post-merge smoke\n',
     'optc-team-builder/docs/maintainer-validation-guide.md': '# Guide\n',
     'optc-team-builder/docs/fixture-ownership-guide.md': '# Fixtures\n',
