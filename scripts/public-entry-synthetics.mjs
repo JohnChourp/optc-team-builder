@@ -3,6 +3,7 @@ import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -93,6 +94,12 @@ export function sanitizeUrlForReport(rawUrl) {
   }
 }
 
+export function sanitizeTextForReport(rawText) {
+  return String(rawText ?? '')
+    .replace(/https?:\/\/[^\s'"<>]+/gu, (url) => sanitizeUrlForReport(url))
+    .replace(/teamShare=[^&#\s'"<>)]+/gu, 'teamShare=<redacted-synthetic>');
+}
+
 export function classifyHttpFailureCategory(request = {}) {
   const isNavigationRequest =
     typeof request.isNavigationRequest === 'function'
@@ -128,10 +135,18 @@ function isIgnorableDiagnostic(value) {
 }
 
 function addFailure(entry, category, message, details = {}) {
+  const sanitizedDetails = { ...details };
+  if (typeof sanitizedDetails.text === 'string') {
+    sanitizedDetails.text = sanitizeTextForReport(sanitizedDetails.text);
+  }
+  if (typeof sanitizedDetails.url === 'string') {
+    sanitizedDetails.url = sanitizeUrlForReport(sanitizedDetails.url);
+  }
+
   entry.failures.push({
     category,
     message,
-    ...details,
+    ...sanitizedDetails,
   });
 }
 
@@ -239,6 +254,27 @@ async function ionInputValue(locator) {
   });
 }
 
+async function waitForIonInputValue(locator, expectedValue) {
+  const deadline = Date.now() + APP_READY_TIMEOUT_MS;
+  let observedValue = '';
+
+  while (Date.now() < deadline) {
+    try {
+      await locator.waitFor({ state: 'attached', timeout: Math.min(500, Math.max(1, deadline - Date.now())) });
+      observedValue = await ionInputValue(locator);
+      if (observedValue === expectedValue) {
+        return { ok: true, observedValue };
+      }
+    } catch {
+      // Keep polling until the hydrated field is available or the public-entry timeout expires.
+    }
+
+    await delay(250);
+  }
+
+  return { ok: false, observedValue };
+}
+
 function createEntry({ id, url }) {
   return {
     id,
@@ -259,7 +295,8 @@ async function checkGuideEntry(context, { baseUrl, artifactDir }) {
   const headingVisible = await page
     .getByRole('heading', { name: PUBLIC_ENTRY_GUIDE.heading })
     .first()
-    .isVisible({ timeout: APP_READY_TIMEOUT_MS })
+    .waitFor({ state: 'visible', timeout: APP_READY_TIMEOUT_MS })
+    .then(() => true)
     .catch(() => false);
 
   if (!headingVisible) {
@@ -287,19 +324,20 @@ async function checkShareLinkEntry(context, { baseUrl, artifactDir }) {
     });
   }
 
-  const teamName = await ionInputValue(page.getByTestId('manual-team-name')).catch(() => '');
-  const notes = await ionInputValue(page.getByTestId('manual-team-notes')).catch(() => '');
+  const teamName = await waitForIonInputValue(page.getByTestId('manual-team-name'), PUBLIC_ENTRY_SYNTHETIC_TEAM.name);
+  const notes = await waitForIonInputValue(page.getByTestId('manual-team-notes'), PUBLIC_ENTRY_SYNTHETIC_TEAM.notes);
   const slotVisible = await page
     .getByTestId('manual-team-slot-0')
     .getByText(PUBLIC_ENTRY_SHARE_LINK.expectedSlotText)
     .first()
-    .isVisible({ timeout: APP_READY_TIMEOUT_MS })
+    .waitFor({ state: 'visible', timeout: APP_READY_TIMEOUT_MS })
+    .then(() => true)
     .catch(() => false);
 
-  if (teamName !== PUBLIC_ENTRY_SYNTHETIC_TEAM.name) {
+  if (!teamName.ok) {
     addFailure(entry, 'rendering', 'Manual Team Builder did not render the synthetic team name.');
   }
-  if (notes !== PUBLIC_ENTRY_SYNTHETIC_TEAM.notes) {
+  if (!notes.ok) {
     addFailure(entry, 'rendering', 'Manual Team Builder did not render the synthetic team notes.');
   }
   if (!slotVisible) {

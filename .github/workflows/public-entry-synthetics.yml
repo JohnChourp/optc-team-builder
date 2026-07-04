@@ -10,22 +10,11 @@ on:
         type: string
   schedule:
     - cron: '41 6 * * *'
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/public-entry-synthetics.yml'
-      - 'README.md'
-      - 'docs/feature-coverage-map.md'
-      - 'docs/maintainer-validation-guide.md'
-      - 'scripts/public-entry-synthetics.mjs'
-      - 'scripts/public-entry-synthetics.spec.ts'
-      - 'src/app/app.routes.ts'
-      - 'src/app/pages/manual-team-builder/**'
-      - 'src/app/pages/saved-teams/saved-teams-transfer.utils.ts'
-      - 'src/app/pages/seo-content/**'
-      - 'package.json'
-      - 'package-lock.json'
+  workflow_run:
+    workflows:
+      - Deploy GitHub Pages
+    types:
+      - completed
 
 permissions:
   contents: read
@@ -36,12 +25,15 @@ concurrency:
 
 jobs:
   public-entry-synthetics:
+    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -57,7 +49,7 @@ jobs:
 
       - name: Run public entry synthetics
         env:
-          PUBLIC_ENTRY_BASE_URL: ${{ github.event.inputs.base_url || 'https://optcteambuilder.com' }}
+          PUBLIC_ENTRY_BASE_URL: ${{ inputs.base_url || 'https://optcteambuilder.com' }}
           PUBLIC_ENTRY_SYNTHETIC_ARTIFACT_DIR: ${{ github.workspace }}/synthetic-artifacts/public-entry
         run: npm run synthetic:public-entry
 

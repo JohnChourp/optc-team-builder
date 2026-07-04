@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -11,8 +12,10 @@ import {
   classifyHttpFailureCategory,
   normalizePublicEntryBaseUrl,
   resolvePublicEntrySyntheticsCliOptions,
+  sanitizeTextForReport,
   sanitizeUrlForReport,
 } from './public-entry-synthetics.mjs';
+import { SCRIPT_SUITE_ORDER } from './ci-check-routing.mjs';
 
 describe('public-entry-synthetics', () => {
   it('builds a deterministic share-link payload without user data', () => {
@@ -35,11 +38,14 @@ describe('public-entry-synthetics', () => {
   it('redacts synthetic share codes and unrelated query strings in reports', () => {
     const shareUrl = buildSyntheticShareUrl('https://example.test/');
     const sanitizedShareUrl = sanitizeUrlForReport(shareUrl);
+    const diagnosticText = `page.goto: net::ERR_TIMED_OUT at ${shareUrl}`;
 
     expect(sanitizedShareUrl).toBe(
       `https://example.test${PUBLIC_ENTRY_SHARE_LINK.path}?${PUBLIC_ENTRY_SHARE_LINK.redactedQuery}`,
     );
     expect(sanitizedShareUrl).not.toContain(buildSyntheticShareCode());
+    expect(sanitizeTextForReport(diagnosticText)).not.toContain(buildSyntheticShareCode());
+    expect(sanitizeTextForReport(diagnosticText)).toContain(PUBLIC_ENTRY_SHARE_LINK.redactedQuery);
     expect(sanitizeUrlForReport('https://example.test/assets/main.js?v=123')).toBe(
       'https://example.test/assets/main.js?<redacted-query>',
     );
@@ -65,5 +71,14 @@ describe('public-entry-synthetics', () => {
     expect(options.reportPath).toBe(
       path.resolve('/tmp/public-entry/public-entry-synthetics-report.json'),
     );
+  });
+
+  it('keeps the Test workflow full-plan fallback aligned with script suites', () => {
+    const testWorkflow = readFileSync(path.resolve('.github/workflows/test.yml'), 'utf8');
+    expect(testWorkflow).toContain(`full_script_suites="${SCRIPT_SUITE_ORDER.join(',')}"`);
+
+    for (const suite of SCRIPT_SUITE_ORDER) {
+      expect(testWorkflow).toContain(`"suite":"${suite}"`);
+    }
   });
 });

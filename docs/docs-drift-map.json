@@ -298,7 +298,7 @@
       "featurePaths": ["src/app/pages/seo-content/", "scripts/generate-seo-pages.mjs", "scripts/audit-seo-pages.mjs", "scripts/verify-guide-discoverability.mjs", "scripts/verify-guide-discoverability.spec.ts", "scripts/public-entry-synthetics.mjs", "scripts/public-entry-synthetics.spec.ts", ".github/workflows/deploy-pages.yml", ".github/workflows/guide-discoverability.yml", ".github/workflows/public-entry-synthetics.yml"],
       "docsPaths": ["README.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwcbb4-guide-discoverability.md", "../optc-team-builder-brain/audits/869dwcbbd-public-entry-synthetics.md"],
       "owner": "SEO content, guide/help discoverability, Pages deployment, and public entry synthetics",
-      "notes": "Public SEO content, route, generation, audit, discoverability verification, synthetic public entry checks, or deployment changes should update public-site docs and validation guidance."
+      "notes": "Public SEO content, route, generation, audit, discoverability verification, post-deploy synthetic public entry checks, or deployment changes should update public-site docs and validation guidance."
     },
     {
       "id": "android-release",
