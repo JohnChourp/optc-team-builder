@@ -48,6 +48,7 @@ script, or workflow prerequisite looks suspect.
 | OPTC DB release-detector logic, fixtures, workflow dispatch rules, historical backtests, upstream replay support, or status artifact formatting | `npm run test:release-check` | Run `npm run data:backtest-release -- --json`, each successful bundled fixture, the live check, verify `node scripts/check-optc-release-needed.mjs --fixture=error --json` exits nonzero, and generate a local release-detector status JSON/Markdown pair from the current reports | Missing upstream character IDs are the only release trigger, historical snapshots keep expected release/no-release decisions stable, fixture branches remain replayable, malformed fixture handling still fails, manual workflow dispatch defaults to report-only verification, the live upstream read still works, and maintainers can scan the latest status without raw workflow logs | Command output; workflow artifacts `release-trigger-outcome`, `upstream-monitor-report`, and `release-detector-status` after Actions runs |
 | Release-readiness summary schema, report formatting, sign-off policy, or release evidence wiring | `npm run test:release-readiness` | `npm run test:release-readiness` plus `npm run release:readiness -- --source /path/to/source.json --output /path/to/summary.md --json-output /path/to/summary.json` using current evidence | Candidate status, tests, performance report, release-trigger report, blockers, and waivers produce the intended ready/blocked decision | Paths passed to `--output` and `--json-output` |
 | Post-merge smoke pack for release-critical web and release-adjacent flows | `npm run test:post-merge-smoke` | Core smoke pack plus the deeper row for the changed surface; add Android live launch only for native, Capacitor, release, PWA shell, or device-specific risk | Public guide/help routes, guided/compare/share journeys, maintainer prerequisites, and release-check handoff stay healthy after merge without replacing full QA for broad release candidates | Playwright output and task-scoped evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` when needed |
+| Public guide and share-link landing synthetics | `PUBLIC_ENTRY_BASE_URL=https://optcteambuilder.com npm run synthetic:public-entry` plus `npm run test:public-entry-synthetics` when the monitor changes | Scheduled/manual `Public Entry Synthetics` workflow, plus the dispatch sent by a successful `Deploy GitHub Pages` run on `main`; use the JSON report categories to route failures | The deployed guide route renders after Pages publish, required assets load, the deterministic redacted `teamShare` payload decodes, and Manual Team Builder renders the shared draft | GitHub Actions artifact `public-entry-synthetics-report`; local `PUBLIC_ENTRY_SYNTHETIC_ARTIFACT_DIR` when set |
 | Release-note source, generated release-note Markdown, or release-note workflow routing | `node ../optc-team-builder-brain/scripts/generate-release-notes.mjs --source ../optc-team-builder-brain/audits/release-notes/<period>-source.json --evidence-index ../optc-team-builder-brain/audits/evidence-index.json --output docs/release-notes/<period>.md --check` with `<period>` replaced by the touched release period, plus docs integrity | Generator tests plus full app/brain docs integrity when changing source schema, generated Markdown, or release-note links | Release notes stay generated from workspace-scoped ClickUp evidence and brain audits instead of drifting into hand-edited summaries | Generated `docs/release-notes/<period>.md` and brain source JSON |
 | Dependency maintenance policy, Dependabot cadence, or toolchain update review | `npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain` plus the focused row for the changed surface | Follow `docs/dependency-maintenance-policy.md`: batch safe minor/patch updates, split focused-review updates, and add the package/workflow/browser/performance/release/native checks that match the update | Maintainers can tell which dependency and tooling updates are safe to batch, which require focused review, and how to roll out or roll back changes after merge | Brain task audit and default-branch workflow runs |
 | Maintainer environment, sibling checkout, or validation prerequisite drift | `npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain` | Doctor command plus `npm run test:maintainer-doctor`; add docs command and integrity checks when command examples or workflow references changed | Node/npm engines, app/brain layout, required workflow files, contract/performance/release-check scripts, release fixtures, brain evidence paths, and instruction parity are ready before deeper validation | Doctor output only |
@@ -566,6 +567,46 @@ Command status: CI-executable.
 ```bash
 npm run test:discoverability
 ```
+
+### Public Entry Synthetics
+
+Use the public entry synthetic monitor when the deployed guide or share-link
+landing path needs live availability evidence. The monitor uses a deterministic
+synthetic share payload and redacts the `teamShare` value from JSON reports, so
+do not paste real user share links or codes into workflow inputs or issue
+comments.
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+PUBLIC_ENTRY_BASE_URL=https://optcteambuilder.com npm run synthetic:public-entry
+```
+
+Run the focused unit tests after changing the monitor script or report
+classification:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run test:public-entry-synthetics
+```
+
+Failures use four categories:
+
+- `routing`: inspect Pages deploy status, route redirects, and Angular route
+  registration.
+- `asset-loading`: inspect missing hashed bundles, generated data assets, and
+  deploy artifact contents.
+- `decoding`: inspect saved-team share schema/codec changes and
+  `teamShare` query handling.
+- `rendering`: inspect Manual Team Builder or SEO guide rendering after the
+  route and assets loaded.
+
+The `Deploy GitHub Pages` workflow dispatches the synthetic workflow after
+successful `main` deployments, which avoids checking the previous public site
+before the new Pages artifact is live. Scheduled/manual runs use the same
+workflow, which uploads `public-entry-synthetics-report` with the JSON report
+and screenshots for the latest run.
 
 ### Docs Drift
 

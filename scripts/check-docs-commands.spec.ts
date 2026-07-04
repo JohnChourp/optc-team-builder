@@ -67,6 +67,7 @@ describe('check-docs-commands', () => {
         '```bash',
         'npm run data:check-release -- --fixture=no-change --json',
         'npm run data:check-release -- --fixture=no-change --json',
+        'npm run test:public-entry-synthetics',
         '```',
         '',
         'Command status: manual/illustrative.',
@@ -94,6 +95,7 @@ describe('check-docs-commands', () => {
     expect(result.failures).toEqual([]);
     expect(seen).toEqual([
       { command: 'npm run data:check-release -- --fixture=no-change --json', cwd: appRoot },
+      { command: 'npm run test:public-entry-synthetics', cwd: appRoot },
       {
         command: 'node scripts/audit-docs-integrity.mjs --brain . --app ../optc-team-builder',
         cwd: brainRoot,

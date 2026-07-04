@@ -1,0 +1,55 @@
+name: Public Entry Synthetics
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Public site base URL to monitor
+        required: false
+        default: https://optcteambuilder.com
+        type: string
+  schedule:
+    - cron: '41 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-entry-synthetics
+  cancel-in-progress: false
+
+jobs:
+  public-entry-synthetics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run public entry synthetics
+        env:
+          PUBLIC_ENTRY_BASE_URL: ${{ inputs.base_url || 'https://optcteambuilder.com' }}
+          PUBLIC_ENTRY_SYNTHETIC_ARTIFACT_DIR: ${{ github.workspace }}/synthetic-artifacts/public-entry
+        run: npm run synthetic:public-entry
+
+      - name: Upload public entry synthetic artifacts
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: public-entry-synthetics-report
+          path: synthetic-artifacts/public-entry/
+          if-no-files-found: warn
+          retention-days: 30

@@ -55,6 +55,10 @@ export const SCRIPT_SUITES = {
     label: 'Guide discoverability tests',
     command: 'npm run test:discoverability',
   },
+  'public-entry-synthetics': {
+    label: 'Public entry synthetic monitor tests',
+    command: 'npm run test:public-entry-synthetics',
+  },
   'drive-sync-server': {
     label: 'Drive sync backend tests',
     command: 'npm run test:drive-sync-server',
@@ -165,6 +169,13 @@ function isDiscoverabilityPath(filePath) {
   return (
     filePath === 'scripts/verify-guide-discoverability.mjs' ||
     filePath === 'scripts/verify-guide-discoverability.spec.ts'
+  );
+}
+
+function isPublicEntrySyntheticsPath(filePath) {
+  return (
+    filePath === 'scripts/public-entry-synthetics.mjs' ||
+    filePath === 'scripts/public-entry-synthetics.spec.ts'
   );
 }
 
@@ -356,6 +367,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isDiscoverabilityPath(filePath)) {
       categories.add('guide-discoverability');
       addScriptSuite(scriptSuites, 'discoverability');
+      continue;
+    }
+
+    if (isPublicEntrySyntheticsPath(filePath)) {
+      categories.add('public-entry-synthetics');
+      addScriptSuite(scriptSuites, 'public-entry-synthetics');
       continue;
     }
 
