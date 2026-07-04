@@ -798,6 +798,21 @@
         "noTeam": "Το preset δεν περιέχει embedded generated ή saved team."
       }
     },
+    "storage": {
+      "diagnosticCode": "Κωδικός diagnostic: {{code}}.",
+      "persistenceQuota": "Το compare panel συνεχίζει να λειτουργεί, αλλά το browser storage είναι γεμάτο και το compare draft μπορεί να μη φορτωθεί μετά από refresh.",
+      "persistenceTitle": "Το compare session δεν αποθηκεύτηκε",
+      "persistenceUnavailable": "Το compare panel συνεχίζει να λειτουργεί, αλλά αυτό το browser session δεν μπορεί να γράψει compare drafts στο local session storage.",
+      "restoreReset": "Ένα saved compare draft ήταν corrupted ή incomplete και καθαρίστηκε.",
+      "restoreTitle": "Το compare session έγινε reset",
+      "restoreUnavailable": "Αυτό το browser session δεν μπόρεσε να διαβάσει compare drafts από το local session storage, οπότε όποιο stale compare restore state υπήρχε παραλείφθηκε.",
+      "restoreUnavailableTitle": "Το compare session δεν φορτώθηκε",
+      "recovery": {
+        "quota": "Ανάκτηση: κλείσε unused tabs, καθάρισε περιττό site storage ή κάνε export τα σημαντικά local data πριν ξαναδοκιμάσεις.",
+        "restoreReset": "Ανάκτηση: διάλεξε ξανά saved teams ή κάνε paste ξανά το compare payload.",
+        "unavailable": "Ανάκτηση: ενεργοποίησε site storage για αυτό το browser profile ή χρησιμοποίησε κανονικό browser window."
+      }
+    },
     "errors": {
       "loadFailed": "Δεν φορτώθηκαν τα team data για αυτή την πλευρά.",
       "missingCharacters": "{{count}} character(s) δεν φορτώθηκαν και εμφανίζονται ως κενά."

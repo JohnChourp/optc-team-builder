@@ -2746,6 +2746,23 @@
                 </button>
               </section>
 
+              @if (compareStorageFeedback(); as compareStorage) {
+                <section
+                  class="preset-import-feedback preset-import-feedback--warning"
+                  data-testid="compare-storage-feedback"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <ion-icon [icon]="presetImportErrorIcon" aria-hidden="true"></ion-icon>
+                  <div>
+                    <strong>{{ compareStorage.title }}</strong>
+                    @for (detail of compareStorage.details; track $index) {
+                      <small>{{ detail }}</small>
+                    }
+                  </div>
+                </section>
+              }
+
               @if (compareModeOpen()) {
                 <section
                   id="auto-team-builder-compare-panel"

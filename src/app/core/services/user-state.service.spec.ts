@@ -2,6 +2,7 @@ import '@angular/compiler';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 
 import { BUILT_IN_CREW_FORGE_IMAGE_PROFILES } from '../data/crew-forge-built-in-profiles';
+import { BrowserStoragePersistenceError } from './browser-storage-error.utils';
 import { type PreferencesAdapterService } from './preferences-adapter.service';
 import { UserStateService } from './user-state.service';
 
@@ -466,6 +467,101 @@ describe('UserStateService saved teams', () => {
       reset: true,
     });
     expect(setCalls).toEqual([{ key: 'savedTeams', value: '[]' }]);
+  });
+
+  it('keeps current saved teams when browser quota prevents imported-team persistence', async () => {
+    const store = new Map<string, string>([
+      ['savedTeams', JSON.stringify([createTeam('team-1', 'Slashers')])],
+    ]);
+
+    preferences.get.mockImplementation(async ({ key }) => ({
+      value: store.get(key) ?? null,
+    }));
+    preferences.set.mockRejectedValue(
+      new DOMException('Simulated browser quota pressure', 'QuotaExceededError'),
+    );
+
+    const service = new UserStateService(
+      { translate: vi.fn((key: string) => key) } as never,
+      preferences as unknown as PreferencesAdapterService,
+    );
+
+    await service.readySavedTeams();
+
+    let caughtError: unknown;
+
+    try {
+      await service.mergeImportedTeams([createTeam('team-2', 'Import')]);
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(BrowserStoragePersistenceError);
+    expect(caughtError).toMatchObject({
+      diagnosticCode: 'BROWSER_STORAGE_QUOTA_EXCEEDED',
+    });
+    expect(service.savedTeams().map((team) => team.id)).toEqual(['team-1']);
+  });
+
+  it('updates saved-team state after storage succeeds when sync metadata marking fails', async () => {
+    const store = new Map<string, string>([
+      ['savedTeams', JSON.stringify([createTeam('team-1', 'Slashers')])],
+    ]);
+    const driveSyncState = {
+      markLocalChange: vi.fn().mockRejectedValue(new Error('sync metadata unavailable')),
+    };
+
+    preferences.get.mockImplementation(async ({ key }) => ({
+      value: store.get(key) ?? null,
+    }));
+    preferences.set.mockImplementation(async ({ key, value }) => {
+      store.set(key, value);
+    });
+
+    const service = new UserStateService(
+      { translate: vi.fn((key: string) => key) } as never,
+      preferences as unknown as PreferencesAdapterService,
+      driveSyncState as never,
+    );
+
+    await service.readySavedTeams();
+
+    await expect(service.mergeImportedTeams([createTeam('team-2', 'Import')])).rejects.toThrow(
+      'sync metadata unavailable',
+    );
+    expect(JSON.parse(store.get('savedTeams') ?? '[]')).toEqual([
+      expect.objectContaining({ id: 'team-2' }),
+      expect.objectContaining({ id: 'team-1' }),
+    ]);
+    expect(service.savedTeams().map((team) => team.id)).toEqual(['team-2', 'team-1']);
+  });
+
+  it('serializes overlapping saved-team mutations against the latest state', async () => {
+    const store = new Map<string, string>([
+      [
+        'savedTeams',
+        JSON.stringify([createTeam('team-1', 'Slashers'), createTeam('team-2', 'Strikers')]),
+      ],
+    ]);
+
+    preferences.get.mockImplementation(async ({ key }) => ({
+      value: store.get(key) ?? null,
+    }));
+    preferences.set.mockImplementation(async ({ key, value }) => {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      store.set(key, value);
+    });
+
+    const service = new UserStateService(
+      { translate: vi.fn((key: string) => key) } as never,
+      preferences as unknown as PreferencesAdapterService,
+    );
+
+    await service.readySavedTeams();
+    await Promise.all([service.deleteTeam('team-1'), service.deleteTeam('team-2')]);
+
+    expect(JSON.parse(store.get('savedTeams') ?? '[]')).toEqual([]);
+    expect(service.savedTeams()).toEqual([]);
   });
 
   it('merges imported teams by id and keeps untouched teams behind them', async () => {

@@ -45,6 +45,7 @@ import {
   type ShipRecord,
 } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import { resolveBrowserStorageFailureDiagnostic } from '../../core/services/browser-storage-error.utils';
 import {
   resolveCaptainTeamConditionStatus,
   type CaptainTeamConditionStatus,
@@ -1172,7 +1173,8 @@ export class SavedTeamsPage implements OnInit {
 
   private resolveImportErrorDetails(error: SavedTeamsImportError | Error | unknown): string[] {
     const details = [this.resolveImportError(error)];
-    const diagnostic = resolveSavedTeamsImportDiagnostic(error);
+    const diagnostic =
+      resolveSavedTeamsImportDiagnostic(error) ?? resolveBrowserStorageFailureDiagnostic(error);
 
     if (diagnostic) {
       details.push(

@@ -798,6 +798,21 @@
         "noTeam": "This preset does not include an embedded generated or saved team."
       }
     },
+    "storage": {
+      "diagnosticCode": "Diagnostic code: {{code}}.",
+      "persistenceQuota": "The compare panel still works, but this browser storage is full so the compare draft may not restore after refresh.",
+      "persistenceTitle": "Compare session not saved",
+      "persistenceUnavailable": "The compare panel still works, but this browser session cannot write compare drafts to local session storage.",
+      "restoreReset": "A saved compare draft was corrupted or incomplete and has been cleared.",
+      "restoreTitle": "Compare session reset",
+      "restoreUnavailable": "This browser session could not read compare drafts from local session storage, so any stale compare restore state was skipped.",
+      "restoreUnavailableTitle": "Compare session not restored",
+      "recovery": {
+        "quota": "Recovery: close unused tabs, clear unneeded site storage, or export important local data before retrying.",
+        "restoreReset": "Recovery: reselect saved teams or paste the compare payload again.",
+        "unavailable": "Recovery: enable site storage for this browser profile or use a normal browser window."
+      }
+    },
     "errors": {
       "loadFailed": "Team data could not be loaded for this side.",
       "missingCharacters": "{{count}} character(s) could not be loaded and are shown as empty."
