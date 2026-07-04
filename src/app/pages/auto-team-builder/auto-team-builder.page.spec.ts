@@ -5414,6 +5414,112 @@ describe('AutoTeamBuilder compare panel', () => {
       '1 character(s) could not be loaded and are shown as empty.',
     );
   });
+
+  it('clears corrupted compare session storage with visible recovery feedback', async () => {
+    ensureSessionStorage();
+    globalThis.sessionStorage.setItem('autoTeamBuilder.compareState.v1', '{"open":true,"sides":');
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page.compareModeOpen()).toBe(false);
+    expect(globalThis.sessionStorage.getItem('autoTeamBuilder.compareState.v1')).toBeNull();
+    expect(page.compareStorageFeedback()).toEqual({
+      tone: 'warning',
+      title: 'Compare session reset',
+      details: [
+        'A saved compare draft was corrupted or incomplete and has been cleared.',
+        'Diagnostic code: AUTO_TEAM_COMPARE_SESSION_RESET.',
+        'Recovery: reselect saved teams or paste the compare payload again.',
+      ],
+    });
+  });
+
+  it('shows compare storage feedback when session restore cannot read browser storage', async () => {
+    ensureSessionStorage();
+    const storage = globalThis.sessionStorage;
+
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      value: {
+        get length() {
+          return storage.length;
+        },
+        clear: () => storage.clear(),
+        getItem: () => {
+          throw new DOMException('Simulated blocked session storage', 'SecurityError');
+        },
+        key: (index: number) => storage.key(index),
+        removeItem: (key: string) => storage.removeItem(key),
+        setItem: (key: string, value: string) => storage.setItem(key, value),
+      } satisfies Storage,
+    });
+
+    try {
+      const { page } = await createPage();
+
+      await page.ngOnInit();
+
+      expect(page.compareModeOpen()).toBe(false);
+      expect(page.compareStorageFeedback()).toEqual({
+        tone: 'warning',
+        title: 'Compare session not restored',
+        details: [
+          'This browser session could not read compare drafts from local session storage, so any stale compare restore state was skipped.',
+          'Diagnostic code: BROWSER_STORAGE_UNAVAILABLE.',
+          'Recovery: enable site storage for this browser profile or use a normal browser window.',
+        ],
+      });
+    } finally {
+      Object.defineProperty(globalThis, 'sessionStorage', {
+        configurable: true,
+        value: storage,
+      });
+    }
+  });
+
+  it('shows compare storage feedback when session persistence hits browser quota', async () => {
+    ensureSessionStorage();
+    const storage = globalThis.sessionStorage;
+
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      value: {
+        get length() {
+          return storage.length;
+        },
+        clear: () => storage.clear(),
+        getItem: (key: string) => storage.getItem(key),
+        key: (index: number) => storage.key(index),
+        removeItem: (key: string) => storage.removeItem(key),
+        setItem: () => {
+          throw new DOMException('Simulated compare quota pressure', 'QuotaExceededError');
+        },
+      } satisfies Storage,
+    });
+
+    try {
+      const { page } = await createPage();
+
+      await page.ngOnInit();
+      page.toggleCompareMode();
+
+      expect(page.compareStorageFeedback()).toEqual({
+        tone: 'warning',
+        title: 'Compare session not saved',
+        details: [
+          'The compare panel still works, but this browser storage is full so the compare draft may not restore after refresh.',
+          'Diagnostic code: BROWSER_STORAGE_QUOTA_EXCEEDED.',
+          'Recovery: close unused tabs, clear unneeded site storage, or export important local data before retrying.',
+        ],
+      });
+    } finally {
+      Object.defineProperty(globalThis, 'sessionStorage', {
+        configurable: true,
+        value: storage,
+      });
+    }
+  });
 });
 
 describe('AutoTeamBuilder export helpers', () => {

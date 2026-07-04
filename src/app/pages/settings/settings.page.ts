@@ -19,6 +19,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { type CharacterBox } from '../../core/models/optc.models';
 import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import { resolveBrowserStorageFailureDiagnostic } from '../../core/services/browser-storage-error.utils';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import {
   DriveBackupService,
@@ -1907,7 +1908,8 @@ export class SettingsPage implements OnInit {
     error: SavedTeamsImportError | Error | unknown,
   ): string[] {
     const details = [this.resolveSavedTeamsImportError(error)];
-    const diagnostic = resolveSavedTeamsImportDiagnostic(error);
+    const diagnostic =
+      resolveSavedTeamsImportDiagnostic(error) ?? resolveBrowserStorageFailureDiagnostic(error);
 
     if (diagnostic) {
       details.push(

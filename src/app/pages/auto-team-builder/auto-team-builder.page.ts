@@ -121,6 +121,7 @@ import {
   UserStateService,
   type AutoTeamBuilderWorkerMode,
 } from '../../core/services/user-state.service';
+import { classifyBrowserStorageFailure } from '../../core/services/browser-storage-error.utils';
 import {
   AutoTeamSelectionImportError,
   type AutoTeamSelectionImportMessage,
@@ -858,6 +859,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly autoTeamBuilderAvailableWorkerCounts;
   public readonly presetImportFeedback = signal<PresetImportFeedback | null>(null);
   public readonly candidatePoolBoxFeedback = signal<PresetImportFeedback | null>(null);
+  public readonly compareStorageFeedback = signal<PresetImportFeedback | null>(null);
   public readonly manualSimilarPickFeedback = signal('');
   public readonly loadedEnemyPresetName = signal<string | null>(null);
   public readonly openExplanationSlotKeys = signal<ReadonlySet<string>>(new Set());
@@ -3889,8 +3891,30 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           },
         } satisfies AutoTeamCompareSessionState),
       );
-    } catch {
-      // Session persistence is best effort only.
+      if (
+        this.compareStorageFeedback()?.details.some((detail) =>
+          detail.includes('BROWSER_STORAGE_'),
+        )
+      ) {
+        this.compareStorageFeedback.set(null);
+      }
+    } catch (error) {
+      const code = classifyBrowserStorageFailure(error) ?? 'BROWSER_STORAGE_UNAVAILABLE';
+
+      this.compareStorageFeedback.set(
+        this.buildCompareStorageFeedback({
+          code,
+          detailKey:
+            code === 'BROWSER_STORAGE_QUOTA_EXCEEDED'
+              ? 'compare.storage.persistenceQuota'
+              : 'compare.storage.persistenceUnavailable',
+          recoveryKey:
+            code === 'BROWSER_STORAGE_QUOTA_EXCEEDED'
+              ? 'compare.storage.recovery.quota'
+              : 'compare.storage.recovery.unavailable',
+          titleKey: 'compare.storage.persistenceTitle',
+        }),
+      );
     }
   }
 
@@ -3915,9 +3939,55 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           state: this.normalizeCompareSideSessionState(parsedState.sides?.b),
         },
       });
-    } catch {
+    } catch (error) {
+      const storageFailureCode = classifyBrowserStorageFailure(error);
+
       this.compareModeOpen.set(false);
+      this.compareSidePayloads.set({
+        a: createAutoTeamCompareSidePayload(),
+        b: createAutoTeamCompareSidePayload(),
+      });
+      try {
+        globalThis.sessionStorage?.removeItem(AUTO_TEAM_COMPARE_SESSION_KEY);
+      } catch {
+        // The visible warning below is enough to distinguish this browser-storage path.
+      }
+      this.compareStorageFeedback.set(
+        storageFailureCode
+          ? this.buildCompareStorageFeedback({
+              code: storageFailureCode,
+              detailKey: 'compare.storage.restoreUnavailable',
+              recoveryKey:
+                storageFailureCode === 'BROWSER_STORAGE_QUOTA_EXCEEDED'
+                  ? 'compare.storage.recovery.quota'
+                  : 'compare.storage.recovery.unavailable',
+              titleKey: 'compare.storage.restoreUnavailableTitle',
+            })
+          : this.buildCompareStorageFeedback({
+              code: 'AUTO_TEAM_COMPARE_SESSION_RESET',
+              detailKey: 'compare.storage.restoreReset',
+              recoveryKey: 'compare.storage.recovery.restoreReset',
+              titleKey: 'compare.storage.restoreTitle',
+            }),
+      );
     }
+  }
+
+  private buildCompareStorageFeedback(input: {
+    code: string;
+    detailKey: string;
+    recoveryKey: string;
+    titleKey: string;
+  }): PresetImportFeedback {
+    return {
+      details: [
+        this.t(input.detailKey),
+        this.t('compare.storage.diagnosticCode', { code: input.code }),
+        this.t(input.recoveryKey),
+      ],
+      title: this.t(input.titleKey),
+      tone: 'warning',
+    };
   }
 
   private normalizeCompareSideSessionState(value: unknown): AutoTeamCompareSideState {

@@ -142,6 +142,16 @@
     "reset": "Local saved-teams storage was invalid and has been reset.",
     "title": "Saved teams storage repaired"
   },
+  "storageFailures": {
+    "errors": {
+      "quota": "Browser storage is full, so the saved teams could not be stored.",
+      "unavailable": "Browser storage is unavailable, so the saved teams could not be stored."
+    },
+    "recovery": {
+      "quota": "Recovery: export or back up important local data, remove unused saved teams or site storage, then retry the import.",
+      "unavailable": "Recovery: enable site storage for this browser profile or retry in a normal browser window."
+    }
+  },
   "openTeam": {
     "copy": "Choose where to open \"{{name}}\".",
     "destinations": {

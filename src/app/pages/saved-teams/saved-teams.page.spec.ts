@@ -8,6 +8,7 @@ import {
   type AutoBuildAbilitySource,
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
+import { BrowserStoragePersistenceError } from '../../core/services/browser-storage-error.utils';
 import {
   captureJsonDownloads,
   readJsonDownloadPayload,
@@ -665,6 +666,50 @@ describe('SavedTeamsPage', () => {
     expect(page.importFeedback()?.details.join(' ')).not.toContain('schemaVersion');
   });
 
+  it('shows storage diagnostics when browser quota blocks saved-team import persistence', async () => {
+    const { page, userState } = createPage();
+
+    userState.mergeImportedTeams.mockRejectedValueOnce(
+      new BrowserStoragePersistenceError('BROWSER_STORAGE_QUOTA_EXCEEDED'),
+    );
+    await page.ngOnInit();
+
+    await page['importSavedTeams'](
+      new File(
+        [
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'saved-teams',
+            exportedAt: '2026-03-29T12:00:00.000Z',
+            teams: [
+              {
+                id: 'team-3',
+                name: 'Imported Team',
+                notes: 'Imported notes',
+                shipId: 9001,
+                slots: [101, null, null, null, null, null],
+                createdAt: '2026-03-29T12:00:00.000Z',
+                updatedAt: '2026-03-29T12:00:00.000Z',
+              },
+            ],
+          }),
+        ],
+        'teams.json',
+        { type: 'application/json' },
+      ),
+    );
+
+    expect(page.importFeedback()).toEqual({
+      tone: 'error',
+      title: 'Import failed',
+      details: [
+        'Browser storage is full.',
+        'Diagnostic code: BROWSER_STORAGE_QUOTA_EXCEEDED.',
+        'Recovery for storageFailures.recovery.quota',
+      ],
+    });
+  });
+
   it('shows import feedback before refreshing imported team cards', async () => {
     const { page, repository } = createPage();
 
@@ -976,6 +1021,18 @@ function createPage(
 
       if (key === 'storageRecovery.dropped') {
         return `Removed ${params?.['count'] ?? 0} corrupted saved-team records.`;
+      }
+
+      if (key === 'storageFailures.errors.quota') {
+        return 'Browser storage is full.';
+      }
+
+      if (key === 'storageFailures.errors.unavailable') {
+        return 'Browser storage is unavailable.';
+      }
+
+      if (key.startsWith('storageFailures.recovery.')) {
+        return `Recovery for ${key}`;
       }
 
       if (key === 'ship.noShipLabel') {

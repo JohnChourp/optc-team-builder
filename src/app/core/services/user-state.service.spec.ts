@@ -2,6 +2,7 @@ import '@angular/compiler';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 
 import { BUILT_IN_CREW_FORGE_IMAGE_PROFILES } from '../data/crew-forge-built-in-profiles';
+import { BrowserStoragePersistenceError } from './browser-storage-error.utils';
 import { type PreferencesAdapterService } from './preferences-adapter.service';
 import { UserStateService } from './user-state.service';
 
@@ -466,6 +467,40 @@ describe('UserStateService saved teams', () => {
       reset: true,
     });
     expect(setCalls).toEqual([{ key: 'savedTeams', value: '[]' }]);
+  });
+
+  it('keeps current saved teams when browser quota prevents imported-team persistence', async () => {
+    const store = new Map<string, string>([
+      ['savedTeams', JSON.stringify([createTeam('team-1', 'Slashers')])],
+    ]);
+
+    preferences.get.mockImplementation(async ({ key }) => ({
+      value: store.get(key) ?? null,
+    }));
+    preferences.set.mockRejectedValue(
+      new DOMException('Simulated browser quota pressure', 'QuotaExceededError'),
+    );
+
+    const service = new UserStateService(
+      { translate: vi.fn((key: string) => key) } as never,
+      preferences as unknown as PreferencesAdapterService,
+    );
+
+    await service.readySavedTeams();
+
+    let caughtError: unknown;
+
+    try {
+      await service.mergeImportedTeams([createTeam('team-2', 'Import')]);
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(BrowserStoragePersistenceError);
+    expect(caughtError).toMatchObject({
+      diagnosticCode: 'BROWSER_STORAGE_QUOTA_EXCEEDED',
+    });
+    expect(service.savedTeams().map((team) => team.id)).toEqual(['team-1']);
   });
 
   it('merges imported teams by id and keeps untouched teams behind them', async () => {

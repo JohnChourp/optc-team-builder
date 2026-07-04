@@ -142,6 +142,16 @@
     "reset": "Το local saved-teams storage δεν ήταν έγκυρο και έγινε reset.",
     "title": "Το saved teams storage επιδιορθώθηκε"
   },
+  "storageFailures": {
+    "errors": {
+      "quota": "Το browser storage είναι γεμάτο, οπότε τα saved teams δεν αποθηκεύτηκαν.",
+      "unavailable": "Το browser storage δεν είναι διαθέσιμο, οπότε τα saved teams δεν αποθηκεύτηκαν."
+    },
+    "recovery": {
+      "quota": "Ανάκτηση: κάνε export ή backup τα σημαντικά local data, αφαίρεσε unused saved teams ή site storage και δοκίμασε ξανά το import.",
+      "unavailable": "Ανάκτηση: ενεργοποίησε το site storage για αυτό το browser profile ή δοκίμασε σε κανονικό browser window."
+    }
+  },
   "openTeam": {
     "copy": "Διάλεξε πού θα ανοίξει το \"{{name}}\".",
     "destinations": {

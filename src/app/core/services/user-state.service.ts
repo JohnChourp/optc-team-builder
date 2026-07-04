@@ -44,6 +44,7 @@ import {
   type SavedRumbleTeamSlot,
 } from '../models/saved-rumble-team.models';
 import { AppI18nService } from './app-i18n.service';
+import { toBrowserStoragePersistenceError } from './browser-storage-error.utils';
 import { DriveSyncStateService } from './drive-sync-state.service';
 import { PreferencesAdapterService } from './preferences-adapter.service';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
@@ -1159,7 +1160,16 @@ export class UserStateService {
   }
 
   private async persistJson(key: string, value: unknown): Promise<void> {
-    await this.preferences.set({ key, value: JSON.stringify(value) });
+    try {
+      await this.preferences.set({ key, value: JSON.stringify(value) });
+    } catch (error) {
+      if (key === SAVED_TEAMS_KEY) {
+        throw toBrowserStoragePersistenceError(error) ?? error;
+      }
+
+      throw error;
+    }
+
     await this.markSyncScopedLocalChange(key);
   }
 
@@ -1182,8 +1192,8 @@ export class UserStateService {
   }
 
   private async replaceSavedTeams(teams: SavedTeam[]): Promise<void> {
-    this.savedTeams.set(teams);
     await this.persistJson(SAVED_TEAMS_KEY, teams);
+    this.savedTeams.set(teams);
   }
 
   private async replaceCharacterBoxes(boxes: CharacterBox[]): Promise<void> {
