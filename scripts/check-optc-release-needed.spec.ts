@@ -1,4 +1,7 @@
 import { execFile } from 'node:child_process';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
@@ -15,6 +18,7 @@ import {
   normalizeReleaseDispatchMode,
   parseReleaseCheckArgs,
   resolveReleaseCheckOptions,
+  validateSourceContract,
 } from './check-optc-release-needed.mjs';
 import {
   buildReleasePolicyGitHubOutputs,
@@ -305,6 +309,33 @@ describe('check-optc-release-needed', () => {
       sourceContract: {
         status: 'passed',
       },
+    });
+  });
+
+  it('fails source-contract validation when normalized units include invalid IDs beside valid IDs', () => {
+    const sourceContract = validateSourceContract({
+      sourceVersion: '40',
+      units: {
+        1: [1, 'Luffy'],
+        metadata: { updatedAt: '2026-07-04' },
+      },
+      characters: [
+        { id: 1 },
+        { id: Number.NaN },
+      ],
+    });
+
+    expect(sourceContract).toMatchObject({
+      status: 'failed',
+      failures: [
+        {
+          id: 'normalized-character-ids',
+          details: {
+            normalizedCharacterCount: 2,
+            invalidCharacterIdCount: 1,
+          },
+        },
+      ],
     });
   });
 
@@ -1009,6 +1040,43 @@ describe('check-optc-release-needed', () => {
       },
     });
     expect(String(rejection.stderr)).toContain('OPTC DB source contract broken');
+  });
+
+  it('converts normalization exceptions into source-contract failures', async () => {
+    const fixtureDir = await mkdtemp(path.join(os.tmpdir(), 'optc-source-contract-throw-'));
+
+    try {
+      await Promise.all([
+        writeFile(path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.manifestPath), '{ "sourceVersion": "36" }\n'),
+        writeFile(
+          path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.seedPath),
+          "CREATE TABLE characters (id INTEGER PRIMARY KEY, name TEXT);\nINSERT INTO characters (id, name) VALUES (1, 'Fixture Luffy');\n",
+        ),
+        writeFile(path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.remoteVersionPath), 'var dbVersion = "40";\n'),
+        writeFile(path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.remoteUnitsPath), 'window.units = [null];\n'),
+      ]);
+
+      await expect(checkOptcReleaseNeeded({ fixtureDir })).rejects.toMatchObject({
+        code: 'SOURCE_CONTRACT_BROKEN',
+        releaseCheckResult: {
+          releaseNeeded: false,
+          reason: 'source-contract-broken',
+          sourceContract: {
+            status: 'failed',
+            failures: [
+              {
+                id: 'normalized-character-ids',
+                details: {
+                  normalizedCharacterCount: 0,
+                },
+              },
+            ],
+          },
+        },
+      });
+    } finally {
+      await rm(fixtureDir, { recursive: true, force: true });
+    }
   });
 });
 

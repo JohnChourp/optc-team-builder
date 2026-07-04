@@ -123,6 +123,10 @@ describe('maintainer-environment-doctor', () => {
     expect(report.checks.map((check) => check.id)).toContain('brain/agents-claude-parity');
   });
 
+  it('includes the source-contract expected-failure fixture in maintainer checks', () => {
+    expect(RELEASE_CHECK_FIXTURE_NAMES).toContain('source-contract-broken');
+  });
+
   it('fails with actionable guidance when the brain checkout is missing', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
     await rm(brainRoot, { recursive: true, force: true });

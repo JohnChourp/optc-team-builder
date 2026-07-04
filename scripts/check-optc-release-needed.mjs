@@ -263,11 +263,31 @@ function duplicateIds(values) {
   return [...duplicates].sort((left, right) => left - right);
 }
 
-export function validateSourceContract({ sourceVersion, units, characters }) {
+function normalizeErrorMessage(error) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
+
+function invalidCharacterIdSamples(normalizedCharacters) {
+  return normalizedCharacters
+    .map((character, index) => ({
+      index,
+      id: character?.id ?? null,
+    }))
+    .filter((sample) => {
+      const characterId = Number(sample.id);
+      return !Number.isInteger(characterId) || characterId <= 0;
+    })
+    .slice(0, 5);
+}
+
+export function validateSourceContract({ sourceVersion, units, characters, normalizationError = null }) {
   const normalizedCharacters = Array.isArray(characters) ? characters : [];
-  const characterIds = normalizedCharacters
-    .map((character) => Number(character?.id))
-    .filter((characterId) => Number.isInteger(characterId) && characterId > 0);
+  const normalizedCharacterIds = normalizedCharacters.map((character) => Number(character?.id));
+  const characterIds = normalizedCharacterIds.filter((characterId) => Number.isInteger(characterId) && characterId > 0);
+  const invalidSamples = invalidCharacterIdSamples(normalizedCharacters);
   const duplicates = duplicateIds(characterIds);
   const checks = [];
 
@@ -301,7 +321,19 @@ export function validateSourceContract({ sourceVersion, units, characters }) {
         ),
   );
 
-  if (characterIds.length === 0) {
+  if (normalizationError) {
+    checks.push(
+      buildSourceContractCheck(
+        'normalized-character-ids',
+        'failed',
+        'Upstream units could not be normalized to canonical character IDs.',
+        {
+          normalizedCharacterCount: normalizedCharacters.length,
+          normalizationError: normalizeErrorMessage(normalizationError),
+        },
+      ),
+    );
+  } else if (characterIds.length === 0) {
     checks.push(
       buildSourceContractCheck(
         'normalized-character-ids',
@@ -309,6 +341,21 @@ export function validateSourceContract({ sourceVersion, units, characters }) {
         'Upstream units did not normalize to any positive canonical character IDs.',
         {
           normalizedCharacterCount: normalizedCharacters.length,
+          invalidCharacterIdCount: invalidSamples.length,
+          invalidCharacterIdSamples: invalidSamples,
+        },
+      ),
+    );
+  } else if (invalidSamples.length > 0) {
+    checks.push(
+      buildSourceContractCheck(
+        'normalized-character-ids',
+        'failed',
+        'Upstream units normalized to invalid canonical character IDs.',
+        {
+          normalizedCharacterCount: normalizedCharacters.length,
+          invalidCharacterIdCount: invalidSamples.length,
+          invalidCharacterIdSamples: invalidSamples,
         },
       ),
     );
@@ -681,11 +728,18 @@ async function readRemoteDatasetSnapshot(source, options = {}) {
   const unitsWindow = evaluateLegacyDataSource(unitsSource);
   const sourceVersion = extractSourceVersion(versionSource);
   const units = unitsWindow.units;
-  const characters = normalizeCharacters(units, {}, [], new Map());
+  let characters = [];
+  let normalizationError = null;
+  try {
+    characters = normalizeCharacters(units, {}, [], new Map());
+  } catch (error) {
+    normalizationError = error;
+  }
   const sourceContract = validateSourceContract({
     sourceVersion,
     units,
     characters,
+    normalizationError,
   });
 
   return {
