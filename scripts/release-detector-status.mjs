@@ -144,6 +144,34 @@ function normalizeMonitor(upstreamMonitorReport = {}) {
   };
 }
 
+function normalizeSourceContract(releaseTriggerReport = {}) {
+  const releaseCheck = isObject(releaseTriggerReport.releaseCheck) ? releaseTriggerReport.releaseCheck : {};
+  const sourceContract = isObject(releaseTriggerReport.sourceContract)
+    ? releaseTriggerReport.sourceContract
+    : isObject(releaseCheck.sourceContract)
+      ? releaseCheck.sourceContract
+      : null;
+
+  if (!sourceContract) {
+    return {
+      status: null,
+      failureCount: 0,
+      failureIds: [],
+    };
+  }
+
+  const failures = Array.isArray(sourceContract.failures) ? sourceContract.failures : [];
+  const failureIds = failures
+    .map((failure) => optionalString(isObject(failure) ? failure.id : failure))
+    .filter(Boolean);
+
+  return {
+    status: optionalString(sourceContract.status),
+    failureCount: failureIds.length,
+    failureIds,
+  };
+}
+
 function statusFromInputs({ releaseTriggerReport, upstreamMonitorReport, inputErrors }) {
   if (inputErrors.length > 0) {
     return {
@@ -204,6 +232,7 @@ export function buildReleaseDetectorStatusReport({
     reason: status.reason,
     verdict: normalizeVerdict(safeReleaseTriggerReport),
     dataset: normalizeDataset(safeReleaseTriggerReport, safeUpstreamMonitorReport),
+    sourceContract: normalizeSourceContract(safeReleaseTriggerReport),
     monitor: normalizeMonitor(safeUpstreamMonitorReport),
     workflow: pickWorkflowMetadata(safeReleaseTriggerReport.workflow, safeUpstreamMonitorReport.workflow),
     inputErrors,
@@ -252,6 +281,12 @@ export function formatReleaseDetectorStatusMarkdown(report) {
       report.dataset.newCharacterIdsTruncated ? ' (truncated)' : ''
     }`,
     `- Delta summary: ${report.dataset.deltaSummary}`,
+    '',
+    '## Source Contract',
+    '',
+    `- Status: ${formatNullable(report.sourceContract.status)}`,
+    `- Failure count: ${report.sourceContract.failureCount}`,
+    `- Failure IDs: ${formatList(report.sourceContract.failureIds)}`,
     '',
     '## Upstream Monitor',
     '',

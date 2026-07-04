@@ -21,6 +21,30 @@ const requestHeaders = {
 };
 
 const noop = () => undefined;
+const sourceContractAssumptions = Object.freeze([
+  {
+    id: 'version-db-version',
+    label: 'Upstream version file exposes dbVersion',
+  },
+  {
+    id: 'units-window-shape',
+    label: 'Upstream units file populates window.units as an object or array',
+  },
+  {
+    id: 'normalized-character-ids',
+    label: 'Upstream units normalize to positive unique canonical character IDs',
+  },
+]);
+
+export class SourceContractError extends Error {
+  constructor(sourceContract) {
+    const failureIds = sourceContract.failures.map((failure) => failure.id).join(', ');
+    super(`OPTC DB source contract broken: ${failureIds}`);
+    this.name = 'SourceContractError';
+    this.code = 'SOURCE_CONTRACT_BROKEN';
+    this.sourceContract = sourceContract;
+  }
+}
 
 export function parseReleaseCheckArgs(args = process.argv.slice(2)) {
   const options = {
@@ -184,6 +208,7 @@ export function buildReleaseCheckResult({
   remoteSourceVersion,
   localCharacterIds,
   remoteCharacters,
+  sourceContract = null,
 }) {
   const localIdSet = new Set(localCharacterIds);
   const remoteCharacterIds = remoteCharacters
@@ -206,6 +231,193 @@ export function buildReleaseCheckResult({
     remoteCharacterCount: remoteCharacterIds.length,
     newCharacterIds,
     newCharacterCount: newCharacterIds.length,
+    sourceContract,
+  };
+}
+
+function buildSourceContractCheck(id, status, message, details = {}) {
+  return {
+    id,
+    status,
+    message,
+    details,
+  };
+}
+
+function isSupportedUnitsShape(units) {
+  return Array.isArray(units) || (units !== null && typeof units === 'object');
+}
+
+function duplicateIds(values) {
+  const seen = new Set();
+  const duplicates = new Set();
+
+  for (const value of values) {
+    if (seen.has(value)) {
+      duplicates.add(value);
+    } else {
+      seen.add(value);
+    }
+  }
+
+  return [...duplicates].sort((left, right) => left - right);
+}
+
+function normalizeErrorMessage(error) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
+
+function invalidCharacterIdSamples(normalizedCharacters) {
+  return normalizedCharacters
+    .map((character, index) => ({
+      index,
+      id: character?.id ?? null,
+    }))
+    .filter((sample) => {
+      const characterId = Number(sample.id);
+      return !Number.isInteger(characterId) || characterId <= 0;
+    })
+    .slice(0, 5);
+}
+
+export function validateSourceContract({ sourceVersion, units, characters, normalizationError = null }) {
+  const normalizedCharacters = Array.isArray(characters) ? characters : [];
+  const normalizedCharacterIds = normalizedCharacters.map((character) => Number(character?.id));
+  const characterIds = normalizedCharacterIds.filter((characterId) => Number.isInteger(characterId) && characterId > 0);
+  const invalidSamples = invalidCharacterIdSamples(normalizedCharacters);
+  const duplicates = duplicateIds(characterIds);
+  const checks = [];
+
+  checks.push(
+    sourceVersion && sourceVersion !== 'unknown'
+      ? buildSourceContractCheck('version-db-version', 'passed', 'Upstream version.js exposed dbVersion.', {
+          sourceVersion,
+        })
+      : buildSourceContractCheck('version-db-version', 'failed', 'Upstream version.js did not expose dbVersion.', {
+          sourceVersion,
+        }),
+  );
+
+  checks.push(
+    isSupportedUnitsShape(units)
+      ? buildSourceContractCheck(
+          'units-window-shape',
+          'passed',
+          'Upstream units.js populated window.units as a supported object or array.',
+          {
+            shape: Array.isArray(units) ? 'array' : 'object',
+          },
+        )
+      : buildSourceContractCheck(
+          'units-window-shape',
+          'failed',
+          'Upstream units.js did not populate window.units as a supported object or array.',
+          {
+            shape: units === null ? 'null' : typeof units,
+          },
+        ),
+  );
+
+  if (normalizationError) {
+    checks.push(
+      buildSourceContractCheck(
+        'normalized-character-ids',
+        'failed',
+        'Upstream units could not be normalized to canonical character IDs.',
+        {
+          normalizedCharacterCount: normalizedCharacters.length,
+          normalizationError: normalizeErrorMessage(normalizationError),
+        },
+      ),
+    );
+  } else if (characterIds.length === 0) {
+    checks.push(
+      buildSourceContractCheck(
+        'normalized-character-ids',
+        'failed',
+        'Upstream units did not normalize to any positive canonical character IDs.',
+        {
+          normalizedCharacterCount: normalizedCharacters.length,
+          invalidCharacterIdCount: invalidSamples.length,
+          invalidCharacterIdSamples: invalidSamples,
+        },
+      ),
+    );
+  } else if (invalidSamples.length > 0) {
+    checks.push(
+      buildSourceContractCheck(
+        'normalized-character-ids',
+        'failed',
+        'Upstream units normalized to invalid canonical character IDs.',
+        {
+          normalizedCharacterCount: normalizedCharacters.length,
+          invalidCharacterIdCount: invalidSamples.length,
+          invalidCharacterIdSamples: invalidSamples,
+        },
+      ),
+    );
+  } else if (duplicates.length > 0) {
+    checks.push(
+      buildSourceContractCheck(
+        'normalized-character-ids',
+        'failed',
+        'Upstream units normalized to duplicate canonical character IDs.',
+        {
+          normalizedCharacterCount: normalizedCharacters.length,
+          duplicateCharacterIds: duplicates,
+        },
+      ),
+    );
+  } else {
+    checks.push(
+      buildSourceContractCheck(
+        'normalized-character-ids',
+        'passed',
+        'Upstream units normalized to positive unique canonical character IDs.',
+        {
+          normalizedCharacterCount: normalizedCharacters.length,
+        },
+      ),
+    );
+  }
+
+  const failures = checks.filter((check) => check.status === 'failed');
+  const sourceContract = {
+    schemaVersion: 1,
+    status: failures.length > 0 ? 'failed' : 'passed',
+    assumptions: sourceContractAssumptions,
+    checks,
+    failures,
+  };
+
+  return sourceContract;
+}
+
+export function buildSourceContractFailureResult({
+  source,
+  localSnapshot = null,
+  remoteSnapshot = null,
+  sourceContract,
+}) {
+  const remoteCharacterCount = (Array.isArray(remoteSnapshot?.characters) ? remoteSnapshot.characters : [])
+    .map((character) => Number(character?.id))
+    .filter((characterId) => Number.isInteger(characterId) && characterId > 0).length;
+
+  return {
+    releaseNeeded: false,
+    reason: releaseTriggerPolicy.report.reasons.sourceContractBroken,
+    source: source.key,
+    sourceRepository: source.repository,
+    localSourceVersion: String(localSnapshot?.sourceVersion ?? 'unknown'),
+    remoteSourceVersion: String(remoteSnapshot?.sourceVersion ?? 'unknown'),
+    localCharacterCount: Array.isArray(localSnapshot?.characterIds) ? localSnapshot.characterIds.length : 0,
+    remoteCharacterCount,
+    newCharacterIds: [],
+    newCharacterCount: 0,
+    sourceContract,
   };
 }
 
@@ -292,6 +504,9 @@ export function buildReleaseTriggerReport({
     isFailedStepOutcome(steps.releaseCheck) ||
     isFailedStepOutcome(steps.activeRelease) ||
     isFailedStepOutcome(steps.dispatchRelease);
+  const sourceContractBroken =
+    releaseCheckResult?.reason === releaseTriggerPolicy.report.reasons.sourceContractBroken ||
+    releaseCheckResult?.sourceContract?.status === 'failed';
   const blockedByVerificationOnly = !failedPrerequisite && releaseNeeded && !releaseDispatched && verificationOnly;
   const blockedByActiveRelease =
     !failedPrerequisite &&
@@ -315,7 +530,9 @@ export function buildReleaseTriggerReport({
     reason = releaseTriggerPolicy.report.reasons.fixtureValidationFailed;
   } else if (isFailedStepOutcome(steps.releaseCheck)) {
     status = releaseTriggerPolicy.report.statuses.failed;
-    reason = releaseTriggerPolicy.report.reasons.detectorFailed;
+    reason = sourceContractBroken
+      ? releaseTriggerPolicy.report.reasons.sourceContractBroken
+      : releaseTriggerPolicy.report.reasons.detectorFailed;
   } else if (isFailedStepOutcome(steps.activeRelease)) {
     status = releaseTriggerPolicy.report.statuses.failed;
     reason = releaseTriggerPolicy.report.reasons.activeReleaseCheckFailed;
@@ -343,6 +560,7 @@ export function buildReleaseTriggerReport({
     reason,
     workflow,
     releaseCheck: releaseCheckResult,
+    sourceContract: releaseCheckResult?.sourceContract ?? null,
     comparison: releaseCheckResult
       ? {
           source: releaseCheckResult.source,
@@ -430,6 +648,18 @@ export function formatReleaseTriggerSummary(report) {
     lines.push(`- Run: ${report.workflow.runUrl}`);
   }
 
+  if (report.sourceContract) {
+    lines.push(`- Source contract: ${report.sourceContract.status}`);
+
+    if (report.sourceContract.failures?.length > 0) {
+      lines.push(
+        `- Source contract failures: ${report.sourceContract.failures
+          .map((failure) => failure.id)
+          .join(', ')}`,
+      );
+    }
+  }
+
   lines.push(
     '',
     '### Step outcomes',
@@ -496,10 +726,26 @@ async function readRemoteDatasetSnapshot(source, options = {}) {
     }),
   ]);
   const unitsWindow = evaluateLegacyDataSource(unitsSource);
+  const sourceVersion = extractSourceVersion(versionSource);
+  const units = unitsWindow.units;
+  let characters = [];
+  let normalizationError = null;
+  try {
+    characters = normalizeCharacters(units, {}, [], new Map());
+  } catch (error) {
+    normalizationError = error;
+  }
+  const sourceContract = validateSourceContract({
+    sourceVersion,
+    units,
+    characters,
+    normalizationError,
+  });
 
   return {
-    sourceVersion: extractSourceVersion(versionSource),
-    characters: normalizeCharacters(unitsWindow.units, {}, [], new Map()),
+    sourceVersion,
+    characters,
+    sourceContract,
   };
 }
 
@@ -517,12 +763,24 @@ export async function checkOptcReleaseNeeded(options = {}) {
   const localSnapshot = await readLocalDatasetSnapshot(resolvedOptions);
   const remoteSnapshot = await readRemoteDatasetSnapshot(source, resolvedOptions);
 
+  if (remoteSnapshot.sourceContract.status === 'failed') {
+    const error = new SourceContractError(remoteSnapshot.sourceContract);
+    error.releaseCheckResult = buildSourceContractFailureResult({
+      source,
+      localSnapshot,
+      remoteSnapshot,
+      sourceContract: remoteSnapshot.sourceContract,
+    });
+    throw error;
+  }
+
   return buildReleaseCheckResult({
     source,
     localSourceVersion: localSnapshot.sourceVersion,
     remoteSourceVersion: remoteSnapshot.sourceVersion,
     localCharacterIds: localSnapshot.characterIds,
     remoteCharacters: remoteSnapshot.characters,
+    sourceContract: remoteSnapshot.sourceContract,
   });
 }
 
@@ -550,6 +808,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       console.log(options.json ? JSON.stringify(result, null, 2) : formatHumanResult(result));
     })
     .catch((error) => {
+      if (error instanceof SourceContractError && options.json && error.releaseCheckResult) {
+        console.log(JSON.stringify(error.releaseCheckResult, null, 2));
+      }
+
       console.error(error);
       process.exitCode = 1;
     });

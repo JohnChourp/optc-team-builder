@@ -151,6 +151,7 @@ export const RELEASE_CHECK_FIXTURE_NAMES = [
   'error',
   'new-character',
   'no-change',
+  'source-contract-broken',
   'upstream-shape-drift',
 ];
 

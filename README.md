@@ -245,7 +245,7 @@ The scheduled `Check OPTC DB Release` workflow uses `npm run data:check-release`
 compare committed character IDs with upstream OPTC DB IDs. The detector can also
 replay compact local fixtures without fetching upstream data:
 
-Command status: CI-executable; the `error` fixture is expected to exit nonzero.
+Command status: CI-executable; the `error` and `source-contract-broken` fixtures are expected to exit nonzero.
 <!-- docs-command: ci-executable -->
 ```bash
 npm run data:backtest-release -- --json
@@ -254,14 +254,23 @@ npm run data:check-release -- --fixture=new-character --json
 npm run data:check-release -- --fixture=active-release-running --json
 npm run data:check-release -- --fixture=upstream-shape-drift --json
 node scripts/check-optc-release-needed.mjs --fixture=error --json
+node scripts/check-optc-release-needed.mjs --fixture=source-contract-broken --json
 ```
 
 `no-change` must return `releaseNeeded=false`; `new-character` must return
 `releaseNeeded=true`; `active-release-running` must return `releaseNeeded=true`
 so the workflow report can replay the blocked active-release branch;
 `upstream-shape-drift` must return `releaseNeeded=false` even with a newer
-source version and object/variant shape drift; `error` is intentionally
+source version and object/variant shape drift; `source-contract-broken` must
+exit nonzero with `reason=source-contract-broken`; `error` is intentionally
 malformed and must exit nonzero.
+
+The detector's upstream source contract is intentionally narrow. The selected
+source must expose `dbVersion` from `common/data/version.js`, populate
+`window.units` from `common/data/units.js` as an object or array, and normalize
+to at least one positive unique canonical character ID. Contract failures are
+reported as `source-contract-broken`; they do not request a release and should
+be triaged as upstream-source or parser drift before any Android dispatch.
 
 The historical backtest corpus lives at
 `scripts/fixtures/release-check/history/corpus.json`. It stores exact historical
@@ -288,9 +297,10 @@ finds releasable data.
 
 Every workflow run also uploads `release-detector-status`, a compact JSON and
 Markdown Actions artifact for maintainers. It surfaces the latest detector
-status, release-needed verdict, local and upstream dataset versions, character
-count delta, new upstream ID sample, upstream monitor warning IDs, and the run
-URL without requiring raw workflow-log inspection.
+status, release-needed verdict, source-contract status/failures, local and
+upstream dataset versions, character count delta, new upstream ID sample,
+upstream monitor warning IDs, and the run URL without requiring raw workflow-log
+inspection.
 
 When `Check OPTC DB Release` dispatches `Release Android`, it passes the
 detector run ID, run URL, and source SHA into the release workflow. The release

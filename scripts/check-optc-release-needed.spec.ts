@@ -1,3 +1,10 @@
+import { execFile } from 'node:child_process';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+
 import { describe, expect, it } from 'vitest';
 
 import { dataImportSources } from './import-optc-data.mjs';
@@ -11,6 +18,7 @@ import {
   normalizeReleaseDispatchMode,
   parseReleaseCheckArgs,
   resolveReleaseCheckOptions,
+  validateSourceContract,
 } from './check-optc-release-needed.mjs';
 import {
   buildReleasePolicyGitHubOutputs,
@@ -26,6 +34,9 @@ import {
   RELEASE_CHECK_FIXTURE_FILE_NAMES,
   RELEASE_CHECK_REPLAY_FIXTURE_CASES,
 } from './fixtures/shared/release-check-fixtures.mjs';
+
+const execFileAsync = promisify(execFile);
+const releaseCheckCliPath = fileURLToPath(new URL('./check-optc-release-needed.mjs', import.meta.url));
 
 describe('check-optc-release-needed', () => {
   it('defaults to the 2shankz source and JSON output off', () => {
@@ -64,6 +75,9 @@ describe('check-optc-release-needed', () => {
       },
       report: {
         schemaVersion: 1,
+        reasons: {
+          sourceContractBroken: 'source-contract-broken',
+        },
       },
     });
     expect(releaseTriggerPolicy.localDataset.manifestPath).toMatch(/public[/\\]assets[/\\]data[/\\]optc-manifest\.json$/);
@@ -94,6 +108,7 @@ describe('check-optc-release-needed', () => {
         'active-release-running': 'warning',
         'fixture-validation-failed': 'error',
         'detector-failed': 'error',
+        'source-contract-broken': 'error',
         'active-release-check-failed': 'error',
         'dispatch-failed': 'error',
       },
@@ -273,6 +288,55 @@ describe('check-optc-release-needed', () => {
 
     expect(result.releaseNeeded).toBe(true);
     expect(result.newCharacterIds).toEqual([3]);
+  });
+
+  it('attaches passed source-contract checks to normal release decisions', () => {
+    const result = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '36',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }],
+      sourceContract: {
+        status: 'passed',
+        checks: [{ id: 'normalized-character-ids', status: 'passed' }],
+      },
+    });
+
+    expect(result).toMatchObject({
+      releaseNeeded: false,
+      reason: 'no-new-upstream-characters',
+      sourceContract: {
+        status: 'passed',
+      },
+    });
+  });
+
+  it('fails source-contract validation when normalized units include invalid IDs beside valid IDs', () => {
+    const sourceContract = validateSourceContract({
+      sourceVersion: '40',
+      units: {
+        1: [1, 'Luffy'],
+        metadata: { updatedAt: '2026-07-04' },
+      },
+      characters: [
+        { id: 1 },
+        { id: Number.NaN },
+      ],
+    });
+
+    expect(sourceContract).toMatchObject({
+      status: 'failed',
+      failures: [
+        {
+          id: 'normalized-character-ids',
+          details: {
+            normalizedCharacterCount: 2,
+            invalidCharacterIdCount: 1,
+          },
+        },
+      ],
+    });
   });
 
   it('builds a skipped report for a no-change release check', () => {
@@ -580,6 +644,43 @@ describe('check-optc-release-needed', () => {
     });
   });
 
+  it('includes source-contract failure IDs in maintainer notifications', () => {
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult: {
+        releaseNeeded: false,
+        reason: 'source-contract-broken',
+        source: '2shankz',
+        sourceRepository: '2Shankz/optc-db.github.io',
+        localSourceVersion: '36',
+        remoteSourceVersion: '39',
+        localCharacterCount: 2,
+        remoteCharacterCount: 0,
+        newCharacterIds: [],
+        newCharacterCount: 0,
+        sourceContract: {
+          status: 'failed',
+          failures: [{ id: 'normalized-character-ids' }],
+        },
+      },
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'failure',
+        activeRelease: 'skipped',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+    const notification = buildReleaseTriggerNotification(report);
+
+    expect(notification).toMatchObject({
+      shouldNotify: true,
+      reason: 'source-contract-broken',
+      severity: 'error',
+    });
+    expect(notification.body).toContain('Source contract failures: normalized-character-ids');
+  });
+
   it('builds the active-release blocked report from the bundled active-release-running fixture', async () => {
     const releaseCheckResult = await checkOptcReleaseNeeded({ fixture: 'active-release-running' });
     const report = buildReleaseTriggerReport({
@@ -653,6 +754,27 @@ describe('check-optc-release-needed', () => {
       {
         reason: 'detector-failed',
         releaseCheckResult: null,
+        stepOutcomes: {
+          fixtureValidation: 'success',
+          releaseCheck: 'failure',
+          activeRelease: 'skipped',
+          dispatchRelease: 'skipped',
+          skipRelease: 'skipped',
+        },
+      },
+      {
+        reason: 'source-contract-broken',
+        releaseCheckResult: {
+          ...releaseCheckResult,
+          releaseNeeded: false,
+          reason: 'source-contract-broken',
+          newCharacterIds: [],
+          newCharacterCount: 0,
+          sourceContract: {
+            status: 'failed',
+            failures: [{ id: 'normalized-character-ids' }],
+          },
+        },
         stepOutcomes: {
           fixtureValidation: 'success',
           releaseCheck: 'failure',
@@ -877,6 +999,84 @@ describe('check-optc-release-needed', () => {
     await expect(
       checkOptcReleaseNeeded({ fixture: MALFORMED_RELEASE_CHECK_FIXTURE }),
     ).rejects.toThrow();
+  });
+
+  it('fails source-contract drift with a structured JSON result from the CLI', async () => {
+    let rejection;
+
+    try {
+      await execFileAsync(process.execPath, [
+        releaseCheckCliPath,
+        '--fixture=source-contract-broken',
+        '--json',
+      ]);
+    } catch (error) {
+      rejection = error;
+    }
+
+    expect(rejection).toMatchObject({
+      code: 1,
+    });
+
+    const result = JSON.parse(String(rejection.stdout));
+    expect(result).toMatchObject({
+      releaseNeeded: false,
+      reason: 'source-contract-broken',
+      source: '2shankz',
+      sourceRepository: '2Shankz/optc-db.github.io',
+      localSourceVersion: '36',
+      remoteSourceVersion: '39',
+      localCharacterCount: 2,
+      remoteCharacterCount: 0,
+      newCharacterIds: [],
+      newCharacterCount: 0,
+      sourceContract: {
+        status: 'failed',
+        failures: [
+          {
+            id: 'normalized-character-ids',
+          },
+        ],
+      },
+    });
+    expect(String(rejection.stderr)).toContain('OPTC DB source contract broken');
+  });
+
+  it('converts normalization exceptions into source-contract failures', async () => {
+    const fixtureDir = await mkdtemp(path.join(os.tmpdir(), 'optc-source-contract-throw-'));
+
+    try {
+      await Promise.all([
+        writeFile(path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.manifestPath), '{ "sourceVersion": "36" }\n'),
+        writeFile(
+          path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.seedPath),
+          "CREATE TABLE characters (id INTEGER PRIMARY KEY, name TEXT);\nINSERT INTO characters (id, name) VALUES (1, 'Fixture Luffy');\n",
+        ),
+        writeFile(path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.remoteVersionPath), 'var dbVersion = "40";\n'),
+        writeFile(path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.remoteUnitsPath), 'window.units = [null];\n'),
+      ]);
+
+      await expect(checkOptcReleaseNeeded({ fixtureDir })).rejects.toMatchObject({
+        code: 'SOURCE_CONTRACT_BROKEN',
+        releaseCheckResult: {
+          releaseNeeded: false,
+          reason: 'source-contract-broken',
+          sourceContract: {
+            status: 'failed',
+            failures: [
+              {
+                id: 'normalized-character-ids',
+                details: {
+                  normalizedCharacterCount: 0,
+                },
+              },
+            ],
+          },
+        },
+      });
+    } finally {
+      await rm(fixtureDir, { recursive: true, force: true });
+    }
   });
 });
 

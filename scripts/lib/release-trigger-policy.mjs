@@ -12,7 +12,7 @@ const dataDir = path.join(rootDir, 'public', 'assets', 'data');
  */
 
 /**
- * @typedef {'no-new-upstream-characters' | 'new-upstream-characters' | 'release-dispatched' | 'active-release-running' | 'verification-only' | 'fixture-validation-failed' | 'detector-failed' | 'active-release-check-failed' | 'dispatch-failed'} ReleaseTriggerReason
+ * @typedef {'no-new-upstream-characters' | 'new-upstream-characters' | 'release-dispatched' | 'active-release-running' | 'verification-only' | 'fixture-validation-failed' | 'detector-failed' | 'source-contract-broken' | 'active-release-check-failed' | 'dispatch-failed'} ReleaseTriggerReason
  */
 
 /**
@@ -137,6 +137,7 @@ const releaseTriggerPolicyV1 = {
       verificationOnly: 'verification-only',
       fixtureValidationFailed: 'fixture-validation-failed',
       detectorFailed: 'detector-failed',
+      sourceContractBroken: 'source-contract-broken',
       activeReleaseCheckFailed: 'active-release-check-failed',
       dispatchFailed: 'dispatch-failed',
     },
@@ -151,6 +152,7 @@ const releaseTriggerPolicyV1 = {
       'active-release-running',
       'fixture-validation-failed',
       'detector-failed',
+      'source-contract-broken',
       'active-release-check-failed',
       'dispatch-failed',
     ],
@@ -159,6 +161,7 @@ const releaseTriggerPolicyV1 = {
       'active-release-running': 'warning',
       'fixture-validation-failed': 'error',
       'detector-failed': 'error',
+      'source-contract-broken': 'error',
       'active-release-check-failed': 'error',
       'dispatch-failed': 'error',
     },
@@ -215,6 +218,7 @@ function validateReleaseTriggerReasons(policy) {
     'verificationOnly',
     'fixtureValidationFailed',
     'detectorFailed',
+    'sourceContractBroken',
     'activeReleaseCheckFailed',
     'dispatchFailed',
   ];

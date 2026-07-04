@@ -12,6 +12,13 @@ function formatNewCharacterIds(report) {
   return ids.length > 0 ? ids.join(', ') : 'none';
 }
 
+function formatSourceContractFailures(report) {
+  const failures = report.sourceContract?.failures ?? report.releaseCheck?.sourceContract?.failures ?? [];
+  const failureIds = failures.map((failure) => String(failure?.id ?? '').trim()).filter(Boolean);
+
+  return failureIds.length > 0 ? failureIds.join(', ') : 'none';
+}
+
 function buildArtifactPointer(report) {
   if (report.workflow?.runUrl) {
     return `${report.workflow.runUrl} artifact \`${artifactName}\``;
@@ -63,6 +70,7 @@ export function buildReleaseTriggerNotification(report, policy = releaseTriggerP
     `- Release dispatch block reason: ${report.dispatch?.blockReason ?? 'none'}`,
     `- Active Release Android runs: ${report.dispatch?.activeReleaseCount ?? 'unknown'}`,
     `- New character IDs: ${formatNewCharacterIds(report)}`,
+    `- Source contract failures: ${formatSourceContractFailures(report)}`,
     `- Detailed evidence: ${buildArtifactPointer(report)}`,
   ];
 

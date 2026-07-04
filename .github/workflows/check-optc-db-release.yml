@@ -117,6 +117,14 @@ jobs:
           fi
           echo "::endgroup::"
 
+          echo "::group::Release detector fixture: source-contract-broken (expected failure)"
+          if npm run --silent data:check-release -- --fixture=source-contract-broken --json; then
+            echo "::endgroup::"
+            echo "Expected the release detector source-contract-broken fixture to fail." >&2
+            exit 1
+          fi
+          echo "::endgroup::"
+
       - name: Check upstream OPTC DB character IDs
         id: release-check
         env:
