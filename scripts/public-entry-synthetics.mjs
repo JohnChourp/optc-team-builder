@@ -10,6 +10,8 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const defaultArtifactDir = path.join(projectRoot, 'synthetic-artifacts', 'public-entry');
 const DEFAULT_BASE_URL = 'https://optcteambuilder.com';
 const APP_READY_TIMEOUT_MS = 45_000;
+const SHARE_ERROR_TIMEOUT_MS = 5_000;
+const BROWSER_VIEWPORT = { width: 1366, height: 900 };
 
 export const PUBLIC_ENTRY_SYNTHETIC_TEAM = {
   id: 'synthetic-public-entry-crew',
@@ -186,6 +188,19 @@ function attachPageDiagnostics(page, entry) {
       resourceType: response.request().resourceType(),
     });
   });
+
+  page.on('requestfailed', (request) => {
+    const url = request.url();
+    const failureText = request.failure()?.errorText ?? '';
+    if (isIgnorableDiagnostic(url) || isIgnorableDiagnostic(failureText)) {
+      return;
+    }
+    addFailure(entry, classifyHttpFailureCategory(request), 'Network request failed while loading public entry.', {
+      text: failureText,
+      url: sanitizeUrlForReport(url),
+      resourceType: request.resourceType(),
+    });
+  });
 }
 
 async function waitForAppReady(page, entry) {
@@ -326,7 +341,10 @@ async function checkShareLinkEntry(context, { baseUrl, artifactDir }) {
   await navigateAndWait(page, entry, url);
 
   const shareError = page.getByTestId('manual-share-error');
-  const shareErrorVisible = await shareError.isVisible({ timeout: 2_000 }).catch(() => false);
+  const shareErrorVisible = await shareError
+    .waitFor({ state: 'visible', timeout: SHARE_ERROR_TIMEOUT_MS })
+    .then(() => true)
+    .catch(() => false);
   if (shareErrorVisible) {
     addFailure(entry, 'decoding', 'Manual Team Builder reported a share-link decoding error.', {
       text: ((await shareError.textContent().catch(() => '')) ?? '').replace(/\s+/gu, ' ').trim(),
@@ -375,10 +393,19 @@ export async function runPublicEntrySynthetics(options = {}) {
 
   const browser = await chromium.launch();
   try {
-    const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
-    report.checkedEntries.push(await checkGuideEntry(context, { baseUrl, artifactDir }));
-    report.checkedEntries.push(await checkShareLinkEntry(context, { baseUrl, artifactDir }));
-    await context.close();
+    const guideContext = await browser.newContext({ viewport: BROWSER_VIEWPORT, serviceWorkers: 'block' });
+    try {
+      report.checkedEntries.push(await checkGuideEntry(guideContext, { baseUrl, artifactDir }));
+    } finally {
+      await guideContext.close();
+    }
+
+    const shareContext = await browser.newContext({ viewport: BROWSER_VIEWPORT, serviceWorkers: 'block' });
+    try {
+      report.checkedEntries.push(await checkShareLinkEntry(shareContext, { baseUrl, artifactDir }));
+    } finally {
+      await shareContext.close();
+    }
   } finally {
     await browser.close();
   }
