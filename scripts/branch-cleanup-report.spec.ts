@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BRANCH_CLEANUP_REPORT_SCHEMA_VERSION,
   buildBranchCleanupReport,
+  flattenPaginatedJsonArray,
   formatBranchCleanupMarkdown,
   isCliEntrypoint,
   parseMergedBranches,
@@ -152,6 +153,56 @@ describe('branch cleanup report', () => {
     );
   });
 
+  it('ignores fork PR heads when matching repository branches', () => {
+    const report = buildBranchCleanupReport({
+      repository: 'JohnChourp/optc-team-builder',
+      repoMetadata: { default_branch: 'main' },
+      remoteBranches: [{ name: 'codex/current-work', sha: '1111111' }],
+      openPullRequests: [
+        {
+          number: 77,
+          headRefName: 'codex/current-work',
+          headRepositoryOwner: { login: 'external-contributor' },
+          isCrossRepository: true,
+          updatedAt: '2026-07-04T00:00:00Z',
+        },
+      ],
+      rulesets: [],
+    });
+
+    expect(report.branches[0]).toMatchObject({
+      status: 'investigate',
+      openPr: null,
+      reason: 'no open or merged PR evidence found',
+    });
+  });
+
+  it('investigates stale merged PR evidence when the branch SHA changed', () => {
+    const report = buildBranchCleanupReport({
+      repository: 'JohnChourp/optc-team-builder',
+      repoMetadata: { default_branch: 'main' },
+      remoteBranches: [{ name: 'codex/reused-branch', sha: 'new-sha' }],
+      mergedPullRequests: [
+        {
+          number: 78,
+          headRefName: 'codex/reused-branch',
+          headRefOid: 'old-sha',
+          headRepositoryOwner: { login: 'JohnChourp' },
+          isCrossRepository: false,
+          mergedAt: '2026-07-01T00:00:00Z',
+        },
+      ],
+      rulesets: [],
+    });
+
+    expect(report.branches[0]).toMatchObject({
+      status: 'investigate',
+      reason: 'merged PR head SHA no longer matches remote branch',
+      mergedPr: { number: 78, headRefOid: 'old-sha' },
+    });
+    expect(report.summary.manualDeleteCandidates).toBe(0);
+  });
+
   it('keeps open PR branches and long-lived branch names out of deletion candidates', () => {
     const report = buildBranchCleanupReport({
       repoMetadata: { default_branch: 'main' },
@@ -232,6 +283,12 @@ describe('branch cleanup report', () => {
     expect(report.branches[0].status).toBe('manual-delete-candidate');
     expect(JSON.stringify(report)).not.toContain('delete-branch');
     expect(JSON.stringify(report)).not.toContain('git push');
+  });
+
+  it('flattens paginated ruleset API responses before trusting rule state', () => {
+    expect(flattenPaginatedJsonArray([[{ id: 1 }], [{ id: 2 }]])).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(flattenPaginatedJsonArray([{ id: 1 }])).toEqual([{ id: 1 }]);
+    expect(flattenPaginatedJsonArray(null)).toBeNull();
   });
 
   it('only runs the CLI for the actual entrypoint', () => {

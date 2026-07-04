@@ -44,6 +44,10 @@ function compareIsoStrings(left, right) {
   return String(right ?? '').localeCompare(String(left ?? ''));
 }
 
+function repositoryOwnerFromName(repository) {
+  return optionalString(repository)?.split('/')[0]?.toLowerCase() ?? null;
+}
+
 function latestPullRequestForBranch(pullRequests) {
   const sorted = [...pullRequests].sort((left, right) =>
     compareIsoStrings(left.mergedAt ?? left.updatedAt ?? '', right.mergedAt ?? right.updatedAt ?? ''),
@@ -51,12 +55,16 @@ function latestPullRequestForBranch(pullRequests) {
   return sorted[0] ?? null;
 }
 
-function indexPullRequestsByHead(pullRequests = []) {
+function indexPullRequestsByHead(pullRequests = [], { repositoryOwner = null } = {}) {
   const result = new Map();
 
   for (const pr of pullRequests) {
     const branchName = optionalString(pr?.headRefName);
     if (!branchName) {
+      continue;
+    }
+    const headOwner = optionalString(pr?.headRepositoryOwner?.login)?.toLowerCase() ?? null;
+    if (pr?.isCrossRepository === true || (repositoryOwner && headOwner && headOwner !== repositoryOwner)) {
       continue;
     }
 
@@ -68,6 +76,7 @@ function indexPullRequestsByHead(pullRequests = []) {
       title: optionalString(pr.title),
       url: optionalString(pr.url),
       headRefName: branchName,
+      headRefOid: optionalString(pr.headRefOid),
       mergedAt: optionalString(pr.mergedAt),
       updatedAt: optionalString(pr.updatedAt),
       isDraft: Boolean(pr.isDraft),
@@ -221,6 +230,14 @@ function classifyBranch({
   }
 
   const mergedPr = latestPullRequestForBranch(mergedPullRequests);
+  const mergedPrShaMismatch = Boolean(mergedPr?.headRefOid && branch.sha && mergedPr.headRefOid !== branch.sha);
+  if (mergedPrShaMismatch && !branch.gitMerged) {
+    return {
+      status: 'investigate',
+      reason: 'merged PR head SHA no longer matches remote branch',
+      mergedPr,
+    };
+  }
   const hasMergedEvidence = Boolean(mergedPr || branch.gitMerged);
   const isRoutine = isRoutineFeatureBranch(branch.name);
 
@@ -273,8 +290,9 @@ export function buildBranchCleanupReport({
   warnings = [],
 } = {}) {
   const defaultBranch = optionalString(repoMetadata.default_branch ?? repoMetadata.defaultBranch) ?? 'main';
-  const openByHead = indexPullRequestsByHead(openPullRequests);
-  const mergedByHead = indexPullRequestsByHead(mergedPullRequests);
+  const repositoryOwner = repositoryOwnerFromName(repository ?? repoMetadata.full_name);
+  const openByHead = indexPullRequestsByHead(openPullRequests, { repositoryOwner });
+  const mergedByHead = indexPullRequestsByHead(mergedPullRequests, { repositoryOwner });
   const rulesetsKnown = Array.isArray(rulesets);
   const normalizedRulesets = rulesetsKnown ? rulesets.map(normalizeRuleset).filter(Boolean) : [];
 
@@ -382,6 +400,13 @@ function escapeMarkdown(value) {
     .replace(/\|/gu, '\\|');
 }
 
+export function flattenPaginatedJsonArray(value) {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  return value.flatMap((page) => (Array.isArray(page) ? page : [page]));
+}
+
 export function formatBranchCleanupMarkdown(report) {
   const lines = [
     '# Branch Cleanup Report',
@@ -481,7 +506,13 @@ async function loadRepoMetadata(repo, warnings) {
 }
 
 async function loadRulesets(repo, warnings) {
-  const rulesets = await tryJson('gh', ['api', `repos/${repo}/rulesets`], warnings, 'repository rulesets');
+  const rulesetPages = await tryJson(
+    'gh',
+    ['api', '--paginate', '--slurp', `repos/${repo}/rulesets`],
+    warnings,
+    'repository rulesets',
+  );
+  const rulesets = flattenPaginatedJsonArray(rulesetPages);
   if (!Array.isArray(rulesets)) {
     return null;
   }
@@ -511,7 +542,18 @@ async function loadRulesets(repo, warnings) {
 async function loadPullRequests(repo, state, limit, warnings) {
   const prs = await tryJson(
     'gh',
-    ['pr', 'list', '--repo', repo, '--state', state, '--limit', String(limit), '--json', 'number,headRefName,title,url,mergedAt,updatedAt,isDraft'],
+    [
+      'pr',
+      'list',
+      '--repo',
+      repo,
+      '--state',
+      state,
+      '--limit',
+      String(limit),
+      '--json',
+      'number,headRefName,headRefOid,headRepositoryOwner,isCrossRepository,title,url,mergedAt,updatedAt,isDraft',
+    ],
     warnings,
     `${state} pull requests`,
   );
