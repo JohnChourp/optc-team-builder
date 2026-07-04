@@ -137,6 +137,11 @@ describe('release-detector-status', () => {
         newCharacterIdsTruncated: false,
         deltaSummary: 'local dataset matches upstream by source version, count, and character IDs',
       },
+      sourceContract: {
+        status: null,
+        failureCount: 0,
+        failureIds: [],
+      },
       monitor: {
         status: 'passed',
         warningCount: 0,
@@ -208,6 +213,73 @@ describe('release-detector-status', () => {
     expect(formatReleaseDetectorStatusMarkdown(report)).toContain('# OPTC DB Release Detector Status');
     expect(formatReleaseDetectorStatusMarkdown(report)).toContain('- Local dataset version: 36');
     expect(formatReleaseDetectorStatusMarkdown(report)).toContain('- New upstream character IDs: none');
+    expect(formatReleaseDetectorStatusMarkdown(report)).toContain('## Source Contract');
+  });
+
+  it('surfaces source-contract failures from the release trigger report', () => {
+    const report = buildReleaseDetectorStatusReport({
+      releaseTriggerReport: releaseTriggerReport({
+        status: 'failed',
+        reason: 'source-contract-broken',
+        releaseCheck: {
+          releaseNeeded: false,
+          reason: 'source-contract-broken',
+          source: '2shankz',
+          sourceRepository: '2Shankz/optc-db.github.io',
+          localSourceVersion: '36',
+          remoteSourceVersion: '39',
+          localCharacterCount: 2,
+          remoteCharacterCount: 0,
+          newCharacterIds: [],
+          newCharacterCount: 0,
+          sourceContract: {
+            status: 'failed',
+            failures: [
+              {
+                id: 'normalized-character-ids',
+                message: 'Upstream units did not normalize to any positive canonical character IDs.',
+              },
+            ],
+          },
+        },
+        comparison: {
+          source: '2shankz',
+          sourceRepository: '2Shankz/optc-db.github.io',
+          localSourceVersion: '36',
+          remoteSourceVersion: '39',
+          localCharacterCount: 2,
+          remoteCharacterCount: 0,
+          newCharacterIds: [],
+          newCharacterCount: 0,
+        },
+        sourceContract: {
+          status: 'failed',
+          failures: [
+            {
+              id: 'normalized-character-ids',
+            },
+          ],
+        },
+      }),
+      upstreamMonitorReport: upstreamMonitorReport(),
+      generatedAt,
+    });
+
+    expect(report).toMatchObject({
+      status: 'failed',
+      reason: 'source-contract-broken',
+      sourceContract: {
+        status: 'failed',
+        failureCount: 1,
+        failureIds: ['normalized-character-ids'],
+      },
+      dataset: {
+        upstreamCharacterCount: 0,
+        newCharacterCount: 0,
+      },
+    });
+    expect(formatReleaseDetectorStatusMarkdown(report)).toContain('- Status: failed');
+    expect(formatReleaseDetectorStatusMarkdown(report)).toContain('- Failure IDs: normalized-character-ids');
   });
 
   it('writes failed JSON and Markdown outputs when an input report is missing or malformed', async () => {
