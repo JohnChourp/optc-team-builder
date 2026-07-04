@@ -122,11 +122,19 @@ export function resolvePublicEntrySyntheticsCliOptions(env = process.env) {
   };
 }
 
-function isIgnorableDiagnostic(value) {
+export async function preparePublicEntryArtifactDirs({ artifactDir, reportPath }) {
+  await mkdir(artifactDir, { recursive: true });
+  await mkdir(path.dirname(reportPath), { recursive: true });
+}
+
+export function isIgnorableDiagnostic(value) {
   return [
     /accounts\.google\.com/iu,
     /Google Identity Services/iu,
     /google\.accounts/iu,
+    /googletagmanager\.com/iu,
+    /google-analytics\.com/iu,
+    /gtag\/js/iu,
     /app-config\.js/iu,
     /favicon/iu,
     /ResizeObserver loop/iu,
@@ -183,7 +191,7 @@ function attachPageDiagnostics(page, entry) {
 async function waitForAppReady(page, entry) {
   try {
     await page.waitForLoadState('domcontentloaded');
-    await page.locator('ion-app, app-root').first().waitFor({
+    await page.locator('ion-app').first().waitFor({
       state: 'attached',
       timeout: APP_READY_TIMEOUT_MS,
     });
@@ -293,6 +301,7 @@ async function checkGuideEntry(context, { baseUrl, artifactDir }) {
   await navigateAndWait(page, entry, url);
 
   const headingVisible = await page
+    .locator('ion-app')
     .getByRole('heading', { name: PUBLIC_ENTRY_GUIDE.heading })
     .first()
     .waitFor({ state: 'visible', timeout: APP_READY_TIMEOUT_MS })
@@ -354,7 +363,7 @@ export async function runPublicEntrySynthetics(options = {}) {
   const baseUrl = normalizePublicEntryBaseUrl(options.baseUrl ?? DEFAULT_BASE_URL);
   const artifactDir = path.resolve(options.artifactDir ?? defaultArtifactDir);
   const reportPath = path.resolve(options.reportPath ?? path.join(artifactDir, 'public-entry-synthetics-report.json'));
-  await mkdir(artifactDir, { recursive: true });
+  await preparePublicEntryArtifactDirs({ artifactDir, reportPath });
 
   const report = {
     schemaVersion: 1,

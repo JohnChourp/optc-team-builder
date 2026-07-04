@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -10,7 +11,9 @@ import {
   buildSyntheticSharePayload,
   buildSyntheticShareUrl,
   classifyHttpFailureCategory,
+  isIgnorableDiagnostic,
   normalizePublicEntryBaseUrl,
+  preparePublicEntryArtifactDirs,
   resolvePublicEntrySyntheticsCliOptions,
   sanitizeTextForReport,
   sanitizeUrlForReport,
@@ -71,6 +74,27 @@ describe('public-entry-synthetics', () => {
     expect(options.reportPath).toBe(
       path.resolve('/tmp/public-entry/public-entry-synthetics-report.json'),
     );
+  });
+
+  it('prepares artifact and custom report directories', async () => {
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'public-entry-synthetics-'));
+    try {
+      const artifactDir = path.join(tempRoot, 'artifacts');
+      const reportPath = path.join(tempRoot, 'nested', 'reports', 'synthetic-report.json');
+
+      await preparePublicEntryArtifactDirs({ artifactDir, reportPath });
+
+      expect(existsSync(artifactDir)).toBe(true);
+      expect(existsSync(path.dirname(reportPath))).toBe(true);
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('ignores optional analytics diagnostics without masking first-party assets', () => {
+    expect(isIgnorableDiagnostic('https://www.googletagmanager.com/gtag/js?id=G-TEST')).toBe(true);
+    expect(isIgnorableDiagnostic('https://www.google-analytics.com/g/collect')).toBe(true);
+    expect(isIgnorableDiagnostic('https://example.test/assets/main.js')).toBe(false);
   });
 
   it('keeps the Test workflow full-plan fallback aligned with script suites', () => {
