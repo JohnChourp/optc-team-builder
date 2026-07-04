@@ -136,8 +136,16 @@ Import and share failures are surfaced through safe diagnostic codes plus short 
 | `SAVED_TEAMS_INVALID_PAYLOAD` | The saved-team transfer payload shape is incomplete. | Re-export from Saved Teams or Settings. |
 | `SAVED_TEAMS_INVALID_SHARE_PAYLOAD` | The decoded share payload is missing required share fields. | Generate a new share link from Manual Team Builder or Saved Teams. |
 | `SAVED_TEAMS_NO_IMPORTABLE_TEAM` | The payload parsed, but no stable team could be imported. | Re-share or re-export a saved team with a stable id. |
+| `BROWSER_STORAGE_QUOTA_EXCEEDED` | The payload parsed, but browser storage rejected the saved-team or compare-session write because quota/storage limits were reached. | Export or back up important local data, remove unused saved teams or site storage, then retry the import or compare action. |
+| `BROWSER_STORAGE_UNAVAILABLE` | The payload parsed, but the current browser profile/session cannot read or write the local storage surface. | Enable site storage for this profile or retry in a normal browser window. |
 
 Diagnostics must stay redacted. Error objects and user-facing diagnostic lines may include only the translation key, diagnostic code, and recovery class. They must not include raw JSON, share codes, URLs, team names, notes, decoded payload text, or slot contents.
+
+Browser-storage diagnostics are persistence diagnostics, not schema versions.
+Saved-team and share payloads remain schema v1 when these failures occur.
+Settings standalone saved-team imports, Settings all-data saved-team sections,
+Saved Teams imports, and Auto Team Builder compare-session restore/write paths
+must surface the same redacted diagnostic class without exposing the payload.
 
 Single-team share links use a separate self-contained payload encoded into the `teamShare` query parameter on `/tabs/manual-team-builder`:
 
