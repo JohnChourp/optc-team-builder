@@ -122,6 +122,7 @@ export class UserStateService {
 
   private readonly hydratedDomains = new Set<UserStateHydrationDomain>();
   private readonly hydrationPromises = new Map<UserStateHydrationDomain, Promise<void>>();
+  private savedTeamsMutationQueue: Promise<void> = Promise.resolve();
   private readonly userCrewForgeImageProfiles = signal<CrewForgeImageProfile[]>([]);
 
   public constructor(
@@ -668,21 +669,30 @@ export class UserStateService {
     input: Omit<SavedTeam, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   ): Promise<SavedTeam> {
     await this.readySavedTeams();
+    let savedTeam: SavedTeam | null = null;
 
-    const existing = this.savedTeams().find((team) => team.id === input.id);
-    const savedTeam = this.normalizeSavedTeam(
-      {
-        ...input,
-        id: input.id ?? this.createTeamId(),
-      },
-      existing,
-    );
+    await this.mutateSavedTeams((currentTeams) => {
+      const existing = currentTeams.find((team) => team.id === input.id);
+      savedTeam = this.normalizeSavedTeam(
+        {
+          ...input,
+          id: input.id ?? this.createTeamId(),
+        },
+        existing,
+      );
 
-    const next = existing
-      ? this.savedTeams().map((team) => (team.id === savedTeam.id ? savedTeam : team))
-      : [savedTeam, ...this.savedTeams()];
+      return {
+        changed: true,
+        nextTeams: existing
+          ? currentTeams.map((team) => (team.id === savedTeam?.id ? savedTeam : team))
+          : [savedTeam, ...currentTeams],
+        result: undefined,
+      };
+    });
 
-    await this.replaceSavedTeams(next);
+    if (!savedTeam) {
+      throw new Error('Saved team mutation did not produce a team.');
+    }
 
     return savedTeam;
   }
@@ -701,14 +711,26 @@ export class UserStateService {
       return;
     }
 
-    const next = this.savedTeams().filter((team) => !targetTeamIds.has(team.id));
+    const removedTeamIds = await this.mutateSavedTeams((currentTeams) => {
+      const next = currentTeams.filter((team) => !targetTeamIds.has(team.id));
 
-    if (next.length === this.savedTeams().length) {
-      return;
-    }
+      if (next.length === currentTeams.length) {
+        return {
+          changed: false,
+          result: new Set<string>(),
+        };
+      }
 
-    await this.replaceSavedTeams(next);
-    await this.pruneAssociatedTeamIdsFromEnemies(targetTeamIds);
+      return {
+        changed: true,
+        nextTeams: next,
+        result: new Set(
+          currentTeams.filter((team) => targetTeamIds.has(team.id)).map((team) => team.id),
+        ),
+      };
+    });
+
+    await this.pruneAssociatedTeamIdsFromEnemies(removedTeamIds);
   }
 
   private async pruneAssociatedTeamIdsFromEnemies(
@@ -749,7 +771,18 @@ export class UserStateService {
 
   public async clearAllSavedTeams(): Promise<void> {
     await this.readySavedTeams();
-    await this.replaceSavedTeams([]);
+    await this.mutateSavedTeams((currentTeams) =>
+      currentTeams.length
+        ? {
+            changed: true,
+            nextTeams: [],
+            result: undefined,
+          }
+        : {
+            changed: false,
+            result: undefined,
+          },
+    );
   }
 
   public getSavedTeamById(teamId: string): SavedTeam | null {
@@ -834,40 +867,57 @@ export class UserStateService {
   ): Promise<{ addedCount: number; updatedCount: number; teams: SavedTeam[] }> {
     await this.readySavedTeams();
 
-    const currentTeams = this.savedTeams();
-    const currentTeamMap = new Map(currentTeams.map((team) => [team.id, team] as const));
-    const mergedTeams: SavedTeam[] = [];
-    const importedTeamIds = new Set<string>();
-    let addedCount = 0;
-    let updatedCount = 0;
+    return this.mutateSavedTeams((currentTeams) => {
+      const currentTeamMap = new Map(currentTeams.map((team) => [team.id, team] as const));
+      const mergedTeams: SavedTeam[] = [];
+      const importedTeamIds = new Set<string>();
+      let addedCount = 0;
+      let updatedCount = 0;
 
-    teams.forEach((team) => {
-      const normalizedTeam = this.normalizeSavedTeam(team, currentTeamMap.get(team.id));
+      teams.forEach((team) => {
+        const normalizedTeam = this.normalizeSavedTeam(team, currentTeamMap.get(team.id));
 
-      if (importedTeamIds.has(normalizedTeam.id)) {
-        return;
+        if (importedTeamIds.has(normalizedTeam.id)) {
+          return;
+        }
+
+        importedTeamIds.add(normalizedTeam.id);
+
+        if (currentTeamMap.has(normalizedTeam.id)) {
+          updatedCount += 1;
+        } else {
+          addedCount += 1;
+        }
+
+        mergedTeams.push(normalizedTeam);
+      });
+
+      if (!mergedTeams.length) {
+        return {
+          changed: false,
+          result: {
+            addedCount,
+            updatedCount,
+            teams: currentTeams,
+          },
+        };
       }
 
-      importedTeamIds.add(normalizedTeam.id);
+      const next = [
+        ...mergedTeams,
+        ...currentTeams.filter((team) => !importedTeamIds.has(team.id)),
+      ];
 
-      if (currentTeamMap.has(normalizedTeam.id)) {
-        updatedCount += 1;
-      } else {
-        addedCount += 1;
-      }
-
-      mergedTeams.push(normalizedTeam);
+      return {
+        changed: true,
+        nextTeams: next,
+        result: {
+          addedCount,
+          updatedCount,
+          teams: next,
+        },
+      };
     });
-
-    const next = [...mergedTeams, ...currentTeams.filter((team) => !importedTeamIds.has(team.id))];
-
-    await this.replaceSavedTeams(next);
-
-    return {
-      addedCount,
-      updatedCount,
-      teams: next,
-    };
   }
 
   public async mergeImportedEnemies(
@@ -1198,6 +1248,38 @@ export class UserStateService {
     await this.writeJsonToPreferences(SAVED_TEAMS_KEY, teams);
     this.savedTeams.set(teams);
     await this.markSyncScopedLocalChange(SAVED_TEAMS_KEY);
+  }
+
+  private async mutateSavedTeams<Result>(
+    mutation: (currentTeams: SavedTeam[]) =>
+      | {
+          changed: false;
+          result: Result;
+        }
+      | {
+          changed: true;
+          nextTeams: SavedTeam[];
+          result: Result;
+        },
+  ): Promise<Result> {
+    let result: Result | undefined;
+    const runMutation = this.savedTeamsMutationQueue.then(async () => {
+      const mutationResult = mutation(this.savedTeams());
+      result = mutationResult.result;
+
+      if (mutationResult.changed) {
+        await this.replaceSavedTeams(mutationResult.nextTeams);
+      }
+    });
+
+    this.savedTeamsMutationQueue = runMutation.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    await runMutation;
+
+    return result as Result;
   }
 
   private async replaceCharacterBoxes(boxes: CharacterBox[]): Promise<void> {

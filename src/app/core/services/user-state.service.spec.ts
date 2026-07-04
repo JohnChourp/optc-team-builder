@@ -536,6 +536,34 @@ describe('UserStateService saved teams', () => {
     expect(service.savedTeams().map((team) => team.id)).toEqual(['team-2', 'team-1']);
   });
 
+  it('serializes overlapping saved-team mutations against the latest state', async () => {
+    const store = new Map<string, string>([
+      [
+        'savedTeams',
+        JSON.stringify([createTeam('team-1', 'Slashers'), createTeam('team-2', 'Strikers')]),
+      ],
+    ]);
+
+    preferences.get.mockImplementation(async ({ key }) => ({
+      value: store.get(key) ?? null,
+    }));
+    preferences.set.mockImplementation(async ({ key, value }) => {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      store.set(key, value);
+    });
+
+    const service = new UserStateService(
+      { translate: vi.fn((key: string) => key) } as never,
+      preferences as unknown as PreferencesAdapterService,
+    );
+
+    await service.readySavedTeams();
+    await Promise.all([service.deleteTeam('team-1'), service.deleteTeam('team-2')]);
+
+    expect(JSON.parse(store.get('savedTeams') ?? '[]')).toEqual([]);
+    expect(service.savedTeams()).toEqual([]);
+  });
+
   it('merges imported teams by id and keeps untouched teams behind them', async () => {
     const { service, setCalls } = await createService([
       createTeam('team-1', 'Original one'),
