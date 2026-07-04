@@ -62,4 +62,4 @@ jobs:
       - name: Dispatch public entry synthetics
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run public-entry-synthetics.yml --ref main -f base_url=https://optcteambuilder.com
+        run: gh workflow run public-entry-synthetics.yml --repo "$GITHUB_REPOSITORY" --ref main -f base_url=https://optcteambuilder.com
