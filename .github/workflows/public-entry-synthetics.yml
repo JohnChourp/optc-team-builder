@@ -10,11 +10,6 @@ on:
         type: string
   schedule:
     - cron: '41 6 * * *'
-  workflow_run:
-    workflows:
-      - Deploy GitHub Pages
-    types:
-      - completed
 
 permissions:
   contents: read
@@ -25,15 +20,12 @@ concurrency:
 
 jobs:
   public-entry-synthetics:
-    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6

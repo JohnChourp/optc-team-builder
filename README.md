@@ -229,9 +229,10 @@ This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workf
   sitemap, metadata, source-doc, and in-app help links do not silently drift.
 - Public guide and share-link landing availability is checked by
   `npm run synthetic:public-entry` against `https://optcteambuilder.com` by
-  default. The scheduled/manual `Public Entry Synthetics` workflow also runs
-  after successful `Deploy GitHub Pages` runs on `main`, so it checks the
-  deployed SHA rather than racing the Pages publish. It uploads the
+  default. The `Deploy GitHub Pages` workflow dispatches `Public Entry
+  Synthetics` after successful `main` deployments, so it checks the deployed
+  SHA rather than racing the Pages publish. Scheduled/manual runs are also
+  available. The workflow uploads the
   `public-entry-synthetics-report` artifact with JSON results and screenshots
   for the guided/compare/share guide plus a deterministic redacted
   `/tabs/manual-team-builder?teamShare=...` landing flow. Set
