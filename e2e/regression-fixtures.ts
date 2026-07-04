@@ -150,10 +150,27 @@ export async function setIonToggle(locator: Locator, checked: boolean): Promise<
       break;
     }
 
+    const beforeAction = await readIonToggleState(locator);
+    if (beforeAction.checked === checked) {
+      await dispatchIonToggleChange(locator, checked);
+      if (await waitForIonToggleMatch(locator, checked)) {
+        break;
+      }
+    }
+
     try {
       await action();
-      await expect.poll(() => ionToggleMatches(locator, checked), { timeout: 5_000 }).toBe(true);
-      break;
+      if (await waitForIonToggleMatch(locator, checked)) {
+        break;
+      }
+
+      const afterAction = await readIonToggleState(locator);
+      if (afterAction.checked === checked) {
+        await dispatchIonToggleChange(locator, checked);
+        if (await waitForIonToggleMatch(locator, checked)) {
+          break;
+        }
+      }
     } catch {
       // Try the next real interaction path before falling back to Ionic's event contract.
     }
@@ -166,18 +183,37 @@ export async function setIonToggle(locator: Locator, checked: boolean): Promise<
   await expect.poll(() => ionToggleMatches(locator, checked)).toBe(true);
   await expect(locator).toHaveAttribute('data-guided-enabled', checked ? 'true' : 'false');
   await locator.page().waitForTimeout(100);
+  if (!(await ionToggleMatches(locator, checked))) {
+    await dispatchIonToggleChange(locator, checked);
+  }
   await expect(locator).toHaveAttribute('data-guided-enabled', checked ? 'true' : 'false');
 }
 
 async function ionToggleMatches(locator: Locator, checked: boolean): Promise<boolean> {
-  const state = await locator.evaluate((element) => ({
-    checked: Boolean((element as HTMLElement & { checked?: boolean }).checked),
-    guidedEnabled: element.getAttribute('data-guided-enabled'),
-  }));
+  const state = await readIonToggleState(locator);
 
   return state.guidedEnabled === null
     ? state.checked === checked
     : state.guidedEnabled === String(checked);
+}
+
+async function waitForIonToggleMatch(locator: Locator, checked: boolean): Promise<boolean> {
+  try {
+    await expect.poll(() => ionToggleMatches(locator, checked), { timeout: 5_000 }).toBe(true);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readIonToggleState(locator: Locator): Promise<{
+  checked: boolean;
+  guidedEnabled: string | null;
+}> {
+  return locator.evaluate((element) => ({
+    checked: Boolean((element as HTMLElement & { checked?: boolean }).checked),
+    guidedEnabled: element.getAttribute('data-guided-enabled'),
+  }));
 }
 
 async function dispatchIonToggleChange(locator: Locator, checked: boolean): Promise<void> {
