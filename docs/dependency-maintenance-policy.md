@@ -36,6 +36,11 @@ larger migration batch.
 | Angular, Ionic, and Capacitor runtime stack | `@angular/*`, `@ionic/angular`, `@capacitor/*`, service-worker/PWA packages | Framework updates can affect routing, PWA install/update behavior, native sync, and UI tests. |
 | Gradle and Android release tooling | `android/`, Gradle wrapper/plugins, signing/build metadata, release scripts | Native-tooling drift can break Android build, signing, versioning, or release workflow execution. |
 
+For post-deploy workflow dispatches, prefer explicit repository context such as
+`gh workflow run --repo "$GITHUB_REPOSITORY"` when the job does not need a
+checkout. That keeps deploy jobs lightweight while avoiding accidental reliance
+on a local `.git` directory.
+
 ## Batch Versus Focused Review
 
 Safe-to-batch updates are small, related, and covered by the existing weekly

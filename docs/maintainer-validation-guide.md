@@ -604,7 +604,9 @@ Failures use four categories:
 
 The `Deploy GitHub Pages` workflow dispatches the synthetic workflow after
 successful `main` deployments, which avoids checking the previous public site
-before the new Pages artifact is live. Scheduled/manual runs use the same
+before the new Pages artifact is live. The dispatch step passes the repository
+explicitly to `gh workflow run` because the deploy job does not need a checkout
+and therefore has no local `.git` context. Scheduled/manual runs use the same
 workflow, which uploads `public-entry-synthetics-report` with the JSON report
 and screenshots for the latest run.
 
