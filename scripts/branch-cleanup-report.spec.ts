@@ -4,6 +4,7 @@ import {
   BRANCH_CLEANUP_REPORT_SCHEMA_VERSION,
   buildBranchCleanupReport,
   formatBranchCleanupMarkdown,
+  isCliEntrypoint,
   parseMergedBranches,
   parseRemoteBranches,
 } from './branch-cleanup-report.mjs';
@@ -86,6 +87,71 @@ describe('branch cleanup report', () => {
     });
   });
 
+  it('treats unavailable rulesets as unsafe for merged routine branches', () => {
+    const report = buildBranchCleanupReport({
+      repoMetadata: {
+        default_branch: 'main',
+        delete_branch_on_merge: true,
+      },
+      remoteBranches: [{ name: 'codex/merged-feature', sha: '2222222', gitMerged: true }],
+      mergedPullRequests: [{ number: 12, headRefName: 'codex/merged-feature', mergedAt: '2026-07-01T00:00:00Z' }],
+      rulesets: null,
+    });
+
+    expect(report.rules.rulesetsKnown).toBe(false);
+    expect(report.branches[0]).toMatchObject({
+      name: 'codex/merged-feature',
+      status: 'investigate',
+      reason: 'merged routine branch, but deletion-rule state is unavailable',
+    });
+    expect(report.summary.manualDeleteCandidates).toBe(0);
+  });
+
+  it('matches branch ruleset glob patterns before classifying deletion candidates', () => {
+    const report = buildBranchCleanupReport({
+      repoMetadata: { default_branch: 'main' },
+      remoteBranches: [
+        { name: 'codex/report-cleanup', sha: '1111111', gitMerged: true },
+        { name: 'codex/nested/report', sha: '2222222', gitMerged: true },
+      ],
+      mergedPullRequests: [
+        { number: 12, headRefName: 'codex/report-cleanup', mergedAt: '2026-07-01T00:00:00Z' },
+        { number: 13, headRefName: 'codex/nested/report', mergedAt: '2026-07-02T00:00:00Z' },
+      ],
+      rulesets: [
+        {
+          id: 1,
+          name: 'Cleanup suffix branches',
+          target: 'branch',
+          enforcement: 'active',
+          conditions: { ref_name: { include: ['refs/heads/codex/*-cleanup'], exclude: [] } },
+          rules: [{ type: 'deletion' }],
+        },
+        {
+          id: 2,
+          name: 'Nested codex branches',
+          target: 'branch',
+          enforcement: 'active',
+          conditions: { ref_name: { include: ['codex/**/*'], exclude: [] } },
+          rules: [{ type: 'deletion' }],
+        },
+      ],
+    });
+
+    const cleanupBranch = report.branches.find((branch) => branch.name === 'codex/report-cleanup');
+    expect(cleanupBranch).toMatchObject({ status: 'blocked' });
+    expect(cleanupBranch?.deletionRules).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Cleanup suffix branches' })]),
+    );
+    const nestedBranch = report.branches.find((branch) => branch.name === 'codex/nested/report');
+    expect(nestedBranch).toMatchObject({
+      status: 'blocked',
+    });
+    expect(nestedBranch?.deletionRules).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Nested codex branches' })]),
+    );
+  });
+
   it('keeps open PR branches and long-lived branch names out of deletion candidates', () => {
     const report = buildBranchCleanupReport({
       repoMetadata: { default_branch: 'main' },
@@ -160,10 +226,19 @@ describe('branch cleanup report', () => {
       repoMetadata: { default_branch: 'main', delete_branch_on_merge: false },
       remoteBranches: [{ name: 'codex/merged-feature', sha: '2222222' }],
       mergedPullRequests: [{ number: 12, headRefName: 'codex/merged-feature', mergedAt: '2026-07-01T00:00:00Z' }],
+      rulesets: [],
     });
 
     expect(report.branches[0].status).toBe('manual-delete-candidate');
     expect(JSON.stringify(report)).not.toContain('delete-branch');
     expect(JSON.stringify(report)).not.toContain('git push');
+  });
+
+  it('only runs the CLI for the actual entrypoint', () => {
+    const moduleUrl = 'file:///tmp/branch-cleanup-report.mjs';
+
+    expect(isCliEntrypoint({ argv1: '/tmp/branch-cleanup-report.mjs', moduleUrl })).toBe(true);
+    expect(isCliEntrypoint({ argv1: '/tmp/vitest.mjs', moduleUrl })).toBe(false);
+    expect(isCliEntrypoint({ argv1: null, moduleUrl })).toBe(false);
   });
 });

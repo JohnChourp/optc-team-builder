@@ -2,7 +2,7 @@
 import { execFile } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
@@ -120,6 +120,34 @@ function listConditionValues(ruleset, field) {
   return Array.isArray(values) ? values.map(String) : [];
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[\\^$.*+?()[\]{}|]/gu, '\\$&');
+}
+
+function globPatternToRegExp(pattern) {
+  let source = '^';
+  for (let index = 0; index < pattern.length; index += 1) {
+    const char = pattern[index];
+    const next = pattern[index + 1];
+    const afterNext = pattern[index + 2];
+
+    if (char === '*' && next === '*' && afterNext === '/') {
+      source += '(?:.*/)?';
+      index += 2;
+    } else if (char === '*' && next === '*') {
+      source += '.*';
+      index += 1;
+    } else if (char === '*') {
+      source += '[^/]*';
+    } else if (char === '?') {
+      source += '[^/]';
+    } else {
+      source += escapeRegExp(char);
+    }
+  }
+  return new RegExp(`${source}$`, 'u');
+}
+
 function rulePatternMatchesBranch(pattern, branchName, defaultBranch) {
   if (pattern === '~ALL') {
     return true;
@@ -127,14 +155,7 @@ function rulePatternMatchesBranch(pattern, branchName, defaultBranch) {
   if (pattern === '~DEFAULT_BRANCH') {
     return branchName === defaultBranch;
   }
-  if (pattern === branchName || pattern === `refs/heads/${branchName}`) {
-    return true;
-  }
-  if (pattern.endsWith('*')) {
-    const prefix = pattern.replace(/^refs\/heads\//u, '').slice(0, -1);
-    return branchName.startsWith(prefix);
-  }
-  return false;
+  return [branchName, `refs/heads/${branchName}`].some((candidate) => globPatternToRegExp(pattern).test(candidate));
 }
 
 function rulesetAppliesToBranch(ruleset, branchName, defaultBranch) {
@@ -174,6 +195,7 @@ function classifyBranch({
   openPullRequests,
   mergedPullRequests,
   deletionRules,
+  deletionRulesUnknown,
 }) {
   if (branch.name === defaultBranch) {
     return {
@@ -211,6 +233,14 @@ function classifyBranch({
       };
     }
 
+    if (deletionRulesUnknown) {
+      return {
+        status: 'investigate',
+        reason: 'merged routine branch, but deletion-rule state is unavailable',
+        mergedPr,
+      };
+    }
+
     return {
       status: 'manual-delete-candidate',
       reason: 'merged routine branch and no active deletion rule applies',
@@ -239,13 +269,14 @@ export function buildBranchCleanupReport({
   remoteBranches = [],
   openPullRequests = [],
   mergedPullRequests = [],
-  rulesets = [],
+  rulesets = null,
   warnings = [],
 } = {}) {
   const defaultBranch = optionalString(repoMetadata.default_branch ?? repoMetadata.defaultBranch) ?? 'main';
   const openByHead = indexPullRequestsByHead(openPullRequests);
   const mergedByHead = indexPullRequestsByHead(mergedPullRequests);
-  const normalizedRulesets = rulesets.map(normalizeRuleset).filter(Boolean);
+  const rulesetsKnown = Array.isArray(rulesets);
+  const normalizedRulesets = rulesetsKnown ? rulesets.map(normalizeRuleset).filter(Boolean) : [];
 
   const branches = remoteBranches
     .map((branch) => ({
@@ -268,6 +299,7 @@ export function buildBranchCleanupReport({
         openPullRequests: openByHead.get(branch.name) ?? [],
         mergedPullRequests: mergedByHead.get(branch.name) ?? [],
         deletionRules,
+        deletionRulesUnknown: !rulesetsKnown,
       });
 
       return {
@@ -292,6 +324,7 @@ export function buildBranchCleanupReport({
     defaultBranch,
     deleteBranchOnMerge: repoMetadata.delete_branch_on_merge ?? repoMetadata.deleteBranchOnMerge ?? null,
     rules: {
+      rulesetsKnown,
       deletionRules: normalizedRulesets
         .filter((ruleset) => ruleset.target === 'branch')
         .filter((ruleset) => ruleset.enforcement === 'active')
@@ -450,7 +483,7 @@ async function loadRepoMetadata(repo, warnings) {
 async function loadRulesets(repo, warnings) {
   const rulesets = await tryJson('gh', ['api', `repos/${repo}/rulesets`], warnings, 'repository rulesets');
   if (!Array.isArray(rulesets)) {
-    return [];
+    return null;
   }
 
   const detailedRulesets = [];
@@ -466,7 +499,10 @@ async function loadRulesets(repo, warnings) {
       warnings,
       `repository ruleset ${ruleset.id}`,
     );
-    detailedRulesets.push(isObject(details) ? details : ruleset);
+    if (!isObject(details)) {
+      return null;
+    }
+    detailedRulesets.push(details);
   }
 
   return detailedRulesets;
@@ -618,7 +654,14 @@ export async function runCli(argv = process.argv.slice(2)) {
   }
 }
 
-if (import.meta.url === pathToFileURL(fileURLToPath(import.meta.url)).href) {
+export function isCliEntrypoint({ argv1 = process.argv[1], moduleUrl = import.meta.url } = {}) {
+  if (!argv1) {
+    return false;
+  }
+  return pathToFileURL(path.resolve(argv1)).href === moduleUrl;
+}
+
+if (isCliEntrypoint()) {
   runCli().catch((error) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
