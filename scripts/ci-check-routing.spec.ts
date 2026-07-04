@@ -158,6 +158,7 @@ describe('ci-check-routing', () => {
       'docs-commands',
       'docs-drift',
       'discoverability',
+      'public-entry-synthetics',
       'drive-sync-server',
       'source-data',
       'perf-budget',
@@ -176,6 +177,18 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(false);
     expect(plan.runE2e).toBe(false);
     expect(plan.scriptSuites).toEqual(['discoverability']);
+  });
+
+  it('routes public entry synthetic monitor changes to the focused suite', () => {
+    const plan = buildCheckPlan([
+      'scripts/public-entry-synthetics.mjs',
+      'scripts/public-entry-synthetics.spec.ts',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['public-entry-synthetics']);
   });
 
   it('routes branch cleanup report changes to the focused suite and docs gates', () => {

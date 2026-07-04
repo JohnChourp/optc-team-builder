@@ -35,6 +35,7 @@ const ALLOWED_COMMANDS = new Map(
     ['npm run test:docs-integrity', { cwd: 'app', expected: 'zero' }],
     ['npm run test:docs-drift', { cwd: 'app', expected: 'zero' }],
     ['npm run test:discoverability', { cwd: 'app', expected: 'zero' }],
+    ['npm run test:public-entry-synthetics', { cwd: 'app', expected: 'zero' }],
     [
       'npm run docs:integrity -- --brain-root ../optc-team-builder-brain',
       { cwd: 'app', expected: 'zero', requiresBrain: true },
