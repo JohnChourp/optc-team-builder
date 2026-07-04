@@ -345,6 +345,7 @@ function formatRuleNames(rules) {
 function escapeMarkdown(value) {
   return String(value ?? '')
     .replace(/\r?\n/gu, ' ')
+    .replace(/\\/gu, '\\\\')
     .replace(/\|/gu, '\\|');
 }
 

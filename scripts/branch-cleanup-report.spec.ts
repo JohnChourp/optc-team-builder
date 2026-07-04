@@ -142,14 +142,16 @@ describe('branch cleanup report', () => {
       repository: 'JohnChourp/optc-team-builder',
       generatedAt: '2026-07-04T00:00:00.000Z',
       repoMetadata: { default_branch: 'main', delete_branch_on_merge: false },
-      remoteBranches: [{ name: 'codex/unknown', sha: '5555555' }],
+      remoteBranches: [{ name: 'codex/unknown\\with|pipe', sha: '5555555' }],
       warnings: ['rulesets unavailable'],
     });
     const markdown = formatBranchCleanupMarkdown(report);
 
     expect(markdown).toContain('# Branch Cleanup Report');
     expect(markdown).toContain('Delete branch on merge: no');
-    expect(markdown).toContain('| `codex/unknown` | investigate | no open or merged PR evidence found | none | none | none |');
+    expect(markdown).toContain(
+      '| `codex/unknown\\\\with\\|pipe` | investigate | no open or merged PR evidence found | none | none | none |',
+    );
     expect(markdown).toContain('- rulesets unavailable');
   });
 
