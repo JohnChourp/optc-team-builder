@@ -20,8 +20,21 @@ on:
         description: Optional explicit versionCode / build number
         required: false
         type: string
+      trigger_run_id:
+        description: Optional Check OPTC DB Release run ID that dispatched this Android release
+        required: false
+        type: string
+      trigger_run_url:
+        description: Optional Check OPTC DB Release run URL that dispatched this Android release
+        required: false
+        type: string
+      trigger_sha:
+        description: Optional source SHA from the Check OPTC DB Release run
+        required: false
+        type: string
 
 permissions:
+  actions: read
   contents: write
   pages: write
   id-token: write
@@ -35,6 +48,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release-sha: ${{ steps.android-release.outputs.release-sha }}
+      release-tag: ${{ steps.android-release.outputs.release-tag }}
+      release-version: ${{ steps.android-release.outputs.release-version }}
+      version-code: ${{ steps.android-release.outputs.version-code }}
+      apk-path: ${{ steps.android-release.outputs.apk-path }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -146,7 +163,131 @@ jobs:
           fi
 
           ./scripts/release-and-tag.sh "${release_args[@]}"
-          echo "release-sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+          release_sha="$(git rev-parse HEAD)"
+          release_version="$(node -p "require('./package.json').version")"
+          version_code="$(node -e "const fs=require('fs'); const text=fs.readFileSync('android/app/build.gradle','utf8'); const match=text.match(/versionCode\\s+(\\d+)/); if(!match){process.exit(1)} console.log(match[1]);")"
+          release_tag="v${release_version}"
+          apk_path="build-artifacts/releases/${release_tag}/optc-team-builder-${release_tag}.apk"
+
+          {
+            echo "release-sha=${release_sha}"
+            echo "release-tag=${release_tag}"
+            echo "release-version=${release_version}"
+            echo "version-code=${version_code}"
+            echo "apk-path=${apk_path}"
+          } >> "${GITHUB_OUTPUT}"
+
+  release-provenance:
+    needs: release
+    runs-on: ubuntu-latest
+    if: ${{ always() && needs.release.result == 'success' }}
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.release-sha }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download release-trigger report
+        if: ${{ inputs.trigger_run_id != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TRIGGER_RUN_ID: ${{ inputs.trigger_run_id }}
+        run: |
+          mkdir -p release-provenance-inputs
+          for attempt in {1..18}; do
+            if gh run download "${TRIGGER_RUN_ID}" \
+              --name release-trigger-outcome \
+              --dir release-provenance-inputs; then
+              exit 0
+            fi
+
+            rm -rf release-provenance-inputs/*
+            echo "release-trigger-outcome artifact not available yet; retry ${attempt}/18"
+            sleep 10
+          done
+
+          echo "::error::Could not download release-trigger-outcome from run ${TRIGGER_RUN_ID}"
+          exit 1
+
+      - name: Read GitHub Release metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.release.outputs.release-tag }}
+        run: |
+          gh release view "${RELEASE_TAG}" \
+            --json tagName,name,url,createdAt,publishedAt,targetCommitish,assets,body \
+            > release-provenance-inputs-github-release.json
+
+      - name: Download GitHub Release APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.release.outputs.release-tag }}
+        run: |
+          mkdir -p release-provenance-inputs
+          gh release download "${RELEASE_TAG}" \
+            --pattern "optc-team-builder-${RELEASE_TAG}.apk" \
+            --dir release-provenance-inputs
+
+      - name: Write release provenance report
+        env:
+          RELEASE_TAG: ${{ needs.release.outputs.release-tag }}
+          RELEASE_VERSION: ${{ needs.release.outputs.release-version }}
+          VERSION_CODE: ${{ needs.release.outputs.version-code }}
+          RELEASE_SHA: ${{ needs.release.outputs.release-sha }}
+          APK_PATH: release-provenance-inputs/optc-team-builder-${{ needs.release.outputs.release-tag }}.apk
+          TRIGGER_RUN_ID: ${{ inputs.trigger_run_id }}
+          TRIGGER_RUN_URL: ${{ inputs.trigger_run_url }}
+          TRIGGER_SHA: ${{ inputs.trigger_sha }}
+        run: |
+          args=(
+            --github-release release-provenance-inputs-github-release.json
+            --release-tag "${RELEASE_TAG}"
+            --release-version "${RELEASE_VERSION}"
+            --version-code "${VERSION_CODE}"
+            --release-sha "${RELEASE_SHA}"
+            --apk-path "${APK_PATH}"
+            --output release-provenance.json
+            --summary release-provenance.md
+          )
+
+          if [[ -n "${TRIGGER_RUN_ID}" ]]; then
+            args+=(--release-trigger-report release-provenance-inputs/release-trigger-outcome.json)
+            args+=(--trigger-run-id "${TRIGGER_RUN_ID}")
+            args+=(--trigger-run-url "${TRIGGER_RUN_URL}")
+            args+=(--trigger-sha "${TRIGGER_SHA}")
+          else
+            args+=(--release-trigger-report none)
+          fi
+
+          npm run --silent release:provenance -- "${args[@]}"
+          cat release-provenance.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload release provenance artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-provenance
+          path: |
+            release-provenance.json
+            release-provenance.md
+            release-provenance-inputs-github-release.json
+          if-no-files-found: error
+          retention-days: 90
 
   deploy-pages:
     needs: release

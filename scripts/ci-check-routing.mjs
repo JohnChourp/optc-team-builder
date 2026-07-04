@@ -141,6 +141,9 @@ function isReleaseCheckPath(filePath) {
     filePath === 'scripts/check-optc-upstream-monitor.mjs' ||
     filePath === 'scripts/check-optc-upstream-monitor.spec.ts' ||
     filePath.startsWith('scripts/fixtures/release-check/') ||
+    filePath.startsWith('scripts/fixtures/release-provenance/') ||
+    filePath === 'scripts/release-provenance-report.mjs' ||
+    filePath === 'scripts/release-provenance-report.spec.ts' ||
     filePath.startsWith('scripts/lib/release-trigger-')
   );
 }

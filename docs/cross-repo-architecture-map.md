@@ -20,7 +20,7 @@ flowchart TD
   dataset --> detector["scripts/check-optc-release-needed.mjs"]
   fixtures["scripts/fixtures/release-check/*"] --> detector
   detector --> workflow[".github/workflows/check-optc-db-release.yml"]
-  workflow --> artifacts["release-trigger-outcome, upstream-monitor-report, release-detector-status"]
+  workflow --> artifacts["release-trigger-outcome, upstream-monitor-report, release-detector-status, release-provenance"]
   appDocs["App maintainer docs"] --> brainAudit["Brain audits and evidence index"]
   artifacts --> brainAudit
   brainAudit --> clickup["ClickUp completion evidence"]
@@ -34,7 +34,7 @@ flowchart TD
 | Generated dataset | `public/assets/data/optc-manifest.json`, `optc-seed.sql`, `optc-preview.json`, `optc-auto-builder-abilities.json`, `optc-unresolved-images.json` | Evidence index entries for tasks that regenerate, validate, or explain dataset changes |
 | Runtime consumers | `src/app/core/services/optc-repository.service.ts`, Captain Coverage services, Auto Team Builder services, Saved Enemy and picker flows | Audits that explain user-visible behavior, QA, and duplicate-prevention context |
 | Captain contracts | `src/app/core/services/fixtures/captain-contract-cases.json`, `scripts/import-optc-data.spec.ts`, `scripts/lib/captain-ability-coverage.spec.ts`, runtime captain specs | Captain coverage audits and task notes when parser, generated tiers, or runtime matching drift |
-| Release detection | `scripts/check-optc-release-needed.mjs`, `scripts/check-optc-upstream-monitor.mjs`, `scripts/release-detector-status.mjs`, `scripts/fixtures/release-check/` | `../../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` and release-trigger audits |
+| Release detection | `scripts/check-optc-release-needed.mjs`, `scripts/check-optc-upstream-monitor.mjs`, `scripts/release-detector-status.mjs`, `scripts/release-provenance-report.mjs`, `scripts/fixtures/release-check/`, `scripts/fixtures/release-provenance/` | `../../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` and release-trigger/provenance audits |
 | Workflow and artifacts | `.github/workflows/check-optc-db-release.yml`, `.github/workflows/release-android.yml` | `../../optc-team-builder-brain/audits/evidence-index.md` plus task-scoped `live-artifacts/<task-id>/` summaries |
 
 ## Data Import To Runtime
@@ -82,8 +82,9 @@ Release detection uses these maintainer surfaces:
   malformed, active-release, and upstream-drift scenarios.
 - `.github/workflows/check-optc-db-release.yml` for scheduled and manual
   verification.
-- `release-trigger-outcome`, `upstream-monitor-report`, and
-  `release-detector-status` workflow artifacts for scan-friendly evidence.
+- `release-trigger-outcome`, `upstream-monitor-report`,
+  `release-detector-status`, and `release-provenance` workflow artifacts for
+  scan-friendly evidence.
 - `../../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` for private
   operations context and incident replay notes.
 

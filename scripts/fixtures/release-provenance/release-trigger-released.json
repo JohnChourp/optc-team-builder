@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-04T00:00:00.000Z",
+  "status": "released",
+  "reason": "release-dispatched",
+  "workflow": {
+    "name": "Check OPTC DB Release",
+    "repository": "JohnChourp/optc-team-builder",
+    "runId": "200",
+    "runNumber": "20",
+    "runAttempt": "1",
+    "runUrl": "https://github.com/JohnChourp/optc-team-builder/actions/runs/200",
+    "eventName": "schedule",
+    "ref": "refs/heads/main",
+    "sha": "1111111111111111111111111111111111111111"
+  },
+  "comparison": {
+    "source": "2shankz",
+    "sourceRepository": "2Shankz/optc-db.github.io",
+    "localSourceVersion": "36",
+    "remoteSourceVersion": "37",
+    "localCharacterCount": 3,
+    "remoteCharacterCount": 5,
+    "newCharacterIds": [
+      1001,
+      1002
+    ],
+    "newCharacterCount": 2
+  },
+  "dispatch": {
+    "releaseWorkflow": "release-android.yml",
+    "ref": "main",
+    "bump": "patch",
+    "mode": "dispatch-if-needed",
+    "releaseNeeded": true,
+    "releaseDispatched": true,
+    "activeReleaseCount": 0,
+    "blocked": false,
+    "blockReason": null
+  },
+  "steps": {}
+}

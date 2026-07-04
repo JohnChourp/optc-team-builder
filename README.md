@@ -292,6 +292,16 @@ status, release-needed verdict, local and upstream dataset versions, character
 count delta, new upstream ID sample, upstream monitor warning IDs, and the run
 URL without requiring raw workflow-log inspection.
 
+When `Check OPTC DB Release` dispatches `Release Android`, it passes the
+detector run ID, run URL, and source SHA into the release workflow. The release
+workflow then uploads a `release-provenance` artifact after the GitHub Release is
+published. That artifact verifies the release tag/version/code, release-notes
+metadata, APK asset name/link/digest, detector dispatch verdict, source-version
+alignment, released new character IDs, and trigger-to-release ancestry. Manual
+Android releases without detector metadata still produce the report, but the
+detector-link check is recorded as a visible warning instead of blocking the
+manual path.
+
 To replay captured upstream files during an incident, keep the local manifest and
 seed defaults or point at custom local files, then pass both remote paths:
 
@@ -340,6 +350,9 @@ The workflow:
 - bumps `package.json`, `package-lock.json`, Android `versionName`/`versionCode`, and iOS `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`
 - builds the signed Android APK
 - commits `release: vX.Y.Z`, tags `vX.Y.Z`, pushes both to `main`, and publishes a GitHub Release
+- uploads `release-provenance` so maintainers can trace an auto-triggered
+  release back to the detector verdict, source SHA, version metadata, and APK
+  artifact
 - relies on that pushed release commit to trigger the normal `Deploy GitHub Pages` workflow
 
 Local fallback signing setup:
