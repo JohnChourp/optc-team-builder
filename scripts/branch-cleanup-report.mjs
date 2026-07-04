@@ -205,6 +205,7 @@ function classifyBranch({
   mergedPullRequests,
   deletionRules,
   deletionRulesUnknown,
+  openPullRequestsUnknown,
 }) {
   if (branch.name === defaultBranch) {
     return {
@@ -258,6 +259,14 @@ function classifyBranch({
       };
     }
 
+    if (openPullRequestsUnknown) {
+      return {
+        status: 'investigate',
+        reason: 'merged routine branch, but open PR state is unavailable',
+        mergedPr,
+      };
+    }
+
     return {
       status: 'manual-delete-candidate',
       reason: 'merged routine branch and no active deletion rule applies',
@@ -291,8 +300,11 @@ export function buildBranchCleanupReport({
 } = {}) {
   const defaultBranch = optionalString(repoMetadata.default_branch ?? repoMetadata.defaultBranch) ?? 'main';
   const repositoryOwner = repositoryOwnerFromName(repository ?? repoMetadata.full_name);
-  const openByHead = indexPullRequestsByHead(openPullRequests, { repositoryOwner });
-  const mergedByHead = indexPullRequestsByHead(mergedPullRequests, { repositoryOwner });
+  const openPullRequestsKnown = Array.isArray(openPullRequests);
+  const openPullRequestList = openPullRequestsKnown ? openPullRequests : [];
+  const mergedPullRequestList = Array.isArray(mergedPullRequests) ? mergedPullRequests : [];
+  const openByHead = indexPullRequestsByHead(openPullRequestList, { repositoryOwner });
+  const mergedByHead = indexPullRequestsByHead(mergedPullRequestList, { repositoryOwner });
   const rulesetsKnown = Array.isArray(rulesets);
   const normalizedRulesets = rulesetsKnown ? rulesets.map(normalizeRuleset).filter(Boolean) : [];
 
@@ -318,6 +330,7 @@ export function buildBranchCleanupReport({
         mergedPullRequests: mergedByHead.get(branch.name) ?? [],
         deletionRules,
         deletionRulesUnknown: !rulesetsKnown,
+        openPullRequestsUnknown: !openPullRequestsKnown,
       });
 
       return {
@@ -370,8 +383,8 @@ export function buildBranchCleanupReport({
       manualDeleteCandidates: statuses['manual-delete-candidate'] ?? 0,
       keepOpen: statuses['keep-open'] ?? 0,
       investigate: statuses.investigate ?? 0,
-      openPrCount: openPullRequests.length,
-      mergedPrCount: mergedPullRequests.length,
+      openPrCount: openPullRequestsKnown ? openPullRequestList.length : null,
+      mergedPrCount: mergedPullRequestList.length,
     },
     branches,
     warnings,
@@ -557,7 +570,7 @@ async function loadPullRequests(repo, state, limit, warnings) {
     warnings,
     `${state} pull requests`,
   );
-  return Array.isArray(prs) ? prs : [];
+  return Array.isArray(prs) ? prs : null;
 }
 
 async function inferRepoFromRemote(remote, warnings) {

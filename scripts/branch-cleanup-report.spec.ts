@@ -203,6 +203,33 @@ describe('branch cleanup report', () => {
     expect(report.summary.manualDeleteCandidates).toBe(0);
   });
 
+  it('treats unavailable open PR data as unsafe for merged routine branches', () => {
+    const report = buildBranchCleanupReport({
+      repository: 'JohnChourp/optc-team-builder',
+      repoMetadata: { default_branch: 'main' },
+      remoteBranches: [{ name: 'codex/maybe-open', sha: 'same-sha' }],
+      openPullRequests: null,
+      mergedPullRequests: [
+        {
+          number: 79,
+          headRefName: 'codex/maybe-open',
+          headRefOid: 'same-sha',
+          headRepositoryOwner: { login: 'JohnChourp' },
+          isCrossRepository: false,
+          mergedAt: '2026-07-01T00:00:00Z',
+        },
+      ],
+      rulesets: [],
+    });
+
+    expect(report.summary.openPrCount).toBeNull();
+    expect(report.branches[0]).toMatchObject({
+      status: 'investigate',
+      reason: 'merged routine branch, but open PR state is unavailable',
+    });
+    expect(report.summary.manualDeleteCandidates).toBe(0);
+  });
+
   it('keeps open PR branches and long-lived branch names out of deletion candidates', () => {
     const report = buildBranchCleanupReport({
       repoMetadata: { default_branch: 'main' },
