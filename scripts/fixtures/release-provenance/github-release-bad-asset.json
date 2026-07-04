@@ -1,0 +1,17 @@
+{
+  "tagName": "v1.2.3",
+  "name": "v1.2.3",
+  "url": "https://github.com/JohnChourp/optc-team-builder/releases/tag/v1.2.3",
+  "targetCommitish": "main",
+  "body": "# OPTC Team Builder v1.2.3\n\n- Version: `1.2.3`\n- Version code: `123`\n",
+  "assets": [
+    {
+      "name": "optc-team-builder-v1.2.2.apk",
+      "url": "https://github.com/JohnChourp/optc-team-builder/releases/download/v1.2.2/optc-team-builder-v1.2.2.apk",
+      "contentType": "application/vnd.android.package-archive",
+      "digest": "sha256:1c9834296ef6ae5fad260e0e0b1f8c545ed62313ab5ea47485efe8f9d55e5427",
+      "size": 12,
+      "state": "uploaded"
+    }
+  ]
+}

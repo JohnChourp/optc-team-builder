@@ -198,7 +198,12 @@ jobs:
           RELEASE_REF: ${{ steps.release-policy.outputs.release_ref }}
           RELEASE_BUMP: ${{ steps.release-policy.outputs.release_bump }}
         run: |
-          gh workflow run "${RELEASE_WORKFLOW}" --ref "${RELEASE_REF}" -f "bump=${RELEASE_BUMP}"
+          gh workflow run "${RELEASE_WORKFLOW}" \
+            --ref "${RELEASE_REF}" \
+            -f "bump=${RELEASE_BUMP}" \
+            -f "trigger_run_id=${GITHUB_RUN_ID}" \
+            -f "trigger_run_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f "trigger_sha=${GITHUB_SHA}"
 
       - name: Block release dispatch for verification-only mode
         id: verify-only-dispatch

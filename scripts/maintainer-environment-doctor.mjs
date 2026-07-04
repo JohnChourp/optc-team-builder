@@ -64,7 +64,7 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     name: 'test:release-check',
     group: 'release-check',
     expectedCommand:
-      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts',
+      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-provenance-report.spec.ts',
     fix: 'Restore the release detector replay package script.',
   },
   {
@@ -84,6 +84,12 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     group: 'release-check',
     expectedCommand: 'node ./scripts/backtest-optc-release-detector.mjs',
     fix: 'Restore the historical release detector backtest package script.',
+  },
+  {
+    name: 'release:provenance',
+    group: 'release-check',
+    expectedCommand: 'node ./scripts/release-provenance-report.mjs',
+    fix: 'Restore the release provenance verification package script.',
   },
   {
     name: 'docs:integrity',
@@ -129,8 +135,11 @@ export const REQUIRED_APP_PATHS = [
   { relativePath: 'scripts/check-optc-upstream-monitor.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/backtest-optc-release-detector.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/backtest-optc-release-detector.spec.ts', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/release-provenance-report.mjs', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/release-provenance-report.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/fixtures/shared/release-check-fixtures.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/fixtures/release-check/history/corpus.json', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/fixtures/release-provenance/release-trigger-released.json', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/check-docs-commands.mjs', kind: 'file', group: 'docs' },
   { relativePath: 'scripts/check-docs-integrity.mjs', kind: 'file', group: 'docs' },
   { relativePath: 'scripts/check-docs-drift.mjs', kind: 'file', group: 'docs' },

@@ -183,13 +183,16 @@
     },
     {
       "id": "release-detector",
-      "name": "OPTC DB release detector and release-trigger notifications",
+      "name": "OPTC DB release detector, release-trigger notifications, and release provenance",
       "featurePaths": [
         "scripts/check-optc-release-needed.mjs",
         "scripts/check-optc-upstream-monitor.mjs",
         "scripts/release-detector-status.mjs",
+        "scripts/release-provenance-report.mjs",
         "scripts/lib/release-trigger-",
         "scripts/fixtures/release-check/",
+        "scripts/fixtures/release-provenance/",
+        ".github/workflows/release-android.yml",
         ".github/workflows/check-optc-db-release.yml"
       ],
       "docsPaths": [
@@ -200,8 +203,8 @@
         "docs/copy-review-checklist.md",
         "../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md"
       ],
-      "owner": "Release detector and notification policy",
-      "notes": "Detector, status artifact, fixture, policy, notification, workflow, or maintainer-facing release copy changes should update release runbook, validation docs, and copy guidance."
+      "owner": "Release detector, notification, and provenance policy",
+      "notes": "Detector, status/provenance artifact, fixture, policy, notification, workflow, or maintainer-facing release copy changes should update release runbook, validation docs, and copy guidance."
     },
     {
       "id": "release-readiness",

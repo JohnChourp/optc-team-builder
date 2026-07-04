@@ -32,6 +32,9 @@
 /scripts/notify-release-trigger-outcome.mjs @JohnChourp
 /scripts/lib/release-trigger-*.mjs @JohnChourp
 /scripts/fixtures/release-check/ @JohnChourp
+/scripts/release-provenance-report.mjs @JohnChourp
+/scripts/release-provenance-report.spec.ts @JohnChourp
+/scripts/fixtures/release-provenance/ @JohnChourp
 
 /scripts/release-readiness-report.mjs @JohnChourp
 /scripts/release-readiness-report.spec.ts @JohnChourp
