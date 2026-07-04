@@ -15,6 +15,10 @@ export const SCRIPT_SUITES = {
     label: 'Maintainer environment doctor tests',
     command: 'npm run test:maintainer-doctor',
   },
+  'branch-cleanup': {
+    label: 'Branch cleanup report tests',
+    command: 'npm run test:branch-cleanup',
+  },
   'dataset-digest': {
     label: 'Dataset change digest tests',
     command: 'npm run test:dataset-digest',
@@ -168,6 +172,14 @@ function isMaintainerDoctorPath(filePath) {
   return (
     filePath === 'scripts/maintainer-environment-doctor.mjs' ||
     filePath === 'scripts/maintainer-environment-doctor.spec.ts'
+  );
+}
+
+function isBranchCleanupPath(filePath) {
+  return (
+    filePath === 'scripts/branch-cleanup-report.mjs' ||
+    filePath === 'scripts/branch-cleanup-report.spec.ts' ||
+    filePath === 'docs/branch-lifecycle-policy.md'
   );
 }
 
@@ -350,6 +362,17 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isMaintainerDoctorPath(filePath)) {
       categories.add('maintainer-doctor');
       addScriptSuite(scriptSuites, 'maintainer-doctor');
+      continue;
+    }
+
+    if (isBranchCleanupPath(filePath)) {
+      categories.add('branch-cleanup');
+      addScriptSuite(scriptSuites, 'branch-cleanup');
+      if (isDocsPath(filePath)) {
+        for (const suite of DOCS_SCRIPT_SUITES) {
+          addScriptSuite(scriptSuites, suite);
+        }
+      }
       continue;
     }
 

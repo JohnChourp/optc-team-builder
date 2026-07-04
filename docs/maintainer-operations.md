@@ -37,6 +37,7 @@ that private detail.
 | Audit public guide and help discoverability | `npm run discoverability:verify` after `npm run build:pages` | Guide-discoverability workflow artifact and task audit when route/link ownership changes |
 | Keep docs from drifting after feature changes | [Docs drift map](docs-drift-map.json) and the docs-only row in the [validation guide](maintainer-validation-guide.md) | Brain docs-integrity audit or task-specific closeout |
 | Open or review human PRs | [Review ownership policy](review-ownership-policy.md) and PR traceability fields | Brain audit, live-artifact directory, and CI run links referenced from the PR |
+| Audit merged branch cleanup blockers | [Branch lifecycle policy](branch-lifecycle-policy.md) | Task audit and ignored `live-artifacts/<task-id>/` command evidence when ClickUp-backed |
 | Triage OPTC DB release detection | [Release detector replay](../README.md#release-detector-replay) and the latest `release-detector-status` Actions artifact | `../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` and release-trigger audits |
 | Summarize release readiness | Release-readiness row in the [validation guide](maintainer-validation-guide.md) | `../optc-team-builder-brain/audits/869dwc0wc-release-readiness-summary.md` or the current release-candidate audit |
 | Publish user-facing release notes | [Release notes README](release-notes/README.md) | Source JSON and generation evidence in the brain repo |

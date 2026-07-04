@@ -60,6 +60,8 @@ Maintainer validation guide:
 - `docs/review-ownership-policy.md` explains CODEOWNERS review routing,
   cross-repo escalation, and the branch-protection limitation for required
   reviews.
+- `docs/branch-lifecycle-policy.md` defines the report-only branch cleanup path
+  for merged PR branches when GitHub rulesets block routine deletion.
 
 Check the maintainer environment before choosing a validation path. The CI
 profile verifies shared app/brain layout, package scripts, contract,

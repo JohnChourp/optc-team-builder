@@ -18,6 +18,7 @@
     "pirate-rumble"
   ],
   "scripts": {
+    "branch:cleanup-report": "node ./scripts/branch-cleanup-report.mjs",
     "config:app": "node ./scripts/write-app-config.mjs",
     "config:app:web-strict": "node ./scripts/write-app-config.mjs --require-google-web-client-id",
     "ng": "ng",
@@ -60,6 +61,7 @@
     "release:detector-status": "node ./scripts/release-detector-status.mjs",
     "doctor:maintainer": "node ./scripts/maintainer-environment-doctor.mjs",
     "test:maintainer-doctor": "vitest run scripts/maintainer-environment-doctor.spec.ts",
+    "test:branch-cleanup": "vitest run scripts/branch-cleanup-report.spec.ts",
     "dataset:digest": "node ./scripts/dataset-change-digest.mjs",
     "test:dataset-digest": "vitest run scripts/dataset-change-digest.spec.ts",
     "test:docs-integrity": "vitest run scripts/check-docs-integrity.spec.ts",

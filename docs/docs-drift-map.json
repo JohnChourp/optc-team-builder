@@ -284,6 +284,14 @@
       "notes": "PR template, workflow, or traceability rule changes should keep reviewer guidance and evidence docs aligned."
     },
     {
+      "id": "branch-lifecycle",
+      "name": "Branch lifecycle and post-merge cleanup",
+      "featurePaths": ["scripts/branch-cleanup-report.mjs", "scripts/branch-cleanup-report.spec.ts", "docs/branch-lifecycle-policy.md"],
+      "docsPaths": ["README.md", "docs/branch-lifecycle-policy.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwcbba-branch-cleanup-policy.md"],
+      "owner": "Branch cleanup policy and GH013 blocker triage",
+      "notes": "Cleanup report, policy, or GH013 branch-deletion guidance changes should keep maintainer routing and brain evidence aligned."
+    },
+    {
       "id": "seo-pages",
       "name": "SEO pages and GitHub Pages deploy",
       "featurePaths": ["src/app/pages/seo-content/", "scripts/generate-seo-pages.mjs", "scripts/audit-seo-pages.mjs", "scripts/verify-guide-discoverability.mjs", "scripts/verify-guide-discoverability.spec.ts", ".github/workflows/deploy-pages.yml", ".github/workflows/guide-discoverability.yml"],

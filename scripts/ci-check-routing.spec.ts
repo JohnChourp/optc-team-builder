@@ -148,6 +148,7 @@ describe('ci-check-routing', () => {
     expect(plan.scriptSuites).toEqual([
       'ci-routing',
       'maintainer-doctor',
+      'branch-cleanup',
       'dataset-digest',
       'saved-team-codecs',
       'captain-contracts',
@@ -175,6 +176,15 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(false);
     expect(plan.runE2e).toBe(false);
     expect(plan.scriptSuites).toEqual(['discoverability']);
+  });
+
+  it('routes branch cleanup report changes to the focused suite and docs gates', () => {
+    const plan = buildCheckPlan(['scripts/branch-cleanup-report.mjs', 'docs/branch-lifecycle-policy.md']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['branch-cleanup', 'docs-integrity', 'docs-commands', 'docs-drift']);
   });
 
   it('fails closed for unknown paths and missing diff data', () => {
