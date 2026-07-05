@@ -94,6 +94,7 @@ try {
   await collectMemorySnapshot(page, cdp, 'final-after-forced-gc', { forceGc: true });
 
   await context.close();
+  recordDiagnosticFailures();
   buildWarnings();
   await writeArtifacts();
 
@@ -259,12 +260,25 @@ function isIgnorableConsoleMessage(text) {
   return text.includes('Ionic Native') || text.includes('Angular is running in development mode');
 }
 
+function recordDiagnosticFailures() {
+  for (const message of consoleMessages) {
+    if (message.type === 'error') {
+      failures.push(`${message.flow}: console error: ${message.text}`);
+    }
+  }
+
+  for (const error of pageErrors) {
+    failures.push(`${error.flow}: page error: ${error.message}`);
+  }
+}
+
 async function runCompareStress(page, cdp) {
   console.log('[perf:memory-pressure] loading Auto Team Builder compare route');
   await page.goto('/tabs/auto-team-builder');
   await waitForAngular(page);
   await page.locator('app-auto-team-builder-page').waitFor({ state: 'attached', timeout: 45_000 });
   await page.getByTestId('auto-build-submit').waitFor({ state: 'visible', timeout: 45_000 });
+  await waitForAutoTeamBuilderReady(page);
   await collectMemorySnapshot(page, cdp, 'compare-before-import');
 
   const importStart = performance.now();
@@ -341,6 +355,26 @@ async function waitForAngular(page) {
     undefined,
     { timeout: 60_000 },
   );
+}
+
+async function waitForAutoTeamBuilderReady(page) {
+  await page.waitForFunction(
+    () => {
+      const host = document.querySelector('app-auto-team-builder-page');
+      const component = host && window.ng?.getComponent?.(host);
+
+      return Boolean(
+        component?.summary?.() &&
+          component?.abilityCatalog?.() &&
+          Array.isArray(component?.ships?.()) &&
+          component.ships().length > 0 &&
+          Array.isArray(component?.savedTeams?.()),
+      );
+    },
+    undefined,
+    { timeout: 60_000 },
+  );
+  await waitForAngular(page);
 }
 
 async function injectAutoTeamFixture(page) {
