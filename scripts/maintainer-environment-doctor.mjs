@@ -43,6 +43,12 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     fix: 'Restore the explanation/compare performance harness package script.',
   },
   {
+    name: 'perf:route-load',
+    group: 'performance',
+    expectedCommand: 'node ./scripts/perf-route-load.mjs',
+    fix: 'Restore the route-load performance harness package script.',
+  },
+  {
     name: 'perf:budget-report',
     group: 'performance',
     expectedCommand: 'node ./scripts/perf-budget-report.mjs',

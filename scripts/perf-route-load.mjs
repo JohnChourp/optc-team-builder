@@ -219,9 +219,9 @@ async function readBundleStats() {
   const initialFiles = new Set(initialEntries.map(({ file }) => file));
 
   const routeEntries = {
-    guide: 'src/app/pages/seo-content/seo-content.page.ts',
-    manualShare: 'src/app/pages/manual-team-builder/manual-team-builder.page.ts',
-    compare: 'src/app/pages/auto-team-builder/auto-team-builder.page.ts',
+    guide: ['src/app/pages/seo-content/seo-content.page.ts'],
+    manualShare: ['src/app/layout/tabs.page.ts', 'src/app/pages/manual-team-builder/manual-team-builder.page.ts'],
+    compare: ['src/app/layout/tabs.page.ts', 'src/app/pages/auto-team-builder/auto-team-builder.page.ts'],
   };
 
   return {
@@ -238,18 +238,26 @@ async function readBundleStats() {
       })),
     },
     routes: Object.fromEntries(
-      Object.entries(routeEntries).map(([key, entryPoint]) => {
-        const found = Object.entries(outputs).find(([, output]) => String(output.entryPoint ?? '').endsWith(entryPoint));
+      Object.entries(routeEntries).map(([key, entryPoints]) => {
+        const found = entryPoints
+          .map((entryPoint) => findOutputByEntryPoint(outputs, entryPoint))
+          .filter(Boolean);
 
-        if (!found) {
-          failures.push(`Missing bundle stats for ${entryPoint}.`);
+        if (found.length !== entryPoints.length) {
+          const foundEntryPoints = new Set(found.map(([, output]) => output.entryPoint));
+          const missing = entryPoints.filter((entryPoint) => !foundEntryPoints.has(entryPoint));
+          failures.push(`Missing bundle stats for ${missing.join(', ')}.`);
           return [key, null];
         }
 
-        return [key, outputStats(found[0], found[1], outputs, initialFiles)];
+        return [key, outputStats(found, outputs, initialFiles)];
       }),
     ),
   };
+}
+
+function findOutputByEntryPoint(outputs, entryPoint) {
+  return Object.entries(outputs).find(([, output]) => String(output.entryPoint ?? '').endsWith(entryPoint)) ?? null;
 }
 
 async function readInitialEntries(outputs) {
@@ -353,21 +361,37 @@ function normalizeOutputPath(value) {
     .replace(/^\/+/u, '');
 }
 
-function outputStats(outputKey, output, outputs, initialFiles) {
-  const outputKeys = [outputKey, ...collectImportedOutputKeys(outputKey, outputs, initialFiles)];
+function outputStats(outputEntries, outputs, initialFiles) {
+  const outputKeys = [];
+  const selected = new Set();
+
+  for (const [outputKey] of outputEntries) {
+    for (const key of [outputKey, ...collectImportedOutputKeys(outputKey, outputs, initialFiles)]) {
+      if (!initialFiles.has(key) && !selected.has(key)) {
+        selected.add(key);
+        outputKeys.push(key);
+      }
+    }
+  }
+
   const rawBytes = outputKeys.reduce((total, key) => total + (outputs[key]?.bytes ?? 0), 0);
   const gzipBytes = outputKeys.reduce((total, key) => total + gzipOutputFile(key), 0);
+  const primaryEntry = outputEntries[outputEntries.length - 1];
 
   return {
-    file: outputKey,
+    file: primaryEntry[0],
     rawBytes,
     gzipBytes,
-    entryPoint: output.entryPoint ?? null,
+    entryPoint: primaryEntry[1].entryPoint ?? null,
+    entryFiles: outputEntries.map(([file, output]) => ({
+      file,
+      entryPoint: output.entryPoint ?? null,
+    })),
     files: outputKeys.map((key) => ({
       file: key,
       rawBytes: outputs[key]?.bytes ?? 0,
       gzipBytes: gzipOutputFile(key),
-      imported: key !== outputKey,
+      imported: !outputEntries.some(([file]) => file === key),
     })),
     topInputs: topInputsForOutputs(outputKeys, outputs),
   };
