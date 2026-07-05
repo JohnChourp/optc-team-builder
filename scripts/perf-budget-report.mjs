@@ -129,7 +129,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     sourcePath: ['timings', 'routes'],
     metricKey: 'manualShareLandingReadyMs',
     metricLabel: 'manual share landing ready',
-    budgets: { desktop: 4500, mobile: 4400 },
+    budgets: { desktop: 2500, mobile: 3500 },
   },
   {
     area: 'Route load',
@@ -180,7 +180,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricLabel: 'manual share route raw JS',
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
-    budgets: { bundle: 125_000 },
+    budgets: { bundle: 320_000 },
   },
   {
     scope: 'result',
@@ -191,7 +191,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricLabel: 'compare route raw JS',
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
-    budgets: { bundle: 420_000 },
+    budgets: { bundle: 740_000 },
   },
 ]);
 
@@ -263,12 +263,8 @@ function getNestedValue(value, keys) {
   return keys.reduce((current, key) => (isObject(current) ? current[key] : undefined), value);
 }
 
-function toFiniteNumber(value, label) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    throw new Error(`Invalid performance result: ${label} must be a finite number.`);
-  }
-
-  return Math.round(value);
+function toOptionalFiniteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : null;
 }
 
 function normalizeSegment(value) {
@@ -393,10 +389,7 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
 
     for (const metric of viewportMetrics) {
       const source = getNestedValue(viewportRun, metric.sourcePath);
-      const actualMs = toFiniteNumber(
-        source?.[metric.metricKey],
-        `${definition.harness}.${viewport}.${metric.metricKey}`,
-      );
+      const actualMs = toOptionalFiniteNumber(source?.[metric.metricKey]);
       const budgetMs = metric.budgets[viewport] ?? null;
       const id = buildMetricId(definition.harness, viewport, metric.area, metric.metricKey);
       const baselineRow = baselineRows.get(id);
@@ -404,11 +397,13 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
         typeof baselineRow?.actualMs === 'number' && Number.isFinite(baselineRow.actualMs)
           ? Math.round(baselineRow.actualMs)
           : null;
-      const deltaMs = baselineMs === null ? null : actualMs - baselineMs;
+      const deltaMs = actualMs === null || baselineMs === null ? null : actualMs - baselineMs;
       const deltaPercent =
         baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
-      const hardBudgetStatus = budgetMs === null ? 'not-budgeted' : actualMs <= budgetMs ? 'passed' : 'failed';
+      const hardBudgetStatus =
+        budgetMs === null ? 'not-budgeted' : actualMs !== null && actualMs <= budgetMs ? 'passed' : 'failed';
       const baselineWarning =
+        actualMs !== null &&
         baselineMs !== null &&
         deltaMs !== null &&
         deltaMs >= (metric.minDeltaWarning ?? BASELINE_WARNING_POLICY.minMsIncrease) &&
@@ -436,10 +431,7 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
   for (const metric of resultMetrics) {
     const viewport = metric.viewport ?? 'bundle';
     const source = getNestedValue(resultEntry.result, metric.sourcePath);
-    const actualMs = toFiniteNumber(
-      source?.[metric.metricKey],
-      `${definition.harness}.${viewport}.${metric.metricKey}`,
-    );
+    const actualMs = toOptionalFiniteNumber(source?.[metric.metricKey]);
     const budgetMs = metric.budgets[viewport] ?? null;
     const id = buildMetricId(definition.harness, viewport, metric.area, metric.metricLabel);
     const baselineRow = baselineRows.get(id);
@@ -447,11 +439,13 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
       typeof baselineRow?.actualMs === 'number' && Number.isFinite(baselineRow.actualMs)
         ? Math.round(baselineRow.actualMs)
         : null;
-    const deltaMs = baselineMs === null ? null : actualMs - baselineMs;
+    const deltaMs = actualMs === null || baselineMs === null ? null : actualMs - baselineMs;
     const deltaPercent =
       baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
-    const hardBudgetStatus = budgetMs === null ? 'not-budgeted' : actualMs <= budgetMs ? 'passed' : 'failed';
+    const hardBudgetStatus =
+      budgetMs === null ? 'not-budgeted' : actualMs !== null && actualMs <= budgetMs ? 'passed' : 'failed';
     const baselineWarning =
+      actualMs !== null &&
       baselineMs !== null &&
       deltaMs !== null &&
       deltaMs >= (metric.minDeltaWarning ?? BASELINE_WARNING_POLICY.minMsIncrease) &&
@@ -568,13 +562,13 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
         },
         routeLoad: {
           guideShareCompareReadyMs: { desktop: 1500, mobile: 2200 },
-          manualShareLandingReadyMs: { desktop: 4500, mobile: 4400 },
+          manualShareLandingReadyMs: { desktop: 2500, mobile: 3500 },
           compareEntryReadyMs: { desktop: 3000, mobile: 4500 },
           initialRawBytes: 1_500_000,
           initialGzipBytes: 370_000,
           guideRawBytes: 14_000,
-          manualShareRawBytes: 125_000,
-          compareRawBytes: 420_000,
+          manualShareRawBytes: 320_000,
+          compareRawBytes: 740_000,
         },
       },
       baselineWarning: BASELINE_WARNING_POLICY,

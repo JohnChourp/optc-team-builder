@@ -107,7 +107,9 @@ function explanationResult() {
   };
 }
 
-function routeLoadResult(overrides: Record<string, number> = {}) {
+function routeLoadResult(overrides: Record<string, number | null> = {}) {
+  const value = (key: string, fallback: number) => (Object.hasOwn(overrides, key) ? overrides[key] : fallback);
+
   return {
     schemaVersion: 1,
     capturedAt: '2026-07-05T00:00:00.000Z',
@@ -116,13 +118,13 @@ function routeLoadResult(overrides: Record<string, number> = {}) {
     runLabel: 'route-load',
     bundle: {
       initial: {
-        rawBytes: overrides.initialRawBytes ?? 1_300_000,
-        gzipBytes: overrides.initialGzipBytes ?? 320_000,
+        rawBytes: value('initialRawBytes', 1_300_000),
+        gzipBytes: value('initialGzipBytes', 320_000),
       },
       routes: {
-        guide: { rawBytes: overrides.guideRawBytes ?? 4_000, gzipBytes: 2_000 },
-        manualShare: { rawBytes: overrides.manualShareRawBytes ?? 94_000, gzipBytes: 21_000 },
-        compare: { rawBytes: overrides.compareRawBytes ?? 348_000, gzipBytes: 67_000 },
+        guide: { rawBytes: value('guideRawBytes', 4_000), gzipBytes: 2_000 },
+        manualShare: { rawBytes: value('manualShareRawBytes', 274_000), gzipBytes: 64_000 },
+        compare: { rawBytes: value('compareRawBytes', 636_000), gzipBytes: 140_000 },
       },
     },
     viewportRuns: [
@@ -130,9 +132,9 @@ function routeLoadResult(overrides: Record<string, number> = {}) {
         viewport: 'desktop',
         timings: {
           routes: {
-            guideShareCompareReadyMs: overrides.desktopGuideReadyMs ?? 200,
-            manualShareLandingReadyMs: overrides.desktopManualShareReadyMs ?? 3300,
-            compareEntryReadyMs: overrides.desktopCompareReadyMs ?? 450,
+            guideShareCompareReadyMs: value('desktopGuideReadyMs', 200),
+            manualShareLandingReadyMs: value('desktopManualShareReadyMs', 1000),
+            compareEntryReadyMs: value('desktopCompareReadyMs', 450),
           },
         },
       },
@@ -140,9 +142,9 @@ function routeLoadResult(overrides: Record<string, number> = {}) {
         viewport: 'mobile',
         timings: {
           routes: {
-            guideShareCompareReadyMs: overrides.mobileGuideReadyMs ?? 200,
-            manualShareLandingReadyMs: overrides.mobileManualShareReadyMs ?? 3300,
-            compareEntryReadyMs: overrides.mobileCompareReadyMs ?? 450,
+            guideShareCompareReadyMs: value('mobileGuideReadyMs', 200),
+            manualShareLandingReadyMs: value('mobileManualShareReadyMs', 1000),
+            compareEntryReadyMs: value('mobileCompareReadyMs', 450),
           },
         },
       },
@@ -191,8 +193,8 @@ describe('perf-budget-report', () => {
     expect(report.metricRows).toContainEqual(
       expect.objectContaining({
         id: 'route-load.desktop.route-load.manualsharelandingreadyms',
-        actualMs: 3300,
-        budgetMs: 4500,
+        actualMs: 1000,
+        budgetMs: 2500,
       }),
     );
     expect(report.metricRows).toContainEqual(
@@ -200,6 +202,14 @@ describe('perf-budget-report', () => {
         id: 'route-load.bundle.bundle.initial-raw-js',
         actualMs: 1_300_000,
         budgetMs: 1_500_000,
+        unit: 'bytes',
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.bundle.bundle.compare-route-raw-js',
+        actualMs: 636_000,
+        budgetMs: 740_000,
         unit: 'bytes',
       }),
     );
@@ -230,8 +240,8 @@ describe('perf-budget-report', () => {
       rootDir,
       abilityResult(),
       routeLoadResult({
-        desktopManualShareReadyMs: 4501,
-        compareRawBytes: 420_001,
+        desktopManualShareReadyMs: 2501,
+        compareRawBytes: 740_001,
       }),
     );
     const report = await buildPerformanceBudgetReport({ currentDir });
@@ -244,10 +254,33 @@ describe('perf-budget-report', () => {
         }),
         expect.objectContaining({
           metricId: 'route-load.bundle.bundle.compare-route-raw-js',
-          message: expect.stringContaining('420.0KB'),
+          message: expect.stringContaining('740.0KB'),
         }),
       ]),
     );
+  });
+
+  it('reports missing route-load metrics as failed rows', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult(),
+      routeLoadResult({
+        desktopManualShareReadyMs: null,
+      }),
+    );
+    const report = await buildPerformanceBudgetReport({ currentDir });
+
+    expect(report.status).toBe('failed');
+    expect(report.hardBudgetFailures).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metricId: 'route-load.desktop.route-load.manualsharelandingreadyms',
+          message: expect.stringContaining('n/a'),
+        }),
+      ]),
+    );
+    expect(formatPerformanceBudgetSummary(report)).toContain('| route-load | desktop | Route load | manual share landing ready | n/a |');
   });
 
   it('requires route-load performance results', async () => {

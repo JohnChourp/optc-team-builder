@@ -149,12 +149,12 @@ to record initial JS and route chunk sizes with top source contributors.
 The recurring workflow budgets are:
 
 - guide route ready `<=1500ms` desktop and `<=2200ms` mobile
-- manual share-link landing ready `<=4500ms` desktop and `<=4400ms` mobile
+- manual share-link landing ready `<=2500ms` desktop and `<=3500ms` mobile
 - compare entry ready `<=3000ms` desktop and `<=4500ms` mobile
 - initial raw JS `<=1.50MB` and initial gzip JS `<=370KB`
 - guide route raw JS `<=14KB`
-- manual share route raw JS `<=125KB`
-- compare route raw JS `<=420KB`
+- manual share route raw JS `<=320KB`
+- compare route raw JS `<=740KB`
 
 Set `PERF_ASSERT=0` to collect artifacts without failing on the budgets.
 

@@ -13,15 +13,15 @@ export const ROUTE_LOAD_SCHEMA_VERSION = 1;
 export const ROUTE_LOAD_BUDGETS = Object.freeze({
   timings: {
     guideShareCompareReadyMs: { desktop: 1500, mobile: 2200 },
-    manualShareLandingReadyMs: { desktop: 4500, mobile: 4400 },
+    manualShareLandingReadyMs: { desktop: 2500, mobile: 3500 },
     compareEntryReadyMs: { desktop: 3000, mobile: 4500 },
   },
   bundles: {
     initialRawBytes: 1_500_000,
     initialGzipBytes: 370_000,
     guideRawBytes: 14_000,
-    manualShareRawBytes: 125_000,
-    compareRawBytes: 420_000,
+    manualShareRawBytes: 320_000,
+    compareRawBytes: 740_000,
   },
 });
 
@@ -138,28 +138,20 @@ try {
       ...devices['Pixel 7'],
     },
   ]) {
-    const context = await browser.newContext({
-      baseURL,
-      viewport: viewport.viewport,
-      isMobile: viewport.isMobile,
-      hasTouch: viewport.hasTouch,
-      userAgent: viewport.userAgent,
-    });
-    await context.addInitScript(() => {
-      localStorage.setItem('CapacitorStorage.appLanguage', 'en');
-      localStorage.setItem('CapacitorStorage.analyticsConsent', 'rejected');
-    });
-
     const run = { viewport: viewport.label, timings: { routes: {} }, routeRuns: [] };
     for (const route of routes) {
-      const routeRun = await measureRoute(context, route, viewport.label);
-      run.routeRuns.push(routeRun);
-      run.timings.routes[route.metricKey] = routeRun.readyMs;
+      const context = await createRouteContext(viewport);
+      try {
+        const routeRun = await measureRoute(context, route, viewport.label);
+        run.routeRuns.push(routeRun);
+        run.timings.routes[route.metricKey] = routeRun.readyMs;
+      } finally {
+        await context.close().catch(() => {});
+      }
     }
 
     results.viewportRuns.push(run);
     checkTimingBudgets(viewport.label, run.timings.routes);
-    await context.close();
   }
 
   checkBundleBudgets(bundle);
@@ -225,6 +217,7 @@ async function readBundleStats() {
   const initialEntries = Object.entries(outputs).filter(
     ([file, output]) => file.endsWith('.js') && output.entryPoint === 'src/main.ts',
   );
+  const initialFiles = new Set(initialEntries.map(([file]) => file));
 
   const routeEntries = {
     guide: 'src/app/pages/seo-content/seo-content.page.ts',
@@ -253,36 +246,116 @@ async function readBundleStats() {
           return [key, null];
         }
 
-        return [key, outputStats(found[0], found[1])];
+        return [key, outputStats(found[0], found[1], outputs, initialFiles)];
       }),
     ),
   };
 }
 
-function outputStats(outputKey, output) {
+function outputStats(outputKey, output, outputs, initialFiles) {
+  const outputKeys = [outputKey, ...collectImportedOutputKeys(outputKey, outputs, initialFiles)];
+  const rawBytes = outputKeys.reduce((total, key) => total + (outputs[key]?.bytes ?? 0), 0);
+  const gzipBytes = outputKeys.reduce((total, key) => total + gzipOutputFile(key), 0);
+
   return {
     file: outputKey,
-    rawBytes: output.bytes ?? 0,
-    gzipBytes: gzipOutputFile(outputKey),
+    rawBytes,
+    gzipBytes,
     entryPoint: output.entryPoint ?? null,
-    topInputs: Object.entries(output.inputs ?? {})
-      .map(([inputPath, input]) => ({
-        path: inputPath,
-        bytesInOutput: Math.round(input.bytesInOutput ?? 0),
-      }))
-      .sort((left, right) => right.bytesInOutput - left.bytesInOutput)
-      .slice(0, 12),
+    files: outputKeys.map((key) => ({
+      file: key,
+      rawBytes: outputs[key]?.bytes ?? 0,
+      gzipBytes: gzipOutputFile(key),
+      imported: key !== outputKey,
+    })),
+    topInputs: topInputsForOutputs(outputKeys, outputs),
   };
 }
 
-function gzipOutputFile(file) {
-  const filePath = path.join(browserRoot, file);
+function collectImportedOutputKeys(outputKey, outputs, initialFiles, seen = new Set([outputKey])) {
+  const imported = [];
+  const output = outputs[outputKey];
 
-  if (!existsSync(filePath)) {
-    return null;
+  for (const item of output?.imports ?? []) {
+    const importedKey = item?.path;
+
+    if (
+      typeof importedKey !== 'string' ||
+      !importedKey.endsWith('.js') ||
+      initialFiles.has(importedKey) ||
+      seen.has(importedKey) ||
+      !outputs[importedKey]
+    ) {
+      continue;
+    }
+
+    seen.add(importedKey);
+    imported.push(importedKey, ...collectImportedOutputKeys(importedKey, outputs, initialFiles, seen));
   }
 
+  return imported;
+}
+
+function topInputsForOutputs(outputKeys, outputs) {
+  const inputTotals = new Map();
+
+  for (const key of outputKeys) {
+    for (const [inputPath, input] of Object.entries(outputs[key]?.inputs ?? {})) {
+      inputTotals.set(inputPath, (inputTotals.get(inputPath) ?? 0) + Math.round(input.bytesInOutput ?? 0));
+    }
+  }
+
+  return [...inputTotals.entries()]
+      .map(([inputPath, input]) => ({
+        path: inputPath,
+        bytesInOutput: input,
+      }))
+      .sort((left, right) => right.bytesInOutput - left.bytesInOutput)
+      .slice(0, 12);
+}
+
+function gzipOutputFile(file) {
+  const filePath = resolveOutputFilePath(file);
+
   return gzipSync(readFileSync(filePath)).length;
+}
+
+function resolveOutputFilePath(file) {
+  const normalized = String(file).replace(/\\/gu, '/').replace(/^\/+/u, '');
+  const candidates = [
+    path.resolve(browserRoot, ...normalized.split('/')),
+    path.resolve(buildRoot, ...normalized.split('/')),
+    path.resolve(browserRoot, path.basename(normalized)),
+  ];
+  const resolvedBuildRoot = path.resolve(buildRoot);
+
+  for (const candidate of candidates) {
+    if (
+      (candidate === resolvedBuildRoot || candidate.startsWith(`${resolvedBuildRoot}${path.sep}`)) &&
+      existsSync(candidate)
+    ) {
+      return candidate;
+    }
+  }
+
+  throw new Error(`Missing emitted bundle file for stats output ${file}.`);
+}
+
+async function createRouteContext(viewport) {
+  const context = await browser.newContext({
+    baseURL,
+    viewport: viewport.viewport,
+    isMobile: viewport.isMobile,
+    hasTouch: viewport.hasTouch,
+    userAgent: viewport.userAgent,
+    serviceWorkers: 'block',
+  });
+  await context.addInitScript(() => {
+    localStorage.setItem('CapacitorStorage.appLanguage', 'en');
+    localStorage.setItem('CapacitorStorage.analyticsConsent', 'rejected');
+  });
+
+  return context;
 }
 
 async function startStaticServer() {
