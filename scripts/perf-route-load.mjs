@@ -40,6 +40,7 @@ const screenshotDir = path.join(artifactDir, 'screenshots');
 const consoleMessages = [];
 const pageErrors = [];
 const failures = [];
+const SYNCHRONOUS_IMPORT_KINDS = new Set(['import-statement']);
 
 export const ROUTE_LOAD_SYNTHETIC_TEAM = Object.freeze({
   id: 'route-load-budget-crew',
@@ -214,10 +215,16 @@ function resolveGitHead() {
 async function readBundleStats() {
   const stats = JSON.parse(await readFile(statsPath, 'utf8'));
   const outputs = stats.outputs ?? {};
-  const initialEntries = Object.entries(outputs).filter(
-    ([file, output]) => file.endsWith('.js') && output.entryPoint === 'src/main.ts',
-  );
-  const initialFiles = new Set(initialEntries.map(([file]) => file));
+  const mainEntryKeys = Object.entries(outputs)
+    .filter(([file, output]) => file.endsWith('.js') && output.entryPoint === 'src/main.ts')
+    .map(([file]) => file);
+  const initialFiles = new Set(mainEntryKeys);
+  for (const key of mainEntryKeys) {
+    for (const importedKey of collectImportedOutputKeys(key, outputs)) {
+      initialFiles.add(importedKey);
+    }
+  }
+  const initialEntries = [...initialFiles].map((file) => [file, outputs[file]]);
 
   const routeEntries = {
     guide: 'src/app/pages/seo-content/seo-content.page.ts',
@@ -272,7 +279,7 @@ function outputStats(outputKey, output, outputs, initialFiles) {
   };
 }
 
-function collectImportedOutputKeys(outputKey, outputs, initialFiles, seen = new Set([outputKey])) {
+function collectImportedOutputKeys(outputKey, outputs, excludedFiles = new Set(), seen = new Set([outputKey])) {
   const imported = [];
   const output = outputs[outputKey];
 
@@ -282,7 +289,8 @@ function collectImportedOutputKeys(outputKey, outputs, initialFiles, seen = new 
     if (
       typeof importedKey !== 'string' ||
       !importedKey.endsWith('.js') ||
-      initialFiles.has(importedKey) ||
+      !SYNCHRONOUS_IMPORT_KINDS.has(item?.kind) ||
+      excludedFiles.has(importedKey) ||
       seen.has(importedKey) ||
       !outputs[importedKey]
     ) {
@@ -290,7 +298,7 @@ function collectImportedOutputKeys(outputKey, outputs, initialFiles, seen = new 
     }
 
     seen.add(importedKey);
-    imported.push(importedKey, ...collectImportedOutputKeys(importedKey, outputs, initialFiles, seen));
+    imported.push(importedKey, ...collectImportedOutputKeys(importedKey, outputs, excludedFiles, seen));
   }
 
   return imported;

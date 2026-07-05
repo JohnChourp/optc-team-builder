@@ -401,7 +401,7 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
       const deltaPercent =
         baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
       const hardBudgetStatus =
-        budgetMs === null ? 'not-budgeted' : actualMs !== null && actualMs <= budgetMs ? 'passed' : 'failed';
+        actualMs === null ? 'failed' : budgetMs === null ? 'not-budgeted' : actualMs <= budgetMs ? 'passed' : 'failed';
       const baselineWarning =
         actualMs !== null &&
         baselineMs !== null &&
@@ -443,7 +443,7 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
     const deltaPercent =
       baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
     const hardBudgetStatus =
-      budgetMs === null ? 'not-budgeted' : actualMs !== null && actualMs <= budgetMs ? 'passed' : 'failed';
+      actualMs === null ? 'failed' : budgetMs === null ? 'not-budgeted' : actualMs <= budgetMs ? 'passed' : 'failed';
     const baselineWarning =
       actualMs !== null &&
       baselineMs !== null &&
