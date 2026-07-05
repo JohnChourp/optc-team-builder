@@ -46,6 +46,7 @@ script, or workflow prerequisite looks suspect.
 | Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters`; use `npm run perf:mobile-pickers` for narrow picker/list responsiveness evidence | Run `npm run perf:ability-filters`, collect the companion explanation/import-share result, then run `npm run perf:budget-report -- --current-dir /path/to/current`; add `npm run perf:mobile-pickers` plus focused unit specs when the change targets mobile pickers, long saved collections, or modal filter lists | Deterministic desktop/mobile ability-filter timings are captured, mobile picker/list screenshots and soft warnings are recorded, and hard budgets are enforced by the budget report for the budgeted harnesses | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` or `test-results/mobile-picker-performance` |
 | Auto Team Builder explanation detail, compare rendering, or import/share hydration performance | `PERF_ASSERT=0 npm run perf:explanation-compare` | `npm run perf:explanation-compare` plus focused Auto Team Builder, Saved Teams, or Manual Team Builder specs | Compare-panel rendering, imported compare apply, explanation expansion, heavy saved-team import, and share-link hydration stay inside pragmatic browser budgets; the harness waits for stable explanation detail state and reasserts its deterministic fixture after CI route lifecycle resets before screenshots or expanded-result toggles | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dvr7x5`, with other machines using `perf-artifacts/explanation-compare` |
 | Public guide, share-link landing, compare entry, or route bundle size performance | `PERF_ASSERT=0 npm run perf:route-load` | Collect all current budget harnesses (`perf:ability-filters`, `perf:explanation-compare`, and `perf:route-load`) into the same current artifact root before `npm run perf:budget-report -- --current-dir /path/to/current`; add public-entry synthetics when the deployed guide/share route is the risk | Production guide route load, deterministic Manual Team Builder share-link landing load, Auto Team Builder compare entry load, initial JS, and selected route chunk sizes stay inside pragmatic budgets without starving the consolidated report of companion harness inputs | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/route-load-performance` |
+| Public guide and share-link visual baselines | `npm run test:public-entry-visual` | Focused visual gate plus the existing guide discoverability, public-entry synthetics, route-load, and browser smoke rows when route templates or shared shell styling change | Chromium desktop/mobile screenshots catch obvious public guide and share-link landing layout drift, missing hero content, and missing shared-team visual content without expanding noisy cross-browser pixel baselines | Playwright snapshot baselines under `e2e/public-entry-visual.spec.ts-snapshots/`; diff artifacts under `test-results/` on failure |
 | Guided build, compare mode, saved-team sharing, import accessibility, or related copy | Focused page specs plus `npm run test:e2e:chromium -- --grep "@accessibility"`; for copy-only changes use `npm run i18n:validate` and the [copy review checklist](copy-review-checklist.md) | Focused accessibility slice plus full `npm run test:e2e:chromium`, `npm run i18n:validate`, guide discoverability, and `npm run build` when route or guide copy changes | Guided toggles/submits, compare saved/imported/error/swap controls, saved-team share/import feedback, modal focus recovery, dialog names, live-region semantics, manual share hydration, and shared bilingual terms remain reachable, accurate, and consistent | Playwright reports and task-scoped live evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` |
 | PWA installability, offline app-shell entry, service-worker cache config, or stale-shell upgrade behavior | `PWA_SHELL_ARTIFACT_DIR=../optc-team-builder-brain/live-artifacts/<task-id>/pwa-shell npm run test:pwa-shell` | PWA shell check plus `npm run build`, browser e2e for touched routes, and docs integrity when recovery guidance changes | Manifest and icon prerequisites, Angular service-worker registration/control, offline entry for high-value routes, and stale-shell upgrade recovery stay repeatable from production build output | `PWA_SHELL_ARTIFACT_DIR` when set; otherwise local OPTC checkouts use `../optc-team-builder-brain/live-artifacts/869dwc7wk/pwa-shell`, with CI/standalone checkouts using `test-results/pwa-shell` |
 | Release-candidate performance confidence | Manual `Performance Budgets` workflow dispatch | Scheduled/manual `Performance Budgets` workflow with an explicit `baseline_run_id`, then inspect the uploaded compact report and conditional visual-evidence artifact when warnings/failures exist | The ability-filter, explanation/compare, and route-load harnesses all ran on GitHub Actions, hard-budget results were recorded, and baseline warnings were surfaced | GitHub Actions artifact `performance-budget-report`; `performance-budget-visual-evidence` only for warnings/failures |
@@ -645,6 +646,43 @@ explicitly to `gh workflow run` because the deploy job does not need a checkout
 and therefore has no local `.git` context. Scheduled/manual runs use the same
 workflow, which uploads `public-entry-synthetics-report` with the JSON report
 and screenshots for the latest run.
+
+### Public Entry Visual Baselines
+
+Use the focused visual baseline gate when a PR can affect the first-viewport
+layout of public guide pages or the Manual Team Builder share-link landing:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:public-entry-visual
+```
+
+The suite keeps Chromium-only baselines for desktop `1366x900` and mobile
+`390x844` on the public team-building guide, the guided/compare/share guide,
+and a deterministic shared-team landing URL. It intentionally does not add
+Firefox, WebKit, macOS, or Windows pixel baselines; use the normal browser
+smoke/regression rows for cross-browser behavior. The screenshot masks the app
+footer before comparison so routine version-label changes do not force baseline
+refreshes.
+
+Refresh snapshots only after reviewing the diff and confirming the visual
+change is intentional. When local rendering differs from CI, use the Linux
+Chromium GitHub Actions actual image as the canonical committed baseline:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:public-entry-visual -- --update-snapshots
+```
+
+Investigate failures as real regressions when they show missing headings,
+missing shared-team slot content, blank/overlapping hero content, collapsed
+cards, route-shell spacing regressions, or asset-driven layout holes. Baseline
+refreshes are appropriate only for intentional copy, spacing, typography,
+component, or route-template changes that still pass the related functional
+guide, share-link, and route-load checks. Keep the `maxDiffPixelRatio` stable;
+do not loosen thresholds instead of committing reviewed CI baselines.
 
 ### Docs Drift
 

@@ -22,6 +22,7 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   reporter: reporters,
   outputDir,
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}',
   timeout: 60_000,
   expect: { timeout: 15_000 },
   workers: isCI ? 1 : undefined,
