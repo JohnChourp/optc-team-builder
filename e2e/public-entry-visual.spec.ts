@@ -102,6 +102,8 @@ async function prepareVisualSnapshot(page: Page): Promise<void> {
 }
 
 async function expectPublicEntrySnapshot(page: Page, snapshotName: string): Promise<void> {
+  await waitForVisibleImagesReady(page);
+
   const screenshot = await page.screenshot({
     animations: 'disabled',
     caret: 'hide',
@@ -110,4 +112,50 @@ async function expectPublicEntrySnapshot(page: Page, snapshotName: string): Prom
   });
 
   expect(screenshot).toMatchSnapshot(snapshotName, SNAPSHOT_OPTIONS);
+}
+
+async function waitForVisibleImagesReady(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const visibleImages = Array.from(document.images).filter((image) => {
+        const rect = image.getBoundingClientRect();
+        const style = window.getComputedStyle(image);
+
+        return (
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          rect.width > 0 &&
+          rect.height > 0 &&
+          rect.bottom >= 0 &&
+          rect.right >= 0 &&
+          rect.top <= window.innerHeight &&
+          rect.left <= window.innerWidth
+        );
+      });
+
+      return visibleImages.every((image) => image.complete && image.naturalWidth > 0);
+    },
+    undefined,
+    { timeout: 45_000 },
+  );
+
+  await page.evaluate(async () => {
+    const visibleImages = Array.from(document.images).filter((image) => {
+      const rect = image.getBoundingClientRect();
+      const style = window.getComputedStyle(image);
+
+      return (
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        rect.width > 0 &&
+        rect.height > 0 &&
+        rect.bottom >= 0 &&
+        rect.right >= 0 &&
+        rect.top <= window.innerHeight &&
+        rect.left <= window.innerWidth
+      );
+    });
+
+    await Promise.all(visibleImages.map((image) => image.decode().catch(() => undefined)));
+  });
 }
