@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
 import { buildCheckPlan, formatGitHubOutput, getChangedFiles, parseNameStatusOutput, renderMarkdown } from './ci-check-routing.mjs';
@@ -133,10 +135,20 @@ describe('ci-check-routing', () => {
       'scripts/fixtures/release-check/no-change/remote-units.js',
       'scripts/fixtures/release-provenance/github-release-v1.2.3.json',
       'scripts/perf-budget-report.mjs',
+      'scripts/perf-route-load.mjs',
     ]);
 
     expect(plan.fullPlan).toBe(false);
     expect(plan.scriptSuites).toEqual(['release-check', 'perf-budget']);
+  });
+
+  it('covers standalone route-load harness changes in the selected performance suite', () => {
+    const plan = buildCheckPlan(['scripts/perf-route-load.mjs']);
+    const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.scriptSuites).toEqual(['perf-budget']);
+    expect(packageJson.scripts['test:perf-budget']).toContain('node --check ./scripts/perf-route-load.mjs');
   });
 
   it('fails closed for dependency, workflow, and router changes', () => {

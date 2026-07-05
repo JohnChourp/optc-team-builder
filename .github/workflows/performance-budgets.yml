@@ -139,6 +139,14 @@ jobs:
           PERF_RUN_LABEL: explanation-compare
         run: npm run perf:explanation-compare
 
+      - name: Route-load and bundle performance
+        env:
+          CI: 'true'
+          PERF_ASSERT: '0'
+          PERF_ARTIFACT_DIR: ${{ github.workspace }}/perf-artifacts/current/route-load
+          PERF_RUN_LABEL: route-load
+        run: npm run perf:route-load
+
       - name: Build performance budget report
         env:
           BASELINE_REPORT_PATH: ${{ steps.baseline.outputs.baseline_report_path }}

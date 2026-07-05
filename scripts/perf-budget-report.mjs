@@ -9,6 +9,7 @@ export const PERFORMANCE_REPORT_SCHEMA_VERSION = 1;
 export const BASELINE_WARNING_POLICY = Object.freeze({
   minPercentIncrease: 35,
   minMsIncrease: 100,
+  minBytesIncrease: 10_000,
 });
 
 const ABILITY_METRICS = Object.freeze([
@@ -115,6 +116,85 @@ const EXPLANATION_METRICS = Object.freeze([
   },
 ]);
 
+const ROUTE_LOAD_METRICS = Object.freeze([
+  {
+    area: 'Route load',
+    sourcePath: ['timings', 'routes'],
+    metricKey: 'guideShareCompareReadyMs',
+    metricLabel: 'guide route ready',
+    budgets: { desktop: 1500, mobile: 2200 },
+  },
+  {
+    area: 'Route load',
+    sourcePath: ['timings', 'routes'],
+    metricKey: 'manualShareLandingReadyMs',
+    metricLabel: 'manual share landing ready',
+    budgets: { desktop: 2500, mobile: 3500 },
+  },
+  {
+    area: 'Route load',
+    sourcePath: ['timings', 'routes'],
+    metricKey: 'compareEntryReadyMs',
+    metricLabel: 'compare entry ready',
+    budgets: { desktop: 3000, mobile: 4500 },
+  },
+  {
+    scope: 'result',
+    viewport: 'bundle',
+    area: 'Bundle',
+    sourcePath: ['bundle', 'initial'],
+    metricKey: 'rawBytes',
+    metricLabel: 'initial raw JS',
+    unit: 'bytes',
+    minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
+    budgets: { bundle: 1_500_000 },
+  },
+  {
+    scope: 'result',
+    viewport: 'bundle',
+    area: 'Bundle',
+    sourcePath: ['bundle', 'initial'],
+    metricKey: 'gzipBytes',
+    metricLabel: 'initial gzip JS',
+    unit: 'bytes',
+    minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
+    budgets: { bundle: 370_000 },
+  },
+  {
+    scope: 'result',
+    viewport: 'bundle',
+    area: 'Bundle',
+    sourcePath: ['bundle', 'routes', 'guide'],
+    metricKey: 'rawBytes',
+    metricLabel: 'guide route raw JS',
+    unit: 'bytes',
+    minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
+    budgets: { bundle: 14_000 },
+  },
+  {
+    scope: 'result',
+    viewport: 'bundle',
+    area: 'Bundle',
+    sourcePath: ['bundle', 'routes', 'manualShare'],
+    metricKey: 'rawBytes',
+    metricLabel: 'manual share route raw JS',
+    unit: 'bytes',
+    minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
+    budgets: { bundle: 320_000 },
+  },
+  {
+    scope: 'result',
+    viewport: 'bundle',
+    area: 'Bundle',
+    sourcePath: ['bundle', 'routes', 'compare'],
+    metricKey: 'rawBytes',
+    metricLabel: 'compare route raw JS',
+    unit: 'bytes',
+    minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
+    budgets: { bundle: 740_000 },
+  },
+]);
+
 const HARNESS_DEFINITIONS = Object.freeze({
   ability: {
     harness: 'ability-filters',
@@ -123,6 +203,10 @@ const HARNESS_DEFINITIONS = Object.freeze({
   explanation: {
     harness: 'explanation-compare',
     metrics: EXPLANATION_METRICS,
+  },
+  routeLoad: {
+    harness: 'route-load',
+    metrics: ROUTE_LOAD_METRICS,
   },
 });
 
@@ -142,16 +226,45 @@ function formatMs(value) {
   return Number.isFinite(value) ? `${Math.round(value)}ms` : 'n/a';
 }
 
+function formatBytes(value) {
+  if (!Number.isFinite(value)) {
+    return 'n/a';
+  }
+
+  if (Math.abs(value) >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(2)}MB`;
+  }
+
+  if (Math.abs(value) >= 1_000) {
+    return `${(value / 1_000).toFixed(1)}KB`;
+  }
+
+  return `${Math.round(value)}B`;
+}
+
+function formatMetricValue(value, unit) {
+  return unit === 'bytes' ? formatBytes(value) : formatMs(value);
+}
+
+function formatDeltaValue(value, unit) {
+  if (!Number.isFinite(value)) {
+    return 'n/a';
+  }
+
+  if (unit === 'bytes') {
+    const prefix = value >= 0 ? '+' : '';
+    return `${prefix}${formatBytes(value)}`;
+  }
+
+  return `${value >= 0 ? '+' : ''}${Math.round(value)}ms`;
+}
+
 function getNestedValue(value, keys) {
   return keys.reduce((current, key) => (isObject(current) ? current[key] : undefined), value);
 }
 
-function toFiniteNumber(value, label) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    throw new Error(`Invalid performance result: ${label} must be a finite number.`);
-  }
-
-  return Math.round(value);
+function toOptionalFiniteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : null;
 }
 
 function normalizeSegment(value) {
@@ -200,6 +313,14 @@ function detectResultKind(result) {
     result.viewportRuns.some((run) => isObject(run?.timings?.compare))
   ) {
     return 'explanation';
+  }
+
+  if (
+    Array.isArray(result?.viewportRuns) &&
+    isObject(result?.bundle) &&
+    result.viewportRuns.some((run) => isObject(run?.timings?.routes))
+  ) {
+    return 'routeLoad';
   }
 
   return null;
@@ -256,6 +377,8 @@ export async function readPerformanceResults(currentDir) {
 function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
   const definition = HARNESS_DEFINITIONS[kind];
   const rows = [];
+  const viewportMetrics = definition.metrics.filter((metric) => metric.scope !== 'result');
+  const resultMetrics = definition.metrics.filter((metric) => metric.scope === 'result');
 
   for (const viewportRun of resultEntry.result.viewportRuns) {
     const viewport = viewportRun.viewport;
@@ -264,12 +387,9 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
       throw new Error(`Invalid ${definition.harness} result: viewport label is required.`);
     }
 
-    for (const metric of definition.metrics) {
+    for (const metric of viewportMetrics) {
       const source = getNestedValue(viewportRun, metric.sourcePath);
-      const actualMs = toFiniteNumber(
-        source?.[metric.metricKey],
-        `${definition.harness}.${viewport}.${metric.metricKey}`,
-      );
+      const actualMs = toOptionalFiniteNumber(source?.[metric.metricKey]);
       const budgetMs = metric.budgets[viewport] ?? null;
       const id = buildMetricId(definition.harness, viewport, metric.area, metric.metricKey);
       const baselineRow = baselineRows.get(id);
@@ -277,14 +397,16 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
         typeof baselineRow?.actualMs === 'number' && Number.isFinite(baselineRow.actualMs)
           ? Math.round(baselineRow.actualMs)
           : null;
-      const deltaMs = baselineMs === null ? null : actualMs - baselineMs;
+      const deltaMs = actualMs === null || baselineMs === null ? null : actualMs - baselineMs;
       const deltaPercent =
         baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
-      const hardBudgetStatus = budgetMs === null ? 'not-budgeted' : actualMs <= budgetMs ? 'passed' : 'failed';
+      const hardBudgetStatus =
+        actualMs === null ? 'failed' : budgetMs === null ? 'not-budgeted' : actualMs <= budgetMs ? 'passed' : 'failed';
       const baselineWarning =
+        actualMs !== null &&
         baselineMs !== null &&
         deltaMs !== null &&
-        deltaMs >= BASELINE_WARNING_POLICY.minMsIncrease &&
+        deltaMs >= (metric.minDeltaWarning ?? BASELINE_WARNING_POLICY.minMsIncrease) &&
         deltaPercent >= BASELINE_WARNING_POLICY.minPercentIncrease;
 
       rows.push({
@@ -294,6 +416,7 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
         area: metric.area,
         metric: metric.metricLabel,
         metricKey: metric.metricKey,
+        unit: metric.unit ?? 'ms',
         actualMs,
         budgetMs,
         baselineMs,
@@ -303,6 +426,47 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
         baselineWarning,
       });
     }
+  }
+
+  for (const metric of resultMetrics) {
+    const viewport = metric.viewport ?? 'bundle';
+    const source = getNestedValue(resultEntry.result, metric.sourcePath);
+    const actualMs = toOptionalFiniteNumber(source?.[metric.metricKey]);
+    const budgetMs = metric.budgets[viewport] ?? null;
+    const id = buildMetricId(definition.harness, viewport, metric.area, metric.metricLabel);
+    const baselineRow = baselineRows.get(id);
+    const baselineMs =
+      typeof baselineRow?.actualMs === 'number' && Number.isFinite(baselineRow.actualMs)
+        ? Math.round(baselineRow.actualMs)
+        : null;
+    const deltaMs = actualMs === null || baselineMs === null ? null : actualMs - baselineMs;
+    const deltaPercent =
+      baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
+    const hardBudgetStatus =
+      actualMs === null ? 'failed' : budgetMs === null ? 'not-budgeted' : actualMs <= budgetMs ? 'passed' : 'failed';
+    const baselineWarning =
+      actualMs !== null &&
+      baselineMs !== null &&
+      deltaMs !== null &&
+      deltaMs >= (metric.minDeltaWarning ?? BASELINE_WARNING_POLICY.minMsIncrease) &&
+      deltaPercent >= BASELINE_WARNING_POLICY.minPercentIncrease;
+
+    rows.push({
+      id,
+      harness: definition.harness,
+      viewport,
+      area: metric.area,
+      metric: metric.metricLabel,
+      metricKey: metric.metricKey,
+      unit: metric.unit ?? 'ms',
+      actualMs,
+      budgetMs,
+      baselineMs,
+      deltaMs,
+      deltaPercent: deltaPercent === null ? null : Number(deltaPercent.toFixed(2)),
+      hardBudgetStatus,
+      baselineWarning,
+    });
   }
 
   return rows;
@@ -350,13 +514,25 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
     .filter((row) => row.hardBudgetStatus === 'failed')
     .map((row) => ({
       metricId: row.id,
-      message: `${row.harness} ${row.viewport} ${row.area} ${row.metric}: ${row.actualMs}ms > ${row.budgetMs}ms`,
+      message: `${row.harness} ${row.viewport} ${row.area} ${row.metric}: ${formatMetricValue(
+        row.actualMs,
+        row.unit,
+      )} > ${formatMetricValue(row.budgetMs, row.unit)}`,
+    }));
+  const invalidMetricFailures = metricRows
+    .filter((row) => row.actualMs === null)
+    .map((row) => ({
+      metricId: row.id,
+      message: `${row.harness} ${row.viewport} ${row.area} ${row.metric}: missing or non-finite metric value`,
     }));
   const baselineDeltaWarnings = metricRows
     .filter((row) => row.baselineWarning)
     .map((row) => ({
       metricId: row.id,
-      message: `${row.harness} ${row.viewport} ${row.area} ${row.metric}: ${row.actualMs}ms vs baseline ${row.baselineMs}ms (${formatPercent(row.deltaPercent)} increase)`,
+      message: `${row.harness} ${row.viewport} ${row.area} ${row.metric}: ${formatMetricValue(
+        row.actualMs,
+        row.unit,
+      )} vs baseline ${formatMetricValue(row.baselineMs, row.unit)} (${formatPercent(row.deltaPercent)} increase)`,
     }));
   const status = hardBudgetFailures.length ? 'failed' : baselineDeltaWarnings.length ? 'warning' : 'passed';
 
@@ -390,6 +566,16 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
           firstExplanationToggleMs: { desktop: 300, mobile: 450 },
           allExplanationToggleMs: { desktop: 900, mobile: 1200 },
         },
+        routeLoad: {
+          guideShareCompareReadyMs: { desktop: 1500, mobile: 2200 },
+          manualShareLandingReadyMs: { desktop: 2500, mobile: 3500 },
+          compareEntryReadyMs: { desktop: 3000, mobile: 4500 },
+          initialRawBytes: 1_500_000,
+          initialGzipBytes: 370_000,
+          guideRawBytes: 14_000,
+          manualShareRawBytes: 320_000,
+          compareRawBytes: 740_000,
+        },
       },
       baselineWarning: BASELINE_WARNING_POLICY,
     },
@@ -397,10 +583,12 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
       metricCount: metricRows.length,
       budgetedMetricCount: metricRows.filter((row) => row.budgetMs !== null).length,
       hardBudgetFailureCount: hardBudgetFailures.length,
+      invalidMetricFailureCount: invalidMetricFailures.length,
       baselineDeltaWarningCount: baselineDeltaWarnings.length,
     },
     metricRows,
     hardBudgetFailures,
+    invalidMetricFailures,
     baselineDeltaWarnings,
   };
 }
@@ -432,6 +620,15 @@ export function formatPerformanceBudgetSummary(report) {
     lines.push('- None');
   }
 
+  lines.push('', '## Invalid Metrics');
+  if (report.invalidMetricFailures.length) {
+    for (const failure of report.invalidMetricFailures) {
+      lines.push(`- ${failure.message}`);
+    }
+  } else {
+    lines.push('- None');
+  }
+
   lines.push('', '## Baseline Delta Warnings');
   if (report.baselineDeltaWarnings.length) {
     for (const warning of report.baselineDeltaWarnings) {
@@ -452,11 +649,12 @@ export function formatPerformanceBudgetSummary(report) {
     const delta =
       row.deltaMs === null
         ? 'n/a'
-        : `${row.deltaMs >= 0 ? '+' : ''}${Math.round(row.deltaMs)}ms (${formatPercent(row.deltaPercent)})`;
+        : `${formatDeltaValue(row.deltaMs, row.unit)} (${formatPercent(row.deltaPercent)})`;
     lines.push(
-      `| ${row.harness} | ${row.viewport} | ${row.area} | ${row.metric} | ${formatMs(row.actualMs)} | ${formatMs(
-        row.budgetMs,
-      )} | ${formatMs(row.baselineMs)} | ${delta} |`,
+      `| ${row.harness} | ${row.viewport} | ${row.area} | ${row.metric} | ${formatMetricValue(
+        row.actualMs,
+        row.unit,
+      )} | ${formatMetricValue(row.budgetMs, row.unit)} | ${formatMetricValue(row.baselineMs, row.unit)} | ${delta} |`,
     );
   }
 
@@ -523,7 +721,7 @@ export async function runCli(argv = process.argv.slice(2), env = process.env) {
     process.stdout.write(markdown);
   }
 
-  if (report.hardBudgetFailures.length && !options.reportOnly) {
+  if (report.invalidMetricFailures.length || (report.hardBudgetFailures.length && !options.reportOnly)) {
     process.exitCode = 1;
   }
 

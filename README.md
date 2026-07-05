@@ -238,6 +238,11 @@ This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workf
   `/tabs/manual-team-builder?teamShare=...` landing flow. Set
   `PUBLIC_ENTRY_BASE_URL` when replaying the same monitor against another
   public origin.
+- Public guide, share-link landing, and compare-entry route cost is checked by
+  `npm run perf:route-load` as part of the scheduled/manual `Performance
+  Budgets` workflow. The route-load harness records production route-ready
+  timings, initial JS size, and selected route chunk sizes before the
+  consolidated `performance-budget-report` artifact is built.
 
 ## Release detector replay
 

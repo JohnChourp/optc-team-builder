@@ -13,6 +13,7 @@ import {
 let tempDirs: string[] = [];
 
 afterEach(async () => {
+  process.exitCode = undefined;
   await Promise.all(tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
   tempDirs = [];
 });
@@ -107,13 +108,61 @@ function explanationResult() {
   };
 }
 
-async function writeCurrentResults(rootDir: string, ability = abilityResult()) {
+function routeLoadResult(overrides: Record<string, number | null> = {}) {
+  const value = (key: string, fallback: number) => (Object.hasOwn(overrides, key) ? overrides[key] : fallback);
+
+  return {
+    schemaVersion: 1,
+    capturedAt: '2026-07-05T00:00:00.000Z',
+    baseURL: 'http://127.0.0.1:8448',
+    appCommit: 'abc1234',
+    runLabel: 'route-load',
+    bundle: {
+      initial: {
+        rawBytes: value('initialRawBytes', 1_300_000),
+        gzipBytes: value('initialGzipBytes', 320_000),
+      },
+      routes: {
+        guide: { rawBytes: value('guideRawBytes', 4_000), gzipBytes: 2_000 },
+        manualShare: { rawBytes: value('manualShareRawBytes', 274_000), gzipBytes: 64_000 },
+        compare: { rawBytes: value('compareRawBytes', 636_000), gzipBytes: 140_000 },
+      },
+    },
+    viewportRuns: [
+      {
+        viewport: 'desktop',
+        timings: {
+          routes: {
+            guideShareCompareReadyMs: value('desktopGuideReadyMs', 200),
+            manualShareLandingReadyMs: value('desktopManualShareReadyMs', 1000),
+            compareEntryReadyMs: value('desktopCompareReadyMs', 450),
+          },
+        },
+      },
+      {
+        viewport: 'mobile',
+        timings: {
+          routes: {
+            guideShareCompareReadyMs: value('mobileGuideReadyMs', 200),
+            manualShareLandingReadyMs: value('mobileManualShareReadyMs', 1000),
+            compareEntryReadyMs: value('mobileCompareReadyMs', 450),
+          },
+        },
+      },
+    ],
+  };
+}
+
+async function writeCurrentResults(rootDir: string, ability = abilityResult(), routeLoad = routeLoadResult()) {
   const abilityDir = path.join(rootDir, 'current', 'ability');
   const explanationDir = path.join(rootDir, 'current', 'explanation');
+  const routeLoadDir = path.join(rootDir, 'current', 'route-load');
   await mkdir(abilityDir, { recursive: true });
   await mkdir(explanationDir, { recursive: true });
+  await mkdir(routeLoadDir, { recursive: true });
   await writeFile(path.join(abilityDir, 'ability-performance.json'), JSON.stringify(ability));
   await writeFile(path.join(explanationDir, 'explanation-performance.json'), JSON.stringify(explanationResult()));
+  await writeFile(path.join(routeLoadDir, 'route-load-performance.json'), JSON.stringify(routeLoad));
   return path.join(rootDir, 'current');
 }
 
@@ -124,9 +173,10 @@ describe('perf-budget-report', () => {
     const report = await buildPerformanceBudgetReport({ currentDir });
 
     expect(report.status).toBe('passed');
-    expect(report.summary.metricCount).toBe(28);
-    expect(report.summary.budgetedMetricCount).toBe(22);
+    expect(report.summary.metricCount).toBe(39);
+    expect(report.summary.budgetedMetricCount).toBe(33);
     expect(report.hardBudgetFailures).toEqual([]);
+    expect(report.invalidMetricFailures).toEqual([]);
     expect(report.baseline).toBeNull();
     expect(report.metricRows).toContainEqual(
       expect.objectContaining({
@@ -140,6 +190,29 @@ describe('perf-budget-report', () => {
         id: 'explanation-compare.desktop.import-share-hydration.savedteamsimportreadyms',
         actualMs: 900,
         budgetMs: 3000,
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.desktop.route-load.manualsharelandingreadyms',
+        actualMs: 1000,
+        budgetMs: 2500,
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.bundle.bundle.initial-raw-js',
+        actualMs: 1_300_000,
+        budgetMs: 1_500_000,
+        unit: 'bytes',
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.bundle.bundle.compare-route-raw-js',
+        actualMs: 636_000,
+        budgetMs: 740_000,
+        unit: 'bytes',
       }),
     );
   });
@@ -160,7 +233,75 @@ describe('perf-budget-report', () => {
         metricId: 'ability-filters.desktop.saved-teams.firsttogglems',
       }),
     ]);
-    expect(report.metricRows).toHaveLength(28);
+    expect(report.metricRows).toHaveLength(39);
+  });
+
+  it('fails route-load timing and bundle hard budgets', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult(),
+      routeLoadResult({
+        desktopManualShareReadyMs: 2501,
+        compareRawBytes: 740_001,
+      }),
+    );
+    const report = await buildPerformanceBudgetReport({ currentDir });
+
+    expect(report.status).toBe('failed');
+    expect(report.hardBudgetFailures).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metricId: 'route-load.desktop.route-load.manualsharelandingreadyms',
+        }),
+        expect.objectContaining({
+          metricId: 'route-load.bundle.bundle.compare-route-raw-js',
+          message: expect.stringContaining('740.0KB'),
+        }),
+      ]),
+    );
+  });
+
+  it('reports missing route-load metrics as failed rows', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult(),
+      routeLoadResult({
+        desktopManualShareReadyMs: null,
+      }),
+    );
+    const report = await buildPerformanceBudgetReport({ currentDir });
+
+    expect(report.status).toBe('failed');
+    expect(report.hardBudgetFailures).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metricId: 'route-load.desktop.route-load.manualsharelandingreadyms',
+          message: expect.stringContaining('n/a'),
+        }),
+      ]),
+    );
+    expect(report.invalidMetricFailures).toEqual([
+      expect.objectContaining({
+        metricId: 'route-load.desktop.route-load.manualsharelandingreadyms',
+      }),
+    ]);
+    expect(formatPerformanceBudgetSummary(report)).toContain('| route-load | desktop | Route load | manual share landing ready | n/a |');
+  });
+
+  it('requires route-load performance results', async () => {
+    const rootDir = await makeTempDir();
+    const abilityDir = path.join(rootDir, 'current', 'ability');
+    const explanationDir = path.join(rootDir, 'current', 'explanation');
+    await mkdir(abilityDir, { recursive: true });
+    await mkdir(explanationDir, { recursive: true });
+    await writeFile(path.join(abilityDir, 'ability-performance.json'), JSON.stringify(abilityResult()));
+    await writeFile(path.join(explanationDir, 'explanation-performance.json'), JSON.stringify(explanationResult()));
+
+    await expect(buildPerformanceBudgetReport({ currentDir: path.join(rootDir, 'current') })).rejects.toThrow(
+      'Missing route-load performance result',
+    );
   });
 
   it('warns on large baseline deltas without failing when hard budgets pass', async () => {
@@ -206,6 +347,7 @@ describe('perf-budget-report', () => {
 
     expect(serialized).toContain('ability-performance.json');
     expect(serialized).toContain('explanation-performance.json');
+    expect(serialized).toContain('route-load-performance.json');
     await writeFile(path.join(rootDir, 'report.json'), `${serialized}\n`);
     await expect(readFile(path.join(rootDir, 'report.json'), 'utf8')).resolves.toContain('"schemaVersion":1');
   });
@@ -234,6 +376,34 @@ describe('perf-budget-report', () => {
 
     await expect(readFile(outputPath, 'utf8')).resolves.toContain('"status": "failed"');
     await expect(readFile(summaryPath, 'utf8')).resolves.toContain('Hard Budget Failures');
+    await expect(readFile(summaryPath, 'utf8')).resolves.toContain('1.30MB');
     expect(process.exitCode).toBeUndefined();
+  });
+
+  it('fails report-only CLI output when required metric telemetry is invalid', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult(),
+      routeLoadResult({
+        desktopManualShareReadyMs: null,
+      }),
+    );
+    const outputPath = path.join(rootDir, 'invalid-report.json');
+    const summaryPath = path.join(rootDir, 'invalid-summary.md');
+
+    await runCli([
+      '--current-dir',
+      currentDir,
+      '--output',
+      outputPath,
+      '--summary',
+      summaryPath,
+      '--report-only',
+    ]);
+
+    await expect(readFile(outputPath, 'utf8')).resolves.toContain('"invalidMetricFailureCount": 1');
+    await expect(readFile(summaryPath, 'utf8')).resolves.toContain('missing or non-finite');
+    expect(process.exitCode).toBe(1);
   });
 });
