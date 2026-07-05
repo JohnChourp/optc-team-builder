@@ -32,6 +32,7 @@ const SNAPSHOT_OPTIONS = {
 
 test.describe('public entry visual baselines @public-entry-visual', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'Visual baselines are maintained for Chromium only.');
+  test.skip(process.platform !== 'linux', 'Visual baselines are compared on Linux to match CI rendering.');
 
   for (const viewport of VISUAL_VIEWPORTS) {
     test.describe(`${viewport.id} viewport`, () => {
@@ -108,6 +109,8 @@ async function expectPublicEntrySnapshot(page: Page, snapshotName: string): Prom
     animations: 'disabled',
     caret: 'hide',
     fullPage: false,
+    mask: [page.locator('.app-footer-meta')],
+    maskColor: '#03050c',
     scale: 'css',
   });
 

@@ -661,8 +661,10 @@ npm run test:public-entry-visual
 The suite keeps Chromium-only baselines for desktop `1366x900` and mobile
 `390x844` on the public team-building guide, the guided/compare/share guide,
 and a deterministic shared-team landing URL. It intentionally does not add
-Firefox or WebKit pixel baselines; use the normal browser smoke/regression rows
-for cross-browser behavior.
+Firefox, WebKit, macOS, or Windows pixel baselines; use the normal browser
+smoke/regression rows for cross-browser behavior. The screenshot masks the app
+footer before comparison so routine version-label changes do not force baseline
+refreshes.
 
 Refresh snapshots only after reviewing the diff and confirming the visual
 change is intentional. When local rendering differs from CI, use the Linux

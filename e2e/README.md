@@ -61,7 +61,9 @@ The protected states are:
 
 Run the focused visual gate before changing public guide templates, Manual Team
 Builder share-link landing layout, route-level shell styling, or shared Ionic
-theme rules that can affect those public entry pages:
+theme rules that can affect those public entry pages. The pixel comparison runs
+on Linux Chromium so local macOS/Windows runs do not compare against
+CI-generated baselines:
 
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
@@ -71,7 +73,9 @@ npm run test:public-entry-visual
 
 Refresh snapshots only for intentional visual changes after reviewing the
 generated diff. Prefer Linux Chromium artifacts from GitHub Actions as the
-canonical baseline source when local platform rendering differs from CI:
+canonical baseline source when local platform rendering differs from CI. The
+app footer is masked before comparison so routine version bumps do not refresh
+public-entry layout baselines:
 
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
