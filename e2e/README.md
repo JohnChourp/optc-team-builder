@@ -14,6 +14,9 @@ The Playwright suite has two layers:
   activation checks, explicit state/feedback assertions, and focused axe scans
   for serious structural regressions. The axe helper intentionally excludes
   `color-contrast`; contrast reviews remain a separate visual/design pass.
+- `public-entry-visual.spec.ts` keeps Chromium desktop and mobile visual
+  baselines for the public team-building guide, guided/compare/share guide, and
+  deterministic Manual Team Builder share-link landing.
 
 Regression tests seed only browser-local Capacitor Preferences keys:
 
@@ -41,6 +44,44 @@ Run the focused accessibility slice locally with
 `npm run test:e2e:chromium -- --grep "@accessibility"` before changing guided
 controls, compare import/swap UI, saved-team share/import feedback, or manual
 builder share hydration.
+
+## Public Entry Visual Baselines
+
+Visual baselines are intentionally narrower than the behavioral browser suite.
+They run only in Chromium for desktop `1366x900` and mobile `390x844`, while the
+existing smoke, regression, accessibility, route-load, and public-entry
+synthetic checks keep broader route and browser behavior covered.
+
+The protected states are:
+
+- `/guides/how-to-build-an-optc-team`
+- `/guides/guided-build-compare-team-sharing`
+- deterministic `/tabs/manual-team-builder?teamShare=...` generated from the
+  shared saved-team regression fixture
+
+Run the focused visual gate before changing public guide templates, Manual Team
+Builder share-link landing layout, route-level shell styling, or shared Ionic
+theme rules that can affect those public entry pages:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:public-entry-visual
+```
+
+Refresh snapshots only for intentional visual changes after reviewing the
+generated diff:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:public-entry-visual -- --update-snapshots
+```
+
+Treat missing headings, missing shared-team slot content, broken hero layout,
+collapsed cards, or unexpected blank space as regressions. Refresh baselines
+only when the changed PR intentionally updates layout, spacing, typography, or
+guide/share-link content and the matching functional checks still pass.
 
 ## Flake Triage And Quarantine
 
