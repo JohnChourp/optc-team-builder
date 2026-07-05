@@ -499,8 +499,10 @@ async function startStaticServer() {
       });
       createReadStream(filePath).pipe(response);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failures.push(`Static server request failed: ${message}`);
       response.writeHead(500);
-      response.end(error instanceof Error ? error.message : String(error));
+      response.end('internal server error');
     }
   });
 
