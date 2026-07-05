@@ -6,6 +6,9 @@ release-detector checks, release-readiness reporting, and broad UI validation so
 maintainers can pick the smallest useful path without rereading prior audits.
 Use `docs/maintainer-operations.md` first when you need the broader
 public-versus-private operations map before selecting a validation command.
+Use `docs/github-linked-task-template.md` when drafting or closing a
+ClickUp-backed task that should preserve rationale, GitHub links, verification,
+and residual-risk notes.
 Use `docs/cross-repo-architecture-map.md` when the change crosses data import,
 generated assets, runtime matching, release detection, and brain audit evidence.
 Use `docs/dependency-maintenance-policy.md` before reviewing dependency,

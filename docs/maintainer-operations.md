@@ -31,6 +31,7 @@ that private detail.
 | Choose validation for a change | [Maintainer validation guide](maintainer-validation-guide.md) | Brain audit for the ClickUp task when the work needs durable closeout evidence |
 | Understand app and brain ownership across data import, runtime matching, release detection, and audits | [Cross-repo architecture map](cross-repo-architecture-map.md) | Task audit and `../optc-team-builder-brain/audits/evidence-index.md` when the map changes |
 | Find the owner and coverage for a product or operational flow | [Feature coverage map](feature-coverage-map.md) | Related task audit and `../optc-team-builder-brain/audits/evidence-index.md` |
+| Draft or close a GitHub-linked ClickUp task | [GitHub-linked task template](github-linked-task-template.md) | Task audit, PR links, workflow evidence, and completion notes in ClickUp |
 | Add, move, or repair fixtures | [Fixture ownership guide](fixture-ownership-guide.md) | Task audit when fixture policy or release evidence changes |
 | Review dependency, workflow, browser-test, performance, release-check, or native-tooling updates | [Dependency maintenance policy](dependency-maintenance-policy.md) | Brain audit for the maintenance task and post-merge workflow checks |
 | Run quick confidence after a risky merge | [Post-merge smoke pack](post-merge-smoke-pack.md) | Task audit and `live-artifacts/<task-id>/` when ClickUp-backed evidence is needed |
@@ -49,16 +50,19 @@ that private detail.
 
 1. Classify the task before editing: runtime feature, docs/tooling, release
    automation, release evidence, performance, data import, or ClickUp cleanup.
-2. Pick the smallest validation path from the maintainer validation guide.
-3. If live UI evidence is explicitly requested, keep captures under
+2. For ClickUp-backed work that will produce GitHub evidence, start from the
+   GitHub-linked task template so rationale, links, verification, and residual
+   risk are captured before closeout.
+3. Pick the smallest validation path from the maintainer validation guide.
+4. If live UI evidence is explicitly requested, keep captures under
    `../optc-team-builder-brain/live-artifacts/<task-id>/` and summarize only
    the useful result in a tracked audit.
-4. Fill PR traceability with the ClickUp task, durable evidence, and concrete
+5. Fill PR traceability with the ClickUp task, durable evidence, and concrete
    verification commands before requesting review.
-5. After merge, monitor the default branch checks for the repos that changed,
+6. After merge, monitor the default branch checks for the repos that changed,
    then run the post-merge smoke pack when the merge carried release-critical
    web or release-adjacent risk.
-6. Close ClickUp only after the merged state, validation, and evidence links are
+7. Close ClickUp only after the merged state, validation, and evidence links are
    recorded.
 
 ## Maintenance Rule
