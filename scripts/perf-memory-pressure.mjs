@@ -15,9 +15,9 @@ const artifactDir = process.env.PERF_ARTIFACT_DIR ?? resolveDefaultArtifactDir()
 const runLabel = sanitizeSegment(process.env.PERF_RUN_LABEL ?? 'memory-pressure');
 const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const compareSavedTeams = buildSavedTeams(1200, 'memory-compare-team', 'Memory Compare Team');
-const savedTeamsImportPayload = buildSavedTeamsTransferJson(
-  buildSavedTeams(700, 'memory-import-team', 'Memory Import Team'),
-);
+const compareLeftSavedTeam = buildSavedTeams(1, 'memory-left-team', 'Memory Left Team')[0];
+const savedTeamsImportTeams = buildSavedTeams(700, 'memory-import-team', 'Memory Import Team');
+const savedTeamsImportPayload = buildSavedTeamsTransferJson(savedTeamsImportTeams);
 const comparePayload = buildSavedTeamsTransferJson(compareSavedTeams);
 const consoleMessages = [];
 const pageErrors = [];
@@ -42,6 +42,7 @@ const results = {
   fixture: {
     compareTeamCount: compareSavedTeams.length,
     comparePayloadBytes: comparePayload.length,
+    savedTeamsImportTeamCount: savedTeamsImportTeams.length,
     savedTeamsImportPayloadBytes: savedTeamsImportPayload.length,
   },
   snapshots: [],
@@ -283,7 +284,10 @@ async function runCompareStress(page, cdp) {
 
   const importStart = performance.now();
   await applyLargeCompareImport(page);
-  await waitForImportedCompare(page, 'Memory Compare Team 1');
+  await waitForCompareSession(page, {
+    leftLabel: compareLeftSavedTeam.name,
+    rightLabel: 'Memory Compare Team 1',
+  });
   const importMs = Math.round(performance.now() - importStart);
   results.compareImportMs = importMs;
   await screenshot(page, 'compare-after-import');
@@ -292,7 +296,10 @@ async function runCompareStress(page, cdp) {
   const restoreStart = performance.now();
   await page.reload({ waitUntil: 'domcontentloaded' });
   await waitForAngular(page);
-  await waitForImportedCompare(page, 'Memory Compare Team 1');
+  await waitForCompareSession(page, {
+    leftLabel: compareLeftSavedTeam.name,
+    rightLabel: 'Memory Compare Team 1',
+  });
   results.compareRestoreMs = Math.round(performance.now() - restoreStart);
   await screenshot(page, 'compare-after-reload-restore');
   await collectMemorySnapshot(page, cdp, 'compare-after-reload-restore');
@@ -323,11 +330,7 @@ async function runSavedTeamsImportStress(page, cdp) {
   results.savedTeamsImportFeedbackMs = Math.round(performance.now() - importStart);
   await screenshot(page, 'saved-teams-import-feedback');
   await waitForAngular(page);
-  await page.waitForFunction(
-    () => document.querySelectorAll('.saved-team-list .captain-condition-panel').length > 0,
-    undefined,
-    { timeout: 60_000 },
-  );
+  await waitForSavedTeamsImportCount(page, savedTeamsImportTeams.length);
   await screenshot(page, 'saved-teams-after-large-import');
   await collectMemorySnapshot(page, cdp, 'saved-teams-after-large-import');
 }
@@ -404,7 +407,7 @@ async function injectAutoTeamFixture(page) {
 
 async function applyLargeCompareImport(page) {
   const applied = await page.evaluate(
-    async ({ rawContent, leftSnapshot }) => {
+    async ({ rawContent, leftSavedTeam, leftSnapshot }) => {
       const host = document.querySelector('app-auto-team-builder-page');
       const debugApi = window.ng;
       const component = host && debugApi?.getComponent?.(host);
@@ -418,14 +421,17 @@ async function applyLargeCompareImport(page) {
       }
 
       component.compareModeOpen.set(true);
+      localStorage.setItem('CapacitorStorage.savedTeams', JSON.stringify([leftSavedTeam]));
+      component.savedTeams?.set?.([leftSavedTeam]);
       component.compareSidePayloads.set({
         a: {
           state: {
             source: 'saved',
-            savedTeamId: 'memory-left-team',
+            savedTeamId: leftSavedTeam.id,
             importDraft: '',
             importedLabel: '',
             importedRawContent: '',
+            importedSeed: null,
           },
           seed: null,
           snapshot: leftSnapshot,
@@ -439,6 +445,7 @@ async function applyLargeCompareImport(page) {
             importDraft: rawContent,
             importedLabel: '',
             importedRawContent: '',
+            importedSeed: null,
           },
           seed: null,
           snapshot: null,
@@ -456,7 +463,11 @@ async function applyLargeCompareImport(page) {
 
       return true;
     },
-    { rawContent: comparePayload, leftSnapshot: buildCompareSnapshot('Memory Left Team') },
+    {
+      rawContent: comparePayload,
+      leftSavedTeam: compareLeftSavedTeam,
+      leftSnapshot: buildCompareSnapshot(compareLeftSavedTeam.name),
+    },
   );
 
   if (!applied) {
@@ -464,40 +475,56 @@ async function applyLargeCompareImport(page) {
   }
 }
 
-async function waitForImportedCompare(page, expectedLabel) {
+async function waitForCompareSession(page, expected) {
   try {
     await page.waitForFunction(
-      (label) => {
+      ({ leftLabel, rightLabel }) => {
         const host = document.querySelector('app-auto-team-builder-page');
         const component = host && window.ng?.getComponent?.(host);
-        const payload = component?.compareSidePayload?.('b');
+        const leftPayload = component?.compareSidePayload?.('a');
+        const rightPayload = component?.compareSidePayload?.('b');
+        const diff = component?.compareDiff?.();
+        const leftSummaryText =
+          document.querySelector('[data-testid="compare-summary-a"]')?.textContent ?? '';
         const summaryText =
           document.querySelector('[data-testid="compare-summary-b"]')?.textContent ?? '';
 
         return (
           component?.compareModeOpen?.() === true &&
-          payload?.state?.source === 'imported' &&
-          payload?.loading === false &&
-          payload?.snapshot?.label === label &&
-          summaryText.includes(label)
+          leftPayload?.state?.source === 'saved' &&
+          leftPayload?.loading === false &&
+          leftPayload?.snapshot?.label === leftLabel &&
+          rightPayload?.state?.source === 'imported' &&
+          rightPayload?.loading === false &&
+          rightPayload?.snapshot?.label === rightLabel &&
+          Boolean(diff) &&
+          leftSummaryText.includes(leftLabel) &&
+          summaryText.includes(rightLabel)
         );
       },
-      expectedLabel,
+      expected,
       { timeout: 60_000 },
     );
   } catch (error) {
     const diagnostics = await page.evaluate(() => {
       const host = document.querySelector('app-auto-team-builder-page');
       const component = host && window.ng?.getComponent?.(host);
-      const payload = component?.compareSidePayload?.('b');
+      const leftPayload = component?.compareSidePayload?.('a');
+      const rightPayload = component?.compareSidePayload?.('b');
 
       return {
         compareModeOpen: component?.compareModeOpen?.() ?? null,
-        source: payload?.state?.source ?? null,
-        loading: payload?.loading ?? null,
-        error: payload?.error ?? null,
-        seedLabel: payload?.seed?.label ?? null,
-        snapshotLabel: payload?.snapshot?.label ?? null,
+        leftSource: leftPayload?.state?.source ?? null,
+        leftLoading: leftPayload?.loading ?? null,
+        leftError: leftPayload?.error ?? null,
+        leftSnapshotLabel: leftPayload?.snapshot?.label ?? null,
+        rightSource: rightPayload?.state?.source ?? null,
+        rightLoading: rightPayload?.loading ?? null,
+        rightError: rightPayload?.error ?? null,
+        rightSeedLabel: rightPayload?.seed?.label ?? null,
+        rightSnapshotLabel: rightPayload?.snapshot?.label ?? null,
+        hasCompareDiff: Boolean(component?.compareDiff?.()),
+        leftSummaryText: document.querySelector('[data-testid="compare-summary-a"]')?.textContent ?? '',
         summaryText: document.querySelector('[data-testid="compare-summary-b"]')?.textContent ?? '',
         metricChipCount: document.querySelectorAll('.compare-metric-chip').length,
         slotRowCount: document.querySelectorAll('.compare-slot-row').length,
@@ -505,10 +532,51 @@ async function waitForImportedCompare(page, expectedLabel) {
     });
 
     throw new Error(
-      `Timed out waiting for imported compare label ${expectedLabel}: ${JSON.stringify(diagnostics)}`,
+      `Timed out waiting for restored compare session ${JSON.stringify(expected)}: ${JSON.stringify(diagnostics)}`,
       { cause: error },
     );
   }
+}
+
+async function waitForSavedTeamsImportCount(page, expectedCount) {
+  const prefix = 'memory-import-team-';
+
+  await page.waitForFunction(
+    ({ expectedCount: count, prefix: expectedPrefix }) => {
+      let teams = [];
+
+      try {
+        const raw = localStorage.getItem('CapacitorStorage.savedTeams') ?? '[]';
+        const parsed = JSON.parse(raw);
+        teams = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        teams = [];
+      }
+
+      const importedCount = teams.filter(
+        (team) => typeof team?.id === 'string' && team.id.startsWith(expectedPrefix),
+      ).length;
+      const renderedCards = document.querySelectorAll('.saved-team-list .captain-condition-panel')
+        .length;
+
+      return importedCount === count && renderedCards > 0;
+    },
+    { expectedCount, prefix },
+    { timeout: 60_000 },
+  );
+
+  results.savedTeamsImportedCount = await page.evaluate((expectedPrefix) => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem('CapacitorStorage.savedTeams') ?? '[]');
+
+      return Array.isArray(parsed)
+        ? parsed.filter((team) => typeof team?.id === 'string' && team.id.startsWith(expectedPrefix))
+            .length
+        : 0;
+    } catch {
+      return 0;
+    }
+  }, prefix);
 }
 
 async function clearImportedCompareSide(page) {
@@ -655,6 +723,7 @@ function buildSummary() {
     `Base URL: ${results.baseURL}`,
     `Compare payload bytes: ${results.fixture.comparePayloadBytes}`,
     `Saved Teams import payload bytes: ${results.fixture.savedTeamsImportPayloadBytes}`,
+    `Saved Teams imported count: ${formatMetric(results.savedTeamsImportedCount)}`,
     '',
     '| Snapshot | JS heap used | JS heap total | Nodes | Compare session bytes | Saved Teams bytes |',
     '| --- | ---: | ---: | ---: | ---: | ---: |',
