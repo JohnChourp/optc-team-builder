@@ -5162,7 +5162,12 @@ describe('AutoTeamBuilder compare panel', () => {
 
     expect(page.compareSidePayload('b')).toMatchObject({
       state: {
-        importedRawContent: validPayload,
+        importDraft: '',
+        importedRawContent: '',
+        importedSeed: {
+          label: 'Saved Team imported-team',
+          slotIds: [101, 102, 103, 104, 105, 106],
+        },
       },
       snapshot: {
         label: 'Saved Team imported-team',
@@ -5179,6 +5184,7 @@ describe('AutoTeamBuilder compare panel', () => {
         importDraft: 'not-json',
         importedLabel: '',
         importedRawContent: '',
+        importedSeed: null,
       },
       seed: null,
       snapshot: null,
@@ -5189,6 +5195,102 @@ describe('AutoTeamBuilder compare panel', () => {
           importDraft: 'not-json',
           importedLabel: '',
           importedRawContent: '',
+          importedSeed: null,
+        },
+      },
+    });
+  });
+
+  it('persists compact imported compare state instead of raw payload text', async () => {
+    ensureSessionStorage();
+
+    const { page } = await createPage();
+    const validPayload = JSON.stringify(
+      createSavedTeam('imported-team', {
+        shipId: 9002,
+        slots: [101, 102, 103, 104, 105, 106],
+      }),
+    );
+
+    await page.ngOnInit();
+    page.toggleCompareMode();
+    page.onCompareImportDraftChange('b', { detail: { value: validPayload } } as CustomEvent<{
+      value: string;
+    }>);
+    await page.applyCompareImportDraft('b');
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: {
+        importDraft: '',
+        importedRawContent: '',
+        importedSeed: {
+          label: 'Saved Team imported-team',
+          shipId: 9002,
+          slotIds: [101, 102, 103, 104, 105, 106],
+        },
+      },
+      snapshot: {
+        label: 'Saved Team imported-team',
+      },
+    });
+
+    const sessionJson = globalThis.sessionStorage.getItem('autoTeamBuilder.compareState.v1') ?? '';
+    expect(sessionJson).not.toContain(validPayload);
+    expect(readCompareSessionState()).toMatchObject({
+      sides: {
+        b: {
+          importDraft: '',
+          importedRawContent: '',
+          importedSeed: {
+            label: 'Saved Team imported-team',
+            shipId: 9002,
+            slotIds: [101, 102, 103, 104, 105, 106],
+          },
+        },
+      },
+    });
+  });
+
+  it('clears compact imported compare state when switching away from imported source', async () => {
+    ensureSessionStorage();
+
+    const { page } = await createPage();
+    const validPayload = JSON.stringify(
+      createSavedTeam('imported-team', {
+        shipId: 9002,
+        slots: [101, 102, 103, 104, 105, 106],
+      }),
+    );
+
+    await page.ngOnInit();
+    page.toggleCompareMode();
+    page.onCompareImportDraftChange('b', { detail: { value: validPayload } } as CustomEvent<{
+      value: string;
+    }>);
+    await page.applyCompareImportDraft('b');
+    page.onCompareSideSourceChange('b', { detail: { value: 'current' } } as CustomEvent<{
+      value: string;
+    }>);
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: {
+        source: 'current',
+        importDraft: '',
+        importedLabel: '',
+        importedRawContent: '',
+        importedSeed: null,
+      },
+      seed: null,
+      snapshot: null,
+    });
+    expect(readCompareSessionState()).toMatchObject({
+      sides: {
+        b: {
+          source: 'current',
+          importDraft: '',
+          importedLabel: '',
+          importedRawContent: '',
+          importedSeed: null,
         },
       },
     });
@@ -5413,6 +5515,65 @@ describe('AutoTeamBuilder compare panel', () => {
     expect(page.compareSidePayload('a').error).toBe(
       '1 character(s) could not be loaded and are shown as empty.',
     );
+  });
+
+  it('restores legacy raw imported compare sessions once and rewrites them compactly', async () => {
+    const legacyPayload = JSON.stringify(
+      createSavedTeam('legacy-imported-team', {
+        shipId: 9002,
+        slots: [101, 102, 103, 104, 105, 106],
+      }),
+    );
+    writeCompareSessionState({
+      open: true,
+      sides: {
+        a: {
+          source: 'current',
+          savedTeamId: '',
+          importDraft: '',
+          importedLabel: '',
+          importedRawContent: '',
+        },
+        b: {
+          source: 'imported',
+          savedTeamId: '',
+          importDraft: '',
+          importedLabel: 'Legacy payload',
+          importedRawContent: legacyPayload,
+        },
+      },
+    });
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page.compareSidePayload('b')).toMatchObject({
+      state: {
+        source: 'imported',
+        importDraft: '',
+        importedRawContent: '',
+        importedSeed: {
+          label: 'Saved Team legacy-imported-team',
+          slotIds: [101, 102, 103, 104, 105, 106],
+        },
+      },
+      snapshot: {
+        label: 'Saved Team legacy-imported-team',
+      },
+    });
+    const sessionJson = globalThis.sessionStorage.getItem('autoTeamBuilder.compareState.v1') ?? '';
+    expect(sessionJson).not.toContain(legacyPayload);
+    expect(readCompareSessionState()).toMatchObject({
+      sides: {
+        b: {
+          importDraft: '',
+          importedRawContent: '',
+          importedSeed: {
+            label: 'Saved Team legacy-imported-team',
+          },
+        },
+      },
+    });
   });
 
   it('clears corrupted compare session storage with visible recovery feedback', async () => {

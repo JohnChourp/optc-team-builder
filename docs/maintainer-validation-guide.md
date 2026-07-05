@@ -44,7 +44,7 @@ script, or workflow prerequisite looks suspect.
 | Manual-character overlays or dataset integrity checks | `npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts` | Lightweight manual-character specs plus `npx vitest run scripts --reporter=dot`; add `npm run test:captain-contracts` when generated ability metadata is touched | Manual overlays, linked canonical ids, generated dataset integrity, and broad script sweeps stay trustworthy | Test output only |
 | Dataset-change digest schema, generated-data review summary, or PR digest workflow | `npm run test:dataset-digest` | Focused digest tests plus one real `npm run dataset:digest -- --base-ref origin/main --head-ref HEAD --output /tmp/dataset-change-digest.md --json-output /tmp/dataset-change-digest.json`; add captain/source-data gates for parser changes | Parser/import PRs get a scan-friendly summary of manifest counts, generated records, captain tiers, builder abilities, ability catalog deltas, and suspicious churn | GitHub Actions artifact `dataset-change-digest`; local paths passed to `--output` and `--json-output` |
 | Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters`; use `npm run perf:mobile-pickers` for narrow picker/list responsiveness evidence | Run `npm run perf:ability-filters`, collect the companion explanation/import-share result, then run `npm run perf:budget-report -- --current-dir /path/to/current`; add `npm run perf:mobile-pickers` plus focused unit specs when the change targets mobile pickers, long saved collections, or modal filter lists | Deterministic desktop/mobile ability-filter timings are captured, mobile picker/list screenshots and soft warnings are recorded, and hard budgets are enforced by the budget report for the budgeted harnesses | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` or `test-results/mobile-picker-performance` |
-| Auto Team Builder explanation detail, compare rendering, or import/share hydration performance | `PERF_ASSERT=0 npm run perf:explanation-compare` | `npm run perf:explanation-compare` plus focused Auto Team Builder, Saved Teams, or Manual Team Builder specs | Compare-panel rendering, imported compare apply, explanation expansion, heavy saved-team import, and share-link hydration stay inside pragmatic browser budgets; the harness waits for stable explanation detail state and reasserts its deterministic fixture after CI route lifecycle resets before screenshots or expanded-result toggles | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dvr7x5`, with other machines using `perf-artifacts/explanation-compare` |
+| Auto Team Builder explanation detail, compare rendering, import/share hydration, or memory pressure | `PERF_ASSERT=0 npm run perf:explanation-compare`; use `npm run perf:memory-pressure` for low-end compare/import memory evidence | `npm run perf:explanation-compare` plus focused Auto Team Builder, Saved Teams, or Manual Team Builder specs; add `npm run perf:memory-pressure` when compare-session persistence, large imports, or low-end recovery behavior changes | Compare-panel rendering, imported compare apply, explanation expansion, heavy saved-team import, share-link hydration, and low-end compare/import memory recovery stay measurable; the memory harness records Chromium heap/DOM counters and session-storage sizes before import, restore, cleanup, and forced GC | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dvr7x5` for explanation/compare and `../optc-team-builder-brain/live-artifacts/869dwcee1` for memory pressure |
 | Public guide, share-link landing, compare entry, or route bundle size performance | `PERF_ASSERT=0 npm run perf:route-load` | Collect all current budget harnesses (`perf:ability-filters`, `perf:explanation-compare`, and `perf:route-load`) into the same current artifact root before `npm run perf:budget-report -- --current-dir /path/to/current`; add public-entry synthetics when the deployed guide/share route is the risk | Production guide route load, deterministic Manual Team Builder share-link landing load, Auto Team Builder compare entry load, initial JS, and selected route chunk sizes stay inside pragmatic budgets without starving the consolidated report of companion harness inputs | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/route-load-performance` |
 | Public guide and share-link visual baselines | `npm run test:public-entry-visual` | Focused visual gate plus the existing guide discoverability, public-entry synthetics, route-load, and browser smoke rows when route templates or shared shell styling change | Chromium desktop/mobile screenshots catch obvious public guide and share-link landing layout drift, missing hero content, and missing shared-team visual content without expanding noisy cross-browser pixel baselines | Playwright snapshot baselines under `e2e/public-entry-visual.spec.ts-snapshots/`; diff artifacts under `test-results/` on failure |
 | Guided build, compare mode, saved-team sharing, import accessibility, or related copy | Focused page specs plus `npm run test:e2e:chromium -- --grep "@accessibility"`; for copy-only changes use `npm run i18n:validate` and the [copy review checklist](copy-review-checklist.md) | Focused accessibility slice plus full `npm run test:e2e:chromium`, `npm run i18n:validate`, guide discoverability, and `npm run build` when route or guide copy changes | Guided toggles/submits, compare saved/imported/error/swap controls, saved-team share/import feedback, modal focus recovery, dialog names, live-region semantics, manual share hydration, and shared bilingual terms remain reachable, accurate, and consistent | Playwright reports and task-scoped live evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` |
@@ -281,6 +281,14 @@ Command status: manual/illustrative.
 PERF_ARTIFACT_DIR=/path/to/artifacts PERF_RUN_LABEL=local-explanation npm run perf:explanation-compare
 ```
 
+Low-end memory-pressure harness:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+PERF_ARTIFACT_DIR=/path/to/artifacts PERF_RUN_LABEL=local-memory npm run perf:memory-pressure
+```
+
 Route-load and bundle-size harness:
 
 Command status: manual/illustrative.
@@ -302,6 +310,13 @@ warnings for Saved Teams and Saved Enemies long lists, Manual Team Builder
 candidate and ability picker paths, and the Saved Enemies character image
 picker. It is report-only by design; use the warnings and screenshots to decide
 whether a behavior-preserving UI performance fix is needed.
+
+`perf:memory-pressure` records a constrained mobile Chromium profile for large
+Auto Team Builder compare imports and Saved Teams imports. It captures
+session-storage bytes, Chromium heap/DOM counters, screenshots, console/page
+errors, reload restore behavior, source-cleanup behavior, and forced-GC state.
+Memory thresholds are report-only warnings; crashes, page errors, missing
+restore, or missing import feedback fail the harness.
 
 `perf:ability-filters` records timings and screenshots but does not enforce hard
 budgets by itself. To enforce ability-filter budgets locally, place the ability

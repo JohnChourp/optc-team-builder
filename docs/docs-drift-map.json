@@ -257,6 +257,7 @@
       "featurePaths": [
         "scripts/perf-ability-filters.mjs",
         "scripts/perf-explanation-compare.mjs",
+        "scripts/perf-memory-pressure.mjs",
         "scripts/perf-mobile-pickers.mjs",
         "scripts/perf-route-load.mjs",
         "scripts/perf-budget-report.mjs",

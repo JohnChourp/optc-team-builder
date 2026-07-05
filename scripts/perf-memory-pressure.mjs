@@ -578,7 +578,8 @@ function buildWarnings() {
 
   if (
     afterCleanup?.browserState.compareSessionStorageBytes >
-    afterImport?.browserState.compareSessionStorageBytes * 0.5
+      afterImport?.browserState.compareSessionStorageBytes * 0.5 &&
+    afterCleanup?.browserState.compareSessionStorageBytes > 50_000
   ) {
     warnings.push(
       `compare cleanup retained ${afterCleanup.browserState.compareSessionStorageBytes} session-storage bytes after imported side cleanup`,
