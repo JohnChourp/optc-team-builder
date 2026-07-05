@@ -665,7 +665,8 @@ Firefox or WebKit pixel baselines; use the normal browser smoke/regression rows
 for cross-browser behavior.
 
 Refresh snapshots only after reviewing the diff and confirming the visual
-change is intentional:
+change is intentional. When local rendering differs from CI, use the Linux
+Chromium GitHub Actions actual image as the canonical committed baseline:
 
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
@@ -678,7 +679,8 @@ missing shared-team slot content, blank/overlapping hero content, collapsed
 cards, route-shell spacing regressions, or asset-driven layout holes. Baseline
 refreshes are appropriate only for intentional copy, spacing, typography,
 component, or route-template changes that still pass the related functional
-guide, share-link, and route-load checks.
+guide, share-link, and route-load checks. Keep the `maxDiffPixelRatio` stable;
+do not loosen thresholds instead of committing reviewed CI baselines.
 
 ### Docs Drift
 

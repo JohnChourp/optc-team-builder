@@ -70,7 +70,8 @@ npm run test:public-entry-visual
 ```
 
 Refresh snapshots only for intentional visual changes after reviewing the
-generated diff:
+generated diff. Prefer Linux Chromium artifacts from GitHub Actions as the
+canonical baseline source when local platform rendering differs from CI:
 
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
@@ -81,7 +82,8 @@ npm run test:public-entry-visual -- --update-snapshots
 Treat missing headings, missing shared-team slot content, broken hero layout,
 collapsed cards, or unexpected blank space as regressions. Refresh baselines
 only when the changed PR intentionally updates layout, spacing, typography, or
-guide/share-link content and the matching functional checks still pass.
+guide/share-link content and the matching functional checks still pass; do not
+loosen the visual threshold to hide a real diff.
 
 ## Flake Triage And Quarantine
 
