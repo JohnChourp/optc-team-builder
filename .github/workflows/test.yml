@@ -298,6 +298,7 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run Playwright (${{ matrix.browser }})
+        id: playwright
         run: node ./scripts/run-playwright-e2e.mjs --e2e-project=${{ matrix.browser }} --quarantine-mode=exclude
         env:
           CI: 'true'
@@ -311,14 +312,27 @@ jobs:
             --output-md test-results/playwright-failure-summary-${{ matrix.browser }}.md \
             --append-github-step-summary
 
-      - name: Upload Playwright report
+      - name: Upload Playwright summary
         if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-summary-${{ matrix.browser }}
+          path: |
+            test-results/playwright-failure-summary-${{ matrix.browser }}.json
+            test-results/playwright-failure-summary-${{ matrix.browser }}.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Playwright debug report
+        if: always() && steps.playwright.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report-${{ matrix.browser }}
           path: |
             playwright-report/
-            test-results/
+            test-results/**/error-context.md
+            test-results/playwright-failure-summary-${{ matrix.browser }}.json
+            test-results/playwright-failure-summary-${{ matrix.browser }}.md
           retention-days: 14
 
   e2e-quarantine:
@@ -357,6 +371,7 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run quarantined Playwright (${{ matrix.browser }})
+        id: quarantined_playwright
         run: node ./scripts/run-playwright-e2e.mjs --e2e-project=${{ matrix.browser }} --quarantine-mode=only
         env:
           CI: 'true'
@@ -370,12 +385,25 @@ jobs:
             --output-md test-results/playwright-quarantine-failure-summary-${{ matrix.browser }}.md \
             --append-github-step-summary
 
-      - name: Upload quarantined Playwright report
+      - name: Upload quarantined Playwright summary
         if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-quarantine-summary-${{ matrix.browser }}
+          path: |
+            test-results/playwright-quarantine-failure-summary-${{ matrix.browser }}.json
+            test-results/playwright-quarantine-failure-summary-${{ matrix.browser }}.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload quarantined Playwright debug report
+        if: always() && steps.quarantined_playwright.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
           name: playwright-quarantine-${{ matrix.browser }}
           path: |
             playwright-report/
-            test-results/
+            test-results/**/error-context.md
+            test-results/playwright-quarantine-failure-summary-${{ matrix.browser }}.json
+            test-results/playwright-quarantine-failure-summary-${{ matrix.browser }}.md
           retention-days: 14

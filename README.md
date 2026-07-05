@@ -242,7 +242,9 @@ This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workf
   `npm run perf:route-load` as part of the scheduled/manual `Performance
   Budgets` workflow. The route-load harness records production route-ready
   timings, initial JS size, and selected route chunk sizes before the
-  consolidated `performance-budget-report` artifact is built.
+  compact `performance-budget-report` artifact is built. Visual harness
+  screenshots are uploaded separately as `performance-budget-visual-evidence`
+  only when hard-budget failures or baseline warnings need triage.
 
 ## Release detector replay
 
