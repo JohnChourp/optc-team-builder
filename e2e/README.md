@@ -163,6 +163,8 @@ Build the current report and trend history locally from collected artifacts with
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
 ```bash
+PERF_ARTIFACT_DIR=perf-artifacts/current/ability PERF_ASSERT=0 npm run perf:ability-filters
+PERF_ARTIFACT_DIR=perf-artifacts/current/explanation PERF_ASSERT=0 npm run perf:explanation-compare
 PERF_ARTIFACT_DIR=perf-artifacts/current/route-load PERF_ASSERT=0 npm run perf:route-load
 npm run perf:budget-report -- --current-dir perf-artifacts/current --output perf-artifacts/performance-budget-report.json --summary perf-artifacts/performance-budget-summary.md --report-only
 npm run perf:budget-history -- --current-report perf-artifacts/performance-budget-report.json --history-dir perf-artifacts/history --output perf-artifacts/performance-budget-history.json --summary perf-artifacts/performance-budget-history.md

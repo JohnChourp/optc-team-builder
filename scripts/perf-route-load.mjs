@@ -215,16 +215,8 @@ function resolveGitHead() {
 async function readBundleStats() {
   const stats = JSON.parse(await readFile(statsPath, 'utf8'));
   const outputs = stats.outputs ?? {};
-  const mainEntryKeys = Object.entries(outputs)
-    .filter(([file, output]) => file.endsWith('.js') && output.entryPoint === 'src/main.ts')
-    .map(([file]) => file);
-  const initialFiles = new Set(mainEntryKeys);
-  for (const key of mainEntryKeys) {
-    for (const importedKey of collectImportedOutputKeys(key, outputs)) {
-      initialFiles.add(importedKey);
-    }
-  }
-  const initialEntries = [...initialFiles].map((file) => [file, outputs[file]]);
+  const initialEntries = await readInitialEntries(outputs);
+  const initialFiles = new Set(initialEntries.map(({ file }) => file));
 
   const routeEntries = {
     guide: 'src/app/pages/seo-content/seo-content.page.ts',
@@ -235,13 +227,14 @@ async function readBundleStats() {
   return {
     statsPath: path.relative(appRoot, statsPath).replace(/\\/gu, '/'),
     initial: {
-      rawBytes: initialEntries.reduce((total, [, output]) => total + (output.bytes ?? 0), 0),
-      gzipBytes: initialEntries.reduce((total, [file]) => total + gzipOutputFile(file), 0),
-      files: initialEntries.map(([file, output]) => ({
+      rawBytes: initialEntries.reduce((total, { output }) => total + (output.bytes ?? 0), 0),
+      gzipBytes: initialEntries.reduce((total, { file }) => total + gzipOutputFile(file), 0),
+      files: initialEntries.map(({ file, output, source }) => ({
         file,
         rawBytes: output.bytes ?? 0,
         gzipBytes: gzipOutputFile(file),
         entryPoint: output.entryPoint ?? null,
+        source,
       })),
     },
     routes: Object.fromEntries(
@@ -257,6 +250,107 @@ async function readBundleStats() {
       }),
     ),
   };
+}
+
+async function readInitialEntries(outputs) {
+  const indexPath = path.join(browserRoot, 'index.html');
+  const scriptFiles = extractInitialScriptFiles(await readFile(indexPath, 'utf8'));
+
+  if (!scriptFiles.length) {
+    throw new Error(`No initial JavaScript scripts found in ${path.relative(appRoot, indexPath)}.`);
+  }
+
+  const entries = new Map();
+
+  for (const scriptFile of scriptFiles) {
+    const outputKey = resolveStatsOutputKey(scriptFile, outputs);
+
+    if (!outputKey) {
+      const filePath = resolveOutputFilePath(scriptFile);
+      const fileStat = await stat(filePath);
+      entries.set(scriptFile, {
+        file: scriptFile,
+        output: {
+          bytes: fileStat.size,
+          entryPoint: null,
+        },
+        source: 'index.html',
+      });
+      continue;
+    }
+
+    addInitialStatsEntry(entries, outputKey, outputs, 'index.html');
+    for (const importedKey of collectImportedOutputKeys(outputKey, outputs)) {
+      addInitialStatsEntry(entries, importedKey, outputs, outputKey);
+    }
+  }
+
+  if (!entries.size) {
+    throw new Error(`No initial JavaScript bundle entries could be resolved from ${path.relative(appRoot, indexPath)}.`);
+  }
+
+  return [...entries.values()];
+}
+
+function addInitialStatsEntry(entries, outputKey, outputs, source) {
+  if (!outputs[outputKey] || entries.has(outputKey)) {
+    return;
+  }
+
+  entries.set(outputKey, {
+    file: outputKey,
+    output: outputs[outputKey],
+    source,
+  });
+}
+
+function extractInitialScriptFiles(indexHtml) {
+  const scripts = new Set();
+  const scriptPattern = /<script\b[^>]*\bsrc=(["'])(.*?)\1[^>]*>/giu;
+  let match;
+
+  while ((match = scriptPattern.exec(indexHtml))) {
+    const src = String(match[2] ?? '').trim();
+
+    if (!src || /^(?:https?:)?\/\//iu.test(src)) {
+      continue;
+    }
+
+    const normalized = normalizeOutputPath(src);
+    if (normalized.endsWith('.js')) {
+      scripts.add(normalized);
+    }
+  }
+
+  return [...scripts];
+}
+
+function resolveStatsOutputKey(file, outputs) {
+  const normalized = normalizeOutputPath(file);
+  const withoutBrowserPrefix = normalized.replace(/^browser\//u, '');
+  const basename = path.posix.basename(normalized);
+  const candidates = [normalized, withoutBrowserPrefix, `browser/${withoutBrowserPrefix}`, basename];
+
+  for (const candidate of candidates) {
+    if (outputs[candidate]) {
+      return candidate;
+    }
+  }
+
+  const basenameMatches = Object.keys(outputs).filter(
+    (key) => key.endsWith('.js') && path.posix.basename(key) === basename,
+  );
+
+  return basenameMatches.length === 1 ? basenameMatches[0] : null;
+}
+
+function normalizeOutputPath(value) {
+  return String(value)
+    .split('#')[0]
+    .split('?')[0]
+    .replace(/\\/gu, '/')
+    .replace(/^\.?\//u, '')
+    .replace(/^\/+/u, '');
 }
 
 function outputStats(outputKey, output, outputs, initialFiles) {
@@ -410,7 +504,19 @@ async function startStaticServer() {
     }
   });
 
-  await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
+  await new Promise((resolve, reject) => {
+    const onError = (error) => {
+      server.off('listening', onListening);
+      reject(error);
+    };
+    const onListening = () => {
+      server.off('error', onError);
+      resolve();
+    };
+
+    server.once('error', onError);
+    server.listen(port, '127.0.0.1', onListening);
+  });
   return server;
 }
 

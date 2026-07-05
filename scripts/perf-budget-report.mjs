@@ -519,6 +519,12 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
         row.unit,
       )} > ${formatMetricValue(row.budgetMs, row.unit)}`,
     }));
+  const invalidMetricFailures = metricRows
+    .filter((row) => row.actualMs === null)
+    .map((row) => ({
+      metricId: row.id,
+      message: `${row.harness} ${row.viewport} ${row.area} ${row.metric}: missing or non-finite metric value`,
+    }));
   const baselineDeltaWarnings = metricRows
     .filter((row) => row.baselineWarning)
     .map((row) => ({
@@ -577,10 +583,12 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
       metricCount: metricRows.length,
       budgetedMetricCount: metricRows.filter((row) => row.budgetMs !== null).length,
       hardBudgetFailureCount: hardBudgetFailures.length,
+      invalidMetricFailureCount: invalidMetricFailures.length,
       baselineDeltaWarningCount: baselineDeltaWarnings.length,
     },
     metricRows,
     hardBudgetFailures,
+    invalidMetricFailures,
     baselineDeltaWarnings,
   };
 }
@@ -606,6 +614,15 @@ export function formatPerformanceBudgetSummary(report) {
   lines.push('', '## Hard Budget Failures');
   if (report.hardBudgetFailures.length) {
     for (const failure of report.hardBudgetFailures) {
+      lines.push(`- ${failure.message}`);
+    }
+  } else {
+    lines.push('- None');
+  }
+
+  lines.push('', '## Invalid Metrics');
+  if (report.invalidMetricFailures.length) {
+    for (const failure of report.invalidMetricFailures) {
       lines.push(`- ${failure.message}`);
     }
   } else {
@@ -704,7 +721,7 @@ export async function runCli(argv = process.argv.slice(2), env = process.env) {
     process.stdout.write(markdown);
   }
 
-  if (report.hardBudgetFailures.length && !options.reportOnly) {
+  if (report.invalidMetricFailures.length || (report.hardBudgetFailures.length && !options.reportOnly)) {
     process.exitCode = 1;
   }
 

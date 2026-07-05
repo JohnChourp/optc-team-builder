@@ -57,8 +57,9 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
   {
     name: 'test:perf-budget',
     group: 'performance',
-    expectedCommand: 'vitest run scripts/perf-budget-report.spec.ts scripts/perf-budget-history.spec.ts',
-    fix: 'Restore the performance budget unit test package script.',
+    expectedCommand:
+      'node --check ./scripts/perf-route-load.mjs && vitest run scripts/perf-budget-report.spec.ts scripts/perf-budget-history.spec.ts',
+    fix: 'Restore the performance budget unit test package script, including the route-load syntax check.',
   },
   {
     name: 'test:release-check',
@@ -129,6 +130,7 @@ export const REQUIRED_APP_PATHS = [
   { relativePath: 'src/app/core/services/fixtures/captain-contract-cases.json', kind: 'file', group: 'contract' },
   { relativePath: 'scripts/perf-ability-filters.mjs', kind: 'file', group: 'performance' },
   { relativePath: 'scripts/perf-explanation-compare.mjs', kind: 'file', group: 'performance' },
+  { relativePath: 'scripts/perf-route-load.mjs', kind: 'file', group: 'performance' },
   { relativePath: 'scripts/perf-budget-report.mjs', kind: 'file', group: 'performance' },
   { relativePath: 'scripts/perf-budget-history.mjs', kind: 'file', group: 'performance' },
   { relativePath: 'scripts/check-optc-release-needed.mjs', kind: 'file', group: 'release-check' },

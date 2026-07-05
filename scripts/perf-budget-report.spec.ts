@@ -13,6 +13,7 @@ import {
 let tempDirs: string[] = [];
 
 afterEach(async () => {
+  process.exitCode = undefined;
   await Promise.all(tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
   tempDirs = [];
 });
@@ -175,6 +176,7 @@ describe('perf-budget-report', () => {
     expect(report.summary.metricCount).toBe(39);
     expect(report.summary.budgetedMetricCount).toBe(33);
     expect(report.hardBudgetFailures).toEqual([]);
+    expect(report.invalidMetricFailures).toEqual([]);
     expect(report.baseline).toBeNull();
     expect(report.metricRows).toContainEqual(
       expect.objectContaining({
@@ -280,6 +282,11 @@ describe('perf-budget-report', () => {
         }),
       ]),
     );
+    expect(report.invalidMetricFailures).toEqual([
+      expect.objectContaining({
+        metricId: 'route-load.desktop.route-load.manualsharelandingreadyms',
+      }),
+    ]);
     expect(formatPerformanceBudgetSummary(report)).toContain('| route-load | desktop | Route load | manual share landing ready | n/a |');
   });
 
@@ -371,5 +378,32 @@ describe('perf-budget-report', () => {
     await expect(readFile(summaryPath, 'utf8')).resolves.toContain('Hard Budget Failures');
     await expect(readFile(summaryPath, 'utf8')).resolves.toContain('1.30MB');
     expect(process.exitCode).toBeUndefined();
+  });
+
+  it('fails report-only CLI output when required metric telemetry is invalid', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult(),
+      routeLoadResult({
+        desktopManualShareReadyMs: null,
+      }),
+    );
+    const outputPath = path.join(rootDir, 'invalid-report.json');
+    const summaryPath = path.join(rootDir, 'invalid-summary.md');
+
+    await runCli([
+      '--current-dir',
+      currentDir,
+      '--output',
+      outputPath,
+      '--summary',
+      summaryPath,
+      '--report-only',
+    ]);
+
+    await expect(readFile(outputPath, 'utf8')).resolves.toContain('"invalidMetricFailureCount": 1');
+    await expect(readFile(summaryPath, 'utf8')).resolves.toContain('missing or non-finite');
+    expect(process.exitCode).toBe(1);
   });
 });
