@@ -1,0 +1,547 @@
+#!/usr/bin/env node
+import { spawnSync } from 'node:child_process';
+import { createServer } from 'node:http';
+import { existsSync, createReadStream, readFileSync } from 'node:fs';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
+import { gzipSync } from 'node:zlib';
+import { chromium, devices } from 'playwright';
+
+export const ROUTE_LOAD_SCHEMA_VERSION = 1;
+
+export const ROUTE_LOAD_BUDGETS = Object.freeze({
+  timings: {
+    guideShareCompareReadyMs: { desktop: 1500, mobile: 2200 },
+    manualShareLandingReadyMs: { desktop: 4500, mobile: 4400 },
+    compareEntryReadyMs: { desktop: 3000, mobile: 4500 },
+  },
+  bundles: {
+    initialRawBytes: 1_500_000,
+    initialGzipBytes: 370_000,
+    guideRawBytes: 14_000,
+    manualShareRawBytes: 125_000,
+    compareRawBytes: 420_000,
+  },
+});
+
+const appRoot = process.cwd();
+const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const port = Number(process.env.PERF_ROUTE_LOAD_PORT ?? process.env.PERF_PORT ?? process.env.E2E_PORT ?? 8448);
+const baseURL = process.env.PERF_BASE_URL ?? process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
+const artifactDir = process.env.PERF_ARTIFACT_DIR ?? path.join(appRoot, 'test-results/route-load-performance');
+const runLabel = sanitizeSegment(process.env.PERF_RUN_LABEL ?? 'route-load');
+const shouldAssert = process.env.PERF_ASSERT !== '0';
+const shouldBuild = process.env.PERF_ROUTE_LOAD_BUILD !== '0';
+const buildRoot = path.resolve(process.env.PERF_ROUTE_LOAD_BUILD_ROOT ?? path.join(appRoot, 'dist/optc-team-builder'));
+const browserRoot = path.join(buildRoot, 'browser');
+const statsPath = path.join(buildRoot, 'stats.json');
+const screenshotDir = path.join(artifactDir, 'screenshots');
+const consoleMessages = [];
+const pageErrors = [];
+const failures = [];
+
+export const ROUTE_LOAD_SYNTHETIC_TEAM = Object.freeze({
+  id: 'route-load-budget-crew',
+  name: 'Route Load Budget Crew',
+  slots: [5056, 4551, 4520, 4408, 4267, null],
+  shipId: null,
+  notes: 'Synthetic route-load performance fixture.',
+  createdAt: '2026-07-05T00:00:00.000Z',
+  updatedAt: '2026-07-05T00:00:00.000Z',
+});
+
+const routes = [
+  {
+    id: 'guide-share-compare',
+    path: '/guides/guided-build-compare-team-sharing/',
+    metricKey: 'guideShareCompareReadyMs',
+    wait: async (page) => {
+      await page
+        .locator('ion-app')
+        .getByRole('heading', { name: 'Guided Build, Compare Mode, and Team Sharing' })
+        .first()
+        .waitFor({ state: 'visible', timeout: 45_000 });
+    },
+  },
+  {
+    id: 'manual-share-landing',
+    path: `/tabs/manual-team-builder?teamShare=${encodeURIComponent(buildSyntheticShareCode())}`,
+    redactedPath: '/tabs/manual-team-builder?teamShare=<redacted-synthetic>',
+    metricKey: 'manualShareLandingReadyMs',
+    wait: async (page) => {
+      await waitForShareLinkHydration(page);
+    },
+  },
+  {
+    id: 'compare-entry',
+    path: '/tabs/auto-team-builder',
+    metricKey: 'compareEntryReadyMs',
+    wait: async (page) => {
+      const compareToggle = page.getByTestId('compare-toggle');
+      await compareToggle.waitFor({ state: 'visible', timeout: 60_000 });
+      await compareToggle.click();
+      await page.getByTestId('compare-empty-state').waitFor({ state: 'visible', timeout: 45_000 });
+    },
+  },
+];
+
+await mkdir(screenshotDir, { recursive: true });
+if (shouldBuild) {
+  runProductionStatsBuild();
+}
+
+const bundle = await readBundleStats();
+const server = process.env.PERF_BASE_URL || process.env.E2E_BASE_URL ? null : await startStaticServer();
+let browser;
+
+const results = {
+  schemaVersion: ROUTE_LOAD_SCHEMA_VERSION,
+  capturedAt: new Date().toISOString(),
+  baseURL,
+  appRepo: appRoot,
+  appCommit: resolveGitHead(),
+  artifactDir,
+  runLabel,
+  shouldAssert,
+  budgets: ROUTE_LOAD_BUDGETS,
+  fixture: {
+    teamId: ROUTE_LOAD_SYNTHETIC_TEAM.id,
+    teamName: ROUTE_LOAD_SYNTHETIC_TEAM.name,
+    filledSlotCount: ROUTE_LOAD_SYNTHETIC_TEAM.slots.filter((slot) => slot !== null).length,
+    shareCodeBytes: buildSyntheticShareCode().length,
+  },
+  routes: routes.map((route) => ({
+    id: route.id,
+    path: route.redactedPath ?? route.path,
+    metricKey: route.metricKey,
+  })),
+  bundle,
+  viewportRuns: [],
+  consoleMessages,
+  pageErrors,
+  failures,
+};
+
+try {
+  browser = await chromium.launch();
+
+  for (const viewport of [
+    {
+      label: 'desktop',
+      viewport: { width: 1440, height: 1000 },
+      isMobile: false,
+      userAgent: devices['Desktop Chrome'].userAgent,
+    },
+    {
+      label: 'mobile',
+      ...devices['Pixel 7'],
+    },
+  ]) {
+    const context = await browser.newContext({
+      baseURL,
+      viewport: viewport.viewport,
+      isMobile: viewport.isMobile,
+      hasTouch: viewport.hasTouch,
+      userAgent: viewport.userAgent,
+    });
+    await context.addInitScript(() => {
+      localStorage.setItem('CapacitorStorage.appLanguage', 'en');
+      localStorage.setItem('CapacitorStorage.analyticsConsent', 'rejected');
+    });
+
+    const run = { viewport: viewport.label, timings: { routes: {} }, routeRuns: [] };
+    for (const route of routes) {
+      const routeRun = await measureRoute(context, route, viewport.label);
+      run.routeRuns.push(routeRun);
+      run.timings.routes[route.metricKey] = routeRun.readyMs;
+    }
+
+    results.viewportRuns.push(run);
+    checkTimingBudgets(viewport.label, run.timings.routes);
+    await context.close();
+  }
+
+  checkBundleBudgets(bundle);
+  await writeResults(results);
+
+  if (shouldAssert && failures.length) {
+    throw new Error(`Route-load guardrails failed:\n${failures.map((failure) => `- ${failure}`).join('\n')}`);
+  }
+} finally {
+  if (browser) {
+    await closeBrowser(browser);
+  }
+  await stopStaticServer(server);
+}
+
+function sanitizeSegment(value) {
+  return String(value).trim().replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'route-load';
+}
+
+function buildSyntheticShareCode(team = ROUTE_LOAD_SYNTHETIC_TEAM) {
+  return Buffer.from(
+    JSON.stringify({
+      schemaVersion: 1,
+      source: 'saved-team-share',
+      exportedAt: '2026-07-05T00:00:00.000Z',
+      team: {
+        ...team,
+        slots: [...team.slots],
+      },
+    }),
+    'utf8',
+  )
+    .toString('base64')
+    .replace(/\+/gu, '-')
+    .replace(/\//gu, '_')
+    .replace(/=+$/u, '');
+}
+
+function runProductionStatsBuild() {
+  const result = spawnSync(npmBin, ['run', 'build', '--', '--stats-json'], {
+    cwd: appRoot,
+    env: process.env,
+    stdio: 'inherit',
+  });
+
+  if (result.status !== 0) {
+    throw new Error(`Production stats build failed with exit code ${result.status ?? 'unknown'}.`);
+  }
+}
+
+function resolveGitHead() {
+  const result = spawnSync('git', ['rev-parse', '--short', 'HEAD'], {
+    cwd: appRoot,
+    encoding: 'utf8',
+  });
+
+  return result.status === 0 ? result.stdout.trim() : null;
+}
+
+async function readBundleStats() {
+  const stats = JSON.parse(await readFile(statsPath, 'utf8'));
+  const outputs = stats.outputs ?? {};
+  const initialEntries = Object.entries(outputs).filter(
+    ([file, output]) => file.endsWith('.js') && output.entryPoint === 'src/main.ts',
+  );
+
+  const routeEntries = {
+    guide: 'src/app/pages/seo-content/seo-content.page.ts',
+    manualShare: 'src/app/pages/manual-team-builder/manual-team-builder.page.ts',
+    compare: 'src/app/pages/auto-team-builder/auto-team-builder.page.ts',
+  };
+
+  return {
+    statsPath: path.relative(appRoot, statsPath).replace(/\\/gu, '/'),
+    initial: {
+      rawBytes: initialEntries.reduce((total, [, output]) => total + (output.bytes ?? 0), 0),
+      gzipBytes: initialEntries.reduce((total, [file]) => total + gzipOutputFile(file), 0),
+      files: initialEntries.map(([file, output]) => ({
+        file,
+        rawBytes: output.bytes ?? 0,
+        gzipBytes: gzipOutputFile(file),
+        entryPoint: output.entryPoint ?? null,
+      })),
+    },
+    routes: Object.fromEntries(
+      Object.entries(routeEntries).map(([key, entryPoint]) => {
+        const found = Object.entries(outputs).find(([, output]) => String(output.entryPoint ?? '').endsWith(entryPoint));
+
+        if (!found) {
+          failures.push(`Missing bundle stats for ${entryPoint}.`);
+          return [key, null];
+        }
+
+        return [key, outputStats(found[0], found[1])];
+      }),
+    ),
+  };
+}
+
+function outputStats(outputKey, output) {
+  return {
+    file: outputKey,
+    rawBytes: output.bytes ?? 0,
+    gzipBytes: gzipOutputFile(outputKey),
+    entryPoint: output.entryPoint ?? null,
+    topInputs: Object.entries(output.inputs ?? {})
+      .map(([inputPath, input]) => ({
+        path: inputPath,
+        bytesInOutput: Math.round(input.bytesInOutput ?? 0),
+      }))
+      .sort((left, right) => right.bytesInOutput - left.bytesInOutput)
+      .slice(0, 12),
+  };
+}
+
+function gzipOutputFile(file) {
+  const filePath = path.join(browserRoot, file);
+
+  if (!existsSync(filePath)) {
+    return null;
+  }
+
+  return gzipSync(readFileSync(filePath)).length;
+}
+
+async function startStaticServer() {
+  const mime = new Map([
+    ['.html', 'text/html; charset=utf-8'],
+    ['.js', 'text/javascript; charset=utf-8'],
+    ['.css', 'text/css; charset=utf-8'],
+    ['.json', 'application/json; charset=utf-8'],
+    ['.svg', 'image/svg+xml'],
+    ['.png', 'image/png'],
+    ['.jpg', 'image/jpeg'],
+    ['.jpeg', 'image/jpeg'],
+    ['.wasm', 'application/wasm'],
+    ['.txt', 'text/plain; charset=utf-8'],
+  ]);
+
+  const server = createServer(async (request, response) => {
+    try {
+      const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+      let pathname = decodeURIComponent(url.pathname);
+
+      if (pathname.endsWith('/')) {
+        pathname += 'index.html';
+      }
+
+      let filePath = path.normalize(path.join(browserRoot, pathname));
+      if (!filePath.startsWith(browserRoot)) {
+        response.writeHead(403);
+        response.end('forbidden');
+        return;
+      }
+
+      if (!existsSync(filePath) || !(await stat(filePath)).isFile()) {
+        filePath = path.join(browserRoot, 'index.html');
+      }
+
+      response.writeHead(200, {
+        'content-type': mime.get(path.extname(filePath)) ?? 'application/octet-stream',
+      });
+      createReadStream(filePath).pipe(response);
+    } catch (error) {
+      response.writeHead(500);
+      response.end(error instanceof Error ? error.message : String(error));
+    }
+  });
+
+  await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
+  return server;
+}
+
+async function stopStaticServer(server) {
+  if (!server) {
+    return;
+  }
+
+  await new Promise((resolve) => server.close(resolve));
+}
+
+async function closeBrowser(activeBrowser) {
+  await Promise.race([activeBrowser.close(), delay(5000)]);
+}
+
+async function measureRoute(context, route, viewportLabel) {
+  const page = await context.newPage();
+  attachPageDiagnostics(page, route.id, viewportLabel);
+  const startedAt = performance.now();
+
+  try {
+    await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    await waitForAppReady(page);
+    await route.wait(page);
+    await waitForAngular(page).catch(() => true);
+
+    const readyMs = Math.round(performance.now() - startedAt);
+    const screenshot = `screenshots/${runLabel}-${viewportLabel}-${route.id}.png`;
+    await page.screenshot({
+      path: path.join(artifactDir, screenshot),
+      fullPage: true,
+      timeout: 10_000,
+    });
+
+    return {
+      id: route.id,
+      path: route.redactedPath ?? route.path,
+      readyMs,
+      screenshot,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    failures.push(`${viewportLabel} ${route.id}: ${message}`);
+
+    return {
+      id: route.id,
+      path: route.redactedPath ?? route.path,
+      readyMs: null,
+      error: message,
+    };
+  } finally {
+    await page.close().catch(() => {});
+  }
+}
+
+function attachPageDiagnostics(page, routeId, viewportLabel) {
+  page.on('console', (message) => {
+    if (!['error', 'warning'].includes(message.type())) {
+      return;
+    }
+
+    consoleMessages.push({
+      viewport: viewportLabel,
+      route: routeId,
+      type: message.type(),
+      text: sanitizeDiagnosticText(message.text()),
+    });
+  });
+
+  page.on('pageerror', (error) => {
+    pageErrors.push({
+      viewport: viewportLabel,
+      route: routeId,
+      message: sanitizeDiagnosticText(error.message),
+      stack: error.stack ? sanitizeDiagnosticText(error.stack) : null,
+    });
+  });
+}
+
+function sanitizeDiagnosticText(value) {
+  return String(value ?? '').replace(/teamShare=[^&#\s'"<>)]+/gu, 'teamShare=<redacted-synthetic>');
+}
+
+async function waitForAppReady(page) {
+  await page.waitForLoadState('domcontentloaded');
+  await page.locator('ion-app').first().waitFor({ state: 'attached', timeout: 45_000 });
+  await waitForAngular(page).catch(() => true);
+}
+
+async function waitForAngular(page) {
+  await page.waitForFunction(
+    () => {
+      const testabilities = window.getAllAngularTestabilities?.() ?? [];
+
+      if (!testabilities.length) {
+        return true;
+      }
+
+      return Promise.all(
+        testabilities.map(
+          (testability) =>
+            new Promise((resolve) => {
+              testability.whenStable(resolve);
+            }),
+        ),
+      ).then(() => true);
+    },
+    undefined,
+    { timeout: 60_000 },
+  );
+}
+
+async function waitForShareLinkHydration(page) {
+  const shareError = page.getByTestId('manual-share-error');
+
+  const name = await waitForIonInputValue(page.getByTestId('manual-team-name'), ROUTE_LOAD_SYNTHETIC_TEAM.name);
+  if (!name.ok) {
+    throw new Error(`Manual Team Builder did not render the synthetic team name; observed ${JSON.stringify(name.observedValue)}.`);
+  }
+
+  const notes = await waitForIonInputValue(page.getByTestId('manual-team-notes'), ROUTE_LOAD_SYNTHETIC_TEAM.notes);
+  if (!notes.ok) {
+    throw new Error(`Manual Team Builder did not render the synthetic team notes; observed ${JSON.stringify(notes.observedValue)}.`);
+  }
+
+  await page
+    .getByTestId('manual-team-slot-0')
+    .getByText('Sergeant Helmeppo')
+    .first()
+    .waitFor({ state: 'visible', timeout: 45_000 });
+
+  if (await shareError.isVisible().catch(() => false)) {
+    const text = ((await shareError.textContent().catch(() => '')) ?? '').replace(/\s+/gu, ' ').trim();
+    throw new Error(`Manual Team Builder reported a share-link decoding error: ${text}`);
+  }
+}
+
+async function ionInputValue(locator) {
+  return locator.evaluate(async (element) => {
+    await element.componentOnReady?.();
+    return element.value ?? element.querySelector('input, textarea')?.value ?? '';
+  });
+}
+
+async function waitForIonInputValue(locator, expectedValue) {
+  const deadline = Date.now() + 45_000;
+  let observedValue = '';
+
+  while (Date.now() < deadline) {
+    try {
+      await locator.waitFor({
+        state: 'attached',
+        timeout: Math.min(500, Math.max(1, deadline - Date.now())),
+      });
+      observedValue = await ionInputValue(locator);
+
+      if (observedValue === expectedValue) {
+        return { ok: true, observedValue };
+      }
+    } catch {
+      // Keep polling until the hydrated field is available or the timeout expires.
+    }
+
+    await delay(250);
+  }
+
+  return { ok: false, observedValue };
+}
+
+function checkTimingBudgets(viewportLabel, timings) {
+  if (!shouldAssert) {
+    return;
+  }
+
+  for (const [metricKey, viewportBudgets] of Object.entries(ROUTE_LOAD_BUDGETS.timings)) {
+    const actual = timings[metricKey];
+    const budget = viewportBudgets[viewportLabel];
+
+    if (Number.isFinite(actual) && Number.isFinite(budget) && actual > budget) {
+      failures.push(`${viewportLabel} ${metricKey}: ${actual}ms > ${budget}ms`);
+    }
+  }
+}
+
+function checkBundleBudgets(bundle) {
+  if (!shouldAssert) {
+    return;
+  }
+
+  const checks = [
+    ['initial raw JS', bundle.initial.rawBytes, ROUTE_LOAD_BUDGETS.bundles.initialRawBytes, 'bytes'],
+    ['initial gzip JS', bundle.initial.gzipBytes, ROUTE_LOAD_BUDGETS.bundles.initialGzipBytes, 'bytes'],
+    ['guide route raw JS', bundle.routes.guide?.rawBytes, ROUTE_LOAD_BUDGETS.bundles.guideRawBytes, 'bytes'],
+    [
+      'manual share route raw JS',
+      bundle.routes.manualShare?.rawBytes,
+      ROUTE_LOAD_BUDGETS.bundles.manualShareRawBytes,
+      'bytes',
+    ],
+    ['compare route raw JS', bundle.routes.compare?.rawBytes, ROUTE_LOAD_BUDGETS.bundles.compareRawBytes, 'bytes'],
+  ];
+
+  for (const [label, actual, budget, unit] of checks) {
+    if (Number.isFinite(actual) && Number.isFinite(budget) && actual > budget) {
+      failures.push(`${label}: ${actual}${unit} > ${budget}${unit}`);
+    }
+  }
+}
+
+async function writeResults(report) {
+  await writeFile(
+    path.join(artifactDir, `${runLabel}-performance.json`),
+    `${JSON.stringify(report, null, 2)}\n`,
+  );
+}

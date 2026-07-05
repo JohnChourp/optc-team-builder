@@ -133,6 +133,7 @@ describe('ci-check-routing', () => {
       'scripts/fixtures/release-check/no-change/remote-units.js',
       'scripts/fixtures/release-provenance/github-release-v1.2.3.json',
       'scripts/perf-budget-report.mjs',
+      'scripts/perf-route-load.mjs',
     ]);
 
     expect(plan.fullPlan).toBe(false);

@@ -107,13 +107,59 @@ function explanationResult() {
   };
 }
 
-async function writeCurrentResults(rootDir: string, ability = abilityResult()) {
+function routeLoadResult(overrides: Record<string, number> = {}) {
+  return {
+    schemaVersion: 1,
+    capturedAt: '2026-07-05T00:00:00.000Z',
+    baseURL: 'http://127.0.0.1:8448',
+    appCommit: 'abc1234',
+    runLabel: 'route-load',
+    bundle: {
+      initial: {
+        rawBytes: overrides.initialRawBytes ?? 1_300_000,
+        gzipBytes: overrides.initialGzipBytes ?? 320_000,
+      },
+      routes: {
+        guide: { rawBytes: overrides.guideRawBytes ?? 4_000, gzipBytes: 2_000 },
+        manualShare: { rawBytes: overrides.manualShareRawBytes ?? 94_000, gzipBytes: 21_000 },
+        compare: { rawBytes: overrides.compareRawBytes ?? 348_000, gzipBytes: 67_000 },
+      },
+    },
+    viewportRuns: [
+      {
+        viewport: 'desktop',
+        timings: {
+          routes: {
+            guideShareCompareReadyMs: overrides.desktopGuideReadyMs ?? 200,
+            manualShareLandingReadyMs: overrides.desktopManualShareReadyMs ?? 3300,
+            compareEntryReadyMs: overrides.desktopCompareReadyMs ?? 450,
+          },
+        },
+      },
+      {
+        viewport: 'mobile',
+        timings: {
+          routes: {
+            guideShareCompareReadyMs: overrides.mobileGuideReadyMs ?? 200,
+            manualShareLandingReadyMs: overrides.mobileManualShareReadyMs ?? 3300,
+            compareEntryReadyMs: overrides.mobileCompareReadyMs ?? 450,
+          },
+        },
+      },
+    ],
+  };
+}
+
+async function writeCurrentResults(rootDir: string, ability = abilityResult(), routeLoad = routeLoadResult()) {
   const abilityDir = path.join(rootDir, 'current', 'ability');
   const explanationDir = path.join(rootDir, 'current', 'explanation');
+  const routeLoadDir = path.join(rootDir, 'current', 'route-load');
   await mkdir(abilityDir, { recursive: true });
   await mkdir(explanationDir, { recursive: true });
+  await mkdir(routeLoadDir, { recursive: true });
   await writeFile(path.join(abilityDir, 'ability-performance.json'), JSON.stringify(ability));
   await writeFile(path.join(explanationDir, 'explanation-performance.json'), JSON.stringify(explanationResult()));
+  await writeFile(path.join(routeLoadDir, 'route-load-performance.json'), JSON.stringify(routeLoad));
   return path.join(rootDir, 'current');
 }
 
@@ -124,8 +170,8 @@ describe('perf-budget-report', () => {
     const report = await buildPerformanceBudgetReport({ currentDir });
 
     expect(report.status).toBe('passed');
-    expect(report.summary.metricCount).toBe(28);
-    expect(report.summary.budgetedMetricCount).toBe(22);
+    expect(report.summary.metricCount).toBe(39);
+    expect(report.summary.budgetedMetricCount).toBe(33);
     expect(report.hardBudgetFailures).toEqual([]);
     expect(report.baseline).toBeNull();
     expect(report.metricRows).toContainEqual(
@@ -140,6 +186,21 @@ describe('perf-budget-report', () => {
         id: 'explanation-compare.desktop.import-share-hydration.savedteamsimportreadyms',
         actualMs: 900,
         budgetMs: 3000,
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.desktop.route-load.manualsharelandingreadyms',
+        actualMs: 3300,
+        budgetMs: 4500,
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.bundle.bundle.initial-raw-js',
+        actualMs: 1_300_000,
+        budgetMs: 1_500_000,
+        unit: 'bytes',
       }),
     );
   });
@@ -160,7 +221,47 @@ describe('perf-budget-report', () => {
         metricId: 'ability-filters.desktop.saved-teams.firsttogglems',
       }),
     ]);
-    expect(report.metricRows).toHaveLength(28);
+    expect(report.metricRows).toHaveLength(39);
+  });
+
+  it('fails route-load timing and bundle hard budgets', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult(),
+      routeLoadResult({
+        desktopManualShareReadyMs: 4501,
+        compareRawBytes: 420_001,
+      }),
+    );
+    const report = await buildPerformanceBudgetReport({ currentDir });
+
+    expect(report.status).toBe('failed');
+    expect(report.hardBudgetFailures).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metricId: 'route-load.desktop.route-load.manualsharelandingreadyms',
+        }),
+        expect.objectContaining({
+          metricId: 'route-load.bundle.bundle.compare-route-raw-js',
+          message: expect.stringContaining('420.0KB'),
+        }),
+      ]),
+    );
+  });
+
+  it('requires route-load performance results', async () => {
+    const rootDir = await makeTempDir();
+    const abilityDir = path.join(rootDir, 'current', 'ability');
+    const explanationDir = path.join(rootDir, 'current', 'explanation');
+    await mkdir(abilityDir, { recursive: true });
+    await mkdir(explanationDir, { recursive: true });
+    await writeFile(path.join(abilityDir, 'ability-performance.json'), JSON.stringify(abilityResult()));
+    await writeFile(path.join(explanationDir, 'explanation-performance.json'), JSON.stringify(explanationResult()));
+
+    await expect(buildPerformanceBudgetReport({ currentDir: path.join(rootDir, 'current') })).rejects.toThrow(
+      'Missing route-load performance result',
+    );
   });
 
   it('warns on large baseline deltas without failing when hard budgets pass', async () => {
@@ -206,6 +307,7 @@ describe('perf-budget-report', () => {
 
     expect(serialized).toContain('ability-performance.json');
     expect(serialized).toContain('explanation-performance.json');
+    expect(serialized).toContain('route-load-performance.json');
     await writeFile(path.join(rootDir, 'report.json'), `${serialized}\n`);
     await expect(readFile(path.join(rootDir, 'report.json'), 'utf8')).resolves.toContain('"schemaVersion":1');
   });
@@ -234,6 +336,7 @@ describe('perf-budget-report', () => {
 
     await expect(readFile(outputPath, 'utf8')).resolves.toContain('"status": "failed"');
     await expect(readFile(summaryPath, 'utf8')).resolves.toContain('Hard Budget Failures');
+    await expect(readFile(summaryPath, 'utf8')).resolves.toContain('1.30MB');
     expect(process.exitCode).toBeUndefined();
   });
 });

@@ -258,13 +258,14 @@
         "scripts/perf-ability-filters.mjs",
         "scripts/perf-explanation-compare.mjs",
         "scripts/perf-mobile-pickers.mjs",
+        "scripts/perf-route-load.mjs",
         "scripts/perf-budget-report.mjs",
         "scripts/perf-budget-history.mjs",
         ".github/workflows/performance-budgets.yml"
       ],
-      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwc0hh-performance-budget-tracking.md"],
-      "owner": "Browser performance, import/share hydration, and trend ownership",
-      "notes": "Performance harness, budget, trend, or workflow changes should update validation guidance and evidence."
+      "docsPaths": ["README.md", "e2e/README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwc0hh-performance-budget-tracking.md"],
+      "owner": "Browser performance, route-load, import/share hydration, and trend ownership",
+      "notes": "Performance harness, route-load budget, bundle budget, trend, or workflow changes should update validation guidance and evidence."
     },
     {
       "id": "docs-quality",

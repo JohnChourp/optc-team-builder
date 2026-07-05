@@ -15,6 +15,38 @@ function formatMs(value) {
   return Number.isFinite(value) ? `${Math.round(value)}ms` : 'n/a';
 }
 
+function formatBytes(value) {
+  if (!Number.isFinite(value)) {
+    return 'n/a';
+  }
+
+  if (Math.abs(value) >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(2)}MB`;
+  }
+
+  if (Math.abs(value) >= 1_000) {
+    return `${(value / 1_000).toFixed(1)}KB`;
+  }
+
+  return `${Math.round(value)}B`;
+}
+
+function formatMetricValue(value, unit) {
+  return unit === 'bytes' ? formatBytes(value) : formatMs(value);
+}
+
+function formatDeltaValue(value, unit) {
+  if (!Number.isFinite(value)) {
+    return 'n/a';
+  }
+
+  if (unit === 'bytes') {
+    return `${value >= 0 ? '+' : ''}${formatBytes(value)}`;
+  }
+
+  return `${value >= 0 ? '+' : ''}${Math.round(value)}ms`;
+}
+
 function formatPercent(value) {
   return Number.isFinite(value) ? `${value.toFixed(1)}%` : 'n/a';
 }
@@ -152,6 +184,7 @@ function buildMetricTrendRows(currentReport, historicalReports) {
           status: report.status ?? null,
           actualMs: Math.round(row.actualMs),
           budgetMs: Number.isFinite(row.budgetMs) ? Math.round(row.budgetMs) : null,
+          unit: row.unit ?? 'ms',
           hardBudgetStatus: row.hardBudgetStatus ?? null,
           baselineWarning: Boolean(row.baselineWarning),
         };
@@ -165,6 +198,7 @@ function buildMetricTrendRows(currentReport, historicalReports) {
       area: currentRow.area,
       metric: currentRow.metric,
       metricKey: currentRow.metricKey,
+      unit: currentRow.unit ?? 'ms',
       latestActualMs,
       budgetMs: Number.isFinite(currentRow.budgetMs) ? Math.round(currentRow.budgetMs) : null,
       previousActualMs,
@@ -304,13 +338,15 @@ export function formatPerformanceBudgetHistorySummary(history) {
     const delta =
       row.deltaFromPreviousMs === null
         ? 'n/a'
-        : `${row.deltaFromPreviousMs >= 0 ? '+' : ''}${Math.round(row.deltaFromPreviousMs)}ms (${formatPercent(
-            row.deltaFromPreviousPercent,
-          )})`;
+        : `${formatDeltaValue(row.deltaFromPreviousMs, row.unit)} (${formatPercent(row.deltaFromPreviousPercent)})`;
     lines.push(
-      `| ${row.harness} ${row.viewport} ${row.area} ${row.metric} | ${formatMs(row.latestActualMs)} | ${formatMs(
-        row.previousActualMs,
-      )} | ${delta} | ${formatMs(row.budgetMs)} | ${row.latestHardBudgetStatus} |`,
+      `| ${row.harness} ${row.viewport} ${row.area} ${row.metric} | ${formatMetricValue(
+        row.latestActualMs,
+        row.unit,
+      )} | ${formatMetricValue(row.previousActualMs, row.unit)} | ${delta} | ${formatMetricValue(
+        row.budgetMs,
+        row.unit,
+      )} | ${row.latestHardBudgetStatus} |`,
     );
   }
 

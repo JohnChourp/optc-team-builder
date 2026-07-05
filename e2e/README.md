@@ -94,6 +94,8 @@ The workflow uploads one `performance-budget-report` artifact. It contains:
 - `current/ability/` with the ability-filter timing JSON and screenshots.
 - `current/explanation/` with the explanation/compare/import-share timing JSON
   and screenshots.
+- `current/route-load/` with the production route-load timing JSON, route
+  screenshots, and bundle-size stats parsed from the Angular production build.
 
 On scheduled runs, the report compares against the latest successful
 `Performance Budgets` artifact on `main`. On manual runs, pass
@@ -137,6 +139,23 @@ Chromium viewports. The recurring workflow budgets are:
 Page-ready timings are reported for before/after context but are not
 hard-budgeted.
 
+`npm run perf:route-load` builds the production app with `--stats-json`, serves
+the generated `dist/optc-team-builder/browser` output locally, and measures
+desktop/mobile Chromium entry cost for the public guided/compare/share guide,
+a deterministic redacted Manual Team Builder `teamShare` landing, and the Auto
+Team Builder compare entry controls. It also parses `dist/optc-team-builder/stats.json`
+to record initial JS and route chunk sizes with top source contributors.
+
+The recurring workflow budgets are:
+
+- guide route ready `<=1500ms` desktop and `<=2200ms` mobile
+- manual share-link landing ready `<=4500ms` desktop and `<=4400ms` mobile
+- compare entry ready `<=3000ms` desktop and `<=4500ms` mobile
+- initial raw JS `<=1.50MB` and initial gzip JS `<=370KB`
+- guide route raw JS `<=14KB`
+- manual share route raw JS `<=125KB`
+- compare route raw JS `<=420KB`
+
 Set `PERF_ASSERT=0` to collect artifacts without failing on the budgets.
 
 Build the current report and trend history locally from collected artifacts with:
@@ -144,6 +163,7 @@ Build the current report and trend history locally from collected artifacts with
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
 ```bash
+PERF_ARTIFACT_DIR=perf-artifacts/current/route-load PERF_ASSERT=0 npm run perf:route-load
 npm run perf:budget-report -- --current-dir perf-artifacts/current --output perf-artifacts/performance-budget-report.json --summary perf-artifacts/performance-budget-summary.md --report-only
 npm run perf:budget-history -- --current-report perf-artifacts/performance-budget-report.json --history-dir perf-artifacts/history --output perf-artifacts/performance-budget-history.json --summary perf-artifacts/performance-budget-history.md
 ```

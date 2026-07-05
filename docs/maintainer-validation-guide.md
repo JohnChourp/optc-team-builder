@@ -42,9 +42,10 @@ script, or workflow prerequisite looks suspect.
 | Dataset-change digest schema, generated-data review summary, or PR digest workflow | `npm run test:dataset-digest` | Focused digest tests plus one real `npm run dataset:digest -- --base-ref origin/main --head-ref HEAD --output /tmp/dataset-change-digest.md --json-output /tmp/dataset-change-digest.json`; add captain/source-data gates for parser changes | Parser/import PRs get a scan-friendly summary of manifest counts, generated records, captain tiers, builder abilities, ability catalog deltas, and suspicious churn | GitHub Actions artifact `dataset-change-digest`; local paths passed to `--output` and `--json-output` |
 | Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters`; use `npm run perf:mobile-pickers` for narrow picker/list responsiveness evidence | Run `npm run perf:ability-filters`, collect the companion explanation/import-share result, then run `npm run perf:budget-report -- --current-dir /path/to/current`; add `npm run perf:mobile-pickers` plus focused unit specs when the change targets mobile pickers, long saved collections, or modal filter lists | Deterministic desktop/mobile ability-filter timings are captured, mobile picker/list screenshots and soft warnings are recorded, and hard budgets are enforced by the budget report for the budgeted harnesses | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` or `test-results/mobile-picker-performance` |
 | Auto Team Builder explanation detail, compare rendering, or import/share hydration performance | `PERF_ASSERT=0 npm run perf:explanation-compare` | `npm run perf:explanation-compare` plus focused Auto Team Builder, Saved Teams, or Manual Team Builder specs | Compare-panel rendering, imported compare apply, explanation expansion, heavy saved-team import, and share-link hydration stay inside pragmatic browser budgets; the harness waits for stable explanation detail state and reasserts its deterministic fixture after CI route lifecycle resets before screenshots or expanded-result toggles | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dvr7x5`, with other machines using `perf-artifacts/explanation-compare` |
+| Public guide, share-link landing, compare entry, or route bundle size performance | `PERF_ASSERT=0 npm run perf:route-load` | Route-load harness plus `npm run perf:budget-report -- --current-dir /path/to/current`; add public-entry synthetics when the deployed guide/share route is the risk | Production guide route load, deterministic Manual Team Builder share-link landing load, Auto Team Builder compare entry load, initial JS, and selected route chunk sizes stay inside pragmatic budgets | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/route-load-performance` |
 | Guided build, compare mode, saved-team sharing, import accessibility, or related copy | Focused page specs plus `npm run test:e2e:chromium -- --grep "@accessibility"`; for copy-only changes use `npm run i18n:validate` and the [copy review checklist](copy-review-checklist.md) | Focused accessibility slice plus full `npm run test:e2e:chromium`, `npm run i18n:validate`, guide discoverability, and `npm run build` when route or guide copy changes | Guided toggles/submits, compare saved/imported/error/swap controls, saved-team share/import feedback, modal focus recovery, dialog names, live-region semantics, manual share hydration, and shared bilingual terms remain reachable, accurate, and consistent | Playwright reports and task-scoped live evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` |
 | PWA installability, offline app-shell entry, service-worker cache config, or stale-shell upgrade behavior | `PWA_SHELL_ARTIFACT_DIR=../optc-team-builder-brain/live-artifacts/<task-id>/pwa-shell npm run test:pwa-shell` | PWA shell check plus `npm run build`, browser e2e for touched routes, and docs integrity when recovery guidance changes | Manifest and icon prerequisites, Angular service-worker registration/control, offline entry for high-value routes, and stale-shell upgrade recovery stay repeatable from production build output | `PWA_SHELL_ARTIFACT_DIR` when set; otherwise local OPTC checkouts use `../optc-team-builder-brain/live-artifacts/869dwc7wk/pwa-shell`, with CI/standalone checkouts using `test-results/pwa-shell` |
-| Release-candidate performance confidence | Manual `Performance Budgets` workflow dispatch | Scheduled/manual `Performance Budgets` workflow with an explicit `baseline_run_id`, then inspect the uploaded report | The ability-filter and explanation/compare harnesses both ran on GitHub Actions, hard-budget results were recorded, and baseline warnings were surfaced | GitHub Actions artifact `performance-budget-report` |
+| Release-candidate performance confidence | Manual `Performance Budgets` workflow dispatch | Scheduled/manual `Performance Budgets` workflow with an explicit `baseline_run_id`, then inspect the uploaded report | The ability-filter, explanation/compare, and route-load harnesses all ran on GitHub Actions, hard-budget results were recorded, and baseline warnings were surfaced | GitHub Actions artifact `performance-budget-report` |
 | OPTC DB release-detector logic, source-contract checks, fixtures, workflow dispatch rules, historical backtests, upstream replay support, status artifact formatting, or post-release provenance verification | `npm run test:release-check` | Run `npm run data:backtest-release -- --json`, each successful bundled fixture, the live check, verify `node scripts/check-optc-release-needed.mjs --fixture=error --json` and `node scripts/check-optc-release-needed.mjs --fixture=source-contract-broken --json` exit nonzero, and generate local release-detector status/provenance JSON and Markdown from current or fixture reports | Missing upstream character IDs are the only release trigger, historical snapshots keep expected release/no-release decisions stable, fixture branches remain replayable, malformed fixture handling still fails, source-contract breakage is distinct from normal no-release outcomes, manual workflow dispatch defaults to report-only verification, the live upstream read still works, maintainers can scan the latest status without raw workflow logs, and release outputs can be traced back to detector/source/version/APK evidence | Command output; workflow artifacts `release-trigger-outcome`, `upstream-monitor-report`, `release-detector-status`, and `release-provenance` after Actions runs |
 | Release-readiness summary schema, report formatting, sign-off policy, or release evidence wiring | `npm run test:release-readiness` | `npm run test:release-readiness` plus `npm run release:readiness -- --source /path/to/source.json --output /path/to/summary.md --json-output /path/to/summary.json` using current evidence | Candidate status, tests, performance report, release-trigger report, blockers, and waivers produce the intended ready/blocked decision | Paths passed to `--output` and `--json-output` |
 | Post-merge smoke pack for release-critical web and release-adjacent flows | `npm run test:post-merge-smoke` | Core smoke pack plus the deeper row for the changed surface; add Android live launch only for native, Capacitor, release, PWA shell, or device-specific risk | Public guide/help routes, guided/compare/share journeys, maintainer prerequisites, and release-check handoff stay healthy after merge without replacing full QA for broad release candidates | Playwright output and task-scoped evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` when needed |
@@ -276,6 +277,14 @@ Command status: manual/illustrative.
 PERF_ARTIFACT_DIR=/path/to/artifacts PERF_RUN_LABEL=local-explanation npm run perf:explanation-compare
 ```
 
+Route-load and bundle-size harness:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+PERF_ARTIFACT_DIR=/path/to/artifacts PERF_RUN_LABEL=local-route-load PERF_ASSERT=0 npm run perf:route-load
+```
+
 Narrow mobile picker/list harness:
 
 Command status: manual/illustrative.
@@ -292,14 +301,15 @@ whether a behavior-preserving UI performance fix is needed.
 
 `perf:ability-filters` records timings and screenshots but does not enforce hard
 budgets by itself. To enforce ability-filter budgets locally, place the ability
-result under a shared current directory, include an explanation/compare result,
-then run the budget report:
+result under a shared current directory, include explanation/compare and
+route-load results, then run the budget report:
 
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
 ```bash
 PERF_ARTIFACT_DIR=perf-artifacts/current/ability npm run perf:ability-filters
 PERF_ARTIFACT_DIR=perf-artifacts/current/explanation PERF_ASSERT=0 npm run perf:explanation-compare
+PERF_ARTIFACT_DIR=perf-artifacts/current/route-load PERF_ASSERT=0 npm run perf:route-load
 npm run perf:budget-report -- --current-dir perf-artifacts/current
 ```
 
@@ -308,6 +318,12 @@ set. Use `PERF_ASSERT=0` when collecting timing evidence without failing the
 command on budget regressions. Leave assertions enabled when the explanation
 and compare harness itself is the merge gate or release-candidate confidence
 check.
+
+`perf:route-load` builds the production app with `--stats-json`, serves the
+generated browser output locally, and records route-ready timings plus initial
+and route chunk sizes. Set `PERF_ROUTE_LOAD_BUILD=0` only when an existing
+production build and `dist/optc-team-builder/stats.json` already match the code
+under test.
 
 ### PWA Shell Safety
 
@@ -350,7 +366,8 @@ worker and Application > Storage to clear site data during local diagnosis.
 ### Performance Budgets
 
 Use the `Performance Budgets` GitHub Actions workflow for recurring or release
-candidate performance evidence. The workflow runs both browser harnesses,
+candidate performance evidence. The workflow runs the ability-filter,
+explanation/compare, and route-load browser harnesses,
 combines them with:
 
 Command status: manual/illustrative.
