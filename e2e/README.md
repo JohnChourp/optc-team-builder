@@ -186,6 +186,14 @@ repo.
 - desktop first/all explanation toggles `<=300ms` / `<=900ms`
 - mobile first/all explanation toggles `<=450ms` / `<=1200ms`
 
+`npm run perf:memory-pressure` replays large compare imports and Saved Teams
+imports in a constrained mobile Chromium profile. It records Chromium
+heap/DOM counters, compare-session storage bytes, reload restore behavior,
+source cleanup, forced-GC state, and screenshots. When `PERF_ARTIFACT_DIR` is
+not set, local OPTC workspace checkouts use
+`../optc-team-builder-brain/live-artifacts/869dwcee1`; other machines fall back
+to `perf-artifacts/memory-pressure`.
+
 `npm run perf:ability-filters` measures deterministic Saved Teams, Saved
 Enemies, and Manual Team Builder ability-filter flows in desktop and mobile
 Chromium viewports. The recurring workflow budgets are:

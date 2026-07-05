@@ -239,6 +239,7 @@ interface AutoTeamCompareSideState {
   importDraft: string;
   importedLabel: string;
   importedRawContent: string;
+  importedSeed: AutoTeamCompareImportedSeed | null;
 }
 
 interface AutoTeamCompareSidePayload {
@@ -274,6 +275,42 @@ function createAutoTeamCompareSideState(
     importDraft: '',
     importedLabel: '',
     importedRawContent: '',
+    importedSeed: null,
+  };
+}
+
+function cloneAutoTeamCompareImportedSeed(
+  seed: AutoTeamCompareImportedSeed | null,
+): AutoTeamCompareImportedSeed | null {
+  if (!seed) {
+    return null;
+  }
+
+  return {
+    ...seed,
+    slotIds: [...seed.slotIds],
+    characters: seed.characters ? [...seed.characters] : [],
+  };
+}
+
+function cloneAutoTeamCompareSideState(
+  state: AutoTeamCompareSideState,
+): AutoTeamCompareSideState {
+  return {
+    ...state,
+    importedSeed: cloneAutoTeamCompareImportedSeed(state.importedSeed),
+  };
+}
+
+function clearImportedCompareSessionFields(
+  state: AutoTeamCompareSideState,
+): AutoTeamCompareSideState {
+  return {
+    ...state,
+    importDraft: '',
+    importedLabel: '',
+    importedRawContent: '',
+    importedSeed: null,
   };
 }
 
@@ -292,19 +329,10 @@ function createAutoTeamCompareSidePayload(
 function cloneAutoTeamCompareSidePayload(
   payload: AutoTeamCompareSidePayload,
 ): AutoTeamCompareSidePayload {
-  const seed = payload.seed
-    ? {
-        ...payload.seed,
-        slotIds: [...payload.seed.slotIds],
-      }
-    : null;
-
-  if (seed?.characters) {
-    seed.characters = [...seed.characters];
-  }
+  const seed = cloneAutoTeamCompareImportedSeed(payload.seed);
 
   return {
-    state: { ...payload.state },
+    state: cloneAutoTeamCompareSideState(payload.state),
     seed,
     snapshot: payload.snapshot,
     error: payload.error,
@@ -329,6 +357,14 @@ function settleSwappedComparePayload(
 
 function normalizeCompareSource(value: unknown): AutoTeamCompareSource {
   return value === 'saved' || value === 'imported' ? value : 'current';
+}
+
+function normalizeCompareSessionPositiveInteger(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 interface LoadingProgressRow {
@@ -3512,7 +3548,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.updateCompareSidePayload(side, (payload) => ({
       ...payload,
       state: {
-        ...payload.state,
+        ...(source === 'imported'
+          ? payload.state
+          : clearImportedCompareSessionFields(payload.state)),
         source,
       },
       seed: source === 'imported' ? payload.seed : null,
@@ -3557,6 +3595,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       state: {
         ...payload.state,
         importDraft,
+        importedLabel: '',
+        importedRawContent: '',
+        importedSeed: null,
       },
       loading: false,
     }));
@@ -3640,6 +3681,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
+    if (payload.state.importedSeed) {
+      await this.refreshImportedCompareSnapshot(
+        side,
+        payload.state.importedSeed,
+        payload.state.importedLabel || this.t('compare.import.restoredPayload'),
+        requestToken,
+      );
+      return;
+    }
+
     if (payload.state.importedRawContent.trim().length) {
       await this.applyCompareImportRawContent(
         side,
@@ -3654,6 +3705,71 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       ...current,
       loading: false,
     }));
+  }
+
+  private async refreshImportedCompareSnapshot(
+    side: AutoTeamCompareSide,
+    seed: AutoTeamCompareImportedSeed,
+    sourceLabel: string,
+    requestToken: number,
+  ): Promise<void> {
+    this.updateCompareSidePayload(side, (payload) => ({
+      ...payload,
+      loading: true,
+    }));
+
+    try {
+      const characterMap = await this.loadCompareCharacterMap(
+        collectAutoTeamCompareSeedCharacterIds(seed),
+      );
+      const snapshot = buildAutoTeamCompareSnapshotFromImportedSeed(
+        seed,
+        characterMap,
+        this.resolveCompareShip(seed.shipId),
+        this.availableAbilityCatalogItems(),
+      );
+
+      if (
+        !this.isCompareRequestCurrent(side, requestToken) ||
+        this.compareSideState(side).source !== 'imported'
+      ) {
+        return;
+      }
+
+      const compactSeed = cloneAutoTeamCompareImportedSeed(seed);
+
+      this.updateCompareSidePayload(side, (payload) => ({
+        ...payload,
+        state: {
+          ...payload.state,
+          source: 'imported',
+          importDraft: '',
+          importedLabel: seed.label || sourceLabel,
+          importedRawContent: '',
+          importedSeed: compactSeed,
+        },
+        seed: compactSeed,
+        snapshot,
+        error: this.resolveCompareSnapshotWarning(snapshot),
+        loading: false,
+      }));
+      this.persistCompareSessionState();
+    } catch {
+      if (
+        !this.isCompareRequestCurrent(side, requestToken) ||
+        this.compareSideState(side).source !== 'imported'
+      ) {
+        return;
+      }
+
+      this.updateCompareSidePayload(side, (payload) => ({
+        ...payload,
+        seed: null,
+        snapshot: null,
+        error: this.t('compare.errors.loadFailed'),
+        loading: false,
+      }));
+    }
   }
 
   private async refreshSavedCompareSnapshot(
@@ -3783,16 +3899,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         return;
       }
 
+      const compactSeed = cloneAutoTeamCompareImportedSeed(seed);
+
       this.updateCompareSidePayload(side, (payload) => ({
         ...payload,
         state: {
           ...payload.state,
           source: 'imported',
-          importDraft: rawContent,
+          importDraft: '',
           importedLabel: seed.label || sourceLabel,
-          importedRawContent: rawContent,
+          importedRawContent: '',
+          importedSeed: compactSeed,
         },
-        seed,
+        seed: compactSeed,
         snapshot,
         error: this.resolveCompareSnapshotWarning(snapshot),
         loading: false,
@@ -3814,6 +3933,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           importDraft: rawContent,
           importedLabel: '',
           importedRawContent: '',
+          importedSeed: null,
         },
         seed: null,
         snapshot: null,
@@ -3985,19 +4105,49 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private normalizeCompareSideSessionState(value: unknown): AutoTeamCompareSideState {
-    if (!value || typeof value !== 'object') {
+    if (!isRecord(value)) {
       return createAutoTeamCompareSideState();
     }
 
-    const record = value as Partial<AutoTeamCompareSideState>;
+    const importedSeed = this.normalizeCompareImportedSeed(value['importedSeed']);
 
     return {
-      source: normalizeCompareSource(record.source),
-      savedTeamId: typeof record.savedTeamId === 'string' ? record.savedTeamId : '',
-      importDraft: typeof record.importDraft === 'string' ? record.importDraft : '',
-      importedLabel: typeof record.importedLabel === 'string' ? record.importedLabel : '',
+      source: normalizeCompareSource(value['source']),
+      savedTeamId: typeof value['savedTeamId'] === 'string' ? value['savedTeamId'] : '',
+      importDraft: typeof value['importDraft'] === 'string' ? value['importDraft'] : '',
+      importedLabel:
+        typeof value['importedLabel'] === 'string'
+          ? value['importedLabel']
+          : importedSeed?.label ?? '',
       importedRawContent:
-        typeof record.importedRawContent === 'string' ? record.importedRawContent : '',
+        typeof value['importedRawContent'] === 'string' ? value['importedRawContent'] : '',
+      importedSeed,
+    };
+  }
+
+  private normalizeCompareImportedSeed(value: unknown): AutoTeamCompareImportedSeed | null {
+    if (!isRecord(value)) {
+      return null;
+    }
+
+    const rawSlotIds = Array.isArray(value['slotIds']) ? value['slotIds'] : [];
+    const slotIds = AUTO_BUILD_MANUAL_SLOT_ROLES.map((_, index) =>
+      normalizeCompareSessionPositiveInteger(rawSlotIds[index]),
+    );
+    const label = typeof value['label'] === 'string' ? value['label'].trim() : '';
+
+    if (!label && slotIds.every((slotId) => slotId === null)) {
+      return null;
+    }
+
+    return {
+      label: label || this.t('compare.import.restoredPayload'),
+      shipId: normalizeCompareSessionPositiveInteger(value['shipId']),
+      ship: isRecord(value['ship']) ? (value['ship'] as unknown as ShipRecord) : null,
+      slotIds,
+      characters: Array.isArray(value['characters'])
+        ? (value['characters'] as CharacterDetailRecord[])
+        : [],
     };
   }
 
