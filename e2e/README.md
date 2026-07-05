@@ -21,7 +21,12 @@ Regression tests seed only browser-local Capacitor Preferences keys:
 - `CapacitorStorage.analyticsConsent`
 - `CapacitorStorage.savedTeams`
 
-Keep new scenarios deterministic. Prefer stable seeded teams and `data-testid` hooks over incidental Ionic popover structure, visual pixels, network timing, or generated class names. Failure traces, screenshots, videos, the HTML report, and `test-results/` are uploaded by CI for debugging.
+Keep new scenarios deterministic. Prefer stable seeded teams and `data-testid`
+hooks over incidental Ionic popover structure, visual pixels, network timing, or
+generated class names. CI always uploads the generated Playwright failure
+summary for each browser leg. The full HTML report, traces, screenshots, videos,
+and useful error-context Markdown files are uploaded only for browser legs that
+fail.
 
 CI already runs each browser project with one worker through `playwright.config.ts`.
 For scoped browser runs, the E2E wrapper first runs the non-guided suite and then
@@ -56,8 +61,8 @@ CI keeps quarantined coverage visible without blocking unrelated work:
 - the normal browser matrix runs `scripts/run-playwright-e2e.mjs` with
   `--quarantine-mode=exclude`
 - the non-blocking quarantine matrix runs with `--quarantine-mode=only`
-- both paths upload `playwright-report/`, `test-results/`, JSON reporter output,
-  and the generated failure summary
+- both paths upload a compact generated failure summary for every browser leg
+  and upload the heavier Playwright debug report only for failed browser legs
 
 The `Test` workflow does not start these browser matrices for every file
 change. `scripts/ci-check-routing.mjs` selects them for app runtime, e2e,
@@ -83,7 +88,8 @@ surface in the summary and artifacts without blocking unrelated work. Set the
 manual `fail_on_regression` input to `true` when a release-candidate preflight
 should fail on hard-budget misses.
 
-The workflow uploads one `performance-budget-report` artifact. It contains:
+The workflow uploads one compact `performance-budget-report` artifact. It
+contains:
 
 - `performance-budget-report.json` with schema version, workflow metadata,
   metric rows, hard-budget failures, and baseline-delta warnings.
@@ -91,11 +97,17 @@ The workflow uploads one `performance-budget-report` artifact. It contains:
 - `performance-budget-history.json` with recent run metadata and per-metric
   trend rows.
 - `performance-budget-history.md` with the trend summary for maintainers.
-- `current/ability/` with the ability-filter timing JSON and screenshots.
+- `current/ability/` with the ability-filter timing JSON.
 - `current/explanation/` with the explanation/compare/import-share timing JSON
-  and screenshots.
+  outputs.
 - `current/route-load/` with the production route-load timing JSON, route
-  screenshots, and bundle-size stats parsed from the Angular production build.
+  bundle-size stats parsed from the Angular production build, and related JSON
+  outputs.
+
+When hard-budget failures or baseline-delta warnings are present, the workflow
+also uploads `performance-budget-visual-evidence` with the current harness
+screenshots. Routine successful runs keep the compact JSON/Markdown artifact so
+baseline and history downloads remain cheap.
 
 On scheduled runs, the report compares against the latest successful
 `Performance Budgets` artifact on `main`. On manual runs, pass

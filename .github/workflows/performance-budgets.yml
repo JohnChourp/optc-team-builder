@@ -148,6 +148,7 @@ jobs:
         run: npm run perf:route-load
 
       - name: Build performance budget report
+        id: budget_report
         env:
           BASELINE_REPORT_PATH: ${{ steps.baseline.outputs.baseline_report_path }}
           FAIL_ON_REGRESSION: ${{ github.event.inputs.fail_on_regression || 'false' }}
@@ -181,6 +182,45 @@ jobs:
 
           cat perf-artifacts/performance-budget-history.md >> "${GITHUB_STEP_SUMMARY}"
 
+      - name: Resolve performance visual evidence upload
+        id: visual_evidence
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          function hasPngFiles(dir) {
+            if (!fs.existsSync(dir)) {
+              return false;
+            }
+
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const entryPath = path.join(dir, entry.name);
+              if (entry.isDirectory() && hasPngFiles(entryPath)) {
+                return true;
+              }
+              if (entry.isFile() && entry.name.endsWith('.png')) {
+                return true;
+              }
+            }
+
+            return false;
+          }
+
+          let upload = false;
+          if (fs.existsSync('perf-artifacts/performance-budget-report.json')) {
+            const report = JSON.parse(fs.readFileSync('perf-artifacts/performance-budget-report.json', 'utf8'));
+            const failures = Array.isArray(report.hardBudgetFailures) ? report.hardBudgetFailures.length : 0;
+            const warnings = Array.isArray(report.baselineDeltaWarnings) ? report.baselineDeltaWarnings.length : 0;
+            upload = failures > 0 || warnings > 0;
+          } else {
+            upload = hasPngFiles('perf-artifacts/current');
+          }
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `upload=${upload}\n`);
+          NODE
+
       - name: Upload performance budget artifacts
         if: always()
         uses: actions/upload-artifact@v7
@@ -191,6 +231,15 @@ jobs:
             perf-artifacts/performance-budget-summary.md
             perf-artifacts/performance-budget-history.json
             perf-artifacts/performance-budget-history.md
-            perf-artifacts/current/
+            perf-artifacts/current/**/*.json
           if-no-files-found: error
-          retention-days: 90
+          retention-days: 45
+
+      - name: Upload performance visual evidence
+        if: always() && steps.visual_evidence.outputs.upload == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-budget-visual-evidence
+          path: perf-artifacts/current/**/*.png
+          if-no-files-found: warn
+          retention-days: 14
