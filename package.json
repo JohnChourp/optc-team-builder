@@ -56,6 +56,7 @@
     "perf:ability-filters": "node ./scripts/perf-ability-filters.mjs",
     "perf:explanation-compare": "node ./scripts/perf-explanation-compare.mjs",
     "perf:mobile-pickers": "node ./scripts/perf-mobile-pickers.mjs",
+    "perf:memory-pressure": "node ./scripts/perf-memory-pressure.mjs",
     "perf:route-load": "node ./scripts/perf-route-load.mjs",
     "perf:budget-report": "node ./scripts/perf-budget-report.mjs",
     "perf:budget-history": "node ./scripts/perf-budget-history.mjs",
