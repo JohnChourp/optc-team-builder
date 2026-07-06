@@ -53,6 +53,18 @@
               @for (detail of feedback.details; track $index) {
                 <span>{{ detail }}</span>
               }
+              @if (feedback.manualCopy; as manualCopy) {
+                <label class="manual-copy-fallback">
+                  <span>{{ manualCopy.label }}</span>
+                  <textarea
+                    readonly
+                    rows="3"
+                    [attr.data-testid]="manualCopy.testId"
+                    [value]="manualCopy.text"
+                    (focus)="selectManualCopyText($event)"
+                  ></textarea>
+                </label>
+              }
             </div>
           </div>
         }

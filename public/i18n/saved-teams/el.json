@@ -188,9 +188,21 @@
     "copiedLink": "Αντιγράφηκε το share link για \"{{name}}\".",
     "copiedSelectedJson": "Αντιγράφηκε JSON export για {{count}} επιλεγμένα teams.",
     "errorTitle": "Η αντιγραφή απέτυχε",
-    "errors": {
-      "clipboard": "Το clipboard δεν είναι διαθέσιμο. Δοκίμασε το download action."
+    "manualCopyTitle": "Χειροκίνητη αντιγραφή",
+    "manualCopy": {
+      "codeLabel": "Share code",
+      "instructions": "Επίλεξε το πεδίο παρακάτω και κάνε copy χειροκίνητα.",
+      "linkLabel": "Share link"
     },
+    "errors": {
+      "insecureContext": "Αυτός ο browser μπλοκάρει το clipboard εκτός ασφαλούς σελίδας.",
+      "jsonClipboard": "Χρησιμοποίησε Export για να κατεβάσεις το JSON file και μετά κάνε share ή import το αρχείο.",
+      "manualCopyAvailable": "Η τιμή για share παραμένει διαθέσιμη παρακάτω.",
+      "permissionDenied": "Το clipboard permission απορρίφθηκε από αυτόν τον browser ή profile.",
+      "unavailable": "Το clipboard δεν είναι διαθέσιμο σε αυτόν τον browser.",
+      "unknown": "Ο browser δεν μπόρεσε να γράψει στο clipboard."
+    },
+    "sharedLink": "Άνοιξε το native share για \"{{name}}\".",
     "successTitle": "Αντιγράφηκε"
   },
   "selection": {

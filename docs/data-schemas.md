@@ -147,6 +147,14 @@ Settings standalone saved-team imports, Settings all-data saved-team sections,
 Saved Teams imports, and Auto Team Builder compare-session restore/write paths
 must surface the same redacted diagnostic class without exposing the payload.
 
+Browser share and clipboard capability failures are also outside the payload
+schema. Saved Teams classifies unavailable clipboard APIs, denied/security
+errors, insecure contexts, and unknown write failures without exposing raw
+exception text. Share links and raw share codes provide a readonly manual-copy
+fallback when both native share and clipboard writes are blocked. JSON copy
+failures direct users to the Export/download action instead of rendering large
+payloads for manual selection.
+
 Single-team share links use a separate self-contained payload encoded into the `teamShare` query parameter on `/tabs/manual-team-builder`:
 
 ```json

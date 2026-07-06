@@ -83,8 +83,26 @@ interface SavedTeamPreviewCard {
 
 interface SavedTeamsImportFeedback {
   details: string[];
+  manualCopy?: SavedTeamsManualCopyFeedback;
   title: string;
   tone: 'error' | 'success' | 'warning';
+}
+
+interface SavedTeamsManualCopyFeedback {
+  label: string;
+  testId: string;
+  text: string;
+}
+
+type ClipboardFailureKind =
+  | 'insecureContext'
+  | 'permissionDenied'
+  | 'unavailable'
+  | 'unknown';
+
+interface ClipboardFallbackOptions {
+  failureRecoveryKey: string;
+  manualCopy?: SavedTeamsManualCopyFeedback;
 }
 
 interface SavedTeamsImportFeedbackStats {
@@ -347,6 +365,9 @@ export class SavedTeamsPage implements OnInit {
         { count: this.selectedCount() },
         'saved-teams',
       ),
+      {
+        failureRecoveryKey: 'share.errors.jsonClipboard',
+      },
     );
   }
 
@@ -355,16 +376,45 @@ export class SavedTeamsPage implements OnInit {
   }
 
   public async copyTeamShareLink(team: SavedTeam): Promise<void> {
+    const shareUrl = buildSavedTeamShareUrl(team);
+    const nativeShareMessage = this.i18n.translate(
+      'share.sharedLink',
+      { name: team.name },
+      'saved-teams',
+    );
+
+    if (await this.shareTextWithNativeShare(shareUrl, team.name, nativeShareMessage)) {
+      return;
+    }
+
     await this.copyTextToClipboardWithFeedback(
-      buildSavedTeamShareUrl(team),
+      shareUrl,
       this.i18n.translate('share.copiedLink', { name: team.name }, 'saved-teams'),
+      {
+        failureRecoveryKey: 'share.errors.manualCopyAvailable',
+        manualCopy: {
+          label: this.i18n.translate('share.manualCopy.linkLabel', undefined, 'saved-teams'),
+          testId: 'saved-teams-manual-copy-share-link',
+          text: shareUrl,
+        },
+      },
     );
   }
 
   public async copyTeamShareCode(team: SavedTeam): Promise<void> {
+    const shareCode = buildSavedTeamShareCode(team);
+
     await this.copyTextToClipboardWithFeedback(
-      buildSavedTeamShareCode(team),
+      shareCode,
       this.i18n.translate('share.copiedCode', { name: team.name }, 'saved-teams'),
+      {
+        failureRecoveryKey: 'share.errors.manualCopyAvailable',
+        manualCopy: {
+          label: this.i18n.translate('share.manualCopy.codeLabel', undefined, 'saved-teams'),
+          testId: 'saved-teams-manual-copy-share-code',
+          text: shareCode,
+        },
+      },
     );
   }
 
@@ -372,7 +422,18 @@ export class SavedTeamsPage implements OnInit {
     await this.copyTextToClipboardWithFeedback(
       buildSavedTeamJson(team),
       this.i18n.translate('share.copiedJson', { name: team.name }, 'saved-teams'),
+      {
+        failureRecoveryKey: 'share.errors.jsonClipboard',
+      },
     );
+  }
+
+  public selectManualCopyText(event: FocusEvent): void {
+    const target = event.target;
+
+    if (target instanceof HTMLTextAreaElement) {
+      target.select();
+    }
   }
 
   public resetPage(): void {
@@ -733,6 +794,7 @@ export class SavedTeamsPage implements OnInit {
   private async copyTextToClipboardWithFeedback(
     text: string,
     successMessage: string,
+    options: ClipboardFallbackOptions,
   ): Promise<void> {
     this.actionFeedback.set(null);
 
@@ -749,13 +811,83 @@ export class SavedTeamsPage implements OnInit {
         title: this.i18n.translate('share.successTitle', undefined, 'saved-teams'),
         details: [successMessage],
       });
-    } catch {
+    } catch (error) {
+      const failureKind = this.resolveClipboardFailureKind(error);
+      const details = [
+        this.i18n.translate(`share.errors.${failureKind}`, undefined, 'saved-teams'),
+        this.i18n.translate(options.failureRecoveryKey, undefined, 'saved-teams'),
+      ];
+
+      if (options.manualCopy) {
+        details.push(this.i18n.translate('share.manualCopy.instructions', undefined, 'saved-teams'));
+      }
+
       this.actionFeedback.set({
-        tone: 'error',
-        title: this.i18n.translate('share.errorTitle', undefined, 'saved-teams'),
-        details: [this.i18n.translate('share.errors.clipboard', undefined, 'saved-teams')],
+        tone: options.manualCopy ? 'warning' : 'error',
+        title: this.i18n.translate(
+          options.manualCopy ? 'share.manualCopyTitle' : 'share.errorTitle',
+          undefined,
+          'saved-teams',
+        ),
+        details,
+        manualCopy: options.manualCopy,
       });
     }
+  }
+
+  private async shareTextWithNativeShare(
+    shareUrl: string,
+    teamName: string,
+    successMessage: string,
+  ): Promise<boolean> {
+    const nativeShare = globalThis.navigator?.share;
+
+    if (!nativeShare) {
+      return false;
+    }
+
+    const shareData: ShareData = {
+      title: teamName,
+      text: teamName,
+      url: shareUrl,
+    };
+
+    if (globalThis.navigator?.canShare && !globalThis.navigator.canShare(shareData)) {
+      return false;
+    }
+
+    try {
+      await nativeShare.call(globalThis.navigator, shareData);
+      this.actionFeedback.set({
+        tone: 'success',
+        title: this.i18n.translate('share.successTitle', undefined, 'saved-teams'),
+        details: [successMessage],
+      });
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private resolveClipboardFailureKind(error: Error | unknown): ClipboardFailureKind {
+    if (globalThis.isSecureContext === false) {
+      return 'insecureContext';
+    }
+
+    const errorName = error && typeof error === 'object' && 'name' in error ? error.name : null;
+
+    if (errorName === 'NotAllowedError' || errorName === 'SecurityError') {
+      return 'permissionDenied';
+    }
+
+    const clipboard = globalThis.navigator?.clipboard;
+
+    if (!clipboard?.writeText) {
+      return 'unavailable';
+    }
+
+    return 'unknown';
   }
 
   private buildAbilityFilterSection(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFilterSection {
