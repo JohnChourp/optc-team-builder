@@ -11,6 +11,10 @@ export const SCRIPT_SUITES = {
     label: 'CI routing tests',
     command: 'npm run test:ci-routing',
   },
+  'actions-pins': {
+    label: 'GitHub Actions pin tests',
+    command: 'npm run test:actions-pins && npm run actions:pins',
+  },
   'maintainer-doctor': {
     label: 'Maintainer environment doctor tests',
     command: 'npm run test:maintainer-doctor',
@@ -167,6 +171,13 @@ function isDocsScriptPath(filePath) {
     filePath === 'scripts/check-docs-drift.mjs' ||
     filePath === 'scripts/check-docs-drift.spec.ts' ||
     filePath === 'docs/docs-drift-map.json'
+  );
+}
+
+function isGitHubActionsPinPath(filePath) {
+  return (
+    filePath === 'scripts/check-github-actions-pins.mjs' ||
+    filePath === 'scripts/check-github-actions-pins.spec.ts'
   );
 }
 
@@ -368,6 +379,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       for (const suite of DOCS_SCRIPT_SUITES) {
         addScriptSuite(scriptSuites, suite);
       }
+      continue;
+    }
+
+    if (isGitHubActionsPinPath(filePath)) {
+      categories.add('github-actions-pins');
+      addScriptSuite(scriptSuites, 'actions-pins');
       continue;
     }
 

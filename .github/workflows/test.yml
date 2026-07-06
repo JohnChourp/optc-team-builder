@@ -28,13 +28,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
 
       - name: Checkout trusted router
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: .ci-router-base
@@ -64,8 +64,8 @@ jobs:
 
           base_sha="${{ steps.diff.outputs.base_sha }}"
           head_sha="${{ steps.diff.outputs.head_sha }}"
-          full_script_suites="ci-routing,maintainer-doctor,branch-cleanup,dataset-digest,saved-team-codecs,captain-contracts,release-check,release-readiness,docs-integrity,docs-commands,docs-drift,discoverability,public-entry-synthetics,drive-sync-server,source-data,perf-budget,e2e-triage,pwa-shell"
-          full_script_matrix='{"include":[{"suite":"ci-routing","label":"CI routing tests","command":"npm run test:ci-routing"},{"suite":"maintainer-doctor","label":"Maintainer environment doctor tests","command":"npm run test:maintainer-doctor"},{"suite":"branch-cleanup","label":"Branch cleanup report tests","command":"npm run test:branch-cleanup"},{"suite":"dataset-digest","label":"Dataset change digest tests","command":"npm run test:dataset-digest"},{"suite":"saved-team-codecs","label":"Saved-team codec fuzz tests","command":"npm run test:saved-team-codecs"},{"suite":"captain-contracts","label":"Captain contract script tests","command":"npm run test:captain-contracts"},{"suite":"release-check","label":"Release detector replay tests","command":"npm run test:release-check"},{"suite":"release-readiness","label":"Release readiness report tests","command":"npm run test:release-readiness"},{"suite":"docs-integrity","label":"Docs integrity script tests","command":"npm run test:docs-integrity"},{"suite":"docs-commands","label":"Docs command script tests","command":"npm run test:docs-commands"},{"suite":"docs-drift","label":"Docs drift script tests","command":"npm run test:docs-drift"},{"suite":"discoverability","label":"Guide discoverability tests","command":"npm run test:discoverability"},{"suite":"public-entry-synthetics","label":"Public entry synthetic monitor tests","command":"npm run test:public-entry-synthetics"},{"suite":"drive-sync-server","label":"Drive sync backend tests","command":"npm run test:drive-sync-server"},{"suite":"source-data","label":"Source data validation tests","command":"npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/upsert-manual-character.spec.ts"},{"suite":"perf-budget","label":"Performance budget script tests","command":"npm run test:perf-budget"},{"suite":"e2e-triage","label":"Playwright routing and quarantine tests","command":"npm run test:e2e-triage"},{"suite":"pwa-shell","label":"PWA shell safety tests","command":"npm run test:pwa-shell"}]}'
+          full_script_suites="ci-routing,actions-pins,maintainer-doctor,branch-cleanup,dataset-digest,saved-team-codecs,captain-contracts,release-check,release-readiness,docs-integrity,docs-commands,docs-drift,discoverability,public-entry-synthetics,drive-sync-server,source-data,perf-budget,e2e-triage,pwa-shell"
+          full_script_matrix='{"include":[{"suite":"ci-routing","label":"CI routing tests","command":"npm run test:ci-routing"},{"suite":"actions-pins","label":"GitHub Actions pin tests","command":"npm run test:actions-pins && npm run actions:pins"},{"suite":"maintainer-doctor","label":"Maintainer environment doctor tests","command":"npm run test:maintainer-doctor"},{"suite":"branch-cleanup","label":"Branch cleanup report tests","command":"npm run test:branch-cleanup"},{"suite":"dataset-digest","label":"Dataset change digest tests","command":"npm run test:dataset-digest"},{"suite":"saved-team-codecs","label":"Saved-team codec fuzz tests","command":"npm run test:saved-team-codecs"},{"suite":"captain-contracts","label":"Captain contract script tests","command":"npm run test:captain-contracts"},{"suite":"release-check","label":"Release detector replay tests","command":"npm run test:release-check"},{"suite":"release-readiness","label":"Release readiness report tests","command":"npm run test:release-readiness"},{"suite":"docs-integrity","label":"Docs integrity script tests","command":"npm run test:docs-integrity"},{"suite":"docs-commands","label":"Docs command script tests","command":"npm run test:docs-commands"},{"suite":"docs-drift","label":"Docs drift script tests","command":"npm run test:docs-drift"},{"suite":"discoverability","label":"Guide discoverability tests","command":"npm run test:discoverability"},{"suite":"public-entry-synthetics","label":"Public entry synthetic monitor tests","command":"npm run test:public-entry-synthetics"},{"suite":"drive-sync-server","label":"Drive sync backend tests","command":"npm run test:drive-sync-server"},{"suite":"source-data","label":"Source data validation tests","command":"npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/upsert-manual-character.spec.ts"},{"suite":"perf-budget","label":"Performance budget script tests","command":"npm run test:perf-budget"},{"suite":"e2e-triage","label":"Playwright routing and quarantine tests","command":"npm run test:e2e-triage"},{"suite":"pwa-shell","label":"PWA shell safety tests","command":"npm run test:pwa-shell"}]}'
 
           write_full_plan() {
             local reason="$1"
@@ -159,7 +159,7 @@ jobs:
           cat ci-check-routing-summary.md >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload routing summary
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ci-check-routing-summary
           path: ci-check-routing-summary.md
@@ -178,11 +178,11 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.run_angular == 'true'
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Setup Node
         if: needs.changes.outputs.run_angular == 'true'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -206,10 +206,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -219,7 +219,7 @@ jobs:
 
       - name: Cache Playwright browsers
         if: matrix.suite == 'pwa-shell'
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
@@ -235,7 +235,7 @@ jobs:
 
       - name: Upload PWA shell artifacts
         if: always() && matrix.suite == 'pwa-shell'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: pwa-shell-report
           path: test-results/pwa-shell/
@@ -249,10 +249,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -275,10 +275,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -287,7 +287,7 @@ jobs:
         run: npm ci
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
@@ -314,7 +314,7 @@ jobs:
 
       - name: Upload Playwright summary
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-summary-${{ matrix.browser }}
           path: |
@@ -325,7 +325,7 @@ jobs:
 
       - name: Upload Playwright debug report
         if: always() && steps.playwright.outcome == 'failure'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-report-${{ matrix.browser }}
           path: |
@@ -348,10 +348,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -360,7 +360,7 @@ jobs:
         run: npm ci
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
@@ -387,7 +387,7 @@ jobs:
 
       - name: Upload quarantined Playwright summary
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-quarantine-summary-${{ matrix.browser }}
           path: |
@@ -398,7 +398,7 @@ jobs:
 
       - name: Upload quarantined Playwright debug report
         if: always() && steps.quarantined_playwright.outcome == 'failure'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-quarantine-${{ matrix.browser }}
           path: |
