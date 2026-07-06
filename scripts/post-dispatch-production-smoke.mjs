@@ -8,6 +8,10 @@ export const POST_DISPATCH_PRODUCTION_SMOKE_SCHEMA_VERSION = 1;
 
 const DEFAULT_OUTPUT_PATH = 'post-dispatch-production-smoke.json';
 const DEFAULT_SUMMARY_PATH = 'post-dispatch-production-smoke.md';
+const REQUIRED_PUBLIC_ENTRY_IDS = [
+  'guided-compare-sharing-guide',
+  'manual-share-link-landing',
+];
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -245,6 +249,10 @@ export function buildPostDispatchProductionSmokeReport({
   }
 
   const publicEntries = normalizePublicEntries(publicEntryReport);
+  const missingPublicEntryIds = REQUIRED_PUBLIC_ENTRY_IDS.filter(
+    (entryId) => !publicEntries.some((entry) => entry.id === entryId),
+  );
+  const failedPublicEntries = publicEntries.filter((entry) => entry.status !== 'passed' || entry.failures.length > 0);
   if (!isObject(publicEntryReport)) {
     addCheck(checks, 'production-public-entry', 'Production public-entry smoke', 'failed', 'Public-entry synthetic report was not available.');
   } else if (publicEntryReport.status !== 'ok') {
@@ -255,13 +263,21 @@ export function buildPostDispatchProductionSmokeReport({
       'failed',
       'At least one production public-entry synthetic flow failed.',
     );
-  } else if (publicEntries.length === 0) {
+  } else if (missingPublicEntryIds.length) {
     addCheck(
       checks,
       'production-public-entry',
       'Production public-entry smoke',
       'failed',
-      'Public-entry synthetic report did not include checked entries.',
+      `Public-entry synthetic report is missing required flow(s): ${missingPublicEntryIds.join(', ')}.`,
+    );
+  } else if (failedPublicEntries.length) {
+    addCheck(
+      checks,
+      'production-public-entry',
+      'Production public-entry smoke',
+      'failed',
+      `Public-entry synthetic report contains failed flow(s): ${failedPublicEntries.map((entry) => entry.id).join(', ')}.`,
     );
   } else {
     addCheck(

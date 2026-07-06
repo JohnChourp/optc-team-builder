@@ -298,8 +298,8 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     concurrency:
-      group: github-pages
-      cancel-in-progress: true
+      group: release-android-pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -342,6 +342,7 @@ jobs:
       - release
       - release-provenance
       - deploy-pages
+    if: ${{ always() && needs.release.result == 'success' && (needs.release-provenance.result == 'success' || needs.release-provenance.result == 'failure') && needs.deploy-pages.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -367,6 +368,7 @@ jobs:
 
       - name: Download release provenance artifact
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: release-provenance
           path: post-dispatch-production-smoke/release-provenance
@@ -403,8 +405,10 @@ jobs:
             args+=(--require-auto-release-link)
           fi
 
-          npm run --silent release:post-dispatch-smoke -- "${args[@]}"
+          smoke_status=0
+          npm run --silent release:post-dispatch-smoke -- "${args[@]}" || smoke_status=$?
           cat post-dispatch-production-smoke/post-dispatch-production-smoke.md >> "${GITHUB_STEP_SUMMARY}"
+          exit "${smoke_status}"
 
       - name: Upload post-dispatch production smoke artifact
         if: always()

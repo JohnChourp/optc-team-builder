@@ -133,6 +133,69 @@ describe('post-dispatch-production-smoke', () => {
     expect(formatPostDispatchProductionSmokeMarkdown(report)).toContain('Manual Team Builder did not render');
   });
 
+  it('fails when a required production public-entry flow is missing', () => {
+    const report = buildPostDispatchProductionSmokeReport({
+      releaseProvenance: makeReleaseProvenance({ status: 'passed' }),
+      publicEntryReport: makePublicEntryReport({
+        checkedEntries: [
+          {
+            id: 'guided-compare-sharing-guide',
+            url: 'https://optcteambuilder.com/guides/guided-build-compare-team-sharing/',
+            status: 'ok',
+            failures: [],
+            evidence: {},
+          },
+        ],
+      }),
+      releaseRunUrl: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/300',
+      releaseTag: 'v1.2.3',
+      releaseVersion: '1.2.3',
+      versionCode: '123',
+      generatedAt,
+    });
+
+    expect(report.status).toBe('failed');
+    expect(report.checks.find((check) => check.id === 'production-public-entry')).toMatchObject({
+      status: 'failed',
+      detail: expect.stringContaining('manual-share-link-landing'),
+    });
+  });
+
+  it('fails when a checked production public-entry flow failed despite an ok aggregate status', () => {
+    const report = buildPostDispatchProductionSmokeReport({
+      releaseProvenance: makeReleaseProvenance({ status: 'passed' }),
+      publicEntryReport: makePublicEntryReport({
+        checkedEntries: [
+          {
+            id: 'guided-compare-sharing-guide',
+            url: 'https://optcteambuilder.com/guides/guided-build-compare-team-sharing/',
+            status: 'ok',
+            failures: [],
+            evidence: {},
+          },
+          {
+            id: 'manual-share-link-landing',
+            url: 'https://optcteambuilder.com/tabs/manual-team-builder?teamShare=<redacted-synthetic>',
+            status: 'failed',
+            failures: [{ category: 'rendering', message: 'Manual Team Builder did not render.' }],
+            evidence: {},
+          },
+        ],
+      }),
+      releaseRunUrl: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/300',
+      releaseTag: 'v1.2.3',
+      releaseVersion: '1.2.3',
+      versionCode: '123',
+      generatedAt,
+    });
+
+    expect(report.status).toBe('failed');
+    expect(report.checks.find((check) => check.id === 'production-public-entry')).toMatchObject({
+      status: 'failed',
+      detail: expect.stringContaining('manual-share-link-landing'),
+    });
+  });
+
   it('fails release metadata mismatches', () => {
     const report = buildPostDispatchProductionSmokeReport({
       releaseProvenance: makeReleaseProvenance({ status: 'passed' }),
