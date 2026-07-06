@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -98,7 +98,14 @@ jobs:
       - name: Check app and brain workflow budgets
         if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
         working-directory: optc-team-builder
-        run: npm run actions:workflow-budgets -- --brain-root ../optc-team-builder-brain
+        shell: bash
+        run: |
+          if grep -q 'actions:workflow-budgets' ../optc-team-builder-brain/.github/workflows/docs-integrity.yml; then
+            npm run actions:workflow-budgets -- --brain-root ../optc-team-builder-brain
+          else
+            echo "::notice::Running app-only workflow budget check because the checked-out brain ref does not define the paired budget check yet."
+            npm run actions:workflow-budgets -- --app-only
+          fi
 
       - name: Check full docs drift
         if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}

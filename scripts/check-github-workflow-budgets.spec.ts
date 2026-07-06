@@ -56,7 +56,7 @@ function appWorkflow({
     'permissions:',
     '  contents: read',
     'concurrency:',
-    '  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}',
+    '  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}',
     `  cancel-in-progress: ${cancelInProgress}`,
     'jobs:',
     '  docs-integrity:',
@@ -101,7 +101,7 @@ describe('check-github-workflow-budgets', () => {
         {
           workflowPath: '.github/workflows/docs-integrity.yml',
           concurrency: {
-            group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}',
+            group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}',
             cancelInProgress: "${{ github.event_name == 'pull_request' }}",
           },
           jobs: {
@@ -127,7 +127,7 @@ describe('check-github-workflow-budgets', () => {
         {
           workflowPath: '.github/workflows/docs-integrity.yml',
           concurrency: {
-            group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}',
+            group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}',
             cancelInProgress: "${{ github.event_name == 'pull_request' }}",
           },
           jobs: {
@@ -146,6 +146,84 @@ describe('check-github-workflow-budgets', () => {
       expect.objectContaining({
         scope: 'jobs.docs-integrity',
         message: expect.stringContaining('Missing workflow-budget summary step'),
+      }),
+    ]);
+  });
+
+  it('fails when a covered workflow adds an unbudgeted job', async () => {
+    const appRoot = await makeRoot({
+      '.github/workflows/docs-integrity.yml': [
+        appWorkflow(),
+        '  unbudgeted:',
+        '    runs-on: ubuntu-latest',
+        '    steps:',
+        '      - run: echo bypass',
+      ].join('\n'),
+    });
+
+    const result = inspectWorkflowBudgets({
+      appRoot,
+      appOnly: true,
+      appContracts: [
+        {
+          workflowPath: '.github/workflows/docs-integrity.yml',
+          concurrency: {
+            group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}',
+            cancelInProgress: "${{ github.event_name == 'pull_request' }}",
+          },
+          jobs: {
+            'docs-integrity': { timeoutMinutes: 25 },
+          },
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        scope: 'jobs.unbudgeted',
+        message: 'Job is not covered by the workflow-budget contract.',
+      }),
+    ]);
+  });
+
+  it('fails when a workflow file is not contracted or explicitly exempted', async () => {
+    const appRoot = await makeRoot({
+      '.github/workflows/docs-integrity.yml': `${appWorkflow()}\n`,
+      '.github/workflows/new-heavy.yml': [
+        'name: New Heavy Workflow',
+        'on:',
+        '  pull_request:',
+        'jobs:',
+        '  verify:',
+        '    runs-on: ubuntu-latest',
+        '    steps:',
+        '      - run: echo bypass',
+      ].join('\n'),
+    });
+
+    const result = inspectWorkflowBudgets({
+      appRoot,
+      appOnly: true,
+      appContracts: [
+        {
+          workflowPath: '.github/workflows/docs-integrity.yml',
+          concurrency: {
+            group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}',
+            cancelInProgress: "${{ github.event_name == 'pull_request' }}",
+          },
+          jobs: {
+            'docs-integrity': { timeoutMinutes: 25 },
+          },
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        workflowPath: '.github/workflows/new-heavy.yml',
+        message: expect.stringContaining('Workflow is not covered by the budget contract'),
       }),
     ]);
   });
@@ -206,7 +284,7 @@ describe('check-github-workflow-budgets', () => {
         {
           workflowPath: '.github/workflows/docs-integrity.yml',
           concurrency: {
-            group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}',
+            group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}',
             cancelInProgress: "${{ github.event_name == 'pull_request' }}",
           },
           jobs: {

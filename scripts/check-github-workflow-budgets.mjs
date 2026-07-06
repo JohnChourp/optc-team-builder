@@ -1,13 +1,21 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import YAML from 'yaml';
 
-const PR_FRESHNESS_GROUP = '${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}';
+const PR_FRESHNESS_GROUP = '${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}';
 const PR_FRESHNESS_CANCEL = "${{ github.event_name == 'pull_request' }}";
+
+export const APP_WORKFLOW_BUDGET_EXEMPTIONS = [
+  '.github/workflows/codeql.yml',
+  '.github/workflows/dataset-change-digest.yml',
+  '.github/workflows/pr-traceability.yml',
+];
+
+export const BRAIN_WORKFLOW_BUDGET_EXEMPTIONS = ['.github/workflows/pr-traceability.yml'];
 
 export const APP_WORKFLOW_BUDGET_CONTRACT = [
   {
@@ -144,6 +152,18 @@ function readWorkflow(root, workflowPath) {
   }
 }
 
+function listWorkflowFiles(root) {
+  const workflowRoot = path.join(root, '.github/workflows');
+  if (!existsSync(workflowRoot)) {
+    return [];
+  }
+
+  return readdirSync(workflowRoot)
+    .filter((file) => /\.ya?ml$/u.test(file))
+    .map((file) => `.github/workflows/${file}`)
+    .sort();
+}
+
 function valueMatches(actual, expected) {
   if (typeof expected === 'boolean') {
     return actual === expected;
@@ -201,18 +221,54 @@ function hasBudgetSummaryStep(job, timeoutMinutes) {
   });
 }
 
+function inspectWorkflowFileCoverage({ findings, repo, root, contracts, exemptions }) {
+  const contractedWorkflowPaths = new Set(contracts.map((contract) => normalizePath(contract.workflowPath)));
+  const exemptWorkflowPaths = new Set(exemptions.map((workflowPath) => normalizePath(workflowPath)));
+
+  for (const workflowPath of listWorkflowFiles(root)) {
+    if (!contractedWorkflowPaths.has(workflowPath) && !exemptWorkflowPaths.has(workflowPath)) {
+      findings.push({
+        repo,
+        workflowPath,
+        scope: 'workflow',
+        message:
+          'Workflow is not covered by the budget contract or an explicit exemption, so it can bypass concurrency and timeout policy checks.',
+      });
+    }
+  }
+}
+
+function inspectBudgetedJobCoverage({ findings, repo, workflowPath, workflow, contract }) {
+  const actualJobs = workflow?.jobs && typeof workflow.jobs === 'object' ? Object.keys(workflow.jobs) : [];
+  const contractedJobs = new Set(Object.keys(contract.jobs));
+
+  for (const jobId of actualJobs) {
+    if (!contractedJobs.has(jobId)) {
+      findings.push({
+        repo,
+        workflowPath,
+        scope: `jobs.${jobId}`,
+        message: 'Job is not covered by the workflow-budget contract.',
+      });
+    }
+  }
+}
+
 export function inspectWorkflowBudgets({
   appRoot = process.cwd(),
   brainRoot,
   appOnly = false,
   appContracts = APP_WORKFLOW_BUDGET_CONTRACT,
   brainContracts = BRAIN_WORKFLOW_BUDGET_CONTRACT,
+  appWorkflowExemptions = APP_WORKFLOW_BUDGET_EXEMPTIONS,
+  brainWorkflowExemptions = BRAIN_WORKFLOW_BUDGET_EXEMPTIONS,
 } = {}) {
   const targets = [
     {
       repo: 'app',
       root: appRoot,
       contracts: appContracts,
+      exemptions: appWorkflowExemptions,
     },
   ];
 
@@ -221,6 +277,7 @@ export function inspectWorkflowBudgets({
       repo: 'brain',
       root: brainRoot,
       contracts: brainContracts,
+      exemptions: brainWorkflowExemptions,
     });
   }
 
@@ -229,6 +286,14 @@ export function inspectWorkflowBudgets({
   const checkedWorkflows = [];
 
   for (const target of targets) {
+    inspectWorkflowFileCoverage({
+      findings,
+      repo: target.repo,
+      root: target.root,
+      contracts: target.contracts,
+      exemptions: target.exemptions,
+    });
+
     for (const contract of target.contracts) {
       const workflowPath = normalizePath(contract.workflowPath);
       const { workflow, error } = readWorkflow(target.root, workflowPath);
@@ -238,6 +303,14 @@ export function inspectWorkflowBudgets({
         findings.push({ repo: target.repo, workflowPath, scope: 'workflow', message: error });
         continue;
       }
+
+      inspectBudgetedJobCoverage({
+        findings,
+        repo: target.repo,
+        workflowPath,
+        workflow,
+        contract,
+      });
 
       inspectConcurrency({
         findings,
