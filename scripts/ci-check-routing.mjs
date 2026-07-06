@@ -39,6 +39,10 @@ export const SCRIPT_SUITES = {
     label: 'Release detector replay tests',
     command: 'npm run test:release-check',
   },
+  'release-runbook-drift': {
+    label: 'Release runbook drift tests',
+    command: 'npm run test:release-runbook-drift',
+  },
   'release-readiness': {
     label: 'Release readiness report tests',
     command: 'npm run test:release-readiness',
@@ -159,6 +163,13 @@ function isReleaseReadinessPath(filePath) {
     filePath === 'scripts/release-readiness-report.mjs' ||
     filePath === 'scripts/release-readiness-report.spec.ts' ||
     filePath.startsWith('scripts/fixtures/release-readiness/')
+  );
+}
+
+function isReleaseRunbookDriftPath(filePath) {
+  return (
+    filePath === 'scripts/check-release-runbook-drift.mjs' ||
+    filePath === 'scripts/check-release-runbook-drift.spec.ts'
   );
 }
 
@@ -371,6 +382,15 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isReleaseReadinessPath(filePath)) {
       categories.add('release-readiness');
       addScriptSuite(scriptSuites, 'release-readiness');
+      continue;
+    }
+
+    if (isReleaseRunbookDriftPath(filePath)) {
+      categories.add('release-runbook-drift');
+      addScriptSuite(scriptSuites, 'release-runbook-drift');
+      for (const suite of DOCS_SCRIPT_SUITES) {
+        addScriptSuite(scriptSuites, suite);
+      }
       continue;
     }
 

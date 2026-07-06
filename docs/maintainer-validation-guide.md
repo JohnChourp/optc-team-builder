@@ -61,7 +61,7 @@ script, or workflow prerequisite looks suspect.
 | Branch lifecycle, post-merge branch cleanup, or GH013 deletion blockers | `npm run test:branch-cleanup` plus `npm run branch:cleanup-report -- --repo JohnChourp/optc-team-builder --format markdown` for current state | Focused cleanup tests plus docs integrity, docs commands, docs drift, and the brain task audit when policy or evidence changes | Merged routine branches are classified without deleting anything, active deletion rules are visible, and maintainers know when to keep, investigate, or request separate cleanup approval | Report output and task-scoped evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` when ClickUp-backed |
 | CI routing, dependency, workflow, or package changes | `npm run test:ci-routing` plus a YAML parse of the touched workflow | Full local validation for the changed routing surface, then rely on the PR `Test` workflow to prove the selected GitHub jobs | The executable routing rules stay fail-closed and the workflow still emits check-selection evidence before running targeted jobs | `ci-check-routing-summary` workflow artifact |
 | Broad app UI behavior, routing, saved-team/share flows, or regression-prone user journeys | Focused `npm run test:ci -- --include ...` for touched components/services | `npm run test:ci`, scoped `npm run test:e2e:*` browser runs, `npm run i18n:validate`, and `npm run build`; use all browser projects when browser-specific behavior changed | Angular units, deterministic cross-browser journeys, translation keys, and production build health remain intact; browser flakes follow the `e2e/README.md` quarantine workflow before any coverage is excluded from blocking CI | Compact Playwright summary artifacts for every browser leg; full Playwright debug reports only for failed browser legs |
-| Docs drift map, docs guardrails, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, `npm run docs:drift -- --base-ref origin/main --head-ref HEAD --brain-root ../optc-team-builder-brain`, plus `git diff --check` | Add `npm run test:docs-drift` when the map or detector changes; add targeted command validation when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, documented maintainer commands, mapped feature-to-doc ownership, and whitespace stay valid across app and brain docs | None |
+| Docs drift map, docs guardrails, release runbook contract, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, `npm run docs:release-runbook-drift -- --brain-root ../optc-team-builder-brain`, `npm run docs:drift -- --base-ref origin/main --head-ref HEAD --brain-root ../optc-team-builder-brain`, plus `git diff --check` | Add `npm run test:docs-drift` when the map or detector changes; add `npm run test:release-runbook-drift` when release runbook workflow/package/policy alignment changes; add targeted command validation when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, documented maintainer commands, release runbook workflow/package/policy alignment, mapped feature-to-doc ownership, and whitespace stay valid across app and brain docs | None |
 
 ## Lightweight vs Deep Runs
 
@@ -593,6 +593,16 @@ Command status: CI-executable.
 <!-- docs-command: ci-executable -->
 ```bash
 npm run docs:integrity -- --brain-root ../optc-team-builder-brain
+```
+
+For the OPTC DB auto-release runbook, also verify that the marked runbook
+contract matches the live workflow, package scripts, release policy, artifacts,
+outputs, and source-file references:
+
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
+```bash
+npm run docs:release-runbook-drift -- --brain-root ../optc-team-builder-brain
 ```
 
 For untrusted pull requests that cannot receive the private brain checkout, CI

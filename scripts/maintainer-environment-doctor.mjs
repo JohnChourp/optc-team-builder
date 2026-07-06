@@ -81,6 +81,12 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     fix: 'Restore the release detector replay and post-dispatch smoke package script.',
   },
   {
+    name: 'test:release-runbook-drift',
+    group: 'release-check',
+    expectedCommand: 'vitest run scripts/check-release-runbook-drift.spec.ts',
+    fix: 'Restore the release runbook drift checker unit test package script.',
+  },
+  {
     name: 'data:check-release',
     group: 'release-check',
     expectedCommand: 'node ./scripts/check-optc-release-needed.mjs',
@@ -123,6 +129,12 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     fix: 'Restore the docs command verification package script.',
   },
   {
+    name: 'docs:release-runbook-drift',
+    group: 'docs',
+    expectedCommand: 'node ./scripts/check-release-runbook-drift.mjs',
+    fix: 'Restore the release runbook drift package script.',
+  },
+  {
     name: 'docs:drift',
     group: 'docs',
     expectedCommand: 'node ./scripts/check-docs-drift.mjs',
@@ -154,6 +166,8 @@ export const REQUIRED_APP_PATHS = [
   { relativePath: 'scripts/perf-budget-history.mjs', kind: 'file', group: 'performance' },
   { relativePath: 'scripts/check-optc-release-needed.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/check-optc-upstream-monitor.mjs', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/check-release-runbook-drift.mjs', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/check-release-runbook-drift.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/backtest-optc-release-detector.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/backtest-optc-release-detector.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/release-provenance-report.mjs', kind: 'file', group: 'release-check' },

@@ -165,6 +165,7 @@ describe('check-docs-commands', () => {
         '<!-- docs-command: ci-executable -->',
         '```bash',
         'npm run docs:integrity -- --brain-root ../optc-team-builder-brain',
+        'npm run docs:release-runbook-drift -- --brain-root ../optc-team-builder-brain',
         'npm run docs:integrity -- --app-only',
         '```',
       ].join('\n'),
@@ -187,6 +188,6 @@ describe('check-docs-commands', () => {
 
     expect(result.failures).toEqual([]);
     expect(seen).toEqual(['npm run docs:integrity -- --app-only']);
-    expect(result.skippedExecutions).toHaveLength(1);
+    expect(result.skippedExecutions).toHaveLength(2);
   });
 });
