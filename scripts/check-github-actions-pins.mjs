@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -15,7 +16,9 @@ export const STRICT_GITHUB_ACTION_WORKFLOWS = [
 ];
 
 const FULL_LENGTH_SHA_PATTERN = /^[0-9a-f]{40}$/iu;
-const USES_LINE_PATTERN = /^\s*(?:-\s*)?uses:\s*([^#\s]+)(?:\s+#\s*(.*))?\s*$/u;
+const SOURCE_TAG_COMMENT_PATTERN = /^v\d+(?:[.\w-]*)?$/iu;
+const USES_LINE_PATTERN = /^\s*(?:-\s*)?uses:\s*([^#\s]+)(?:\s+#\s*(.*?))?\s*$/u;
+const BLOCK_SCALAR_PATTERN = /^(\s*)(?:-\s*)?[A-Za-z0-9_-]+:\s*[|>]/u;
 
 function normalizePath(value) {
   return String(value ?? '').replace(/\\/gu, '/').replace(/^\.\/+/u, '').trim();
@@ -29,11 +32,57 @@ function parseUsesValue(rawValue) {
   return String(rawValue ?? '').replace(/^['"]|['"]$/gu, '');
 }
 
+function getIndent(line) {
+  return line.match(/^\s*/u)?.[0].length ?? 0;
+}
+
+function parseExternalActionRef(value) {
+  const refSeparatorIndex = value.lastIndexOf('@');
+  if (refSeparatorIndex === -1) {
+    return { ref: '', ownerRepo: '' };
+  }
+
+  const target = value.slice(0, refSeparatorIndex);
+  const ref = value.slice(refSeparatorIndex + 1);
+  const [owner, repo] = target.split('/');
+  const ownerRepo = owner && repo ? `${owner}/${repo}` : '';
+  return { ref, ownerRepo };
+}
+
+function defaultRefExists(ownerRepo, ref) {
+  try {
+    const output = execFileSync('git', ['ls-remote', `https://github.com/${ownerRepo}.git`], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return output
+      .split(/\r?\n/u)
+      .some((line) => line.split(/\s+/u)[0]?.toLowerCase() === ref.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
 export function collectWorkflowUses({ workflowPath, text }) {
   const uses = [];
   const lines = String(text ?? '').split(/\r?\n/u);
+  let blockScalarIndent = null;
 
   for (const [index, line] of lines.entries()) {
+    const indent = getIndent(line);
+    if (blockScalarIndent !== null) {
+      if (line.trim() === '' || indent > blockScalarIndent) {
+        continue;
+      }
+      blockScalarIndent = null;
+    }
+
+    const blockScalarMatch = line.match(BLOCK_SCALAR_PATTERN);
+    if (blockScalarMatch) {
+      blockScalarIndent = blockScalarMatch[1].length;
+      continue;
+    }
+
     const match = line.match(USES_LINE_PATTERN);
     if (!match) {
       continue;
@@ -50,10 +99,16 @@ export function collectWorkflowUses({ workflowPath, text }) {
   return uses;
 }
 
-export function inspectGitHubActionPins({ root = process.cwd(), strictWorkflows = STRICT_GITHUB_ACTION_WORKFLOWS } = {}) {
+export function inspectGitHubActionPins({
+  root = process.cwd(),
+  strictWorkflows = STRICT_GITHUB_ACTION_WORKFLOWS,
+  validateRemoteRefs = true,
+  refExists = defaultRefExists,
+} = {}) {
   const entries = [];
   const findings = [];
   const errors = [];
+  const refExistenceCache = new Map();
 
   for (const workflowPath of strictWorkflows.map(normalizePath)) {
     const absolutePath = path.join(root, workflowPath);
@@ -73,8 +128,8 @@ export function inspectGitHubActionPins({ root = process.cwd(), strictWorkflows 
         continue;
       }
 
-      const refSeparatorIndex = entry.value.lastIndexOf('@');
-      if (refSeparatorIndex === -1) {
+      const { ref, ownerRepo } = parseExternalActionRef(entry.value);
+      if (!ref) {
         findings.push({
           ...entry,
           message: 'External action reference is missing an explicit ref.',
@@ -82,12 +137,32 @@ export function inspectGitHubActionPins({ root = process.cwd(), strictWorkflows 
         continue;
       }
 
-      const ref = entry.value.slice(refSeparatorIndex + 1);
       if (!FULL_LENGTH_SHA_PATTERN.test(ref)) {
         findings.push({
           ...entry,
           message: 'External action reference must be pinned to a full 40-character commit SHA.',
         });
+        continue;
+      }
+
+      if (!SOURCE_TAG_COMMENT_PATTERN.test(entry.comment)) {
+        findings.push({
+          ...entry,
+          message: 'External action SHA pin must keep the source tag in a trailing comment.',
+        });
+      }
+
+      if (validateRemoteRefs && ownerRepo) {
+        const cacheKey = `${ownerRepo}@${ref}`;
+        if (!refExistenceCache.has(cacheKey)) {
+          refExistenceCache.set(cacheKey, refExists(ownerRepo, ref));
+        }
+        if (!refExistenceCache.get(cacheKey)) {
+          findings.push({
+            ...entry,
+            message: 'Pinned SHA must exist in the referenced action repository.',
+          });
+        }
       }
     }
   }

@@ -70,6 +70,7 @@ describe('check-github-actions-pins', () => {
     const result = inspectGitHubActionPins({
       root,
       strictWorkflows: ['.github/workflows/release-android.yml'],
+      validateRemoteRefs: false,
     });
 
     expect(result.ok).toBe(true);
@@ -79,12 +80,13 @@ describe('check-github-actions-pins', () => {
 
   it('fails when a strict workflow uses a mutable tag', async () => {
     const root = await makeWorkspace({
-      '.github/workflows/test.yml': 'steps:\n  - uses: actions/setup-node@v6\n',
+      '.github/workflows/test.yml': 'steps:\n  - uses: actions/setup-node@v6   \n',
     });
 
     const result = inspectGitHubActionPins({
       root,
       strictWorkflows: ['.github/workflows/test.yml'],
+      validateRemoteRefs: false,
     });
 
     expect(result.ok).toBe(false);
@@ -105,6 +107,7 @@ describe('check-github-actions-pins', () => {
     const result = inspectGitHubActionPins({
       root,
       strictWorkflows: ['.github/workflows/deploy-pages.yml'],
+      validateRemoteRefs: false,
     });
 
     expect(result.ok).toBe(false);
@@ -130,6 +133,71 @@ describe('check-github-actions-pins', () => {
         message: 'Strict workflow is missing.',
         workflowPath: '.github/workflows/check-optc-db-release.yml',
       },
+    ]);
+  });
+
+  it('fails when a strict workflow SHA pin has no source tag comment', async () => {
+    const root = await makeWorkspace({
+      '.github/workflows/test.yml': 'steps:\n  - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0\n',
+    });
+
+    const result = inspectGitHubActionPins({
+      root,
+      strictWorkflows: ['.github/workflows/test.yml'],
+      validateRemoteRefs: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        message: 'External action SHA pin must keep the source tag in a trailing comment.',
+      }),
+    ]);
+  });
+
+  it('ignores uses-looking lines inside workflow shell blocks', () => {
+    const uses = collectWorkflowUses({
+      workflowPath: '.github/workflows/release-android.yml',
+      text: [
+        'steps:',
+        '  - name: Print sample',
+        '    run: |',
+        '      uses: actions/setup-node@v6',
+        '      echo done',
+        '  - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7',
+      ].join('\n'),
+    });
+
+    expect(uses).toEqual([
+      {
+        comment: 'v7',
+        line: 6,
+        value: 'actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0',
+        workflowPath: '.github/workflows/release-android.yml',
+      },
+    ]);
+  });
+
+  it('fails when a full SHA is not found in the referenced action repository', async () => {
+    const root = await makeWorkspace({
+      '.github/workflows/release-android.yml': [
+        'steps:',
+        '  - uses: actions/setup-java@0000000000000000000000000000000000000000 # v5',
+      ].join('\n'),
+    });
+
+    const result = inspectGitHubActionPins({
+      root,
+      strictWorkflows: ['.github/workflows/release-android.yml'],
+      refExists: () => false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        message: 'Pinned SHA must exist in the referenced action repository.',
+        value: 'actions/setup-java@0000000000000000000000000000000000000000',
+      }),
     ]);
   });
 });
