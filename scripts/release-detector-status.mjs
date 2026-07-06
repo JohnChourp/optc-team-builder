@@ -172,6 +172,36 @@ function normalizeSourceContract(releaseTriggerReport = {}) {
   };
 }
 
+function normalizeIdempotency(releaseTriggerReport = {}) {
+  const idempotency = isObject(releaseTriggerReport.idempotency) ? releaseTriggerReport.idempotency : {};
+  const dispatch = isObject(releaseTriggerReport.dispatch) ? releaseTriggerReport.dispatch : {};
+  const duplicateRuns = Array.isArray(idempotency.duplicateReleaseRuns) ? idempotency.duplicateReleaseRuns : [];
+  const matchingRunUrls = duplicateRuns
+    .map((run) => optionalString(isObject(run) ? run.url : null))
+    .filter(Boolean);
+  const registrationRuns = Array.isArray(idempotency.dispatchRegistrationRuns)
+    ? idempotency.dispatchRegistrationRuns
+    : [];
+  const registrationRunUrls = registrationRuns
+    .map((run) => optionalString(isObject(run) ? run.url : null))
+    .filter(Boolean);
+
+  return {
+    strategy: optionalString(idempotency.strategy),
+    key: optionalString(idempotency.key ?? dispatch.idempotencyKey),
+    duplicateReleaseRunCount:
+      optionalNumber(idempotency.duplicateReleaseRunCount ?? dispatch.duplicateRunCount) ?? 0,
+    duplicateReleaseBlockingCount:
+      optionalNumber(idempotency.duplicateReleaseBlockingCount ?? dispatch.duplicateBlockingCount) ?? 0,
+    duplicateReleaseBlocked:
+      optionalBoolean(idempotency.duplicateReleaseBlocked) ?? optionalBoolean(dispatch.duplicateBlocked) ?? false,
+    matchingRunUrls,
+    dispatchRegistrationConfirmed: optionalBoolean(idempotency.dispatchRegistrationConfirmed),
+    dispatchRegistrationAttempts: optionalNumber(idempotency.dispatchRegistrationAttempts ?? undefined),
+    dispatchRegistrationRunUrls: registrationRunUrls,
+  };
+}
+
 function statusFromInputs({ releaseTriggerReport, upstreamMonitorReport, inputErrors }) {
   if (inputErrors.length > 0) {
     return {
@@ -233,6 +263,7 @@ export function buildReleaseDetectorStatusReport({
     verdict: normalizeVerdict(safeReleaseTriggerReport),
     dataset: normalizeDataset(safeReleaseTriggerReport, safeUpstreamMonitorReport),
     sourceContract: normalizeSourceContract(safeReleaseTriggerReport),
+    idempotency: normalizeIdempotency(safeReleaseTriggerReport),
     monitor: normalizeMonitor(safeUpstreamMonitorReport),
     workflow: pickWorkflowMetadata(safeReleaseTriggerReport.workflow, safeUpstreamMonitorReport.workflow),
     inputErrors,
@@ -287,6 +318,18 @@ export function formatReleaseDetectorStatusMarkdown(report) {
     `- Status: ${formatNullable(report.sourceContract.status)}`,
     `- Failure count: ${report.sourceContract.failureCount}`,
     `- Failure IDs: ${formatList(report.sourceContract.failureIds)}`,
+    '',
+    '## Dispatch Idempotency',
+    '',
+    `- Strategy: ${formatNullable(report.idempotency.strategy)}`,
+    `- Key: ${formatNullable(report.idempotency.key)}`,
+    `- Duplicate release matches: ${report.idempotency.duplicateReleaseRunCount}`,
+    `- Duplicate release blocking matches: ${report.idempotency.duplicateReleaseBlockingCount}`,
+    `- Duplicate release blocked: ${formatYesNo(report.idempotency.duplicateReleaseBlocked)}`,
+    `- Matching run URLs: ${formatList(report.idempotency.matchingRunUrls)}`,
+    `- Dispatch registration confirmed: ${formatNullable(report.idempotency.dispatchRegistrationConfirmed)}`,
+    `- Dispatch registration attempts: ${formatNullable(report.idempotency.dispatchRegistrationAttempts)}`,
+    `- Dispatch registration run URLs: ${formatList(report.idempotency.dispatchRegistrationRunUrls)}`,
     '',
     '## Upstream Monitor',
     '',

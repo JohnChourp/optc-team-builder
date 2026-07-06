@@ -12,7 +12,7 @@ const dataDir = path.join(rootDir, 'public', 'assets', 'data');
  */
 
 /**
- * @typedef {'no-new-upstream-characters' | 'new-upstream-characters' | 'release-dispatched' | 'active-release-running' | 'verification-only' | 'fixture-validation-failed' | 'detector-failed' | 'source-contract-broken' | 'active-release-check-failed' | 'dispatch-failed'} ReleaseTriggerReason
+ * @typedef {'no-new-upstream-characters' | 'new-upstream-characters' | 'release-dispatched' | 'active-release-running' | 'verification-only' | 'duplicate-release-dispatch-blocked' | 'fixture-validation-failed' | 'detector-failed' | 'source-contract-broken' | 'active-release-check-failed' | 'dispatch-failed'} ReleaseTriggerReason
  */
 
 /**
@@ -57,6 +57,13 @@ const dataDir = path.join(rootDir, 'public', 'assets', 'data');
  *     }>,
  *     manualDefaultMode: ReleaseDispatchMode,
  *     scheduledMode: ReleaseDispatchMode,
+ *     idempotency: Readonly<{
+ *       strategy: 'release-dispatch-idempotency-key',
+ *       runNamePrefix: string,
+ *       recentRunLimit: number,
+ *       blockingStatuses: readonly string[],
+ *       blockingConclusions: readonly string[],
+ *     }>,
  *   }>,
  *   report: Readonly<{
  *     schemaVersion: 1,
@@ -121,6 +128,13 @@ const releaseTriggerPolicyV1 = {
     },
     manualDefaultMode: 'verify-only',
     scheduledMode: 'dispatch-if-needed',
+    idempotency: {
+      strategy: 'release-dispatch-idempotency-key',
+      runNamePrefix: 'Release Android',
+      recentRunLimit: 50,
+      blockingStatuses: ['queued', 'in_progress'],
+      blockingConclusions: ['success'],
+    },
   },
   report: {
     schemaVersion: 1,
@@ -135,6 +149,7 @@ const releaseTriggerPolicyV1 = {
       releaseDispatched: 'release-dispatched',
       activeReleaseRunning: 'active-release-running',
       verificationOnly: 'verification-only',
+      duplicateReleaseDispatchBlocked: 'duplicate-release-dispatch-blocked',
       fixtureValidationFailed: 'fixture-validation-failed',
       detectorFailed: 'detector-failed',
       sourceContractBroken: 'source-contract-broken',
@@ -150,6 +165,7 @@ const releaseTriggerPolicyV1 = {
     notifyReasons: [
       'release-dispatched',
       'active-release-running',
+      'duplicate-release-dispatch-blocked',
       'fixture-validation-failed',
       'detector-failed',
       'source-contract-broken',
@@ -159,6 +175,7 @@ const releaseTriggerPolicyV1 = {
     severities: {
       'release-dispatched': 'info',
       'active-release-running': 'warning',
+      'duplicate-release-dispatch-blocked': 'warning',
       'fixture-validation-failed': 'error',
       'detector-failed': 'error',
       'source-contract-broken': 'error',
@@ -216,6 +233,7 @@ function validateReleaseTriggerReasons(policy) {
     'releaseDispatched',
     'activeReleaseRunning',
     'verificationOnly',
+    'duplicateReleaseDispatchBlocked',
     'fixtureValidationFailed',
     'detectorFailed',
     'sourceContractBroken',
@@ -314,6 +332,18 @@ export function validateReleaseTriggerPolicy(policy) {
     Object.values(policy.dispatch.modes),
     'dispatch.scheduledMode',
   );
+  assertPlainObject(policy.dispatch.idempotency, 'dispatch.idempotency');
+  assertAllowedString(
+    policy.dispatch.idempotency.strategy,
+    ['release-dispatch-idempotency-key'],
+    'dispatch.idempotency.strategy',
+  );
+  assertString(policy.dispatch.idempotency.runNamePrefix, 'dispatch.idempotency.runNamePrefix');
+  if (!Number.isInteger(policy.dispatch.idempotency.recentRunLimit) || policy.dispatch.idempotency.recentRunLimit < 1) {
+    throw new Error('Invalid release trigger policy: dispatch.idempotency.recentRunLimit must be a positive integer.');
+  }
+  assertStringArray(policy.dispatch.idempotency.blockingStatuses, 'dispatch.idempotency.blockingStatuses');
+  assertStringArray(policy.dispatch.idempotency.blockingConclusions, 'dispatch.idempotency.blockingConclusions');
 
   assertPlainObject(policy.report, 'report');
   if (policy.report.schemaVersion !== 1) {
@@ -344,6 +374,11 @@ export function buildReleasePolicyGitHubOutputs(policy = releaseTriggerPolicy) {
     release_dispatch_mode_dispatch_if_needed: policy.dispatch.modes.dispatchIfNeeded,
     release_manual_dispatch_default: policy.dispatch.manualDefaultMode,
     release_scheduled_dispatch_mode: policy.dispatch.scheduledMode,
+    release_dispatch_idempotency_strategy: policy.dispatch.idempotency.strategy,
+    release_dispatch_run_name_prefix: policy.dispatch.idempotency.runNamePrefix,
+    release_dispatch_recent_run_limit: String(policy.dispatch.idempotency.recentRunLimit),
+    release_dispatch_blocking_statuses_json: JSON.stringify(policy.dispatch.idempotency.blockingStatuses),
+    release_dispatch_blocking_conclusions_json: JSON.stringify(policy.dispatch.idempotency.blockingConclusions),
   };
 }
 

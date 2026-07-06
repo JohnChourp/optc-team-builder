@@ -68,6 +68,22 @@ function releaseTriggerReport(overrides = {}) {
       activeReleaseCount: null,
       blocked: false,
       blockReason: null,
+      idempotencyKey: null,
+      duplicateRunCount: 0,
+      duplicateBlockingCount: 0,
+      duplicateBlocked: false,
+    },
+    idempotency: {
+      strategy: 'release-dispatch-idempotency-key',
+      key: null,
+      payload: null,
+      duplicateReleaseRuns: [],
+      duplicateReleaseRunCount: 0,
+      duplicateReleaseBlockingCount: 0,
+      duplicateReleaseBlocked: false,
+      dispatchRegistrationConfirmed: null,
+      dispatchRegistrationAttempts: null,
+      dispatchRegistrationRuns: [],
     },
     steps: {},
     ...overrides,
@@ -142,6 +158,17 @@ describe('release-detector-status', () => {
         failureCount: 0,
         failureIds: [],
       },
+      idempotency: {
+        strategy: 'release-dispatch-idempotency-key',
+        key: null,
+        duplicateReleaseRunCount: 0,
+        duplicateReleaseBlockingCount: 0,
+        duplicateReleaseBlocked: false,
+        matchingRunUrls: [],
+        dispatchRegistrationConfirmed: null,
+        dispatchRegistrationAttempts: null,
+        dispatchRegistrationRunUrls: [],
+      },
       monitor: {
         status: 'passed',
         warningCount: 0,
@@ -214,6 +241,75 @@ describe('release-detector-status', () => {
     expect(formatReleaseDetectorStatusMarkdown(report)).toContain('- Local dataset version: 36');
     expect(formatReleaseDetectorStatusMarkdown(report)).toContain('- New upstream character IDs: none');
     expect(formatReleaseDetectorStatusMarkdown(report)).toContain('## Source Contract');
+    expect(formatReleaseDetectorStatusMarkdown(report)).toContain('## Dispatch Idempotency');
+  });
+
+  it('surfaces duplicate dispatch guard state for maintainer scanability', () => {
+    const report = buildReleaseDetectorStatusReport({
+      releaseTriggerReport: releaseTriggerReport({
+        status: 'skipped',
+        reason: 'duplicate-release-dispatch-blocked',
+        dispatch: {
+          releaseWorkflow: 'release-android.yml',
+          ref: 'main',
+          bump: 'patch',
+          mode: 'dispatch-if-needed',
+          releaseNeeded: true,
+          releaseDispatched: false,
+          activeReleaseCount: 0,
+          blocked: true,
+          blockReason: 'duplicate-release-dispatch-blocked',
+          idempotencyKey: 'optc-release-1234abcd5678ef90',
+          duplicateRunCount: 2,
+          duplicateBlockingCount: 1,
+          duplicateBlocked: true,
+        },
+        idempotency: {
+          strategy: 'release-dispatch-idempotency-key',
+          key: 'optc-release-1234abcd5678ef90',
+          dispatchRegistrationConfirmed: false,
+          dispatchRegistrationAttempts: 12,
+          duplicateReleaseRuns: [
+            {
+              url: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/101',
+              status: 'completed',
+              conclusion: 'success',
+              blocking: true,
+            },
+          ],
+          duplicateReleaseRunCount: 2,
+          duplicateReleaseBlockingCount: 1,
+          duplicateReleaseBlocked: true,
+          dispatchRegistrationRuns: [
+            {
+              url: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/102',
+              status: 'queued',
+            },
+          ],
+        },
+      }),
+      upstreamMonitorReport: upstreamMonitorReport(),
+      generatedAt,
+    });
+
+    expect(report).toMatchObject({
+      status: 'skipped',
+      reason: 'duplicate-release-dispatch-blocked',
+      idempotency: {
+        strategy: 'release-dispatch-idempotency-key',
+        key: 'optc-release-1234abcd5678ef90',
+        duplicateReleaseRunCount: 2,
+        duplicateReleaseBlockingCount: 1,
+        duplicateReleaseBlocked: true,
+        matchingRunUrls: ['https://github.com/JohnChourp/optc-team-builder/actions/runs/101'],
+        dispatchRegistrationConfirmed: false,
+        dispatchRegistrationAttempts: 12,
+        dispatchRegistrationRunUrls: ['https://github.com/JohnChourp/optc-team-builder/actions/runs/102'],
+      },
+    });
+    expect(formatReleaseDetectorStatusMarkdown(report)).toContain('- Duplicate release blocked: yes');
+    expect(formatReleaseDetectorStatusMarkdown(report)).toContain('- Dispatch registration confirmed: false');
+    expect(formatReleaseDetectorStatusMarkdown(report)).toContain('optc-release-1234abcd5678ef90');
   });
 
   it('surfaces source-contract failures from the release trigger report', () => {

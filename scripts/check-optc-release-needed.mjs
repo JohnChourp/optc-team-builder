@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -431,8 +432,10 @@ function normalizeStepOutcomes(stepOutcomes = {}) {
     fixtureValidation: normalizeStepOutcome(stepOutcomes.fixtureValidation),
     releaseCheck: normalizeStepOutcome(stepOutcomes.releaseCheck),
     activeRelease: normalizeStepOutcome(stepOutcomes.activeRelease),
+    duplicateReleaseDispatch: normalizeStepOutcome(stepOutcomes.duplicateReleaseDispatch),
     verifyOnlyDispatch: normalizeStepOutcome(stepOutcomes.verifyOnlyDispatch),
     dispatchRelease: normalizeStepOutcome(stepOutcomes.dispatchRelease),
+    dispatchRegistration: normalizeStepOutcome(stepOutcomes.dispatchRegistration),
     skipRelease: normalizeStepOutcome(stepOutcomes.skipRelease),
   };
 }
@@ -448,6 +451,102 @@ function parseOptionalNumber(value) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseOptionalBoolean(value) {
+  if (value === true || value === false) {
+    return value;
+  }
+
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (normalized === 'true') {
+    return true;
+  }
+  if (normalized === 'false') {
+    return false;
+  }
+
+  return null;
+}
+
+function normalizePositiveIds(values = []) {
+  return Array.isArray(values)
+    ? values
+        .map((value) => Number(value))
+        .filter((value) => Number.isInteger(value) && value > 0)
+        .sort((left, right) => left - right)
+    : [];
+}
+
+export function buildReleaseDispatchIdempotencyKey({
+  releaseCheckResult = null,
+  dispatchWorkflow = releaseTriggerPolicy.dispatch.workflow,
+  dispatchRef = releaseTriggerPolicy.dispatch.ref,
+  dispatchBump = releaseTriggerPolicy.dispatch.bump,
+} = {}) {
+  if (releaseCheckResult?.releaseNeeded !== true) {
+    return {
+      key: null,
+      payload: null,
+    };
+  }
+
+  const payload = {
+    source: String(releaseCheckResult.source ?? ''),
+    sourceRepository: String(releaseCheckResult.sourceRepository ?? ''),
+    remoteSourceVersion: String(releaseCheckResult.remoteSourceVersion ?? ''),
+    newCharacterIds: normalizePositiveIds(releaseCheckResult.newCharacterIds),
+    releaseWorkflow: String(dispatchWorkflow ?? ''),
+    ref: String(dispatchRef ?? ''),
+    bump: String(dispatchBump ?? ''),
+  };
+  const digest = createHash('sha256').update(JSON.stringify(payload)).digest('hex').slice(0, 16);
+
+  return {
+    key: `optc-release-${digest}`,
+    payload,
+  };
+}
+
+function isBlockingDuplicateReleaseRun(run, policy = releaseTriggerPolicy) {
+  const status = String(run?.status ?? '');
+  const conclusion = String(run?.conclusion ?? '');
+
+  return (
+    policy.dispatch.idempotency.blockingStatuses.includes(status) ||
+    (status === 'completed' && policy.dispatch.idempotency.blockingConclusions.includes(conclusion))
+  );
+}
+
+function normalizeDuplicateReleaseRunMatches(matches = [], policy = releaseTriggerPolicy) {
+  if (!Array.isArray(matches)) {
+    return [];
+  }
+
+  return matches
+    .filter((match) => match && typeof match === 'object')
+    .map((match) => ({
+      databaseId: match.databaseId === null || match.databaseId === undefined ? null : String(match.databaseId),
+      displayTitle: match.displayTitle === null || match.displayTitle === undefined ? null : String(match.displayTitle),
+      status: match.status === null || match.status === undefined ? null : String(match.status),
+      conclusion: match.conclusion === null || match.conclusion === undefined ? null : String(match.conclusion),
+      url: match.url === null || match.url === undefined ? null : String(match.url),
+      createdAt: match.createdAt === null || match.createdAt === undefined ? null : String(match.createdAt),
+      blocking: isBlockingDuplicateReleaseRun(match, policy),
+    }));
+}
+
+function parseJsonArray(value) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 function buildWorkflowMetadata(env = process.env) {
@@ -485,12 +584,18 @@ export function buildReleaseTriggerReport({
   releaseCheckResult = null,
   stepOutcomes = {},
   activeReleaseCount = null,
+  duplicateReleaseRunMatches = [],
+  dispatchIdempotencyKey = null,
+  dispatchRegistrationMatches = [],
+  dispatchRegistrationConfirmed = null,
+  dispatchRegistrationAttempts = null,
   workflow = {},
   generatedAt = new Date().toISOString(),
   dispatchWorkflow = releaseTriggerPolicy.dispatch.workflow,
   dispatchRef = releaseTriggerPolicy.dispatch.ref,
   dispatchBump = releaseTriggerPolicy.dispatch.bump,
   dispatchMode = releaseTriggerPolicy.dispatch.scheduledMode,
+  idempotencyStrategy = releaseTriggerPolicy.dispatch.idempotency.strategy,
 } = {}) {
   const steps = normalizeStepOutcomes(stepOutcomes);
   const activeCount = parseOptionalNumber(activeReleaseCount);
@@ -498,12 +603,26 @@ export function buildReleaseTriggerReport({
   const newCharacterCount = Number(releaseCheckResult?.newCharacterCount ?? 0);
   const releaseDispatched = steps.dispatchRelease === 'success';
   const normalizedDispatchMode = normalizeReleaseDispatchMode(dispatchMode);
+  const generatedIdempotency = buildReleaseDispatchIdempotencyKey({
+    releaseCheckResult,
+    dispatchWorkflow,
+    dispatchRef,
+    dispatchBump,
+  });
+  const idempotencyKey = dispatchIdempotencyKey || generatedIdempotency.key;
+  const duplicateMatches = normalizeDuplicateReleaseRunMatches(duplicateReleaseRunMatches);
+  const duplicateBlockingCount = duplicateMatches.filter((match) => match.blocking).length;
+  const registrationMatches = normalizeDuplicateReleaseRunMatches(dispatchRegistrationMatches);
+  const registrationConfirmed = parseOptionalBoolean(dispatchRegistrationConfirmed);
+  const registrationAttempts = parseOptionalNumber(dispatchRegistrationAttempts);
   const verificationOnly = normalizedDispatchMode === releaseTriggerPolicy.dispatch.modes.verifyOnly;
   const failedPrerequisite =
     isFailedStepOutcome(steps.fixtureValidation) ||
     isFailedStepOutcome(steps.releaseCheck) ||
     isFailedStepOutcome(steps.activeRelease) ||
-    isFailedStepOutcome(steps.dispatchRelease);
+    isFailedStepOutcome(steps.duplicateReleaseDispatch) ||
+    isFailedStepOutcome(steps.dispatchRelease) ||
+    isFailedStepOutcome(steps.dispatchRegistration);
   const sourceContractBroken =
     releaseCheckResult?.reason === releaseTriggerPolicy.report.reasons.sourceContractBroken ||
     releaseCheckResult?.sourceContract?.status === 'failed';
@@ -515,12 +634,21 @@ export function buildReleaseTriggerReport({
     !blockedByVerificationOnly &&
     activeCount !== null &&
     activeCount > 0;
-  const dispatchBlocked = blockedByActiveRelease || blockedByVerificationOnly;
+  const blockedByDuplicateDispatch =
+    !failedPrerequisite &&
+    releaseNeeded &&
+    !releaseDispatched &&
+    !blockedByVerificationOnly &&
+    !blockedByActiveRelease &&
+    duplicateBlockingCount > 0;
+  const dispatchBlocked = blockedByActiveRelease || blockedByVerificationOnly || blockedByDuplicateDispatch;
   const dispatchBlockReason = blockedByVerificationOnly
     ? releaseTriggerPolicy.report.reasons.verificationOnly
     : blockedByActiveRelease
       ? releaseTriggerPolicy.report.reasons.activeReleaseRunning
-      : null;
+      : blockedByDuplicateDispatch
+        ? releaseTriggerPolicy.report.reasons.duplicateReleaseDispatchBlocked
+        : null;
 
   let status = releaseTriggerPolicy.report.statuses.skipped;
   let reason = releaseTriggerPolicy.report.reasons.noNewUpstreamCharacters;
@@ -536,7 +664,13 @@ export function buildReleaseTriggerReport({
   } else if (isFailedStepOutcome(steps.activeRelease)) {
     status = releaseTriggerPolicy.report.statuses.failed;
     reason = releaseTriggerPolicy.report.reasons.activeReleaseCheckFailed;
+  } else if (isFailedStepOutcome(steps.duplicateReleaseDispatch)) {
+    status = releaseTriggerPolicy.report.statuses.failed;
+    reason = releaseTriggerPolicy.report.reasons.activeReleaseCheckFailed;
   } else if (isFailedStepOutcome(steps.dispatchRelease)) {
+    status = releaseTriggerPolicy.report.statuses.failed;
+    reason = releaseTriggerPolicy.report.reasons.dispatchFailed;
+  } else if (isFailedStepOutcome(steps.dispatchRegistration)) {
     status = releaseTriggerPolicy.report.statuses.failed;
     reason = releaseTriggerPolicy.report.reasons.dispatchFailed;
   } else if (releaseDispatched) {
@@ -548,6 +682,9 @@ export function buildReleaseTriggerReport({
   } else if (blockedByActiveRelease) {
     status = releaseTriggerPolicy.report.statuses.skipped;
     reason = releaseTriggerPolicy.report.reasons.activeReleaseRunning;
+  } else if (blockedByDuplicateDispatch) {
+    status = releaseTriggerPolicy.report.statuses.skipped;
+    reason = releaseTriggerPolicy.report.reasons.duplicateReleaseDispatchBlocked;
   } else if (releaseNeeded && !releaseDispatched) {
     status = releaseTriggerPolicy.report.statuses.failed;
     reason = releaseTriggerPolicy.report.reasons.activeReleaseCheckFailed;
@@ -583,6 +720,22 @@ export function buildReleaseTriggerReport({
       activeReleaseCount: activeCount,
       blocked: dispatchBlocked,
       blockReason: dispatchBlockReason,
+      idempotencyKey,
+      duplicateRunCount: duplicateMatches.length,
+      duplicateBlockingCount,
+      duplicateBlocked: blockedByDuplicateDispatch,
+    },
+    idempotency: {
+      strategy: idempotencyStrategy,
+      key: idempotencyKey,
+      payload: generatedIdempotency.payload,
+      duplicateReleaseRuns: duplicateMatches,
+      duplicateReleaseRunCount: duplicateMatches.length,
+      duplicateReleaseBlockingCount: duplicateBlockingCount,
+      duplicateReleaseBlocked: blockedByDuplicateDispatch,
+      dispatchRegistrationConfirmed: registrationConfirmed,
+      dispatchRegistrationAttempts: registrationAttempts,
+      dispatchRegistrationRuns: registrationMatches,
     },
     steps,
   };
@@ -602,14 +755,22 @@ export function buildReleaseTriggerReportFromEnv({
       fixtureValidation: env.FIXTURE_VALIDATION_OUTCOME,
       releaseCheck: env.RELEASE_CHECK_OUTCOME,
       activeRelease: env.ACTIVE_RELEASE_OUTCOME,
+      duplicateReleaseDispatch: env.DUPLICATE_RELEASE_DISPATCH_OUTCOME,
       verifyOnlyDispatch: env.VERIFY_ONLY_DISPATCH_OUTCOME,
       dispatchRelease: env.DISPATCH_RELEASE_OUTCOME,
+      dispatchRegistration: env.DISPATCH_REGISTRATION_OUTCOME,
       skipRelease: env.SKIP_RELEASE_OUTCOME,
     },
+    duplicateReleaseRunMatches: parseJsonArray(env.DUPLICATE_RELEASE_RUNS_JSON),
+    dispatchIdempotencyKey: env.RELEASE_DISPATCH_IDEMPOTENCY_KEY,
+    dispatchRegistrationMatches: parseJsonArray(env.DISPATCH_REGISTRATION_RUNS_JSON),
+    dispatchRegistrationConfirmed: env.DISPATCH_REGISTRATION_CONFIRMED,
+    dispatchRegistrationAttempts: env.DISPATCH_REGISTRATION_ATTEMPTS,
     dispatchWorkflow: env.RELEASE_DISPATCH_WORKFLOW || releaseTriggerPolicy.dispatch.workflow,
     dispatchRef: env.RELEASE_DISPATCH_REF || releaseTriggerPolicy.dispatch.ref,
     dispatchBump: env.RELEASE_DISPATCH_BUMP || releaseTriggerPolicy.dispatch.bump,
     dispatchMode: env.RELEASE_DISPATCH_MODE || releaseTriggerPolicy.dispatch.scheduledMode,
+    idempotencyStrategy: env.RELEASE_DISPATCH_IDEMPOTENCY_STRATEGY || releaseTriggerPolicy.dispatch.idempotency.strategy,
   });
 }
 
@@ -619,6 +780,20 @@ function formatYesNo(value) {
 
 function formatList(values) {
   return values.length > 0 ? values.join(', ') : 'none';
+}
+
+function formatDuplicateReleaseRuns(matches = []) {
+  if (!matches.length) {
+    return 'none';
+  }
+
+  return matches
+    .map((match) => {
+      const locator = match.url ?? match.databaseId ?? match.displayTitle ?? 'unknown';
+      const conclusion = match.conclusion ? `/${match.conclusion}` : '';
+      return `${locator} (${match.status ?? 'unknown'}${conclusion}${match.blocking ? ', blocking' : ''})`;
+    })
+    .join('; ');
 }
 
 export function formatReleaseTriggerSummary(report) {
@@ -633,6 +808,20 @@ export function formatReleaseTriggerSummary(report) {
     `- Release dispatch blocked: ${formatYesNo(report.dispatch.blocked)}`,
     `- Release dispatch block reason: ${report.dispatch.blockReason ?? 'none'}`,
     `- Active Release Android runs: ${report.dispatch.activeReleaseCount ?? 'unknown'}`,
+    `- Release dispatch idempotency key: ${report.idempotency?.key ?? 'none'}`,
+    `- Release dispatch idempotency strategy: ${report.idempotency?.strategy ?? 'unknown'}`,
+    `- Duplicate release matches: ${report.idempotency?.duplicateReleaseRunCount ?? 0}`,
+    `- Duplicate release blocking matches: ${report.idempotency?.duplicateReleaseBlockingCount ?? 0}`,
+    `- Duplicate release dispatch blocked: ${formatYesNo(report.idempotency?.duplicateReleaseBlocked)}`,
+    `- Duplicate release matching runs: ${formatDuplicateReleaseRuns(report.idempotency?.duplicateReleaseRuns ?? [])}`,
+    `- Dispatch registration confirmed: ${
+      report.idempotency?.dispatchRegistrationConfirmed === null ||
+      report.idempotency?.dispatchRegistrationConfirmed === undefined
+        ? 'unknown'
+        : formatYesNo(report.idempotency.dispatchRegistrationConfirmed)
+    }`,
+    `- Dispatch registration attempts: ${report.idempotency?.dispatchRegistrationAttempts ?? 'unknown'}`,
+    `- Dispatch registration matching runs: ${formatDuplicateReleaseRuns(report.idempotency?.dispatchRegistrationRuns ?? [])}`,
   ];
 
   if (report.comparison) {
@@ -667,8 +856,10 @@ export function formatReleaseTriggerSummary(report) {
     `- Fixture validation: ${report.steps.fixtureValidation}`,
     `- Release detector: ${report.steps.releaseCheck}`,
     `- Active release guard: ${report.steps.activeRelease}`,
+    `- Duplicate release guard: ${report.steps.duplicateReleaseDispatch}`,
     `- Verification-only guard: ${report.steps.verifyOnlyDispatch}`,
     `- Release dispatch: ${report.steps.dispatchRelease}`,
+    `- Dispatch registration: ${report.steps.dispatchRegistration}`,
     `- Skip branch: ${report.steps.skipRelease}`,
     '',
   );

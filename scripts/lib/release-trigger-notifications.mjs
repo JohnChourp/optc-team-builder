@@ -19,6 +19,22 @@ function formatSourceContractFailures(report) {
   return failureIds.length > 0 ? failureIds.join(', ') : 'none';
 }
 
+function formatDuplicateReleaseRuns(report) {
+  const runs = report.idempotency?.duplicateReleaseRuns ?? [];
+
+  if (!Array.isArray(runs) || runs.length === 0) {
+    return 'none';
+  }
+
+  return runs
+    .map((run) => {
+      const locator = run.url ?? run.databaseId ?? run.displayTitle ?? 'unknown';
+      const conclusion = run.conclusion ? `/${run.conclusion}` : '';
+      return `${locator} (${run.status ?? 'unknown'}${conclusion}${run.blocking ? ', blocking' : ''})`;
+    })
+    .join('; ');
+}
+
 function buildArtifactPointer(report) {
   if (report.workflow?.runUrl) {
     return `${report.workflow.runUrl} artifact \`${artifactName}\``;
@@ -69,6 +85,17 @@ export function buildReleaseTriggerNotification(report, policy = releaseTriggerP
     `- Release dispatch blocked: ${formatYesNo(report.dispatch?.blocked)}`,
     `- Release dispatch block reason: ${report.dispatch?.blockReason ?? 'none'}`,
     `- Active Release Android runs: ${report.dispatch?.activeReleaseCount ?? 'unknown'}`,
+    `- Release dispatch idempotency key: ${report.idempotency?.key ?? 'none'}`,
+    `- Duplicate release matches: ${report.idempotency?.duplicateReleaseRunCount ?? 0}`,
+    `- Duplicate release blocking matches: ${report.idempotency?.duplicateReleaseBlockingCount ?? 0}`,
+    `- Duplicate release matching runs: ${formatDuplicateReleaseRuns(report)}`,
+    `- Dispatch registration confirmed: ${
+      report.idempotency?.dispatchRegistrationConfirmed === null ||
+      report.idempotency?.dispatchRegistrationConfirmed === undefined
+        ? 'unknown'
+        : formatYesNo(report.idempotency.dispatchRegistrationConfirmed)
+    }`,
+    `- Dispatch registration attempts: ${report.idempotency?.dispatchRegistrationAttempts ?? 'unknown'}`,
     `- New character IDs: ${formatNewCharacterIds(report)}`,
     `- Source contract failures: ${formatSourceContractFailures(report)}`,
     `- Detailed evidence: ${buildArtifactPointer(report)}`,

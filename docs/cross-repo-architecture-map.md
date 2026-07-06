@@ -81,7 +81,8 @@ Release detection uses these maintainer surfaces:
 - `scripts/fixtures/release-check/` for replayable no-change, new-character,
   malformed, active-release, and upstream-drift scenarios.
 - `.github/workflows/check-optc-db-release.yml` for scheduled and manual
-  verification.
+  verification, including the duplicate-dispatch idempotency guard before
+  production release dispatch.
 - `release-trigger-outcome`, `upstream-monitor-report`,
   `release-detector-status`, and `release-provenance` workflow artifacts for
   scan-friendly evidence.
