@@ -88,6 +88,8 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    environment:
+      name: github-pages
     steps:
       - name: Summarize workflow budget
         run: |

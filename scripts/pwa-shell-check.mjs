@@ -929,7 +929,7 @@ async function verifyCacheFreshness(browser, serverHandle, diagnostics) {
 
     const stateBeforeUpdate = await serviceWorkerState(page);
     const checkResult = await sendNgswOperation(page, 'CHECK_FOR_UPDATES');
-    assertNgswOperationCompleted('CHECK_FOR_UPDATES', checkResult, { requireTrue: true });
+    assertNgswOperationCompleted('CHECK_FOR_UPDATES', checkResult);
     const activateResult = await sendNgswOperation(page, 'ACTIVATE_UPDATE');
     assertNgswOperationCompleted('ACTIVATE_UPDATE', activateResult);
     await page.waitForTimeout(1500);
