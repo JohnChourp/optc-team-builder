@@ -188,9 +188,21 @@
     "copiedLink": "Copied share link for \"{{name}}\".",
     "copiedSelectedJson": "Copied JSON export for {{count}} selected teams.",
     "errorTitle": "Copy failed",
-    "errors": {
-      "clipboard": "Clipboard access is unavailable. Try the download action instead."
+    "manualCopyTitle": "Copy manually",
+    "manualCopy": {
+      "codeLabel": "Share code",
+      "instructions": "Select the field below and copy it manually.",
+      "linkLabel": "Share link"
     },
+    "errors": {
+      "insecureContext": "This browser blocks clipboard access outside a secure page.",
+      "jsonClipboard": "Use Export instead to download the JSON file, then share or import that file.",
+      "manualCopyAvailable": "The share value is still available below.",
+      "permissionDenied": "Clipboard permission was denied for this browser or profile.",
+      "unavailable": "Clipboard access is unavailable in this browser.",
+      "unknown": "The browser could not write to the clipboard."
+    },
+    "sharedLink": "Opened native share for \"{{name}}\".",
     "successTitle": "Copied"
   },
   "selection": {

@@ -307,6 +307,7 @@ const publicRoutes = [
       'Compare mode helps review two team sources side by side. You can compare the current generated team, a saved team on this device, or an imported payload, then review slot changes, filled slots, ability counts, Captain Ability tier coverage, and ship differences.',
       'Saved Teams transfer supports schema v1 saved-teams JSON, saved-team share links, and raw saved-team share codes. Stable-id v1 team records can be repaired when optional fields are missing or stale, while unsupported schemas and malformed share codes are rejected.',
       'A common flow is to build with guided mode, save the result, share it from Saved Teams, and open the share link on another device. The link preloads Manual Team Builder as an unsaved draft, and saving from there creates a normal local saved team.',
+      'When a browser blocks native share or clipboard access, Saved Teams keeps the share link or share code visible for manual copy. JSON copy actions stay download-first in blocked clipboard contexts so large exports do not have to be selected from the page.',
       'Saved teams remain local to the current browser or app install unless you export, share, import, or sync them. Corrupted local saved-team storage is repaired in place when possible, and unrecoverable records are removed with a warning instead of breaking the page.',
     ],
     links: [

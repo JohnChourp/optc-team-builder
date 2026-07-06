@@ -429,6 +429,9 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain('copyTeamShareLink(teamCard.team)');
     expect(template).toContain('copyTeamShareCode(teamCard.team)');
     expect(template).toContain('copyTeamJson(teamCard.team)');
+    expect(template).toContain('feedback.manualCopy');
+    expect(template).toContain('[attr.data-testid]="manualCopy.testId"');
+    expect(template).toContain('selectManualCopyText($event)');
     expect(template).toContain("t('selection.selectAll')");
     expect(template).toContain("t('edit.actions.edit')");
     expect(template).toContain('edit.teamNameLabel');
@@ -519,6 +522,53 @@ describe('SavedTeamsPage', () => {
     expect(page.actionFeedback()).toMatchObject({ tone: 'success' });
   });
 
+  it('opens native share for saved-team links before using clipboard fallback', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const share = vi.fn().mockResolvedValue(undefined);
+    const { page } = createPage();
+
+    vi.stubGlobal('navigator', {
+      canShare: vi.fn().mockReturnValue(true),
+      clipboard: { writeText },
+      share,
+    });
+    await page.ngOnInit();
+
+    await page.copyTeamShareLink(page.savedTeams()[0]!);
+
+    expect(share).toHaveBeenCalledOnce();
+    expect(share.mock.calls[0]?.[0]).toMatchObject({
+      title: 'Slashers',
+      text: 'Slashers',
+    });
+    expect(String(share.mock.calls[0]?.[0]?.url)).toContain('/tabs/manual-team-builder?teamShare=');
+    expect(writeText).not.toHaveBeenCalled();
+    expect(page.actionFeedback()).toMatchObject({
+      details: ['Opened native share for "Slashers".'],
+      title: 'Copied',
+      tone: 'success',
+    });
+  });
+
+  it('falls back to clipboard when native share cannot complete', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const share = vi.fn().mockRejectedValue(new DOMException('cancelled', 'AbortError'));
+    const { page } = createPage();
+
+    vi.stubGlobal('navigator', {
+      clipboard: { writeText },
+      share,
+    });
+    await page.ngOnInit();
+
+    await page.copyTeamShareLink(page.savedTeams()[0]!);
+
+    expect(share).toHaveBeenCalledOnce();
+    expect(writeText).toHaveBeenCalledOnce();
+    expect(String(writeText.mock.calls[0]?.[0])).toContain('/tabs/manual-team-builder?teamShare=');
+    expect(page.actionFeedback()).toMatchObject({ tone: 'success' });
+  });
+
   it('copies a self-contained manual builder share link for a saved team', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     const { page } = createPage();
@@ -534,6 +584,97 @@ describe('SavedTeamsPage', () => {
     expect(parsedUrl.pathname).toBe('/tabs/manual-team-builder');
     expect(parsedUrl.searchParams.get('teamShare')).toMatch(/^[A-Za-z0-9_-]+$/u);
     expect(page.actionFeedback()).toMatchObject({ tone: 'success' });
+  });
+
+  it('offers manual copy when clipboard permission blocks share links', async () => {
+    const writeText = vi.fn().mockRejectedValue(new DOMException('denied', 'NotAllowedError'));
+    const { page } = createPage();
+
+    vi.stubGlobal('isSecureContext', true);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    await page.ngOnInit();
+
+    await page.copyTeamShareLink(page.savedTeams()[0]!);
+
+    expect(page.actionFeedback()).toMatchObject({
+      details: [
+        'Clipboard permission was denied for this browser or profile.',
+        'The share value is still available below.',
+        'Select the field below and copy it manually.',
+      ],
+      manualCopy: {
+        label: 'Share link',
+        testId: 'saved-teams-manual-copy-share-link',
+      },
+      title: 'Copy manually',
+      tone: 'warning',
+    });
+    expect(page.actionFeedback()?.manualCopy?.text).toContain('/tabs/manual-team-builder?teamShare=');
+  });
+
+  it('offers manual copy when clipboard is unavailable for raw share codes', async () => {
+    const { page } = createPage();
+
+    vi.stubGlobal('isSecureContext', true);
+    vi.stubGlobal('navigator', {});
+    await page.ngOnInit();
+
+    await page.copyTeamShareCode(page.savedTeams()[0]!);
+
+    expect(page.actionFeedback()).toMatchObject({
+      details: [
+        'Clipboard access is unavailable in this browser.',
+        'The share value is still available below.',
+        'Select the field below and copy it manually.',
+      ],
+      manualCopy: {
+        label: 'Share code',
+        testId: 'saved-teams-manual-copy-share-code',
+      },
+      title: 'Copy manually',
+      tone: 'warning',
+    });
+    expect(page.actionFeedback()?.manualCopy?.text).toMatch(/^[A-Za-z0-9_-]+$/u);
+  });
+
+  it('classifies blocked clipboard writes in insecure contexts', async () => {
+    const { page } = createPage();
+
+    vi.stubGlobal('isSecureContext', false);
+    vi.stubGlobal('navigator', {});
+    await page.ngOnInit();
+
+    await page.copyTeamShareLink(page.savedTeams()[0]!);
+
+    expect(page.actionFeedback()).toMatchObject({
+      details: [
+        'This browser blocks clipboard access outside a secure page.',
+        'The share value is still available below.',
+        'Select the field below and copy it manually.',
+      ],
+      title: 'Copy manually',
+      tone: 'warning',
+    });
+  });
+
+  it('routes blocked JSON copies to export instead of manual payload rendering', async () => {
+    const writeText = vi.fn().mockRejectedValue(new DOMException('denied', 'NotAllowedError'));
+    const { page } = createPage();
+
+    vi.stubGlobal('isSecureContext', true);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    await page.ngOnInit();
+
+    await page.copyTeamJson(page.savedTeams()[0]!);
+
+    expect(page.actionFeedback()).toEqual({
+      details: [
+        'Clipboard permission was denied for this browser or profile.',
+        'Use Export instead to download the JSON file, then share or import that file.',
+      ],
+      title: 'Copy failed',
+      tone: 'error',
+    });
   });
 
   it('imports a pasted raw saved team share code', async () => {
@@ -997,6 +1138,74 @@ function createPage(
 
       if (key === 'import.errors.invalidJson') {
         return 'The selected file is not valid JSON.';
+      }
+
+      if (key === 'share.successTitle') {
+        return 'Copied';
+      }
+
+      if (key === 'share.errorTitle') {
+        return 'Copy failed';
+      }
+
+      if (key === 'share.manualCopyTitle') {
+        return 'Copy manually';
+      }
+
+      if (key === 'share.sharedLink') {
+        return `Opened native share for "${params?.['name'] ?? ''}".`;
+      }
+
+      if (key === 'share.copiedLink') {
+        return `Copied share link for "${params?.['name'] ?? ''}".`;
+      }
+
+      if (key === 'share.copiedCode') {
+        return `Copied share code for "${params?.['name'] ?? ''}".`;
+      }
+
+      if (key === 'share.copiedJson') {
+        return `Copied JSON export for "${params?.['name'] ?? ''}".`;
+      }
+
+      if (key === 'share.copiedSelectedJson') {
+        return `Copied JSON export for ${params?.['count'] ?? 0} selected teams.`;
+      }
+
+      if (key === 'share.errors.permissionDenied') {
+        return 'Clipboard permission was denied for this browser or profile.';
+      }
+
+      if (key === 'share.errors.unavailable') {
+        return 'Clipboard access is unavailable in this browser.';
+      }
+
+      if (key === 'share.errors.insecureContext') {
+        return 'This browser blocks clipboard access outside a secure page.';
+      }
+
+      if (key === 'share.errors.unknown') {
+        return 'The browser could not write to the clipboard.';
+      }
+
+      if (key === 'share.errors.manualCopyAvailable') {
+        return 'The share value is still available below.';
+      }
+
+      if (key === 'share.errors.jsonClipboard') {
+        return 'Use Export instead to download the JSON file, then share or import that file.';
+      }
+
+      if (key === 'share.manualCopy.instructions') {
+        return 'Select the field below and copy it manually.';
+      }
+
+      if (key === 'share.manualCopy.linkLabel') {
+        return 'Share link';
+      }
+
+      if (key === 'share.manualCopy.codeLabel') {
+        return 'Share code';
       }
 
       if (key === 'import.diagnosticCode') {

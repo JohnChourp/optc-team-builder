@@ -563,6 +563,18 @@ Classify the report by the code shown in the UI:
 If the screenshot shows only a generic error without one of these codes, treat
 that as a diagnostics regression in the import surface that produced it.
 
+For share/copy reports where there is no saved-team diagnostic code, classify
+the browser capability state instead:
+
+- Native share unavailable or cancelled: the app should fall back to clipboard
+  copy without changing the share payload.
+- Clipboard API unavailable, insecure context, `NotAllowedError`, or
+  `SecurityError`: share links and raw share codes should show the readonly
+  manual-copy field; JSON copy actions should direct the user to Export.
+- Unknown clipboard write failures: collect a screenshot of the feedback banner
+  and browser/profile details, but do not ask for raw share links, share codes,
+  JSON, team names, or notes.
+
 ### Docs Integrity
 
 Use the shared docs checker before merging README, guide, runbook, or audit

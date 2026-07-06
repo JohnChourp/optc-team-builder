@@ -67,6 +67,11 @@ Auto Team Builder preset itself keeps its own independent schema version.
 - User-facing failures must use safe diagnostic codes and recovery copy. Error
   objects, logs, UI details, and support notes must not include raw JSON, share
   codes, URLs, team names, notes, decoded payload text, or slot contents.
+- Browser capability failures are not schema failures. If native share or
+  clipboard access is denied, unavailable, or blocked by an insecure context,
+  share links and raw share codes remain available for manual copy. JSON export
+  copy actions direct users to the download/export path instead of rendering
+  large JSON payloads in the page.
 
 ## Migration Rules
 
