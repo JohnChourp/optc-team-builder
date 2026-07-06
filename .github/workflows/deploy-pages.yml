@@ -58,6 +58,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          error_count: 120
 
       - name: Dispatch public entry synthetics
         env:
