@@ -39,6 +39,75 @@ import {
 
 const execFileAsync = promisify(execFile);
 const releaseCheckCliPath = fileURLToPath(new URL('./check-optc-release-needed.mjs', import.meta.url));
+const validRemoteVersionSource = 'var dbVersion = "37";\n';
+const validRemoteUnitsSource = `window.units = {
+  "1": { id: "1", name: "Fixture Luffy", type: "STR", class: ["Fighter"], stars: "5" },
+  "2": { id: "2", name: "Fixture Zoro", type: "DEX", class: ["Slasher"], stars: "5" },
+  "3": { id: "3", name: "Fixture Nami", type: "QCK", class: ["Striker"], stars: "5" }
+};\n`;
+const testFetchPolicy = {
+  timeoutMs: 25,
+  attempts: 2,
+  retryDelayMs: 0,
+  retryableStatuses: [500, 502, 503, 504],
+};
+
+function buildMockTextResponse(text, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    text: async () => text,
+  };
+}
+
+function buildMockTextFailureResponse(error, status = 200) {
+  return {
+    ok: true,
+    status,
+    text: async () => {
+      throw error;
+    },
+  };
+}
+
+async function writeLocalReleaseSnapshot() {
+  const fixtureDir = await mkdtemp(path.join(os.tmpdir(), 'optc-release-fetch-'));
+  await Promise.all([
+    writeFile(path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.manifestPath), '{ "sourceVersion": "36" }\n'),
+    writeFile(
+      path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.seedPath),
+      "CREATE TABLE characters (id INTEGER PRIMARY KEY, name TEXT);\nINSERT INTO characters (id, name) VALUES (1, 'Fixture Luffy');\nINSERT INTO characters (id, name) VALUES (2, 'Fixture Zoro');\n",
+    ),
+  ]);
+
+  return {
+    fixtureDir,
+    manifestPath: path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.manifestPath),
+    seedPath: path.join(fixtureDir, RELEASE_CHECK_FIXTURE_FILE_NAMES.seedPath),
+  };
+}
+
+async function withLocalReleaseSnapshot(callback) {
+  const snapshot = await writeLocalReleaseSnapshot();
+  try {
+    return await callback(snapshot);
+  } finally {
+    await rm(snapshot.fixtureDir, { recursive: true, force: true });
+  }
+}
+
+function releaseCheckFetchOptions(snapshot, fetchImpl, overrides = {}) {
+  return {
+    manifestPath: snapshot.manifestPath,
+    seedPath: snapshot.seedPath,
+    fetchImpl,
+    sleep: async () => undefined,
+    upstreamFetchPolicy: {
+      ...testFetchPolicy,
+      ...overrides,
+    },
+  };
+}
 
 describe('check-optc-release-needed', () => {
   it('defaults to the 2shankz source and JSON output off', () => {
@@ -86,7 +155,17 @@ describe('check-optc-release-needed', () => {
         schemaVersion: 1,
         reasons: {
           sourceContractBroken: 'source-contract-broken',
+          upstreamTimeout: 'upstream-timeout',
+          upstreamUnavailable: 'upstream-unavailable',
+          upstreamPartialData: 'upstream-partial-data',
+          upstreamMalformedData: 'upstream-malformed-data',
         },
+      },
+      upstreamFetch: {
+        timeoutMs: 15_000,
+        attempts: 3,
+        retryDelayMs: 1_000,
+        retryableStatuses: [408, 429, 500, 502, 503, 504],
       },
     });
     expect(releaseTriggerPolicy.localDataset.manifestPath).toMatch(/public[/\\]assets[/\\]data[/\\]optc-manifest\.json$/);
@@ -124,6 +203,10 @@ describe('check-optc-release-needed', () => {
         'fixture-validation-failed': 'error',
         'detector-failed': 'error',
         'source-contract-broken': 'error',
+        'upstream-timeout': 'error',
+        'upstream-unavailable': 'error',
+        'upstream-partial-data': 'error',
+        'upstream-malformed-data': 'error',
         'active-release-check-failed': 'error',
         'dispatch-failed': 'error',
       },
@@ -982,6 +1065,199 @@ describe('check-optc-release-needed', () => {
     });
   });
 
+  it('retries retryable upstream fetch statuses before returning a normal release result', async () => {
+    await withLocalReleaseSnapshot(async (snapshot) => {
+      const versionCalls = [];
+      const fetchImpl = async (url) => {
+        if (String(url).endsWith('/common/data/version.js')) {
+          versionCalls.push(url);
+          return versionCalls.length === 1
+            ? buildMockTextResponse('temporarily unavailable', 503)
+            : buildMockTextResponse(validRemoteVersionSource);
+        }
+
+        return buildMockTextResponse(validRemoteUnitsSource);
+      };
+
+      const result = await checkOptcReleaseNeeded(releaseCheckFetchOptions(snapshot, fetchImpl));
+
+      expect(result).toMatchObject({
+        releaseNeeded: true,
+        reason: 'new-upstream-characters',
+        remoteSourceVersion: '37',
+        newCharacterIds: [3],
+      });
+      expect(result).not.toHaveProperty('upstreamFetch');
+      expect(versionCalls).toHaveLength(2);
+    });
+  });
+
+  it('classifies repeated upstream timeouts with structured JSON diagnostics', async () => {
+    await withLocalReleaseSnapshot(async (snapshot) => {
+      const timeoutError = new Error('The operation was aborted.');
+      timeoutError.name = 'AbortError';
+      const fetchImpl = async () => {
+        throw timeoutError;
+      };
+
+      await expect(checkOptcReleaseNeeded(releaseCheckFetchOptions(snapshot, fetchImpl))).rejects.toMatchObject({
+        code: 'UPSTREAM_FETCH_FAILED',
+        reason: 'upstream-timeout',
+        releaseCheckResult: {
+          releaseNeeded: false,
+          reason: 'upstream-timeout',
+          localSourceVersion: '36',
+          remoteSourceVersion: 'unknown',
+          upstreamFetch: {
+            status: 'failed',
+            reason: 'upstream-timeout',
+            policy: {
+              attempts: 2,
+              timeoutMs: 25,
+              retryDelayMs: 0,
+            },
+          },
+        },
+      });
+    });
+  });
+
+  it('classifies retry-exhausted 5xx upstream responses as unavailable', async () => {
+    await withLocalReleaseSnapshot(async (snapshot) => {
+      const fetchImpl = async (url) => {
+        if (String(url).endsWith('/common/data/version.js')) {
+          return buildMockTextResponse('server error', 503);
+        }
+
+        return buildMockTextResponse(validRemoteUnitsSource);
+      };
+
+      let rejection;
+      try {
+        await checkOptcReleaseNeeded(releaseCheckFetchOptions(snapshot, fetchImpl));
+      } catch (error) {
+        rejection = error;
+      }
+
+      expect(rejection).toMatchObject({
+        code: 'UPSTREAM_FETCH_FAILED',
+        reason: 'upstream-unavailable',
+        releaseCheckResult: {
+          reason: 'upstream-unavailable',
+          upstreamFetch: {
+            status: 'failed',
+            files: expect.arrayContaining([
+              expect.objectContaining({
+                relativePath: 'common/data/version.js',
+                status: 'failed',
+                attemptCount: 2,
+                finalReason: 'upstream-unavailable',
+              }),
+              expect.objectContaining({
+                relativePath: 'common/data/units.js',
+                status: 'passed',
+                attemptCount: 1,
+              }),
+            ]),
+          },
+        },
+      });
+    });
+  });
+
+  it('does not retry non-retryable upstream 4xx responses', async () => {
+    await withLocalReleaseSnapshot(async (snapshot) => {
+      const versionCalls = [];
+      const fetchImpl = async (url) => {
+        if (String(url).endsWith('/common/data/version.js')) {
+          versionCalls.push(url);
+          return buildMockTextResponse('not found', 404);
+        }
+
+        return buildMockTextResponse(validRemoteUnitsSource);
+      };
+
+      await expect(
+        checkOptcReleaseNeeded(releaseCheckFetchOptions(snapshot, fetchImpl, { attempts: 3 })),
+      ).rejects.toMatchObject({
+        reason: 'upstream-unavailable',
+        releaseCheckResult: {
+          upstreamFetch: {
+            files: expect.arrayContaining([
+              expect.objectContaining({
+                relativePath: 'common/data/version.js',
+                attemptCount: 1,
+              }),
+            ]),
+          },
+        },
+      });
+      expect(versionCalls).toHaveLength(1);
+    });
+  });
+
+  it('classifies body read failures as partial upstream data', async () => {
+    await withLocalReleaseSnapshot(async (snapshot) => {
+      const fetchImpl = async (url) => {
+        if (String(url).endsWith('/common/data/units.js')) {
+          return buildMockTextFailureResponse(new Error('response body ended early'));
+        }
+
+        return buildMockTextResponse(validRemoteVersionSource);
+      };
+
+      await expect(checkOptcReleaseNeeded(releaseCheckFetchOptions(snapshot, fetchImpl))).rejects.toMatchObject({
+        code: 'UPSTREAM_FETCH_FAILED',
+        reason: 'upstream-partial-data',
+        releaseCheckResult: {
+          reason: 'upstream-partial-data',
+          upstreamFetch: {
+            files: expect.arrayContaining([
+              expect.objectContaining({
+                relativePath: 'common/data/units.js',
+                status: 'failed',
+                finalReason: 'upstream-partial-data',
+                attemptCount: 2,
+              }),
+            ]),
+          },
+        },
+      });
+    });
+  });
+
+  it('classifies aborted body reads as upstream timeouts', async () => {
+    await withLocalReleaseSnapshot(async (snapshot) => {
+      const timeoutError = new Error('The operation was aborted.');
+      timeoutError.name = 'AbortError';
+      const fetchImpl = async (url) => {
+        if (String(url).endsWith('/common/data/units.js')) {
+          return buildMockTextFailureResponse(timeoutError);
+        }
+
+        return buildMockTextResponse(validRemoteVersionSource);
+      };
+
+      await expect(checkOptcReleaseNeeded(releaseCheckFetchOptions(snapshot, fetchImpl))).rejects.toMatchObject({
+        code: 'UPSTREAM_FETCH_FAILED',
+        reason: 'upstream-timeout',
+        releaseCheckResult: {
+          reason: 'upstream-timeout',
+          upstreamFetch: {
+            files: expect.arrayContaining([
+              expect.objectContaining({
+                relativePath: 'common/data/units.js',
+                status: 'failed',
+                finalReason: 'upstream-timeout',
+                attemptCount: 2,
+              }),
+            ]),
+          },
+        },
+      });
+    });
+  });
+
   it('builds a failed report when fixture validation fails before the live check', () => {
     const report = buildReleaseTriggerReport({
       generatedAt: '2026-06-26T00:00:00.000Z',
@@ -1054,6 +1330,40 @@ describe('check-optc-release-needed', () => {
           skipRelease: 'skipped',
         },
       },
+      ...[
+        'upstream-timeout',
+        'upstream-unavailable',
+        'upstream-partial-data',
+        'upstream-malformed-data',
+      ].map((reason) => ({
+        reason,
+        releaseCheckResult: {
+          ...releaseCheckResult,
+          releaseNeeded: false,
+          reason,
+          newCharacterIds: [],
+          newCharacterCount: 0,
+          upstreamFetch: {
+            schemaVersion: 1,
+            status: 'failed',
+            reason,
+            files: [
+              {
+                relativePath: 'common/data/units.js',
+                status: 'failed',
+                finalReason: reason,
+              },
+            ],
+          },
+        },
+        stepOutcomes: {
+          fixtureValidation: 'success',
+          releaseCheck: 'failure',
+          activeRelease: 'skipped',
+          dispatchRelease: 'skipped',
+          skipRelease: 'skipped',
+        },
+      })),
       {
         reason: 'active-release-check-failed',
         releaseCheckResult,
@@ -1269,7 +1579,53 @@ describe('check-optc-release-needed', () => {
   it('fails deterministically for the malformed error fixture', async () => {
     await expect(
       checkOptcReleaseNeeded({ fixture: MALFORMED_RELEASE_CHECK_FIXTURE }),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({
+      code: 'UPSTREAM_FETCH_FAILED',
+      reason: 'upstream-malformed-data',
+      releaseCheckResult: {
+        reason: 'upstream-malformed-data',
+        upstreamFetch: {
+          status: 'failed',
+          reason: 'upstream-malformed-data',
+          files: expect.arrayContaining([
+            expect.objectContaining({
+              relativePath: 'common/data/units.js',
+              status: 'failed',
+              finalReason: 'upstream-malformed-data',
+            }),
+          ]),
+        },
+      },
+    });
+  });
+
+  it('fails malformed upstream JavaScript fixtures with a structured JSON result from the CLI', async () => {
+    let rejection;
+
+    try {
+      await execFileAsync(process.execPath, [
+        releaseCheckCliPath,
+        '--fixture=error',
+        '--json',
+      ]);
+    } catch (error) {
+      rejection = error;
+    }
+
+    expect(rejection).toMatchObject({
+      code: 1,
+    });
+
+    const result = JSON.parse(String(rejection.stdout));
+    expect(result).toMatchObject({
+      releaseNeeded: false,
+      reason: 'upstream-malformed-data',
+      upstreamFetch: {
+        status: 'failed',
+        reason: 'upstream-malformed-data',
+      },
+    });
+    expect(String(rejection.stderr)).toContain('OPTC DB upstream fetch failed');
   });
 
   it('fails source-contract drift with a structured JSON result from the CLI', async () => {

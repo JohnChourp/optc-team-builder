@@ -53,6 +53,6 @@ Use the smallest validation path that covers the changed owner:
 - shared saved-team fixtures: `npm run test:e2e:chromium` plus focused saved
   team transfer tests when transfer utilities or the saved-team schema lifecycle
   contract change
-- shared release-check fixtures or historical corpus: `npm run test:release-check` plus `npm run data:backtest-release -- --json`; expected-failure fixtures such as `error` and `source-contract-broken` must also be replayed nonzero
+- shared release-check fixtures, injected upstream-fetch cases, or historical corpus: `npm run test:release-check` plus `npm run data:backtest-release -- --json`; expected-failure fixtures such as `error` (`upstream-malformed-data`) and `source-contract-broken` must also be replayed nonzero
 - fixture ownership docs: `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`
 - broad shared fixture changes: `npm run test:ci` and `git diff --check`

@@ -272,7 +272,16 @@ so the workflow report can replay the blocked active-release branch;
 `upstream-shape-drift` must return `releaseNeeded=false` even with a newer
 source version and object/variant shape drift; `source-contract-broken` must
 exit nonzero with `reason=source-contract-broken`; `error` is intentionally
-malformed and must exit nonzero.
+malformed and must exit nonzero with `reason=upstream-malformed-data`.
+
+Live upstream reads use the release policy's fetch guardrails: three attempts,
+a 15 second per-file timeout, a one second retry delay, and retries only for
+transient HTTP statuses `408`, `429`, `500`, `502`, `503`, and `504`. Detector
+failures before source-contract validation are reported as
+`upstream-timeout`, `upstream-unavailable`, `upstream-partial-data`, or
+`upstream-malformed-data` with an `upstreamFetch` diagnostic block that lists
+the affected upstream file, attempt count, retryability, and safe error
+summary.
 
 The detector's upstream source contract is intentionally narrow. The selected
 source must expose `dbVersion` from `common/data/version.js`, populate
@@ -306,10 +315,10 @@ finds releasable data.
 
 Every workflow run also uploads `release-detector-status`, a compact JSON and
 Markdown Actions artifact for maintainers. It surfaces the latest detector
-status, release-needed verdict, source-contract status/failures, local and
-upstream dataset versions, character count delta, new upstream ID sample,
-upstream monitor warning IDs, and the run URL without requiring raw workflow-log
-inspection.
+status, release-needed verdict, source-contract status/failures, upstream fetch
+status/failures, local and upstream dataset versions, character count delta, new
+upstream ID sample, upstream monitor warning IDs, and the run URL without
+requiring raw workflow-log inspection.
 
 When `Check OPTC DB Release` dispatches `Release Android`, it passes the
 detector run ID, run URL, and source SHA into the release workflow. The release

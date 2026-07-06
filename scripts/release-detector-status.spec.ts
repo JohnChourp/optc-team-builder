@@ -378,6 +378,66 @@ describe('release-detector-status', () => {
     expect(formatReleaseDetectorStatusMarkdown(report)).toContain('- Failure IDs: normalized-character-ids');
   });
 
+  it('surfaces upstream fetch diagnostics from the release trigger report', () => {
+    const report = buildReleaseDetectorStatusReport({
+      releaseTriggerReport: releaseTriggerReport({
+        status: 'failed',
+        reason: 'upstream-partial-data',
+        releaseCheck: {
+          releaseNeeded: false,
+          reason: 'upstream-partial-data',
+          source: '2shankz',
+          sourceRepository: '2Shankz/optc-db.github.io',
+          localSourceVersion: '36',
+          remoteSourceVersion: 'unknown',
+          localCharacterCount: 2,
+          remoteCharacterCount: 0,
+          newCharacterIds: [],
+          newCharacterCount: 0,
+          upstreamFetch: {
+            schemaVersion: 1,
+            status: 'failed',
+            reason: 'upstream-partial-data',
+            files: [
+              {
+                relativePath: 'common/data/units.js',
+                status: 'failed',
+                finalReason: 'upstream-partial-data',
+                attemptCount: 2,
+              },
+            ],
+          },
+        },
+      }),
+      upstreamMonitorReport: upstreamMonitorReport({
+        status: 'failed',
+        warnings: [{ id: 'release-check-failed', severity: 'error' }],
+      }),
+      generatedAt,
+    });
+
+    expect(report).toMatchObject({
+      status: 'failed',
+      reason: 'upstream-partial-data',
+      upstreamFetch: {
+        status: 'failed',
+        reason: 'upstream-partial-data',
+        failedFileCount: 1,
+        failedFiles: [
+          {
+            relativePath: 'common/data/units.js',
+            reason: 'upstream-partial-data',
+            attempts: 2,
+          },
+        ],
+      },
+    });
+    expect(formatReleaseDetectorStatusMarkdown(report)).toContain('## Upstream Fetch');
+    expect(formatReleaseDetectorStatusMarkdown(report)).toContain(
+      '- Failure details: common/data/units.js:upstream-partial-data',
+    );
+  });
+
   it('writes failed JSON and Markdown outputs when an input report is missing or malformed', async () => {
     const rootDir = await makeTempDir();
     const releaseTriggerPath = path.join(rootDir, 'release-trigger-outcome.json');

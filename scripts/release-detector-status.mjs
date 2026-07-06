@@ -172,6 +172,28 @@ function normalizeSourceContract(releaseTriggerReport = {}) {
   };
 }
 
+function normalizeUpstreamFetch(releaseTriggerReport = {}) {
+  const releaseCheck = isObject(releaseTriggerReport.releaseCheck) ? releaseTriggerReport.releaseCheck : {};
+  const upstreamFetch = isObject(releaseTriggerReport.upstreamFetch)
+    ? releaseTriggerReport.upstreamFetch
+    : isObject(releaseCheck.upstreamFetch)
+      ? releaseCheck.upstreamFetch
+      : null;
+  const files = Array.isArray(upstreamFetch?.files) ? upstreamFetch.files : [];
+  const failedFiles = files.filter((file) => isObject(file) && file.status === 'failed');
+
+  return {
+    status: optionalString(upstreamFetch?.status),
+    reason: optionalString(upstreamFetch?.reason),
+    failedFileCount: failedFiles.length,
+    failedFiles: failedFiles.map((file) => ({
+      relativePath: optionalString(file.relativePath),
+      reason: optionalString(file.finalReason ?? upstreamFetch?.reason),
+      attempts: optionalNumber(file.attemptCount),
+    })),
+  };
+}
+
 function normalizeIdempotency(releaseTriggerReport = {}) {
   const idempotency = isObject(releaseTriggerReport.idempotency) ? releaseTriggerReport.idempotency : {};
   const dispatch = isObject(releaseTriggerReport.dispatch) ? releaseTriggerReport.dispatch : {};
@@ -263,6 +285,7 @@ export function buildReleaseDetectorStatusReport({
     verdict: normalizeVerdict(safeReleaseTriggerReport),
     dataset: normalizeDataset(safeReleaseTriggerReport, safeUpstreamMonitorReport),
     sourceContract: normalizeSourceContract(safeReleaseTriggerReport),
+    upstreamFetch: normalizeUpstreamFetch(safeReleaseTriggerReport),
     idempotency: normalizeIdempotency(safeReleaseTriggerReport),
     monitor: normalizeMonitor(safeUpstreamMonitorReport),
     workflow: pickWorkflowMetadata(safeReleaseTriggerReport.workflow, safeUpstreamMonitorReport.workflow),
@@ -318,6 +341,15 @@ export function formatReleaseDetectorStatusMarkdown(report) {
     `- Status: ${formatNullable(report.sourceContract.status)}`,
     `- Failure count: ${report.sourceContract.failureCount}`,
     `- Failure IDs: ${formatList(report.sourceContract.failureIds)}`,
+    '',
+    '## Upstream Fetch',
+    '',
+    `- Status: ${formatNullable(report.upstreamFetch.status)}`,
+    `- Reason: ${formatNullable(report.upstreamFetch.reason)}`,
+    `- Failed files: ${report.upstreamFetch.failedFileCount}`,
+    `- Failure details: ${formatList(
+      report.upstreamFetch.failedFiles.map((file) => `${file.relativePath ?? 'unknown'}:${file.reason ?? 'unknown'}`),
+    )}`,
     '',
     '## Dispatch Idempotency',
     '',

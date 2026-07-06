@@ -47,6 +47,28 @@ export class SourceContractError extends Error {
   }
 }
 
+export class UpstreamFetchError extends Error {
+  constructor(reason, upstreamFetch, cause = null) {
+    super(`OPTC DB upstream fetch failed: ${reason}`);
+    this.name = 'UpstreamFetchError';
+    this.code = 'UPSTREAM_FETCH_FAILED';
+    this.reason = reason;
+    this.upstreamFetch = upstreamFetch;
+    this.cause = cause;
+  }
+}
+
+const upstreamFetchFailureReasons = new Set([
+  releaseTriggerPolicy.report.reasons.upstreamTimeout,
+  releaseTriggerPolicy.report.reasons.upstreamUnavailable,
+  releaseTriggerPolicy.report.reasons.upstreamPartialData,
+  releaseTriggerPolicy.report.reasons.upstreamMalformedData,
+]);
+
+function isUpstreamFetchFailureReason(reason) {
+  return upstreamFetchFailureReasons.has(reason);
+}
+
 export function parseReleaseCheckArgs(args = process.argv.slice(2)) {
   const options = {
     source: releaseTriggerPolicy.defaultSource,
@@ -422,6 +444,26 @@ export function buildSourceContractFailureResult({
   };
 }
 
+export function buildUpstreamFetchFailureResult({
+  source,
+  localSnapshot = null,
+  upstreamFetch,
+}) {
+  return {
+    releaseNeeded: false,
+    reason: upstreamFetch.reason,
+    source: source.key,
+    sourceRepository: source.repository,
+    localSourceVersion: String(localSnapshot?.sourceVersion ?? 'unknown'),
+    remoteSourceVersion: 'unknown',
+    localCharacterCount: Array.isArray(localSnapshot?.characterIds) ? localSnapshot.characterIds.length : 0,
+    remoteCharacterCount: 0,
+    newCharacterIds: [],
+    newCharacterCount: 0,
+    upstreamFetch,
+  };
+}
+
 function normalizeStepOutcome(outcome) {
   const normalized = String(outcome ?? '').trim();
   return normalized || 'skipped';
@@ -626,6 +668,7 @@ export function buildReleaseTriggerReport({
   const sourceContractBroken =
     releaseCheckResult?.reason === releaseTriggerPolicy.report.reasons.sourceContractBroken ||
     releaseCheckResult?.sourceContract?.status === 'failed';
+  const upstreamFetchFailure = isUpstreamFetchFailureReason(releaseCheckResult?.reason);
   const blockedByVerificationOnly = !failedPrerequisite && releaseNeeded && !releaseDispatched && verificationOnly;
   const blockedByActiveRelease =
     !failedPrerequisite &&
@@ -660,7 +703,9 @@ export function buildReleaseTriggerReport({
     status = releaseTriggerPolicy.report.statuses.failed;
     reason = sourceContractBroken
       ? releaseTriggerPolicy.report.reasons.sourceContractBroken
-      : releaseTriggerPolicy.report.reasons.detectorFailed;
+      : upstreamFetchFailure
+        ? releaseCheckResult.reason
+        : releaseTriggerPolicy.report.reasons.detectorFailed;
   } else if (isFailedStepOutcome(steps.activeRelease)) {
     status = releaseTriggerPolicy.report.statuses.failed;
     reason = releaseTriggerPolicy.report.reasons.activeReleaseCheckFailed;
@@ -698,6 +743,7 @@ export function buildReleaseTriggerReport({
     workflow,
     releaseCheck: releaseCheckResult,
     sourceContract: releaseCheckResult?.sourceContract ?? null,
+    upstreamFetch: releaseCheckResult?.upstreamFetch ?? null,
     comparison: releaseCheckResult
       ? {
           source: releaseCheckResult.source,
@@ -849,6 +895,16 @@ export function formatReleaseTriggerSummary(report) {
     }
   }
 
+  if (report.upstreamFetch) {
+    lines.push(`- Upstream fetch: ${report.upstreamFetch.status}`);
+    lines.push(`- Upstream fetch reason: ${report.upstreamFetch.reason ?? 'none'}`);
+    lines.push(
+      `- Upstream fetch attempts: ${(report.upstreamFetch.files ?? [])
+        .map((file) => `${file.relativePath}:${file.attemptCount}`)
+        .join(', ') || 'none'}`,
+    );
+  }
+
   lines.push(
     '',
     '### Step outcomes',
@@ -867,16 +923,6 @@ export function formatReleaseTriggerSummary(report) {
   return lines.join('\n');
 }
 
-async function fetchText(url, source) {
-  const response = await fetch(url, { headers: buildRequestHeaders() });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url} from ${source.label}: ${response.status}`);
-  }
-
-  return response.text();
-}
-
 function buildRequestHeaders() {
   const token = process.env.GITHUB_TOKEN?.trim() || process.env.GH_TOKEN?.trim() || '';
 
@@ -888,6 +934,246 @@ function buildRequestHeaders() {
     ...requestHeaders,
     Authorization: `Bearer ${token}`,
   };
+}
+
+function normalizeUpstreamFetchPolicy(policy = releaseTriggerPolicy.upstreamFetch) {
+  return {
+    timeoutMs: Number.isInteger(policy.timeoutMs) && policy.timeoutMs > 0
+      ? policy.timeoutMs
+      : releaseTriggerPolicy.upstreamFetch.timeoutMs,
+    attempts: Number.isInteger(policy.attempts) && policy.attempts > 0
+      ? policy.attempts
+      : releaseTriggerPolicy.upstreamFetch.attempts,
+    retryDelayMs: Number.isInteger(policy.retryDelayMs) && policy.retryDelayMs >= 0
+      ? policy.retryDelayMs
+      : releaseTriggerPolicy.upstreamFetch.retryDelayMs,
+    retryableStatuses: Array.isArray(policy.retryableStatuses)
+      ? [...policy.retryableStatuses]
+      : [...releaseTriggerPolicy.upstreamFetch.retryableStatuses],
+  };
+}
+
+function sleepFor(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function safeErrorClass(error) {
+  if (error instanceof Error && error.name) {
+    return error.name;
+  }
+  if (error && typeof error === 'object' && typeof error.name === 'string' && error.name.trim()) {
+    return error.name;
+  }
+  return typeof error;
+}
+
+function safeErrorMessage(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.replace(/\s+/g, ' ').slice(0, 240);
+}
+
+function isTimeoutError(error) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  return error.name === 'AbortError' || error.name === 'TimeoutError' || error.code === 'ABORT_ERR';
+}
+
+function buildUpstreamFetchEnvelope({ policy, files, reason = null }) {
+  return {
+    schemaVersion: 1,
+    status: reason ? 'failed' : 'passed',
+    reason,
+    policy: {
+      timeoutMs: policy.timeoutMs,
+      attempts: policy.attempts,
+      retryDelayMs: policy.retryDelayMs,
+      retryableStatuses: [...policy.retryableStatuses],
+    },
+    files,
+  };
+}
+
+function classifyAttemptFailure(attempt) {
+  if (attempt.status === 'timeout') {
+    return releaseTriggerPolicy.report.reasons.upstreamTimeout;
+  }
+  if (attempt.status === 'partial-data') {
+    return releaseTriggerPolicy.report.reasons.upstreamPartialData;
+  }
+  return releaseTriggerPolicy.report.reasons.upstreamUnavailable;
+}
+
+function finalAttemptReason(diagnostic) {
+  const finalAttempt = [...diagnostic.attempts].reverse().find((attempt) => attempt.status !== 'success');
+  return finalAttempt ? classifyAttemptFailure(finalAttempt) : releaseTriggerPolicy.report.reasons.upstreamUnavailable;
+}
+
+function failedFetchEnvelope({ policy, diagnostic }) {
+  const reason = finalAttemptReason(diagnostic);
+  return buildUpstreamFetchEnvelope({
+    policy,
+    reason,
+    files: [
+      {
+        ...diagnostic,
+        status: 'failed',
+        finalReason: reason,
+      },
+    ],
+  });
+}
+
+function markDiagnosticFailed(diagnostic, reason, error) {
+  return {
+    ...diagnostic,
+    status: 'failed',
+    finalReason: reason,
+    finalErrorClass: safeErrorClass(error),
+    finalErrorMessage: safeErrorMessage(error),
+  };
+}
+
+async function fetchText(url, source, { relativePath, policy, fetchImpl = fetch, sleep = sleepFor } = {}) {
+  const diagnostic = {
+    relativePath,
+    source: 'remote',
+    url,
+    status: 'pending',
+    attemptCount: 0,
+    attempts: [],
+  };
+
+  for (let attempt = 1; attempt <= policy.attempts; attempt += 1) {
+    let timeoutId;
+    const controller = new AbortController();
+
+    try {
+      timeoutId = setTimeout(() => controller.abort(), policy.timeoutMs);
+      const response = await fetchImpl(url, {
+        headers: buildRequestHeaders(),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        clearTimeout(timeoutId);
+        const retryable = policy.retryableStatuses.includes(response.status);
+        diagnostic.attempts.push({
+          attempt,
+          status: 'http-error',
+          httpStatus: response.status,
+          retryable,
+        });
+        diagnostic.attemptCount = diagnostic.attempts.length;
+
+        if (retryable && attempt < policy.attempts) {
+          await sleep(policy.retryDelayMs);
+          continue;
+        }
+
+        throw new UpstreamFetchError(releaseTriggerPolicy.report.reasons.upstreamUnavailable, failedFetchEnvelope({
+          policy,
+          diagnostic,
+        }));
+      }
+
+      if (response.status === 206) {
+        clearTimeout(timeoutId);
+        diagnostic.attempts.push({
+          attempt,
+          status: 'partial-data',
+          httpStatus: response.status,
+          retryable: false,
+        });
+        diagnostic.attemptCount = diagnostic.attempts.length;
+        throw new UpstreamFetchError(releaseTriggerPolicy.report.reasons.upstreamPartialData, failedFetchEnvelope({
+          policy,
+          diagnostic,
+        }));
+      }
+
+      try {
+        const text = await response.text();
+        clearTimeout(timeoutId);
+        diagnostic.attempts.push({
+          attempt,
+          status: 'success',
+          httpStatus: response.status,
+          retryable: false,
+        });
+        diagnostic.attemptCount = diagnostic.attempts.length;
+        diagnostic.status = 'passed';
+        return { text, diagnostic };
+      } catch (error) {
+        diagnostic.attempts.push({
+          attempt,
+          status: 'partial-data',
+          httpStatus: response.status,
+          retryable: attempt < policy.attempts,
+          errorClass: safeErrorClass(error),
+          errorMessage: safeErrorMessage(error),
+        });
+        diagnostic.attemptCount = diagnostic.attempts.length;
+
+        const timedOut = isTimeoutError(error);
+        clearTimeout(timeoutId);
+        diagnostic.attempts[diagnostic.attempts.length - 1] = {
+          ...diagnostic.attempts[diagnostic.attempts.length - 1],
+          status: timedOut ? 'timeout' : 'partial-data',
+        };
+
+        if (attempt < policy.attempts) {
+          await sleep(policy.retryDelayMs);
+          continue;
+        }
+
+        throw new UpstreamFetchError(
+          timedOut
+            ? releaseTriggerPolicy.report.reasons.upstreamTimeout
+            : releaseTriggerPolicy.report.reasons.upstreamPartialData,
+          failedFetchEnvelope({
+            policy,
+            diagnostic,
+          }),
+          error,
+        );
+      }
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (error instanceof UpstreamFetchError) {
+        throw error;
+      }
+
+      const timedOut = isTimeoutError(error);
+      diagnostic.attempts.push({
+        attempt,
+        status: timedOut ? 'timeout' : 'network-error',
+        retryable: attempt < policy.attempts,
+        errorClass: safeErrorClass(error),
+        errorMessage: safeErrorMessage(error),
+      });
+      diagnostic.attemptCount = diagnostic.attempts.length;
+
+      if (attempt < policy.attempts) {
+        await sleep(policy.retryDelayMs);
+        continue;
+      }
+
+      throw new UpstreamFetchError(
+        timedOut
+          ? releaseTriggerPolicy.report.reasons.upstreamTimeout
+          : releaseTriggerPolicy.report.reasons.upstreamUnavailable,
+        failedFetchEnvelope({ policy, diagnostic }),
+        error,
+      );
+    }
+  }
+
+  throw new UpstreamFetchError(releaseTriggerPolicy.report.reasons.upstreamUnavailable, failedFetchEnvelope({
+    policy,
+    diagnostic,
+  }));
 }
 
 async function readLocalDatasetSnapshot(options) {
@@ -903,21 +1189,80 @@ async function readLocalDatasetSnapshot(options) {
   };
 }
 
+function diagnosticsFromSettledReads(reads) {
+  return reads.flatMap((result) => {
+    if (result.status === 'fulfilled') {
+      return [result.value.diagnostic];
+    }
+    if (result.reason instanceof UpstreamFetchError) {
+      return result.reason.upstreamFetch.files;
+    }
+    return [];
+  });
+}
+
 async function readRemoteDatasetSnapshot(source, options = {}) {
-  const [versionSource, unitsSource] = await Promise.all([
+  const policy = normalizeUpstreamFetchPolicy(options.upstreamFetchPolicy);
+  const readOptions = {
+    policy,
+    fetchImpl: options.fetchImpl ?? fetch,
+    sleep: options.sleep ?? sleepFor,
+  };
+  const reads = await Promise.allSettled([
     readRemoteSourceFile({
       filePath: options.remoteVersionPath,
       source,
       relativePath: releaseTriggerPolicy.upstream.versionPath,
+      ...readOptions,
     }),
     readRemoteSourceFile({
       filePath: options.remoteUnitsPath,
       source,
       relativePath: releaseTriggerPolicy.upstream.unitsPath,
+      ...readOptions,
     }),
   ]);
-  const unitsWindow = evaluateLegacyDataSource(unitsSource);
-  const sourceVersion = extractSourceVersion(versionSource);
+
+  const rejectedRead = reads.find((result) => result.status === 'rejected');
+  if (rejectedRead) {
+    const reason =
+      rejectedRead.reason instanceof UpstreamFetchError
+        ? rejectedRead.reason.reason
+        : releaseTriggerPolicy.report.reasons.upstreamUnavailable;
+    throw new UpstreamFetchError(
+      reason,
+      buildUpstreamFetchEnvelope({
+        policy,
+        reason,
+        files: diagnosticsFromSettledReads(reads),
+      }),
+      rejectedRead.reason,
+    );
+  }
+
+  const [versionRead, unitsRead] = reads.map((result) => result.value);
+  const sourceVersion = extractSourceVersion(versionRead.text);
+  let unitsWindow;
+  try {
+    unitsWindow = evaluateLegacyDataSource(unitsRead.text);
+  } catch (error) {
+    throw new UpstreamFetchError(
+      releaseTriggerPolicy.report.reasons.upstreamMalformedData,
+      buildUpstreamFetchEnvelope({
+        policy,
+        reason: releaseTriggerPolicy.report.reasons.upstreamMalformedData,
+        files: [
+          versionRead.diagnostic,
+          markDiagnosticFailed(
+            unitsRead.diagnostic,
+            releaseTriggerPolicy.report.reasons.upstreamMalformedData,
+            error,
+          ),
+        ],
+      }),
+      error,
+    );
+  }
   const units = unitsWindow.units;
   let characters = [];
   let normalizationError = null;
@@ -940,19 +1285,82 @@ async function readRemoteDatasetSnapshot(source, options = {}) {
   };
 }
 
-function readRemoteSourceFile({ filePath, source, relativePath }) {
+async function readRemoteSourceFile({ filePath, source, relativePath, policy, fetchImpl, sleep }) {
   if (filePath) {
-    return readFile(filePath, 'utf8');
+    try {
+      const text = await readFile(filePath, 'utf8');
+      return {
+        text,
+        diagnostic: {
+          relativePath,
+          source: 'fixture',
+          status: 'passed',
+          attemptCount: 1,
+          attempts: [
+            {
+              attempt: 1,
+              status: 'success',
+              retryable: false,
+            },
+          ],
+        },
+      };
+    } catch (error) {
+      const diagnostic = {
+        relativePath,
+        source: 'fixture',
+        status: 'failed',
+        finalReason: releaseTriggerPolicy.report.reasons.upstreamUnavailable,
+        finalErrorClass: safeErrorClass(error),
+        finalErrorMessage: safeErrorMessage(error),
+        attemptCount: 1,
+        attempts: [
+          {
+            attempt: 1,
+            status: 'file-error',
+            retryable: false,
+            errorClass: safeErrorClass(error),
+            errorMessage: safeErrorMessage(error),
+          },
+        ],
+      };
+      throw new UpstreamFetchError(
+        releaseTriggerPolicy.report.reasons.upstreamUnavailable,
+        buildUpstreamFetchEnvelope({
+          policy,
+          reason: releaseTriggerPolicy.report.reasons.upstreamUnavailable,
+          files: [diagnostic],
+        }),
+        error,
+      );
+    }
   }
 
-  return fetchText(buildSourceFileUrl(source, relativePath), source);
+  return fetchText(buildSourceFileUrl(source, relativePath), source, {
+    relativePath,
+    policy,
+    fetchImpl,
+    sleep,
+  });
 }
 
 export async function checkOptcReleaseNeeded(options = {}) {
   const resolvedOptions = resolveReleaseCheckOptions(options);
   const source = resolveImportSource(resolvedOptions.source ?? releaseTriggerPolicy.defaultSource);
   const localSnapshot = await readLocalDatasetSnapshot(resolvedOptions);
-  const remoteSnapshot = await readRemoteDatasetSnapshot(source, resolvedOptions);
+  let remoteSnapshot;
+  try {
+    remoteSnapshot = await readRemoteDatasetSnapshot(source, resolvedOptions);
+  } catch (error) {
+    if (error instanceof UpstreamFetchError) {
+      error.releaseCheckResult = buildUpstreamFetchFailureResult({
+        source,
+        localSnapshot,
+        upstreamFetch: error.upstreamFetch,
+      });
+    }
+    throw error;
+  }
 
   if (remoteSnapshot.sourceContract.status === 'failed') {
     const error = new SourceContractError(remoteSnapshot.sourceContract);
@@ -999,7 +1407,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       console.log(options.json ? JSON.stringify(result, null, 2) : formatHumanResult(result));
     })
     .catch((error) => {
-      if (error instanceof SourceContractError && options.json && error.releaseCheckResult) {
+      if (
+        (error instanceof SourceContractError || error instanceof UpstreamFetchError) &&
+        options.json &&
+        error.releaseCheckResult
+      ) {
         console.log(JSON.stringify(error.releaseCheckResult, null, 2));
       }
 

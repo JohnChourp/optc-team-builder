@@ -78,14 +78,16 @@ from the local `characters` table in `optc-seed.sql`.
 Release detection uses these maintainer surfaces:
 
 - `scripts/check-optc-release-needed.mjs` for the detector decision.
-- `scripts/fixtures/release-check/` for replayable no-change, new-character,
-  malformed, active-release, and upstream-drift scenarios.
+- `scripts/fixtures/release-check/` plus injected fetch tests for replayable
+  no-change, new-character, malformed, timeout, unavailable, partial-data,
+  active-release, and upstream-drift scenarios.
 - `.github/workflows/check-optc-db-release.yml` for scheduled and manual
   verification, including the duplicate-dispatch idempotency guard before
   production release dispatch.
 - `release-trigger-outcome`, `upstream-monitor-report`,
   `release-detector-status`, and `release-provenance` workflow artifacts for
-  scan-friendly evidence.
+  scan-friendly evidence, including upstream fetch diagnostics when the
+  detector fails before source-contract validation.
 - `../../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` for private
   operations context and incident replay notes.
 

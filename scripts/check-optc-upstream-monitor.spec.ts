@@ -266,6 +266,46 @@ describe('check-optc-upstream-monitor', () => {
     ]);
   });
 
+  it('fails the monitor report without stale-drift analysis when release detector fetch fails', () => {
+    const report = buildUpstreamMonitorReport({
+      releaseCheckResult: releaseCheckResult({
+        reason: 'upstream-timeout',
+        upstreamFetch: {
+          schemaVersion: 1,
+          status: 'failed',
+          reason: 'upstream-timeout',
+          files: [
+            {
+              relativePath: 'common/data/version.js',
+              status: 'failed',
+              finalReason: 'upstream-timeout',
+            },
+          ],
+        },
+      }),
+      generatedAt: '2026-07-01T00:00:00.000Z',
+      historyReports: [
+        historyReport('2026-06-08T00:00:00.000Z'),
+        historyReport('2026-06-15T00:00:00.000Z'),
+        historyReport('2026-06-22T00:00:00.000Z'),
+      ],
+      env: scheduledEnv,
+    });
+
+    expect(report.status).toBe('failed');
+    expect(report.warnings).toEqual([
+      {
+        id: 'release-check-failed',
+        severity: 'error',
+        message: 'Release detector failed before producing a usable upstream comparison.',
+        details: {
+          detectorReason: 'upstream-timeout',
+          upstreamFetchReason: 'upstream-timeout',
+        },
+      },
+    ]);
+  });
+
   it('writes CLI JSON and Markdown outputs', async () => {
     const rootDir = await makeTempDir();
     const releaseCheckPath = path.join(rootDir, 'release-check.json');
