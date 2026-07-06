@@ -308,7 +308,10 @@ function markdownStatusIcon(status) {
 }
 
 function escapeMarkdownCell(value) {
-  return String(value ?? 'none').replace(/\r?\n/g, ' ').replace(/\|/g, '\\|');
+  return String(value ?? 'none')
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, ' ')
+    .replace(/\|/g, '\\|');
 }
 
 export function formatPostDispatchProductionSmokeMarkdown(report) {

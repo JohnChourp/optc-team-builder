@@ -148,6 +148,20 @@ describe('post-dispatch-production-smoke', () => {
     expect(report.checks.find((check) => check.id === 'release-metadata')).toMatchObject({ status: 'failed' });
   });
 
+  it('escapes Markdown table cells defensively', () => {
+    const report = buildPostDispatchProductionSmokeReport({
+      releaseProvenance: makeReleaseProvenance({ status: 'passed' }),
+      publicEntryReport: makePublicEntryReport(),
+      releaseRunUrl: 'https://example.test/releases/C:\\tmp|release',
+      releaseTag: 'v1.2.3',
+      releaseVersion: '1.2.3',
+      versionCode: '123',
+      generatedAt,
+    });
+
+    expect(formatPostDispatchProductionSmokeMarkdown(report)).toContain('C:\\\\tmp\\|release');
+  });
+
   it('fails missing auto-release linkage only when the workflow requires it', () => {
     const manualReport = buildPostDispatchProductionSmokeReport({
       releaseProvenance: makeReleaseProvenance({ status: 'passed', trigger: null }),
