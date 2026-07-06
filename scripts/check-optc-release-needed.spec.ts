@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import { dataImportSources } from './import-optc-data.mjs';
 import {
+  buildReleaseDispatchIdempotencyKey,
   buildReleaseTriggerReport,
   buildReleaseCheckResult,
   checkOptcReleaseNeeded,
@@ -72,6 +74,13 @@ describe('check-optc-release-needed', () => {
         },
         manualDefaultMode: 'verify-only',
         scheduledMode: 'dispatch-if-needed',
+        idempotency: {
+          strategy: 'release-dispatch-idempotency-key',
+          runNamePrefix: 'Release Android',
+          recentRunLimit: 50,
+          blockingStatuses: ['queued', 'in_progress', 'requested', 'waiting', 'pending'],
+          blockingConclusions: ['success'],
+        },
       },
       report: {
         schemaVersion: 1,
@@ -95,6 +104,11 @@ describe('check-optc-release-needed', () => {
       release_dispatch_mode_dispatch_if_needed: 'dispatch-if-needed',
       release_manual_dispatch_default: 'verify-only',
       release_scheduled_dispatch_mode: 'dispatch-if-needed',
+      release_dispatch_idempotency_strategy: 'release-dispatch-idempotency-key',
+      release_dispatch_run_name_prefix: 'Release Android',
+      release_dispatch_recent_run_limit: '50',
+      release_dispatch_blocking_statuses_json: '["queued","in_progress","requested","waiting","pending"]',
+      release_dispatch_blocking_conclusions_json: '["success"]',
     });
     expect(Object.isFrozen(releaseTriggerPolicy)).toBe(true);
     expect(Object.isFrozen(releaseTriggerPolicy.dispatch.activeStatuses)).toBe(true);
@@ -106,6 +120,7 @@ describe('check-optc-release-needed', () => {
       severities: {
         'release-dispatched': 'info',
         'active-release-running': 'warning',
+        'duplicate-release-dispatch-blocked': 'warning',
         'fixture-validation-failed': 'error',
         'detector-failed': 'error',
         'source-contract-broken': 'error',
@@ -381,15 +396,29 @@ describe('check-optc-release-needed', () => {
       localCharacterIds: [1, 2],
       remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
     });
+    const idempotency = buildReleaseDispatchIdempotencyKey({ releaseCheckResult });
     const report = buildReleaseTriggerReport({
       releaseCheckResult,
       activeReleaseCount: '0',
+      dispatchRegistrationConfirmed: 'true',
+      dispatchRegistrationAttempts: '2',
+      dispatchRegistrationMatches: [
+        {
+          databaseId: 102,
+          displayTitle: `Release Android ${idempotency.key}`,
+          status: 'queued',
+          conclusion: null,
+          url: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/102',
+        },
+      ],
       generatedAt: '2026-06-26T00:00:00.000Z',
       stepOutcomes: {
         fixtureValidation: 'success',
         releaseCheck: 'success',
         activeRelease: 'success',
+        duplicateReleaseDispatch: 'success',
         dispatchRelease: 'success',
+        dispatchRegistration: 'success',
         skipRelease: 'skipped',
       },
     });
@@ -406,6 +435,65 @@ describe('check-optc-release-needed', () => {
         releaseDispatched: true,
         activeReleaseCount: 0,
       },
+      idempotency: {
+        dispatchRegistrationConfirmed: true,
+        dispatchRegistrationAttempts: 2,
+        dispatchRegistrationRuns: [
+          {
+            databaseId: '102',
+            displayTitle: `Release Android ${idempotency.key}`,
+            url: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/102',
+          },
+        ],
+      },
+      steps: {
+        dispatchRegistration: 'success',
+      },
+    });
+    expect(formatReleaseTriggerSummary(report)).toContain('Dispatch registration confirmed: yes');
+  });
+
+  it('builds a deterministic release dispatch idempotency key from the release inputs', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 3 }, { id: 2 }, { id: 1 }],
+    });
+    const first = buildReleaseDispatchIdempotencyKey({
+      releaseCheckResult,
+      dispatchWorkflow: 'release-android.yml',
+      dispatchRef: 'main',
+      dispatchBump: 'patch',
+    });
+    const second = buildReleaseDispatchIdempotencyKey({
+      releaseCheckResult: {
+        ...releaseCheckResult,
+        newCharacterIds: [...releaseCheckResult.newCharacterIds].reverse(),
+      },
+      dispatchWorkflow: 'release-android.yml',
+      dispatchRef: 'main',
+      dispatchBump: 'patch',
+    });
+    const changedBump = buildReleaseDispatchIdempotencyKey({
+      releaseCheckResult,
+      dispatchWorkflow: 'release-android.yml',
+      dispatchRef: 'main',
+      dispatchBump: 'minor',
+    });
+
+    expect(first.key).toMatch(/^optc-release-[0-9a-f]{16}$/u);
+    expect(second.key).toBe(first.key);
+    expect(changedBump.key).not.toBe(first.key);
+    expect(first.payload).toMatchObject({
+      source: '2shankz',
+      sourceRepository: '2Shankz/optc-db.github.io',
+      remoteSourceVersion: '37',
+      newCharacterIds: [3],
+      releaseWorkflow: 'release-android.yml',
+      ref: 'main',
+      bump: 'patch',
     });
   });
 
@@ -642,6 +730,189 @@ describe('check-optc-release-needed', () => {
       reason: 'active-release-running',
       severity: 'warning',
     });
+  });
+
+  it('builds an observable skipped report when a duplicate release dispatch is already registered', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    });
+    const idempotency = buildReleaseDispatchIdempotencyKey({ releaseCheckResult });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      activeReleaseCount: '0',
+      duplicateReleaseRunMatches: [
+        {
+          databaseId: 100,
+          displayTitle: `Release Android ${idempotency.key}`,
+          status: 'completed',
+          conclusion: 'failure',
+          url: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/100',
+        },
+        {
+          databaseId: 101,
+          displayTitle: `Release Android ${idempotency.key}`,
+          status: 'completed',
+          conclusion: 'success',
+          url: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/101',
+        },
+        {
+          databaseId: 102,
+          displayTitle: `Release Android ${idempotency.key}`,
+          status: 'waiting',
+          conclusion: null,
+          url: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/102',
+        },
+      ],
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'success',
+        duplicateReleaseDispatch: 'success',
+        dispatchRelease: 'skipped',
+        skipRelease: 'skipped',
+      },
+    });
+
+    expect(report).toMatchObject({
+      status: 'skipped',
+      reason: 'duplicate-release-dispatch-blocked',
+      dispatch: {
+        releaseNeeded: true,
+        releaseDispatched: false,
+        activeReleaseCount: 0,
+        blocked: true,
+        blockReason: 'duplicate-release-dispatch-blocked',
+        idempotencyKey: idempotency.key,
+        duplicateRunCount: 3,
+        duplicateBlockingCount: 2,
+        duplicateBlocked: true,
+      },
+      idempotency: {
+        strategy: 'release-dispatch-idempotency-key',
+        key: idempotency.key,
+        duplicateReleaseRunCount: 3,
+        duplicateReleaseBlockingCount: 2,
+        duplicateReleaseBlocked: true,
+        dispatchRegistrationConfirmed: null,
+      },
+    });
+    expect(formatReleaseTriggerSummary(report)).toContain(`Release dispatch idempotency key: ${idempotency.key}`);
+    expect(formatReleaseTriggerSummary(report)).toContain('Duplicate release dispatch blocked: yes');
+    expect(buildReleaseTriggerNotification(report)).toMatchObject({
+      shouldNotify: true,
+      reason: 'duplicate-release-dispatch-blocked',
+      severity: 'warning',
+    });
+  });
+
+  it('keeps failed duplicate release attempts visible without blocking retry dispatch', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    });
+    const idempotency = buildReleaseDispatchIdempotencyKey({ releaseCheckResult });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      activeReleaseCount: '0',
+      duplicateReleaseRunMatches: [
+        {
+          databaseId: 100,
+          displayTitle: `Release Android ${idempotency.key}`,
+          status: 'completed',
+          conclusion: 'failure',
+          url: 'https://github.com/JohnChourp/optc-team-builder/actions/runs/100',
+        },
+      ],
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'success',
+        duplicateReleaseDispatch: 'success',
+        dispatchRelease: 'success',
+        skipRelease: 'skipped',
+      },
+    });
+
+    expect(report).toMatchObject({
+      status: 'released',
+      reason: 'release-dispatched',
+      dispatch: {
+        releaseDispatched: true,
+        blocked: false,
+        duplicateRunCount: 1,
+        duplicateBlockingCount: 0,
+        duplicateBlocked: false,
+      },
+    });
+  });
+
+  it('marks the report failed when dispatch registration does not appear after dispatch', () => {
+    const releaseCheckResult = buildReleaseCheckResult({
+      source: dataImportSources['2shankz'],
+      localSourceVersion: '36',
+      remoteSourceVersion: '37',
+      localCharacterIds: [1, 2],
+      remoteCharacters: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    });
+    const report = buildReleaseTriggerReport({
+      releaseCheckResult,
+      activeReleaseCount: '0',
+      dispatchRegistrationConfirmed: 'false',
+      dispatchRegistrationAttempts: '12',
+      dispatchRegistrationMatches: [],
+      generatedAt: '2026-06-26T00:00:00.000Z',
+      stepOutcomes: {
+        fixtureValidation: 'success',
+        releaseCheck: 'success',
+        activeRelease: 'success',
+        duplicateReleaseDispatch: 'success',
+        dispatchRelease: 'success',
+        dispatchRegistration: 'failure',
+        skipRelease: 'skipped',
+      },
+    });
+
+    expect(report).toMatchObject({
+      status: 'failed',
+      reason: 'dispatch-failed',
+      dispatch: {
+        releaseDispatched: true,
+      },
+      idempotency: {
+        dispatchRegistrationConfirmed: false,
+        dispatchRegistrationAttempts: 12,
+        dispatchRegistrationRuns: [],
+      },
+      steps: {
+        dispatchRegistration: 'failure',
+      },
+    });
+    expect(formatReleaseTriggerSummary(report)).toContain('Dispatch registration confirmed: no');
+  });
+
+  it('keeps release workflow wiring aligned with the dispatch idempotency contract', () => {
+    const checkWorkflow = readFileSync('.github/workflows/check-optc-db-release.yml', 'utf8');
+    const releaseWorkflow = readFileSync('.github/workflows/release-android.yml', 'utf8');
+
+    expect(checkWorkflow).toContain('concurrency:\n  group: optc-db-release-check\n  cancel-in-progress: false');
+    expect(checkWorkflow).toContain('Build release dispatch idempotency key');
+    expect(checkWorkflow).toContain('Check duplicate Android release dispatches');
+    expect(checkWorkflow).toContain('Confirm dispatched Android release registration');
+    expect(checkWorkflow).toContain('.status as $status | .conclusion as $conclusion');
+    expect(checkWorkflow).toContain('DISPATCH_REQUESTED_AT');
+    expect(checkWorkflow).toContain('(.createdAt // "") >= $requestedAt');
+    expect(checkWorkflow).toContain('-f "dispatch_idempotency_key=${RELEASE_DISPATCH_IDEMPOTENCY_KEY}"');
+    expect(releaseWorkflow).toContain('run-name: ${{ inputs.dispatch_idempotency_key');
+    expect(releaseWorkflow).toContain('dispatch_idempotency_key:');
   });
 
   it('includes source-contract failure IDs in maintainer notifications', () => {

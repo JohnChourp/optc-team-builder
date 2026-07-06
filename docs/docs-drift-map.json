@@ -183,7 +183,7 @@
     },
     {
       "id": "release-detector",
-      "name": "OPTC DB release detector, release-trigger notifications, and release provenance",
+      "name": "OPTC DB release detector, release dispatch idempotency, release-trigger notifications, and release provenance",
       "featurePaths": [
         "scripts/check-optc-release-needed.mjs",
         "scripts/check-optc-upstream-monitor.mjs",
@@ -204,8 +204,8 @@
         "docs/copy-review-checklist.md",
         "../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md"
       ],
-      "owner": "Release detector, notification, and provenance policy",
-      "notes": "Detector, source-contract canary, status/provenance artifact, fixture, policy, notification, workflow, or maintainer-facing release copy changes should update release runbook, validation docs, fixture ownership, and copy guidance."
+      "owner": "Release detector, dispatch idempotency, notification, and provenance policy",
+      "notes": "Detector, source-contract canary, dispatch idempotency guard, status/provenance artifact, fixture, policy, notification, workflow, or maintainer-facing release copy changes should update release runbook, validation docs, fixture ownership, and copy guidance."
     },
     {
       "id": "release-readiness",

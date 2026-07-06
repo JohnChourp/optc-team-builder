@@ -1,4 +1,5 @@
 name: Release Android
+run-name: ${{ inputs.dispatch_idempotency_key != '' && format('Release Android {0}', inputs.dispatch_idempotency_key) || 'Release Android' }}
 
 on:
   workflow_dispatch:
@@ -30,6 +31,10 @@ on:
         type: string
       trigger_sha:
         description: Optional source SHA from the Check OPTC DB Release run
+        required: false
+        type: string
+      dispatch_idempotency_key:
+        description: Optional duplicate-dispatch guard key from the Check OPTC DB Release run
         required: false
         type: string
 

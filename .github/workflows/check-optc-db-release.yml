@@ -33,6 +33,8 @@ jobs:
       release_dispatched: ${{ steps.release-trigger-report.outputs.release_dispatched }}
       release_dispatch_mode: ${{ steps.release-trigger-report.outputs.release_dispatch_mode }}
       release_dispatch_blocked: ${{ steps.release-trigger-report.outputs.release_dispatch_blocked }}
+      release_dispatch_idempotency_key: ${{ steps.release-trigger-report.outputs.release_dispatch_idempotency_key }}
+      duplicate_release_dispatch_blocked: ${{ steps.release-trigger-report.outputs.duplicate_release_dispatch_blocked }}
 
     steps:
       - name: Checkout repository
@@ -197,21 +199,148 @@ jobs:
           )"
           echo "active_count=${active_count}" >> "${GITHUB_OUTPUT}"
 
+      - name: Build release dispatch idempotency key
+        id: release-idempotency
+        if: steps.release-check.outputs.release_needed == 'true'
+        env:
+          RELEASE_CHECK_RESULT_PATH: release-check.json
+          RELEASE_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
+          RELEASE_REF: ${{ steps.release-policy.outputs.release_ref }}
+          RELEASE_BUMP: ${{ steps.release-policy.outputs.release_bump }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+
+          import { buildReleaseDispatchIdempotencyKey } from './scripts/check-optc-release-needed.mjs';
+
+          const releaseCheckResult = JSON.parse(readFileSync(process.env.RELEASE_CHECK_RESULT_PATH, 'utf8'));
+          const result = buildReleaseDispatchIdempotencyKey({
+            releaseCheckResult,
+            dispatchWorkflow: process.env.RELEASE_WORKFLOW,
+            dispatchRef: process.env.RELEASE_REF,
+            dispatchBump: process.env.RELEASE_BUMP,
+          });
+
+          appendFileSync(process.env.GITHUB_OUTPUT, `key=${result.key ?? ''}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `payload_json=${JSON.stringify(result.payload ?? {})}\n`);
+          NODE
+
+      - name: Check duplicate Android release dispatches
+        id: duplicate-release
+        if: steps.release-check.outputs.release_needed == 'true' && steps.active-release.outputs.active_count == '0' && steps.release-dispatch-mode.outputs.release_dispatch_mode == 'dispatch-if-needed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
+          RELEASE_DISPATCH_IDEMPOTENCY_KEY: ${{ steps.release-idempotency.outputs.key }}
+          RECENT_RUN_LIMIT: ${{ steps.release-policy.outputs.release_dispatch_recent_run_limit }}
+          BLOCKING_STATUSES_JSON: ${{ steps.release-policy.outputs.release_dispatch_blocking_statuses_json }}
+          BLOCKING_CONCLUSIONS_JSON: ${{ steps.release-policy.outputs.release_dispatch_blocking_conclusions_json }}
+        run: |
+          runs_json="$(
+            gh run list \
+              --workflow "${RELEASE_WORKFLOW}" \
+              --limit "${RECENT_RUN_LIMIT}" \
+              --json databaseId,displayTitle,status,conclusion,url,createdAt
+          )"
+
+          matches_json="$(
+            jq -c \
+              --arg key "${RELEASE_DISPATCH_IDEMPOTENCY_KEY}" \
+              --argjson blockingStatuses "${BLOCKING_STATUSES_JSON}" \
+              --argjson blockingConclusions "${BLOCKING_CONCLUSIONS_JSON}" \
+              '[.[] | select((.displayTitle // "") | contains($key)) | {
+                databaseId,
+                displayTitle,
+                status,
+                conclusion,
+                url,
+                createdAt,
+                blocking: (.status as $status | .conclusion as $conclusion | (($blockingStatuses | index($status)) != null) or ($status == "completed" and (($blockingConclusions | index($conclusion)) != null)))
+              }]' <<< "${runs_json}"
+          )"
+          blocking_count="$(jq '[.[] | select(.blocking)] | length' <<< "${matches_json}")"
+
+          echo "matching_runs_json=${matches_json}" >> "${GITHUB_OUTPUT}"
+          echo "blocking_count=${blocking_count}" >> "${GITHUB_OUTPUT}"
+
+      - name: Block duplicate release dispatch
+        id: duplicate-release-block
+        if: steps.release-check.outputs.release_needed == 'true' && steps.duplicate-release.outputs.blocking_count != '' && steps.duplicate-release.outputs.blocking_count != '0'
+        run: |
+          echo "Release dispatch blocked because an existing Release Android run already uses idempotency key ${{ steps.release-idempotency.outputs.key }}."
+
       - name: Dispatch Android release
         id: dispatch-release
-        if: steps.release-check.outputs.release_needed == 'true' && steps.active-release.outputs.active_count == '0' && steps.release-dispatch-mode.outputs.release_dispatch_mode == 'dispatch-if-needed'
+        if: steps.release-check.outputs.release_needed == 'true' && steps.active-release.outputs.active_count == '0' && steps.release-dispatch-mode.outputs.release_dispatch_mode == 'dispatch-if-needed' && steps.duplicate-release.outputs.blocking_count == '0'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
           RELEASE_REF: ${{ steps.release-policy.outputs.release_ref }}
           RELEASE_BUMP: ${{ steps.release-policy.outputs.release_bump }}
+          RELEASE_DISPATCH_IDEMPOTENCY_KEY: ${{ steps.release-idempotency.outputs.key }}
         run: |
+          dispatch_requested_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "requested_at=${dispatch_requested_at}" >> "${GITHUB_OUTPUT}"
+
           gh workflow run "${RELEASE_WORKFLOW}" \
             --ref "${RELEASE_REF}" \
             -f "bump=${RELEASE_BUMP}" \
             -f "trigger_run_id=${GITHUB_RUN_ID}" \
             -f "trigger_run_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            -f "trigger_sha=${GITHUB_SHA}"
+            -f "trigger_sha=${GITHUB_SHA}" \
+            -f "dispatch_idempotency_key=${RELEASE_DISPATCH_IDEMPOTENCY_KEY}"
+
+      - name: Confirm dispatched Android release registration
+        id: dispatch-registration
+        if: steps.dispatch-release.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
+          RELEASE_DISPATCH_IDEMPOTENCY_KEY: ${{ steps.release-idempotency.outputs.key }}
+          DISPATCH_REQUESTED_AT: ${{ steps.dispatch-release.outputs.requested_at }}
+        run: |
+          confirmed="false"
+          attempts="0"
+          matches_json="[]"
+
+          for attempt in $(seq 1 12); do
+            attempts="${attempt}"
+            runs_json="$(
+              gh run list \
+                --workflow "${RELEASE_WORKFLOW}" \
+                --limit 20 \
+                --json databaseId,displayTitle,status,conclusion,url,createdAt
+            )"
+            matches_json="$(
+              jq -c \
+                --arg key "${RELEASE_DISPATCH_IDEMPOTENCY_KEY}" \
+                --arg requestedAt "${DISPATCH_REQUESTED_AT}" \
+                '[.[] | select(((.displayTitle // "") | contains($key)) and ((.createdAt // "") >= $requestedAt)) | {
+                  databaseId,
+                  displayTitle,
+                  status,
+                  conclusion,
+                  url,
+                  createdAt
+                }]' <<< "${runs_json}"
+            )"
+
+            if [ "$(jq 'length' <<< "${matches_json}")" != "0" ]; then
+              confirmed="true"
+              break
+            fi
+
+            sleep 10
+          done
+
+          echo "confirmed=${confirmed}" >> "${GITHUB_OUTPUT}"
+          echo "attempts=${attempts}" >> "${GITHUB_OUTPUT}"
+          echo "matching_runs_json=${matches_json}" >> "${GITHUB_OUTPUT}"
+
+          if [ "${confirmed}" != "true" ]; then
+            echo "Release dispatch registration was not visible after ${attempts} attempts for idempotency key ${RELEASE_DISPATCH_IDEMPOTENCY_KEY}."
+            exit 1
+          fi
 
       - name: Block release dispatch for verification-only mode
         id: verify-only-dispatch
@@ -233,14 +362,22 @@ jobs:
           FIXTURE_VALIDATION_OUTCOME: ${{ steps.fixture-validation.outcome }}
           RELEASE_CHECK_OUTCOME: ${{ steps.release-check.outcome }}
           ACTIVE_RELEASE_OUTCOME: ${{ steps.active-release.outcome }}
+          DUPLICATE_RELEASE_DISPATCH_OUTCOME: ${{ steps.duplicate-release.outcome }}
           DISPATCH_RELEASE_OUTCOME: ${{ steps.dispatch-release.outcome }}
+          DISPATCH_REGISTRATION_OUTCOME: ${{ steps.dispatch-registration.outcome }}
           VERIFY_ONLY_DISPATCH_OUTCOME: ${{ steps.verify-only-dispatch.outcome }}
           SKIP_RELEASE_OUTCOME: ${{ steps.skip-release.outcome }}
           ACTIVE_RELEASE_COUNT: ${{ steps.active-release.outputs.active_count }}
+          DUPLICATE_RELEASE_RUNS_JSON: ${{ steps.duplicate-release.outputs.matching_runs_json }}
+          DISPATCH_REGISTRATION_CONFIRMED: ${{ steps.dispatch-registration.outputs.confirmed }}
+          DISPATCH_REGISTRATION_ATTEMPTS: ${{ steps.dispatch-registration.outputs.attempts }}
+          DISPATCH_REGISTRATION_RUNS_JSON: ${{ steps.dispatch-registration.outputs.matching_runs_json }}
           RELEASE_DISPATCH_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
           RELEASE_DISPATCH_REF: ${{ steps.release-policy.outputs.release_ref }}
           RELEASE_DISPATCH_BUMP: ${{ steps.release-policy.outputs.release_bump }}
           RELEASE_DISPATCH_MODE: ${{ steps.release-dispatch-mode.outputs.release_dispatch_mode }}
+          RELEASE_DISPATCH_IDEMPOTENCY_KEY: ${{ steps.release-idempotency.outputs.key }}
+          RELEASE_DISPATCH_IDEMPOTENCY_STRATEGY: ${{ steps.release-policy.outputs.release_dispatch_idempotency_strategy }}
         run: |
           node --input-type=module <<'NODE'
           import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -273,6 +410,8 @@ jobs:
             `release_dispatched=${report.dispatch.releaseDispatched ? 'true' : 'false'}`,
             `release_dispatch_mode=${report.dispatch.mode}`,
             `release_dispatch_blocked=${report.dispatch.blocked ? 'true' : 'false'}`,
+            `release_dispatch_idempotency_key=${report.idempotency.key ?? ''}`,
+            `duplicate_release_dispatch_blocked=${report.idempotency.duplicateReleaseBlocked ? 'true' : 'false'}`,
           ];
 
           appendFileSync(process.env.GITHUB_OUTPUT, `${outputs.join('\n')}\n`);
