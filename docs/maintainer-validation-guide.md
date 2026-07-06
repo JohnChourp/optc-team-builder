@@ -683,6 +683,12 @@ and therefore has no local `.git` context. Scheduled/manual runs use the same
 workflow, which uploads `public-entry-synthetics-report` with the JSON report
 and screenshots for the latest run.
 
+The Pages deploy step allows an extended `actions/deploy-pages` polling budget
+so normal `syncing_files` periods do not fail the `Deploy GitHub Pages` workflow
+before GitHub Pages reports a terminal deployment state. If the deploy job still
+fails after that budget, inspect the Pages deployment status before rerunning or
+changing the artifact build.
+
 ### Public Entry Visual Baselines
 
 Use the focused visual baseline gate when a PR can affect the first-viewport
