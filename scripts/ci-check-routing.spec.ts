@@ -217,6 +217,7 @@ describe('ci-check-routing', () => {
       'docs-drift',
       'discoverability',
       'public-entry-synthetics',
+      'i18n-regression',
       'drive-sync-server',
       'source-data',
       'perf-budget',
@@ -247,6 +248,27 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(false);
     expect(plan.runE2e).toBe(false);
     expect(plan.scriptSuites).toEqual(['public-entry-synthetics']);
+  });
+
+  it('routes i18n regression checker changes to the focused suite', () => {
+    const plan = buildCheckPlan([
+      'scripts/i18n-regression-check.mjs',
+      'scripts/i18n-regression-check.spec.ts',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['i18n-regression']);
+  });
+
+  it('adds multilingual regression checks to translation runtime changes', () => {
+    const plan = buildCheckPlan(['public/i18n/saved-teams/el.json']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(true);
+    expect(plan.runE2e).toBe(true);
+    expect(plan.scriptSuites).toEqual(['i18n-regression']);
   });
 
   it('routes branch cleanup report changes to the focused suite and docs gates', () => {

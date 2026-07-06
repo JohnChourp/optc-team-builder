@@ -88,6 +88,8 @@
     "i18n:extract": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager extract --project optc-team-builder",
     "i18n:find": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager find --project optc-team-builder --translations-path public/i18n",
     "i18n:validate": "node ./scripts/audit-i18n.mjs",
+    "i18n:regression": "node ./scripts/i18n-regression-check.mjs",
+    "test:i18n-regression": "vitest run scripts/i18n-regression-check.spec.ts && npm run i18n:regression",
     "data:import:all": "node ./scripts/import-optc-data.mjs --download-images=all",
     "data:check-release": "node ./scripts/check-optc-release-needed.mjs",
     "data:monitor-upstream": "node ./scripts/check-optc-upstream-monitor.mjs",
