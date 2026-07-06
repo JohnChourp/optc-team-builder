@@ -49,6 +49,10 @@ const ALLOWED_COMMANDS = new Map(
       { cwd: 'app', expected: 'zero', requiresBrain: true },
     ],
     [
+      'npm run docs:release-runbook-drift -- --brain-root ../optc-team-builder-brain',
+      { cwd: 'app', expected: 'zero', requiresBrain: true },
+    ],
+    [
       'npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain',
       { cwd: 'app', expected: 'zero', requiresBrain: true },
     ],

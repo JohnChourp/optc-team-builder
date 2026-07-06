@@ -281,6 +281,8 @@
         "scripts/check-docs-integrity.mjs",
         "scripts/check-docs-commands.mjs",
         "scripts/check-docs-drift.mjs",
+        "scripts/check-release-runbook-drift.mjs",
+        "scripts/check-release-runbook-drift.spec.ts",
         "docs/docs-drift-map.json",
         ".github/workflows/docs-integrity.yml"
       ],

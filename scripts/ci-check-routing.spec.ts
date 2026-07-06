@@ -155,6 +155,18 @@ describe('ci-check-routing', () => {
     expect(plan.scriptSuites).toEqual(['release-check', 'perf-budget']);
   });
 
+  it('routes release runbook drift tooling to its focused suite and docs gates', () => {
+    const plan = buildCheckPlan([
+      'scripts/check-release-runbook-drift.mjs',
+      'scripts/check-release-runbook-drift.spec.ts',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['release-runbook-drift', 'docs-integrity', 'docs-commands', 'docs-drift']);
+  });
+
   it('covers standalone route-load and codec harness changes in the selected performance suite', () => {
     const plan = buildCheckPlan(['scripts/perf-route-load.mjs', 'scripts/perf-saved-team-codecs.mjs']);
     const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
@@ -184,6 +196,7 @@ describe('ci-check-routing', () => {
       'saved-team-codecs',
       'captain-contracts',
       'release-check',
+      'release-runbook-drift',
       'release-readiness',
       'docs-integrity',
       'docs-commands',

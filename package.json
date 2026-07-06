@@ -43,6 +43,7 @@
     "test:saved-team-codecs": "ng test --watch=false --include src/app/pages/saved-teams/saved-teams-transfer.utils.spec.ts --include src/app/pages/saved-teams/saved-teams-codec-fuzz.spec.ts --include src/app/pages/auto-team-builder/auto-team-builder-team-compare.utils.spec.ts --include src/app/pages/settings/all-data-transfer.utils.spec.ts",
     "test:captain-contracts": "vitest run scripts/import-optc-data.spec.ts scripts/lib/captain-ability-coverage.spec.ts",
     "test:release-check": "vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-provenance-report.spec.ts scripts/post-dispatch-production-smoke.spec.ts",
+    "test:release-runbook-drift": "vitest run scripts/check-release-runbook-drift.spec.ts",
     "test:drive-sync-server": "vitest run server/drive-sync-server.spec.mjs",
     "test:e2e": "node ./scripts/run-playwright-e2e.mjs",
     "test:e2e:install": "playwright install --with-deps",
@@ -80,6 +81,7 @@
     "docs:drift": "node ./scripts/check-docs-drift.mjs",
     "test:docs-commands": "vitest run scripts/check-docs-commands.spec.ts",
     "docs:commands": "node ./scripts/check-docs-commands.mjs",
+    "docs:release-runbook-drift": "node ./scripts/check-release-runbook-drift.mjs",
     "i18n:extract": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager extract --project optc-team-builder",
     "i18n:find": "../codex_utilities/Downloads/projects/node_modules/.bin/transloco-keys-manager find --project optc-team-builder --translations-path public/i18n",
     "i18n:validate": "node ./scripts/audit-i18n.mjs",
@@ -149,6 +151,7 @@
     "jsdom": "^29.1.1",
     "knip": "^6.23.0",
     "typescript": "6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "yaml": "^2.9.0"
   }
 }
