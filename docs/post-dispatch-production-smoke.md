@@ -6,9 +6,9 @@ bounded production smoke, not a full release sign-off cycle.
 
 ## Minimum Checklist
 
-The `Release Android` workflow runs this check after the release commit,
-`release-provenance`, and GitHub Pages deploy have succeeded. The smoke record
-must include:
+The `Release Android` workflow runs this check after the release commit and
+GitHub Pages deploy have succeeded and `release-provenance` has finished. The
+smoke record must include:
 
 - Release run URL, tag, package version, and Android version code.
 - `release-provenance` JSON and Markdown from the same workflow run.

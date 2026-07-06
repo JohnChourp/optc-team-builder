@@ -376,9 +376,9 @@ The workflow:
   release back to the detector verdict, source SHA, version metadata, and APK
   artifact
 - relies on that pushed release commit to trigger the normal `Deploy GitHub Pages` workflow
-- uploads `post-dispatch-production-smoke` after provenance and Pages deploy
-  succeed, proving the release metadata and production guide/share-link shell
-  still pass the bounded smoke check
+- uploads `post-dispatch-production-smoke` after provenance completes and Pages
+  deploy succeeds, proving the release metadata and production guide/share-link
+  shell still pass the bounded smoke check
 
 Local fallback signing setup:
 
