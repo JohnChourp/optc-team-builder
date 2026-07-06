@@ -153,15 +153,56 @@ function routeLoadResult(overrides: Record<string, number | null> = {}) {
   };
 }
 
-async function writeCurrentResults(rootDir: string, ability = abilityResult(), routeLoad = routeLoadResult()) {
+function savedTeamCodecResult(overrides: Record<string, number | null> = {}) {
+  const value = (key: string, fallback: number) => (Object.hasOwn(overrides, key) ? overrides[key] : fallback);
+
+  return {
+    schemaVersion: 1,
+    harness: 'saved-team-codecs',
+    capturedAt: '2026-07-06T00:00:00.000Z',
+    appCommit: 'abc1234',
+    runLabel: 'saved-team-codecs',
+    fixture: { bulkTeamCount: 1500, bulkJsonBytes: 490_000, shareCodeBytes: 44_000 },
+    viewportRuns: [
+      {
+        viewport: 'node',
+        timings: {
+          savedTeamCodecs: {
+            bulkExportEncodeMs: value('bulkExportEncodeMs', 1),
+            bulkJsonParseMs: value('bulkJsonParseMs', 1),
+            bulkSanitizeMs: value('bulkSanitizeMs', 1),
+            bulkParseSanitizeMs: value('bulkParseSanitizeMs', 2),
+            shareEncodeMs: value('shareEncodeMs', 1),
+            shareDecodeMs: value('shareDecodeMs', 1),
+            shareResolveSanitizeMs: value('shareResolveSanitizeMs', 1),
+            invalidValidationMs: value('invalidValidationMs', 1),
+          },
+        },
+      },
+    ],
+  };
+}
+
+async function writeCurrentResults(
+  rootDir: string,
+  ability = abilityResult(),
+  routeLoad = routeLoadResult(),
+  savedTeamCodecs = savedTeamCodecResult(),
+) {
   const abilityDir = path.join(rootDir, 'current', 'ability');
   const explanationDir = path.join(rootDir, 'current', 'explanation');
+  const savedTeamCodecsDir = path.join(rootDir, 'current', 'saved-team-codecs');
   const routeLoadDir = path.join(rootDir, 'current', 'route-load');
   await mkdir(abilityDir, { recursive: true });
   await mkdir(explanationDir, { recursive: true });
+  await mkdir(savedTeamCodecsDir, { recursive: true });
   await mkdir(routeLoadDir, { recursive: true });
   await writeFile(path.join(abilityDir, 'ability-performance.json'), JSON.stringify(ability));
   await writeFile(path.join(explanationDir, 'explanation-performance.json'), JSON.stringify(explanationResult()));
+  await writeFile(
+    path.join(savedTeamCodecsDir, 'saved-team-codecs-performance.json'),
+    JSON.stringify(savedTeamCodecs),
+  );
   await writeFile(path.join(routeLoadDir, 'route-load-performance.json'), JSON.stringify(routeLoad));
   return path.join(rootDir, 'current');
 }
@@ -173,8 +214,8 @@ describe('perf-budget-report', () => {
     const report = await buildPerformanceBudgetReport({ currentDir });
 
     expect(report.status).toBe('passed');
-    expect(report.summary.metricCount).toBe(39);
-    expect(report.summary.budgetedMetricCount).toBe(33);
+    expect(report.summary.metricCount).toBe(47);
+    expect(report.summary.budgetedMetricCount).toBe(41);
     expect(report.hardBudgetFailures).toEqual([]);
     expect(report.invalidMetricFailures).toEqual([]);
     expect(report.baseline).toBeNull();
@@ -197,6 +238,13 @@ describe('perf-budget-report', () => {
         id: 'route-load.desktop.route-load.manualsharelandingreadyms',
         actualMs: 1000,
         budgetMs: 2500,
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'saved-team-codecs.node.saved-team-codecs.sharedecodems',
+        actualMs: 1,
+        budgetMs: 3,
       }),
     );
     expect(report.metricRows).toContainEqual(
@@ -233,7 +281,7 @@ describe('perf-budget-report', () => {
         metricId: 'ability-filters.desktop.saved-teams.firsttogglems',
       }),
     ]);
-    expect(report.metricRows).toHaveLength(39);
+    expect(report.metricRows).toHaveLength(47);
   });
 
   it('fails route-load timing and bundle hard budgets', async () => {
@@ -259,6 +307,45 @@ describe('perf-budget-report', () => {
           message: expect.stringContaining('740.0KB'),
         }),
       ]),
+    );
+  });
+
+  it('fails saved-team codec hard budgets', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult(),
+      routeLoadResult(),
+      savedTeamCodecResult({
+        shareDecodeMs: 3.1,
+      }),
+    );
+    const report = await buildPerformanceBudgetReport({ currentDir });
+
+    expect(report.status).toBe('failed');
+    expect(report.hardBudgetFailures).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metricId: 'saved-team-codecs.node.saved-team-codecs.sharedecodems',
+        }),
+      ]),
+    );
+  });
+
+  it('keeps sub-millisecond codec timings visible in the Markdown summary', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult(),
+      routeLoadResult(),
+      savedTeamCodecResult({
+        shareDecodeMs: 0.07,
+      }),
+    );
+    const report = await buildPerformanceBudgetReport({ currentDir });
+
+    expect(formatPerformanceBudgetSummary(report)).toContain(
+      '| saved-team-codecs | node | Saved-team codecs | share decode | 0.07ms | 3ms | n/a | n/a |',
     );
   });
 
@@ -294,13 +381,36 @@ describe('perf-budget-report', () => {
     const rootDir = await makeTempDir();
     const abilityDir = path.join(rootDir, 'current', 'ability');
     const explanationDir = path.join(rootDir, 'current', 'explanation');
+    const savedTeamCodecsDir = path.join(rootDir, 'current', 'saved-team-codecs');
     await mkdir(abilityDir, { recursive: true });
     await mkdir(explanationDir, { recursive: true });
+    await mkdir(savedTeamCodecsDir, { recursive: true });
     await writeFile(path.join(abilityDir, 'ability-performance.json'), JSON.stringify(abilityResult()));
     await writeFile(path.join(explanationDir, 'explanation-performance.json'), JSON.stringify(explanationResult()));
+    await writeFile(
+      path.join(savedTeamCodecsDir, 'saved-team-codecs-performance.json'),
+      JSON.stringify(savedTeamCodecResult()),
+    );
 
     await expect(buildPerformanceBudgetReport({ currentDir: path.join(rootDir, 'current') })).rejects.toThrow(
       'Missing route-load performance result',
+    );
+  });
+
+  it('requires saved-team codec performance results', async () => {
+    const rootDir = await makeTempDir();
+    const abilityDir = path.join(rootDir, 'current', 'ability');
+    const explanationDir = path.join(rootDir, 'current', 'explanation');
+    const routeLoadDir = path.join(rootDir, 'current', 'route-load');
+    await mkdir(abilityDir, { recursive: true });
+    await mkdir(explanationDir, { recursive: true });
+    await mkdir(routeLoadDir, { recursive: true });
+    await writeFile(path.join(abilityDir, 'ability-performance.json'), JSON.stringify(abilityResult()));
+    await writeFile(path.join(explanationDir, 'explanation-performance.json'), JSON.stringify(explanationResult()));
+    await writeFile(path.join(routeLoadDir, 'route-load-performance.json'), JSON.stringify(routeLoadResult()));
+
+    await expect(buildPerformanceBudgetReport({ currentDir: path.join(rootDir, 'current') })).rejects.toThrow(
+      'Missing saved-team-codecs performance result',
     );
   });
 
@@ -347,6 +457,7 @@ describe('perf-budget-report', () => {
 
     expect(serialized).toContain('ability-performance.json');
     expect(serialized).toContain('explanation-performance.json');
+    expect(serialized).toContain('saved-team-codecs-performance.json');
     expect(serialized).toContain('route-load-performance.json');
     await writeFile(path.join(rootDir, 'report.json'), `${serialized}\n`);
     await expect(readFile(path.join(rootDir, 'report.json'), 'utf8')).resolves.toContain('"schemaVersion":1');

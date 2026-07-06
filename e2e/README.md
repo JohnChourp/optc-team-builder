@@ -126,10 +126,11 @@ metadata behind after a test is restored.
 ## Opt-in Performance Guardrails
 
 `Performance Budgets` is the recurring GitHub Actions workflow for these
-browser-timing guardrails. It runs on weekday schedules from `main` and supports
-manual dispatch as the release-candidate preflight path. The workflow runs both
-browser harnesses with `PERF_ASSERT=0`, then `npm run perf:budget-report`
-writes the current report after the JSON and screenshots have been captured.
+performance guardrails. It runs on weekday schedules from `main` and supports
+manual dispatch as the release-candidate preflight path. The workflow runs the
+browser, production route-load, and Node codec harnesses with `PERF_ASSERT=0`,
+then `npm run perf:budget-report` writes the current report after the JSON and
+screenshots have been captured.
 Scheduled and default manual runs are report-only, so noisy browser regressions
 surface in the summary and artifacts without blocking unrelated work. Set the
 manual `fail_on_regression` input to `true` when a release-candidate preflight
@@ -147,6 +148,8 @@ contains:
 - `current/ability/` with the ability-filter timing JSON.
 - `current/explanation/` with the explanation/compare/import-share timing JSON
   outputs.
+- `current/saved-team-codecs/` with repeated large-payload Saved Teams
+  encode/decode/validation timing JSON.
 - `current/route-load/` with the production route-load timing JSON, route
   bundle-size stats parsed from the Angular production build, and related JSON
   outputs.
@@ -185,6 +188,28 @@ repo.
 - manual share-link hydration `<=1800ms` desktop and `<=2500ms` mobile
 - desktop first/all explanation toggles `<=300ms` / `<=900ms`
 - mobile first/all explanation toggles `<=450ms` / `<=1200ms`
+
+`npm run perf:saved-team-codecs` measures Saved Teams transfer helpers directly
+in Node with generated heavy fixtures. It separates repeated bulk export encode,
+bulk JSON parse, bulk sanitize, bulk parse/sanitize, single-team share encode,
+share decode, share resolve/sanitize, and invalid-input validation timings. The
+harness writes JSON to `PERF_ARTIFACT_DIR`, records loop counts and fixture
+sizes, and ranks the slowest per-loop phase so format changes can be optimized
+from measured evidence instead of inferred hotspots. When `PERF_ARTIFACT_DIR` is
+not set, local OPTC workspace checkouts use
+`../optc-team-builder-brain/live-artifacts/869dwchtw`; other machines fall back
+to `perf-artifacts/saved-team-codecs`.
+
+The recurring workflow budgets are:
+
+- bulk export encode `<=10ms` per loop
+- bulk JSON parse `<=10ms` per loop
+- bulk sanitize `<=10ms` per loop
+- bulk parse/sanitize `<=15ms` per loop
+- share encode `<=5ms` per loop
+- share decode `<=3ms` per loop
+- share resolve/sanitize `<=4ms` per loop
+- invalid-input validation `<=1ms` per loop
 
 `npm run perf:memory-pressure` replays large compare imports and Saved Teams
 imports in a constrained mobile Chromium profile. It records Chromium
@@ -232,6 +257,7 @@ Command status: manual/illustrative.
 ```bash
 PERF_ARTIFACT_DIR=perf-artifacts/current/ability PERF_ASSERT=0 npm run perf:ability-filters
 PERF_ARTIFACT_DIR=perf-artifacts/current/explanation PERF_ASSERT=0 npm run perf:explanation-compare
+PERF_ARTIFACT_DIR=perf-artifacts/current/saved-team-codecs PERF_ASSERT=0 npm run perf:saved-team-codecs
 PERF_ARTIFACT_DIR=perf-artifacts/current/route-load PERF_ASSERT=0 npm run perf:route-load
 npm run perf:budget-report -- --current-dir perf-artifacts/current --output perf-artifacts/performance-budget-report.json --summary perf-artifacts/performance-budget-summary.md --report-only
 npm run perf:budget-history -- --current-report perf-artifacts/performance-budget-report.json --history-dir perf-artifacts/history --output perf-artifacts/performance-budget-history.json --summary perf-artifacts/performance-budget-history.md

@@ -31,7 +31,7 @@ validation harnesses, or release evidence.
 | `src/app/core/services/fixtures/captain-contract-cases.json` | Captain parser and captain coverage owners | script-side captain contract tests and Angular captain coverage/matching specs | Add a case for a new captain wording class; update expected generated boosts and tiers together. |
 | `scripts/fixtures/data/*.json` | Saved Teams, Saved Enemies, and compact dataset owners | transfer compatibility specs and local development checks | Keep files small and schema-focused. For saved-team payloads, follow `docs/saved-team-schema-lifecycle.md`; add a file only for a distinct persisted payload edge case. |
 | `scripts/fixtures/release-readiness/*` | Release readiness owners | `npm run test:release-readiness` | Update source JSON and expected Markdown together when the report schema or maintainer summary contract changes. |
-| performance harness fixture builders in `scripts/perf-ability-filters.mjs` and `scripts/perf-explanation-compare.mjs` | Performance budget owners | browser performance harnesses, import/share hydration timings, and `Performance Budgets` workflow | Keep large generated fixtures local to the harness until another suite needs the same data shape. Store run output as artifacts, not checked-in fixtures. |
+| performance harness fixture builders in `scripts/perf-ability-filters.mjs`, `scripts/perf-explanation-compare.mjs`, and `scripts/perf-saved-team-codecs.mjs` | Performance budget owners | browser performance harnesses, codec timing harnesses, import/share hydration timings, and `Performance Budgets` workflow | Keep large generated fixtures local to the harness until another suite needs the same data shape. Store run output as artifacts, not checked-in fixtures. |
 
 ## Migration Policy
 

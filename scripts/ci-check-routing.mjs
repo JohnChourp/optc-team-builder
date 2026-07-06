@@ -230,6 +230,7 @@ function isPerfPath(filePath) {
     filePath === 'scripts/perf-budget-history.spec.ts' ||
     filePath === 'scripts/perf-ability-filters.mjs' ||
     filePath === 'scripts/perf-explanation-compare.mjs' ||
+    filePath === 'scripts/perf-saved-team-codecs.mjs' ||
     filePath === 'scripts/perf-route-load.mjs'
   );
 }

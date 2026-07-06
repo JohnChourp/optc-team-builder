@@ -139,6 +139,14 @@ jobs:
           PERF_RUN_LABEL: explanation-compare
         run: npm run perf:explanation-compare
 
+      - name: Saved-team codec performance
+        env:
+          CI: 'true'
+          PERF_ASSERT: '0'
+          PERF_ARTIFACT_DIR: ${{ github.workspace }}/perf-artifacts/current/saved-team-codecs
+          PERF_RUN_LABEL: saved-team-codecs
+        run: npm run perf:saved-team-codecs
+
       - name: Route-load and bundle performance
         env:
           CI: 'true'
