@@ -2,10 +2,10 @@ import { execFile } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildReleaseDecisionHistory,
@@ -229,6 +229,38 @@ describe('release-decision-history', () => {
     expect(history.retention.maxRuns).toBe(2);
   });
 
+  it('skips malformed optional history artifacts', async () => {
+    const rootDir = await makeTempDir();
+    const currentPath = path.join(rootDir, 'current.json');
+    const historyDir = path.join(rootDir, 'history');
+    await writeJson(currentPath, statusReport());
+    await mkdir(path.join(historyDir, 'run-malformed'), { recursive: true });
+    await writeFile(path.join(historyDir, 'run-malformed', 'release-detector-status.json'), '{not-json');
+    await writeJson(
+      path.join(historyDir, 'run-100', 'release-detector-status.json'),
+      statusReport({
+        generatedAt: '2026-07-05T08:00:00.000Z',
+        workflow: {
+          ...statusReport().workflow,
+          runId: '100',
+        },
+      }),
+    );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      const history = await buildReleaseDecisionHistory({
+        currentStatusPath: currentPath,
+        historyDir,
+      });
+
+      expect(history.recentRuns.map((run) => run.workflow.runId)).toEqual(['200', '100']);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('Skipping unreadable history report'));
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it('keeps null numeric fields as null instead of coercing them to zero', async () => {
     const rootDir = await makeTempDir();
     const currentPath = path.join(rootDir, 'current.json');
@@ -313,5 +345,15 @@ describe('release-decision-history', () => {
     await expect(execFileAsync('node', [scriptPath, '--current-status', currentPath])).rejects.toMatchObject({
       code: 1,
     });
+  });
+
+  it('can be imported from stdin module contexts without running CLI detection', async () => {
+    const { stdout } = await execFileAsync('node', [
+      '--input-type=module',
+      '-e',
+      `const mod = await import(${JSON.stringify(pathToFileURL(scriptPath).href)}); console.log(mod.DEFAULT_MAX_RUNS);`,
+    ]);
+
+    expect(stdout.trim()).toBe(String(DEFAULT_MAX_RUNS));
   });
 });

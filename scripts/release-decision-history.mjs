@@ -237,7 +237,15 @@ async function readHistoricalReports(historyDir) {
   const reports = [];
 
   for (const filePath of jsonFiles) {
-    const parsed = await readJsonFile(filePath, 'history report');
+    let parsed;
+    try {
+      parsed = await readJsonFile(filePath, 'history report');
+    } catch (error) {
+      console.warn(
+        `Skipping unreadable history report at ${filePath}: ${error instanceof Error ? error.message : error}`,
+      );
+      continue;
+    }
 
     if (isReleaseDetectorStatusReport(parsed)) {
       reports.push(parsed);
@@ -456,7 +464,8 @@ export async function runCli(argv = process.argv.slice(2)) {
   return history;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+const invokedScriptUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
+if (import.meta.url === invokedScriptUrl) {
   try {
     await runCli();
   } catch (error) {
