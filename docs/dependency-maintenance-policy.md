@@ -29,8 +29,9 @@ GitHub's secure-use guidance treats a full-length commit SHA as the immutable
 way to consume an action. OPTC keeps the strongest pinning controls on workflows
 that can release, deploy, publish release evidence, or run browser-critical
 confidence checks. The guard command requires strict workflow action refs to be
-full SHAs, keep a source-tag comment, and resolve inside the referenced action
-repository:
+full SHAs, use `owner/repository` external action refs, keep a source-tag
+comment, and prove that the source tag resolves to the pinned SHA inside the
+referenced action repository:
 
 ```bash
 npm run actions:pins

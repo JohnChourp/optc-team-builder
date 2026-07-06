@@ -189,7 +189,7 @@ describe('check-github-actions-pins', () => {
     const result = inspectGitHubActionPins({
       root,
       strictWorkflows: ['.github/workflows/release-android.yml'],
-      refExists: () => false,
+      getRemoteRefs: () => [],
     });
 
     expect(result.ok).toBe(false);
@@ -197,6 +197,57 @@ describe('check-github-actions-pins', () => {
       expect.objectContaining({
         message: 'Pinned SHA must exist in the referenced action repository.',
         value: 'actions/setup-java@0000000000000000000000000000000000000000',
+      }),
+    ]);
+  });
+
+  it('fails when an external action ref is not owner/repository-shaped', async () => {
+    const root = await makeWorkspace({
+      '.github/workflows/release-android.yml': [
+        'steps:',
+        '  - uses: checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7',
+      ].join('\n'),
+    });
+
+    const result = inspectGitHubActionPins({
+      root,
+      strictWorkflows: ['.github/workflows/release-android.yml'],
+      validateRemoteRefs: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        message: 'External action reference must use owner/repository format.',
+        value: 'checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0',
+      }),
+    ]);
+  });
+
+  it('fails when the source tag comment does not resolve to the pinned SHA', async () => {
+    const pinnedSha = '2222222222222222222222222222222222222222';
+    const tagSha = '1111111111111111111111111111111111111111';
+    const root = await makeWorkspace({
+      '.github/workflows/release-android.yml': [
+        'steps:',
+        `  - uses: actions/setup-java@${pinnedSha} # v5`,
+      ].join('\n'),
+    });
+
+    const result = inspectGitHubActionPins({
+      root,
+      strictWorkflows: ['.github/workflows/release-android.yml'],
+      getRemoteRefs: () => [
+        { name: 'HEAD', sha: pinnedSha },
+        { name: 'refs/tags/v5', sha: tagSha },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        message: 'Source tag comment must resolve to the pinned SHA.',
+        value: `actions/setup-java@${pinnedSha}`,
       }),
     ]);
   });

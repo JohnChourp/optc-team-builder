@@ -39,28 +39,40 @@ function getIndent(line) {
 function parseExternalActionRef(value) {
   const refSeparatorIndex = value.lastIndexOf('@');
   if (refSeparatorIndex === -1) {
-    return { ref: '', ownerRepo: '' };
+    return { ref: '', ownerRepo: '', target: '' };
   }
 
   const target = value.slice(0, refSeparatorIndex);
   const ref = value.slice(refSeparatorIndex + 1);
   const [owner, repo] = target.split('/');
   const ownerRepo = owner && repo ? `${owner}/${repo}` : '';
-  return { ref, ownerRepo };
+  return { ref, ownerRepo, target };
 }
 
-function defaultRefExists(ownerRepo, ref) {
+function fetchRemoteRefs(ownerRepo) {
   try {
     const output = execFileSync('git', ['ls-remote', `https://github.com/${ownerRepo}.git`], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     });
-    return output
-      .split(/\r?\n/u)
-      .some((line) => line.split(/\s+/u)[0]?.toLowerCase() === ref.toLowerCase());
+    return output.split(/\r?\n/u).flatMap((line) => {
+      const [sha, name] = line.trim().split(/\s+/u);
+      return sha && name ? [{ name, sha }] : [];
+    });
   } catch {
-    return false;
+    return [];
   }
+}
+
+function refExists(remoteRefs, ref) {
+  return remoteRefs.some(({ sha }) => sha.toLowerCase() === ref.toLowerCase());
+}
+
+function tagMatchesRef(remoteRefs, tag, ref) {
+  const tagNames = new Set([`refs/tags/${tag}`, `refs/tags/${tag}^{}`]);
+  return remoteRefs.some(
+    ({ name, sha }) => tagNames.has(name) && sha.toLowerCase() === ref.toLowerCase(),
+  );
 }
 
 export function collectWorkflowUses({ workflowPath, text }) {
@@ -103,12 +115,12 @@ export function inspectGitHubActionPins({
   root = process.cwd(),
   strictWorkflows = STRICT_GITHUB_ACTION_WORKFLOWS,
   validateRemoteRefs = true,
-  refExists = defaultRefExists,
+  getRemoteRefs = fetchRemoteRefs,
 } = {}) {
   const entries = [];
   const findings = [];
   const errors = [];
-  const refExistenceCache = new Map();
+  const remoteRefsCache = new Map();
 
   for (const workflowPath of strictWorkflows.map(normalizePath)) {
     const absolutePath = path.join(root, workflowPath);
@@ -137,6 +149,14 @@ export function inspectGitHubActionPins({
         continue;
       }
 
+      if (!ownerRepo) {
+        findings.push({
+          ...entry,
+          message: 'External action reference must use owner/repository format.',
+        });
+        continue;
+      }
+
       if (!FULL_LENGTH_SHA_PATTERN.test(ref)) {
         findings.push({
           ...entry,
@@ -152,15 +172,22 @@ export function inspectGitHubActionPins({
         });
       }
 
-      if (validateRemoteRefs && ownerRepo) {
-        const cacheKey = `${ownerRepo}@${ref}`;
-        if (!refExistenceCache.has(cacheKey)) {
-          refExistenceCache.set(cacheKey, refExists(ownerRepo, ref));
+      if (validateRemoteRefs) {
+        if (!remoteRefsCache.has(ownerRepo)) {
+          remoteRefsCache.set(ownerRepo, getRemoteRefs(ownerRepo));
         }
-        if (!refExistenceCache.get(cacheKey)) {
+        const remoteRefs = remoteRefsCache.get(ownerRepo);
+        const shaExists = refExists(remoteRefs, ref);
+        if (!shaExists) {
           findings.push({
             ...entry,
             message: 'Pinned SHA must exist in the referenced action repository.',
+          });
+        }
+        if (shaExists && SOURCE_TAG_COMMENT_PATTERN.test(entry.comment) && !tagMatchesRef(remoteRefs, entry.comment, ref)) {
+          findings.push({
+            ...entry,
+            message: 'Source tag comment must resolve to the pinned SHA.',
           });
         }
       }
