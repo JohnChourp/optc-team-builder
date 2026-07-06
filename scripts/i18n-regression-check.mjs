@@ -98,6 +98,10 @@ export const PUBLIC_GUIDE_CASES = [
         file: 'src/app/pages/saved-teams/saved-teams.page.html',
         text: '/guides/guided-build-compare-team-sharing',
       },
+      {
+        file: 'README.md',
+        text: 'https://optcteambuilder.com/guides/guided-build-compare-team-sharing/',
+      },
     ],
   },
 ];
@@ -321,7 +325,13 @@ function checkPublicGuideSources({ appRoot, publicGuideCases, errors }) {
       appRoot,
       filePath: appRoutesPath,
       guideId: guide.id,
-      values: [guide.path, guide.seoTitle, guide.heading, ...guide.appRouteFragments],
+      values: [
+        routePathAssignment('path', guide.path),
+        routePathAssignment('canonicalPath', guide.path),
+        guide.seoTitle,
+        guide.heading,
+        ...guide.appRouteFragments,
+      ],
       errors,
     });
     expectSourceContains({
@@ -365,6 +375,10 @@ function expectSourceContains({ source, appRoot, filePath, guideId, values, erro
 
     errors.push(`${guideId}: ${path.relative(appRoot, filePath)} must include "${value}".`);
   }
+}
+
+function routePathAssignment(property, value) {
+  return `${property}: '${value}'`;
 }
 
 function normalizeForComparison(value) {

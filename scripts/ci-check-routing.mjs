@@ -225,6 +225,7 @@ function isPublicEntrySyntheticsPath(filePath) {
 
 function isI18nRegressionPath(filePath) {
   return (
+    filePath === 'README.md' ||
     filePath === 'scripts/i18n-regression-check.mjs' ||
     filePath === 'scripts/i18n-regression-check.spec.ts' ||
     filePath.startsWith('public/i18n/') ||
@@ -457,6 +458,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isI18nRegressionPath(filePath)) {
       categories.add('i18n-regression');
       addScriptSuite(scriptSuites, 'i18n-regression');
+      if (isDocsPath(filePath)) {
+        for (const suite of DOCS_SCRIPT_SUITES) {
+          addScriptSuite(scriptSuites, suite);
+        }
+      }
       if (isRuntimePath(filePath)) {
         categories.add('runtime');
         runAngular = true;

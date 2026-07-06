@@ -56,6 +56,7 @@ function buildGuideFiles({ includeHelpSource = true } = {}) {
   return {
     'src/app/app.routes.ts': [
       "path: 'guides/example'",
+      "canonicalPath: 'guides/example'",
       "title: 'Example Guide | OPTC Team Builder'",
       "title: 'Example Guide'",
       'Important app route help text',
@@ -67,6 +68,7 @@ function buildGuideFiles({ includeHelpSource = true } = {}) {
       'Important generated guide text',
     ].join('\n'),
     'src/app/pages/example/example.page.html': includeHelpSource ? '/guides/example' : '',
+    'README.md': includeHelpSource ? 'https://example.test/guides/example/' : '',
   };
 }
 
@@ -89,6 +91,10 @@ const publicGuideCases = [
       {
         file: 'src/app/pages/example/example.page.html',
         text: '/guides/example',
+      },
+      {
+        file: 'README.md',
+        text: 'https://example.test/guides/example/',
       },
     ],
   },
@@ -154,7 +160,29 @@ describe('i18n regression check', () => {
       expect.arrayContaining([
         expect.stringContaining('example-guide: scripts/generate-seo-pages.mjs must include "Example Guide | OPTC Team Builder"'),
         expect.stringContaining('example-guide: src/app/pages/example/example.page.html must include "/guides/example"'),
+        expect.stringContaining('example-guide: README.md must include "https://example.test/guides/example/"'),
       ]),
+    );
+  });
+
+  it('rejects broken app route registration even when canonical guide strings remain', async () => {
+    const appRoot = await makeFixture({
+      ...buildTranslationFiles(),
+      ...buildGuideFiles(),
+      'src/app/app.routes.ts': [
+        "path: 'guides/example-broken'",
+        "canonicalPath: 'guides/example'",
+        "title: 'Example Guide | OPTC Team Builder'",
+        "title: 'Example Guide'",
+        'Important app route help text',
+      ].join('\n'),
+    });
+
+    const result = checkI18nRegression({ appRoot, translationCases, publicGuideCases });
+
+    expect(result.status).toBe('failed');
+    expect(result.errors).toContain(
+      'example-guide: src/app/app.routes.ts must include "path: \'guides/example\'".',
     );
   });
 });

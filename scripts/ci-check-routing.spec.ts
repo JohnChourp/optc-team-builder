@@ -6,7 +6,7 @@ import { buildCheckPlan, formatGitHubOutput, getChangedFiles, parseNameStatusOut
 
 describe('ci-check-routing', () => {
   it('routes docs-only changes to docs script suites only', () => {
-    const plan = buildCheckPlan(['docs/maintainer-validation-guide.md', 'README.md']);
+    const plan = buildCheckPlan(['docs/maintainer-validation-guide.md', 'docs/feature-coverage-map.md']);
 
     expect(plan.fullPlan).toBe(false);
     expect(plan.runAngular).toBe(false);
@@ -260,6 +260,20 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(false);
     expect(plan.runE2e).toBe(false);
     expect(plan.scriptSuites).toEqual(['i18n-regression']);
+  });
+
+  it('routes README guide-link edits through docs and multilingual regression suites', () => {
+    const plan = buildCheckPlan(['README.md']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual([
+      'docs-integrity',
+      'docs-commands',
+      'docs-drift',
+      'i18n-regression',
+    ]);
   });
 
   it('adds multilingual regression checks to translation runtime changes', () => {
