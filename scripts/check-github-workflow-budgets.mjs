@@ -62,6 +62,7 @@ export const APP_WORKFLOW_BUDGET_CONTRACT = [
     jobs: {
       build: { timeoutMinutes: 25 },
       deploy: { timeoutMinutes: 15 },
+      'cache-freshness': { timeoutMinutes: 25 },
     },
   },
   {

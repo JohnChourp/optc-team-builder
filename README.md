@@ -240,6 +240,14 @@ This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workf
   `/tabs/manual-team-builder?teamShare=...` landing flow. Set
   `PUBLIC_ENTRY_BASE_URL` when replaying the same monitor against another
   public origin.
+- Public guide and share-link cache freshness is checked by the post-deploy
+  `cache-freshness` job in `Deploy GitHub Pages`. It runs
+  `npm run test:pwa-shell` against a simulated release A/B production build,
+  proves that stale guide/share content can remain under the old service worker
+  before update activation, then verifies the guide and redacted
+  `/tabs/manual-team-builder?teamShare=...` landing show the release B content
+  after `CHECK_FOR_UPDATES` and `ACTIVATE_UPDATE`. The workflow uploads
+  `pwa-cache-freshness-report` with JSON and screenshots.
 - Public guide, share-link landing, and compare-entry route cost is checked by
   `npm run perf:route-load` as part of the scheduled/manual `Performance
   Budgets` workflow. The route-load harness records production route-ready
