@@ -7,14 +7,23 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import {
+  PUBLIC_ENTRY_GUIDE,
+  PUBLIC_ENTRY_SHARE_LINK,
+  PUBLIC_ENTRY_SYNTHETIC_TEAM,
+  buildSyntheticShareUrl,
+} from './public-entry-synthetics.mjs';
+
 const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST_DIR = path.join(ROOT_DIR, 'dist', 'optc-team-builder', 'browser');
+const DEFAULT_TASK_ID = '869dwc7wk';
+const TASK_ID = process.env.PWA_SHELL_TASK_ID || DEFAULT_TASK_ID;
 const DEFAULT_BRAIN_ARTIFACT_DIR = path.resolve(
   ROOT_DIR,
   '..',
   'optc-team-builder-brain',
   'live-artifacts',
-  '869dwc7wk',
+  TASK_ID,
   'pwa-shell',
 );
 const DEFAULT_ARTIFACT_DIR = fs.existsSync(path.resolve(ROOT_DIR, '..', 'optc-team-builder-brain'))
@@ -34,6 +43,34 @@ const ROUTES = [
   { path: '/guides/guided-build-compare-team-sharing', expectedText: /Guided Build|Compare Mode|Team Sharing/iu },
 ];
 const ROUTE_PATHS = ROUTES.map((route) => route.path);
+const GUIDE_CACHE_FRESHNESS_SOURCE_TEXT =
+  'Use guided auto build to fill one crew slot at a time, compare team sources side by side, and move saved teams between devices with supported local transfer formats.';
+const MANUAL_SHARE_CACHE_FRESHNESS_SOURCE_TEXT =
+  'Build and save a known crew without running the automatic builder.';
+const CACHE_FRESHNESS_TARGETS = [
+  {
+    id: 'guided-share-guide',
+    path: PUBLIC_ENTRY_GUIDE.path,
+    sourceText: GUIDE_CACHE_FRESHNESS_SOURCE_TEXT,
+    markers: {
+      'release-a': 'PWA cache freshness guide marker release A.',
+      'release-b': 'PWA cache freshness guide marker release B.',
+    },
+    patchExtensions: new Set(['.js']),
+    failureCategory: 'route-bundle-content',
+  },
+  {
+    id: 'manual-share-link-landing',
+    path: PUBLIC_ENTRY_SHARE_LINK.path,
+    sourceText: MANUAL_SHARE_CACHE_FRESHNESS_SOURCE_TEXT,
+    markers: {
+      'release-a': 'PWA cache freshness manual share marker release A.',
+      'release-b': 'PWA cache freshness manual share marker release B.',
+    },
+    patchExtensions: new Set(['.json']),
+    failureCategory: 'i18n-assets',
+  },
+];
 const SERVICE_WORKER_READY_TIMEOUT_MS = 45_000;
 const APP_READY_TIMEOUT_MS = 45_000;
 
@@ -152,7 +189,54 @@ function patchReleaseMarker(releaseDir, label) {
   return {
     label,
     changedBundles: label === 'release-b' ? patchReleaseBundle(releaseDir, indexPath, label) : [],
+    visibleContent: patchReleaseVisibleContent(releaseDir, label),
   };
+}
+
+function walkReleaseFiles(dir, files = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const absolutePath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkReleaseFiles(absolutePath, files);
+      continue;
+    }
+    if (entry.isFile()) {
+      files.push(absolutePath);
+    }
+  }
+  return files;
+}
+
+function patchReleaseVisibleContent(releaseDir, label) {
+  return CACHE_FRESHNESS_TARGETS.map((target) => {
+    const marker = target.markers[label];
+    const patchedFiles = [];
+
+    for (const filePath of walkReleaseFiles(releaseDir)) {
+      if (!target.patchExtensions.has(path.extname(filePath).toLowerCase())) {
+        continue;
+      }
+
+      const original = fs.readFileSync(filePath, 'utf8');
+      if (!original.includes(target.sourceText)) {
+        continue;
+      }
+
+      fs.writeFileSync(filePath, original.replaceAll(target.sourceText, marker), 'utf8');
+      patchedFiles.push(path.relative(releaseDir, filePath).replace(/\\/gu, '/'));
+    }
+
+    if (patchedFiles.length === 0) {
+      throw new Error(`Unable to patch ${target.id} freshness marker for ${label}.`);
+    }
+
+    return {
+      id: target.id,
+      failureCategory: target.failureCategory,
+      marker,
+      patchedFiles,
+    };
+  });
 }
 
 function patchReleaseBundle(releaseDir, indexPath, label) {
@@ -374,6 +458,38 @@ async function fetchAppConfig(page, cacheMode = 'default') {
   }, cacheMode);
 }
 
+async function ionInputValue(locator) {
+  return locator.evaluate(async (element) => {
+    await element.componentOnReady?.();
+    return element.value ?? element.querySelector('input, textarea')?.value ?? '';
+  });
+}
+
+async function waitForIonInputValue(locator, expectedValue) {
+  const deadline = Date.now() + APP_READY_TIMEOUT_MS;
+  let observedValue = '';
+
+  while (Date.now() < deadline) {
+    try {
+      await locator.waitFor({ state: 'attached', timeout: Math.min(500, Math.max(1, deadline - Date.now())) });
+      observedValue = await ionInputValue(locator);
+      if (observedValue === expectedValue) {
+        return { ok: true, observedValue };
+      }
+    } catch {
+      // Keep polling until Ionic hydrates the field or the app-ready deadline expires.
+    }
+
+    await pageWait(250);
+  }
+
+  return { ok: false, observedValue };
+}
+
+function pageWait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function sendNgswOperation(page, action) {
   return page.evaluate(
     ({ action: actionName, timeoutMs }) =>
@@ -463,6 +579,67 @@ async function screenshot(page, phase, route) {
   ensureDir(path.dirname(outputPath));
   await page.screenshot({ path: outputPath, fullPage: true });
   return path.relative(ARTIFACT_DIR, outputPath).replace(/\\/gu, '/');
+}
+
+function cacheFreshnessUrl(baseURL, target) {
+  if (target.id === 'manual-share-link-landing') {
+    return buildSyntheticShareUrl(baseURL);
+  }
+  return new URL(target.path, `${baseURL}/`).toString();
+}
+
+async function assertCacheFreshnessTarget(page, baseURL, target, releaseLabel, phase) {
+  const url = cacheFreshnessUrl(baseURL, target);
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  if (!response?.ok()) {
+    throw new Error(`${target.failureCategory}: ${phase} ${target.id} returned ${response?.status() ?? 'no response'}`);
+  }
+
+  await waitForAppReady(page);
+
+  const marker = target.markers[releaseLabel];
+  await page.getByText(marker, { exact: true }).first().waitFor({
+    state: 'visible',
+    timeout: APP_READY_TIMEOUT_MS,
+  });
+
+  const assertions = [{ type: 'visible-marker', expected: marker }];
+
+  if (target.id === 'manual-share-link-landing') {
+    const teamName = await waitForIonInputValue(page.getByTestId('manual-team-name'), PUBLIC_ENTRY_SYNTHETIC_TEAM.name);
+    const notes = await waitForIonInputValue(page.getByTestId('manual-team-notes'), PUBLIC_ENTRY_SYNTHETIC_TEAM.notes);
+    const slotVisible = await page
+      .getByTestId('manual-team-slot-0')
+      .getByText(PUBLIC_ENTRY_SHARE_LINK.expectedSlotText)
+      .first()
+      .waitFor({ state: 'visible', timeout: APP_READY_TIMEOUT_MS })
+      .then(() => true)
+      .catch(() => false);
+
+    assertions.push(
+      { type: 'share-team-name', ok: teamName.ok, observedValue: teamName.observedValue },
+      { type: 'share-team-notes', ok: notes.ok, observedValue: notes.observedValue },
+      { type: 'share-slot-1', ok: slotVisible, expected: PUBLIC_ENTRY_SHARE_LINK.expectedSlotText },
+    );
+
+    if (!teamName.ok || !notes.ok || !slotVisible) {
+      throw new Error(`${target.failureCategory}: ${phase} ${target.id} did not render the synthetic shared team.`);
+    }
+  }
+
+  return {
+    id: target.id,
+    route: target.path,
+    redactedUrl:
+      target.id === 'manual-share-link-landing'
+        ? `${new URL(baseURL).origin}${PUBLIC_ENTRY_SHARE_LINK.path}?${PUBLIC_ENTRY_SHARE_LINK.redactedQuery}`
+        : new URL(target.path, `${baseURL}/`).toString(),
+    expectedRelease: releaseLabel,
+    expectedMarker: marker,
+    failureCategory: target.failureCategory,
+    assertions,
+    screenshot: await screenshot(page, `cache-${phase}`, target.id),
+  };
 }
 
 async function verifyManifest(baseURL) {
@@ -614,6 +791,7 @@ async function verifyOfflineRoutes(browser, baseURL, diagnostics) {
 }
 
 async function verifyUpgrade(browser, serverHandle, diagnostics) {
+  serverHandle.switchRoot(RELEASE_A_DIR);
   const context = await browser.newContext({ serviceWorkers: 'allow', viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
   attachPageDiagnostics(page, diagnostics, 'upgrade');
@@ -694,6 +872,76 @@ async function verifyUpgrade(browser, serverHandle, diagnostics) {
   }
 }
 
+async function verifyCacheFreshness(browser, serverHandle, diagnostics) {
+  serverHandle.switchRoot(RELEASE_A_DIR);
+  const context = await browser.newContext({ serviceWorkers: 'allow', viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  attachPageDiagnostics(page, diagnostics, 'cache-freshness');
+  try {
+    await page.goto(`${serverHandle.baseURL}/`, { waitUntil: 'domcontentloaded' });
+    await waitForAppReady(page);
+    const serviceWorker = await waitForServiceWorkerControl(page);
+
+    const releaseBefore = await page.locator('meta[name="pwa-shell-release"]').getAttribute('content');
+    if (releaseBefore !== 'release-a') {
+      throw new Error(`service-worker-update: expected release-a before cache freshness check, received ${releaseBefore}`);
+    }
+
+    const releaseAState = await serviceWorkerState(page);
+    const releaseAContent = [];
+    for (const target of CACHE_FRESHNESS_TARGETS) {
+      releaseAContent.push(await assertCacheFreshnessTarget(page, serverHandle.baseURL, target, 'release-a', 'release-a'));
+    }
+
+    serverHandle.switchRoot(RELEASE_B_DIR);
+
+    const staleBeforeUpdate = [];
+    for (const target of CACHE_FRESHNESS_TARGETS) {
+      staleBeforeUpdate.push(await assertCacheFreshnessTarget(page, serverHandle.baseURL, target, 'release-a', 'stale-before-update'));
+    }
+
+    const stateBeforeUpdate = await serviceWorkerState(page);
+    const checkResult = await sendNgswOperation(page, 'CHECK_FOR_UPDATES');
+    assertNgswOperationCompleted('CHECK_FOR_UPDATES', checkResult, { requireTrue: true });
+    const activateResult = await sendNgswOperation(page, 'ACTIVATE_UPDATE');
+    assertNgswOperationCompleted('ACTIVATE_UPDATE', activateResult);
+    await page.waitForTimeout(1500);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await waitForAppReady(page);
+
+    const freshAfterUpdate = [];
+    for (const target of CACHE_FRESHNESS_TARGETS) {
+      freshAfterUpdate.push(await assertCacheFreshnessTarget(page, serverHandle.baseURL, target, 'release-b', 'fresh-after-update'));
+    }
+
+    const releaseAfter = await page.locator('meta[name="pwa-shell-release"]').getAttribute('content');
+    const bundleMarker = await assertChangedBundleLoaded(page, 'release-b');
+    const stateAfterUpdate = await serviceWorkerState(page);
+
+    return {
+      serviceWorker,
+      releaseBefore,
+      releaseAfter,
+      bundleMarker,
+      releaseAState,
+      stateBeforeUpdate,
+      stateAfterUpdate,
+      checkResult,
+      activateResult,
+      targets: CACHE_FRESHNESS_TARGETS.map((target) => ({
+        id: target.id,
+        route: target.path,
+        failureCategory: target.failureCategory,
+      })),
+      releaseAContent,
+      staleBeforeUpdate,
+      freshAfterUpdate,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
 function failOnDiagnostics(diagnostics) {
   const blockingRequestFailures = diagnostics.requestFailures.filter(
     (failure) =>
@@ -737,12 +985,13 @@ async function main() {
     const manifestLink = await verifyManifestLink(browser, serverHandle.baseURL, diagnostics);
     const onlineRoutes = await verifyOnlineRoutes(browser, serverHandle.baseURL, diagnostics);
     const offlineRoutes = await verifyOfflineRoutes(browser, serverHandle.baseURL, diagnostics);
+    const cacheFreshness = await verifyCacheFreshness(browser, serverHandle, diagnostics);
     const upgrade = await verifyUpgrade(browser, serverHandle, diagnostics);
     failOnDiagnostics(diagnostics);
 
     const summary = {
       schemaVersion: 1,
-      taskId: '869dwc7wk',
+      taskId: TASK_ID,
       status: 'passed',
       startedAt,
       completedAt: new Date().toISOString(),
@@ -753,6 +1002,7 @@ async function main() {
       manifestLink,
       onlineRoutes,
       offlineRoutes,
+      cacheFreshness,
       upgrade,
       diagnostics,
       artifactDir: ARTIFACT_DIR,
@@ -763,10 +1013,11 @@ async function main() {
       [
         '# PWA Shell Safety Report',
         '',
-        `Task: 869dwc7wk`,
+        `Task: ${TASK_ID}`,
         `Status: passed`,
         `Routes: ${ROUTE_PATHS.join(', ')}`,
         `Service worker: ${offlineRoutes.serviceWorker.scriptURL}`,
+        `Cache freshness: ${cacheFreshness.releaseBefore} stale -> ${cacheFreshness.releaseAfter} fresh`,
         `Upgrade: ${upgrade.releaseBefore} -> ${upgrade.releaseAfter}`,
         `Screenshots: ${path.relative(ARTIFACT_DIR, SCREENSHOT_DIR).replace(/\\/gu, '/')}/`,
         '',
@@ -776,7 +1027,7 @@ async function main() {
   } catch (error) {
     const failure = {
       schemaVersion: 1,
-      taskId: '869dwc7wk',
+      taskId: TASK_ID,
       status: 'failed',
       startedAt,
       completedAt: new Date().toISOString(),

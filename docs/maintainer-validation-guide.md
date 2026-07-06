@@ -49,7 +49,7 @@ script, or workflow prerequisite looks suspect.
 | Public guide, share-link landing, compare entry, or route bundle size performance | `PERF_ASSERT=0 npm run perf:route-load` | Collect all current budget harnesses (`perf:ability-filters`, `perf:explanation-compare`, `perf:saved-team-codecs`, and `perf:route-load`) into the same current artifact root before `npm run perf:budget-report -- --current-dir /path/to/current`; add public-entry synthetics when the deployed guide/share route is the risk | Production guide route load, deterministic Manual Team Builder share-link landing load, Auto Team Builder compare entry load, initial JS, and selected route chunk sizes stay inside pragmatic budgets without starving the consolidated report of companion harness inputs | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/route-load-performance` |
 | Public guide and share-link visual baselines | `npm run test:public-entry-visual` | Focused visual gate plus the existing guide discoverability, public-entry synthetics, route-load, and browser smoke rows when route templates or shared shell styling change | Chromium desktop/mobile screenshots catch obvious public guide and share-link landing layout drift, missing hero content, and missing shared-team visual content without expanding noisy cross-browser pixel baselines | Playwright snapshot baselines under `e2e/public-entry-visual.spec.ts-snapshots/`; diff artifacts under `test-results/` on failure |
 | Guided build, compare mode, saved-team sharing, import accessibility, or related copy | Focused page specs plus `npm run test:e2e:chromium -- --grep "@accessibility"`; for copy-only changes use `npm run i18n:validate` and the [copy review checklist](copy-review-checklist.md) | Focused accessibility slice plus full `npm run test:e2e:chromium`, `npm run i18n:validate`, guide discoverability, and `npm run build` when route or guide copy changes | Guided toggles/submits, compare saved/imported/error/swap controls, saved-team share/import feedback, modal focus recovery, dialog names, live-region semantics, manual share hydration, and shared bilingual terms remain reachable, accurate, and consistent | Playwright reports and task-scoped live evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` |
-| PWA installability, offline app-shell entry, service-worker cache config, or stale-shell upgrade behavior | `PWA_SHELL_ARTIFACT_DIR=../optc-team-builder-brain/live-artifacts/<task-id>/pwa-shell npm run test:pwa-shell` | PWA shell check plus `npm run build`, browser e2e for touched routes, and docs integrity when recovery guidance changes | Manifest and icon prerequisites, Angular service-worker registration/control, offline entry for high-value routes, and stale-shell upgrade recovery stay repeatable from production build output | `PWA_SHELL_ARTIFACT_DIR` when set; otherwise local OPTC checkouts use `../optc-team-builder-brain/live-artifacts/869dwc7wk/pwa-shell`, with CI/standalone checkouts using `test-results/pwa-shell` |
+| PWA installability, offline app-shell entry, service-worker cache config, stale-shell upgrade behavior, or guide/share cache freshness | `PWA_SHELL_TASK_ID=<task-id> PWA_SHELL_ARTIFACT_DIR=../optc-team-builder-brain/live-artifacts/<task-id>/pwa-shell npm run test:pwa-shell` | PWA shell check plus `npm run build`, browser e2e for touched routes, and docs integrity when recovery guidance changes | Manifest and icon prerequisites, Angular service-worker registration/control, offline entry for high-value routes, stale-shell upgrade recovery, and release A/B guide/share content freshness stay repeatable from production build output | `PWA_SHELL_ARTIFACT_DIR` when set; otherwise local OPTC checkouts use `../optc-team-builder-brain/live-artifacts/<task-id>/pwa-shell` when `PWA_SHELL_TASK_ID` is set or `../optc-team-builder-brain/live-artifacts/869dwc7wk/pwa-shell`, with CI/standalone checkouts using `test-results/pwa-shell` |
 | Release-candidate performance confidence | Manual `Performance Budgets` workflow dispatch | Scheduled/manual `Performance Budgets` workflow with an explicit `baseline_run_id`, then inspect the uploaded compact report and conditional visual-evidence artifact when warnings/failures exist | The ability-filter, explanation/compare, saved-team codec, and route-load harnesses all ran on GitHub Actions, hard-budget results were recorded, and baseline warnings were surfaced | GitHub Actions artifact `performance-budget-report`; `performance-budget-visual-evidence` only for warnings/failures |
 | OPTC DB release-detector logic, upstream fetch timeout/retry/failure classification, source-contract checks, fixtures, workflow dispatch rules, duplicate-dispatch idempotency, historical backtests, upstream replay support, status artifact formatting, or post-release provenance verification | `npm run test:release-check` | Run `npm run data:backtest-release -- --json`, each successful bundled fixture, the live check, verify `node scripts/check-optc-release-needed.mjs --fixture=error --json` and `node scripts/check-optc-release-needed.mjs --fixture=source-contract-broken --json` exit nonzero, and generate local release-detector status/provenance JSON and Markdown from current or fixture reports | Missing upstream character IDs are the only release trigger, historical snapshots keep expected release/no-release decisions stable, fixture branches remain replayable, malformed fixture handling reports `upstream-malformed-data`, timeout/unavailable/partial upstream reads stay distinct from source-contract breakage, manual workflow dispatch defaults to report-only verification, overlapping/retried dispatch attempts are keyed and visibly blocked when a matching queued/in-progress/succeeded release already exists, the live upstream read still works, maintainers can scan the latest status and `upstreamFetch` diagnostics without raw workflow logs, and release outputs can be traced back to detector/source/version/APK evidence | Command output; workflow artifacts `release-trigger-outcome`, `upstream-monitor-report`, `release-detector-status`, and `release-provenance` after Actions runs |
 | Release-readiness summary schema, report formatting, sign-off policy, or release evidence wiring | `npm run test:release-readiness` | `npm run test:release-readiness` plus `npm run release:readiness -- --source /path/to/source.json --output /path/to/summary.md --json-output /path/to/summary.json` using current evidence | Candidate status, tests, performance report, release-trigger report, blockers, and waivers produce the intended ready/blocked decision | Paths passed to `--output` and `--json-output` |
@@ -357,13 +357,13 @@ under test.
 ### PWA Shell Safety
 
 Use the PWA shell check before changing the Angular service-worker config,
-manifest, install icons, app bootstrap providers, or stale-cache recovery
-guidance:
+manifest, install icons, app bootstrap providers, public guide/share cache
+freshness, or stale-cache recovery guidance:
 
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
 ```bash
-PWA_SHELL_ARTIFACT_DIR=../optc-team-builder-brain/live-artifacts/<task-id>/pwa-shell npm run test:pwa-shell
+PWA_SHELL_TASK_ID=<task-id> PWA_SHELL_ARTIFACT_DIR=../optc-team-builder-brain/live-artifacts/<task-id>/pwa-shell npm run test:pwa-shell
 ```
 
 The check builds the production app, serves a local release, verifies manifest
@@ -371,8 +371,16 @@ and icon installability prerequisites, waits for Angular service-worker control,
 and proves offline direct entry for the home page, Characters, Auto Team
 Builder, Saved Teams, Settings, and the guided build/compare/share guide. It
 also serves a second local release with a regenerated `ngsw.json` and verifies
-that a stale shell can update to the new version.
+that a stale shell can update to the new version. The cache-freshness phase
+loads the guided/compare/share guide and a deterministic redacted
+`/tabs/manual-team-builder?teamShare=...` route under release A service-worker
+control, switches the local server to release B, confirms the old route-visible
+guide/share content can remain before explicit update activation, then runs
+`CHECK_FOR_UPDATES` and `ACTIVATE_UPDATE` and verifies the release B guide
+bundle and Manual Team Builder i18n content are visible.
 When `PWA_SHELL_ARTIFACT_DIR` is not set, local OPTC sibling checkouts write to
+`../optc-team-builder-brain/live-artifacts/<PWA_SHELL_TASK_ID>/pwa-shell` when
+`PWA_SHELL_TASK_ID` is set, otherwise
 `../optc-team-builder-brain/live-artifacts/869dwc7wk/pwa-shell`; CI and
 standalone app checkouts write to `test-results/pwa-shell`.
 
@@ -381,7 +389,11 @@ For reported PWA failures, first separate the failure class:
 - App logic: the same route fails online with the service worker bypassed or
   after site storage is cleared.
 - Stale assets: `/ngsw/state` shows an older version, reloads keep serving an
-  older `index.html`, or the PWA shell check fails only in the upgrade phase.
+  older `index.html`, or the PWA shell check fails in the upgrade or
+  cache-freshness phase. `route-bundle-content` points to the guide route
+  bundle or `ngsw.json`; `i18n-assets` points to cached translation assets used
+  by the Manual Team Builder share-link landing; `service-worker-update` points
+  to update detection or activation.
 - Install/update state: manifest or icon checks fail, no service worker
   controls the page after the ready timeout, or offline direct entry misses a
   required asset.
