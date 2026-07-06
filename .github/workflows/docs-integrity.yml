@@ -9,11 +9,24 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   docs-integrity:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 25 minutes"
+            echo "- Concurrency policy: PR Docs Integrity runs cancel stale attempts for the same PR; main runs are preserved."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Note app-only validation for untrusted PR
         if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
         run: |
@@ -82,6 +95,11 @@ jobs:
         working-directory: optc-team-builder
         run: npm run docs:release-runbook-drift -- --brain-root ../optc-team-builder-brain
 
+      - name: Check app and brain workflow budgets
+        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
+        working-directory: optc-team-builder
+        run: npm run actions:workflow-budgets -- --brain-root ../optc-team-builder-brain
+
       - name: Check full docs drift
         if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
         working-directory: optc-team-builder
@@ -122,6 +140,11 @@ jobs:
             base_ref="origin/${GITHUB_BASE_REF:-main}"
           fi
           npm run docs:drift -- --base-ref "${base_ref}" --head-ref HEAD --app-only
+
+      - name: Check app-only workflow budgets
+        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
+        working-directory: optc-team-builder
+        run: npm run actions:workflow-budgets -- --app-only
 
       - name: Docs integrity script tests
         working-directory: optc-team-builder

@@ -25,6 +25,18 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     fix: 'Add "test:maintainer-doctor": "vitest run scripts/maintainer-environment-doctor.spec.ts" to package.json.',
   },
   {
+    name: 'actions:workflow-budgets',
+    group: 'ci',
+    expectedCommand: 'node ./scripts/check-github-workflow-budgets.mjs',
+    fix: 'Restore the GitHub workflow timeout and concurrency budget checker package script.',
+  },
+  {
+    name: 'test:workflow-budgets',
+    group: 'ci',
+    expectedCommand: 'vitest run scripts/check-github-workflow-budgets.spec.ts',
+    fix: 'Restore the GitHub workflow budget checker unit test package script.',
+  },
+  {
     name: 'test:captain-contracts',
     group: 'contract',
     expectedCommand: 'vitest run scripts/import-optc-data.spec.ts scripts/lib/captain-ability-coverage.spec.ts',
@@ -155,6 +167,8 @@ export const REQUIRED_APP_PATHS = [
   { relativePath: '.github/workflows/docs-integrity.yml', kind: 'file', group: 'ci' },
   { relativePath: '.github/workflows/check-optc-db-release.yml', kind: 'file', group: 'release-check' },
   { relativePath: '.github/workflows/performance-budgets.yml', kind: 'file', group: 'performance' },
+  { relativePath: 'scripts/check-github-workflow-budgets.mjs', kind: 'file', group: 'ci' },
+  { relativePath: 'scripts/check-github-workflow-budgets.spec.ts', kind: 'file', group: 'ci' },
   { relativePath: 'scripts/import-optc-data.spec.ts', kind: 'file', group: 'contract' },
   { relativePath: 'scripts/lib/captain-ability-coverage.spec.ts', kind: 'file', group: 'contract' },
   { relativePath: 'src/app/core/services/fixtures/captain-contract-cases.json', kind: 'file', group: 'contract' },

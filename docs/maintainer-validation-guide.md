@@ -59,7 +59,7 @@ script, or workflow prerequisite looks suspect.
 | Dependency maintenance policy, Dependabot cadence, or toolchain update review | `npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain` plus the focused row for the changed surface | Follow `docs/dependency-maintenance-policy.md`: batch safe minor/patch updates, split focused-review updates, and add the package/workflow/browser/performance/release/native checks that match the update | Maintainers can tell which dependency and tooling updates are safe to batch, which require focused review, and how to roll out or roll back changes after merge | Brain task audit and default-branch workflow runs |
 | Maintainer environment, sibling checkout, or validation prerequisite drift | `npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain` | Doctor command plus `npm run test:maintainer-doctor`; add docs command and integrity checks when command examples or workflow references changed | Node/npm engines, app/brain layout, required workflow files, contract/performance/release-check scripts, release fixtures, brain evidence paths, and instruction parity are ready before deeper validation | Doctor output only |
 | Branch lifecycle, post-merge branch cleanup, or GH013 deletion blockers | `npm run test:branch-cleanup` plus `npm run branch:cleanup-report -- --repo JohnChourp/optc-team-builder --format markdown` for current state | Focused cleanup tests plus docs integrity, docs commands, docs drift, and the brain task audit when policy or evidence changes | Merged routine branches are classified without deleting anything, active deletion rules are visible, and maintainers know when to keep, investigate, or request separate cleanup approval | Report output and task-scoped evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` when ClickUp-backed |
-| CI routing, dependency, workflow, or package changes | `npm run test:ci-routing` plus a YAML parse of the touched workflow | Full local validation for the changed routing surface, then rely on the PR `Test` workflow to prove the selected GitHub jobs | The executable routing rules stay fail-closed and the workflow still emits check-selection evidence before running targeted jobs | `ci-check-routing-summary` workflow artifact |
+| CI routing, dependency, workflow, workflow-budget, or package changes | `npm run test:ci-routing`, `npm run test:workflow-budgets`, `npm run actions:workflow-budgets`, plus a YAML parse of the touched workflow | Full local validation for the changed routing surface, `npm run actions:workflow-budgets -- --brain-root ../optc-team-builder-brain` when paired brain workflow budgets are in scope, then rely on the PR `Test` workflow to prove the selected GitHub jobs | The executable routing rules stay fail-closed, workflow timeout/concurrency policy remains explicit, and the workflow still emits check-selection evidence before running targeted jobs | `ci-check-routing-summary` workflow artifact and workflow step summaries |
 | Broad app UI behavior, routing, saved-team/share flows, or regression-prone user journeys | Focused `npm run test:ci -- --include ...` for touched components/services | `npm run test:ci`, scoped `npm run test:e2e:*` browser runs, `npm run i18n:validate`, and `npm run build`; use all browser projects when browser-specific behavior changed | Angular units, deterministic cross-browser journeys, translation keys, and production build health remain intact; browser flakes follow the `e2e/README.md` quarantine workflow before any coverage is excluded from blocking CI | Compact Playwright summary artifacts for every browser leg; full Playwright debug reports only for failed browser legs |
 | Docs drift map, docs guardrails, release runbook contract, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, `npm run docs:release-runbook-drift -- --brain-root ../optc-team-builder-brain`, `npm run docs:drift -- --base-ref origin/main --head-ref HEAD --brain-root ../optc-team-builder-brain`, plus `git diff --check` | Add `npm run test:docs-drift` when the map or detector changes; add `npm run test:release-runbook-drift` when release runbook workflow/package/policy alignment changes; add targeted command validation when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, documented maintainer commands, release runbook workflow/package/policy alignment, mapped feature-to-doc ownership, and whitespace stay valid across app and brain docs | None |
 
@@ -108,6 +108,7 @@ Routing defaults are:
 - docs-only changes run the docs script tests and skip Angular and browser jobs
 - docs-drift map or detector changes run the docs drift script tests with the
   other docs script suites
+- workflow-budget checker changes run the focused workflow-budget tests
 - maintainer doctor changes run the focused doctor script tests
 - branch cleanup report changes run the focused branch cleanup suite
 - dataset-change digest changes run the focused digest script tests
@@ -129,6 +130,13 @@ coverage, and workflow/dependency changes keep the full historical confidence
 path. When investigating a surprising route, run `npm run test:ci-routing` and
 inspect the workflow's `ci-check-routing-summary` artifact before changing the
 YAML.
+
+Workflow budget changes also need `npm run test:workflow-budgets` and
+`npm run actions:workflow-budgets`; include `-- --brain-root
+../optc-team-builder-brain` when checking paired app/brain branches. Pull
+request validation workflows favor freshness by canceling stale runs for the
+same PR, while release, performance, monitor, and release-evidence workflows
+preserve every in-progress run.
 
 PWA-sensitive changes are selected for `ngsw-config.json`, app bootstrap,
 `src/index.html`, the web manifest, PWA icons, and the PWA shell harness. The

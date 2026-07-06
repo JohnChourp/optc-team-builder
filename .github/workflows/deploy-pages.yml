@@ -18,9 +18,18 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment:
       name: github-pages
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 25 minutes"
+            echo "- Concurrency policy: GitHub Pages deploys favor the latest production artifact and cancel stale deploy attempts."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -51,10 +60,19 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 15 minutes"
+            echo "- Concurrency policy: GitHub Pages deploys favor the latest production artifact and cancel stale deploy attempts."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5

@@ -9,10 +9,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   changes:
     name: Select checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       full_plan: ${{ steps.route.outputs.full_plan }}
       categories: ${{ steps.route.outputs.categories }}
@@ -27,6 +32,14 @@ jobs:
       changed_files_json: ${{ steps.route.outputs.changed_files_json }}
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 10 minutes"
+            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
@@ -64,8 +77,8 @@ jobs:
 
           base_sha="${{ steps.diff.outputs.base_sha }}"
           head_sha="${{ steps.diff.outputs.head_sha }}"
-          full_script_suites="ci-routing,actions-pins,maintainer-doctor,branch-cleanup,dataset-digest,saved-team-codecs,captain-contracts,release-check,release-runbook-drift,release-readiness,docs-integrity,docs-commands,docs-drift,discoverability,public-entry-synthetics,drive-sync-server,source-data,perf-budget,e2e-triage,pwa-shell"
-          full_script_matrix='{"include":[{"suite":"ci-routing","label":"CI routing tests","command":"npm run test:ci-routing"},{"suite":"actions-pins","label":"GitHub Actions pin tests","command":"npm run test:actions-pins && npm run actions:pins"},{"suite":"maintainer-doctor","label":"Maintainer environment doctor tests","command":"npm run test:maintainer-doctor"},{"suite":"branch-cleanup","label":"Branch cleanup report tests","command":"npm run test:branch-cleanup"},{"suite":"dataset-digest","label":"Dataset change digest tests","command":"npm run test:dataset-digest"},{"suite":"saved-team-codecs","label":"Saved-team codec fuzz tests","command":"npm run test:saved-team-codecs"},{"suite":"captain-contracts","label":"Captain contract script tests","command":"npm run test:captain-contracts"},{"suite":"release-check","label":"Release detector replay tests","command":"npm run test:release-check"},{"suite":"release-runbook-drift","label":"Release runbook drift tests","command":"npm run test:release-runbook-drift"},{"suite":"release-readiness","label":"Release readiness report tests","command":"npm run test:release-readiness"},{"suite":"docs-integrity","label":"Docs integrity script tests","command":"npm run test:docs-integrity"},{"suite":"docs-commands","label":"Docs command script tests","command":"npm run test:docs-commands"},{"suite":"docs-drift","label":"Docs drift script tests","command":"npm run test:docs-drift"},{"suite":"discoverability","label":"Guide discoverability tests","command":"npm run test:discoverability"},{"suite":"public-entry-synthetics","label":"Public entry synthetic monitor tests","command":"npm run test:public-entry-synthetics"},{"suite":"drive-sync-server","label":"Drive sync backend tests","command":"npm run test:drive-sync-server"},{"suite":"source-data","label":"Source data validation tests","command":"npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/upsert-manual-character.spec.ts"},{"suite":"perf-budget","label":"Performance budget script tests","command":"npm run test:perf-budget"},{"suite":"e2e-triage","label":"Playwright routing and quarantine tests","command":"npm run test:e2e-triage"},{"suite":"pwa-shell","label":"PWA shell safety tests","command":"npm run test:pwa-shell"}]}'
+          full_script_suites="ci-routing,actions-pins,workflow-budgets,maintainer-doctor,branch-cleanup,dataset-digest,saved-team-codecs,captain-contracts,release-check,release-runbook-drift,release-readiness,docs-integrity,docs-commands,docs-drift,discoverability,public-entry-synthetics,drive-sync-server,source-data,perf-budget,e2e-triage,pwa-shell"
+          full_script_matrix='{"include":[{"suite":"ci-routing","label":"CI routing tests","command":"npm run test:ci-routing"},{"suite":"actions-pins","label":"GitHub Actions pin tests","command":"npm run test:actions-pins && npm run actions:pins"},{"suite":"workflow-budgets","label":"GitHub workflow budget tests","command":"npm run test:workflow-budgets && npm run actions:workflow-budgets"},{"suite":"maintainer-doctor","label":"Maintainer environment doctor tests","command":"npm run test:maintainer-doctor"},{"suite":"branch-cleanup","label":"Branch cleanup report tests","command":"npm run test:branch-cleanup"},{"suite":"dataset-digest","label":"Dataset change digest tests","command":"npm run test:dataset-digest"},{"suite":"saved-team-codecs","label":"Saved-team codec fuzz tests","command":"npm run test:saved-team-codecs"},{"suite":"captain-contracts","label":"Captain contract script tests","command":"npm run test:captain-contracts"},{"suite":"release-check","label":"Release detector replay tests","command":"npm run test:release-check"},{"suite":"release-runbook-drift","label":"Release runbook drift tests","command":"npm run test:release-runbook-drift"},{"suite":"release-readiness","label":"Release readiness report tests","command":"npm run test:release-readiness"},{"suite":"docs-integrity","label":"Docs integrity script tests","command":"npm run test:docs-integrity"},{"suite":"docs-commands","label":"Docs command script tests","command":"npm run test:docs-commands"},{"suite":"docs-drift","label":"Docs drift script tests","command":"npm run test:docs-drift"},{"suite":"discoverability","label":"Guide discoverability tests","command":"npm run test:discoverability"},{"suite":"public-entry-synthetics","label":"Public entry synthetic monitor tests","command":"npm run test:public-entry-synthetics"},{"suite":"drive-sync-server","label":"Drive sync backend tests","command":"npm run test:drive-sync-server"},{"suite":"source-data","label":"Source data validation tests","command":"npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/upsert-manual-character.spec.ts"},{"suite":"perf-budget","label":"Performance budget script tests","command":"npm run test:perf-budget"},{"suite":"e2e-triage","label":"Playwright routing and quarantine tests","command":"npm run test:e2e-triage"},{"suite":"pwa-shell","label":"PWA shell safety tests","command":"npm run test:pwa-shell"}]}'
 
           write_full_plan() {
             local reason="$1"
@@ -168,8 +181,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: changes
+    timeout-minutes: 20
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 20 minutes"
+            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Note skipped Angular tests
         if: needs.changes.outputs.run_angular != 'true'
         run: |
@@ -200,11 +222,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.run_script_suites == 'true'
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.changes.outputs.script_matrix) }}
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 25 minutes"
+            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -246,8 +277,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.run_dataset_perf == 'true'
+    timeout-minutes: 20
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 20 minutes"
+            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -268,12 +308,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.run_e2e == 'true'
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 35 minutes"
+            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -341,12 +390,21 @@ jobs:
     needs: changes
     if: needs.changes.outputs.run_quarantine == 'true'
     continue-on-error: true
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 35 minutes"
+            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 

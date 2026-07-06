@@ -51,6 +51,7 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     outputs:
       release-sha: ${{ steps.android-release.outputs.release-sha }}
       release-tag: ${{ steps.android-release.outputs.release-tag }}
@@ -58,6 +59,14 @@ jobs:
       version-code: ${{ steps.android-release.outputs.version-code }}
       apk-path: ${{ steps.android-release.outputs.apk-path }}
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 60 minutes"
+            echo "- Concurrency policy: Android releases are serialized and never cancel in-progress release, tag, or asset publishing work."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
@@ -186,12 +195,21 @@ jobs:
   release-provenance:
     needs: release
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: ${{ always() && needs.release.result == 'success' }}
     permissions:
       actions: read
       contents: read
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 20 minutes"
+            echo "- Concurrency policy: Release provenance is preserved with the release run and never cancels in-progress evidence collection."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout release commit
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
@@ -297,6 +315,7 @@ jobs:
   deploy-pages:
     needs: release
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     concurrency:
       group: release-android-pages
       cancel-in-progress: false
@@ -304,6 +323,14 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 25 minutes"
+            echo "- Concurrency policy: Release Pages deploys are serialized and never cancel in-progress release deploy evidence."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout release commit
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
@@ -344,11 +371,20 @@ jobs:
       - deploy-pages
     if: ${{ always() && needs.release.result == 'success' && (needs.release-provenance.result == 'success' || needs.release-provenance.result == 'failure') && needs.deploy-pages.result == 'success' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       actions: read
       contents: read
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 20 minutes"
+            echo "- Concurrency policy: Post-dispatch production smoke stays attached to the release run and is not canceled by later release checks."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout release commit
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:

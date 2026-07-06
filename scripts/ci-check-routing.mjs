@@ -15,6 +15,10 @@ export const SCRIPT_SUITES = {
     label: 'GitHub Actions pin tests',
     command: 'npm run test:actions-pins && npm run actions:pins',
   },
+  'workflow-budgets': {
+    label: 'GitHub workflow budget tests',
+    command: 'npm run test:workflow-budgets && npm run actions:workflow-budgets',
+  },
   'maintainer-doctor': {
     label: 'Maintainer environment doctor tests',
     command: 'npm run test:maintainer-doctor',
@@ -189,6 +193,13 @@ function isGitHubActionsPinPath(filePath) {
   return (
     filePath === 'scripts/check-github-actions-pins.mjs' ||
     filePath === 'scripts/check-github-actions-pins.spec.ts'
+  );
+}
+
+function isWorkflowBudgetPath(filePath) {
+  return (
+    filePath === 'scripts/check-github-workflow-budgets.mjs' ||
+    filePath === 'scripts/check-github-workflow-budgets.spec.ts'
   );
 }
 
@@ -405,6 +416,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isGitHubActionsPinPath(filePath)) {
       categories.add('github-actions-pins');
       addScriptSuite(scriptSuites, 'actions-pins');
+      continue;
+    }
+
+    if (isWorkflowBudgetPath(filePath)) {
+      categories.add('workflow-budgets');
+      addScriptSuite(scriptSuites, 'workflow-budgets');
       continue;
     }
 

@@ -84,6 +84,26 @@ tags unless they become release-critical or browser/test-critical; they still
 stay covered by Dependabot, CODEOWNERS, PR traceability, and default-branch
 monitoring.
 
+## GitHub Workflow Budgets
+
+Heavy workflows must make their concurrency and timeout tradeoff explicit. The
+guard command `npm run actions:workflow-budgets` checks the app workflow
+contract, and `npm run actions:workflow-budgets -- --brain-root
+../optc-team-builder-brain` checks the paired brain Docs Integrity workflow.
+Run `npm run test:workflow-budgets` after changing the checker.
+
+Policy:
+
+| Workflow class | Concurrency rule | Timeout rule |
+| --- | --- | --- |
+| Pull-request validation (`Test`, Guide Discoverability, app/brain Docs Integrity) | Group by workflow plus PR number and cancel stale PR attempts only. Main pushes are preserved. | Each job has a realistic `timeout-minutes` budget and a summary step that states the budget. |
+| GitHub Pages deploy | Keep the repository-level `github-pages` freshness lock with cancellation so the latest production artifact wins. | Build and deploy jobs have separate budgets so deployment stalls are visible. |
+| Performance and production-entry evidence | Serialize runs and keep `cancel-in-progress: false` so scheduled/manual history is preserved. | Existing monitor/report budgets remain explicit and are logged in the step summary. |
+| Release detector and Android release flows | Serialize runs and keep `cancel-in-progress: false`; manual release dispatches are not validation shortcuts unless a maintainer explicitly requested a release. | Release-check, notification, release, provenance, release Pages, and post-dispatch smoke jobs each have explicit budgets. |
+
+Task-specific evidence for the workflow-budget policy closeout is recorded in
+`../optc-team-builder-brain/audits/869dwchu0-workflow-concurrency-timeouts.md`.
+
 ## Critical Update Surfaces
 
 | Surface | Examples | Why it is sensitive |
@@ -139,7 +159,7 @@ Use the smallest additional path that covers the changed surface:
 
 | Changed surface | Required local validation before PR review |
 | --- | --- |
-| Dependabot config, package files, workflow files, or CI routing | `npm run test:ci-routing`, YAML parse or workflow inspection, and PR `Test` workflow result. |
+| Dependabot config, package files, workflow files, workflow budget checker, or CI routing | `npm run test:ci-routing`, `npm run test:workflow-budgets`, `npm run actions:workflow-budgets`, YAML parse or workflow inspection, and PR `Test` workflow result. |
 | Docs, command examples, drift map, or policy docs | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, `npm run docs:drift -- --base-ref origin/main --head-ref HEAD --brain-root ../optc-team-builder-brain`, and `npm run test:docs-drift` when the map changes. |
 | Playwright or browser regression tooling | `npm run test:e2e-triage` and the affected `npm run test:e2e:*` browser command; rely on PR browser CI for the full matrix when package or workflow changes are included. |
 | Performance harness or budget tooling | `npm run test:perf-budget`, plus the affected performance harness in report-only mode when the update can change browser timing. |
