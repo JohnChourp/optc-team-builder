@@ -51,6 +51,8 @@ Maintainer validation guide:
   to run for each class of change.
 - `docs/post-merge-smoke-pack.md` defines the quick post-merge smoke pack for
   release-critical guide, guided/compare/share, and release-check handoff paths.
+- `docs/post-dispatch-production-smoke.md` defines the bounded production smoke
+  check that runs after successful Android release dispatches.
 - `docs/feature-coverage-map.md` maps major product and operational flows to
   their tests, docs, performance checks, evidence, and owning area.
 - `docs/docs-drift-map.json` maps those flows to documentation entry points so
@@ -317,7 +319,10 @@ metadata, APK asset name/link/digest, detector dispatch verdict, source-version
 alignment, released new character IDs, and trigger-to-release ancestry. Manual
 Android releases without detector metadata still produce the report, but the
 detector-link check is recorded as a visible warning instead of blocking the
-manual path.
+manual path. After the release, provenance, and Pages jobs pass, the workflow
+runs the post-dispatch production smoke check and uploads a
+`post-dispatch-production-smoke` artifact that combines provenance metadata with
+production guide/share-link synthetic evidence.
 
 To replay captured upstream files during an incident, keep the local manifest and
 seed defaults or point at custom local files, then pass both remote paths:
@@ -371,6 +376,9 @@ The workflow:
   release back to the detector verdict, source SHA, version metadata, and APK
   artifact
 - relies on that pushed release commit to trigger the normal `Deploy GitHub Pages` workflow
+- uploads `post-dispatch-production-smoke` after provenance completes and Pages
+  deploy succeeds, proving the release metadata and production guide/share-link
+  shell still pass the bounded smoke check
 
 Local fallback signing setup:
 
