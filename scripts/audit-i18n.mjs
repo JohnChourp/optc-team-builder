@@ -5,7 +5,8 @@ import { spawnSync } from "node:child_process";
 const projectRoot = process.cwd();
 const i18nRoot = path.join(projectRoot, "public", "i18n");
 const srcRoot = path.join(projectRoot, "src", "app");
-const validatorBin = path.join(
+const localValidatorBin = path.join(projectRoot, "node_modules", ".bin", "transloco-validator");
+const legacyValidatorBin = path.join(
   projectRoot,
   "..",
   "codex_utilities",
@@ -18,10 +19,7 @@ const validatorBin = path.join(
 const validatorArgs = collectTranslationJsonFiles(i18nRoot).map((file) =>
   path.relative(projectRoot, file).replace(/\\/g, "/"),
 );
-const validatorCommand =
-  process.platform === "win32" && existsSync(`${validatorBin}.cmd`)
-    ? `${validatorBin}.cmd`
-    : validatorBin;
+const validatorCommand = resolveValidatorCommand([localValidatorBin, legacyValidatorBin]);
 
 if (validatorArgs.length === 0) {
   console.error(`[i18n-audit] No translation JSON files found under ${i18nRoot}`);
@@ -140,6 +138,25 @@ function scanTypeScriptFiles(rootDir, rootTranslationTree, scopeTranslationTrees
   }
 
   return findings;
+}
+
+function resolveValidatorCommand(candidates) {
+  for (const candidate of candidates) {
+    const platformCommand =
+      process.platform === "win32" && existsSync(`${candidate}.cmd`) ? `${candidate}.cmd` : candidate;
+
+    if (existsSync(platformCommand)) {
+      return platformCommand;
+    }
+  }
+
+  console.error(
+    `[i18n-audit] Missing transloco-validator. Run npm install so ${path.relative(
+      projectRoot,
+      localValidatorBin,
+    )} is available.`,
+  );
+  process.exit(1);
 }
 
 function collectTranslationJsonFiles(rootDir) {
