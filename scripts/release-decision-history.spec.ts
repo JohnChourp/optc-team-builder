@@ -264,7 +264,7 @@ describe('release-decision-history', () => {
       currentPath,
       statusReport({
         status: 'warning',
-        reason: 'upstream-monitor-warning',
+        reason: 'upstream\\monitor|warning',
         monitor: {
           status: 'warning',
           warningCount: 1,
@@ -278,6 +278,7 @@ describe('release-decision-history', () => {
     expect(markdown).toContain('# OPTC DB Release Decision History');
     expect(markdown).toContain(`Retention: latest ${DEFAULT_MAX_RUNS} runs, 90 days per artifact`);
     expect(markdown).toContain('| Generated | Status | Reason | Decision reason |');
+    expect(markdown).toContain('upstream\\\\monitor\\|warning');
     expect(markdown).toContain('persistent-local-lag');
   });
 

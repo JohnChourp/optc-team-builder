@@ -314,7 +314,7 @@ function formatRunLink(workflow = {}) {
 }
 
 function markdownCell(value) {
-  return formatNullable(value).replace(/\|/gu, '\\|').replace(/\r?\n/gu, ' ');
+  return formatNullable(value).replace(/\\/gu, '\\\\').replace(/\|/gu, '\\|').replace(/\r?\n/gu, ' ');
 }
 
 export function formatReleaseDecisionHistoryMarkdown(history) {
