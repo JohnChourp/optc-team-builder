@@ -18,6 +18,7 @@ const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const DIST_DIR = path.join(ROOT_DIR, 'dist', 'optc-team-builder', 'browser');
 const DEFAULT_TASK_ID = '869dwc7wk';
 const TASK_ID = process.env.PWA_SHELL_TASK_ID || DEFAULT_TASK_ID;
+const BUILD_SCRIPT = process.env.PWA_SHELL_BUILD_SCRIPT || 'build';
 const DEFAULT_BRAIN_ARTIFACT_DIR = path.resolve(
   ROOT_DIR,
   '..',
@@ -642,6 +643,23 @@ async function assertCacheFreshnessTarget(page, baseURL, target, releaseLabel, p
   };
 }
 
+async function openControlledCacheFreshnessPage(context, diagnostics, phase, baseURL) {
+  const page = await context.newPage();
+  attachPageDiagnostics(page, diagnostics, phase);
+  await page.goto(`${baseURL}/`, { waitUntil: 'domcontentloaded' });
+  await waitForAppReady(page);
+  await waitForServiceWorkerControl(page);
+  return page;
+}
+
+async function assertCacheFreshnessTargets(page, baseURL, releaseLabel, phase) {
+  const results = [];
+  for (const target of CACHE_FRESHNESS_TARGETS) {
+    results.push(await assertCacheFreshnessTarget(page, baseURL, target, releaseLabel, phase));
+  }
+  return results;
+}
+
 async function verifyManifest(baseURL) {
   const api = await playwrightRequest.newContext({ baseURL });
   try {
@@ -875,11 +893,8 @@ async function verifyUpgrade(browser, serverHandle, diagnostics) {
 async function verifyCacheFreshness(browser, serverHandle, diagnostics) {
   serverHandle.switchRoot(RELEASE_A_DIR);
   const context = await browser.newContext({ serviceWorkers: 'allow', viewport: { width: 1280, height: 900 } });
-  const page = await context.newPage();
-  attachPageDiagnostics(page, diagnostics, 'cache-freshness');
+  let page = await openControlledCacheFreshnessPage(context, diagnostics, 'cache-freshness', serverHandle.baseURL);
   try {
-    await page.goto(`${serverHandle.baseURL}/`, { waitUntil: 'domcontentloaded' });
-    await waitForAppReady(page);
     const serviceWorker = await waitForServiceWorkerControl(page);
 
     const releaseBefore = await page.locator('meta[name="pwa-shell-release"]').getAttribute('content');
@@ -888,17 +903,29 @@ async function verifyCacheFreshness(browser, serverHandle, diagnostics) {
     }
 
     const releaseAState = await serviceWorkerState(page);
-    const releaseAContent = [];
-    for (const target of CACHE_FRESHNESS_TARGETS) {
-      releaseAContent.push(await assertCacheFreshnessTarget(page, serverHandle.baseURL, target, 'release-a', 'release-a'));
-    }
+    const releaseAContent = await assertCacheFreshnessTargets(page, serverHandle.baseURL, 'release-a', 'release-a');
 
     serverHandle.switchRoot(RELEASE_B_DIR);
 
-    const staleBeforeUpdate = [];
-    for (const target of CACHE_FRESHNESS_TARGETS) {
-      staleBeforeUpdate.push(await assertCacheFreshnessTarget(page, serverHandle.baseURL, target, 'release-a', 'stale-before-update'));
+    const stalePage = await openControlledCacheFreshnessPage(
+      context,
+      diagnostics,
+      'cache-freshness-stale-client',
+      serverHandle.baseURL,
+    );
+    await page.close();
+    page = stalePage;
+
+    const staleRelease = await page.locator('meta[name="pwa-shell-release"]').getAttribute('content');
+    if (staleRelease !== 'release-a') {
+      throw new Error(`service-worker-update: expected release-a in stale client, received ${staleRelease}`);
     }
+    const staleBeforeUpdate = await assertCacheFreshnessTargets(
+      page,
+      serverHandle.baseURL,
+      'release-a',
+      'stale-before-update',
+    );
 
     const stateBeforeUpdate = await serviceWorkerState(page);
     const checkResult = await sendNgswOperation(page, 'CHECK_FOR_UPDATES');
@@ -909,12 +936,28 @@ async function verifyCacheFreshness(browser, serverHandle, diagnostics) {
     await page.reload({ waitUntil: 'domcontentloaded' });
     await waitForAppReady(page);
 
-    const freshAfterUpdate = [];
-    for (const target of CACHE_FRESHNESS_TARGETS) {
-      freshAfterUpdate.push(await assertCacheFreshnessTarget(page, serverHandle.baseURL, target, 'release-b', 'fresh-after-update'));
+    let releaseAfter = await page.locator('meta[name="pwa-shell-release"]').getAttribute('content');
+    if (releaseAfter !== 'release-b') {
+      const freshPage = await openControlledCacheFreshnessPage(
+        context,
+        diagnostics,
+        'cache-freshness-fresh-client',
+        serverHandle.baseURL,
+      );
+      await page.close();
+      page = freshPage;
+      releaseAfter = await page.locator('meta[name="pwa-shell-release"]').getAttribute('content');
+      if (releaseAfter !== 'release-b') {
+        throw new Error(`service-worker-update: expected release-b after cache freshness update, received ${releaseAfter}`);
+      }
     }
 
-    const releaseAfter = await page.locator('meta[name="pwa-shell-release"]').getAttribute('content');
+    const freshAfterUpdate = await assertCacheFreshnessTargets(
+      page,
+      serverHandle.baseURL,
+      'release-b',
+      'fresh-after-update',
+    );
     const bundleMarker = await assertChangedBundleLoaded(page, 'release-b');
     const stateAfterUpdate = await serviceWorkerState(page);
 
@@ -924,6 +967,7 @@ async function verifyCacheFreshness(browser, serverHandle, diagnostics) {
       releaseAfter,
       bundleMarker,
       releaseAState,
+      staleRelease,
       stateBeforeUpdate,
       stateAfterUpdate,
       checkResult,
@@ -965,7 +1009,7 @@ async function main() {
   ensureDir(TEMP_ROOT);
 
   const npm = npmCommand();
-  runCommand('build', npm.command, [...npm.prefixArgs, 'run', 'build']);
+  runCommand(`build-${BUILD_SCRIPT.replace(/[^a-z0-9_-]+/giu, '-')}`, npm.command, [...npm.prefixArgs, 'run', BUILD_SCRIPT]);
   if (!fs.existsSync(path.join(DIST_DIR, 'ngsw-worker.js')) || !fs.existsSync(path.join(DIST_DIR, 'ngsw.json'))) {
     throw new Error(`Production build did not produce Angular service worker files under ${DIST_DIR}`);
   }
@@ -996,6 +1040,7 @@ async function main() {
       startedAt,
       completedAt: new Date().toISOString(),
       baseURL: serverHandle.baseURL,
+      buildScript: BUILD_SCRIPT,
       releases,
       routes: ROUTE_PATHS,
       manifest,

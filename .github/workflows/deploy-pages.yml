@@ -122,6 +122,10 @@ jobs:
 
       - name: Verify PWA cache freshness
         env:
+          APP_GA4_MEASUREMENT_ID: ${{ secrets.APP_GA4_MEASUREMENT_ID }}
+          APP_GOOGLE_WEB_CLIENT_ID: ${{ secrets.APP_GOOGLE_WEB_CLIENT_ID }}
+          APP_GOOGLE_IOS_CLIENT_ID: ${{ secrets.APP_GOOGLE_IOS_CLIENT_ID }}
+          PWA_SHELL_BUILD_SCRIPT: build:pages
           PWA_SHELL_TASK_ID: pages-cache-freshness
           PWA_SHELL_ARTIFACT_DIR: test-results/pwa-cache-freshness
         run: npm run test:pwa-shell
