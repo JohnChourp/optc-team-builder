@@ -77,8 +77,8 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     name: 'test:release-check',
     group: 'release-check',
     expectedCommand:
-      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-provenance-report.spec.ts',
-    fix: 'Restore the release detector replay package script.',
+      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-provenance-report.spec.ts scripts/post-dispatch-production-smoke.spec.ts',
+    fix: 'Restore the release detector replay and post-dispatch smoke package script.',
   },
   {
     name: 'data:check-release',
@@ -103,6 +103,12 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     group: 'release-check',
     expectedCommand: 'node ./scripts/release-provenance-report.mjs',
     fix: 'Restore the release provenance verification package script.',
+  },
+  {
+    name: 'release:post-dispatch-smoke',
+    group: 'release-check',
+    expectedCommand: 'node ./scripts/post-dispatch-production-smoke.mjs',
+    fix: 'Restore the post-dispatch production smoke package script.',
   },
   {
     name: 'docs:integrity',
@@ -152,6 +158,8 @@ export const REQUIRED_APP_PATHS = [
   { relativePath: 'scripts/backtest-optc-release-detector.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/release-provenance-report.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/release-provenance-report.spec.ts', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/post-dispatch-production-smoke.mjs', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/post-dispatch-production-smoke.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/fixtures/shared/release-check-fixtures.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/fixtures/release-check/history/corpus.json', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/fixtures/release-provenance/release-trigger-released.json', kind: 'file', group: 'release-check' },

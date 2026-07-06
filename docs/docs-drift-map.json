@@ -184,12 +184,13 @@
     },
     {
       "id": "release-detector",
-      "name": "OPTC DB release detector, release dispatch idempotency, release-trigger notifications, and release provenance",
+      "name": "OPTC DB release detector, release dispatch idempotency, release-trigger notifications, release provenance, and post-dispatch production smoke",
       "featurePaths": [
         "scripts/check-optc-release-needed.mjs",
         "scripts/check-optc-upstream-monitor.mjs",
         "scripts/release-detector-status.mjs",
         "scripts/release-provenance-report.mjs",
+        "scripts/post-dispatch-production-smoke.mjs",
         "scripts/lib/release-trigger-",
         "scripts/fixtures/release-check/",
         "scripts/fixtures/release-provenance/",
@@ -200,13 +201,14 @@
         "docs/cross-repo-architecture-map.md",
         "docs/maintainer-operations.md",
         "docs/feature-coverage-map.md",
+        "docs/post-dispatch-production-smoke.md",
         "docs/fixture-ownership-guide.md",
         "docs/maintainer-validation-guide.md",
         "docs/copy-review-checklist.md",
         "../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md"
       ],
-      "owner": "Release detector, dispatch idempotency, notification, and provenance policy",
-      "notes": "Detector, source-contract canary, dispatch idempotency guard, status/provenance artifact, fixture, policy, notification, workflow, or maintainer-facing release copy changes should update release runbook, validation docs, fixture ownership, and copy guidance."
+      "owner": "Release detector, dispatch idempotency, notification, provenance, and post-dispatch smoke policy",
+      "notes": "Detector, source-contract canary, dispatch idempotency guard, status/provenance/smoke artifact, fixture, policy, notification, workflow, or maintainer-facing release copy changes should update release runbook, validation docs, fixture ownership, and copy guidance."
     },
     {
       "id": "release-readiness",
@@ -316,12 +318,13 @@
         "scripts/release-and-tag.sh",
         "scripts/bump-version.sh",
         "scripts/setup-release-signing.sh",
+        "scripts/post-dispatch-production-smoke.mjs",
         "android/",
         "ios/"
       ],
-      "docsPaths": ["README.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
-      "owner": "Native release and version ownership",
-      "notes": "Native release, signing, versioning, or platform metadata changes should update release guidance and validation docs."
+      "docsPaths": ["README.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/post-dispatch-production-smoke.md"],
+      "owner": "Native release, version, and post-dispatch smoke ownership",
+      "notes": "Native release, signing, versioning, platform metadata, or post-dispatch production smoke changes should update release guidance and validation docs."
     }
   ]
 }

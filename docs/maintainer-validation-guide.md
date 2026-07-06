@@ -484,6 +484,13 @@ source version, released new IDs, or trigger-to-release ancestry do not align.
 Manual Android releases without detector metadata keep the report useful by
 recording the missing detector link as a warning.
 
+After the release, provenance, and Pages deploy jobs succeed, inspect the
+`post-dispatch-production-smoke` artifact from the same `Release Android` run.
+It combines the release provenance verdict with production public-entry
+synthetics for the guide route and redacted saved-team share-link landing. A
+failed smoke artifact blocks release closeout until the provenance or production
+rendering failure is triaged.
+
 For captured upstream incident replay, pass both remote files together:
 
 Command status: manual/illustrative.

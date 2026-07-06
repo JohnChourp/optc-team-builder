@@ -336,3 +336,81 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+  post-dispatch-production-smoke:
+    needs:
+      - release
+      - release-provenance
+      - deploy-pages
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.release-sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Download release provenance artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: release-provenance
+          path: post-dispatch-production-smoke/release-provenance
+
+      - name: Run production public-entry smoke
+        id: public-entry
+        continue-on-error: true
+        env:
+          PUBLIC_ENTRY_BASE_URL: https://optcteambuilder.com
+          PUBLIC_ENTRY_SYNTHETIC_ARTIFACT_DIR: ${{ github.workspace }}/post-dispatch-production-smoke/public-entry
+          PUBLIC_ENTRY_SYNTHETIC_REPORT: ${{ github.workspace }}/post-dispatch-production-smoke/public-entry/public-entry-synthetics-report.json
+        run: npm run synthetic:public-entry
+
+      - name: Write post-dispatch production smoke report
+        env:
+          RELEASE_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RELEASE_TAG: ${{ needs.release.outputs.release-tag }}
+          RELEASE_VERSION: ${{ needs.release.outputs.release-version }}
+          VERSION_CODE: ${{ needs.release.outputs.version-code }}
+          TRIGGER_RUN_ID: ${{ inputs.trigger_run_id }}
+        run: |
+          args=(
+            --release-provenance post-dispatch-production-smoke/release-provenance/release-provenance.json
+            --public-entry-report post-dispatch-production-smoke/public-entry/public-entry-synthetics-report.json
+            --release-run-url "${RELEASE_RUN_URL}"
+            --release-tag "${RELEASE_TAG}"
+            --release-version "${RELEASE_VERSION}"
+            --version-code "${VERSION_CODE}"
+            --output post-dispatch-production-smoke/post-dispatch-production-smoke.json
+            --summary post-dispatch-production-smoke/post-dispatch-production-smoke.md
+          )
+
+          if [[ -n "${TRIGGER_RUN_ID}" ]]; then
+            args+=(--require-auto-release-link)
+          fi
+
+          npm run --silent release:post-dispatch-smoke -- "${args[@]}"
+          cat post-dispatch-production-smoke/post-dispatch-production-smoke.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload post-dispatch production smoke artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: post-dispatch-production-smoke
+          path: post-dispatch-production-smoke/
+          if-no-files-found: warn
+          retention-days: 90
