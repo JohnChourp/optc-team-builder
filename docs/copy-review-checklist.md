@@ -36,10 +36,14 @@ Examples: use Greek labels for source/state words such as `Πηγή`, `Κενό`
 3. Keep UI, guide, and runbook terms aligned for guided build, compare mode,
    Saved Teams sharing/import, Manual Team Builder share hydration, and release
    maintenance workflows.
-4. For copy-only changes, run `npm run i18n:validate`. Add focused page specs,
-   guide discoverability, docs drift, or browser evidence when route metadata,
-   public guide content, or live UI behavior is touched.
-5. In PR traceability, call out the user-facing surfaces and whether the copy is
+4. For copy-only changes, run `npm run i18n:validate`. Run
+   `npm run test:i18n-regression` when the change touches public help/guide
+   links or critical Saved Teams, Auto Team Builder, or Manual Team Builder
+   runtime help/error copy.
+5. Add focused page specs, guide discoverability, docs drift, or browser
+   evidence when route metadata, public guide content, or live UI behavior is
+   touched.
+6. In PR traceability, call out the user-facing surfaces and whether the copy is
    UI-facing, public-guide-facing, or maintainer-facing.
 
 ## Anti-Drift Checks
@@ -54,3 +58,6 @@ Examples: use Greek labels for source/state words such as `Πηγή`, `Κενό`
 - Do not update public guide SEO route copy without also checking
   `scripts/generate-seo-pages.mjs` when the generated page repeats the same
   wording.
+- Do not add critical runtime help/error text for Saved Teams, Auto Team Builder,
+  or Manual Team Builder without deciding whether the key belongs in
+  `scripts/i18n-regression-check.mjs`.

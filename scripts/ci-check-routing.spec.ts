@@ -6,7 +6,7 @@ import { buildCheckPlan, formatGitHubOutput, getChangedFiles, parseNameStatusOut
 
 describe('ci-check-routing', () => {
   it('routes docs-only changes to docs script suites only', () => {
-    const plan = buildCheckPlan(['docs/maintainer-validation-guide.md', 'README.md']);
+    const plan = buildCheckPlan(['docs/maintainer-validation-guide.md', 'docs/feature-coverage-map.md']);
 
     expect(plan.fullPlan).toBe(false);
     expect(plan.runAngular).toBe(false);
@@ -217,6 +217,7 @@ describe('ci-check-routing', () => {
       'docs-drift',
       'discoverability',
       'public-entry-synthetics',
+      'i18n-regression',
       'drive-sync-server',
       'source-data',
       'perf-budget',
@@ -247,6 +248,41 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(false);
     expect(plan.runE2e).toBe(false);
     expect(plan.scriptSuites).toEqual(['public-entry-synthetics']);
+  });
+
+  it('routes i18n regression checker changes to the focused suite', () => {
+    const plan = buildCheckPlan([
+      'scripts/i18n-regression-check.mjs',
+      'scripts/i18n-regression-check.spec.ts',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['i18n-regression']);
+  });
+
+  it('routes README guide-link edits through docs and multilingual regression suites', () => {
+    const plan = buildCheckPlan(['README.md']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual([
+      'docs-integrity',
+      'docs-commands',
+      'docs-drift',
+      'i18n-regression',
+    ]);
+  });
+
+  it('adds multilingual regression checks to translation runtime changes', () => {
+    const plan = buildCheckPlan(['public/i18n/saved-teams/el.json']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(true);
+    expect(plan.runE2e).toBe(true);
+    expect(plan.scriptSuites).toEqual(['i18n-regression']);
   });
 
   it('routes branch cleanup report changes to the focused suite and docs gates', () => {

@@ -71,6 +71,10 @@ export const SCRIPT_SUITES = {
     label: 'Public entry synthetic monitor tests',
     command: 'npm run test:public-entry-synthetics',
   },
+  'i18n-regression': {
+    label: 'Multilingual regression tests',
+    command: 'npm run test:i18n-regression',
+  },
   'drive-sync-server': {
     label: 'Drive sync backend tests',
     command: 'npm run test:drive-sync-server',
@@ -216,6 +220,18 @@ function isPublicEntrySyntheticsPath(filePath) {
   return (
     filePath === 'scripts/public-entry-synthetics.mjs' ||
     filePath === 'scripts/public-entry-synthetics.spec.ts'
+  );
+}
+
+function isI18nRegressionPath(filePath) {
+  return (
+    filePath === 'README.md' ||
+    filePath === 'scripts/i18n-regression-check.mjs' ||
+    filePath === 'scripts/i18n-regression-check.spec.ts' ||
+    filePath.startsWith('public/i18n/') ||
+    filePath === 'src/app/app.routes.ts' ||
+    filePath === 'src/app/pages/auto-team-builder/auto-team-builder.page.html' ||
+    filePath === 'src/app/pages/saved-teams/saved-teams.page.html'
   );
 }
 
@@ -436,6 +452,22 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isPublicEntrySyntheticsPath(filePath)) {
       categories.add('public-entry-synthetics');
       addScriptSuite(scriptSuites, 'public-entry-synthetics');
+      continue;
+    }
+
+    if (isI18nRegressionPath(filePath)) {
+      categories.add('i18n-regression');
+      addScriptSuite(scriptSuites, 'i18n-regression');
+      if (isDocsPath(filePath)) {
+        for (const suite of DOCS_SCRIPT_SUITES) {
+          addScriptSuite(scriptSuites, suite);
+        }
+      }
+      if (isRuntimePath(filePath)) {
+        categories.add('runtime');
+        runAngular = true;
+        runE2e = true;
+      }
       continue;
     }
 

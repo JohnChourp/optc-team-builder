@@ -32,13 +32,14 @@
       "featurePaths": [
         "src/app/pages/manual-team-builder/",
         "public/i18n/manual-team-builder/",
+        "scripts/i18n-regression-check.mjs",
         "src/app/core/services/team-coverage-summary.utils.ts",
         "src/app/shared/team-coverage-summary/",
         "src/app/shared/character-ability-groups/"
       ],
       "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/copy-review-checklist.md"],
       "owner": "Manual builder UI and team summary",
-      "notes": "Manual-builder workflow, share hydration, coverage-summary, or copy changes should keep the guide, validation map, and bilingual copy checklist aligned."
+      "notes": "Manual-builder workflow, share hydration, coverage-summary, or copy changes should keep the guide, validation map, multilingual regression inventory, and bilingual copy checklist aligned."
     },
     {
       "id": "auto-team-builder",
@@ -46,6 +47,7 @@
       "featurePaths": [
         "src/app/pages/auto-team-builder/",
         "public/i18n/auto-team-builder/",
+        "scripts/i18n-regression-check.mjs",
         "src/app/core/services/auto-team-builder",
         "src/app/shared/ability-requirement-picker/",
         "src/app/core/services/ability-requirement-draft.utils.ts"
@@ -59,7 +61,7 @@
         "../optc-team-builder-brain/audits/869dwc7ww-recommendation-quality-benchmark.md"
       ],
       "owner": "Auto builder engine, worker, requirements, compare, and recommendation trust",
-      "notes": "Auto-builder logic, scoring, fallback, compare, explanation, guided-control, or copy changes need mapped validation and evidence updates."
+      "notes": "Auto-builder logic, scoring, fallback, compare, explanation, guided-control, or copy changes need mapped validation, multilingual regression inventory, and evidence updates."
     },
     {
       "id": "captain-coverage",
@@ -86,6 +88,7 @@
       "featurePaths": [
         "src/app/pages/saved-teams/",
         "public/i18n/saved-teams/",
+        "scripts/i18n-regression-check.mjs",
         "scripts/fixtures/data/saved-team-codec-fuzz-corpus.json",
         "scripts/fixtures/data/saved-teams-v1-legacy-partial.json",
         "scripts/fixtures/data/saved-teams-v1.json",
@@ -95,7 +98,7 @@
       ],
       "docsPaths": ["docs/saved-team-schema-lifecycle.md", "docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/copy-review-checklist.md"],
       "owner": "Saved team persistence, transfer contracts, and import/share hydration",
-      "notes": "Saved-team schema, transfer, import, share, compatibility, synthetic landing checks, or copy changes should update schema, lifecycle, validation, and bilingual copy docs."
+      "notes": "Saved-team schema, transfer, import, share, compatibility, synthetic landing checks, or copy changes should update schema, lifecycle, validation, multilingual regression inventory, and bilingual copy docs."
     },
     {
       "id": "saved-enemies",
@@ -313,10 +316,10 @@
     {
       "id": "seo-pages",
       "name": "SEO pages and GitHub Pages deploy",
-      "featurePaths": ["src/app/pages/seo-content/", "scripts/generate-seo-pages.mjs", "scripts/audit-seo-pages.mjs", "scripts/verify-guide-discoverability.mjs", "scripts/verify-guide-discoverability.spec.ts", "scripts/public-entry-synthetics.mjs", "scripts/public-entry-synthetics.spec.ts", "scripts/pwa-shell-check.mjs", "e2e/public-entry-visual.spec.ts", "e2e/public-entry-visual.spec.ts-snapshots/", ".github/workflows/deploy-pages.yml", ".github/workflows/guide-discoverability.yml", ".github/workflows/public-entry-synthetics.yml"],
+      "featurePaths": ["src/app/pages/seo-content/", "scripts/generate-seo-pages.mjs", "scripts/audit-seo-pages.mjs", "scripts/verify-guide-discoverability.mjs", "scripts/verify-guide-discoverability.spec.ts", "scripts/i18n-regression-check.mjs", "scripts/public-entry-synthetics.mjs", "scripts/public-entry-synthetics.spec.ts", "scripts/pwa-shell-check.mjs", "e2e/public-entry-visual.spec.ts", "e2e/public-entry-visual.spec.ts-snapshots/", ".github/workflows/deploy-pages.yml", ".github/workflows/guide-discoverability.yml", ".github/workflows/public-entry-synthetics.yml"],
       "docsPaths": ["README.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "e2e/README.md", "../optc-team-builder-brain/audits/869dwcbb4-guide-discoverability.md", "../optc-team-builder-brain/audits/869dwcbbd-public-entry-synthetics.md", "../optc-team-builder-brain/audits/869dwcedz-public-entry-visual.md"],
       "owner": "SEO content, guide/help discoverability, Pages deployment, public entry visual baselines, public entry synthetics, and PWA cache freshness",
-      "notes": "Public SEO content, route, generation, audit, discoverability verification, visual baselines, post-deploy synthetic public entry checks, PWA cache freshness checks, or deployment changes should update public-site docs and validation guidance."
+      "notes": "Public SEO content, route, generation, audit, discoverability verification, multilingual guide-anchor checks, visual baselines, post-deploy synthetic public entry checks, PWA cache freshness checks, or deployment changes should update public-site docs and validation guidance."
     },
     {
       "id": "android-release",
