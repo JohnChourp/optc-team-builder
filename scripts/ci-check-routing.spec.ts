@@ -135,6 +135,7 @@ describe('ci-check-routing', () => {
       'scripts/fixtures/release-check/no-change/remote-units.js',
       'scripts/fixtures/release-provenance/github-release-v1.2.3.json',
       'scripts/perf-budget-report.mjs',
+      'scripts/perf-saved-team-codecs.mjs',
       'scripts/perf-route-load.mjs',
     ]);
 
@@ -142,13 +143,16 @@ describe('ci-check-routing', () => {
     expect(plan.scriptSuites).toEqual(['release-check', 'perf-budget']);
   });
 
-  it('covers standalone route-load harness changes in the selected performance suite', () => {
-    const plan = buildCheckPlan(['scripts/perf-route-load.mjs']);
+  it('covers standalone route-load and codec harness changes in the selected performance suite', () => {
+    const plan = buildCheckPlan(['scripts/perf-route-load.mjs', 'scripts/perf-saved-team-codecs.mjs']);
     const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
     expect(plan.fullPlan).toBe(false);
     expect(plan.scriptSuites).toEqual(['perf-budget']);
     expect(packageJson.scripts['test:perf-budget']).toContain('node --check ./scripts/perf-route-load.mjs');
+    expect(packageJson.scripts['test:perf-budget']).toContain(
+      'node --check ./scripts/perf-saved-team-codecs.mjs',
+    );
   });
 
   it('fails closed for dependency, workflow, and router changes', () => {

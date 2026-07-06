@@ -90,6 +90,7 @@
         "scripts/fixtures/data/saved-teams-v1-legacy-partial.json",
         "scripts/fixtures/data/saved-teams-v1.json",
         "scripts/fixtures/data/saved-team-share-v1-legacy-partial.json",
+        "scripts/perf-saved-team-codecs.mjs",
         "scripts/public-entry-synthetics.mjs"
       ],
       "docsPaths": ["docs/saved-team-schema-lifecycle.md", "docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/copy-review-checklist.md"],
@@ -257,6 +258,7 @@
       "featurePaths": [
         "scripts/perf-ability-filters.mjs",
         "scripts/perf-explanation-compare.mjs",
+        "scripts/perf-saved-team-codecs.mjs",
         "scripts/perf-memory-pressure.mjs",
         "scripts/perf-mobile-pickers.mjs",
         "scripts/perf-route-load.mjs",

@@ -116,6 +116,65 @@ const EXPLANATION_METRICS = Object.freeze([
   },
 ]);
 
+const SAVED_TEAM_CODEC_METRICS = Object.freeze([
+  {
+    area: 'Saved-team codecs',
+    sourcePath: ['timings', 'savedTeamCodecs'],
+    metricKey: 'bulkExportEncodeMs',
+    metricLabel: 'bulk export encode',
+    budgets: { node: 10 },
+  },
+  {
+    area: 'Saved-team codecs',
+    sourcePath: ['timings', 'savedTeamCodecs'],
+    metricKey: 'bulkJsonParseMs',
+    metricLabel: 'bulk JSON parse',
+    budgets: { node: 10 },
+  },
+  {
+    area: 'Saved-team codecs',
+    sourcePath: ['timings', 'savedTeamCodecs'],
+    metricKey: 'bulkSanitizeMs',
+    metricLabel: 'bulk sanitize',
+    budgets: { node: 10 },
+  },
+  {
+    area: 'Saved-team codecs',
+    sourcePath: ['timings', 'savedTeamCodecs'],
+    metricKey: 'bulkParseSanitizeMs',
+    metricLabel: 'bulk parse and sanitize',
+    budgets: { node: 15 },
+  },
+  {
+    area: 'Saved-team codecs',
+    sourcePath: ['timings', 'savedTeamCodecs'],
+    metricKey: 'shareEncodeMs',
+    metricLabel: 'share encode',
+    budgets: { node: 5 },
+  },
+  {
+    area: 'Saved-team codecs',
+    sourcePath: ['timings', 'savedTeamCodecs'],
+    metricKey: 'shareDecodeMs',
+    metricLabel: 'share decode',
+    budgets: { node: 3 },
+  },
+  {
+    area: 'Saved-team codecs',
+    sourcePath: ['timings', 'savedTeamCodecs'],
+    metricKey: 'shareResolveSanitizeMs',
+    metricLabel: 'share resolve and sanitize',
+    budgets: { node: 4 },
+  },
+  {
+    area: 'Saved-team codecs',
+    sourcePath: ['timings', 'savedTeamCodecs'],
+    metricKey: 'invalidValidationMs',
+    metricLabel: 'invalid input validation',
+    budgets: { node: 1 },
+  },
+]);
+
 const ROUTE_LOAD_METRICS = Object.freeze([
   {
     area: 'Route load',
@@ -204,6 +263,10 @@ const HARNESS_DEFINITIONS = Object.freeze({
     harness: 'explanation-compare',
     metrics: EXPLANATION_METRICS,
   },
+  savedTeamCodecs: {
+    harness: 'saved-team-codecs',
+    metrics: SAVED_TEAM_CODEC_METRICS,
+  },
   routeLoad: {
     harness: 'route-load',
     metrics: ROUTE_LOAD_METRICS,
@@ -223,7 +286,16 @@ function formatPercent(value) {
 }
 
 function formatMs(value) {
-  return Number.isFinite(value) ? `${Math.round(value)}ms` : 'n/a';
+  if (!Number.isFinite(value)) {
+    return 'n/a';
+  }
+
+  const rounded = Math.round(value);
+  if (Math.abs(value - rounded) < 0.001) {
+    return `${rounded}ms`;
+  }
+
+  return `${value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}ms`;
 }
 
 function formatBytes(value) {
@@ -256,7 +328,8 @@ function formatDeltaValue(value, unit) {
     return `${prefix}${formatBytes(value)}`;
   }
 
-  return `${value >= 0 ? '+' : ''}${Math.round(value)}ms`;
+  const prefix = value > 0 ? '+' : value < 0 ? '-' : '';
+  return `${prefix}${formatMs(Math.abs(value))}`;
 }
 
 function getNestedValue(value, keys) {
@@ -264,7 +337,13 @@ function getNestedValue(value, keys) {
 }
 
 function toOptionalFiniteNumber(value) {
-  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : null;
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+
+  const rounded = Math.round(value * 1000) / 1000;
+
+  return Object.is(rounded, -0) ? 0 : rounded;
 }
 
 function normalizeSegment(value) {
@@ -313,6 +392,14 @@ function detectResultKind(result) {
     result.viewportRuns.some((run) => isObject(run?.timings?.compare))
   ) {
     return 'explanation';
+  }
+
+  if (
+    result?.harness === 'saved-team-codecs' ||
+    (Array.isArray(result?.viewportRuns) &&
+      result.viewportRuns.some((run) => isObject(run?.timings?.savedTeamCodecs)))
+  ) {
+    return 'savedTeamCodecs';
   }
 
   if (
@@ -393,11 +480,8 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
       const budgetMs = metric.budgets[viewport] ?? null;
       const id = buildMetricId(definition.harness, viewport, metric.area, metric.metricKey);
       const baselineRow = baselineRows.get(id);
-      const baselineMs =
-        typeof baselineRow?.actualMs === 'number' && Number.isFinite(baselineRow.actualMs)
-          ? Math.round(baselineRow.actualMs)
-          : null;
-      const deltaMs = actualMs === null || baselineMs === null ? null : actualMs - baselineMs;
+      const baselineMs = toOptionalFiniteNumber(baselineRow?.actualMs);
+      const deltaMs = actualMs === null || baselineMs === null ? null : toOptionalFiniteNumber(actualMs - baselineMs);
       const deltaPercent =
         baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
       const hardBudgetStatus =
@@ -435,11 +519,8 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
     const budgetMs = metric.budgets[viewport] ?? null;
     const id = buildMetricId(definition.harness, viewport, metric.area, metric.metricLabel);
     const baselineRow = baselineRows.get(id);
-    const baselineMs =
-      typeof baselineRow?.actualMs === 'number' && Number.isFinite(baselineRow.actualMs)
-        ? Math.round(baselineRow.actualMs)
-        : null;
-    const deltaMs = actualMs === null || baselineMs === null ? null : actualMs - baselineMs;
+    const baselineMs = toOptionalFiniteNumber(baselineRow?.actualMs);
+    const deltaMs = actualMs === null || baselineMs === null ? null : toOptionalFiniteNumber(actualMs - baselineMs);
     const deltaPercent =
       baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
     const hardBudgetStatus =
@@ -565,6 +646,16 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
           manualShareHydrationMs: { desktop: 1800, mobile: 2500 },
           firstExplanationToggleMs: { desktop: 300, mobile: 450 },
           allExplanationToggleMs: { desktop: 900, mobile: 1200 },
+        },
+        savedTeamCodecs: {
+          bulkExportEncodeMs: { node: 10 },
+          bulkJsonParseMs: { node: 10 },
+          bulkSanitizeMs: { node: 10 },
+          bulkParseSanitizeMs: { node: 15 },
+          shareEncodeMs: { node: 5 },
+          shareDecodeMs: { node: 3 },
+          shareResolveSanitizeMs: { node: 4 },
+          invalidValidationMs: { node: 1 },
         },
         routeLoad: {
           guideShareCompareReadyMs: { desktop: 1500, mobile: 2200 },
