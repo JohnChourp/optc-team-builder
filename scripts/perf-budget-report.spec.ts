@@ -449,6 +449,36 @@ describe('perf-budget-report', () => {
     expect(formatPerformanceBudgetSummary(report)).toContain('Baseline Delta Warnings');
   });
 
+  it('preserves negative signs for improved timing deltas', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(rootDir);
+    const baselinePath = path.join(rootDir, 'baseline-report.json');
+    await writeFile(
+      baselinePath,
+      JSON.stringify({
+        schemaVersion: 1,
+        generatedAt: '2026-06-26T00:00:00.000Z',
+        status: 'passed',
+        workflow: { runUrl: 'https://example.test/actions/runs/1' },
+        metricRows: [
+          {
+            id: 'ability-filters.desktop.saved-teams.firsttogglems',
+            actualMs: 250,
+          },
+        ],
+      }),
+    );
+
+    const report = await buildPerformanceBudgetReport({
+      currentDir,
+      baselineReportPath: baselinePath,
+    });
+
+    expect(formatPerformanceBudgetSummary(report)).toContain(
+      '| ability-filters | desktop | Saved Teams | first ability toggle | 200ms | 800ms | 250ms | -50ms (-20.0%) |',
+    );
+  });
+
   it('writes useful current result metadata', async () => {
     const rootDir = await makeTempDir();
     const currentDir = await writeCurrentResults(rootDir);

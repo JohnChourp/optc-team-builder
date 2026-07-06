@@ -328,7 +328,8 @@ function formatDeltaValue(value, unit) {
     return `${prefix}${formatBytes(value)}`;
   }
 
-  return `${value >= 0 ? '+' : ''}${formatMs(Math.abs(value))}`;
+  const prefix = value > 0 ? '+' : value < 0 ? '-' : '';
+  return `${prefix}${formatMs(Math.abs(value))}`;
 }
 
 function getNestedValue(value, keys) {
