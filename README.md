@@ -328,6 +328,25 @@ status/failures, local and upstream dataset versions, character count delta, new
 upstream ID sample, upstream monitor warning IDs, and the run URL without
 requiring raw workflow-log inspection.
 
+Every workflow run also uploads `release-decision-history`, a compact JSON and
+Markdown Actions artifact that combines the current `release-detector-status`
+report with up to 45 recent completed detector runs. It keeps source versions,
+new-character counts, skip-or-dispatch reasons, idempotency state, monitor
+warnings, and workflow links scan-friendly without opening raw logs one by one.
+The artifact is retained for 90 days, matching the other release-detector
+operational artifacts.
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run release:decision-history -- \
+  --current-status release-detector-status/release-detector-status.json \
+  --history-dir release-decision-history/history \
+  --output release-decision-history/release-decision-history.json \
+  --summary release-decision-history/release-decision-history.md \
+  --max-runs 45
+```
+
 When `Check OPTC DB Release` dispatches `Release Android`, it passes the
 detector run ID, run URL, and source SHA into the release workflow. The release
 workflow then uploads a `release-provenance` artifact after the GitHub Release is

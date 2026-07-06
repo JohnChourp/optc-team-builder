@@ -184,11 +184,12 @@
     },
     {
       "id": "release-detector",
-      "name": "OPTC DB release detector, release dispatch idempotency, release-trigger notifications, release provenance, and post-dispatch production smoke",
+      "name": "OPTC DB release detector, release dispatch idempotency, release-trigger notifications, release status/history artifacts, release provenance, and post-dispatch production smoke",
       "featurePaths": [
         "scripts/check-optc-release-needed.mjs",
         "scripts/check-optc-upstream-monitor.mjs",
         "scripts/release-detector-status.mjs",
+        "scripts/release-decision-history.mjs",
         "scripts/release-provenance-report.mjs",
         "scripts/post-dispatch-production-smoke.mjs",
         "scripts/lib/release-trigger-",

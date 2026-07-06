@@ -191,6 +191,43 @@ jobs:
             fi
           done
 
+      - name: Download recent release detector status history
+        if: ${{ always() }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p release-decision-history/history
+          if ! run_ids="$(
+            gh run list \
+              --workflow check-optc-db-release.yml \
+              --branch main \
+              --status completed \
+              --limit 45 \
+              --json databaseId \
+              --jq '.[].databaseId'
+          )"; then
+            echo "Could not list previous Check OPTC DB Release runs; release decision history will use only the current run." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          if [[ -z "${run_ids}" ]]; then
+            echo "No previous completed Check OPTC DB Release runs found for release decision history." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          for run_id in ${run_ids}; do
+            run_dir="release-decision-history/history/run-${run_id}"
+            mkdir -p "${run_dir}"
+
+            if gh run download "${run_id}" --name release-detector-status --dir "${run_dir}"; then
+              echo "Downloaded release detector status history from run ${run_id}." >> "${GITHUB_STEP_SUMMARY}"
+            else
+              rm -rf "${run_dir}"
+              echo "No release detector status artifact found for run ${run_id}." >> "${GITHUB_STEP_SUMMARY}"
+            fi
+          done
+
       - name: Check active Android release runs
         id: active-release
         if: steps.release-check.outputs.release_needed == 'true'
@@ -462,6 +499,19 @@ jobs:
 
           cat release-detector-status/release-detector-status.md >> "${GITHUB_STEP_SUMMARY}"
 
+      - name: Write release decision history artifact
+        id: release-decision-history
+        if: ${{ always() }}
+        run: |
+          npm run --silent release:decision-history -- \
+            --current-status release-detector-status/release-detector-status.json \
+            --history-dir release-decision-history/history \
+            --output release-decision-history/release-decision-history.json \
+            --summary release-decision-history/release-decision-history.md \
+            --max-runs 45
+
+          cat release-decision-history/release-decision-history.md >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Upload release detector status artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -470,6 +520,17 @@ jobs:
           path: |
             release-detector-status/release-detector-status.json
             release-detector-status/release-detector-status.md
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload release decision history artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-decision-history
+          path: |
+            release-decision-history/release-decision-history.json
+            release-decision-history/release-decision-history.md
           if-no-files-found: error
           retention-days: 90
 

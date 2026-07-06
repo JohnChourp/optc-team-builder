@@ -89,7 +89,7 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     name: 'test:release-check',
     group: 'release-check',
     expectedCommand:
-      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-provenance-report.spec.ts scripts/post-dispatch-production-smoke.spec.ts',
+      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-decision-history.spec.ts scripts/release-provenance-report.spec.ts scripts/post-dispatch-production-smoke.spec.ts',
     fix: 'Restore the release detector replay and post-dispatch smoke package script.',
   },
   {
@@ -115,6 +115,12 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     group: 'release-check',
     expectedCommand: 'node ./scripts/backtest-optc-release-detector.mjs',
     fix: 'Restore the historical release detector backtest package script.',
+  },
+  {
+    name: 'release:decision-history',
+    group: 'release-check',
+    expectedCommand: 'node ./scripts/release-decision-history.mjs',
+    fix: 'Restore the release decision history package script used by Check OPTC DB Release.',
   },
   {
     name: 'release:provenance',
@@ -180,6 +186,8 @@ export const REQUIRED_APP_PATHS = [
   { relativePath: 'scripts/perf-budget-history.mjs', kind: 'file', group: 'performance' },
   { relativePath: 'scripts/check-optc-release-needed.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/check-optc-upstream-monitor.mjs', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/release-decision-history.mjs', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/release-decision-history.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/check-release-runbook-drift.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/check-release-runbook-drift.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/backtest-optc-release-detector.mjs', kind: 'file', group: 'release-check' },
