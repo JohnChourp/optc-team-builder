@@ -291,7 +291,7 @@ function formatMs(value) {
   }
 
   const rounded = Math.round(value);
-  if (Math.abs(value) >= 10 || Math.abs(value - rounded) < 0.001) {
+  if (Math.abs(value - rounded) < 0.001) {
     return `${rounded}ms`;
   }
 

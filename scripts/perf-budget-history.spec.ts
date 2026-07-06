@@ -28,7 +28,15 @@ function report(overrides: {
   runUrl: string;
   sha?: string;
   status?: string;
+  id?: string;
+  harness?: string;
+  viewport?: string;
+  area?: string;
+  metric?: string;
+  metricKey?: string;
   actualMs: number;
+  budgetMs?: number;
+  unit?: string;
   failures?: unknown[];
   warnings?: unknown[];
 }) {
@@ -56,15 +64,16 @@ function report(overrides: {
     },
     metricRows: [
       {
-        id: 'ability-filters.desktop.saved-teams.firsttogglems',
-        harness: 'ability-filters',
-        viewport: 'desktop',
-        area: 'Saved Teams',
-        metric: 'first ability toggle',
-        metricKey: 'firstToggleMs',
+        id: overrides.id ?? 'ability-filters.desktop.saved-teams.firsttogglems',
+        harness: overrides.harness ?? 'ability-filters',
+        viewport: overrides.viewport ?? 'desktop',
+        area: overrides.area ?? 'Saved Teams',
+        metric: overrides.metric ?? 'first ability toggle',
+        metricKey: overrides.metricKey ?? 'firstToggleMs',
         actualMs: overrides.actualMs,
-        budgetMs: 800,
-        hardBudgetStatus: overrides.actualMs <= 800 ? 'passed' : 'failed',
+        budgetMs: overrides.budgetMs ?? 800,
+        unit: overrides.unit ?? 'ms',
+        hardBudgetStatus: overrides.actualMs <= (overrides.budgetMs ?? 800) ? 'passed' : 'failed',
         baselineWarning: baselineDeltaWarnings.length > 0,
       },
     ],
@@ -195,5 +204,63 @@ describe('perf-budget-history', () => {
 
     await expect(readFile(outputPath, 'utf8')).resolves.toContain('m1 failed');
     await expect(readFile(outputPath, 'utf8')).resolves.toContain('m2 warning');
+  });
+
+  it('preserves sub-millisecond codec trend precision', async () => {
+    const rootDir = await makeTempDir();
+    const currentPath = path.join(rootDir, 'current.json');
+    const historyDir = path.join(rootDir, 'history', 'run-100');
+    const codecRow = {
+      id: 'saved-team-codecs.node.saved-team-codecs.sharedecodems',
+      harness: 'saved-team-codecs',
+      viewport: 'node',
+      area: 'Saved-team codecs',
+      metric: 'share decode',
+      metricKey: 'shareDecodeMs',
+      budgetMs: 3,
+    };
+    await mkdir(historyDir, { recursive: true });
+    await writeFile(
+      currentPath,
+      JSON.stringify(
+        report({
+          ...codecRow,
+          generatedAt: '2026-06-28T00:00:00.000Z',
+          runId: '200',
+          runUrl: 'https://example.test/actions/runs/200',
+          actualMs: 0.07,
+        }),
+      ),
+    );
+    await writeFile(
+      path.join(historyDir, 'performance-budget-report.json'),
+      JSON.stringify(
+        report({
+          ...codecRow,
+          generatedAt: '2026-06-27T00:00:00.000Z',
+          runId: '100',
+          runUrl: 'https://example.test/actions/runs/100',
+          actualMs: 0.08,
+        }),
+      ),
+    );
+
+    const history = await buildPerformanceBudgetHistory({
+      currentReportPath: currentPath,
+      historyDir: path.join(rootDir, 'history'),
+    });
+
+    expect(history.metricTrendRows).toContainEqual(
+      expect.objectContaining({
+        id: 'saved-team-codecs.node.saved-team-codecs.sharedecodems',
+        latestActualMs: 0.07,
+        previousActualMs: 0.08,
+        deltaFromPreviousMs: -0.01,
+        deltaFromPreviousPercent: -12.5,
+      }),
+    );
+    expect(formatPerformanceBudgetHistorySummary(history)).toContain(
+      '| saved-team-codecs node Saved-team codecs share decode | 0.07ms | 0.08ms | -0.01ms (-12.5%) | 3ms | passed |',
+    );
   });
 });

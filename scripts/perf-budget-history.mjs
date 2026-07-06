@@ -12,7 +12,16 @@ function isObject(value) {
 }
 
 function formatMs(value) {
-  return Number.isFinite(value) ? `${Math.round(value)}ms` : 'n/a';
+  if (!Number.isFinite(value)) {
+    return 'n/a';
+  }
+
+  const rounded = Math.round(value);
+  if (Math.abs(value - rounded) < 0.001) {
+    return `${rounded}ms`;
+  }
+
+  return `${value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}ms`;
 }
 
 function formatBytes(value) {
@@ -44,7 +53,8 @@ function formatDeltaValue(value, unit) {
     return `${value >= 0 ? '+' : ''}${formatBytes(value)}`;
   }
 
-  return `${value >= 0 ? '+' : ''}${Math.round(value)}ms`;
+  const prefix = value > 0 ? '+' : value < 0 ? '-' : '';
+  return `${prefix}${formatMs(Math.abs(value))}`;
 }
 
 function formatPercent(value) {
@@ -116,6 +126,16 @@ function compareReportsByGeneratedAt(left, right) {
   return String(right.workflow?.runId ?? '').localeCompare(String(left.workflow?.runId ?? ''));
 }
 
+function toOptionalFiniteNumber(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+
+  const rounded = Math.round(value * 1000) / 1000;
+
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+
 function summarizeRun(report) {
   return {
     generatedAt: report.generatedAt ?? null,
@@ -150,7 +170,7 @@ function findPreviousMetricPoint(reports, metricId) {
         generatedAt: report.generatedAt ?? null,
         runId: report.workflow?.runId ?? null,
         runUrl: report.workflow?.runUrl ?? null,
-        actualMs: Math.round(row.actualMs),
+        actualMs: toOptionalFiniteNumber(row.actualMs),
       };
     }
   }
@@ -161,10 +181,12 @@ function findPreviousMetricPoint(reports, metricId) {
 function buildMetricTrendRows(currentReport, historicalReports) {
   return currentReport.metricRows.map((currentRow) => {
     const previousPoint = findPreviousMetricPoint(historicalReports, currentRow.id);
-    const latestActualMs = Number.isFinite(currentRow.actualMs) ? Math.round(currentRow.actualMs) : null;
+    const latestActualMs = toOptionalFiniteNumber(currentRow.actualMs);
     const previousActualMs = previousPoint?.actualMs ?? null;
     const deltaFromPreviousMs =
-      latestActualMs === null || previousActualMs === null ? null : latestActualMs - previousActualMs;
+      latestActualMs === null || previousActualMs === null
+        ? null
+        : toOptionalFiniteNumber(latestActualMs - previousActualMs);
     const deltaFromPreviousPercent =
       deltaFromPreviousMs === null || previousActualMs === 0
         ? null
@@ -182,8 +204,8 @@ function buildMetricTrendRows(currentReport, historicalReports) {
           runId: report.workflow?.runId ?? null,
           runUrl: report.workflow?.runUrl ?? null,
           status: report.status ?? null,
-          actualMs: Math.round(row.actualMs),
-          budgetMs: Number.isFinite(row.budgetMs) ? Math.round(row.budgetMs) : null,
+          actualMs: toOptionalFiniteNumber(row.actualMs),
+          budgetMs: toOptionalFiniteNumber(row.budgetMs),
           unit: row.unit ?? 'ms',
           hardBudgetStatus: row.hardBudgetStatus ?? null,
           baselineWarning: Boolean(row.baselineWarning),
@@ -200,7 +222,7 @@ function buildMetricTrendRows(currentReport, historicalReports) {
       metricKey: currentRow.metricKey,
       unit: currentRow.unit ?? 'ms',
       latestActualMs,
-      budgetMs: Number.isFinite(currentRow.budgetMs) ? Math.round(currentRow.budgetMs) : null,
+      budgetMs: toOptionalFiniteNumber(currentRow.budgetMs),
       previousActualMs,
       deltaFromPreviousMs,
       deltaFromPreviousPercent,

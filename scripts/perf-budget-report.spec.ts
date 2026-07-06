@@ -290,7 +290,7 @@ describe('perf-budget-report', () => {
       rootDir,
       abilityResult(),
       routeLoadResult({
-        desktopManualShareReadyMs: 2501,
+        desktopManualShareReadyMs: 2500.4,
         compareRawBytes: 740_001,
       }),
     );
@@ -301,6 +301,7 @@ describe('perf-budget-report', () => {
       expect.arrayContaining([
         expect.objectContaining({
           metricId: 'route-load.desktop.route-load.manualsharelandingreadyms',
+          message: expect.stringContaining('2500.4ms > 2500ms'),
         }),
         expect.objectContaining({
           metricId: 'route-load.bundle.bundle.compare-route-raw-js',
