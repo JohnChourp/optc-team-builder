@@ -105,6 +105,18 @@ describe('ci-check-routing', () => {
     expect(plan.scriptSuites).toEqual(['maintainer-doctor']);
   });
 
+  it('routes GitHub Actions pin checker changes to the focused pin suite', () => {
+    const plan = buildCheckPlan([
+      'scripts/check-github-actions-pins.mjs',
+      'scripts/check-github-actions-pins.spec.ts',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['actions-pins']);
+  });
+
   it('routes dataset digest changes to the focused digest suite', () => {
     const plan = buildCheckPlan([
       'scripts/dataset-change-digest.mjs',
@@ -165,6 +177,7 @@ describe('ci-check-routing', () => {
     expect(plan.runDatasetPerf).toBe(true);
     expect(plan.scriptSuites).toEqual([
       'ci-routing',
+      'actions-pins',
       'maintainer-doctor',
       'branch-cleanup',
       'dataset-digest',

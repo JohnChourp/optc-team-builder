@@ -23,6 +23,64 @@ Major-version updates are intentionally outside the grouped minor/patch path.
 Handle them as focused review PRs unless a maintainer explicitly approves a
 larger migration batch.
 
+## GitHub Actions Pinning
+
+GitHub's secure-use guidance treats a full-length commit SHA as the immutable
+way to consume an action. OPTC keeps the strongest pinning controls on workflows
+that can release, deploy, publish release evidence, or run browser-critical
+confidence checks. The guard command is:
+
+```bash
+npm run actions:pins
+```
+
+Strictly pinned workflows:
+
+| Workflow | Stability reason |
+| --- | --- |
+| `.github/workflows/check-optc-db-release.yml` | Can dispatch Android releases and writes release-trigger evidence. |
+| `.github/workflows/release-android.yml` | Builds, tags, pushes, publishes GitHub releases, deploys Pages, and uploads release provenance. |
+| `.github/workflows/deploy-pages.yml` | Publishes the production web app and dispatches public-entry synthetics. |
+| `.github/workflows/test.yml` | Runs PR and `main` test routing, browser e2e, quarantine, artifact, and performance confidence lanes. |
+| `.github/workflows/public-entry-synthetics.yml` | Monitors production entry points with Playwright. |
+| `.github/workflows/performance-budgets.yml` | Runs browser-backed performance reporting and baseline artifact reads. |
+| `.github/workflows/guide-discoverability.yml` | Builds production Pages output and verifies public guide discoverability. |
+
+Current strict action inventory:
+
+| Action | Pinned source tag | Commit SHA |
+| --- | --- | --- |
+| `actions/checkout` | `v7` | `9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0` |
+| `actions/setup-node` | `v6` | `48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e` |
+| `actions/cache` | `v6` | `55cc8345863c7cc4c66a329aec7e433d2d1c52a9` |
+| `actions/upload-artifact` | `v7` | `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` |
+| `actions/download-artifact` | `v7` | `37930b1c2abaa49bbe596cd826c3c89aef350131` |
+| `actions/download-artifact` | `v8` | `3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c` |
+| `actions/configure-pages` | `v6` | `45bfe0192ca1faeb007ade9deae92b16b8254a0d` |
+| `actions/upload-pages-artifact` | `v5` | `fc324d3547104276b827a68afc52ff2a11cc49c9` |
+| `actions/deploy-pages` | `v5` | `cd2ce8fcbc39b97be8ca5fce6e763baed58fa128` |
+| `actions/setup-java` | `v5` | `1bcf9fb12cf4aa7d266a90ae39939e61372fe520` |
+| `android-actions/setup-android` | `v4` | `40fd30fb8d7440372e1316f5d1809ec01dcd3699` |
+
+To refresh a strict action pin, resolve the intended tag from the upstream
+action repository, update every strict workflow reference to the new SHA, and
+keep the source tag as a trailing comment:
+
+```bash
+git ls-remote --tags https://github.com/actions/checkout.git v7
+npm run actions:pins
+npm run test:actions-pins
+```
+
+Action-pin PRs require focused review. Confirm the SHA belongs to the upstream
+action repository, scan release notes for permission, cache, artifact, deploy,
+or token behavior changes, run the pin guard locally, and let the app PR `Test`
+workflow re-run the guard in CI. Non-strict workflows such as CodeQL, Docs
+Integrity, PR Traceability, and Dataset Change Digest remain on explicit major
+tags unless they become release-critical or browser/test-critical; they still
+stay covered by Dependabot, CODEOWNERS, PR traceability, and default-branch
+monitoring.
+
 ## Critical Update Surfaces
 
 | Surface | Examples | Why it is sensitive |

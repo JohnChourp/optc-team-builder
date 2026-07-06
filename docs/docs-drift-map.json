@@ -232,6 +232,8 @@
       "featurePaths": [
         ".github/dependabot.yml",
         ".github/workflows/",
+        "scripts/check-github-actions-pins.mjs",
+        "scripts/check-github-actions-pins.spec.ts",
         "playwright.config.ts",
         "scripts/run-playwright-e2e.mjs",
         "scripts/lib/playwright-",
