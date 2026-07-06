@@ -155,6 +155,7 @@ describe('ci-check-routing', () => {
     const plan = buildCheckPlan([
       'scripts/backtest-optc-release-detector.mjs',
       'scripts/check-optc-release-needed.mjs',
+      'scripts/release-decision-history.mjs',
       'scripts/release-provenance-report.mjs',
       'scripts/fixtures/release-check/no-change/remote-units.js',
       'scripts/fixtures/release-provenance/github-release-v1.2.3.json',

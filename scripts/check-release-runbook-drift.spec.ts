@@ -36,6 +36,7 @@ function makeWorkflow(overrides: { outputNames?: string[]; inputDefault?: string
     'run_status',
   ];
   const artifactNames = overrides.artifactNames ?? [
+    'release-decision-history',
     'release-detector-status',
     'release-trigger-outcome',
     'upstream-monitor-report',
@@ -79,11 +80,12 @@ function makePackageJson() {
         'data:backtest-release': 'node ./scripts/backtest-optc-release-detector.mjs',
         'data:check-release': 'node ./scripts/check-optc-release-needed.mjs',
         'data:monitor-upstream': 'node ./scripts/check-optc-upstream-monitor.mjs',
+        'release:decision-history': 'node ./scripts/release-decision-history.mjs',
         'release:detector-status': 'node ./scripts/release-detector-status.mjs',
         'release:post-dispatch-smoke': 'node ./scripts/post-dispatch-production-smoke.mjs',
         'release:provenance': 'node ./scripts/release-provenance-report.mjs',
         'test:release-check':
-          'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-provenance-report.spec.ts scripts/post-dispatch-production-smoke.spec.ts',
+          'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-decision-history.spec.ts scripts/release-provenance-report.spec.ts scripts/post-dispatch-production-smoke.spec.ts',
       },
     },
     null,
@@ -94,7 +96,7 @@ function makePackageJson() {
 function makeContract(overrides: Record<string, unknown> = {}) {
   const contract = {
     workflow: {
-      artifacts: ['release-detector-status', 'release-trigger-outcome', 'upstream-monitor-report'],
+      artifacts: ['release-decision-history', 'release-detector-status', 'release-trigger-outcome', 'upstream-monitor-report'],
       checkJobOutputs: [
         'duplicate_release_dispatch_blocked',
         'new_character_count',
@@ -128,6 +130,7 @@ function makeContract(overrides: Record<string, unknown> = {}) {
         'scripts/check-optc-upstream-monitor.mjs',
         'scripts/lib/release-trigger-policy.mjs',
         'scripts/notify-upstream-monitor.mjs',
+        'scripts/release-decision-history.mjs',
         'scripts/release-detector-status.mjs',
         'scripts/release-provenance-report.mjs',
         'scripts/post-dispatch-production-smoke.mjs',
@@ -166,6 +169,7 @@ async function makeWorkspace(options: { workflow?: string; runbook?: string; pac
     'scripts/check-optc-upstream-monitor.mjs',
     'scripts/lib/release-trigger-policy.mjs',
     'scripts/notify-upstream-monitor.mjs',
+    'scripts/release-decision-history.mjs',
     'scripts/release-detector-status.mjs',
     'scripts/release-provenance-report.mjs',
     'scripts/post-dispatch-production-smoke.mjs',
