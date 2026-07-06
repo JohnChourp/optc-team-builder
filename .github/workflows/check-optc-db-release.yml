@@ -255,7 +255,7 @@ jobs:
                 conclusion,
                 url,
                 createdAt,
-                blocking: ((($blockingStatuses | index(.status)) != null) or (.status == "completed" and (($blockingConclusions | index(.conclusion)) != null)))
+                blocking: (.status as $status | .conclusion as $conclusion | (($blockingStatuses | index($status)) != null) or ($status == "completed" and (($blockingConclusions | index($conclusion)) != null)))
               }]' <<< "${runs_json}"
           )"
           blocking_count="$(jq '[.[] | select(.blocking)] | length' <<< "${matches_json}")"
@@ -279,6 +279,9 @@ jobs:
           RELEASE_BUMP: ${{ steps.release-policy.outputs.release_bump }}
           RELEASE_DISPATCH_IDEMPOTENCY_KEY: ${{ steps.release-idempotency.outputs.key }}
         run: |
+          dispatch_requested_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "requested_at=${dispatch_requested_at}" >> "${GITHUB_OUTPUT}"
+
           gh workflow run "${RELEASE_WORKFLOW}" \
             --ref "${RELEASE_REF}" \
             -f "bump=${RELEASE_BUMP}" \
@@ -294,6 +297,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_WORKFLOW: ${{ steps.release-policy.outputs.release_workflow }}
           RELEASE_DISPATCH_IDEMPOTENCY_KEY: ${{ steps.release-idempotency.outputs.key }}
+          DISPATCH_REQUESTED_AT: ${{ steps.dispatch-release.outputs.requested_at }}
         run: |
           confirmed="false"
           attempts="0"
@@ -310,7 +314,8 @@ jobs:
             matches_json="$(
               jq -c \
                 --arg key "${RELEASE_DISPATCH_IDEMPOTENCY_KEY}" \
-                '[.[] | select((.displayTitle // "") | contains($key)) | {
+                --arg requestedAt "${DISPATCH_REQUESTED_AT}" \
+                '[.[] | select(((.displayTitle // "") | contains($key)) and ((.createdAt // "") >= $requestedAt)) | {
                   databaseId,
                   displayTitle,
                   status,

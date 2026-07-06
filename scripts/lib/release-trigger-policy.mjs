@@ -132,7 +132,7 @@ const releaseTriggerPolicyV1 = {
       strategy: 'release-dispatch-idempotency-key',
       runNamePrefix: 'Release Android',
       recentRunLimit: 50,
-      blockingStatuses: ['queued', 'in_progress'],
+      blockingStatuses: ['queued', 'in_progress', 'requested', 'waiting', 'pending'],
       blockingConclusions: ['success'],
     },
   },
