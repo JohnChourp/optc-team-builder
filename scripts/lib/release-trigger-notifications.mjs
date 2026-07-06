@@ -19,6 +19,21 @@ function formatSourceContractFailures(report) {
   return failureIds.length > 0 ? failureIds.join(', ') : 'none';
 }
 
+function formatUpstreamFetchFailures(report) {
+  const upstreamFetch = report.upstreamFetch ?? report.releaseCheck?.upstreamFetch ?? null;
+
+  if (!upstreamFetch) {
+    return 'none';
+  }
+
+  const files = Array.isArray(upstreamFetch.files) ? upstreamFetch.files : [];
+  const fileSummaries = files
+    .filter((file) => file?.status === 'failed')
+    .map((file) => `${file.relativePath ?? 'unknown'}:${file.finalReason ?? upstreamFetch.reason ?? 'failed'}`);
+
+  return fileSummaries.length > 0 ? fileSummaries.join(', ') : (upstreamFetch.reason ?? 'none');
+}
+
 function formatDuplicateReleaseRuns(report) {
   const runs = report.idempotency?.duplicateReleaseRuns ?? [];
 
@@ -98,6 +113,7 @@ export function buildReleaseTriggerNotification(report, policy = releaseTriggerP
     `- Dispatch registration attempts: ${report.idempotency?.dispatchRegistrationAttempts ?? 'unknown'}`,
     `- New character IDs: ${formatNewCharacterIds(report)}`,
     `- Source contract failures: ${formatSourceContractFailures(report)}`,
+    `- Upstream fetch failures: ${formatUpstreamFetchFailures(report)}`,
     `- Detailed evidence: ${buildArtifactPointer(report)}`,
   ];
 

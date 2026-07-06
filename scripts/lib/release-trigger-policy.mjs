@@ -12,7 +12,7 @@ const dataDir = path.join(rootDir, 'public', 'assets', 'data');
  */
 
 /**
- * @typedef {'no-new-upstream-characters' | 'new-upstream-characters' | 'release-dispatched' | 'active-release-running' | 'verification-only' | 'duplicate-release-dispatch-blocked' | 'fixture-validation-failed' | 'detector-failed' | 'source-contract-broken' | 'active-release-check-failed' | 'dispatch-failed'} ReleaseTriggerReason
+ * @typedef {'no-new-upstream-characters' | 'new-upstream-characters' | 'release-dispatched' | 'active-release-running' | 'verification-only' | 'duplicate-release-dispatch-blocked' | 'fixture-validation-failed' | 'detector-failed' | 'source-contract-broken' | 'upstream-timeout' | 'upstream-unavailable' | 'upstream-partial-data' | 'upstream-malformed-data' | 'active-release-check-failed' | 'dispatch-failed'} ReleaseTriggerReason
  */
 
 /**
@@ -30,6 +30,12 @@ const dataDir = path.join(rootDir, 'public', 'assets', 'data');
  *   upstream: Readonly<{
  *     versionPath: string,
  *     unitsPath: string,
+ *   }>,
+ *   upstreamFetch: Readonly<{
+ *     timeoutMs: number,
+ *     attempts: number,
+ *     retryDelayMs: number,
+ *     retryableStatuses: readonly number[],
  *   }>,
  *   fixtures: Readonly<{
  *     directory: string,
@@ -97,6 +103,12 @@ const releaseTriggerPolicyV1 = {
     versionPath: 'common/data/version.js',
     unitsPath: 'common/data/units.js',
   },
+  upstreamFetch: {
+    timeoutMs: 15_000,
+    attempts: 3,
+    retryDelayMs: 1_000,
+    retryableStatuses: [408, 429, 500, 502, 503, 504],
+  },
   fixtures: {
     directory: path.join(scriptsDir, 'fixtures', 'release-check'),
     files: {
@@ -153,6 +165,10 @@ const releaseTriggerPolicyV1 = {
       fixtureValidationFailed: 'fixture-validation-failed',
       detectorFailed: 'detector-failed',
       sourceContractBroken: 'source-contract-broken',
+      upstreamTimeout: 'upstream-timeout',
+      upstreamUnavailable: 'upstream-unavailable',
+      upstreamPartialData: 'upstream-partial-data',
+      upstreamMalformedData: 'upstream-malformed-data',
       activeReleaseCheckFailed: 'active-release-check-failed',
       dispatchFailed: 'dispatch-failed',
     },
@@ -169,6 +185,10 @@ const releaseTriggerPolicyV1 = {
       'fixture-validation-failed',
       'detector-failed',
       'source-contract-broken',
+      'upstream-timeout',
+      'upstream-unavailable',
+      'upstream-partial-data',
+      'upstream-malformed-data',
       'active-release-check-failed',
       'dispatch-failed',
     ],
@@ -179,6 +199,10 @@ const releaseTriggerPolicyV1 = {
       'fixture-validation-failed': 'error',
       'detector-failed': 'error',
       'source-contract-broken': 'error',
+      'upstream-timeout': 'error',
+      'upstream-unavailable': 'error',
+      'upstream-partial-data': 'error',
+      'upstream-malformed-data': 'error',
       'active-release-check-failed': 'error',
       'dispatch-failed': 'error',
     },
@@ -237,6 +261,10 @@ function validateReleaseTriggerReasons(policy) {
     'fixtureValidationFailed',
     'detectorFailed',
     'sourceContractBroken',
+    'upstreamTimeout',
+    'upstreamUnavailable',
+    'upstreamPartialData',
+    'upstreamMalformedData',
     'activeReleaseCheckFailed',
     'dispatchFailed',
   ];
@@ -300,6 +328,22 @@ export function validateReleaseTriggerPolicy(policy) {
   assertPlainObject(policy.upstream, 'upstream');
   assertString(policy.upstream.versionPath, 'upstream.versionPath');
   assertString(policy.upstream.unitsPath, 'upstream.unitsPath');
+
+  assertPlainObject(policy.upstreamFetch, 'upstreamFetch');
+  for (const key of ['timeoutMs', 'attempts', 'retryDelayMs']) {
+    if (!Number.isInteger(policy.upstreamFetch[key]) || policy.upstreamFetch[key] < 0) {
+      throw new Error(`Invalid release trigger policy: upstreamFetch.${key} must be a non-negative integer.`);
+    }
+  }
+  if (policy.upstreamFetch.timeoutMs < 1 || policy.upstreamFetch.attempts < 1) {
+    throw new Error('Invalid release trigger policy: upstreamFetch timeoutMs and attempts must be positive.');
+  }
+  if (
+    !Array.isArray(policy.upstreamFetch.retryableStatuses) ||
+    policy.upstreamFetch.retryableStatuses.some((status) => !Number.isInteger(status) || status < 100 || status > 599)
+  ) {
+    throw new Error('Invalid release trigger policy: upstreamFetch.retryableStatuses must be HTTP status integers.');
+  }
 
   assertPlainObject(policy.fixtures, 'fixtures');
   assertString(policy.fixtures.directory, 'fixtures.directory');

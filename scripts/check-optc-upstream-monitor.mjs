@@ -24,6 +24,13 @@ export const UPSTREAM_MONITOR_POLICY = Object.freeze({
   recentHistoryLimit: 8,
 });
 
+const releaseDetectorFailureReasons = new Set([
+  'upstream-timeout',
+  'upstream-unavailable',
+  'upstream-partial-data',
+  'upstream-malformed-data',
+]);
+
 const reportFileName = 'upstream-monitor-report.json';
 
 function isObject(value) {
@@ -141,6 +148,7 @@ export function normalizeReleaseCheckResult(releaseCheckResult) {
     remoteCharacterCount,
     newCharacterIds,
     newCharacterCount,
+    upstreamFetch: isObject(releaseCheckResult.upstreamFetch) ? releaseCheckResult.upstreamFetch : null,
   };
 }
 
@@ -161,6 +169,7 @@ function buildCurrentSignals(releaseCheckResult, policy) {
     newCharacterCount: releaseCheckResult.newCharacterCount,
     newCharacterIds: releaseCheckResult.newCharacterIds,
     newCharacterIdSample: releaseCheckResult.newCharacterIds.slice(0, policy.maxNewCharacterSample),
+    upstreamFetch: releaseCheckResult.upstreamFetch,
   };
 }
 
@@ -415,6 +424,16 @@ export function buildUpstreamMonitorReport({
       severity: 'error',
       message: 'Release detector output was missing or did not contain usable upstream/local count signals.',
       details: {},
+    });
+  } else if (current.upstreamFetch?.status === 'failed' || releaseDetectorFailureReasons.has(current.detectorReason)) {
+    warnings.push({
+      id: 'release-check-failed',
+      severity: 'error',
+      message: 'Release detector failed before producing a usable upstream comparison.',
+      details: {
+        detectorReason: current.detectorReason,
+        upstreamFetchReason: current.upstreamFetch?.reason ?? null,
+      },
     });
   } else {
     for (const warning of [
