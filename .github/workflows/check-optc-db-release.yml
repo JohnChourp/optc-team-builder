@@ -25,6 +25,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     outputs:
       run_status: ${{ steps.release-trigger-report.outputs.run_status }}
       run_reason: ${{ steps.release-trigger-report.outputs.run_reason }}
@@ -37,6 +38,14 @@ jobs:
       duplicate_release_dispatch_blocked: ${{ steps.release-trigger-report.outputs.duplicate_release_dispatch_blocked }}
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 40 minutes"
+            echo "- Concurrency policy: Release detector runs are serialized and never cancel in-progress release evidence or dispatch checks."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -479,12 +488,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: check
     if: ${{ always() }}
+    timeout-minutes: 10
     permissions:
       contents: read
       actions: read
       issues: write
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 10 minutes"
+            echo "- Concurrency policy: Release detector notification runs are preserved with their source release-check run."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 

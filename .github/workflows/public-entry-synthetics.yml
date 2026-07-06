@@ -24,6 +24,14 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 15 minutes"
+            echo "- Concurrency policy: Public-entry evidence runs are serialized and never cancel in-progress monitor runs."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 

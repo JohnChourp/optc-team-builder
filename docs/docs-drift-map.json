@@ -234,6 +234,8 @@
         ".github/workflows/",
         "scripts/check-github-actions-pins.mjs",
         "scripts/check-github-actions-pins.spec.ts",
+        "scripts/check-github-workflow-budgets.mjs",
+        "scripts/check-github-workflow-budgets.spec.ts",
         "playwright.config.ts",
         "scripts/run-playwright-e2e.mjs",
         "scripts/lib/playwright-",
@@ -251,7 +253,8 @@
         "docs/feature-coverage-map.md",
         "docs/maintainer-validation-guide.md",
         "docs/review-ownership-policy.md",
-        "../optc-team-builder-brain/audits/869dwcbb3-dependency-maintenance.md"
+        "../optc-team-builder-brain/audits/869dwcbb3-dependency-maintenance.md",
+        "../optc-team-builder-brain/audits/869dwchu0-workflow-concurrency-timeouts.md"
       ],
       "owner": "Dependency cadence, update review, and rollback policy",
       "notes": "Dependabot, package, workflow, Playwright, performance, release-check, release-readiness, or native-tooling updates should keep the dependency maintenance policy and validation routing aligned."
