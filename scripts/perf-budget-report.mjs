@@ -480,11 +480,8 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
       const budgetMs = metric.budgets[viewport] ?? null;
       const id = buildMetricId(definition.harness, viewport, metric.area, metric.metricKey);
       const baselineRow = baselineRows.get(id);
-      const baselineMs =
-        typeof baselineRow?.actualMs === 'number' && Number.isFinite(baselineRow.actualMs)
-          ? Math.round(baselineRow.actualMs)
-          : null;
-      const deltaMs = actualMs === null || baselineMs === null ? null : actualMs - baselineMs;
+      const baselineMs = toOptionalFiniteNumber(baselineRow?.actualMs);
+      const deltaMs = actualMs === null || baselineMs === null ? null : toOptionalFiniteNumber(actualMs - baselineMs);
       const deltaPercent =
         baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
       const hardBudgetStatus =
@@ -522,11 +519,8 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
     const budgetMs = metric.budgets[viewport] ?? null;
     const id = buildMetricId(definition.harness, viewport, metric.area, metric.metricLabel);
     const baselineRow = baselineRows.get(id);
-    const baselineMs =
-      typeof baselineRow?.actualMs === 'number' && Number.isFinite(baselineRow.actualMs)
-        ? Math.round(baselineRow.actualMs)
-        : null;
-    const deltaMs = actualMs === null || baselineMs === null ? null : actualMs - baselineMs;
+    const baselineMs = toOptionalFiniteNumber(baselineRow?.actualMs);
+    const deltaMs = actualMs === null || baselineMs === null ? null : toOptionalFiniteNumber(actualMs - baselineMs);
     const deltaPercent =
       baselineMs && baselineMs > 0 && deltaMs !== null ? (deltaMs / baselineMs) * 100 : null;
     const hardBudgetStatus =

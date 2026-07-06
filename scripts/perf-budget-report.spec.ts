@@ -479,6 +479,50 @@ describe('perf-budget-report', () => {
     );
   });
 
+  it('preserves sub-millisecond baseline precision for codec deltas', async () => {
+    const rootDir = await makeTempDir();
+    const currentDir = await writeCurrentResults(
+      rootDir,
+      abilityResult(),
+      routeLoadResult(),
+      savedTeamCodecResult({
+        shareDecodeMs: 0.07,
+      }),
+    );
+    const baselinePath = path.join(rootDir, 'baseline-report.json');
+    await writeFile(
+      baselinePath,
+      JSON.stringify({
+        schemaVersion: 1,
+        generatedAt: '2026-06-26T00:00:00.000Z',
+        status: 'passed',
+        workflow: { runUrl: 'https://example.test/actions/runs/1' },
+        metricRows: [
+          {
+            id: 'saved-team-codecs.node.saved-team-codecs.sharedecodems',
+            actualMs: 0.08,
+          },
+        ],
+      }),
+    );
+
+    const report = await buildPerformanceBudgetReport({
+      currentDir,
+      baselineReportPath: baselinePath,
+    });
+
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'saved-team-codecs.node.saved-team-codecs.sharedecodems',
+        baselineMs: 0.08,
+        deltaMs: -0.01,
+      }),
+    );
+    expect(formatPerformanceBudgetSummary(report)).toContain(
+      '| saved-team-codecs | node | Saved-team codecs | share decode | 0.07ms | 3ms | 0.08ms | -0.01ms (-12.5%) |',
+    );
+  });
+
   it('writes useful current result metadata', async () => {
     const rootDir = await makeTempDir();
     const currentDir = await writeCurrentResults(rootDir);
