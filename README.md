@@ -248,10 +248,11 @@ This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workf
   `/tabs/manual-team-builder?teamShare=...` landing show the release B content
   after `CHECK_FOR_UPDATES` and `ACTIVATE_UPDATE`. The workflow uploads
   `pwa-cache-freshness-report` with JSON and screenshots.
-- Public guide, share-link landing, and compare-entry route cost is checked by
-  `npm run perf:route-load` as part of the scheduled/manual `Performance
-  Budgets` workflow. The route-load harness records production route-ready
-  timings, initial JS size, and selected route chunk sizes before the
+- Public guide, share-link landing, compare-entry, Characters search, Saved
+  Teams entry, and Captain Coverage entry route cost is checked by `npm run
+  perf:route-load` as part of the scheduled/manual `Performance Budgets`
+  workflow. The route-load harness records production route-ready timings,
+  initial JS size, and selected route chunk sizes before the
   compact `performance-budget-report` artifact is built. Visual harness
   screenshots are uploaded separately as `performance-budget-visual-evidence`
   only when hard-budget failures or baseline warnings need triage.
