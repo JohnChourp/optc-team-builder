@@ -112,7 +112,7 @@ function routeLoadResult(overrides: Record<string, number | null> = {}) {
   const value = (key: string, fallback: number) => (Object.hasOwn(overrides, key) ? overrides[key] : fallback);
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     capturedAt: '2026-07-05T00:00:00.000Z',
     baseURL: 'http://127.0.0.1:8448',
     appCommit: 'abc1234',
@@ -126,6 +126,9 @@ function routeLoadResult(overrides: Record<string, number | null> = {}) {
         guide: { rawBytes: value('guideRawBytes', 4_000), gzipBytes: 2_000 },
         manualShare: { rawBytes: value('manualShareRawBytes', 274_000), gzipBytes: 64_000 },
         compare: { rawBytes: value('compareRawBytes', 636_000), gzipBytes: 140_000 },
+        characters: { rawBytes: value('charactersRawBytes', 70_000), gzipBytes: 16_000 },
+        savedTeams: { rawBytes: value('savedTeamsRawBytes', 74_000), gzipBytes: 19_000 },
+        captainCoverage: { rawBytes: value('captainCoverageRawBytes', 78_000), gzipBytes: 19_000 },
       },
     },
     viewportRuns: [
@@ -136,6 +139,9 @@ function routeLoadResult(overrides: Record<string, number | null> = {}) {
             guideShareCompareReadyMs: value('desktopGuideReadyMs', 200),
             manualShareLandingReadyMs: value('desktopManualShareReadyMs', 1000),
             compareEntryReadyMs: value('desktopCompareReadyMs', 450),
+            charactersSearchReadyMs: value('desktopCharactersSearchReadyMs', 1100),
+            savedTeamsReadyMs: value('desktopSavedTeamsReadyMs', 1500),
+            captainCoverageReadyMs: value('desktopCaptainCoverageReadyMs', 1600),
           },
         },
       },
@@ -146,6 +152,9 @@ function routeLoadResult(overrides: Record<string, number | null> = {}) {
             guideShareCompareReadyMs: value('mobileGuideReadyMs', 200),
             manualShareLandingReadyMs: value('mobileManualShareReadyMs', 1000),
             compareEntryReadyMs: value('mobileCompareReadyMs', 450),
+            charactersSearchReadyMs: value('mobileCharactersSearchReadyMs', 1100),
+            savedTeamsReadyMs: value('mobileSavedTeamsReadyMs', 1500),
+            captainCoverageReadyMs: value('mobileCaptainCoverageReadyMs', 1600),
           },
         },
       },
@@ -214,8 +223,8 @@ describe('perf-budget-report', () => {
     const report = await buildPerformanceBudgetReport({ currentDir });
 
     expect(report.status).toBe('passed');
-    expect(report.summary.metricCount).toBe(47);
-    expect(report.summary.budgetedMetricCount).toBe(41);
+    expect(report.summary.metricCount).toBe(56);
+    expect(report.summary.budgetedMetricCount).toBe(50);
     expect(report.hardBudgetFailures).toEqual([]);
     expect(report.invalidMetricFailures).toEqual([]);
     expect(report.baseline).toBeNull();
@@ -242,6 +251,20 @@ describe('perf-budget-report', () => {
     );
     expect(report.metricRows).toContainEqual(
       expect.objectContaining({
+        id: 'route-load.desktop.route-load.characterssearchreadyms',
+        actualMs: 1100,
+        budgetMs: 1600,
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.mobile.route-load.captaincoveragereadyms',
+        actualMs: 1600,
+        budgetMs: 4500,
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
         id: 'saved-team-codecs.node.saved-team-codecs.sharedecodems',
         actualMs: 1,
         budgetMs: 3,
@@ -263,6 +286,14 @@ describe('perf-budget-report', () => {
         unit: 'bytes',
       }),
     );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.bundle.bundle.characters-route-raw-js',
+        actualMs: 70_000,
+        budgetMs: 170_000,
+        unit: 'bytes',
+      }),
+    );
   });
 
   it('fails hard budgets while still reporting all metrics', async () => {
@@ -281,7 +312,7 @@ describe('perf-budget-report', () => {
         metricId: 'ability-filters.desktop.saved-teams.firsttogglems',
       }),
     ]);
-    expect(report.metricRows).toHaveLength(47);
+    expect(report.metricRows).toHaveLength(56);
   });
 
   it('fails route-load timing and bundle hard budgets', async () => {
@@ -292,6 +323,8 @@ describe('perf-budget-report', () => {
       routeLoadResult({
         desktopManualShareReadyMs: 2500.4,
         compareRawBytes: 740_001,
+        desktopCharactersSearchReadyMs: 1600.4,
+        savedTeamsRawBytes: 140_001,
       }),
     );
     const report = await buildPerformanceBudgetReport({ currentDir });
@@ -306,6 +339,14 @@ describe('perf-budget-report', () => {
         expect.objectContaining({
           metricId: 'route-load.bundle.bundle.compare-route-raw-js',
           message: expect.stringContaining('740.0KB'),
+        }),
+        expect.objectContaining({
+          metricId: 'route-load.desktop.route-load.characterssearchreadyms',
+          message: expect.stringContaining('1600.4ms > 1600ms'),
+        }),
+        expect.objectContaining({
+          metricId: 'route-load.bundle.bundle.saved-teams-route-raw-js',
+          message: expect.stringContaining('140.0KB'),
         }),
       ]),
     );
