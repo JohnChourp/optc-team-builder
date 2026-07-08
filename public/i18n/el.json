@@ -444,6 +444,21 @@
       "reject": "Απόρριψη analytics"
     }
   },
+  "appUpdate": {
+    "title": "Νέα έκδοση διαθέσιμη",
+    "copy": "Μια νέα ενημέρωση του OPTC Team Builder είναι έτοιμη. Κάνε refresh για τις τελευταίες διορθώσεις.",
+    "copyNative": "Μια νέα έκδοση του OPTC Team Builder είναι διαθέσιμη για λήψη.",
+    "update": "Ενημέρωση",
+    "later": "Αργότερα",
+    "confirm": {
+      "title": "Διαθέσιμη ενημέρωση",
+      "message": "Μια νέα έκδοση είναι έτοιμη. Να γίνει επαναφόρτωση τώρα για ενημέρωση του OPTC Team Builder;",
+      "messageNative": "Μια νέα έκδοση είναι διαθέσιμη. Να ανοίξει τώρα η σελίδα λήψης;",
+      "cancel": "Όχι τώρα",
+      "confirm": "Ενημέρωση τώρα",
+      "download": "Λήψη"
+    }
+  },
   "installPrompt": {
     "title": "Εγκατάσταση OPTC Team Builder",
     "copy": "Πρόσθεσε την εφαρμογή στο κινητό για full-screen shortcut και offline-friendly φόρτωση.",

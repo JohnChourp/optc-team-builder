@@ -444,6 +444,21 @@
       "reject": "Reject analytics"
     }
   },
+  "appUpdate": {
+    "title": "New version available",
+    "copy": "A fresh OPTC Team Builder update is ready. Refresh to get the latest fixes.",
+    "copyNative": "A new OPTC Team Builder version is available to download.",
+    "update": "Update",
+    "later": "Later",
+    "confirm": {
+      "title": "Update available",
+      "message": "A new version is ready. Reload now to update OPTC Team Builder?",
+      "messageNative": "A new version is available. Open the download page now?",
+      "cancel": "Not now",
+      "confirm": "Update now",
+      "download": "Download"
+    }
+  },
   "installPrompt": {
     "title": "Install OPTC Team Builder",
     "copy": "Add the app to your phone for a full-screen shortcut and offline-friendly loading.",
