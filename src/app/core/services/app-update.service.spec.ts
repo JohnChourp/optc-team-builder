@@ -62,11 +62,17 @@ describe('AppUpdateService', () => {
     expect(service.updateAvailable()).toBe(true);
   });
 
-  it('marks an update available when the initial poll finds one', async () => {
-    const { service } = createService({ hasUpdate: true });
+  it('does not eagerly check on init but marks an update when a later poll finds one', async () => {
+    const { service, swUpdate } = createService({ hasUpdate: true });
 
     service.init();
-    await vi.waitFor(() => expect(service.updateAvailable()).toBe(true));
+    expect(swUpdate.checkForUpdate).not.toHaveBeenCalled();
+    expect(service.updateAvailable()).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+
+    expect(swUpdate.checkForUpdate).toHaveBeenCalled();
+    expect(service.updateAvailable()).toBe(true);
   });
 
   it('activates the pending version and reloads when applying the update', async () => {

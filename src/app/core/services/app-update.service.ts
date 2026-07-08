@@ -37,13 +37,17 @@ export class AppUpdateService {
 
     this.started = true;
 
+    // ngsw runs its own update check once the app stabilizes and emits
+    // VERSION_READY for a build that was already newer at startup, so we rely on
+    // versionUpdates for the initial signal rather than an eager checkForUpdate()
+    // (an eager check perturbs ngsw's controlled version assignment). The periodic
+    // poll then covers long-lived sessions where a new build ships mid-session.
     this.swUpdate.versionUpdates.subscribe((event) => {
       if (event.type === 'VERSION_READY') {
         this.markAvailable();
       }
     });
 
-    void this.checkForUpdate();
     setInterval(() => {
       void this.checkForUpdate();
     }, this.pollIntervalMs);
