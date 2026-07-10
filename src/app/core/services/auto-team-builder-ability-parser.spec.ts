@@ -1016,6 +1016,72 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('tags Remove SFX from OPTC-DB "Blindness" wording across special, sailor and support', async () => {
+    // In-game the enemy debuff is "Remove SFX" (hides tap-timing rings); OPTC-DB
+    // ability text always names it "Blindness". The picker exposes `remove_sfx`,
+    // so Blindness-cleanse wording must populate the SFX keys on every surface.
+    const characters: ParserCharacters = [
+      {
+        id: 920001,
+        detail: {
+          specialText: 'Removes Blindness duration completely',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 920002,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: ['Reduces Blindness duration by 3 turns'],
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 920003,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          supportData: [
+            {
+              supportedCharactersText: 'Some Crew',
+              levelDescriptions: [
+                'Once per adventure, when an enemy inflicts you with ATK DOWN or Blindness, reduces ATK DOWN and Blindness duration by 2 turns',
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'remove_sfx')).toEqual(
+      expect.objectContaining({
+        category: 'special',
+        label: 'Remove SFX',
+        groupLabel: 'Reduce Status Effect Duration',
+        matchingCharacterIds: expect.arrayContaining([920001]),
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'crewmate_recover_remove_sfx')).toEqual(
+      expect.objectContaining({
+        category: 'crewmate',
+        matchingCharacterIds: expect.arrayContaining([920002]),
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'support_status_effect_recovery_remove_sfx')).toEqual(
+      expect.objectContaining({
+        category: 'support',
+        matchingCharacterIds: [920003],
+      }),
+    );
+    // The dead `remove_blindness` legacy key must no longer be emitted.
+    expect(catalog.find((item) => item.key === 'remove_blindness')).toBeUndefined();
+  });
+
   it('indexes structured captain utility matches in the ability catalog', async () => {
     const characters: ParserCharacters = [
       {

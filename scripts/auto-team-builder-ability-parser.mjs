@@ -382,8 +382,10 @@ const CREWMATE_ABILITY_MATCHERS = [
     patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bspecial reverse\b/i],
   },
   {
+    // "Remove SFX" debuff == OPTC-DB "Blindness" in sailor ability text
+    // (e.g. "Reduces Blindness duration by 3 turns").
     key: 'crewmate_recover_remove_sfx',
-    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bSFX\b/i],
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\b(?:blindness|SFX)\b/i],
   },
   {
     key: 'crewmate_recover_paralysis',
@@ -541,9 +543,15 @@ const TARGET_ALIASES = [
     matcher: (target) => target.includes('paralysis'),
   },
   {
-    key: 'remove_blindness',
-    label: 'Remove Blindness',
-    matcher: (target) => target.includes('blindness') || target === 'blind',
+    // The enemy debuff surfaced in the picker as "Remove SFX" (it hides the
+    // tap-timing SFX rings, making PERFECTs harder) is written as "Blindness"
+    // in OPTC-DB ability text. Map that wording to the picker-visible
+    // `remove_sfx` key so the Special filter matches these cleanse specials.
+    // The `sfx` clause future-proofs against upstream renaming Blindness -> SFX.
+    key: 'remove_sfx',
+    label: 'Remove SFX',
+    matcher: (target) =>
+      target.includes('blindness') || target === 'blind' || target.includes('sfx'),
   },
   {
     key: 'remove_atk_down',
@@ -1680,8 +1688,9 @@ function addSupportStatusRecoveryKeys(keys, text) {
       /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\block chain multiplier\b/i,
     ],
     [
+      // "Remove SFX" debuff == OPTC-DB "Blindness" in support ability text.
       'support_status_effect_recovery_remove_sfx',
-      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bSFX\b/i,
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:blindness|SFX)\b/i,
     ],
   ];
 
