@@ -9,8 +9,14 @@ const { addListener } = vi.hoisted(() => ({
   addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
 }));
 
+// Keep the full `App` shape ({ getInfo, addListener }) even though this spec only
+// uses addListener: the Angular unit-test builder shares one `@capacitor/app`
+// module mock across spec files, so a partial mock here would strip `getInfo`
+// from sibling specs (e.g. native-update.service.spec) and make their
+// `App.getInfo()` throw — a flaky, order-dependent failure.
 vi.mock('@capacitor/app', () => ({
   App: {
+    getInfo: vi.fn().mockResolvedValue({ version: '1.0.0' }),
     addListener,
   },
 }));

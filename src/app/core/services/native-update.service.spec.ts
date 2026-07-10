@@ -47,7 +47,11 @@ describe('NativeUpdateService', () => {
   afterEach(() => {
     vi.clearAllTimers();
     vi.useRealTimers();
-    vi.clearAllMocks();
+    // restore (not just clear) so the `Capacitor.isNativePlatform` spy this spec
+    // installs does not leak `isNativePlatform → true` into sibling spec files
+    // (e.g. app.component's browser-install-banner tests) under the shared
+    // Angular unit-test builder.
+    vi.restoreAllMocks();
   });
 
   it('stays inert on web platforms', () => {
