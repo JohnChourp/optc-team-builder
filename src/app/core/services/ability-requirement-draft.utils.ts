@@ -122,9 +122,9 @@ const ABILITY_VISUALS: Record<string, Omit<AbilityRequirementVisualMeta, 'isFall
     badge: 'BD',
     tone: 'gold',
   },
-  remove_blindness: {
+  remove_sfx: {
     icon: eyeOffOutline,
-    badge: 'BL',
+    badge: 'SFX',
     tone: 'blue',
   },
   remove_burn: {
