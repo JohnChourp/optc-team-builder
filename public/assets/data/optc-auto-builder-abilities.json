@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-10T14:26:52.722Z",
+  "generatedAt": "2026-07-10T20:23:34.183Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -13483,7 +13483,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 992,
+      "matchCount": 993,
       "matchingCharacterIds": [
         389,
         390,
@@ -14264,6 +14264,7 @@
         4253,
         4256,
         4257,
+        4261,
         4262,
         4263,
         4267,
@@ -15121,6 +15122,7 @@
         4253,
         4256,
         4257,
+        4261,
         4262,
         4267,
         4268,
@@ -21049,6 +21051,14 @@
           "slotTokens": [
             "INT",
             "STR"
+          ]
+        },
+        {
+          "characterId": 4261,
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "BOMB",
+            "SUPERBOMB"
           ]
         },
         {
@@ -44268,7 +44278,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1126,
+      "matchCount": 1129,
       "matchingCharacterIds": [
         4,
         12,
@@ -45171,6 +45181,7 @@
         4133,
         4134,
         4135,
+        4137,
         4138,
         4139,
         4140,
@@ -45221,6 +45232,8 @@
         4251,
         4252,
         4253,
+        4260,
+        4261,
         4263,
         4268,
         4274,

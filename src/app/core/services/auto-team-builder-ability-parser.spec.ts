@@ -463,6 +463,26 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('detects favorable slots when the clause contains a [S. BOMB] (Super Bomb) orb token', () => {
+    // The inner ". " of "[S. BOMB]" used to read as a sentence/clause boundary and
+    // break the `[^.;]`-bounded matcher, dropping make_slots_favorable entirely
+    // (e.g. Dr. Vegapunk - Flowers for the Deceased, id 4261).
+    const abilities = analyzeBuilderAbilityText(
+      'Changes all orbs into [BOMB] orbs at the start of the fight, boosts ATK of all character by 4x, makes [BOMB] and [S. BOMB] orbs beneficial for all characters, and restores Special Cooldown of all characters by 2 turns when they are rewinded.',
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['BOMB', 'SUPERBOMB'],
+          effectTargetScope: 'crew',
+        }),
+      ]),
+    );
+  });
+
   it('extracts favorable slot tokens and scope from only the slot effect segment', () => {
     const abilities = analyzeBuilderAbilityText(
       "Makes [STR] and [QCK] orbs beneficial for all characters, recovers 0.5x this character's RCV and makes [DEX] orbs beneficial for [INT] characters.",

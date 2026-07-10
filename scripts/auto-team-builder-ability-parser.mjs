@@ -779,8 +779,23 @@ function normalizeHtmlAbilityText(value) {
   return normalizeHtmlToText(value);
 }
 
+// Orb-token spellings that carry inner punctuation/whitespace break sentence and
+// clause splitting (a `. ` inside `[S. BOMB]` reads as a sentence boundary) and the
+// `[^.;]`-bounded effect matchers. Canonicalize them to their bracketed slot-token
+// form up front so every downstream matcher and slot-token extractor sees a clean,
+// period-free token. `[S. BOMB]` (the Super Bomb orb) is currently the only such
+// spelling in upstream data; add future aliases here.
+const ORB_TOKEN_TEXT_ALIASES = [[/\[\s*S\.\s*BOMB\s*\]/gi, '[SUPERBOMB]']];
+
+function canonicalizeOrbTokens(text) {
+  return ORB_TOKEN_TEXT_ALIASES.reduce(
+    (current, [pattern, replacement]) => current.replace(pattern, replacement),
+    text,
+  );
+}
+
 export function extractPrimaryAbilityBranchText(value) {
-  const normalizedText = normalizeLegacyAbilityText(value);
+  const normalizedText = canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
 
   if (!normalizedText.length) {
     return '';
