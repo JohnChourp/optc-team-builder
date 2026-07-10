@@ -61,6 +61,11 @@ vi.mock('@capacitor/app', () => ({
     getInfo: vi.fn().mockResolvedValue({
       version: '9.9.9',
     }),
+    // The Angular unit-test builder shares one @capacitor/app module mock across
+    // spec files. NativeUpdateService calls App.addListener('resume', ...) on init,
+    // so this mock must expose the full App shape or, when it wins the shared
+    // registry, native-update.service.spec fails non-deterministically. See #161.
+    addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
   },
 }));
 
