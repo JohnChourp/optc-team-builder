@@ -281,6 +281,21 @@ ability catalog spikes, or generated character changes without a manifest
 `sourceVersion` change should trigger a closer review against the focused parser
 tests and raw generated SQL/JSON diff.
 
+### Ability Detection Semantic Diff
+
+For a targeted ability-parser rule or `scripts/data/builder-ability-corrections.json`
+change, prove the effect is scoped before merging. Regenerate the dataset offline
+with `npm run data:apply-manual` (no network, unlike `scripts/import-optc-data.mjs`,
+which pulls unrelated upstream churn), then semantic-diff
+`public/assets/data/optc-auto-builder-abilities.json` against `git HEAD` per ability
+key. Compare each key's character-level id sets (`matchingCharacterIds`,
+`captainAbilityMatchingCharacterIds`) **and** the structured fields on
+already-matched characters (`captainAbilityEffectMatches`, `slotTokens`,
+`minEffectValue`, `turnMatchingCharacterIds`), so a value-level change is not masked
+by an unchanged id set. A clean targeted fix shows only the intended key(s) gaining
+or losing characters with no collateral movement on sibling keys; investigate any
+removal or value change you did not intend.
+
 ### Browser Performance
 
 Ability-filter harness:
