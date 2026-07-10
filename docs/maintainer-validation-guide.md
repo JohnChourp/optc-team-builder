@@ -77,6 +77,13 @@ Use a deep run when any of these are true:
 - a prior lightweight run fails or produces surprising output
 - the PR is a release-candidate or post-merge recovery path
 
+When a pinned GitHub Action's moving major tag advances upstream (e.g.
+`actions/setup-java # v5` moving from v5.4.0 to v5.5.0), the strict
+`node scripts/check-github-actions-pins.mjs` gate fails with "source tag comment
+must resolve to the pinned SHA". Re-pin the `uses:` SHA to the commit the tagged
+major now points to (`git ls-remote https://github.com/<owner>/<action>.git`),
+keep the trailing `# vN` comment, and confirm the gate reports `Status: passed`.
+
 When intentional recommendation scoring changes land, update
 `src/app/core/services/auto-team-builder.recommendation-benchmark.spec.ts` in
 the same PR as the scoring change. Keep each benchmark expectation tied to a
