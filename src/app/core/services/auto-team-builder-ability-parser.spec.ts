@@ -376,6 +376,54 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('keeps a cumulative second conditional captain clause with a different condition', () => {
+    // Kurozumi Orochi (ids 3571/3572): two independent crew-composition conditions.
+    // The 3-word fingerprint used to collapse both to "if your crew" and drop the
+    // second clause as a duplicate restatement, losing its make_slots_favorable.
+    const text =
+      'If your crew has 6 Driven characters, boosts ATK of Driven characters by 3.5x. If your crew has 5 [STR] characters, boosts HP of [STR] characters by 1.3x and makes [QCK] and [DEX] orbs beneficial for all characters.';
+
+    expect(extractPrimaryAbilityBranchText(text)).toContain(
+      'makes [QCK] and [DEX] orbs beneficial for all characters',
+    );
+    expect(analyzeBuilderAbilityText(text, 'captainAbility')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          source: 'captainAbility',
+          slotTokens: ['QCK', 'DEX'],
+          effectTargetScope: 'crew',
+        }),
+      ]),
+    );
+  });
+
+  it('still drops a same-condition powered-up restatement branch', () => {
+    // Guard the non-regression direction: when two branches share the SAME
+    // condition, the later (higher-magnitude) restatement must still be dropped.
+    const text =
+      'If HP is above 50%, boosts ATK of all characters by 2x. If HP is above 50%, boosts ATK of all characters by 3x and reduces Bind duration by 5 turns.';
+
+    expect(extractPrimaryAbilityBranchText(text)).not.toContain('reduces Bind duration by 5 turns');
+    expect(analyzeBuilderAbilityText(text, 'captainAbility')).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'remove_bind' })]),
+    );
+  });
+
+  it('keeps distinct captain-conditioned sailor branches instead of deduping them', () => {
+    // Jabra (id 4334) sailor text: three "If your Captain is a <class> character"
+    // branches. The last branch's Chain Coefficient Reduction removal was dropped
+    // when all three collapsed to the same "if your captain" fingerprint.
+    const text =
+      'If your Captain is a Shooter character, makes [STR] orbs beneficial for Shooter characters. If your Captain is a Fighter character, makes [QCK] orbs beneficial for Fighter characters, and reduces Chain Coefficient Reduction duration by 1 turn.';
+
+    expect(analyzeBuilderAbilityText(text, 'sailorAbilities')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_chain_coefficient_reduction' }),
+      ]),
+    );
+  });
+
   it('extracts representable captain ability effects without standard leader stat boosts', () => {
     const abilities = analyzeBuilderAbilityText(
       'Boosts ATK of all characters by 5x, boosts RCV of crew by 1.5x, boosts max HP by 1.3x, reduces Special Cooldown of all characters by 1 turn, reduces damage received by 20%, makes [DEX] orbs beneficial for all characters, boosts chain multiplier by 1.5x, reduces Bind duration by 5 turns and guarantees duplicating a drop upon completion of the island.',

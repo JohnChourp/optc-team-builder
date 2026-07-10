@@ -2338,7 +2338,34 @@ function splitAbilityTextIntoSentences(text) {
     .filter(Boolean);
 }
 
+const CONDITIONAL_BRANCH_STARTER_PATTERN = /^\s*(?:if|when|while|unless)\b/i;
+
 function createBranchStarterFingerprint(sentence) {
+  // Conditional branches ("If your crew has 6 Driven characters, ...") are only
+  // distinguished by their CONDITION, which extends past the first few words and
+  // hinges on type/class tokens that the default fingerprint strips. Two genuinely
+  // different conditions ("6 Driven characters" vs "5 [STR] characters") both
+  // collapse to "if your crew", so a real cumulative second clause gets mistaken
+  // for a restated duplicate branch and dropped (e.g. Kurozumi Orochi 3571/3572,
+  // which lose their conditional HP boost and make_slots_favorable). For these,
+  // fingerprint the whole leading condition (up to the first comma) and preserve
+  // the bracketed type tokens, so different conditions no longer collide while a
+  // same-condition powered-up restatement still shares a fingerprint and dedups.
+  if (CONDITIONAL_BRANCH_STARTER_PATTERN.test(sentence)) {
+    const conditionText = sentence.split(',')[0];
+    const normalizedCondition = conditionText
+      .toLowerCase()
+      .replace(/\[([^\]]+)\]/g, (_match, token) => ` ${token.replace(/[^a-z]/gi, '')} `)
+      .replace(/\b\d+(?:\.\d+)?x?\b/g, ' ')
+      .replace(/[^a-z\s']/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (normalizedCondition.length) {
+      return `if:${normalizedCondition}`;
+    }
+  }
+
   const normalizedSentence = sentence
     .toLowerCase()
     .replace(/\[[^\]]+\]/g, ' ')

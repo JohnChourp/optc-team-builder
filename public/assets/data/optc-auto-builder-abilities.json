@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-10T20:23:34.183Z",
+  "generatedAt": "2026-07-10T20:24:56.275Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -20,7 +20,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1819,
+      "matchCount": 1820,
       "matchingCharacterIds": [
         1,
         2,
@@ -1814,6 +1814,7 @@
         4475,
         4480,
         4481,
+        4482,
         4484,
         4487,
         4490,
@@ -13483,7 +13484,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 993,
+      "matchCount": 995,
       "matchingCharacterIds": [
         389,
         390,
@@ -13908,6 +13909,8 @@
         3562,
         3563,
         3569,
+        3571,
+        3572,
         3575,
         3576,
         3589,
@@ -14774,6 +14777,8 @@
         3562,
         3563,
         3569,
+        3571,
+        3572,
         3575,
         3576,
         3589,
@@ -18023,6 +18028,22 @@
         },
         {
           "characterId": 3569,
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "DEX",
+            "QCK"
+          ]
+        },
+        {
+          "characterId": 3571,
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "DEX",
+            "QCK"
+          ]
+        },
+        {
+          "characterId": 3572,
           "effectTargetScope": "crew",
           "slotTokens": [
             "DEX",
@@ -23022,7 +23043,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1503,
+      "matchCount": 1504,
       "matchingCharacterIds": [
         21,
         23,
@@ -24261,6 +24282,7 @@
         3907,
         3908,
         3920,
+        3927,
         3928,
         3932,
         3933,
@@ -24628,7 +24650,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 628,
+      "matchCount": 629,
       "matchingCharacterIds": [
         566,
         570,
@@ -25088,6 +25110,7 @@
         3907,
         3908,
         3920,
+        3927,
         3932,
         3933,
         3938,
@@ -27967,7 +27990,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 561,
+      "matchCount": 563,
       "matchingCharacterIds": [
         73,
         251,
@@ -28393,6 +28416,7 @@
         3918,
         3923,
         3924,
+        3927,
         3931,
         3934,
         3937,
@@ -28506,6 +28530,7 @@
         4461,
         4475,
         4478,
+        4482,
         4486,
         4489,
         4491,
@@ -28863,6 +28888,7 @@
             3394,
             3516,
             3526,
+            3927,
             3949,
             4090,
             4609,
@@ -29107,6 +29133,7 @@
             4394,
             4410,
             4418,
+            4482,
             4491,
             4507,
             4522,
@@ -30736,7 +30763,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 180,
+      "matchCount": 181,
       "matchingCharacterIds": [
         2237,
         2238,
@@ -30905,6 +30932,7 @@
         4428,
         4431,
         4472,
+        4482,
         4488,
         4489,
         4503,
@@ -31150,6 +31178,7 @@
             4366,
             4381,
             4394,
+            4482,
             4571
           ]
         },
@@ -32310,7 +32339,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 115,
+      "matchCount": 116,
       "matchingCharacterIds": [
         1699,
         1700,
@@ -32411,6 +32440,7 @@
         4285,
         4321,
         4333,
+        4334,
         4387,
         4419,
         4428,
@@ -32429,6 +32459,12 @@
         4602
       ],
       "turnMatchingCharacterIds": [
+        {
+          "minTurns": 1,
+          "characterIds": [
+            4334
+          ]
+        },
         {
           "minTurns": 2,
           "characterIds": [
