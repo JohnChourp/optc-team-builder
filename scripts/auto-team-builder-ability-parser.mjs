@@ -779,8 +779,23 @@ function normalizeHtmlAbilityText(value) {
   return normalizeHtmlToText(value);
 }
 
+// Orb-token spellings that carry inner punctuation/whitespace break sentence and
+// clause splitting (a `. ` inside `[S. BOMB]` reads as a sentence boundary) and the
+// `[^.;]`-bounded effect matchers. Canonicalize them to their bracketed slot-token
+// form up front so every downstream matcher and slot-token extractor sees a clean,
+// period-free token. `[S. BOMB]` (the Super Bomb orb) is currently the only such
+// spelling in upstream data; add future aliases here.
+const ORB_TOKEN_TEXT_ALIASES = [[/\[\s*S\.\s*BOMB\s*\]/gi, '[SUPERBOMB]']];
+
+function canonicalizeOrbTokens(text) {
+  return ORB_TOKEN_TEXT_ALIASES.reduce(
+    (current, [pattern, replacement]) => current.replace(pattern, replacement),
+    text,
+  );
+}
+
 export function extractPrimaryAbilityBranchText(value) {
-  const normalizedText = normalizeLegacyAbilityText(value);
+  const normalizedText = canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
 
   if (!normalizedText.length) {
     return '';
@@ -2323,7 +2338,34 @@ function splitAbilityTextIntoSentences(text) {
     .filter(Boolean);
 }
 
+const CONDITIONAL_BRANCH_STARTER_PATTERN = /^\s*(?:if|when|while|unless)\b/i;
+
 function createBranchStarterFingerprint(sentence) {
+  // Conditional branches ("If your crew has 6 Driven characters, ...") are only
+  // distinguished by their CONDITION, which extends past the first few words and
+  // hinges on type/class tokens that the default fingerprint strips. Two genuinely
+  // different conditions ("6 Driven characters" vs "5 [STR] characters") both
+  // collapse to "if your crew", so a real cumulative second clause gets mistaken
+  // for a restated duplicate branch and dropped (e.g. Kurozumi Orochi 3571/3572,
+  // which lose their conditional HP boost and make_slots_favorable). For these,
+  // fingerprint the whole leading condition (up to the first comma) and preserve
+  // the bracketed type tokens, so different conditions no longer collide while a
+  // same-condition powered-up restatement still shares a fingerprint and dedups.
+  if (CONDITIONAL_BRANCH_STARTER_PATTERN.test(sentence)) {
+    const conditionText = sentence.split(',')[0];
+    const normalizedCondition = conditionText
+      .toLowerCase()
+      .replace(/\[([^\]]+)\]/g, (_match, token) => ` ${token.replace(/[^a-z]/gi, '')} `)
+      .replace(/\b\d+(?:\.\d+)?x?\b/g, ' ')
+      .replace(/[^a-z\s']/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (normalizedCondition.length) {
+      return `if:${normalizedCondition}`;
+    }
+  }
+
   const normalizedSentence = sentence
     .toLowerCase()
     .replace(/\[[^\]]+\]/g, ' ')
