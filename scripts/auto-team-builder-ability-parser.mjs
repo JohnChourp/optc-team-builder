@@ -257,7 +257,12 @@ const SPECIAL_ABILITY_MATCHERS = [
   [
     'change_slots',
     [
-      /\bchanges?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i,
+      // Exclude orb-EFFECT changes ("changes the Orb Multiplier / Amplification /
+      // Effects ... of [X] orbs"): those alter an orb's multiplier/effect, not its
+      // type, so they are not a slot/orb-type change (e.g. Kaido & Big Mom #4477
+      // "change the Orb Multiplier of specific orbs"). Genuine changes name an orb
+      // type or "the orb(s)" as the object, not the "Orb <effect>" noun.
+      /\bchanges?\b(?!\s+(?:the\s+)?Orb\s+(?:Multiplier|Amplification|Effects?)\b)[^.]{0,160}\b(?:orbs?|slots?)\b/i,
       /\btransforms?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i,
     ],
   ],

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T14:44:21.893Z",
+  "generatedAt": "2026-07-11T19:02:57.041Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -22665,7 +22665,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1504,
+      "matchCount": 1503,
       "matchingCharacterIds": [
         21,
         23,
@@ -24127,7 +24127,6 @@
         4470,
         4471,
         4473,
-        4477,
         4479,
         4480,
         4481,
@@ -24234,7 +24233,6 @@
         4392,
         4395,
         4469,
-        4477,
         4487,
         4502,
         4518,

@@ -347,6 +347,29 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('detects genuine orb-type changes but not "change the Orb Multiplier"', () => {
+    // Genuine orb-type conversion → change_slots.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Changes [STR] orbs of Fighter characters into [TND] orbs.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('change_slots');
+
+    // "change the Orb Multiplier of specific orbs" alters an orb's multiplier,
+    // not its type — it must NOT be tagged as a slot/orb change (#4477).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If a crew member uses a special to change the Orb Multiplier of specific orbs, replaces that buff with an ATK boost.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('change_slots');
+  });
+
   it('extracts multiple unique effects from one special text without duplicates', () => {
     expect(
       analyzeBuilderAbilityText(
