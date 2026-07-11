@@ -56,18 +56,9 @@ let i18nStub: {
   translate: ReturnType<typeof vi.fn>;
 };
 
-vi.mock('@capacitor/app', () => ({
-  App: {
-    getInfo: vi.fn().mockResolvedValue({
-      version: '9.9.9',
-    }),
-    // The Angular unit-test builder shares one @capacitor/app module mock across
-    // spec files. NativeUpdateService calls App.addListener('resume', ...) on init,
-    // so this mock must expose the full App shape or, when it wins the shared
-    // registry, native-update.service.spec fails non-deterministically. See #161.
-    addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
-  },
-}));
+// `@capacitor/app` is mocked once globally in src/test-setup.ts (shared `App`
+// singleton). AppComponent.loadAppVersion() calls App.getInfo() but tolerates any
+// value; no per-file mock is needed here.
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonApp: class {},

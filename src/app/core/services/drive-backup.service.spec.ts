@@ -2,24 +2,14 @@ import '@angular/compiler';
 import { computed, signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { App } from '@capacitor/app';
+
 import { DriveBackupService } from './drive-backup.service';
 import { type AllDataTransferPayload } from '../../pages/settings/all-data-transfer.utils';
 
-const { addListener } = vi.hoisted(() => ({
-  addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
-}));
-
-// Keep the full `App` shape ({ getInfo, addListener }) even though this spec only
-// uses addListener: the Angular unit-test builder shares one `@capacitor/app`
-// module mock across spec files, so a partial mock here would strip `getInfo`
-// from sibling specs (e.g. native-update.service.spec) and make their
-// `App.getInfo()` throw — a flaky, order-dependent failure.
-vi.mock('@capacitor/app', () => ({
-  App: {
-    getInfo: vi.fn().mockResolvedValue({ version: '1.0.0' }),
-    addListener,
-  },
-}));
+// `@capacitor/app` is mocked once globally in src/test-setup.ts (shared `App`
+// singleton). This spec only asserts that DriveBackupService never registers an
+// App resume listener, read from that shared mock.
 
 interface FetchMockQueue {
   mockResolvedValueOnce(value: Response): FetchMockQueue;
@@ -50,7 +40,7 @@ describe('DriveBackupService', () => {
     await service.ready();
 
     expect(fetch).not.toHaveBeenCalled();
-    expect(addListener).not.toHaveBeenCalled();
+    expect(App.addListener).not.toHaveBeenCalled();
   });
 
   it('reports when manual sync finds no local data and no Drive backup without creating Drive files', async () => {
