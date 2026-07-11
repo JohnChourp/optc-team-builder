@@ -577,6 +577,62 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('does not mis-tag glass-cannon / counter / heal clauses as reduce_damage', () => {
+    // Glass-cannon downside: "reduces HP ..., Increases damage received" must NOT
+    // be reduce_damage (the crew takes MORE damage). Regression for Dellinger.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'reduces HP of all characters by 20%, Increases damage received by 2x',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('reduce_damage');
+    // Counter: "reduces Despair ... and deals Nx the damage taken" is offensive, not reduction.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'reduces Despair duration by 10 turns and deals 100x the damage taken from enemies in the previous turn in [INT] damage to all enemies',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('reduce_damage');
+    // Debuff cure on a special: "Reduces ... Increase Damage Taken" is a status
+    // cure (remove_increase_damage_taken), not a % reduction.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces ATK DOWN and Increase Damage Taken by 2 turns', 'specialText'),
+      ),
+    ).not.toContain('reduce_damage');
+  });
+
+  it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
+    // Type-scoped and plain crew reductions.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces damage received from [PSY] enemies by 20%', 'captainAbility'),
+      ),
+    ).toContain('reduce_damage');
+    // Genuine reduction that co-occurs with a quoted "increases damage received"
+    // penalty it removes (Orochi) must still match.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "reduces damage received by 10% and removes the following effect from this character's Captain Ability: increases damage received by 1.5x",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('reduce_damage');
+    // Upstream typo "damage take" (missing n) — Sanji "Grill Shot".
+    const sanji = analyzeBuilderAbilityText(
+      'Boosts ATK of Powerhouse characters by 2.5x and reduces damage take by 10%.',
+      'captainAbility',
+    );
+    expect(sanji.find((a) => a.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({ minEffectValue: 10, effectTargetScope: 'crew' }),
+    );
+  });
+
   it('classifies favorable slots for non-captains as sub-member scoped', () => {
     const abilities = analyzeBuilderAbilityText(
       'Makes [RCV] orbs beneficial for non-captains.',

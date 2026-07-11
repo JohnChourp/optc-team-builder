@@ -219,7 +219,13 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['effect_boost', [/\bincreases?\b[^.]{0,120}\bboost effects?\b/i, /\beffect boost\b/i]],
   ['critical_damage_boost', [/\bcritical damage\b/i]],
   ['final_tap_atk_boost', [/\bfinal tap\b[^.]{0,120}\bATK\b/i]],
-  ['reduce_damage', [/\breduces?\b[^.]{0,120}\bdamage (?:received|taken)\b/i]],
+  // Require "reduces" to directly govern "damage received/taken" (canonical
+  // OPTC-DB "reduces damage received/taken by N%"; "take" handles an upstream
+  // typo, e.g. Sanji "reduces damage take by 10%"). A wide `[^.]{0,120}` bridge
+  // previously mis-tagged debuff cures ("reduces Increase Damage Taken"),
+  // counters ("deals Nx the damage taken"), and glass-cannon downsides
+  // ("increases damage received") as reduce_damage.
+  ['reduce_damage', [/\breduces?\s+(?:any\s+)?damage (?:received|taken|take)\b/i]],
   [
     'reduce_damage_over_threshold',
     [/\breduces?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bover\b[^.]{0,80}\bHP\b/i],
@@ -1061,8 +1067,14 @@ function addCaptainDamageReductionMatches(abilities, seen, normalizedText) {
   }
 
   for (const clause of extractCaptainEffectClauses(normalizedText)) {
+    // "reduces" must directly govern "damage received/taken" — clauses like
+    // "reduces HP ..., Increases damage received" (glass-cannon downside),
+    // "reduces Despair ... and deals Nx the damage taken" (counter), and
+    // "reduces Paralysis ... and recovers N% of damage taken" (heal) are NOT
+    // crew damage reduction and must not match. ("take" tolerates the upstream
+    // typo in Sanji "reduces damage take by 10%".)
     const damageReductionMatch = clause.match(
-      /\breduces?\b[^.;]{0,120}\bdamage (?:received|taken)\b/i,
+      /\breduces?\s+(?:any\s+)?damage (?:received|taken|take)\b/i,
     );
 
     if (!damageReductionMatch) {
@@ -1070,7 +1082,7 @@ function addCaptainDamageReductionMatches(abilities, seen, normalizedText) {
     }
 
     const match = clause.match(
-      /\breduces?\b[^.;]{0,120}\bdamage (?:received|taken)\b[^.;]{0,80}\bby\s+(\d+(?:\.\d+)?)%/i,
+      /\breduces?\s+(?:any\s+)?damage (?:received|taken|take)\b[^.;]{0,80}\bby\s+(\d+(?:\.\d+)?)%/i,
     );
     const minEffectValue = match ? normalizeEffectValue(match[1]) : null;
 
