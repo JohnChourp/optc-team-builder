@@ -56,6 +56,12 @@
         "withFavorites": "{{count}} από {{total}} χαρακτήρα/ες αυτού του box είναι favorites."
       }
     },
+    "characterTags": {
+      "label": "Character Tags",
+      "placeholder": "Επίλεξε character tags",
+      "noMatches": "Δεν βρέθηκαν tags",
+      "support": "Εμφάνισε μόνο χαρακτήρες στα αποτελέσματα που έχουν τουλάχιστον ένα από τα επιλεγμένα tags."
+    },
     "class": {
       "label": "Class",
       "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά class"
