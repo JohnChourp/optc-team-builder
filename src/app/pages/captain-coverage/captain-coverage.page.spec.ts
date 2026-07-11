@@ -1622,6 +1622,7 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain("t('results.openCharacterDetails')");
     expect(template).toContain('class="coverage-tag-filter"');
     expect(template).toContain("t('filters.characterTags.label')");
+    expect(template).toContain("[attr.aria-label]=\"t('filters.characterTags.label')\"");
     expect(template).toContain('hasSelectedCharacterTags()');
     expect(template).toContain('(click)="clearSelectedCharacterTags()"');
     expect(template).toContain("[placeholder]=\"t('filters.characterTags.placeholder')\"");

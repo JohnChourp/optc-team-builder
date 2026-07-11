@@ -518,6 +518,7 @@
                   autocomplete="off"
                   [debounce]="0"
                   [searchIcon]="searchIcon"
+                  [attr.aria-label]="t('filters.characterTags.label')"
                   [placeholder]="t('filters.characterTags.placeholder')"
                   [value]="characterTagSearchTerm()"
                   [disabled]="loading() || !availableCharacterTags().length"
