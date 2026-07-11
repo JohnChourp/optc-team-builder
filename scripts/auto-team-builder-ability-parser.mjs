@@ -309,7 +309,13 @@ const SPECIAL_ABILITY_MATCHERS = [
     // mechanic (see `reduce_ship_special_charge`), not a crew/character effect.
     [/\b(?:restores?|advances?)\s+(?:the\s+)?special cooldown\b(?!\s+of\s+ship\b)/i],
   ],
-  ['heal_hp', [/\b(?:recovers?|heals?)\b[^.]{0,120}\bHP\b/i]],
+  // `(?:[^.]|\.\d)` lets the gap span decimals (e.g. "recovers 1.5x character's
+  // RCV in HP") without crossing a real sentence boundary (a period followed by a
+  // space, not a digit) — a bare `[^.]` stopped at the "." in "1.5x" and missed
+  // ~30 RCV-scaled healer captains (Marco, Rayleigh, Big Mom, Shanks, ...).
+  // "health" tolerates the legacy wording in Marguerite "recovers a small amount
+  // of health at the end of each turn".
+  ['heal_hp', [/\b(?:recovers?|heals?)\b(?:[^.]|\.\d){0,120}\b(?:HP|health)\b/i]],
   ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],
   [
     'apply_resilience',
