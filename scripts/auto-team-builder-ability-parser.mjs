@@ -212,7 +212,14 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'chain_multiplier_multiplicative_boost',
-    [/\bboosts?\b[^.]{0,120}\bchain\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i],
+    // Require the genuine multiplicative wording "boosts (the) chain multiplier by
+    // Nx" (the "Chain Multiplication" buff category). The old loose "boosts ...
+    // chain ... by Nx" mis-tagged the growth-rate effect ("boosts Chain Multiplier
+    // Growth Rate by Nx" → chain_multiplier_growth_rate) and conditional ATK boosts
+    // ("boosts ATK ... at the start of the chain, by Nx"). This yields 0 matches on
+    // captainAbility/specialText today (the effect is currently support-side only)
+    // but stays correct for any future captain/special that uses this wording.
+    [/\bboosts?\s+(?:the\s+)?chain multiplier by\s+\d+(?:\.\d+)?x/i],
   ],
   [
     'chain_multiplier_growth_rate',

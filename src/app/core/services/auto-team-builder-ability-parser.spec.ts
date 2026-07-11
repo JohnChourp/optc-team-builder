@@ -365,15 +365,34 @@ describe('auto team builder ability parser', () => {
       expect.arrayContaining([
         expect.objectContaining({ key: 'reduce_special_charge', source: 'captainAbility' }),
         expect.objectContaining({ key: 'make_slots_favorable', source: 'captainAbility' }),
-        expect.objectContaining({
-          key: 'chain_multiplier_multiplicative_boost',
-          source: 'captainAbility',
-        }),
       ]),
+    );
+    // "boosts ATK ... at the start of the chain, by Nx" is a conditional ATK boost,
+    // NOT a chain-multiplier boost — it must not be tagged multiplicative.
+    expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).not.toContain(
+      'chain_multiplier_multiplicative_boost',
     );
     expect(analyzeBuilderAbilityText(text, 'captainAbility')).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ key: 'remove_paralysis' })]),
     );
+  });
+
+  it('detects chain_multiplier_multiplicative_boost only for genuine "chain multiplier by Nx"', () => {
+    // Genuine multiplicative wording (the "Chain Multiplication" buff category).
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('boosts chain multiplier by 1.5x', 'captainAbility')),
+    ).toContain('chain_multiplier_multiplicative_boost');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts the chain multiplier by 1.1x for 1 turn', 'specialText'),
+      ),
+    ).toContain('chain_multiplier_multiplicative_boost');
+    // Growth-rate boost is a different key, not multiplicative.
+    const growth = extractAbilityKeys(
+      analyzeBuilderAbilityText('Boosts Chain Multiplier Growth Rate by 4x', 'captainAbility'),
+    );
+    expect(growth).toContain('chain_multiplier_growth_rate');
+    expect(growth).not.toContain('chain_multiplier_multiplicative_boost');
   });
 
   it('keeps a cumulative second conditional captain clause with a different condition', () => {
