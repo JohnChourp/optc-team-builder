@@ -282,7 +282,26 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,120}\bVS effect gauge\b/i]],
   [
     'reduce_special_charge',
-    [/\breduces?\b[^.]{0,120}\bspecial cooldown\b/i, /\breduces?\b[^.]{0,120}\bspecial charge\b/i],
+    // Require "reduces" to directly govern "special cooldown" — the canonical
+    // OPTC-DB wording "Reduces Special Cooldown of <scope> by N turn(s) at the
+    // start of the fight" (community name "Reduce Special Charge Time"). A wide
+    // `[^.]{0,120}` bridge previously mis-scoped clauses such as "reduces Bind
+    // duration ... and restores/advances Special Cooldown" — the "restores (when
+    // rewinded)" / "advances to MAX" beneficial charge is a DISTINCT mechanic and
+    // must not be reported here. The former "special charge" alternative matched
+    // zero characters across every source, so it is dropped.
+    [/\breduces?\s+(?:the\s+)?special cooldown\b/i],
+  ],
+  [
+    'restore_advance_special_charge',
+    // The beneficial-but-distinct special-charge family that is NOT the canonical
+    // start-of-fight `reduce_special_charge`: "restores Special Cooldown of <scope>
+    // by N turns when they are rewinded" (Rewind/Time recovery) and "advances
+    // Special Cooldown of <scope> to MAX / by N turns" (proactive charge). "restores"
+    // / "advances" must directly govern "special cooldown". The negative lookahead
+    // excludes "Special Cooldown of Ship" — the ship special cooldown is a separate
+    // mechanic (see `reduce_ship_special_charge`), not a crew/character effect.
+    [/\b(?:restores?|advances?)\s+(?:the\s+)?special cooldown\b(?!\s+of\s+ship\b)/i],
   ],
   ['heal_hp', [/\b(?:recovers?|heals?)\b[^.]{0,120}\bHP\b/i]],
   ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],

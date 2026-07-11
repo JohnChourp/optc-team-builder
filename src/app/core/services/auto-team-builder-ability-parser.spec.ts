@@ -450,6 +450,89 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('detects reduce_special_charge only when "reduces" directly governs "special cooldown"', () => {
+    // Canonical OPTC-DB wording (crew-scoped and self-scoped) — must match.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Special Cooldown of all characters by 2 turns at the start of the fight, boosts ATK of all characters by 4x.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('reduce_special_charge');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Special Cooldown of this character by 3 turns at the start of the fight.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('reduce_special_charge');
+
+    // Clause bridge: "reduces" governs Special Bind duration; the separate
+    // "restores Special Cooldown ... when rewinded" (rewind-recovery) is a
+    // DISTINCT mechanic and must NOT be reported as reduce_special_charge.
+    const rewindBridge = analyzeBuilderAbilityText(
+      'reduces Special Bind duration by 10 turns on this character and restores Special Cooldown of all characters by 2 turns when they are rewinded',
+      'captainAbility',
+    );
+    expect(extractAbilityKeys(rewindBridge)).toContain('remove_special_bind');
+    expect(extractAbilityKeys(rewindBridge)).not.toContain('reduce_special_charge');
+
+    // HP-cost bridge on a special: "advances Special Cooldown ... to MAX" is a
+    // distinct self max-charge effect, not a special-cooldown reduction.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "reduces crew's current HP by 50% crew's MAX HP and advances Special Cooldown of all characters to MAX",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('reduce_special_charge');
+  });
+
+  it('detects restore_advance_special_charge for rewind-restore / advance, excluding ship scope', () => {
+    // Rewind-recovery restore — matches the new key, NOT reduce_special_charge.
+    const restore = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        'restores Special Cooldown of all characters by 2 turns when they are rewinded',
+        'captainAbility',
+      ),
+    );
+    expect(restore).toContain('restore_advance_special_charge');
+    expect(restore).not.toContain('reduce_special_charge');
+
+    // Proactive advance-to-MAX on this character — matches the new key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'advances Special Cooldown of this character to MAX at the start of the fight',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('restore_advance_special_charge');
+
+    // Advance on a special (specialText source) is also covered.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'advances Special Cooldown of this character to MAX',
+          'specialText',
+        ),
+      ),
+    ).toContain('restore_advance_special_charge');
+
+    // Ship special cooldown is a distinct mechanic and must be excluded.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Advances Special Cooldown of Ship to MAX at the start of the fight',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('restore_advance_special_charge');
+  });
+
   it('extracts structured captain utility metadata for damage reduction and favorable slots', () => {
     const abilities = analyzeBuilderAbilityText(
       'Reduces damage received by 20%, makes [RCV] orbs beneficial for all characters and makes [INT] slots favorable for this character.',
@@ -1013,7 +1096,7 @@ describe('auto team builder ability parser', () => {
       return counts;
     }, {});
 
-    expect(specialCatalog).toHaveLength(85);
+    expect(specialCatalog).toHaveLength(86);
     expect(groupCounts).toEqual({
       Damage: 6,
       'Boost Damage': 17,
@@ -1023,7 +1106,7 @@ describe('auto team builder ability parser', () => {
       'Reduce Status Effect Duration': 15,
       'Reduce Enemy Effect Duration': 9,
       'Apply Status Effect': 8,
-      Reduction: 4,
+      Reduction: 5,
       Other: 15,
     });
     expect(specialCatalog.slice(0, 3).map((item) => item.key)).toEqual([
