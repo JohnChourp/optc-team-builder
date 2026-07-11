@@ -633,6 +633,49 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('detects heal_hp across decimal RCV multipliers and the legacy "health" wording', () => {
+    // Decimal RCV multiplier — the "." in "1.5x" must not break the match
+    // (regression: bare [^.] stopped at the decimal and missed Marco/Rayleigh/etc.).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Boosts ATK of all characters by 5x and recovers 1.5x character's RCV in HP at the end of each turn",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('heal_hp');
+    // Ranged decimal multiplier (Marco).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "recovers 0.5x-3.5x character's RCV in HP at the end of each turn",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('heal_hp');
+    // Legacy "health" wording (Marguerite).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Boosts ATK of Shooter characters by 1.75x, recovers a small amount of health at the end of each turn',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('heal_hp');
+    // Plain fixed and integer forms still match.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Recovers 1,000 HP at the end of each turn', 'captainAbility'),
+      ),
+    ).toContain('heal_hp');
+    // A max-HP boost is NOT a heal.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Boosts HP of all characters by 1.5x', 'captainAbility'),
+      ),
+    ).not.toContain('heal_hp');
+  });
+
   it('classifies favorable slots for non-captains as sub-member scoped', () => {
     const abilities = analyzeBuilderAbilityText(
       'Makes [RCV] orbs beneficial for non-captains.',
