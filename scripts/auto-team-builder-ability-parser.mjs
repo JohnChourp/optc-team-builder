@@ -728,7 +728,12 @@ const TARGET_ALIASES = [
 const TURN_PATTERNS = [
   {
     isCompleteRemoval: false,
-    pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+(?:duration\s+)?by\s+(\d+)\s+turns?/gi,
+    // Accept "<target> duration by N turns", "<target> by N turns", and the
+    // "by"-less "<target> duration N turns" form. The last covers an upstream
+    // OPTC-DB wording quirk (e.g. Luffy & Whitebeard #3728 "reduces Paralysis
+    // and Despair duration 1 turn") where the "by" is dropped; making "by"
+    // optional only after the literal "duration" keeps the match tight.
+    pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)\s+turns?/gi,
     resolveTurns: (match) => Number(match[2]),
   },
   {
