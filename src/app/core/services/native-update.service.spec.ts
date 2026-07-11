@@ -5,13 +5,11 @@ import { Capacitor } from '@capacitor/core';
 
 import { NativeUpdateService } from './native-update.service';
 
-vi.mock('@capacitor/app', () => ({
-  App: {
-    getInfo: vi.fn(),
-    addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
-  },
-}));
-
+// `@capacitor/app` is mocked once globally in src/test-setup.ts as a single
+// shared `App` object; this spec configures `App.getInfo` per test via
+// `createService`. Mocking it locally here would fork a per-file `App` that the
+// service under test may not bind to under the shared Angular unit-test module
+// registry — the root cause of the historical order-dependent flake (#161).
 function createService(options?: {
   native?: boolean;
   currentVersion?: string;
