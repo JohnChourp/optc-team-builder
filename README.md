@@ -431,7 +431,7 @@ Local fallback release command:
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
 ```bash
-../optc-team-builder-brain/.codex/skills/optc-team-builder-android-release/scripts/run_release.sh --project "$(pwd)" --bump patch
+../optc-team-builder-brain/.codex/skills/optc-release/scripts/run_release.sh --project "$(pwd)" --bump patch
 ```
 
 The local skill auto-loads `~/.android/optc-team-builder/release-signing.env` and, if needed, runs `./scripts/setup-release-signing.sh` before continuing with the existing release flow.
