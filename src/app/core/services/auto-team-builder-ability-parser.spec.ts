@@ -200,6 +200,44 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('does not treat Sailor Despair as generic Despair', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Reduces Sailor Despair duration by 10 turns.',
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual([
+      expect.objectContaining({
+        key: 'remove_sailor_despair',
+        minTurns: 10,
+        source: 'captainAbility',
+      }),
+    ]);
+    expect(extractAbilityKeys(abilities)).not.toContain('remove_despair');
+  });
+
+  it('keeps real Despair when text also includes Sailor Despair', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Reduces Despair and Sailor Despair duration by 6 turns.',
+      'specialText',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_despair',
+          minTurns: 6,
+          source: 'specialText',
+        }),
+        expect.objectContaining({
+          key: 'remove_sailor_despair',
+          minTurns: 6,
+          source: 'specialText',
+        }),
+      ]),
+    );
+  });
+
   it('does not treat Special Bind as generic Bind', () => {
     const abilities = analyzeBuilderAbilityText(
       'Reduces Special Bind duration by 10 turns.',

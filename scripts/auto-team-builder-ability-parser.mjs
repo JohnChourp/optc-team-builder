@@ -579,7 +579,12 @@ const TARGET_ALIASES = [
   {
     key: 'remove_despair',
     label: 'Remove Despair',
-    matcher: (target) => target.includes('despair'),
+    // "Sailor Despair" is a DISTINCT debuff (it disables sailor abilities, not
+    // the Captain ability that ordinary Despair disables) and is handled by
+    // `remove_sailor_despair`. The bare substring 'despair' must not swallow it,
+    // otherwise a Sailor-Despair-only cure is miscounted as a Despair cure
+    // (mirrors the `remove_bind` exclusion of special/slot/orb/ship bind).
+    matcher: (target) => target.includes('despair') && !target.includes('sailor despair'),
   },
   {
     key: 'remove_paralysis',
