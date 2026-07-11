@@ -200,6 +200,22 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('extracts paralysis and despair reduction when the upstream text drops "by" ("duration N turns")', () => {
+    // OPTC-DB quirk (Luffy & Whitebeard #3728): "reduces Paralysis and Despair
+    // duration 1 turn" with the "by" missing must still be detected.
+    const abilities = analyzeBuilderAbilityText(
+      'Boosts ATK of all characters by 3x and reduces Paralysis and Despair duration 1 turn.',
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_paralysis', minTurns: 1, source: 'captainAbility' }),
+        expect.objectContaining({ key: 'remove_despair', minTurns: 1, source: 'captainAbility' }),
+      ]),
+    );
+  });
+
   it('does not treat Sailor Despair as generic Despair', () => {
     const abilities = analyzeBuilderAbilityText(
       'Reduces Sailor Despair duration by 10 turns.',
