@@ -56,6 +56,12 @@
         "withFavorites": "{{count}} of {{total}} character(s) in this box are currently favorites."
       }
     },
+    "characterTags": {
+      "label": "Character Tags",
+      "placeholder": "Select character tags",
+      "noMatches": "No matching tags",
+      "support": "Show only result characters that have at least one of the selected tags."
+    },
     "class": {
       "label": "Class",
       "placeholder": "Type to filter by class"

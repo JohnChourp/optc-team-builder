@@ -493,6 +493,80 @@
               (sortChange)="onSortModeChange($event)"
               (idOrderChange)="onIdOrderChange($event)"
             ></app-character-filter-row>
+
+            <div class="coverage-tag-filter">
+              <div class="coverage-tag-filter__header">
+                <span class="coverage-tag-filter__label">
+                  {{ t('filters.characterTags.label') }}
+                </span>
+                @if (hasSelectedCharacterTags()) {
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    color="warning"
+                    [disabled]="loading()"
+                    (click)="clearSelectedCharacterTags()"
+                  >
+                    {{ 'common.actions.clear' | transloco }}
+                  </ion-button>
+                }
+              </div>
+
+              <div class="character-tag-combobox">
+                <ion-searchbar
+                  class="character-tag-search"
+                  autocomplete="off"
+                  [debounce]="0"
+                  [searchIcon]="searchIcon"
+                  [attr.aria-label]="t('filters.characterTags.label')"
+                  [placeholder]="t('filters.characterTags.placeholder')"
+                  [value]="characterTagSearchTerm()"
+                  [disabled]="loading() || !availableCharacterTags().length"
+                  (ionInput)="onCharacterTagSearchChange($event)"
+                  (keydown.enter)="selectFirstCharacterTagSuggestion()"
+                ></ion-searchbar>
+
+                @if (characterTagSearchTerm().trim()) {
+                  <div class="character-tag-suggestions" role="listbox">
+                    @for (item of filteredCharacterTagSuggestions(); track item) {
+                      <button
+                        type="button"
+                        class="character-tag-suggestion"
+                        role="option"
+                        [disabled]="loading()"
+                        (click)="addSelectedCharacterTag(item)"
+                      >
+                        {{ item }}
+                      </button>
+                    } @empty {
+                      <small class="character-tag-suggestions__empty">
+                        {{ t('filters.characterTags.noMatches') }}
+                      </small>
+                    }
+                  </div>
+                }
+              </div>
+
+              @if (selectedCharacterTags().length) {
+                <div class="selected-values-row">
+                  @for (item of selectedCharacterTags(); track item) {
+                    <button
+                      type="button"
+                      class="selected-value-chip"
+                      [disabled]="loading()"
+                      (click)="removeSelectedCharacterTag(item)"
+                    >
+                      {{ item }}
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  }
+                </div>
+              }
+
+              <small class="coverage-tag-filter__support">
+                {{ t('filters.characterTags.support') }}
+              </small>
+            </div>
           </div>
         </div>
 

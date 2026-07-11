@@ -97,6 +97,7 @@ import { CaptainCoverageStylePanelsComponent } from './captain-coverage-style-pa
 const MAX_CAPTAIN_LOOKUP_COUNT = 12000;
 const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 6;
 const CAPTAIN_ABILITY_FILTER_CATEGORY: AbilityFilterRailCategory = 'captainAbility';
+const CHARACTER_TAG_SUGGESTION_LIMIT = 12;
 
 type CaptainCoverageSortMode =
   | Extract<
@@ -192,6 +193,9 @@ export class CaptainCoveragePage implements OnInit {
   public readonly tierCoverageMaxRender = 5;
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
+  public readonly availableCharacterTags = signal<string[]>([]);
+  public readonly selectedCharacterTags = signal<string[]>([]);
+  public readonly characterTagSearchTerm = signal('');
   public readonly captainAbilityPickerOpen = signal(false);
   public readonly captainAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly specialAbilityPickerOpen = signal(false);
@@ -230,6 +234,33 @@ export class CaptainCoveragePage implements OnInit {
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
   );
+  public readonly hasSelectedCharacterTags = computed(
+    () => this.selectedCharacterTags().length > 0,
+  );
+  public readonly filteredCharacterTagSuggestions = computed<string[]>(() => {
+    const searchTerm = this.normalizeCharacterTagSearchTerm(this.characterTagSearchTerm());
+
+    if (!searchTerm) {
+      return [];
+    }
+
+    const selectedTagKeys = new Set(this.selectedCharacterTags().map((tag) => tag.toLowerCase()));
+
+    return this.availableCharacterTags()
+      .filter((tag) => !selectedTagKeys.has(tag.toLowerCase()))
+      .filter((tag) => tag.toLowerCase().includes(searchTerm))
+      .sort((left, right) => {
+        const leftStartsWith = left.toLowerCase().startsWith(searchTerm);
+        const rightStartsWith = right.toLowerCase().startsWith(searchTerm);
+
+        if (leftStartsWith !== rightStartsWith) {
+          return leftStartsWith ? -1 : 1;
+        }
+
+        return left.localeCompare(right);
+      })
+      .slice(0, CHARACTER_TAG_SUGGESTION_LIMIT);
+  });
   public readonly selectedCaptainSubtitle = computed(() => {
     const captain = this.selectedCaptain();
 
@@ -407,6 +438,11 @@ export class CaptainCoveragePage implements OnInit {
     const captainCoverageFilterState = this.captainCoverageFilterState();
     const characterDetailsById = this.allCharacterDetailsById();
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
+    const selectedCharacterTagKeys = new Set(
+      this.selectedCharacterTags()
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean),
+    );
     const matchingCharacters = this.allCharacters()
       .filter((character) =>
         selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
@@ -434,6 +470,9 @@ export class CaptainCoveragePage implements OnInit {
       .filter(({ matchesCaptainCoverageFilters }) => matchesCaptainCoverageFilters)
       .filter(({ characterDetail }) => this.matchesSuperPresenceFilters(characterDetail))
       .filter(({ character }) => !this.hasPartyConflict(character, selectedConflictKeys))
+      .filter(({ characterDetail }) =>
+        this.matchesSelectedCharacterTags(characterDetail, selectedCharacterTagKeys),
+      )
       .map(({ character, characterDetail, coverage }) => {
         const detailAbilities = characterDetail?.detail.builderAbilities ?? [];
         const abilities = detailAbilities.filter((ability) => ability.source !== 'captainAbility');
@@ -638,7 +677,7 @@ export class CaptainCoveragePage implements OnInit {
     this.loading.set(true);
 
     try {
-      const [, , summary, abilityCatalog, records] = await Promise.all([
+      const [, , summary, abilityCatalog, records, , availableCharacterTags] = await Promise.all([
         this.userState.readyFavoriteCharacterIds(),
         this.userState.readyCharacterBoxes(),
         this.repository.getDatasetManifest(),
@@ -655,10 +694,12 @@ export class CaptainCoveragePage implements OnInit {
           offset: 0,
         }),
         this.characterCatalogCache.ensureLoaded(),
+        this.loadAvailableCharacterTags(),
       ]);
 
       this.summary.set(summary);
       this.abilityCatalog.set(abilityCatalog);
+      this.availableCharacterTags.set(availableCharacterTags);
       this.allCharacters.set(this.characterCatalogCache.catalog());
       this.allCharacterDetailsById.set(new Map(records.map((record) => [record.id, record])));
       this.allCaptains.set(
@@ -844,6 +885,41 @@ export class CaptainCoveragePage implements OnInit {
   public clearClassFilter(): void {
     this.classQuery.set('');
     this.selectedClass.set('');
+  }
+
+  public onCharacterTagSearchChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.characterTagSearchTerm.set((event.detail.value ?? '').toString());
+  }
+
+  public addSelectedCharacterTag(characterTag: string): void {
+    const currentTags = this.selectedCharacterTags();
+    const nextTags = this.resolveSelectedCharacterTags([...currentTags, characterTag]);
+
+    if (nextTags.length === currentTags.length) {
+      return;
+    }
+
+    this.selectedCharacterTags.set(nextTags);
+    this.characterTagSearchTerm.set('');
+  }
+
+  public selectFirstCharacterTagSuggestion(): void {
+    const [firstSuggestion] = this.filteredCharacterTagSuggestions();
+
+    if (firstSuggestion) {
+      this.addSelectedCharacterTag(firstSuggestion);
+    }
+  }
+
+  public removeSelectedCharacterTag(characterTag: string): void {
+    this.selectedCharacterTags.set(
+      this.selectedCharacterTags().filter((selectedTag) => selectedTag !== characterTag),
+    );
+  }
+
+  public clearSelectedCharacterTags(): void {
+    this.selectedCharacterTags.set([]);
+    this.characterTagSearchTerm.set('');
   }
 
   public onCoverageCostRangeChange(
@@ -1193,6 +1269,19 @@ export class CaptainCoveragePage implements OnInit {
     return selectedClass ? character.classes.includes(selectedClass) : true;
   }
 
+  private matchesSelectedCharacterTags(
+    characterDetail: CharacterDetailRecord | undefined,
+    selectedTagKeys: Set<string>,
+  ): boolean {
+    if (selectedTagKeys.size === 0) {
+      return true;
+    }
+
+    const tags = characterDetail?.detail.characterTags ?? [];
+
+    return tags.some((tag) => selectedTagKeys.has(tag.trim().toLowerCase()));
+  }
+
   private matchesCoverageCostRange(
     character: CharacterListItem,
     range: CharacterFilterCostRange,
@@ -1454,6 +1543,41 @@ export class CaptainCoveragePage implements OnInit {
     return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort((left, right) =>
       left.localeCompare(right),
     );
+  }
+
+  private normalizeCharacterTagSearchTerm(value: string): string {
+    return value.trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  private resolveSelectedCharacterTags(value: string[] | string | null | undefined): string[] {
+    const nextValues = Array.isArray(value) ? value : value ? [value] : [];
+    const availableTagByKey = new Map(
+      this.availableCharacterTags().map((tag) => [tag.toLowerCase(), tag] as const),
+    );
+    const uniqueTags = new Map<string, string>();
+
+    for (const candidate of nextValues) {
+      const normalizedTag = candidate.trim().replace(/\s+/g, ' ');
+      const canonicalTag = availableTagByKey.get(normalizedTag.toLowerCase());
+
+      if (canonicalTag && !uniqueTags.has(canonicalTag.toLowerCase())) {
+        uniqueTags.set(canonicalTag.toLowerCase(), canonicalTag);
+      }
+    }
+
+    return [...uniqueTags.values()];
+  }
+
+  private async loadAvailableCharacterTags(): Promise<string[]> {
+    if (typeof this.repository.getAvailableCharacterTags !== 'function') {
+      return [];
+    }
+
+    try {
+      return await this.repository.getAvailableCharacterTags();
+    } catch {
+      return [];
+    }
   }
 
   private resolveStringInput(input: string | CustomEvent<{ value?: string | null }>): string {
