@@ -161,7 +161,13 @@ const TERRITORY_PROVIDER_PATTERNS = [
   /\bapplies\b[^.;]{0,120}\b(?:field|crew)[^.;]{0,120}\b["“]?\s*Territory\s*:\s*(?:\[[^\]]+\]|[A-Za-z][A-Za-z ]*)\s*["”]?/i,
 ];
 const SPECIAL_ABILITY_MATCHERS = [
-  ['special_damage', [/\bdeals?\b[^.]{0,160}\bdamage\b/i]],
+  // The captain/crew DEALING damage to enemies ("deals <amount> [in TYPE] damage
+  // to enemies"). The negative lookbehind rejects DEFENSIVE "damage": "[BOMB]/
+  // [SUPERBOMB] orbs will deal N% less damage to the crew" (orb self-damage cut)
+  // and bridges into "reduces damage received" — neither deals damage. `(?:[^.]|
+  // \.\d)` also lets the gap span decimals so decimal-multiplier damage specials
+  // ("deals 3.5x character's RCV/ATK ... damage") are not lost at the ".".
+  ['special_damage', [/\bdeals?\b(?:[^.]|\.\d){0,160}(?<!\b(?:less|more|reduces?|reduced)\s)damage\b/i]],
   ['special_damage_other', [/\bdeals?\b[^.]{0,160}\btypeless damage\b/i]],
   [
     'percent_damage',
