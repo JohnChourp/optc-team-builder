@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T10:08:05.214Z",
+  "generatedAt": "2026-07-11T10:21:11.235Z",
   "characters": [
     {
       "id": 1,
@@ -455,15 +455,6 @@
         "characterTags": [],
         "builderAbilities": [
           {
-            "key": "special_damage",
-            "label": "Damage",
-            "minTurns": null,
-            "isCompleteRemoval": false,
-            "slotTokens": [],
-            "source": "specialText",
-            "coverageMode": "explicit"
-          },
-          {
             "key": "crewmate_make_slots_favorable",
             "label": "Make Slots Favorable",
             "minTurns": null,
@@ -488,6 +479,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
             "coverageMode": "explicit"
           }
         ],
@@ -1040,15 +1040,6 @@
         "characterTags": [],
         "builderAbilities": [
           {
-            "key": "special_damage",
-            "label": "Damage",
-            "minTurns": null,
-            "isCompleteRemoval": false,
-            "slotTokens": [],
-            "source": "specialText",
-            "coverageMode": "explicit"
-          },
-          {
             "key": "potential_qck_damage_reduction",
             "label": "QCK Damage Reduction",
             "minTurns": null,
@@ -1082,6 +1073,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
             "coverageMode": "explicit"
           }
         ],
@@ -1618,15 +1618,6 @@
         "characterTags": [],
         "builderAbilities": [
           {
-            "key": "special_damage",
-            "label": "Damage",
-            "minTurns": null,
-            "isCompleteRemoval": false,
-            "slotTokens": [],
-            "source": "specialText",
-            "coverageMode": "explicit"
-          },
-          {
             "key": "crewmate_make_slots_favorable",
             "label": "Make Slots Favorable",
             "minTurns": null,
@@ -1669,6 +1660,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
             "coverageMode": "explicit"
           }
         ],
@@ -2418,15 +2418,6 @@
         "characterTags": [],
         "builderAbilities": [
           {
-            "key": "special_damage",
-            "label": "Damage",
-            "minTurns": null,
-            "isCompleteRemoval": false,
-            "slotTokens": [],
-            "source": "specialText",
-            "coverageMode": "explicit"
-          },
-          {
             "key": "apply_delay",
             "label": "Delay",
             "minTurns": null,
@@ -2487,6 +2478,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
             "coverageMode": "explicit"
           }
         ],
@@ -3158,15 +3158,6 @@
             "coverageMode": "explicit"
           },
           {
-            "key": "special_damage",
-            "label": "Damage",
-            "minTurns": null,
-            "isCompleteRemoval": false,
-            "slotTokens": [],
-            "source": "specialText",
-            "coverageMode": "explicit"
-          },
-          {
             "key": "crewmate_make_slots_favorable",
             "label": "Make Slots Favorable",
             "minTurns": null,
@@ -3236,6 +3227,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
             "coverageMode": "explicit"
           }
         ],
@@ -3473,15 +3473,6 @@
         "characterTags": [],
         "builderAbilities": [
           {
-            "key": "special_damage",
-            "label": "Damage",
-            "minTurns": null,
-            "isCompleteRemoval": false,
-            "slotTokens": [],
-            "source": "specialText",
-            "coverageMode": "explicit"
-          },
-          {
             "key": "crewmate_make_slots_favorable",
             "label": "Make Slots Favorable",
             "minTurns": null,
@@ -3551,6 +3542,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "supportData",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "special_damage",
+            "label": "Damage",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
             "coverageMode": "explicit"
           }
         ],

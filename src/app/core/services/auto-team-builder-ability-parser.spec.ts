@@ -676,6 +676,38 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('heal_hp');
   });
 
+  it('detects special_damage for dealing damage, not defensive orb "less damage"', () => {
+    // Genuine end-of-turn damage dealer.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Boosts ATK of all characters by 2x, deals 5x character's ATK in [STR] damage to all enemies at the end of each turn",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('special_damage');
+    // Counter form (deals the damage taken back to enemies).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'deals 5x the damage taken from enemies in the previous turn in [STR] damage to all enemies at the end of each turn',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('special_damage');
+    // "[BOMB]/[SUPERBOMB] orbs will deal N% less damage to the crew" is a defensive
+    // orb-damage reduction, not the crew dealing damage — must NOT be special_damage,
+    // even when a "reduces damage received" clause follows.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'makes [BOMB] and [SUPERBOMB] orbs beneficial for all characters, [BOMB] and [SUPERBOMB] orbs will deal 80% less damage to the crew, reduces damage received by 10%',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('special_damage');
+  });
+
   it('classifies favorable slots for non-captains as sub-member scoped', () => {
     const abilities = analyzeBuilderAbilityText(
       'Makes [RCV] orbs beneficial for non-captains.',
