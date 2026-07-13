@@ -200,6 +200,34 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('extracts a Bind cure worded "reduces Bind duration completely"', () => {
+    // RRG #4257 / S-Shark #4311 / Kizaru #4544: the "completely" pattern must
+    // strip the trailing "duration" keyword (like the "by N turns" pattern) so
+    // the target is "bind" (matched by remove_bind's exact rule), not
+    // "bind duration" (which failed the match).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Bind duration completely on this character.', 'captainAbility'),
+      ),
+    ).toContain('remove_bind');
+    // The same "duration completely" wording also recovers exact-match enemy-buff
+    // removals (real data: Vivi & Rebecca #2600).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Removes enemies' Increased Defense and Percent Damage Reduction buffs duration completely.",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_damage_reduction');
+    // Special Bind duration completely must still NOT be remove_bind.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Special Bind duration completely.', 'captainAbility'),
+      ),
+    ).not.toContain('remove_bind');
+  });
+
   it('extracts paralysis and despair reduction when the upstream text drops "by" ("duration N turns")', () => {
     // OPTC-DB quirk (Luffy & Whitebeard #3728): "reduces Paralysis and Despair
     // duration 1 turn" with the "by" missing must still be detected.

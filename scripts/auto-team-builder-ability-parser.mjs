@@ -773,7 +773,15 @@ const TURN_PATTERNS = [
   },
   {
     isCompleteRemoval: true,
-    pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+completely/gi,
+    // Strip a trailing "duration" keyword the same way the "by N turns" pattern
+    // above does, so "reduces <target> duration completely" captures "<target>"
+    // rather than "<target> duration". Without this, targets matched by an exact
+    // or endsWith rule (e.g. `remove_bind` requires target === 'bind', and
+    // `remove_damage_reduction` requires target === 'percent damage reduction')
+    // were missed on the "... duration completely" wording — e.g. RRG #4257 /
+    // S-Shark #4311/#4312 / Kizaru #4544 "reduces Bind duration completely".
+    // `includes`-based aliases are unaffected (the substring still matches).
+    pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+(?:duration\s+)?completely/gi,
     resolveTurns: () => 99,
   },
 ];
