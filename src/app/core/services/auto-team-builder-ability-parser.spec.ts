@@ -472,6 +472,51 @@ describe('auto team builder ability parser', () => {
     expect(growth).not.toContain('chain_multiplier_multiplicative_boost');
   });
 
+  it('detects chain_multiplier_growth_rate only for a genuine "by Nx" grant, not buff amplifiers', () => {
+    // Canonical grant wording keeps matching (captain + special sources).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Boosts Chain Multiplier Growth Rate by 1.5x', 'captainAbility'),
+      ),
+    ).toContain('chain_multiplier_growth_rate');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'boosts Chain Multiplier Growth Rate by 1.75x for 1 turn',
+          'specialText',
+        ),
+      ),
+    ).toContain('chain_multiplier_growth_rate');
+    // Amplifiers that only extend/strengthen OTHER sources' growth-rate buffs grant
+    // no growth rate themselves — Edward Newgate #4216 (duration extend, "by N
+    // turns") and Roger & Rayleigh & Gaban #4387 (condition + "buffs by +Nx").
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'increases duration of any Chain Multiplier Growth Rate buffs applied by Specials by 2 turns',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If a crew member uses a special to boost Chain Multiplier Growth Rate, increases duration of any Chain Multiplier Growth Rate buffs by 1 turn, and increases boost effects of Chain Multiplier Growth Rate buffs by +0.25x',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+    // Trigger CONDITION "you gain a ... buff" is not a grant either (Dorry & Broggy #4436).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If your crew has 3+ [Giant] characters and you gain a Chain Multiplier Growth Rate buff, activates a follow-up special',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+  });
+
   it('keeps a cumulative second conditional captain clause with a different condition', () => {
     // Kurozumi Orochi (ids 3571/3572): two independent crew-composition conditions.
     // The 3-word fingerprint used to collapse both to "if your crew" and drop the
