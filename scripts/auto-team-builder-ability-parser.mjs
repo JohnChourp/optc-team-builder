@@ -223,10 +223,19 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'chain_multiplier_growth_rate',
-    [
-      /\bboosts?\b[^.]{0,120}\bchain\b[^.]{0,80}\bgrowth rate\b/i,
-      /\bincreases?\b[^.]{0,120}\bchain\b[^.]{0,80}\bgrowth rate\b/i,
-    ],
+    // Genuine GRANT only: "(Boosts|Increases) [the] Chain Multiplier Growth Rate
+    // by [+]Nx" — the canonical OPTC-DB wording (every real grant uses "Boosts
+    // Chain Multiplier Growth Rate by Nx"; the "by <multiplier>x" fingerprint is
+    // what makes it a grant). The old loose `boosts?/increases? ... chain ...
+    // growth rate` bridge over-matched growth-rate BUFF AMPLIFIERS that grant no
+    // growth rate themselves — "increases duration of any Chain Multiplier Growth
+    // Rate buffs ... by N turns" (Edward Newgate #4216) and "increases boost
+    // effects of Chain Multiplier Growth Rate buffs by +Nx" / "uses a special to
+    // boost Chain Multiplier Growth Rate" (Roger & Rayleigh & Gaban #4387) — and
+    // the trigger condition "you gain a Chain Multiplier Growth Rate buff" (Dorry
+    // & Broggy #4436). Requiring "by [+]Nx" to directly follow the phrase keeps
+    // all 63 captain / 42 special grants and drops those non-grant forms.
+    [/\b(?:boosts?|increases?)\s+(?:the\s+)?chain\s+multiplier\s+growth\s+rate\s+by\s+\+?\d+(?:\.\d+)?x/i],
   ],
   ['boost_base_atk', [/\bboosts?\b[^.]{0,120}\bbase ATK\b/i, /\badds?\b[^.]{0,120}\bbase ATK\b/i]],
   ['effect_boost', [/\bincreases?\b[^.]{0,120}\bboost effects?\b/i, /\beffect boost\b/i]],
