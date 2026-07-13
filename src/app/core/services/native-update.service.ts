@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Inject, Injectable, signal } from '@angular/core';
+import { Inject, Injectable, InjectionToken, signal } from '@angular/core';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
@@ -7,6 +7,28 @@ export interface NativeAppUpdate {
   version: string;
   url: string;
 }
+
+/** Resolves the running native app version (null when unavailable). */
+export type NativeVersionReader = () => Promise<string | null>;
+
+/**
+ * Injectable source of the running native version. Defaults to Capacitor's
+ * `App.getInfo()`; injecting it (rather than calling `App.getInfo` inline) lets
+ * unit tests supply a deterministic version without racing the shared global
+ * `@capacitor/app` mock across concurrently-running spec files.
+ */
+export const NATIVE_APP_VERSION = new InjectionToken<NativeVersionReader>('NATIVE_APP_VERSION', {
+  providedIn: 'root',
+  factory: () => async () => {
+    try {
+      const { version } = await App.getInfo();
+
+      return version ?? null;
+    } catch {
+      return null;
+    }
+  },
+});
 
 /**
  * Native (Capacitor) counterpart to {@link AppUpdateService}. The installed
@@ -32,7 +54,10 @@ export class NativeUpdateService {
   private readonly pollIntervalMs = 6 * 60 * 60 * 1000;
   private readonly snoozeIntervalMs = 24 * 60 * 60 * 1000;
 
-  public constructor(@Inject(DOCUMENT) private readonly document: Document) {}
+  public constructor(
+    @Inject(DOCUMENT) private readonly document: Document,
+    @Inject(NATIVE_APP_VERSION) private readonly readNativeVersion: NativeVersionReader,
+  ) {}
 
   /** Starts native release polling. No-op on web and safe to call twice. */
   public init(): void {
@@ -103,9 +128,7 @@ export class NativeUpdateService {
 
   private async currentVersion(): Promise<string | null> {
     try {
-      const { version } = await App.getInfo();
-
-      return version ?? null;
+      return await this.readNativeVersion();
     } catch {
       return null;
     }

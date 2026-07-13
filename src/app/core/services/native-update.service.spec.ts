@@ -1,15 +1,15 @@
 import '@angular/compiler';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
 import { NativeUpdateService } from './native-update.service';
 
-// `@capacitor/app` is mocked once globally in src/test-setup.ts as a single
-// shared `App` object; this spec configures `App.getInfo` per test via
-// `createService`. Mocking it locally here would fork a per-file `App` that the
-// service under test may not bind to under the shared Angular unit-test module
-// registry — the root cause of the historical order-dependent flake (#161).
+// The running native version is injected per instance (a deterministic
+// `NativeVersionReader`) rather than read from the globally-shared `@capacitor/app`
+// mock. Reading the shared `App.getInfo` mock made `current` race a sibling
+// spec's `beforeEach` re-arm under the shared Angular unit-test module registry
+// (`current` briefly fell back to the '1.0.0' default), an order/timing-dependent
+// full-suite flake; injecting the version removes that shared dependency.
 function createService(options?: {
   native?: boolean;
   currentVersion?: string;
@@ -17,9 +17,6 @@ function createService(options?: {
   ok?: boolean;
 }) {
   vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(options?.native ?? true);
-  (App.getInfo as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-    version: options?.currentVersion ?? '1.0.0',
-  });
 
   const open = vi.fn();
   const fetch = vi.fn().mockResolvedValue({
@@ -32,7 +29,10 @@ function createService(options?: {
   });
   const documentStub = { defaultView: { fetch, open } } as unknown as Document;
 
-  const service = new NativeUpdateService(documentStub);
+  const service = new NativeUpdateService(
+    documentStub,
+    async () => options?.currentVersion ?? '1.0.0',
+  );
 
   return { service, open, fetch };
 }
