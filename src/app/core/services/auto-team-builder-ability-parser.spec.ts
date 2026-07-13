@@ -517,6 +517,40 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('chain_multiplier_growth_rate');
   });
 
+  it('detects boost_type_effects only for a genuine Color Affinity / Type Effects grant', () => {
+    // Genuine grants keep matching.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts the Color Affinity of Fighter characters', 'captainAbility'),
+      ),
+    ).toContain('boost_type_effects');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts ATK by 3x, their Color Affinity by 1.75x', 'captainAbility'),
+      ),
+    ).toContain('boost_type_effects');
+    // "boosts [Super] Type Effects of [scope]" stays via the type-effects pattern.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts Super Type Effects of [PSY] characters by 3x', 'specialText'),
+      ),
+    ).toContain('boost_type_effects');
+    // Non-grant references to Color Affinity must NOT match: effect_boost,
+    // duration extension, condition, convert, enhance-enable.
+    for (const notGrant of [
+      'increases boost effects of Color Affinity buffs by +0.25x',
+      'increases duration of any Color Affinity buffs applied by Specials by 1 turn',
+      'if a crew member uses a special with a Color Affinity buff, boosts ATK by 2x',
+      'if a crew member uses a special to boost Color Affinity, increases duration of any Color Affinity buffs by 2 turns',
+      'converts Color Affinity into a Stackable Color Affinity',
+      'enables Color Affinity buffs to be enhanced up to 2 times',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notGrant, 'captainAbility'))).not.toContain(
+        'boost_type_effects',
+      );
+    }
+  });
+
   it('keeps a cumulative second conditional captain clause with a different condition', () => {
     // Kurozumi Orochi (ids 3571/3572): two independent crew-composition conditions.
     // The 3-word fingerprint used to collapse both to "if your crew" and drop the
