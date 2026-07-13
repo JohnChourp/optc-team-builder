@@ -1,10 +1,1 @@
-{
-  "2363": {
-    "sourceScopes": [
-      "specialText",
-      "captainAbility"
-    ],
-    "replaceAbilities": [],
-    "reason": "Snakeman upstream text concatenates alternate branches."
-  }
-}
+{}

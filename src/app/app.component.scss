@@ -89,6 +89,53 @@
     linear-gradient(145deg, rgba(13, 22, 39, 0.97), rgba(8, 11, 24, 0.94));
 }
 
+// Compact update prompt anchored to the lower-left of the floating stack.
+.app-update-banner {
+  justify-self: start;
+  width: min(92vw, 360px);
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(245, 200, 76, 0.4);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(245, 200, 76, 0.18), transparent 52%),
+    linear-gradient(145deg, rgba(20, 18, 30, 0.97), rgba(10, 9, 20, 0.95));
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.44),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  pointer-events: auto;
+}
+
+.app-update-banner__copy {
+  display: grid;
+  gap: 4px;
+}
+
+.app-update-banner__copy strong {
+  color: #fff8dd;
+  font-size: 0.98rem;
+}
+
+.app-update-banner__copy p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.app-update-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.app-update-banner__actions ion-button {
+  margin: 0;
+}
+
 .analytics-consent-banner__copy,
 .app-install-banner__copy {
   display: grid;
@@ -230,6 +277,10 @@
     right: 12px;
     bottom: calc(12px + env(safe-area-inset-bottom) + var(--app-footer-bar-height));
     left: 12px;
+  }
+
+  .app-update-banner {
+    width: auto;
   }
 
   .analytics-consent-banner,

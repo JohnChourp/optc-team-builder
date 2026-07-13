@@ -2,18 +2,14 @@ import '@angular/compiler';
 import { computed, signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { App } from '@capacitor/app';
+
 import { DriveBackupService } from './drive-backup.service';
 import { type AllDataTransferPayload } from '../../pages/settings/all-data-transfer.utils';
 
-const { addListener } = vi.hoisted(() => ({
-  addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
-}));
-
-vi.mock('@capacitor/app', () => ({
-  App: {
-    addListener,
-  },
-}));
+// `@capacitor/app` is mocked once globally in src/test-setup.ts (shared `App`
+// singleton). This spec only asserts that DriveBackupService never registers an
+// App resume listener, read from that shared mock.
 
 interface FetchMockQueue {
   mockResolvedValueOnce(value: Response): FetchMockQueue;
@@ -44,7 +40,7 @@ describe('DriveBackupService', () => {
     await service.ready();
 
     expect(fetch).not.toHaveBeenCalled();
-    expect(addListener).not.toHaveBeenCalled();
+    expect(App.addListener).not.toHaveBeenCalled();
   });
 
   it('reports when manual sync finds no local data and no Drive backup without creating Drive files', async () => {

@@ -8,13 +8,16 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { gzipSync } from 'node:zlib';
 import { chromium, devices } from 'playwright';
 
-export const ROUTE_LOAD_SCHEMA_VERSION = 1;
+export const ROUTE_LOAD_SCHEMA_VERSION = 2;
 
 export const ROUTE_LOAD_BUDGETS = Object.freeze({
   timings: {
     guideShareCompareReadyMs: { desktop: 1500, mobile: 2200 },
     manualShareLandingReadyMs: { desktop: 2500, mobile: 3500 },
     compareEntryReadyMs: { desktop: 3000, mobile: 4500 },
+    charactersSearchReadyMs: { desktop: 1600, mobile: 2200 },
+    savedTeamsReadyMs: { desktop: 2200, mobile: 2200 },
+    captainCoverageReadyMs: { desktop: 3000, mobile: 4500 },
   },
   bundles: {
     initialRawBytes: 1_500_000,
@@ -22,6 +25,9 @@ export const ROUTE_LOAD_BUDGETS = Object.freeze({
     guideRawBytes: 14_000,
     manualShareRawBytes: 320_000,
     compareRawBytes: 740_000,
+    charactersRawBytes: 170_000,
+    savedTeamsRawBytes: 140_000,
+    captainCoverageRawBytes: 330_000,
   },
 });
 
@@ -51,6 +57,23 @@ export const ROUTE_LOAD_SYNTHETIC_TEAM = Object.freeze({
   createdAt: '2026-07-05T00:00:00.000Z',
   updatedAt: '2026-07-05T00:00:00.000Z',
 });
+
+export const ROUTE_LOAD_SAVED_TEAMS_COUNT = 72;
+
+const ROUTE_LOAD_SAVED_TEAM_SLOT_IDS = Object.freeze([
+  5056,
+  4551,
+  4520,
+  4408,
+  4267,
+  4090,
+  4265,
+  4210,
+  4211,
+  4208,
+  4209,
+  4048,
+]);
 
 const routes = [
   {
@@ -85,6 +108,48 @@ const routes = [
       await page.getByTestId('compare-empty-state').waitFor({ state: 'visible', timeout: 45_000 });
     },
   },
+  {
+    id: 'characters-search',
+    path: '/tabs/characters',
+    metricKey: 'charactersSearchReadyMs',
+    wait: async (page) => {
+      await page
+        .locator('.character-card, .character-thumb-card')
+        .first()
+        .waitFor({ state: 'visible', timeout: 60_000 });
+      await page.locator('ion-searchbar').first().click();
+      await page.keyboard.type('Monkey', { delay: 15 });
+      await page
+        .locator('.character-thumb-card[title*="Monkey"], .character-card:has-text("Monkey")')
+        .first()
+        .waitFor({ state: 'visible', timeout: 30_000 });
+    },
+  },
+  {
+    id: 'saved-teams-entry',
+    path: '/tabs/saved-teams',
+    metricKey: 'savedTeamsReadyMs',
+    seedSavedTeams: true,
+    wait: async (page) => {
+      await page.getByText('Cold Start Team 1').first().waitFor({ state: 'visible', timeout: 60_000 });
+      await page
+        .locator('.saved-team-list .captain-condition-panel')
+        .first()
+        .waitFor({ state: 'visible', timeout: 30_000 });
+    },
+  },
+  {
+    id: 'captain-coverage-entry',
+    path: '/tabs/captain-coverage',
+    metricKey: 'captainCoverageReadyMs',
+    wait: async (page) => {
+      await page.locator('.results-toolbar').first().waitFor({ state: 'visible', timeout: 60_000 });
+      await page
+        .locator('.captain-result-list .captain-result, .panel-empty:not(:has(ion-spinner))')
+        .first()
+        .waitFor({ state: 'visible', timeout: 60_000 });
+    },
+  },
 ];
 
 await mkdir(screenshotDir, { recursive: true });
@@ -111,6 +176,8 @@ const results = {
     teamName: ROUTE_LOAD_SYNTHETIC_TEAM.name,
     filledSlotCount: ROUTE_LOAD_SYNTHETIC_TEAM.slots.filter((slot) => slot !== null).length,
     shareCodeBytes: buildSyntheticShareCode().length,
+    savedTeamsCount: ROUTE_LOAD_SAVED_TEAMS_COUNT,
+    charactersSearchTerm: 'Monkey',
   },
   routes: routes.map((route) => ({
     id: route.id,
@@ -141,7 +208,7 @@ try {
   ]) {
     const run = { viewport: viewport.label, timings: { routes: {} }, routeRuns: [] };
     for (const route of routes) {
-      const context = await createRouteContext(viewport);
+      const context = await createRouteContext(viewport, route);
       try {
         const routeRun = await measureRoute(context, route, viewport.label);
         run.routeRuns.push(routeRun);
@@ -222,6 +289,9 @@ async function readBundleStats() {
     guide: ['src/app/pages/seo-content/seo-content.page.ts'],
     manualShare: ['src/app/layout/tabs.page.ts', 'src/app/pages/manual-team-builder/manual-team-builder.page.ts'],
     compare: ['src/app/layout/tabs.page.ts', 'src/app/pages/auto-team-builder/auto-team-builder.page.ts'],
+    characters: ['src/app/layout/tabs.page.ts', 'src/app/pages/characters/characters.page.ts'],
+    savedTeams: ['src/app/layout/tabs.page.ts', 'src/app/pages/saved-teams/saved-teams.page.ts'],
+    captainCoverage: ['src/app/layout/tabs.page.ts', 'src/app/pages/captain-coverage/captain-coverage.page.ts'],
   };
 
   return {
@@ -467,7 +537,22 @@ function resolveOutputFilePath(file) {
   throw new Error(`Missing emitted bundle file for stats output ${file}.`);
 }
 
-async function createRouteContext(viewport) {
+function buildSyntheticSavedTeams() {
+  return Array.from({ length: ROUTE_LOAD_SAVED_TEAMS_COUNT }, (_, index) => ({
+    id: `cold-start-team-${String(index + 1).padStart(3, '0')}`,
+    name: `Cold Start Team ${index + 1}`,
+    notes: 'Synthetic cold-start route performance fixture.',
+    shipId: null,
+    slots: Array.from(
+      { length: 6 },
+      (__, slotIndex) => ROUTE_LOAD_SAVED_TEAM_SLOT_IDS[(index + slotIndex) % ROUTE_LOAD_SAVED_TEAM_SLOT_IDS.length] ?? null,
+    ),
+    createdAt: '2026-07-07T00:00:00.000Z',
+    updatedAt: '2026-07-07T00:00:00.000Z',
+  }));
+}
+
+async function createRouteContext(viewport, route) {
   const context = await browser.newContext({
     baseURL,
     viewport: viewport.viewport,
@@ -476,10 +561,13 @@ async function createRouteContext(viewport) {
     userAgent: viewport.userAgent,
     serviceWorkers: 'block',
   });
-  await context.addInitScript(() => {
+  await context.addInitScript((seededSavedTeams) => {
     localStorage.setItem('CapacitorStorage.appLanguage', 'en');
     localStorage.setItem('CapacitorStorage.analyticsConsent', 'rejected');
-  });
+    if (seededSavedTeams.length) {
+      localStorage.setItem('CapacitorStorage.savedTeams', JSON.stringify(seededSavedTeams));
+    }
+  }, route.seedSavedTeams ? buildSyntheticSavedTeams() : []);
 
   return context;
 }
@@ -743,6 +831,24 @@ function checkBundleBudgets(bundle) {
       'bytes',
     ],
     ['compare route raw JS', bundle.routes.compare?.rawBytes, ROUTE_LOAD_BUDGETS.bundles.compareRawBytes, 'bytes'],
+    [
+      'characters route raw JS',
+      bundle.routes.characters?.rawBytes,
+      ROUTE_LOAD_BUDGETS.bundles.charactersRawBytes,
+      'bytes',
+    ],
+    [
+      'saved teams route raw JS',
+      bundle.routes.savedTeams?.rawBytes,
+      ROUTE_LOAD_BUDGETS.bundles.savedTeamsRawBytes,
+      'bytes',
+    ],
+    [
+      'captain coverage route raw JS',
+      bundle.routes.captainCoverage?.rawBytes,
+      ROUTE_LOAD_BUDGETS.bundles.captainCoverageRawBytes,
+      'bytes',
+    ],
   ];
 
   for (const [label, actual, budget, unit] of checks) {

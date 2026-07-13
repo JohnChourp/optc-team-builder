@@ -36,20 +36,36 @@ let toolbarBackNavigationStub: {
 let characterCatalogCacheStub: {
   kickoffPreload: ReturnType<typeof vi.fn>;
 };
+let appUpdateStub: {
+  updateAvailable: ReturnType<typeof signal>;
+  init: ReturnType<typeof vi.fn>;
+  applyUpdate: ReturnType<typeof vi.fn>;
+  snooze: ReturnType<typeof vi.fn>;
+};
+let nativeUpdateStub: {
+  availableUpdate: ReturnType<typeof signal>;
+  init: ReturnType<typeof vi.fn>;
+  check: ReturnType<typeof vi.fn>;
+  snooze: ReturnType<typeof vi.fn>;
+  openReleasePage: ReturnType<typeof vi.fn>;
+};
+let alertControllerStub: {
+  create: ReturnType<typeof vi.fn>;
+};
+let i18nStub: {
+  translate: ReturnType<typeof vi.fn>;
+};
 
-vi.mock('@capacitor/app', () => ({
-  App: {
-    getInfo: vi.fn().mockResolvedValue({
-      version: '9.9.9',
-    }),
-  },
-}));
+// `@capacitor/app` is mocked once globally in src/test-setup.ts (shared `App`
+// singleton). AppComponent.loadAppVersion() calls App.getInfo() but tolerates any
+// value; no per-file mock is needed here.
 
 vi.mock('@ionic/angular/standalone', () => ({
   IonApp: class {},
   IonButton: class {},
   IonIcon: class {},
   IonRouterOutlet: class {},
+  AlertController: class AlertController {},
 }));
 
 vi.mock('@jsverse/transloco', () => ({
@@ -85,6 +101,14 @@ vi.mock('@angular/core', async () => {
           return toolbarBackNavigationStub;
         case 'CharacterCatalogCacheService':
           return characterCatalogCacheStub;
+        case 'AppUpdateService':
+          return appUpdateStub;
+        case 'NativeUpdateService':
+          return nativeUpdateStub;
+        case 'AlertController':
+          return alertControllerStub;
+        case 'AppI18nService':
+          return i18nStub;
         default:
           throw new Error(`Unexpected inject token: ${token.name ?? 'unknown'}`);
       }
@@ -116,6 +140,27 @@ describe('AppComponent', () => {
     };
     characterCatalogCacheStub = {
       kickoffPreload: vi.fn(),
+    };
+    appUpdateStub = {
+      updateAvailable: signal(false),
+      init: vi.fn(),
+      applyUpdate: vi.fn().mockResolvedValue(undefined),
+      snooze: vi.fn(),
+    };
+    nativeUpdateStub = {
+      availableUpdate: signal(null),
+      init: vi.fn(),
+      check: vi.fn().mockResolvedValue(undefined),
+      snooze: vi.fn(),
+      openReleasePage: vi.fn(),
+    };
+    alertControllerStub = {
+      create: vi.fn().mockResolvedValue({
+        present: vi.fn().mockResolvedValue(undefined),
+      }),
+    };
+    i18nStub = {
+      translate: vi.fn((key: string) => key),
     };
   });
 
@@ -192,6 +237,70 @@ describe('AppComponent', () => {
 
     expect(promptEvent.prompt).toHaveBeenCalledOnce();
     expect(component.showInstallBanner()).toBe(false);
+  });
+
+  it('renders the service-worker update banner actions in the template', () => {
+    const template = readFileSync(resolve(process.cwd(), 'src/app/app.component.ts'), 'utf8');
+
+    expect(template).toContain('@if (showUpdateBanner())');
+    expect(template).toContain('app-update-banner');
+    expect(template).toContain("'appUpdate.title' | transloco");
+    expect(template).toContain('updateCopyKey() | transloco');
+    expect(template).toContain('(click)="snoozeUpdate()"');
+    expect(template).toContain('(click)="openUpdatePrompt()"');
+    expect(template).toContain('[icon]="updateIcon"');
+  });
+
+  it('surfaces the update banner when a new version is available and snoozes it', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    expect(component.showUpdateBanner()).toBe(false);
+
+    appUpdateStub.updateAvailable.set(true);
+    expect(component.showUpdateBanner()).toBe(true);
+
+    component.snoozeUpdate();
+    expect(appUpdateStub.snooze).toHaveBeenCalledOnce();
+  });
+
+  it('opens an Ionic confirmation alert that applies the update when confirmed', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    await component.openUpdatePrompt();
+
+    expect(alertControllerStub.create).toHaveBeenCalledOnce();
+
+    const alertConfig = alertControllerStub.create.mock.calls[0]?.[0] as {
+      buttons: { role?: string; handler?: () => void }[];
+    };
+    const confirmButton = alertConfig.buttons.find((button) => button.role === 'confirm');
+
+    expect(confirmButton).toBeDefined();
+
+    confirmButton?.handler?.();
+
+    expect(appUpdateStub.applyUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('surfaces the native update banner and opens the release page on confirm', async () => {
+    nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    expect(component.showUpdateBanner()).toBe(true);
+    expect(component.updateCopyKey()).toBe('appUpdate.copyNative');
+
+    await component.openUpdatePrompt();
+
+    const alertConfig = alertControllerStub.create.mock.calls[0]?.[0] as {
+      buttons: { role?: string; handler?: () => void }[];
+    };
+    alertConfig.buttons.find((button) => button.role === 'confirm')?.handler?.();
+
+    expect(nativeUpdateStub.openReleasePage).toHaveBeenCalledOnce();
+    expect(appUpdateStub.applyUpdate).not.toHaveBeenCalled();
   });
 
   it('shows the banner while consent is unknown and hides it after acceptance', async () => {

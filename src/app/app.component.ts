@@ -1,7 +1,7 @@
 import { App } from '@capacitor/app';
 import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { IonApp, IonButton, IonIcon, IonRouterOutlet } from '@ionic/angular/standalone';
+import { AlertController, IonApp, IonButton, IonIcon, IonRouterOutlet } from '@ionic/angular/standalone';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -13,11 +13,14 @@ import {
 } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { closeOutline, cloudDownloadOutline } from 'ionicons/icons';
+import { closeOutline, cloudDownloadOutline, refreshOutline } from 'ionicons/icons';
 import packageJson from '../../package.json';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
+import { AppI18nService } from './core/services/app-i18n.service';
+import { AppUpdateService } from './core/services/app-update.service';
 import { CharacterCatalogCacheService } from './core/services/character-catalog-cache.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
+import { NativeUpdateService } from './core/services/native-update.service';
 import { ToolbarBackNavigationService } from './core/services/toolbar-back-navigation.service';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -61,8 +64,27 @@ const defaultSeo: RouteSeoData = {
         <ion-router-outlet></ion-router-outlet>
       </div>
 
-      @if (showInstallBanner() || showAnalyticsConsentBanner()) {
+      @if (showUpdateBanner() || showInstallBanner() || showAnalyticsConsentBanner()) {
         <div class="app-floating-banners">
+          @if (showUpdateBanner()) {
+            <section class="app-update-banner" aria-live="polite">
+              <div class="app-update-banner__copy">
+                <strong>{{ 'appUpdate.title' | transloco }}</strong>
+                <p>{{ updateCopyKey() | transloco }}</p>
+              </div>
+
+              <div class="app-update-banner__actions">
+                <ion-button fill="clear" color="light" size="small" (click)="snoozeUpdate()">
+                  {{ 'appUpdate.later' | transloco }}
+                </ion-button>
+                <ion-button fill="solid" color="warning" size="small" (click)="openUpdatePrompt()">
+                  <ion-icon slot="start" [icon]="updateIcon"></ion-icon>
+                  {{ 'appUpdate.update' | transloco }}
+                </ion-button>
+              </div>
+            </section>
+          }
+
           @if (showInstallBanner()) {
             <section class="app-install-banner" aria-live="polite">
               <div class="app-install-banner__copy">
@@ -165,6 +187,10 @@ export class AppComponent {
   private readonly analytics = inject(GoogleAnalyticsService);
   private readonly toolbarBackNavigation = inject(ToolbarBackNavigationService);
   private readonly characterCatalogCache = inject(CharacterCatalogCacheService);
+  private readonly appUpdateService = inject(AppUpdateService);
+  private readonly nativeUpdateService = inject(NativeUpdateService);
+  private readonly alertController = inject(AlertController);
+  private readonly i18n = inject(AppI18nService);
   private lastTrackedUrl: string | null = null;
 
   public readonly appVersion = signal(packageJson.version);
@@ -174,6 +200,13 @@ export class AppComponent {
   public readonly analyticsConsent = this.analyticsConsentService.consent;
   public readonly installIcon = cloudDownloadOutline;
   public readonly dismissIcon = closeOutline;
+  public readonly updateIcon = refreshOutline;
+  public readonly showUpdateBanner = computed(
+    () => this.appUpdateService.updateAvailable() || this.nativeUpdateService.availableUpdate() !== null,
+  );
+  public readonly updateCopyKey = computed(() =>
+    this.nativeUpdateService.availableUpdate() ? 'appUpdate.copyNative' : 'appUpdate.copy',
+  );
   public readonly installPromptEvent = signal<BeforeInstallPromptEvent | null>(null);
   public readonly installBannerDismissed = signal(false);
   public readonly appInstalled = signal(false);
@@ -238,6 +271,48 @@ export class AppComponent {
 
   public dismissInstallBanner(): void {
     this.installBannerDismissed.set(true);
+  }
+
+  public snoozeUpdate(): void {
+    if (this.appUpdateService.updateAvailable()) {
+      this.appUpdateService.snooze();
+    }
+
+    if (this.nativeUpdateService.availableUpdate()) {
+      this.nativeUpdateService.snooze();
+    }
+  }
+
+  public async openUpdatePrompt(): Promise<void> {
+    const isNativeUpdate = this.nativeUpdateService.availableUpdate() !== null;
+    const alert = await this.alertController.create({
+      header: this.i18n.translate('appUpdate.confirm.title'),
+      message: this.i18n.translate(
+        isNativeUpdate ? 'appUpdate.confirm.messageNative' : 'appUpdate.confirm.message',
+      ),
+      buttons: [
+        {
+          text: this.i18n.translate('appUpdate.confirm.cancel'),
+          role: 'cancel',
+        },
+        {
+          text: this.i18n.translate(
+            isNativeUpdate ? 'appUpdate.confirm.download' : 'appUpdate.confirm.confirm',
+          ),
+          role: 'confirm',
+          handler: () => {
+            if (isNativeUpdate) {
+              this.nativeUpdateService.openReleasePage();
+              return;
+            }
+
+            void this.appUpdateService.applyUpdate();
+          },
+        },
+      ],
+    });
+
+    await alert.present();
   }
 
   public async installApp(): Promise<void> {

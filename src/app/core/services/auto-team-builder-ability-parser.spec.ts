@@ -200,6 +200,60 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('extracts paralysis and despair reduction when the upstream text drops "by" ("duration N turns")', () => {
+    // OPTC-DB quirk (Luffy & Whitebeard #3728): "reduces Paralysis and Despair
+    // duration 1 turn" with the "by" missing must still be detected.
+    const abilities = analyzeBuilderAbilityText(
+      'Boosts ATK of all characters by 3x and reduces Paralysis and Despair duration 1 turn.',
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_paralysis', minTurns: 1, source: 'captainAbility' }),
+        expect.objectContaining({ key: 'remove_despair', minTurns: 1, source: 'captainAbility' }),
+      ]),
+    );
+  });
+
+  it('does not treat Sailor Despair as generic Despair', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Reduces Sailor Despair duration by 10 turns.',
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual([
+      expect.objectContaining({
+        key: 'remove_sailor_despair',
+        minTurns: 10,
+        source: 'captainAbility',
+      }),
+    ]);
+    expect(extractAbilityKeys(abilities)).not.toContain('remove_despair');
+  });
+
+  it('keeps real Despair when text also includes Sailor Despair', () => {
+    const abilities = analyzeBuilderAbilityText(
+      'Reduces Despair and Sailor Despair duration by 6 turns.',
+      'specialText',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_despair',
+          minTurns: 6,
+          source: 'specialText',
+        }),
+        expect.objectContaining({
+          key: 'remove_sailor_despair',
+          minTurns: 6,
+          source: 'specialText',
+        }),
+      ]),
+    );
+  });
+
   it('does not treat Special Bind as generic Bind', () => {
     const abilities = analyzeBuilderAbilityText(
       'Reduces Special Bind duration by 10 turns.',
@@ -293,6 +347,29 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('detects genuine orb-type changes but not "change the Orb Multiplier"', () => {
+    // Genuine orb-type conversion → change_slots.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Changes [STR] orbs of Fighter characters into [TND] orbs.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('change_slots');
+
+    // "change the Orb Multiplier of specific orbs" alters an orb's multiplier,
+    // not its type — it must NOT be tagged as a slot/orb change (#4477).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If a crew member uses a special to change the Orb Multiplier of specific orbs, replaces that buff with an ATK boost.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('change_slots');
+  });
+
   it('extracts multiple unique effects from one special text without duplicates', () => {
     expect(
       analyzeBuilderAbilityText(
@@ -365,14 +442,126 @@ describe('auto team builder ability parser', () => {
       expect.arrayContaining([
         expect.objectContaining({ key: 'reduce_special_charge', source: 'captainAbility' }),
         expect.objectContaining({ key: 'make_slots_favorable', source: 'captainAbility' }),
-        expect.objectContaining({
-          key: 'chain_multiplier_multiplicative_boost',
-          source: 'captainAbility',
-        }),
       ]),
+    );
+    // "boosts ATK ... at the start of the chain, by Nx" is a conditional ATK boost,
+    // NOT a chain-multiplier boost — it must not be tagged multiplicative.
+    expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).not.toContain(
+      'chain_multiplier_multiplicative_boost',
     );
     expect(analyzeBuilderAbilityText(text, 'captainAbility')).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ key: 'remove_paralysis' })]),
+    );
+  });
+
+  it('detects chain_multiplier_multiplicative_boost only for genuine "chain multiplier by Nx"', () => {
+    // Genuine multiplicative wording (the "Chain Multiplication" buff category).
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('boosts chain multiplier by 1.5x', 'captainAbility')),
+    ).toContain('chain_multiplier_multiplicative_boost');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts the chain multiplier by 1.1x for 1 turn', 'specialText'),
+      ),
+    ).toContain('chain_multiplier_multiplicative_boost');
+    // Growth-rate boost is a different key, not multiplicative.
+    const growth = extractAbilityKeys(
+      analyzeBuilderAbilityText('Boosts Chain Multiplier Growth Rate by 4x', 'captainAbility'),
+    );
+    expect(growth).toContain('chain_multiplier_growth_rate');
+    expect(growth).not.toContain('chain_multiplier_multiplicative_boost');
+  });
+
+  it('detects chain_multiplier_growth_rate only for a genuine "by Nx" grant, not buff amplifiers', () => {
+    // Canonical grant wording keeps matching (captain + special sources).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Boosts Chain Multiplier Growth Rate by 1.5x', 'captainAbility'),
+      ),
+    ).toContain('chain_multiplier_growth_rate');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'boosts Chain Multiplier Growth Rate by 1.75x for 1 turn',
+          'specialText',
+        ),
+      ),
+    ).toContain('chain_multiplier_growth_rate');
+    // Amplifiers that only extend/strengthen OTHER sources' growth-rate buffs grant
+    // no growth rate themselves — Edward Newgate #4216 (duration extend, "by N
+    // turns") and Roger & Rayleigh & Gaban #4387 (condition + "buffs by +Nx").
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'increases duration of any Chain Multiplier Growth Rate buffs applied by Specials by 2 turns',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If a crew member uses a special to boost Chain Multiplier Growth Rate, increases duration of any Chain Multiplier Growth Rate buffs by 1 turn, and increases boost effects of Chain Multiplier Growth Rate buffs by +0.25x',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+    // Trigger CONDITION "you gain a ... buff" is not a grant either (Dorry & Broggy #4436).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If your crew has 3+ [Giant] characters and you gain a Chain Multiplier Growth Rate buff, activates a follow-up special',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+  });
+
+  it('keeps a cumulative second conditional captain clause with a different condition', () => {
+    // Kurozumi Orochi (ids 3571/3572): two independent crew-composition conditions.
+    // The 3-word fingerprint used to collapse both to "if your crew" and drop the
+    // second clause as a duplicate restatement, losing its make_slots_favorable.
+    const text =
+      'If your crew has 6 Driven characters, boosts ATK of Driven characters by 3.5x. If your crew has 5 [STR] characters, boosts HP of [STR] characters by 1.3x and makes [QCK] and [DEX] orbs beneficial for all characters.';
+
+    expect(extractPrimaryAbilityBranchText(text)).toContain(
+      'makes [QCK] and [DEX] orbs beneficial for all characters',
+    );
+    expect(analyzeBuilderAbilityText(text, 'captainAbility')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          source: 'captainAbility',
+          slotTokens: ['QCK', 'DEX'],
+          effectTargetScope: 'crew',
+        }),
+      ]),
+    );
+  });
+
+  it('still drops a same-condition powered-up restatement branch', () => {
+    // Guard the non-regression direction: when two branches share the SAME
+    // condition, the later (higher-magnitude) restatement must still be dropped.
+    const text =
+      'If HP is above 50%, boosts ATK of all characters by 2x. If HP is above 50%, boosts ATK of all characters by 3x and reduces Bind duration by 5 turns.';
+
+    expect(extractPrimaryAbilityBranchText(text)).not.toContain('reduces Bind duration by 5 turns');
+    expect(analyzeBuilderAbilityText(text, 'captainAbility')).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'remove_bind' })]),
+    );
+  });
+
+  it('keeps distinct captain-conditioned sailor branches instead of deduping them', () => {
+    // Jabra (id 4334) sailor text: three "If your Captain is a <class> character"
+    // branches. The last branch's Chain Coefficient Reduction removal was dropped
+    // when all three collapsed to the same "if your captain" fingerprint.
+    const text =
+      'If your Captain is a Shooter character, makes [STR] orbs beneficial for Shooter characters. If your Captain is a Fighter character, makes [QCK] orbs beneficial for Fighter characters, and reduces Chain Coefficient Reduction duration by 1 turn.';
+
+    expect(analyzeBuilderAbilityText(text, 'sailorAbilities')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_chain_coefficient_reduction' }),
+      ]),
     );
   });
 
@@ -400,6 +589,89 @@ describe('auto team builder ability parser', () => {
     expect(new Set(abilities.map((ability) => ability.source))).toEqual(
       new Set(['captainAbility']),
     );
+  });
+
+  it('detects reduce_special_charge only when "reduces" directly governs "special cooldown"', () => {
+    // Canonical OPTC-DB wording (crew-scoped and self-scoped) — must match.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Special Cooldown of all characters by 2 turns at the start of the fight, boosts ATK of all characters by 4x.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('reduce_special_charge');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Special Cooldown of this character by 3 turns at the start of the fight.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('reduce_special_charge');
+
+    // Clause bridge: "reduces" governs Special Bind duration; the separate
+    // "restores Special Cooldown ... when rewinded" (rewind-recovery) is a
+    // DISTINCT mechanic and must NOT be reported as reduce_special_charge.
+    const rewindBridge = analyzeBuilderAbilityText(
+      'reduces Special Bind duration by 10 turns on this character and restores Special Cooldown of all characters by 2 turns when they are rewinded',
+      'captainAbility',
+    );
+    expect(extractAbilityKeys(rewindBridge)).toContain('remove_special_bind');
+    expect(extractAbilityKeys(rewindBridge)).not.toContain('reduce_special_charge');
+
+    // HP-cost bridge on a special: "advances Special Cooldown ... to MAX" is a
+    // distinct self max-charge effect, not a special-cooldown reduction.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "reduces crew's current HP by 50% crew's MAX HP and advances Special Cooldown of all characters to MAX",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('reduce_special_charge');
+  });
+
+  it('detects restore_advance_special_charge for rewind-restore / advance, excluding ship scope', () => {
+    // Rewind-recovery restore — matches the new key, NOT reduce_special_charge.
+    const restore = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        'restores Special Cooldown of all characters by 2 turns when they are rewinded',
+        'captainAbility',
+      ),
+    );
+    expect(restore).toContain('restore_advance_special_charge');
+    expect(restore).not.toContain('reduce_special_charge');
+
+    // Proactive advance-to-MAX on this character — matches the new key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'advances Special Cooldown of this character to MAX at the start of the fight',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('restore_advance_special_charge');
+
+    // Advance on a special (specialText source) is also covered.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'advances Special Cooldown of this character to MAX',
+          'specialText',
+        ),
+      ),
+    ).toContain('restore_advance_special_charge');
+
+    // Ship special cooldown is a distinct mechanic and must be excluded.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Advances Special Cooldown of Ship to MAX at the start of the fight',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('restore_advance_special_charge');
   });
 
   it('extracts structured captain utility metadata for damage reduction and favorable slots', () => {
@@ -446,6 +718,137 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('does not mis-tag glass-cannon / counter / heal clauses as reduce_damage', () => {
+    // Glass-cannon downside: "reduces HP ..., Increases damage received" must NOT
+    // be reduce_damage (the crew takes MORE damage). Regression for Dellinger.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'reduces HP of all characters by 20%, Increases damage received by 2x',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('reduce_damage');
+    // Counter: "reduces Despair ... and deals Nx the damage taken" is offensive, not reduction.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'reduces Despair duration by 10 turns and deals 100x the damage taken from enemies in the previous turn in [INT] damage to all enemies',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('reduce_damage');
+    // Debuff cure on a special: "Reduces ... Increase Damage Taken" is a status
+    // cure (remove_increase_damage_taken), not a % reduction.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces ATK DOWN and Increase Damage Taken by 2 turns', 'specialText'),
+      ),
+    ).not.toContain('reduce_damage');
+  });
+
+  it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
+    // Type-scoped and plain crew reductions.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces damage received from [PSY] enemies by 20%', 'captainAbility'),
+      ),
+    ).toContain('reduce_damage');
+    // Genuine reduction that co-occurs with a quoted "increases damage received"
+    // penalty it removes (Orochi) must still match.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "reduces damage received by 10% and removes the following effect from this character's Captain Ability: increases damage received by 1.5x",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('reduce_damage');
+    // Upstream typo "damage take" (missing n) — Sanji "Grill Shot".
+    const sanji = analyzeBuilderAbilityText(
+      'Boosts ATK of Powerhouse characters by 2.5x and reduces damage take by 10%.',
+      'captainAbility',
+    );
+    expect(sanji.find((a) => a.key === 'reduce_damage')).toEqual(
+      expect.objectContaining({ minEffectValue: 10, effectTargetScope: 'crew' }),
+    );
+  });
+
+  it('detects heal_hp across decimal RCV multipliers and the legacy "health" wording', () => {
+    // Decimal RCV multiplier — the "." in "1.5x" must not break the match
+    // (regression: bare [^.] stopped at the decimal and missed Marco/Rayleigh/etc.).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Boosts ATK of all characters by 5x and recovers 1.5x character's RCV in HP at the end of each turn",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('heal_hp');
+    // Ranged decimal multiplier (Marco).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "recovers 0.5x-3.5x character's RCV in HP at the end of each turn",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('heal_hp');
+    // Legacy "health" wording (Marguerite).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Boosts ATK of Shooter characters by 1.75x, recovers a small amount of health at the end of each turn',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('heal_hp');
+    // Plain fixed and integer forms still match.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Recovers 1,000 HP at the end of each turn', 'captainAbility'),
+      ),
+    ).toContain('heal_hp');
+    // A max-HP boost is NOT a heal.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Boosts HP of all characters by 1.5x', 'captainAbility'),
+      ),
+    ).not.toContain('heal_hp');
+  });
+
+  it('detects special_damage for dealing damage, not defensive orb "less damage"', () => {
+    // Genuine end-of-turn damage dealer.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Boosts ATK of all characters by 2x, deals 5x character's ATK in [STR] damage to all enemies at the end of each turn",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('special_damage');
+    // Counter form (deals the damage taken back to enemies).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'deals 5x the damage taken from enemies in the previous turn in [STR] damage to all enemies at the end of each turn',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('special_damage');
+    // "[BOMB]/[SUPERBOMB] orbs will deal N% less damage to the crew" is a defensive
+    // orb-damage reduction, not the crew dealing damage — must NOT be special_damage,
+    // even when a "reduces damage received" clause follows.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'makes [BOMB] and [SUPERBOMB] orbs beneficial for all characters, [BOMB] and [SUPERBOMB] orbs will deal 80% less damage to the crew, reduces damage received by 10%',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('special_damage');
+  });
+
   it('classifies favorable slots for non-captains as sub-member scoped', () => {
     const abilities = analyzeBuilderAbilityText(
       'Makes [RCV] orbs beneficial for non-captains.',
@@ -458,6 +861,26 @@ describe('auto team builder ability parser', () => {
           key: 'make_slots_favorable',
           slotTokens: ['RCV'],
           effectTargetScope: 'subs',
+        }),
+      ]),
+    );
+  });
+
+  it('detects favorable slots when the clause contains a [S. BOMB] (Super Bomb) orb token', () => {
+    // The inner ". " of "[S. BOMB]" used to read as a sentence/clause boundary and
+    // break the `[^.;]`-bounded matcher, dropping make_slots_favorable entirely
+    // (e.g. Dr. Vegapunk - Flowers for the Deceased, id 4261).
+    const abilities = analyzeBuilderAbilityText(
+      'Changes all orbs into [BOMB] orbs at the start of the fight, boosts ATK of all character by 4x, makes [BOMB] and [S. BOMB] orbs beneficial for all characters, and restores Special Cooldown of all characters by 2 turns when they are rewinded.',
+      'captainAbility',
+    );
+
+    expect(abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'make_slots_favorable',
+          slotTokens: ['BOMB', 'SUPERBOMB'],
+          effectTargetScope: 'crew',
         }),
       ]),
     );
@@ -945,7 +1368,7 @@ describe('auto team builder ability parser', () => {
       return counts;
     }, {});
 
-    expect(specialCatalog).toHaveLength(85);
+    expect(specialCatalog).toHaveLength(86);
     expect(groupCounts).toEqual({
       Damage: 6,
       'Boost Damage': 17,
@@ -955,7 +1378,7 @@ describe('auto team builder ability parser', () => {
       'Reduce Status Effect Duration': 15,
       'Reduce Enemy Effect Duration': 9,
       'Apply Status Effect': 8,
-      Reduction: 4,
+      Reduction: 5,
       Other: 15,
     });
     expect(specialCatalog.slice(0, 3).map((item) => item.key)).toEqual([
@@ -1014,6 +1437,72 @@ describe('auto team builder ability parser', () => {
         matchCount: 1,
       }),
     );
+  });
+
+  it('tags Remove SFX from OPTC-DB "Blindness" wording across special, sailor and support', async () => {
+    // In-game the enemy debuff is "Remove SFX" (hides tap-timing rings); OPTC-DB
+    // ability text always names it "Blindness". The picker exposes `remove_sfx`,
+    // so Blindness-cleanse wording must populate the SFX keys on every surface.
+    const characters: ParserCharacters = [
+      {
+        id: 920001,
+        detail: {
+          specialText: 'Removes Blindness duration completely',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 920002,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: ['Reduces Blindness duration by 3 turns'],
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 920003,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          supportData: [
+            {
+              supportedCharactersText: 'Some Crew',
+              levelDescriptions: [
+                'Once per adventure, when an enemy inflicts you with ATK DOWN or Blindness, reduces ATK DOWN and Blindness duration by 2 turns',
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'remove_sfx')).toEqual(
+      expect.objectContaining({
+        category: 'special',
+        label: 'Remove SFX',
+        groupLabel: 'Reduce Status Effect Duration',
+        matchingCharacterIds: expect.arrayContaining([920001]),
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'crewmate_recover_remove_sfx')).toEqual(
+      expect.objectContaining({
+        category: 'crewmate',
+        matchingCharacterIds: expect.arrayContaining([920002]),
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'support_status_effect_recovery_remove_sfx')).toEqual(
+      expect.objectContaining({
+        category: 'support',
+        matchingCharacterIds: [920003],
+      }),
+    );
+    // The dead `remove_blindness` legacy key must no longer be emitted.
+    expect(catalog.find((item) => item.key === 'remove_blindness')).toBeUndefined();
   });
 
   it('indexes structured captain utility matches in the ability catalog', async () => {

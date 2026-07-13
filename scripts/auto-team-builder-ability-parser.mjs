@@ -161,7 +161,13 @@ const TERRITORY_PROVIDER_PATTERNS = [
   /\bapplies\b[^.;]{0,120}\b(?:field|crew)[^.;]{0,120}\b["“]?\s*Territory\s*:\s*(?:\[[^\]]+\]|[A-Za-z][A-Za-z ]*)\s*["”]?/i,
 ];
 const SPECIAL_ABILITY_MATCHERS = [
-  ['special_damage', [/\bdeals?\b[^.]{0,160}\bdamage\b/i]],
+  // The captain/crew DEALING damage to enemies ("deals <amount> [in TYPE] damage
+  // to enemies"). The negative lookbehind rejects DEFENSIVE "damage": "[BOMB]/
+  // [SUPERBOMB] orbs will deal N% less damage to the crew" (orb self-damage cut)
+  // and bridges into "reduces damage received" — neither deals damage. `(?:[^.]|
+  // \.\d)` also lets the gap span decimals so decimal-multiplier damage specials
+  // ("deals 3.5x character's RCV/ATK ... damage") are not lost at the ".".
+  ['special_damage', [/\bdeals?\b(?:[^.]|\.\d){0,160}(?<!\b(?:less|more|reduces?|reduced)\s)damage\b/i]],
   ['special_damage_other', [/\bdeals?\b[^.]{0,160}\btypeless damage\b/i]],
   [
     'percent_damage',
@@ -206,20 +212,42 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'chain_multiplier_multiplicative_boost',
-    [/\bboosts?\b[^.]{0,120}\bchain\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i],
+    // Require the genuine multiplicative wording "boosts (the) chain multiplier by
+    // Nx" (the "Chain Multiplication" buff category). The old loose "boosts ...
+    // chain ... by Nx" mis-tagged the growth-rate effect ("boosts Chain Multiplier
+    // Growth Rate by Nx" → chain_multiplier_growth_rate) and conditional ATK boosts
+    // ("boosts ATK ... at the start of the chain, by Nx"). This yields 0 matches on
+    // captainAbility/specialText today (the effect is currently support-side only)
+    // but stays correct for any future captain/special that uses this wording.
+    [/\bboosts?\s+(?:the\s+)?chain multiplier by\s+\d+(?:\.\d+)?x/i],
   ],
   [
     'chain_multiplier_growth_rate',
-    [
-      /\bboosts?\b[^.]{0,120}\bchain\b[^.]{0,80}\bgrowth rate\b/i,
-      /\bincreases?\b[^.]{0,120}\bchain\b[^.]{0,80}\bgrowth rate\b/i,
-    ],
+    // Genuine GRANT only: "(Boosts|Increases) [the] Chain Multiplier Growth Rate
+    // by [+]Nx" — the canonical OPTC-DB wording (every real grant uses "Boosts
+    // Chain Multiplier Growth Rate by Nx"; the "by <multiplier>x" fingerprint is
+    // what makes it a grant). The old loose `boosts?/increases? ... chain ...
+    // growth rate` bridge over-matched growth-rate BUFF AMPLIFIERS that grant no
+    // growth rate themselves — "increases duration of any Chain Multiplier Growth
+    // Rate buffs ... by N turns" (Edward Newgate #4216) and "increases boost
+    // effects of Chain Multiplier Growth Rate buffs by +Nx" / "uses a special to
+    // boost Chain Multiplier Growth Rate" (Roger & Rayleigh & Gaban #4387) — and
+    // the trigger condition "you gain a Chain Multiplier Growth Rate buff" (Dorry
+    // & Broggy #4436). Requiring "by [+]Nx" to directly follow the phrase keeps
+    // all 63 captain / 42 special grants and drops those non-grant forms.
+    [/\b(?:boosts?|increases?)\s+(?:the\s+)?chain\s+multiplier\s+growth\s+rate\s+by\s+\+?\d+(?:\.\d+)?x/i],
   ],
   ['boost_base_atk', [/\bboosts?\b[^.]{0,120}\bbase ATK\b/i, /\badds?\b[^.]{0,120}\bbase ATK\b/i]],
   ['effect_boost', [/\bincreases?\b[^.]{0,120}\bboost effects?\b/i, /\beffect boost\b/i]],
   ['critical_damage_boost', [/\bcritical damage\b/i]],
   ['final_tap_atk_boost', [/\bfinal tap\b[^.]{0,120}\bATK\b/i]],
-  ['reduce_damage', [/\breduces?\b[^.]{0,120}\bdamage (?:received|taken)\b/i]],
+  // Require "reduces" to directly govern "damage received/taken" (canonical
+  // OPTC-DB "reduces damage received/taken by N%"; "take" handles an upstream
+  // typo, e.g. Sanji "reduces damage take by 10%"). A wide `[^.]{0,120}` bridge
+  // previously mis-tagged debuff cures ("reduces Increase Damage Taken"),
+  // counters ("deals Nx the damage taken"), and glass-cannon downsides
+  // ("increases damage received") as reduce_damage.
+  ['reduce_damage', [/\breduces?\s+(?:any\s+)?damage (?:received|taken|take)\b/i]],
   [
     'reduce_damage_over_threshold',
     [/\breduces?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bover\b[^.]{0,80}\bHP\b/i],
@@ -238,7 +266,12 @@ const SPECIAL_ABILITY_MATCHERS = [
   [
     'change_slots',
     [
-      /\bchanges?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i,
+      // Exclude orb-EFFECT changes ("changes the Orb Multiplier / Amplification /
+      // Effects ... of [X] orbs"): those alter an orb's multiplier/effect, not its
+      // type, so they are not a slot/orb-type change (e.g. Kaido & Big Mom #4477
+      // "change the Orb Multiplier of specific orbs"). Genuine changes name an orb
+      // type or "the orb(s)" as the object, not the "Orb <effect>" noun.
+      /\bchanges?\b(?!\s+(?:the\s+)?Orb\s+(?:Multiplier|Amplification|Effects?)\b)[^.]{0,160}\b(?:orbs?|slots?)\b/i,
       /\btransforms?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i,
     ],
   ],
@@ -282,9 +315,34 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,120}\bVS effect gauge\b/i]],
   [
     'reduce_special_charge',
-    [/\breduces?\b[^.]{0,120}\bspecial cooldown\b/i, /\breduces?\b[^.]{0,120}\bspecial charge\b/i],
+    // Require "reduces" to directly govern "special cooldown" — the canonical
+    // OPTC-DB wording "Reduces Special Cooldown of <scope> by N turn(s) at the
+    // start of the fight" (community name "Reduce Special Charge Time"). A wide
+    // `[^.]{0,120}` bridge previously mis-scoped clauses such as "reduces Bind
+    // duration ... and restores/advances Special Cooldown" — the "restores (when
+    // rewinded)" / "advances to MAX" beneficial charge is a DISTINCT mechanic and
+    // must not be reported here. The former "special charge" alternative matched
+    // zero characters across every source, so it is dropped.
+    [/\breduces?\s+(?:the\s+)?special cooldown\b/i],
   ],
-  ['heal_hp', [/\b(?:recovers?|heals?)\b[^.]{0,120}\bHP\b/i]],
+  [
+    'restore_advance_special_charge',
+    // The beneficial-but-distinct special-charge family that is NOT the canonical
+    // start-of-fight `reduce_special_charge`: "restores Special Cooldown of <scope>
+    // by N turns when they are rewinded" (Rewind/Time recovery) and "advances
+    // Special Cooldown of <scope> to MAX / by N turns" (proactive charge). "restores"
+    // / "advances" must directly govern "special cooldown". The negative lookahead
+    // excludes "Special Cooldown of Ship" — the ship special cooldown is a separate
+    // mechanic (see `reduce_ship_special_charge`), not a crew/character effect.
+    [/\b(?:restores?|advances?)\s+(?:the\s+)?special cooldown\b(?!\s+of\s+ship\b)/i],
+  ],
+  // `(?:[^.]|\.\d)` lets the gap span decimals (e.g. "recovers 1.5x character's
+  // RCV in HP") without crossing a real sentence boundary (a period followed by a
+  // space, not a digit) — a bare `[^.]` stopped at the "." in "1.5x" and missed
+  // ~30 RCV-scaled healer captains (Marco, Rayleigh, Big Mom, Shanks, ...).
+  // "health" tolerates the legacy wording in Marguerite "recovers a small amount
+  // of health at the end of each turn".
+  ['heal_hp', [/\b(?:recovers?|heals?)\b(?:[^.]|\.\d){0,120}\b(?:HP|health)\b/i]],
   ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],
   [
     'apply_resilience',
@@ -382,8 +440,10 @@ const CREWMATE_ABILITY_MATCHERS = [
     patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bspecial reverse\b/i],
   },
   {
+    // "Remove SFX" debuff == OPTC-DB "Blindness" in sailor ability text
+    // (e.g. "Reduces Blindness duration by 3 turns").
     key: 'crewmate_recover_remove_sfx',
-    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bSFX\b/i],
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\b(?:blindness|SFX)\b/i],
   },
   {
     key: 'crewmate_recover_paralysis',
@@ -533,7 +593,12 @@ const TARGET_ALIASES = [
   {
     key: 'remove_despair',
     label: 'Remove Despair',
-    matcher: (target) => target.includes('despair'),
+    // "Sailor Despair" is a DISTINCT debuff (it disables sailor abilities, not
+    // the Captain ability that ordinary Despair disables) and is handled by
+    // `remove_sailor_despair`. The bare substring 'despair' must not swallow it,
+    // otherwise a Sailor-Despair-only cure is miscounted as a Despair cure
+    // (mirrors the `remove_bind` exclusion of special/slot/orb/ship bind).
+    matcher: (target) => target.includes('despair') && !target.includes('sailor despair'),
   },
   {
     key: 'remove_paralysis',
@@ -541,9 +606,15 @@ const TARGET_ALIASES = [
     matcher: (target) => target.includes('paralysis'),
   },
   {
-    key: 'remove_blindness',
-    label: 'Remove Blindness',
-    matcher: (target) => target.includes('blindness') || target === 'blind',
+    // The enemy debuff surfaced in the picker as "Remove SFX" (it hides the
+    // tap-timing SFX rings, making PERFECTs harder) is written as "Blindness"
+    // in OPTC-DB ability text. Map that wording to the picker-visible
+    // `remove_sfx` key so the Special filter matches these cleanse specials.
+    // The `sfx` clause future-proofs against upstream renaming Blindness -> SFX.
+    key: 'remove_sfx',
+    label: 'Remove SFX',
+    matcher: (target) =>
+      target.includes('blindness') || target === 'blind' || target.includes('sfx'),
   },
   {
     key: 'remove_atk_down',
@@ -671,7 +742,12 @@ const TARGET_ALIASES = [
 const TURN_PATTERNS = [
   {
     isCompleteRemoval: false,
-    pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+(?:duration\s+)?by\s+(\d+)\s+turns?/gi,
+    // Accept "<target> duration by N turns", "<target> by N turns", and the
+    // "by"-less "<target> duration N turns" form. The last covers an upstream
+    // OPTC-DB wording quirk (e.g. Luffy & Whitebeard #3728 "reduces Paralysis
+    // and Despair duration 1 turn") where the "by" is dropped; making "by"
+    // optional only after the literal "duration" keeps the match tight.
+    pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)\s+turns?/gi,
     resolveTurns: (match) => Number(match[2]),
   },
   {
@@ -771,8 +847,23 @@ function normalizeHtmlAbilityText(value) {
   return normalizeHtmlToText(value);
 }
 
+// Orb-token spellings that carry inner punctuation/whitespace break sentence and
+// clause splitting (a `. ` inside `[S. BOMB]` reads as a sentence boundary) and the
+// `[^.;]`-bounded effect matchers. Canonicalize them to their bracketed slot-token
+// form up front so every downstream matcher and slot-token extractor sees a clean,
+// period-free token. `[S. BOMB]` (the Super Bomb orb) is currently the only such
+// spelling in upstream data; add future aliases here.
+const ORB_TOKEN_TEXT_ALIASES = [[/\[\s*S\.\s*BOMB\s*\]/gi, '[SUPERBOMB]']];
+
+function canonicalizeOrbTokens(text) {
+  return ORB_TOKEN_TEXT_ALIASES.reduce(
+    (current, [pattern, replacement]) => current.replace(pattern, replacement),
+    text,
+  );
+}
+
 export function extractPrimaryAbilityBranchText(value) {
-  const normalizedText = normalizeLegacyAbilityText(value);
+  const normalizedText = canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
 
   if (!normalizedText.length) {
     return '';
@@ -1019,8 +1110,14 @@ function addCaptainDamageReductionMatches(abilities, seen, normalizedText) {
   }
 
   for (const clause of extractCaptainEffectClauses(normalizedText)) {
+    // "reduces" must directly govern "damage received/taken" — clauses like
+    // "reduces HP ..., Increases damage received" (glass-cannon downside),
+    // "reduces Despair ... and deals Nx the damage taken" (counter), and
+    // "reduces Paralysis ... and recovers N% of damage taken" (heal) are NOT
+    // crew damage reduction and must not match. ("take" tolerates the upstream
+    // typo in Sanji "reduces damage take by 10%".)
     const damageReductionMatch = clause.match(
-      /\breduces?\b[^.;]{0,120}\bdamage (?:received|taken)\b/i,
+      /\breduces?\s+(?:any\s+)?damage (?:received|taken|take)\b/i,
     );
 
     if (!damageReductionMatch) {
@@ -1028,7 +1125,7 @@ function addCaptainDamageReductionMatches(abilities, seen, normalizedText) {
     }
 
     const match = clause.match(
-      /\breduces?\b[^.;]{0,120}\bdamage (?:received|taken)\b[^.;]{0,80}\bby\s+(\d+(?:\.\d+)?)%/i,
+      /\breduces?\s+(?:any\s+)?damage (?:received|taken|take)\b[^.;]{0,80}\bby\s+(\d+(?:\.\d+)?)%/i,
     );
     const minEffectValue = match ? normalizeEffectValue(match[1]) : null;
 
@@ -1680,8 +1777,9 @@ function addSupportStatusRecoveryKeys(keys, text) {
       /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\block chain multiplier\b/i,
     ],
     [
+      // "Remove SFX" debuff == OPTC-DB "Blindness" in support ability text.
       'support_status_effect_recovery_remove_sfx',
-      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bSFX\b/i,
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:blindness|SFX)\b/i,
     ],
   ];
 
@@ -2314,7 +2412,34 @@ function splitAbilityTextIntoSentences(text) {
     .filter(Boolean);
 }
 
+const CONDITIONAL_BRANCH_STARTER_PATTERN = /^\s*(?:if|when|while|unless)\b/i;
+
 function createBranchStarterFingerprint(sentence) {
+  // Conditional branches ("If your crew has 6 Driven characters, ...") are only
+  // distinguished by their CONDITION, which extends past the first few words and
+  // hinges on type/class tokens that the default fingerprint strips. Two genuinely
+  // different conditions ("6 Driven characters" vs "5 [STR] characters") both
+  // collapse to "if your crew", so a real cumulative second clause gets mistaken
+  // for a restated duplicate branch and dropped (e.g. Kurozumi Orochi 3571/3572,
+  // which lose their conditional HP boost and make_slots_favorable). For these,
+  // fingerprint the whole leading condition (up to the first comma) and preserve
+  // the bracketed type tokens, so different conditions no longer collide while a
+  // same-condition powered-up restatement still shares a fingerprint and dedups.
+  if (CONDITIONAL_BRANCH_STARTER_PATTERN.test(sentence)) {
+    const conditionText = sentence.split(',')[0];
+    const normalizedCondition = conditionText
+      .toLowerCase()
+      .replace(/\[([^\]]+)\]/g, (_match, token) => ` ${token.replace(/[^a-z]/gi, '')} `)
+      .replace(/\b\d+(?:\.\d+)?x?\b/g, ' ')
+      .replace(/[^a-z\s']/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (normalizedCondition.length) {
+      return `if:${normalizedCondition}`;
+    }
+  }
+
   const normalizedSentence = sentence
     .toLowerCase()
     .replace(/\[[^\]]+\]/g, ' ')
