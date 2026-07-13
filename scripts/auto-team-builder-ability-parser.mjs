@@ -202,7 +202,28 @@ const SPECIAL_ABILITY_MATCHERS = [
     [/\bboosts?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bpoisoned enemies\b/i],
   ],
   ['other_damage_boosts', [/\bboosts?\b[^.]{0,120}\bdamage dealt\b/i, /\bdamage boost\b/i]],
-  ['boost_type_effects', [/\bboosts?\b[^.]{0,120}\btype effects?\b/i, /\bcolor affinity\b/i]],
+  [
+    'boost_type_effects',
+    // A genuine Type-Effects / Color Affinity BOOST grant — not any mention of
+    // the buff. Keep the verb-anchored "boosts ... Type Effects" (covers "boosts
+    // [the] [Super] Type Effects of [scope]"). The old bare `/color affinity/`
+    // literal over-matched every reference to the buff: effect_boost ("increases
+    // boost effects of Color Affinity buffs"), buff-duration extenders
+    // ("increases duration of any Color Affinity buffs"), conditions ("uses a
+    // special with / to boost a Color Affinity buff", "if your crew has Color
+    // Affinity", "you gain a Color Affinity buff"), converts ("converts Color
+    // Affinity into a Stackable Color Affinity"), and enhance-enablers. Require
+    // the clause to actually grant Color Affinity: "boosts [the] Color Affinity
+    // of [scope]" or possessive "their|its Color Affinity by Nx". Captain
+    // 56->25; special 437->410, superSpecial 36->23, sailor 7->0 (all drops are
+    // non-grant references; Super Type Effects grants stay via the type-effects
+    // pattern).
+    [
+      /\bboosts?\b[^.]{0,120}\btype effects?\b/i,
+      /\bboosts?\s+(?:the\s+)?color affinity\s+of\b/i,
+      /\b(?:their|its)\s+color affinity\s+by\s+[+]?\d/i,
+    ],
+  ],
   ['additional_damage_boost', [/\badds?\b[^.]{0,120}\bdamage\b/i, /\badditional damage\b/i]],
   ['chain_multiplier_lock', [/\blocks?\b[^.]{0,120}\bchain\b/i]],
   ['chain_multiplier_lock_min_max', [/\bchain\b[^.]{0,80}\b(?:minimum|maximum|min|max)\b/i]],
