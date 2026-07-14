@@ -500,6 +500,37 @@ describe('auto team builder ability parser', () => {
     expect(growth).not.toContain('chain_multiplier_multiplicative_boost');
   });
 
+  it('detects special_damage_other for typeless damage incl. True/Fixed modifiers, but not pure typed True', () => {
+    // Plain typeless (baseline) still matches.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("deals 20x character's ATK in typeless damage to all enemies", 'specialText'),
+      ),
+    ).toContain('special_damage_other');
+    // Typeless with a True / Fixed True modifier between "typeless" and "damage" now matches.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Deals 50x character's ATK in Typeless True damage to one enemy", 'specialText'),
+      ),
+    ).toContain('special_damage_other');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Deals 50x character's ATK in Typeless Fixed True damage to all enemies", 'specialText'),
+      ),
+    ).toContain('special_damage_other');
+    // Pure TYPED True / Fixed True damage (no "typeless") is a distinct axis (ignore-DEF, still typed) — NOT "Other".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Deals 25x character's ATK in [STR] True damage to one enemy", 'specialText'),
+      ),
+    ).not.toContain('special_damage_other');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Deals 200,000 Fixed True damage to one enemy', 'specialText'),
+      ),
+    ).not.toContain('special_damage_other');
+  });
+
   it('detects boost_slot_effects only for the literal "Orb Effects"/"Slot Effects" grant', () => {
     // Genuine grants (modern, legacy lowercase, legacy possessive "Slot Effects").
     expect(
