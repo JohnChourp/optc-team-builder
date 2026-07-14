@@ -500,6 +500,41 @@ describe('auto team builder ability parser', () => {
     expect(growth).not.toContain('chain_multiplier_multiplicative_boost');
   });
 
+  it('detects defeat_enemy only for the "instantly defeats" execute wording', () => {
+    // Genuine execute (specials only): OPTC-DB "Instantly defeats all enemies with HP below N%".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Instantly defeats all enemies with current HP equal to or below 20% their MAX HP',
+          'specialText',
+        ),
+      ),
+    ).toContain('defeat_enemy');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Has a small chance to instantly defeat each enemy', 'specialText'),
+      ),
+    ).toContain('defeat_enemy');
+    // Conditional kill-streak captain boost ("if you defeat an enemy, ...") is NOT an execute.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If you defeat an enemy, increases ATK boost slightly.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('defeat_enemy');
+    // Defensive "Protects from defeat ... to one enemy" (Loss Prevention) is the opposite effect.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Protects from defeat for 1 turn and deals 1x-150x character's ATK in Typeless damage, depending on the crew's current HP, to one enemy.",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('defeat_enemy');
+  });
+
   it('detects chain_multiplier_growth_rate only for a genuine "by Nx" grant, not buff amplifiers', () => {
     // Canonical grant wording keeps matching (captain + special sources).
     expect(
