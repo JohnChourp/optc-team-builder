@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-14T17:51:46.595Z",
+  "generatedAt": "2026-07-14T18:15:02.007Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -41817,7 +41817,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 179,
+      "matchCount": 177,
       "matchingCharacterIds": [
         668,
         669,
@@ -41857,8 +41857,6 @@
         2366,
         2367,
         2398,
-        2423,
-        2424,
         2476,
         2477,
         2514,
@@ -42004,8 +42002,6 @@
         2245,
         2337,
         2338,
-        2423,
-        2424,
         3375,
         3376,
         3377,

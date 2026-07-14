@@ -1053,6 +1053,32 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('apply_resistance_reduction');
   });
 
+  it('scopes delayed_effect_launch to genuine launches, excluding "after N turns" ramp caps', () => {
+    // Genuine delayed launches (kept): named-special activation, delayed boost,
+    // "After N turns, <effect>" (comma), and the colon "launches ... after N turn:" form.
+    for (const [text, src] of [
+      ['activates "Pteranodon Raid" in the following turn', 'specialText'],
+      ['boosts ATK of Slasher characters by 1.75x for 1 turn in the following turn', 'specialText'],
+      ['After 1 turn, boosts ATK of this character by 8.25x', 'captainAbility'],
+      ['After 3 turns, Binds and Despairs himself for 7 turns', 'specialText'],
+      ['launches the following effects after 1 turn: ignores Debuff Protection', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, src))).toContain(
+        'delayed_effect_launch',
+      );
+    }
+    // False positive (excluded): a gradual per-turn ATK ramp whose "after N turns"
+    // only marks when the ramp caps — nothing launches on turn N (Elizabello II).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Increases own ATK multiplier by 0.0875x at the end of each turn until it reaches a maximum 2.75x after 20 turns.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('delayed_effect_launch');
+  });
+
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
     // Type-scoped and plain crew reductions.
     expect(

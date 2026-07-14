@@ -462,7 +462,18 @@ const SPECIAL_ABILITY_MATCHERS = [
     'extend_turn_duration',
     [/\bextends?\b[^.]{0,120}\bduration\b/i, /\bincreases?\b[^.]{0,120}\bduration\b/i],
   ],
-  ['delayed_effect_launch', [/\bfollowing turn\b/i, /\bafter\s+\d+\s+turns?\b/i]],
+  // "Delayed Effect Launch" = an effect scheduled to activate on a LATER turn
+  // ("activates <Special> in the following turn"; "boosts ... for 1 turn in the
+  // following turn"; "After N turns, <effect>"; "launches ... after N turn: ...").
+  // The "after N turns" branch must be comma/colon-terminated: every genuine
+  // delayed launch reads "After N turns, <effect>" or "launches ... after N turn:
+  // <effect>", whereas the ONLY non-launch uses are period-terminated ramp caps
+  // and cooldowns ("... at the end of each turn until it reaches a maximum Nx
+  // after 20 turns." — Elizabello II #2423/#2424, a per-turn ramp active from
+  // turn 1, nothing launches on turn 20). Requiring the delimiter drops those
+  // ramp caps and zero genuine launches. The "following turn" branch has no
+  // false positives, so it is left broad.
+  ['delayed_effect_launch', [/\bfollowing turn\b/i, /\bafter\s+\d+\s+turns?\s*[,:]/i]],
   ['boost_max_hp', [/\bboosts?\b[^.]{0,120}\bmax HP\b/i]],
   [
     'apply_ally_status_effect',
