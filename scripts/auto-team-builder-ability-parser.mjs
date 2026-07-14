@@ -366,7 +366,17 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['apply_unique_effect', [/\bunique effect\b/i]],
   [
     'apply_resistance_reduction',
-    [/\bresistance reduction\b/i, /\breduces?\b[^.]{0,120}\bresistance\b/i],
+    [
+      /\bresistance reduction\b/i,
+      /\breduces?\b[^.]{0,120}\bresistance\b/i,
+      // Same type/class damage-resistance-down debuff written with the verb
+      // "applies -N% <Type/Class> Resistance to enemies" (e.g. Caesar & Monet
+      // #4126 "applies -10% [QCK] Resistance to all enemies for 1 turn"). The
+      // "reduces" branch misses it because the verb is "applies" and never
+      // precedes "resistance". OPTC never phrases a crew-side resistance GAIN
+      // with "applies" (those use "boosts ... Resistance"), so this stays safe.
+      /\bapplies?\b[^.]{0,60}\bresistance\b/i,
+    ],
   ],
   ['apply_set_target', [/\bsets?\b[^.]{0,80}\btarget\b/i]],
   ['apply_weakened', [/\bweakened\b/i]],

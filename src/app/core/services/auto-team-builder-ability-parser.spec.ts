@@ -1024,6 +1024,35 @@ describe('auto team builder ability parser', () => {
     ).toContain('remove_atk_down');
   });
 
+  it('detects apply_resistance_reduction for both the "reduces" and "applies -N%" verb forms', () => {
+    // Canonical enemy type/class damage-resistance-down debuff (reduces branch).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "reduces enemies' Slasher Resistance by -10% for 1 turn",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('apply_resistance_reduction');
+    // Same effect written with the alternate verb "applies -N% <Type> Resistance
+    // to enemies" (e.g. Caesar & Monet #4126) — must not be missed.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'applies -10% [QCK] Resistance to all enemies for 1 turn',
+          'specialText',
+        ),
+      ),
+    ).toContain('apply_resistance_reduction');
+    // Crew-side resistance GAINS use "boosts ... Resistance" and must NOT match
+    // the enemy resistance-down key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts Bind Resistance of all characters', 'captainAbility'),
+      ),
+    ).not.toContain('apply_resistance_reduction');
+  });
+
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
     // Type-scoped and plain crew reductions.
     expect(
