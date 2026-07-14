@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-14T15:32:14.312Z",
+  "generatedAt": "2026-07-14T17:35:09.116Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -37290,7 +37290,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 83,
+      "matchCount": 84,
       "matchingCharacterIds": [
         3657,
         3681,
@@ -37330,6 +37330,7 @@
         4106,
         4110,
         4111,
+        4126,
         4136,
         4137,
         4158,
