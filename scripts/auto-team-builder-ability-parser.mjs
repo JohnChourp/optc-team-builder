@@ -371,7 +371,20 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   ['defeat_enemy', [/\bdefeats?\b[^.]{0,120}\benem/i, /\binstantly defeats?\b/i]],
   ['end_of_turn_additional_damage', [/\bend of (?:each )?turn\b[^.]{0,120}\bdamage\b/i]],
-  ['tap_timing_requirement', [/\bPERFECT hits?\b/i, /\btap-?timing\b/i]],
+  [
+    'tap_timing_requirement',
+    // A tap-timing-gated captain/special BOOST — the effect depends on PERFECT
+    // tap timing (chains of PERFECT, "after the Nth PERFECT in a row", "until
+    // the first hit other than PERFECT", "each time you hit a PERFECT"). The old
+    // `PERFECT hits?` only caught the "... perfect hits" chain wording and missed
+    // the majority (~155 captains that gate their boost on PERFECT). Broadened to
+    // any `PERFECT` mention — in captain/special text PERFECT is always a
+    // tap-timing signal — EXCLUDING the ubiquitous orb-keep form "hit a PERFECT
+    // with <char>, keep <char>'s orb" (a conditional orb-keep, not a boost
+    // requirement — sailor orb-keeps and captain #4135), which is intentionally
+    // out of scope. Captain 38->193, specialText 139->149; sailor stays 0.
+    [/\bPERFECT\b(?![^.]{0,45}\bkeep\b[^.]{0,20}\borbs?\b)/i, /\btap-?timing\b/i],
+  ],
   [
     'extend_turn_duration',
     [/\bextends?\b[^.]{0,120}\bduration\b/i, /\bincreases?\b[^.]{0,120}\bduration\b/i],
