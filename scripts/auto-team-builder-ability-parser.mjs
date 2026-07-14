@@ -369,7 +369,28 @@ const SPECIAL_ABILITY_MATCHERS = [
     'apply_resilience',
     [/\bapplies?\b[^.]{0,120}\bresilience\b/i, /\bresilience\b[^.]{0,120}\bcrew\b/i],
   ],
-  ['defeat_enemy', [/\bdefeats?\b[^.]{0,120}\benem/i, /\binstantly defeats?\b/i]],
+  [
+    'defeat_enemy',
+    // The instant-KO / execute mechanic only. OPTC-DB canonical wording:
+    // "Instantly defeats all enemies with [current] HP [equal to or]
+    // below/less than N% [their MAX HP]" (also the ATK-scaled threshold
+    // "instantly defeats all enemies with HP equal to or below Nx character's
+    // ATK", the chance forms "chance to instantly defeat each enemy", and the
+    // conditional "instantly defeats them/all enemies otherwise"). Every
+    // genuine execute string in OPTC-DB contains the literal "instantly" and
+    // appears ONLY on specials — 0 captain fields across the full upstream
+    // details.js — so this key is specialText-only in practice.
+    //
+    // The former broad `/\bdefeats?\b[^.]{0,120}\benem/` alternative conflated
+    // two UNRELATED families and is dropped:
+    //   (1) the conditional kill-streak captain boost "If you defeat an enemy,
+    //       increases ATK boost slightly" — a stacking ATK trigger, not an
+    //       execute (captainAbility 34->0), and
+    //   (2) the defensive guard "Protects from defeat ... to one enemy" (Loss
+    //       Prevention / endure), the OPPOSITE effect.
+    // specialText 51->24; captainAbility 34->0.
+    [/\binstantly defeats?\b/i],
+  ],
   ['end_of_turn_additional_damage', [/\bend of (?:each )?turn\b[^.]{0,120}\bdamage\b/i]],
   [
     'tap_timing_requirement',
