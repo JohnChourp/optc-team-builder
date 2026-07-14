@@ -896,7 +896,20 @@ const TURN_PATTERNS = [
     // OPTC-DB wording quirk (e.g. Luffy & Whitebeard #3728 "reduces Paralysis
     // and Despair duration 1 turn") where the "by" is dropped; making "by"
     // optional only after the literal "duration" keeps the match tight.
-    pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)\s+turns?/gi,
+    // A RANGE turn count "by N-M turns" (e.g. X Drake #2823 "reduces enemies'
+    // Barrier duration by 1-5 turns", Chaka #3644 "reduces Bind duration by 1-5
+    // turns") records the FIRST number as minTurns — the guaranteed minimum
+    // reduction (a "1-5" range guarantees at least 1). The optional "-M" tail is
+    // non-capturing so match[2] stays the min; ranges whose min is 0 ("by 0-10
+    // turns") resolve to 0 and are dropped by the minTurns > 0 guard downstream.
+    // The target excludes a second "reduce(s)/remove(s)" verb so it cannot bridge
+    // a first no-turn-count clause into a later "by N turns" clause — e.g. Zeus &
+    // Prometheus & Big Mom #3902 "reduce Paralysis duration by half and reduces
+    // Special Cooldown ... by 1-99 turns" must NOT tag remove_paralysis via the
+    // special-cooldown range ("by half" is an uncountable partial reduction).
+    // "Reduction"/"reduced" are unaffected (\breduces?\b matches only the verb).
+    pattern:
+      /(?:reduces?|removes?)\s+((?:(?!\breduces?\b|\bremoves?\b)[^.;])+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)(?:\s*-\s*\d+)?\s+turns?/gi,
     resolveTurns: (match) => Number(match[2]),
   },
   {
