@@ -168,7 +168,22 @@ const SPECIAL_ABILITY_MATCHERS = [
   // \.\d)` also lets the gap span decimals so decimal-multiplier damage specials
   // ("deals 3.5x character's RCV/ATK ... damage") are not lost at the ".".
   ['special_damage', [/\bdeals?\b(?:[^.]|\.\d){0,160}(?<!\b(?:less|more|reduces?|reduced)\s)damage\b/i]],
-  ['special_damage_other', [/\bdeals?\b[^.]{0,160}\btypeless damage\b/i]],
+  [
+    'special_damage_other',
+    // "Other" damage = TYPELESS damage (the type-matchup multiplier is forced to
+    // x1 — same damage vs every enemy color). This is the axis-A "non-typed"
+    // property and is DISTINCT from "True" damage (an axis-B property that ignores
+    // enemy DEF / reductions but is still typed, e.g. "[STR] True damage" respects
+    // the matchup) — so pure typed True/Fixed-True damage is intentionally NOT
+    // included here (it stays under generic special_damage / deal_fixed_damage).
+    // The former /typeless damage/ required the two words to be adjacent and so
+    // MISSED the 100+ typeless hits that carry a True/Fixed modifier between them:
+    // "Typeless True damage" (Kizaru, Whitebeard), "Typeless Fixed True damage"
+    // (Cat Viper), "Typeless True Fixed damage". Allow up to three Fixed/True
+    // tokens between "typeless" and "damage"; still anchored on "typeless" so it
+    // never catches pure "[STR] True damage" or "Fixed True damage".
+    [/\bdeals?\b[^.]{0,160}\btypeless\b(?:\s+(?:Fixed|True)){0,3}\s+damage\b/i],
+  ],
   [
     'percent_damage',
     [
