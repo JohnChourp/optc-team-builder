@@ -172,8 +172,22 @@ const SPECIAL_ABILITY_MATCHERS = [
   [
     'percent_damage',
     [
+      // Canonical OPTC-DB wording (588 upstream occurrences): "Deals N% of enemies'
+      // current HP in [True] damage to all/one enem(y/ies) [at the end of each turn /
+      // at the start of every stage]". Possessor is always plural "enemies'", scope is
+      // always "current HP", verb is always "deals" — the tokens appear in-order in a
+      // tiny window, so this catches every canonical/embedded/captain form.
       /\bdeals?\b[^.]{0,160}\b\d+%\s+of\b[^.]{0,100}\bHP\b[^.]{0,80}\bdamage\b/i,
-      /\bcuts?\b[^.]{0,100}\bHP\b[^.]{0,80}\bby\s+\d+%/i,
+      // Newer OPTC-DB wording that omits "deals"/"damage": "Reduces (one) enem(y's|ies')
+      // HP by N% [(ignoring all defensive effects)]" — still a genuine percent-HP damage
+      // TO ENEMIES (e.g. Law - Finger-Controlled Boulder #4185, whose upstream text was
+      // updated away from the older "Deals N% of enemies' current HP in True damage ..."
+      // form; without this the unit silently loses its Percent Damage tag on re-import).
+      // Scoped to enem(y's|ies') so it never catches the SELF HP-cost "Cutting special,
+      // reduces crew's current HP by N%". Replaces the former /cuts? ... HP ... by N%/
+      // alternative, which matched nothing in OPTC-DB crew text ("cut" only appears in
+      // enemy-debuff names and that self-cost, never as a crew percent-damage effect).
+      /\breduces?\b[^.]{0,20}\benem(?:y'?s?|ies'?)\b[^.]{0,20}\bHP\b[^.]{0,10}\bby\s+\d+%/i,
     ],
   ],
   [
