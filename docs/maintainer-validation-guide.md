@@ -78,11 +78,19 @@ Use a deep run when any of these are true:
 - the PR is a release-candidate or post-merge recovery path
 
 When a pinned GitHub Action's moving major tag advances upstream (e.g.
-`actions/setup-java # v5` moving from v5.4.0 to v5.5.0), the strict
-`node scripts/check-github-actions-pins.mjs` gate fails with "source tag comment
-must resolve to the pinned SHA". Re-pin the `uses:` SHA to the commit the tagged
-major now points to (`git ls-remote https://github.com/<owner>/<action>.git`),
-keep the trailing `# vN` comment, and confirm the gate reports `Status: passed`.
+`actions/setup-node # v6` moving from v6.4.0 to v6.5.0 when upstream retags
+`v6`), the strict `node scripts/check-github-actions-pins.mjs` gate fails with
+"source tag comment must resolve to the pinned SHA". Fix it either way and
+confirm the gate reports `Status: passed`:
+
+- **Preferred (recurrence-proof, no version change):** change the trailing
+  comment to the **exact immutable tag** the pinned SHA resolves to (e.g.
+  `# v6.4.0`). Immutable patch tags never move, so later upstream retags of the
+  major never re-break the gate, and the pinned action version is unchanged.
+- **To adopt the newer version:** re-pin the `uses:` SHA to the commit the
+  tagged major now points to
+  (`git ls-remote https://github.com/<owner>/<action>.git`) and keep the `# vN`
+  comment (this will re-break on the next upstream retag until re-pinned again).
 
 When intentional recommendation scoring changes land, update
 `src/app/core/services/auto-team-builder.recommendation-benchmark.spec.ts` in
