@@ -976,6 +976,54 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('reduce_damage');
   });
 
+  it('excludes Minimum-/Maximum-Chain ATK Down from remove_atk_down (distinct chain debuffs)', () => {
+    // "Minimum-Chain ATK Down" and "Maximum-Chain ATK Down" are DISTINCT
+    // chain-conditional debuffs (OPTC-DB models them as separate matchers/
+    // filters), not plain ATK Down. A plain "reduces ATK Down" cure does not
+    // clear them, so the chain-only cures (Ace #4067/#4068, Burgess #4101/#4102,
+    // Sanji & Reiju #4483) must NOT be tagged remove_atk_down. Mirrors
+    // remove_bind excluding special/slot/orb/ship bind.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'reduces Minimum-Chain ATK Down duration by 10 turns',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('remove_atk_down');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'reduces Chain Coefficient Reduction and Minimum-Chain ATK Down duration by 5 turns',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('remove_atk_down');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'reduces Maximum-Chain ATK Down duration by 5 turns',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('remove_atk_down');
+    // Plain ATK Down cures still match — including a compound clause that also
+    // names the chain variant (the plain segment must still register).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces ATK DOWN duration by 10 turns', 'captainAbility'),
+      ),
+    ).toContain('remove_atk_down');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'reduces ATK Down and Minimum-Chain ATK Down duration by 3 turns',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('remove_atk_down');
+  });
+
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
     // Type-scoped and plain crew reductions.
     expect(

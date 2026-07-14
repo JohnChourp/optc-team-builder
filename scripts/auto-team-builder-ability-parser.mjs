@@ -714,9 +714,23 @@ const TARGET_ALIASES = [
       target.includes('blindness') || target === 'blind' || target.includes('sfx'),
   },
   {
+    // "Minimum-Chain ATK Down" and "Maximum-Chain ATK Down" are DISTINCT
+    // chain-conditional debuffs, NOT plain ATK Down: OPTC-DB models them as
+    // separate matchers/filter checkboxes ("Sets minimum|maximum Chain
+    // multiplier ATK reduction to Nx") alongside the plain "ATK DOWN"
+    // ("Reduces ATK of ... characters"), and a cure must name the chain
+    // variant to clear it. The bare "atk down" substring must not swallow
+    // them — mirrors remove_bind excluding special/slot/orb/ship bind and
+    // remove_despair excluding sailor despair. Excluding "chain atk down"
+    // drops the chain-only cures (e.g. Ace #4067/#4068 & Burgess #4101/#4102
+    // "reduces Minimum-Chain ATK Down duration", Sanji & Reiju #4483
+    // "reduces Maximum-Chain ATK Down duration") without affecting any plain
+    // ATK-Down cure (plain wording never contains the "chain atk down" adjacency).
     key: 'remove_atk_down',
     label: 'Remove ATK Down',
-    matcher: (target) => target.includes('atk down') || target.includes('attack down'),
+    matcher: (target) =>
+      (target.includes('atk down') || target.includes('attack down')) &&
+      !target.includes('chain atk down'),
   },
   {
     key: 'remove_damage_reduction',
