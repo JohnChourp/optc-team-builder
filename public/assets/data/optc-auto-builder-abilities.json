@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-14T18:52:11.192Z",
+  "generatedAt": "2026-07-14T19:48:56.557Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -25033,7 +25033,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 517,
+      "matchCount": 518,
       "matchingCharacterIds": [
         228,
         265,
@@ -25360,6 +25360,7 @@
         3632,
         3640,
         3641,
+        3644,
         3655,
         3659,
         3668,
@@ -25577,6 +25578,7 @@
             3512,
             3513,
             3622,
+            3644,
             3672,
             3802,
             3846,
@@ -26345,7 +26347,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 466,
+      "matchCount": 468,
       "matchingCharacterIds": [
         354,
         355,
@@ -26654,6 +26656,7 @@
         3741,
         3747,
         3756,
+        3773,
         3781,
         3784,
         3786,
@@ -26704,6 +26707,7 @@
         4042,
         4043,
         4047,
+        4053,
         4054,
         4057,
         4058,
@@ -26925,6 +26929,7 @@
             3701,
             3710,
             3713,
+            3773,
             3855,
             3915,
             3927,
@@ -27160,6 +27165,7 @@
             3961,
             3981,
             4047,
+            4053,
             4078,
             4079,
             4108,
@@ -27573,7 +27579,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 564,
+      "matchCount": 565,
       "matchingCharacterIds": [
         73,
         251,
@@ -27975,6 +27981,7 @@
         3804,
         3810,
         3811,
+        3815,
         3816,
         3817,
         3819,
@@ -28242,6 +28249,7 @@
             4260,
             4261,
             4272,
+            4286,
             4346,
             4369,
             4373,
@@ -28249,6 +28257,7 @@
             4384,
             4385,
             4394,
+            4418,
             4579,
             5046,
             5047
@@ -28321,6 +28330,7 @@
             3709,
             3716,
             3739,
+            3815,
             3817,
             3855,
             3989,
@@ -29834,6 +29844,8 @@
             3954,
             3976,
             4047,
+            4053,
+            4086,
             4197,
             4200,
             4262,
@@ -30350,7 +30362,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 181,
+      "matchCount": 182,
       "matchingCharacterIds": [
         2237,
         2238,
@@ -30467,6 +30479,7 @@
         4066,
         4071,
         4074,
+        4086,
         4104,
         4123,
         4124,
@@ -30686,6 +30699,7 @@
             3942,
             4066,
             4074,
+            4086,
             4311,
             4346
           ]
@@ -31055,7 +31069,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 330,
+      "matchCount": 333,
       "matchingCharacterIds": [
         1823,
         1824,
@@ -31260,6 +31274,7 @@
         3763,
         3764,
         3767,
+        3773,
         3776,
         3784,
         3794,
@@ -31293,7 +31308,9 @@
         3998,
         4002,
         4003,
+        4025,
         4030,
+        4033,
         4034,
         4037,
         4042,
@@ -31396,6 +31413,8 @@
             2304,
             3570,
             3717,
+            4025,
+            4033,
             4047,
             4053,
             4102,
@@ -31447,6 +31466,7 @@
             3701,
             3710,
             3713,
+            3773,
             3797,
             4030,
             4208,
@@ -31900,7 +31920,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 116,
+      "matchCount": 117,
       "matchingCharacterIds": [
         1699,
         1700,
@@ -31982,6 +32002,7 @@
         3684,
         3691,
         3699,
+        3815,
         3828,
         3842,
         3854,
@@ -32033,6 +32054,7 @@
             2737,
             2738,
             2847,
+            3815,
             4429,
             4430
           ]
@@ -36201,7 +36223,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 114,
+      "matchCount": 115,
       "matchingCharacterIds": [
         1189,
         1190,
@@ -36242,6 +36264,7 @@
         2786,
         2787,
         2817,
+        2823,
         2978,
         3024,
         3039,
@@ -36355,6 +36378,7 @@
             2786,
             2787,
             2817,
+            2823,
             2978,
             3039,
             3040,
@@ -43937,12 +43961,14 @@
             4260,
             4261,
             4272,
+            4286,
             4346,
             4369,
             4376,
             4384,
             4385,
             4394,
+            4418,
             4579,
             5046,
             5047
@@ -60820,15 +60846,24 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 5,
+      "matchCount": 7,
       "matchingCharacterIds": [
         3700,
         3884,
+        4025,
+        4033,
         4076,
         4140,
         4193
       ],
       "turnMatchingCharacterIds": [
+        {
+          "minTurns": 1,
+          "characterIds": [
+            4025,
+            4033
+          ]
+        },
         {
           "minTurns": 2,
           "characterIds": [
@@ -60858,16 +60893,16 @@
       "sampleCharacterIds": [
         3700,
         3884,
-        4076,
-        4140,
-        4193
+        4025,
+        4033,
+        4076
       ],
       "sampleTexts": [
         "Reduces Special Cooldown of all characters by 2 turns, changes all orbs, including [BLOCK] orbs, into Matching orbs and reduces Ship Bind duration completely.",
         "Reduces Ship Bind duration by 2 turns, makes [STR], [DEX] and [INT] orbs beneficial for all characters for 3 turns and reduces any damage received above 5,000 HP by 97% for 2 turns.",
-        "Reduces the defense of all enemies by 100% for 1 turn. If during that turn you score 2 PERFECT hits, reduces the defense of all enemies by 100% for 1 turn in the following turn. Reduces Ship Bind, Bind and Chain Coefficient Reduction duration by 6 turns. Reduces crew's current HP by 95%, deals 30x the amount of HP subtracted in Typeless damage to all enemies, and deals 200x character's ATK in [QCK] damage to enemies at end of each turn for 3 turns.",
-        "Reduces Despair, No Healing, Ship Bind duration by 6 turns, recovers 15,000 HP, and boosts ATK against enemies inflicted with Defense Down by 2.25x for 2 turns. Boosts base ATK of [DEX], [INT] and Cerebral characters by 1,250-2,000 for 2 turns based on the number of status effects applied on enemy. Increases boost effects of Status ATK Boost buffs by +0.25x, including effects activated in the same Ability, increases boost effects of Base ATK Boost buffs by +250, including effects activated in the same Ability, and becomes Law & Bepo for 3 turns.. Reduces Despair, No Healing, Ship Bind duration by 7 turns, recovers 30,000 HP, and boosts ATK against enemies inflicted with Defense Down by 2.5x for 2 turns. Boosts base ATK of [DEX], [INT] and Cerebral characters by 1,250-2,000 for 2 turns based on the number of status effects applied on enemy. Increases duration of any Base ATK boosting and Status ATK boosting buffs by 1 turn, including effects activated in the same Ability, increases boost effects of Status ATK Boost buffs by +0.3x, including effects activated in the same Ability, increases boost effects of Base ATK Boost buffs by +500, including effects activated in the same Ability.",
-        "Reduces Special Cooldown of all characters by 1 turn, reduces enemies' Percent Damage Reduction and Threshold Damage Reduction duration by 4 turns, reduces Ship Bind duration by 7 turns, boosts Color Affinity of [DEX], Shooter and Powerhouse characters by 2.75x for 2 turns, adds 150x character's ATK as Additional Typeless Damage for 5 turns, reduces enemies' [DEX], Shooter and Powerhouse Resistance by -10% for 1 turn, and enables Chain Tap Timing Bonus buffs to be enhanced up to 2 times. If \"Seeing Through the Fateful Day\" is used again in the same turn the special is activated in, increases boost effects of Chain Tap Timing Bonus buffs by +0.2x, and increases boost effects of Color Affinity buffs by +0.5x, including effects activated in the same Ability."
+        "Boosts ATK against enemies with reduced defense by 2x for 1 turn. Increases duration of any Status ATK boosting buffs by 0-1 turn, including effects activated in the same Ability, reduces ATK Down and Ship Bind duration by 1-2 turns and reduces damage received by 0%-60% for 1 turn depending on how many times this character used \"Dashing Little Ones\" this adventure.",
+        "Boosts ATK against enemies with reduced defense by 2x for 1 turn. Increases duration of any Status ATK boosting buffs by 0-1 turn, including effects activated in the same Ability, increases boost effects of Status ATK Boost buffs by +0x-+0.25x, including effects activated in the same Ability, reduces ATK Down and Ship Bind duration by 1-3 turns and reduces damage received by 0%-60% for 1 turn depending on how many times this character used \"Dashing Little Ones\" this adventure.",
+        "Reduces the defense of all enemies by 100% for 1 turn. If during that turn you score 2 PERFECT hits, reduces the defense of all enemies by 100% for 1 turn in the following turn. Reduces Ship Bind, Bind and Chain Coefficient Reduction duration by 6 turns. Reduces crew's current HP by 95%, deals 30x the amount of HP subtracted in Typeless damage to all enemies, and deals 200x character's ATK in [QCK] damage to enemies at end of each turn for 3 turns."
       ]
     },
     {

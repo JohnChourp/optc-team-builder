@@ -1079,6 +1079,45 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('delayed_effect_launch');
   });
 
+  it('parses range turn counts "reduces X duration by N-M turns" using the min', () => {
+    // Range turn counts record the FIRST (min) number as the guaranteed reduction.
+    const barrier = analyzeBuilderAbilityText(
+      "reduces enemies' Barrier duration by 1-5 turns",
+      'specialText',
+    ).find((a) => a.key === 'remove_enemy_barrier');
+    expect(barrier?.minTurns).toBe(1);
+    const despair = analyzeBuilderAbilityText(
+      'reduces Despair and ATK DOWN duration by 2-6 turns',
+      'specialText',
+    );
+    expect(despair.find((a) => a.key === 'remove_despair')?.minTurns).toBe(2);
+    expect(despair.find((a) => a.key === 'remove_atk_down')?.minTurns).toBe(2);
+    // A range whose min is 0 ("by 0-10 turns") has no guaranteed reduction and is
+    // dropped by the minTurns > 0 guard.
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('reduces Bind duration by 0-10 turns', 'specialText')),
+    ).not.toContain('remove_bind');
+    // Non-range single counts are unaffected.
+    expect(
+      analyzeBuilderAbilityText('reduces Bind duration by 3 turns', 'specialText').find(
+        (a) => a.key === 'remove_bind',
+      )?.minTurns,
+    ).toBe(3);
+    // A range must not let the target bridge a first no-turn-count clause across a
+    // SECOND "reduce(s)" verb into a later "by N turns": "reduce Paralysis duration
+    // by half and reduces Special Cooldown ... by 1-99 turns" must not tag
+    // remove_paralysis (Zeus & Prometheus & Big Mom #3902), and the special-cooldown
+    // "by 1-99 turns" must not leak into a status key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'reduce Paralysis duration by half and reduces Special Cooldown of this character by 1-99 turns',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('remove_paralysis');
+  });
+
   it('scopes inflict_poison to genuine infliction, excluding the immunity-piercing enabler', () => {
     // Genuine infliction on enemies (kept).
     expect(
