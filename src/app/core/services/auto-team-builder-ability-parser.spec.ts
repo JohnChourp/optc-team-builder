@@ -500,6 +500,41 @@ describe('auto team builder ability parser', () => {
     expect(growth).not.toContain('chain_multiplier_multiplicative_boost');
   });
 
+  it('detects percent_damage for both the "deals N% of HP damage" and "reduces enemy HP by N%" wordings', () => {
+    // Canonical "deals N% of enemies' current HP in [True] damage" (captain + special).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Deals 20% of enemies' current HP in damage to all enemies at the end of each turn",
+          'captainAbility',
+        ),
+      ),
+    ).toContain('percent_damage');
+    // Newer wording without "deals"/"damage": "Reduces one enemy's HP by N% (ignoring …)".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces one enemy's HP by 10% (ignoring all defensive effects), deals 200x character's ATK in [PSY] damage to enemies at end of turn for 3 turns",
+          'specialText',
+        ),
+      ),
+    ).toContain('percent_damage');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("reduces enemies' HP by 15%", 'specialText'),
+      ),
+    ).toContain('percent_damage');
+    // Must NOT match the SELF HP-cost "Cutting special, reduces crew's current HP by N%".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Cutting special, reduces crew's current HP by 20%",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('percent_damage');
+  });
+
   it('detects defeat_enemy only for the "instantly defeats" execute wording', () => {
     // Genuine execute (specials only): OPTC-DB "Instantly defeats all enemies with HP below N%".
     expect(
