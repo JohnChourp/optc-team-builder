@@ -1079,6 +1079,50 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('delayed_effect_launch');
   });
 
+  it('scopes inflict_poison to genuine infliction, excluding the immunity-piercing enabler', () => {
+    // Genuine infliction on enemies (kept).
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('poisons all enemies', 'captainAbility')),
+    ).toContain('inflict_poison');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'inflicts Poison, Strong Poison or Toxic, inflicts all enemies with Reiju Poison',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('inflict_poison');
+    // Enabler (excluded): "allows effects that inflict Poison to ignore Debuff
+    // Protection" applies no Poison itself — it only lets other poison effects
+    // bypass enemy immunity.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'allows effects that inflict Poison to ignore Debuff Protection',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('inflict_poison');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'allows effects that inflict Defense Reduction, Paralysis, Burn, Delay, Negative, Poison, Increase Damage Taken, Weaken and ATK Down to ignore Debuff Protection',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('inflict_poison');
+    // Bounded bridge (excluded): a poison CURE or condition must not bridge to a
+    // later unrelated "enemies" clause.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'removes Poison duration completely and reduces the defense of all enemies',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('inflict_poison');
+  });
+
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
     // Type-scoped and plain crew reductions.
     expect(
