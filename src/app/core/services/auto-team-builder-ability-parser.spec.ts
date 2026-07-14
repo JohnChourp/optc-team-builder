@@ -500,6 +500,46 @@ describe('auto team builder ability parser', () => {
     expect(growth).not.toContain('chain_multiplier_multiplicative_boost');
   });
 
+  it('detects boost_slot_effects only for the literal "Orb Effects"/"Slot Effects" grant', () => {
+    // Genuine grants (modern, legacy lowercase, legacy possessive "Slot Effects").
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Boosts Orb Effects of all characters by 1.5x for 2 turns', 'captainAbility'),
+      ),
+    ).toContain('boost_slot_effects');
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('boosts orb effects by 1.25x for 2 turns', 'specialText')),
+    ).toContain('boost_slot_effects');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("boosts [STR] and [INT] characters' slot effects by 3.25x for 3 turns", 'specialText'),
+      ),
+    ).toContain('boost_slot_effects');
+    // Distinct orb mechanics that must NOT be tagged Boost Slot Effects (a Boost Damage key):
+    //   orb drop-rate, makes-beneficial + ATK, and the RCV-orb HEAL boost.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Boosts chances of getting [PSY] orbs, boosts ATK of [PSY] characters by 2x",
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('boost_slot_effects');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'makes [RCV] orbs beneficial for all characters, boosts ATK of all characters by 2x',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('boost_slot_effects');
+    const rcvHeal = extractAbilityKeys(
+      analyzeBuilderAbilityText('For 2 turns, boosts the amount healed by [RCV] orbs by 1.5x', 'specialText'),
+    );
+    expect(rcvHeal).not.toContain('boost_slot_effects');
+    expect(rcvHeal).toContain('boost_rcv'); // the RCV-orb heal boost is a Boost RCV effect, not a damage orb-effect
+  });
+
   it('detects percent_damage for both the "deals N% of HP damage" and "reduces enemy HP by N%" wordings', () => {
     // Canonical "deals N% of enemies' current HP in [True] damage" (captain + special).
     expect(

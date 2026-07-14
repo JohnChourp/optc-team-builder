@@ -200,7 +200,20 @@ const SPECIAL_ABILITY_MATCHERS = [
   [
     'boost_slot_effects',
     [
-      /\bboosts?\b[^.]{0,120}\b(?:Orb Effects|Slot Effects|orbs?)\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i,
+      // "Boost Orb Effects" (community "Orb Boost"; the resulting buff state is
+      // "Orb Amplification") amplifies the damage multiplier a matching/beneficial
+      // orb grants. OPTC-DB ALWAYS words it with the literal "Orb Effects" (legacy
+      // "Slot Effects"), incl. lowercase and the possessive "characters' slot
+      // effects by Nx" — all caught case-insensitively. The former bare `orbs?`
+      // alternative produced NO true positives, only false positives by bridging
+      // to distinct orb mechanics: orb DROP RATE ("boosts chances of getting [X]
+      // orbs"), "makes [X] orbs beneficial ... boosts ATK by Nx", "Orb
+      // Amplification" conditionals, and the RCV-orb HEAL boost "boosts the amount
+      // healed by [RCV] orbs by Nx" (a heal boost — already carried by `boost_rcv`,
+      // and this key is grouped under Boost Damage). Dropping `orbs?` narrows the
+      // captain matches from 29 (26 false) to the 3 genuine "Boosts Orb Effects"
+      // grants and removes the analogous special-side false positives.
+      /\bboosts?\b[^.]{0,120}\b(?:Orb Effects|Slot Effects)\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i,
     ],
   ],
   [
