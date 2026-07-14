@@ -148,9 +148,26 @@ const EXPLICIT_BUILDER_ABILITIES = [
   {
     key: 'inflict_poison',
     label: 'Inflict Poison',
-    matcher: (text) =>
-      /\binflicts?\b[^.]*\b(?:poison|strong poison|toxic|venom)\b/i.test(text) ||
-      /\bpoisons?\b[^.]*\benemies?\b/i.test(text),
+    // "allows effects that inflict Poison to ignore Debuff Protection" is a
+    // debuff-protection / immunity-piercing ENABLER, not an infliction — the
+    // captain applies no Poison itself, it only lets separately-sourced poison
+    // effects bypass enemy Immunity (optc-db `ignoreImmunities`). Strip that
+    // clause before matching (mirrors remove_atk_down excluding the analogous
+    // ATK-Down enabler). Also bound the bridge so the verb and the
+    // "poison"/"enemies" noun stay near-adjacent within one clause: the old
+    // unbounded [^.]* wrongly bridged a poison CURE / condition to a later
+    // "enemies" clause (e.g. "removes Poison duration completely ... reduces the
+    // defense of all enemies"; "boosts ATK against enemies inflicted with Poison").
+    matcher: (text) => {
+      const stripped = text.replace(
+        /\ballows?\b[^.]*?\beffects?\b[^.]*?\binflicts?\b[^.]*?\b(?:poison|strong poison|toxic|venom)\b[^.]*?\b(?:ignore|bypass)\b[^.]*?\b(?:debuff protection|immunit(?:y|ies))\b/gi,
+        ' ',
+      );
+      return (
+        /\binflicts?\b[^.]{0,60}\b(?:poison|strong poison|toxic|venom)\b/i.test(stripped) ||
+        /\bpoisons?\b[^.]{0,40}\benemies?\b/i.test(stripped)
+      );
+    },
   },
 ];
 const EXPLICIT_BUILDER_ABILITY_KEY_SET = new Set(
