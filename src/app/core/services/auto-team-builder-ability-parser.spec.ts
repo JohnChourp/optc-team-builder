@@ -579,6 +579,32 @@ describe('auto team builder ability parser', () => {
     }
   });
 
+  it('detects tap_timing_requirement across PERFECT wordings but not the orb-keep form', () => {
+    // Genuine tap-timing-gated boosts (previously missed by the narrow
+    // "PERFECT hits" matcher).
+    for (const text of [
+      'boosts ATK of all characters by 3x following a chain of good > great > perfect hits',
+      'boosts ATK of all characters by 3x after the 3rd PERFECT in a row',
+      'boosts ATK of all characters by 3x until the first hit other than PERFECT',
+      'recovers 500 HP each time you hit a PERFECT',
+      'boosts ATK by 2x following a chain of perfect > perfect > perfect for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).toContain(
+        'tap_timing_requirement',
+      );
+    }
+    // The ubiquitous orb-keep form ("hit a PERFECT with X, keep X's orb") is a
+    // conditional orb-keep, not a tap-timing boost requirement — out of scope.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If this character has an [RCV] orb and you hit a PERFECT with them, keep their orb for the turn',
+          'sailorAbilities',
+        ),
+      ),
+    ).not.toContain('tap_timing_requirement');
+  });
+
   it('keeps a cumulative second conditional captain clause with a different condition', () => {
     // Kurozumi Orochi (ids 3571/3572): two independent crew-composition conditions.
     // The 3-word fingerprint used to collapse both to "if your crew" and drop the
