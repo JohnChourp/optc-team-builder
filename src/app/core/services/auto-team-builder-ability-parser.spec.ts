@@ -649,6 +649,36 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('end_of_turn_additional_damage');
   });
 
+  it('detects lock_slots only when "locks" directly governs orbs/slots, not for Chain Lock references', () => {
+    // Genuine orb locks (all / own / your Captain's / bare / [Type]).
+    for (const [text, source] of [
+      ['Locks all orbs for 1 turn', 'captainAbility'],
+      ['locks own orb for 1 turn', 'specialText'],
+      ["changes the orb of this character into an [INT] orb and locks your Captain's orb for 1 turn", 'specialText'],
+      ['locks [STR] and [DEX] orbs for 2 turns', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain('lock_slots');
+    }
+    // "locks the chain multiplier ... [later orb clause]" — object is the chain
+    // multiplier, NOT orbs; and the "Chain Lock" buff referenced by name. Neither
+    // is an orb lock.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('locks the chain multiplier at 3x for 1 turn, boosts Orb Effects of all characters by 2x for 1 turn', 'specialText'),
+      ),
+    ).not.toContain('lock_slots');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('increases duration of any Chain Lock buffs by 1 turn, and changes orbs, including [BLOCK] orbs, of adjacent characters into Matching orbs', 'specialText'),
+      ),
+    ).not.toContain('lock_slots');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('increases duration of any Chain Lock and Orb Amplification buffs by 1 turn', 'specialText'),
+      ),
+    ).not.toContain('lock_slots');
+  });
+
   it('detects percent_damage for both the "deals N% of HP damage" and "reduces enemy HP by N%" wordings', () => {
     // Canonical "deals N% of enemies' current HP in [True] damage" (captain + special).
     expect(
