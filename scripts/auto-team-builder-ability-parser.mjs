@@ -250,11 +250,27 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'boost_against_delayed_enemies',
-    [/\bboosts?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bdelayed enemies\b/i],
+    // Conditional ATK boost vs Delayed enemies: "boosts [scope] ATK against
+    // [targets ...] delayed enemies by Nx". Anchor on "against ... delayed
+    // enemies" (no "damage" token). Like boost_against_poisoned_enemies, the old
+    // `boosts? ... damage ... delayed enemies` only matched when a "damage" token
+    // (e.g. "Increase Damage Taken") preceded the target in the list, missing
+    // ~112 genuine units. The "against" anchor also excludes the trigger condition
+    // "If there are delayed enemies ..." (Kaya #4180 etc.), which is not a
+    // boost-against target. Two bounded [^.]{0,N} gaps between fixed anchors ->
+    // ReDoS-safe.
+    [/\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\bdelayed enemies\b/i],
   ],
   [
     'boost_against_def_reduced_enemies',
-    [/\bboosts?\b[^.]{0,120}\bdamage\b[^.]{0,120}\b(?:DEF|defense) reduced enemies\b/i],
+    // Conditional ATK boost vs DEF-reduced enemies: "boosts [scope] ATK against
+    // [targets ...] enemies with reduced defense by Nx". The old matcher targeted
+    // the phrase "(DEF|defense) reduced enemies" -- which NEVER appears upstream
+    // (the canonical wording is "enemies with reduced defense") -- AND required a
+    // "damage" token, so it matched 0. Re-anchored on "against ... enemies with
+    // reduced defense" (all 140 such tokens are boost-against targets, 0 non-boost
+    // uses). Two bounded [^.]{0,N} gaps between fixed anchors -> ReDoS-safe.
+    [/\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\benemies with reduced defense\b/i],
   ],
   [
     'boost_against_poisoned_enemies',

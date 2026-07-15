@@ -749,6 +749,49 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('boost_against_poisoned_enemies');
   });
 
+  it('detects boost_against_delayed_enemies for "boosts ATK against delayed enemies" without needing a "damage" token', () => {
+    // Genuine boost-against-Delay forms (no "damage" token required).
+    for (const [text, source] of [
+      ['Boosts ATK against delayed enemies by 1.75x for 1 turn', 'specialText'],
+      ['boosts ATK of [DEX], Cerebral and Striker characters against enemies inflicted with Increase Damage Taken, delayed enemies by 1.5x', 'captainAbility'],
+      ['boosts ATK against delayed enemies by 1.2x', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'boost_against_delayed_enemies',
+      );
+    }
+    // Not a boost-against target: the "If there are delayed enemies ..." trigger
+    // condition (Kaya #4180) merely gates a boost, it is not "against delayed enemies".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('If there are delayed enemies, boosts ATK of all characters by 2x', 'specialText'),
+      ),
+    ).not.toContain('boost_against_delayed_enemies');
+    // Merely delaying enemies is not a boost against them.
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('Delays all enemies by 1 turn', 'specialText')),
+    ).not.toContain('boost_against_delayed_enemies');
+  });
+
+  it('detects boost_against_def_reduced_enemies for "boosts ATK against enemies with reduced defense"', () => {
+    // Canonical upstream wording is "enemies with reduced defense" (NOT
+    // "DEF reduced enemies", which never appears); no "damage" token required.
+    for (const [text, source] of [
+      ['Boosts ATK against enemies with reduced defense by 1.5x for 1 turn', 'specialText'],
+      ['boosts ATK of all characters against enemies with reduced defense by 1.2x', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'boost_against_def_reduced_enemies',
+      );
+    }
+    // Merely reducing enemy defense is not a boost against such enemies.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Reduces enemies' defense by 50% for 3 turns", 'specialText'),
+      ),
+    ).not.toContain('boost_against_def_reduced_enemies');
+  });
+
   it('detects percent_damage for both the "deals N% of HP damage" and "reduces enemy HP by N%" wordings', () => {
     // Canonical "deals N% of enemies' current HP in [True] damage" (captain + special).
     expect(
