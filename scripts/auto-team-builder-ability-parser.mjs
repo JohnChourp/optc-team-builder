@@ -143,7 +143,18 @@ const EXPLICIT_BUILDER_ABILITIES = [
   {
     key: 'deal_fixed_damage',
     label: 'Deal Fixed Damage',
-    matcher: (text) => /\bdeals?\b[^.]*\bfixed(?: true)? damage\b/i.test(text),
+    // "Deals Nx ATK in Fixed [True] [Typeless] damage". The Fixed-damage
+    // modifiers (True = also ignores damage reduction, Typeless = type-neutral)
+    // can appear in any order between "Fixed" and "damage" — the old
+    // `fixed(?: true)? damage` required "damage" to immediately follow the
+    // optional "True", so the "Fixed True Typeless damage" ordering (Typeless
+    // wedged before "damage") was missed (#3785, #4038, #4039). Allow up to two
+    // True/Typeless modifier tokens between "Fixed" and "damage". Bounded
+    // [^.]{0,160} bridge (max observed deals→fixed gap is <70) keeps it
+    // ReDoS-safe. "Typeless Fixed True damage" (Typeless before Fixed) already
+    // matches via the adjacent "Fixed True damage".
+    matcher: (text) =>
+      /\bdeals?\b[^.]{0,160}\bfixed(?:\s+(?:true|typeless)){0,2}\s+damage\b/i.test(text),
   },
   {
     key: 'inflict_poison',

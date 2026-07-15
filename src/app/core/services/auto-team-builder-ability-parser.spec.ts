@@ -537,6 +537,26 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('special_damage_other');
   });
 
+  it('detects deal_fixed_damage across Fixed/True/Typeless modifier orderings', () => {
+    for (const text of [
+      'Deals 100x ATK in Fixed damage to all enemies',
+      'Deals 100x ATK in Fixed True damage to all enemies',
+      "Deals 56x character's ATK in Fixed True Typeless damage to one enemy", // Typeless wedged before "damage"
+      "Deals 100x character's ATK in Typeless Fixed True damage to all enemies",
+      'deals 9 Fixed damage to all enemies at the end of each turn', // captain end-of-turn flat Fixed damage
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'deal_fixed_damage',
+      );
+    }
+    // Not fixed damage: plain typeless / true damage without the "Fixed" token.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Deals 100x ATK in Typeless damage to all enemies', 'specialText'),
+      ),
+    ).not.toContain('deal_fixed_damage');
+  });
+
   it('detects boost_slot_effects only for the literal "Orb Effects"/"Slot Effects" grant', () => {
     // Genuine grants (modern, legacy lowercase, legacy possessive "Slot Effects").
     expect(
