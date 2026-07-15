@@ -353,7 +353,19 @@ const SPECIAL_ABILITY_MATCHERS = [
     // are not grants and are dropped.
     [/\badds?\b[^.]{0,80}\bas\s+additional\b[^.]{0,30}\bdamage\b/i],
   ],
-  ['chain_multiplier_lock', [/\blocks?\b[^.]{0,120}\bchain\b/i]],
+  // Chain Lock GRANT = "locks [the] chain multiplier at Nx" (fixes the chain
+  // multiplier at a value regardless of tap timing). Require "locks" to directly
+  // govern "chain multiplier": the old `locks? ... chain` 120-char bridge
+  // mis-tagged (a) "locks all orbs ..." specials whose LATER clause merely
+  // mentions "chain" (Chain Coefficient Reduction removal, Chain Multiplier
+  // Limit, "after the Nth chain", boosts Chain Multiplier Growth Rate) — the lock
+  // is on ORBS (lock_slots), not the chain multiplier; and (b) every reference to
+  // the "Chain Lock" buff by name that is not a grant — "increases boost effects
+  // of Chain Lock buffs" (effect_boost), "if your crew has Chain Lock" (condition),
+  // "increases duration of any Chain Lock buffs" (extender), "enables Chain Lock …
+  // to be enhanced", "Chain Lock and Chain Boundary buffs". All 3 captainAbility
+  // matches (#4267/#4268/#4289) were such references, so captain 3→0.
+  ['chain_multiplier_lock', [/\blocks?\s+(?:the\s+)?chain\s+multiplier\b/i]],
   ['chain_multiplier_lock_min_max', [/\bchain\b[^.]{0,80}\b(?:minimum|maximum|min|max)\b/i]],
   [
     'chain_multiplier_additive_boost',

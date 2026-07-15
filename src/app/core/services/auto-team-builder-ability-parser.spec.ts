@@ -610,6 +610,44 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_enemy_barrier');
   });
 
+  it('detects chain_multiplier_lock only for a genuine "locks the chain multiplier" grant', () => {
+    // Genuine Chain Lock grant.
+    for (const text of [
+      'Locks the chain multiplier at 2.5x for 2 turns',
+      'locks all orbs for 1 turn and locks the chain multiplier at 3x for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'chain_multiplier_lock',
+      );
+    }
+    // "locks all orbs …" whose only later "chain" is an unrelated clause — the lock
+    // is on ORBS, not the chain multiplier.
+    for (const text of [
+      'locks all orbs for 1 turn, reduces Chain Coefficient Reduction duration by 2 turns',
+      'locks all orbs for 2 turns and boosts Chain Multiplier Growth Rate by 1.2x for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'chain_multiplier_lock',
+      );
+    }
+    // References to the "Chain Lock" buff by name are not grants.
+    for (const [text, source] of [
+      ['increases boost effects of Chain Lock buffs by +0.25x', 'specialText'],
+      ['If your crew has Chain Lock when the special is activated, boosts ATK by 2x', 'specialText'],
+      ['enables Chain Lock and Color Affinity buffs to be enhanced up to 2 times', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).not.toContain(
+        'chain_multiplier_lock',
+      );
+    }
+    // "locks the minimum/maximum chain multiplier" is the distinct min/max key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Locks the minimum chain multiplier to 2x', 'specialText'),
+      ),
+    ).not.toContain('chain_multiplier_lock');
+  });
+
   it('detects boost_slot_effects only for the literal "Orb Effects"/"Slot Effects" grant', () => {
     // Genuine grants (modern, legacy lowercase, legacy possessive "Slot Effects").
     expect(
