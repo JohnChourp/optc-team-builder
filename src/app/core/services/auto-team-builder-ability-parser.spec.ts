@@ -571,6 +571,50 @@ describe('auto team builder ability parser', () => {
     expect(rcvHeal).toContain('boost_rcv'); // the RCV-orb heal boost is a Boost RCV effect, not a damage orb-effect
   });
 
+  it('detects boost_base_atk only when the verb directly grants "base ATK", not for Base ATK Boost buff references', () => {
+    // Genuine flat Base ATK grants (captain + special, incl. scoped/typed forms).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Boosts base ATK of all characters by 1-1,000 for 1 turn, depending on your current HP',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('boost_base_atk');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts base ATK of [Giant] characters by 750', 'captainAbility'),
+      ),
+    ).toContain('boost_base_atk');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Boosts Base ATK of [DEX], Slasher and Powerhouse characters by 1,250 for 1 turn', 'specialText'),
+      ),
+    ).toContain('boost_base_atk');
+    // Non-grant forms that merely NAME the "Base ATK Boost" buff must NOT be tagged
+    // as granting base ATK — they are effect_boost / extend_turn_duration / enhance.
+    const amplifier = extractAbilityKeys(
+      analyzeBuilderAbilityText('increases boost effects of Base ATK Boost buffs by +500', 'captainAbility'),
+    );
+    expect(amplifier).not.toContain('boost_base_atk');
+    expect(amplifier).toContain('effect_boost');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('increases duration of any Base ATK Boost buffs by 1 turn', 'specialText'),
+      ),
+    ).not.toContain('boost_base_atk');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('enables Base ATK Boost buffs to be enhanced up to 2 times', 'specialText'),
+      ),
+    ).not.toContain('boost_base_atk');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('If your crew has Base ATK Boost when the special is activated, boosts ATK by 2x', 'specialText'),
+      ),
+    ).not.toContain('boost_base_atk');
+  });
+
   it('detects percent_damage for both the "deals N% of HP damage" and "reduces enemy HP by N%" wordings', () => {
     // Canonical "deals N% of enemies' current HP in [True] damage" (captain + special).
     expect(
