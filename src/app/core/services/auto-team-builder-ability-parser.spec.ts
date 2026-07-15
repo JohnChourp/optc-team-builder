@@ -2123,6 +2123,22 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('detects NAO bypass in a "bypass ... Normal Attack Only" defensive-list phrasing', () => {
+    expect(
+      analyzeBuilderAbilityText(
+        'Makes Damage Specials of all characters bypass all defensive Buffs, Barriers, Defense and Normal Attack Only, deals 500x character ATK in True damage to all enemies.',
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'ignore_normal_attack_only',
+          source: 'specialText',
+        }),
+      ]),
+    );
+  });
+
   it('preserves explicit builder abilities while deduping derived matches', async () => {
     const characters = [
       {
