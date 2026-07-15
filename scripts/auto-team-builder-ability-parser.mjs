@@ -258,7 +258,22 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'boost_against_poisoned_enemies',
-    [/\bboosts?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bpoisoned enemies\b/i],
+    // Conditional ATK boost vs Poison-inflicted enemies: "boosts [scope] ATK
+    // against [targets ...] Poisoned enemies by Nx" (also the verbose "against
+    // enemies inflicted with Poison [/ Strong Poison / Toxic]"). The old
+    // `boosts? ... damage ... poisoned enemies` required a "damage" token between
+    // "boosts" and the target, which only happened to work when "Increase Damage
+    // Taken" appeared earlier in the boost-against list — it MISSED ~46 genuine
+    // boost-against-Poison units whose list has no "damage" token (e.g. "against
+    // Poisoned and Strongly Poisoned enemies", Blazing General Zombie #827;
+    // Boa Sandersonia #1055; Magellan / Caesar / Reiju). Every "poisoned enemies"
+    // token in the corpus is a boost-against target (0 non-boost uses), so anchor
+    // on "against ... poisoned enemies" (no "damage" token). Two bounded [^.]{0,N}
+    // gaps between fixed anchors → ReDoS-safe.
+    [
+      /\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\bpoisoned enemies\b/i,
+      /\bboosts?\b[^.]{0,120}\bagainst enemies inflicted with poison\b/i,
+    ],
   ],
   [
     'other_damage_boosts',
