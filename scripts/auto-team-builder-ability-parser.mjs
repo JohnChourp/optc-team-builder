@@ -1187,6 +1187,50 @@ export function extractPrimaryAbilityBranchText(value) {
   return selectedSentences.join('. ');
 }
 
+// Returns the FINAL same-fingerprint activation branch of a multi-tier special
+// (the max special level), plus any trailing non-independent clauses that belong
+// to it. extractPrimaryAbilityBranchText intentionally keeps only the FIRST tier
+// to avoid double-counting restated tiers, but a maxed character's special IS the
+// last (strongest) tier, so effects that only appear there — e.g. Zoro & Sanji
+// #4061 reduces enemies' Threshold Damage Reduction only from its max tier — were
+// invisible. Returns the whole text unchanged when there is no later independent
+// tier (so callers can cheaply detect "single tier" via strict inequality).
+export function extractMaxLevelAbilityBranchText(value) {
+  const normalizedText = canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
+
+  if (!normalizedText.length) {
+    return '';
+  }
+
+  const sentences = splitAbilityTextIntoSentences(normalizedText);
+
+  if (sentences.length <= 1) {
+    return normalizedText;
+  }
+
+  const primaryFingerprint = createBranchStarterFingerprint(sentences[0]);
+
+  if (!primaryFingerprint.length) {
+    return normalizedText;
+  }
+
+  let lastBranchStart = 0;
+  for (let index = 1; index < sentences.length; index += 1) {
+    if (
+      createBranchStarterFingerprint(sentences[index]) === primaryFingerprint &&
+      looksLikeIndependentAbilityBranch(sentences[index])
+    ) {
+      lastBranchStart = index;
+    }
+  }
+
+  if (lastBranchStart === 0) {
+    return normalizedText;
+  }
+
+  return sentences.slice(lastBranchStart).join('. ');
+}
+
 function resolveStructuredTurnMinTurns(key, normalizedText) {
   const aliases = STRUCTURED_TURN_SOURCE_ALIASES.get(key) ?? [key];
   const minTurns = [];
@@ -1249,7 +1293,7 @@ function resolveMaxDurationTurnCountFromText(value) {
   return minTurns.length > 0 ? Math.max(...minTurns) : null;
 }
 
-export function analyzeBuilderAbilityText(value, source) {
+export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true) {
   const normalizedText = extractPrimaryAbilityBranchText(value);
 
   if (!normalizedText.length) {
@@ -1371,6 +1415,36 @@ export function analyzeBuilderAbilityText(value, source) {
         coverageMode: DEFAULT_COVERAGE_MODE,
       });
     });
+  }
+
+  // Fold in the MAX-LEVEL (last) activation tier of a multi-tier special: a maxed
+  // character's special is its final tier, so effects introduced only there
+  // (e.g. Zoro & Sanji #4061 reducing enemies' Threshold Damage Reduction duration
+  // only from its max tier) would otherwise be missed. We add ONLY keys the
+  // primary tier did not already yield (by key+source), never touching intermediate
+  // tiers — every added key is present in the max tier, so this cannot over-claim
+  // an intermediate-only effect (verified: 131 additions across 37 keys, 0 keys
+  // that are not in the last tier). Scoped to specialText, where multi-level
+  // specials occur. The `foldMaxLevelTier = false` argument on the inner call
+  // disables re-folding, so this cannot recurse more than one level even when the
+  // extracted max-level text itself still contains nested tier restatements.
+  if (foldMaxLevelTier && source === 'specialText') {
+    const maxLevelText = extractMaxLevelAbilityBranchText(value);
+
+    if (maxLevelText && maxLevelText !== normalizedText) {
+      const existingKeySources = new Set(
+        abilities.map((ability) => `${ability.key}|${ability.source}`),
+      );
+
+      for (const ability of analyzeBuilderAbilityText(maxLevelText, source, false)) {
+        const keySource = `${ability.key}|${ability.source}`;
+
+        if (!existingKeySources.has(keySource)) {
+          existingKeySources.add(keySource);
+          addAbility(abilities, seen, ability);
+        }
+      }
+    }
   }
 
   return abilities;

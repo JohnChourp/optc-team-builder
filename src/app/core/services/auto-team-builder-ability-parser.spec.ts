@@ -443,19 +443,25 @@ describe('auto team builder ability parser', () => {
     ]);
   });
 
-  it('keeps only the primary special branch when upstream text concatenates alternate versions', () => {
+  it('folds the max-level tier when specialText concatenates a stronger version, but the captain branch stays primary-only', () => {
     const text =
       "Deals 15x character's ATK in Typeless damage to one enemy, adds 0.3x to Chain multiplier for 1 turn, boosts Orb Effects of all characters by 1.5x for 1 turn. If Luffy is your Captain or Friend/Guest Captain, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for all characters for 3 turns. Deals 150x character's ATK in Typeless damage to one enemy, adds 0.7x to chain multiplier for 3 turns, boosts Orb Effects of all characters by 1.75x for 1 turn. If during that turn you score 3 PERFECT hits, boosts Orb Effects of all characters by 2x for 1 turn in the following turn. If Luffy is your Captain or Friend/Guest Captain, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for all characters for 3 turns. Reduces enemies' Increased Defense and Percent Damage Reduction duration by 2 turns.";
 
+    // extractPrimaryAbilityBranchText itself is unchanged: it still returns only the
+    // FIRST (base 15x) tier, so the trailing enemy-debuff removal is not in it.
     expect(extractPrimaryAbilityBranchText(text)).not.toContain(
       "Reduces enemies' Increased Defense and Percent Damage Reduction duration by 2 turns",
     );
-    expect(analyzeBuilderAbilityText(text, 'specialText')).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          key: 'remove_enemy_increased_defense',
-        }),
-      ]),
+    // But a maxed character's special IS the last (150x) tier, so analyze now folds
+    // the max-level tier and DOES surface its enemy-effect removal (design decision:
+    // the last activation tier is canonical for a maxed unit).
+    expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+      'remove_enemy_increased_defense',
+    );
+    // captainAbility is NOT folded (multi-level tiers are a special-text mechanic), so
+    // the sibling captain concatenation test below still keeps only its primary branch.
+    expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).not.toContain(
+      'remove_enemy_increased_defense',
     );
   });
 
@@ -1664,6 +1670,33 @@ describe('auto team builder ability parser', () => {
         ),
       ),
     ).toContain('deal_fixed_damage');
+  });
+
+  it('folds the max-level (last) tier of a multi-tier special so late-tier removals are detected', () => {
+    // Two same-fingerprint activation tiers ("Deals ..."): the base tier reduces
+    // Increased Defense; the MAX tier additionally reduces Threshold Damage
+    // Reduction. A maxed character's special is the last tier, so both must be
+    // detected (extractPrimaryAbilityBranchText alone sees only the base tier).
+    const twoTier =
+      "Deals 200x character's ATK in Typeless Fixed True damage to enemies, reduces enemies' Increased Defense duration by 7 turns and becomes Zoro & Sanji for 3 turns.. " +
+      "Deals 300x character's ATK in Typeless Fixed True damage to enemies, reduces enemies' Threshold Damage Reduction and Increased Defense duration by 7 turns and becomes Zoro & Sanji for 3 turns.";
+    const keys = extractAbilityKeys(analyzeBuilderAbilityText(twoTier, 'specialText'));
+    expect(keys).toContain('remove_enemy_increased_defense'); // base tier
+    expect(keys).toContain('remove_threshold_damage_reduction'); // max-tier-only
+  });
+
+  it('does not fold intermediate-tier-only effects (max-level folding never over-claims)', () => {
+    // Three same-fingerprint tiers where lock_slots appears ONLY in the middle
+    // tier and is dropped at max. Only the primary (first) and max (last) tiers are
+    // parsed, so a maxed character is not credited with the intermediate-only lock.
+    const threeTier =
+      "Deals 100x character's ATK in Typeless damage to all enemies, reduces enemies' Increased Defense duration by 1 turn and boosts ATK of all characters by 2x for 1 turn.. " +
+      "Deals 100x character's ATK in Typeless damage to all enemies, locks all orbs for 1 turn and reduces enemies' Increased Defense duration by 2 turns.. " +
+      "Deals 100x character's ATK in Typeless damage to all enemies, reduces enemies' Increased Defense duration by 3 turns and boosts ATK of all characters by 3x for 1 turn.";
+    const keys = extractAbilityKeys(analyzeBuilderAbilityText(threeTier, 'specialText'));
+    expect(keys).toContain('remove_enemy_increased_defense');
+    expect(keys).toContain('boost_atk');
+    expect(keys).not.toContain('lock_slots'); // intermediate-tier only → not folded
   });
 
   it('keeps superSpecialText restricted to territory-group special matchers (no full special catalog)', () => {

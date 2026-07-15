@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T12:42:43.937Z",
+  "generatedAt": "2026-07-15T13:20:02.611Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -2024,7 +2024,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 281,
+      "matchCount": 282,
       "matchingCharacterIds": [
         20,
         230,
@@ -2300,6 +2300,7 @@
         4450,
         4451,
         4469,
+        4475,
         4490,
         4520,
         4521,
@@ -3480,7 +3481,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1338,
+      "matchCount": 1348,
       "matchingCharacterIds": [
         209,
         210,
@@ -3850,6 +3851,8 @@
         1788,
         1793,
         1794,
+        1797,
+        1798,
         1799,
         1800,
         1811,
@@ -3874,6 +3877,8 @@
         1853,
         1854,
         1855,
+        1860,
+        1861,
         1864,
         1865,
         1872,
@@ -3882,6 +3887,8 @@
         1887,
         1888,
         1889,
+        1892,
+        1893,
         1894,
         1895,
         1900,
@@ -4493,6 +4500,7 @@
         3794,
         3801,
         3802,
+        3803,
         3808,
         3809,
         3810,
@@ -4533,6 +4541,7 @@
         3915,
         3916,
         3917,
+        3920,
         3923,
         3924,
         3927,
@@ -4724,6 +4733,8 @@
         4411,
         4413,
         4414,
+        4416,
+        4417,
         4418,
         4420,
         4422,
@@ -4854,7 +4865,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 752,
+      "matchCount": 755,
       "matchingCharacterIds": [
         263,
         305,
@@ -5434,10 +5445,13 @@
         3877,
         3878,
         3887,
+        3893,
         3894,
         3903,
         3904,
         3905,
+        3907,
+        3908,
         3919,
         3920,
         3921,
@@ -5647,7 +5661,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 116,
+      "matchCount": 122,
       "matchingCharacterIds": [
         644,
         645,
@@ -5662,10 +5676,16 @@
         1525,
         1769,
         1770,
+        1797,
+        1798,
         1839,
         1840,
+        1860,
+        1861,
         1886,
         1887,
+        1892,
+        1893,
         1942,
         1943,
         1966,
@@ -5827,7 +5847,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 140,
+      "matchCount": 143,
       "matchingCharacterIds": [
         549,
         550,
@@ -5913,6 +5933,7 @@
         3748,
         3791,
         3792,
+        3803,
         3812,
         3853,
         3869,
@@ -5959,6 +5980,8 @@
         4340,
         4413,
         4414,
+        4416,
+        4417,
         4425,
         4455,
         4462,
@@ -6194,7 +6217,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 422,
+      "matchCount": 424,
       "matchingCharacterIds": [
         1233,
         1234,
@@ -6429,6 +6452,8 @@
         3506,
         3507,
         3508,
+        3512,
+        3513,
         3514,
         3515,
         3527,
@@ -6799,7 +6824,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 173,
+      "matchCount": 175,
       "matchingCharacterIds": [
         864,
         865,
@@ -6903,6 +6928,8 @@
         3214,
         3228,
         3229,
+        3252,
+        3253,
         3302,
         3303,
         3306,
@@ -7112,7 +7139,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 103,
+      "matchCount": 104,
       "matchingCharacterIds": [
         366,
         367,
@@ -7213,6 +7240,7 @@
         4426,
         4436,
         4460,
+        4469,
         4478,
         4486,
         4524,
@@ -7316,7 +7344,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 160,
+      "matchCount": 169,
       "matchingCharacterIds": [
         2535,
         2536,
@@ -7341,6 +7369,8 @@
         3506,
         3522,
         3523,
+        3531,
+        3532,
         3554,
         3555,
         3575,
@@ -7375,6 +7405,8 @@
         3814,
         3815,
         3819,
+        3823,
+        3824,
         3829,
         3830,
         3845,
@@ -7390,6 +7422,8 @@
         3897,
         3898,
         3902,
+        3907,
+        3908,
         3926,
         3930,
         3935,
@@ -7439,10 +7473,13 @@
         4344,
         4347,
         4354,
+        4367,
         4390,
         4395,
         4402,
         4411,
+        4416,
+        4417,
         4429,
         4430,
         4433,
@@ -7530,7 +7567,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 312,
+      "matchCount": 315,
       "matchingCharacterIds": [
         3365,
         3371,
@@ -7577,6 +7614,8 @@
         3754,
         3755,
         3761,
+        3765,
+        3766,
         3782,
         3787,
         3788,
@@ -7698,6 +7737,7 @@
         4218,
         4219,
         4222,
+        4223,
         4224,
         4225,
         4226,
@@ -22954,7 +22994,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1503,
+      "matchCount": 1509,
       "matchingCharacterIds": [
         21,
         23,
@@ -23849,6 +23889,8 @@
         2934,
         2935,
         2936,
+        2939,
+        2940,
         2943,
         2944,
         2947,
@@ -23982,6 +24024,8 @@
         3348,
         3349,
         3353,
+        3354,
+        3355,
         3358,
         3360,
         3362,
@@ -24054,6 +24098,7 @@
         3540,
         3544,
         3545,
+        3548,
         3554,
         3555,
         3556,
@@ -24329,6 +24374,7 @@
         4212,
         4213,
         4215,
+        4216,
         4220,
         4221,
         4223,
@@ -24559,7 +24605,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 629,
+      "matchCount": 638,
       "matchingCharacterIds": [
         566,
         570,
@@ -24771,6 +24817,7 @@
         2478,
         2479,
         2500,
+        2505,
         2511,
         2512,
         2524,
@@ -24872,6 +24919,8 @@
         3222,
         3236,
         3247,
+        3252,
+        3253,
         3264,
         3269,
         3286,
@@ -24890,6 +24939,8 @@
         3340,
         3348,
         3349,
+        3354,
+        3355,
         3360,
         3362,
         3366,
@@ -24938,6 +24989,7 @@
         3523,
         3528,
         3540,
+        3548,
         3558,
         3560,
         3569,
@@ -25103,6 +25155,7 @@
         4211,
         4213,
         4215,
+        4216,
         4220,
         4221,
         4223,
@@ -25183,6 +25236,8 @@
         4547,
         4552,
         4556,
+        4584,
+        4585,
         4586,
         4593,
         4595,
@@ -25377,7 +25432,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 521,
+      "matchCount": 524,
       "matchingCharacterIds": [
         228,
         265,
@@ -25490,6 +25545,8 @@
         2195,
         2208,
         2209,
+        2214,
+        2215,
         2237,
         2238,
         2254,
@@ -25870,6 +25927,7 @@
         4451,
         4456,
         4470,
+        4475,
         4477,
         4478,
         4483,
@@ -25977,6 +26035,8 @@
             2177,
             2188,
             2189,
+            2214,
+            2215,
             2237,
             2238,
             2331,
@@ -26375,6 +26435,7 @@
             4438,
             4446,
             4470,
+            4475,
             4503,
             4553,
             4556,
@@ -26699,7 +26760,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 474,
+      "matchCount": 476,
       "matchingCharacterIds": [
         354,
         355,
@@ -26795,6 +26856,8 @@
         2188,
         2189,
         2195,
+        2214,
+        2215,
         2221,
         2237,
         2238,
@@ -27248,6 +27311,8 @@
             2019,
             2188,
             2189,
+            2214,
+            2215,
             2221,
             2237,
             2238,
@@ -27944,7 +28009,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 569,
+      "matchCount": 572,
       "matchingCharacterIds": [
         73,
         251,
@@ -28087,6 +28152,8 @@
         2203,
         2212,
         2213,
+        2214,
+        2215,
         2222,
         2223,
         2224,
@@ -28488,6 +28555,7 @@
         4441,
         4449,
         4461,
+        4469,
         4475,
         4478,
         4482,
@@ -28667,6 +28735,8 @@
             1994,
             1995,
             2130,
+            2214,
+            2215,
             2222,
             2223,
             2224,
@@ -29046,6 +29116,7 @@
             4083,
             4084,
             4171,
+            4469,
             4489,
             4529,
             4551,
@@ -29409,7 +29480,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 463,
+      "matchCount": 464,
       "matchingCharacterIds": [
         709,
         949,
@@ -29549,6 +29620,7 @@
         2649,
         2653,
         2665,
+        2675,
         2676,
         2684,
         2713,
@@ -29946,6 +30018,7 @@
             1761,
             1874,
             1875,
+            2214,
             2215,
             2274,
             2275,
@@ -30129,6 +30202,8 @@
             1366,
             1958,
             1959,
+            2012,
+            2013,
             2430,
             2431,
             2480,
@@ -30140,6 +30215,7 @@
             2622,
             2626,
             2649,
+            2675,
             2676,
             2720,
             2721,
@@ -30754,7 +30830,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 187,
+      "matchCount": 190,
       "matchingCharacterIds": [
         2237,
         2238,
@@ -30773,6 +30849,8 @@
         2514,
         2515,
         2523,
+        2566,
+        2567,
         2588,
         2596,
         2683,
@@ -30877,6 +30955,7 @@
         4104,
         4123,
         4124,
+        4156,
         4163,
         4164,
         4166,
@@ -31056,6 +31135,8 @@
           "characterIds": [
             2495,
             2496,
+            2566,
+            2567,
             2683,
             2684,
             2687,
@@ -31114,6 +31195,7 @@
             4071,
             4123,
             4124,
+            4156,
             4170,
             4180,
             4188,
@@ -31305,7 +31387,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 47,
+      "matchCount": 49,
       "matchingCharacterIds": [
         2049,
         2050,
@@ -31334,6 +31416,8 @@
         2498,
         2558,
         2559,
+        2566,
+        2567,
         2742,
         2743,
         2781,
@@ -31407,6 +31491,8 @@
             2281,
             2404,
             2405,
+            2566,
+            2567,
             2742,
             2743,
             2796,
@@ -32329,7 +32415,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 117,
+      "matchCount": 118,
       "matchingCharacterIds": [
         1699,
         1700,
@@ -32427,6 +32513,7 @@
         4092,
         4127,
         4128,
+        4157,
         4216,
         4285,
         4321,
@@ -32567,6 +32654,7 @@
             4092,
             4127,
             4128,
+            4157,
             4216,
             4321,
             4333,
@@ -32690,7 +32778,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 99,
+      "matchCount": 102,
       "matchingCharacterIds": [
         1627,
         1628,
@@ -32735,6 +32823,8 @@
         2626,
         2652,
         2653,
+        2675,
+        2676,
         2697,
         2698,
         2724,
@@ -32781,6 +32871,7 @@
         4037,
         4048,
         4128,
+        4157,
         4227,
         4289,
         4328,
@@ -32875,6 +32966,8 @@
             2620,
             2652,
             2653,
+            2675,
+            2676,
             2824,
             2825,
             2985,
@@ -32899,7 +32992,8 @@
           "minTurns": 6,
           "characterIds": [
             3241,
-            3502
+            3502,
+            4157
           ]
         },
         {
@@ -33918,7 +34012,7 @@
         "explicit",
         "selectedDebuff"
       ],
-      "matchCount": 15,
+      "matchCount": 16,
       "matchingCharacterIds": [
         2602,
         2603,
@@ -33933,6 +34027,7 @@
         4318,
         4339,
         4405,
+        4424,
         4456,
         4517
       ],
@@ -33947,7 +34042,8 @@
           "minTurns": 3,
           "characterIds": [
             4339,
-            4405
+            4405,
+            4424
           ]
         },
         {
@@ -35197,7 +35293,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 333,
+      "matchCount": 337,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -35446,11 +35542,14 @@
         4040,
         4041,
         4055,
+        4061,
+        4062,
         4075,
         4078,
         4079,
         4080,
         4085,
+        4104,
         4110,
         4111,
         4132,
@@ -35496,6 +35595,7 @@
         4357,
         4358,
         4368,
+        4371,
         4381,
         4391,
         4397,
@@ -35802,6 +35902,7 @@
             3961,
             3988,
             3997,
+            4104,
             4215,
             4297,
             4298,
@@ -35860,6 +35961,7 @@
             4301,
             4331,
             4368,
+            4371,
             4397,
             4404,
             4406,
@@ -35889,6 +35991,8 @@
             4029,
             4040,
             4041,
+            4061,
+            4062,
             4179,
             4281,
             4308,
@@ -35899,6 +36003,7 @@
             4422,
             4433,
             4466,
+            4469,
             4477,
             4521,
             4529,
@@ -36008,12 +36113,14 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 20,
+      "matchCount": 22,
       "matchingCharacterIds": [
         1431,
         1432,
         1803,
         1804,
+        1878,
+        1879,
         2038,
         2039,
         2106,
@@ -36049,6 +36156,8 @@
         {
           "minTurns": 5,
           "characterIds": [
+            1878,
+            1879,
             2204,
             2205
           ]
@@ -36088,14 +36197,14 @@
         1432,
         1803,
         1804,
-        2038
+        1878
       ],
       "sampleTexts": [
         "Deals 100x character's ATK in Typeless damage to all enemies, removes enemies' ATK Up, Enrage, End of Turn Damage/Percent Cut and End of Turn Heal Buffs duration completely and boosts ATK of all characters by 1.5x for 1 turn",
         "Deals 100x character's ATK in Typeless damage to all enemies, removes enemies' ATK Up, Enrage, End of Turn Damage/Percent Cut and End of Turn Heal Buffs duration completely and boosts ATK of all characters by 1.5x for 1 turn",
         "Deals 13x character's ATK in [DEX] damage to one enemy, removes enemies' End of Turn Damage/Percent Cut duration completely and randomizes all orbs, including [BLOCK] orbs",
         "Deals 13x character's ATK in [DEX] damage to one enemy, removes enemies' End of Turn Damage/Percent Cut duration completely and randomizes all orbs, including [BLOCK] orbs",
-        "Recovers 3,960 HP, reduces enemies' ATK Up and End of Turn Damage/Percent Cut Buff duration by 7 turns and reduces damage received by 80% for 1 turn."
+        "Reduces any damage received above 5,000 HP by 97% for 2 turns, recovers 20% of crew's MAX HP, reduces enemies' ATK Up and Enrage Buffs duration by 5 turns.. Reduces any damage received above 3,000 HP by 97% for 2 turns, recovers 50% of crew's MAX HP, reduces enemies' ATK Up, Enrage, End of Turn Damage/Percent Cut and Resilience Buffs duration by 5 turns."
       ]
     },
     {
@@ -36340,8 +36449,10 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 135,
+      "matchCount": 137,
       "matchingCharacterIds": [
+        1878,
+        1879,
         2106,
         2107,
         2122,
@@ -36548,6 +36659,8 @@
         {
           "minTurns": 5,
           "characterIds": [
+            1878,
+            1879,
             2122,
             2123,
             2212,
@@ -36669,18 +36782,18 @@
         }
       ],
       "sampleCharacterIds": [
+        1878,
+        1879,
         2106,
         2107,
-        2122,
-        2123,
-        2196
+        2122
       ],
       "sampleTexts": [
+        "Reduces any damage received above 5,000 HP by 97% for 2 turns, recovers 20% of crew's MAX HP, reduces enemies' ATK Up and Enrage Buffs duration by 5 turns.. Reduces any damage received above 3,000 HP by 97% for 2 turns, recovers 50% of crew's MAX HP, reduces enemies' ATK Up, Enrage, End of Turn Damage/Percent Cut and Resilience Buffs duration by 5 turns.",
+        "Reduces any damage received above 5,000 HP by 97% for 2 turns, recovers 20% of crew's MAX HP, reduces enemies' ATK Up and Enrage Buffs duration by 5 turns.. Reduces any damage received above 3,000 HP by 97% for 2 turns, recovers 50% of crew's MAX HP, reduces enemies' ATK Up, Enrage, End of Turn Damage/Percent Cut and Resilience Buffs duration by 5 turns.",
         "Reduces enemies' Threshold Damage Reduction, Percent Damage Reduction, Resilience, End of Turn Damage/Percent Cut Buffs duration by 4 turns, changes orbs of adjacent characters into Matching orbs and changes [BLOCK] orbs into Matching orbs, randomizes non-Matching orbs and reduces damage received by 70% for 2 turns.",
         "Reduces enemies' Threshold Damage Reduction, Percent Damage Reduction and Resilience and End of Turn Damage/Percent Cut Buffs duration by 4 turns, changes orbs of adjacent characters into Matching orbs and changes [BLOCK] orbs into Matching orbs, randomizes non-Matching orbs and reduces damage received by 70% for 2 turns.",
-        "Reduces Despair and ATK DOWN duration by 5 turns and reduces enemies' Resilience Buffs duration by 5 turns. Reduces the defense of all enemies by 80% for 3 turns and boosts Orb Effects of Cerebral and Powerhouse characters by 1.75x for 3 turns",
-        "Reduces Despair and ATK DOWN duration by 5 turns and reduces enemies' Resilience Buffs duration by 5 turns. Reduces the defense of all enemies by 80% for 3 turns and boosts Orb Effects of Cerebral and Powerhouse characters by 1.75x for 3 turns",
-        "Reduces enemies' Threshold Damage Reduction, Percent Damage Reduction, End of Turn Damage/Percent Cut, End of Turn Heal, Increased Defense, Damage Nullification, ATK Up, Enrage, Resilience and Barrier Buffs duration by 1 turn. Boosts ATK of all characters by 2x for 1 turn if HP is below 10% when the special is activated."
+        "Reduces Despair and ATK DOWN duration by 5 turns and reduces enemies' Resilience Buffs duration by 5 turns. Reduces the defense of all enemies by 80% for 3 turns and boosts Orb Effects of Cerebral and Powerhouse characters by 1.75x for 3 turns"
       ]
     },
     {
@@ -36701,12 +36814,14 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 119,
+      "matchCount": 122,
       "matchingCharacterIds": [
         1189,
         1190,
         1552,
         1553,
+        1823,
+        1824,
         1848,
         1849,
         1903,
@@ -36820,6 +36935,7 @@
         4562,
         4569,
         4576,
+        4584,
         4599,
         4607
       ],
@@ -36831,6 +36947,8 @@
             1190,
             1552,
             1553,
+            1823,
+            1824,
             1848,
             1849,
             1903,
@@ -36953,7 +37071,8 @@
             4481,
             4493,
             4515,
-            4576
+            4576,
+            4584
           ]
         },
         {
@@ -36995,14 +37114,14 @@
         1190,
         1552,
         1553,
-        1848
+        1823
       ],
       "sampleTexts": [
         "Reduces enemies' Barrier duration by 1 turn",
         "Reduces enemies' Barrier duration by 1 turn",
         "Deals 300,000 Fixed damage to one enemy, boosts ATK of Cost 40 characters by 1.75x for 1 turn, reduces enemies' Barrier duration by 1 turn",
         "Deals 300,000 Fixed damage to one enemy, boosts ATK of Cost 40 characters by 1.75x for 1 turn, reduces enemies' Barrier duration by 1 turn",
-        "Deals 50x character's ATK in [STR] damage to one enemy, reduces enemies' Barrier duration by 1 turn and reduces any damage above 3,000 by 80% for 1 turn"
+        "Deals 100,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 300,000 Fixed damage to one enemy and removes ATK DOWN duration completely. Deals 500,000 Fixed damage to one enemy, removes ATK DOWN duration completely and reduces enemies' Barrier duration by 1 turn"
       ]
     },
     {
@@ -37022,7 +37141,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 270,
+      "matchCount": 273,
       "matchingCharacterIds": [
         13,
         14,
@@ -37132,6 +37251,8 @@
         1869,
         1884,
         1885,
+        1892,
+        1893,
         1960,
         1961,
         1964,
@@ -37256,6 +37377,7 @@
         4095,
         4096,
         4103,
+        4126,
         4129,
         4138,
         4146,
@@ -37475,7 +37597,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 211,
+      "matchCount": 213,
       "matchingCharacterIds": [
         2049,
         2050,
@@ -37504,6 +37626,8 @@
         2498,
         2558,
         2559,
+        2566,
+        2567,
         2742,
         2743,
         2781,
@@ -37784,7 +37908,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 84,
+      "matchCount": 87,
       "matchingCharacterIds": [
         3657,
         3681,
@@ -37814,6 +37938,8 @@
         4031,
         4057,
         4058,
+        4059,
+        4060,
         4065,
         4083,
         4084,
@@ -37834,6 +37960,7 @@
         4177,
         4180,
         4193,
+        4223,
         4226,
         4230,
         4231,
@@ -38094,7 +38221,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 986,
+      "matchCount": 987,
       "matchingCharacterIds": [
         452,
         453,
@@ -38550,6 +38677,7 @@
         3700,
         3704,
         3709,
+        3710,
         3711,
         3716,
         3721,
@@ -39760,7 +39888,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 97,
+      "matchCount": 98,
       "matchingCharacterIds": [
         2690,
         2740,
@@ -39819,6 +39947,7 @@
         4079,
         4110,
         4111,
+        4126,
         4129,
         4140,
         4154,
@@ -39978,7 +40107,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 743,
+      "matchCount": 747,
       "matchingCharacterIds": [
         9,
         17,
@@ -40273,6 +40402,8 @@
         1986,
         1987,
         2001,
+        2012,
+        2013,
         2034,
         2038,
         2039,
@@ -40434,6 +40565,8 @@
         2931,
         2939,
         2940,
+        2945,
+        2946,
         2969,
         2970,
         2974,
@@ -41647,7 +41780,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 327,
+      "matchCount": 329,
       "matchingCharacterIds": [
         577,
         578,
@@ -41766,6 +41899,7 @@
         2324,
         2325,
         2328,
+        2363,
         2398,
         2476,
         2477,
@@ -41933,6 +42067,7 @@
         4147,
         4149,
         4150,
+        4156,
         4166,
         4167,
         4170,
@@ -42205,7 +42340,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 258,
+      "matchCount": 263,
       "matchingCharacterIds": [
         1191,
         1192,
@@ -42241,6 +42376,8 @@
         2498,
         2558,
         2559,
+        2566,
+        2567,
         2742,
         2743,
         2754,
@@ -42355,6 +42492,9 @@
         4064,
         4097,
         4112,
+        4140,
+        4141,
+        4142,
         4149,
         4150,
         4152,
@@ -42555,7 +42695,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 177,
+      "matchCount": 182,
       "matchingCharacterIds": [
         668,
         669,
@@ -42592,6 +42732,7 @@
         2328,
         2337,
         2338,
+        2363,
         2366,
         2367,
         2398,
@@ -42645,6 +42786,8 @@
         3293,
         3332,
         3339,
+        3354,
+        3355,
         3370,
         3375,
         3376,
@@ -42709,6 +42852,8 @@
         4076,
         4106,
         4147,
+        4156,
+        4157,
         4190,
         4191,
         4213,
@@ -42811,7 +42956,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 18,
+      "matchCount": 20,
       "matchingCharacterIds": [
         3339,
         3661,
@@ -42830,7 +42975,9 @@
         4365,
         4387,
         4432,
-        4576
+        4576,
+        4584,
+        4585
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -43078,7 +43225,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 81,
+      "matchCount": 83,
       "matchingCharacterIds": [
         4206,
         4209,
@@ -43154,6 +43301,8 @@
         4573,
         4576,
         4577,
+        4584,
+        4585,
         4588,
         4589,
         4597,
@@ -61440,7 +61589,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 12,
+      "matchCount": 13,
       "matchingCharacterIds": [
         4133,
         4222,
@@ -61453,7 +61602,8 @@
         4448,
         4518,
         4521,
-        4578
+        4578,
+        4585
       ],
       "turnMatchingCharacterIds": [
         {
@@ -61477,7 +61627,8 @@
         {
           "minTurns": 4,
           "characterIds": [
-            4518
+            4518,
+            4585
           ]
         },
         {
