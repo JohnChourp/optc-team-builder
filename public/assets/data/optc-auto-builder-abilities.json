@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T17:49:59.488Z",
+  "generatedAt": "2026-07-15T18:21:04.949Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -36817,7 +36817,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 122,
+      "matchCount": 120,
       "matchingCharacterIds": [
         1189,
         1190,
@@ -36934,8 +36934,6 @@
         4512,
         4515,
         4543,
-        4561,
-        4562,
         4569,
         4576,
         4584,
@@ -37081,9 +37079,7 @@
         {
           "minTurns": 5,
           "characterIds": [
-            4282,
-            4561,
-            4562
+            4282
           ]
         },
         {
