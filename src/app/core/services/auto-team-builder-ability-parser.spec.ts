@@ -2310,6 +2310,67 @@ describe('auto team builder ability parser', () => {
     expect(abilityKeys).not.toContain('support_status_effect_recovery_bind');
   });
 
+  it('detects support_end_of_turn_additional_damage only for a support GRANT of end-of-turn damage, not enemy End-of-Turn-Damage-buff references', async () => {
+    const characters = [
+      {
+        id: 900001,
+        detail: {
+          supportData: [
+            {
+              supportedCharactersText: 'Tester',
+              levelDescriptions: [
+                "Once per adventure, when the supported character uses their special, deals 7% of enemies' current HP in damage to all enemies at the end of the turn for 3 turns.",
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 900002,
+        detail: {
+          supportData: [
+            {
+              supportedCharactersText: 'Tester',
+              levelDescriptions: [
+                'Once per adventure, when the enemy enables an End of Turn Damage buff, reduces Increase Damage Taken duration by 3 turns and recovers 3,000 HP.',
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 900003,
+        detail: {
+          supportData: [
+            {
+              supportedCharactersText: 'Tester',
+              levelDescriptions: [
+                "Removes enemies' End of Turn Damage/Percent Cut duration completely.",
+              ],
+            },
+          ],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    // Genuine grant → tagged.
+    expect(extractAbilityKeys(characters[0]?.detail.builderAbilities ?? [])).toContain(
+      'support_end_of_turn_additional_damage',
+    );
+    // Enemy End-of-Turn-Damage-buff references (trigger / removal) → NOT tagged.
+    expect(extractAbilityKeys(characters[1]?.detail.builderAbilities ?? [])).not.toContain(
+      'support_end_of_turn_additional_damage',
+    );
+    expect(extractAbilityKeys(characters[2]?.detail.builderAbilities ?? [])).not.toContain(
+      'support_end_of_turn_additional_damage',
+    );
+  });
+
   it('adds crewmate-derived builder abilities from sailor abilities to the character detail', async () => {
     const characters = [
       {

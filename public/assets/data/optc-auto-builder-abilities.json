@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T07:21:54.764Z",
+  "generatedAt": "2026-07-15T07:42:49.493Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -54406,22 +54406,30 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 3,
+      "matchCount": 7,
       "matchingCharacterIds": [
-        1564,
-        2435,
-        5056
+        2389,
+        3465,
+        3503,
+        3558,
+        3798,
+        3959,
+        4020
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
-        1564,
-        2435,
-        5056
+        2389,
+        3465,
+        3503,
+        3558,
+        3798
       ],
       "sampleTexts": [
-        "Dagama, Chinjao, Sai, Ideo and Hajrudin: Once per adventure, when the enemy enables an End of Turn Damage buff, reduces Increase Damage Taken duration by 3 turns and recovers 3,000 HP.",
-        "Elizabello II, Chinjao, Sai, Ideo and Hajrudin: Adds 20% of this character's base ATK to the supported character's base ATK, boosts the supported character's ATK by 1.5x against Bartolomeo and when the supported character hits a PERFECT, reduces enemies' End of Turn Damage/Percent Cut duration by 5 turns.",
-        "Coby: Once per adventure, when the supported character uses an Orb Locking special, changes [BLOCK] orbs of all characters into Matching orbs. Removes enemies' End of Turn Damage/Percent Cut duration completely."
+        "Monkey D. Garp and Sengoku: Once per adventure, when the supported character uses their special, deals 7% of enemies' current HP in damage to all enemies at the end of the turn for 3 turns.",
+        "[INT] Slasher and [INT] Free Spirit characters: Once per adventure, when you reach the final stage, deals 15% of enemies' current HP in damage to all enemies at the end of the turn for 1 turn, reduces the defense of all enemies by 100% for 1 turn and reduces Special Cooldown of supported character by 2 turns.",
+        "Kin'emon and Kozuki Oden: Once per adventure, when the supported character uses their special, deals 5% of enemies' current HP in damage to all enemies at the end of the turn for 3 turns.",
+        "Izo, Kin'emon, Kurozumi Kanjuro, Dogstorm, Kozuki Momonosuke, Cat Viper, Kikunojo, Shutenmaru, Kozuki Oden, Denjiro, Kawamatsu, Kozuki Hiyori: Once per adventure, when an enemy inflicts you with Bind, reduces Bind duration by 1 turn and deals 5% of enemies' current HP in damage to all enemies at the end of the turn for 1 turn.",
+        "Nami, Satori, Shura, Gedatsu and Ohm: Once per adventure, when you reach the final stage, reduces crew's current HP by 20% and deals 5% of enemies' current HP in damage to all enemies at the end of the turn for 1 turn."
       ]
     },
     {
