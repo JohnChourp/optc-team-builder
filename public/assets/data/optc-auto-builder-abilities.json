@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T14:58:15.251Z",
+  "generatedAt": "2026-07-15T17:49:59.488Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -43104,41 +43104,16 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility"
+        "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 5,
-      "matchingCharacterIds": [
-        3176,
-        3177,
-        3786,
-        4057,
-        4058
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "captainAbilityMatchingCharacterIds": [
-        3176,
-        3177,
-        3786,
-        4057,
-        4058
-      ],
-      "sampleCharacterIds": [
-        3176,
-        3177,
-        3786,
-        4057,
-        4058
-      ],
-      "sampleTexts": [
-        "Nullifies Remove Beneficial Effects and Remove Accumulated Value effects once per adventure. Boosts ATK of all characters by 4.5x and their HP by 1.3x and removes Despair duration completely. If you use \"Divine Departure\" on this Roger boosts ATK of all characters by 5x for 3 turns instead.",
-        "Nullifies Remove Beneficial Effects and Remove Accumulated Value effects once per adventure. Boosts ATK of all characters by 4.5x and their HP by 1.3x and removes Despair duration completely. If you use \"Divine Departure\" on this Roger boosts ATK of all characters by 5x for 3 turns instead.",
-        "Nullifies Remove Beneficial Effects and Remove Accumulated Value effects once per adventure. Boosts ATK of all characters by 5x, boosts HP of all characters by 1.3x and removes Despair duration completely. If you use \"Divine Departure of Obliteration\" on this character, boosts ATK of all characters by 5.25x instead for 3 turns.",
-        "Nullifies Remove Beneficial Effects and Remove Accumulated Value effects once per adventure, boosts HP of [QCK] and Slasher characters by 1.5x, boosts ATK of [QCK] and Slasher characters by 5.5x, boosts ATK of all other characters by 5x, changes [STR] orbs of Slasher characters into [WANO] orbs and removes Despair duration completely. If you use \"Formidable Onslaught\" on this character, boosts ATK of [QCK] and Slasher characters by 6x and boosts ATK of all other characters by 5.25x instead. When a Critical Hit Enabled Slasher character hits a Critical Hit, reduces enemies' Slasher Resistance by -6% for 1 turn.",
-        "Nullifies Remove Beneficial Effects and Remove Accumulated Value effects once per adventure, boosts HP of [QCK] and Slasher characters by 1.5x, boosts ATK of [QCK] and Slasher characters by 5.5x, boosts ATK of all other characters by 5x, changes [STR] orbs of Slasher characters into [WANO] orbs and removes Despair duration completely. If you use \"Formidable Onslaught\" on this character, boosts ATK of [QCK] and Slasher characters by 6x and boosts ATK of all other characters by 5.25x instead. When a Critical Hit Enabled Slasher character hits a Critical Hit, reduces enemies' Slasher Resistance by -6% for 1 turn."
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "class_change",

@@ -557,6 +557,29 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('deal_fixed_damage');
   });
 
+  it('detects remove_beneficial_effect only for an offensive removal, not the "Nullifies Remove Beneficial Effects" self-protection', () => {
+    // Defensive nullification of the enemy's "Remove Beneficial Effects" attack
+    // (Gol D. Roger #3176 etc.) — the crew protects its OWN buffs, it does NOT
+    // remove the enemy's, so it must NOT be tagged.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Nullifies Remove Beneficial Effects and Remove Accumulated Value effects once per adventure. Boosts ATK of all characters by 4.5x',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('remove_beneficial_effect');
+    // Genuine offensive removals still match (future-proofing; none exist upstream yet).
+    for (const text of [
+      "Removes all of enemies' beneficial effects",
+      "Nullifies Bind and removes enemies' beneficial effects",
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'remove_beneficial_effect',
+      );
+    }
+  });
+
   it('detects boost_slot_effects only for the literal "Orb Effects"/"Slot Effects" grant', () => {
     // Genuine grants (modern, legacy lowercase, legacy possessive "Slot Effects").
     expect(

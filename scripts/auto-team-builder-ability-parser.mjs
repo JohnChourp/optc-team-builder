@@ -629,7 +629,17 @@ const SPECIAL_ABILITY_MATCHERS = [
     [/\bapplies?\b[^.]{0,120}\b(?:to|for)\b[^.]{0,80}\b(?:crew|characters|allies)\b/i],
   ],
   ['swap_captains', [/\bswaps?\b[^.]{0,120}\bcaptains?\b/i]],
-  ['remove_beneficial_effect', [/\bremoves?\b[^.]{0,120}\bbeneficial effects?\b/i]],
+  // Remove Beneficial Effect = an OFFENSIVE debuff that strips the ENEMY's
+  // beneficial effects. The negative lookbehind excludes the DEFENSIVE
+  // "Nullif(y|ies) Remove Beneficial Effects ..." self-protection captain
+  // ability (Gol D. Roger #3176/#3177, #3786, #4057/#4058), where "Remove
+  // Beneficial Effects" is a NAMED enemy attack the crew nullifies — not the
+  // crew removing enemy buffs. The old `removes? ... beneficial effects`
+  // matched the "Remove" inside that named buff, mis-tagging all 5. No genuine
+  // "removes enemies' beneficial effects" wording exists in the corpus, so this
+  // key correctly resolves to 0; the guard keeps future genuine removals
+  // (e.g. "Nullifies Bind and removes enemies' beneficial effects") matching.
+  ['remove_beneficial_effect', [/(?<!\bnullif(?:y|ies|ied)\s)\bremoves?\b[^.]{0,120}\bbeneficial effects?\b/i]],
   ['class_change', [/\bclass change\b/i, /\bchanges?\b[^.]{0,120}\bclass\b/i]],
   ['critical_hit_chance_boost', [/\bcritical hit chance\b/i]],
   ['territory', TERRITORY_PROVIDER_PATTERNS],
