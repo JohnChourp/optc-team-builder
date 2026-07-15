@@ -283,7 +283,22 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\b(?:their|its)\s+color affinity\s+by\s+[+]?\d/i,
     ],
   ],
-  ['additional_damage_boost', [/\badds?\b[^.]{0,120}\bdamage\b/i, /\badditional damage\b/i]],
+  [
+    'additional_damage_boost',
+    // The "Additional Damage" post-attack buff GRANT: "adds Nx character's ATK as
+    // Additional [Typeless] Damage for N turns" (extra flat damage after each
+    // attack). Anchor on "adds ... as Additional ... damage" (two bounded gaps
+    // with fixed anchors → ReDoS-safe). The old pair — a loose `adds? ... damage`
+    // (matched only genuine grants here, but was a latent chain-addition bridge)
+    // and a bare `additional damage` literal — over-matched every REFERENCE to the
+    // buff by name: conditions ("if your crew has Additional Damage buff", "N turns
+    // or more of Additional Damage"), the duration extender "increases duration of
+    // any Additional Damage buffs" (Curly Dadan #4296), the buff-list reference
+    // (Jinbe #4202), and the replace-trigger "if a crew member uses a special with
+    // an Additional Damage buff, replaces those buffs" (Garp #4239/#4240). Those
+    // are not grants and are dropped.
+    [/\badds?\b[^.]{0,80}\bas\s+additional\b[^.]{0,30}\bdamage\b/i],
+  ],
   ['chain_multiplier_lock', [/\blocks?\b[^.]{0,120}\bchain\b/i]],
   ['chain_multiplier_lock_min_max', [/\bchain\b[^.]{0,80}\b(?:minimum|maximum|min|max)\b/i]],
   [

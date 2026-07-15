@@ -678,6 +678,37 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('lock_slots');
   });
 
+  it('detects additional_damage_boost only for the "adds ... as Additional Damage" grant, not buff references', () => {
+    // Genuine Additional Damage grants.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Deals random Typeless damage to all enemies. Adds 55x character's ATK as Additional Typeless Damage for 2 turns", 'captainAbility'),
+      ),
+    ).toContain('additional_damage_boost');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("adds 300x character's ATK as Additional Typeless Damage for 1 turn", 'specialText'),
+      ),
+    ).toContain('additional_damage_boost');
+    // References to the "Additional Damage" buff by name are NOT grants:
+    // condition, duration-extend, and replace-trigger.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('If your crew has Additional Damage buff for 2 or more turns when the special is activated, boosts ATK by 2x', 'specialText'),
+      ),
+    ).not.toContain('additional_damage_boost');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('increases duration of any Additional Damage buffs by 1 turn', 'specialText'),
+      ),
+    ).not.toContain('additional_damage_boost');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('If a crew member uses a special with an Additional Damage buff, replaces those buffs', 'captainAbility'),
+      ),
+    ).not.toContain('additional_damage_boost');
+  });
+
   it('detects percent_damage for both the "deals N% of HP damage" and "reduces enemy HP by N%" wordings', () => {
     // Canonical "deals N% of enemies' current HP in [True] damage" (captain + special).
     expect(
