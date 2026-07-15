@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T09:47:37.649Z",
+  "generatedAt": "2026-07-15T10:16:24.992Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -5746,16 +5746,13 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility",
-        "specialText"
+        "captainAbility"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 9,
+      "matchCount": 7,
       "matchingCharacterIds": [
-        3176,
-        3177,
         4116,
         4123,
         4124,
@@ -5775,18 +5772,18 @@
         4128
       ],
       "sampleCharacterIds": [
-        3176,
-        3177,
         4116,
         4123,
-        4124
+        4124,
+        4125,
+        4126
       ],
       "sampleTexts": [
-        "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
-        "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
         "Boosts [STR], Cerebral and Driven characters' ATK by 3.75x and HP by 1.25x, boosts their ATK by approximately 4.5x when they have [TND] or [WANO] orbs, and boosts damage dealt to enemies inflicted with Increase Damage Taken, delay, Poison, Venom, progressive Poison, DEF Down, or Paralysis by 1.2x",
         "Reduces Special Cooldown of Driven and Cerebral characters by 1 turn at the start of the fight, boosts HP of Driven and Cerebral characters by 1.3x, boosts ATK of Driven and Cerebral characters by 4.5x, boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, reduced defense, Paralysis, Burn or Negative by 1.15x, and makes [RCV] orbs beneficial for all characters.",
-        "Reduces Special Cooldown of Driven and Cerebral characters by 1 turn at the start of the fight, boosts HP of Driven and Cerebral characters by 1.3x, boosts ATK of Driven and Cerebral characters by 4.5x, boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, reduced defense, Paralysis, Burn or Negative by 1.15x, and makes [RCV] orbs beneficial for all characters."
+        "Reduces Special Cooldown of Driven and Cerebral characters by 1 turn at the start of the fight, boosts HP of Driven and Cerebral characters by 1.3x, boosts ATK of Driven and Cerebral characters by 4.5x, boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, reduced defense, Paralysis, Burn or Negative by 1.15x, and makes [RCV] orbs beneficial for all characters.",
+        "Boosts HP of Driven characters by 1.5x, boosts ATK of Driven characters by 3.75x, and boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.1x.",
+        "Boosts HP of Driven characters by 1.25x, boosts ATK of Driven characters by 3.5x, and boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.2x."
       ]
     },
     {
