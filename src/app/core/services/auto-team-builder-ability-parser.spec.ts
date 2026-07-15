@@ -730,6 +730,25 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('other_damage_boosts');
   });
 
+  it('detects boost_against_poisoned_enemies for "boosts ATK against Poisoned enemies" without needing a "damage" token', () => {
+    // Genuine boost-against-Poison forms (no "damage" token required).
+    for (const [text, source] of [
+      ['Boosts ATK against Poisoned and Strongly Poisoned enemies by 1.05x for 99 turns', 'specialText'],
+      ['boosts ATK of [DEX], Cerebral and Striker characters against enemies inflicted with Increase Damage Taken, delayed enemies, Poisoned enemies by 1.5x', 'captainAbility'],
+      ['boosts ATK against Poisoned enemies by 1.75x', 'specialText'],
+      // verbose "inflicted with Poison" wording (semantically identical).
+      ['boosts ATK against enemies inflicted with Poison or Strong Poison by 1.5x for 1 turn', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'boost_against_poisoned_enemies',
+      );
+    }
+    // Not a boost against poisoned enemies: merely poisoning enemies.
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('Poisons all enemies for 3 turns', 'specialText')),
+    ).not.toContain('boost_against_poisoned_enemies');
+  });
+
   it('detects percent_damage for both the "deals N% of HP damage" and "reduces enemy HP by N%" wordings', () => {
     // Canonical "deals N% of enemies' current HP in [True] damage" (captain + special).
     expect(
