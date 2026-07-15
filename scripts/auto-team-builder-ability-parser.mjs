@@ -352,7 +352,30 @@ const SPECIAL_ABILITY_MATCHERS = [
     [/\breduces?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bover\b[^.]{0,80}\bHP\b/i],
   ],
   ['nullify_damage', [/\bnullif(?:y|ies)\b[^.]{0,120}\bdamage\b/i]],
-  ['lock_slots', [/\blocks?\b[^.]{0,80}\b(?:orbs?|slots?)\b/i]],
+  [
+    'lock_slots',
+    // Orb Lock: "locks <scope> orbs/slots" so the crew's slots stay fixed for N
+    // turns. Require "locks" to DIRECTLY govern an orb/slot object (bounded scope
+    // whitelist: all / own / the / your Captain's / [Type] / N). The old loose
+    // `locks? ... (orbs?|slots?)` (80-char bridge) mis-tagged two Chain-related
+    // families whose "orbs" came from a LATER, unrelated clause:
+    //   - "locks the chain multiplier at Nx ... boosts Orb Effects / randomizes
+    //     all orbs" (the object of "locks" is the CHAIN MULTIPLIER, not orbs) —
+    //     Rayleigh #1882/#1883/#3018, Sabo #2440/#2441, Boa Hancock #2682; and
+    //   - the "Chain Lock" buff referenced by name ("increases duration of any
+    //     Chain Lock buffs ... changes/boosts orbs", "Chain Lock and Orb
+    //     Amplification") — Vivi&co #3943/#3944, Trafalgar Law #4185, Luffy VS
+    //     Kaido #4210/#4211, Stussy #4228, Hack #4421.
+    // Because the scope whitelist has no bare "and"/"the chain", "Chain Lock and
+    // Orb ..." and "locks the chain multiplier" no longer reach an orb object.
+    // Scope is a BOUNDED run ({0,4}) of non-overlapping single scope words each
+    // ending in whitespace (no nested quantifiers → no exponential backtracking);
+    // "and"/"the chain" are deliberately absent so the Chain families can't reach
+    // an orb object. ("[Type] orbs" locks don't exist upstream, so no [T] token.)
+    [
+      /\blocks?\s+(?:(?:all|own|the|your|selected|adjacent|top|bottom|left|right|row|column|[a-z]+['’]s|[\d,]+)\s+){0,4}(?:orbs?|slots?)\b/i,
+    ],
+  ],
   [
     'make_slots_favorable',
     [/\bmakes?\b[^.]{0,160}\b(?:orbs?|slots?)\b[^.]{0,80}\b(?:beneficial|matching|favorable)\b/i],
