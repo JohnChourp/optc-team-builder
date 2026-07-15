@@ -1855,7 +1855,24 @@ function addSupportSlotKeys(keys, text) {
 }
 
 function addSupportBoostKeys(keys, text) {
-  if (/\bend of (?:each )?turn\b[^.]{0,120}\bdamage\b/i.test(text)) {
+  // GRANT of end-of-turn additional damage to the supported character: "deals
+  // [N% / Nx] ... damage to <scope> enemies at [the] end of [each|the] turn".
+  // Anchor on the tail (the damage OBJECT bound to the end-of-turn timing) --
+  // mirrors the captain/special `end_of_turn_additional_damage` fix. The old
+  // `/end of (?:each )?turn ... damage/` over-matched supportData that only
+  // REFERENCES the ENEMY's "End of Turn Damage" buff (a debuff on your crew):
+  // "when the enemy enables an End of Turn Damage buff, reduces Increase Damage
+  // Taken ..." (Elizabello II #1564) and "removes/reduces enemies' End of Turn
+  // Damage/Percent Cut duration" (Dagama #2435, Helmeppo #5056 -- the latter is
+  // support_reduce_enemy_effect_turns_end_of_turn_damage), and MISSED genuine
+  // grants "deals N% of enemies' current HP in damage to all enemies at the end
+  // of the turn for N turns" (Tsuru, Mihawk, Denjiro, Raizo, Eneru, Momonosuke,
+  // Katakuri & Oven).
+  if (
+    /\bdamage\s+to\b[^.]{0,30}\benem(?:y|ies)\b\s+at (?:the )?end of (?:each |every |the )?turn\b/i.test(
+      text,
+    )
+  ) {
     keys.add('support_end_of_turn_additional_damage');
   }
 
