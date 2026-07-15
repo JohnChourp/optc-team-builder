@@ -260,7 +260,19 @@ const SPECIAL_ABILITY_MATCHERS = [
     'boost_against_poisoned_enemies',
     [/\bboosts?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bpoisoned enemies\b/i],
   ],
-  ['other_damage_boosts', [/\bboosts?\b[^.]{0,120}\bdamage dealt\b/i, /\bdamage boost\b/i]],
+  [
+    'other_damage_boosts',
+    // Catch-all conditional damage boost: "boosts [the] damage dealt to enemies
+    // inflicted with <status>" (a status-conditional damage multiplier). Require
+    // "boosts" to DIRECTLY govern "damage dealt" (adjacent) — the old
+    // `boosts? ... damage dealt` (120-char bridge) mis-tagged the scaling
+    // CONDITION "boosts ATK of all characters by Nx ... depending on the amount of
+    // normal attack damage dealt before this special" (Gol D. Roger #3176/#3177),
+    // where "damage dealt" is the scaling INPUT, not the boosted object. The dead
+    // `/damage boost/` literal (0 matches, and a latent false-positive risk against
+    // "Additional Damage Boost") is removed.
+    [/\bboosts?\s+(?:the\s+)?damage dealt\b/i],
+  ],
   [
     'boost_type_effects',
     // A genuine Type-Effects / Color Affinity BOOST grant — not any mention of

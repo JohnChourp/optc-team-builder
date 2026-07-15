@@ -709,6 +709,27 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('additional_damage_boost');
   });
 
+  it('detects other_damage_boosts only when "boosts" directly governs "damage dealt", not a damage-dealt scaling condition', () => {
+    // Genuine catch-all conditional damage boost.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay or Poison by 1.2x', 'captainAbility'),
+      ),
+    ).toContain('other_damage_boosts');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts the damage dealt by all characters against delayed enemies', 'specialText'),
+      ),
+    ).toContain('other_damage_boosts');
+    // "boosts ATK ... depending on the amount of normal attack damage dealt" — the
+    // "damage dealt" is the scaling INPUT, not the boosted object.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated', 'specialText'),
+      ),
+    ).not.toContain('other_damage_boosts');
+  });
+
   it('detects percent_damage for both the "deals N% of HP damage" and "reduces enemy HP by N%" wordings', () => {
     // Canonical "deals N% of enemies' current HP in [True] damage" (captain + special).
     expect(
