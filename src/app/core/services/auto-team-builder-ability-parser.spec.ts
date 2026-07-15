@@ -615,6 +615,40 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('boost_base_atk');
   });
 
+  it('detects end_of_turn_additional_damage only when damage is dealt to enemies at the end of a turn', () => {
+    // Genuine end-of-turn damage dealers (damage BEFORE the timing; recurring + one-off;
+    // no-"the" wording; percent-HP; single-target; damage-taken retaliation form).
+    for (const [text, source] of [
+      ['deals 400x character\'s ATK in DEX damage to all enemies at the end of each turn', 'captainAbility'],
+      ['Deals 20% of enemies\' current HP in damage to all enemies at the end of the turn', 'specialText'],
+      ['and deals 5x character\'s ATK in [INT] damage to all enemies at end of each turn', 'captainAbility'],
+      ['deals 0x-500x character\'s ATK in Typeless damage to one enemy at the end of each turn depending on PERFECTs', 'captainAbility'],
+      ['deals 100x the damage taken from enemies in the previous turn in Typeless damage to all enemies at the end of each turn', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'end_of_turn_additional_damage',
+      );
+    }
+    // Non-dealing forms that must NOT match: enemy-buff removal ("End of Turn Damage"
+    // is the ENEMY dealing to your crew), end-of-turn heal + reduce-damage bridge, and
+    // damage dealt at the START of a stage (not the end of a turn).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("removes enemies' ATK Up, Enrage and End of Turn Damage/Percent Cut duration completely", 'specialText'),
+      ),
+    ).not.toContain('end_of_turn_additional_damage');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Recovers 500 HP at the end of each turn, reduces damage received by 10%', 'captainAbility'),
+      ),
+    ).not.toContain('end_of_turn_additional_damage');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("recovers 2,000 HP at the end of each turn, and deals 10% of enemies' current HP in damage to all enemies at the start of every stage", 'captainAbility'),
+      ),
+    ).not.toContain('end_of_turn_additional_damage');
+  });
+
   it('detects percent_damage for both the "deals N% of HP damage" and "reduces enemy HP by N%" wordings', () => {
     // Canonical "deals N% of enemies' current HP in [True] damage" (captain + special).
     expect(

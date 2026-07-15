@@ -479,7 +479,28 @@ const SPECIAL_ABILITY_MATCHERS = [
     // specialText 51->24; captainAbility 34->0.
     [/\binstantly defeats?\b/i],
   ],
-  ['end_of_turn_additional_damage', [/\bend of (?:each )?turn\b[^.]{0,120}\bdamage\b/i]],
+  [
+    'end_of_turn_additional_damage',
+    // The character/captain DEALS additional damage TO ENEMIES at the end of a turn
+    // (recurring "at the end of each turn", or one-off "at the end of the turn").
+    // Anchor on the canonical tail "damage to <scope> enem(y|ies) at [the] end of
+    // [each|every|the] turn" — the damage OBJECT bound to the end-of-turn timing.
+    // The old `/end of (?:each )?turn ... damage/` assumed the timing preceded
+    // "damage" and therefore both:
+    //   (1) MISSED the real wording "deals Nx ATK in [Type] damage to all enemies at
+    //       the end of each turn" (damage BEFORE the timing) — ~180 genuine captains/
+    //       specials (Kaido, Magellan, Eneru, Big Mom, Franky, King, ...), and
+    //   (2) OVER-MATCHED non-dealing forms where an unrelated end-of-turn clause (a
+    //       heal) bridged to a later "damage": "reduces damage received", the enemy-
+    //       buff removal "removes/reduces enemies' End of Turn Damage/Percent Cut"
+    //       (the ENEMY dealing damage to your crew), "attacks will ignore damage",
+    //       and "deals ... damage ... at the start of every stage".
+    // Requiring "damage to <scope> enemies" to ABUT the end-of-turn timing keeps only
+    // genuine end-of-turn damage dealers (incl. the "at end of each turn" no-"the"
+    // wording and the "in Typeless damage to all enemies at the end of each turn"
+    // damage-taken retaliation form).
+    [/\bdamage\s+to\b[^.]{0,30}\benem(?:y|ies)\b\s+at (?:the )?end of (?:each |every |the )?turn\b/i],
+  ],
   [
     'tap_timing_requirement',
     // A tap-timing-gated captain/special BOOST — the effect depends on PERFECT
