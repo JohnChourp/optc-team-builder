@@ -1635,6 +1635,50 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('derives duration-removal keys from superSpecialText via the shared TURN_PATTERNS pipeline', () => {
+    // Genuine super-special enemy-effect duration removal (previously skipped:
+    // the superSpecialText branch used to early-return before TURN_PATTERNS).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces enemies' Threshold Damage Reduction duration by 3 turns and transforms Fighter characters into Super Fighter characters.",
+          'superSpecialText',
+        ),
+      ),
+    ).toContain('remove_threshold_damage_reduction');
+    // "removes <status> duration completely" variant.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Removes Despair duration completely on this character and transforms [STR] characters into Super [STR] characters.',
+          'superSpecialText',
+        ),
+      ),
+    ).toContain('remove_despair');
+    // EXPLICIT builder ability (fixed damage) also derives from super text.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Deals 100x character's ATK in Typeless Fixed True damage to all enemies and transforms [DEX] characters into Super [DEX] characters.",
+          'superSpecialText',
+        ),
+      ),
+    ).toContain('deal_fixed_damage');
+  });
+
+  it('keeps superSpecialText restricted to territory-group special matchers (no full special catalog)', () => {
+    // The line-1335 `specialText || captainAbility` guard must keep the broad
+    // special-ability matchers (e.g. boost_atk) from firing on super text, so
+    // super specials do not double-tag effects the base special already carries.
+    const keys = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        'Boosts ATK of all characters by 2x for 1 turn and transforms [STR] characters into Super [STR] characters.',
+        'superSpecialText',
+      ),
+    );
+    expect(keys).not.toContain('boost_atk');
+  });
+
   it.each([
     [
       'increased defense',

@@ -1260,9 +1260,22 @@ export function analyzeBuilderAbilityText(value, source) {
   const seen = new Set();
 
   if (source === 'superSpecialText') {
+    // Super specials contribute their territory-provider effects (kept
+    // restricted to the 'territory' group so the broader special-ability
+    // matchers do not double-tag effects the base special already carries),
+    // and then FALL THROUGH to the shared TURN_PATTERNS / SELECTED_DEBUFF /
+    // EXPLICIT_BUILDER_ABILITIES pipeline below. Without the fall-through, no
+    // duration-removal key (remove_* "reduces enemies' <buff> duration by N
+    // turns", "removes <status> duration completely"), fixed-damage, or
+    // inflict-status effect was ever derived from super text, even for genuine
+    // clauses — e.g. 7 units reduce enemies' Threshold Damage Reduction
+    // duration only in their super special. The line-1335 `specialText ||
+    // captainAbility` guard keeps the FULL special-ability matcher set from
+    // running on super text, so this only adds the shared structured pipeline
+    // (identical logic already validated for specialText), not the whole
+    // special catalog. extractPrimaryAbilityBranchText still bounds parsing to
+    // the primary activation branch.
     addSpecialAbilityMatches(abilities, seen, normalizedText, source, new Set(['territory']));
-
-    return abilities;
   }
 
   TURN_PATTERNS.forEach(({ pattern, resolveTurns, isCompleteRemoval }) => {
