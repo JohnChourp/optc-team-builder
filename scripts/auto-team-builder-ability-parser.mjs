@@ -317,7 +317,26 @@ const SPECIAL_ABILITY_MATCHERS = [
     // all 63 captain / 42 special grants and drops those non-grant forms.
     [/\b(?:boosts?|increases?)\s+(?:the\s+)?chain\s+multiplier\s+growth\s+rate\s+by\s+\+?\d+(?:\.\d+)?x/i],
   ],
-  ['boost_base_atk', [/\bboosts?\b[^.]{0,120}\bbase ATK\b/i, /\badds?\b[^.]{0,120}\bbase ATK\b/i]],
+  [
+    'boost_base_atk',
+    // Require the grant verb to DIRECTLY govern "base ATK" ("boosts base ATK of
+    // <scope> by N ..." — the canonical OPTC-DB Base ATK Boost grant wording).
+    // The old loose `boosts? ... base ATK` bridge mis-tagged non-grant forms that
+    // merely NAME the "Base ATK Boost" buff:
+    //   - the amplifier "increases boost effects of Base ATK Boost buffs by +N"
+    //     (effect_boost) — "boost" in "boost effects" bridged to a later "Base
+    //     ATK"; captains Dr. Vegapunk York #4135, Law & Bepo #4140, Whitebeard &
+    //     Ace #4293 were tagged base-ATK granters this way;
+    //   - the duration extender "increases duration of any Base ATK Boost buffs by
+    //     N turns" (extend_turn_duration) and the "enables Base ATK Boost buffs to
+    //     be enhanced" form — the noun "Boost" bridged to a later "Base ATK".
+    // Requiring the verb to abut "base ATK" keeps all genuine grants (e.g. Big Mom
+    // #2535 "Boosts base ATK of all characters by 1-1,000", Rodo #4589 "boosts base
+    // ATK of [Giant] characters by 750") while dropping those buff-referencing
+    // forms. The old `adds? ... base ATK` branch matched nothing beyond this and is
+    // removed.
+    [/\bboosts?\s+base ATK\b/i],
+  ],
   ['effect_boost', [/\bincreases?\b[^.]{0,120}\bboost effects?\b/i, /\beffect boost\b/i]],
   ['critical_damage_boost', [/\bcritical damage\b/i]],
   ['final_tap_atk_boost', [/\bfinal tap\b[^.]{0,120}\bATK\b/i]],
