@@ -580,6 +580,36 @@ describe('auto team builder ability parser', () => {
     }
   });
 
+  it('detects remove_enemy_barrier for genuine Barrier-duration removal, not barrier penetration or slot/orb barrier', () => {
+    // Genuine enemy-Barrier removals (incl. multi-item lists and the "Barrier
+    // Penetration Enabled" trigger, whose ACTION is a real barrier-duration cut).
+    for (const text of [
+      "Reduces enemies' Barrier duration by 1 turn",
+      "Reduces enemies' Barrier and Damage Nullification duration by 2 turns",
+      "When a Barrier Penetration Enabled character hits an enemy, reduces enemies' Barrier duration by 1 turn",
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'remove_enemy_barrier',
+      );
+    }
+    // Barrier PENETRATION ("ignore … barriers") bypasses barriers without removing
+    // them — a distinct mechanic, NOT a duration removal (Zoro & Sanji #4561/#4562).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Characters' normal attacks ignore damage reducing Barriers and Buffs for 1 turn",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('remove_enemy_barrier');
+    // Slot/Orb Barrier are distinct keys, not the enemy Barrier.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Reduces Slot Barrier duration by 2 turns", 'specialText'),
+      ),
+    ).not.toContain('remove_enemy_barrier');
+  });
+
   it('detects boost_slot_effects only for the literal "Orb Effects"/"Slot Effects" grant', () => {
     // Genuine grants (modern, legacy lowercase, legacy possessive "Slot Effects").
     expect(
