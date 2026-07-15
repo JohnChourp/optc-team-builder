@@ -2315,6 +2315,8 @@ describe('auto team builder ability parser', () => {
       {
         id: 900001,
         detail: {
+          specialText: null,
+          captainAbility: null,
           supportData: [
             {
               supportedCharactersText: 'Tester',
@@ -2329,6 +2331,8 @@ describe('auto team builder ability parser', () => {
       {
         id: 900002,
         detail: {
+          specialText: null,
+          captainAbility: null,
           supportData: [
             {
               supportedCharactersText: 'Tester',
@@ -2343,6 +2347,8 @@ describe('auto team builder ability parser', () => {
       {
         id: 900003,
         detail: {
+          specialText: null,
+          captainAbility: null,
           supportData: [
             {
               supportedCharactersText: 'Tester',
