@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-15T11:33:39.083Z",
+  "generatedAt": "2026-07-15T12:42:43.937Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -2018,12 +2018,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 273,
+      "matchCount": 281,
       "matchingCharacterIds": [
         20,
         230,
@@ -2188,6 +2189,7 @@
         2962,
         2967,
         2968,
+        2980,
         2995,
         3005,
         3006,
@@ -2224,13 +2226,17 @@
         3544,
         3558,
         3585,
+        3670,
         3744,
         3745,
         3754,
         3755,
+        3762,
         3774,
         3775,
         3786,
+        3790,
+        3798,
         3799,
         3895,
         3896,
@@ -2266,7 +2272,9 @@
         4150,
         4152,
         4153,
+        4170,
         4227,
+        4233,
         4245,
         4246,
         4249,
@@ -2284,6 +2292,7 @@
         4371,
         4378,
         4381,
+        4401,
         4410,
         4433,
         4442,
@@ -2334,12 +2343,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 31,
+      "matchCount": 32,
       "matchingCharacterIds": [
         3176,
         3177,
@@ -2350,6 +2360,7 @@
         3754,
         3755,
         3786,
+        3798,
         3808,
         3809,
         3907,
@@ -25360,12 +25371,13 @@
       "availableSources": [
         "captainAbility",
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 518,
+      "matchCount": 521,
       "matchingCharacterIds": [
         228,
         265,
@@ -25684,6 +25696,7 @@
         3605,
         3610,
         3611,
+        3613,
         3615,
         3618,
         3622,
@@ -25801,6 +25814,7 @@
         4184,
         4188,
         4192,
+        4197,
         4208,
         4209,
         4210,
@@ -25823,6 +25837,7 @@
         4277,
         4283,
         4289,
+        4294,
         4311,
         4312,
         4314,
@@ -26004,7 +26019,8 @@
             4209,
             4223,
             4246,
-            4354
+            4354,
+            4456
           ]
         },
         {
@@ -26307,6 +26323,7 @@
             3163,
             3164,
             3242,
+            3613,
             3681,
             3682,
             3690,
@@ -26342,6 +26359,7 @@
             4159,
             4184,
             4188,
+            4197,
             4228,
             4235,
             4249,
@@ -26349,6 +26367,7 @@
             4277,
             4283,
             4289,
+            4294,
             4324,
             4333,
             4392,
@@ -26674,12 +26693,13 @@
       "availableSources": [
         "captainAbility",
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 468,
+      "matchCount": 474,
       "matchingCharacterIds": [
         354,
         355,
@@ -27032,6 +27052,8 @@
         3992,
         3993,
         4009,
+        4011,
+        4012,
         4023,
         4027,
         4036,
@@ -27051,6 +27073,7 @@
         4082,
         4090,
         4094,
+        4096,
         4106,
         4107,
         4108,
@@ -27114,6 +27137,8 @@
         4425,
         4439,
         4446,
+        4447,
+        4448,
         4449,
         4459,
         4467,
@@ -27121,6 +27146,7 @@
         4471,
         4472,
         4476,
+        4477,
         4478,
         4489,
         4490,
@@ -27538,6 +27564,7 @@
             4081,
             4082,
             4094,
+            4096,
             4106,
             4110,
             4111,
@@ -27689,6 +27716,8 @@
             3897,
             3898,
             3957,
+            4011,
+            4012,
             4057,
             4058,
             4078,
@@ -27698,7 +27727,10 @@
             4291,
             4292,
             4329,
+            4447,
+            4448,
             4449,
+            4477,
             4478,
             4571,
             4587
@@ -27906,12 +27938,13 @@
       "availableSources": [
         "captainAbility",
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 565,
+      "matchCount": 569,
       "matchingCharacterIds": [
         73,
         251,
@@ -28300,6 +28333,7 @@
         3733,
         3738,
         3739,
+        3741,
         3748,
         3756,
         3760,
@@ -28367,9 +28401,11 @@
         4037,
         4038,
         4039,
+        4043,
         4046,
         4051,
         4056,
+        4063,
         4064,
         4069,
         4071,
@@ -28379,6 +28415,7 @@
         4084,
         4090,
         4098,
+        4102,
         4109,
         4113,
         4126,
@@ -28772,9 +28809,11 @@
             3551,
             3586,
             3671,
+            3741,
             3835,
             3953,
             3954,
+            4063,
             4212,
             4339,
             4361,
@@ -28947,6 +28986,7 @@
             4002,
             4003,
             4039,
+            4043,
             4051,
             4064,
             4071,
@@ -29060,6 +29100,7 @@
             4394,
             4410,
             4418,
+            4441,
             4482,
             4491,
             4507,
@@ -29148,6 +29189,7 @@
             3989,
             4078,
             4079,
+            4102,
             4109,
             4229,
             4237,
@@ -29361,12 +29403,13 @@
       "availableSources": [
         "captainAbility",
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 456,
+      "matchCount": 463,
       "matchingCharacterIds": [
         709,
         949,
@@ -29691,6 +29734,7 @@
         3838,
         3839,
         3845,
+        3852,
         3863,
         3867,
         3871,
@@ -29747,6 +29791,7 @@
         4212,
         4214,
         4216,
+        4221,
         4229,
         4232,
         4233,
@@ -29756,8 +29801,11 @@
         4258,
         4262,
         4267,
+        4271,
+        4272,
         4278,
         4287,
+        4288,
         4289,
         4291,
         4292,
@@ -29794,11 +29842,13 @@
         4447,
         4448,
         4449,
+        4459,
         4472,
         4475,
         4476,
         4478,
         4483,
+        4487,
         4492,
         4496,
         4497,
@@ -30065,6 +30115,7 @@
             3449,
             3468,
             3712,
+            3852,
             3952,
             4534,
             5031,
@@ -30181,6 +30232,7 @@
             4197,
             4200,
             4262,
+            4288,
             4424,
             4426,
             4502,
@@ -30235,6 +30287,7 @@
             4201,
             4214,
             4216,
+            4221,
             4229,
             4249,
             4250,
@@ -30259,6 +30312,7 @@
             4439,
             4447,
             4448,
+            4459,
             4508,
             4513,
             4514,
@@ -30291,6 +30345,7 @@
             4186,
             4232,
             4233,
+            4267,
             4322,
             4345,
             4472,
@@ -30350,6 +30405,7 @@
             4202,
             4232,
             4233,
+            4250,
             4291,
             4292,
             4300,
@@ -30365,6 +30421,7 @@
             4448,
             4476,
             4483,
+            4487,
             4492,
             4529,
             4547,
@@ -30448,6 +30505,8 @@
             4229,
             4237,
             4267,
+            4271,
+            4272,
             4291,
             4292,
             4329,
@@ -30689,12 +30748,13 @@
       "availableSources": [
         "captainAbility",
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 182,
+      "matchCount": 187,
       "matchingCharacterIds": [
         2237,
         2238,
@@ -30767,6 +30827,7 @@
         3277,
         3278,
         3310,
+        3338,
         3366,
         3374,
         3381,
@@ -30796,6 +30857,7 @@
         3793,
         3813,
         3821,
+        3830,
         3874,
         3881,
         3915,
@@ -30838,6 +30900,7 @@
         4256,
         4269,
         4272,
+        4275,
         4279,
         4280,
         4288,
@@ -30863,6 +30926,7 @@
         4422,
         4428,
         4431,
+        4451,
         4472,
         4482,
         4488,
@@ -30874,6 +30938,7 @@
         4533,
         4535,
         4537,
+        4549,
         4571,
         4591,
         4598,
@@ -30951,6 +31016,7 @@
             3277,
             3278,
             3310,
+            3338,
             3560,
             3671,
             4164,
@@ -31039,6 +31105,7 @@
         {
           "minTurns": 6,
           "characterIds": [
+            3830,
             3881,
             3915,
             3932,
@@ -31054,6 +31121,7 @@
             4220,
             4221,
             4269,
+            4275,
             4312,
             4325,
             4356,
@@ -31062,12 +31130,14 @@
             4422,
             4428,
             4431,
+            4451,
             4488,
             4503,
             4517,
             4525,
             4533,
             4535,
+            4549,
             4610
           ]
         },
@@ -31396,12 +31466,13 @@
       "availableSources": [
         "captainAbility",
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 333,
+      "matchCount": 336,
       "matchingCharacterIds": [
         1823,
         1824,
@@ -31599,6 +31670,7 @@
         3734,
         3735,
         3737,
+        3741,
         3744,
         3745,
         3753,
@@ -31650,6 +31722,7 @@
         4047,
         4052,
         4053,
+        4063,
         4081,
         4082,
         4088,
@@ -31699,6 +31772,7 @@
         4374,
         4375,
         4376,
+        4380,
         4386,
         4390,
         4394,
@@ -31858,9 +31932,11 @@
             3544,
             3551,
             3572,
+            3741,
             3753,
             3863,
             4030,
+            4063,
             4143,
             4209,
             4438
@@ -32114,6 +32190,7 @@
             4219,
             4293,
             4319,
+            4380,
             4395,
             4491,
             4537,
@@ -32607,12 +32684,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 98,
+      "matchCount": 99,
       "matchingCharacterIds": [
         1627,
         1628,
@@ -32702,6 +32780,7 @@
         4000,
         4037,
         4048,
+        4128,
         4227,
         4289,
         4328,
@@ -32735,7 +32814,8 @@
             2724,
             2737,
             2738,
-            3537
+            3537,
+            4128
           ]
         },
         {
@@ -32857,6 +32937,12 @@
             4452,
             4453
           ]
+        },
+        {
+          "minTurns": 99,
+          "characterIds": [
+            4128
+          ]
         }
       ],
       "captainAbilityMatchingCharacterIds": [
@@ -32899,12 +32985,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 105,
+      "matchCount": 109,
       "matchingCharacterIds": [
         379,
         380,
@@ -32966,6 +33053,7 @@
         3166,
         3182,
         3183,
+        3278,
         3297,
         3402,
         3403,
@@ -32993,6 +33081,7 @@
         4138,
         4182,
         4226,
+        4256,
         4269,
         4300,
         4325,
@@ -33002,10 +33091,12 @@
         4423,
         4434,
         4482,
+        4483,
         4489,
         4510,
         4511,
         4512,
+        4518,
         4550,
         4587,
         4609,
@@ -33017,7 +33108,8 @@
           "minTurns": 1,
           "characterIds": [
             3689,
-            4182
+            4182,
+            4518
           ]
         },
         {
@@ -33163,6 +33255,7 @@
             3166,
             3182,
             3183,
+            3278,
             3297,
             3402,
             3403,
@@ -33188,6 +33281,7 @@
             4138,
             4182,
             4226,
+            4256,
             4269,
             4300,
             4325,
@@ -33197,10 +33291,12 @@
             4423,
             4434,
             4482,
+            4483,
             4489,
             4510,
             4511,
             4512,
+            4518,
             4550,
             4587,
             4609,
@@ -33940,12 +34036,13 @@
       "availableSources": [
         "captainAbility",
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 262,
+      "matchCount": 266,
       "matchingCharacterIds": [
         1411,
         1412,
@@ -34128,6 +34225,7 @@
         3905,
         3913,
         3918,
+        3948,
         3950,
         3963,
         3978,
@@ -34146,6 +34244,7 @@
         4088,
         4089,
         4097,
+        4100,
         4110,
         4111,
         4151,
@@ -34162,6 +34261,7 @@
         4226,
         4230,
         4231,
+        4238,
         4239,
         4240,
         4248,
@@ -34195,6 +34295,7 @@
         4486,
         4494,
         4495,
+        4499,
         4519,
         4526,
         4527,
@@ -34225,7 +34326,8 @@
             4089,
             4322,
             4326,
-            4327
+            4327,
+            4418
           ]
         },
         {
@@ -34250,7 +34352,9 @@
             3025,
             3625,
             3626,
+            3697,
             3711,
+            3848,
             4048,
             4155,
             4156,
@@ -34299,6 +34403,7 @@
             3978,
             3979,
             4032,
+            4238,
             4303,
             4418,
             4486,
@@ -34421,6 +34526,7 @@
             4215,
             4262,
             4371,
+            4499,
             4546
           ]
         },
@@ -34445,6 +34551,7 @@
             3904,
             3905,
             3918,
+            3948,
             3963,
             3996,
             4002,
@@ -34452,6 +34559,7 @@
             4007,
             4008,
             4097,
+            4100,
             4110,
             4111,
             4170,
@@ -34610,12 +34718,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 98,
+      "matchCount": 99,
       "matchingCharacterIds": [
         1539,
         1540,
@@ -34701,6 +34810,7 @@
         4002,
         4003,
         4075,
+        4080,
         4132,
         4210,
         4211,
@@ -34729,6 +34839,7 @@
             3697,
             4326,
             4327,
+            4418,
             4505
           ]
         },
@@ -34740,6 +34851,7 @@
             2353,
             2354,
             3625,
+            3697,
             3703
           ]
         },
@@ -34766,6 +34878,7 @@
             2997,
             3728,
             3847,
+            4080,
             4418,
             4588
           ]
@@ -34789,6 +34902,7 @@
             3785,
             3848,
             3935,
+            4505,
             4589
           ]
         },
@@ -34901,12 +35015,13 @@
       "availableSources": [
         "captainAbility",
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 48,
+      "matchCount": 52,
       "matchingCharacterIds": [
         1903,
         1904,
@@ -34936,14 +35051,17 @@
         4147,
         4154,
         4187,
+        4213,
         4247,
         4249,
         4250,
         4263,
         4289,
         4307,
+        4329,
         4388,
         4425,
+        4436,
         4462,
         4465,
         4483,
@@ -34955,7 +35073,8 @@
         4539,
         4574,
         4575,
-        4583
+        4583,
+        4598
       ],
       "turnMatchingCharacterIds": [
         {
@@ -34980,6 +35099,7 @@
             4187,
             4247,
             4263,
+            4329,
             4462,
             4496,
             4497,
@@ -34999,17 +35119,20 @@
             3761,
             3938,
             4132,
+            4213,
             4249,
             4250,
             4289,
             4425,
+            4436,
             4465,
             4483,
             4487,
             4514,
             4539,
             4575,
-            4583
+            4583,
+            4598
           ]
         },
         {
@@ -35068,12 +35191,13 @@
       "availableSources": [
         "captainAbility",
         "sailorAbilities",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 326,
+      "matchCount": 333,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -35211,6 +35335,7 @@
         3215,
         3218,
         3219,
+        3227,
         3230,
         3231,
         3234,
@@ -35284,7 +35409,9 @@
         3760,
         3762,
         3770,
+        3775,
         3785,
+        3790,
         3800,
         3803,
         3813,
@@ -35322,6 +35449,7 @@
         4075,
         4078,
         4079,
+        4080,
         4085,
         4110,
         4111,
@@ -35340,6 +35468,7 @@
         4210,
         4211,
         4215,
+        4238,
         4241,
         4242,
         4247,
@@ -35388,12 +35517,14 @@
         4487,
         4495,
         4505,
+        4506,
         4519,
         4521,
         4529,
         4546,
         4550,
         4570,
+        4571,
         4583,
         4588,
         4589,
@@ -35417,6 +35548,7 @@
             3597,
             3696,
             3697,
+            3785,
             4285,
             4297,
             4326,
@@ -35449,16 +35581,19 @@
             2972,
             2995,
             3173,
+            3227,
             3359,
             3428,
             3477,
             3592,
+            3697,
             3703,
             3711,
             3947,
             3948,
             4155,
             4157,
+            4193,
             4195,
             4298,
             4323,
@@ -35511,11 +35646,14 @@
             3396,
             3477,
             3728,
+            3775,
             3800,
             4022,
             4078,
             4079,
+            4080,
             4143,
+            4238,
             4247,
             4271,
             4358,
@@ -35564,6 +35702,7 @@
             4193,
             4241,
             4242,
+            4505,
             4589
           ]
         },
@@ -35651,6 +35790,7 @@
             3746,
             3758,
             3770,
+            3790,
             3821,
             3825,
             3833,
@@ -35667,6 +35807,7 @@
             4298,
             4332,
             4546,
+            4571,
             5031,
             5032
           ]
@@ -35727,6 +35868,7 @@
             4457,
             4469,
             4495,
+            4506,
             4519,
             4570,
             4583,
@@ -36192,12 +36334,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 134,
+      "matchCount": 135,
       "matchingCharacterIds": [
         2106,
         2107,
@@ -36291,6 +36434,7 @@
         3647,
         3655,
         3664,
+        3676,
         3687,
         3692,
         3699,
@@ -36495,6 +36639,7 @@
           "minTurns": 7,
           "characterIds": [
             3051,
+            3676,
             3789,
             3790,
             4187,
@@ -36550,12 +36695,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 115,
+      "matchCount": 119,
       "matchingCharacterIds": [
         1189,
         1190,
@@ -36648,6 +36794,7 @@
         4187,
         4217,
         4222,
+        4233,
         4257,
         4270,
         4271,
@@ -36657,9 +36804,12 @@
         4374,
         4375,
         4383,
+        4405,
         4435,
         4436,
+        4453,
         4455,
+        4460,
         4480,
         4481,
         4493,
@@ -36736,11 +36886,13 @@
             4101,
             4102,
             4187,
+            4233,
             4271,
             4322,
             4373,
             4383,
-            4435
+            4435,
+            4453
           ]
         },
         {
@@ -36770,7 +36922,9 @@
             4270,
             4374,
             4375,
+            4405,
             4455,
+            4460,
             4480,
             4512,
             4543,
@@ -37206,12 +37360,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 64,
+      "matchCount": 67,
       "matchingCharacterIds": [
         58,
         215,
@@ -37266,12 +37421,15 @@
         3524,
         3648,
         3872,
+        3967,
         4126,
         4256,
+        4282,
         4315,
         4405,
         4461,
         4482,
+        4483,
         4501,
         4509,
         4510,
@@ -61276,12 +61434,13 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 11,
+      "matchCount": 12,
       "matchingCharacterIds": [
         4133,
         4222,
@@ -61293,6 +61452,7 @@
         4447,
         4448,
         4518,
+        4521,
         4578
       ],
       "turnMatchingCharacterIds": [
@@ -61301,6 +61461,7 @@
           "characterIds": [
             4373,
             4447,
+            4521,
             4578
           ]
         },
@@ -61360,19 +61521,27 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 4,
+      "matchCount": 5,
       "matchingCharacterIds": [
+        3307,
         3851,
         3852,
         4061,
         4062
       ],
       "turnMatchingCharacterIds": [
+        {
+          "minTurns": 3,
+          "characterIds": [
+            3307
+          ]
+        },
         {
           "minTurns": 6,
           "characterIds": [
@@ -61402,12 +61571,14 @@
         }
       ],
       "sampleCharacterIds": [
+        3307,
         3851,
         3852,
         4061,
         4062
       ],
       "sampleTexts": [
+        "Changes all orbs into [RCV] orbs, reduces Sailor Despair duration by 3 turns and reduces Special Cooldown of this character by 1 turn and transforms [INT] characters into Super [INT] characters.",
         "Reduces Special Cooldown of [PSY] and [INT] characters by 1 turn and boosts Orb Effects of [PSY] and [INT] characters by 2.5x-2.75x, based on total damage taken. If your Captain is a [PSY] or [INT] character, reduces Bind and Sailor Despair duration by 6 turns, reduces damage received by 100% for 1 turn or 1-2 attacks, depending on Special Counter, and increases duration of any Orb Amplification buffs by 1 turn, including effects activated in the same Ability.",
         "Reduces Special Cooldown of [PSY] and [INT] characters by 1 turn and boosts Orb Effects of [PSY] and [INT] characters by 2.5x-2.75x, based on total damage taken. If your Captain is a [PSY] or [INT] character, reduces Bind and Sailor Despair duration by 6 turns, reduces damage received by 100% for 1 turn or 1-2 attacks, depending on Special Counter, and increases duration of any Orb Amplification buffs by 1 turn, including effects activated in the same Ability.",
         "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, boosts HP of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 1.5x, boosts ATK of Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters by 2.3x-5.29x, depending on if the character has 2 matching Classes, makes [DEX], [RCV] and [TND] orbs beneficial for Fighter, Slasher, Striker, Shooter, Driven, and Free Spirit characters and reduces Sailor Despair duration by 10 turns. If this character has a [TND] or [WANO] orb and you attack with this character, reduces Switch Effect of this character by 1.",
@@ -61539,12 +61710,13 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 13,
+      "matchCount": 15,
       "matchingCharacterIds": [
         3306,
         3307,
@@ -61552,9 +61724,11 @@
         4031,
         4050,
         4093,
+        4102,
         4139,
         4164,
         4268,
+        4388,
         4468,
         4479,
         4507,
@@ -61601,7 +61775,14 @@
           "characterIds": [
             3306,
             3307,
-            4139
+            4139,
+            4388
+          ]
+        },
+        {
+          "minTurns": 99,
+          "characterIds": [
+            4102
           ]
         }
       ],
