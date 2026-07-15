@@ -655,7 +655,6 @@ describe('auto team builder ability parser', () => {
       ['Locks all orbs for 1 turn', 'captainAbility'],
       ['locks own orb for 1 turn', 'specialText'],
       ["changes the orb of this character into an [INT] orb and locks your Captain's orb for 1 turn", 'specialText'],
-      ['locks [STR] and [DEX] orbs for 2 turns', 'specialText'],
     ] as const) {
       expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain('lock_slots');
     }

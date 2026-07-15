@@ -368,8 +368,12 @@ const SPECIAL_ABILITY_MATCHERS = [
     //     Kaido #4210/#4211, Stussy #4228, Hack #4421.
     // Because the scope whitelist has no bare "and"/"the chain", "Chain Lock and
     // Orb ..." and "locks the chain multiplier" no longer reach an orb object.
+    // Scope is a BOUNDED run ({0,4}) of non-overlapping single scope words each
+    // ending in whitespace (no nested quantifiers → no exponential backtracking);
+    // "and"/"the chain" are deliberately absent so the Chain families can't reach
+    // an orb object. ("[Type] orbs" locks don't exist upstream, so no [T] token.)
     [
-      /\blocks?\s+(?:all\s+|own\s+|the\s+|your\s+[a-z]+['’]s\s+|[a-z]+['’]s\s+|[\d,]+\s+|selected\s+|adjacent\s+|(?:top|bottom|left|right)\s+(?:row\s+|column\s+)?|(?:\[[^\]]+\][\s,]*(?:and\s+|or\s+)?)+)*(?:orbs?|slots?)\b/i,
+      /\blocks?\s+(?:(?:all|own|the|your|selected|adjacent|top|bottom|left|right|row|column|[a-z]+['’]s|[\d,]+)\s+){0,4}(?:orbs?|slots?)\b/i,
     ],
   ],
   [
