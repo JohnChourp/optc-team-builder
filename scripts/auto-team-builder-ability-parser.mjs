@@ -138,7 +138,18 @@ const EXPLICIT_BUILDER_ABILITIES = [
   {
     key: 'ignore_normal_attack_only',
     label: 'Ignore Normal Attack Only (NAO)',
-    matcher: (text) => /\bignoring normal attack only\b/i.test(text),
+    // "Normal Attack Only" is an enemy defensive buff that limits the crew to
+    // normal attacks (nullifying special damage/effects). Units whose attacks
+    // ignore/bypass it penetrate that buff. Besides the adjacent "ignoring
+    // Normal Attack Only" phrasing, OPTC-DB also lists NAO among the defensive
+    // effects a special "bypass[es]" (e.g. "bypass all defensive Buffs,
+    // Barriers, Defense and Normal Attack Only"), so accept ignore/bypass verbs
+    // with a bounded, ReDoS-safe [^.]{0,80} bridge (kept within one sentence so
+    // the "if your crew has Normal Attack Only" condition wording is excluded).
+    matcher: (text) =>
+      /\b(?:ignor(?:e|es|ing)|bypass(?:es|ing)?)\b[^.]{0,80}\bnormal attack only\b/i.test(
+        text,
+      ),
   },
   {
     key: 'deal_fixed_damage',
