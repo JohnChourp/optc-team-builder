@@ -2799,6 +2799,65 @@ describe('auto team builder ability parser', () => {
     ).toEqual(expect.arrayContaining([960001, 960002]));
   });
 
+  it('tags RCV-scaled and damage-taken heals that never name HP', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 993001,
+        detail: {
+          specialText: 'Recovers 5,000 HP',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // The canonical Post Turn Heal, minus the "in HP" tail (Nami #2675).
+        id: 993002,
+        detail: {
+          specialText: null,
+          captainAbility: "recovers 1x character's RCV at the end of each turn",
+          builderAbilities: [],
+        },
+      },
+      {
+        // Decimal amount — the gap must span the "." (Law #1750).
+        id: 993003,
+        detail: {
+          specialText: null,
+          captainAbility: "recovers 0.5x this character's RCV at the end of the turn",
+          builderAbilities: [],
+        },
+      },
+      {
+        // Restores HP without naming HP (Katakuri #2364). reduce_damage
+        // correctly rejects this same phrasing — it is a heal, not a reduction.
+        id: 993004,
+        detail: {
+          specialText: null,
+          captainAbility: 'Recovers 50% of damage taken from enemies',
+          builderAbilities: [],
+        },
+      },
+      {
+        // An RCV *stat* boost is boost_rcv, not a heal.
+        id: 993005,
+        detail: {
+          specialText: 'Boosts RCV of all characters by 1.2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'heal_hp')?.['matchingCharacterIds']).toEqual([
+      993001, 993002, 993003, 993004,
+    ]);
+    expect(catalog.find((item) => item.key === 'boost_rcv')?.['matchingCharacterIds']).toEqual([
+      993005,
+    ]);
+  });
+
   it('reads a buff duration from its own clause, not the longest one in the sentence', async () => {
     const characters: ParserCharacters = [
       {

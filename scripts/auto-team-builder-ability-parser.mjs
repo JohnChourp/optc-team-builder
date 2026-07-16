@@ -769,7 +769,33 @@ const SPECIAL_ABILITY_MATCHERS = [
   // ~30 RCV-scaled healer captains (Marco, Rayleigh, Big Mom, Shanks, ...).
   // "health" tolerates the legacy wording in Marguerite "recovers a small amount
   // of health at the end of each turn".
-  ['heal_hp', [/\b(?:recovers?|heals?)\b(?:[^.]|\.\d){0,120}\b(?:HP|health)\b/i]],
+  [
+    'heal_hp',
+    [
+      // Canonical: "Recovers N HP", "Recovers N% of crew's MAX HP", "Recovers Nx
+      // character's RCV in HP", "recovers all missing HP", plus Marguerite #918's
+      // legacy "a small amount of health". `(?:[^.]|\.\d)` lets the gap span the
+      // decimal in "1.5x character's RCV" while still stopping at a real sentence
+      // boundary (period+space, not period+digit) — without it ~27 RCV-scaled
+      // healer captains were silently missed (fixed by the 2026-07-11 captain
+      // audit).
+      /\b(?:recovers?|heals?)\b(?:[^.]|\.\d){0,120}\b(?:HP|health)\b/i,
+      // The SAME RCV-scaled heal, but upstream often omits the "in HP" tail:
+      // "recovers 1x character's RCV at the end of each turn" (Nami #2675,
+      // Tsuru #1319, Rayleigh #1619 ...). Requiring an HP token hid 26 healers —
+      // the identical failure shape as the decimal bug, via a different tail.
+      // All 7 distinct span shapes in the corpus are "recovers <amount>
+      // character's RCV", i.e. always an HP recovery; the boosts guard and the
+      // comma-blocked gap keep it from reaching a neighbouring "boosts ... RCV"
+      // clause, which is boost_rcv's territory and not a heal.
+      /\brecovers?\b(?:(?!\bboosts?\b)(?:[^.,;]|\.\d)){0,40}\bRCV\b/i,
+      // Damage-taken heals: "Recovers 50% of damage taken from enemies"
+      // (Katakuri #2364, Magellan #3277, Hawkins #2981) restore HP without ever
+      // naming HP. Note the reduce_damage audit correctly REJECTS this same
+      // phrasing — it is a heal, not a damage reduction.
+      /\brecovers?\b(?:[^.,;]|\.\d){0,30}\bof\s+(?:the\s+)?damage\s+taken\b/i,
+    ],
+  ],
   ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],
   [
     'apply_resilience',
