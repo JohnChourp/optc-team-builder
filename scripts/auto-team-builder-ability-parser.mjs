@@ -518,7 +518,18 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\bauto changes?\b/i,
     ],
   ],
-  ['remove_silence', [/\breduces?\b[^.]{0,80}\bsilence\b[^.]{0,80}\bby\s+\d+\s+turns?/i]],
+  // NOTE: there is deliberately NO `remove_silence` matcher. "Silence" is the
+  // IN-GAME label for the debuff OPTC-DB otherwise words as "Special Bind" (it
+  // greys out the special gauge and locks specials) — the same effect seen under
+  // two names, exactly like Blindness/Remove SFX. It is NOT Despair: Despair is
+  // shown in-game as "Gloom" and OPTC-DB words it "Despair". Upstream is simply
+  // inconsistent — only 5 units (#4197/#4262/#4288/#4426/#4502) say "Silence"
+  // while 356 say "Special Bind", interleaved across the same id range (the
+  // newest units of all, #5031/#5032, still say "Special Bind"), so this is
+  // transcription drift, not a rename or a distinct mechanic. The `silence`
+  // alias on `remove_special_bind` in TARGET_ALIASES already routes these units
+  // to the single canonical key WITH their turn count; a separate matcher here
+  // only produced a duplicate turn-less picker entry. See TARGET_ALIASES.
   ['apply_delay', [/\bdelays?\b[^.]{0,120}\benemies\b/i]],
   [
     'apply_def_reduction',
@@ -924,6 +935,19 @@ const TARGET_ALIASES = [
     matcher: (target) => target.includes('sailor despair'),
   },
   {
+    // "Special Bind" (OPTC-DB's house wording, 356 units) and "Silence" (the
+    // in-game label, 5 units) are the SAME debuff — specials locked, special
+    // gauge greyed out — so both wordings must resolve to this one key. The
+    // Fandom glossary states it directly ("Special bind - also known as silence
+    // or numbness ... note it is called silence here" on the in-game
+    // visualisation) and the Special Bind Reduction category is worded
+    // "Special Bind/Silence Reduction" throughout.
+    //
+    // The `silence` alias must NOT be read as Despair even though the community
+    // sometimes says "silence" for Despair: in-game Despair is labelled "Gloom",
+    // and OPTC-DB words it "Despair" (476 units) — no unit ever pairs "Silence"
+    // with "Despair" in the same field, and every "Silence" unit's cure sits
+    // alongside ordinary cleanses (ATK Down, Blindness), not captain-only ones.
     key: 'remove_special_bind',
     label: 'Remove Special Bind',
     matcher: (target) => target.includes('special bind') || target.includes('silence'),

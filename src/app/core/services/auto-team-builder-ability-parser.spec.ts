@@ -2439,14 +2439,16 @@ describe('auto team builder ability parser', () => {
       return counts;
     }, {});
 
-    expect(specialCatalog).toHaveLength(86);
+    // 85, not 86: `remove_silence` was retired — "Silence" is the in-game name
+    // for the same debuff as `remove_special_bind`, so it is one effect, one key.
+    expect(specialCatalog).toHaveLength(85);
     expect(groupCounts).toEqual({
       Damage: 6,
       'Boost Damage': 17,
       'Damage Reduction': 3,
       Slot: 4,
       'Slot Change': 4,
-      'Reduce Status Effect Duration': 15,
+      'Reduce Status Effect Duration': 14,
       'Reduce Enemy Effect Duration': 9,
       'Apply Status Effect': 8,
       Reduction: 5,
@@ -2574,6 +2576,65 @@ describe('auto team builder ability parser', () => {
     );
     // The dead `remove_blindness` legacy key must no longer be emitted.
     expect(catalog.find((item) => item.key === 'remove_blindness')).toBeUndefined();
+  });
+
+  it('folds OPTC-DB "Silence" wording into remove_special_bind with its turn count', async () => {
+    // "Silence" is the in-game label for the debuff OPTC-DB usually words as
+    // "Special Bind" (specials locked) — one effect, two names, so both wordings
+    // must land on the single `remove_special_bind` key WITH the turn count.
+    // The retired `remove_silence` key produced a duplicate turn-less picker
+    // entry that matched a strict subset, and must never be emitted again.
+    const characters: ParserCharacters = [
+      {
+        id: 930001,
+        detail: {
+          specialText: 'Reduces Silence duration by 5 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 930002,
+        detail: {
+          specialText: 'Reduces Special Bind duration by 5 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // superSpecialText-only Silence (the wording the retired key missed).
+        id: 930003,
+        detail: {
+          specialText: null,
+          superSpecialText: 'Reduces Silence duration by 5 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'remove_special_bind')).toEqual(
+      expect.objectContaining({
+        category: 'special',
+        label: 'Special Bind (Silence)',
+        groupLabel: 'Reduce Status Effect Duration',
+        supportsTurns: true,
+        matchingCharacterIds: expect.arrayContaining([930001, 930002, 930003]),
+      }),
+    );
+    // Silence must carry the same turn count as the equivalent Special Bind wording.
+    expect(
+      catalog
+        .find((item) => item.key === 'remove_special_bind')
+        ?.turnMatchingCharacterIds?.find((entry) => entry.minTurns === 5)?.characterIds,
+    ).toEqual(expect.arrayContaining([930001, 930002, 930003]));
+    // Silence must NOT be mistaken for Despair (in-game "Gloom"): the key still
+    // exists in the catalog, but no Silence unit may land on it.
+    expect(catalog.find((item) => item.key === 'remove_despair')?.matchingCharacterIds).toEqual([]);
+    // The retired duplicate key must no longer be emitted at all.
+    expect(catalog.find((item) => item.key === 'remove_silence')).toBeUndefined();
   });
 
   it('indexes structured captain utility matches in the ability catalog', async () => {

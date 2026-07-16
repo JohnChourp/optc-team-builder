@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-16T07:20:54.734Z",
+  "generatedAt": "2026-07-16T07:59:30.079Z",
   "sourceVersion": "36",
-  "abilityCount": 263,
+  "abilityCount": 262,
   "abilities": [
     {
       "key": "special_damage",
@@ -29400,7 +29400,7 @@
     },
     {
       "key": "remove_special_bind",
-      "label": "Special Bind",
+      "label": "Special Bind (Silence)",
       "category": "special",
       "groupLabel": "Reduce Status Effect Duration",
       "groupOrder": 6,
@@ -33759,43 +33759,6 @@
         "Boosts base ATK of Shooter characters by 20. Reduces Blindness duration by 5 turns",
         "Recovers 2 turns of Paralysis on self. Reduces Blindness duration by 2 turns",
         "Reduces Blindness duration by 3 turns. When HP is below ?% at the start of the turn, boosts base RCV of all characters by 50"
-      ]
-    },
-    {
-      "key": "remove_silence",
-      "label": "Silence",
-      "category": "special",
-      "groupLabel": "Reduce Status Effect Duration",
-      "groupOrder": 6,
-      "effectOrder": 14,
-      "supportsTurns": false,
-      "supportsSlotTokens": false,
-      "availableSlotTokens": [],
-      "availableSources": [
-        "specialText"
-      ],
-      "availableCoverageModes": [
-        "explicit"
-      ],
-      "matchCount": 4,
-      "matchingCharacterIds": [
-        4197,
-        4262,
-        4426,
-        4502
-      ],
-      "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [
-        4197,
-        4262,
-        4426,
-        4502
-      ],
-      "sampleTexts": [
-        "Reduces Silence duration by 5 turns, boosts Orb Effects of [INT], Slasher and Free Spirit characters by 2.75x for 2 turns, boosts Final Tap ATK of [INT], Slasher and Free Spirit characters by 30%, and enables Chain Addition buffs to be enhanced up to 2 times. If your crew has Orb Amplification when the special is activated, recovers 31% of crew's MAX HP. If HP is above 30%, protects from defeat for 1 turn if HP is above 30%. If \"Headed to the Promised Cape\" is used again in the same turn the special is activated in, increases boost effects of Chain Addition buffs by +0.7x, and increases boost effects of Orb Amplification buffs by +0.5x, including effects activated in the same Ability.",
-        "Reduces Silence duration by 5 turns, reduces enemies' Percent Damage Reduction duration by 7 turns, increases Chain Tap Timing Bonus of Cerebral and Driven characters to +0.2x-0.7x for 1 turn depending on Tap Timing, and boosts Tap Timing ATK of Cerebral and Driven characters by 2.25x following a chain of GOOD > GOOD attacks for 1 turn.",
-        "Ignores Debuff Protection and reduces the defense of all enemies by 100% for 1 turn, reduces Silence duration by 5 turns, reduces ATK Down duration by 6 turns, and boosts the Color Affinity of [PSY], Slasher and Free Spirit characters by 2.75x for 2 turns. If your crew has Color Affinity or Color Affinity Nullification when the special is activated, boosts Advantageous Class Effect of Slasher and Free Spirit characters by 1.75x for 2 turns. If your crew has 4+ [Straw Hat Pirates], [Paramythia-type] or [Scientist] characters, reduces Special Cooldown of middle and bottom row characters by 3 turns, and boosts Chain Multiplier Growth Rate by 1.5x, can be enhanced up to 2 times, for 2 turns.",
-        "Reduces Silence duration by 5 turns, reduces ATK Down duration by 7 turns, and becomes Drake & Apoo for 3 turns. If enemies are inflicted with Weaken when the special is activated, removes enemies' Weaken duration completely, and recovers 5,000 HP at the end of the turn for 7 turns. If your crew has 7+ turns of End of Turn Healing, ignores Debuff Protection and inflicts all enemies with Weaken by 1.5x, by 2.25x instead if enemies are inflicted with Increase Damage Taken, for 1 turn. If your crew has 4+ [Worst Generation] or [Land of Wano Arc] characters, ignores Debuff Protection and inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 1 turn, boosts Base ATK of all characters by 1,000 for 1 turn, and increases boost effects of Base ATK Boost buffs by +750, including effects activated in the same ability; otherwise, inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 1 turn. If a [DEX] character is supporting this character, reduces enemies' damage received by 33% for 3 turns, reduces damage received by 90% for 1 turn, and boosts Crew Damage Reduction to ATK of all characters by 1x-1.6x, proportional to the strength of crew's Percent Damage Reduction buff, for 1 turn."
       ]
     },
     {
