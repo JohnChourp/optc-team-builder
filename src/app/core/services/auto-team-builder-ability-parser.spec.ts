@@ -2799,6 +2799,69 @@ describe('auto team builder ability parser', () => {
     ).toEqual(expect.arrayContaining([960001, 960002]));
   });
 
+  it('separates ATK-multiplier grants from buff amplifiers and clause bridges', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 980001,
+        detail: {
+          specialText: 'Boosts ATK of [INT] characters by 1.5x for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Long enemy-state list: genuine, and the reason the ATK->multiplier
+        // window is 160 rather than 80.
+        id: 980002,
+        detail: {
+          specialText:
+            'boosts ATK against Poisoned enemies, Strongly Poisoned enemies and enemies inflicted with Toxic by 1.75x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Amplifier: scales OTHER characters' ATK Up buffs, grants no ATK.
+        id: 980003,
+        detail: {
+          specialText: 'increases boost effects of ATK Up buffs by 1.5x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Bridge: the multiplier belongs to Color Affinity, one clause later.
+        id: 980004,
+        detail: {
+          specialText:
+            'boosts Final Tap ATK of all characters by 50%; boosts Color Affinity of [DEX] characters by 3.25x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // "Increase Damage Taken" is a buff NAME, not a verb — guarding on
+        // "increases" would wrongly delete this genuine grant.
+        id: 980005,
+        detail: {
+          specialText: 'boosts ATK against enemies inflicted with Increase Damage Taken by 2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'boost_atk')?.['matchingCharacterIds']).toEqual([
+      980001, 980002, 980005,
+    ]);
+    // The amplifier is still correctly reported as an effect boost.
+    expect(
+      catalog.find((item) => item.key === 'effect_boost')?.['matchingCharacterIds'],
+    ).toEqual(expect.arrayContaining([980003]));
+  });
+
   it('splits the adaptive "into Matching orbs" family out as change_slots_matching', async () => {
     // "Favorable Slot Change" on the wiki: the orb is changed INTO a Matching
     // orb per character (type-adaptive), distinct from fixed-type changes.

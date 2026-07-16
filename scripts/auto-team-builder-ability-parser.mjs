@@ -250,7 +250,39 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\b\d+%\s+of\b[^.]{0,100}\bHP\b[^.]{0,120}\bignoring\b[^.]{0,120}\b(?:defensive effects|normal attack only|damage reduction|barrier|defense)\b/i,
     ],
   ],
-  ['boost_atk', [/\bboosts?\b[^.]{0,120}\bATK\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i]],
+  [
+    // Grants an ATK MULTIPLIER: OPTC-DB "boosts ATK of <scope> by Nx" (1,185
+    // clauses) and its conditional twin "boosts ATK against <enemy state> by Nx"
+    // (320). Flat/base grants ("boosts base ATK ... by 1,000") and percent ones
+    // ("boosts Final Tap ATK ... by 30%") are other keys — they carry no "Nx", so
+    // the multiplier requirement already separates them.
+    //
+    // `(?!\s+effects?)` rejects the AMPLIFIER: "increases boost effects of ATK Up
+    // buffs by 1.5x" satisfies \bboosts?\b through the NOUN in "boost effects",
+    // then reaches the ATK inside the buff NAME. That grants no ATK at all — it
+    // scales OTHER characters' ATK Up buffs — and all 20 such units are already
+    // (correctly) effect_boost. Same defect `boost_base_atk` fixed for "boost
+    // effects of Base ATK Boost buffs".
+    //
+    // Neither gap may span another effect verb, which is what actually stops a
+    // bridge — e.g. Garp & Coby #4521 "boosts Final Tap ATK ... by 50%; boosts
+    // Color Affinity ... by 3.25x", where the multiplier belongs to a different
+    // effect one clause later. The verb list deliberately EXCLUDES increases/
+    // sets/adds: those collide with buff NAMES ("Increase Damage Taken"), and
+    // guarding on them silently deleted 16 genuine "boosts ATK against enemies
+    // inflicted with Increase Damage Taken by 2x" units. "inflicts" is safe —
+    // \binflicts?\b cannot match the participle "inflicted".
+    //
+    // With the guard doing that work, the ATK->multiplier window is 160 rather
+    // than 80: the old bound was blunt collateral that dropped 11 genuine grants
+    // whose enemy-state list is simply long ("boosts ATK against Poisoned
+    // enemies, Strongly Poisoned enemies and enemies inflicted with Toxic by
+    // 1.75x").
+    'boost_atk',
+    [
+      /\bboosts?\b(?!\s+effects?\b)(?:(?!\b(?:reduces?|removes?|changes?|makes?|locks?|randomizes?|recovers?|deals?|inflicts?|swaps?|consumes?|switches|transforms?|boosts?)\b)[^.]){0,120}?\bATK\b(?:(?!\b(?:reduces?|removes?|changes?|makes?|locks?|randomizes?|recovers?|deals?|inflicts?|swaps?|consumes?|switches|transforms?|boosts?)\b)[^.]){0,160}?\bby\s+\d+(?:\.\d+)?x/i,
+    ],
+  ],
   [
     'boost_slot_effects',
     [
