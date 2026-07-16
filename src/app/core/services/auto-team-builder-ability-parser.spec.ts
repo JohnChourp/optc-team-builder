@@ -2799,6 +2799,51 @@ describe('auto team builder ability parser', () => {
     ).toEqual(expect.arrayContaining([960001, 960002]));
   });
 
+  it('does not tag the crew consuming its own End of Turn Healing as an enemy strip', async () => {
+    const characters: ParserCharacters = [
+      {
+        // Genuine: strips the ENEMY's auto-heal buff, spelled "End of Turn Heal".
+        id: 994001,
+        detail: {
+          specialText:
+            "Reduces enemies' Percent Damage Reduction, End of Turn Heal, Increased Defense and Resilience Buffs duration by 2 turns",
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // The crew SPENDING its own regen buff, spelled "End of Turn Healing"
+        // (Garp #4239 / Hibari #4523 shape) — not an enemy strip.
+        id: 994002,
+        detail: {
+          specialText:
+            'If your crew has End of Turn Healing when the special is activated, recovers 30,000 HP, and reduces End of Turn Healing duration by 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Bridge (#4553): the target swallows a later EXTENDER clause, the
+        // opposite of a strip.
+        id: 994003,
+        detail: {
+          specialText:
+            "Reduces enemies' damage received by 50% for 3 turns, increases duration of any End of Turn Healing buffs by 3 turns",
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(
+      catalog.find((item) => item.key === 'remove_enemy_end_of_turn_heal')?.[
+        'matchingCharacterIds'
+      ],
+    ).toEqual([994001]);
+  });
+
   it('tags RCV-scaled and damage-taken heals that never name HP', async () => {
     const characters: ParserCharacters = [
       {

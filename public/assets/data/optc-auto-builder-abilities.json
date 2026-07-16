@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T19:07:28.512Z",
+  "generatedAt": "2026-07-16T19:26:23.665Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -48195,7 +48195,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 19,
+      "matchCount": 14,
       "matchingCharacterIds": [
         1431,
         1432,
@@ -48210,12 +48210,7 @@
         2872,
         3049,
         3284,
-        3645,
-        4239,
-        4240,
-        4523,
-        4529,
-        4553
+        3645
       ],
       "turnMatchingCharacterIds": [
         {
@@ -48235,14 +48230,6 @@
           ]
         },
         {
-          "minTurns": 3,
-          "characterIds": [
-            4523,
-            4529,
-            4553
-          ]
-        },
-        {
           "minTurns": 4,
           "characterIds": [
             3284
@@ -48255,13 +48242,6 @@
             2119,
             2872,
             3645
-          ]
-        },
-        {
-          "minTurns": 10,
-          "characterIds": [
-            4239,
-            4240
           ]
         },
         {

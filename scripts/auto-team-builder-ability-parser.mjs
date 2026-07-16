@@ -1268,9 +1268,27 @@ const TARGET_ALIASES = [
       target.includes('percent cut'),
   },
   {
+    // The ENEMY's auto-heal buff is named "End of Turn Heal"; the CREW's own
+    // regen buff is "End of Turn HealING". Upstream keeps the two spellings
+    // perfectly separate in removal targets — all 14 genuine enemy strips read
+    // "reduces enemies' ... End of Turn Heal ... duration", and every "End of
+    // Turn Healing" removal target is the crew CONSUMING its own buff (Garp
+    // #4239/#4240, Hibari #4523, Zoro VS Nusjuro #4529 all gate on "If your crew
+    // has End of Turn Healing" and then spend it), which is not an enemy strip.
+    //
+    // The possessive cannot be used here: normalizeTargetText deliberately
+    // strips "enemies'" before an alias ever sees the target, so the spelling is
+    // the only signal available at this layer. The `\b` also drops Garp &
+    // Tashigi #4553, whose target bridges a whole clause ("enemies' damage
+    // received by 50% for 3 turns, increases duration of any End of Turn
+    // Healing") — an EXTENDER, the opposite of a strip.
+    //
+    // If upstream ever writes "reduces enemies' End of Turn Healing duration",
+    // this misses it; that costs a miss rather than a wrong tag, and today the
+    // split is 14/14 vs 4/4 clean.
     key: 'remove_enemy_end_of_turn_heal',
     label: 'Remove End of Turn Heal',
-    matcher: (target) => target.includes('end of turn heal'),
+    matcher: (target) => /\bend of turn heal\b/.test(target),
   },
   {
     key: 'remove_no_healing',
