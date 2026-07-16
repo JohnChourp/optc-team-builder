@@ -228,6 +228,44 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_bind');
   });
 
+  it('detects enemy Percent Damage Reduction removal when it is the FIRST buff after "enemies\'"', () => {
+    // Regression: normalizeTargetText stripped only "enemies" and left the
+    // possessive apostrophe, so the first buff after "enemies'" became a
+    // "' percent damage reduction" segment that failed the exact-match matcher —
+    // only a NON-first buff in the list was ever detected. #3762 (real data).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Reduces enemies' Percent Damage Reduction duration by 3 turns.", 'captainAbility'),
+      ),
+    ).toContain('remove_damage_reduction');
+    // First-buff plain "Damage Reduction" in a list too.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces enemies' Damage Reduction and Increased Defense duration by 2 turns.",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_damage_reduction');
+    // "Threshold Damage Reduction" as the first/sole buff must NOT be mis-tagged
+    // as the distinct Percent-Damage-Reduction key (it stays remove_threshold_damage_reduction).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Reduces enemies' Threshold Damage Reduction duration by 2 turns.", 'captainAbility'),
+      ),
+    ).not.toContain('remove_damage_reduction');
+    // Crew's-OWN Percent Damage Reduction reference (a scaling clause, not a
+    // duration removal) must stay excluded (#4293 Jozu/Oden variant).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Boosts ATK by 1x-2.5x, proportional to the strength of crew's Percent Damage Reduction buff, for 1 turn.",
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('remove_damage_reduction');
+  });
+
   it('extracts paralysis and despair reduction when the upstream text drops "by" ("duration N turns")', () => {
     // OPTC-DB quirk (Luffy & Whitebeard #3728): "reduces Paralysis and Despair
     // duration 1 turn" with the "by" missing must still be detected.
@@ -1498,6 +1536,199 @@ describe('auto team builder ability parser', () => {
         ),
       ),
     ).not.toContain('inflict_poison');
+  });
+
+  it('scopes apply_weakened to the "inflicts … Weaken" applier, not the "Weakened" transform-form name', () => {
+    // Genuine Weaken infliction (the debuff is spelled "Weaken", never "-ed").
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 2 turns.',
+          'specialText',
+        ),
+      ),
+    ).toContain('apply_weakened');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Defense Reduction and inflicts all enemies with Weaken by 1.5x for 1 turn.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('apply_weakened');
+    // The old /\bweakened\b/ matched ONLY this transform-form name (#3895/#3896) —
+    // a character transformation, not a debuff applied to enemies.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Boosts ATK by 3x if enough HP is available, otherwise transforms into Weakened.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('apply_weakened');
+    // Boost-against CONDITION ("inflicted", past tense) must stay excluded.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Boosts ATK against Delayed enemies and enemies inflicted with Weaken by 2.5x-3x for 2 turns.',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('apply_weakened');
+    // Immunity-pierce ENABLER must stay excluded.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Allows Increase Damage Taken, Weaken and ATK Down to ignore Debuff Protection.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('apply_weakened');
+  });
+
+  it('scopes apply_ally_status_effect to crew Immunity / Turn Progress Effect, not Territory-to-field or damage', () => {
+    // Genuine crew status applications (kept).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('applies Burn and ATK DOWN Immunity for 5 turns.', 'specialText'),
+      ),
+    ).toContain('apply_ally_status_effect');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Applies a Turn Progress Effect for 3 turns that will apply the following effects: Start of Each Turn: recovers HP.',
+          'specialText',
+        ),
+      ),
+    ).toContain('apply_ally_status_effect');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Boosts ATK, and applies the following buff: Blindness Immunity for 10 turns.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('apply_ally_status_effect');
+    // Territory-to-field provider (excluded): "characters" is the boost target,
+    // the effect is Territory (own `territory` key), not an ally status.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Applies Territory: Powerhouse to the field for 3 turns, boosts Base ATK of Powerhouse characters by 1.5x.',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('apply_ally_status_effect');
+    // End-of-turn damage "applies the following: Deals …" (excluded).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "applies the following: Deals 300x character's ATK in [INT] damage to all enemies at the end of each turn for 3 turns.",
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('apply_ally_status_effect');
+  });
+
+  it('scopes class_change to a genuine Class 1/2/both-Classes reassignment, not "Advantageous Class"', () => {
+    // Genuine in-battle class change (kept), incl. the plural "both Classes" form.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('changes Class 1 of all non-Fighter characters to Fighter class for 2 turns.', 'specialText'),
+      ),
+    ).toContain('class_change');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Changes own Type and both Classes to any selected combination.', 'specialText'),
+      ),
+    ).toContain('class_change');
+    // "boosts Advantageous Class" is a damage boost bridged from a "changes orbs"
+    // clause — NOT a class change. The old 120-char `changes … class` bridge
+    // mis-tagged these (#4372 special, #4477 captainAbility — the lone captain match).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'changes orbs of right column characters into [RAINBOW] orbs, and boosts Advantageous Class by 2x for 1 turn.',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('class_change');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'change the Orb Multiplier of specific orbs, replaces that buff with the following effect: boosts Advantageous Class.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('class_change');
+  });
+
+  it('scopes chain_multiplier_lock_min_max to the "minimum/maximum chain multiplier" object', () => {
+    // Genuine min/max lock grant wording (the key must catch it if it appears).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Locks the minimum chain multiplier at 2x for 3 turns.', 'specialText'),
+      ),
+    ).toContain('chain_multiplier_lock_min_max');
+    // "MAX" of "crew's MAX HP" near a "Chain …" clause must NOT match (old
+    // /chain … (min|max)/ bridge false positives — #3293/#3776/#4429/#4430).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces Chain Coefficient Reduction duration by 5 turns, recovers 30% of crew's MAX HP.",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_lock_min_max');
+    // "Minimum-Chain ATK Down" is a separate debuff, not a chain-multiplier lock
+    // (#4067/#4068 — the entire prior captain count).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Chain Coefficient Reduction and Minimum-Chain ATK Down duration by 5 turns.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_lock_min_max');
+    // Plain "locks the chain multiplier at Nx" stays with chain_multiplier_lock.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Locks the chain multiplier at 3.25x for 2 turns.', 'specialText'),
+      ),
+    ).not.toContain('chain_multiplier_lock_min_max');
+  });
+
+  it('scopes remove_chain_multiplier_limit to the enemy debuff, not the friendly "Chain Lock" buff extension', () => {
+    // Genuine enemy Chain Multiplier Limit removal (kept), incl. multi-item list.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Chain Multiplier Limit duration by 4 turns.', 'specialText'),
+      ),
+    ).toContain('remove_chain_multiplier_limit');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Increased Defense and Chain Multiplier Limit duration by 2 turns.', 'captainAbility'),
+      ),
+    ).toContain('remove_chain_multiplier_limit');
+    // "increases duration of any Chain Lock buffs" EXTENDS the friendly Chain Lock
+    // buff (opposite of removing the enemy debuff) — the old `|| 'chain lock'`
+    // alias mis-tagged these (#4000/#4128/#4289 — the entire prior captain count).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'recovers 2,000 HP at the end of each turn, and increases duration of any Chain Lock buffs applied by Specials by 1 turn.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('remove_chain_multiplier_limit');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'increases duration of any Chain Lock/Limit/Boundary buffs/debuffs applied by Specials by 1 turn.',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('remove_chain_multiplier_limit');
   });
 
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {

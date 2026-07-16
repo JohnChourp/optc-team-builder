@@ -377,7 +377,21 @@ const SPECIAL_ABILITY_MATCHERS = [
   // to be enhanced", "Chain Lock and Chain Boundary buffs". All 3 captainAbility
   // matches (#4267/#4268/#4289) were such references, so captain 3→0.
   ['chain_multiplier_lock', [/\blocks?\s+(?:the\s+)?chain\s+multiplier\b/i]],
-  ['chain_multiplier_lock_min_max', [/\bchain\b[^.]{0,80}\b(?:minimum|maximum|min|max)\b/i]],
+  // Chain Multiplier min/max lock ("Chain Boundary") sets a floor/ceiling on the
+  // chain multiplier — the canonical object is the "minimum/maximum chain
+  // multiplier". The old `chain … (min|max)` 80-char bridge over-matched every
+  // clause where a "chain" word sat near an unrelated "MAX"/"min": "…Chain
+  // Coefficient Reduction … recovers 30% of crew's MAX HP" (#3293/#3776/#4429/
+  // #4430 — MAX from MAX HP) and "Chain Coefficient Reduction and Minimum-Chain
+  // ATK Down …" (#4067/#4068 — Minimum belongs to the separate Minimum-Chain ATK
+  // Down debuff), so ALL 6 detections (incl. the entire captain count) were false
+  // positives. Anchor on the real locked object "(minimum|maximum) chain
+  // multiplier"; the only "Chain Boundary" mention in the corpus (#3742 "boost
+  // effects of Chain Lock and Chain Boundary buffs") is an effect_boost REFERENCE,
+  // not a grant — so no genuine grant exists yet and the key correctly resolves to
+  // 0, while staying ready for a real future "locks the minimum/maximum chain
+  // multiplier at Nx" grant. ReDoS-safe (fixed adjacency, no unbounded bridge).
+  ['chain_multiplier_lock_min_max', [/\b(?:minimum|maximum)\s+chain\s+multiplier\b/i]],
   [
     'chain_multiplier_additive_boost',
     [/\badds?\b[^.]{0,80}\bto\b[^.]{0,40}\bchain\b/i, /\bchain\b[^.]{0,80}\b\+\d/i],
@@ -530,7 +544,18 @@ const SPECIAL_ABILITY_MATCHERS = [
     ],
   ],
   ['apply_set_target', [/\bsets?\b[^.]{0,80}\btarget\b/i]],
-  ['apply_weakened', [/\bweakened\b/i]],
+  // "Weaken" is an enemy damage-increasing debuff (like ATK Down / Increase
+  // Damage Taken); OPTC-DB applies it as "inflicts (all) enemies with Weaken by
+  // X.Xx". The old bare /\bweakened\b/ required the "-ed" suffix, which the debuff
+  // NEVER uses, so it matched 0 genuine appliers and instead only fired on the
+  // unrelated transform-form name "otherwise transforms into Weakened" (#3895/
+  // #3896 — 2 false positives). Anchor on the applier verb "inflicts … Weaken"
+  // (bounded, ReDoS-safe; max observed inflicts→Weaken gap is 18) and exclude the
+  // "-ed" transform name via a negative lookahead. Non-applier references stay
+  // out because they use different verbs: "boosts ATK against enemies inflicted
+  // with Weaken" (a boost-against condition — "inflicted", not "inflicts") and
+  // "allows … Weaken … to ignore Debuff Protection" (an immunity-pierce enabler).
+  ['apply_weakened', [/\binflicts?\b[^.]{0,60}\bweaken\b(?!ed)/i]],
   [
     'reduce_ship_special_charge',
     [/\breduces?\b[^.]{0,120}\bship special\b[^.]{0,80}\b(?:charge|cooldown|turns?)\b/i],
@@ -648,8 +673,19 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['delayed_effect_launch', [/\bfollowing turn\b/i, /\bafter\s+\d+\s+turns?\s*[,:]/i]],
   ['boost_max_hp', [/\bboosts?\b[^.]{0,120}\bmax HP\b/i]],
   [
+    // "Apply Status Effect (Ally)" = applying a beneficial status to your OWN
+    // crew. The two canonical OPTC-DB wordings that have no dedicated key are the
+    // crew debuff-immunity buff ("applies <Status> Immunity for N turns" — Burn /
+    // ATK DOWN / Increase Damage Taken / Chain Coefficient Reduction / Blindness /
+    // Tap Limit Immunity) and "Applies a Turn Progress Effect for N turns". The
+    // old `applies … to/for … crew|characters` bridge mostly matched FALSE
+    // POSITIVES where "characters" was an unrelated boost target: "applies
+    // Territory: X to the field … boosts ATK of <scope> characters" (Territory-to-
+    // field, own `territory` key — 14 hits) and "applies the following: Deals …
+    // damage to all enemies" (end-of-turn damage — #4081/#4082). Anchor on the
+    // applied status itself instead (ReDoS-safe; max applies→status gap is 56).
     'apply_ally_status_effect',
-    [/\bapplies?\b[^.]{0,120}\b(?:to|for)\b[^.]{0,80}\b(?:crew|characters|allies)\b/i],
+    [/\bapplies?\b[^.]{0,80}\b(?:immunity|turn progress effect)\b/i],
   ],
   ['swap_captains', [/\bswaps?\b[^.]{0,120}\bcaptains?\b/i]],
   // Remove Beneficial Effect = an OFFENSIVE debuff that strips the ENEMY's
@@ -663,7 +699,19 @@ const SPECIAL_ABILITY_MATCHERS = [
   // key correctly resolves to 0; the guard keeps future genuine removals
   // (e.g. "Nullifies Bind and removes enemies' beneficial effects") matching.
   ['remove_beneficial_effect', [/(?<!\bnullif(?:y|ies|ied)\s)\bremoves?\b[^.]{0,120}\bbeneficial effects?\b/i]],
-  ['class_change', [/\bclass change\b/i, /\bchanges?\b[^.]{0,120}\bclass\b/i]],
+  // In-battle Class Change reassigns a character's Class 1 / Class 2 (each unit
+  // has up to two of the 8 classes) — "changes Class 1/Class 2 of all non-<X>
+  // characters to <Y> class for N turns" and self-reclass "Changes own Type and
+  // both Classes to any selected combination". The old `changes? … class` used a
+  // 120-char bridge to ANY "class", so a "changes orbs … boosts Advantageous
+  // Class" clause (Advantageous Class is a damage boost, not a reclass) bridged
+  // into false positives — #4372 (specialText) and #4477 (captainAbility, the
+  // lone captain match). Require the changed object to be the class itself
+  // ("Class 1" / "Class 2" / "both Classes"), which also fixes the plural-form
+  // miss "both Classes" (#3522/#3523). (9 further genuine reclass specials carry
+  // the wording only in superSpecialText and stay undetected under the pre-
+  // existing territory-only super limitation for SPECIAL_ABILITY_MATCHERS.)
+  ['class_change', [/\bclass change\b/i, /\bchanges?\b[^.]{0,40}\b(?:class\s*[12]\b|both classes\b)/i]],
   ['critical_hit_chance_boost', [/\bcritical hit chance\b/i]],
   ['territory', TERRITORY_PROVIDER_PATTERNS],
 ].map(([key, patterns]) => ({
@@ -1034,7 +1082,17 @@ const TARGET_ALIASES = [
   {
     key: 'remove_chain_multiplier_limit',
     label: 'Remove Chain Multiplier Limit',
-    matcher: (target) => target.includes('chain multiplier limit') || target.includes('chain lock'),
+    // "Chain Multiplier Limit" is the ENEMY debuff that caps the crew's chain
+    // multiplier; removing it is "reduces/removes Chain Multiplier Limit duration
+    // by N turns". The old `|| target.includes('chain lock')` alias conflated it
+    // with the FRIENDLY "Chain Lock" buff (which locks YOUR chain multiplier at a
+    // value — the opposite, carried by chain_multiplier_lock): every corpus
+    // "chain lock" removal-target actually comes from "increases duration of any
+    // Chain Lock/Limit/Boundary buffs" (a friendly-buff EXTENSION), so all 3
+    // "chain lock"-only matches (#4000/#4128/#4289 — the entire captainAbility
+    // count) were false positives, and ZERO genuine enemy removals use "Chain
+    // Lock" without "Chain Multiplier Limit". Require the real debuff name.
+    matcher: (target) => target.includes('chain multiplier limit'),
   },
   {
     key: 'remove_increase_damage_taken',
@@ -2986,7 +3044,16 @@ function normalizeTargetText(targetText) {
     .toLowerCase()
     .replace(/\[[^\]]+\]/g, ' ')
     .replace(/\bthe\b/g, ' ')
-    .replace(/\benemies'?s?\b/g, ' ')
+    // Strip the "enemies" / "enemies'" possessive scope. The trailing apostrophe
+    // must be consumed HERE: a bare \b after the optional apostrophe fails
+    // (apostrophe->space is non-word to non-word, no boundary), so the old
+    // /\benemies'?s?\b/ backtracked and matched only "enemies", leaving a stray
+    // "'" glued to the first buff name. A leading "' percent damage reduction"
+    // segment then failed the exact-match removal matchers, so only a NON-first
+    // buff in a list ("Threshold Damage Reduction, Percent Damage Reduction …")
+    // was ever detected. Consume the possessive apostrophe and bound the tail
+    // with a not-a-letter lookahead instead of \b (ReDoS-safe, no backtracking).
+    .replace(/\benemies(?:['’]s?)?(?![a-z])/g, ' ')
     .replace(/\benemy\b/g, ' ')
     .replace(/\bbuffs?\b/g, ' ')
     .replace(/\bstatuses?\b/g, ' ')

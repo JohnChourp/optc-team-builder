@@ -64,7 +64,7 @@
   { "key": "apply_unique_effect", "label": "Unique Effect", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 5 },
   { "key": "apply_resistance_reduction", "label": "Resistance Reduction", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 6 },
   { "key": "apply_set_target", "label": "Set Target", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 7 },
-  { "key": "apply_weakened", "label": "Weakened", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 8 },
+  { "key": "apply_weakened", "label": "Weaken", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 8 },
   { "key": "reduce_ship_special_charge", "label": "Reduce Ship Special Charge", "groupLabel": "Reduction", "groupOrder": 9, "effectOrder": 1 },
   { "key": "reduce_switch_effect_use", "label": "Reduce Switch Effect Use", "groupLabel": "Reduction", "groupOrder": 9, "effectOrder": 2 },
   { "key": "reduce_vs_effect_gauge", "label": "Reduce VS Effect Gauge", "groupLabel": "Reduction", "groupOrder": 9, "effectOrder": 3 },
