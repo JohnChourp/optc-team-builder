@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T04:57:11.794Z",
+  "generatedAt": "2026-07-16T05:34:46.473Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -43672,7 +43672,6 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility",
         "specialText"
       ],
       "availableCoverageModes": [
@@ -43680,6 +43679,8 @@
       ],
       "matchCount": 10,
       "matchingCharacterIds": [
+        3522,
+        3523,
         4061,
         4062,
         4136,
@@ -43687,27 +43688,22 @@
         4216,
         4239,
         4240,
-        4293,
-        4372,
-        4477
+        4293
       ],
       "turnMatchingCharacterIds": [],
-      "captainAbilityMatchingCharacterIds": [
-        4477
-      ],
       "sampleCharacterIds": [
+        3522,
+        3523,
         4061,
         4062,
-        4136,
-        4137,
-        4216
+        4136
       ],
       "sampleTexts": [
+        "Changes own Type and both Classes to any selected combination, reduces Special Cooldown of all characters by 1 turn, changes all orbs, including [BLOCK] orbs, into [RCV] orbs and boosts base ATK of all characters by 1,500 for 2 turns.",
+        "Changes own Type and both Classes to any selected combination, reduces Special Cooldown of all characters by 1 turn, changes all orbs, including [BLOCK] orbs, into [RCV] orbs and boosts base ATK of all characters by 1,500 for 2 turns.",
         "Deals 200x character's ATK in Typeless Fixed True damage to enemies, reduces enemies' Increased Defense duration by 7 turns, increases boost effects of ATK UP and Orb Amplification buffs by +0.3x, boosts Chain Multiplier Growth Rate by 1.75x for 1 turn, adds 1.0x to Chain multiplier for 1 turn and becomes Zoro & Sanji for 3 turns. If your Captain is a Slasher character, changes Class 2 of all non-Slasher characters to Slasher class for 1 turn.. Deals 200x character's ATK in Typeless Fixed True damage to enemies, reduces enemies' Threshold Damage Reduction duration by 7 turns, increases boost effects of ATK UP and Orb Amplification buffs by +0.3x, boosts Chain Multiplier Growth Rate by 1.5x for 1 turn, adds 2.0x to Chain multiplier for 1 turn and becomes Zoro & Sanji for 3 turns. If your Captain is a Free Spirit character, changes Class 2 of all non-Free Spirit characters to Free Spirit class for 1 turn.. Deals 300x character's ATK in Typeless Fixed True damage to enemies, reduces enemies' Threshold Damage Reduction and Increased Defense duration by 7 turns, increases boost effects of ATK UP and Orb Amplification buffs by +0.5x, boosts Chain Multiplier Growth Rate by 1.75x for 1 turn and adds 2.0x to Chain multiplier for 1 turn. If your Captain is a Slasher or Free Spirit character, changes Class 1 of all characters to Slasher class for 3 turns and changes Class 2 of all characters to Free Spirit class for 3 turns.",
         "Deals 200x character's ATK in Typeless Fixed True damage to enemies, reduces enemies' Increased Defense duration by 7 turns, increases boost effects of ATK UP and Orb Amplification buffs by +0.3x, boosts Chain Multiplier Growth Rate by 1.75x for 1 turn, adds 1.0x to Chain multiplier for 1 turn and becomes Zoro & Sanji for 3 turns. If your Captain is a Slasher character, changes Class 2 of all non-Slasher characters to Slasher class for 1 turn.. Deals 200x character's ATK in Typeless Fixed True damage to enemies, reduces enemies' Threshold Damage Reduction duration by 7 turns, increases boost effects of ATK UP and Orb Amplification buffs by +0.3x, boosts Chain Multiplier Growth Rate by 1.5x for 1 turn, adds 2.0x to Chain multiplier for 1 turn and becomes Zoro & Sanji for 3 turns. If your Captain is a Free Spirit character, changes Class 2 of all non-Free Spirit characters to Free Spirit class for 1 turn.. Deals 300x character's ATK in Typeless Fixed True damage to enemies, reduces enemies' Threshold Damage Reduction and Increased Defense duration by 7 turns, increases boost effects of ATK UP and Orb Amplification buffs by +0.5x, boosts Chain Multiplier Growth Rate by 1.75x for 1 turn and adds 2.0x to Chain multiplier for 1 turn. If your Captain is a Slasher or Free Spirit character, changes Class 1 of all characters to Slasher class for 3 turns and changes Class 2 of all characters to Free Spirit class for 3 turns.",
-        "Reduces Special Bind duration by 10 turns, changes the orb, including [BLOCK] orbs, of this character into a [TND] orb, and barriers this character's orb for 1 PERFECT hit. Allows you to select up to 2 of the following effects to launch, launched effects will bypass Special Interrupts: Boosts ATK of Cerebral characters by 2.75x, can be enhanced up to 2 times, for 1 turn. Boosts Orb Effects of Cerebral characters by 2.75x, can be enhanced up to 2 times, for 1 turn. Boosts Color Affinity of Cerebral characters by 2.5x, can be enhanced up to 2 times, for 1 turn. Boosts base ATK of Cerebral characters by 1,500, can be enhanced up to 2 times, for 1 turn. Adds 1.8x, can be enhanced up to 2 times, to Chain multiplier for 1 turn. Boosts ATK against delayed enemies, enemies with reduced defense and poisoned enemies by 2.5x, can be enhanced up to 2 times, for 1 turn. If your crew has 6 [INT] characters on your crew, changes Class 2 of all non-Cerebral Class 2 Powerhouse characters to Cerebral class for 1 turn. If this character is your Captain or Friend/Guest Captain, reduces enemies' Cerebral Resistance by -20% for 1 turn.",
-        "Reduces Special Bind duration by 10 turns, changes the orb, including [BLOCK] orbs, of this character into a [TND] orb, and barriers this character's orb for 1 PERFECT hit. Allows you to select up to 2 of the following effects to launch, launched effects will bypass Special Interrupts: Boosts ATK of Cerebral characters by 2.75x, can be enhanced up to 2 times, for 1 turn. Boosts Orb Effects of Cerebral characters by 2.75x, can be enhanced up to 2 times, for 1 turn. Boosts Color Affinity of Cerebral characters by 2.5x, can be enhanced up to 2 times, for 1 turn. Boosts base ATK of Cerebral characters by 1,500, can be enhanced up to 2 times, for 1 turn. Adds 1.8x, can be enhanced up to 2 times, to Chain multiplier for 1 turn. Boosts ATK against delayed enemies, enemies with reduced defense and poisoned enemies by 2.5x, can be enhanced up to 2 times, for 1 turn. If your crew has 6 [INT] characters on your crew, changes Class 2 of all non-Cerebral Class 2 Powerhouse characters to Cerebral class for 1 turn. If this character is your Captain or Friend/Guest Captain, reduces enemies' Cerebral Resistance by -20% for 1 turn.",
-        "Reduces Special Bind and Chain Coefficient Reduction duration by 6 turns. If your Captain is a Powerhouse or Striker character when the special is activated, boosts Chain Multiplier Growth Rate by 1.5x for 1 turn. If your crew has 3 turns or more of Chain Lock when the special is activated, decreases duration of any Chain Lock buffs by 2 turns and increases boost effects of Chain Lock buffs by +0.8x. If your Captain is a Powerhouse or Striker character and HP is below 51% when the special is activated, changes Class 1 of all non-Powerhouse characters to Powerhouse class for 1 turn and sets Chain Boundaries to 3.0x and 30.0x for 2 turns.. Reduces Special Bind and Chain Coefficient Reduction duration by 7 turns, changes all orbs, including [BLOCK] orbs, into [TND] orbs, and sets Chain Boundaries to 3.25x and 30.0x for 3 turns. If your Captain is a Powerhouse or Striker character when the special is activated, boosts Chain Multiplier Growth Rate by 1.75x for 1 turn, reduces crew's current HP by 50%, and reduces Special Cooldown of this character by 15 turns."
+        "Reduces Special Bind duration by 10 turns, changes the orb, including [BLOCK] orbs, of this character into a [TND] orb, and barriers this character's orb for 1 PERFECT hit. Allows you to select up to 2 of the following effects to launch, launched effects will bypass Special Interrupts: Boosts ATK of Cerebral characters by 2.75x, can be enhanced up to 2 times, for 1 turn. Boosts Orb Effects of Cerebral characters by 2.75x, can be enhanced up to 2 times, for 1 turn. Boosts Color Affinity of Cerebral characters by 2.5x, can be enhanced up to 2 times, for 1 turn. Boosts base ATK of Cerebral characters by 1,500, can be enhanced up to 2 times, for 1 turn. Adds 1.8x, can be enhanced up to 2 times, to Chain multiplier for 1 turn. Boosts ATK against delayed enemies, enemies with reduced defense and poisoned enemies by 2.5x, can be enhanced up to 2 times, for 1 turn. If your crew has 6 [INT] characters on your crew, changes Class 2 of all non-Cerebral Class 2 Powerhouse characters to Cerebral class for 1 turn. If this character is your Captain or Friend/Guest Captain, reduces enemies' Cerebral Resistance by -20% for 1 turn."
       ]
     },
     {

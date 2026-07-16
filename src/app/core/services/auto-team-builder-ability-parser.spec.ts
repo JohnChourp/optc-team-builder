@@ -1630,6 +1630,39 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('apply_ally_status_effect');
   });
 
+  it('scopes class_change to a genuine Class 1/2/both-Classes reassignment, not "Advantageous Class"', () => {
+    // Genuine in-battle class change (kept), incl. the plural "both Classes" form.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('changes Class 1 of all non-Fighter characters to Fighter class for 2 turns.', 'specialText'),
+      ),
+    ).toContain('class_change');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Changes own Type and both Classes to any selected combination.', 'specialText'),
+      ),
+    ).toContain('class_change');
+    // "boosts Advantageous Class" is a damage boost bridged from a "changes orbs"
+    // clause — NOT a class change. The old 120-char `changes … class` bridge
+    // mis-tagged these (#4372 special, #4477 captainAbility — the lone captain match).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'changes orbs of right column characters into [RAINBOW] orbs, and boosts Advantageous Class by 2x for 1 turn.',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('class_change');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'change the Orb Multiplier of specific orbs, replaces that buff with the following effect: boosts Advantageous Class.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('class_change');
+  });
+
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
     // Type-scoped and plain crew reductions.
     expect(

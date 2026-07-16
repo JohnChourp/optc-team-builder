@@ -685,7 +685,19 @@ const SPECIAL_ABILITY_MATCHERS = [
   // key correctly resolves to 0; the guard keeps future genuine removals
   // (e.g. "Nullifies Bind and removes enemies' beneficial effects") matching.
   ['remove_beneficial_effect', [/(?<!\bnullif(?:y|ies|ied)\s)\bremoves?\b[^.]{0,120}\bbeneficial effects?\b/i]],
-  ['class_change', [/\bclass change\b/i, /\bchanges?\b[^.]{0,120}\bclass\b/i]],
+  // In-battle Class Change reassigns a character's Class 1 / Class 2 (each unit
+  // has up to two of the 8 classes) — "changes Class 1/Class 2 of all non-<X>
+  // characters to <Y> class for N turns" and self-reclass "Changes own Type and
+  // both Classes to any selected combination". The old `changes? … class` used a
+  // 120-char bridge to ANY "class", so a "changes orbs … boosts Advantageous
+  // Class" clause (Advantageous Class is a damage boost, not a reclass) bridged
+  // into false positives — #4372 (specialText) and #4477 (captainAbility, the
+  // lone captain match). Require the changed object to be the class itself
+  // ("Class 1" / "Class 2" / "both Classes"), which also fixes the plural-form
+  // miss "both Classes" (#3522/#3523). (9 further genuine reclass specials carry
+  // the wording only in superSpecialText and stay undetected under the pre-
+  // existing territory-only super limitation for SPECIAL_ABILITY_MATCHERS.)
+  ['class_change', [/\bclass change\b/i, /\bchanges?\b[^.]{0,40}\b(?:class\s*[12]\b|both classes\b)/i]],
   ['critical_hit_chance_boost', [/\bcritical hit chance\b/i]],
   ['territory', TERRITORY_PROVIDER_PATTERNS],
 ].map(([key, patterns]) => ({
