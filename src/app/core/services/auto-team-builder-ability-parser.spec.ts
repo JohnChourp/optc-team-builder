@@ -2799,6 +2799,46 @@ describe('auto team builder ability parser', () => {
     ).toEqual(expect.arrayContaining([960001, 960002]));
   });
 
+  it('matches both the multiply-by and set-to forms of an Orb Effects boost', async () => {
+    const characters: ParserCharacters = [
+      {
+        // Multiply-by, scoped by CHARACTER.
+        id: 991001,
+        detail: {
+          specialText: 'boosts Orb Effects of [INT] and Slasher characters by 2.75x for 2 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Set-to, scoped by ORB TYPE — same stat, and previously invisible.
+        id: 991002,
+        detail: {
+          specialText:
+            'increases Orb Effects of beneficial [TND] and [RCV] orbs to 2.5x for 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Orb DROP RATE is a different mechanic and must stay out (the bare
+        // "orbs?" alternative that caused this was removed by the captain audit).
+        id: 991003,
+        detail: {
+          specialText: 'boosts chances of getting [STR] orbs and boosts ATK of all characters by 2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'boost_slot_effects')?.['matchingCharacterIds']).toEqual(
+      [991001, 991002],
+    );
+  });
+
   it('splits threshold and 100% damage reduction out of the reduce_damage umbrella', async () => {
     const characters: ParserCharacters = [
       {

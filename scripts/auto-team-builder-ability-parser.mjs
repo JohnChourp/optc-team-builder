@@ -300,6 +300,17 @@ const SPECIAL_ABILITY_MATCHERS = [
       // captain matches from 29 (26 false) to the 3 genuine "Boosts Orb Effects"
       // grants and removes the analogous special-side false positives.
       /\bboosts?\b[^.]{0,120}\b(?:Orb Effects|Slot Effects)\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i,
+      // The SET-TO grant form, which the multiply-by wording alone cannot see:
+      // "increases Orb Effects of beneficial [TND] orbs TO 2.75x for 3 turns"
+      // scopes by ORB TYPE and sets the multiplier, where "boosts Orb Effects of
+      // [INT] characters BY 2.75x" scopes by CHARACTER and multiplies. Both
+      // amplify the same Orb Effects stat, so both belong here — 21 characters
+      // carried only the set-to form and were invisible to this filter.
+      // `(?!\s+boost\s+effects?)` keeps the amplifier ("increases boost effects
+      // of ... buffs") out on principle, as it did for boost_atk; upstream names
+      // that buff "Orb Amplification" rather than "Orb Effects", so the shape
+      // currently matches nothing here — the guard is cheap future-proofing.
+      /\bincreases?\b(?!\s+boost\s+effects?\b)[^.;]{0,40}?\b(?:Orb Effects|Slot Effects)\b[^.;]{0,120}?\bto\s+\d+(?:\.\d+)?x/i,
     ],
   ],
   [
