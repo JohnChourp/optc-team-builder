@@ -782,8 +782,11 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\b(?:recovers?|heals?)\b(?:[^.]|\.\d){0,120}\b(?:HP|health)\b/i,
       // The SAME RCV-scaled heal, but upstream often omits the "in HP" tail:
       // "recovers 1x character's RCV at the end of each turn" (Nami #2675,
-      // Tsuru #1319, Rayleigh #1619 ...). Requiring an HP token hid 26 healers —
+      // Tsuru #1319, Rayleigh #1619 ...). Requiring an HP token hid 62 healers —
       // the identical failure shape as the decimal bug, via a different tail.
+      // (A decimal-BLIND probe undercounts these as 26, because [^.;] stops at
+      // the "." in "recovers 0.75x" — the very trap the comment above warns
+      // about, so measure this family with the decimal-tolerant construct.)
       // All 7 distinct span shapes in the corpus are "recovers <amount>
       // character's RCV", i.e. always an HP recovery; the boosts guard and the
       // comma-blocked gap keep it from reaching a neighbouring "boosts ... RCV"
