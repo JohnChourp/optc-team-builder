@@ -2625,14 +2625,21 @@ describe('auto team builder ability parser', () => {
       }),
     );
     // Silence must carry the same turn count as the equivalent Special Bind wording.
-    expect(
-      catalog
-        .find((item) => item.key === 'remove_special_bind')
-        ?.turnMatchingCharacterIds?.find((entry) => entry.minTurns === 5)?.characterIds,
-    ).toEqual(expect.arrayContaining([930001, 930002, 930003]));
+    expect(catalog.find((item) => item.key === 'remove_special_bind')).toEqual(
+      expect.objectContaining({
+        turnMatchingCharacterIds: expect.arrayContaining([
+          expect.objectContaining({
+            minTurns: 5,
+            characterIds: expect.arrayContaining([930001, 930002, 930003]),
+          }),
+        ]),
+      }),
+    );
     // Silence must NOT be mistaken for Despair (in-game "Gloom"): the key still
     // exists in the catalog, but no Silence unit may land on it.
-    expect(catalog.find((item) => item.key === 'remove_despair')?.matchingCharacterIds).toEqual([]);
+    expect(catalog.find((item) => item.key === 'remove_despair')).toEqual(
+      expect.objectContaining({ matchingCharacterIds: [] }),
+    );
     // The retired duplicate key must no longer be emitted at all.
     expect(catalog.find((item) => item.key === 'remove_silence')).toBeUndefined();
   });
