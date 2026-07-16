@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-16T05:56:22.501Z",
+  "generatedAt": "2026-07-16T07:20:54.734Z",
   "sourceVersion": "36",
-  "abilityCount": 264,
+  "abilityCount": 263,
   "abilities": [
     {
       "key": "special_damage",
@@ -25378,7 +25378,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 524,
+      "matchCount": 522,
       "matchingCharacterIds": [
         228,
         265,
@@ -25474,8 +25474,6 @@
         1986,
         1987,
         2002,
-        2010,
-        2011,
         2012,
         2013,
         2018,
@@ -26060,8 +26058,6 @@
             1986,
             1987,
             2002,
-            2010,
-            2011,
             2012,
             2013,
             2089,
@@ -28714,7 +28710,6 @@
             3679,
             3709,
             3716,
-            3739,
             3815,
             3817,
             3855,
@@ -29049,8 +29044,6 @@
           "characterIds": [
             1619,
             3094,
-            3165,
-            3166,
             3356,
             3357,
             3879,
@@ -29063,7 +29056,6 @@
             4084,
             4171,
             4469,
-            4489,
             4529,
             4551,
             4583
@@ -29317,7 +29309,6 @@
             3217,
             3249,
             3339,
-            3739,
             4271,
             4374,
             4375,
@@ -30001,7 +29992,6 @@
             3571,
             3716,
             3736,
-            3739,
             3989,
             4317,
             4318,
@@ -30642,7 +30632,6 @@
             3246,
             3368,
             3736,
-            3739,
             4317,
             4318,
             4496
@@ -33004,7 +32993,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 109,
+      "matchCount": 108,
       "matchingCharacterIds": [
         379,
         380,
@@ -33071,7 +33060,6 @@
         3402,
         3403,
         3440,
-        3490,
         3499,
         3524,
         3551,
@@ -33120,89 +33108,13 @@
         {
           "minTurns": 1,
           "characterIds": [
-            3689,
-            4182,
             4518
-          ]
-        },
-        {
-          "minTurns": 2,
-          "characterIds": [
-            587,
-            588,
-            2237,
-            2238,
-            2782
           ]
         },
         {
           "minTurns": 3,
           "characterIds": [
-            1833,
-            1834,
-            2744,
-            2745,
-            3551,
             3872
-          ]
-        },
-        {
-          "minTurns": 4,
-          "characterIds": [
-            2131,
-            2132,
-            2900,
-            2901,
-            3893,
-            4510,
-            5031,
-            5032
-          ]
-        },
-        {
-          "minTurns": 5,
-          "characterIds": [
-            2370,
-            2371,
-            2539,
-            2540,
-            2828,
-            2829,
-            3107,
-            3182,
-            3183,
-            3490,
-            3643
-          ]
-        },
-        {
-          "minTurns": 6,
-          "characterIds": [
-            3931,
-            4112,
-            4138,
-            4269,
-            4325,
-            4511
-          ]
-        },
-        {
-          "minTurns": 7,
-          "characterIds": [
-            2730,
-            2731,
-            3165,
-            3166,
-            4048,
-            4489,
-            4550
-          ]
-        },
-        {
-          "minTurns": 10,
-          "characterIds": [
-            2216,
-            2217
           ]
         },
         {
@@ -33595,8 +33507,6 @@
             643,
             1710,
             1711,
-            2291,
-            2292,
             2596,
             2983,
             2984,
@@ -33637,8 +33547,7 @@
             3813,
             3980,
             4030,
-            4534,
-            4597
+            4534
           ]
         },
         {
@@ -33661,11 +33570,6 @@
             2156,
             2190,
             2191,
-            2390,
-            2480,
-            2481,
-            2539,
-            2540,
             2556,
             2557,
             2668,
@@ -33691,8 +33595,6 @@
             3129,
             3136,
             3137,
-            3182,
-            3183,
             3186,
             3205,
             3208,
@@ -33719,8 +33621,7 @@
           "minTurns": 6,
           "characterIds": [
             4445,
-            4516,
-            4597
+            4516
           ]
         },
         {
@@ -33728,11 +33629,7 @@
           "characterIds": [
             2162,
             2163,
-            3165,
-            3166,
-            3460,
-            4048,
-            4489
+            3460
           ]
         },
         {
@@ -33839,18 +33736,6 @@
         4597
       ],
       "captainAbilityTurnMatchingCharacterIds": [
-        {
-          "minTurns": 3,
-          "characterIds": [
-            4597
-          ]
-        },
-        {
-          "minTurns": 6,
-          "characterIds": [
-            4597
-          ]
-        },
         {
           "minTurns": 99,
           "characterIds": [
@@ -34577,7 +34462,6 @@
             4100,
             4110,
             4111,
-            4170,
             4173,
             4204,
             4230,
@@ -35762,7 +35646,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 337,
+      "matchCount": 334,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -36037,8 +35921,6 @@
         4211,
         4215,
         4238,
-        4241,
-        4242,
         4247,
         4254,
         4259,
@@ -36080,7 +35962,6 @@
         4457,
         4466,
         4469,
-        4477,
         4485,
         4486,
         4487,
@@ -36269,8 +36150,6 @@
             3935,
             4055,
             4193,
-            4241,
-            4242,
             4505,
             4589
           ]
@@ -36473,7 +36352,6 @@
             4433,
             4466,
             4469,
-            4477,
             4521,
             4529,
             4550,
@@ -58949,10 +58827,10 @@
       ],
       "sampleTexts": [
         "Zephyr and Binz: Once per adventure, when the enemy gains an Increased Defense or Percent Damage Reduction buff, reduces enemies' Percent Damage Reduction and Increased Defense duration by 2 turns and recovers 10% of crew's MAX HP.",
-        "Zephyr and Binz: Once per adventure, when the enemy gains an Increased Defense or Percent Damage Reduction buff, reduces enemies' Percent Damage Reduction and Increased Defense duration by 2 turns and recovers 10% of crew's MAX HP.",
         "Roronoa Zoro: Once per adventure, when the supported character uses a Damage Dealing or Health Cutting special, reduces enemies' Percent Damage Reduction Buffs duration by 3 turns.",
-        "Roronoa Zoro: Once per adventure, when the supported character uses a Damage Dealing or Health Cutting special, reduces enemies' Percent Damage Reduction Buffs duration by 3 turns.",
-        "Trafalgar D. Water Law: Once per adventure, when the enemy applies Percent Damage Reduction, reduces enemies' Percent Damage Reduction duration by 2 turns."
+        "Trafalgar D. Water Law: Once per adventure, when the enemy applies Percent Damage Reduction, reduces enemies' Percent Damage Reduction duration by 2 turns.",
+        "Sakazuki (Akainu), Kuzan (Aokiji) and Borsalino (Kizaru): Once per adventure, when the supported character uses a Damage Dealing or Health Cutting special, reduces enemies' Resilience and Percent Damage Reduction duration by 2 turns.",
+        "Crocodile (Mr. 0), Nico Robin, Bentham (Mr. 2 Bon Clay): Once per adventure, when the supported character uses their special, reduces enemies' Percent Damage Reduction duration by 4 turns, reduces Paralysis duration by 4 turns and adds 0.7x to Chain multiplier for 1 turn."
       ]
     },
     {
@@ -59004,10 +58882,10 @@
       ],
       "sampleTexts": [
         "Sengoku: Adds 5% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV. When the supported character hits a PERFECT, reduces enemies' Percent Damage Reduction duration by 1 turn.",
-        "Sengoku: Adds 5% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV. When the supported character hits a PERFECT, reduces enemies' Percent Damage Reduction duration by 1 turn.",
         "Aladdin: Adds 5% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV. When the supported character hits a PERFECT, reduces enemies' Percent Damage Reduction duration by 1 turn.",
-        "Aladdin: Adds 5% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV. When the supported character hits a PERFECT, reduces enemies' Percent Damage Reduction duration by 1 turn.",
-        "Vinsmoke Sanji: Adds 5% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV. When the supported character hits a PERFECT, reduces enemies' Percent Damage Reduction duration by 1 turn."
+        "Vinsmoke Sanji: Adds 5% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV. When the supported character hits a PERFECT, reduces enemies' Percent Damage Reduction duration by 1 turn.",
+        "Sakazuki (Akainu), Borsalino (Kizaru) and Tsuru: Adds 5% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV. When the supported character hits a PERFECT, reduces enemies' Percent Damage Reduction duration by 1 turn.",
+        "Vinsmoke Reiju: Adds 4% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV. When the supported character hits a PERFECT, reduces enemies' Percent Damage Reduction duration by 1 turn."
       ]
     },
     {
@@ -62330,45 +62208,6 @@
       ]
     },
     {
-      "key": "remove_slot_barrier",
-      "label": "Remove Slot Barrier",
-      "category": "legacy",
-      "groupLabel": null,
-      "groupOrder": null,
-      "effectOrder": null,
-      "supportsTurns": true,
-      "supportsSlotTokens": false,
-      "availableSlotTokens": [],
-      "availableSources": [
-        "specialText"
-      ],
-      "availableCoverageModes": [
-        "explicit"
-      ],
-      "matchCount": 2,
-      "matchingCharacterIds": [
-        3356,
-        3357
-      ],
-      "turnMatchingCharacterIds": [
-        {
-          "minTurns": 7,
-          "characterIds": [
-            3356,
-            3357
-          ]
-        }
-      ],
-      "sampleCharacterIds": [
-        3356,
-        3357
-      ],
-      "sampleTexts": [
-        "Reduces Slot Barrier duration by 3 stacks, reduces Paralysis and Special Bind duration by 7 turns and recovers 50x character's RCV in HP, allowing HP Overfill up to 2x MAX HP. If HP is below 50% when the special is activated, boosts the Color Affinity of [PSY], [INT] and Powerhouse characters by 2.5x for 1 turn, by 2x for 1 turn otherwise. If your crew has Color Affinity boost when the special is activated, adds 1.2x to Chain multiplier for 1 turn.",
-        "Reduces Slot Barrier duration by 3 stacks, reduces Paralysis and Special Bind duration by 7 turns and recovers 50x character's RCV in HP, allowing HP Overfill up to 2x MAX HP. If HP is below 50% when the special is activated, boosts the Color Affinity of [PSY], [INT] and Powerhouse characters by 2.5x for 1 turn, by 2x for 1 turn otherwise. If your crew has Color Affinity boost when the special is activated, adds 1.2x to Chain multiplier for 1 turn."
-      ]
-    },
-    {
       "key": "remove_slot_bind",
       "label": "Remove Slot Bind",
       "category": "legacy",
@@ -62511,19 +62350,6 @@
         4533
       ],
       "turnMatchingCharacterIds": [
-        {
-          "minTurns": 6,
-          "characterIds": [
-            4130,
-            4131
-          ]
-        },
-        {
-          "minTurns": 7,
-          "characterIds": [
-            4446
-          ]
-        },
         {
           "minTurns": 99,
           "characterIds": [
