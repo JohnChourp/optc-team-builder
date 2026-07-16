@@ -484,12 +484,62 @@ const SPECIAL_ABILITY_MATCHERS = [
   // previously mis-tagged debuff cures ("reduces Increase Damage Taken"),
   // counters ("deals Nx the damage taken"), and glass-cannon downsides
   // ("increases damage received") as reduce_damage.
-  ['reduce_damage', [/\breduces?\s+(?:any\s+)?damage (?:received|taken|take)\b/i]],
   [
-    'reduce_damage_over_threshold',
-    [/\breduces?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bover\b[^.]{0,80}\bHP\b/i],
+    'reduce_damage',
+    [
+      // "reduces" must directly govern "damage received/taken" — see the
+      // 2026-07-11 captain audit. "take"/"recieved" tolerate upstream typos
+      // (Sanji #1447 "reduces damage take by 10%"; Makino & Luffy & Uta #4021 and
+      // Galdino #4112 "Reduces damage recieved by 60%").
+      /\breduces?\s+(?:any\s+)?damage\s+(?:received|recieved|taken|take)\b/i,
+      // The threshold form sometimes drops "received" entirely — Akainu #1848 /
+      // Sakazuki #1849 "reduces any damage above 3,000 by 80% for 1 turn" is a
+      // genuine crew reduction that the received/taken requirement alone missed.
+      /\breduces?\s+any\s+damage\s+above\s+[\d,]+/i,
+    ],
   ],
-  ['nullify_damage', [/\bnullif(?:y|ies)\b[^.]{0,120}\bdamage\b/i]],
+  [
+    // Threshold Damage Reduction: only the damage EXCEEDING the threshold is
+    // reduced ("reduces a portion of ... damage ... exceeding 3000"), which is a
+    // different mechanic from a flat percentage cut — the corpus itself names
+    // them as separate buffs ("a Percent Damage Reduction, Threshold Damage
+    // Reduction or Damage Nullification buff", Blackbeard #3279).
+    //
+    // The old matcher demanded "over ... HP". OPTC-DB never writes "over": the
+    // wording is "reduces any damage received ABOVE 5,000 HP by 97%" (and #1848
+    // drops both "received" and "HP"), so this key sat dead at 0 while its 67
+    // characters were reported only as generic reduce_damage. Same
+    // spelled-like-players-say-it failure as remove_sfx / reduce_ship_special_charge
+    // / swap_slots. Kept INSIDE reduce_damage as a subset (mirrors
+    // change_slots_matching): 39 of the 57 threshold-only characters have no
+    // other reduction clause, so excluding them would delete their coverage.
+    'reduce_damage_over_threshold',
+    [/\breduces?\s+any\s+damage\s+(?:received\s+|recieved\s+)?above\s+[\d,]+/i],
+  ],
+  [
+    // Damage Nullification (Fandom's crew-side "Damage Negation"): OPTC-DB has NO
+    // "nullifies ... damage" verb — the old matcher's wording does not exist, so
+    // the key sat dead at 0. The provider wording is always a 100% reduction, and
+    // upstream equates the two itself: Jinbe #3774 captainAbility "reduces damage
+    // received by 100% for 1 attack" + captainNotes "Damage Nullification
+    // activates on the first instance of damage taken"; Komurasaki #3217
+    // specialText "Reduces damage received by 70%-100%" + specialNotes "3rd time
+    // or more: 100% nullification".
+    //
+    // Matching the literal "Damage Nullification" noun instead would be wrong on
+    // both sides: 87% of those clauses are the ENEMY buff (already
+    // remove_enemy_damage_nullification), and every crew-side one is a META clause
+    // (duration extender / buff replacer / note), never a provider.
+    //
+    // The typed form "reduces damage received FROM [X] enemies by 100%" is
+    // included (Fandom: "sometimes only a single type, such as all QCK damage
+    // received"). The "any ... above N HP by 100%" threshold form is excluded by
+    // requiring "damage received" to abut "reduces" — a 100% THRESHOLD cut is
+    // Threshold DR, which the corpus lists as a distinct buff. The gap forbids a
+    // second "damage" so a later clause's "by 100%" cannot be claimed.
+    'nullify_damage',
+    [/\breduces?\s+damage\s+(?:received|recieved)\b(?:(?!\bdamage\b)[^.;]){0,60}?\bby\s+100%/i],
+  ],
   [
     'lock_slots',
     // Orb Lock: "locks <scope> orbs/slots" so the crew's slots stay fixed for N

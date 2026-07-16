@@ -2799,6 +2799,88 @@ describe('auto team builder ability parser', () => {
     ).toEqual(expect.arrayContaining([960001, 960002]));
   });
 
+  it('splits threshold and 100% damage reduction out of the reduce_damage umbrella', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 990001,
+        detail: {
+          specialText: 'Reduces damage received by 50% for 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Threshold: only the excess above the amount is reduced. OPTC-DB says
+        // "above", never "over" — the wording the dead matcher demanded.
+        id: 990002,
+        detail: {
+          specialText: 'Reduces any damage received above 5,000 HP by 97% for 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Total nullification, worded as a 100% reduction (upstream calls this
+        // "Damage Nullification" in its own notes).
+        id: 990003,
+        detail: {
+          specialText: 'Reduces damage received by 100% for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Typed nullification ("only a single type").
+        id: 990004,
+        detail: {
+          specialText: 'Reduces damage received from [INT] enemies by 100% for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // A 100% THRESHOLD cut is Threshold DR, NOT nullification — the corpus
+        // lists the two as distinct buffs.
+        id: 990005,
+        detail: {
+          specialText: 'reduces any damage received above 2,000 HP by 100% for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Threshold with neither "received" nor "HP" (Akainu #1848).
+        id: 990006,
+        detail: {
+          specialText: 'reduces any damage above 3,000 by 80% for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Upstream typo (#4021).
+        id: 990007,
+        detail: {
+          specialText: 'Reduces damage recieved by 60% for 2 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const ids = (key: string) =>
+      catalog.find((item) => item.key === key)?.['matchingCharacterIds'];
+
+    // The umbrella keeps every one of them.
+    expect(ids('reduce_damage')).toEqual([
+      990001, 990002, 990003, 990004, 990005, 990006, 990007,
+    ]);
+    expect(ids('reduce_damage_over_threshold')).toEqual([990002, 990005, 990006]);
+    // 990005 is a 100% THRESHOLD cut and must NOT be nullification.
+    expect(ids('nullify_damage')).toEqual([990003, 990004]);
+  });
+
   it('separates ATK-multiplier grants from buff amplifiers and clause bridges', async () => {
     const characters: ParserCharacters = [
       {
