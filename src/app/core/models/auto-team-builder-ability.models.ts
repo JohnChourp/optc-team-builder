@@ -59,6 +59,14 @@ export interface AutoBuildAbilityCatalogItem {
   availableSlotTokens: string[];
   availableSources: AutoBuildAbilitySource[];
   availableCoverageModes?: AutoBuildAbilityCoverageMode[];
+  /**
+   * Team-role scopes real characters implement for this ability, so the picker
+   * can offer exactly those and never a scope that would match nobody. Absent
+   * when the ability carries no scope data at all (no scope control is shown).
+   * Never contains 'any' — that is the "do not filter" choice, not a scope.
+   */
+  availableEffectTargetScopes?: Exclude<AutoBuildAbilityEffectTargetScope, 'any'>[];
+  effectTargetScopeMatchingCharacterIds?: AutoBuildAbilityEffectTargetScopeMatchingCharacterIds[];
   matchCount: number;
   matchingCharacterIds?: number[];
   turnMatchingCharacterIds?: AutoBuildAbilityTurnMatchingCharacterIds[];
@@ -72,6 +80,18 @@ export interface AutoBuildAbilityCatalogItem {
 interface AutoBuildAbilityTurnMatchingCharacterIds {
   minTurns: number;
   characterIds: number[];
+}
+
+/**
+ * Per-scope match index. Turn buckets are nested INSIDE the scope rather than
+ * intersected with the ability-wide ones: a character can cure at one turn count
+ * on itself and a different one crew-wide, so intersecting the two flat lists
+ * would match it for a (scope, turns) pair it does not actually implement.
+ */
+interface AutoBuildAbilityEffectTargetScopeMatchingCharacterIds {
+  effectTargetScope: Exclude<AutoBuildAbilityEffectTargetScope, 'any'>;
+  characterIds: number[];
+  turnMatchingCharacterIds: AutoBuildAbilityTurnMatchingCharacterIds[];
 }
 
 export interface AutoBuildAbilityCatalog {

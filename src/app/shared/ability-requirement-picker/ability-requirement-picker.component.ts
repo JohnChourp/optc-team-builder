@@ -69,6 +69,7 @@ interface AbilityRequirementSelectedRowView {
   supportsSlotTokens: boolean;
   supportsMinEffectValue: boolean;
   supportsEffectTargetScope: boolean;
+  availableEffectTargetScopes: AutoBuildAbilityEffectTargetScope[];
   availableSlotTokens: string[];
   painSelectableBadges: AbilityRequirementMiniBadge[];
 }
@@ -125,13 +126,10 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   public readonly closeIcon = closeOutline;
   public readonly pickerIcon = optionsOutline;
   public readonly availableLeaderBoostFilters = AUTO_BUILD_LEADER_BOOST_FILTERS;
-  public readonly availableEffectTargetScopes: AutoBuildAbilityEffectTargetScope[] = [
-    'any',
-    'crew',
-    'captains',
-    'self',
-    'subs',
-  ];
+  // 'any' ("don't filter by scope") is always offered; the real scopes beside it
+  // are data-gated per ability on the row, so a scope that no character
+  // implements is never offered. See `selectedRows`.
+  private static readonly ANY_EFFECT_TARGET_SCOPE: AutoBuildAbilityEffectTargetScope = 'any';
   public readonly searchTerm = signal('');
   public readonly workingDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly catalogItemsState = signal<AutoBuildAbilityCatalogItem[]>([]);
@@ -202,9 +200,20 @@ export class AbilityRequirementPickerComponent implements OnChanges {
           catalogItem?.supportsSlotTokens === true ||
           (this.captainAbilityMode && draft.abilityKey === 'make_slots_favorable'),
         supportsMinEffectValue: this.captainAbilityMode && draft.abilityKey === 'reduce_damage',
-        supportsEffectTargetScope:
-          this.captainAbilityMode &&
-          (draft.abilityKey === 'reduce_damage' || draft.abilityKey === 'make_slots_favorable'),
+        // Data-gated: offered only where real characters implement a scope.
+        // Captain mode stays restricted to the two captain structured effects —
+        // those resolve through captainAbilityEffectMatches, the only
+        // scope-aware captain index. Everywhere else any ability carrying scope
+        // data (the cure/removal family) can now be scoped, resolved through
+        // effectTargetScopeMatchingCharacterIds.
+        supportsEffectTargetScope: this.captainAbilityMode
+          ? (draft.abilityKey === 'reduce_damage' || draft.abilityKey === 'make_slots_favorable') &&
+            (catalogItem?.availableEffectTargetScopes?.length ?? 0) > 0
+          : (catalogItem?.availableEffectTargetScopes?.length ?? 0) > 0,
+        availableEffectTargetScopes: [
+          AbilityRequirementPickerComponent.ANY_EFFECT_TARGET_SCOPE,
+          ...(catalogItem?.availableEffectTargetScopes ?? []),
+        ],
         availableSlotTokens: catalogItem?.availableSlotTokens ?? [],
         painSelectableBadges: resolveAbilityRequirementPainSelectableDebuffBadges(draft.abilityKey),
       };

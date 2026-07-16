@@ -1457,6 +1457,15 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         continue;
       }
 
+      // Scope is read from the text right after THIS clause, so a character
+      // carrying both a self-scoped sailor cure and a crew-wide special cure
+      // records both (buildAbilityIdentity includes the scope, so the two
+      // entries do not collapse into one).
+      const effectTargetScope = resolveCureEffectTargetScope(
+        normalizedText,
+        match.index + match[0].length,
+      );
+
       normalizeTargetSegments(rawTarget).forEach((segment) => {
         resolveAbilityDefinitions(segment).forEach((normalized) => {
           const ability = {
@@ -1467,6 +1476,9 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
             slotTokens: normalized.slotTokens,
             source,
             coverageMode: DEFAULT_COVERAGE_MODE,
+            ...(ENEMY_TARGETED_REMOVAL_ABILITY_KEYS.has(normalized.key)
+              ? {}
+              : { effectTargetScope }),
           };
           addAbility(abilities, seen, ability);
         });
@@ -1737,6 +1749,48 @@ function resolveCaptainDamageReductionTargetScope(clause) {
   return explicitTargetMatch
     ? resolveCaptainEffectTargetScope(explicitTargetMatch[1], 'crew')
     : 'crew';
+}
+
+// Removal keys whose target is the ENEMY ("reduces enemies' Barrier duration by
+// 3 turns"), not your crew. The captains/subs/crew/self scopes describe which of
+// YOUR team-roles an effect lands on, so they are meaningless here — an enemy
+// debuff stripped "for the crew" is not a thing. These keys therefore carry no
+// scope at all, which also keeps the picker from offering a crew/self choice on
+// an enemy-facing filter. Mirrors the "Reduce Enemy Effect Duration" picker
+// group, plus the legacy keys that group does not list.
+const ENEMY_TARGETED_REMOVAL_ABILITY_KEYS = new Set([
+  'remove_damage_reduction',
+  'remove_enemy_atk_up',
+  'remove_enemy_barrier',
+  'remove_enemy_damage_nullification',
+  'remove_enemy_end_of_turn_damage_percent_cut',
+  'remove_enemy_end_of_turn_heal',
+  'remove_enemy_enrage',
+  'remove_enemy_increased_defense',
+  'remove_enemy_orb_based_damage_reduction',
+  'remove_resilience',
+  'remove_threshold_damage_reduction',
+]);
+
+// Team-role scope of a CURE/REMOVAL clause ("reduces <target> duration by N
+// turns"), resolved from the text immediately FOLLOWING the matched clause.
+//
+// Deliberately not `resolveCaptainEffectTargetScope`: that one scans a whole
+// clause for captain/sub/crew wording, which on cure text reads scope off the
+// NEIGHBOURING clause and mislabels. In "Boosts ATK of Slasher characters by
+// 1.3x for 2 turns, reduces Bind duration by 2 turns" the class wording belongs
+// to the ATK boost, and in "If your Captain is a Free Spirit character, removes
+// Blindness duration completely" the captain wording is a CONDITION, not a
+// target.
+//
+// A corpus sweep of all 3,526 cure clauses found exactly one scope qualifier
+// that ever attaches to a cure — a trailing "on this character" (457 clauses) —
+// and zero captain-scoped or sub-scoped cures, so this is a two-way rule. The
+// qualifier is required to be ADJACENT to the clause (not merely nearby): every
+// one of the 457 sits flush against it, and requiring adjacency stops a later
+// clause's "on this character" from leaking onto an earlier crew-wide cure.
+function resolveCureEffectTargetScope(text, clauseEndIndex) {
+  return /^\s*on this character\b/i.test(String(text).slice(clauseEndIndex)) ? 'self' : 'crew';
 }
 
 function normalizeEffectValue(value) {
@@ -2456,6 +2510,37 @@ export async function enrichCharactersWithBuilderAbilities(
         current.availableCoverageModes.add(resolveCoverageMode(ability));
         ability.slotTokens.forEach((token) => current.availableSlotTokens.add(token));
 
+        // Team-role scope index. 'any' means "this ability carries no scope
+        // information", which is not a selectable scope — only real scopes are
+        // recorded, so the picker can offer exactly the populated ones and the
+        // filter can resolve ids per scope. Indexed per (scope, minTurns) rather
+        // than intersecting two flat lists: a character can cure at one turn
+        // count on itself and a different one crew-wide, and intersecting would
+        // wrongly match it for the crew scope at the self clause's turn count.
+        const effectTargetScope = normalizeEffectTargetScope(ability.effectTargetScope);
+
+        if (effectTargetScope !== 'any') {
+          current.availableEffectTargetScopes.add(effectTargetScope);
+
+          const scopeEntry = current.effectTargetScopeMatches.get(effectTargetScope) ?? {
+            matchingCharacterIds: new Set(),
+            turnMatchingCharacterIds: new Map(),
+          };
+
+          scopeEntry.matchingCharacterIds.add(character.id);
+
+          if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
+            const scopeMinTurns = Math.floor(ability.minTurns);
+            const scopeTurnCharacterIds =
+              scopeEntry.turnMatchingCharacterIds.get(scopeMinTurns) ?? new Set();
+
+            scopeTurnCharacterIds.add(character.id);
+            scopeEntry.turnMatchingCharacterIds.set(scopeMinTurns, scopeTurnCharacterIds);
+          }
+
+          current.effectTargetScopeMatches.set(effectTargetScope, scopeEntry);
+        }
+
         if (!current.matchingCharacterIds.has(character.id)) {
           current.matchingCharacterIds.add(character.id);
           current.matchCount = current.matchingCharacterIds.size;
@@ -2570,6 +2655,30 @@ export async function enrichCharactersWithBuilderAbilities(
         availableCoverageModes: [...entry.availableCoverageModes].length
           ? [...entry.availableCoverageModes].sort(compareCoverageModes)
           : [DEFAULT_COVERAGE_MODE],
+        // Omitted entirely for abilities that carry no scope data, so the picker
+        // shows no scope control for them and untouched keys keep their exact
+        // current serialization.
+        ...(entry.availableEffectTargetScopes.size
+          ? {
+              availableEffectTargetScopes: [...entry.availableEffectTargetScopes].sort(
+                (left, right) => left.localeCompare(right),
+              ),
+              effectTargetScopeMatchingCharacterIds: [...entry.effectTargetScopeMatches.entries()]
+                .sort(([leftScope], [rightScope]) => leftScope.localeCompare(rightScope))
+                .map(([effectTargetScope, scopeEntry]) => ({
+                  effectTargetScope,
+                  characterIds: [...scopeEntry.matchingCharacterIds].sort(
+                    (left, right) => left - right,
+                  ),
+                  turnMatchingCharacterIds: [...scopeEntry.turnMatchingCharacterIds.entries()]
+                    .sort(([leftTurns], [rightTurns]) => leftTurns - rightTurns)
+                    .map(([minTurns, characterIds]) => ({
+                      minTurns,
+                      characterIds: [...characterIds].sort((left, right) => left - right),
+                    })),
+                })),
+            }
+          : {}),
         matchCount: entry.matchCount,
         matchingCharacterIds: [...entry.matchingCharacterIds].sort((left, right) => left - right),
         turnMatchingCharacterIds: [...entry.turnMatchingCharacterIds.entries()]
@@ -2654,12 +2763,25 @@ export function applyBuilderAbilityCorrection(abilities, correction) {
 function mergeBuilderAbilities(existingAbilities, derivedAbilities) {
   const mergedAbilities = [];
   const seen = new Set();
-
-  [...normalizeExistingBuilderAbilities(existingAbilities), ...derivedAbilities].forEach(
-    (ability) => {
-      addAbility(mergedAbilities, seen, ability);
-    },
+  // The effect-target scope is part of an ability's dedupe identity, so a stored
+  // entry whose scope differs from (or is missing against) the freshly derived
+  // one is a DIFFERENT identity and a plain merge would keep both — silently
+  // doubling the entry, 5,124 times when cure scopes were introduced.
+  //
+  // Whenever the derived set already covers the same ability modulo scope, the
+  // derived entries are authoritative: they are a complete re-derivation of that
+  // ability from the raw text, including every scope variant the text supports.
+  // Dropping the stored copy in that case is symmetric — it self-heals a scope
+  // being added, changed, or removed — so no one-off seed migration is needed
+  // per parser change.
+  const derivedScopeBlindIdentities = new Set(derivedAbilities.map(buildScopeBlindAbilityIdentity));
+  const retainedExistingAbilities = normalizeExistingBuilderAbilities(existingAbilities).filter(
+    (ability) => !derivedScopeBlindIdentities.has(buildScopeBlindAbilityIdentity(ability)),
   );
+
+  [...retainedExistingAbilities, ...derivedAbilities].forEach((ability) => {
+    addAbility(mergedAbilities, seen, ability);
+  });
 
   return mergedAbilities;
 }
@@ -2740,6 +2862,8 @@ function createCatalogAccumulator(key, label) {
     availableSlotTokens: new Set(),
     availableSources: new Set(),
     availableCoverageModes: new Set(),
+    availableEffectTargetScopes: new Set(),
+    effectTargetScopeMatches: new Map(),
     matchCount: 0,
     matchingCharacterIds: new Set(),
     turnMatchingCharacterIds: new Map(),
@@ -2778,6 +2902,19 @@ function compareCatalogAbilities(left, right) {
   }
 
   return left.label.localeCompare(right.label);
+}
+
+// Identity WITHOUT the effect-target scope. Used to spot a stored ability that
+// a freshly derived one supersedes by adding a scope (see mergeBuilderAbilities).
+function buildScopeBlindAbilityIdentity(ability) {
+  return [
+    ability.key,
+    ability.minTurns ?? 'none',
+    normalizeSlotTokens(ability.slotTokens).join(','),
+    ability.source,
+    resolveCoverageMode(ability),
+    normalizeEffectValue(ability.minEffectValue) ?? 'none',
+  ].join('|');
 }
 
 function buildAbilityIdentity(ability) {

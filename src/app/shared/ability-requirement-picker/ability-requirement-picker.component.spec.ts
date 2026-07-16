@@ -213,6 +213,10 @@ describe('AbilityRequirementPickerComponent', () => {
         availableSlotTokens: [],
         availableSources: ['captainAbility'],
         availableCoverageModes: ['explicit'],
+        // The scope control is data-gated: without populated scopes the picker
+        // offers no scope at all, so the fixture must declare the ones its
+        // characters implement.
+        availableEffectTargetScopes: ['crew', 'self'],
         matchCount: 10,
         sampleCharacterIds: [101],
         sampleTexts: ['Reduces damage received by 20%'],
@@ -267,6 +271,7 @@ describe('AbilityRequirementPickerComponent', () => {
         availableSlotTokens: ['RCV'],
         availableSources: ['captainAbility'],
         availableCoverageModes: ['explicit'],
+        availableEffectTargetScopes: ['crew', 'self'],
         matchCount: 10,
         sampleCharacterIds: [101],
         sampleTexts: ['Makes [RCV] orbs beneficial for all characters'],
@@ -509,7 +514,11 @@ describe('AbilityRequirementPickerComponent', () => {
     expect(template).toContain('@if (row.supportsSlotTokens && row.availableSlotTokens.length)');
     expect(template).toContain('@if (row.supportsMinEffectValue)');
     expect(template).toContain('onMinEffectValueChange(row.draft.draftId, $event)');
-    expect(template).toContain('@if (row.supportsEffectTargetScope)');
+    expect(template).toContain(
+      '@if (row.supportsEffectTargetScope && row.availableEffectTargetScopes.length > 1)',
+    );
+    // Scopes come from the ROW (data-gated per ability), never a static list.
+    expect(template).toContain('@for (scope of row.availableEffectTargetScopes; track scope)');
     expect(template).toContain('setEffectTargetScope(row.draft.draftId, scope)');
     expect(template).toContain('@if (showLeaderBoostControls)');
     expect(template).toContain("t('leaderBoost.range.atkMin')");

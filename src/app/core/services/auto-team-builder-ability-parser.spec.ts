@@ -2644,6 +2644,182 @@ describe('auto team builder ability parser', () => {
     expect(catalog.find((item) => item.key === 'remove_silence')).toBeUndefined();
   });
 
+  it('scopes cure clauses by their own trailing qualifier, not a neighbouring clause', async () => {
+    // "on this character" is the ONLY scope qualifier that ever attaches to a
+    // cure clause; everything else in the sentence belongs to a different
+    // clause. A whole-sentence scan would read the ATK boost's class wording or
+    // an "If your Captain is ..." CONDITION as the cure's scope and mislabel it.
+    const characters: ParserCharacters = [
+      {
+        id: 940001,
+        detail: {
+          // Scope wording present, but it belongs to the ATK boost clause.
+          specialText: 'Boosts ATK of Slasher characters by 1.3x for 2 turns, reduces Bind duration by 2 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 940002,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          // Captain wording here is a CONDITION, not a target scope.
+          sailorAbilities: [
+            'If your Captain is a Free Spirit character, reduces Bind duration by 3 turns',
+          ],
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 940003,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: ['Reduces Bind duration by 5 turns on this character'],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const removeBind = catalog.find((item) => item.key === 'remove_bind');
+
+    expect(removeBind).toEqual(
+      expect.objectContaining({
+        // Only the real scopes, and never 'captains' from the condition wording.
+        availableEffectTargetScopes: ['crew', 'self'],
+        effectTargetScopeMatchingCharacterIds: expect.arrayContaining([
+          expect.objectContaining({
+            effectTargetScope: 'crew',
+            characterIds: expect.arrayContaining([940001, 940002]),
+          }),
+          expect.objectContaining({
+            effectTargetScope: 'self',
+            characterIds: [940003],
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it('records both scopes when one character cures on itself and crew-wide', async () => {
+    // The self and crew entries must not collapse into one another: the dedupe
+    // identity carries the scope, so both survive with their own turn counts.
+    const characters: ParserCharacters = [
+      {
+        id: 940101,
+        detail: {
+          specialText: 'Reduces Paralysis duration by 3 turns',
+          captainAbility: null,
+          sailorAbilities: ['Reduces Paralysis duration by 5 turns on this character'],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const removeParalysis = catalog.find((item) => item.key === 'remove_paralysis');
+
+    expect(removeParalysis).toEqual(
+      expect.objectContaining({
+        availableEffectTargetScopes: ['crew', 'self'],
+        effectTargetScopeMatchingCharacterIds: expect.arrayContaining([
+          expect.objectContaining({
+            effectTargetScope: 'crew',
+            turnMatchingCharacterIds: [{ minTurns: 3, characterIds: [940101] }],
+          }),
+          expect.objectContaining({
+            effectTargetScope: 'self',
+            turnMatchingCharacterIds: [{ minTurns: 5, characterIds: [940101] }],
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it('gives enemy-targeted removals no team-role scope', async () => {
+    // captains/subs/crew/self describe which of YOUR roles an effect lands on.
+    // An enemy debuff stripped "for the crew" is meaningless, so enemy-facing
+    // removals must carry no scope and offer no scope control.
+    const characters: ParserCharacters = [
+      {
+        id: 940401,
+        detail: {
+          specialText:
+            "Reduces enemies' Barrier duration by 3 turns and reduces Bind duration by 2 turns",
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(
+      catalog.find((item) => item.key === 'remove_enemy_barrier')?.['availableEffectTargetScopes'],
+    ).toBeUndefined();
+    // The crew-side cure in the same sentence still gets its scope.
+    expect(catalog.find((item) => item.key === 'remove_bind')).toEqual(
+      expect.objectContaining({ availableEffectTargetScopes: ['crew'] }),
+    );
+  });
+
+  it('omits scope fields for abilities that carry no scope data', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 940201,
+        detail: {
+          specialText: 'Deals 10x character’s ATK in damage to all enemies',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const specialDamage = catalog.find((item) => item.key === 'special_damage');
+
+    expect(specialDamage?.['availableEffectTargetScopes']).toBeUndefined();
+    expect(specialDamage?.['effectTargetScopeMatchingCharacterIds']).toBeUndefined();
+  });
+
+  it('supersedes a stored scope-less ability with the derived scoped one', async () => {
+    // apply-manual merges stored + derived abilities. A stored entry written
+    // before cure scopes existed normalizes to scope 'any' — a different dedupe
+    // identity from the same ability re-derived with a real scope — so a plain
+    // merge would keep BOTH and double the entry.
+    const characters: ParserCharacters = [
+      {
+        id: 940301,
+        detail: {
+          specialText: 'Reduces Bind duration by 2 turns',
+          captainAbility: null,
+          builderAbilities: [
+            {
+              key: 'remove_bind',
+              label: 'Remove Bind',
+              minTurns: 2,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+              coverageMode: 'explicit',
+            },
+          ],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    const removeBindEntries = (characters[0]!.detail.builderAbilities as Array<
+      Record<string, unknown>
+    >).filter((ability) => ability['key'] === 'remove_bind');
+
+    expect(removeBindEntries).toHaveLength(1);
+    expect(removeBindEntries[0]).toEqual(expect.objectContaining({ effectTargetScope: 'crew' }));
+  });
+
   it('indexes structured captain utility matches in the ability catalog', async () => {
     const characters: ParserCharacters = [
       {
