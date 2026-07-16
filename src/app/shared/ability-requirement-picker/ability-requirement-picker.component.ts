@@ -190,6 +190,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   public readonly selectedRows = computed<AbilityRequirementSelectedRowView[]>(() =>
     this.workingDrafts().map((draft) => {
       const catalogItem = this.catalogMap().get(draft.abilityKey);
+      const resolvedEffectTargetScopes = this.resolveAvailableEffectTargetScopes(catalogItem);
 
       return {
         draft,
@@ -200,25 +201,49 @@ export class AbilityRequirementPickerComponent implements OnChanges {
           catalogItem?.supportsSlotTokens === true ||
           (this.captainAbilityMode && draft.abilityKey === 'make_slots_favorable'),
         supportsMinEffectValue: this.captainAbilityMode && draft.abilityKey === 'reduce_damage',
-        // Data-gated: offered only where real characters implement a scope.
-        // Captain mode stays restricted to the two captain structured effects —
-        // those resolve through captainAbilityEffectMatches, the only
-        // scope-aware captain index. Everywhere else any ability carrying scope
-        // data (the cure/removal family) can now be scoped, resolved through
-        // effectTargetScopeMatchingCharacterIds.
-        supportsEffectTargetScope: this.captainAbilityMode
-          ? (draft.abilityKey === 'reduce_damage' || draft.abilityKey === 'make_slots_favorable') &&
-            (catalogItem?.availableEffectTargetScopes?.length ?? 0) > 0
-          : (catalogItem?.availableEffectTargetScopes?.length ?? 0) > 0,
+        // Data-gated: offered only where real characters implement a scope, and
+        // read from whichever index actually backs the filter in this mode —
+        // captain requirements resolve through captainAbilityEffectMatches,
+        // everything else through effectTargetScopeMatchingCharacterIds. Reading
+        // the wrong one would offer a scope the filter cannot honour.
+        supportsEffectTargetScope: resolvedEffectTargetScopes.length > 0,
         availableEffectTargetScopes: [
           AbilityRequirementPickerComponent.ANY_EFFECT_TARGET_SCOPE,
-          ...(catalogItem?.availableEffectTargetScopes ?? []),
+          ...resolvedEffectTargetScopes,
         ],
         availableSlotTokens: catalogItem?.availableSlotTokens ?? [],
         painSelectableBadges: resolveAbilityRequirementPainSelectableDebuffBadges(draft.abilityKey),
       };
     }),
   );
+
+  /**
+   * Scopes this ability can actually be filtered by, taken from whichever index
+   * backs the filter in the current mode. Captain requirements resolve through
+   * `captainAbilityEffectMatches` (captain-scoped by construction); everything
+   * else resolves through `effectTargetScopeMatchingCharacterIds`, which
+   * deliberately excludes captain structured effects.
+   */
+  private resolveAvailableEffectTargetScopes(
+    catalogItem: AutoBuildAbilityCatalogItem | undefined,
+  ): AutoBuildAbilityEffectTargetScope[] {
+    if (!catalogItem) {
+      return [];
+    }
+
+    if (this.captainAbilityMode) {
+      const captainScopes = (catalogItem.captainAbilityEffectMatches ?? [])
+        .map((match) => match.effectTargetScope)
+        .filter(
+          (scope): scope is Exclude<AutoBuildAbilityEffectTargetScope, 'any'> =>
+            scope !== undefined && scope !== 'any',
+        );
+
+      return [...new Set(captainScopes)].sort((left, right) => left.localeCompare(right));
+    }
+
+    return [...(catalogItem.availableEffectTargetScopes ?? [])];
+  }
 
   public labelModalDialog(event: Event, label: string): void {
     applyIonicModalDialogLabel(event, label);

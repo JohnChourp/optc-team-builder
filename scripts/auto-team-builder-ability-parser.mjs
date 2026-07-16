@@ -2517,9 +2517,16 @@ export async function enrichCharactersWithBuilderAbilities(
         // than intersecting two flat lists: a character can cure at one turn
         // count on itself and a different one crew-wide, and intersecting would
         // wrongly match it for the crew scope at the self clause's turn count.
+        //
+        // Captain structured effects are excluded: they are scoped ONLY on their
+        // captainAbility branch, so indexing them here would describe a fraction
+        // of the key's matches as if it were the whole (make_slots_favorable is
+        // scoped on 364 of its 996 matches) and a scope filter in non-captain
+        // mode would silently drop the rest. They keep resolving through
+        // captainAbilityEffectMatches, which is captain-scoped by construction.
         const effectTargetScope = normalizeEffectTargetScope(ability.effectTargetScope);
 
-        if (effectTargetScope !== 'any') {
+        if (effectTargetScope !== 'any' && !isCaptainStructuredEffectAbility(ability)) {
           current.availableEffectTargetScopes.add(effectTargetScope);
 
           const scopeEntry = current.effectTargetScopeMatches.get(effectTargetScope) ?? {
