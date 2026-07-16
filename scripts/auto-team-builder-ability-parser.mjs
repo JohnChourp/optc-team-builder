@@ -377,7 +377,21 @@ const SPECIAL_ABILITY_MATCHERS = [
   // to be enhanced", "Chain Lock and Chain Boundary buffs". All 3 captainAbility
   // matches (#4267/#4268/#4289) were such references, so captain 3→0.
   ['chain_multiplier_lock', [/\blocks?\s+(?:the\s+)?chain\s+multiplier\b/i]],
-  ['chain_multiplier_lock_min_max', [/\bchain\b[^.]{0,80}\b(?:minimum|maximum|min|max)\b/i]],
+  // Chain Multiplier min/max lock ("Chain Boundary") sets a floor/ceiling on the
+  // chain multiplier — the canonical object is the "minimum/maximum chain
+  // multiplier". The old `chain … (min|max)` 80-char bridge over-matched every
+  // clause where a "chain" word sat near an unrelated "MAX"/"min": "…Chain
+  // Coefficient Reduction … recovers 30% of crew's MAX HP" (#3293/#3776/#4429/
+  // #4430 — MAX from MAX HP) and "Chain Coefficient Reduction and Minimum-Chain
+  // ATK Down …" (#4067/#4068 — Minimum belongs to the separate Minimum-Chain ATK
+  // Down debuff), so ALL 6 detections (incl. the entire captain count) were false
+  // positives. Anchor on the real locked object "(minimum|maximum) chain
+  // multiplier"; the only "Chain Boundary" mention in the corpus (#3742 "boost
+  // effects of Chain Lock and Chain Boundary buffs") is an effect_boost REFERENCE,
+  // not a grant — so no genuine grant exists yet and the key correctly resolves to
+  // 0, while staying ready for a real future "locks the minimum/maximum chain
+  // multiplier at Nx" grant. ReDoS-safe (fixed adjacency, no unbounded bridge).
+  ['chain_multiplier_lock_min_max', [/\b(?:minimum|maximum)\s+chain\s+multiplier\b/i]],
   [
     'chain_multiplier_additive_boost',
     [/\badds?\b[^.]{0,80}\bto\b[^.]{0,40}\bchain\b/i, /\bchain\b[^.]{0,80}\b\+\d/i],

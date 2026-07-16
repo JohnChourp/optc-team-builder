@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T05:34:46.473Z",
+  "generatedAt": "2026-07-16T05:44:43.300Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -7004,40 +7004,16 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility",
         "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 6,
-      "matchingCharacterIds": [
-        3293,
-        3776,
-        4067,
-        4068,
-        4429,
-        4430
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "captainAbilityMatchingCharacterIds": [
-        4067,
-        4068
-      ],
-      "sampleCharacterIds": [
-        3293,
-        3776,
-        4067,
-        4068,
-        4429
-      ],
-      "sampleTexts": [
-        "Reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 5 turns, recovers 30% of crew's MAX HP and boosts the Color Affinity of Powerhouse and Driven characters by 1.75x for 1 turn. If your captain is a Driven or Powerhouse character, after 2 turns, boosts Orb Effects of Powerhouse and Driven characters by 2x for 1 turn.",
-        "Reduces Special Cooldown of all characters by 1 turn, reduces enemies' Increased Defense duration by 5 turns and reduces Paralysis and ATK DOWN duration by 5 turns. If HP is above 99% when the special is activated, adds 1.0x to Chain multiplier for 1 turn, recovers 30% of crew's MAX HP otherwise.",
-        "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, and boosts HP of Shooter characters by 1.5x, boosts ATK of Shooter characters by 3.5x, by 5x instead if HP is below 30% at the start of the turn, makes [STR], [RCV] and [TND] orbs beneficial for Shooter characters, reduces crew's current HP by 10% at the end of each turn, and reduces Chain Coefficient Reduction and Minimum-Chain ATK Down duration by 5 turns.",
-        "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, and boosts HP of Shooter and Striker characters by 1.5x, boosts ATK of Shooter and Striker characters by 4.5x, by 5.5x instead if HP is below 30% at the start of the turn, makes [STR], [RCV] and [TND] orbs beneficial for Shooter and Striker characters, reduces crew's current HP by 10% at the end of each turn, and reduces Chain Coefficient Reduction and Minimum-Chain ATK Down duration by 5 turns.",
-        "Deals 100x character's ATK in Typeless damage to one enemy, reduces enemies' Resilience duration by 6 turns, adds 1.2x to chain multiplier for 3 turns, and recovers 30% of crew's MAX HP. If HP is below 50% when the special is activated or your crew has 2+ [Navy] characters, carries over 0.1x-1.5x of Chain Multiplier on this turn to the next turn."
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "chain_multiplier_additive_boost",

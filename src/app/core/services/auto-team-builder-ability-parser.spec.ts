@@ -1663,6 +1663,41 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('class_change');
   });
 
+  it('scopes chain_multiplier_lock_min_max to the "minimum/maximum chain multiplier" object', () => {
+    // Genuine min/max lock grant wording (the key must catch it if it appears).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Locks the minimum chain multiplier at 2x for 3 turns.', 'specialText'),
+      ),
+    ).toContain('chain_multiplier_lock_min_max');
+    // "MAX" of "crew's MAX HP" near a "Chain …" clause must NOT match (old
+    // /chain … (min|max)/ bridge false positives — #3293/#3776/#4429/#4430).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces Chain Coefficient Reduction duration by 5 turns, recovers 30% of crew's MAX HP.",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_lock_min_max');
+    // "Minimum-Chain ATK Down" is a separate debuff, not a chain-multiplier lock
+    // (#4067/#4068 — the entire prior captain count).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Chain Coefficient Reduction and Minimum-Chain ATK Down duration by 5 turns.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_lock_min_max');
+    // Plain "locks the chain multiplier at Nx" stays with chain_multiplier_lock.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Locks the chain multiplier at 3.25x for 2 turns.', 'specialText'),
+      ),
+    ).not.toContain('chain_multiplier_lock_min_max');
+  });
+
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
     // Type-scoped and plain crew reductions.
     expect(
