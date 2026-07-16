@@ -2799,6 +2799,66 @@ describe('auto team builder ability parser', () => {
     ).toEqual(expect.arrayContaining([960001, 960002]));
   });
 
+  it('reads a buff duration from its own clause, not the longest one in the sentence', async () => {
+    const characters: ParserCharacters = [
+      {
+        // The Usopp #572 trap: taking the MAX "for N turns" anywhere in the text
+        // (what the support-side helper does) would report a 15-turn ATK boost.
+        id: 992001,
+        detail: {
+          specialText: 'Boosts ATK of Fighter characters by 2x for 1 turn, binds himself for 15 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Two grants: the longest genuinely exists, so it wins.
+        id: 992002,
+        detail: {
+          specialText:
+            'Boosts ATK of all characters by 1.5x for 1 turn and boosts ATK of Slasher characters by 2x for 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // A range records its guaranteed minimum, as TURN_PATTERNS already does.
+        id: 992003,
+        detail: {
+          specialText: 'boosts ATK of Fighter characters by 1.75x for 1-6 turns, depending on the number of enemies',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Start-of-fight cooldown reduction: "by 3 turns" is an AMOUNT, not a
+        // duration, so this key must NOT gain a turn count from this mechanism.
+        id: 992004,
+        detail: {
+          specialText: 'Reduces Special Cooldown of all characters by 3 turns at the start of the fight',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const buckets = (key: string) =>
+      catalog.find((item) => item.key === key)?.['turnMatchingCharacterIds'];
+
+    expect(catalog.find((item) => item.key === 'boost_atk')).toEqual(
+      expect.objectContaining({ supportsTurns: true }),
+    );
+    expect(buckets('boost_atk')).toEqual([
+      { minTurns: 1, characterIds: [992001, 992003] },
+      { minTurns: 3, characterIds: [992002] },
+    ]);
+    // The cooldown key keeps no turn count — its "by N turns" is an amount.
+    expect(catalog.find((item) => item.key === 'reduce_special_charge')).toEqual(
+      expect.objectContaining({ supportsTurns: false }),
+    );
+  });
+
   it('matches both the multiply-by and set-to forms of an Orb Effects boost', async () => {
     const characters: ParserCharacters = [
       {

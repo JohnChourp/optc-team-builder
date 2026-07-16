@@ -1755,6 +1755,73 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
   return abilities;
 }
 
+// Matcher-based keys whose effect is a BUFF WITH A DURATION ("... for N turns"),
+// so the picker can answer "an ATK boost lasting at least 3 turns". Limited to
+// keys whose clause shape has been audited, because the duration must be read
+// from the matched clause's OWN window (see resolveClauseDurationTurns).
+//
+// Deliberately EXCLUDES reduce_special_charge / reduce_ship_special_charge: their
+// "by N turns" is the AMOUNT of cooldown removed at the start of the fight, not
+// how long anything lasts — a different quantity that would be wrong to compare
+// against a buff duration.
+const DURATION_TURN_KEYS = new Set([
+  'boost_atk',
+  'boost_slot_effects',
+  'reduce_damage',
+  'reduce_damage_over_threshold',
+  'nullify_damage',
+]);
+
+// Turn count of the buff granted by THIS clause.
+//
+// It must not be read from the whole text: specialText is multi-effect, and the
+// existing whole-text helper (resolveMaxDurationTurnCountFromText, correct for
+// single-effect support text) takes the MAX "for N turns" anywhere in the
+// sentence — which is wrong for 250 of boost_atk's 1,359 durationed characters.
+// Usopp #572 "Boosts ATK of Fighter characters by 2x FOR 1 TURN, binds himself
+// FOR 15 TURNS" would report a 15-turn ATK boost.
+//
+// So the window runs from the end of the matched clause to the next effect verb.
+// A RANGE records its FIRST number as the guaranteed minimum ("for 1-6 turns" =>
+// at least 1), matching the convention TURN_PATTERNS already uses for
+// "reduces ... by 1-5 turns"; "for 0-6 turns" therefore yields 0 and is dropped
+// by the caller's > 0 guard. "99+"/"6 or more" take the leading number.
+const CLAUSE_DURATION_PATTERN = /\bfor\s+(\d+)(?:\s*-\s*\d+|\+|\s+or\s+more)?\s+turns?\b/i;
+const CLAUSE_DURATION_STOP_PATTERN =
+  /\b(?:boosts?|reduces?|removes?|changes?|makes?|locks?|randomizes?|recovers?|deals?|inflicts?|adds?|increases?|sets?|applies|swaps?|consumes?|switches|transforms?)\b/i;
+
+function resolveClauseDurationTurns(patterns, normalizedText) {
+  const durations = [];
+
+  patterns.forEach((pattern) => {
+    const scanner = new RegExp(
+      pattern.source,
+      pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`,
+    );
+
+    for (const match of normalizedText.matchAll(scanner)) {
+      const tail = normalizedText.slice(match.index + match[0].length);
+      const stop = tail.match(CLAUSE_DURATION_STOP_PATTERN);
+      const window = stop ? tail.slice(0, stop.index) : tail;
+      const duration = window.match(CLAUSE_DURATION_PATTERN);
+
+      if (!duration) {
+        continue;
+      }
+
+      const turns = Number(duration[1]);
+
+      if (Number.isFinite(turns) && turns > 0) {
+        durations.push(Math.floor(turns));
+      }
+    }
+  });
+
+  // A character granting both a 1-turn and a 3-turn boost genuinely has a 3-turn
+  // boost, so the longest clause wins — the filter reads it as "at least N".
+  return durations.length > 0 ? Math.max(...durations) : null;
+}
+
 function addSpecialAbilityMatches(abilities, seen, normalizedText, source, allowedKeys = null) {
   SPECIAL_ABILITY_MATCHERS.forEach(({ key, patterns }) => {
     const definition = STRUCTURED_ABILITY_METADATA_BY_KEY.get(key);
@@ -1771,7 +1838,9 @@ function addSpecialAbilityMatches(abilities, seen, normalizedText, source, allow
     addAbility(abilities, seen, {
       key,
       label: definition.label,
-      minTurns: resolveStructuredTurnMinTurns(key, normalizedText),
+      minTurns: DURATION_TURN_KEYS.has(key)
+        ? resolveClauseDurationTurns(patterns, normalizedText)
+        : resolveStructuredTurnMinTurns(key, normalizedText),
       isCompleteRemoval: false,
       slotTokens: [],
       source,

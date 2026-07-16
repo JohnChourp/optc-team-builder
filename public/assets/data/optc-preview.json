@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T18:11:55.556Z",
+  "generatedAt": "2026-07-16T18:20:13.326Z",
   "characters": [
     {
       "id": 1,
@@ -1486,7 +1486,7 @@
           {
             "key": "reduce_damage",
             "label": "Reduce Damage",
-            "minTurns": null,
+            "minTurns": 1,
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "specialText",
@@ -1495,7 +1495,7 @@
           {
             "key": "nullify_damage",
             "label": "Nullify Damage (Damage Negation, 100% Reduction)",
-            "minTurns": null,
+            "minTurns": 1,
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "specialText",
