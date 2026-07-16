@@ -659,8 +659,19 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['delayed_effect_launch', [/\bfollowing turn\b/i, /\bafter\s+\d+\s+turns?\s*[,:]/i]],
   ['boost_max_hp', [/\bboosts?\b[^.]{0,120}\bmax HP\b/i]],
   [
+    // "Apply Status Effect (Ally)" = applying a beneficial status to your OWN
+    // crew. The two canonical OPTC-DB wordings that have no dedicated key are the
+    // crew debuff-immunity buff ("applies <Status> Immunity for N turns" — Burn /
+    // ATK DOWN / Increase Damage Taken / Chain Coefficient Reduction / Blindness /
+    // Tap Limit Immunity) and "Applies a Turn Progress Effect for N turns". The
+    // old `applies … to/for … crew|characters` bridge mostly matched FALSE
+    // POSITIVES where "characters" was an unrelated boost target: "applies
+    // Territory: X to the field … boosts ATK of <scope> characters" (Territory-to-
+    // field, own `territory` key — 14 hits) and "applies the following: Deals …
+    // damage to all enemies" (end-of-turn damage — #4081/#4082). Anchor on the
+    // applied status itself instead (ReDoS-safe; max applies→status gap is 56).
     'apply_ally_status_effect',
-    [/\bapplies?\b[^.]{0,120}\b(?:to|for)\b[^.]{0,80}\b(?:crew|characters|allies)\b/i],
+    [/\bapplies?\b[^.]{0,80}\b(?:immunity|turn progress effect)\b/i],
   ],
   ['swap_captains', [/\bswaps?\b[^.]{0,120}\bcaptains?\b/i]],
   // Remove Beneficial Effect = an OFFENSIVE debuff that strips the ENEMY's

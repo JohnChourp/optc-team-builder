@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T04:48:14.207Z",
+  "generatedAt": "2026-07-16T04:57:11.794Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -43509,47 +43509,43 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 20,
+      "matchCount": 15,
       "matchingCharacterIds": [
+        3006,
+        3007,
+        3213,
         3339,
         3661,
+        3680,
         3721,
+        3816,
+        3858,
+        3859,
         3980,
-        4081,
-        4082,
-        4206,
-        4209,
-        4218,
-        4219,
-        4230,
-        4231,
-        4249,
-        4250,
-        4365,
-        4387,
-        4432,
-        4576,
-        4584,
-        4585
+        3992,
+        3993,
+        4235,
+        4535
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
-        4081,
-        4082
+        3858,
+        3859,
+        4235
       ],
       "sampleCharacterIds": [
+        3006,
+        3007,
+        3213,
         3339,
-        3661,
-        3721,
-        3980,
-        4081
+        3661
       ],
       "sampleTexts": [
+        "Deals 100x character's ATK in Typeless Fixed True damage to one enemy and applies Burn and ATK DOWN Immunity for 5 turns. If your crew has ATK UP when the special is activated, boosts Orb Effects of [QCK] characters by 2.5x for 1 turn, boosts ATK of [QCK] characters by 2.5x for 1 turn otherwise.",
+        "Deals 100x character's ATK in Typeless Fixed True damage to one enemy and applies Burn and ATK DOWN Immunity for 5 turns. If your crew has ATK UP when the special is activated, boosts Orb Effects of [QCK] characters by 2.5x for 1 turn, boosts ATK of [QCK] characters by 2.5x for 1 turn otherwise.",
+        "Deals 15% of enemies' current HP in damage to one enemy, reduces Paralysis duration by 6 turns, reduces Special Cooldown of all characters by 1 turn, boosts Orb Effects of all characters by 2x for 1 turn and applies Increase Damage Taken Immunity for 3 turns.",
         "Applies ATK DOWN and Chain Coefficient Reduction Immunity for 3 turns, recovers 6,000 HP at the end of the turn for 3 turns and boosts ATK of [DEX] and Free Spirit characters by 1.75x for 1 turn. After 1 turn, boosts ATK of [DEX] and Free Spirit characters by 2x for 1 turn.",
-        "Applies PERFECTs Harder to Hit and Chain Coefficient Reduction Immunity for 3 turns and boosts Color Affinity of [DEX] and [PSY] characters by 1.75x for 1 turn. If during that turn you score 2 PERFECT hits, boosts base ATK of [DEX] and [PSY] characters by 900 for 1 turn in the following turn.",
-        "Applies a Turn Progress Effect for 3 turns that will apply the following effects: Start of Each Turn: Reduces crew's current HP by 70% at the start of every turn. Turn 1 (Activation): Boosts Orb Effects of Driven and Powerhouse characters by 2.5x for 1 turn and boosts Color Affinity of Driven and Powerhouse characters by 2.25x for 1 turn. Turn 2: Boosts Orb Effects of Driven and Powerhouse characters by 2.75x for 1 turn and boosts Color Affinity of Driven and Powerhouse characters by 2.5x for 1 turn. Turn 3: Boosts Orb Effects of Driven and Powerhouse characters by 3x for 1 turn and boosts Color Affinity of Driven and Powerhouse characters by 2.75x for 1 turn. On Effect Removal by Enemy: Boosts Orb Effects of Driven and Powerhouse characters by 2.75x for 1 turn and boosts Color Affinity of Driven and Powerhouse characters by 2.5x for 1 turn. Effect Removal Condition & Effect: If your HP is below 70% at the end of your turn, removes Turn Progress Effect and binds themselves for 5 turns. If your crew has Turn Progress Effect when the special is activated, changes Effect Removal Condition & Effect to: If your HP is below 70% at the end of your turn, removes Turn Progress Effect and binds themselves for 5 turns; and changes the Start of Each Turn effect to: Reduces crew's current HP by 30% at the start of every turn. If your crew has Turn Progress Effect when the special is activated, increases duration of any ATK boosting buffs buffs by 2 turns, locks all orbs for 2 turns and adds 1.4x to Chain multiplier for 3 turns.",
-        "Delays all enemies by 2 turns, reduces Burn duration by 6 turns, applies Burn Immunity for 2 turns, boosts ATK of [INT] and [PSY] characters by 1.75x for 3 turns, boosts Orb Effects of [INT] and [PSY] characters by 1.75x for 3 turns, and deals 200x character's ATK in [INT] damage to all enemies at the end of the turn for 3 turns.",
-        "Reduces Special Cooldown of [INT], Cerebral and Shooter characters by 2 turns and applies the following: Deals 300x character's ATK in [INT] damage to all enemies at the end of each turn for 3 turns, at the start of the fight, boosts ATK of [INT], Cerebral and Shooter characters by 5.25x, by 5.5x instead if they have a beneficial orb, and boosts HP of [INT], Cerebral and Shooter characters by 1.35x. If a crew member uses a Special with ATK UP, increases boost effects of ATK UP by +0.25x."
+        "Applies PERFECTs Harder to Hit and Chain Coefficient Reduction Immunity for 3 turns and boosts Color Affinity of [DEX] and [PSY] characters by 1.75x for 1 turn. If during that turn you score 2 PERFECT hits, boosts base ATK of [DEX] and [PSY] characters by 900 for 1 turn in the following turn."
       ]
     },
     {

@@ -1586,6 +1586,50 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('apply_weakened');
   });
 
+  it('scopes apply_ally_status_effect to crew Immunity / Turn Progress Effect, not Territory-to-field or damage', () => {
+    // Genuine crew status applications (kept).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('applies Burn and ATK DOWN Immunity for 5 turns.', 'specialText'),
+      ),
+    ).toContain('apply_ally_status_effect');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Applies a Turn Progress Effect for 3 turns that will apply the following effects: Start of Each Turn: recovers HP.',
+          'specialText',
+        ),
+      ),
+    ).toContain('apply_ally_status_effect');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Boosts ATK, and applies the following buff: Blindness Immunity for 10 turns.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('apply_ally_status_effect');
+    // Territory-to-field provider (excluded): "characters" is the boost target,
+    // the effect is Territory (own `territory` key), not an ally status.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Applies Territory: Powerhouse to the field for 3 turns, boosts Base ATK of Powerhouse characters by 1.5x.',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('apply_ally_status_effect');
+    // End-of-turn damage "applies the following: Deals …" (excluded).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "applies the following: Deals 300x character's ATK in [INT] damage to all enemies at the end of each turn for 3 turns.",
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('apply_ally_status_effect');
+  });
+
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
     // Type-scoped and plain crew reductions.
     expect(
