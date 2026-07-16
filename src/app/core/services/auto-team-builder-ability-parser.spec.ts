@@ -1698,6 +1698,39 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('chain_multiplier_lock_min_max');
   });
 
+  it('scopes remove_chain_multiplier_limit to the enemy debuff, not the friendly "Chain Lock" buff extension', () => {
+    // Genuine enemy Chain Multiplier Limit removal (kept), incl. multi-item list.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Chain Multiplier Limit duration by 4 turns.', 'specialText'),
+      ),
+    ).toContain('remove_chain_multiplier_limit');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Increased Defense and Chain Multiplier Limit duration by 2 turns.', 'captainAbility'),
+      ),
+    ).toContain('remove_chain_multiplier_limit');
+    // "increases duration of any Chain Lock buffs" EXTENDS the friendly Chain Lock
+    // buff (opposite of removing the enemy debuff) — the old `|| 'chain lock'`
+    // alias mis-tagged these (#4000/#4128/#4289 — the entire prior captain count).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'recovers 2,000 HP at the end of each turn, and increases duration of any Chain Lock buffs applied by Specials by 1 turn.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('remove_chain_multiplier_limit');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'increases duration of any Chain Lock/Limit/Boundary buffs/debuffs applied by Specials by 1 turn.',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('remove_chain_multiplier_limit');
+  });
+
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
     // Type-scoped and plain crew reductions.
     expect(

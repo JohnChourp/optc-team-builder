@@ -1082,7 +1082,17 @@ const TARGET_ALIASES = [
   {
     key: 'remove_chain_multiplier_limit',
     label: 'Remove Chain Multiplier Limit',
-    matcher: (target) => target.includes('chain multiplier limit') || target.includes('chain lock'),
+    // "Chain Multiplier Limit" is the ENEMY debuff that caps the crew's chain
+    // multiplier; removing it is "reduces/removes Chain Multiplier Limit duration
+    // by N turns". The old `|| target.includes('chain lock')` alias conflated it
+    // with the FRIENDLY "Chain Lock" buff (which locks YOUR chain multiplier at a
+    // value — the opposite, carried by chain_multiplier_lock): every corpus
+    // "chain lock" removal-target actually comes from "increases duration of any
+    // Chain Lock/Limit/Boundary buffs" (a friendly-buff EXTENSION), so all 3
+    // "chain lock"-only matches (#4000/#4128/#4289 — the entire captainAbility
+    // count) were false positives, and ZERO genuine enemy removals use "Chain
+    // Lock" without "Chain Multiplier Limit". Require the real debuff name.
+    matcher: (target) => target.includes('chain multiplier limit'),
   },
   {
     key: 'remove_increase_damage_taken',
