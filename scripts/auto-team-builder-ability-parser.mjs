@@ -2986,7 +2986,16 @@ function normalizeTargetText(targetText) {
     .toLowerCase()
     .replace(/\[[^\]]+\]/g, ' ')
     .replace(/\bthe\b/g, ' ')
-    .replace(/\benemies'?s?\b/g, ' ')
+    // Strip the "enemies" / "enemies'" possessive scope. The trailing apostrophe
+    // must be consumed HERE: a bare \b after the optional apostrophe fails
+    // (apostrophe->space is non-word to non-word, no boundary), so the old
+    // /\benemies'?s?\b/ backtracked and matched only "enemies", leaving a stray
+    // "'" glued to the first buff name. A leading "' percent damage reduction"
+    // segment then failed the exact-match removal matchers, so only a NON-first
+    // buff in a list ("Threshold Damage Reduction, Percent Damage Reduction …")
+    // was ever detected. Consume the possessive apostrophe and bound the tail
+    // with a not-a-letter lookahead instead of \b (ReDoS-safe, no backtracking).
+    .replace(/\benemies(?:['’]s?)?(?![a-z])/g, ' ')
     .replace(/\benemy\b/g, ' ')
     .replace(/\bbuffs?\b/g, ' ')
     .replace(/\bstatuses?\b/g, ' ')

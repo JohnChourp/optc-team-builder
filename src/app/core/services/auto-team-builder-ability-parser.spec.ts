@@ -228,6 +228,44 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_bind');
   });
 
+  it('detects enemy Percent Damage Reduction removal when it is the FIRST buff after "enemies\'"', () => {
+    // Regression: normalizeTargetText stripped only "enemies" and left the
+    // possessive apostrophe, so the first buff after "enemies'" became a
+    // "' percent damage reduction" segment that failed the exact-match matcher —
+    // only a NON-first buff in the list was ever detected. #3762 (real data).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Reduces enemies' Percent Damage Reduction duration by 3 turns.", 'captainAbility'),
+      ),
+    ).toContain('remove_damage_reduction');
+    // First-buff plain "Damage Reduction" in a list too.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces enemies' Damage Reduction and Increased Defense duration by 2 turns.",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_damage_reduction');
+    // "Threshold Damage Reduction" as the first/sole buff must NOT be mis-tagged
+    // as the distinct Percent-Damage-Reduction key (it stays remove_threshold_damage_reduction).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Reduces enemies' Threshold Damage Reduction duration by 2 turns.", 'captainAbility'),
+      ),
+    ).not.toContain('remove_damage_reduction');
+    // Crew's-OWN Percent Damage Reduction reference (a scaling clause, not a
+    // duration removal) must stay excluded (#4293 Jozu/Oden variant).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Boosts ATK by 1x-2.5x, proportional to the strength of crew's Percent Damage Reduction buff, for 1 turn.",
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('remove_damage_reduction');
+  });
+
   it('extracts paralysis and despair reduction when the upstream text drops "by" ("duration N turns")', () => {
     // OPTC-DB quirk (Luffy & Whitebeard #3728): "reduces Paralysis and Despair
     // duration 1 turn" with the "by" missing must still be detected.
