@@ -299,7 +299,15 @@ const SPECIAL_ABILITY_MATCHERS = [
       // and this key is grouped under Boost Damage). Dropping `orbs?` narrows the
       // captain matches from 29 (26 false) to the 3 genuine "Boosts Orb Effects"
       // grants and removes the analogous special-side false positives.
-      /\bboosts?\b[^.]{0,120}\b(?:Orb Effects|Slot Effects)\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i,
+      // The trailing "x" is optional ONLY when the number cannot be a turn or
+      // percent count: Yamato #4212 "boosts Orb Effects of Free Spirit characters
+      // by 1.75" is a genuine grant whose multiplier upstream simply wrote
+      // without the "x" (same class as the "recieved"/"take" typo tolerances).
+      // The lookahead adds exactly that one character and drops none.
+      // ("Slot Effects" is legacy tolerance from the captain audit and currently
+      // matches nothing — 0 occurrences in any field, any case — but it is a
+      // literal with no bridge risk, so it stays as cheap future-proofing.)
+      /\bboosts?\b[^.]{0,120}\b(?:Orb Effects|Slot Effects)\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?(?:x|(?!\s*(?:turns?|%|\d)))/i,
       // The SET-TO grant form, which the multiply-by wording alone cannot see:
       // "increases Orb Effects of beneficial [TND] orbs TO 2.75x for 3 turns"
       // scopes by ORB TYPE and sets the multiplier, where "boosts Orb Effects of
