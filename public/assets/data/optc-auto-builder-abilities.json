@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T15:30:53.704Z",
+  "generatedAt": "2026-07-16T15:51:32.843Z",
   "sourceVersion": "36",
   "abilityCount": 262,
   "abilities": [
@@ -13345,7 +13345,7 @@
     },
     {
       "key": "make_slots_favorable",
-      "label": "Make Slots Favorable",
+      "label": "Make Orbs Beneficial",
       "category": "special",
       "groupLabel": "Slot",
       "groupOrder": 4,
@@ -13371,7 +13371,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 996,
+      "matchCount": 993,
       "matchingCharacterIds": [
         389,
         390,
@@ -13399,8 +13399,6 @@
         1380,
         1403,
         1404,
-        1435,
-        1436,
         1459,
         1460,
         1462,
@@ -14157,7 +14155,6 @@
         4257,
         4261,
         4262,
-        4263,
         4267,
         4268,
         4270,

@@ -484,7 +484,24 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'make_slots_favorable',
-    [/\bmakes?\b[^.]{0,160}\b(?:orbs?|slots?)\b[^.]{0,80}\b(?:beneficial|matching|favorable)\b/i],
+    // OPTC-DB canonical: "makes [X] orbs beneficial for <scope>" (1,017 of the
+    // 1,019 hits have the term flush against "orbs"; "orbs matching for all
+    // characters" — Brook #3665 — is the same effect worded differently, and
+    // "makes ... orbs that the Captain has beneficial" is the one long variant).
+    //
+    // Neither gap may span another effect verb, or "makes" bridges across a
+    // comma into an unrelated clause and reports a slot effect that is not
+    // there: Hyouzou #1435/#1436 "MAKES PERFECTs harder to hit for 1 turn,
+    // CHANGES [STR] ... orbs of Powerhouse characters into MATCHING orbs" is a
+    // tap-timing debuff plus a slot CHANGE (already `change_slots`), and Perona
+    // #4263 "makes Badly Matching and [BLOCK] orbs NOT REDUCE DAMAGE ... changes
+    // ... into Matching orbs" only removes a penalty. The "favorable" alternative
+    // is dropped: it matched zero characters on any source, because "favorable"
+    // /"advantageous" is never the verb upstream (the app label was the only
+    // place that word appeared — see the label note in the definitions file).
+    [
+      /\bmakes?\b(?:(?!\b(?:changes?|boosts?|locks?|randomizes?|delays?|recovers?|reduces?|removes?|sets?|deals?|inflicts?|increases?)\b)[^.]){0,160}?\b(?:orbs?|slots?)\b(?:(?!\b(?:changes?|boosts?|locks?|randomizes?|delays?|recovers?|reduces?|removes?|sets?|deals?|inflicts?|increases?)\b)[^.]){0,80}?\b(?:beneficial|matching)\b/i,
+    ],
   ],
   [
     'change_slot_chance',

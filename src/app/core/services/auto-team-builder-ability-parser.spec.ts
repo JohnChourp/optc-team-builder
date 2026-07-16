@@ -2738,6 +2738,64 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('does not bridge "makes" across a clause into an unrelated orb effect', async () => {
+    // OPTC-DB canonical is "makes [X] orbs beneficial for <scope>" — the term sits
+    // flush against "orbs". Letting either gap span another effect verb makes
+    // "Makes PERFECTs harder to hit ..., changes ... orbs ... into Matching orbs"
+    // (a tap-timing debuff + a slot CHANGE) report as a beneficial-orb effect.
+    const characters: ParserCharacters = [
+      {
+        id: 960001,
+        detail: {
+          specialText:
+            'Makes PERFECTs harder to hit for 1 turn, changes [STR] and [QCK] orbs of Powerhouse characters into Matching orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 960002,
+        detail: {
+          // Penalty removal is not "beneficial".
+          specialText:
+            'makes Badly Matching and [BLOCK] orbs not reduce damage for 3 turns, changes [BLOCK] orbs into Matching orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 960003,
+        detail: {
+          specialText: 'makes [STR], [DEX] and [QCK] orbs beneficial for all characters',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Same effect, worded "matching" instead of "beneficial" (Brook #3665).
+        id: 960004,
+        detail: {
+          specialText: 'makes [RCV] and [TND] orbs matching for all characters by 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'make_slots_favorable')).toEqual(
+      expect.objectContaining({
+        label: 'Make Orbs Beneficial',
+        matchingCharacterIds: [960003, 960004],
+      }),
+    );
+    // The bridged units are genuine slot CHANGES and must still be tagged as such.
+    expect(
+      catalog.find((item) => item.key === 'change_slots')?.['matchingCharacterIds'],
+    ).toEqual(expect.arrayContaining([960001, 960002]));
+  });
+
   it('splits "Special Cooldown of Ship" from the crew special-cooldown reduce', async () => {
     // The SHIP's own Special has its own cooldown (Ship Bind is what disables
     // it), so OPTC-DB's "reduces Special Cooldown of Ship" is NOT a crew
