@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T04:08:29.544Z",
+  "generatedAt": "2026-07-16T04:37:57.452Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -38630,28 +38630,65 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility"
+        "captainAbility",
+        "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 2,
+      "matchCount": 30,
       "matchingCharacterIds": [
-        3895,
-        3896
+        4083,
+        4084,
+        4105,
+        4121,
+        4122,
+        4166,
+        4167,
+        4202,
+        4307,
+        4336,
+        4367,
+        4402,
+        4405,
+        4419,
+        4434,
+        4463,
+        4464,
+        4483,
+        4490,
+        4494,
+        4495,
+        4502,
+        4517,
+        4529,
+        4532,
+        4538,
+        4566,
+        4591,
+        4594,
+        4597
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
-        3895,
-        3896
+        4083,
+        4084,
+        4490,
+        4591
       ],
       "sampleCharacterIds": [
-        3895,
-        3896
+        4083,
+        4084,
+        4105,
+        4121,
+        4122
       ],
       "sampleTexts": [
-        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn.",
-        "Always Active: Boosts HP of Slasher and Free Spirit characters by 1.5x. Sheathed Captain: Reduces Special Cooldown of [STR], [DEX], [QCK] characters by 2 turns at the start of the fight, reduces Special Cooldown of Slasher and Free Spirit characters by 1 turn at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x and makes [TND] orbs beneficial for Slasher and Free Spirit characters. Characters who attack with a Type advantage and with a [RCV] or [TND] orb will gain a [WANO] orb after attacking. Enma Captain: Boosts ATK of Slasher and Free Spirit characters by 5.5x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character and changes [RCV] orbs into [WANO] orbs. Characters who attack with a Type advantage will gain a [WANO] orb after attacking. Reduces crew's current HP by 15% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Enma Unleashed Captain: Boosts ATK of Slasher and Free Spirit characters by 5.75x, makes [TND] orbs beneficial for Slasher and Free Spirit characters, makes [STR], [DEX], [QCK], [PSY] and [INT] orbs beneficial for this character, changes [RCV] orbs into [WANO] orbs, makes this character's normal attacks count as Type Effective against all Types and increases enemies' Damage Limiter limit up to 2x. If this character has a [TND] or [WANO] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 1.5x for 1 turn. Reduces crew's current HP by 60% crew's MAX HP at the end of each turn if enough HP is available, otherwise transforms into Weakened. Weakened Captain: Boosts ATK of Slasher and Free Spirit characters by 2x. Action: Based on how full Enma Gauge is, transforms Zoro. At any Enma level, changes between Sheathed and Enma freely. If Enma is full, changes into Enma Unleashed. This can be used an unlimited number of times per turn."
+        "Reduces Bind and Paralysis duration by 7 turns, locks all orbs for 1 turn, recovers 20,000 HP, and boosts ATK against enemies inflicted with Increase Damage Taken an enemies inflicted with Weaken by 2.25x for 3 turns. If this character is your Captain or Friend/Guest Captain when the special is activated, reduces enemies' [PSY] and [INT] Resistance by -50% for 2 turns. If this character is a Crewmate when the special is activated, inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 3 turns.",
+        "Boosts HP of [PSY], [INT] and Fighter characters by 1.2x, boosts ATK of [PSY], [INT] and Fighter characters by 5.25x, by 5.5x instead if they have an [INT], [RCV] or [TND] orb, makes [RCV] orbs beneficial for all characters, slightly boosts chances of getting [RCV] orbs, and makes PERFECTs consume [RCV] orbs. If this character has a [RCV] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 1 turn.",
+        "Reduces Bind and Paralysis duration by 7 turns, locks all orbs for 1 turn, recovers 20,000 HP, and boosts ATK against enemies inflicted with Increase Damage Taken an enemies inflicted with Weaken by 2.25x for 3 turns. If this character is your Captain or Friend/Guest Captain when the special is activated, reduces enemies' [PSY] and [INT] Resistance by -50% for 2 turns. If this character is a Crewmate when the special is activated, inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 3 turns.",
+        "Boosts HP of [PSY], [INT] and Fighter characters by 1.2x, boosts ATK of [PSY], [INT] and Fighter characters by 5.25x, by 5.5x instead if they have an [INT], [RCV] or [TND] orb, makes [RCV] orbs beneficial for all characters, slightly boosts chances of getting [RCV] orbs, and makes PERFECTs consume [RCV] orbs. If this character has a [RCV] orb and you attack with this character, ignores Debuff Protection and inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 1 turn.",
+        "Reduces Bind duration by 6 turns, and changes all other orbs, including [BLOCK] orbs, of all characters into this character's orb. If the enemy has Percent Damage Reduction Buff for 6 or more turns or if the enemy doesn't have Percent Damage Reduction Buff when the Special is activated, reduces enemies' [STR] Resistance by -30% for 1 turn. If the enemy doesn't have Percent Damage Reduction Buff when the Special is activated, reduces enemies' damage received by 80% for 6 turns. If during that turn you score 2 PERFECT hits, inflicts all enemies with Weaken by 1.2x, by 1.68x instead if enemies are inflicted with Increase Damage Taken, for 1 turn in the next turn."
       ]
     },
     {

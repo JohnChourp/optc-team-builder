@@ -1538,6 +1538,54 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('inflict_poison');
   });
 
+  it('scopes apply_weakened to the "inflicts … Weaken" applier, not the "Weakened" transform-form name', () => {
+    // Genuine Weaken infliction (the debuff is spelled "Weaken", never "-ed").
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 2 turns.',
+          'specialText',
+        ),
+      ),
+    ).toContain('apply_weakened');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Defense Reduction and inflicts all enemies with Weaken by 1.5x for 1 turn.',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('apply_weakened');
+    // The old /\bweakened\b/ matched ONLY this transform-form name (#3895/#3896) —
+    // a character transformation, not a debuff applied to enemies.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Boosts ATK by 3x if enough HP is available, otherwise transforms into Weakened.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('apply_weakened');
+    // Boost-against CONDITION ("inflicted", past tense) must stay excluded.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Boosts ATK against Delayed enemies and enemies inflicted with Weaken by 2.5x-3x for 2 turns.',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('apply_weakened');
+    // Immunity-pierce ENABLER must stay excluded.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Allows Increase Damage Taken, Weaken and ATK Down to ignore Debuff Protection.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('apply_weakened');
+  });
+
   it('still detects genuine crew damage reduction (including the "damage take" typo)', () => {
     // Type-scoped and plain crew reductions.
     expect(

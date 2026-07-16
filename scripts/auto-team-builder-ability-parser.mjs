@@ -530,7 +530,18 @@ const SPECIAL_ABILITY_MATCHERS = [
     ],
   ],
   ['apply_set_target', [/\bsets?\b[^.]{0,80}\btarget\b/i]],
-  ['apply_weakened', [/\bweakened\b/i]],
+  // "Weaken" is an enemy damage-increasing debuff (like ATK Down / Increase
+  // Damage Taken); OPTC-DB applies it as "inflicts (all) enemies with Weaken by
+  // X.Xx". The old bare /\bweakened\b/ required the "-ed" suffix, which the debuff
+  // NEVER uses, so it matched 0 genuine appliers and instead only fired on the
+  // unrelated transform-form name "otherwise transforms into Weakened" (#3895/
+  // #3896 — 2 false positives). Anchor on the applier verb "inflicts … Weaken"
+  // (bounded, ReDoS-safe; max observed inflicts→Weaken gap is 18) and exclude the
+  // "-ed" transform name via a negative lookahead. Non-applier references stay
+  // out because they use different verbs: "boosts ATK against enemies inflicted
+  // with Weaken" (a boost-against condition — "inflicted", not "inflicts") and
+  // "allows … Weaken … to ignore Debuff Protection" (an immunity-pierce enabler).
+  ['apply_weakened', [/\binflicts?\b[^.]{0,60}\bweaken\b(?!ed)/i]],
   [
     'reduce_ship_special_charge',
     [/\breduces?\b[^.]{0,120}\bship special\b[^.]{0,80}\b(?:charge|cooldown|turns?)\b/i],
