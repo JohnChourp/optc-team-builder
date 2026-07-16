@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T04:37:57.452Z",
+  "generatedAt": "2026-07-16T04:48:14.207Z",
   "sourceVersion": "36",
   "abilityCount": 264,
   "abilities": [
@@ -38621,7 +38621,7 @@
     },
     {
       "key": "apply_weakened",
-      "label": "Weakened",
+      "label": "Weaken",
       "category": "special",
       "groupLabel": "Apply Status Effect",
       "groupOrder": 8,
