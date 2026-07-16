@@ -507,7 +507,20 @@ const SPECIAL_ABILITY_MATCHERS = [
     'change_slot_chance',
     [/\b(?:changes?|boosts?|increases?)\b[^.]{0,120}\b(?:orb|slot)\b[^.]{0,80}\bchance\b/i],
   ],
-  ['swap_slots', [/\bswaps?\b[^.]{0,80}\b(?:orbs?|slots?)\b/i]],
+  [
+    // Position-only orb movement ("Slot Swap" on the wiki — explicitly NOT a
+    // Slot Change: orb types are untouched, they trade places). OPTC-DB's only
+    // wording for it is "switches orbs between slots N time(s)" — the verb is
+    // ALWAYS "switches", never "swaps": upstream reserves "swaps" for
+    // unit/captain swaps ("swaps this unit with your captain") and the Swap
+    // debuff. The old /swaps? ... orbs?/ matcher therefore matched ZERO real
+    // orb-swaps; its 3 hits were captain-swap and Swap-cure clauses bridging
+    // into a later "Orb Effects"/"ATK Up, Orb ..." noun, while all ~73 genuine
+    // "switches orbs between slots" units went undetected. "Switch Effect"
+    // (the VS/switch-gauge mechanic) never fits this shape, so it stays out.
+    'swap_slots',
+    [/\bswitch(?:es)?\b[^.]{0,40}\borbs?\b[^.]{0,40}\bbetween\b[^.]{0,30}\bslots?\b/i],
+  ],
   [
     'change_slots',
     [
@@ -516,9 +529,31 @@ const SPECIAL_ABILITY_MATCHERS = [
       // type, so they are not a slot/orb-type change (e.g. Kaido & Big Mom #4477
       // "change the Orb Multiplier of specific orbs"). Genuine changes name an orb
       // type or "the orb(s)" as the object, not the "Orb <effect>" noun.
-      /\bchanges?\b(?!\s+(?:the\s+)?Orb\s+(?:Multiplier|Amplification|Effects?)\b)[^.]{0,160}\b(?:orbs?|slots?)\b/i,
-      /\btransforms?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i,
+      //
+      // The lookbehind rejects the RESTRICTION clause "becomes unable to change
+      // to [X] orbs for N turns" — a self-limitation, not an orb change; Dr.
+      // Vegapunk #4423 was matched ONLY through it (his real orb effect is an
+      // undirected randomize, which is deliberately not this key — OPTC-DB
+      // filters "Randomizes all orbs" as its own "Orb randomizers" family).
+      //
+      // No "transforms" alternative: zero of the 1,820 change-clauses in the
+      // corpus use it for orbs — upstream reserves "transforms" for CHARACTER
+      // transformations ("transforms [STR] characters into Super [STR]
+      // characters"), so keeping it was pure bridge risk with no coverage.
+      /(?<!\bunable to )\bchanges?\b(?!\s+(?:the\s+)?Orb\s+(?:Multiplier|Amplification|Effects?)\b)[^.]{0,160}\b(?:orbs?|slots?)\b/i,
     ],
+  ],
+  [
+    // The type-ADAPTIVE subfamily ("Favorable Slot Change" on the wiki —
+    // "matches the orb to whatever type the character is", its own category,
+    // rainbow-team oriented): OPTC-DB words it "changes ... into (a) Matching
+    // orb(s)". A strict subset of `change_slots` (umbrella membership is kept,
+    // mirroring how `change_block_slots` overlaps it), split out because 649
+    // characters carry it and a fixed-type change is useless to a rainbow team.
+    // "into Badly Matching orbs" (sabotage) does not match — "Badly" sits
+    // between "into" and "Matching".
+    'change_slots_matching',
+    [/\bchanges?\b[^.]{0,160}\binto\s+(?:a\s+)?Matching\s+orbs?\b/i],
   ],
   [
     'change_block_slots',

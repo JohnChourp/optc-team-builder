@@ -2441,13 +2441,16 @@ describe('auto team builder ability parser', () => {
 
     // 85, not 86: `remove_silence` was retired — "Silence" is the in-game name
     // for the same debuff as `remove_special_bind`, so it is one effect, one key.
-    expect(specialCatalog).toHaveLength(85);
+    // 86: `remove_silence` was retired (== remove_special_bind), and
+    // `change_slots_matching` was added (the wiki's "Favorable Slot Change" —
+    // type-adaptive "into Matching orbs" — is a distinct, filterable family).
+    expect(specialCatalog).toHaveLength(86);
     expect(groupCounts).toEqual({
       Damage: 6,
       'Boost Damage': 17,
       'Damage Reduction': 3,
       Slot: 4,
-      'Slot Change': 4,
+      'Slot Change': 5,
       'Reduce Status Effect Duration': 14,
       'Reduce Enemy Effect Duration': 9,
       'Apply Status Effect': 8,
@@ -2794,6 +2797,131 @@ describe('auto team builder ability parser', () => {
     expect(
       catalog.find((item) => item.key === 'change_slots')?.['matchingCharacterIds'],
     ).toEqual(expect.arrayContaining([960001, 960002]));
+  });
+
+  it('splits the adaptive "into Matching orbs" family out as change_slots_matching', async () => {
+    // "Favorable Slot Change" on the wiki: the orb is changed INTO a Matching
+    // orb per character (type-adaptive), distinct from fixed-type changes.
+    // Umbrella membership in change_slots is kept (mirrors change_block_slots).
+    const characters: ParserCharacters = [
+      {
+        id: 970001,
+        detail: {
+          specialText: 'Changes [RCV], [TND] and [BLOCK] orbs into Matching orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 970002,
+        detail: {
+          specialText: 'Changes [PSY] and [INT] orbs into [STR] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Sabotage: "into Badly Matching orbs" must NOT count as adaptive.
+        id: 970003,
+        detail: {
+          specialText: 'Changes all orbs of Cerebral characters into Badly Matching orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'change_slots_matching')).toEqual(
+      expect.objectContaining({
+        label: 'Change Slots into Matching (Favorable Slot Change)',
+        groupLabel: 'Slot Change',
+        matchingCharacterIds: [970001],
+      }),
+    );
+    // All three remain plain slot changes.
+    expect(
+      catalog.find((item) => item.key === 'change_slots')?.['matchingCharacterIds'],
+    ).toEqual([970001, 970002, 970003]);
+  });
+
+  it('does not count the "unable to change to [X] orbs" restriction as a slot change', async () => {
+    const characters: ParserCharacters = [
+      {
+        // Dr. Vegapunk #4423 shape: the only "change" wording is the negative
+        // self-restriction; the real orb effect is an undirected randomize,
+        // which is deliberately not change_slots (OPTC-DB's own filter treats
+        // "Randomizes all orbs" as a separate family).
+        id: 970101,
+        detail: {
+          specialText:
+            'Randomizes all orbs into [STR], [DEX], [QCK], [INT] or [RCV] orbs, and becomes unable to change to [PSY] and [TND] orbs for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // A genuine change alongside the restriction must still match (#4149).
+        id: 970102,
+        detail: {
+          specialText:
+            'Changes all orbs, including [BLOCK] orbs, into [INT] orbs, and becomes unable to change to [STR] and [BLOCK] orbs for 2 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(
+      catalog.find((item) => item.key === 'change_slots')?.['matchingCharacterIds'],
+    ).toEqual([970102]);
+  });
+
+  it('matches real orb switches and ignores unit-swap and Swap-cure clauses', async () => {
+    // OPTC-DB's only orb-move wording is "switches orbs between slots N times";
+    // "swaps" is reserved for unit/captain swaps and the Swap debuff, which the
+    // old /swaps? ... orbs?/ matcher bridged into ("swaps this unit with your
+    // captain ... boosts Orb Effects").
+    const characters: ParserCharacters = [
+      {
+        id: 970201,
+        detail: {
+          specialText: 'Switches orbs between slots 2 times, boosts Orb Effects of all characters by 2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 970202,
+        detail: {
+          specialText:
+            'Optionally swaps this unit with your captain for 1 turn, and boosts Orb Effects of all characters by 2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 970203,
+        detail: {
+          specialText:
+            'Reduces Swap duration completely, and increases boost effects of ATK Up, Orb Amplification and Color Affinity buffs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'swap_slots')).toEqual(
+      expect.objectContaining({
+        label: 'Switch Orbs Between Slots (Slot Swap)',
+        matchingCharacterIds: [970201],
+      }),
+    );
   });
 
   it('splits "Special Cooldown of Ship" from the crew special-cooldown reduce', async () => {
