@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T08:44:51.528Z",
+  "generatedAt": "2026-07-16T15:30:53.704Z",
   "sourceVersion": "36",
   "abilityCount": 262,
   "abilities": [
@@ -46270,7 +46270,7 @@
     },
     {
       "key": "reduce_ship_special_charge",
-      "label": "Reduce Ship Special Charge",
+      "label": "Reduce Ship Special Cooldown (Ship Special Charge)",
       "category": "special",
       "groupLabel": "Reduction",
       "groupOrder": 9,
@@ -46279,16 +46279,60 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
+        "captainAbility",
         "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 16,
+      "matchingCharacterIds": [
+        4131,
+        4180,
+        4193,
+        4194,
+        4195,
+        4202,
+        4217,
+        4257,
+        4345,
+        4384,
+        4385,
+        4424,
+        4565,
+        4566,
+        4569,
+        4570
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "captainAbilityMatchingCharacterIds": [
+        4131,
+        4193,
+        4194,
+        4195,
+        4217,
+        4257,
+        4345,
+        4424,
+        4565,
+        4566,
+        4569,
+        4570
+      ],
+      "sampleCharacterIds": [
+        4131,
+        4180,
+        4193,
+        4194,
+        4195
+      ],
+      "sampleTexts": [
+        "Reduces Special Cooldown of all characters by 1 turn at the start of the fight, reduces Special Cooldown of Ship by 3 turns at the start of the fight, boosts ATK of [INT] and [DEX] characters by 4.5x, boosts HP of [INT] and [DEX] characters by 1.3x, and makes [RCV] and [TND] orbs beneficial for [INT] and [DEX] characters.",
+        "Reduces Burn duration by 6 turns, changes all orbs, including [BLOCK] orbs, into Matching orbs, recovers 15,000 HP, and boosts Color Affinity of [DEX] and Free Spirit characters by 2.25x for 3 turns. If there are delayed enemies when the Special is activated, increases duration of any ATK Up and Orb Amplification buffs by 1 turn. If your crew has Usopp as a member or supporting this character, reduces enemies' [DEX] Resistance by -20% for 2 turns, and reduces Special Cooldown of Ship by 1 turn.",
+        "Reduces Special Cooldown of all characters by 2 turns at the start of the fight, reduces Special Cooldown of Ship by 2 turns at the start of the fight, boosts ATK of [DEX], Powerhouse and Shooter characters by 5.5x, boosts HP of [DEX], Powerhouse and Shooter characters by 1.5x, makes [RCV] and [TND] orbs beneficial for [DEX], Powerhouse and Shooter characters, makes crew immune to Blow Away, and increases duration of any Color Affinity buffs applied by Specials by 1 turn. When a Barrier Penetration Enabled character hits a PERFECT, reduces enemies' Increased Defense duration by 2 turns.",
+        "Reduces Special Cooldown of Ship by 5 turns at the start of the fight, boosts ATK of Powerhouse characters by 3.5x, and boosts HP of Powerhouse characters by 1.5x.",
+        "Reduces Special Cooldown of Ship by 5 turns at the start of the fight, boosts ATK of Shooter characters by 3.5x, and boosts HP of Shooter characters by 1.5x."
+      ]
     },
     {
       "key": "reduce_switch_effect_use",
@@ -46336,7 +46380,7 @@
     },
     {
       "key": "reduce_special_charge",
-      "label": "Reduce Special Charge",
+      "label": "Reduce Special Cooldown (Reduce Special Charge Time)",
       "category": "special",
       "groupLabel": "Reduction",
       "groupOrder": 9,
@@ -46351,7 +46395,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 987,
+      "matchCount": 983,
       "matchingCharacterIds": [
         452,
         453,
@@ -47127,7 +47171,6 @@
         4253,
         4254,
         4256,
-        4257,
         4258,
         4259,
         4260,
@@ -47181,7 +47224,6 @@
         4338,
         4340,
         4343,
-        4345,
         4346,
         4347,
         4348,
@@ -47204,8 +47246,6 @@
         4380,
         4381,
         4383,
-        4384,
-        4385,
         4387,
         4389,
         4391,
@@ -47793,8 +47833,6 @@
         4189,
         4191,
         4193,
-        4194,
-        4195,
         4202,
         4203,
         4204,
@@ -47826,7 +47864,6 @@
         4250,
         4253,
         4256,
-        4257,
         4258,
         4259,
         4260,
@@ -47870,7 +47907,6 @@
         4337,
         4338,
         4343,
-        4345,
         4346,
         4347,
         4348,

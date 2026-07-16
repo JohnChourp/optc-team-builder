@@ -569,7 +569,15 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['apply_weakened', [/\binflicts?\b[^.]{0,60}\bweaken\b(?!ed)/i]],
   [
     'reduce_ship_special_charge',
-    [/\breduces?\b[^.]{0,120}\bship special\b[^.]{0,80}\b(?:charge|cooldown|turns?)\b/i],
+    // The SHIP's own Special has its own cooldown, distinct from the crew's (it
+    // is what Ship Bind disables). OPTC-DB words it "reduces Special Cooldown of
+    // Ship by N turn(s)" — the ship is a TRAILING qualifier, never the adjacent
+    // phrase "ship special". The old matcher required that "ship special"
+    // adjacency, which occurs ZERO times in the corpus, so this picker key
+    // matched nothing while its 16 real characters were silently absorbed by the
+    // crew-facing `reduce_special_charge` (same Remove-SFX-vs-Blindness failure:
+    // a key spelled the way players say it, not the way OPTC-DB writes it).
+    [/\breduces?\s+(?:the\s+)?special cooldown\s+of\s+ship\b/i],
   ],
   ['reduce_switch_effect_use', [/\breduces?\b[^.]{0,120}\bswitch effect\b[^.]{0,80}\buse/i]],
   ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,120}\bVS effect gauge\b/i]],
@@ -583,7 +591,13 @@ const SPECIAL_ABILITY_MATCHERS = [
     // rewinded)" / "advances to MAX" beneficial charge is a DISTINCT mechanic and
     // must not be reported here. The former "special charge" alternative matched
     // zero characters across every source, so it is dropped.
-    [/\breduces?\s+(?:the\s+)?special cooldown\b/i],
+    //
+    // The negative lookahead excludes "Special Cooldown of Ship" — the SHIP's own
+    // special cooldown is a separate mechanic (`reduce_ship_special_charge`), not
+    // a crew head-start. It mirrors the identical guard on
+    // `restore_advance_special_charge`, whose absence here let 4 ship-only units
+    // (#4257/#4345/#4384/#4385) report as crew special-cooldown reducers.
+    [/\breduces?\s+(?:the\s+)?special cooldown\b(?!\s+of\s+ship\b)/i],
   ],
   [
     'restore_advance_special_charge',

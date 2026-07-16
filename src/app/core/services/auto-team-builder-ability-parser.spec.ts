@@ -2738,6 +2738,59 @@ describe('auto team builder ability parser', () => {
     );
   });
 
+  it('splits "Special Cooldown of Ship" from the crew special-cooldown reduce', async () => {
+    // The SHIP's own Special has its own cooldown (Ship Bind is what disables
+    // it), so OPTC-DB's "reduces Special Cooldown of Ship" is NOT a crew
+    // head-start. The picker key for it was spelled the way players say it
+    // ("ship special"), a phrase that never occurs upstream, so it matched
+    // nothing while its characters were absorbed by the crew key.
+    const characters: ParserCharacters = [
+      {
+        id: 950001,
+        detail: {
+          specialText: 'Reduces Special Cooldown of Ship by 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 950002,
+        detail: {
+          specialText: 'Reduces Special Cooldown of all characters by 2 turns at the start of the fight',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Both in one text: the crew clause still counts, the ship clause routes
+        // to the ship key.
+        id: 950003,
+        detail: {
+          specialText:
+            'Reduces Special Cooldown of all characters by 1 turn at the start of the fight, reduces Special Cooldown of Ship by 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    // The ship-only unit must NOT report as a crew special-cooldown reducer.
+    expect(catalog.find((item) => item.key === 'reduce_special_charge')).toEqual(
+      expect.objectContaining({
+        label: 'Reduce Special Cooldown (Reduce Special Charge Time)',
+        matchingCharacterIds: [950002, 950003],
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'reduce_ship_special_charge')).toEqual(
+      expect.objectContaining({
+        label: 'Reduce Ship Special Cooldown (Ship Special Charge)',
+        matchingCharacterIds: [950001, 950003],
+      }),
+    );
+  });
+
   it('gives enemy-targeted removals no team-role scope', async () => {
     // captains/subs/crew/self describe which of YOUR roles an effect lands on.
     // An enemy debuff stripped "for the crew" is meaningless, so enemy-facing
