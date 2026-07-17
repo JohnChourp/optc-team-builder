@@ -228,6 +228,35 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_bind');
   });
 
+  it('publishes a multi-tier special\'s MAX-level turn count, not just level 1', () => {
+    // Gladius #1400. A maxed character's special is its final tier, but the
+    // max-level fold deduped on key+source alone, so once tier 1 had yielded
+    // remove_despair at 1 turn the max tier's 2-turn record was silently dropped
+    // and the weaker level-1 count was published.
+    // Both texts below are VERBATIM upstream. The escalating multiplier tail
+    // ("1.5x ... 1.75x") is what marks the special as multi-tier, so the primary
+    // parse sees tier 1 only and the fold supplies the max — strip the tail and
+    // the string stops being tiered at all, and stops exercising this path.
+    const gladius = analyzeBuilderAbilityText(
+      "Deals 13x character's ATK in [STR] damage to all enemies, reduces Bind and Despair duration by 1 turn and boosts the Color Affinity of Shooter characters by 1.5x for 1 turn. Deals 30x character's ATK in [STR] damage to all enemies, reduces Bind and Despair duration by 2 turns and boosts the Color Affinity of Shooter characters by 1.75x for 1 turn",
+      'specialText',
+    );
+    expect(gladius).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_despair', minTurns: 1 }),
+        expect.objectContaining({ key: 'remove_despair', minTurns: 2 }),
+      ]),
+    );
+
+    // Machvise #1627 (tiers 1/3/5): the MAX must be published, and the
+    // INTERMEDIATE tier must still stay out - the fold reads only the last tier.
+    const machvise = analyzeBuilderAbilityText(
+      'Reduces Chain Multiplier Limit duration by 1 turn and boosts the Color Affinity of Striker characters by 1.25x for 1 turn. Reduces Chain Multiplier Limit duration by 3 turns and boosts the Color Affinity of Striker characters by 1.5x for 1 turn. Reduces Chain Multiplier Limit duration by 5 turns and boosts the Color Affinity of Striker characters by 1.75x for 1 turn',
+      'specialText',
+    ).filter((a) => a.key === 'remove_chain_multiplier_limit');
+    expect(machvise.map((a) => a.minTurns).sort((a, b) => Number(a) - Number(b))).toEqual([1, 5]);
+  });
+
   it('tolerates the upstream "reducess" verb typo', () => {
     // Makino & Woop Slap #3844 is the corpus's ONLY "reducess" (1 of 7,183 verb
     // instances) and had no Despair tag at all, because `reduces?` matches

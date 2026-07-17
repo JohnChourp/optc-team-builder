@@ -1871,11 +1871,21 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
   // Fold in the MAX-LEVEL (last) activation tier of a multi-tier special: a maxed
   // character's special is its final tier, so effects introduced only there
   // (e.g. Zoro & Sanji #4061 reducing enemies' Threshold Damage Reduction duration
-  // only from its max tier) would otherwise be missed. We add ONLY keys the
-  // primary tier did not already yield (by key+source), never touching intermediate
-  // tiers — every added key is present in the max tier, so this cannot over-claim
-  // an intermediate-only effect (verified: 131 additions across 37 keys, 0 keys
-  // that are not in the last tier). Scoped to specialText, where multi-level
+  // only from its max tier) would otherwise be missed. We add every max-tier record
+  // the primary tier did not already yield, never touching intermediate tiers —
+  // everything added comes from the last tier, so this cannot over-claim an
+  // intermediate-only effect.
+  //
+  // Dedupe is on the FULL identity (key+source+minTurns+scope), NOT key+source. The
+  // narrower check reasoned only about MEMBERSHIP, so it silently discarded the max
+  // tier's record whenever the same key already existed at a DIFFERENT turn count —
+  // publishing the weaker LEVEL-1 count for a maxed character, whose special IS its
+  // final tier. Gladius #1400 ("reduces Bind and Despair duration by 1 turn ... by
+  // 2 turns") published 1; Machvise #1627 (tiers 1/3/5) published 1. Both now also
+  // publish their max, while the intermediate tier still stays out. This adds 144
+  // records across 75 characters and 22 keys, every one at a turn count >= its own
+  // tier-1 count, and changes no key's membership.
+  // Scoped to specialText, where multi-level
   // specials occur. The `foldMaxLevelTier = false` argument on the inner call
   // disables re-folding, so this cannot recurse more than one level even when the
   // extracted max-level text itself still contains nested tier restatements.
@@ -1883,12 +1893,12 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
     const maxLevelText = extractMaxLevelAbilityBranchText(value);
 
     if (maxLevelText && maxLevelText !== normalizedText) {
-      const existingKeySources = new Set(
-        abilities.map((ability) => `${ability.key}|${ability.source}`),
-      );
+      const identity = (ability) =>
+        `${ability.key}|${ability.source}|${ability.minTurns}|${ability.effectTargetScope ?? ''}`;
+      const existingKeySources = new Set(abilities.map(identity));
 
       for (const ability of analyzeBuilderAbilityText(maxLevelText, source, false)) {
-        const keySource = `${ability.key}|${ability.source}`;
+        const keySource = identity(ability);
 
         if (!existingKeySources.has(keySource)) {
           existingKeySources.add(keySource);
