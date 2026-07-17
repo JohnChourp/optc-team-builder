@@ -1,88 +1,605 @@
 [
-  { "key": "special_damage", "label": "Damage", "groupLabel": "Damage", "groupOrder": 1, "effectOrder": 1 },
-  { "key": "deal_fixed_damage", "label": "Fixed", "groupLabel": "Damage", "groupOrder": 1, "effectOrder": 2 },
-  { "key": "ignore_normal_attack_only", "label": "Ignore DEF/Defensive Effects", "groupLabel": "Damage", "groupOrder": 1, "effectOrder": 3 },
-  { "key": "special_damage_other", "label": "Other", "groupLabel": "Damage", "groupOrder": 1, "effectOrder": 4 },
-  { "key": "percent_damage", "label": "Percent Damage", "groupLabel": "Damage", "groupOrder": 1, "effectOrder": 5 },
-  { "key": "percent_damage_ignore_defensive_effects", "label": "Percent Damage: Ignore Defensive Effects", "groupLabel": "Damage", "groupOrder": 1, "effectOrder": 6 },
-  { "key": "boost_atk", "label": "Boost ATK", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 1 },
-  { "key": "boost_slot_effects", "label": "Boost Slot Effects", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 2 },
-  { "key": "boost_against_delayed_enemies", "label": "Delayed Enemies", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 3 },
-  { "key": "boost_against_def_reduced_enemies", "label": "DEF Reduced Enemies", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 4 },
-  { "key": "boost_against_poisoned_enemies", "label": "Poisoned Enemies", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 5 },
-  { "key": "other_damage_boosts", "label": "Other Damage Boosts", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 6 },
-  { "key": "boost_type_effects", "label": "Boost Type Effects", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 7 },
-  { "key": "additional_damage_boost", "label": "Additional Damage Boost", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 8 },
-  { "key": "chain_multiplier_lock", "label": "Chain Multiplier: Lock", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 9 },
-  { "key": "chain_multiplier_lock_min_max", "label": "Chain Multiplier: Lock Multiplier Min/Max", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 10 },
-  { "key": "chain_multiplier_additive_boost", "label": "Chain Multiplier: Additive Boost", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 11 },
-  { "key": "chain_multiplier_multiplicative_boost", "label": "Chain Multiplier: Multiplicative Boost", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 12 },
-  { "key": "chain_multiplier_growth_rate", "label": "Chain Multiplier: Growth Rate", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 13 },
-  { "key": "boost_base_atk", "label": "Boost Base ATK", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 14 },
-  { "key": "effect_boost", "label": "Effect Boost", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 15 },
-  { "key": "critical_damage_boost", "label": "Critical Damage Boost", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 16 },
-  { "key": "final_tap_atk_boost", "label": "Final Tap ATK Boost", "groupLabel": "Boost Damage", "groupOrder": 2, "effectOrder": 17 },
-  { "key": "reduce_damage", "label": "Reduce Damage", "groupLabel": "Damage Reduction", "groupOrder": 3, "effectOrder": 1 },
-  { "key": "reduce_damage_over_threshold", "label": "Reduce Damage Above A Threshold (Threshold Damage Reduction)", "groupLabel": "Damage Reduction", "groupOrder": 3, "effectOrder": 2 },
-  { "key": "nullify_damage", "label": "Nullify Damage (Damage Negation, 100% Reduction)", "groupLabel": "Damage Reduction", "groupOrder": 3, "effectOrder": 3 },
-  { "key": "lock_slots", "label": "Lock Slots", "groupLabel": "Slot", "groupOrder": 4, "effectOrder": 1 },
-  { "key": "make_slots_favorable", "label": "Make Orbs Beneficial", "groupLabel": "Slot", "groupOrder": 4, "effectOrder": 2, "supportsSlotTokens": true },
-  { "key": "change_slot_chance", "label": "Change Slot Chance", "groupLabel": "Slot", "groupOrder": 4, "effectOrder": 3 },
-  { "key": "swap_slots", "label": "Switch Orbs Between Slots (Slot Swap)", "groupLabel": "Slot", "groupOrder": 4, "effectOrder": 4 },
-  { "key": "change_slots", "label": "Change Slots", "groupLabel": "Slot Change", "groupOrder": 5, "effectOrder": 1 },
-  { "key": "change_block_slots", "label": "Change [BLOCK] Slots", "groupLabel": "Slot Change", "groupOrder": 5, "effectOrder": 2 },
-  { "key": "consume_slots", "label": "Consume Slots", "groupLabel": "Slot Change", "groupOrder": 5, "effectOrder": 3 },
-  { "key": "auto_change_slots", "label": "Auto Change", "groupLabel": "Slot Change", "groupOrder": 5, "effectOrder": 4 },
-  { "key": "change_slots_matching", "label": "Change Slots into Matching (Favorable Slot Change)", "groupLabel": "Slot Change", "groupOrder": 5, "effectOrder": 5 },
-  { "key": "remove_bind", "label": "Bind", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 1 },
-  { "key": "remove_despair", "label": "Despair", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 2 },
-  { "key": "remove_paralysis", "label": "Paralysis", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 3 },
-  { "key": "remove_special_bind", "label": "Special Bind (Silence)", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 4 },
-  { "key": "remove_burn", "label": "Burn", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 5 },
-  { "key": "remove_increase_damage_taken", "label": "Increased damage taken Duration", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 6 },
-  { "key": "remove_atk_down", "label": "ATK Down", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 7 },
-  { "key": "remove_chain_coefficient_reduction", "label": "Decrease Chain Multiplier Growth Rate", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 8 },
-  { "key": "remove_chain_multiplier_limit", "label": "Lock Chain Multiplier", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 9 },
-  { "key": "remove_poison", "label": "Poison", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 10 },
-  { "key": "remove_rcv_bind", "label": "RCV bind", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 11 },
-  { "key": "remove_rcv_down", "label": "RCV Down", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 12 },
-  { "key": "remove_sfx", "label": "Remove SFX", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 13 },
-  { "key": "remove_pain", "label": "Pain", "groupLabel": "Reduce Status Effect Duration", "groupOrder": 6, "effectOrder": 15 },
-  { "key": "remove_enemy_increased_defense", "label": "Enemy DEF Up", "groupLabel": "Reduce Enemy Effect Duration", "groupOrder": 7, "effectOrder": 1 },
-  { "key": "remove_damage_reduction", "label": "Enemy Damage Reduction", "groupLabel": "Reduce Enemy Effect Duration", "groupOrder": 7, "effectOrder": 2 },
-  { "key": "remove_enemy_damage_nullification", "label": "Enemy Damage Nullification", "groupLabel": "Reduce Enemy Effect Duration", "groupOrder": 7, "effectOrder": 3 },
-  { "key": "remove_threshold_damage_reduction", "label": "Enemy Damage threshold", "groupLabel": "Reduce Enemy Effect Duration", "groupOrder": 7, "effectOrder": 4 },
-  { "key": "remove_enemy_end_of_turn_damage_percent_cut", "label": "Enemy EOT damage", "groupLabel": "Reduce Enemy Effect Duration", "groupOrder": 7, "effectOrder": 5 },
-  { "key": "remove_enemy_enrage", "label": "Enemy Enrage", "groupLabel": "Reduce Enemy Effect Duration", "groupOrder": 7, "effectOrder": 6 },
-  { "key": "remove_enemy_end_of_turn_heal", "label": "Enemy Auto-heal", "groupLabel": "Reduce Enemy Effect Duration", "groupOrder": 7, "effectOrder": 7 },
-  { "key": "remove_resilience", "label": "Enemy Resilience", "groupLabel": "Reduce Enemy Effect Duration", "groupOrder": 7, "effectOrder": 8 },
-  { "key": "remove_enemy_barrier", "label": "Enemy Barrier", "groupLabel": "Reduce Enemy Effect Duration", "groupOrder": 7, "effectOrder": 9 },
-  { "key": "apply_delay", "label": "Delay", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 1 },
-  { "key": "apply_def_reduction", "label": "DEF Reduction", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 2 },
-  { "key": "inflict_poison", "label": "Poison", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 3 },
-  { "key": "apply_increase_damage_taken", "label": "Increase Damage Taken", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 4 },
-  { "key": "apply_unique_effect", "label": "Unique Effect", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 5 },
-  { "key": "apply_resistance_reduction", "label": "Resistance Reduction", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 6 },
-  { "key": "apply_set_target", "label": "Set Target", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 7 },
-  { "key": "apply_weakened", "label": "Weaken", "groupLabel": "Apply Status Effect", "groupOrder": 8, "effectOrder": 8 },
-  { "key": "reduce_ship_special_charge", "label": "Reduce Ship Special Cooldown (Ship Special Charge)", "groupLabel": "Reduction", "groupOrder": 9, "effectOrder": 1 },
-  { "key": "reduce_switch_effect_use", "label": "Reduce Switch Effect Use", "groupLabel": "Reduction", "groupOrder": 9, "effectOrder": 2 },
-  { "key": "reduce_vs_effect_gauge", "label": "Reduce VS Effect Gauge", "groupLabel": "Reduction", "groupOrder": 9, "effectOrder": 3 },
-  { "key": "reduce_special_charge", "label": "Reduce Special Cooldown (Reduce Special Charge Time)", "groupLabel": "Reduction", "groupOrder": 9, "effectOrder": 4 },
-  { "key": "restore_advance_special_charge", "label": "Restore/Advance Special Cooldown", "groupLabel": "Reduction", "groupOrder": 9, "effectOrder": 5 },
-  { "key": "heal_hp", "label": "Heal HP", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 1 },
-  { "key": "boost_rcv", "label": "Boost RCV", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 2 },
-  { "key": "apply_resilience", "label": "Resilience", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 3 },
-  { "key": "defeat_enemy", "label": "Defeat Enemy", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 4 },
-  { "key": "end_of_turn_additional_damage", "label": "End of Turn Additional Damage", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 5 },
-  { "key": "tap_timing_requirement", "label": "Tap-Timing Requirement", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 6 },
-  { "key": "extend_turn_duration", "label": "Extend Turn Duration", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 7 },
-  { "key": "delayed_effect_launch", "label": "Delayed Effect Launch", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 8 },
-  { "key": "boost_max_hp", "label": "Boost Max HP", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 9 },
-  { "key": "apply_ally_status_effect", "label": "Apply Status Effect (Ally)", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 10 },
-  { "key": "swap_captains", "label": "Swap Captains", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 11 },
-  { "key": "remove_beneficial_effect", "label": "Remove Beneficial Effect", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 12 },
-  { "key": "class_change", "label": "Class Change", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 13 },
-  { "key": "critical_hit_chance_boost", "label": "Critical Hit Chance Boost", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 14 },
-  { "key": "territory", "label": "Territory", "groupLabel": "Other", "groupOrder": 10, "effectOrder": 15 }
+  {
+    "key": "special_damage",
+    "label": "Damage",
+    "groupLabel": "Damage",
+    "groupOrder": 1,
+    "effectOrder": 1
+  },
+  {
+    "key": "deal_fixed_damage",
+    "label": "Fixed",
+    "groupLabel": "Damage",
+    "groupOrder": 1,
+    "effectOrder": 2
+  },
+  {
+    "key": "ignore_normal_attack_only",
+    "label": "Ignore DEF/Defensive Effects",
+    "groupLabel": "Damage",
+    "groupOrder": 1,
+    "effectOrder": 3
+  },
+  {
+    "key": "special_damage_other",
+    "label": "Typeless Damage (Other)",
+    "groupLabel": "Damage",
+    "groupOrder": 1,
+    "effectOrder": 4
+  },
+  {
+    "key": "percent_damage",
+    "label": "Percent Damage",
+    "groupLabel": "Damage",
+    "groupOrder": 1,
+    "effectOrder": 5
+  },
+  {
+    "key": "percent_damage_ignore_defensive_effects",
+    "label": "Percent Damage: Ignore Defensive Effects",
+    "groupLabel": "Damage",
+    "groupOrder": 1,
+    "effectOrder": 6
+  },
+  {
+    "key": "boost_atk",
+    "label": "Boost ATK",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 1
+  },
+  {
+    "key": "boost_slot_effects",
+    "label": "Boost Slot Effects",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 2
+  },
+  {
+    "key": "boost_against_delayed_enemies",
+    "label": "Delayed Enemies",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 3
+  },
+  {
+    "key": "boost_against_def_reduced_enemies",
+    "label": "DEF Reduced Enemies",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 4
+  },
+  {
+    "key": "boost_against_poisoned_enemies",
+    "label": "Poisoned Enemies",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 5
+  },
+  {
+    "key": "other_damage_boosts",
+    "label": "Other Damage Boosts",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 6
+  },
+  {
+    "key": "boost_type_effects",
+    "label": "Boost Type Effects",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 7
+  },
+  {
+    "key": "additional_damage_boost",
+    "label": "Additional Damage Boost",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 8
+  },
+  {
+    "key": "chain_multiplier_lock",
+    "label": "Chain Multiplier: Lock",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 9
+  },
+  {
+    "key": "chain_multiplier_lock_min_max",
+    "label": "Chain Multiplier: Lock Multiplier Min/Max",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 10
+  },
+  {
+    "key": "chain_multiplier_additive_boost",
+    "label": "Chain Multiplier: Additive Boost",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 11
+  },
+  {
+    "key": "chain_multiplier_multiplicative_boost",
+    "label": "Chain Multiplier: Multiplicative Boost",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 12
+  },
+  {
+    "key": "chain_multiplier_growth_rate",
+    "label": "Chain Multiplier: Growth Rate",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 13
+  },
+  {
+    "key": "boost_base_atk",
+    "label": "Boost Base ATK",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 14
+  },
+  {
+    "key": "effect_boost",
+    "label": "Effect Boost",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 15
+  },
+  {
+    "key": "critical_damage_boost",
+    "label": "Critical Damage Boost",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 16
+  },
+  {
+    "key": "final_tap_atk_boost",
+    "label": "Final Tap ATK Boost",
+    "groupLabel": "Boost Damage",
+    "groupOrder": 2,
+    "effectOrder": 17
+  },
+  {
+    "key": "reduce_damage",
+    "label": "Reduce Damage",
+    "groupLabel": "Damage Reduction",
+    "groupOrder": 3,
+    "effectOrder": 1
+  },
+  {
+    "key": "reduce_damage_over_threshold",
+    "label": "Reduce Damage Above A Threshold (Threshold Damage Reduction)",
+    "groupLabel": "Damage Reduction",
+    "groupOrder": 3,
+    "effectOrder": 2
+  },
+  {
+    "key": "nullify_damage",
+    "label": "Nullify Damage (Damage Negation, 100% Reduction)",
+    "groupLabel": "Damage Reduction",
+    "groupOrder": 3,
+    "effectOrder": 3
+  },
+  {
+    "key": "lock_slots",
+    "label": "Lock Slots",
+    "groupLabel": "Slot",
+    "groupOrder": 4,
+    "effectOrder": 1
+  },
+  {
+    "key": "make_slots_favorable",
+    "label": "Make Orbs Beneficial",
+    "groupLabel": "Slot",
+    "groupOrder": 4,
+    "effectOrder": 2,
+    "supportsSlotTokens": true
+  },
+  {
+    "key": "change_slot_chance",
+    "label": "Change Slot Chance",
+    "groupLabel": "Slot",
+    "groupOrder": 4,
+    "effectOrder": 3
+  },
+  {
+    "key": "swap_slots",
+    "label": "Switch Orbs Between Slots (Slot Swap)",
+    "groupLabel": "Slot",
+    "groupOrder": 4,
+    "effectOrder": 4
+  },
+  {
+    "key": "change_slots",
+    "label": "Change Slots",
+    "groupLabel": "Slot Change",
+    "groupOrder": 5,
+    "effectOrder": 1
+  },
+  {
+    "key": "change_block_slots",
+    "label": "Change [BLOCK] Slots",
+    "groupLabel": "Slot Change",
+    "groupOrder": 5,
+    "effectOrder": 2
+  },
+  {
+    "key": "consume_slots",
+    "label": "Consume Slots",
+    "groupLabel": "Slot Change",
+    "groupOrder": 5,
+    "effectOrder": 3
+  },
+  {
+    "key": "auto_change_slots",
+    "label": "Auto Change",
+    "groupLabel": "Slot Change",
+    "groupOrder": 5,
+    "effectOrder": 4
+  },
+  {
+    "key": "change_slots_matching",
+    "label": "Change Slots into Matching (Favorable Slot Change)",
+    "groupLabel": "Slot Change",
+    "groupOrder": 5,
+    "effectOrder": 5
+  },
+  {
+    "key": "remove_bind",
+    "label": "Bind",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 1
+  },
+  {
+    "key": "remove_despair",
+    "label": "Despair",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 2
+  },
+  {
+    "key": "remove_paralysis",
+    "label": "Paralysis",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 3
+  },
+  {
+    "key": "remove_special_bind",
+    "label": "Special Bind (Silence)",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 4
+  },
+  {
+    "key": "remove_burn",
+    "label": "Burn",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 5
+  },
+  {
+    "key": "remove_increase_damage_taken",
+    "label": "Increased damage taken Duration",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 6
+  },
+  {
+    "key": "remove_atk_down",
+    "label": "ATK Down",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 7
+  },
+  {
+    "key": "remove_chain_coefficient_reduction",
+    "label": "Decrease Chain Multiplier Growth Rate",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 8
+  },
+  {
+    "key": "remove_chain_multiplier_limit",
+    "label": "Lock Chain Multiplier",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 9
+  },
+  {
+    "key": "remove_poison",
+    "label": "Poison",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 10
+  },
+  {
+    "key": "remove_rcv_bind",
+    "label": "RCV bind",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 11
+  },
+  {
+    "key": "remove_rcv_down",
+    "label": "RCV Down",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 12
+  },
+  {
+    "key": "remove_sfx",
+    "label": "Remove SFX",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 13
+  },
+  {
+    "key": "remove_pain",
+    "label": "Pain",
+    "groupLabel": "Reduce Status Effect Duration",
+    "groupOrder": 6,
+    "effectOrder": 15
+  },
+  {
+    "key": "remove_enemy_increased_defense",
+    "label": "Enemy DEF Up",
+    "groupLabel": "Reduce Enemy Effect Duration",
+    "groupOrder": 7,
+    "effectOrder": 1
+  },
+  {
+    "key": "remove_damage_reduction",
+    "label": "Enemy Damage Reduction",
+    "groupLabel": "Reduce Enemy Effect Duration",
+    "groupOrder": 7,
+    "effectOrder": 2
+  },
+  {
+    "key": "remove_enemy_damage_nullification",
+    "label": "Enemy Damage Nullification",
+    "groupLabel": "Reduce Enemy Effect Duration",
+    "groupOrder": 7,
+    "effectOrder": 3
+  },
+  {
+    "key": "remove_threshold_damage_reduction",
+    "label": "Enemy Damage threshold",
+    "groupLabel": "Reduce Enemy Effect Duration",
+    "groupOrder": 7,
+    "effectOrder": 4
+  },
+  {
+    "key": "remove_enemy_end_of_turn_damage_percent_cut",
+    "label": "Enemy EOT damage",
+    "groupLabel": "Reduce Enemy Effect Duration",
+    "groupOrder": 7,
+    "effectOrder": 5
+  },
+  {
+    "key": "remove_enemy_enrage",
+    "label": "Enemy Enrage",
+    "groupLabel": "Reduce Enemy Effect Duration",
+    "groupOrder": 7,
+    "effectOrder": 6
+  },
+  {
+    "key": "remove_enemy_end_of_turn_heal",
+    "label": "Enemy Auto-heal",
+    "groupLabel": "Reduce Enemy Effect Duration",
+    "groupOrder": 7,
+    "effectOrder": 7
+  },
+  {
+    "key": "remove_resilience",
+    "label": "Enemy Resilience",
+    "groupLabel": "Reduce Enemy Effect Duration",
+    "groupOrder": 7,
+    "effectOrder": 8
+  },
+  {
+    "key": "remove_enemy_barrier",
+    "label": "Enemy Barrier",
+    "groupLabel": "Reduce Enemy Effect Duration",
+    "groupOrder": 7,
+    "effectOrder": 9
+  },
+  {
+    "key": "apply_delay",
+    "label": "Delay",
+    "groupLabel": "Apply Status Effect",
+    "groupOrder": 8,
+    "effectOrder": 1
+  },
+  {
+    "key": "apply_def_reduction",
+    "label": "DEF Reduction",
+    "groupLabel": "Apply Status Effect",
+    "groupOrder": 8,
+    "effectOrder": 2
+  },
+  {
+    "key": "inflict_poison",
+    "label": "Poison",
+    "groupLabel": "Apply Status Effect",
+    "groupOrder": 8,
+    "effectOrder": 3
+  },
+  {
+    "key": "apply_increase_damage_taken",
+    "label": "Increase Damage Taken",
+    "groupLabel": "Apply Status Effect",
+    "groupOrder": 8,
+    "effectOrder": 4
+  },
+  {
+    "key": "apply_unique_effect",
+    "label": "Unique Effect",
+    "groupLabel": "Apply Status Effect",
+    "groupOrder": 8,
+    "effectOrder": 5
+  },
+  {
+    "key": "apply_resistance_reduction",
+    "label": "Resistance Reduction",
+    "groupLabel": "Apply Status Effect",
+    "groupOrder": 8,
+    "effectOrder": 6
+  },
+  {
+    "key": "apply_set_target",
+    "label": "Set Target",
+    "groupLabel": "Apply Status Effect",
+    "groupOrder": 8,
+    "effectOrder": 7
+  },
+  {
+    "key": "apply_weakened",
+    "label": "Weaken",
+    "groupLabel": "Apply Status Effect",
+    "groupOrder": 8,
+    "effectOrder": 8
+  },
+  {
+    "key": "reduce_ship_special_charge",
+    "label": "Reduce Ship Special Cooldown (Ship Special Charge)",
+    "groupLabel": "Reduction",
+    "groupOrder": 9,
+    "effectOrder": 1
+  },
+  {
+    "key": "reduce_switch_effect_use",
+    "label": "Reduce Switch Effect Use",
+    "groupLabel": "Reduction",
+    "groupOrder": 9,
+    "effectOrder": 2
+  },
+  {
+    "key": "reduce_vs_effect_gauge",
+    "label": "Reduce VS Effect Gauge",
+    "groupLabel": "Reduction",
+    "groupOrder": 9,
+    "effectOrder": 3
+  },
+  {
+    "key": "reduce_special_charge",
+    "label": "Reduce Special Cooldown (Reduce Special Charge Time)",
+    "groupLabel": "Reduction",
+    "groupOrder": 9,
+    "effectOrder": 4
+  },
+  {
+    "key": "restore_advance_special_charge",
+    "label": "Restore/Advance Special Cooldown",
+    "groupLabel": "Reduction",
+    "groupOrder": 9,
+    "effectOrder": 5
+  },
+  {
+    "key": "heal_hp",
+    "label": "Heal HP",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 1
+  },
+  {
+    "key": "boost_rcv",
+    "label": "Boost RCV",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 2
+  },
+  {
+    "key": "apply_resilience",
+    "label": "Resilience",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 3
+  },
+  {
+    "key": "defeat_enemy",
+    "label": "Defeat Enemy",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 4
+  },
+  {
+    "key": "end_of_turn_additional_damage",
+    "label": "End of Turn Additional Damage",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 5
+  },
+  {
+    "key": "tap_timing_requirement",
+    "label": "Tap-Timing Requirement",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 6
+  },
+  {
+    "key": "extend_turn_duration",
+    "label": "Extend Turn Duration",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 7
+  },
+  {
+    "key": "delayed_effect_launch",
+    "label": "Delayed Effect Launch",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 8
+  },
+  {
+    "key": "boost_max_hp",
+    "label": "Boost Max HP",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 9
+  },
+  {
+    "key": "apply_ally_status_effect",
+    "label": "Apply Status Effect (Ally)",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 10
+  },
+  {
+    "key": "swap_captains",
+    "label": "Swap Captains",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 11
+  },
+  {
+    "key": "remove_beneficial_effect",
+    "label": "Remove Beneficial Effect",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 12
+  },
+  {
+    "key": "class_change",
+    "label": "Class Change",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 13
+  },
+  {
+    "key": "critical_hit_chance_boost",
+    "label": "Critical Hit Chance Boost",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 14
+  },
+  {
+    "key": "territory",
+    "label": "Territory",
+    "groupLabel": "Other",
+    "groupOrder": 10,
+    "effectOrder": 15
+  }
 ]

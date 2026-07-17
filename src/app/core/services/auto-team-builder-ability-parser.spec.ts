@@ -267,6 +267,45 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('special_damage_other');
   });
 
+  it('does not read an "Additional Typeless Damage" grant as the damage this special deals', () => {
+    // Dogstorm #1570 (verbatim). The damage DEALT is [STR]-typed, so the matchup is
+    // not x1; the word "typeless" belongs to a neighbouring additional-damage BUFF
+    // grant, a different mechanic owned by additional_damage_boost. Without the
+    // lookbehind the boundary is decided by PUNCTUATION, not meaning: this joins its
+    // clauses with "and" and bridged, while Koala #1241's identical grammar has a
+    // period and did not.
+    const dogstorm = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        "Reduces crew's current HP by 80%, deals 60x character's ATK in [STR] damage to one enemy and adds 80x character's ATK as Additional Typeless Damage for 1 turn",
+        'specialText',
+      ),
+    );
+    expect(dogstorm).toContain('special_damage');
+    expect(dogstorm).not.toContain('special_damage_other');
+
+    // Akainu #4297: no "deals" of its own at all - the bridged verb belongs to the
+    // ENEMY's Burn.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Inflicts all enemies with Burn that will deal 30x enemies' ATK in damage for 1 turn, and adds 80x character's ATK as Additional Typeless Damage for 1 turn",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('special_damage_other');
+
+    // A character with BOTH a genuine direct typeless hit AND an ATD grant must
+    // still be IN (Sabo #1046 shape) - the guard must not throw those away.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Deals random Typeless damage to all enemies. Adds 55x character's ATK as Additional Typeless Damage for 1 turn.",
+          'specialText',
+        ),
+      ),
+    ).toContain('special_damage_other');
+  });
+
   it('publishes a multi-tier special\'s MAX-level turn count, not just level 1', () => {
     // Gladius #1400. A maxed character's special is its final tier, but the
     // max-level fold deduped on key+source alone, so once tier 1 had yielded

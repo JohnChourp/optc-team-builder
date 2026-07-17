@@ -229,7 +229,23 @@ const SPECIAL_ABILITY_MATCHERS = [
     // Doflamingo #3550, Ulti #3588, S-Hawk #4109, Sakazuki #4217). Widening only
     // ever crosses a period followed by a DIGIT, so it still cannot run past a
     // sentence boundary into an unrelated clause.
-    [/\bdeals?\b(?:[^.]|\.\d){0,160}\btypeless\b(?:\s+(?:Fixed|True)){0,3}\s+damage\b/i],
+    // The `(?<!\badditional\s)` guard keeps the gap from reaching out of one clause
+    // and into a NEIGHBOURING "adds Nx character's ATK as Additional Typeless
+    // Damage" buff grant, which is a different mechanic (owned by
+    // additional_damage_boost) and says nothing about the type of the damage this
+    // special DEALS. Seven characters were tagged purely through that bridge while
+    // their own damage was typed, percent, or not even theirs: Dogstorm #1570
+    // "deals 60x character's ATK in [STR] damage to one enemy and adds 80x
+    // character's ATK as Additional Typeless Damage" is [STR]-TYPED, so the matchup
+    // is not x1 at all; Z #2329 deals percent damage; Akainu #4297/#4298 have no
+    // "deals" of their own — the bridged verb belongs to the ENEMY's Burn ("Burn
+    // that will deal 30x enemies' ATK in damage"). Also #1571, #2330, #2372.
+    // Without the guard the boundary is decided by PUNCTUATION rather than meaning:
+    // identical grammar lands in the key when the clauses are joined by "and"
+    // (#1570) and out of it when a period intervenes (Koala #1241).
+    [
+      /\bdeals?\b(?:[^.]|\.\d){0,160}(?<!\badditional\s)\btypeless\b(?:\s+(?:Fixed|True)){0,3}\s+damage\b/i,
+    ],
   ],
   [
     'percent_damage',

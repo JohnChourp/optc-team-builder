@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T08:43:20.924Z",
+  "generatedAt": "2026-07-17T09:21:02.681Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -2413,7 +2413,7 @@
     },
     {
       "key": "special_damage_other",
-      "label": "Other",
+      "label": "Typeless Damage (Other)",
       "category": "special",
       "groupLabel": "Damage",
       "groupOrder": 1,
@@ -2428,7 +2428,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 474,
+      "matchCount": 467,
       "matchingCharacterIds": [
         446,
         447,
@@ -2501,8 +2501,6 @@
         1559,
         1563,
         1564,
-        1570,
-        1571,
         1576,
         1577,
         1593,
@@ -2599,8 +2597,6 @@
         2295,
         2322,
         2323,
-        2329,
-        2330,
         2333,
         2334,
         2341,
@@ -2611,7 +2607,6 @@
         2363,
         2364,
         2365,
-        2372,
         2417,
         2418,
         2447,
@@ -2864,8 +2859,6 @@
         4290,
         4291,
         4292,
-        4297,
-        4298,
         4306,
         4322,
         4323,
