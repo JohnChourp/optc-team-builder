@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T07:20:54.734Z",
+  "generatedAt": "2026-07-17T09:31:34.210Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -20,7 +20,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1823,
+      "matchCount": 1824,
       "matchingCharacterIds": [
         1,
         2,
@@ -1841,6 +1841,7 @@
         4588,
         4589,
         4596,
+        4612,
         5013,
         5014,
         5029,
@@ -2956,7 +2957,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 410,
+      "matchCount": 411,
       "matchingCharacterIds": [
         226,
         227,
@@ -3366,6 +3367,7 @@
         4505,
         4579,
         4596,
+        4611,
         5029,
         5030
       ],
@@ -3486,7 +3488,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1348,
+      "matchCount": 1350,
       "matchingCharacterIds": [
         209,
         210,
@@ -4832,8 +4834,10 @@
         4599,
         4601,
         4602,
+        4605,
         4607,
         4609,
+        4612,
         5013,
         5014
       ],
@@ -4870,7 +4874,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 755,
+      "matchCount": 758,
       "matchingCharacterIds": [
         263,
         305,
@@ -5625,6 +5629,9 @@
         4595,
         4596,
         4597,
+        4603,
+        4606,
+        4613,
         5029,
         5030
       ],
@@ -6222,7 +6229,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 424,
+      "matchCount": 426,
       "matchingCharacterIds": [
         1233,
         1234,
@@ -6647,7 +6654,9 @@
         4593,
         4595,
         4598,
-        4609
+        4609,
+        4611,
+        4613
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -6675,7 +6684,9 @@
         4289,
         4350,
         4387,
-        4598
+        4598,
+        4611,
+        4613
       ],
       "sampleCharacterIds": [
         1233,
@@ -7062,11 +7073,17 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 1,
+      "matchingCharacterIds": [
+        4611
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "sampleCharacterIds": [
+        4611
+      ],
+      "sampleTexts": [
+        "Reduces one enemy's HP by 25% (ignoring all defensive effects), and reduces all enemies' Threshold Damage Reduction duration by 15 turns. If character is a Captain/Friend Captain/Helper Captain, changes Cerebral characters' [BLOCK][RCV][STR] slots to Super [STR]. If field has \"Territory: Cerebral class\" and \"Territory: [STR]\", or field has \"Territory: Crew\", boosts the chain multiplier by 3x for 3 turns (boosts the chain multiplier by 1.75x for 1 turn otherwise), then after that, boosts [STR], Cerebral, and Powerhouse characters' slot effects up to 4x based on the result of the Action Special for 3 turns (MISS 3x; GOOD 3.25x; GREAT 3.5x; PERFECT 3.75x; EXCELLENT 4x), and applies \"Territory: Cerebral class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 3 turns"
+      ]
     },
     {
       "key": "chain_multiplier_growth_rate",
@@ -7513,7 +7530,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 315,
+      "matchCount": 318,
       "matchingCharacterIds": [
         3365,
         3371,
@@ -7829,7 +7846,10 @@
         4598,
         4599,
         4600,
-        4608
+        4605,
+        4606,
+        4608,
+        4613
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -8049,7 +8069,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 863,
+      "matchCount": 867,
       "matchingCharacterIds": [
         9,
         11,
@@ -8909,7 +8929,11 @@
         4595,
         4598,
         4599,
+        4603,
         4607,
+        4611,
+        4612,
+        4613,
         5013,
         5014,
         5054,
@@ -13054,7 +13078,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 256,
+      "matchCount": 257,
       "matchingCharacterIds": [
         231,
         232,
@@ -13310,6 +13334,7 @@
         4554,
         4555,
         4587,
+        4613,
         5054,
         5055
       ],
@@ -13371,7 +13396,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 996,
+      "matchCount": 999,
       "matchingCharacterIds": [
         389,
         390,
@@ -14366,6 +14391,9 @@
         4596,
         4597,
         4598,
+        4603,
+        4605,
+        4606,
         4608,
         4609,
         4610
@@ -15226,6 +15254,9 @@
         4596,
         4597,
         4598,
+        4603,
+        4605,
+        4606,
         4608,
         4609,
         4610
@@ -22830,6 +22861,30 @@
           ]
         },
         {
+          "characterId": 4603,
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "INT",
+            "QCK",
+            "RCV",
+            "TND"
+          ]
+        },
+        {
+          "characterId": 4605,
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "TND"
+          ]
+        },
+        {
+          "characterId": 4606,
+          "effectTargetScope": "crew",
+          "slotTokens": [
+            "RCV"
+          ]
+        },
+        {
           "characterId": 4608,
           "slotTokens": [
             "DEX",
@@ -22940,7 +22995,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1509,
+      "matchCount": 1514,
       "matchingCharacterIds": [
         21,
         23,
@@ -24440,7 +24495,12 @@
         4593,
         4595,
         4596,
+        4605,
+        4606,
         4610,
+        4611,
+        4612,
+        4613,
         5013,
         5014,
         5029,
@@ -24551,7 +24611,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 638,
+      "matchCount": 643,
       "matchingCharacterIds": [
         566,
         570,
@@ -25188,7 +25248,12 @@
         4593,
         4595,
         4596,
+        4605,
+        4606,
         4610,
+        4611,
+        4612,
+        4613,
         5031,
         5032
       ],
@@ -27951,7 +28016,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 572,
+      "matchCount": 573,
       "matchingCharacterIds": [
         73,
         251,
@@ -28520,6 +28585,7 @@
         4596,
         4601,
         4602,
+        4603,
         4609,
         5031,
         5032,
@@ -29058,7 +29124,8 @@
             4469,
             4529,
             4551,
-            4583
+            4583,
+            4603
           ]
         },
         {
@@ -29417,7 +29484,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 464,
+      "matchCount": 465,
       "matchingCharacterIds": [
         709,
         949,
@@ -29881,6 +29948,7 @@
         4591,
         4595,
         4608,
+        4613,
         5031,
         5032
       ],
@@ -30438,7 +30506,8 @@
             4529,
             4547,
             4571,
-            4608
+            4608,
+            4613
           ]
         },
         {
@@ -30612,7 +30681,8 @@
         4529,
         4547,
         4571,
-        4608
+        4608,
+        4613
       ],
       "captainAbilityTurnMatchingCharacterIds": [
         {
@@ -30705,7 +30775,8 @@
             4483,
             4529,
             4547,
-            4608
+            4608,
+            4613
           ]
         },
         {
@@ -33942,7 +34013,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 266,
+      "matchCount": 268,
       "matchingCharacterIds": [
         1411,
         1412,
@@ -34209,7 +34280,9 @@
         4585,
         4588,
         4589,
-        4597
+        4597,
+        4605,
+        4606
       ],
       "turnMatchingCharacterIds": [
         {
@@ -34308,7 +34381,9 @@
             4418,
             4486,
             4588,
-            4597
+            4597,
+            4605,
+            4606
           ]
         },
         {
@@ -34624,7 +34699,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 347,
+      "matchCount": 348,
       "matchingCharacterIds": [
         1411,
         1412,
@@ -34972,7 +35047,8 @@
         4584,
         4588,
         4589,
-        4600
+        4600,
+        4605
       ],
       "turnMatchingCharacterIds": [
         {
@@ -35333,7 +35409,8 @@
             4530,
             4565,
             4584,
-            4600
+            4600,
+            4605
           ]
         },
         {
@@ -35470,7 +35547,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 52,
+      "matchCount": 54,
       "matchingCharacterIds": [
         1903,
         1904,
@@ -35523,7 +35600,9 @@
         4574,
         4575,
         4583,
-        4598
+        4598,
+        4603,
+        4613
       ],
       "turnMatchingCharacterIds": [
         {
@@ -35581,7 +35660,9 @@
             4539,
             4575,
             4583,
-            4598
+            4598,
+            4603,
+            4613
           ]
         },
         {
@@ -35646,7 +35727,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 334,
+      "matchCount": 338,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -35979,7 +36060,11 @@
         4588,
         4589,
         4598,
+        4603,
+        4606,
         4610,
+        4611,
+        4612,
         5031,
         5032
       ],
@@ -36322,6 +36407,8 @@
             4519,
             4570,
             4583,
+            4603,
+            4606,
             4610
           ]
         },
@@ -36372,6 +36459,13 @@
             4210,
             4211,
             4487
+          ]
+        },
+        {
+          "minTurns": 15,
+          "characterIds": [
+            4611,
+            4612
           ]
         },
         {
@@ -37940,7 +38034,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 213,
+      "matchCount": 214,
       "matchingCharacterIds": [
         2049,
         2050,
@@ -38154,7 +38248,8 @@
         4577,
         4591,
         4594,
-        4597
+        4597,
+        4603
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -38573,16 +38668,29 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "specialText"
+        "captainAbility"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 2,
+      "matchingCharacterIds": [
+        4611,
+        4612
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "captainAbilityMatchingCharacterIds": [
+        4611,
+        4612
+      ],
+      "sampleCharacterIds": [
+        4611,
+        4612
+      ],
+      "sampleTexts": [
+        "Launches the following effect at start of quest: \"Boosts the type effects of normal attacks for [STR], Cerebral, and Powerhouse characters by 3.25x for 7 turns, allows healing up to 2x crew's max HP ignoring max HP limit for 7 turns (if HP is above max limit, it is treated as being full HP), and reduces Cerebral and Powerhouse characters' Special charge time by 2 turns, and VS Effect gauge and Switch Effect by 2\". Boosts Cerebral and Powerhouse characters' ATK by 6x. If field has \"Territory: Cerebral class\", boosts Cerebral characters' ATK by a further 1.1x. If field has \"Territory: Powerhouse class\", boosts Powerhouse characters' ATK by a further 1.1x. If field has \"Territory: [STR]\", boosts [STR] characters' ATK by 1.1x [Applies following effect based on number of applicable Character Tags on crew] If 3 or more [World Government] [Holy Knights] [Celestial Dragon] [Five Elders] characters are on the crew and character is a Captain (Friend/Helper Captain does not count) and performs EXCELLENT for the Action Special, boosts Cerebral and Powerhouse characters' ATK by a further 1.2x for 3 turns. Reduces [World Government] [Holy Knights] [Celestial Dragon] [Five Elders] characters' Special charge time by 5 turns at start of quest",
+        "Launches the following effect at start of quest: \"Allows crew to stack up to 2 different damage boosting effects (cannot stack the damage boost of the same type) for 7 turns, allows healing up to 2x crew's max HP ignoring max HP limit for 7 turns (if HP is above max limit, it is treated as being full HP), and reduces Powerhouse and Cerebral characters' Special charge time by 2 turns, and VS Effect gauge and Switch Effect by 2\". Boosts Powerhouse and Cerebral characters' ATK by 6x. If field has \"Territory: [STR]\", \"Territory: Powerhouse class\", \"Territory: Cerebral class\", or \"Territory: Crew\", boosts [STR], Powerhouse, and Cerebral characters' ATK by a further 1.2x [Applies following effect based on number of applicable Character Tags on crew] If character is a Captain (Friend/Helper Captain does not count) and performs EXCELLENT for the Action Special, boosts [World Government] [Holy Knights] [Celestial Dragon] [Five Elders] characters' ATK by 1.1x for 3 turns. Reduces [World Government] [Holy Knights] [Celestial Dragon] [Five Elders] characters' Special charge time by 5 turns at start of quest"
+      ]
     },
     {
       "key": "reduce_special_charge",
@@ -42160,7 +42268,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 329,
+      "matchCount": 331,
       "matchingCharacterIds": [
         577,
         578,
@@ -42490,7 +42598,9 @@
         4599,
         4601,
         4602,
-        4609
+        4609,
+        4611,
+        4612
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -42720,7 +42830,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 263,
+      "matchCount": 264,
       "matchingCharacterIds": [
         1191,
         1192,
@@ -42984,7 +43094,8 @@
         4553,
         4556,
         4599,
-        4608
+        4608,
+        4613
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -43572,7 +43683,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 83,
+      "matchCount": 87,
       "matchingCharacterIds": [
         4206,
         4209,
@@ -43655,8 +43766,12 @@
         4597,
         4601,
         4602,
+        4603,
         4609,
-        4610
+        4610,
+        4611,
+        4612,
+        4613
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -45571,7 +45686,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1129,
+      "matchCount": 1134,
       "matchingCharacterIds": [
         4,
         12,
@@ -46699,8 +46814,13 @@
         4598,
         4601,
         4602,
+        4605,
+        4606,
         4607,
         4608,
+        4611,
+        4612,
+        4613,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -47108,7 +47228,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 365,
+      "matchCount": 367,
       "matchingCharacterIds": [
         20,
         22,
@@ -47471,6 +47591,8 @@
         4593,
         4598,
         4600,
+        4605,
+        4606,
         4607,
         4610,
         5054,
@@ -48879,7 +49001,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 291,
+      "matchCount": 293,
       "matchingCharacterIds": [
         20,
         22,
@@ -49167,6 +49289,8 @@
         4573,
         4574,
         4575,
+        4605,
+        4606,
         4607,
         4609,
         4610,
@@ -50128,7 +50252,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 287,
+      "matchCount": 289,
       "matchingCharacterIds": [
         20,
         22,
@@ -50413,6 +50537,8 @@
         4593,
         4598,
         4600,
+        4605,
+        4606,
         4607,
         4609,
         5054,
@@ -51528,7 +51654,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 121,
+      "matchCount": 123,
       "matchingCharacterIds": [
         575,
         1595,
@@ -51650,7 +51776,9 @@
         4577,
         4583,
         4596,
-        4598
+        4598,
+        4603,
+        4605
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -51728,7 +51856,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 51,
+      "matchCount": 53,
       "matchingCharacterIds": [
         4364,
         4365,
@@ -51780,7 +51908,9 @@
         4585,
         4591,
         4597,
-        4608
+        4606,
+        4608,
+        4611
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -53642,7 +53772,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 516,
+      "matchCount": 519,
       "matchingCharacterIds": [
         12,
         20,
@@ -54156,9 +54286,12 @@
         4591,
         4595,
         4596,
+        4603,
+        4606,
         4608,
         4609,
         4610,
+        4613,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -54569,7 +54702,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 695,
+      "matchCount": 697,
       "matchingCharacterIds": [
         8,
         77,
@@ -55265,6 +55398,8 @@
         4589,
         4594,
         4600,
+        4605,
+        4611,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -55351,7 +55486,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 23,
+      "matchCount": 25,
       "matchingCharacterIds": [
         4432,
         4441,
@@ -55375,7 +55510,9 @@
         4563,
         4564,
         4577,
-        4594
+        4594,
+        4611,
+        4612
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -55743,7 +55880,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 57,
+      "matchCount": 58,
       "matchingCharacterIds": [
         75,
         221,
@@ -55801,7 +55938,8 @@
         4510,
         4511,
         4516,
-        4579
+        4579,
+        4611
       ],
       "turnMatchingCharacterIds": [
         {
@@ -55854,7 +55992,8 @@
             4510,
             4511,
             4516,
-            4579
+            4579,
+            4611
           ]
         },
         {
@@ -55901,7 +56040,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 40,
+      "matchCount": 41,
       "matchingCharacterIds": [
         713,
         789,
@@ -55942,7 +56081,8 @@
         4302,
         4378,
         4457,
-        4539
+        4539,
+        4613
       ],
       "turnMatchingCharacterIds": [
         {
@@ -55985,7 +56125,8 @@
             4302,
             4378,
             4457,
-            4539
+            4539,
+            4613
           ]
         },
         {
@@ -57750,7 +57891,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 172,
+      "matchCount": 174,
       "matchingCharacterIds": [
         73,
         257,
@@ -57923,6 +58064,8 @@
         4524,
         4536,
         4537,
+        4612,
+        4613,
         5014
       ],
       "turnMatchingCharacterIds": [],
@@ -60277,7 +60420,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 151,
+      "matchCount": 153,
       "matchingCharacterIds": [
         8,
         12,
@@ -60429,7 +60572,9 @@
         3864,
         4032,
         4044,
-        4087
+        4087,
+        4605,
+        4606
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -60614,7 +60759,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 99,
+      "matchCount": 100,
       "matchingCharacterIds": [
         12,
         251,
@@ -60714,7 +60859,8 @@
         3844,
         3938,
         4046,
-        4086
+        4086,
+        4606
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -60965,7 +61111,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 162,
+      "matchCount": 163,
       "matchingCharacterIds": [
         8,
         20,
@@ -61128,7 +61274,8 @@
         4044,
         4046,
         4086,
-        4087
+        4087,
+        4605
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -61162,7 +61309,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 88,
+      "matchCount": 89,
       "matchingCharacterIds": [
         73,
         416,
@@ -61251,7 +61398,8 @@
         4545,
         4552,
         4572,
-        4573
+        4573,
+        4612
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
