@@ -228,6 +228,84 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_bind');
   });
 
+  it('splits a cure list that contains a slot-scoped entry', () => {
+    // Romy & Yorueka #4031. isSlotScopedTarget fires on a SUBSTRING, so a list
+    // merely CONTAINING "slot bind" took the whole-target-only path and was never
+    // split: the single target "bind and slot bind" matches remove_bind on
+    // endsWith(' bind') but is then vetoed by its own !includes('slot bind')
+    // exclusion, so this genuine 5-turn Bind cure resolved to Slot Bind alone.
+    const both = analyzeBuilderAbilityText(
+      'Reduces Bind and Slot Bind duration by 5 turns.',
+      'specialText',
+    );
+    expect(both).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_bind', minTurns: 5 }),
+        expect.objectContaining({ key: 'remove_slot_bind', minTurns: 5 }),
+      ]),
+    );
+    // Order must not matter.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Slot Bind and Bind duration by 5 turns.', 'specialText'),
+      ),
+    ).toEqual(expect.arrayContaining(['remove_bind', 'remove_slot_bind']));
+    // A LONE slot-scoped target still must NOT leak into the plain Bind key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Slot Bind duration by 5 turns.', 'specialText'),
+      ),
+    ).not.toContain('remove_bind');
+  });
+
+  it('keeps a cure whose duration range has a zero floor, with no turn guarantee', () => {
+    // Boa Hancock #4398/#4399. A range publishes its LOWER bound (minTurns means
+    // "at least this many"), so a 0 floor guarantees nothing - and returning 0
+    // made the consumer's `minTurns <= 0` check discard the whole match, tag
+    // included, leaving a real Bind cure unfilterable even with no turn
+    // requirement. null = "cures, no guaranteed floor".
+    const hancock = analyzeBuilderAbilityText(
+      'Recovers 20,000 HP, reduces Bind duration by 0-10 turns depending on the number of [RCV] orbs used in normal attacks.',
+      'specialText',
+    );
+    expect(hancock).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'remove_bind', minTurns: null })]),
+    );
+    // A range with a real floor still publishes that floor, not null.
+    expect(
+      analyzeBuilderAbilityText('Reduces Bind duration by 2-6 turns.', 'specialText'),
+    ).toEqual(expect.arrayContaining([expect.objectContaining({ key: 'remove_bind', minTurns: 2 })]));
+  });
+
+  it('reads a cure listed by ellipsis, without borrowing a neighbour\'s own duration', () => {
+    // Monet #2010/#2011. Upstream compresses "reduces Bind duration by 3 turns,
+    // and reduces ... for 3 turns" (per Fandom, which also files her under
+    // Category:Bind Reduction) into one clause where the trailing "by 3 turns"
+    // distributes across both targets, so the Bind cure has no duration of its
+    // own and the anti-bridge guard dropped it.
+    expect(
+      analyzeBuilderAbilityText(
+        "Deals 50,000 Fixed damage to one enemy and reduces Bind and reduces enemies' Percent Damage Reduction duration by 3 turns",
+        'specialText',
+      ),
+    ).toEqual(expect.arrayContaining([expect.objectContaining({ key: 'remove_bind', minTurns: 3 })]));
+
+    // The separator: when the FIRST clause carries its OWN duration this is the
+    // bridge, not an ellipsis, and must not be re-read at the second clause's
+    // turn count. Dogstorm #2168 cures Special Bind for 4 turns, never 3.
+    const dogstorm = analyzeBuilderAbilityText(
+      "Reduces Special Bind duration by 4 turns and reduces enemies' Threshold Damage Reduction duration by 3 turns.",
+      'specialText',
+    );
+    expect(dogstorm).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_special_bind', minTurns: 4 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 3 }),
+      ]),
+    );
+    expect(dogstorm).not.toContainEqual(expect.objectContaining({ key: 'remove_special_bind', minTurns: 3 }));
+  });
+
   it('does not let a cure clause bridge into a neighbouring clause in either direction', () => {
     // Both TURN_PATTERNS lazily scan to their terminator, so without a guard the
     // target starts at the FIRST verb in the sentence and swallows whole clauses.
@@ -1544,11 +1622,25 @@ describe('auto team builder ability parser', () => {
     );
     expect(despair.find((a) => a.key === 'remove_despair')?.minTurns).toBe(2);
     expect(despair.find((a) => a.key === 'remove_atk_down')?.minTurns).toBe(2);
-    // A range whose min is 0 ("by 0-10 turns") has no guaranteed reduction and is
-    // dropped by the minTurns > 0 guard.
-    expect(
-      extractAbilityKeys(analyzeBuilderAbilityText('reduces Bind duration by 0-10 turns', 'specialText')),
-    ).not.toContain('remove_bind');
+    // A range whose min is 0 ("by 0-10 turns") has no guaranteed reduction, so it
+    // publishes minTurns: null rather than 0.
+    //
+    // This deliberately supersedes the original behaviour, which dropped the match
+    // outright via the `minTurns > 0` guard. Dropping OVERSHOT the intent: it did
+    // not just withhold the turn guarantee, it denied membership, so Boa Hancock
+    // #4398/#4399 ("reduces Bind duration by 0-10 turns depending on the number of
+    // [RCV] orbs used in normal attacks") cured Bind yet was absent from
+    // remove_bind entirely and unfilterable even with no turn requirement. null
+    // states exactly what the original comment intended - a real cure with no
+    // guaranteed floor - and lands her in the key's characterIds but in NO turn
+    // bucket, so an unfiltered search finds her and any "N+ turns" filter skips
+    // her, which is the behaviour the guard was reaching for.
+    const zeroFloor = analyzeBuilderAbilityText(
+      'reduces Bind duration by 0-10 turns',
+      'specialText',
+    ).find((a) => a.key === 'remove_bind');
+    expect(zeroFloor).toBeDefined();
+    expect(zeroFloor?.minTurns).toBeNull();
     // Non-range single counts are unaffected.
     expect(
       analyzeBuilderAbilityText('reduces Bind duration by 3 turns', 'specialText').find(

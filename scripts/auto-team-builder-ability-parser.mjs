@@ -1380,8 +1380,11 @@ const TURN_PATTERNS = [
     // Barrier duration by 1-5 turns", Chaka #3644 "reduces Bind duration by 1-5
     // turns") records the FIRST number as minTurns — the guaranteed minimum
     // reduction (a "1-5" range guarantees at least 1). The optional "-M" tail is
-    // non-capturing so match[2] stays the min; ranges whose min is 0 ("by 0-10
-    // turns") resolve to 0 and are dropped by the minTurns > 0 guard downstream.
+    // non-capturing so match[2] stays the min; a range whose min is 0 ("by 0-10
+    // turns") guarantees nothing and so resolves to null, NOT 0 — see resolveTurns
+    // below. Returning 0 made the downstream `minTurns <= 0` guard drop the whole
+    // match, tag included, which denied membership rather than just withholding
+    // the turn guarantee.
     // The target excludes a second "reduce(s)/remove(s)" verb so it cannot bridge
     // a first no-turn-count clause into a later "by N turns" clause — e.g. Zeus &
     // Prometheus & Big Mom #3902 "reduce Paralysis duration by half and reduces
@@ -1398,7 +1401,18 @@ const TURN_PATTERNS = [
     // "completely", so this only ever drops bridges (6 records, 0 replacements).
     pattern:
       /(?:reduces?|removes?)\s+((?:(?!\breduces?\b|\bremoves?\b|\bcompletely\b)[^.;])+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)(?:\s*-\s*\d+)?\s+turns?/gi,
-    resolveTurns: (match) => Number(match[2]),
+    // A range publishes its LOWER bound, because minTurns means "guaranteed at
+    // least this many" ("by 1-99 turns" -> 1). A ZERO floor therefore guarantees
+    // nothing, and returning 0 made the consumer's `minTurns <= 0` check discard
+    // the whole match - tag included - so Boa Hancock #4398/#4399 ("reduces Bind
+    // duration by 0-10 turns depending on the number of [RCV] orbs used in normal
+    // attacks") cured Bind but was absent from remove_bind entirely, unfilterable
+    // even with no turn requirement. null means "real cure, no guaranteed floor":
+    // the same shape the parser already uses for turn-less abilities, so she is
+    // matched by an unfiltered search and correctly skipped by any "N+ turns" one.
+    // This is the corpus's only zero-floor range (the other 17 all start at 1+),
+    // and there is no literal "by 0 turns" anywhere, so nothing else changes.
+    resolveTurns: (match) => (Number(match[2]) > 0 ? Number(match[2]) : null),
   },
   {
     isCompleteRemoval: true,
@@ -1421,6 +1435,35 @@ const TURN_PATTERNS = [
     pattern:
       /(?:reduces?|removes?)\s+((?:(?!\breduces?\b|\bremoves?\b)[^.;])+?)\s+(?:duration\s+)?completely/gi,
     resolveTurns: () => 99,
+  },
+  {
+    isCompleteRemoval: false,
+    // Upstream's ELLIPSIS: "reduces Bind and reduces enemies' Percent Damage
+    // Reduction duration by 3 turns" (Monet #2010/#2011). The first target has no
+    // duration of its own - the trailing "by 3 turns" distributes across BOTH -
+    // so the anti-bridge guard (correctly) refused to cross the second "reduces"
+    // and the Bind cure was dropped. Fandom confirms the intent: Monet's skill is
+    // "reduces Bind duration by 3 turns, and reduces all enemies damage reduction
+    // duration ... for 3 turns", and the page carries [[Category:Bind Reduction]].
+    //
+    // This is NOT the bridge case the guard exists to stop: there, the first
+    // clause has its OWN "duration by N turns" and the swallowed verb starts a
+    // genuinely separate effect. Here the conjunction is "and reduces" with no
+    // intervening duration, which is one clause listing two targets. Requiring a
+    // trailing "duration by N turns" keeps the verb-less "Remove Beneficial
+    // Effects and Remove Accumulated Value effects once per ..." family (Roger
+    // #3176 et al) out. Group 1 spans both targets; the second segment keeps its
+    // "reduces" prefix and simply matches no alias, which is harmless.
+    //
+    // The FIRST target additionally may not contain "duration" or "turns": that
+    // is what separates an ellipsis from the bridge. Without it, Dogstorm #2168
+    // "Reduces Special Bind duration by 4 turns and reduces enemies' Threshold
+    // Damage Reduction duration by 3 turns" would swallow its own 4-turn clause
+    // and republish Special Bind as a 3-turn cure - the exact defect the guards
+    // above exist to stop.
+    pattern:
+      /(?:reduces?)\s+((?:(?!\breduces?\b|\bremoves?\b|\bduration\b|\bturns?\b)[^.;])+?\s+and\s+reduces?\s+(?:(?!\breduces?\b|\bremoves?\b)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
+    resolveTurns: (match) => Number(match[2]),
   },
   {
     isCompleteRemoval: false,
@@ -1720,7 +1763,10 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
       const rawTarget = String(match[1] ?? '').trim();
       const minTurns = resolveTurns(match);
 
-      if (!Number.isFinite(minTurns) || minTurns <= 0) {
+      // An explicit null is a pattern SIGNALLING "this is a real effect with no
+      // guaranteed turn floor" (a zero-floor range), and must keep its record.
+      // Anything else non-finite or <= 0 is a failed parse and is dropped.
+      if (minTurns !== null && (!Number.isFinite(minTurns) || minTurns <= 0)) {
         continue;
       }
 
@@ -3502,29 +3548,33 @@ function normalizeTargetSegments(targetText) {
     return [];
   }
 
-  if (isSlotScopedTarget(normalizedTarget)) {
-    return [
-      {
-        target: normalizedTarget,
-        slotTokens,
-      },
-    ];
-  }
-
-  const candidates = [
-    ...normalizedTarget
-      .split(/\s*,\s*|\s+and\s+/gi)
-      .map((segment) => segment.trim())
-      .filter(Boolean)
-      .map((segment) => ({
-        target: segment,
-        slotTokens: [],
-      })),
-    {
-      target: normalizedTarget,
+  const segments = normalizedTarget
+    .split(/\s*,\s*|\s+and\s+/gi)
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .map((segment) => ({
+      target: segment,
       slotTokens: [],
-    },
-  ];
+    }));
+
+  // A slot-scoped target is emitted WHOLE and first, so it keeps the slot tokens
+  // that the split path drops. It must still emit its segments too, though:
+  // isSlotScopedTarget fires on a SUBSTRING, so a LIST that merely contains a
+  // slot-scoped entry took the whole-only path and hid every other cure in it.
+  // "Reduces Bind and Slot Bind duration by 5 turns" (Romy & Yorueka #4031)
+  // produced only the unsplit "bind and slot bind" - which remove_bind matches on
+  // endsWith(' bind') but then vetoes via its own !includes('slot bind')
+  // exclusion - so a genuine 5-turn Bind cure vanished. A lone slot-scoped target
+  // splits to itself, making this a no-op there; addAbility dedupes the overlap.
+  const candidates = isSlotScopedTarget(normalizedTarget)
+    ? [{ target: normalizedTarget, slotTokens }, ...segments]
+    : [
+        ...segments,
+        {
+          target: normalizedTarget,
+          slotTokens: [],
+        },
+      ];
 
   const seen = new Set();
 
