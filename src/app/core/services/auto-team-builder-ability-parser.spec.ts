@@ -633,6 +633,19 @@ describe('auto team builder ability parser', () => {
     );
     expect(thredhold).toContain('remove_threshold_damage_reduction');
     expect(thredhold).not.toContain('remove_damage_reduction');
+    // A removal that EXCLUDES a buff must not be tagged as removing it: Saintess
+    // Gunko #4612 "reduces all enemies' damage reduction (except Threshold Damage
+    // Reduction) duration by 15 turns". The "(except …)" strip drops the
+    // parenthetical, so she is tagged for the plain Damage Reduction she reduces,
+    // NOT the Threshold DR she spares.
+    const gunko = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        "Reduces all enemies' damage reduction (except Threshold Damage Reduction) duration by 15 turns.",
+        'specialText',
+      ),
+    );
+    expect(gunko).toContain('remove_damage_reduction');
+    expect(gunko).not.toContain('remove_threshold_damage_reduction');
     // Crew's-OWN Percent Damage Reduction reference (a scaling clause, not a
     // duration removal) must stay excluded (#4293 Jozu/Oden variant).
     expect(

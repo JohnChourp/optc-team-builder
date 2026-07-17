@@ -3708,6 +3708,15 @@ function normalizeTargetText(targetText) {
     // aliases already tolerated the prefix, so this only affects exact-match keys;
     // simulated corpus-wide it is +2 (Bepo) / -0, touching no other key.
     .replace(/\ball\b/g, ' ')
+    // Strip an "(except <buff>)" exclusion so a removal that EXCLUDES a buff is not
+    // tagged as removing it. Saintess Gunko #4612 "reduces all enemies' damage
+    // reduction (except Threshold Damage Reduction) duration by 15 turns" was tagged
+    // remove_threshold_damage_reduction because that key's includes() fired on the
+    // exclusion substring. Removing the parenthetical leaves the segment "damage
+    // reduction", so she is correctly tagged remove_damage_reduction instead - the
+    // buff she actually reduces. This is the corpus's ONLY "(except …)" clause, so
+    // the blast radius is exactly this one character.
+    .replace(/\s*\(except[^)]*\)/g, ' ')
     .replace(/\bbuffs?\b/g, ' ')
     .replace(/\bstatuses?\b/g, ' ')
     .replace(/\bof the crew\b/g, ' ')

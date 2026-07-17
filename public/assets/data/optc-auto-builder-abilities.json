@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T17:01:20.256Z",
+  "generatedAt": "2026-07-17T17:30:14.076Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -46669,7 +46669,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 350,
+      "matchCount": 351,
       "matchingCharacterIds": [
         1411,
         1412,
@@ -47020,7 +47020,8 @@
         4588,
         4589,
         4600,
-        4605
+        4605,
+        4612
       ],
       "turnMatchingCharacterIds": [
         {
@@ -47434,6 +47435,12 @@
           ]
         },
         {
+          "minTurns": 15,
+          "characterIds": [
+            4612
+          ]
+        },
+        {
           "minTurns": 99,
           "characterIds": [
             2600,
@@ -47710,7 +47717,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 339,
+      "matchCount": 338,
       "matchingCharacterIds": [
         1311,
         1312,
@@ -48048,7 +48055,6 @@
         4606,
         4610,
         4611,
-        4612,
         5031,
         5032
       ],
@@ -48452,8 +48458,7 @@
         {
           "minTurns": 15,
           "characterIds": [
-            4611,
-            4612
+            4611
           ]
         },
         {
