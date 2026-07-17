@@ -228,6 +228,56 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_bind');
   });
 
+  it('tolerates the upstream "reducess" verb typo', () => {
+    // Makino & Woop Slap #3844 is the corpus's ONLY "reducess" (1 of 7,183 verb
+    // instances) and had no Despair tag at all, because `reduces?` matches
+    // "reduce"/"reduces" but not the doubled s.
+    expect(
+      analyzeBuilderAbilityText(
+        "Reduces enemies' Increased Defense and Resilience duration by 5 turns, reducess Despair duration by 5 turns.",
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_despair', minTurns: 5 }),
+        expect.objectContaining({ key: 'remove_enemy_increased_defense', minTurns: 5 }),
+      ]),
+    );
+    // The singular verb still works, and the NOUN "Reduction" is still not a verb.
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('Reduce Despair duration by 3 turns.', 'specialText')),
+    ).toContain('remove_despair');
+    expect(
+      analyzeBuilderAbilityText(
+        "Reduces enemies' Percent Damage Reduction duration by 3 turns.",
+        'specialText',
+      ).find((a) => a.key === 'remove_damage_reduction')?.minTurns,
+    ).toBe(3);
+  });
+
+  it('keeps the plain Despair cure separate from Sailor Despair in both directions', () => {
+    // Sailor Despair is a DISTINCT debuff (it disables the sailor ability), hence
+    // remove_despair's !includes('sailor despair') veto. That veto is a substring
+    // check, so a LIST naming both is the risk case - the shape that cost
+    // remove_bind a tag (#4031, "Bind and Slot Bind"). Here the segment split runs
+    // normally, so both keys resolve, in either order.
+    for (const text of [
+      'Reduces Despair and Sailor Despair duration by 5 turns.',
+      'Reduces Sailor Despair and Despair duration by 5 turns.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toEqual(
+        expect.arrayContaining(['remove_despair', 'remove_sailor_despair']),
+      );
+    }
+    // A Sailor-Despair-only cure must NOT claim the plain Despair key: real data,
+    // Basil Hawkins #3851/#3852 "reduces Bind and Sailor Despair duration by 6 turns".
+    const hawkins = extractAbilityKeys(
+      analyzeBuilderAbilityText('reduces Bind and Sailor Despair duration by 6 turns', 'specialText'),
+    );
+    expect(hawkins).toEqual(expect.arrayContaining(['remove_bind', 'remove_sailor_despair']));
+    expect(hawkins).not.toContain('remove_despair');
+  });
+
   it('splits a cure list that contains a slot-scoped entry', () => {
     // Romy & Yorueka #4031. isSlotScopedTarget fires on a SUBSTRING, so a list
     // merely CONTAINING "slot bind" took the whole-target-only path and was never

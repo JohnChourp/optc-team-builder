@@ -1400,7 +1400,7 @@ const TURN_PATTERNS = [
     // the correct permanent one. A genuine "by N turns" target never contains
     // "completely", so this only ever drops bridges (6 records, 0 replacements).
     pattern:
-      /(?:reduces?|removes?)\s+((?:(?!\breduces?\b|\bremoves?\b|\bcompletely\b)[^.;])+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)(?:\s*-\s*\d+)?\s+turns?/gi,
+      /(?:reduces{0,2}|removes?)\s+((?:(?!\breduces{0,2}\b|\bremoves?\b|\bcompletely\b)[^.;])+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)(?:\s*-\s*\d+)?\s+turns?/gi,
     // A range publishes its LOWER bound, because minTurns means "guaranteed at
     // least this many" ("by 1-99 turns" -> 1). A ZERO floor therefore guarantees
     // nothing, and returning 0 made the consumer's `minTurns <= 0` check discard
@@ -1433,7 +1433,7 @@ const TURN_PATTERNS = [
     // "completely" target, Poison, went unrecorded. 50 characters were bridged
     // this way; the guard makes each capture start at its own verb.
     pattern:
-      /(?:reduces?|removes?)\s+((?:(?!\breduces?\b|\bremoves?\b)[^.;])+?)\s+(?:duration\s+)?completely/gi,
+      /(?:reduces{0,2}|removes?)\s+((?:(?!\breduces{0,2}\b|\bremoves?\b)[^.;])+?)\s+(?:duration\s+)?completely/gi,
     resolveTurns: () => 99,
   },
   {
@@ -1462,7 +1462,7 @@ const TURN_PATTERNS = [
     // and republish Special Bind as a 3-turn cure - the exact defect the guards
     // above exist to stop.
     pattern:
-      /(?:reduces?)\s+((?:(?!\breduces?\b|\bremoves?\b|\bduration\b|\bturns?\b)[^.;])+?\s+and\s+reduces?\s+(?:(?!\breduces?\b|\bremoves?\b)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
+      /(?:reduces{0,2})\s+((?:(?!\breduces{0,2}\b|\bremoves?\b|\bduration\b|\bturns?\b)[^.;])+?\s+and\s+reduces{0,2}\s+(?:(?!\breduces{0,2}\b|\bremoves?\b)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
     resolveTurns: (match) => Number(match[2]),
   },
   {
