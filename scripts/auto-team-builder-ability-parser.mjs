@@ -505,17 +505,19 @@ const SPECIAL_ABILITY_MATCHERS = [
     // Nx" (the "Chain Multiplication" buff category). The old loose "boosts ...
     // chain ... by Nx" mis-tagged the growth-rate effect ("boosts Chain Multiplier
     // Growth Rate by Nx" → chain_multiplier_growth_rate) and conditional ATK boosts
-    // ("boosts ATK ... at the start of the chain, by Nx"). This yields 0 matches on
-    // captainAbility/specialText today — but NOT because "the effect is support-side
-    // only", as this comment previously claimed. That was false: the wording "boosts
-    // (the) chain multiplier by" occurs ZERO times in ANY field of ANY character,
-    // supportData included (measured across every string in the dataset). The key
-    // matches nothing because the wording does not exist upstream at all, so nothing
-    // would change if the source scope were widened. The regex stays correct for any
-    // future captain/special that adopts this wording.
+    // ("boosts ATK ... at the start of the chain, by Nx").
     //
-    // This is a comment-only correction; the sibling chain_multiplier_additive_boost
-    // audit measured it. Whether the key should exist at all is that key's own audit.
+    // This comment once claimed the key matched 0 "because the effect is currently
+    // support-side only". That justification was false — the wording did not occur in
+    // supportData either — but the key is no longer at 0 anyway: St. Shamrock #4611
+    // arrived in an upstream refresh with "boosts the chain multiplier by 3x for 3
+    // turns", the first genuine use of this grammar in the dataset, and the regex
+    // matched it correctly with no change. So the key was never wrong, only rare, and
+    // it is now live at 1.
+    //
+    // Do not re-assert an absolute "occurs zero times anywhere" here: that claim was
+    // true when measured and false one upstream import later. Count it when you need
+    // it. Whether the key earns its place belongs to its own audit.
     [/\bboosts?\s+(?:the\s+)?chain multiplier by\s+\d+(?:\.\d+)?x/i],
   ],
   [
