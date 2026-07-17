@@ -228,6 +228,45 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_bind');
   });
 
+  it('reads typeless damage whose multiplier is a decimal', () => {
+    // Mihawk #717 et al. A bare [^.] gap dies at the "." of a decimal multiplier,
+    // so this whole family was missed while the integer form matched.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Deals 0.5x the damage dealt in the previous turn in Typeless damage to all enemies.',
+          'specialText',
+        ),
+      ),
+    ).toContain('special_damage_other');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Deals 2.5x character's ATK in Typeless True damage to all enemies.",
+          'specialText',
+        ),
+      ),
+    ).toContain('special_damage_other');
+
+    // Widening only ever crosses a period followed by a DIGIT, so it must still not
+    // run past a SENTENCE boundary into an unrelated clause's "typeless damage".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Deals 10,000 damage to one enemy. Grants Typeless damage immunity to the crew.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('special_damage_other');
+
+    // Pure TYPED True damage stays out - "Typeless" is the anchor, not "True".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Deals 2.5x character's ATK in [STR] True damage.", 'specialText'),
+      ),
+    ).not.toContain('special_damage_other');
+  });
+
   it('publishes a multi-tier special\'s MAX-level turn count, not just level 1', () => {
     // Gladius #1400. A maxed character's special is its final tier, but the
     // max-level fold deduped on key+source alone, so once tier 1 had yielded

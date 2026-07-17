@@ -221,7 +221,15 @@ const SPECIAL_ABILITY_MATCHERS = [
     // (Cat Viper), "Typeless True Fixed damage". Allow up to three Fixed/True
     // tokens between "typeless" and "damage"; still anchored on "typeless" so it
     // never catches pure "[STR] True damage" or "Fixed True damage".
-    [/\bdeals?\b[^.]{0,160}\btypeless\b(?:\s+(?:Fixed|True)){0,3}\s+damage\b/i],
+    //
+    // The gap is `(?:[^.]|\.\d)` rather than a bare `[^.]`, for the same reason
+    // special_damage's is: a bare `[^.]` dies at the "." of a DECIMAL multiplier,
+    // so the whole "Deals 0.5x the damage dealt in the previous turn in Typeless
+    // damage" family was missed (Mihawk #717/#718/#1881, Eneru #3244/#3245/#4579,
+    // Doflamingo #3550, Ulti #3588, S-Hawk #4109, Sakazuki #4217). Widening only
+    // ever crosses a period followed by a DIGIT, so it still cannot run past a
+    // sentence boundary into an unrelated clause.
+    [/\bdeals?\b(?:[^.]|\.\d){0,160}\btypeless\b(?:\s+(?:Fixed|True)){0,3}\s+damage\b/i],
   ],
   [
     'percent_damage',
