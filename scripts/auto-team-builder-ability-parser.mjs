@@ -506,8 +506,16 @@ const SPECIAL_ABILITY_MATCHERS = [
     // chain ... by Nx" mis-tagged the growth-rate effect ("boosts Chain Multiplier
     // Growth Rate by Nx" → chain_multiplier_growth_rate) and conditional ATK boosts
     // ("boosts ATK ... at the start of the chain, by Nx"). This yields 0 matches on
-    // captainAbility/specialText today (the effect is currently support-side only)
-    // but stays correct for any future captain/special that uses this wording.
+    // captainAbility/specialText today — but NOT because "the effect is support-side
+    // only", as this comment previously claimed. That was false: the wording "boosts
+    // (the) chain multiplier by" occurs ZERO times in ANY field of ANY character,
+    // supportData included (measured across every string in the dataset). The key
+    // matches nothing because the wording does not exist upstream at all, so nothing
+    // would change if the source scope were widened. The regex stays correct for any
+    // future captain/special that adopts this wording.
+    //
+    // This is a comment-only correction; the sibling chain_multiplier_additive_boost
+    // audit measured it. Whether the key should exist at all is that key's own audit.
     [/\bboosts?\s+(?:the\s+)?chain multiplier by\s+\d+(?:\.\d+)?x/i],
   ],
   [
