@@ -2830,6 +2830,14 @@ describe('auto team builder ability parser', () => {
     // `change_slots_matching` was added (the wiki's "Favorable Slot Change" —
     // type-adaptive "into Matching orbs" — is a distinct, filterable family).
     expect(specialCatalog).toHaveLength(86);
+
+    // Dual-naming: the picker searches [key, label], and upstream writes this buff
+    // "Color Affinity" (987x) far more than "Type Effects" (545x), so the label
+    // carries the alias — otherwise a search for "color affinity" returns 0 of 426.
+    expect(specialCatalog.find((item) => item.key === 'boost_type_effects')?.label).toBe(
+      'Boost Type Effects (Color Affinity)',
+    );
+
     expect(groupCounts).toEqual({
       Damage: 6,
       'Boost Damage': 17,
