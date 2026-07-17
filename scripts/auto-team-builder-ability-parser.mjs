@@ -505,9 +505,19 @@ const SPECIAL_ABILITY_MATCHERS = [
     // Nx" (the "Chain Multiplication" buff category). The old loose "boosts ...
     // chain ... by Nx" mis-tagged the growth-rate effect ("boosts Chain Multiplier
     // Growth Rate by Nx" → chain_multiplier_growth_rate) and conditional ATK boosts
-    // ("boosts ATK ... at the start of the chain, by Nx"). This yields 0 matches on
-    // captainAbility/specialText today (the effect is currently support-side only)
-    // but stays correct for any future captain/special that uses this wording.
+    // ("boosts ATK ... at the start of the chain, by Nx").
+    //
+    // This comment once claimed the key matched 0 "because the effect is currently
+    // support-side only". That justification was false — the wording did not occur in
+    // supportData either — but the key is no longer at 0 anyway: St. Shamrock #4611
+    // arrived in an upstream refresh with "boosts the chain multiplier by 3x for 3
+    // turns", the first genuine use of this grammar in the dataset, and the regex
+    // matched it correctly with no change. So the key was never wrong, only rare, and
+    // it is now live at 1.
+    //
+    // Do not re-assert an absolute "occurs zero times anywhere" here: that claim was
+    // true when measured and false one upstream import later. Count it when you need
+    // it. Whether the key earns its place belongs to its own audit.
     [/\bboosts?\s+(?:the\s+)?chain multiplier by\s+\d+(?:\.\d+)?x/i],
   ],
   [

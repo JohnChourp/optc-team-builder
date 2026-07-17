@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T12:22:34.418Z",
+  "generatedAt": "2026-07-17T14:59:42.277Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -8445,7 +8445,7 @@
     },
     {
       "key": "boost_type_effects",
-      "label": "Boost Type Effects",
+      "label": "Boost Type Effects (Color Affinity)",
       "category": "special",
       "groupLabel": "Boost Damage",
       "groupOrder": 2,

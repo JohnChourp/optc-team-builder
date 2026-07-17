@@ -85,7 +85,7 @@
   },
   {
     "key": "boost_type_effects",
-    "label": "Boost Type Effects",
+    "label": "Boost Type Effects (Color Affinity)",
     "groupLabel": "Boost Damage",
     "groupOrder": 2,
     "effectOrder": 7
