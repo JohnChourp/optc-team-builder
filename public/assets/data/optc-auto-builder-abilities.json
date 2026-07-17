@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T15:29:56.117Z",
+  "generatedAt": "2026-07-17T15:38:53.026Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -8460,7 +8460,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 426,
+      "matchCount": 425,
       "matchingCharacterIds": [
         1233,
         1234,
@@ -8886,8 +8886,7 @@
         4595,
         4598,
         4609,
-        4611,
-        4613
+        4611
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -8916,8 +8915,7 @@
         4350,
         4387,
         4598,
-        4611,
-        4613
+        4611
       ],
       "sampleCharacterIds": [
         1233,

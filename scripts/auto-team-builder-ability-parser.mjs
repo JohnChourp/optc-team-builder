@@ -417,8 +417,16 @@ const SPECIAL_ABILITY_MATCHERS = [
     // 56->25; special 437->410, superSpecial 36->23, sailor 7->0 (all drops are
     // non-grant references; Super Type Effects grants stay via the type-effects
     // pattern).
+    //
+    // The "Type Effects" alternative requires the verb to DIRECTLY govern the noun
+    // rather than spanning a wide gap: a bare [^.]{0,120} let the infinitive "boost"
+    // in "If crew uses a Special to boost slot or type effects, further increases the
+    // effect" (Vivi #4613) bridge 120 chars to "type effects", tagging an
+    // enhance-ENABLER condition as a grant. #4613 is correctly effect_boost. The four
+    // genuine grants stay ("boosts [the] [Super] Type Effects ..." — #3970, #3971,
+    // #4063, #4611).
     [
-      /\bboosts?\b[^.]{0,120}\btype effects?\b/i,
+      /\bboosts?\s+(?:the\s+)?(?:super\s+)?type effects?\b/i,
       /\bboosts?\s+(?:the\s+)?color affinity\s+of\b/i,
       /\b(?:their|its)\s+color affinity\s+by\s+[+]?\d/i,
     ],

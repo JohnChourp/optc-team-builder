@@ -1460,8 +1460,22 @@ describe('auto team builder ability parser', () => {
       'if a crew member uses a special to boost Color Affinity, increases duration of any Color Affinity buffs by 2 turns',
       'converts Color Affinity into a Stackable Color Affinity',
       'enables Color Affinity buffs to be enhanced up to 2 times',
+      // Vivi #4613: the infinitive "boost" in "to boost ... type effects" is an
+      // enhance-ENABLER condition, not a grant. The old wide-gap pattern bridged
+      // "boost" -> "type effects" and tagged it; the tightened pattern requires the
+      // verb to directly govern the noun.
+      'If crew uses a Special to boost slot or type effects, further increases the effect by +0.3',
     ]) {
       expect(extractAbilityKeys(analyzeBuilderAbilityText(notGrant, 'captainAbility'))).not.toContain(
+        'boost_type_effects',
+      );
+    }
+    // The genuine "boosts [the] [Super] Type Effects of [scope]" grants still match.
+    for (const grant of [
+      'boosts Super Type Effects of [PSY] characters by 3x',
+      'boosts the Type Effects of Fighter characters by 1.75x for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(grant, 'specialText'))).toContain(
         'boost_type_effects',
       );
     }
