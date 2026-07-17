@@ -1388,8 +1388,16 @@ const TURN_PATTERNS = [
     // Special Cooldown ... by 1-99 turns" must NOT tag remove_paralysis via the
     // special-cooldown range ("by half" is an uncountable partial reduction).
     // "Reduction"/"reduced" are unaffected (\breduces?\b matches only the verb).
+    // `completely` is in the guard for the mirror-image reason: a target that
+    // crosses a finished "... duration completely" clause is reaching into a
+    // LATER clause's turn count through a verb the guard does not list, e.g.
+    // Luffy #4129 "removes enemies' ATK Up and Enrage duration completely, and
+    // delays all enemies by 2 turns" captured "...completely, and delays all
+    // enemies" + "by 2 turns" and published a bogus 2-turn ATK Up removal beside
+    // the correct permanent one. A genuine "by N turns" target never contains
+    // "completely", so this only ever drops bridges (6 records, 0 replacements).
     pattern:
-      /(?:reduces?|removes?)\s+((?:(?!\breduces?\b|\bremoves?\b)[^.;])+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)(?:\s*-\s*\d+)?\s+turns?/gi,
+      /(?:reduces?|removes?)\s+((?:(?!\breduces?\b|\bremoves?\b|\bcompletely\b)[^.;])+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)(?:\s*-\s*\d+)?\s+turns?/gi,
     resolveTurns: (match) => Number(match[2]),
   },
   {
@@ -1401,9 +1409,35 @@ const TURN_PATTERNS = [
     // `remove_damage_reduction` requires target === 'percent damage reduction')
     // were missed on the "... duration completely" wording — e.g. RRG #4257 /
     // S-Shark #4311/#4312 / Kizaru #4544 "reduces Bind duration completely".
-    // `includes`-based aliases are unaffected (the substring still matches).
-    pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+(?:duration\s+)?completely/gi,
+    // The `(?!reduces|removes)` guard is the same one the "by N turns" pattern
+    // above carries, and is required for the same reason: without it the lazy
+    // target starts at the FIRST verb in the sentence and swallows every clause
+    // up to a distant "completely", so "Reduces Paralysis duration by 3 turns,
+    // removes Poison duration completely" (Kalifa #1295) captured "Paralysis
+    // duration by 3 turns, removes Poison" and published a PERMANENT Paralysis
+    // clear (minTurns 99) for what is really a 3-turn cure — while the actual
+    // "completely" target, Poison, went unrecorded. 50 characters were bridged
+    // this way; the guard makes each capture start at its own verb.
+    pattern:
+      /(?:reduces?|removes?)\s+((?:(?!\breduces?\b|\bremoves?\b)[^.;])+?)\s+(?:duration\s+)?completely/gi,
     resolveTurns: () => 99,
+  },
+  {
+    isCompleteRemoval: false,
+    // Upstream's INVERTED cure grammar: "Recovers 2 turns of Paralysis on self"
+    // (Squard #642/#643). The verb is "recovers", the amount PRECEDES the status,
+    // and there is no "duration" keyword at all, so neither pattern above can see
+    // it — those two were the only Paralysis cures tagged by nothing.
+    //
+    // The lookahead leaves " on self" unconsumed so resolveCureEffectTargetScope
+    // still reads the scope from the clause tail. The turn count is re-parsed out
+    // of match[0] rather than captured, which keeps group 1 as the target and so
+    // needs no change to the shared consumer.
+    //
+    // Deliberately narrow: this grammar occurs exactly twice corpus-wide and only
+    // for Paralysis, so it is an upstream one-off rather than a family.
+    pattern: /\brecovers?\s+\d+\s+turns?\s+of\s+([^.;,]+?)(?=\s+on\b|[.,;]|$)/gi,
+    resolveTurns: (match) => Number(/(\d+)\s+turns?/i.exec(match[0])?.[1] ?? Number.NaN),
   },
 ];
 const SELECTED_DEBUFF_PAIN_PATTERNS = [
@@ -2092,7 +2126,12 @@ const ENEMY_TARGETED_REMOVAL_ABILITY_KEYS = new Set([
 // one of the 457 sits flush against it, and requiring adjacency stops a later
 // clause's "on this character" from leaking onto an earlier crew-wide cure.
 function resolveCureEffectTargetScope(text, clauseEndIndex) {
-  return /^\s*on this character\b/i.test(String(text).slice(clauseEndIndex)) ? 'self' : 'crew';
+  // "on this character" is the dominant qualifier (499 occurrences); "on self"
+  // is the same scope worded differently and occurs exactly twice, on the
+  // inverted "Recovers N turns of Paralysis on self" grammar (Squard #642/#643).
+  return /^\s*on\s+(?:this character|self)\b/i.test(String(text).slice(clauseEndIndex))
+    ? 'self'
+    : 'crew';
 }
 
 function normalizeEffectValue(value) {

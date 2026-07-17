@@ -228,6 +228,82 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_bind');
   });
 
+  it('does not let a cure clause bridge into a neighbouring clause in either direction', () => {
+    // Both TURN_PATTERNS lazily scan to their terminator, so without a guard the
+    // target starts at the FIRST verb in the sentence and swallows whole clauses.
+    //
+    // Forward bridge (Kalifa #1295): "completely" reached back over the real
+    // 3-turn Paralysis cure and published it as a PERMANENT clear, while the
+    // actual "completely" target (Poison) went unrecorded.
+    const kalifa = analyzeBuilderAbilityText(
+      'Reduces Paralysis duration by 3 turns, removes Poison duration completely.',
+      'specialText',
+    );
+    expect(kalifa).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_paralysis', minTurns: 3, isCompleteRemoval: false }),
+        expect.objectContaining({ key: 'remove_poison', minTurns: 99, isCompleteRemoval: true }),
+      ]),
+    );
+    expect(kalifa).not.toContainEqual(expect.objectContaining({ key: 'remove_paralysis', minTurns: 99 }));
+
+    // Backward bridge (Luffy #4129): "by N turns" reached FORWARD past a finished
+    // "completely" clause into a later, unrelated turn count via a verb the guard
+    // does not list ("delays"), publishing a bogus 2-turn removal beside the real
+    // permanent one.
+    const luffy = analyzeBuilderAbilityText(
+      "Removes enemies' ATK Up and Enrage duration completely, and delays all enemies by 2 turns.",
+      'specialText',
+    );
+    expect(luffy).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_enemy_atk_up', minTurns: 99 }),
+        expect.objectContaining({ key: 'remove_enemy_enrage', minTurns: 99 }),
+      ]),
+    );
+    expect(luffy).not.toContainEqual(expect.objectContaining({ key: 'remove_enemy_atk_up', minTurns: 2 }));
+    expect(luffy).not.toContainEqual(expect.objectContaining({ key: 'remove_enemy_enrage', minTurns: 2 }));
+
+    // A genuinely level-scaled special (Mansherry #1078) must KEEP both records:
+    // upstream lists every level in one string, so 3 turns and a permanent clear
+    // are both true and neither is a bridge.
+    const mansherry = analyzeBuilderAbilityText(
+      "Reduces Paralysis duration by 3 turns. Recovers 15x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely.",
+      'specialText',
+    );
+    expect(mansherry).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_paralysis', minTurns: 3 }),
+        expect.objectContaining({ key: 'remove_paralysis', minTurns: 99 }),
+      ]),
+    );
+  });
+
+  it('extracts the inverted cure grammar "Recovers 2 turns of Paralysis on self"', () => {
+    // Squard #642/#643 sailor ability. Upstream inverts the usual shape: the verb
+    // is "recovers", the turn count precedes the status, and "duration" never
+    // appears, so both the "by N turns" and "completely" patterns miss it. These
+    // two were the only Paralysis cures in the dataset tagged by no key at all.
+    const matches = analyzeBuilderAbilityText('Recovers 2 turns of Paralysis on self.', 'sailorAbilities');
+    expect(matches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_paralysis',
+          minTurns: 2,
+          effectTargetScope: 'self',
+          source: 'sailorAbilities',
+        }),
+      ]),
+    );
+    // "on self" is the rarer spelling of the "on this character" qualifier, so
+    // without it these two would be published as a crew-wide cure.
+    expect(
+      analyzeBuilderAbilityText('Recovers 2 turns of Paralysis.', 'sailorAbilities').find(
+        (match) => match.key === 'remove_paralysis',
+      )?.effectTargetScope,
+    ).toBe('crew');
+  });
+
   it('detects enemy Percent Damage Reduction removal when it is the FIRST buff after "enemies\'"', () => {
     // Regression: normalizeTargetText stripped only "enemies" and left the
     // possessive apostrophe, so the first buff after "enemies'" became a
