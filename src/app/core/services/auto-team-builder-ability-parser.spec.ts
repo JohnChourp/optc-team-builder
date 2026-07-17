@@ -228,6 +228,44 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_bind');
   });
 
+  it('reads a chain-multiplier addition, whose amount is always fractional', () => {
+    // Kizaru #977 (verbatim). A chain ADDITION is always fractional, so the decimal
+    // sits inside the gap between "adds" and "to" and a bare [^.] died at it -
+    // leaving the key matching 2 characters out of ~311.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Special Cooldown of Shooter and Fighter characters by 1 turn. Adds 0.5x to Chain multiplier for 2 turns.',
+          'specialText',
+        ),
+      ),
+    ).toContain('chain_multiplier_additive_boost');
+
+    // The real wording variants that sit between "adds" and "to": a range (Nami
+    // #3789), a parenthetical (King #3897) and an enhanceable (Vegapunk #4136).
+    for (const text of [
+      'Boosts ATK of all characters by 2x and adds 1.5x-2.5x to Chain multiplier for 1 turn.',
+      'Adds 2.0x, preventing buff clears, to Chain multiplier for 2 turns.',
+      'Adds 1.8x, can be enhanced up to 2 times, to Chain multiplier for 1 turn.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'chain_multiplier_additive_boost',
+      );
+    }
+
+    // Widening must not bridge an unrelated "adds ... as Additional Damage" grant
+    // into a later sentence's "chain", and must not swallow the OTHER chain
+    // mechanics, which are separate keys.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Adds 2.5x character's ATK as Additional Damage for 1 turn. Reduces Chain Multiplier Limit duration by 3 turns.",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('chain_multiplier_additive_boost');
+  });
+
   it('reads typeless damage whose multiplier is a decimal', () => {
     // Mihawk #717 et al. A bare [^.] gap dies at the "." of a decimal multiplier,
     // so this whole family was missed while the integer form matched.

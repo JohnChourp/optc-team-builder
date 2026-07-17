@@ -469,7 +469,23 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['chain_multiplier_lock_min_max', [/\b(?:minimum|maximum)\s+chain\s+multiplier\b/i]],
   [
     'chain_multiplier_additive_boost',
-    [/\badds?\b[^.]{0,80}\bto\b[^.]{0,40}\bchain\b/i, /\bchain\b[^.]{0,80}\b\+\d/i],
+    // The gaps are `(?:[^.]|\.\d)` rather than bare `[^.]` because a chain ADDITION
+    // is always fractional — "Adds 0.5x to Chain multiplier for 2 turns" (Kizaru
+    // #977), "Adds 0.1x to ..." (#1066), "Adds 0.2x to ..." (Binz #1105) — so the
+    // decimal sits INSIDE the gap between "adds" and "to", and a bare `[^.]` died
+    // at it on essentially every real member. The key matched 2 of ~298.
+    //
+    // Every one of the 296 recovered characters was checked against its verbatim
+    // text: all are genuine additions, including the range ("adds 1.5x-2.5x to
+    // Chain", Nami #3789), parenthetical ("adds 2.0x, preventing buff clears, to
+    // Chain", King #3897) and enhanceable ("Adds 1.8x, can be enhanced up to 2
+    // times, to Chain", Vegapunk #4136) wordings. No "adds Nx as Additional Damage
+    // ... chain" bridge exists — widening only crosses a period followed by a
+    // DIGIT, so it still cannot run past a sentence boundary.
+    [
+      /\badds?\b(?:[^.]|\.\d){0,80}\bto\b(?:[^.]|\.\d){0,40}\bchain\b/i,
+      /\bchain\b(?:[^.]|\.\d){0,80}\b\+\d/i,
+    ],
   ],
   [
     'chain_multiplier_multiplicative_boost',
