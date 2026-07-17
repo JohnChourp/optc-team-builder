@@ -523,6 +523,30 @@ describe('auto team builder ability parser', () => {
     expect(dogstorm).not.toContainEqual(expect.objectContaining({ key: 'remove_special_bind', minTurns: 3 }));
   });
 
+  it('reads a verbless comma-continuation cure that reuses a leading "Reduces"', () => {
+    // Bobbin #2118/#2119. One "Reduces" governs a first "... duration by 5 turns"
+    // clause, then a comma continues to a SECOND "crew's ATK DOWN duration by 5
+    // turns" with no repeated verb — the verb-anchored pattern and the "and
+    // reduces" ellipsis both need a verb before the target, so this was missed.
+    const bobbin = analyzeBuilderAbilityText(
+      "Reduces enemies' Threshold Damage Reduction, Percent Damage Reduction, Increased Defense and End of Turn Heal duration by 5 turns, crew's ATK DOWN duration by 5 turns and changes orbs.",
+      'specialText',
+    );
+    expect(bobbin).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_atk_down', minTurns: 5 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 5 }),
+      ]),
+    );
+    // The continuation anchors on "turns," so it must NOT fabricate a match from
+    // the FIRST clause's own commas: a plain single-clause list stays single.
+    const single = analyzeBuilderAbilityText(
+      "Reduces Bind, Paralysis and Despair duration by 3 turns.",
+      'specialText',
+    );
+    expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
+  });
+
   it('does not let a cure clause bridge into a neighbouring clause in either direction', () => {
     // Both TURN_PATTERNS lazily scan to their terminator, so without a guard the
     // target starts at the FIRST verb in the sentence and swallows whole clauses.
@@ -625,6 +649,27 @@ describe('auto team builder ability parser', () => {
         analyzeBuilderAbilityText("Reduces enemies' Threshold Damage Reduction duration by 2 turns.", 'captainAbility'),
       ),
     ).not.toContain('remove_damage_reduction');
+    // Upstream's sole "Thredhold" misspelling (Vivi #3667) is accepted by the
+    // threshold key and, because remove_damage_reduction is exact-match, never
+    // leaks there.
+    const thredhold = extractAbilityKeys(
+      analyzeBuilderAbilityText("Reduces enemies' Thredhold Damage Reduction duration by 1 turn.", 'specialText'),
+    );
+    expect(thredhold).toContain('remove_threshold_damage_reduction');
+    expect(thredhold).not.toContain('remove_damage_reduction');
+    // A removal that EXCLUDES a buff must not be tagged as removing it: Saintess
+    // Gunko #4612 "reduces all enemies' damage reduction (except Threshold Damage
+    // Reduction) duration by 15 turns". The "(except …)" strip drops the
+    // parenthetical, so she is tagged for the plain Damage Reduction she reduces,
+    // NOT the Threshold DR she spares.
+    const gunko = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        "Reduces all enemies' damage reduction (except Threshold Damage Reduction) duration by 15 turns.",
+        'specialText',
+      ),
+    );
+    expect(gunko).toContain('remove_damage_reduction');
+    expect(gunko).not.toContain('remove_threshold_damage_reduction');
     // Crew's-OWN Percent Damage Reduction reference (a scaling clause, not a
     // duration removal) must stay excluded (#4293 Jozu/Oden variant).
     expect(
@@ -635,6 +680,17 @@ describe('auto team builder ability parser', () => {
         ),
       ),
     ).not.toContain('remove_damage_reduction');
+    // The "all" quantifier must be stripped like "the": "reduces ALL enemies'
+    // Percent Damage Reduction duration by 2 turns" normalized to "all percent
+    // damage reduction" and failed the exact match (Bepo #4224/#4225, real data).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces all enemies' Percent Damage Reduction duration by 2 turns, and boosts Color Affinity of [PSY] characters by 2x.",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_damage_reduction');
   });
 
   it('extracts paralysis and despair reduction when the upstream text drops "by" ("duration N turns")', () => {
@@ -1460,8 +1516,22 @@ describe('auto team builder ability parser', () => {
       'if a crew member uses a special to boost Color Affinity, increases duration of any Color Affinity buffs by 2 turns',
       'converts Color Affinity into a Stackable Color Affinity',
       'enables Color Affinity buffs to be enhanced up to 2 times',
+      // Vivi #4613: the infinitive "boost" in "to boost ... type effects" is an
+      // enhance-ENABLER condition, not a grant. The old wide-gap pattern bridged
+      // "boost" -> "type effects" and tagged it; the tightened pattern requires the
+      // verb to directly govern the noun.
+      'If crew uses a Special to boost slot or type effects, further increases the effect by +0.3',
     ]) {
       expect(extractAbilityKeys(analyzeBuilderAbilityText(notGrant, 'captainAbility'))).not.toContain(
+        'boost_type_effects',
+      );
+    }
+    // The genuine "boosts [the] [Super] Type Effects of [scope]" grants still match.
+    for (const grant of [
+      'boosts Super Type Effects of [PSY] characters by 3x',
+      'boosts the Type Effects of Fighter characters by 1.75x for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(grant, 'specialText'))).toContain(
         'boost_type_effects',
       );
     }
@@ -2836,6 +2906,10 @@ describe('auto team builder ability parser', () => {
     // carries the alias — otherwise a search for "color affinity" returns 0 of 426.
     expect(specialCatalog.find((item) => item.key === 'boost_type_effects')?.label).toBe(
       'Boost Type Effects (Color Affinity)',
+    );
+    // Players search this mechanic by "PERFECT"; the primary label alone gave 0 hits.
+    expect(specialCatalog.find((item) => item.key === 'tap_timing_requirement')?.label).toBe(
+      'Tap-Timing Requirement (PERFECT)',
     );
 
     expect(groupCounts).toEqual({

@@ -417,8 +417,16 @@ const SPECIAL_ABILITY_MATCHERS = [
     // 56->25; special 437->410, superSpecial 36->23, sailor 7->0 (all drops are
     // non-grant references; Super Type Effects grants stay via the type-effects
     // pattern).
+    //
+    // The "Type Effects" alternative requires the verb to DIRECTLY govern the noun
+    // rather than spanning a wide gap: a bare [^.]{0,120} let the infinitive "boost"
+    // in "If crew uses a Special to boost slot or type effects, further increases the
+    // effect" (Vivi #4613) bridge 120 chars to "type effects", tagging an
+    // enhance-ENABLER condition as a grant. #4613 is correctly effect_boost. The four
+    // genuine grants stay ("boosts [the] [Super] Type Effects ..." — #3970, #3971,
+    // #4063, #4611).
     [
-      /\bboosts?\b[^.]{0,120}\btype effects?\b/i,
+      /\bboosts?\s+(?:the\s+)?(?:super\s+)?type effects?\b/i,
       /\bboosts?\s+(?:the\s+)?color affinity\s+of\b/i,
       /\b(?:their|its)\s+color affinity\s+by\s+[+]?\d/i,
     ],
@@ -1299,7 +1307,14 @@ const TARGET_ALIASES = [
   {
     key: 'remove_threshold_damage_reduction',
     label: 'Remove Threshold Damage Reduction',
-    matcher: (target) => target.includes('threshold damage reduction'),
+    // "thredhold" is upstream's sole misspelling of "threshold" (1 of 955 uses,
+    // Nefeltari Vivi #3667 "reduces enemies' Thredhold Damage Reduction duration by
+    // 1 turn"). Accepting it here is scoped to this key and cannot leak elsewhere:
+    // the exact-match remove_damage_reduction already rejects it (it is not one of
+    // its two strings). Same one-off-typo class as remove_despair's "reducess".
+    matcher: (target) =>
+      target.includes('threshold damage reduction') ||
+      target.includes('thredhold damage reduction'),
   },
   {
     key: 'remove_resilience',
@@ -1475,6 +1490,28 @@ const TURN_PATTERNS = [
     // This is the corpus's only zero-floor range (the other 17 all start at 1+),
     // and there is no literal "by 0 turns" anywhere, so nothing else changes.
     resolveTurns: (match) => (Number(match[2]) > 0 ? Number(match[2]) : null),
+  },
+  {
+    isCompleteRemoval: false,
+    // Comma-continuation: one leading "Reduces" can govern a SECOND
+    // "<target> duration by N turns" clause that follows the first one after it
+    // already closed with "... turns," and WITHOUT repeating the verb. Bobbin
+    // #2118/#2119 "Reduces enemies' Threshold Damage Reduction, ... duration by 5
+    // turns, crew's ATK DOWN duration by 5 turns and changes orbs ..." — the
+    // verb-anchored pattern above and the "and reduces" ellipsis both require a
+    // verb before the target, so the verbless "crew's ATK DOWN duration by 5
+    // turns" continuation went untagged.
+    //
+    // The lookbehind anchors on a completed "turns," (optionally followed by
+    // "and"), so it cannot re-read the first clause, and the body excludes
+    // verbs/duration/turns/comma so it captures exactly one self-contained
+    // continuation segment. The reduces{0,2} guard also keeps it off the typo
+    // "reducess" continuation (Makino #3844, already handled by the verb pattern).
+    // Corpus-wide this is the ONLY occurrence of the shape: +2 (Bobbin), 0
+    // collateral across every key.
+    pattern:
+      /(?<=turns,\s{0,3}(?:and\s)?)((?:(?!\breduces{0,2}\b|\bremoves?\b|\bcompletely\b|\bduration\b|\bturns?\b|,)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
+    resolveTurns: (match) => Number(match[2]),
   },
   {
     isCompleteRemoval: true,
@@ -3686,6 +3723,22 @@ function normalizeTargetText(targetText) {
     // with a not-a-letter lookahead instead of \b (ReDoS-safe, no backtracking).
     .replace(/\benemies(?:['’]s?)?(?![a-z])/g, ' ')
     .replace(/\benemy\b/g, ' ')
+    // Strip the "all" quantifier the same way "the" is stripped: "reduces all
+    // enemies' Percent Damage Reduction duration by 2 turns" (Bepo #4224/#4225)
+    // normalized to "all percent damage reduction", which failed the EXACT-match
+    // removal alias (target === 'percent damage reduction'). The includes/endsWith
+    // aliases already tolerated the prefix, so this only affects exact-match keys;
+    // simulated corpus-wide it is +2 (Bepo) / -0, touching no other key.
+    .replace(/\ball\b/g, ' ')
+    // Strip an "(except <buff>)" exclusion so a removal that EXCLUDES a buff is not
+    // tagged as removing it. Saintess Gunko #4612 "reduces all enemies' damage
+    // reduction (except Threshold Damage Reduction) duration by 15 turns" was tagged
+    // remove_threshold_damage_reduction because that key's includes() fired on the
+    // exclusion substring. Removing the parenthetical leaves the segment "damage
+    // reduction", so she is correctly tagged remove_damage_reduction instead - the
+    // buff she actually reduces. This is the corpus's ONLY "(except …)" clause, so
+    // the blast radius is exactly this one character.
+    .replace(/\s*\(except[^)]*\)/g, ' ')
     .replace(/\bbuffs?\b/g, ' ')
     .replace(/\bstatuses?\b/g, ' ')
     .replace(/\bof the crew\b/g, ' ')

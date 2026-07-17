@@ -534,7 +534,7 @@
   },
   {
     "key": "tap_timing_requirement",
-    "label": "Tap-Timing Requirement",
+    "label": "Tap-Timing Requirement (PERFECT)",
     "groupLabel": "Other",
     "groupOrder": 10,
     "effectOrder": 6

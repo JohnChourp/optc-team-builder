@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T15:29:56.117Z",
+  "generatedAt": "2026-07-17T18:32:55.622Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -8460,7 +8460,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 426,
+      "matchCount": 425,
       "matchingCharacterIds": [
         1233,
         1234,
@@ -8886,8 +8886,7 @@
         4595,
         4598,
         4609,
-        4611,
-        4613
+        4611
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -8916,8 +8915,7 @@
         4350,
         4387,
         4598,
-        4611,
-        4613
+        4611
       ],
       "sampleCharacterIds": [
         1233,
@@ -41535,6 +41533,8 @@
             2091,
             2102,
             2103,
+            2118,
+            2119,
             2122,
             2123,
             2133,
@@ -42034,6 +42034,8 @@
                 1987,
                 2067,
                 2068,
+                2118,
+                2119,
                 2122,
                 2123,
                 2212,
@@ -42281,7 +42283,7 @@
           ]
         }
       ],
-      "matchCount": 336,
+      "matchCount": 338,
       "matchingCharacterIds": [
         1823,
         1824,
@@ -42298,6 +42300,8 @@
         2091,
         2102,
         2103,
+        2118,
+        2119,
         2122,
         2123,
         2133,
@@ -42797,6 +42801,8 @@
             1987,
             2067,
             2068,
+            2118,
+            2119,
             2122,
             2123,
             2212,
@@ -46671,7 +46677,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 348,
+      "matchCount": 351,
       "matchingCharacterIds": [
         1411,
         1412,
@@ -46962,6 +46968,8 @@
         4210,
         4211,
         4215,
+        4224,
+        4225,
         4230,
         4231,
         4232,
@@ -47020,7 +47028,8 @@
         4588,
         4589,
         4600,
-        4605
+        4605,
+        4612
       ],
       "turnMatchingCharacterIds": [
         {
@@ -47089,6 +47098,8 @@
             4157,
             4193,
             4194,
+            4224,
+            4225,
             4232,
             4233,
             4257,
@@ -47429,6 +47440,12 @@
             4211,
             4230,
             4231
+          ]
+        },
+        {
+          "minTurns": 15,
+          "characterIds": [
+            4612
           ]
         },
         {
@@ -47898,6 +47915,7 @@
         3623,
         3635,
         3664,
+        3667,
         3677,
         3683,
         3688,
@@ -48045,7 +48063,6 @@
         4606,
         4610,
         4611,
-        4612,
         5031,
         5032
       ],
@@ -48062,6 +48079,7 @@
             2354,
             3596,
             3597,
+            3667,
             3696,
             3697,
             3785,
@@ -48448,8 +48466,7 @@
         {
           "minTurns": 15,
           "characterIds": [
-            4611,
-            4612
+            4611
           ]
         },
         {
@@ -54416,7 +54433,7 @@
     },
     {
       "key": "tap_timing_requirement",
-      "label": "Tap-Timing Requirement",
+      "label": "Tap-Timing Requirement (PERFECT)",
       "category": "special",
       "groupLabel": "Other",
       "groupOrder": 10,
