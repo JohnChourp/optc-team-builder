@@ -4,6 +4,7 @@ import {
   type AutoBuildAbilityRequirement,
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
+  normalizeAbilityEffectTargetScope,
 } from '../models/auto-team-builder-ability.models';
 import { matchesAbilityRequirementMetadata } from './auto-team-builder-ability-match.utils';
 import {
@@ -313,6 +314,37 @@ function resolveRequirementMatchingCharacterIds(
             ),
           )
           .map((match) => match.characterId),
+      ),
+    ];
+  }
+
+  // Scope-aware resolution for NON-captain requirements. Captain requirements
+  // keep using captainAbilityEffectMatches above, which is already scope-aware;
+  // that index only covers captain structured effects, so cure abilities (whose
+  // scope comes from the per-scope index) are resolved here instead.
+  const effectTargetScope = normalizeAbilityEffectTargetScope(requirement.effectTargetScope);
+
+  if (!useCaptainAbilityIds && effectTargetScope !== 'any') {
+    const scopeEntry = (catalogItem.effectTargetScopeMatchingCharacterIds ?? []).find(
+      (entry) => entry.effectTargetScope === effectTargetScope,
+    );
+
+    // No character implements this ability at the requested scope. Returning []
+    // (rather than falling through to the scope-blind ids) is what makes the
+    // requirement honest: picking "self" must not hand back crew-wide cures.
+    if (!scopeEntry) {
+      return [];
+    }
+
+    if (minTurns === null) {
+      return scopeEntry.characterIds;
+    }
+
+    return [
+      ...new Set(
+        scopeEntry.turnMatchingCharacterIds
+          .filter((bucket) => bucket.minTurns >= minTurns)
+          .flatMap((bucket) => bucket.characterIds),
       ),
     ];
   }

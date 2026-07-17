@@ -69,6 +69,7 @@ interface AbilityRequirementSelectedRowView {
   supportsSlotTokens: boolean;
   supportsMinEffectValue: boolean;
   supportsEffectTargetScope: boolean;
+  availableEffectTargetScopes: AutoBuildAbilityEffectTargetScope[];
   availableSlotTokens: string[];
   painSelectableBadges: AbilityRequirementMiniBadge[];
 }
@@ -125,13 +126,10 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   public readonly closeIcon = closeOutline;
   public readonly pickerIcon = optionsOutline;
   public readonly availableLeaderBoostFilters = AUTO_BUILD_LEADER_BOOST_FILTERS;
-  public readonly availableEffectTargetScopes: AutoBuildAbilityEffectTargetScope[] = [
-    'any',
-    'crew',
-    'captains',
-    'self',
-    'subs',
-  ];
+  // 'any' ("don't filter by scope") is always offered; the real scopes beside it
+  // are data-gated per ability on the row, so a scope that no character
+  // implements is never offered. See `selectedRows`.
+  private static readonly ANY_EFFECT_TARGET_SCOPE: AutoBuildAbilityEffectTargetScope = 'any';
   public readonly searchTerm = signal('');
   public readonly workingDrafts = signal<AbilityRequirementDraft[]>([]);
   public readonly catalogItemsState = signal<AutoBuildAbilityCatalogItem[]>([]);
@@ -192,6 +190,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   public readonly selectedRows = computed<AbilityRequirementSelectedRowView[]>(() =>
     this.workingDrafts().map((draft) => {
       const catalogItem = this.catalogMap().get(draft.abilityKey);
+      const resolvedEffectTargetScopes = this.resolveAvailableEffectTargetScopes(catalogItem);
 
       return {
         draft,
@@ -202,14 +201,49 @@ export class AbilityRequirementPickerComponent implements OnChanges {
           catalogItem?.supportsSlotTokens === true ||
           (this.captainAbilityMode && draft.abilityKey === 'make_slots_favorable'),
         supportsMinEffectValue: this.captainAbilityMode && draft.abilityKey === 'reduce_damage',
-        supportsEffectTargetScope:
-          this.captainAbilityMode &&
-          (draft.abilityKey === 'reduce_damage' || draft.abilityKey === 'make_slots_favorable'),
+        // Data-gated: offered only where real characters implement a scope, and
+        // read from whichever index actually backs the filter in this mode —
+        // captain requirements resolve through captainAbilityEffectMatches,
+        // everything else through effectTargetScopeMatchingCharacterIds. Reading
+        // the wrong one would offer a scope the filter cannot honour.
+        supportsEffectTargetScope: resolvedEffectTargetScopes.length > 0,
+        availableEffectTargetScopes: [
+          AbilityRequirementPickerComponent.ANY_EFFECT_TARGET_SCOPE,
+          ...resolvedEffectTargetScopes,
+        ],
         availableSlotTokens: catalogItem?.availableSlotTokens ?? [],
         painSelectableBadges: resolveAbilityRequirementPainSelectableDebuffBadges(draft.abilityKey),
       };
     }),
   );
+
+  /**
+   * Scopes this ability can actually be filtered by, taken from whichever index
+   * backs the filter in the current mode. Captain requirements resolve through
+   * `captainAbilityEffectMatches` (captain-scoped by construction); everything
+   * else resolves through `effectTargetScopeMatchingCharacterIds`, which
+   * deliberately excludes captain structured effects.
+   */
+  private resolveAvailableEffectTargetScopes(
+    catalogItem: AutoBuildAbilityCatalogItem | undefined,
+  ): AutoBuildAbilityEffectTargetScope[] {
+    if (!catalogItem) {
+      return [];
+    }
+
+    if (this.captainAbilityMode) {
+      const captainScopes = (catalogItem.captainAbilityEffectMatches ?? [])
+        .map((match) => match.effectTargetScope)
+        .filter(
+          (scope): scope is Exclude<AutoBuildAbilityEffectTargetScope, 'any'> =>
+            scope !== undefined && scope !== 'any',
+        );
+
+      return [...new Set(captainScopes)].sort((left, right) => left.localeCompare(right));
+    }
+
+    return [...(catalogItem.availableEffectTargetScopes ?? [])];
+  }
 
   public labelModalDialog(event: Event, label: string): void {
     applyIonicModalDialogLabel(event, label);

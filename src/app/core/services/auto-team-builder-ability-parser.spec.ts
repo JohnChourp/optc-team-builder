@@ -228,6 +228,377 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('remove_bind');
   });
 
+  it('reads a chain-multiplier addition, whose amount is always fractional', () => {
+    // Kizaru #977 (verbatim). A chain ADDITION is always fractional, so the decimal
+    // sits inside the gap between "adds" and "to" and a bare [^.] died at it -
+    // leaving the key matching 2 characters out of ~311.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Special Cooldown of Shooter and Fighter characters by 1 turn. Adds 0.5x to Chain multiplier for 2 turns.',
+          'specialText',
+        ),
+      ),
+    ).toContain('chain_multiplier_additive_boost');
+
+    // The real wording variants that sit between "adds" and "to": a range (Nami
+    // #3789), a parenthetical (King #3897) and an enhanceable (Vegapunk #4136).
+    for (const text of [
+      'Boosts ATK of all characters by 2x and adds 1.5x-2.5x to Chain multiplier for 1 turn.',
+      'Adds 2.0x, preventing buff clears, to Chain multiplier for 2 turns.',
+      'Adds 1.8x, can be enhanced up to 2 times, to Chain multiplier for 1 turn.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'chain_multiplier_additive_boost',
+      );
+    }
+
+    // "Base Chain multiplier" (Ace #3829) and the x-less amount (#2296) are real.
+    for (const text of [
+      'Boosts ATK by 5.25x and adds 0.3x to Base Chain multiplier.',
+      'Adds 1 to Chain multiplier for 1 turn.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).toContain(
+        'chain_multiplier_additive_boost',
+      );
+    }
+
+    // Belo Betty #3406 (verbatim): upstream omits the "to". The only one.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Despair and Chain Multiplier Limit duration by 5 turns and adds 0.8x Chain multiplier for 3 turns.',
+          'specialText',
+        ),
+      ),
+    ).toContain('chain_multiplier_additive_boost');
+
+    // Must not bridge an unrelated "adds ... as Additional Damage" grant into a
+    // later "chain", and must not swallow the OTHER chain mechanics, which are all
+    // separate keys. Requiring the literal "chain multiplier" is what holds this.
+    for (const text of [
+      "Adds 2.5x character's ATK as Additional Damage for 1 turn. Reduces Chain Multiplier Limit duration by 3 turns.",
+      'Boosts Chain Multiplier Growth Rate by 1.5x for 1 turn.',
+      'Reduces Chain Multiplier Limit duration by 3 turns.',
+      'Increases Chain Tap Timing Bonus of [PSY] characters to +0.2x-0.6x for 1 turn.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'chain_multiplier_additive_boost',
+      );
+    }
+  });
+
+  it('reads typeless damage whose multiplier is a decimal', () => {
+    // Mihawk #717 et al. A bare [^.] gap dies at the "." of a decimal multiplier,
+    // so this whole family was missed while the integer form matched.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Deals 0.5x the damage dealt in the previous turn in Typeless damage to all enemies.',
+          'specialText',
+        ),
+      ),
+    ).toContain('special_damage_other');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Deals 2.5x character's ATK in Typeless True damage to all enemies.",
+          'specialText',
+        ),
+      ),
+    ).toContain('special_damage_other');
+
+    // Widening only ever crosses a period followed by a DIGIT, so it must still not
+    // run past a SENTENCE boundary into an unrelated clause's "typeless damage".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Deals 10,000 damage to one enemy. Grants Typeless damage immunity to the crew.',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('special_damage_other');
+
+    // Pure TYPED True damage stays out - "Typeless" is the anchor, not "True".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("Deals 2.5x character's ATK in [STR] True damage.", 'specialText'),
+      ),
+    ).not.toContain('special_damage_other');
+  });
+
+  it('does not read an "Additional Typeless Damage" grant as the damage this special deals', () => {
+    // Dogstorm #1570 (verbatim). The damage DEALT is [STR]-typed, so the matchup is
+    // not x1; the word "typeless" belongs to a neighbouring additional-damage BUFF
+    // grant, a different mechanic owned by additional_damage_boost. Without the
+    // lookbehind the boundary is decided by PUNCTUATION, not meaning: this joins its
+    // clauses with "and" and bridged, while Koala #1241's identical grammar has a
+    // period and did not.
+    const dogstorm = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        "Reduces crew's current HP by 80%, deals 60x character's ATK in [STR] damage to one enemy and adds 80x character's ATK as Additional Typeless Damage for 1 turn",
+        'specialText',
+      ),
+    );
+    expect(dogstorm).toContain('special_damage');
+    expect(dogstorm).not.toContain('special_damage_other');
+
+    // Akainu #4297: no "deals" of its own at all - the bridged verb belongs to the
+    // ENEMY's Burn.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Inflicts all enemies with Burn that will deal 30x enemies' ATK in damage for 1 turn, and adds 80x character's ATK as Additional Typeless Damage for 1 turn",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('special_damage_other');
+
+    // A character with BOTH a genuine direct typeless hit AND an ATD grant must
+    // still be IN (Sabo #1046 shape) - the guard must not throw those away.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Deals random Typeless damage to all enemies. Adds 55x character's ATK as Additional Typeless Damage for 1 turn.",
+          'specialText',
+        ),
+      ),
+    ).toContain('special_damage_other');
+  });
+
+  it('publishes a multi-tier special\'s MAX-level turn count, not just level 1', () => {
+    // Gladius #1400. A maxed character's special is its final tier, but the
+    // max-level fold deduped on key+source alone, so once tier 1 had yielded
+    // remove_despair at 1 turn the max tier's 2-turn record was silently dropped
+    // and the weaker level-1 count was published.
+    // Both texts below are VERBATIM upstream. The escalating multiplier tail
+    // ("1.5x ... 1.75x") is what marks the special as multi-tier, so the primary
+    // parse sees tier 1 only and the fold supplies the max — strip the tail and
+    // the string stops being tiered at all, and stops exercising this path.
+    const gladius = analyzeBuilderAbilityText(
+      "Deals 13x character's ATK in [STR] damage to all enemies, reduces Bind and Despair duration by 1 turn and boosts the Color Affinity of Shooter characters by 1.5x for 1 turn. Deals 30x character's ATK in [STR] damage to all enemies, reduces Bind and Despair duration by 2 turns and boosts the Color Affinity of Shooter characters by 1.75x for 1 turn",
+      'specialText',
+    );
+    expect(gladius).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_despair', minTurns: 1 }),
+        expect.objectContaining({ key: 'remove_despair', minTurns: 2 }),
+      ]),
+    );
+
+    // Machvise #1627 (tiers 1/3/5): the MAX must be published, and the
+    // INTERMEDIATE tier must still stay out - the fold reads only the last tier.
+    const machvise = analyzeBuilderAbilityText(
+      'Reduces Chain Multiplier Limit duration by 1 turn and boosts the Color Affinity of Striker characters by 1.25x for 1 turn. Reduces Chain Multiplier Limit duration by 3 turns and boosts the Color Affinity of Striker characters by 1.5x for 1 turn. Reduces Chain Multiplier Limit duration by 5 turns and boosts the Color Affinity of Striker characters by 1.75x for 1 turn',
+      'specialText',
+    ).filter((a) => a.key === 'remove_chain_multiplier_limit');
+    expect(machvise.map((a) => a.minTurns).sort((a, b) => Number(a) - Number(b))).toEqual([1, 5]);
+  });
+
+  it('tolerates the upstream "reducess" verb typo', () => {
+    // Makino & Woop Slap #3844 is the corpus's ONLY "reducess" (1 of 7,183 verb
+    // instances) and had no Despair tag at all, because `reduces?` matches
+    // "reduce"/"reduces" but not the doubled s.
+    expect(
+      analyzeBuilderAbilityText(
+        "Reduces enemies' Increased Defense and Resilience duration by 5 turns, reducess Despair duration by 5 turns.",
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_despair', minTurns: 5 }),
+        expect.objectContaining({ key: 'remove_enemy_increased_defense', minTurns: 5 }),
+      ]),
+    );
+    // The singular verb still works, and the NOUN "Reduction" is still not a verb.
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('Reduce Despair duration by 3 turns.', 'specialText')),
+    ).toContain('remove_despair');
+    expect(
+      analyzeBuilderAbilityText(
+        "Reduces enemies' Percent Damage Reduction duration by 3 turns.",
+        'specialText',
+      ).find((a) => a.key === 'remove_damage_reduction')?.minTurns,
+    ).toBe(3);
+  });
+
+  it('keeps the plain Despair cure separate from Sailor Despair in both directions', () => {
+    // Sailor Despair is a DISTINCT debuff (it disables the sailor ability), hence
+    // remove_despair's !includes('sailor despair') veto. That veto is a substring
+    // check, so a LIST naming both is the risk case - the shape that cost
+    // remove_bind a tag (#4031, "Bind and Slot Bind"). Here the segment split runs
+    // normally, so both keys resolve, in either order.
+    for (const text of [
+      'Reduces Despair and Sailor Despair duration by 5 turns.',
+      'Reduces Sailor Despair and Despair duration by 5 turns.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toEqual(
+        expect.arrayContaining(['remove_despair', 'remove_sailor_despair']),
+      );
+    }
+    // A Sailor-Despair-only cure must NOT claim the plain Despair key: real data,
+    // Basil Hawkins #3851/#3852 "reduces Bind and Sailor Despair duration by 6 turns".
+    const hawkins = extractAbilityKeys(
+      analyzeBuilderAbilityText('reduces Bind and Sailor Despair duration by 6 turns', 'specialText'),
+    );
+    expect(hawkins).toEqual(expect.arrayContaining(['remove_bind', 'remove_sailor_despair']));
+    expect(hawkins).not.toContain('remove_despair');
+  });
+
+  it('splits a cure list that contains a slot-scoped entry', () => {
+    // Romy & Yorueka #4031. isSlotScopedTarget fires on a SUBSTRING, so a list
+    // merely CONTAINING "slot bind" took the whole-target-only path and was never
+    // split: the single target "bind and slot bind" matches remove_bind on
+    // endsWith(' bind') but is then vetoed by its own !includes('slot bind')
+    // exclusion, so this genuine 5-turn Bind cure resolved to Slot Bind alone.
+    const both = analyzeBuilderAbilityText(
+      'Reduces Bind and Slot Bind duration by 5 turns.',
+      'specialText',
+    );
+    expect(both).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_bind', minTurns: 5 }),
+        expect.objectContaining({ key: 'remove_slot_bind', minTurns: 5 }),
+      ]),
+    );
+    // Order must not matter.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Slot Bind and Bind duration by 5 turns.', 'specialText'),
+      ),
+    ).toEqual(expect.arrayContaining(['remove_bind', 'remove_slot_bind']));
+    // A LONE slot-scoped target still must NOT leak into the plain Bind key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces Slot Bind duration by 5 turns.', 'specialText'),
+      ),
+    ).not.toContain('remove_bind');
+  });
+
+  it('keeps a cure whose duration range has a zero floor, with no turn guarantee', () => {
+    // Boa Hancock #4398/#4399. A range publishes its LOWER bound (minTurns means
+    // "at least this many"), so a 0 floor guarantees nothing - and returning 0
+    // made the consumer's `minTurns <= 0` check discard the whole match, tag
+    // included, leaving a real Bind cure unfilterable even with no turn
+    // requirement. null = "cures, no guaranteed floor".
+    const hancock = analyzeBuilderAbilityText(
+      'Recovers 20,000 HP, reduces Bind duration by 0-10 turns depending on the number of [RCV] orbs used in normal attacks.',
+      'specialText',
+    );
+    expect(hancock).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'remove_bind', minTurns: null })]),
+    );
+    // A range with a real floor still publishes that floor, not null.
+    expect(
+      analyzeBuilderAbilityText('Reduces Bind duration by 2-6 turns.', 'specialText'),
+    ).toEqual(expect.arrayContaining([expect.objectContaining({ key: 'remove_bind', minTurns: 2 })]));
+  });
+
+  it('reads a cure listed by ellipsis, without borrowing a neighbour\'s own duration', () => {
+    // Monet #2010/#2011. Upstream compresses "reduces Bind duration by 3 turns,
+    // and reduces ... for 3 turns" (per Fandom, which also files her under
+    // Category:Bind Reduction) into one clause where the trailing "by 3 turns"
+    // distributes across both targets, so the Bind cure has no duration of its
+    // own and the anti-bridge guard dropped it.
+    expect(
+      analyzeBuilderAbilityText(
+        "Deals 50,000 Fixed damage to one enemy and reduces Bind and reduces enemies' Percent Damage Reduction duration by 3 turns",
+        'specialText',
+      ),
+    ).toEqual(expect.arrayContaining([expect.objectContaining({ key: 'remove_bind', minTurns: 3 })]));
+
+    // The separator: when the FIRST clause carries its OWN duration this is the
+    // bridge, not an ellipsis, and must not be re-read at the second clause's
+    // turn count. Dogstorm #2168 cures Special Bind for 4 turns, never 3.
+    const dogstorm = analyzeBuilderAbilityText(
+      "Reduces Special Bind duration by 4 turns and reduces enemies' Threshold Damage Reduction duration by 3 turns.",
+      'specialText',
+    );
+    expect(dogstorm).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_special_bind', minTurns: 4 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 3 }),
+      ]),
+    );
+    expect(dogstorm).not.toContainEqual(expect.objectContaining({ key: 'remove_special_bind', minTurns: 3 }));
+  });
+
+  it('does not let a cure clause bridge into a neighbouring clause in either direction', () => {
+    // Both TURN_PATTERNS lazily scan to their terminator, so without a guard the
+    // target starts at the FIRST verb in the sentence and swallows whole clauses.
+    //
+    // Forward bridge (Kalifa #1295): "completely" reached back over the real
+    // 3-turn Paralysis cure and published it as a PERMANENT clear, while the
+    // actual "completely" target (Poison) went unrecorded.
+    const kalifa = analyzeBuilderAbilityText(
+      'Reduces Paralysis duration by 3 turns, removes Poison duration completely.',
+      'specialText',
+    );
+    expect(kalifa).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_paralysis', minTurns: 3, isCompleteRemoval: false }),
+        expect.objectContaining({ key: 'remove_poison', minTurns: 99, isCompleteRemoval: true }),
+      ]),
+    );
+    expect(kalifa).not.toContainEqual(expect.objectContaining({ key: 'remove_paralysis', minTurns: 99 }));
+
+    // Backward bridge (Luffy #4129): "by N turns" reached FORWARD past a finished
+    // "completely" clause into a later, unrelated turn count via a verb the guard
+    // does not list ("delays"), publishing a bogus 2-turn removal beside the real
+    // permanent one.
+    const luffy = analyzeBuilderAbilityText(
+      "Removes enemies' ATK Up and Enrage duration completely, and delays all enemies by 2 turns.",
+      'specialText',
+    );
+    expect(luffy).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_enemy_atk_up', minTurns: 99 }),
+        expect.objectContaining({ key: 'remove_enemy_enrage', minTurns: 99 }),
+      ]),
+    );
+    expect(luffy).not.toContainEqual(expect.objectContaining({ key: 'remove_enemy_atk_up', minTurns: 2 }));
+    expect(luffy).not.toContainEqual(expect.objectContaining({ key: 'remove_enemy_enrage', minTurns: 2 }));
+
+    // A genuinely level-scaled special (Mansherry #1078) must KEEP both records:
+    // upstream lists every level in one string, so 3 turns and a permanent clear
+    // are both true and neither is a bridge.
+    const mansherry = analyzeBuilderAbilityText(
+      "Reduces Paralysis duration by 3 turns. Recovers 15x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely.",
+      'specialText',
+    );
+    expect(mansherry).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_paralysis', minTurns: 3 }),
+        expect.objectContaining({ key: 'remove_paralysis', minTurns: 99 }),
+      ]),
+    );
+  });
+
+  it('extracts the inverted cure grammar "Recovers 2 turns of Paralysis on self"', () => {
+    // Squard #642/#643 sailor ability. Upstream inverts the usual shape: the verb
+    // is "recovers", the turn count precedes the status, and "duration" never
+    // appears, so both the "by N turns" and "completely" patterns miss it. These
+    // two were the only Paralysis cures in the dataset tagged by no key at all.
+    const matches = analyzeBuilderAbilityText('Recovers 2 turns of Paralysis on self.', 'sailorAbilities');
+    expect(matches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'remove_paralysis',
+          minTurns: 2,
+          effectTargetScope: 'self',
+          source: 'sailorAbilities',
+        }),
+      ]),
+    );
+    // "on self" is the rarer spelling of the "on this character" qualifier, so
+    // without it these two would be published as a crew-wide cure.
+    expect(
+      analyzeBuilderAbilityText('Recovers 2 turns of Paralysis.', 'sailorAbilities').find(
+        (match) => match.key === 'remove_paralysis',
+      )?.effectTargetScope,
+    ).toBe('crew');
+  });
+
   it('detects enemy Percent Damage Reduction removal when it is the FIRST buff after "enemies\'"', () => {
     // Regression: normalizeTargetText stripped only "enemies" and left the
     // possessive apostrophe, so the first buff after "enemies'" became a
@@ -1468,11 +1839,25 @@ describe('auto team builder ability parser', () => {
     );
     expect(despair.find((a) => a.key === 'remove_despair')?.minTurns).toBe(2);
     expect(despair.find((a) => a.key === 'remove_atk_down')?.minTurns).toBe(2);
-    // A range whose min is 0 ("by 0-10 turns") has no guaranteed reduction and is
-    // dropped by the minTurns > 0 guard.
-    expect(
-      extractAbilityKeys(analyzeBuilderAbilityText('reduces Bind duration by 0-10 turns', 'specialText')),
-    ).not.toContain('remove_bind');
+    // A range whose min is 0 ("by 0-10 turns") has no guaranteed reduction, so it
+    // publishes minTurns: null rather than 0.
+    //
+    // This deliberately supersedes the original behaviour, which dropped the match
+    // outright via the `minTurns > 0` guard. Dropping OVERSHOT the intent: it did
+    // not just withhold the turn guarantee, it denied membership, so Boa Hancock
+    // #4398/#4399 ("reduces Bind duration by 0-10 turns depending on the number of
+    // [RCV] orbs used in normal attacks") cured Bind yet was absent from
+    // remove_bind entirely and unfilterable even with no turn requirement. null
+    // states exactly what the original comment intended - a real cure with no
+    // guaranteed floor - and lands her in the key's characterIds but in NO turn
+    // bucket, so an unfiltered search finds her and any "N+ turns" filter skips
+    // her, which is the behaviour the guard was reaching for.
+    const zeroFloor = analyzeBuilderAbilityText(
+      'reduces Bind duration by 0-10 turns',
+      'specialText',
+    ).find((a) => a.key === 'remove_bind');
+    expect(zeroFloor).toBeDefined();
+    expect(zeroFloor?.minTurns).toBeNull();
     // Non-range single counts are unaffected.
     expect(
       analyzeBuilderAbilityText('reduces Bind duration by 3 turns', 'specialText').find(
@@ -2439,14 +2824,19 @@ describe('auto team builder ability parser', () => {
       return counts;
     }, {});
 
+    // 85, not 86: `remove_silence` was retired — "Silence" is the in-game name
+    // for the same debuff as `remove_special_bind`, so it is one effect, one key.
+    // 86: `remove_silence` was retired (== remove_special_bind), and
+    // `change_slots_matching` was added (the wiki's "Favorable Slot Change" —
+    // type-adaptive "into Matching orbs" — is a distinct, filterable family).
     expect(specialCatalog).toHaveLength(86);
     expect(groupCounts).toEqual({
       Damage: 6,
       'Boost Damage': 17,
       'Damage Reduction': 3,
       Slot: 4,
-      'Slot Change': 4,
-      'Reduce Status Effect Duration': 15,
+      'Slot Change': 5,
+      'Reduce Status Effect Duration': 14,
       'Reduce Enemy Effect Duration': 9,
       'Apply Status Effect': 8,
       Reduction: 5,
@@ -2574,6 +2964,900 @@ describe('auto team builder ability parser', () => {
     );
     // The dead `remove_blindness` legacy key must no longer be emitted.
     expect(catalog.find((item) => item.key === 'remove_blindness')).toBeUndefined();
+  });
+
+  it('folds OPTC-DB "Silence" wording into remove_special_bind with its turn count', async () => {
+    // "Silence" is the in-game label for the debuff OPTC-DB usually words as
+    // "Special Bind" (specials locked) — one effect, two names, so both wordings
+    // must land on the single `remove_special_bind` key WITH the turn count.
+    // The retired `remove_silence` key produced a duplicate turn-less picker
+    // entry that matched a strict subset, and must never be emitted again.
+    const characters: ParserCharacters = [
+      {
+        id: 930001,
+        detail: {
+          specialText: 'Reduces Silence duration by 5 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 930002,
+        detail: {
+          specialText: 'Reduces Special Bind duration by 5 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // superSpecialText-only Silence (the wording the retired key missed).
+        id: 930003,
+        detail: {
+          specialText: null,
+          superSpecialText: 'Reduces Silence duration by 5 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'remove_special_bind')).toEqual(
+      expect.objectContaining({
+        category: 'special',
+        label: 'Special Bind (Silence)',
+        groupLabel: 'Reduce Status Effect Duration',
+        supportsTurns: true,
+        matchingCharacterIds: expect.arrayContaining([930001, 930002, 930003]),
+      }),
+    );
+    // Silence must carry the same turn count as the equivalent Special Bind wording.
+    expect(catalog.find((item) => item.key === 'remove_special_bind')).toEqual(
+      expect.objectContaining({
+        turnMatchingCharacterIds: expect.arrayContaining([
+          expect.objectContaining({
+            minTurns: 5,
+            characterIds: expect.arrayContaining([930001, 930002, 930003]),
+          }),
+        ]),
+      }),
+    );
+    // Silence must NOT be mistaken for Despair (in-game "Gloom"): the key still
+    // exists in the catalog, but no Silence unit may land on it.
+    expect(catalog.find((item) => item.key === 'remove_despair')).toEqual(
+      expect.objectContaining({ matchingCharacterIds: [] }),
+    );
+    // The retired duplicate key must no longer be emitted at all.
+    expect(catalog.find((item) => item.key === 'remove_silence')).toBeUndefined();
+  });
+
+  it('scopes cure clauses by their own trailing qualifier, not a neighbouring clause', async () => {
+    // "on this character" is the ONLY scope qualifier that ever attaches to a
+    // cure clause; everything else in the sentence belongs to a different
+    // clause. A whole-sentence scan would read the ATK boost's class wording or
+    // an "If your Captain is ..." CONDITION as the cure's scope and mislabel it.
+    const characters: ParserCharacters = [
+      {
+        id: 940001,
+        detail: {
+          // Scope wording present, but it belongs to the ATK boost clause.
+          specialText: 'Boosts ATK of Slasher characters by 1.3x for 2 turns, reduces Bind duration by 2 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 940002,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          // Captain wording here is a CONDITION, not a target scope.
+          sailorAbilities: [
+            'If your Captain is a Free Spirit character, reduces Bind duration by 3 turns',
+          ],
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 940003,
+        detail: {
+          specialText: null,
+          captainAbility: null,
+          sailorAbilities: ['Reduces Bind duration by 5 turns on this character'],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const removeBind = catalog.find((item) => item.key === 'remove_bind');
+
+    expect(removeBind).toEqual(
+      expect.objectContaining({
+        // Only the real scopes, and never 'captains' from the condition wording.
+        availableEffectTargetScopes: ['crew', 'self'],
+        effectTargetScopeMatchingCharacterIds: expect.arrayContaining([
+          expect.objectContaining({
+            effectTargetScope: 'crew',
+            characterIds: expect.arrayContaining([940001, 940002]),
+          }),
+          expect.objectContaining({
+            effectTargetScope: 'self',
+            characterIds: [940003],
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it('records both scopes when one character cures on itself and crew-wide', async () => {
+    // The self and crew entries must not collapse into one another: the dedupe
+    // identity carries the scope, so both survive with their own turn counts.
+    const characters: ParserCharacters = [
+      {
+        id: 940101,
+        detail: {
+          specialText: 'Reduces Paralysis duration by 3 turns',
+          captainAbility: null,
+          sailorAbilities: ['Reduces Paralysis duration by 5 turns on this character'],
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const removeParalysis = catalog.find((item) => item.key === 'remove_paralysis');
+
+    expect(removeParalysis).toEqual(
+      expect.objectContaining({
+        availableEffectTargetScopes: ['crew', 'self'],
+        effectTargetScopeMatchingCharacterIds: expect.arrayContaining([
+          expect.objectContaining({
+            effectTargetScope: 'crew',
+            turnMatchingCharacterIds: [{ minTurns: 3, characterIds: [940101] }],
+          }),
+          expect.objectContaining({
+            effectTargetScope: 'self',
+            turnMatchingCharacterIds: [{ minTurns: 5, characterIds: [940101] }],
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it('does not bridge "makes" across a clause into an unrelated orb effect', async () => {
+    // OPTC-DB canonical is "makes [X] orbs beneficial for <scope>" — the term sits
+    // flush against "orbs". Letting either gap span another effect verb makes
+    // "Makes PERFECTs harder to hit ..., changes ... orbs ... into Matching orbs"
+    // (a tap-timing debuff + a slot CHANGE) report as a beneficial-orb effect.
+    const characters: ParserCharacters = [
+      {
+        id: 960001,
+        detail: {
+          specialText:
+            'Makes PERFECTs harder to hit for 1 turn, changes [STR] and [QCK] orbs of Powerhouse characters into Matching orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 960002,
+        detail: {
+          // Penalty removal is not "beneficial".
+          specialText:
+            'makes Badly Matching and [BLOCK] orbs not reduce damage for 3 turns, changes [BLOCK] orbs into Matching orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 960003,
+        detail: {
+          specialText: 'makes [STR], [DEX] and [QCK] orbs beneficial for all characters',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Same effect, worded "matching" instead of "beneficial" (Brook #3665).
+        id: 960004,
+        detail: {
+          specialText: 'makes [RCV] and [TND] orbs matching for all characters by 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'make_slots_favorable')).toEqual(
+      expect.objectContaining({
+        label: 'Make Orbs Beneficial',
+        matchingCharacterIds: [960003, 960004],
+      }),
+    );
+    // The bridged units are genuine slot CHANGES and must still be tagged as such.
+    expect(
+      catalog.find((item) => item.key === 'change_slots')?.['matchingCharacterIds'],
+    ).toEqual(expect.arrayContaining([960001, 960002]));
+  });
+
+  it('tags every way upstream says an effect reaches [BLOCK] orbs', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 995001,
+        detail: {
+          specialText: 'Changes [BLOCK] orbs into [STR] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // "including [BLOCK]" is upstream's block-immunity PIERCE marker, not a
+        // loose phrase — BLOCK cannot be changed unless the text says so. This is
+        // the Fandom glossary's own named example (Jerry Cipher Pol No. 6 #722).
+        id: 995002,
+        detail: {
+          specialText: 'Randomizes all orbs, including [BLOCK] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Directed randomize (Zoro #579) — clears BLOCK with no "changes" verb.
+        id: 995003,
+        detail: {
+          specialText: 'Randomizes [BLOCK] orbs into either [QCK] or [DEX] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Comma-separated orb list (Berry Good #774).
+        id: 995004,
+        detail: {
+          specialText: 'Randomizes [TND], [RCV], [EMPTY], [BLOCK] and [BOMB] orbs into [PSY] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // "turns" verb variant (Blugori #931).
+        id: 995005,
+        detail: {
+          specialText: 'Turns [BLOCK] orbs into [RCV] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Penalty removal is not a block change — the same phrasing
+        // make_slots_favorable also rejects.
+        id: 995006,
+        detail: {
+          specialText: 'Makes Badly Matching and [BLOCK] orbs not reduce damage for 4 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(
+      catalog.find((item) => item.key === 'change_block_slots')?.['matchingCharacterIds'],
+    ).toEqual([995001, 995002, 995003, 995004, 995005]);
+  });
+
+  it('does not tag the crew consuming its own End of Turn Healing as an enemy strip', async () => {
+    const characters: ParserCharacters = [
+      {
+        // Genuine: strips the ENEMY's auto-heal buff, spelled "End of Turn Heal".
+        id: 994001,
+        detail: {
+          specialText:
+            "Reduces enemies' Percent Damage Reduction, End of Turn Heal, Increased Defense and Resilience Buffs duration by 2 turns",
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // The crew SPENDING its own regen buff, spelled "End of Turn Healing"
+        // (Garp #4239 / Hibari #4523 shape) — not an enemy strip.
+        id: 994002,
+        detail: {
+          specialText:
+            'If your crew has End of Turn Healing when the special is activated, recovers 30,000 HP, and reduces End of Turn Healing duration by 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Bridge (#4553): the target swallows a later EXTENDER clause, the
+        // opposite of a strip.
+        id: 994003,
+        detail: {
+          specialText:
+            "Reduces enemies' damage received by 50% for 3 turns, increases duration of any End of Turn Healing buffs by 3 turns",
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(
+      catalog.find((item) => item.key === 'remove_enemy_end_of_turn_heal')?.[
+        'matchingCharacterIds'
+      ],
+    ).toEqual([994001]);
+  });
+
+  it('tags RCV-scaled and damage-taken heals that never name HP', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 993001,
+        detail: {
+          specialText: 'Recovers 5,000 HP',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // The canonical Post Turn Heal, minus the "in HP" tail (Nami #2675).
+        id: 993002,
+        detail: {
+          specialText: null,
+          captainAbility: "recovers 1x character's RCV at the end of each turn",
+          builderAbilities: [],
+        },
+      },
+      {
+        // Decimal amount — the gap must span the "." (Law #1750).
+        id: 993003,
+        detail: {
+          specialText: null,
+          captainAbility: "recovers 0.5x this character's RCV at the end of the turn",
+          builderAbilities: [],
+        },
+      },
+      {
+        // Restores HP without naming HP (Katakuri #2364). reduce_damage
+        // correctly rejects this same phrasing — it is a heal, not a reduction.
+        id: 993004,
+        detail: {
+          specialText: null,
+          captainAbility: 'Recovers 50% of damage taken from enemies',
+          builderAbilities: [],
+        },
+      },
+      {
+        // An RCV *stat* boost is boost_rcv, not a heal.
+        id: 993005,
+        detail: {
+          specialText: 'Boosts RCV of all characters by 1.2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'heal_hp')?.['matchingCharacterIds']).toEqual([
+      993001, 993002, 993003, 993004,
+    ]);
+    expect(catalog.find((item) => item.key === 'boost_rcv')?.['matchingCharacterIds']).toEqual([
+      993005,
+    ]);
+  });
+
+  it('reads a buff duration from its own clause, not the longest one in the sentence', async () => {
+    const characters: ParserCharacters = [
+      {
+        // The Usopp #572 trap: taking the MAX "for N turns" anywhere in the text
+        // (what the support-side helper does) would report a 15-turn ATK boost.
+        id: 992001,
+        detail: {
+          specialText: 'Boosts ATK of Fighter characters by 2x for 1 turn, binds himself for 15 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Two grants: the longest genuinely exists, so it wins.
+        id: 992002,
+        detail: {
+          specialText:
+            'Boosts ATK of all characters by 1.5x for 1 turn and boosts ATK of Slasher characters by 2x for 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // A range records its guaranteed minimum, as TURN_PATTERNS already does.
+        id: 992003,
+        detail: {
+          specialText: 'boosts ATK of Fighter characters by 1.75x for 1-6 turns, depending on the number of enemies',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Start-of-fight cooldown reduction: "by 3 turns" is an AMOUNT, not a
+        // duration, so this key must NOT gain a turn count from this mechanism.
+        id: 992004,
+        detail: {
+          specialText: 'Reduces Special Cooldown of all characters by 3 turns at the start of the fight',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const buckets = (key: string) =>
+      catalog.find((item) => item.key === key)?.['turnMatchingCharacterIds'];
+
+    expect(catalog.find((item) => item.key === 'boost_atk')).toEqual(
+      expect.objectContaining({ supportsTurns: true }),
+    );
+    expect(buckets('boost_atk')).toEqual([
+      { minTurns: 1, characterIds: [992001, 992003] },
+      { minTurns: 3, characterIds: [992002] },
+    ]);
+    // The cooldown key keeps no turn count — its "by N turns" is an amount.
+    expect(catalog.find((item) => item.key === 'reduce_special_charge')).toEqual(
+      expect.objectContaining({ supportsTurns: false }),
+    );
+  });
+
+  it('matches both the multiply-by and set-to forms of an Orb Effects boost', async () => {
+    const characters: ParserCharacters = [
+      {
+        // Multiply-by, scoped by CHARACTER.
+        id: 991001,
+        detail: {
+          specialText: 'boosts Orb Effects of [INT] and Slasher characters by 2.75x for 2 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Set-to, scoped by ORB TYPE — same stat, and previously invisible.
+        id: 991002,
+        detail: {
+          specialText:
+            'increases Orb Effects of beneficial [TND] and [RCV] orbs to 2.5x for 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Orb DROP RATE is a different mechanic and must stay out (the bare
+        // "orbs?" alternative that caused this was removed by the captain audit).
+        id: 991003,
+        detail: {
+          specialText: 'boosts chances of getting [STR] orbs and boosts ATK of all characters by 2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'boost_slot_effects')?.['matchingCharacterIds']).toEqual(
+      [991001, 991002],
+    );
+  });
+
+  it('splits threshold and 100% damage reduction out of the reduce_damage umbrella', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 990001,
+        detail: {
+          specialText: 'Reduces damage received by 50% for 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Threshold: only the excess above the amount is reduced. OPTC-DB says
+        // "above", never "over" — the wording the dead matcher demanded.
+        id: 990002,
+        detail: {
+          specialText: 'Reduces any damage received above 5,000 HP by 97% for 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Total nullification, worded as a 100% reduction (upstream calls this
+        // "Damage Nullification" in its own notes).
+        id: 990003,
+        detail: {
+          specialText: 'Reduces damage received by 100% for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Typed nullification ("only a single type").
+        id: 990004,
+        detail: {
+          specialText: 'Reduces damage received from [INT] enemies by 100% for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // A 100% THRESHOLD cut is Threshold DR, NOT nullification — the corpus
+        // lists the two as distinct buffs.
+        id: 990005,
+        detail: {
+          specialText: 'reduces any damage received above 2,000 HP by 100% for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Threshold with neither "received" nor "HP" (Akainu #1848).
+        id: 990006,
+        detail: {
+          specialText: 'reduces any damage above 3,000 by 80% for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Upstream typo (#4021).
+        id: 990007,
+        detail: {
+          specialText: 'Reduces damage recieved by 60% for 2 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const ids = (key: string) =>
+      catalog.find((item) => item.key === key)?.['matchingCharacterIds'];
+
+    // The umbrella keeps every one of them.
+    expect(ids('reduce_damage')).toEqual([
+      990001, 990002, 990003, 990004, 990005, 990006, 990007,
+    ]);
+    expect(ids('reduce_damage_over_threshold')).toEqual([990002, 990005, 990006]);
+    // 990005 is a 100% THRESHOLD cut and must NOT be nullification.
+    expect(ids('nullify_damage')).toEqual([990003, 990004]);
+  });
+
+  it('separates ATK-multiplier grants from buff amplifiers and clause bridges', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 980001,
+        detail: {
+          specialText: 'Boosts ATK of [INT] characters by 1.5x for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Long enemy-state list: genuine, and the reason the ATK->multiplier
+        // window is 160 rather than 80.
+        id: 980002,
+        detail: {
+          specialText:
+            'boosts ATK against Poisoned enemies, Strongly Poisoned enemies and enemies inflicted with Toxic by 1.75x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Amplifier: scales OTHER characters' ATK Up buffs, grants no ATK.
+        id: 980003,
+        detail: {
+          specialText: 'increases boost effects of ATK Up buffs by 1.5x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Bridge: the multiplier belongs to Color Affinity, one clause later.
+        id: 980004,
+        detail: {
+          specialText:
+            'boosts Final Tap ATK of all characters by 50%; boosts Color Affinity of [DEX] characters by 3.25x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // "Increase Damage Taken" is a buff NAME, not a verb — guarding on
+        // "increases" would wrongly delete this genuine grant.
+        id: 980005,
+        detail: {
+          specialText: 'boosts ATK against enemies inflicted with Increase Damage Taken by 2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'boost_atk')?.['matchingCharacterIds']).toEqual([
+      980001, 980002, 980005,
+    ]);
+    // The amplifier is still correctly reported as an effect boost.
+    expect(
+      catalog.find((item) => item.key === 'effect_boost')?.['matchingCharacterIds'],
+    ).toEqual(expect.arrayContaining([980003]));
+  });
+
+  it('splits the adaptive "into Matching orbs" family out as change_slots_matching', async () => {
+    // "Favorable Slot Change" on the wiki: the orb is changed INTO a Matching
+    // orb per character (type-adaptive), distinct from fixed-type changes.
+    // Umbrella membership in change_slots is kept (mirrors change_block_slots).
+    const characters: ParserCharacters = [
+      {
+        id: 970001,
+        detail: {
+          specialText: 'Changes [RCV], [TND] and [BLOCK] orbs into Matching orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 970002,
+        detail: {
+          specialText: 'Changes [PSY] and [INT] orbs into [STR] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Sabotage: "into Badly Matching orbs" must NOT count as adaptive.
+        id: 970003,
+        detail: {
+          specialText: 'Changes all orbs of Cerebral characters into Badly Matching orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'change_slots_matching')).toEqual(
+      expect.objectContaining({
+        label: 'Change Slots into Matching (Favorable Slot Change)',
+        groupLabel: 'Slot Change',
+        matchingCharacterIds: [970001],
+      }),
+    );
+    // All three remain plain slot changes.
+    expect(
+      catalog.find((item) => item.key === 'change_slots')?.['matchingCharacterIds'],
+    ).toEqual([970001, 970002, 970003]);
+  });
+
+  it('does not count the "unable to change to [X] orbs" restriction as a slot change', async () => {
+    const characters: ParserCharacters = [
+      {
+        // Dr. Vegapunk #4423 shape: the only "change" wording is the negative
+        // self-restriction; the real orb effect is an undirected randomize,
+        // which is deliberately not change_slots (OPTC-DB's own filter treats
+        // "Randomizes all orbs" as a separate family).
+        id: 970101,
+        detail: {
+          specialText:
+            'Randomizes all orbs into [STR], [DEX], [QCK], [INT] or [RCV] orbs, and becomes unable to change to [PSY] and [TND] orbs for 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // A genuine change alongside the restriction must still match (#4149).
+        id: 970102,
+        detail: {
+          specialText:
+            'Changes all orbs, including [BLOCK] orbs, into [INT] orbs, and becomes unable to change to [STR] and [BLOCK] orbs for 2 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(
+      catalog.find((item) => item.key === 'change_slots')?.['matchingCharacterIds'],
+    ).toEqual([970102]);
+  });
+
+  it('matches real orb switches and ignores unit-swap and Swap-cure clauses', async () => {
+    // OPTC-DB's only orb-move wording is "switches orbs between slots N times";
+    // "swaps" is reserved for unit/captain swaps and the Swap debuff, which the
+    // old /swaps? ... orbs?/ matcher bridged into ("swaps this unit with your
+    // captain ... boosts Orb Effects").
+    const characters: ParserCharacters = [
+      {
+        id: 970201,
+        detail: {
+          specialText: 'Switches orbs between slots 2 times, boosts Orb Effects of all characters by 2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 970202,
+        detail: {
+          specialText:
+            'Optionally swaps this unit with your captain for 1 turn, and boosts Orb Effects of all characters by 2x',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 970203,
+        detail: {
+          specialText:
+            'Reduces Swap duration completely, and increases boost effects of ATK Up, Orb Amplification and Color Affinity buffs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(catalog.find((item) => item.key === 'swap_slots')).toEqual(
+      expect.objectContaining({
+        label: 'Switch Orbs Between Slots (Slot Swap)',
+        matchingCharacterIds: [970201],
+      }),
+    );
+  });
+
+  it('splits "Special Cooldown of Ship" from the crew special-cooldown reduce', async () => {
+    // The SHIP's own Special has its own cooldown (Ship Bind is what disables
+    // it), so OPTC-DB's "reduces Special Cooldown of Ship" is NOT a crew
+    // head-start. The picker key for it was spelled the way players say it
+    // ("ship special"), a phrase that never occurs upstream, so it matched
+    // nothing while its characters were absorbed by the crew key.
+    const characters: ParserCharacters = [
+      {
+        id: 950001,
+        detail: {
+          specialText: 'Reduces Special Cooldown of Ship by 1 turn',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        id: 950002,
+        detail: {
+          specialText: 'Reduces Special Cooldown of all characters by 2 turns at the start of the fight',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Both in one text: the crew clause still counts, the ship clause routes
+        // to the ship key.
+        id: 950003,
+        detail: {
+          specialText:
+            'Reduces Special Cooldown of all characters by 1 turn at the start of the fight, reduces Special Cooldown of Ship by 3 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    // The ship-only unit must NOT report as a crew special-cooldown reducer.
+    expect(catalog.find((item) => item.key === 'reduce_special_charge')).toEqual(
+      expect.objectContaining({
+        label: 'Reduce Special Cooldown (Reduce Special Charge Time)',
+        matchingCharacterIds: [950002, 950003],
+      }),
+    );
+    expect(catalog.find((item) => item.key === 'reduce_ship_special_charge')).toEqual(
+      expect.objectContaining({
+        label: 'Reduce Ship Special Cooldown (Ship Special Charge)',
+        matchingCharacterIds: [950001, 950003],
+      }),
+    );
+  });
+
+  it('gives enemy-targeted removals no team-role scope', async () => {
+    // captains/subs/crew/self describe which of YOUR roles an effect lands on.
+    // An enemy debuff stripped "for the crew" is meaningless, so enemy-facing
+    // removals must carry no scope and offer no scope control.
+    const characters: ParserCharacters = [
+      {
+        id: 940401,
+        detail: {
+          specialText:
+            "Reduces enemies' Barrier duration by 3 turns and reduces Bind duration by 2 turns",
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(
+      catalog.find((item) => item.key === 'remove_enemy_barrier')?.['availableEffectTargetScopes'],
+    ).toBeUndefined();
+    // The crew-side cure in the same sentence still gets its scope.
+    expect(catalog.find((item) => item.key === 'remove_bind')).toEqual(
+      expect.objectContaining({ availableEffectTargetScopes: ['crew'] }),
+    );
+  });
+
+  it('omits scope fields for abilities that carry no scope data', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 940201,
+        detail: {
+          specialText: 'Deals 10x character’s ATK in damage to all enemies',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+    const specialDamage = catalog.find((item) => item.key === 'special_damage');
+
+    expect(specialDamage?.['availableEffectTargetScopes']).toBeUndefined();
+    expect(specialDamage?.['effectTargetScopeMatchingCharacterIds']).toBeUndefined();
+  });
+
+  it('supersedes a stored scope-less ability with the derived scoped one', async () => {
+    // apply-manual merges stored + derived abilities. A stored entry written
+    // before cure scopes existed normalizes to scope 'any' — a different dedupe
+    // identity from the same ability re-derived with a real scope — so a plain
+    // merge would keep BOTH and double the entry.
+    const characters: ParserCharacters = [
+      {
+        id: 940301,
+        detail: {
+          specialText: 'Reduces Bind duration by 2 turns',
+          captainAbility: null,
+          builderAbilities: [
+            {
+              key: 'remove_bind',
+              label: 'Remove Bind',
+              minTurns: 2,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+              coverageMode: 'explicit',
+            },
+          ],
+        },
+      },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    const removeBindEntries = (characters[0]!.detail.builderAbilities as Array<
+      Record<string, unknown>
+    >).filter((ability) => ability['key'] === 'remove_bind');
+
+    expect(removeBindEntries).toHaveLength(1);
+    expect(removeBindEntries[0]).toEqual(expect.objectContaining({ effectTargetScope: 'crew' }));
   });
 
   it('indexes structured captain utility matches in the ability catalog', async () => {

@@ -213,6 +213,13 @@ describe('AbilityRequirementPickerComponent', () => {
         availableSlotTokens: [],
         availableSources: ['captainAbility'],
         availableCoverageModes: ['explicit'],
+        // The scope control is data-gated, and in captain mode the scopes come
+        // from captainAbilityEffectMatches — the index that actually backs the
+        // captain filter. Without them the picker offers no scope at all.
+        captainAbilityEffectMatches: [
+          { characterId: 101, effectTargetScope: 'crew', slotTokens: [] },
+          { characterId: 102, effectTargetScope: 'self', slotTokens: [] },
+        ],
         matchCount: 10,
         sampleCharacterIds: [101],
         sampleTexts: ['Reduces damage received by 20%'],
@@ -267,6 +274,10 @@ describe('AbilityRequirementPickerComponent', () => {
         availableSlotTokens: ['RCV'],
         availableSources: ['captainAbility'],
         availableCoverageModes: ['explicit'],
+        captainAbilityEffectMatches: [
+          { characterId: 101, effectTargetScope: 'crew', slotTokens: ['RCV'] },
+          { characterId: 102, effectTargetScope: 'self', slotTokens: ['RCV'] },
+        ],
         matchCount: 10,
         sampleCharacterIds: [101],
         sampleTexts: ['Makes [RCV] orbs beneficial for all characters'],
@@ -285,6 +296,116 @@ describe('AbilityRequirementPickerComponent', () => {
       supportsSlotTokens: true,
       supportsEffectTargetScope: true,
       availableSlotTokens: ['RCV'],
+    });
+  });
+
+  it('offers exactly the scopes real characters implement, not a static list', () => {
+    const component = new AbilityRequirementPickerComponent();
+
+    component.catalogItems = [
+      {
+        key: 'remove_special_bind',
+        label: 'Special Bind (Silence)',
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText', 'sailorAbilities'],
+        availableCoverageModes: ['explicit'],
+        availableEffectTargetScopes: ['crew', 'self'],
+        matchCount: 464,
+        sampleCharacterIds: [101],
+        sampleTexts: ['Reduces Special Bind duration by 5 turns'],
+      },
+      {
+        key: 'remove_burn',
+        label: 'Burn',
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText'],
+        availableCoverageModes: ['explicit'],
+        // Only ever cured crew-wide.
+        availableEffectTargetScopes: ['crew'],
+        matchCount: 190,
+        sampleCharacterIds: [102],
+        sampleTexts: ['Reduces Burn duration by 3 turns'],
+      },
+      {
+        key: 'special_damage',
+        label: 'Damage',
+        supportsTurns: false,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText'],
+        availableCoverageModes: ['explicit'],
+        // Carries no scope at all.
+        matchCount: 1823,
+        sampleCharacterIds: [103],
+        sampleTexts: ['Deals damage to all enemies'],
+      },
+    ];
+    component.drafts = [];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.onCatalogItemSelect(component.catalogItems[0]!);
+    component.onCatalogItemSelect(component.catalogItems[1]!);
+    component.onCatalogItemSelect(component.catalogItems[2]!);
+
+    // Both real scopes, never captains/subs — nobody implements those.
+    expect(component.selectedRows()[0]).toMatchObject({
+      supportsEffectTargetScope: true,
+      availableEffectTargetScopes: ['any', 'crew', 'self'],
+    });
+    // A single populated scope leaves nothing to choose between.
+    expect(component.selectedRows()[1]).toMatchObject({
+      availableEffectTargetScopes: ['any', 'crew'],
+    });
+    // No scope data at all => no scope control.
+    expect(component.selectedRows()[2]).toMatchObject({
+      supportsEffectTargetScope: false,
+      availableEffectTargetScopes: ['any'],
+    });
+  });
+
+  it('does not offer captain-only scopes outside captain ability mode', () => {
+    // make_slots_favorable is scoped ONLY on its captainAbility branch, so in
+    // special mode a scope filter would silently drop its specialText matches.
+    const component = new AbilityRequirementPickerComponent();
+
+    component.captainAbilityMode = false;
+    component.catalogItems = [
+      {
+        key: 'make_slots_favorable',
+        label: 'Make Slots Favorable',
+        supportsTurns: false,
+        supportsSlotTokens: true,
+        availableSlotTokens: ['RCV'],
+        availableSources: ['captainAbility', 'specialText'],
+        availableCoverageModes: ['explicit'],
+        captainAbilityEffectMatches: [
+          { characterId: 101, effectTargetScope: 'crew', slotTokens: ['RCV'] },
+        ],
+        matchCount: 996,
+        sampleCharacterIds: [101],
+        sampleTexts: ['Makes [RCV] orbs beneficial for all characters'],
+      },
+    ];
+    component.drafts = [];
+    component.isOpen = true;
+    component.ngOnChanges({
+      catalogItems: new SimpleChange([], component.catalogItems, true),
+      isOpen: new SimpleChange(false, true, true),
+    });
+
+    component.onCatalogItemSelect(component.catalogItems[0]!);
+
+    expect(component.selectedRows()[0]).toMatchObject({
+      supportsEffectTargetScope: false,
+      availableEffectTargetScopes: ['any'],
     });
   });
 
@@ -509,7 +630,11 @@ describe('AbilityRequirementPickerComponent', () => {
     expect(template).toContain('@if (row.supportsSlotTokens && row.availableSlotTokens.length)');
     expect(template).toContain('@if (row.supportsMinEffectValue)');
     expect(template).toContain('onMinEffectValueChange(row.draft.draftId, $event)');
-    expect(template).toContain('@if (row.supportsEffectTargetScope)');
+    expect(template).toContain(
+      '@if (row.supportsEffectTargetScope && row.availableEffectTargetScopes.length > 1)',
+    );
+    // Scopes come from the ROW (data-gated per ability), never a static list.
+    expect(template).toContain('@for (scope of row.availableEffectTargetScopes; track scope)');
     expect(template).toContain('setEffectTargetScope(row.draft.draftId, scope)');
     expect(template).toContain('@if (showLeaderBoostControls)');
     expect(template).toContain("t('leaderBoost.range.atkMin')");

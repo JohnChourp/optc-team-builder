@@ -221,7 +221,31 @@ const SPECIAL_ABILITY_MATCHERS = [
     // (Cat Viper), "Typeless True Fixed damage". Allow up to three Fixed/True
     // tokens between "typeless" and "damage"; still anchored on "typeless" so it
     // never catches pure "[STR] True damage" or "Fixed True damage".
-    [/\bdeals?\b[^.]{0,160}\btypeless\b(?:\s+(?:Fixed|True)){0,3}\s+damage\b/i],
+    //
+    // The gap is `(?:[^.]|\.\d)` rather than a bare `[^.]`, for the same reason
+    // special_damage's is: a bare `[^.]` dies at the "." of a DECIMAL multiplier,
+    // so the whole "Deals 0.5x the damage dealt in the previous turn in Typeless
+    // damage" family was missed (Mihawk #717/#718/#1881, Eneru #3244/#3245/#4579,
+    // Doflamingo #3550, Ulti #3588, S-Hawk #4109, Sakazuki #4217). Widening only
+    // ever crosses a period followed by a DIGIT, so it still cannot run past a
+    // sentence boundary into an unrelated clause.
+    // The `(?<!\badditional\s)` guard keeps the gap from reaching out of one clause
+    // and into a NEIGHBOURING "adds Nx character's ATK as Additional Typeless
+    // Damage" buff grant, which is a different mechanic (owned by
+    // additional_damage_boost) and says nothing about the type of the damage this
+    // special DEALS. Seven characters were tagged purely through that bridge while
+    // their own damage was typed, percent, or not even theirs: Dogstorm #1570
+    // "deals 60x character's ATK in [STR] damage to one enemy and adds 80x
+    // character's ATK as Additional Typeless Damage" is [STR]-TYPED, so the matchup
+    // is not x1 at all; Z #2329 deals percent damage; Akainu #4297/#4298 have no
+    // "deals" of their own — the bridged verb belongs to the ENEMY's Burn ("Burn
+    // that will deal 30x enemies' ATK in damage"). Also #1571, #2330, #2372.
+    // Without the guard the boundary is decided by PUNCTUATION rather than meaning:
+    // identical grammar lands in the key when the clauses are joined by "and"
+    // (#1570) and out of it when a period intervenes (Koala #1241).
+    [
+      /\bdeals?\b(?:[^.]|\.\d){0,160}(?<!\badditional\s)\btypeless\b(?:\s+(?:Fixed|True)){0,3}\s+damage\b/i,
+    ],
   ],
   [
     'percent_damage',
@@ -250,7 +274,39 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\b\d+%\s+of\b[^.]{0,100}\bHP\b[^.]{0,120}\bignoring\b[^.]{0,120}\b(?:defensive effects|normal attack only|damage reduction|barrier|defense)\b/i,
     ],
   ],
-  ['boost_atk', [/\bboosts?\b[^.]{0,120}\bATK\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i]],
+  [
+    // Grants an ATK MULTIPLIER: OPTC-DB "boosts ATK of <scope> by Nx" (1,185
+    // clauses) and its conditional twin "boosts ATK against <enemy state> by Nx"
+    // (320). Flat/base grants ("boosts base ATK ... by 1,000") and percent ones
+    // ("boosts Final Tap ATK ... by 30%") are other keys — they carry no "Nx", so
+    // the multiplier requirement already separates them.
+    //
+    // `(?!\s+effects?)` rejects the AMPLIFIER: "increases boost effects of ATK Up
+    // buffs by 1.5x" satisfies \bboosts?\b through the NOUN in "boost effects",
+    // then reaches the ATK inside the buff NAME. That grants no ATK at all — it
+    // scales OTHER characters' ATK Up buffs — and all 20 such units are already
+    // (correctly) effect_boost. Same defect `boost_base_atk` fixed for "boost
+    // effects of Base ATK Boost buffs".
+    //
+    // Neither gap may span another effect verb, which is what actually stops a
+    // bridge — e.g. Garp & Coby #4521 "boosts Final Tap ATK ... by 50%; boosts
+    // Color Affinity ... by 3.25x", where the multiplier belongs to a different
+    // effect one clause later. The verb list deliberately EXCLUDES increases/
+    // sets/adds: those collide with buff NAMES ("Increase Damage Taken"), and
+    // guarding on them silently deleted 16 genuine "boosts ATK against enemies
+    // inflicted with Increase Damage Taken by 2x" units. "inflicts" is safe —
+    // \binflicts?\b cannot match the participle "inflicted".
+    //
+    // With the guard doing that work, the ATK->multiplier window is 160 rather
+    // than 80: the old bound was blunt collateral that dropped 11 genuine grants
+    // whose enemy-state list is simply long ("boosts ATK against Poisoned
+    // enemies, Strongly Poisoned enemies and enemies inflicted with Toxic by
+    // 1.75x").
+    'boost_atk',
+    [
+      /\bboosts?\b(?!\s+effects?\b)(?:(?!\b(?:reduces?|removes?|changes?|makes?|locks?|randomizes?|recovers?|deals?|inflicts?|swaps?|consumes?|switches|transforms?|boosts?)\b)[^.]){0,120}?\bATK\b(?:(?!\b(?:reduces?|removes?|changes?|makes?|locks?|randomizes?|recovers?|deals?|inflicts?|swaps?|consumes?|switches|transforms?|boosts?)\b)[^.]){0,160}?\bby\s+\d+(?:\.\d+)?x/i,
+    ],
+  ],
   [
     'boost_slot_effects',
     [
@@ -267,7 +323,26 @@ const SPECIAL_ABILITY_MATCHERS = [
       // and this key is grouped under Boost Damage). Dropping `orbs?` narrows the
       // captain matches from 29 (26 false) to the 3 genuine "Boosts Orb Effects"
       // grants and removes the analogous special-side false positives.
-      /\bboosts?\b[^.]{0,120}\b(?:Orb Effects|Slot Effects)\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?x/i,
+      // The trailing "x" is optional ONLY when the number cannot be a turn or
+      // percent count: Yamato #4212 "boosts Orb Effects of Free Spirit characters
+      // by 1.75" is a genuine grant whose multiplier upstream simply wrote
+      // without the "x" (same class as the "recieved"/"take" typo tolerances).
+      // The lookahead adds exactly that one character and drops none.
+      // ("Slot Effects" is legacy tolerance from the captain audit and currently
+      // matches nothing — 0 occurrences in any field, any case — but it is a
+      // literal with no bridge risk, so it stays as cheap future-proofing.)
+      /\bboosts?\b[^.]{0,120}\b(?:Orb Effects|Slot Effects)\b[^.]{0,80}\bby\s+\d+(?:\.\d+)?(?:x|(?!\s*(?:turns?|%|\d)))/i,
+      // The SET-TO grant form, which the multiply-by wording alone cannot see:
+      // "increases Orb Effects of beneficial [TND] orbs TO 2.75x for 3 turns"
+      // scopes by ORB TYPE and sets the multiplier, where "boosts Orb Effects of
+      // [INT] characters BY 2.75x" scopes by CHARACTER and multiplies. Both
+      // amplify the same Orb Effects stat, so both belong here — 21 characters
+      // carried only the set-to form and were invisible to this filter.
+      // `(?!\s+boost\s+effects?)` keeps the amplifier ("increases boost effects
+      // of ... buffs") out on principle, as it did for boost_atk; upstream names
+      // that buff "Orb Amplification" rather than "Orb Effects", so the shape
+      // currently matches nothing here — the guard is cheap future-proofing.
+      /\bincreases?\b(?!\s+boost\s+effects?\b)[^.;]{0,40}?\b(?:Orb Effects|Slot Effects)\b[^.;]{0,120}?\bto\s+\d+(?:\.\d+)?x/i,
     ],
   ],
   [
@@ -394,7 +469,35 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['chain_multiplier_lock_min_max', [/\b(?:minimum|maximum)\s+chain\s+multiplier\b/i]],
   [
     'chain_multiplier_additive_boost',
-    [/\badds?\b[^.]{0,80}\bto\b[^.]{0,40}\bchain\b/i, /\bchain\b[^.]{0,80}\b\+\d/i],
+    // A chain ADDITION is always fractional — "Adds 0.5x to Chain multiplier for 2
+    // turns" (Kizaru #977), "Adds 0.1x to ..." (#1066), "Adds 0.2x to ..." (Binz
+    // #1105). The former pair of loose gap-matchers therefore died at the decimal:
+    // a bare `[^.]` cannot cross the "." of "0.5x", which sits between "adds" and
+    // "to", so the key matched 2 of 312 — and the only 2 survivors were the only
+    // two with an INTEGER amount. It was a dead filter.
+    //
+    // This anchors on ADJACENCY instead of spanning a gap: adds → amount → optional
+    // range/parenthetical → optional "to (the)" → optional "base" → the literal
+    // "chain multiplier". That covers every wording in the corpus — canonical (288),
+    // enhanceable ("Adds 1.8x, can be enhanced up to 2 times, to Chain multiplier",
+    // Vegapunk #4136), range ("adds 1.5x-2.5x to Chain multiplier", Nami #3789),
+    // parenthetical ("adds 2.0x, preventing buff clears, to Chain multiplier", King
+    // #3897), x-less (#2296, #4344), "Base Chain multiplier" (Ace #3829/#3830), and
+    // the "to"-less typo "adds 0.8x Chain multiplier" (Belo Betty #3406, the only
+    // one) — while requiring the word "multiplier" keeps it out of the neighbouring
+    // chain mechanics, which are separate keys (Chain Multiplier LIMIT, Chain
+    // Coefficient REDUCTION, Chain Multiplier GROWTH RATE, Chain Lock, Chain
+    // Boundaries, Chain Tap Timing Bonus). Safe: across all 319 real matches the
+    // matched "chain" is followed by "multiplier" every time.
+    //
+    // The old second alternative /\bchain\b[^.]{0,80}\b\+\d/i is DELETED rather than
+    // kept: it was structurally dead and always had been. `\b` before `+` requires a
+    // WORD character immediately before it, but upstream always writes a space
+    // (" +0.2x"), so it could never fire — 0 matches corpus-wide. Repairing it
+    // instead would inject 90 false positives from five other chain concepts.
+    [
+      /\badds?\s+\d+(?:\.\d+)?x?(?:-\d+(?:\.\d+)?x?)?(?:,(?:[^.]|\.\d){0,45},)?\s*(?:to\s+(?:the\s+)?)?(?:base\s+)?chain multiplier/i,
+    ],
   ],
   [
     'chain_multiplier_multiplicative_boost',
@@ -452,12 +555,62 @@ const SPECIAL_ABILITY_MATCHERS = [
   // previously mis-tagged debuff cures ("reduces Increase Damage Taken"),
   // counters ("deals Nx the damage taken"), and glass-cannon downsides
   // ("increases damage received") as reduce_damage.
-  ['reduce_damage', [/\breduces?\s+(?:any\s+)?damage (?:received|taken|take)\b/i]],
   [
-    'reduce_damage_over_threshold',
-    [/\breduces?\b[^.]{0,120}\bdamage\b[^.]{0,120}\bover\b[^.]{0,80}\bHP\b/i],
+    'reduce_damage',
+    [
+      // "reduces" must directly govern "damage received/taken" — see the
+      // 2026-07-11 captain audit. "take"/"recieved" tolerate upstream typos
+      // (Sanji #1447 "reduces damage take by 10%"; Makino & Luffy & Uta #4021 and
+      // Galdino #4112 "Reduces damage recieved by 60%").
+      /\breduces?\s+(?:any\s+)?damage\s+(?:received|recieved|taken|take)\b/i,
+      // The threshold form sometimes drops "received" entirely — Akainu #1848 /
+      // Sakazuki #1849 "reduces any damage above 3,000 by 80% for 1 turn" is a
+      // genuine crew reduction that the received/taken requirement alone missed.
+      /\breduces?\s+any\s+damage\s+above\s+[\d,]+/i,
+    ],
   ],
-  ['nullify_damage', [/\bnullif(?:y|ies)\b[^.]{0,120}\bdamage\b/i]],
+  [
+    // Threshold Damage Reduction: only the damage EXCEEDING the threshold is
+    // reduced ("reduces a portion of ... damage ... exceeding 3000"), which is a
+    // different mechanic from a flat percentage cut — the corpus itself names
+    // them as separate buffs ("a Percent Damage Reduction, Threshold Damage
+    // Reduction or Damage Nullification buff", Blackbeard #3279).
+    //
+    // The old matcher demanded "over ... HP". OPTC-DB never writes "over": the
+    // wording is "reduces any damage received ABOVE 5,000 HP by 97%" (and #1848
+    // drops both "received" and "HP"), so this key sat dead at 0 while its 67
+    // characters were reported only as generic reduce_damage. Same
+    // spelled-like-players-say-it failure as remove_sfx / reduce_ship_special_charge
+    // / swap_slots. Kept INSIDE reduce_damage as a subset (mirrors
+    // change_slots_matching): 39 of the 57 threshold-only characters have no
+    // other reduction clause, so excluding them would delete their coverage.
+    'reduce_damage_over_threshold',
+    [/\breduces?\s+any\s+damage\s+(?:received\s+|recieved\s+)?above\s+[\d,]+/i],
+  ],
+  [
+    // Damage Nullification (Fandom's crew-side "Damage Negation"): OPTC-DB has NO
+    // "nullifies ... damage" verb — the old matcher's wording does not exist, so
+    // the key sat dead at 0. The provider wording is always a 100% reduction, and
+    // upstream equates the two itself: Jinbe #3774 captainAbility "reduces damage
+    // received by 100% for 1 attack" + captainNotes "Damage Nullification
+    // activates on the first instance of damage taken"; Komurasaki #3217
+    // specialText "Reduces damage received by 70%-100%" + specialNotes "3rd time
+    // or more: 100% nullification".
+    //
+    // Matching the literal "Damage Nullification" noun instead would be wrong on
+    // both sides: 87% of those clauses are the ENEMY buff (already
+    // remove_enemy_damage_nullification), and every crew-side one is a META clause
+    // (duration extender / buff replacer / note), never a provider.
+    //
+    // The typed form "reduces damage received FROM [X] enemies by 100%" is
+    // included (Fandom: "sometimes only a single type, such as all QCK damage
+    // received"). The "any ... above N HP by 100%" threshold form is excluded by
+    // requiring "damage received" to abut "reduces" — a 100% THRESHOLD cut is
+    // Threshold DR, which the corpus lists as a distinct buff. The gap forbids a
+    // second "damage" so a later clause's "by 100%" cannot be claimed.
+    'nullify_damage',
+    [/\breduces?\s+damage\s+(?:received|recieved)\b(?:(?!\bdamage\b)[^.;]){0,60}?\bby\s+100%/i],
+  ],
   [
     'lock_slots',
     // Orb Lock: "locks <scope> orbs/slots" so the crew's slots stay fixed for N
@@ -484,13 +637,43 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'make_slots_favorable',
-    [/\bmakes?\b[^.]{0,160}\b(?:orbs?|slots?)\b[^.]{0,80}\b(?:beneficial|matching|favorable)\b/i],
+    // OPTC-DB canonical: "makes [X] orbs beneficial for <scope>" (1,017 of the
+    // 1,019 hits have the term flush against "orbs"; "orbs matching for all
+    // characters" — Brook #3665 — is the same effect worded differently, and
+    // "makes ... orbs that the Captain has beneficial" is the one long variant).
+    //
+    // Neither gap may span another effect verb, or "makes" bridges across a
+    // comma into an unrelated clause and reports a slot effect that is not
+    // there: Hyouzou #1435/#1436 "MAKES PERFECTs harder to hit for 1 turn,
+    // CHANGES [STR] ... orbs of Powerhouse characters into MATCHING orbs" is a
+    // tap-timing debuff plus a slot CHANGE (already `change_slots`), and Perona
+    // #4263 "makes Badly Matching and [BLOCK] orbs NOT REDUCE DAMAGE ... changes
+    // ... into Matching orbs" only removes a penalty. The "favorable" alternative
+    // is dropped: it matched zero characters on any source, because "favorable"
+    // /"advantageous" is never the verb upstream (the app label was the only
+    // place that word appeared — see the label note in the definitions file).
+    [
+      /\bmakes?\b(?:(?!\b(?:changes?|boosts?|locks?|randomizes?|delays?|recovers?|reduces?|removes?|sets?|deals?|inflicts?|increases?)\b)[^.]){0,160}?\b(?:orbs?|slots?)\b(?:(?!\b(?:changes?|boosts?|locks?|randomizes?|delays?|recovers?|reduces?|removes?|sets?|deals?|inflicts?|increases?)\b)[^.]){0,80}?\b(?:beneficial|matching)\b/i,
+    ],
   ],
   [
     'change_slot_chance',
     [/\b(?:changes?|boosts?|increases?)\b[^.]{0,120}\b(?:orb|slot)\b[^.]{0,80}\bchance\b/i],
   ],
-  ['swap_slots', [/\bswaps?\b[^.]{0,80}\b(?:orbs?|slots?)\b/i]],
+  [
+    // Position-only orb movement ("Slot Swap" on the wiki — explicitly NOT a
+    // Slot Change: orb types are untouched, they trade places). OPTC-DB's only
+    // wording for it is "switches orbs between slots N time(s)" — the verb is
+    // ALWAYS "switches", never "swaps": upstream reserves "swaps" for
+    // unit/captain swaps ("swaps this unit with your captain") and the Swap
+    // debuff. The old /swaps? ... orbs?/ matcher therefore matched ZERO real
+    // orb-swaps; its 3 hits were captain-swap and Swap-cure clauses bridging
+    // into a later "Orb Effects"/"ATK Up, Orb ..." noun, while all ~73 genuine
+    // "switches orbs between slots" units went undetected. "Switch Effect"
+    // (the VS/switch-gauge mechanic) never fits this shape, so it stays out.
+    'swap_slots',
+    [/\bswitch(?:es)?\b[^.]{0,40}\borbs?\b[^.]{0,40}\bbetween\b[^.]{0,30}\bslots?\b/i],
+  ],
   [
     'change_slots',
     [
@@ -499,15 +682,56 @@ const SPECIAL_ABILITY_MATCHERS = [
       // type, so they are not a slot/orb-type change (e.g. Kaido & Big Mom #4477
       // "change the Orb Multiplier of specific orbs"). Genuine changes name an orb
       // type or "the orb(s)" as the object, not the "Orb <effect>" noun.
-      /\bchanges?\b(?!\s+(?:the\s+)?Orb\s+(?:Multiplier|Amplification|Effects?)\b)[^.]{0,160}\b(?:orbs?|slots?)\b/i,
-      /\btransforms?\b[^.]{0,160}\b(?:orbs?|slots?)\b/i,
+      //
+      // The lookbehind rejects the RESTRICTION clause "becomes unable to change
+      // to [X] orbs for N turns" — a self-limitation, not an orb change; Dr.
+      // Vegapunk #4423 was matched ONLY through it (his real orb effect is an
+      // undirected randomize, which is deliberately not this key — OPTC-DB
+      // filters "Randomizes all orbs" as its own "Orb randomizers" family).
+      //
+      // No "transforms" alternative: zero of the 1,820 change-clauses in the
+      // corpus use it for orbs — upstream reserves "transforms" for CHARACTER
+      // transformations ("transforms [STR] characters into Super [STR]
+      // characters"), so keeping it was pure bridge risk with no coverage.
+      /(?<!\bunable to )\bchanges?\b(?!\s+(?:the\s+)?Orb\s+(?:Multiplier|Amplification|Effects?)\b)[^.]{0,160}\b(?:orbs?|slots?)\b/i,
     ],
   ],
   [
+    // The type-ADAPTIVE subfamily ("Favorable Slot Change" on the wiki —
+    // "matches the orb to whatever type the character is", its own category,
+    // rainbow-team oriented): OPTC-DB words it "changes ... into (a) Matching
+    // orb(s)". A strict subset of `change_slots` (umbrella membership is kept,
+    // mirroring how `change_block_slots` overlaps it), split out because 649
+    // characters carry it and a fixed-type change is useless to a rainbow team.
+    // "into Badly Matching orbs" (sabotage) does not match — "Badly" sits
+    // between "into" and "Matching".
+    'change_slots_matching',
+    [/\bchanges?\b[^.]{0,160}\binto\s+(?:a\s+)?Matching\s+orbs?\b/i],
+  ],
+  [
+    // [BLOCK] orbs "cannot be changed by most specials unless they say so
+    // specifically" (Fandom glossary), so an effect only touches them when the
+    // text SAYS it does. That is why the bare "including [BLOCK]" pattern below
+    // needs no verb: the phrase IS upstream's block-immunity-piercing marker,
+    // not a loose substring. The glossary's own named example of a special that
+    // can change block orbs — "Jerry Cipher Pol No. 6" — is #722, whose entire
+    // special is "Randomizes all orbs, including [BLOCK] orbs", and it reaches
+    // this key through exactly that pattern. (This is also why randomizers count
+    // here while `change_slots` excludes them: that key is about type CHANGES,
+    // this one is about the capability to touch BLOCK at all.)
     'change_block_slots',
     [
       /\bchanges?\b[^.]{0,180}\[BLOCK\][^.]{0,160}\b(?:orbs?|slots?)\b/i,
       /\bincluding\s+\[BLOCK\]/i,
+      // Two further ways upstream clears BLOCK without saying "changes": a
+      // DIRECTED randomize ("Randomizes [BLOCK] orbs into either [QCK] or [DEX]
+      // orbs", Zoro #579/#580; "Randomizes [TND], [RCV], [EMPTY], [BLOCK] and
+      // [BOMB] orbs into ...", Berry Good #774, Mr. 2 #801/#802) and the "turns"
+      // verb (Blugori #931 "Turns [BLOCK] orbs into [RCV] orbs"). The gaps allow
+      // commas because the orb LIST contains them, so an effect verb is excluded
+      // instead to stop a bridge; requiring "into" AFTER [BLOCK] keeps this to
+      // the FROM-block direction only.
+      /\b(?:randomiz\w*|turns?)\b(?:(?!\b(?:boosts?|reduces?|removes?|makes?|locks?|recovers?|deals?|inflicts?|adds?|increases?|sets?|swaps?|consumes?|switches)\b)[^.;]){0,80}?\[BLOCK\](?:(?!\b(?:boosts?|reduces?|removes?|makes?|locks?|recovers?|deals?|inflicts?|adds?|increases?|sets?|swaps?|consumes?|switches)\b)[^.;]){0,60}?\binto\b/i,
     ],
   ],
   ['consume_slots', [/\bconsumes?\b[^.]{0,80}\b(?:orbs?|slots?)\b/i]],
@@ -518,7 +742,18 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\bauto changes?\b/i,
     ],
   ],
-  ['remove_silence', [/\breduces?\b[^.]{0,80}\bsilence\b[^.]{0,80}\bby\s+\d+\s+turns?/i]],
+  // NOTE: there is deliberately NO `remove_silence` matcher. "Silence" is the
+  // IN-GAME label for the debuff OPTC-DB otherwise words as "Special Bind" (it
+  // greys out the special gauge and locks specials) — the same effect seen under
+  // two names, exactly like Blindness/Remove SFX. It is NOT Despair: Despair is
+  // shown in-game as "Gloom" and OPTC-DB words it "Despair". Upstream is simply
+  // inconsistent — only 5 units (#4197/#4262/#4288/#4426/#4502) say "Silence"
+  // while 356 say "Special Bind", interleaved across the same id range (the
+  // newest units of all, #5031/#5032, still say "Special Bind"), so this is
+  // transcription drift, not a rename or a distinct mechanic. The `silence`
+  // alias on `remove_special_bind` in TARGET_ALIASES already routes these units
+  // to the single canonical key WITH their turn count; a separate matcher here
+  // only produced a duplicate turn-less picker entry. See TARGET_ALIASES.
   ['apply_delay', [/\bdelays?\b[^.]{0,120}\benemies\b/i]],
   [
     'apply_def_reduction',
@@ -558,7 +793,15 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['apply_weakened', [/\binflicts?\b[^.]{0,60}\bweaken\b(?!ed)/i]],
   [
     'reduce_ship_special_charge',
-    [/\breduces?\b[^.]{0,120}\bship special\b[^.]{0,80}\b(?:charge|cooldown|turns?)\b/i],
+    // The SHIP's own Special has its own cooldown, distinct from the crew's (it
+    // is what Ship Bind disables). OPTC-DB words it "reduces Special Cooldown of
+    // Ship by N turn(s)" — the ship is a TRAILING qualifier, never the adjacent
+    // phrase "ship special". The old matcher required that "ship special"
+    // adjacency, which occurs ZERO times in the corpus, so this picker key
+    // matched nothing while its 16 real characters were silently absorbed by the
+    // crew-facing `reduce_special_charge` (same Remove-SFX-vs-Blindness failure:
+    // a key spelled the way players say it, not the way OPTC-DB writes it).
+    [/\breduces?\s+(?:the\s+)?special cooldown\s+of\s+ship\b/i],
   ],
   ['reduce_switch_effect_use', [/\breduces?\b[^.]{0,120}\bswitch effect\b[^.]{0,80}\buse/i]],
   ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,120}\bVS effect gauge\b/i]],
@@ -572,7 +815,13 @@ const SPECIAL_ABILITY_MATCHERS = [
     // rewinded)" / "advances to MAX" beneficial charge is a DISTINCT mechanic and
     // must not be reported here. The former "special charge" alternative matched
     // zero characters across every source, so it is dropped.
-    [/\breduces?\s+(?:the\s+)?special cooldown\b/i],
+    //
+    // The negative lookahead excludes "Special Cooldown of Ship" — the SHIP's own
+    // special cooldown is a separate mechanic (`reduce_ship_special_charge`), not
+    // a crew head-start. It mirrors the identical guard on
+    // `restore_advance_special_charge`, whose absence here let 4 ship-only units
+    // (#4257/#4345/#4384/#4385) report as crew special-cooldown reducers.
+    [/\breduces?\s+(?:the\s+)?special cooldown\b(?!\s+of\s+ship\b)/i],
   ],
   [
     'restore_advance_special_charge',
@@ -591,7 +840,36 @@ const SPECIAL_ABILITY_MATCHERS = [
   // ~30 RCV-scaled healer captains (Marco, Rayleigh, Big Mom, Shanks, ...).
   // "health" tolerates the legacy wording in Marguerite "recovers a small amount
   // of health at the end of each turn".
-  ['heal_hp', [/\b(?:recovers?|heals?)\b(?:[^.]|\.\d){0,120}\b(?:HP|health)\b/i]],
+  [
+    'heal_hp',
+    [
+      // Canonical: "Recovers N HP", "Recovers N% of crew's MAX HP", "Recovers Nx
+      // character's RCV in HP", "recovers all missing HP", plus Marguerite #918's
+      // legacy "a small amount of health". `(?:[^.]|\.\d)` lets the gap span the
+      // decimal in "1.5x character's RCV" while still stopping at a real sentence
+      // boundary (period+space, not period+digit) — without it ~27 RCV-scaled
+      // healer captains were silently missed (fixed by the 2026-07-11 captain
+      // audit).
+      /\b(?:recovers?|heals?)\b(?:[^.]|\.\d){0,120}\b(?:HP|health)\b/i,
+      // The SAME RCV-scaled heal, but upstream often omits the "in HP" tail:
+      // "recovers 1x character's RCV at the end of each turn" (Nami #2675,
+      // Tsuru #1319, Rayleigh #1619 ...). Requiring an HP token hid 62 healers —
+      // the identical failure shape as the decimal bug, via a different tail.
+      // (A decimal-BLIND probe undercounts these as 26, because [^.;] stops at
+      // the "." in "recovers 0.75x" — the very trap the comment above warns
+      // about, so measure this family with the decimal-tolerant construct.)
+      // All 7 distinct span shapes in the corpus are "recovers <amount>
+      // character's RCV", i.e. always an HP recovery; the boosts guard and the
+      // comma-blocked gap keep it from reaching a neighbouring "boosts ... RCV"
+      // clause, which is boost_rcv's territory and not a heal.
+      /\brecovers?\b(?:(?!\bboosts?\b)(?:[^.,;]|\.\d)){0,40}\bRCV\b/i,
+      // Damage-taken heals: "Recovers 50% of damage taken from enemies"
+      // (Katakuri #2364, Magellan #3277, Hawkins #2981) restore HP without ever
+      // naming HP. Note the reduce_damage audit correctly REJECTS this same
+      // phrasing — it is a heal, not a damage reduction.
+      /\brecovers?\b(?:[^.,;]|\.\d){0,30}\bof\s+(?:the\s+)?damage\s+taken\b/i,
+    ],
+  ],
   ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],
   [
     'apply_resilience',
@@ -924,6 +1202,19 @@ const TARGET_ALIASES = [
     matcher: (target) => target.includes('sailor despair'),
   },
   {
+    // "Special Bind" (OPTC-DB's house wording, 356 units) and "Silence" (the
+    // in-game label, 5 units) are the SAME debuff — specials locked, special
+    // gauge greyed out — so both wordings must resolve to this one key. The
+    // Fandom glossary states it directly ("Special bind - also known as silence
+    // or numbness ... note it is called silence here" on the in-game
+    // visualisation) and the Special Bind Reduction category is worded
+    // "Special Bind/Silence Reduction" throughout.
+    //
+    // The `silence` alias must NOT be read as Despair even though the community
+    // sometimes says "silence" for Despair: in-game Despair is labelled "Gloom",
+    // and OPTC-DB words it "Despair" (476 units) — no unit ever pairs "Silence"
+    // with "Despair" in the same field, and every "Silence" unit's cure sits
+    // alongside ordinary cleanses (ATK Down, Blindness), not captain-only ones.
     key: 'remove_special_bind',
     label: 'Remove Special Bind',
     matcher: (target) => target.includes('special bind') || target.includes('silence'),
@@ -1048,9 +1339,27 @@ const TARGET_ALIASES = [
       target.includes('percent cut'),
   },
   {
+    // The ENEMY's auto-heal buff is named "End of Turn Heal"; the CREW's own
+    // regen buff is "End of Turn HealING". Upstream keeps the two spellings
+    // perfectly separate in removal targets — all 14 genuine enemy strips read
+    // "reduces enemies' ... End of Turn Heal ... duration", and every "End of
+    // Turn Healing" removal target is the crew CONSUMING its own buff (Garp
+    // #4239/#4240, Hibari #4523, Zoro VS Nusjuro #4529 all gate on "If your crew
+    // has End of Turn Healing" and then spend it), which is not an enemy strip.
+    //
+    // The possessive cannot be used here: normalizeTargetText deliberately
+    // strips "enemies'" before an alias ever sees the target, so the spelling is
+    // the only signal available at this layer. The `\b` also drops Garp &
+    // Tashigi #4553, whose target bridges a whole clause ("enemies' damage
+    // received by 50% for 3 turns, increases duration of any End of Turn
+    // Healing") — an EXTENDER, the opposite of a strip.
+    //
+    // If upstream ever writes "reduces enemies' End of Turn Healing duration",
+    // this misses it; that costs a miss rather than a wrong tag, and today the
+    // split is 14/14 vs 4/4 clean.
     key: 'remove_enemy_end_of_turn_heal',
     label: 'Remove End of Turn Heal',
-    matcher: (target) => target.includes('end of turn heal'),
+    matcher: (target) => /\bend of turn heal\b/.test(target),
   },
   {
     key: 'remove_no_healing',
@@ -1123,17 +1432,39 @@ const TURN_PATTERNS = [
     // Barrier duration by 1-5 turns", Chaka #3644 "reduces Bind duration by 1-5
     // turns") records the FIRST number as minTurns — the guaranteed minimum
     // reduction (a "1-5" range guarantees at least 1). The optional "-M" tail is
-    // non-capturing so match[2] stays the min; ranges whose min is 0 ("by 0-10
-    // turns") resolve to 0 and are dropped by the minTurns > 0 guard downstream.
+    // non-capturing so match[2] stays the min; a range whose min is 0 ("by 0-10
+    // turns") guarantees nothing and so resolves to null, NOT 0 — see resolveTurns
+    // below. Returning 0 made the downstream `minTurns <= 0` guard drop the whole
+    // match, tag included, which denied membership rather than just withholding
+    // the turn guarantee.
     // The target excludes a second "reduce(s)/remove(s)" verb so it cannot bridge
     // a first no-turn-count clause into a later "by N turns" clause — e.g. Zeus &
     // Prometheus & Big Mom #3902 "reduce Paralysis duration by half and reduces
     // Special Cooldown ... by 1-99 turns" must NOT tag remove_paralysis via the
     // special-cooldown range ("by half" is an uncountable partial reduction).
     // "Reduction"/"reduced" are unaffected (\breduces?\b matches only the verb).
+    // `completely` is in the guard for the mirror-image reason: a target that
+    // crosses a finished "... duration completely" clause is reaching into a
+    // LATER clause's turn count through a verb the guard does not list, e.g.
+    // Luffy #4129 "removes enemies' ATK Up and Enrage duration completely, and
+    // delays all enemies by 2 turns" captured "...completely, and delays all
+    // enemies" + "by 2 turns" and published a bogus 2-turn ATK Up removal beside
+    // the correct permanent one. A genuine "by N turns" target never contains
+    // "completely", so this only ever drops bridges (6 records, 0 replacements).
     pattern:
-      /(?:reduces?|removes?)\s+((?:(?!\breduces?\b|\bremoves?\b)[^.;])+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)(?:\s*-\s*\d+)?\s+turns?/gi,
-    resolveTurns: (match) => Number(match[2]),
+      /(?:reduces{0,2}|removes?)\s+((?:(?!\breduces{0,2}\b|\bremoves?\b|\bcompletely\b)[^.;])+?)\s+(?:duration\s+(?:by\s+)?|by\s+)(\d+)(?:\s*-\s*\d+)?\s+turns?/gi,
+    // A range publishes its LOWER bound, because minTurns means "guaranteed at
+    // least this many" ("by 1-99 turns" -> 1). A ZERO floor therefore guarantees
+    // nothing, and returning 0 made the consumer's `minTurns <= 0` check discard
+    // the whole match - tag included - so Boa Hancock #4398/#4399 ("reduces Bind
+    // duration by 0-10 turns depending on the number of [RCV] orbs used in normal
+    // attacks") cured Bind but was absent from remove_bind entirely, unfilterable
+    // even with no turn requirement. null means "real cure, no guaranteed floor":
+    // the same shape the parser already uses for turn-less abilities, so she is
+    // matched by an unfiltered search and correctly skipped by any "N+ turns" one.
+    // This is the corpus's only zero-floor range (the other 17 all start at 1+),
+    // and there is no literal "by 0 turns" anywhere, so nothing else changes.
+    resolveTurns: (match) => (Number(match[2]) > 0 ? Number(match[2]) : null),
   },
   {
     isCompleteRemoval: true,
@@ -1144,9 +1475,64 @@ const TURN_PATTERNS = [
     // `remove_damage_reduction` requires target === 'percent damage reduction')
     // were missed on the "... duration completely" wording — e.g. RRG #4257 /
     // S-Shark #4311/#4312 / Kizaru #4544 "reduces Bind duration completely".
-    // `includes`-based aliases are unaffected (the substring still matches).
-    pattern: /(?:reduces?|removes?)\s+([^.;]+?)\s+(?:duration\s+)?completely/gi,
+    // The `(?!reduces|removes)` guard is the same one the "by N turns" pattern
+    // above carries, and is required for the same reason: without it the lazy
+    // target starts at the FIRST verb in the sentence and swallows every clause
+    // up to a distant "completely", so "Reduces Paralysis duration by 3 turns,
+    // removes Poison duration completely" (Kalifa #1295) captured "Paralysis
+    // duration by 3 turns, removes Poison" and published a PERMANENT Paralysis
+    // clear (minTurns 99) for what is really a 3-turn cure — while the actual
+    // "completely" target, Poison, went unrecorded. 50 characters were bridged
+    // this way; the guard makes each capture start at its own verb.
+    pattern:
+      /(?:reduces{0,2}|removes?)\s+((?:(?!\breduces{0,2}\b|\bremoves?\b)[^.;])+?)\s+(?:duration\s+)?completely/gi,
     resolveTurns: () => 99,
+  },
+  {
+    isCompleteRemoval: false,
+    // Upstream's ELLIPSIS: "reduces Bind and reduces enemies' Percent Damage
+    // Reduction duration by 3 turns" (Monet #2010/#2011). The first target has no
+    // duration of its own - the trailing "by 3 turns" distributes across BOTH -
+    // so the anti-bridge guard (correctly) refused to cross the second "reduces"
+    // and the Bind cure was dropped. Fandom confirms the intent: Monet's skill is
+    // "reduces Bind duration by 3 turns, and reduces all enemies damage reduction
+    // duration ... for 3 turns", and the page carries [[Category:Bind Reduction]].
+    //
+    // This is NOT the bridge case the guard exists to stop: there, the first
+    // clause has its OWN "duration by N turns" and the swallowed verb starts a
+    // genuinely separate effect. Here the conjunction is "and reduces" with no
+    // intervening duration, which is one clause listing two targets. Requiring a
+    // trailing "duration by N turns" keeps the verb-less "Remove Beneficial
+    // Effects and Remove Accumulated Value effects once per ..." family (Roger
+    // #3176 et al) out. Group 1 spans both targets; the second segment keeps its
+    // "reduces" prefix and simply matches no alias, which is harmless.
+    //
+    // The FIRST target additionally may not contain "duration" or "turns": that
+    // is what separates an ellipsis from the bridge. Without it, Dogstorm #2168
+    // "Reduces Special Bind duration by 4 turns and reduces enemies' Threshold
+    // Damage Reduction duration by 3 turns" would swallow its own 4-turn clause
+    // and republish Special Bind as a 3-turn cure - the exact defect the guards
+    // above exist to stop.
+    pattern:
+      /(?:reduces{0,2})\s+((?:(?!\breduces{0,2}\b|\bremoves?\b|\bduration\b|\bturns?\b)[^.;])+?\s+and\s+reduces{0,2}\s+(?:(?!\breduces{0,2}\b|\bremoves?\b)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
+    resolveTurns: (match) => Number(match[2]),
+  },
+  {
+    isCompleteRemoval: false,
+    // Upstream's INVERTED cure grammar: "Recovers 2 turns of Paralysis on self"
+    // (Squard #642/#643). The verb is "recovers", the amount PRECEDES the status,
+    // and there is no "duration" keyword at all, so neither pattern above can see
+    // it — those two were the only Paralysis cures tagged by nothing.
+    //
+    // The lookahead leaves " on self" unconsumed so resolveCureEffectTargetScope
+    // still reads the scope from the clause tail. The turn count is re-parsed out
+    // of match[0] rather than captured, which keeps group 1 as the target and so
+    // needs no change to the shared consumer.
+    //
+    // Deliberately narrow: this grammar occurs exactly twice corpus-wide and only
+    // for Paralysis, so it is an upstream one-off rather than a family.
+    pattern: /\brecovers?\s+\d+\s+turns?\s+of\s+([^.;,]+?)(?=\s+on\b|[.,;]|$)/gi,
+    resolveTurns: (match) => Number(/(\d+)\s+turns?/i.exec(match[0])?.[1] ?? Number.NaN),
   },
 ];
 const SELECTED_DEBUFF_PAIN_PATTERNS = [
@@ -1429,9 +1815,21 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
       const rawTarget = String(match[1] ?? '').trim();
       const minTurns = resolveTurns(match);
 
-      if (!Number.isFinite(minTurns) || minTurns <= 0) {
+      // An explicit null is a pattern SIGNALLING "this is a real effect with no
+      // guaranteed turn floor" (a zero-floor range), and must keep its record.
+      // Anything else non-finite or <= 0 is a failed parse and is dropped.
+      if (minTurns !== null && (!Number.isFinite(minTurns) || minTurns <= 0)) {
         continue;
       }
+
+      // Scope is read from the text right after THIS clause, so a character
+      // carrying both a self-scoped sailor cure and a crew-wide special cure
+      // records both (buildAbilityIdentity includes the scope, so the two
+      // entries do not collapse into one).
+      const effectTargetScope = resolveCureEffectTargetScope(
+        normalizedText,
+        match.index + match[0].length,
+      );
 
       normalizeTargetSegments(rawTarget).forEach((segment) => {
         resolveAbilityDefinitions(segment).forEach((normalized) => {
@@ -1443,6 +1841,9 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
             slotTokens: normalized.slotTokens,
             source,
             coverageMode: DEFAULT_COVERAGE_MODE,
+            ...(ENEMY_TARGETED_REMOVAL_ABILITY_KEYS.has(normalized.key)
+              ? {}
+              : { effectTargetScope }),
           };
           addAbility(abilities, seen, ability);
         });
@@ -1522,11 +1923,21 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
   // Fold in the MAX-LEVEL (last) activation tier of a multi-tier special: a maxed
   // character's special is its final tier, so effects introduced only there
   // (e.g. Zoro & Sanji #4061 reducing enemies' Threshold Damage Reduction duration
-  // only from its max tier) would otherwise be missed. We add ONLY keys the
-  // primary tier did not already yield (by key+source), never touching intermediate
-  // tiers — every added key is present in the max tier, so this cannot over-claim
-  // an intermediate-only effect (verified: 131 additions across 37 keys, 0 keys
-  // that are not in the last tier). Scoped to specialText, where multi-level
+  // only from its max tier) would otherwise be missed. We add every max-tier record
+  // the primary tier did not already yield, never touching intermediate tiers —
+  // everything added comes from the last tier, so this cannot over-claim an
+  // intermediate-only effect.
+  //
+  // Dedupe is on the FULL identity (key+source+minTurns+scope), NOT key+source. The
+  // narrower check reasoned only about MEMBERSHIP, so it silently discarded the max
+  // tier's record whenever the same key already existed at a DIFFERENT turn count —
+  // publishing the weaker LEVEL-1 count for a maxed character, whose special IS its
+  // final tier. Gladius #1400 ("reduces Bind and Despair duration by 1 turn ... by
+  // 2 turns") published 1; Machvise #1627 (tiers 1/3/5) published 1. Both now also
+  // publish their max, while the intermediate tier still stays out. This adds 144
+  // records across 75 characters and 22 keys, every one at a turn count >= its own
+  // tier-1 count, and changes no key's membership.
+  // Scoped to specialText, where multi-level
   // specials occur. The `foldMaxLevelTier = false` argument on the inner call
   // disables re-folding, so this cannot recurse more than one level even when the
   // extracted max-level text itself still contains nested tier restatements.
@@ -1534,12 +1945,12 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
     const maxLevelText = extractMaxLevelAbilityBranchText(value);
 
     if (maxLevelText && maxLevelText !== normalizedText) {
-      const existingKeySources = new Set(
-        abilities.map((ability) => `${ability.key}|${ability.source}`),
-      );
+      const identity = (ability) =>
+        `${ability.key}|${ability.source}|${ability.minTurns}|${ability.effectTargetScope ?? ''}`;
+      const existingKeySources = new Set(abilities.map(identity));
 
       for (const ability of analyzeBuilderAbilityText(maxLevelText, source, false)) {
-        const keySource = `${ability.key}|${ability.source}`;
+        const keySource = identity(ability);
 
         if (!existingKeySources.has(keySource)) {
           existingKeySources.add(keySource);
@@ -1550,6 +1961,73 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
   }
 
   return abilities;
+}
+
+// Matcher-based keys whose effect is a BUFF WITH A DURATION ("... for N turns"),
+// so the picker can answer "an ATK boost lasting at least 3 turns". Limited to
+// keys whose clause shape has been audited, because the duration must be read
+// from the matched clause's OWN window (see resolveClauseDurationTurns).
+//
+// Deliberately EXCLUDES reduce_special_charge / reduce_ship_special_charge: their
+// "by N turns" is the AMOUNT of cooldown removed at the start of the fight, not
+// how long anything lasts — a different quantity that would be wrong to compare
+// against a buff duration.
+const DURATION_TURN_KEYS = new Set([
+  'boost_atk',
+  'boost_slot_effects',
+  'reduce_damage',
+  'reduce_damage_over_threshold',
+  'nullify_damage',
+]);
+
+// Turn count of the buff granted by THIS clause.
+//
+// It must not be read from the whole text: specialText is multi-effect, and the
+// existing whole-text helper (resolveMaxDurationTurnCountFromText, correct for
+// single-effect support text) takes the MAX "for N turns" anywhere in the
+// sentence — which is wrong for 250 of boost_atk's 1,359 durationed characters.
+// Usopp #572 "Boosts ATK of Fighter characters by 2x FOR 1 TURN, binds himself
+// FOR 15 TURNS" would report a 15-turn ATK boost.
+//
+// So the window runs from the end of the matched clause to the next effect verb.
+// A RANGE records its FIRST number as the guaranteed minimum ("for 1-6 turns" =>
+// at least 1), matching the convention TURN_PATTERNS already uses for
+// "reduces ... by 1-5 turns"; "for 0-6 turns" therefore yields 0 and is dropped
+// by the caller's > 0 guard. "99+"/"6 or more" take the leading number.
+const CLAUSE_DURATION_PATTERN = /\bfor\s+(\d+)(?:\s*-\s*\d+|\+|\s+or\s+more)?\s+turns?\b/i;
+const CLAUSE_DURATION_STOP_PATTERN =
+  /\b(?:boosts?|reduces?|removes?|changes?|makes?|locks?|randomizes?|recovers?|deals?|inflicts?|adds?|increases?|sets?|applies|swaps?|consumes?|switches|transforms?)\b/i;
+
+function resolveClauseDurationTurns(patterns, normalizedText) {
+  const durations = [];
+
+  patterns.forEach((pattern) => {
+    const scanner = new RegExp(
+      pattern.source,
+      pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`,
+    );
+
+    for (const match of normalizedText.matchAll(scanner)) {
+      const tail = normalizedText.slice(match.index + match[0].length);
+      const stop = tail.match(CLAUSE_DURATION_STOP_PATTERN);
+      const window = stop ? tail.slice(0, stop.index) : tail;
+      const duration = window.match(CLAUSE_DURATION_PATTERN);
+
+      if (!duration) {
+        continue;
+      }
+
+      const turns = Number(duration[1]);
+
+      if (Number.isFinite(turns) && turns > 0) {
+        durations.push(Math.floor(turns));
+      }
+    }
+  });
+
+  // A character granting both a 1-turn and a 3-turn boost genuinely has a 3-turn
+  // boost, so the longest clause wins — the filter reads it as "at least N".
+  return durations.length > 0 ? Math.max(...durations) : null;
 }
 
 function addSpecialAbilityMatches(abilities, seen, normalizedText, source, allowedKeys = null) {
@@ -1568,7 +2046,9 @@ function addSpecialAbilityMatches(abilities, seen, normalizedText, source, allow
     addAbility(abilities, seen, {
       key,
       label: definition.label,
-      minTurns: resolveStructuredTurnMinTurns(key, normalizedText),
+      minTurns: DURATION_TURN_KEYS.has(key)
+        ? resolveClauseDurationTurns(patterns, normalizedText)
+        : resolveStructuredTurnMinTurns(key, normalizedText),
       isCompleteRemoval: false,
       slotTokens: [],
       source,
@@ -1712,6 +2192,53 @@ function resolveCaptainDamageReductionTargetScope(clause) {
 
   return explicitTargetMatch
     ? resolveCaptainEffectTargetScope(explicitTargetMatch[1], 'crew')
+    : 'crew';
+}
+
+// Removal keys whose target is the ENEMY ("reduces enemies' Barrier duration by
+// 3 turns"), not your crew. The captains/subs/crew/self scopes describe which of
+// YOUR team-roles an effect lands on, so they are meaningless here — an enemy
+// debuff stripped "for the crew" is not a thing. These keys therefore carry no
+// scope at all, which also keeps the picker from offering a crew/self choice on
+// an enemy-facing filter. Mirrors the "Reduce Enemy Effect Duration" picker
+// group, plus the legacy keys that group does not list.
+const ENEMY_TARGETED_REMOVAL_ABILITY_KEYS = new Set([
+  'remove_damage_reduction',
+  'remove_enemy_atk_up',
+  'remove_enemy_barrier',
+  'remove_enemy_damage_nullification',
+  'remove_enemy_end_of_turn_damage_percent_cut',
+  'remove_enemy_end_of_turn_heal',
+  'remove_enemy_enrage',
+  'remove_enemy_increased_defense',
+  'remove_enemy_orb_based_damage_reduction',
+  'remove_resilience',
+  'remove_threshold_damage_reduction',
+]);
+
+// Team-role scope of a CURE/REMOVAL clause ("reduces <target> duration by N
+// turns"), resolved from the text immediately FOLLOWING the matched clause.
+//
+// Deliberately not `resolveCaptainEffectTargetScope`: that one scans a whole
+// clause for captain/sub/crew wording, which on cure text reads scope off the
+// NEIGHBOURING clause and mislabels. In "Boosts ATK of Slasher characters by
+// 1.3x for 2 turns, reduces Bind duration by 2 turns" the class wording belongs
+// to the ATK boost, and in "If your Captain is a Free Spirit character, removes
+// Blindness duration completely" the captain wording is a CONDITION, not a
+// target.
+//
+// A corpus sweep of all 3,526 cure clauses found exactly one scope qualifier
+// that ever attaches to a cure — a trailing "on this character" (457 clauses) —
+// and zero captain-scoped or sub-scoped cures, so this is a two-way rule. The
+// qualifier is required to be ADJACENT to the clause (not merely nearby): every
+// one of the 457 sits flush against it, and requiring adjacency stops a later
+// clause's "on this character" from leaking onto an earlier crew-wide cure.
+function resolveCureEffectTargetScope(text, clauseEndIndex) {
+  // "on this character" is the dominant qualifier (499 occurrences); "on self"
+  // is the same scope worded differently and occurs exactly twice, on the
+  // inverted "Recovers N turns of Paralysis on self" grammar (Squard #642/#643).
+  return /^\s*on\s+(?:this character|self)\b/i.test(String(text).slice(clauseEndIndex))
+    ? 'self'
     : 'crew';
 }
 
@@ -2432,6 +2959,44 @@ export async function enrichCharactersWithBuilderAbilities(
         current.availableCoverageModes.add(resolveCoverageMode(ability));
         ability.slotTokens.forEach((token) => current.availableSlotTokens.add(token));
 
+        // Team-role scope index. 'any' means "this ability carries no scope
+        // information", which is not a selectable scope — only real scopes are
+        // recorded, so the picker can offer exactly the populated ones and the
+        // filter can resolve ids per scope. Indexed per (scope, minTurns) rather
+        // than intersecting two flat lists: a character can cure at one turn
+        // count on itself and a different one crew-wide, and intersecting would
+        // wrongly match it for the crew scope at the self clause's turn count.
+        //
+        // Captain structured effects are excluded: they are scoped ONLY on their
+        // captainAbility branch, so indexing them here would describe a fraction
+        // of the key's matches as if it were the whole (make_slots_favorable is
+        // scoped on 364 of its 996 matches) and a scope filter in non-captain
+        // mode would silently drop the rest. They keep resolving through
+        // captainAbilityEffectMatches, which is captain-scoped by construction.
+        const effectTargetScope = normalizeEffectTargetScope(ability.effectTargetScope);
+
+        if (effectTargetScope !== 'any' && !isCaptainStructuredEffectAbility(ability)) {
+          current.availableEffectTargetScopes.add(effectTargetScope);
+
+          const scopeEntry = current.effectTargetScopeMatches.get(effectTargetScope) ?? {
+            matchingCharacterIds: new Set(),
+            turnMatchingCharacterIds: new Map(),
+          };
+
+          scopeEntry.matchingCharacterIds.add(character.id);
+
+          if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
+            const scopeMinTurns = Math.floor(ability.minTurns);
+            const scopeTurnCharacterIds =
+              scopeEntry.turnMatchingCharacterIds.get(scopeMinTurns) ?? new Set();
+
+            scopeTurnCharacterIds.add(character.id);
+            scopeEntry.turnMatchingCharacterIds.set(scopeMinTurns, scopeTurnCharacterIds);
+          }
+
+          current.effectTargetScopeMatches.set(effectTargetScope, scopeEntry);
+        }
+
         if (!current.matchingCharacterIds.has(character.id)) {
           current.matchingCharacterIds.add(character.id);
           current.matchCount = current.matchingCharacterIds.size;
@@ -2546,6 +3111,30 @@ export async function enrichCharactersWithBuilderAbilities(
         availableCoverageModes: [...entry.availableCoverageModes].length
           ? [...entry.availableCoverageModes].sort(compareCoverageModes)
           : [DEFAULT_COVERAGE_MODE],
+        // Omitted entirely for abilities that carry no scope data, so the picker
+        // shows no scope control for them and untouched keys keep their exact
+        // current serialization.
+        ...(entry.availableEffectTargetScopes.size
+          ? {
+              availableEffectTargetScopes: [...entry.availableEffectTargetScopes].sort(
+                (left, right) => left.localeCompare(right),
+              ),
+              effectTargetScopeMatchingCharacterIds: [...entry.effectTargetScopeMatches.entries()]
+                .sort(([leftScope], [rightScope]) => leftScope.localeCompare(rightScope))
+                .map(([effectTargetScope, scopeEntry]) => ({
+                  effectTargetScope,
+                  characterIds: [...scopeEntry.matchingCharacterIds].sort(
+                    (left, right) => left - right,
+                  ),
+                  turnMatchingCharacterIds: [...scopeEntry.turnMatchingCharacterIds.entries()]
+                    .sort(([leftTurns], [rightTurns]) => leftTurns - rightTurns)
+                    .map(([minTurns, characterIds]) => ({
+                      minTurns,
+                      characterIds: [...characterIds].sort((left, right) => left - right),
+                    })),
+                })),
+            }
+          : {}),
         matchCount: entry.matchCount,
         matchingCharacterIds: [...entry.matchingCharacterIds].sort((left, right) => left - right),
         turnMatchingCharacterIds: [...entry.turnMatchingCharacterIds.entries()]
@@ -2630,12 +3219,25 @@ export function applyBuilderAbilityCorrection(abilities, correction) {
 function mergeBuilderAbilities(existingAbilities, derivedAbilities) {
   const mergedAbilities = [];
   const seen = new Set();
-
-  [...normalizeExistingBuilderAbilities(existingAbilities), ...derivedAbilities].forEach(
-    (ability) => {
-      addAbility(mergedAbilities, seen, ability);
-    },
+  // The effect-target scope is part of an ability's dedupe identity, so a stored
+  // entry whose scope differs from (or is missing against) the freshly derived
+  // one is a DIFFERENT identity and a plain merge would keep both — silently
+  // doubling the entry, 5,124 times when cure scopes were introduced.
+  //
+  // Whenever the derived set already covers the same ability modulo scope, the
+  // derived entries are authoritative: they are a complete re-derivation of that
+  // ability from the raw text, including every scope variant the text supports.
+  // Dropping the stored copy in that case is symmetric — it self-heals a scope
+  // being added, changed, or removed — so no one-off seed migration is needed
+  // per parser change.
+  const derivedScopeBlindIdentities = new Set(derivedAbilities.map(buildScopeBlindAbilityIdentity));
+  const retainedExistingAbilities = normalizeExistingBuilderAbilities(existingAbilities).filter(
+    (ability) => !derivedScopeBlindIdentities.has(buildScopeBlindAbilityIdentity(ability)),
   );
+
+  [...retainedExistingAbilities, ...derivedAbilities].forEach((ability) => {
+    addAbility(mergedAbilities, seen, ability);
+  });
 
   return mergedAbilities;
 }
@@ -2716,6 +3318,8 @@ function createCatalogAccumulator(key, label) {
     availableSlotTokens: new Set(),
     availableSources: new Set(),
     availableCoverageModes: new Set(),
+    availableEffectTargetScopes: new Set(),
+    effectTargetScopeMatches: new Map(),
     matchCount: 0,
     matchingCharacterIds: new Set(),
     turnMatchingCharacterIds: new Map(),
@@ -2754,6 +3358,19 @@ function compareCatalogAbilities(left, right) {
   }
 
   return left.label.localeCompare(right.label);
+}
+
+// Identity WITHOUT the effect-target scope. Used to spot a stored ability that
+// a freshly derived one supersedes by adding a scope (see mergeBuilderAbilities).
+function buildScopeBlindAbilityIdentity(ability) {
+  return [
+    ability.key,
+    ability.minTurns ?? 'none',
+    normalizeSlotTokens(ability.slotTokens).join(','),
+    ability.source,
+    resolveCoverageMode(ability),
+    normalizeEffectValue(ability.minEffectValue) ?? 'none',
+  ].join('|');
 }
 
 function buildAbilityIdentity(ability) {
@@ -2993,29 +3610,33 @@ function normalizeTargetSegments(targetText) {
     return [];
   }
 
-  if (isSlotScopedTarget(normalizedTarget)) {
-    return [
-      {
-        target: normalizedTarget,
-        slotTokens,
-      },
-    ];
-  }
-
-  const candidates = [
-    ...normalizedTarget
-      .split(/\s*,\s*|\s+and\s+/gi)
-      .map((segment) => segment.trim())
-      .filter(Boolean)
-      .map((segment) => ({
-        target: segment,
-        slotTokens: [],
-      })),
-    {
-      target: normalizedTarget,
+  const segments = normalizedTarget
+    .split(/\s*,\s*|\s+and\s+/gi)
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .map((segment) => ({
+      target: segment,
       slotTokens: [],
-    },
-  ];
+    }));
+
+  // A slot-scoped target is emitted WHOLE and first, so it keeps the slot tokens
+  // that the split path drops. It must still emit its segments too, though:
+  // isSlotScopedTarget fires on a SUBSTRING, so a LIST that merely contains a
+  // slot-scoped entry took the whole-only path and hid every other cure in it.
+  // "Reduces Bind and Slot Bind duration by 5 turns" (Romy & Yorueka #4031)
+  // produced only the unsplit "bind and slot bind" - which remove_bind matches on
+  // endsWith(' bind') but then vetoes via its own !includes('slot bind')
+  // exclusion - so a genuine 5-turn Bind cure vanished. A lone slot-scoped target
+  // splits to itself, making this a no-op there; addAbility dedupes the overlap.
+  const candidates = isSlotScopedTarget(normalizedTarget)
+    ? [{ target: normalizedTarget, slotTokens }, ...segments]
+    : [
+        ...segments,
+        {
+          target: normalizedTarget,
+          slotTokens: [],
+        },
+      ];
 
   const seen = new Set();
 

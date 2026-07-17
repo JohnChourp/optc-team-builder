@@ -460,6 +460,114 @@ describe('special ability filter utils', () => {
     ).toEqual([30, 20]);
   });
 
+  describe('effect target scope', () => {
+    // #10 cures on itself (5 turns) AND crew-wide (2 turns); #20 is crew-only.
+    const SCOPED_CATALOG: AutoBuildAbilityCatalogItem[] = [
+      {
+        key: 'remove_special_bind',
+        label: 'Special Bind (Silence)',
+        category: 'special',
+        groupLabel: 'Reduce Status Effect Duration',
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText', 'sailorAbilities'],
+        availableEffectTargetScopes: ['crew', 'self'],
+        effectTargetScopeMatchingCharacterIds: [
+          {
+            effectTargetScope: 'crew',
+            characterIds: [10, 20],
+            turnMatchingCharacterIds: [{ minTurns: 2, characterIds: [10, 20] }],
+          },
+          {
+            effectTargetScope: 'self',
+            characterIds: [10],
+            turnMatchingCharacterIds: [{ minTurns: 5, characterIds: [10] }],
+          },
+        ],
+        matchCount: 2,
+        matchingCharacterIds: [10, 20],
+        turnMatchingCharacterIds: [
+          { minTurns: 2, characterIds: [10, 20] },
+          { minTurns: 5, characterIds: [10] },
+        ],
+        sampleCharacterIds: [],
+        sampleTexts: [],
+      },
+    ];
+
+    it('narrows matches to the requested scope', () => {
+      expect(
+        resolveSpecialAbilityMatchingCharacterIds(
+          [
+            {
+              abilityKey: 'remove_special_bind',
+              minTurns: null,
+              slotTokens: [],
+              requiredCharacterCount: 1,
+              effectTargetScope: 'self',
+            },
+          ],
+          SCOPED_CATALOG,
+        ),
+      ).toEqual([10]);
+    });
+
+    it('ignores scope when the requirement asks for any', () => {
+      expect(
+        resolveSpecialAbilityMatchingCharacterIds(
+          [
+            {
+              abilityKey: 'remove_special_bind',
+              minTurns: null,
+              slotTokens: [],
+              requiredCharacterCount: 1,
+              effectTargetScope: 'any',
+            },
+          ],
+          SCOPED_CATALOG,
+        ),
+      ).toEqual([20, 10]);
+    });
+
+    it('applies the turn count WITHIN the requested scope', () => {
+      // #10 reaches 5 turns only on itself; crew-wide it cures just 2. Asking
+      // for a 5-turn CREW cure must therefore match nobody. Intersecting the
+      // ability-wide turn buckets with the scope ids would wrongly return [10].
+      expect(
+        resolveSpecialAbilityMatchingCharacterIds(
+          [
+            {
+              abilityKey: 'remove_special_bind',
+              minTurns: 5,
+              slotTokens: [],
+              requiredCharacterCount: 1,
+              effectTargetScope: 'crew',
+            },
+          ],
+          SCOPED_CATALOG,
+        ),
+      ).toEqual([]);
+    });
+
+    it('returns no matches for a scope no character implements', () => {
+      expect(
+        resolveSpecialAbilityMatchingCharacterIds(
+          [
+            {
+              abilityKey: 'remove_special_bind',
+              minTurns: null,
+              slotTokens: [],
+              requiredCharacterCount: 1,
+              effectTargetScope: 'captains',
+            },
+          ],
+          SCOPED_CATALOG,
+        ),
+      ).toEqual([]);
+    });
+  });
+
   it('filters category matches by minimum turns when requested', () => {
     expect(
       resolveCategoryAbilityMatchingCharacterIds(
