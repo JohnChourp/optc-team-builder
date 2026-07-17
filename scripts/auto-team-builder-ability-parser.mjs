@@ -949,7 +949,25 @@ const SPECIAL_ABILITY_MATCHERS = [
     // with <char>, keep <char>'s orb" (a conditional orb-keep, not a boost
     // requirement — sailor orb-keeps and captain #4135), which is intentionally
     // out of scope. Captain 38->193, specialText 139->149; sailor stays 0.
-    [/\bPERFECT\b(?![^.]{0,45}\bkeep\b[^.]{0,20}\borbs?\b)/i, /\btap-?timing\b/i],
+    //
+    // The bare \bPERFECT\b cannot match the PLURAL "PERFECTs"/"PERFECTS" (\b needs a
+    // non-word char after "PERFECT", but "s" is a word char), and that plural is the
+    // DOMINANT captain gate wording — so ~100 genuine gates were missed ("after
+    // scoring 3 PERFECTs in a row", Gear Third Luffy #217; "after N consecutive
+    // PERFECTs", Law #2001; "depending on how many PERFECTs scored", Akainu #2022;
+    // "If you score 2 PERFECTS", Morley #2568). The added alternatives target those
+    // gate shapes PRECISELY rather than broadening to \bPERFECTs?\b — the broad form
+    // would also pull in the out-of-scope "makes PERFECTs easier/harder to hit"
+    // (tap-difficulty modifier) and "makes PERFECTs consume [RCV] orbs" (orb
+    // mechanic), neither of which gates an effect on tap timing.
+    [
+      /\bPERFECT\b(?![^.]{0,45}\bkeep\b[^.]{0,20}\borbs?\b)/i,
+      /\btap-?timing\b/i,
+      /PERFECTs?\s+in a row/i,
+      /consecutive\s+PERFECTs?/i,
+      /how many\s+PERFECTs?/i,
+      /\b(?:hit|score)s?\s+\d+\s+PERFECTs?\b/i,
+    ],
   ],
   [
     'extend_turn_duration',
