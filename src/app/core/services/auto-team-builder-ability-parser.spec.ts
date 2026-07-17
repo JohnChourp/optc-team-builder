@@ -2907,6 +2907,10 @@ describe('auto team builder ability parser', () => {
     expect(specialCatalog.find((item) => item.key === 'boost_type_effects')?.label).toBe(
       'Boost Type Effects (Color Affinity)',
     );
+    // Players search this mechanic by "PERFECT"; the primary label alone gave 0 hits.
+    expect(specialCatalog.find((item) => item.key === 'tap_timing_requirement')?.label).toBe(
+      'Tap-Timing Requirement (PERFECT)',
+    );
 
     expect(groupCounts).toEqual({
       Damage: 6,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T18:15:50.481Z",
+  "generatedAt": "2026-07-17T18:32:55.622Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -54433,7 +54433,7 @@
     },
     {
       "key": "tap_timing_requirement",
-      "label": "Tap-Timing Requirement",
+      "label": "Tap-Timing Requirement (PERFECT)",
       "category": "special",
       "groupLabel": "Other",
       "groupOrder": 10,
