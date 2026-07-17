@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T19:26:23.665Z",
+  "generatedAt": "2026-07-17T05:24:49.533Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -27627,22 +27627,28 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 638,
+      "matchCount": 644,
       "matchingCharacterIds": [
         566,
         570,
         571,
+        579,
+        580,
         629,
         710,
         711,
         721,
         722,
+        774,
+        801,
+        802,
         835,
         836,
         879,
         880,
         913,
         914,
+        931,
         1009,
         1086,
         1087,
@@ -28273,15 +28279,15 @@
         566,
         570,
         571,
-        629,
-        710
+        579,
+        580
       ],
       "sampleTexts": [
         "Changes [BLOCK] orbs into [EMPTY] orbs",
         "Changes [BLOCK] orbs into [STR] orbs, deals 20x character's ATK in [STR] damage to one enemy",
         "Changes [BLOCK] orbs into [STR] orbs, deals 20x character's ATK in [STR] damage to one enemy",
-        "Changes all orbs, including [BLOCK] orbs, into [EMPTY] orbs, deals random [INT] damage to all enemies",
-        "Changes [BLOCK] orbs into [EMPTY] orbs, boosts ATK of Shooter characters by 1.25x for 3 turns, deals 15x character's ATK in [PSY] damage to all enemies"
+        "Randomizes [BLOCK] orbs into either [QCK] or [DEX] orbs, deals 15x character's ATK in [QCK] damage to all enemies",
+        "Randomizes [BLOCK] orbs into either [QCK] or [DEX] orbs, deals 15x character's ATK in [QCK] damage to all enemies"
       ]
     },
     {

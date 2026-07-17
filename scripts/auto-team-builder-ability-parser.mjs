@@ -657,10 +657,29 @@ const SPECIAL_ABILITY_MATCHERS = [
     [/\bchanges?\b[^.]{0,160}\binto\s+(?:a\s+)?Matching\s+orbs?\b/i],
   ],
   [
+    // [BLOCK] orbs "cannot be changed by most specials unless they say so
+    // specifically" (Fandom glossary), so an effect only touches them when the
+    // text SAYS it does. That is why the bare "including [BLOCK]" pattern below
+    // needs no verb: the phrase IS upstream's block-immunity-piercing marker,
+    // not a loose substring. The glossary's own named example of a special that
+    // can change block orbs — "Jerry Cipher Pol No. 6" — is #722, whose entire
+    // special is "Randomizes all orbs, including [BLOCK] orbs", and it reaches
+    // this key through exactly that pattern. (This is also why randomizers count
+    // here while `change_slots` excludes them: that key is about type CHANGES,
+    // this one is about the capability to touch BLOCK at all.)
     'change_block_slots',
     [
       /\bchanges?\b[^.]{0,180}\[BLOCK\][^.]{0,160}\b(?:orbs?|slots?)\b/i,
       /\bincluding\s+\[BLOCK\]/i,
+      // Two further ways upstream clears BLOCK without saying "changes": a
+      // DIRECTED randomize ("Randomizes [BLOCK] orbs into either [QCK] or [DEX]
+      // orbs", Zoro #579/#580; "Randomizes [TND], [RCV], [EMPTY], [BLOCK] and
+      // [BOMB] orbs into ...", Berry Good #774, Mr. 2 #801/#802) and the "turns"
+      // verb (Blugori #931 "Turns [BLOCK] orbs into [RCV] orbs"). The gaps allow
+      // commas because the orb LIST contains them, so an effect verb is excluded
+      // instead to stop a bridge; requiring "into" AFTER [BLOCK] keeps this to
+      // the FROM-block direction only.
+      /\b(?:randomiz\w*|turns?)\b(?:(?!\b(?:boosts?|reduces?|removes?|makes?|locks?|recovers?|deals?|inflicts?|adds?|increases?|sets?|swaps?|consumes?|switches)\b)[^.;]){0,80}?\[BLOCK\](?:(?!\b(?:boosts?|reduces?|removes?|makes?|locks?|recovers?|deals?|inflicts?|adds?|increases?|sets?|swaps?|consumes?|switches)\b)[^.;]){0,60}?\binto\b/i,
     ],
   ],
   ['consume_slots', [/\bconsumes?\b[^.]{0,80}\b(?:orbs?|slots?)\b/i]],

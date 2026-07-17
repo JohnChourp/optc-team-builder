@@ -2799,6 +2799,73 @@ describe('auto team builder ability parser', () => {
     ).toEqual(expect.arrayContaining([960001, 960002]));
   });
 
+  it('tags every way upstream says an effect reaches [BLOCK] orbs', async () => {
+    const characters: ParserCharacters = [
+      {
+        id: 995001,
+        detail: {
+          specialText: 'Changes [BLOCK] orbs into [STR] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // "including [BLOCK]" is upstream's block-immunity PIERCE marker, not a
+        // loose phrase — BLOCK cannot be changed unless the text says so. This is
+        // the Fandom glossary's own named example (Jerry Cipher Pol No. 6 #722).
+        id: 995002,
+        detail: {
+          specialText: 'Randomizes all orbs, including [BLOCK] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Directed randomize (Zoro #579) — clears BLOCK with no "changes" verb.
+        id: 995003,
+        detail: {
+          specialText: 'Randomizes [BLOCK] orbs into either [QCK] or [DEX] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Comma-separated orb list (Berry Good #774).
+        id: 995004,
+        detail: {
+          specialText: 'Randomizes [TND], [RCV], [EMPTY], [BLOCK] and [BOMB] orbs into [PSY] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // "turns" verb variant (Blugori #931).
+        id: 995005,
+        detail: {
+          specialText: 'Turns [BLOCK] orbs into [RCV] orbs',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+      {
+        // Penalty removal is not a block change — the same phrasing
+        // make_slots_favorable also rejects.
+        id: 995006,
+        detail: {
+          specialText: 'Makes Badly Matching and [BLOCK] orbs not reduce damage for 4 turns',
+          captainAbility: null,
+          builderAbilities: [],
+        },
+      },
+    ];
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    expect(
+      catalog.find((item) => item.key === 'change_block_slots')?.['matchingCharacterIds'],
+    ).toEqual([995001, 995002, 995003, 995004, 995005]);
+  });
+
   it('does not tag the crew consuming its own End of Turn Healing as an enemy strip', async () => {
     const characters: ParserCharacters = [
       {
