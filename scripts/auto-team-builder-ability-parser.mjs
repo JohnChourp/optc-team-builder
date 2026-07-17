@@ -1492,6 +1492,28 @@ const TURN_PATTERNS = [
     resolveTurns: (match) => (Number(match[2]) > 0 ? Number(match[2]) : null),
   },
   {
+    isCompleteRemoval: false,
+    // Comma-continuation: one leading "Reduces" can govern a SECOND
+    // "<target> duration by N turns" clause that follows the first one after it
+    // already closed with "... turns," and WITHOUT repeating the verb. Bobbin
+    // #2118/#2119 "Reduces enemies' Threshold Damage Reduction, ... duration by 5
+    // turns, crew's ATK DOWN duration by 5 turns and changes orbs ..." — the
+    // verb-anchored pattern above and the "and reduces" ellipsis both require a
+    // verb before the target, so the verbless "crew's ATK DOWN duration by 5
+    // turns" continuation went untagged.
+    //
+    // The lookbehind anchors on a completed "turns," (optionally followed by
+    // "and"), so it cannot re-read the first clause, and the body excludes
+    // verbs/duration/turns/comma so it captures exactly one self-contained
+    // continuation segment. The reduces{0,2} guard also keeps it off the typo
+    // "reducess" continuation (Makino #3844, already handled by the verb pattern).
+    // Corpus-wide this is the ONLY occurrence of the shape: +2 (Bobbin), 0
+    // collateral across every key.
+    pattern:
+      /(?<=turns,\s{0,3}(?:and\s)?)((?:(?!\breduces{0,2}\b|\bremoves?\b|\bcompletely\b|\bduration\b|\bturns?\b|,)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
+    resolveTurns: (match) => Number(match[2]),
+  },
+  {
     isCompleteRemoval: true,
     // Strip a trailing "duration" keyword the same way the "by N turns" pattern
     // above does, so "reduces <target> duration completely" captures "<target>"

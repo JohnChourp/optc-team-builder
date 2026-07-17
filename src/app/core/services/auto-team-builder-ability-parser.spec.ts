@@ -523,6 +523,30 @@ describe('auto team builder ability parser', () => {
     expect(dogstorm).not.toContainEqual(expect.objectContaining({ key: 'remove_special_bind', minTurns: 3 }));
   });
 
+  it('reads a verbless comma-continuation cure that reuses a leading "Reduces"', () => {
+    // Bobbin #2118/#2119. One "Reduces" governs a first "... duration by 5 turns"
+    // clause, then a comma continues to a SECOND "crew's ATK DOWN duration by 5
+    // turns" with no repeated verb — the verb-anchored pattern and the "and
+    // reduces" ellipsis both need a verb before the target, so this was missed.
+    const bobbin = analyzeBuilderAbilityText(
+      "Reduces enemies' Threshold Damage Reduction, Percent Damage Reduction, Increased Defense and End of Turn Heal duration by 5 turns, crew's ATK DOWN duration by 5 turns and changes orbs.",
+      'specialText',
+    );
+    expect(bobbin).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_atk_down', minTurns: 5 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 5 }),
+      ]),
+    );
+    // The continuation anchors on "turns," so it must NOT fabricate a match from
+    // the FIRST clause's own commas: a plain single-clause list stays single.
+    const single = analyzeBuilderAbilityText(
+      "Reduces Bind, Paralysis and Despair duration by 3 turns.",
+      'specialText',
+    );
+    expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
+  });
+
   it('does not let a cure clause bridge into a neighbouring clause in either direction', () => {
     // Both TURN_PATTERNS lazily scan to their terminator, so without a guard the
     // target starts at the FIRST verb in the sentence and swallows whole clauses.
