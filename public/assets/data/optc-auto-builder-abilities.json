@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-17T11:53:13.148Z",
+  "generatedAt": "2026-07-17T12:22:34.418Z",
   "sourceVersion": "36",
-  "abilityCount": 264,
+  "abilityCount": 263,
   "abilities": [
     {
       "key": "special_damage",
@@ -3491,7 +3491,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1361,
+      "matchCount": 1340,
       "matchingCharacterIds": [
         209,
         210,
@@ -4492,7 +4492,6 @@
         3750,
         3759,
         3760,
-        3761,
         3762,
         3765,
         3766,
@@ -4511,13 +4510,10 @@
         3791,
         3792,
         3794,
-        3801,
         3802,
         3803,
         3808,
         3809,
-        3810,
-        3811,
         3812,
         3814,
         3816,
@@ -4549,7 +4545,6 @@
         3904,
         3905,
         3911,
-        3912,
         3914,
         3915,
         3916,
@@ -4614,7 +4609,6 @@
         4046,
         4048,
         4051,
-        4054,
         4056,
         4057,
         4058,
@@ -4634,8 +4628,6 @@
         4098,
         4101,
         4102,
-        4107,
-        4108,
         4113,
         4114,
         4115,
@@ -4655,8 +4647,6 @@
         4149,
         4150,
         4151,
-        4152,
-        4153,
         4154,
         4159,
         4162,
@@ -4738,7 +4728,6 @@
         4376,
         4379,
         4380,
-        4381,
         4386,
         4389,
         4393,
@@ -4749,7 +4738,6 @@
         4406,
         4408,
         4409,
-        4411,
         4413,
         4414,
         4416,
@@ -4762,13 +4750,9 @@
         4433,
         4435,
         4436,
-        4440,
-        4441,
         4442,
         4443,
         4449,
-        4450,
-        4451,
         4452,
         4453,
         4455,
@@ -4776,13 +4760,11 @@
         4462,
         4463,
         4464,
-        4466,
         4467,
         4468,
         4470,
         4472,
         4473,
-        4476,
         4477,
         4479,
         4482,
@@ -4800,7 +4782,6 @@
         4515,
         4518,
         4520,
-        4521,
         4522,
         4523,
         4528,
@@ -4810,7 +4791,6 @@
         4534,
         4535,
         4536,
-        4537,
         4538,
         4540,
         4541,
@@ -4840,7 +4820,6 @@
         4587,
         4590,
         4592,
-        4594,
         4595,
         4596,
         4597,
@@ -6244,10 +6223,10 @@
       ],
       "sampleTexts": [
         "Boosts ATK of [INT] characters by 1.5x for 1 turn",
-        "Boosts ATK of [INT] characters by 1.5x for 1 turn",
         "Boosts ATK of [INT] characters by 2x for 1 turn",
-        "Boosts ATK of [INT] characters by 2x for 1 turn",
-        "Boosts ATK of [PSY] characters by 1.5x for 1 turn"
+        "Boosts ATK of [PSY] characters by 1.5x for 1 turn",
+        "Boosts ATK of [PSY] characters by 2x for 1 turn",
+        "Deals random [STR] damage to one enemy, boosts ATK of [STR] characters by 1.75x for 1 turn"
       ]
     },
     {
@@ -7902,10 +7881,10 @@
       ],
       "sampleTexts": [
         "Boosts Orb Effects of all characters by 1.5x for 2 turns",
+        "Randomizes all orbs into either [PSY] or [RCV] orbs and boosts Orb Effects of [PSY] characters by 1.75x for 1 turn",
+        "Randomizes all orbs into either [PSY] or [RCV] orbs and boosts Orb Effects of [PSY] characters by 1.75x for 1 turn",
         "Boosts Orb Effects of all characters by 1.5x for 2 turns",
-        "Randomizes all orbs into either [PSY] or [RCV] orbs and boosts Orb Effects of [PSY] characters by 1.75x for 1 turn",
-        "Randomizes all orbs into either [PSY] or [RCV] orbs and boosts Orb Effects of [PSY] characters by 1.75x for 1 turn",
-        "Randomizes all orbs into either [PSY] or [RCV] orbs and boosts Orb Effects of [PSY] characters by 1.75x for 1 turn"
+        "Boosts Orb Effects of all characters by 1.5x for 2 turns"
       ]
     },
     {
@@ -16097,9 +16076,9 @@
       "sampleTexts": [
         "Reduces damage received from [INT] enemies by 20%",
         "Reduces damage received from [INT] enemies by 100% for 1 turn",
-        "Reduces damage received from [INT] enemies by 100% for 1 turn",
         "Reduces damage received by 50% for 3 turns",
-        "Reduces damage received by 50% for 3 turns"
+        "Reduces damage received from [STR] enemies by 30%",
+        "Reduces damage received by 80% for 1 turn"
       ]
     },
     {
@@ -16788,7 +16767,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 999,
+      "matchCount": 996,
       "matchingCharacterIds": [
         389,
         390,
@@ -16816,8 +16795,6 @@
         1380,
         1403,
         1404,
-        1435,
-        1436,
         1459,
         1460,
         1462,
@@ -17574,7 +17551,6 @@
         4257,
         4261,
         4262,
-        4263,
         4267,
         4268,
         4270,
@@ -26352,7 +26328,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 76,
+      "matchCount": 73,
       "matchingCharacterIds": [
         336,
         337,
@@ -26426,10 +26402,7 @@
         3702,
         3763,
         3764,
-        4169,
-        4272,
-        4493,
-        4501
+        4493
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -26464,7 +26437,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1514,
+      "matchCount": 1513,
       "matchingCharacterIds": [
         21,
         23,
@@ -27916,7 +27889,6 @@
         4408,
         4411,
         4421,
-        4423,
         4427,
         4434,
         4435,
@@ -48788,7 +48760,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 19,
+      "matchCount": 14,
       "matchingCharacterIds": [
         1431,
         1432,
@@ -48803,12 +48775,7 @@
         2872,
         3049,
         3284,
-        3645,
-        4239,
-        4240,
-        4523,
-        4529,
-        4553
+        3645
       ],
       "turnMatchingCharacterIds": [
         {
@@ -48828,14 +48795,6 @@
           ]
         },
         {
-          "minTurns": 3,
-          "characterIds": [
-            4523,
-            4529,
-            4553
-          ]
-        },
-        {
           "minTurns": 4,
           "characterIds": [
             3284
@@ -48848,13 +48807,6 @@
             2119,
             2872,
             3645
-          ]
-        },
-        {
-          "minTurns": 10,
-          "characterIds": [
-            4239,
-            4240
           ]
         },
         {
@@ -50758,7 +50710,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 987,
+      "matchCount": 983,
       "matchingCharacterIds": [
         452,
         453,
@@ -51534,7 +51486,6 @@
         4253,
         4254,
         4256,
-        4257,
         4258,
         4259,
         4260,
@@ -51588,7 +51539,6 @@
         4338,
         4340,
         4343,
-        4345,
         4346,
         4347,
         4348,
@@ -51611,8 +51561,6 @@
         4380,
         4381,
         4383,
-        4384,
-        4385,
         4387,
         4389,
         4391,
@@ -52200,8 +52148,6 @@
         4189,
         4191,
         4193,
-        4194,
-        4195,
         4202,
         4203,
         4204,
@@ -52233,7 +52179,6 @@
         4250,
         4253,
         4256,
-        4257,
         4258,
         4259,
         4260,
@@ -52277,7 +52222,6 @@
         4337,
         4338,
         4343,
-        4345,
         4346,
         4347,
         4348,
@@ -75077,43 +75021,6 @@
         "Removes Stun duration completely on this character. Makes [RCV] orbs beneficial for all characters",
         "Removes Stun duration completely on this character. Makes [RCV] orbs beneficial for all characters",
         "Boosts base ATK, HP and RCV of Slasher characters by 100. Removes Stun duration completely on this character"
-      ]
-    },
-    {
-      "key": "remove_silence",
-      "label": "Silence",
-      "category": "legacy",
-      "groupLabel": null,
-      "groupOrder": null,
-      "effectOrder": null,
-      "supportsTurns": false,
-      "supportsSlotTokens": false,
-      "availableSlotTokens": [],
-      "availableSources": [
-        "specialText"
-      ],
-      "availableCoverageModes": [
-        "explicit"
-      ],
-      "matchCount": 4,
-      "matchingCharacterIds": [
-        4197,
-        4262,
-        4426,
-        4502
-      ],
-      "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [
-        4197,
-        4262,
-        4426,
-        4502
-      ],
-      "sampleTexts": [
-        "Reduces Silence duration by 5 turns, boosts Orb Effects of [INT], Slasher and Free Spirit characters by 2.75x for 2 turns, boosts Final Tap ATK of [INT], Slasher and Free Spirit characters by 30%, and enables Chain Addition buffs to be enhanced up to 2 times. If your crew has Orb Amplification when the special is activated, recovers 31% of crew's MAX HP. If HP is above 30%, protects from defeat for 1 turn if HP is above 30%. If \"Headed to the Promised Cape\" is used again in the same turn the special is activated in, increases boost effects of Chain Addition buffs by +0.7x, and increases boost effects of Orb Amplification buffs by +0.5x, including effects activated in the same Ability.",
-        "Reduces Silence duration by 5 turns, reduces enemies' Percent Damage Reduction duration by 7 turns, increases Chain Tap Timing Bonus of Cerebral and Driven characters to +0.2x-0.7x for 1 turn depending on Tap Timing, and boosts Tap Timing ATK of Cerebral and Driven characters by 2.25x following a chain of GOOD > GOOD attacks for 1 turn.",
-        "Ignores Debuff Protection and reduces the defense of all enemies by 100% for 1 turn, reduces Silence duration by 5 turns, reduces ATK Down duration by 6 turns, and boosts the Color Affinity of [PSY], Slasher and Free Spirit characters by 2.75x for 2 turns. If your crew has Color Affinity or Color Affinity Nullification when the special is activated, boosts Advantageous Class Effect of Slasher and Free Spirit characters by 1.75x for 2 turns. If your crew has 4+ [Straw Hat Pirates], [Paramythia-type] or [Scientist] characters, reduces Special Cooldown of middle and bottom row characters by 3 turns, and boosts Chain Multiplier Growth Rate by 1.5x, can be enhanced up to 2 times, for 2 turns.",
-        "Reduces Silence duration by 5 turns, reduces ATK Down duration by 7 turns, and becomes Drake & Apoo for 3 turns. If enemies are inflicted with Weaken when the special is activated, removes enemies' Weaken duration completely, and recovers 5,000 HP at the end of the turn for 7 turns. If your crew has 7+ turns of End of Turn Healing, ignores Debuff Protection and inflicts all enemies with Weaken by 1.5x, by 2.25x instead if enemies are inflicted with Increase Damage Taken, for 1 turn. If your crew has 4+ [Worst Generation] or [Land of Wano Arc] characters, ignores Debuff Protection and inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 1 turn, boosts Base ATK of all characters by 1,000 for 1 turn, and increases boost effects of Base ATK Boost buffs by +750, including effects activated in the same ability; otherwise, inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 1 turn. If a [DEX] character is supporting this character, reduces enemies' damage received by 33% for 3 turns, reduces damage received by 90% for 1 turn, and boosts Crew Damage Reduction to ATK of all characters by 1x-1.6x, proportional to the strength of crew's Percent Damage Reduction buff, for 1 turn."
       ]
     }
   ]

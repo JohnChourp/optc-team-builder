@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T11:53:13.148Z",
+  "generatedAt": "2026-07-17T12:22:34.418Z",
   "characters": [
     {
       "id": 1,
@@ -1483,15 +1483,6 @@
         ],
         "characterTags": [],
         "builderAbilities": [
-          {
-            "key": "reduce_damage",
-            "label": "Reduce Damage",
-            "minTurns": null,
-            "isCompleteRemoval": false,
-            "slotTokens": [],
-            "source": "specialText",
-            "coverageMode": "explicit"
-          },
           {
             "key": "reduce_damage",
             "label": "Reduce Damage",
