@@ -625,6 +625,14 @@ describe('auto team builder ability parser', () => {
         analyzeBuilderAbilityText("Reduces enemies' Threshold Damage Reduction duration by 2 turns.", 'captainAbility'),
       ),
     ).not.toContain('remove_damage_reduction');
+    // Upstream's sole "Thredhold" misspelling (Vivi #3667) is accepted by the
+    // threshold key and, because remove_damage_reduction is exact-match, never
+    // leaks there.
+    const thredhold = extractAbilityKeys(
+      analyzeBuilderAbilityText("Reduces enemies' Thredhold Damage Reduction duration by 1 turn.", 'specialText'),
+    );
+    expect(thredhold).toContain('remove_threshold_damage_reduction');
+    expect(thredhold).not.toContain('remove_damage_reduction');
     // Crew's-OWN Percent Damage Reduction reference (a scaling clause, not a
     // duration removal) must stay excluded (#4293 Jozu/Oden variant).
     expect(

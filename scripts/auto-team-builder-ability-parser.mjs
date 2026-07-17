@@ -1307,7 +1307,14 @@ const TARGET_ALIASES = [
   {
     key: 'remove_threshold_damage_reduction',
     label: 'Remove Threshold Damage Reduction',
-    matcher: (target) => target.includes('threshold damage reduction'),
+    // "thredhold" is upstream's sole misspelling of "threshold" (1 of 955 uses,
+    // Nefeltari Vivi #3667 "reduces enemies' Thredhold Damage Reduction duration by
+    // 1 turn"). Accepting it here is scoped to this key and cannot leak elsewhere:
+    // the exact-match remove_damage_reduction already rejects it (it is not one of
+    // its two strings). Same one-off-typo class as remove_despair's "reducess".
+    matcher: (target) =>
+      target.includes('threshold damage reduction') ||
+      target.includes('thredhold damage reduction'),
   },
   {
     key: 'remove_resilience',
