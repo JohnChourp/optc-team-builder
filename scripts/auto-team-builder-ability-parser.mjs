@@ -469,22 +469,34 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['chain_multiplier_lock_min_max', [/\b(?:minimum|maximum)\s+chain\s+multiplier\b/i]],
   [
     'chain_multiplier_additive_boost',
-    // The gaps are `(?:[^.]|\.\d)` rather than bare `[^.]` because a chain ADDITION
-    // is always fractional — "Adds 0.5x to Chain multiplier for 2 turns" (Kizaru
-    // #977), "Adds 0.1x to ..." (#1066), "Adds 0.2x to ..." (Binz #1105) — so the
-    // decimal sits INSIDE the gap between "adds" and "to", and a bare `[^.]` died
-    // at it on essentially every real member. The key matched 2 of ~298.
+    // A chain ADDITION is always fractional — "Adds 0.5x to Chain multiplier for 2
+    // turns" (Kizaru #977), "Adds 0.1x to ..." (#1066), "Adds 0.2x to ..." (Binz
+    // #1105). The former pair of loose gap-matchers therefore died at the decimal:
+    // a bare `[^.]` cannot cross the "." of "0.5x", which sits between "adds" and
+    // "to", so the key matched 2 of 312 — and the only 2 survivors were the only
+    // two with an INTEGER amount. It was a dead filter.
     //
-    // Every one of the 296 recovered characters was checked against its verbatim
-    // text: all are genuine additions, including the range ("adds 1.5x-2.5x to
-    // Chain", Nami #3789), parenthetical ("adds 2.0x, preventing buff clears, to
-    // Chain", King #3897) and enhanceable ("Adds 1.8x, can be enhanced up to 2
-    // times, to Chain", Vegapunk #4136) wordings. No "adds Nx as Additional Damage
-    // ... chain" bridge exists — widening only crosses a period followed by a
-    // DIGIT, so it still cannot run past a sentence boundary.
+    // This anchors on ADJACENCY instead of spanning a gap: adds → amount → optional
+    // range/parenthetical → optional "to (the)" → optional "base" → the literal
+    // "chain multiplier". That covers every wording in the corpus — canonical (288),
+    // enhanceable ("Adds 1.8x, can be enhanced up to 2 times, to Chain multiplier",
+    // Vegapunk #4136), range ("adds 1.5x-2.5x to Chain multiplier", Nami #3789),
+    // parenthetical ("adds 2.0x, preventing buff clears, to Chain multiplier", King
+    // #3897), x-less (#2296, #4344), "Base Chain multiplier" (Ace #3829/#3830), and
+    // the "to"-less typo "adds 0.8x Chain multiplier" (Belo Betty #3406, the only
+    // one) — while requiring the word "multiplier" keeps it out of the neighbouring
+    // chain mechanics, which are separate keys (Chain Multiplier LIMIT, Chain
+    // Coefficient REDUCTION, Chain Multiplier GROWTH RATE, Chain Lock, Chain
+    // Boundaries, Chain Tap Timing Bonus). Safe: across all 319 real matches the
+    // matched "chain" is followed by "multiplier" every time.
+    //
+    // The old second alternative /\bchain\b[^.]{0,80}\b\+\d/i is DELETED rather than
+    // kept: it was structurally dead and always had been. `\b` before `+` requires a
+    // WORD character immediately before it, but upstream always writes a space
+    // (" +0.2x"), so it could never fire — 0 matches corpus-wide. Repairing it
+    // instead would inject 90 false positives from five other chain concepts.
     [
-      /\badds?\b(?:[^.]|\.\d){0,80}\bto\b(?:[^.]|\.\d){0,40}\bchain\b/i,
-      /\bchain\b(?:[^.]|\.\d){0,80}\b\+\d/i,
+      /\badds?\s+\d+(?:\.\d+)?x?(?:-\d+(?:\.\d+)?x?)?(?:,(?:[^.]|\.\d){0,45},)?\s*(?:to\s+(?:the\s+)?)?(?:base\s+)?chain multiplier/i,
     ],
   ],
   [

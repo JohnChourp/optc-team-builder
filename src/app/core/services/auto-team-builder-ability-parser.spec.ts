@@ -253,17 +253,39 @@ describe('auto team builder ability parser', () => {
       );
     }
 
-    // Widening must not bridge an unrelated "adds ... as Additional Damage" grant
-    // into a later sentence's "chain", and must not swallow the OTHER chain
-    // mechanics, which are separate keys.
+    // "Base Chain multiplier" (Ace #3829) and the x-less amount (#2296) are real.
+    for (const text of [
+      'Boosts ATK by 5.25x and adds 0.3x to Base Chain multiplier.',
+      'Adds 1 to Chain multiplier for 1 turn.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).toContain(
+        'chain_multiplier_additive_boost',
+      );
+    }
+
+    // Belo Betty #3406 (verbatim): upstream omits the "to". The only one.
     expect(
       extractAbilityKeys(
         analyzeBuilderAbilityText(
-          "Adds 2.5x character's ATK as Additional Damage for 1 turn. Reduces Chain Multiplier Limit duration by 3 turns.",
+          'Reduces Despair and Chain Multiplier Limit duration by 5 turns and adds 0.8x Chain multiplier for 3 turns.',
           'specialText',
         ),
       ),
-    ).not.toContain('chain_multiplier_additive_boost');
+    ).toContain('chain_multiplier_additive_boost');
+
+    // Must not bridge an unrelated "adds ... as Additional Damage" grant into a
+    // later "chain", and must not swallow the OTHER chain mechanics, which are all
+    // separate keys. Requiring the literal "chain multiplier" is what holds this.
+    for (const text of [
+      "Adds 2.5x character's ATK as Additional Damage for 1 turn. Reduces Chain Multiplier Limit duration by 3 turns.",
+      'Boosts Chain Multiplier Growth Rate by 1.5x for 1 turn.',
+      'Reduces Chain Multiplier Limit duration by 3 turns.',
+      'Increases Chain Tap Timing Bonus of [PSY] characters to +0.2x-0.6x for 1 turn.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'chain_multiplier_additive_boost',
+      );
+    }
   });
 
   it('reads typeless damage whose multiplier is a decimal', () => {
