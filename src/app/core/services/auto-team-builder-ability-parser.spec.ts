@@ -635,6 +635,17 @@ describe('auto team builder ability parser', () => {
         ),
       ),
     ).not.toContain('remove_damage_reduction');
+    // The "all" quantifier must be stripped like "the": "reduces ALL enemies'
+    // Percent Damage Reduction duration by 2 turns" normalized to "all percent
+    // damage reduction" and failed the exact match (Bepo #4224/#4225, real data).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces all enemies' Percent Damage Reduction duration by 2 turns, and boosts Color Affinity of [PSY] characters by 2x.",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_damage_reduction');
   });
 
   it('extracts paralysis and despair reduction when the upstream text drops "by" ("duration N turns")', () => {

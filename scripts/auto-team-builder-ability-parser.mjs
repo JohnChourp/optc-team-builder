@@ -3694,6 +3694,13 @@ function normalizeTargetText(targetText) {
     // with a not-a-letter lookahead instead of \b (ReDoS-safe, no backtracking).
     .replace(/\benemies(?:['’]s?)?(?![a-z])/g, ' ')
     .replace(/\benemy\b/g, ' ')
+    // Strip the "all" quantifier the same way "the" is stripped: "reduces all
+    // enemies' Percent Damage Reduction duration by 2 turns" (Bepo #4224/#4225)
+    // normalized to "all percent damage reduction", which failed the EXACT-match
+    // removal alias (target === 'percent damage reduction'). The includes/endsWith
+    // aliases already tolerated the prefix, so this only affects exact-match keys;
+    // simulated corpus-wide it is +2 (Bepo) / -0, touching no other key.
+    .replace(/\ball\b/g, ' ')
     .replace(/\bbuffs?\b/g, ' ')
     .replace(/\bstatuses?\b/g, ' ')
     .replace(/\bof the crew\b/g, ' ')
