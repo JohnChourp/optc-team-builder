@@ -1546,8 +1546,24 @@ describe('auto team builder ability parser', () => {
       'boosts ATK of all characters by 3x until the first hit other than PERFECT',
       'recovers 500 HP each time you hit a PERFECT',
       'boosts ATK by 2x following a chain of perfect > perfect > perfect for 1 turn',
+      // PLURAL "PERFECTs" — the dominant captain wording, which \bPERFECT\b could
+      // not match (the \b needs a non-word char after "PERFECT", but "s" is one).
+      'boosts ATK of all characters by 3.5x after scoring 3 PERFECTs in a row', // #217
+      'boosts ATK by 3.5x after 3 consecutive PERFECTs', // #2001
+      'boosts ATK depending on how many PERFECTs scored that turn', // #2022
+      'if during that turn you score 2 PERFECTS, reduces the defense of all enemies', // #2568
     ]) {
       expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).toContain(
+        'tap_timing_requirement',
+      );
+    }
+    // But the plural gate patterns must NOT pull in the out-of-scope tap-difficulty
+    // modifier or the orb-consume mechanic (both mention "PERFECTs" but gate nothing).
+    for (const notGate of [
+      'makes PERFECTs easier to hit for all characters for 1 turn',
+      'makes PERFECTs consume [RCV] orbs for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notGate, 'captainAbility'))).not.toContain(
         'tap_timing_requirement',
       );
     }
