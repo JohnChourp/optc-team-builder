@@ -2043,12 +2043,16 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
     // Do NOT widen this to the whole matcher set. Dropping the allowlist was
     // measured to move 37 keys and add 577 ids, including frozen counts
     // (chain_multiplier_additive_boost 312 -> 323, change_slots 1513 -> 1595).
+    // `restore_advance_special_charge` joins them for the same reason: #4032 Law
+    // and #4345 Tashigi carry "Advances Special Cooldown of this character to MAX"
+    // ONLY in their super special, neither repeats it in the base special, and
+    // both are genuine self-charge grants. 98 -> 100.
     addSpecialAbilityMatches(
       abilities,
       seen,
       normalizedText,
       source,
-      new Set(['territory', 'chain_multiplier_growth_rate']),
+      new Set(['territory', 'chain_multiplier_growth_rate', 'restore_advance_special_charge']),
     );
   }
 

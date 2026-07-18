@@ -574,6 +574,58 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('separates Restore (rewind recovery) and Advance (self-charge) from the ship and the reduce family', () => {
+    // RESTORE is recovery from the enemy debuff "Special Rewind", which pushes the
+    // charge gauge backwards. Every restore clause in the corpus carries the rewind
+    // trigger — without an enemy rewinding you it does nothing.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'restores Special Cooldown of all characters by 10 turns when they are rewinded',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('restore_advance_special_charge');
+    // ADVANCE is proactive self-charge, always scoped to this character. Two units
+    // carry it only in super-special text.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Advances Special Cooldown of this character to MAX, optionally removes Captain Swap duration completely',
+          'superSpecialText',
+        ),
+      ),
+    ).toContain('restore_advance_special_charge');
+    // The SHIP has its own separate cooldown and its own key; the ship guard must
+    // hold or five captains leak in.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Advances Special Cooldown of Ship to MAX at the start of the fight, boosts ATK of this crew by 1.2x',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('restore_advance_special_charge');
+    // Plain cooldown REDUCTION is the large sibling key, not this one.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Special Cooldown of all characters by 2 turns at the start of the fight',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('restore_advance_special_charge');
+    // ...and when one sentence does both, each verb reaches its own key.
+    const bothVerbs = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        'Reduces Special Cooldown of all characters by 2 turns and advances Special Cooldown of this character to MAX at the start of the fight',
+        'captainAbility',
+      ),
+    );
+    expect(bothVerbs).toContain('restore_advance_special_charge');
+    expect(bothVerbs).toContain('reduce_special_charge');
+  });
+
   it('derives Chain Multiplier Growth Rate from super-special text without admitting the amplifiers', () => {
     // Ten units grant this buff ONLY in their super special, and none carries the
     // wording in its base special, so the key was added to the per-key allowlist

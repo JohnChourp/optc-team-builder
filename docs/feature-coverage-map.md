@@ -155,6 +155,15 @@ single word for both the enemy cap and the crew lock, so translated sources appe
 them — follow the English split. The buff-extension wording `increases duration of any Chain
 Lock/Limit/Boundary buffs` grants none of these; it belongs to `extend_turn_duration`.
 
+Special-cooldown effects split four ways and must not be conflated. `reduce_special_charge` is
+plain cooldown reduction; `reduce_ship_special_charge` is the ship's own separate cooldown;
+`restore_advance_special_charge` covers both recovery from the enemy **Special Rewind** debuff
+(which pushes the charge gauge backwards — every "restores ... when they are rewinded" clause)
+and proactive self-charge ("advances Special Cooldown of this character to MAX"). The label
+carries "Special Rewind Recovery" because the rewind mechanic drives most of that key's members
+and the bare label named neither it nor the debuff. Ship clauses are held out of the crew keys
+by an explicit guard.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

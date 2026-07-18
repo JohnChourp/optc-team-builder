@@ -492,7 +492,7 @@
   },
   {
     "key": "restore_advance_special_charge",
-    "label": "Restore/Advance Special Cooldown",
+    "label": "Restore/Advance Special Cooldown (Special Rewind Recovery)",
     "groupLabel": "Reduction",
     "groupOrder": 9,
     "effectOrder": 5

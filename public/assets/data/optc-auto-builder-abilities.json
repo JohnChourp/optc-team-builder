@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T18:30:35.617Z",
+  "generatedAt": "2026-07-18T19:07:12.296Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -53416,7 +53416,7 @@
     },
     {
       "key": "restore_advance_special_charge",
-      "label": "Restore/Advance Special Cooldown",
+      "label": "Restore/Advance Special Cooldown (Special Rewind Recovery)",
       "category": "special",
       "groupLabel": "Reduction",
       "groupOrder": 9,
@@ -53426,12 +53426,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 98,
+      "matchCount": 100,
       "matchingCharacterIds": [
         2690,
         2740,
@@ -53485,6 +53486,7 @@
         4023,
         4025,
         4030,
+        4032,
         4033,
         4078,
         4079,
@@ -53512,6 +53514,7 @@
         4322,
         4329,
         4335,
+        4345,
         4381,
         4416,
         4417,
