@@ -2775,6 +2775,29 @@ describe('auto team builder ability parser', () => {
     ).toContain('remove_increase_damage_taken');
   });
 
+  it('boost_against_def_reduced_enemies covers the newer DEF Down / DEF Reduction status wording', () => {
+    // Canonical wording, plus the 2024+ status-noun forms in a multi-status list.
+    for (const text of [
+      'Boosts ATK against enemies with reduced defense by 1.3x for 3 turns.',
+      'Boosts ATK against enemies inflicted with Defense Down by 2.25x for 2 turns.',
+      'Boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.2x.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'boost_against_def_reduced_enemies',
+      );
+    }
+    // APPLYING the debuff, and the enemy's IMMUNITY to it, are different mechanics and
+    // must not read as a boost-against grant.
+    for (const text of [
+      'Reduces the defense of all enemies by 100% for 1 turn.',
+      "Removes enemies' Defense Reduction Debuff Protection duration completely.",
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'boost_against_def_reduced_enemies',
+      );
+    }
+  });
+
   it('boost_base_atk carries its clause duration like its multiplier twin boost_atk', () => {
     // 100% of the flat grants carry "for N turn(s)"; the key belongs in
     // DURATION_TURN_KEYS so the picker can filter on it (boost_atk already does).

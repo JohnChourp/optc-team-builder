@@ -367,7 +367,25 @@ const SPECIAL_ABILITY_MATCHERS = [
     // "damage" token, so it matched 0. Re-anchored on "against ... enemies with
     // reduced defense" (all 140 such tokens are boost-against targets, 0 non-boost
     // uses). Two bounded [^.]{0,N} gaps between fixed anchors -> ReDoS-safe.
-    [/\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\benemies with reduced defense\b/i],
+    //
+    // The second pattern covers the 2024+ upstream vocabulary shift, where the same
+    // exploit clause names the enemy state as a STATUS NOUN in a multi-status list
+    // ("boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay,
+    // Poison, ..., DEF Reduction, or Paralysis by 1.2x" — #4116/#4125/#4126/#4127/
+    // #4128) or with the newer "Defense Down" spelling ("boosts ATK against enemies
+    // inflicted with Defense Down by 2.25x for 2 turns" — #4140). 143 -> 149.
+    //
+    // The governing frame "boosts ... (against|damage dealt to) ... enemies (inflicted
+    // with|affected by)" is load-bearing: it is what keeps the APPLY-side and
+    // IMMUNITY-side characters out, since those read "reduces the defense of all
+    // enemies by N%" (apply_def_reduction) or "Defense Reduction Debuff Protection"
+    // (the enemy's immunity to it) and never place the status in a boost-TARGET
+    // position. Do NOT relax the frame to a bare "Defense Reduction" token — on its
+    // own that noun is overwhelmingly apply-side.
+    [
+      /\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\benemies with reduced defense\b/i,
+      /\bboosts?\b[^.]{0,160}\b(?:against|damage dealt to)\b[^.]{0,200}\benemies (?:inflicted with|affected by)\b[^.]{0,120}\b(?:Defense Down|DEF Down|DEF Reduction|Defense Reduction)\b/i,
+    ],
   ],
   [
     'boost_against_poisoned_enemies',
