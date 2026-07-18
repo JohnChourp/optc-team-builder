@@ -116,6 +116,16 @@ alternation is deliberately explicit rather than an optional comma: allowing any
 follow a bare `turns ` would re-open the clause-bridging that the surrounding guards exist to
 prevent.
 
+Picker labels are searched alongside the key, so a label that does not use the in-game wording
+makes an effect unfindable. `remove_chain_coefficient_reduction` is labelled
+`Chain Coefficient Reduction (Decrease Chain Multiplier Growth Rate)`: the primary is the
+name OPTC-DB uses identically for both the enemy application and the crew cure, and the
+parenthetical preserves the legacy app wording for discoverability. The legacy wording alone
+was actively misleading — it appears nowhere in the ability text, while its three-word core
+names the OPPOSITE mechanic, the crew boost `chain_multiplier_growth_rate`. The cure must
+also not be confused with `remove_chain_multiplier_limit` (the ceiling debuff's cure) or
+`chain_multiplier_lock` (the crew fixed-value buff).
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

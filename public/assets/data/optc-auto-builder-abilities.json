@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T15:19:02.453Z",
+  "generatedAt": "2026-07-18T15:53:26.887Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -43873,7 +43873,7 @@
     },
     {
       "key": "remove_chain_coefficient_reduction",
-      "label": "Decrease Chain Multiplier Growth Rate",
+      "label": "Chain Coefficient Reduction (Decrease Chain Multiplier Growth Rate)",
       "category": "special",
       "groupLabel": "Reduce Status Effect Duration",
       "groupOrder": 6,

@@ -1547,9 +1547,18 @@ const TARGET_ALIASES = [
   {
     key: 'remove_chain_coefficient_reduction',
     label: 'Remove Chain Coefficient Reduction',
-    matcher: (target) =>
-      target.includes('chain coefficient reduction') ||
-      target.includes('decrease chain multiplier growth rate'),
+    // OPTC-DB uses exactly ONE surface form for this debuff on both actor sides:
+    // "Chain Coefficient Reduction" (129 corpus occurrences, one casing, zero
+    // spelling variants, zero abbreviations). The former second branch
+    // ('decrease chain multiplier growth rate') was dead code — 0 occurrences in
+    // the corpus, in upstream details.js, and in matchers.js. Dropping it is
+    // provably lossless: 118 -> 118 with a byte-identical id set.
+    //
+    // Do NOT re-add a 'chain multiplier growth rate' branch. That phrase occurs
+    // 156 times, but 149 of them are "boosts Chain Multiplier Growth Rate by Nx"
+    // — the crew BOOST, i.e. the OPPOSITE mechanic, owned by
+    // chain_multiplier_growth_rate. This key cures the enemy-inflicted debuff.
+    matcher: (target) => target.includes('chain coefficient reduction'),
   },
   {
     key: 'remove_chain_multiplier_limit',

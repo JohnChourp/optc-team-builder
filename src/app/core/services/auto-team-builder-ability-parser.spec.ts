@@ -574,6 +574,49 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('separates the Chain Coefficient Reduction cure from the chain boosts and its immunity', () => {
+    // CCR is an enemy-inflicted CREW debuff that shrinks the per-tap growth of the
+    // chain multiplier. Three neighbouring chain mechanics must stay distinct.
+    for (const [text, source] of [
+      ['Reduces Chain Coefficient Reduction duration by 3 turns', 'specialText'],
+      [
+        'Reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 3 turns',
+        'specialText',
+      ],
+      // Possessive/crew-scoped form, and a decimal-adjacent clause — the decimal
+      // trap already cost this family once (chain_multiplier_additive_boost 2 -> 312).
+      [
+        "Adds 0.3x to Chain multiplier for 2 turns, reduces crew's Chain Coefficient Reduction duration by 4 turns",
+        'specialText',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'remove_chain_coefficient_reduction',
+      );
+    }
+    // The multi-target list must yield BOTH cures, not just the first.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 3 turns',
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_chain_multiplier_limit');
+    // Immunity PREVENTS the debuff, it does not cure it (Koala #3339, Chopper #3661).
+    // The chain BOOSTS are the opposite mechanic and must never reach this key.
+    for (const [notACure, source] of [
+      ['Applies ATK DOWN and Chain Coefficient Reduction Immunity for 3 turns', 'specialText'],
+      ['Boosts Chain Multiplier Growth Rate by 1.5x for 3 turns', 'specialText'],
+      ['Locks the chain multiplier at 3x for 1 turn', 'specialText'],
+      ['Reduces Chain Multiplier Limit duration by 3 turns', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notACure, source))).not.toContain(
+        'remove_chain_coefficient_reduction',
+      );
+    }
+  });
+
   it('reads the comma-less "turns and <target>" continuation as well as the comma form', () => {
     // Upstream punctuates the SAME verbless continuation two ways. The lookbehind
     // originally required the literal comma, so the conjunction form was missed.
@@ -2718,8 +2761,13 @@ describe('auto team builder ability parser', () => {
       5,
     ],
     [
-      'decrease chain multiplier growth rate',
-      'Reduces decrease chain multiplier growth rate duration by 6 turns.',
+      // Was "Reduces decrease chain multiplier growth rate duration by 6 turns."
+      // — a fabricated wording that occurs 0 times in the corpus and 0 times
+      // upstream. It only ever passed because the alias carried a matching dead
+      // branch, so the pair tested itself rather than the data. OPTC-DB writes
+      // this debuff exactly one way, on both actor sides.
+      'chain coefficient reduction',
+      'Reduces Chain Coefficient Reduction duration by 6 turns.',
       'remove_chain_coefficient_reduction',
       6,
     ],
@@ -3212,6 +3260,14 @@ describe('auto team builder ability parser', () => {
     expect(specialCatalog.find((item) => item.key === 'tap_timing_requirement')?.label).toBe(
       'Tap-Timing Requirement (PERFECT)',
     );
+    // The picker searches [key, label], and the legacy label "Decrease Chain
+    // Multiplier Growth Rate" occurs 0 times in the corpus while its 3-word core
+    // names the OPPOSITE mechanic (the crew boost `chain_multiplier_growth_rate`,
+    // 149 "boosts Chain Multiplier Growth Rate by Nx" clauses). Leading with the
+    // real in-game name makes a search for "chain coefficient" find the cure.
+    expect(
+      specialCatalog.find((item) => item.key === 'remove_chain_coefficient_reduction')?.label,
+    ).toBe('Chain Coefficient Reduction (Decrease Chain Multiplier Growth Rate)');
     // Crew-side survival, revived from a dead key: the bare label "Resilience"
     // names the ENEMY buff everywhere else in the app (`remove_resilience`, and
     // the live enemy-mechanic picker), and OPTC-DB never writes "Resilience"
