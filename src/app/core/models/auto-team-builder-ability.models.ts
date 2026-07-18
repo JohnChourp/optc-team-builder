@@ -70,8 +70,20 @@ export interface AutoBuildAbilityCatalogItem {
   matchCount: number;
   matchingCharacterIds?: number[];
   turnMatchingCharacterIds?: AutoBuildAbilityTurnMatchingCharacterIds[];
+  /**
+   * Characters that clear the effect COMPLETELY rather than for a turn count.
+   * A complete removal satisfies ANY turn requirement, so these ids are unioned
+   * into every turn-filtered result instead of being compared numerically.
+   *
+   * They also appear in the `minTurns: 99` bucket, but 99 cannot be used as the
+   * discriminator: upstream writes literal "for 99+ turns" and "for 999 turns"
+   * as its own way of saying "effectively permanent", so the sentinel collides
+   * with genuine counts. Absent when the ability has no complete removals.
+   */
+  completeRemovalCharacterIds?: number[];
   captainAbilityMatchingCharacterIds?: number[];
   captainAbilityTurnMatchingCharacterIds?: AutoBuildAbilityTurnMatchingCharacterIds[];
+  captainAbilityCompleteRemovalCharacterIds?: number[];
   captainAbilityEffectMatches?: AutoBuildAbilityEffectMatch[];
   sampleCharacterIds: number[];
   sampleTexts: string[];
@@ -92,6 +104,7 @@ interface AutoBuildAbilityEffectTargetScopeMatchingCharacterIds {
   effectTargetScope: Exclude<AutoBuildAbilityEffectTargetScope, 'any'>;
   characterIds: number[];
   turnMatchingCharacterIds: AutoBuildAbilityTurnMatchingCharacterIds[];
+  completeRemovalCharacterIds?: number[];
 }
 
 export interface AutoBuildAbilityCatalog {

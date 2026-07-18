@@ -3174,9 +3174,14 @@ export async function enrichCharactersWithBuilderAbilities(
           const scopeEntry = current.effectTargetScopeMatches.get(effectTargetScope) ?? {
             matchingCharacterIds: new Set(),
             turnMatchingCharacterIds: new Map(),
+            completeRemovalCharacterIds: new Set(),
           };
 
           scopeEntry.matchingCharacterIds.add(character.id);
+
+          if (ability.isCompleteRemoval) {
+            scopeEntry.completeRemovalCharacterIds.add(character.id);
+          }
 
           if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
             const scopeMinTurns = Math.floor(ability.minTurns);
@@ -3193,6 +3198,14 @@ export async function enrichCharactersWithBuilderAbilities(
         if (!current.matchingCharacterIds.has(character.id)) {
           current.matchingCharacterIds.add(character.id);
           current.matchCount = current.matchingCharacterIds.size;
+        }
+
+        if (ability.isCompleteRemoval) {
+          current.completeRemovalCharacterIds.add(character.id);
+
+          if (ability.source === 'captainAbility') {
+            current.captainAbilityCompleteRemovalCharacterIds.add(character.id);
+          }
         }
 
         if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
@@ -3325,6 +3338,13 @@ export async function enrichCharactersWithBuilderAbilities(
                       minTurns,
                       characterIds: [...characterIds].sort((left, right) => left - right),
                     })),
+                  ...(scopeEntry.completeRemovalCharacterIds.size
+                    ? {
+                        completeRemovalCharacterIds: [
+                          ...scopeEntry.completeRemovalCharacterIds,
+                        ].sort((left, right) => left - right),
+                      }
+                    : {}),
                 })),
             }
           : {}),
@@ -3336,11 +3356,27 @@ export async function enrichCharactersWithBuilderAbilities(
             minTurns,
             characterIds: [...characterIds].sort((left, right) => left - right),
           })),
+        // Emitted only when the ability has complete removals, so every other key
+        // keeps its exact current serialization.
+        ...(entry.completeRemovalCharacterIds.size
+          ? {
+              completeRemovalCharacterIds: [...entry.completeRemovalCharacterIds].sort(
+                (left, right) => left - right,
+              ),
+            }
+          : {}),
         ...(entry.captainAbilityMatchingCharacterIds.size
           ? {
               captainAbilityMatchingCharacterIds: [...entry.captainAbilityMatchingCharacterIds].sort(
                 (left, right) => left - right,
               ),
+            }
+          : {}),
+        ...(entry.captainAbilityCompleteRemovalCharacterIds.size
+          ? {
+              captainAbilityCompleteRemovalCharacterIds: [
+                ...entry.captainAbilityCompleteRemovalCharacterIds,
+              ].sort((left, right) => left - right),
             }
           : {}),
         ...(entry.captainAbilityTurnMatchingCharacterIds.size
@@ -3516,8 +3552,17 @@ function createCatalogAccumulator(key, label) {
     matchCount: 0,
     matchingCharacterIds: new Set(),
     turnMatchingCharacterIds: new Map(),
+    // Characters whose record clears the effect COMPLETELY rather than for a
+    // number of turns. They live in the minTurns:99 bucket too, but 99 is not a
+    // usable discriminator: upstream also writes literal "for 99+ turns" and
+    // "for 999 turns" as its own way of saying "effectively permanent", so the
+    // integer collides with genuine counts (5 characters carry both). A complete
+    // removal satisfies ANY turn requirement, so it is indexed separately and
+    // unioned in by the filter. See special-ability-filter.utils.ts.
+    completeRemovalCharacterIds: new Set(),
     captainAbilityMatchingCharacterIds: new Set(),
     captainAbilityTurnMatchingCharacterIds: new Map(),
+    captainAbilityCompleteRemovalCharacterIds: new Set(),
     captainAbilityEffectMatches: new Map(),
     sampleCharacterIds: [],
     sampleTexts: [],

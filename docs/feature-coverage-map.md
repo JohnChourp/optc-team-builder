@@ -90,6 +90,15 @@ Status ATK Boost buffs`, `effect_boost`) and the one-shot trigger form (`If ther
 enemies when the Special is activated, ...`), none of which is a per-hit boost against the
 state.
 
+Turn requirements distinguish a *complete removal* from a long duration. Wording like
+`removes enemies' Poison duration completely` carries the `minTurns: 99` sentinel, but 99 is
+not a safe discriminator, because upstream also writes literal `for 99+ turns` and `for 999
+turns` for genuinely long effects. The catalog therefore emits `completeRemovalCharacterIds`
+(and a captain-scoped twin) for the 20 keys that have them, and the turn filter unions those
+ids into every turn-filtered result instead of comparing them numerically — so a permanent
+cure satisfies any requested turn count, while a real 99-turn boost still drops out of a
+"100 turns" request.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community
