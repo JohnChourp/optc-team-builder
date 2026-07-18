@@ -574,6 +574,51 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('matches the Additional Damage grant including decimals and super-special-only carriers', () => {
+    // "Additional Damage" is a named buff: a flat post-calculation packet sized as
+    // a multiple of the granting character's ATK, almost always Typeless. Two
+    // independent defects hid 11 carriers — a decimal amount and super-special text.
+    for (const [text, source] of [
+      // Decimal amount: the "." in "2.5x" sits between "adds" and "as".
+      [
+        "Reduces Paralysis duration by 2 turns and adds 2.5x character's ATK as Additional Typeless Damage for 1 turn.",
+        'specialText',
+      ],
+      ["adds 100x character's ATK as Additional Typeless Damage for 5 turns", 'superSpecialText'],
+      // Health-Loss basis — the longest form, which is why the gap must stay >= 70.
+      [
+        'adds 20x the damage taken from enemies before the special is activated as Additional Typeless Damage for 2 turns',
+        'specialText',
+      ],
+      // Self-scope, no duration.
+      ["adds 500x character's ATK as Additional Typeless Damage to own's attacks", 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'additional_damage_boost',
+      );
+    }
+    // Referencing the buff is not granting it.
+    for (const notAGrant of [
+      'If your crew has Additional Damage Buff for 2 or more turns when the special is activated, recovers 5,000 HP',
+      'increases duration of any Additional Damage buffs by 1 turn',
+      'boosts ATK of all characters by an additional 1.25x for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notAGrant, 'specialText'))).not.toContain(
+        'additional_damage_boost',
+      );
+    }
+    // The near-identically named sibling is a different mechanic: the character
+    // dealing a tick, not a buff on the crew's attacks.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "deals 50x character's ATK in Typeless damage to all enemies at the end of each turn",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('additional_damage_boost');
+  });
+
   it('detects enemy Resistance Reduction across scopes and sources but never the inverse', () => {
     // Enemy debuff lowering resistance to a Type or Class, which raises the damage
     // crew of that Type/Class deal. One mechanic with two scope axes (5 types +

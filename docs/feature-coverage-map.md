@@ -173,6 +173,16 @@ captain and super-special text. The inverse (`increases enemies' ... Resistance`
 self-inflicted drawback) is deliberately excluded, as is the crew-side immunity family, which
 lives in potential abilities under Status Effect Immunity.
 
+**Additional Damage Boost** (`additional_damage_boost`) matches only the *grant* —
+`adds Nx character's ATK as Additional [Typeless] Damage`, plus the health-loss basis
+(`adds Nx the damage taken from enemies before the special is activated ...`). The amount may
+be decimal, so both gaps use the decimal-tolerant construct. Preconditions, duration extenders,
+replace-triggers, buff-list references and the adverbial `by an additional 1.2x` are all
+excluded — they reference the buff without granting it. It is distinct from
+`end_of_turn_additional_damage` despite the near-identical name (a buff on your crew's attacks
+versus the character dealing a tick); seven characters legitimately carry both, from separate
+clauses in different source fields.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

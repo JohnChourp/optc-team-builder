@@ -485,7 +485,17 @@ const SPECIAL_ABILITY_MATCHERS = [
     // (Jinbe #4202), and the replace-trigger "if a crew member uses a special with
     // an Additional Damage buff, replaces those buffs" (Garp #4239/#4240). Those
     // are not grants and are dropped.
-    [/\badds?\b[^.]{0,80}\bas\s+additional\b[^.]{0,30}\bdamage\b/i],
+    // Decimal-tolerant on BOTH gaps. The amount sits between "adds" and "as", so a
+    // bare [^.] gap dies on the "." in "adds 2.5x character's ATK ..." — the same
+    // trap that once cost chain_multiplier_additive_boost 310 matches. Upstream's
+    // own amount atom is [?.\d]+, i.e. decimals are expected. (+2: #2226, #2718.)
+    // The second gap's widening is inert — measured identical — but both are kept
+    // symmetric to match the special_damage / special_damage_other house style.
+    //
+    // Widths 80/30 must NOT be reduced: the "Health-Loss basis" wording
+    // ("adds Nx the damage taken from enemies before the special is activated as
+    // Additional Typeless Damage", 6 ids) needs at least 70.
+    [/\badds?\b(?:[^.]|\.\d){0,80}\bas\s+additional\b(?:[^.]|\.\d){0,30}\bdamage\b/i],
   ],
   // Chain Lock GRANT = "locks [the] chain multiplier at Nx" (fixes the chain
   // multiplier at a value regardless of tap timing). Require "locks" to directly
@@ -2077,6 +2087,10 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // effect's carriers, and 23 characters apply enemy Resistance Reduction
         // ONLY in their super special. 87 -> 110.
         'apply_resistance_reduction',
+        // additional_damage_boost: upstream targets are
+        // ['special','superSpecial','swap','support']; 9 characters grant the
+        // Additional Damage buff only in their super special. 76 -> 85.
+        'additional_damage_boost',
       ]),
     );
   }
