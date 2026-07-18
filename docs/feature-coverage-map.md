@@ -89,5 +89,6 @@ Two conventions come out of this and apply to any new or relabelled effect:
 
 Validation: `npm run test:ci` (the ability parser spec carries a regression case for each
 audited wording), `npm run test:captain-contracts`, `npm run test:dataset-digest`, and
-`npm run perf:dataset -- --assert`. Ledger status:
-`python3 scripts/optc-ability-audit/ledger.py <type> status` in the brain repo.
+`npm run perf:dataset -- --assert`. Ledger status comes from the ledger tool at
+`optc-team-builder-brain/scripts/optc-ability-audit/ledger.py`, invoked from the brain repo
+with the ability type and the `status` subcommand.
