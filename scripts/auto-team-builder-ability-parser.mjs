@@ -1537,7 +1537,17 @@ const TARGET_ALIASES = [
   {
     key: 'remove_poison',
     label: 'Remove Poison',
-    matcher: (target) => target === 'poison' || target === 'toxic' || target.includes('poison'),
+    // Strong Poison (== Venom, 5x ATK/turn, shares Poison's debuff slot) and Toxic
+    // (== Progressive Poison, ramping, its OWN slot, stacks on Poison) are real,
+    // distinct statuses and the crew can be inflicted with both. But NO ability
+    // text ever cures them BY NAME: there are zero
+    // "reduces/removes ... (Strong Poison|Toxic|Venom|Progressive Poison) ... duration"
+    // clauses corpus-wide, and one cure clears every poison tier. The `=== 'toxic'`
+    // branch therefore matched nothing and was removed. Do NOT add variant aliases
+    // here — a future genuine Toxic-only cure needs its OWN key, and folding it in
+    // would silently mis-report it as a plain Poison cure. The `=== 'poison'` branch
+    // was likewise redundant, subsumed by the includes.
+    matcher: (target) => target.includes('poison'),
   },
   {
     key: PAIN_ABILITY_KEY,
@@ -2037,8 +2047,23 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         match.index + match[0].length,
       );
 
+      // normalizeTargetText strips the "enemies'" possessive before aliasing, so
+      // by the time a segment reaches TARGET_ALIASES an ENEMY-side strip is
+      // indistinguishable from a CREW cure: "removes enemies' Poison duration
+      // completely" resolved to the bare target `poison` and tagged the crew cure
+      // key remove_poison. Recover the ownership from the RAW target and drop
+      // enemy-owned segments for keys that are not enemy-targeted.
+      const enemyOwnedKeys = resolveEnemyOwnedTargetKeys(rawTarget);
+
       normalizeTargetSegments(rawTarget).forEach((segment) => {
         resolveAbilityDefinitions(segment).forEach((normalized) => {
+          if (
+            enemyOwnedKeys.has(normalized.key) &&
+            !ENEMY_TARGETED_REMOVAL_ABILITY_KEYS.has(normalized.key)
+          ) {
+            return;
+          }
+
           const ability = {
             key: normalized.key,
             label: normalized.label,
@@ -3859,6 +3884,47 @@ function isAbilitySource(value) {
 
 function correctionSourceMatches(ability, sourceScopes) {
   return sourceScopes.includes(ability.source);
+}
+
+/**
+ * Keys in a duration-reduction target that belong to the ENEMY rather than the crew.
+ *
+ * `normalizeTargetText` deliberately strips the "enemies'" possessive (it is
+ * load-bearing for ~2,977 emissions across the 11 enemy-targeted keys), so the
+ * alias layer cannot tell "removes enemies' Poison duration completely" from a
+ * crew Poison cure. This walks the RAW target instead, keeping a sticky owner
+ * across the comma/"and" list the way the wording reads, and reports the keys for
+ * which EVERY contributing segment is enemy-owned.
+ *
+ * Per-segment, not whole-target: a mixed list keeps its crew half. Testing the
+ * whole raw target instead regresses real cures — Monet #2010/#2011 ("Bind and
+ * reduces enemies' Percent Damage Reduction" -> remove_bind) and Shirahoshi
+ * #2172/#2173 ("enemies' Percent Damage Reduction and crew's Chain Coefficient
+ * Reduction" -> remove_chain_coefficient_reduction).
+ */
+function resolveEnemyOwnedTargetKeys(rawTarget) {
+  const ownerByKey = new Map();
+  let owner = 'crew';
+
+  String(rawTarget ?? '')
+    .split(/\s*,\s*|\s+and\s+/gi)
+    .forEach((rawSegment) => {
+      if (/\benem(?:y|ies)['’]?s?\b/i.test(rawSegment)) {
+        owner = 'enemy';
+      } else if (/\bcrew['’]?s?\b/i.test(rawSegment)) {
+        owner = 'crew';
+      }
+
+      normalizeTargetSegments(rawSegment).forEach((segment) => {
+        resolveAbilityDefinitions(segment).forEach(({ key }) => {
+          // Any crew-owned contribution keeps the key; only an all-enemy key is
+          // reported, so a mixed list never loses its crew side.
+          ownerByKey.set(key, ownerByKey.get(key) === 'crew' ? 'crew' : owner);
+        });
+      });
+    });
+
+  return new Set([...ownerByKey].filter(([, value]) => value === 'enemy').map(([key]) => key));
 }
 
 function normalizeTargetSegments(targetText) {

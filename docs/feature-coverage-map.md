@@ -126,6 +126,16 @@ names the OPPOSITE mechanic, the crew boost `chain_multiplier_growth_rate`. The 
 also not be confused with `remove_chain_multiplier_limit` (the ceiling debuff's cure) or
 `chain_multiplier_lock` (the crew fixed-value buff).
 
+**Enemy-scoped duration removal.** `reduces/removes enemies' <X> duration` strips a buff from
+the ENEMY; it is not a crew cure. Because `normalizeTargetText` strips the `enemies'`
+possessive before target aliasing, the two are indistinguishable at the alias layer, so the
+`TURN_PATTERNS` consumer recovers ownership from the raw target: a key is treated as
+enemy-owned only when EVERY segment resolving to it carries the enemy possessive, and
+enemy-owned segments are skipped for keys outside `ENEMY_TARGETED_REMOVAL_ABILITY_KEYS`. The
+check is per-segment with a sticky owner rather than whole-target, so a mixed list
+(`enemies' Percent Damage Reduction and crew's Chain Coefficient Reduction`) keeps both halves
+with each going to its correct key.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

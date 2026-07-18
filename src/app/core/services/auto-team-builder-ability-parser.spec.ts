@@ -574,6 +574,92 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it("does not let an enemy-side duration strip reach a crew cure key", () => {
+    // normalizeTargetText strips the "enemies'" possessive before aliasing, so an
+    // ENEMY strip used to be indistinguishable from a CREW cure at the alias layer.
+    // "removes enemies' Poison duration completely" tagged remove_poison
+    // (#4483 Sanji & Reiju), and the identical class hit remove_increase_damage_taken
+    // (#4529 Zoro VS St. Nusjuro).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "increases boost effects of ATK Up buffs by +0.5x, removes enemies' Poison duration completely",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('remove_poison');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "reduces enemies' Increase Damage Taken duration by 5 turns",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('remove_increase_damage_taken');
+    // The genuine crew cure is untouched.
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('Removes Poison duration completely', 'specialText')),
+    ).toContain('remove_poison');
+
+    // The guard is PER-SEGMENT with a sticky owner, not whole-target: a mixed list
+    // keeps its crew half. Testing the whole raw target regresses these four.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces Bind and reduces enemies' Percent Damage Reduction duration by 3 turns",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_bind');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces enemies' Percent Damage Reduction and crew's Chain Coefficient Reduction duration by 4 turns",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_chain_coefficient_reduction');
+    // ...and the enemy half of that same mixed list still resolves to its own key,
+    // because enemy-targeted keys are exempt from the guard by construction.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces enemies' Percent Damage Reduction and crew's Chain Coefficient Reduction duration by 4 turns",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_damage_reduction');
+  });
+
+  it('cures Poison by name only, and never the Strong Poison / Toxic variants or the inflict side', () => {
+    // Strong Poison (== Venom) and Toxic (== Progressive Poison) are distinct real
+    // statuses the crew CAN be inflicted with, but no ability text cures them by
+    // name — one cure clears every tier. A variant alias here would silently
+    // mis-report a future Toxic-only cure as a plain Poison cure.
+    for (const text of [
+      'Removes Poison duration completely',
+      'Reduces Poison duration by 3 turns',
+      'Removes Paralysis, Poison, RCV DOWN and Blindness duration completely',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'remove_poison',
+      );
+    }
+    for (const notACure of [
+      // Inflicting poison on enemies is the opposite mechanic (inflict_poison).
+      'Poisons all enemies for 1 turn, delays all enemies by 1 turn',
+      'Inflicts Toxic to all enemies',
+      // Exploiting the status, not curing it.
+      'boosts ATK against Poisoned enemies by 1.35x',
+      // An enabler for someone else's inflict, not an effect of its own.
+      'allows effects that inflict Poison to ignore Debuff Protection',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notACure, 'specialText'))).not.toContain(
+        'remove_poison',
+      );
+    }
+  });
+
   it('separates the Chain Coefficient Reduction cure from the chain boosts and its immunity', () => {
     // CCR is an enemy-inflicted CREW debuff that shrinks the per-tap growth of the
     // chain multiplier. Three neighbouring chain mechanics must stay distinct.
