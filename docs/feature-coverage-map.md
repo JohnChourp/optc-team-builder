@@ -107,6 +107,15 @@ matches 137 characters overall but only one as a captain — so the ability-wide
 promise matches the filter never returns. Counts at or below five are styled as scarce to
 warn that the requirement will likely over-constrain the search, without disabling it.
 
+Duration-reduction clauses may chain a second effect without repeating the verb, and upstream
+punctuates that continuation two ways — with a comma (`... duration by 5 turns, crew's ATK
+DOWN duration by 5 turns`) and with a bare conjunction (`... duration by 5 turns and Barrier
+duration by 1 turn`). The shared `TURN_PATTERNS` continuation accepts both, and each
+continuation carries its OWN turn count rather than inheriting the first clause's. The
+alternation is deliberately explicit rather than an optional comma: allowing any target to
+follow a bare `turns ` would re-open the clause-bridging that the surrounding guards exist to
+prevent.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

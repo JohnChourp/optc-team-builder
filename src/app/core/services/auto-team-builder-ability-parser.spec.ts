@@ -574,6 +574,51 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('reads the comma-less "turns and <target>" continuation as well as the comma form', () => {
+    // Upstream punctuates the SAME verbless continuation two ways. The lookbehind
+    // originally required the literal comma, so the conjunction form was missed.
+    // These are the only 4 corpus occurrences of the comma-less shape.
+    const blackbeard = analyzeBuilderAbilityText(
+      "Deals 15% of enemies' current HP in damage to all enemies, reduces enemies' Threshold Damage Reduction and Increased Defense duration by 5 turns and Barrier duration by 1 turn.",
+      'specialText',
+    );
+    expect(blackbeard).toEqual(
+      expect.arrayContaining([
+        // The continuation itself — Barrier carries its OWN 1 turn, not the 5.
+        expect.objectContaining({ key: 'remove_enemy_barrier', minTurns: 1 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 5 }),
+        expect.objectContaining({ key: 'remove_enemy_increased_defense', minTurns: 5 }),
+      ]),
+    );
+    // Caribou #1841/#1842 — the same shape landing on a different sibling key.
+    expect(
+      analyzeBuilderAbilityText(
+        "Boosts ATK of Driven characters by 1.5x for 1 turn, reduces enemies' Threshold Damage Reduction by 2 turns and ATK Up duration by 3 turns",
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'remove_enemy_atk_up', minTurns: 3 })]),
+    );
+    // The alternation stays explicit: a bare "turns " followed by a target must
+    // NOT continue, or the bridge the guards exist to prevent re-opens. Here the
+    // second clause repeats its own verb, so it resolves through the verb pattern
+    // at its own turn count rather than being re-read as a continuation.
+    const dogstorm = analyzeBuilderAbilityText(
+      "Reduces Special Bind duration by 4 turns and reduces enemies' Threshold Damage Reduction duration by 3 turns.",
+      'specialText',
+    );
+    expect(dogstorm).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_special_bind', minTurns: 4 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 3 }),
+      ]),
+    );
+    // ... and Special Bind must NOT have been republished at the 3-turn count.
+    expect(
+      dogstorm.filter((a) => a.key === 'remove_special_bind' && a.minTurns === 3),
+    ).toHaveLength(0);
+  });
+
   it('does not let a cure clause bridge into a neighbouring clause in either direction', () => {
     // Both TURN_PATTERNS lazily scan to their terminator, so without a guard the
     // target starts at the FIRST verb in the sentence and swallows whole clauses.

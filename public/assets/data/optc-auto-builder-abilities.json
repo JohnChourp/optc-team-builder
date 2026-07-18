@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T14:49:19.561Z",
+  "generatedAt": "2026-07-18T15:19:02.453Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -50412,7 +50412,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 120,
+      "matchCount": 122,
       "matchingCharacterIds": [
         1189,
         1190,
@@ -50441,6 +50441,8 @@
         2261,
         2291,
         2292,
+        2402,
+        2403,
         2413,
         2414,
         2506,
@@ -50564,6 +50566,8 @@
             2261,
             2291,
             2292,
+            2402,
+            2403,
             2413,
             2414,
             2506,
@@ -75397,12 +75401,14 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 36,
+      "matchCount": 38,
       "matchingCharacterIds": [
         1431,
         1432,
         1756,
         1757,
+        1841,
+        1842,
         1870,
         1871,
         1878,
@@ -75460,6 +75466,8 @@
           "characterIds": [
             1756,
             1757,
+            1841,
+            1842,
             1870,
             1871,
             2104,
@@ -75518,14 +75526,14 @@
         1432,
         1756,
         1757,
-        1870
+        1841
       ],
       "sampleTexts": [
         "Deals 100x character's ATK in Typeless damage to all enemies, removes enemies' ATK Up, Enrage, End of Turn Damage/Percent Cut and End of Turn Heal Buffs duration completely and boosts ATK of all characters by 1.5x for 1 turn",
         "Deals 100x character's ATK in Typeless damage to all enemies, removes enemies' ATK Up, Enrage, End of Turn Damage/Percent Cut and End of Turn Heal Buffs duration completely and boosts ATK of all characters by 1.5x for 1 turn",
         "Reduces damage received by 80% for 1 turn, reduces enemies' Threshold Damage Reduction and ATK UP duration by 3 turns",
         "Reduces damage received by 80% for 1 turn, reduces enemies' Threshold Damage Reduction and ATK UP duration by 3 turns",
-        "Reduces crew's current HP by 50%, deals 10x the amount of HP subtracted in Typeless damage to one enemy, reduces enemies' Threshold Damage Reduction, Increased Defense and ATK UP duration by 3 turns and changes the orb of this character into a [PSY] orb"
+        "Boosts ATK of Driven characters by 1.5x for 1 turn, reduces enemies' Threshold Damage Reduction by 2 turns and ATK Up duration by 3 turns"
       ]
     },
     {

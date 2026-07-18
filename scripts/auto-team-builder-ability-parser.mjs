@@ -1640,15 +1640,27 @@ const TURN_PATTERNS = [
     // verb before the target, so the verbless "crew's ATK DOWN duration by 5
     // turns" continuation went untagged.
     //
-    // The lookbehind anchors on a completed "turns," (optionally followed by
-    // "and"), so it cannot re-read the first clause, and the body excludes
-    // verbs/duration/turns/comma so it captures exactly one self-contained
-    // continuation segment. The reduces{0,2} guard also keeps it off the typo
-    // "reducess" continuation (Makino #3844, already handled by the verb pattern).
-    // Corpus-wide this is the ONLY occurrence of the shape: +2 (Bobbin), 0
-    // collateral across every key.
+    // The lookbehind anchors on a completed "turns" clause, so it cannot re-read
+    // the first clause, and the body excludes verbs/duration/turns/comma so it
+    // captures exactly one self-contained continuation segment. The reduces{0,2}
+    // guard also keeps it off the typo "reducess" continuation (Makino #3844,
+    // already handled by the verb pattern).
+    //
+    // TWO punctuations of the same shape occur upstream and both must be read:
+    // the comma form "... by 5 turns, crew's ATK DOWN duration by 5 turns"
+    // (Bobbin #2118/#2119) and the COMMA-LESS conjunction "... duration by 5
+    // turns and Barrier duration by 1 turn" (Blackbeard #2402/#2403 -> Barrier,
+    // Caribou #1841/#1842 -> ATK Up). The lookbehind originally required the
+    // literal comma, so the conjunction form went untagged. Corpus-wide these are
+    // the ONLY 4 occurrences of the comma-less shape, so the blast radius is
+    // fully enumerated: +2 remove_enemy_barrier, +2 remove_enemy_atk_up, 0
+    // collateral on every other key.
+    //
+    // Keep the alternation EXPLICIT. The looser `turns,?\s*(?:and\s)?` would also
+    // admit any target directly following a bare "turns ", which re-opens the
+    // bridge this pattern's guards exist to prevent.
     pattern:
-      /(?<=turns,\s{0,3}(?:and\s)?)((?:(?!\breduces{0,2}\b|\bremoves?\b|\bcompletely\b|\bduration\b|\bturns?\b|,)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
+      /(?<=turns(?:,\s{0,3}(?:and\s)?|\s{1,3}and\s))((?:(?!\breduces{0,2}\b|\bremoves?\b|\bcompletely\b|\bduration\b|\bturns?\b|,)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
     resolveTurns: (match) => Number(match[2]),
   },
   {
