@@ -1606,6 +1606,44 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('tap_timing_requirement');
   });
 
+  it('detects apply_resilience across the protect/prevent-defeat wordings but not the kill triggers', () => {
+    // Crew-side survival ("Loss Prevention" / upstream `Zombies (Protect from
+    // Defeat)`). The key was DEAD at 0 matches because its old matchers demanded
+    // the literal "Resilience", which OPTC-DB only ever writes for the ENEMY buff.
+    // Both real sub-forms must match: the turn-limited special and the permanent
+    // HP-conditional captain passive.
+    for (const [text, source] of [
+      ['Protects from defeat for 1 turn', 'specialText'],
+      ['protects from defeat for 2 turns if HP is above 70%', 'specialText'],
+      ['protects from defeat for 1 turn as long as HP is above 50%', 'specialText'],
+      ['Protects from defeat as long as HP is above 50%', 'captainAbility'],
+      ['Protects from defeat as long as HP is above ?% at the start of the turn', 'captainAbility'],
+      // The only "prevents" spelling in the corpus — Brook #3575/#3576, whose
+      // captainNotes name the mechanic ("Resilience activates when taking damage
+      // from an enemy that would kill you") and are the naming evidence.
+      ['prevents defeat for 1 turn once per adventure', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_resilience',
+      );
+    }
+    // The confusion families all mention "defeat" and must stay out: the execute
+    // mechanic (defeat_enemy), kill triggers, and revive — upstream states in
+    // prose that "The revive is not Resilience since you can still die."
+    for (const [notCrewSurvival, source] of [
+      ['Instantly defeats all enemies with HP below 20%', 'specialText'],
+      ['boosts ATK of all characters by 2x if you defeat an enemy', 'captainAbility'],
+      ['reduces Special Cooldown by 1 turn if any enemies were defeated in the previous turn', 'captainAbility'],
+      ['revives the team after a GAME OVER once per adventure', 'specialText'],
+      // The enemy-side strip: same word, opposite actor, owned by remove_resilience.
+      ["Reduces enemies' Resilience duration by 5 turns", 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notCrewSurvival, source))).not.toContain(
+        'apply_resilience',
+      );
+    }
+  });
+
   it('keeps a cumulative second conditional captain clause with a different condition', () => {
     // Kurozumi Orochi (ids 3571/3572): two independent crew-composition conditions.
     // The 3-word fingerprint used to collapse both to "if your crew" and drop the
@@ -3083,6 +3121,14 @@ describe('auto team builder ability parser', () => {
     // Players search this mechanic by "PERFECT"; the primary label alone gave 0 hits.
     expect(specialCatalog.find((item) => item.key === 'tap_timing_requirement')?.label).toBe(
       'Tap-Timing Requirement (PERFECT)',
+    );
+    // Crew-side survival, revived from a dead key: the bare label "Resilience"
+    // names the ENEMY buff everywhere else in the app (`remove_resilience`, and
+    // the live enemy-mechanic picker), and OPTC-DB never writes "Resilience"
+    // crew-side — it writes "protects/prevents defeat". So the label leads with
+    // the literal ability wording and keeps the community name as the alias.
+    expect(specialCatalog.find((item) => item.key === 'apply_resilience')?.label).toBe(
+      'Protect from Defeat (Resilience)',
     );
 
     expect(groupCounts).toEqual({

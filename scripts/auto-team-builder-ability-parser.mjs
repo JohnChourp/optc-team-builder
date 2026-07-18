@@ -927,8 +927,35 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],
   [
+    // Crew-side survival ("Loss Prevention" / "Zombie"): for a stated window the
+    // crew cannot be dropped below 1 HP by a killing blow. OPTC-DB files it under
+    // `Survivability` as "Zombies (Protect from Defeat)" — a MIRROR of, not the
+    // same thing as, the enemy buff `remove_resilience` strips (upstream category
+    // `Reduce Enemy Effects`). A third system shares the word and is unreachable
+    // here: the Resilience socket, which lives outside all ability text.
+    //
+    // The two former patterns matched 0 because OPTC-DB never writes "applies
+    // Resilience" crew-side — every literal "Resilience" in ability text is the
+    // ENEMY buff. The crew effect is always written "protects from defeat" (72
+    // occurrences) or "prevents defeat" (2, Brook #3575/#3576, whose captainNotes
+    // name the mechanic: "Resilience activates when taking damage from an enemy
+    // that would kill you").
+    //
+    // Adjacency is exact in all 74 occurrences, so this needs no [^.]{0,N} gap —
+    // and must not grow one. Widening it to the usual decimal-tolerant hatch
+    // (?:[^.]|\.\d) on the OLD pattern 2 was measured to cross "1.2x" and bridge
+    // an enemy-Resilience strip into an unrelated crew heal, yielding two pure
+    // false positives (#4429/#4430 Kizaru). Gap widths {0,10}..{0,200} all return
+    // the identical 67 ids, so the gap buys nothing and only risks that class.
+    //
+    // Deliberately NOT in DURATION_TURN_KEYS: the population is mixed —
+    // "protects from defeat for N turns" (specialText, 37) carries a duration but
+    // "Protects from defeat as long as HP is above N%" (captainAbility, 30) is a
+    // PERMANENT passive the schema cannot express. Enabling turns erases every
+    // null-turn record from the buckets, dropping 28 of 67 overall and 30 of 32
+    // in captain mode, to separate just 2 characters. See the audit record.
     'apply_resilience',
-    [/\bapplies?\b[^.]{0,120}\bresilience\b/i, /\bresilience\b[^.]{0,120}\bcrew\b/i],
+    [/\b(?:protects?|prevents?)\s+(?:from\s+)?defeat\b/i],
   ],
   [
     'defeat_enemy',

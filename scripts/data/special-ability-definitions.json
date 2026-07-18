@@ -513,7 +513,7 @@
   },
   {
     "key": "apply_resilience",
-    "label": "Resilience",
+    "label": "Protect from Defeat (Resilience)",
     "groupLabel": "Other",
     "groupOrder": 10,
     "effectOrder": 3

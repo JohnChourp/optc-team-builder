@@ -74,6 +74,12 @@ key|minTurns|slotTokens|source|coverageMode
 
 Canonical keys are deterministic, labels are display-only, and collisions are resolved by keeping one entry per identity. Manual corrections in `scripts/data/builder-ability-corrections.json` may remove or replace derived abilities for specific character ids.
 
+### Dual-named effects
+
+Where an effect is worded differently depending on who applies it, or where the community name differs from the wording in ability text, the definition label carries both as `Primary (Alias)`: the wording our own characters' ability text literally uses first, the other actor's or community name in parentheses. The pickers search both the key and the label, so one remembered name is enough to find the effect.
+
+Existing examples are `Boost Type Effects (Color Affinity)`, `Tap-Timing Requirement (PERFECT)` and `Protect from Defeat (Resilience)` — the last being the crew-side survival buff, which is deliberately *not* labelled bare "Resilience" because that word names the opposite actor's buff in the enemy mechanic picker and in `remove_resilience` ("Enemy Resilience").
+
 ## Enemy Definitions
 
 Saved enemy definitions use the `SavedEnemy` model and the enemy mechanic catalog in `enemy-mechanic-draft.utils.ts`.
