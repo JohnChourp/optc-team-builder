@@ -136,6 +136,16 @@ check is per-segment with a sticky owner rather than whole-target, so a mixed li
 (`enemies' Percent Damage Reduction and crew's Chain Coefficient Reduction`) keeps both halves
 with each going to its correct key.
 
+**Super-special grants.** Matchers do not run over super-special text by default, because most
+units repeat their base special's wording there and would be double-tagged. Effects whose grants
+appear *only* in super-special text are opted in individually via a per-key allowlist —
+`territory` and `chain_multiplier_growth_rate` today. The allowlist must stay per-key: removing
+it so every matcher reads super-special text was measured to move 37 keys and add 577 matches.
+For "Chain Multiplier: Growth Rate" specifically, ten units grant the buff only in their super
+special and none repeats it in the base special, so no double-tagging occurs. Wordings that
+*reference* a buff rather than granting it — duration extenders, boost-effect amplifiers and
+trigger conditions — stay excluded on every source.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

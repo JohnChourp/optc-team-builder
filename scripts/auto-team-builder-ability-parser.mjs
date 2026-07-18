@@ -1561,11 +1561,14 @@ const TARGET_ALIASES = [
     // "Chain Coefficient Reduction" (129 corpus occurrences, one casing, zero
     // spelling variants, zero abbreviations). The former second branch
     // ('decrease chain multiplier growth rate') was dead code — 0 occurrences in
-    // the corpus, in upstream details.js, and in matchers.js. Dropping it is
-    // provably lossless: 118 -> 118 with a byte-identical id set.
+    // the fields the parser actually reads. (Corrected 2026-07-18: it does occur
+    // twice upstream, in the `limit:` arrays of #4429/#4430, which the parser does
+    // not read — so it IS a genuine upstream synonym for the DEBUFF, just an
+    // unreachable one.) Dropping the branch is provably lossless: 118 -> 118 with
+    // a byte-identical id set.
     //
     // Do NOT re-add a 'chain multiplier growth rate' branch. That phrase occurs
-    // 156 times, but 149 of them are "boosts Chain Multiplier Growth Rate by Nx"
+    // 156 times, but 148 of them are "boosts Chain Multiplier Growth Rate by Nx"
     // — the crew BOOST, i.e. the OPPOSITE mechanic, owned by
     // chain_multiplier_growth_rate. This key cures the enemy-inflicted debuff.
     matcher: (target) => target.includes('chain coefficient reduction'),
@@ -2023,7 +2026,24 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
     // (identical logic already validated for specialText), not the whole
     // special catalog. extractPrimaryAbilityBranchText still bounds parsing to
     // the primary activation branch.
-    addSpecialAbilityMatches(abilities, seen, normalizedText, source, new Set(['territory']));
+    // `chain_multiplier_growth_rate` joins `territory` on this per-key allowlist.
+    // Ten units grant "Boosts Chain Multiplier Growth Rate by Nx" ONLY in their
+    // super special (#3071, #3369, #3430, #3553, #3652, #3669, #3898, #4490,
+    // #4536, #4556) and none of them carries the wording in its base special, so
+    // the double-tagging this restriction exists to prevent cannot occur for it.
+    // Upstream OPTC-DB lists superSpecial among this effect's matcher targets.
+    // Audited 2026-07-18: 104 -> 114, exactly one key of 263 changes.
+    //
+    // Do NOT widen this to the whole matcher set. Dropping the allowlist was
+    // measured to move 37 keys and add 577 ids, including frozen counts
+    // (chain_multiplier_additive_boost 312 -> 323, change_slots 1513 -> 1595).
+    addSpecialAbilityMatches(
+      abilities,
+      seen,
+      normalizedText,
+      source,
+      new Set(['territory', 'chain_multiplier_growth_rate']),
+    );
   }
 
   TURN_PATTERNS.forEach(({ pattern, resolveTurns, isCompleteRemoval }) => {

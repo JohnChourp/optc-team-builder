@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T17:11:47.175Z",
+  "generatedAt": "2026-07-18T17:54:41.429Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -9688,12 +9688,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 104,
+      "matchCount": 114,
       "matchingCharacterIds": [
         366,
         367,
@@ -9748,18 +9749,25 @@
         2930,
         2959,
         2960,
+        3071,
         3178,
         3179,
         3211,
         3240,
+        3369,
         3429,
+        3430,
+        3553,
         3586,
+        3652,
+        3669,
         3718,
         3754,
         3755,
         3816,
         3831,
         3832,
+        3898,
         3932,
         3933,
         3946,
@@ -9797,7 +9805,10 @@
         4469,
         4478,
         4486,
+        4490,
         4524,
+        4536,
+        4556,
         4598
       ],
       "turnMatchingCharacterIds": [],

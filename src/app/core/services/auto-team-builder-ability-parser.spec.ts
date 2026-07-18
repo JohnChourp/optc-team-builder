@@ -574,6 +574,55 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('derives Chain Multiplier Growth Rate from super-special text without admitting the amplifiers', () => {
+    // Ten units grant this buff ONLY in their super special, and none carries the
+    // wording in its base special, so the key was added to the per-key allowlist
+    // that lets a matcher run on superSpecialText. The allowlist must stay per-key:
+    // dropping it entirely moves 37 keys and adds 577 ids.
+    for (const text of [
+      'Boosts Chain Multiplier Growth Rate by 1.25x for 1 turn, locks all orbs for 1 turn.',
+      'boosts Chain Multiplier Growth Rate by 1.5x for 3 turns, sets Special Launch Status to (1)',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'superSpecialText'))).toContain(
+        'chain_multiplier_growth_rate',
+      );
+    }
+    // Still matched on the original sources, including decimals, ranges, and the
+    // mid-clause interruption (#4275) that sits after the amount.
+    for (const [text, source] of [
+      ['boosts Chain Multiplier Growth Rate by 4x', 'captainAbility'],
+      ['boosts Chain Multiplier Growth Rate by 1.75x-2.5x for 2 turns', 'specialText'],
+      ['boosts Chain Multiplier Growth Rate by 1.25x, allowing override, for 1 turn', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'chain_multiplier_growth_rate',
+      );
+    }
+    // Referencing the buff is not granting it. Note the amplifier form ENDS in
+    // "+0.3x", so only the "buffs by" adjacency keeps it out — load-bearing.
+    for (const notAGrant of [
+      'increases duration of any Chain Multiplier Growth Rate buffs applied by Specials by 2 turns',
+      'increases boost effects of Chain Multiplier Growth Rate buffs by +0.3x',
+      'If a crew member uses a special to boost Chain Multiplier Growth Rate, recovers 1,000 HP',
+      'and you gain a Chain Multiplier Growth Rate buff, up to 2 times per adventure',
+    ]) {
+      expect(
+        extractAbilityKeys(analyzeBuilderAbilityText(notAGrant, 'specialText')),
+      ).not.toContain('chain_multiplier_growth_rate');
+    }
+    // The neighbouring chain mechanics keep their own keys.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Adds 1.3x to Chain multiplier for 1 turn', 'specialText'),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Locks the chain multiplier at 2.5x for 3 turns', 'specialText'),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+  });
+
   it("does not let an enemy-side duration strip reach a crew cure key", () => {
     // normalizeTargetText strips the "enemies'" possessive before aliasing, so an
     // ENEMY strip used to be indistinguishable from a CREW cure at the alias layer.
