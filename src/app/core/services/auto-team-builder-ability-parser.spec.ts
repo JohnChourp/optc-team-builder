@@ -1382,6 +1382,51 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('boost_against_delayed_enemies');
   });
 
+  it('detects boost_against_delayed_enemies in the status-noun list form without admitting the applier, immunity or amplifier', () => {
+    // The 2024+ upstream vocabulary names the enemy state as a STATUS NOUN inside a
+    // multi-status list rather than as the participle "delayed enemies". #4125-#4128
+    // already matched boost_against_def_reduced_enemies through this very clause via
+    // "DEF Reduction", so missing "Delay" in the same list was an internal
+    // inconsistency. Casing is unstable upstream (#4116 lowercases it), hence /i.
+    for (const [text, source] of [
+      [
+        'boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.2x',
+        'captainAbility',
+      ],
+      [
+        'boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, reduced defense, Paralysis, Burn or Negative by 1.15x',
+        'captainAbility',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'boost_against_delayed_enemies',
+      );
+    }
+    // The frame "boosts ... (against|damage dealt to) ... enemies (inflicted with|
+    // affected by)" is load-bearing. A bare "Delay" token would admit all three of
+    // these; each must stay out, and the applier must still resolve to apply_delay.
+    const applier = extractAbilityKeys(
+      analyzeBuilderAbilityText('Delays all enemies by 2 turns', 'specialText'),
+    );
+    expect(applier).not.toContain('boost_against_delayed_enemies');
+    expect(applier).toContain('apply_delay');
+    for (const [notABoost, source] of [
+      // Enemy immunity to the debuff, plus the applier.
+      ['ignores Delay Debuff Protection and delays all enemies by 1 turn', 'specialText'],
+      // Amplifier of the buff's effect, not a boost against delayed enemies.
+      ['Increases boost effects of Delay Status ATK Boost buffs by 1.1x-1.5x', 'specialText'],
+      // One-shot trigger checked at activation, not a per-hit multiplier.
+      [
+        'If there are delayed enemies when the Special is activated, increases duration of any ATK Up and Orb Amplification buffs by 1 turn',
+        'specialText',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notABoost, source))).not.toContain(
+        'boost_against_delayed_enemies',
+      );
+    }
+  });
+
   it('detects boost_against_def_reduced_enemies for "boosts ATK against enemies with reduced defense"', () => {
     // Canonical upstream wording is "enemies with reduced defense" (NOT
     // "DEF reduced enemies", which never appears); no "damage" token required.

@@ -78,6 +78,18 @@ An audit is not complete until it has covered both halves:
   and which of the four team-role scopes (captains / subs / crew / self) are genuinely
   populated, since a scope with zero matching characters must not be offered.
 
+The conditional "boost against <enemy state>" family (`boost_against_delayed_enemies`,
+`boost_against_def_reduced_enemies`, `boost_against_poisoned_enemies`) recognises two clause
+shapes: the canonical participle form `boosts ATK against delayed enemies by Nx`, and the
+2024+ status-noun list form `boosts damage dealt to enemies inflicted with Increase Damage
+Taken, Delay, Poison, ..., DEF Reduction, or Paralysis by Nx`. The governing frame
+`boosts ... (against|damage dealt to) ... enemies (inflicted with|affected by)` is
+load-bearing: it keeps out the applier (`delays all enemies by N turns`, `apply_delay`), the
+enemy immunity (`Delay Debuff Protection`), the amplifier (`increases boost effects of Delay
+Status ATK Boost buffs`, `effect_boost`) and the one-shot trigger form (`If there are delayed
+enemies when the Special is activated, ...`), none of which is a per-hit boost against the
+state.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

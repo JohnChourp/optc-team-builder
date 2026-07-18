@@ -356,7 +356,29 @@ const SPECIAL_ABILITY_MATCHERS = [
     // "If there are delayed enemies ..." (Kaya #4180 etc.), which is not a
     // boost-against target. Two bounded [^.]{0,N} gaps between fixed anchors ->
     // ReDoS-safe.
-    [/\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\bdelayed enemies\b/i],
+    //
+    // The second pattern covers the 2024+ upstream vocabulary shift, where the same
+    // exploit clause names the enemy state as a STATUS NOUN in a multi-status list
+    // ("boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay,
+    // Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.2x" — #4123/
+    // #4124/#4125/#4126/#4127/#4128). It is byte-parallel to the sibling pattern on
+    // boost_against_def_reduced_enemies below, deliberately: #4125-#4128 ALREADY
+    // match that key through the identical enumeration via "DEF Reduction", so not
+    // deriving Delay from the same list was an internal inconsistency, not merely a
+    // coverage gap. 122 -> 128.
+    //
+    // The governing frame "boosts ... (against|damage dealt to) ... enemies
+    // (inflicted with|affected by)" is load-bearing. A bare "Delay" token would
+    // sweep in the APPLY side ("delays all enemies by N turns", apply_delay, 273),
+    // the enemy IMMUNITY ("Delay Debuff Protection", 45 carriers) and the AMPLIFIER
+    // ("increases boost effects of Delay Status ATK Boost buffs", effect_boost).
+    // Do NOT relax it. \bDelay\b cannot reach the participle "delayed", so the
+    // applier/consumer split stays structural: the applier is always the finite
+    // verb "delays", the consumer always the participle "delayed".
+    [
+      /\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\bdelayed enemies\b/i,
+      /\bboosts?\b[^.]{0,160}\b(?:against|damage dealt to)\b[^.]{0,200}\benemies (?:inflicted with|affected by)\b[^.]{0,120}\bDelay\b/i,
+    ],
   ],
   [
     'boost_against_def_reduced_enemies',
