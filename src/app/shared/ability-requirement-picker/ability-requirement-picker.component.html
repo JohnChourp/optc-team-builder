@@ -103,6 +103,10 @@
                         <span class="ability-picker-tile__copy">
                           <strong>{{ tile.item.label }}</strong>
                           <span class="ability-picker-tile__meta">
+                            <small
+                              [class.ability-picker-tile__match-count--scarce]="tile.isScarce"
+                              >{{ t('catalog.matchCount', { count: tile.matchCount }) }}</small
+                            >
                             @if (tile.item.supportsTurns) {
                               <small>{{ t('catalog.hints.turns') }}</small>
                             }

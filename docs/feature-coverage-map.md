@@ -99,6 +99,14 @@ ids into every turn-filtered result instead of comparing them numerically — so
 cure satisfies any requested turn count, while a real 99-turn boost still drops out of a
 "100 turns" request.
 
+The ability requirement picker shows a match count per catalog tile, and it is
+SOURCE-AWARE: in captain mode it reports the captain-scoped count rather than the
+ability-wide one, because a captain requirement resolves against
+`captainAbilityMatchingCharacterIds`. The two can diverge sharply — "Enemy Resilience"
+matches 137 characters overall but only one as a captain — so the ability-wide number would
+promise matches the filter never returns. Counts at or below five are styled as scarce to
+warn that the requirement will likely over-constrain the search, without disabling it.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community
