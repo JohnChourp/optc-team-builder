@@ -971,7 +971,18 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'extend_turn_duration',
-    [/\bextends?\b[^.]{0,120}\bduration\b/i, /\bincreases?\b[^.]{0,120}\bduration\b/i],
+    // The crew BUFF-DURATION EXTENDER: OPTC-DB "Increases duration of any <buff>
+    // buffs by N turn(s)" (also "... Delay debuffs", a crew-beneficial enemy debuff)
+    // and the lone "extends the duration of crew's <buff> by N turns" (#4613). Anchor
+    // the verb DIRECTLY on "duration of": the old loose /increases?..duration/ 120-char
+    // bridge latched onto the word "Increase" inside the DEBUFF NAMES "Increase Damage
+    // Taken" (50) and "Increase Defense" (1, #3935 Smoothie) and bridged to a later
+    // "duration" even though the sentence verb is "reduces" — tagging the debuff-CURE
+    // family (remove_increase_damage_taken etc.), the exact OPPOSITE of an extender,
+    // as an extender. 264 -> 213 (drops 51 pure false positives; every genuine
+    // "increases/extends [the] duration of ..." extender is retained). Past-tense buff
+    // names "Increased Damage Taken"/"Increased Defense" never tripped \bincreases?\b.
+    [/\b(?:increases?|extends?|prolongs?)\s+(?:the\s+)?duration\s+of\b/i],
   ],
   // "Delayed Effect Launch" = an effect scheduled to activate on a LATER turn
   // ("activates <Special> in the following turn"; "boosts ... for 1 turn in the

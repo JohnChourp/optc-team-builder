@@ -2748,6 +2748,33 @@ describe('auto team builder ability parser', () => {
     ).not.toEqual(expect.arrayContaining([expect.objectContaining({ key: 'remove_pain' })]));
   });
 
+  it('extend_turn_duration requires the verb to govern "duration of" (not the "Increase" debuff name)', () => {
+    // Genuine extender still tags.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Increases duration of any ATK boosting buffs and Orb Amplification buffs by 1 turn.',
+          'specialText',
+        ),
+      ),
+    ).toContain('extend_turn_duration');
+    // The reduce-debuff-duration CURE family must NOT be tagged as an extender just
+    // because the cured debuff is NAMED "Increase Damage Taken" / "Increase Defense".
+    for (const text of [
+      "Reduces ATK DOWN and Increase Damage Taken duration by 5 turns.",
+      "Reduces enemies' Increase Defense, Percent Damage Reduction and Threshold Damage Reduction duration by 4 turns.",
+    ]) {
+      const keys = extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'));
+      expect(keys).not.toContain('extend_turn_duration');
+    }
+    // ...and the Increase Damage Taken cure itself still resolves.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces ATK DOWN and Increase Damage Taken duration by 5 turns.', 'specialText'),
+      ),
+    ).toContain('remove_increase_damage_taken');
+  });
+
   it('extracts explicit NAO bypass from special text only when the effect ignores it', () => {
     expect(
       analyzeBuilderAbilityText(
