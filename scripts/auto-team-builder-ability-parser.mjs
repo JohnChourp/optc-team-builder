@@ -1342,8 +1342,15 @@ const TARGET_ALIASES = [
   {
     key: 'remove_enemy_increased_defense',
     label: 'Remove Increased Defense',
+    // Spelling-tolerant on the trailing "d": OPTC-DB usually writes the enemy buff
+    // "Increased Defense", but Charlotte Smoothie #3935 carries the upstream typo
+    // "Increase Defense" ("Reduces enemies' Increase Defense, Percent Damage
+    // Reduction and Threshold Damage Reduction duration by 4 turns"). The target is
+    // already pre-scoped by TURN_PATTERNS to the reduced enemy-buff name, so this
+    // cannot reach a crew self-buff "increases defense" or DEF-DOWN "reduces DEF of
+    // enemies" (a different mechanic, apply_def_reduction).
     matcher: (target) =>
-      target.includes('increased defense') ||
+      /increased?\s+defense/.test(target) ||
       target === 'def up' ||
       target === 'defense up' ||
       target.endsWith(' def up') ||

@@ -422,6 +422,33 @@ describe('auto team builder ability parser', () => {
     ).toBe(3);
   });
 
+  it('tolerates the upstream "Increase Defense" spelling (missing trailing d)', () => {
+    // Charlotte Smoothie #3935 is the corpus's ONLY "Increase Defense" (no trailing
+    // "d") reduce-duration clause; the former target.includes('increased defense')
+    // exact-substring test missed her while still tagging her sibling buff cures.
+    expect(
+      analyzeBuilderAbilityText(
+        "Reduces enemies' Increase Defense, Percent Damage Reduction and Threshold Damage Reduction duration by 4 turns.",
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_enemy_increased_defense', minTurns: 4 }),
+        expect.objectContaining({ key: 'remove_damage_reduction', minTurns: 4 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 4 }),
+      ]),
+    );
+    // The canonical "Increased Defense" spelling still resolves.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces enemies' Increased Defense duration by 2 turns.",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_enemy_increased_defense');
+  });
+
   it('keeps the plain Despair cure separate from Sailor Despair in both directions', () => {
     // Sailor Despair is a DISTINCT debuff (it disables the sailor ability), hence
     // remove_despair's !includes('sailor despair') veto. That veto is a substring
