@@ -422,6 +422,33 @@ describe('auto team builder ability parser', () => {
     ).toBe(3);
   });
 
+  it('tolerates the upstream "Increase Defense" spelling (missing trailing d)', () => {
+    // Charlotte Smoothie #3935 is the corpus's ONLY "Increase Defense" (no trailing
+    // "d") reduce-duration clause; the former target.includes('increased defense')
+    // exact-substring test missed her while still tagging her sibling buff cures.
+    expect(
+      analyzeBuilderAbilityText(
+        "Reduces enemies' Increase Defense, Percent Damage Reduction and Threshold Damage Reduction duration by 4 turns.",
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_enemy_increased_defense', minTurns: 4 }),
+        expect.objectContaining({ key: 'remove_damage_reduction', minTurns: 4 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 4 }),
+      ]),
+    );
+    // The canonical "Increased Defense" spelling still resolves.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces enemies' Increased Defense duration by 2 turns.",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_enemy_increased_defense');
+  });
+
   it('keeps the plain Despair cure separate from Sailor Despair in both directions', () => {
     // Sailor Despair is a DISTINCT debuff (it disables the sailor ability), hence
     // remove_despair's !includes('sailor despair') veto. That veto is a substring
@@ -2719,6 +2746,57 @@ describe('auto team builder ability parser', () => {
         'specialText',
       ),
     ).not.toEqual(expect.arrayContaining([expect.objectContaining({ key: 'remove_pain' })]));
+  });
+
+  it('extend_turn_duration requires the verb to govern "duration of" (not the "Increase" debuff name)', () => {
+    // Genuine extender still tags.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Increases duration of any ATK boosting buffs and Orb Amplification buffs by 1 turn.',
+          'specialText',
+        ),
+      ),
+    ).toContain('extend_turn_duration');
+    // The reduce-debuff-duration CURE family must NOT be tagged as an extender just
+    // because the cured debuff is NAMED "Increase Damage Taken" / "Increase Defense".
+    for (const text of [
+      "Reduces ATK DOWN and Increase Damage Taken duration by 5 turns.",
+      "Reduces enemies' Increase Defense, Percent Damage Reduction and Threshold Damage Reduction duration by 4 turns.",
+    ]) {
+      const keys = extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'));
+      expect(keys).not.toContain('extend_turn_duration');
+    }
+    // ...and the Increase Damage Taken cure itself still resolves.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Reduces ATK DOWN and Increase Damage Taken duration by 5 turns.', 'specialText'),
+      ),
+    ).toContain('remove_increase_damage_taken');
+  });
+
+  it('apply_increase_damage_taken requires an inflict/apply grant, not the "Increase" debuff name', () => {
+    // Genuine enemy applications tag.
+    for (const text of [
+      'Inflicts all enemies with Increase Damage Taken by 2x for 1 turn.',
+      "increases all enemies' damage taken by 2x for 1 turn ignoring immunity to status effects.",
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'apply_increase_damage_taken',
+      );
+    }
+    // Non-apply clauses that merely NAME the Increase Damage Taken debuff must NOT be
+    // tagged as applying it: the cure (reduces ... duration), the boost-against gate
+    // (participle "inflicted with"), and the effect_boost amplifier.
+    for (const text of [
+      'Reduces ATK DOWN and Increase Damage Taken duration by 5 turns.',
+      'Boosts ATK against enemies inflicted with Increase Damage Taken by 1.1x.',
+      "Increases boost effects of enemies' Increase Damage Taken debuffs by +0.3x.",
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'apply_increase_damage_taken',
+      );
+    }
   });
 
   it('extracts explicit NAO bypass from special text only when the effect ignores it', () => {

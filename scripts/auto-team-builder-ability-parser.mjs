@@ -780,7 +780,26 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\binflicts?\b[^.]{0,120}\bDEF Down\b/i,
     ],
   ],
-  ['apply_increase_damage_taken', [/\bincreases?\b[^.]{0,120}\bdamage taken\b/i]],
+  // The crew INFLICTS the "Increase Damage Taken" (IDT) debuff ON ENEMIES so they
+  // take Nx more damage: OPTC-DB "Inflicts all enemies with Increase Damage Taken by
+  // Nx for M turn(s)" (dominant) and the rare "increases all enemies' damage taken by
+  // Nx" (#4603). Anchor on the APPLY verb (or the "all enemies' damage taken" grant):
+  // the old /increases?..damage taken/ 120-char bridge keyed on the word "Increase"
+  // inside the debuff NAME and could not tell direction, so 115 of 214 were false
+  // positives — 49 CURE clauses ("reduces/removes Increase Damage Taken duration",
+  // 100% owned by remove_increase_damage_taken, the OPPOSITE mechanic), plus
+  // "boosts ATK against enemies inflicted with Increase Damage Taken" (participle
+  // "inflicted", not "inflicts"), "increases boost effects of ... Increase Damage
+  // Taken debuffs" (effect_boost amplifier), "Increase Damage Taken Immunity" (an
+  // ally buff), and "increases duration of ... IDT debuffs" (extend_turn_duration).
+  // 214 -> 99. ("Increased Damage Taken" past-tense never tripped \bincreases?\b.)
+  [
+    'apply_increase_damage_taken',
+    [
+      /\b(?:inflicts?|afflicts?)\b[^.]{0,60}\bincrease damage taken\b/i,
+      /\bincreases?\s+(?:the\s+)?all\s+enemies['’]?\s+damage taken\b/i,
+    ],
+  ],
   ['apply_unique_effect', [/\bunique effect\b/i]],
   [
     'apply_resistance_reduction',
@@ -971,7 +990,18 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'extend_turn_duration',
-    [/\bextends?\b[^.]{0,120}\bduration\b/i, /\bincreases?\b[^.]{0,120}\bduration\b/i],
+    // The crew BUFF-DURATION EXTENDER: OPTC-DB "Increases duration of any <buff>
+    // buffs by N turn(s)" (also "... Delay debuffs", a crew-beneficial enemy debuff)
+    // and the lone "extends the duration of crew's <buff> by N turns" (#4613). Anchor
+    // the verb DIRECTLY on "duration of": the old loose /increases?..duration/ 120-char
+    // bridge latched onto the word "Increase" inside the DEBUFF NAMES "Increase Damage
+    // Taken" (50) and "Increase Defense" (1, #3935 Smoothie) and bridged to a later
+    // "duration" even though the sentence verb is "reduces" — tagging the debuff-CURE
+    // family (remove_increase_damage_taken etc.), the exact OPPOSITE of an extender,
+    // as an extender. 264 -> 213 (drops 51 pure false positives; every genuine
+    // "increases/extends [the] duration of ..." extender is retained). Past-tense buff
+    // names "Increased Damage Taken"/"Increased Defense" never tripped \bincreases?\b.
+    [/\b(?:increases?|extends?|prolongs?)\s+(?:the\s+)?duration\s+of\b/i],
   ],
   // "Delayed Effect Launch" = an effect scheduled to activate on a LATER turn
   // ("activates <Special> in the following turn"; "boosts ... for 1 turn in the
@@ -1342,8 +1372,15 @@ const TARGET_ALIASES = [
   {
     key: 'remove_enemy_increased_defense',
     label: 'Remove Increased Defense',
+    // Spelling-tolerant on the trailing "d": OPTC-DB usually writes the enemy buff
+    // "Increased Defense", but Charlotte Smoothie #3935 carries the upstream typo
+    // "Increase Defense" ("Reduces enemies' Increase Defense, Percent Damage
+    // Reduction and Threshold Damage Reduction duration by 4 turns"). The target is
+    // already pre-scoped by TURN_PATTERNS to the reduced enemy-buff name, so this
+    // cannot reach a crew self-buff "increases defense" or DEF-DOWN "reduces DEF of
+    // enemies" (a different mechanic, apply_def_reduction).
     matcher: (target) =>
-      target.includes('increased defense') ||
+      /increased?\s+defense/.test(target) ||
       target === 'def up' ||
       target === 'defense up' ||
       target.endsWith(' def up') ||
