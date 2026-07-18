@@ -2775,6 +2775,30 @@ describe('auto team builder ability parser', () => {
     ).toContain('remove_increase_damage_taken');
   });
 
+  it('apply_increase_damage_taken requires an inflict/apply grant, not the "Increase" debuff name', () => {
+    // Genuine enemy applications tag.
+    for (const text of [
+      'Inflicts all enemies with Increase Damage Taken by 2x for 1 turn.',
+      "increases all enemies' damage taken by 2x for 1 turn ignoring immunity to status effects.",
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'apply_increase_damage_taken',
+      );
+    }
+    // Non-apply clauses that merely NAME the Increase Damage Taken debuff must NOT be
+    // tagged as applying it: the cure (reduces ... duration), the boost-against gate
+    // (participle "inflicted with"), and the effect_boost amplifier.
+    for (const text of [
+      'Reduces ATK DOWN and Increase Damage Taken duration by 5 turns.',
+      'Boosts ATK against enemies inflicted with Increase Damage Taken by 1.1x.',
+      "Increases boost effects of enemies' Increase Damage Taken debuffs by +0.3x.",
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'apply_increase_damage_taken',
+      );
+    }
+  });
+
   it('extracts explicit NAO bypass from special text only when the effect ignores it', () => {
     expect(
       analyzeBuilderAbilityText(

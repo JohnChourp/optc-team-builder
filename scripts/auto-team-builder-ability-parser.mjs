@@ -780,7 +780,26 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\binflicts?\b[^.]{0,120}\bDEF Down\b/i,
     ],
   ],
-  ['apply_increase_damage_taken', [/\bincreases?\b[^.]{0,120}\bdamage taken\b/i]],
+  // The crew INFLICTS the "Increase Damage Taken" (IDT) debuff ON ENEMIES so they
+  // take Nx more damage: OPTC-DB "Inflicts all enemies with Increase Damage Taken by
+  // Nx for M turn(s)" (dominant) and the rare "increases all enemies' damage taken by
+  // Nx" (#4603). Anchor on the APPLY verb (or the "all enemies' damage taken" grant):
+  // the old /increases?..damage taken/ 120-char bridge keyed on the word "Increase"
+  // inside the debuff NAME and could not tell direction, so 115 of 214 were false
+  // positives — 49 CURE clauses ("reduces/removes Increase Damage Taken duration",
+  // 100% owned by remove_increase_damage_taken, the OPPOSITE mechanic), plus
+  // "boosts ATK against enemies inflicted with Increase Damage Taken" (participle
+  // "inflicted", not "inflicts"), "increases boost effects of ... Increase Damage
+  // Taken debuffs" (effect_boost amplifier), "Increase Damage Taken Immunity" (an
+  // ally buff), and "increases duration of ... IDT debuffs" (extend_turn_duration).
+  // 214 -> 99. ("Increased Damage Taken" past-tense never tripped \bincreases?\b.)
+  [
+    'apply_increase_damage_taken',
+    [
+      /\b(?:inflicts?|afflicts?)\b[^.]{0,60}\bincrease damage taken\b/i,
+      /\bincreases?\s+(?:the\s+)?all\s+enemies['’]?\s+damage taken\b/i,
+    ],
+  ],
   ['apply_unique_effect', [/\bunique effect\b/i]],
   [
     'apply_resistance_reduction',
