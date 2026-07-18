@@ -844,14 +844,31 @@ const SPECIAL_ABILITY_MATCHERS = [
   [
     'apply_resistance_reduction',
     [
-      /\bresistance reduction\b/i,
+      // Do NOT re-add a bare /\bresistance reduction\b/ noun branch. It matched
+      // 0 of 4588 characters — OPTC-DB never writes the noun, 0 hits in
+      // details.js — and it is exactly the name-keyed shape that cost
+      // apply_increase_damage_taken 115 false positives, because a noun branch
+      // cannot tell apply from cure from amplify from boost-against. If upstream
+      // ever coins "Resistance Reduction Debuff Protection" or "boosts ATK
+      // against enemies inflicted with Resistance Reduction", an unanchored noun
+      // fires with no direction check. Same hazard documented on
+      // boost_against_def_reduced_enemies, where upstream DOES write the noun.
+      //
+      // Gap measured inert: widths {0,60}..{0,400} and both decimal-tolerant
+      // forms give a byte-identical id set. Width 40 loses 6 (long type lists).
+      // Keep the tight [^.] form at {0,120}; widening buys nothing.
       /\breduces?\b[^.]{0,120}\bresistance\b/i,
       // Same type/class damage-resistance-down debuff written with the verb
-      // "applies -N% <Type/Class> Resistance to enemies" (e.g. Caesar & Monet
-      // #4126 "applies -10% [QCK] Resistance to all enemies for 1 turn"). The
-      // "reduces" branch misses it because the verb is "applies" and never
-      // precedes "resistance". OPTC never phrases a crew-side resistance GAIN
-      // with "applies" (those use "boosts ... Resistance"), so this stays safe.
+      // "applies -N% <Type/Class> Resistance to enemies" (Caesar & Monet #4126,
+      // "applies -10% [QCK] Resistance to all enemies for 1 turn"). This branch
+      // is load-bearing for 0 characters today — #4126 is already secured by the
+      // "reduces" branch via its max-level tier, which independently reads
+      // "reduces enemies' [INT] Resistance by -10%" — but it is the only guard if
+      // that tier changes, and supportData uses the verb form more widely.
+      //
+      // Do NOT widen the alternation to include "increases": #4065 Kozuki Toki's
+      // sailor text carries the INVERSE, "increases enemies' Slasher Resistance
+      // by +50%", a self-inflicted drawback. Upstream has no matcher for it.
       /\bapplies?\b[^.]{0,60}\bresistance\b/i,
     ],
   ],
@@ -2052,7 +2069,15 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
       seen,
       normalizedText,
       source,
-      new Set(['territory', 'chain_multiplier_growth_rate', 'restore_advance_special_charge']),
+      new Set([
+        'territory',
+        'chain_multiplier_growth_rate',
+        'restore_advance_special_charge',
+        // apply_resistance_reduction: upstream declares superSpecial among this
+        // effect's carriers, and 23 characters apply enemy Resistance Reduction
+        // ONLY in their super special. 87 -> 110.
+        'apply_resistance_reduction',
+      ]),
     );
   }
 

@@ -574,6 +574,54 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('detects enemy Resistance Reduction across scopes and sources but never the inverse', () => {
+    // Enemy debuff lowering resistance to a Type or Class, which raises the damage
+    // crew of that Type/Class deal. One mechanic with two scope axes (5 types +
+    // 8 classes), not several. 23 characters carry it only in super-special text.
+    for (const [text, source] of [
+      ["reduces enemies' Cerebral Resistance by -20% for 1 turn", 'specialText'],
+      ["reduces all enemies' Slasher Resistance by -10% for 1 turn", 'specialText'],
+      // Long type lists need the >=60-char gap the matcher allows.
+      [
+        "reduces enemies' [STR], [DEX], [QCK], [PSY] and [INT] Resistance by -25% for 1 turn",
+        'specialText',
+      ],
+      // Unbracketed type names (#3657).
+      ["reduces enemies' STR, DEX and QCK Resistance by -20% for 1 turn", 'specialText'],
+      // No minus sign, scaled by another buff's duration (#4239/#4240) — upstream's
+      // own regex misses this shape; ours must not.
+      [
+        "reduces enemies' Fighter and Free Spirit Resistance by 10%-40% based on the duration of the End of Turn Healing buff",
+        'specialText',
+      ],
+      ["reduces enemies' Cerebral Resistance by -20% for 1 turn", 'superSpecialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_resistance_reduction',
+      );
+    }
+    // The INVERSE is a self-inflicted drawback, not this effect — the verb
+    // alternation must never grow to include "increases" (#4065 Kozuki Toki).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "increases enemies' Slasher Resistance by +50% for 1 turn",
+          'sailorAbilities',
+        ),
+      ),
+    ).not.toContain('apply_resistance_reduction');
+    // Crew-side immunity ("... Resistance" as a potential) and the neighbouring
+    // enemy debuffs are different mechanics with their own keys.
+    for (const notThis of [
+      'Reduces the defense of all enemies by 50% for 3 turns',
+      'Inflicts all enemies with Increase Damage Taken by 2.5x for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notThis, 'specialText'))).not.toContain(
+        'apply_resistance_reduction',
+      );
+    }
+  });
+
   it('separates Restore (rewind recovery) and Advance (self-charge) from the ship and the reduce family', () => {
     // RESTORE is recovery from the enemy debuff "Special Rewind", which pushes the
     // charge gauge backwards. Every restore clause in the corpus carries the rewind

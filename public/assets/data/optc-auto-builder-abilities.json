@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T19:07:12.296Z",
+  "generatedAt": "2026-07-18T19:48:32.631Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -51360,13 +51360,15 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 87,
+      "matchCount": 110,
       "matchingCharacterIds": [
+        3654,
         3657,
         3681,
         3682,
@@ -51375,6 +51377,8 @@
         3744,
         3745,
         3778,
+        3824,
+        3830,
         3853,
         3869,
         3870,
@@ -51385,6 +51389,7 @@
         3891,
         3916,
         3917,
+        3948,
         3965,
         3969,
         3989,
@@ -51393,6 +51398,7 @@
         4008,
         4023,
         4031,
+        4043,
         4057,
         4058,
         4059,
@@ -51408,6 +51414,8 @@
         4110,
         4111,
         4126,
+        4127,
+        4128,
         4136,
         4137,
         4158,
@@ -51417,6 +51425,7 @@
         4177,
         4180,
         4193,
+        4221,
         4223,
         4226,
         4230,
@@ -51428,18 +51437,28 @@
         4256,
         4275,
         4288,
+        4300,
         4303,
         4314,
+        4329,
         4336,
         4338,
         4341,
         4342,
+        4367,
+        4371,
+        4380,
         4383,
+        4388,
         4398,
         4399,
+        4401,
         4410,
+        4418,
         4423,
+        4441,
         4457,
+        4460,
         4462,
         4472,
         4476,
@@ -51448,11 +51467,16 @@
         4499,
         4507,
         4508,
+        4514,
         4519,
         4529,
         4540,
         4541,
         4544,
+        4576,
+        4584,
+        4585,
+        4594,
         4610
       ],
       "turnMatchingCharacterIds": [],
@@ -51480,18 +51504,18 @@
         4508
       ],
       "sampleCharacterIds": [
+        3654,
         3657,
         3681,
         3682,
-        3712,
-        3732
+        3712
       ],
       "sampleTexts": [
+        "Changes the orb of this character into a [TND] orb, deals 80x character's ATK in Typeless damage to all enemies, reduces Special Cooldown of [STR], [DEX] and [QCK] characters by 1 turn and reduces enemies' Powerhouse Resistance by -50% for 1 turn and transforms Powerhouse characters into Super Powerhouse characters.",
         "Reduces Burn and Chain Coefficient Reduction duration by 5 turns, locks all orbs for 1 turn, makes [PSY], [INT], [RCV] and [TND] orbs beneficial for all characters for 3 turns and boosts Orb Effects by 1.75x for 1 turn. If your Captain is a [STR] or [QCK] character, reduces enemies' STR, DEX and QCK Resistance by -20% for 1 turn.",
         "Recovers 50x character's RCV in HP, allowing HP Overfill up to 2x MAX HP, reduces Bind and Despair duration by 6 turns, reduces enemies' Cerebral Resistance by -50% for 1 turn and boosts Color Affinity of [INT] and Cerebral characters by 2.25x for 1 turn. If during that turn you score 3 PERFECT hits, boosts Color Affinity of [INT] and Cerebral characters by 2.5x for 1 turn.",
         "Recovers 50x character's RCV in HP, allowing HP Overfill up to 2x MAX HP, reduces Bind and Despair duration by 6 turns, reduces enemies' Cerebral Resistance by -50% for 1 turn and boosts Color Affinity of [INT] and Cerebral characters by 2.25x for 1 turn. If during that turn you score 3 PERFECT hits, boosts Color Affinity of [INT] and Cerebral characters by 2.5x for 1 turn.",
-        "Deals 30x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 4 turns and reduces enemies' [PSY] Resistance by -15% for 1 turn. If HP is below 50% when the special is activated, recovers missing HP to 51% MAX HP.. Deals 50x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 5 turns and reduces enemies' [PSY] Resistance by -20% for 1 turn. If HP is below 50% when the special is activated, recovers missing HP to 75% MAX HP.. Deals 80x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 7 turns, reduces enemies' [PSY] Resistance by -30% for 1 turn and recovers all missing HP.",
-        "Reduces Special Cooldown of all characters by 1 turn, deals 35x character's ATK in [QCK] damage to one enemy, reduces Special Bind duration by 5 turns, makes [STR] and [DEX] orbs beneficial for all characters for 3 turns, boosts Color Affinity of [QCK] characters by 2x for 1 turn and reduces enemies' [QCK] Resistance by -10% for 1 turn."
+        "Deals 30x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 4 turns and reduces enemies' [PSY] Resistance by -15% for 1 turn. If HP is below 50% when the special is activated, recovers missing HP to 51% MAX HP.. Deals 50x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 5 turns and reduces enemies' [PSY] Resistance by -20% for 1 turn. If HP is below 50% when the special is activated, recovers missing HP to 75% MAX HP.. Deals 80x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 7 turns, reduces enemies' [PSY] Resistance by -30% for 1 turn and recovers all missing HP."
       ]
     },
     {

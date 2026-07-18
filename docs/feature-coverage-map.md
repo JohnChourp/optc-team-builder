@@ -164,6 +164,15 @@ carries "Special Rewind Recovery" because the rewind mechanic drives most of tha
 and the bare label named neither it nor the debuff. Ship clauses are held out of the crew keys
 by an explicit guard.
 
+**Resistance Reduction** (`apply_resistance_reduction`) is an enemy debuff lowering the enemy's
+resistance to a specific Type (`[STR]/[DEX]/[QCK]/[PSY]/[INT]`) or Class (Fighter, Slasher,
+Striker, Shooter, Free Spirit, Cerebral, Powerhouse, Driven), which raises the damage crew of
+that Type or Class deal. It is one mechanic with two scope axes, not several. Canonical wording
+is `reduces enemies' <Type/Class> Resistance by -N% for M turn(s)`, detected from special,
+captain and super-special text. The inverse (`increases enemies' ... Resistance`, a
+self-inflicted drawback) is deliberately excluded, as is the crew-side immunity family, which
+lives in potential abilities under Status Effect Immunity.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community
