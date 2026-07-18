@@ -641,4 +641,95 @@ describe('AbilityRequirementPickerComponent', () => {
     expect(template).toContain("onLeaderBoostRangeChange('HP', 'max', $event)");
     expect(template).toContain('[disabled]="hasInvalidLeaderBoostRanges()"');
   });
+
+  it('shows a source-aware match count that is captain-scoped in captain mode', () => {
+    // "Enemy Resilience" matches 137 characters overall but only ONE as a captain.
+    // A captain requirement resolves against captainAbilityMatchingCharacterIds,
+    // so showing 137 there would promise matches the filter will never return.
+    const catalogItems = [
+      {
+        key: 'remove_resilience',
+        label: 'Enemy Resilience',
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText', 'captainAbility'],
+        availableCoverageModes: ['explicit'],
+        matchCount: 137,
+        captainAbilityMatchingCharacterIds: [4322],
+        sampleCharacterIds: [4322],
+        sampleTexts: ["Reduces enemies' Resilience duration by 5 turns"],
+      },
+      {
+        key: 'remove_bind',
+        label: 'Remove Bind',
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText', 'captainAbility'],
+        availableCoverageModes: ['explicit'],
+        matchCount: 527,
+        captainAbilityMatchingCharacterIds: [1, 2, 3, 4, 5, 6, 7, 8],
+        sampleCharacterIds: [1],
+        sampleTexts: ['Reduces Bind duration by 3 turns'],
+      },
+      {
+        // No captain-scoped index at all: the filter falls back to the
+        // ability-wide ids, so the tile must show the ability-wide count too.
+        key: 'boost_atk',
+        label: 'Boost ATK',
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText'],
+        availableCoverageModes: ['explicit'],
+        matchCount: 1338,
+        sampleCharacterIds: [9],
+        sampleTexts: ['Boosts ATK of all characters by 1.5x'],
+      },
+    ];
+    const open = (captainAbilityMode: boolean) => {
+      const component = new AbilityRequirementPickerComponent();
+
+      component.captainAbilityMode = captainAbilityMode;
+      component.catalogItems = structuredClone(catalogItems) as never;
+      component.isOpen = true;
+      component.ngOnChanges({
+        catalogItems: new SimpleChange([], component.catalogItems, true),
+        isOpen: new SimpleChange(false, true, true),
+      });
+
+      return new Map(
+        component.filteredCatalogTiles().map((tile) => [tile.item.key, tile] as const),
+      );
+    };
+
+    const specialTiles = open(false);
+    expect(specialTiles.get('remove_resilience')?.matchCount).toBe(137);
+    expect(specialTiles.get('remove_resilience')?.isScarce).toBe(false);
+    expect(specialTiles.get('remove_bind')?.matchCount).toBe(527);
+
+    const captainTiles = open(true);
+    // The regression: captain mode must report the captain-scoped count.
+    expect(captainTiles.get('remove_resilience')?.matchCount).toBe(1);
+    expect(captainTiles.get('remove_resilience')?.isScarce).toBe(true);
+    // 8 captain matches is above the scarcity threshold, so no warning.
+    expect(captainTiles.get('remove_bind')?.matchCount).toBe(8);
+    expect(captainTiles.get('remove_bind')?.isScarce).toBe(false);
+    // No captain-scoped index -> same fallback the filter uses.
+    expect(captainTiles.get('boost_atk')?.matchCount).toBe(1338);
+    expect(captainTiles.get('boost_atk')?.isScarce).toBe(false);
+  });
+
+  it('renders the match count on the catalog tile with scarce styling', () => {
+    const template = readFileSync(
+      resolve(__dirname, 'ability-requirement-picker.component.html'),
+      'utf8',
+    );
+
+    expect(template).toContain("t('catalog.matchCount', { count: tile.matchCount })");
+    expect(template).toContain(
+      '[class.ability-picker-tile__match-count--scarce]="tile.isScarce"',
+    );
+  });
 });

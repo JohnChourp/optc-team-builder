@@ -296,7 +296,7 @@
   },
   {
     "key": "remove_chain_coefficient_reduction",
-    "label": "Decrease Chain Multiplier Growth Rate",
+    "label": "Chain Coefficient Reduction (Decrease Chain Multiplier Growth Rate)",
     "groupLabel": "Reduce Status Effect Duration",
     "groupOrder": 6,
     "effectOrder": 8
@@ -513,7 +513,7 @@
   },
   {
     "key": "apply_resilience",
-    "label": "Resilience",
+    "label": "Protect from Defeat (Resilience)",
     "groupLabel": "Other",
     "groupOrder": 10,
     "effectOrder": 3

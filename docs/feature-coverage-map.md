@@ -56,3 +56,87 @@ live ownership path in the row instead of creating a broad follow-up task.
 When a mapped flow's source path or docs owner changes, update
 `docs/docs-drift-map.json` in the same PR so the drift guard keeps matching the
 coverage map.
+
+## Ability Catalog Audit Coverage
+
+The derived ability catalog (`public/assets/data/optc-auto-builder-abilities.json`,
+built by `scripts/auto-team-builder-ability-parser.mjs` from the definition files in
+`scripts/data/`) is audited **one effect at a time** rather than as a whole. Each of the
+five ability types — captain, special, crewmate, potential, support — has a coverage
+ledger in the brain repo under `optc-team-builder-brain/audits/ability-audits/`, and the
+shared procedure lives in `optc-team-builder-brain/scripts/optc-ability-audit/METHODOLOGY.md`.
+
+An audit is not complete until it has covered both halves:
+
+- **Detection** — reconcile the parser's matches for the effect against the raw ability
+  text of every character, using the exact wording OPTC-DB uses upstream (which is
+  frequently not the community or in-app name). The verdict is one of `verified-correct`,
+  `fixed`, `corrections-added`, `no-data` or `schema-limited`, and it is recorded with
+  before/after match counts and the sources behind it.
+- **Selection surface** — reconcile how the effect can be *picked* in the app: whether a
+  turn-count control should appear (only when the effect's real data carries a turn value),
+  and which of the four team-role scopes (captains / subs / crew / self) are genuinely
+  populated, since a scope with zero matching characters must not be offered.
+
+The conditional "boost against <enemy state>" family (`boost_against_delayed_enemies`,
+`boost_against_def_reduced_enemies`, `boost_against_poisoned_enemies`) recognises two clause
+shapes: the canonical participle form `boosts ATK against delayed enemies by Nx`, and the
+2024+ status-noun list form `boosts damage dealt to enemies inflicted with Increase Damage
+Taken, Delay, Poison, ..., DEF Reduction, or Paralysis by Nx`. The governing frame
+`boosts ... (against|damage dealt to) ... enemies (inflicted with|affected by)` is
+load-bearing: it keeps out the applier (`delays all enemies by N turns`, `apply_delay`), the
+enemy immunity (`Delay Debuff Protection`), the amplifier (`increases boost effects of Delay
+Status ATK Boost buffs`, `effect_boost`) and the one-shot trigger form (`If there are delayed
+enemies when the Special is activated, ...`), none of which is a per-hit boost against the
+state.
+
+Turn requirements distinguish a *complete removal* from a long duration. Wording like
+`removes enemies' Poison duration completely` carries the `minTurns: 99` sentinel, but 99 is
+not a safe discriminator, because upstream also writes literal `for 99+ turns` and `for 999
+turns` for genuinely long effects. The catalog therefore emits `completeRemovalCharacterIds`
+(and a captain-scoped twin) for the 20 keys that have them, and the turn filter unions those
+ids into every turn-filtered result instead of comparing them numerically — so a permanent
+cure satisfies any requested turn count, while a real 99-turn boost still drops out of a
+"100 turns" request.
+
+The ability requirement picker shows a match count per catalog tile, and it is
+SOURCE-AWARE: in captain mode it reports the captain-scoped count rather than the
+ability-wide one, because a captain requirement resolves against
+`captainAbilityMatchingCharacterIds`. The two can diverge sharply — "Enemy Resilience"
+matches 137 characters overall but only one as a captain — so the ability-wide number would
+promise matches the filter never returns. Counts at or below five are styled as scarce to
+warn that the requirement will likely over-constrain the search, without disabling it.
+
+Duration-reduction clauses may chain a second effect without repeating the verb, and upstream
+punctuates that continuation two ways — with a comma (`... duration by 5 turns, crew's ATK
+DOWN duration by 5 turns`) and with a bare conjunction (`... duration by 5 turns and Barrier
+duration by 1 turn`). The shared `TURN_PATTERNS` continuation accepts both, and each
+continuation carries its OWN turn count rather than inheriting the first clause's. The
+alternation is deliberately explicit rather than an optional comma: allowing any target to
+follow a bare `turns ` would re-open the clause-bridging that the surrounding guards exist to
+prevent.
+
+Picker labels are searched alongside the key, so a label that does not use the in-game wording
+makes an effect unfindable. `remove_chain_coefficient_reduction` is labelled
+`Chain Coefficient Reduction (Decrease Chain Multiplier Growth Rate)`: the primary is the
+name OPTC-DB uses identically for both the enemy application and the crew cure, and the
+parenthetical preserves the legacy app wording for discoverability. The legacy wording alone
+was actively misleading — it appears nowhere in the ability text, while its three-word core
+names the OPPOSITE mechanic, the crew boost `chain_multiplier_growth_rate`. The cure must
+also not be confused with `remove_chain_multiplier_limit` (the ceiling debuff's cure) or
+`chain_multiplier_lock` (the crew fixed-value buff).
+
+Two conventions come out of this and apply to any new or relabelled effect:
+
+- Where an effect is named differently depending on who applies it, or where the community
+  name differs from the ability-text wording, the label carries both as `Primary (Alias)` —
+  see `docs/data-schemas.md`. Current examples: `Boost Type Effects (Color Affinity)`,
+  `Tap-Timing Requirement (PERFECT)`, `Protect from Defeat (Resilience)`.
+- Every parser change is proved targeted by a semantic diff of the regenerated catalog
+  against `HEAD`, showing that only the intended key's match data moved.
+
+Validation: `npm run test:ci` (the ability parser spec carries a regression case for each
+audited wording), `npm run test:captain-contracts`, `npm run test:dataset-digest`, and
+`npm run perf:dataset -- --assert`. Ledger status comes from the ledger tool at
+`optc-team-builder-brain/scripts/optc-ability-audit/ledger.py`, invoked from the brain repo
+with the ability type and the `status` subcommand.

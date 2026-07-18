@@ -356,7 +356,29 @@ const SPECIAL_ABILITY_MATCHERS = [
     // "If there are delayed enemies ..." (Kaya #4180 etc.), which is not a
     // boost-against target. Two bounded [^.]{0,N} gaps between fixed anchors ->
     // ReDoS-safe.
-    [/\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\bdelayed enemies\b/i],
+    //
+    // The second pattern covers the 2024+ upstream vocabulary shift, where the same
+    // exploit clause names the enemy state as a STATUS NOUN in a multi-status list
+    // ("boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay,
+    // Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.2x" — #4123/
+    // #4124/#4125/#4126/#4127/#4128). It is byte-parallel to the sibling pattern on
+    // boost_against_def_reduced_enemies below, deliberately: #4125-#4128 ALREADY
+    // match that key through the identical enumeration via "DEF Reduction", so not
+    // deriving Delay from the same list was an internal inconsistency, not merely a
+    // coverage gap. 122 -> 128.
+    //
+    // The governing frame "boosts ... (against|damage dealt to) ... enemies
+    // (inflicted with|affected by)" is load-bearing. A bare "Delay" token would
+    // sweep in the APPLY side ("delays all enemies by N turns", apply_delay, 273),
+    // the enemy IMMUNITY ("Delay Debuff Protection", 45 carriers) and the AMPLIFIER
+    // ("increases boost effects of Delay Status ATK Boost buffs", effect_boost).
+    // Do NOT relax it. \bDelay\b cannot reach the participle "delayed", so the
+    // applier/consumer split stays structural: the applier is always the finite
+    // verb "delays", the consumer always the participle "delayed".
+    [
+      /\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\bdelayed enemies\b/i,
+      /\bboosts?\b[^.]{0,160}\b(?:against|damage dealt to)\b[^.]{0,200}\benemies (?:inflicted with|affected by)\b[^.]{0,120}\bDelay\b/i,
+    ],
   ],
   [
     'boost_against_def_reduced_enemies',
@@ -927,8 +949,35 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],
   [
+    // Crew-side survival ("Loss Prevention" / "Zombie"): for a stated window the
+    // crew cannot be dropped below 1 HP by a killing blow. OPTC-DB files it under
+    // `Survivability` as "Zombies (Protect from Defeat)" — a MIRROR of, not the
+    // same thing as, the enemy buff `remove_resilience` strips (upstream category
+    // `Reduce Enemy Effects`). A third system shares the word and is unreachable
+    // here: the Resilience socket, which lives outside all ability text.
+    //
+    // The two former patterns matched 0 because OPTC-DB never writes "applies
+    // Resilience" crew-side — every literal "Resilience" in ability text is the
+    // ENEMY buff. The crew effect is always written "protects from defeat" (72
+    // occurrences) or "prevents defeat" (2, Brook #3575/#3576, whose captainNotes
+    // name the mechanic: "Resilience activates when taking damage from an enemy
+    // that would kill you").
+    //
+    // Adjacency is exact in all 74 occurrences, so this needs no [^.]{0,N} gap —
+    // and must not grow one. Widening it to the usual decimal-tolerant hatch
+    // (?:[^.]|\.\d) on the OLD pattern 2 was measured to cross "1.2x" and bridge
+    // an enemy-Resilience strip into an unrelated crew heal, yielding two pure
+    // false positives (#4429/#4430 Kizaru). Gap widths {0,10}..{0,200} all return
+    // the identical 67 ids, so the gap buys nothing and only risks that class.
+    //
+    // Deliberately NOT in DURATION_TURN_KEYS: the population is mixed —
+    // "protects from defeat for N turns" (specialText, 37) carries a duration but
+    // "Protects from defeat as long as HP is above N%" (captainAbility, 30) is a
+    // PERMANENT passive the schema cannot express. Enabling turns erases every
+    // null-turn record from the buckets, dropping 28 of 67 overall and 30 of 32
+    // in captain mode, to separate just 2 characters. See the audit record.
     'apply_resilience',
-    [/\bapplies?\b[^.]{0,120}\bresilience\b/i, /\bresilience\b[^.]{0,120}\bcrew\b/i],
+    [/\b(?:protects?|prevents?)\s+(?:from\s+)?defeat\b/i],
   ],
   [
     'defeat_enemy',
@@ -1498,9 +1547,18 @@ const TARGET_ALIASES = [
   {
     key: 'remove_chain_coefficient_reduction',
     label: 'Remove Chain Coefficient Reduction',
-    matcher: (target) =>
-      target.includes('chain coefficient reduction') ||
-      target.includes('decrease chain multiplier growth rate'),
+    // OPTC-DB uses exactly ONE surface form for this debuff on both actor sides:
+    // "Chain Coefficient Reduction" (129 corpus occurrences, one casing, zero
+    // spelling variants, zero abbreviations). The former second branch
+    // ('decrease chain multiplier growth rate') was dead code — 0 occurrences in
+    // the corpus, in upstream details.js, and in matchers.js. Dropping it is
+    // provably lossless: 118 -> 118 with a byte-identical id set.
+    //
+    // Do NOT re-add a 'chain multiplier growth rate' branch. That phrase occurs
+    // 156 times, but 149 of them are "boosts Chain Multiplier Growth Rate by Nx"
+    // — the crew BOOST, i.e. the OPPOSITE mechanic, owned by
+    // chain_multiplier_growth_rate. This key cures the enemy-inflicted debuff.
+    matcher: (target) => target.includes('chain coefficient reduction'),
   },
   {
     key: 'remove_chain_multiplier_limit',
@@ -1591,15 +1649,27 @@ const TURN_PATTERNS = [
     // verb before the target, so the verbless "crew's ATK DOWN duration by 5
     // turns" continuation went untagged.
     //
-    // The lookbehind anchors on a completed "turns," (optionally followed by
-    // "and"), so it cannot re-read the first clause, and the body excludes
-    // verbs/duration/turns/comma so it captures exactly one self-contained
-    // continuation segment. The reduces{0,2} guard also keeps it off the typo
-    // "reducess" continuation (Makino #3844, already handled by the verb pattern).
-    // Corpus-wide this is the ONLY occurrence of the shape: +2 (Bobbin), 0
-    // collateral across every key.
+    // The lookbehind anchors on a completed "turns" clause, so it cannot re-read
+    // the first clause, and the body excludes verbs/duration/turns/comma so it
+    // captures exactly one self-contained continuation segment. The reduces{0,2}
+    // guard also keeps it off the typo "reducess" continuation (Makino #3844,
+    // already handled by the verb pattern).
+    //
+    // TWO punctuations of the same shape occur upstream and both must be read:
+    // the comma form "... by 5 turns, crew's ATK DOWN duration by 5 turns"
+    // (Bobbin #2118/#2119) and the COMMA-LESS conjunction "... duration by 5
+    // turns and Barrier duration by 1 turn" (Blackbeard #2402/#2403 -> Barrier,
+    // Caribou #1841/#1842 -> ATK Up). The lookbehind originally required the
+    // literal comma, so the conjunction form went untagged. Corpus-wide these are
+    // the ONLY 4 occurrences of the comma-less shape, so the blast radius is
+    // fully enumerated: +2 remove_enemy_barrier, +2 remove_enemy_atk_up, 0
+    // collateral on every other key.
+    //
+    // Keep the alternation EXPLICIT. The looser `turns,?\s*(?:and\s)?` would also
+    // admit any target directly following a bare "turns ", which re-opens the
+    // bridge this pattern's guards exist to prevent.
     pattern:
-      /(?<=turns,\s{0,3}(?:and\s)?)((?:(?!\breduces{0,2}\b|\bremoves?\b|\bcompletely\b|\bduration\b|\bturns?\b|,)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
+      /(?<=turns(?:,\s{0,3}(?:and\s)?|\s{1,3}and\s))((?:(?!\breduces{0,2}\b|\bremoves?\b|\bcompletely\b|\bduration\b|\bturns?\b|,)[^.;])+?)\s+duration\s+by\s+(\d+)\s+turns?/gi,
     resolveTurns: (match) => Number(match[2]),
   },
   {
@@ -3125,9 +3195,14 @@ export async function enrichCharactersWithBuilderAbilities(
           const scopeEntry = current.effectTargetScopeMatches.get(effectTargetScope) ?? {
             matchingCharacterIds: new Set(),
             turnMatchingCharacterIds: new Map(),
+            completeRemovalCharacterIds: new Set(),
           };
 
           scopeEntry.matchingCharacterIds.add(character.id);
+
+          if (ability.isCompleteRemoval) {
+            scopeEntry.completeRemovalCharacterIds.add(character.id);
+          }
 
           if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
             const scopeMinTurns = Math.floor(ability.minTurns);
@@ -3144,6 +3219,14 @@ export async function enrichCharactersWithBuilderAbilities(
         if (!current.matchingCharacterIds.has(character.id)) {
           current.matchingCharacterIds.add(character.id);
           current.matchCount = current.matchingCharacterIds.size;
+        }
+
+        if (ability.isCompleteRemoval) {
+          current.completeRemovalCharacterIds.add(character.id);
+
+          if (ability.source === 'captainAbility') {
+            current.captainAbilityCompleteRemovalCharacterIds.add(character.id);
+          }
         }
 
         if (Number.isFinite(ability.minTurns) && ability.minTurns > 0) {
@@ -3276,6 +3359,13 @@ export async function enrichCharactersWithBuilderAbilities(
                       minTurns,
                       characterIds: [...characterIds].sort((left, right) => left - right),
                     })),
+                  ...(scopeEntry.completeRemovalCharacterIds.size
+                    ? {
+                        completeRemovalCharacterIds: [
+                          ...scopeEntry.completeRemovalCharacterIds,
+                        ].sort((left, right) => left - right),
+                      }
+                    : {}),
                 })),
             }
           : {}),
@@ -3287,11 +3377,27 @@ export async function enrichCharactersWithBuilderAbilities(
             minTurns,
             characterIds: [...characterIds].sort((left, right) => left - right),
           })),
+        // Emitted only when the ability has complete removals, so every other key
+        // keeps its exact current serialization.
+        ...(entry.completeRemovalCharacterIds.size
+          ? {
+              completeRemovalCharacterIds: [...entry.completeRemovalCharacterIds].sort(
+                (left, right) => left - right,
+              ),
+            }
+          : {}),
         ...(entry.captainAbilityMatchingCharacterIds.size
           ? {
               captainAbilityMatchingCharacterIds: [...entry.captainAbilityMatchingCharacterIds].sort(
                 (left, right) => left - right,
               ),
+            }
+          : {}),
+        ...(entry.captainAbilityCompleteRemovalCharacterIds.size
+          ? {
+              captainAbilityCompleteRemovalCharacterIds: [
+                ...entry.captainAbilityCompleteRemovalCharacterIds,
+              ].sort((left, right) => left - right),
             }
           : {}),
         ...(entry.captainAbilityTurnMatchingCharacterIds.size
@@ -3467,8 +3573,17 @@ function createCatalogAccumulator(key, label) {
     matchCount: 0,
     matchingCharacterIds: new Set(),
     turnMatchingCharacterIds: new Map(),
+    // Characters whose record clears the effect COMPLETELY rather than for a
+    // number of turns. They live in the minTurns:99 bucket too, but 99 is not a
+    // usable discriminator: upstream also writes literal "for 99+ turns" and
+    // "for 999 turns" as its own way of saying "effectively permanent", so the
+    // integer collides with genuine counts (5 characters carry both). A complete
+    // removal satisfies ANY turn requirement, so it is indexed separately and
+    // unioned in by the filter. See special-ability-filter.utils.ts.
+    completeRemovalCharacterIds: new Set(),
     captainAbilityMatchingCharacterIds: new Set(),
     captainAbilityTurnMatchingCharacterIds: new Map(),
+    captainAbilityCompleteRemovalCharacterIds: new Set(),
     captainAbilityEffectMatches: new Map(),
     sampleCharacterIds: [],
     sampleTexts: [],

@@ -341,11 +341,12 @@ function resolveRequirementMatchingCharacterIds(
     }
 
     return [
-      ...new Set(
-        scopeEntry.turnMatchingCharacterIds
+      ...new Set([
+        ...scopeEntry.turnMatchingCharacterIds
           .filter((bucket) => bucket.minTurns >= minTurns)
           .flatMap((bucket) => bucket.characterIds),
-      ),
+        ...(scopeEntry.completeRemovalCharacterIds ?? []),
+      ]),
     ];
   }
 
@@ -361,17 +362,29 @@ function resolveRequirementMatchingCharacterIds(
       ? (catalogItem.captainAbilityTurnMatchingCharacterIds ?? [])
       : (catalogItem.turnMatchingCharacterIds ?? [])
     : (catalogItem.turnMatchingCharacterIds ?? []);
+  // A COMPLETE removal ("removes Poison duration completely") clears the effect
+  // outright, so it satisfies any turn requirement and is unioned in rather than
+  // compared numerically. It carries the minTurns:99 sentinel in the buckets, but
+  // 99 is not a safe discriminator — upstream also writes literal "for 99+ turns"
+  // and "for 999 turns" for genuinely long effects, so a request above 99 would
+  // otherwise drop permanent cures while keeping a merely long one.
+  const completeRemovalCharacterIds = useCaptainAbilityIds
+    ? hasCaptainAbilityIds
+      ? (catalogItem.captainAbilityCompleteRemovalCharacterIds ?? [])
+      : (catalogItem.completeRemovalCharacterIds ?? [])
+    : (catalogItem.completeRemovalCharacterIds ?? []);
 
   if (minTurns === null) {
     return matchingCharacterIds;
   }
 
   return [
-    ...new Set(
-      turnMatchingCharacterIds
+    ...new Set([
+      ...turnMatchingCharacterIds
         .filter((bucket) => bucket.minTurns >= minTurns)
         .flatMap((bucket) => bucket.characterIds),
-    ),
+      ...completeRemovalCharacterIds,
+    ]),
   ];
 }
 

@@ -59,7 +59,24 @@ interface AbilityRequirementCatalogTileView {
   selectedCount: number;
   supportsSelectableDebuff: boolean;
   painSelectableBadges: AbilityRequirementMiniBadge[];
+  /**
+   * How many characters can actually satisfy this requirement in the CURRENT
+   * mode. In captain mode that is the captain-scoped count, which can be far
+   * smaller than the ability-wide `matchCount` — "Enemy Resilience" matches 137
+   * characters overall but only 1 as a captain.
+   */
+  matchCount: number;
+  /** Few enough matches that picking this is likely to over-constrain the search. */
+  isScarce: boolean;
 }
+
+/**
+ * Below this many matching characters a requirement is flagged as scarce. The
+ * captain-scoped counts have a median of 17.5, and 18 of the 60 captain-offerable
+ * keys sit at 5 or fewer — so 5 marks the genuinely near-unsatisfiable ones
+ * without flagging a third of the catalog.
+ */
+const SCARCE_MATCH_COUNT_THRESHOLD = 5;
 
 interface AbilityRequirementSelectedRowView {
   draft: AbilityRequirementDraft;
@@ -176,16 +193,22 @@ export class AbilityRequirementPickerComponent implements OnChanges {
 
         return [item.key, item.label].some((value) => value.toLowerCase().includes(searchTerm));
       })
-      .map((item) => ({
-        item,
-        visual: resolveAbilityRequirementVisual(item.key),
-        isSelected: selectedCounts.has(item.key),
-        selectedCount: selectedCounts.get(item.key) ?? 0,
-        supportsSelectableDebuff: (item.availableCoverageModes ?? ['explicit']).includes(
-          'selectedDebuff',
-        ),
-        painSelectableBadges: resolveAbilityRequirementPainSelectableDebuffBadges(item.key),
-      }));
+      .map((item) => {
+        const matchCount = this.resolveTileMatchCount(item);
+
+        return {
+          item,
+          visual: resolveAbilityRequirementVisual(item.key),
+          isSelected: selectedCounts.has(item.key),
+          selectedCount: selectedCounts.get(item.key) ?? 0,
+          supportsSelectableDebuff: (item.availableCoverageModes ?? ['explicit']).includes(
+            'selectedDebuff',
+          ),
+          painSelectableBadges: resolveAbilityRequirementPainSelectableDebuffBadges(item.key),
+          matchCount,
+          isScarce: matchCount <= SCARCE_MATCH_COUNT_THRESHOLD,
+        };
+      });
   });
   public readonly selectedRows = computed<AbilityRequirementSelectedRowView[]>(() =>
     this.workingDrafts().map((draft) => {
@@ -260,6 +283,21 @@ export class AbilityRequirementPickerComponent implements OnChanges {
       this.workingLeaderBoostFilters.set(this.normalizeLeaderBoostFilters(this.leaderBoostFilters));
       this.workingLeaderBoostRanges.set(this.cloneLeaderBoostRanges(this.leaderBoostRanges));
     }
+  }
+
+  /**
+   * The count that is honest for the mode the picker is in. A captain requirement
+   * is resolved against `captainAbilityMatchingCharacterIds`, so showing the
+   * ability-wide `matchCount` there would promise matches the filter will not
+   * return. Falls back to the ability-wide count when the ability carries no
+   * captain-scoped index, which is what the filter itself falls back to.
+   */
+  private resolveTileMatchCount(item: AutoBuildAbilityCatalogItem): number {
+    if (this.captainAbilityMode && item.captainAbilityMatchingCharacterIds !== undefined) {
+      return item.captainAbilityMatchingCharacterIds.length;
+    }
+
+    return item.matchCount;
   }
 
   public onSearchChange(event: CustomEvent<{ value?: string | null }>): void {

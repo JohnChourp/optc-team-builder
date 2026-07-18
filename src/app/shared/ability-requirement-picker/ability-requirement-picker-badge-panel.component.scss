@@ -49,3 +49,11 @@
   font-size: 0.7rem;
   line-height: 1;
 }
+
+// Very few characters can satisfy this requirement in the current mode, so
+// picking it will probably over-constrain the search. Warn rather than disable:
+// a scarce requirement is still a legitimate choice.
+.ability-picker-tile__meta small.ability-picker-tile__match-count--scarce {
+  background: rgba(255, 176, 32, 0.18);
+  color: rgb(255, 205, 120);
+}

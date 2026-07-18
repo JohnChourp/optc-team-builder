@@ -759,6 +759,95 @@ describe('special ability filter utils', () => {
     ).toEqual([]);
   });
 
+  it('lets a complete removal satisfy any turn requirement, including one above the 99 sentinel', () => {
+    // "Removes Poison duration completely" is emitted with the minTurns:99
+    // sentinel. 99 cannot be compared numerically, because upstream ALSO writes
+    // literal "for 99+ turns" / "for 999 turns" for genuinely long effects — so a
+    // request above 99 used to drop permanent cures while keeping a merely long
+    // one. The complete-removal ids are unioned in instead.
+    const catalog: AutoBuildAbilityCatalogItem[] = [
+      {
+        key: 'remove_poison',
+        label: 'Remove Poison',
+        category: 'special',
+        groupLabel: 'Reduce Status Effect Duration',
+        groupOrder: 1,
+        effectOrder: 1,
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText'],
+        matchCount: 3,
+        matchingCharacterIds: [10, 20, 30],
+        // 30 clears it completely; 10 and 20 only reduce it.
+        turnMatchingCharacterIds: [
+          { minTurns: 3, characterIds: [10] },
+          { minTurns: 5, characterIds: [20] },
+          { minTurns: 99, characterIds: [30] },
+        ],
+        completeRemovalCharacterIds: [30],
+        sampleCharacterIds: [],
+        sampleTexts: [],
+      },
+    ];
+    // Order is not meaningful — the result is a set — so compare sorted.
+    const idsFor = (minTurns: number): number[] =>
+      [
+        ...(resolveSpecialAbilityMatchingCharacterIds(
+          [{ abilityKey: 'remove_poison', minTurns, slotTokens: [], requiredCharacterCount: 1 }],
+          catalog,
+        ) ?? []),
+      ].sort((left, right) => left - right);
+
+    // Ordinary comparisons are unchanged.
+    expect(idsFor(3)).toEqual([10, 20, 30]);
+    expect(idsFor(5)).toEqual([20, 30]);
+    // The regression: at and above the sentinel the permanent cure must survive.
+    expect(idsFor(99)).toEqual([30]);
+    expect(idsFor(100)).toEqual([30]);
+    expect(idsFor(999)).toEqual([30]);
+  });
+
+  it('still compares a genuine long turn count numerically rather than treating 99 as permanent', () => {
+    // Magellan #2732 really does read "for 99+ turns" and Blazing General Zombie
+    // #827 "for 999 turns" — these are turn counts, not complete removals, so
+    // they must NOT be rescued by a request beyond their value.
+    const catalog: AutoBuildAbilityCatalogItem[] = [
+      {
+        key: 'boost_atk',
+        label: 'Boost ATK',
+        category: 'special',
+        groupLabel: 'Boost Damage',
+        groupOrder: 1,
+        effectOrder: 1,
+        supportsTurns: true,
+        supportsSlotTokens: false,
+        availableSlotTokens: [],
+        availableSources: ['specialText'],
+        matchCount: 2,
+        matchingCharacterIds: [2732, 827],
+        turnMatchingCharacterIds: [
+          { minTurns: 99, characterIds: [2732] },
+          { minTurns: 999, characterIds: [827] },
+        ],
+        sampleCharacterIds: [],
+        sampleTexts: [],
+      },
+    ];
+    const idsFor = (minTurns: number): number[] =>
+      [
+        ...(resolveSpecialAbilityMatchingCharacterIds(
+          [{ abilityKey: 'boost_atk', minTurns, slotTokens: [], requiredCharacterCount: 1 }],
+          catalog,
+        ) ?? []),
+      ].sort((left, right) => left - right);
+
+    expect(idsFor(99)).toEqual([827, 2732]);
+    // No completeRemovalCharacterIds on this key, so 100 correctly drops the 99.
+    expect(idsFor(100)).toEqual([827]);
+    expect(idsFor(1000)).toEqual([]);
+  });
+
   it('intersects special, crewmate, potential, and support result sets together', () => {
     expect(
       intersectAbilityMatchingCharacterIds([

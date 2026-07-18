@@ -574,6 +574,94 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('separates the Chain Coefficient Reduction cure from the chain boosts and its immunity', () => {
+    // CCR is an enemy-inflicted CREW debuff that shrinks the per-tap growth of the
+    // chain multiplier. Three neighbouring chain mechanics must stay distinct.
+    for (const [text, source] of [
+      ['Reduces Chain Coefficient Reduction duration by 3 turns', 'specialText'],
+      [
+        'Reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 3 turns',
+        'specialText',
+      ],
+      // Possessive/crew-scoped form, and a decimal-adjacent clause — the decimal
+      // trap already cost this family once (chain_multiplier_additive_boost 2 -> 312).
+      [
+        "Adds 0.3x to Chain multiplier for 2 turns, reduces crew's Chain Coefficient Reduction duration by 4 turns",
+        'specialText',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'remove_chain_coefficient_reduction',
+      );
+    }
+    // The multi-target list must yield BOTH cures, not just the first.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Chain Multiplier Limit and Chain Coefficient Reduction duration by 3 turns',
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_chain_multiplier_limit');
+    // Immunity PREVENTS the debuff, it does not cure it (Koala #3339, Chopper #3661).
+    // The chain BOOSTS are the opposite mechanic and must never reach this key.
+    for (const [notACure, source] of [
+      ['Applies ATK DOWN and Chain Coefficient Reduction Immunity for 3 turns', 'specialText'],
+      ['Boosts Chain Multiplier Growth Rate by 1.5x for 3 turns', 'specialText'],
+      ['Locks the chain multiplier at 3x for 1 turn', 'specialText'],
+      ['Reduces Chain Multiplier Limit duration by 3 turns', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notACure, source))).not.toContain(
+        'remove_chain_coefficient_reduction',
+      );
+    }
+  });
+
+  it('reads the comma-less "turns and <target>" continuation as well as the comma form', () => {
+    // Upstream punctuates the SAME verbless continuation two ways. The lookbehind
+    // originally required the literal comma, so the conjunction form was missed.
+    // These are the only 4 corpus occurrences of the comma-less shape.
+    const blackbeard = analyzeBuilderAbilityText(
+      "Deals 15% of enemies' current HP in damage to all enemies, reduces enemies' Threshold Damage Reduction and Increased Defense duration by 5 turns and Barrier duration by 1 turn.",
+      'specialText',
+    );
+    expect(blackbeard).toEqual(
+      expect.arrayContaining([
+        // The continuation itself — Barrier carries its OWN 1 turn, not the 5.
+        expect.objectContaining({ key: 'remove_enemy_barrier', minTurns: 1 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 5 }),
+        expect.objectContaining({ key: 'remove_enemy_increased_defense', minTurns: 5 }),
+      ]),
+    );
+    // Caribou #1841/#1842 — the same shape landing on a different sibling key.
+    expect(
+      analyzeBuilderAbilityText(
+        "Boosts ATK of Driven characters by 1.5x for 1 turn, reduces enemies' Threshold Damage Reduction by 2 turns and ATK Up duration by 3 turns",
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'remove_enemy_atk_up', minTurns: 3 })]),
+    );
+    // The alternation stays explicit: a bare "turns " followed by a target must
+    // NOT continue, or the bridge the guards exist to prevent re-opens. Here the
+    // second clause repeats its own verb, so it resolves through the verb pattern
+    // at its own turn count rather than being re-read as a continuation.
+    const dogstorm = analyzeBuilderAbilityText(
+      "Reduces Special Bind duration by 4 turns and reduces enemies' Threshold Damage Reduction duration by 3 turns.",
+      'specialText',
+    );
+    expect(dogstorm).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'remove_special_bind', minTurns: 4 }),
+        expect.objectContaining({ key: 'remove_threshold_damage_reduction', minTurns: 3 }),
+      ]),
+    );
+    // ... and Special Bind must NOT have been republished at the 3-turn count.
+    expect(
+      dogstorm.filter((a) => a.key === 'remove_special_bind' && a.minTurns === 3),
+    ).toHaveLength(0);
+  });
+
   it('does not let a cure clause bridge into a neighbouring clause in either direction', () => {
     // Both TURN_PATTERNS lazily scan to their terminator, so without a guard the
     // target starts at the FIRST verb in the sentence and swallows whole clauses.
@@ -1382,6 +1470,51 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('boost_against_delayed_enemies');
   });
 
+  it('detects boost_against_delayed_enemies in the status-noun list form without admitting the applier, immunity or amplifier', () => {
+    // The 2024+ upstream vocabulary names the enemy state as a STATUS NOUN inside a
+    // multi-status list rather than as the participle "delayed enemies". #4125-#4128
+    // already matched boost_against_def_reduced_enemies through this very clause via
+    // "DEF Reduction", so missing "Delay" in the same list was an internal
+    // inconsistency. Casing is unstable upstream (#4116 lowercases it), hence /i.
+    for (const [text, source] of [
+      [
+        'boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.2x',
+        'captainAbility',
+      ],
+      [
+        'boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, reduced defense, Paralysis, Burn or Negative by 1.15x',
+        'captainAbility',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'boost_against_delayed_enemies',
+      );
+    }
+    // The frame "boosts ... (against|damage dealt to) ... enemies (inflicted with|
+    // affected by)" is load-bearing. A bare "Delay" token would admit all three of
+    // these; each must stay out, and the applier must still resolve to apply_delay.
+    const applier = extractAbilityKeys(
+      analyzeBuilderAbilityText('Delays all enemies by 2 turns', 'specialText'),
+    );
+    expect(applier).not.toContain('boost_against_delayed_enemies');
+    expect(applier).toContain('apply_delay');
+    for (const [notABoost, source] of [
+      // Enemy immunity to the debuff, plus the applier.
+      ['ignores Delay Debuff Protection and delays all enemies by 1 turn', 'specialText'],
+      // Amplifier of the buff's effect, not a boost against delayed enemies.
+      ['Increases boost effects of Delay Status ATK Boost buffs by 1.1x-1.5x', 'specialText'],
+      // One-shot trigger checked at activation, not a per-hit multiplier.
+      [
+        'If there are delayed enemies when the Special is activated, increases duration of any ATK Up and Orb Amplification buffs by 1 turn',
+        'specialText',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notABoost, source))).not.toContain(
+        'boost_against_delayed_enemies',
+      );
+    }
+  });
+
   it('detects boost_against_def_reduced_enemies for "boosts ATK against enemies with reduced defense"', () => {
     // Canonical upstream wording is "enemies with reduced defense" (NOT
     // "DEF reduced enemies", which never appears); no "damage" token required.
@@ -1604,6 +1737,44 @@ describe('auto team builder ability parser', () => {
         ),
       ),
     ).not.toContain('tap_timing_requirement');
+  });
+
+  it('detects apply_resilience across the protect/prevent-defeat wordings but not the kill triggers', () => {
+    // Crew-side survival ("Loss Prevention" / upstream `Zombies (Protect from
+    // Defeat)`). The key was DEAD at 0 matches because its old matchers demanded
+    // the literal "Resilience", which OPTC-DB only ever writes for the ENEMY buff.
+    // Both real sub-forms must match: the turn-limited special and the permanent
+    // HP-conditional captain passive.
+    for (const [text, source] of [
+      ['Protects from defeat for 1 turn', 'specialText'],
+      ['protects from defeat for 2 turns if HP is above 70%', 'specialText'],
+      ['protects from defeat for 1 turn as long as HP is above 50%', 'specialText'],
+      ['Protects from defeat as long as HP is above 50%', 'captainAbility'],
+      ['Protects from defeat as long as HP is above ?% at the start of the turn', 'captainAbility'],
+      // The only "prevents" spelling in the corpus — Brook #3575/#3576, whose
+      // captainNotes name the mechanic ("Resilience activates when taking damage
+      // from an enemy that would kill you") and are the naming evidence.
+      ['prevents defeat for 1 turn once per adventure', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_resilience',
+      );
+    }
+    // The confusion families all mention "defeat" and must stay out: the execute
+    // mechanic (defeat_enemy), kill triggers, and revive — upstream states in
+    // prose that "The revive is not Resilience since you can still die."
+    for (const [notCrewSurvival, source] of [
+      ['Instantly defeats all enemies with HP below 20%', 'specialText'],
+      ['boosts ATK of all characters by 2x if you defeat an enemy', 'captainAbility'],
+      ['reduces Special Cooldown by 1 turn if any enemies were defeated in the previous turn', 'captainAbility'],
+      ['revives the team after a GAME OVER once per adventure', 'specialText'],
+      // The enemy-side strip: same word, opposite actor, owned by remove_resilience.
+      ["Reduces enemies' Resilience duration by 5 turns", 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notCrewSurvival, source))).not.toContain(
+        'apply_resilience',
+      );
+    }
   });
 
   it('keeps a cumulative second conditional captain clause with a different condition', () => {
@@ -2590,8 +2761,13 @@ describe('auto team builder ability parser', () => {
       5,
     ],
     [
-      'decrease chain multiplier growth rate',
-      'Reduces decrease chain multiplier growth rate duration by 6 turns.',
+      // Was "Reduces decrease chain multiplier growth rate duration by 6 turns."
+      // — a fabricated wording that occurs 0 times in the corpus and 0 times
+      // upstream. It only ever passed because the alias carried a matching dead
+      // branch, so the pair tested itself rather than the data. OPTC-DB writes
+      // this debuff exactly one way, on both actor sides.
+      'chain coefficient reduction',
+      'Reduces Chain Coefficient Reduction duration by 6 turns.',
       'remove_chain_coefficient_reduction',
       6,
     ],
@@ -3083,6 +3259,22 @@ describe('auto team builder ability parser', () => {
     // Players search this mechanic by "PERFECT"; the primary label alone gave 0 hits.
     expect(specialCatalog.find((item) => item.key === 'tap_timing_requirement')?.label).toBe(
       'Tap-Timing Requirement (PERFECT)',
+    );
+    // The picker searches [key, label], and the legacy label "Decrease Chain
+    // Multiplier Growth Rate" occurs 0 times in the corpus while its 3-word core
+    // names the OPPOSITE mechanic (the crew boost `chain_multiplier_growth_rate`,
+    // 149 "boosts Chain Multiplier Growth Rate by Nx" clauses). Leading with the
+    // real in-game name makes a search for "chain coefficient" find the cure.
+    expect(
+      specialCatalog.find((item) => item.key === 'remove_chain_coefficient_reduction')?.label,
+    ).toBe('Chain Coefficient Reduction (Decrease Chain Multiplier Growth Rate)');
+    // Crew-side survival, revived from a dead key: the bare label "Resilience"
+    // names the ENEMY buff everywhere else in the app (`remove_resilience`, and
+    // the live enemy-mechanic picker), and OPTC-DB never writes "Resilience"
+    // crew-side — it writes "protects/prevents defeat". So the label leads with
+    // the literal ability wording and keeps the community name as the alias.
+    expect(specialCatalog.find((item) => item.key === 'apply_resilience')?.label).toBe(
+      'Protect from Defeat (Resilience)',
     );
 
     expect(groupCounts).toEqual({
