@@ -2092,6 +2092,14 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
 // against a buff duration.
 const DURATION_TURN_KEYS = new Set([
   'boost_atk',
+  // boost_base_atk is the FLAT twin of boost_atk and shares its grammar exactly
+  // ("boosts base ATK of <scope> by N for M turns"), so it belongs here for the same
+  // reason: 100% of its specialText grants carry an explicit duration (1t x106,
+  // 2t x45, 3t x26, 5t x1), and the 13 without one are permanent captain passives.
+  // It was the odd one out — its multiplier twin boost_atk and its support-source
+  // counterpart support_base_atk_boost_damage both expose a turn control while it
+  // did not, so the picker omitted a turn filter the data genuinely supports.
+  'boost_base_atk',
   'boost_slot_effects',
   'reduce_damage',
   'reduce_damage_over_threshold',

@@ -2775,6 +2775,37 @@ describe('auto team builder ability parser', () => {
     ).toContain('remove_increase_damage_taken');
   });
 
+  it('boost_base_atk carries its clause duration like its multiplier twin boost_atk', () => {
+    // 100% of the flat grants carry "for N turn(s)"; the key belongs in
+    // DURATION_TURN_KEYS so the picker can filter on it (boost_atk already does).
+    expect(
+      analyzeBuilderAbilityText(
+        'Boosts base ATK of all characters by 1,000 for 3 turns.',
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'boost_base_atk', minTurns: 3 })]),
+    );
+    // Clause-scoped, not whole-text max: a longer neighbouring buff must not leak in.
+    expect(
+      analyzeBuilderAbilityText(
+        'Boosts base ATK of this character by 1,250 for 2 turns and boosts Orb Effects of all characters by 2.5x for 5 turns.',
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'boost_base_atk', minTurns: 2 })]),
+    );
+    // Permanent captain passives carry no duration.
+    expect(
+      analyzeBuilderAbilityText(
+        'Boosts base ATK of [Giant] characters by 750.',
+        'captainAbility',
+      ),
+    ).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'boost_base_atk', minTurns: null })]),
+    );
+  });
+
   it('delayed_effect_launch catches "in the next turn" and stays off non-launch turn references', () => {
     // Both deferral wordings launch on a later turn. "in the next turn" is the rare
     // twin of "in the following turn" (Doc Q #4105, Blackbeard #4146) and was missed.
