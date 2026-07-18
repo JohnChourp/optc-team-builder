@@ -56,3 +56,38 @@ live ownership path in the row instead of creating a broad follow-up task.
 When a mapped flow's source path or docs owner changes, update
 `docs/docs-drift-map.json` in the same PR so the drift guard keeps matching the
 coverage map.
+
+## Ability Catalog Audit Coverage
+
+The derived ability catalog (`public/assets/data/optc-auto-builder-abilities.json`,
+built by `scripts/auto-team-builder-ability-parser.mjs` from the definition files in
+`scripts/data/`) is audited **one effect at a time** rather than as a whole. Each of the
+five ability types — captain, special, crewmate, potential, support — has a coverage
+ledger in the brain repo under `optc-team-builder-brain/audits/ability-audits/`, and the
+shared procedure lives in `optc-team-builder-brain/scripts/optc-ability-audit/METHODOLOGY.md`.
+
+An audit is not complete until it has covered both halves:
+
+- **Detection** — reconcile the parser's matches for the effect against the raw ability
+  text of every character, using the exact wording OPTC-DB uses upstream (which is
+  frequently not the community or in-app name). The verdict is one of `verified-correct`,
+  `fixed`, `corrections-added`, `no-data` or `schema-limited`, and it is recorded with
+  before/after match counts and the sources behind it.
+- **Selection surface** — reconcile how the effect can be *picked* in the app: whether a
+  turn-count control should appear (only when the effect's real data carries a turn value),
+  and which of the four team-role scopes (captains / subs / crew / self) are genuinely
+  populated, since a scope with zero matching characters must not be offered.
+
+Two conventions come out of this and apply to any new or relabelled effect:
+
+- Where an effect is named differently depending on who applies it, or where the community
+  name differs from the ability-text wording, the label carries both as `Primary (Alias)` —
+  see `docs/data-schemas.md`. Current examples: `Boost Type Effects (Color Affinity)`,
+  `Tap-Timing Requirement (PERFECT)`, `Protect from Defeat (Resilience)`.
+- Every parser change is proved targeted by a semantic diff of the regenerated catalog
+  against `HEAD`, showing that only the intended key's match data moved.
+
+Validation: `npm run test:ci` (the ability parser spec carries a regression case for each
+audited wording), `npm run test:captain-contracts`, `npm run test:dataset-digest`, and
+`npm run perf:dataset -- --assert`. Ledger status:
+`python3 scripts/optc-ability-audit/ledger.py <type> status` in the brain repo.
