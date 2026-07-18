@@ -2775,6 +2775,85 @@ describe('auto team builder ability parser', () => {
     ).toContain('remove_increase_damage_taken');
   });
 
+  it('boost_against_def_reduced_enemies covers the newer DEF Down / DEF Reduction status wording', () => {
+    // Canonical wording, plus the 2024+ status-noun forms in a multi-status list.
+    for (const text of [
+      'Boosts ATK against enemies with reduced defense by 1.3x for 3 turns.',
+      'Boosts ATK against enemies inflicted with Defense Down by 2.25x for 2 turns.',
+      'Boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.2x.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'boost_against_def_reduced_enemies',
+      );
+    }
+    // APPLYING the debuff, and the enemy's IMMUNITY to it, are different mechanics and
+    // must not read as a boost-against grant.
+    for (const text of [
+      'Reduces the defense of all enemies by 100% for 1 turn.',
+      "Removes enemies' Defense Reduction Debuff Protection duration completely.",
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'boost_against_def_reduced_enemies',
+      );
+    }
+  });
+
+  it('boost_base_atk carries its clause duration like its multiplier twin boost_atk', () => {
+    // 100% of the flat grants carry "for N turn(s)"; the key belongs in
+    // DURATION_TURN_KEYS so the picker can filter on it (boost_atk already does).
+    expect(
+      analyzeBuilderAbilityText(
+        'Boosts base ATK of all characters by 1,000 for 3 turns.',
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'boost_base_atk', minTurns: 3 })]),
+    );
+    // Clause-scoped, not whole-text max: a longer neighbouring buff must not leak in.
+    expect(
+      analyzeBuilderAbilityText(
+        'Boosts base ATK of this character by 1,250 for 2 turns and boosts Orb Effects of all characters by 2.5x for 5 turns.',
+        'specialText',
+      ),
+    ).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'boost_base_atk', minTurns: 2 })]),
+    );
+    // Permanent captain passives carry no duration.
+    expect(
+      analyzeBuilderAbilityText(
+        'Boosts base ATK of [Giant] characters by 750.',
+        'captainAbility',
+      ),
+    ).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'boost_base_atk', minTurns: null })]),
+    );
+  });
+
+  it('delayed_effect_launch catches "in the next turn" and stays off non-launch turn references', () => {
+    // Both deferral wordings launch on a later turn. "in the next turn" is the rare
+    // twin of "in the following turn" (Doc Q #4105, Blackbeard #4146) and was missed.
+    for (const text of [
+      'Boosts ATK of Slasher characters by 1.75x for 1 turn in the following turn.',
+      'Inflicts all enemies with Increase Damage Taken by 1.75x for 1 turn in the next turn.',
+      'After 2 turns, changes all orbs of Cerebral characters into Matching orbs.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'delayed_effect_launch',
+      );
+    }
+    // Naming a later turn is not scheduling anything to launch on it: the tap-timing
+    // CONDITION form, the Chain carry-over, and the period-terminated ramp cap.
+    for (const text of [
+      'If during the following turn you score 4 PERFECT hits, adds 1.2x to Chain multiplier for 1 turn.',
+      'Carries over 0.5x of Chain Multiplier on this turn to the next turn.',
+      'Increases own ATK multiplier by 0.0875x at the end of each turn until it reaches a maximum 2.75x after 20 turns.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'delayed_effect_launch',
+      );
+    }
+  });
+
   it('apply_increase_damage_taken requires an inflict/apply grant, not the "Increase" debuff name', () => {
     // Genuine enemy applications tag.
     for (const text of [

@@ -367,7 +367,25 @@ const SPECIAL_ABILITY_MATCHERS = [
     // "damage" token, so it matched 0. Re-anchored on "against ... enemies with
     // reduced defense" (all 140 such tokens are boost-against targets, 0 non-boost
     // uses). Two bounded [^.]{0,N} gaps between fixed anchors -> ReDoS-safe.
-    [/\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\benemies with reduced defense\b/i],
+    //
+    // The second pattern covers the 2024+ upstream vocabulary shift, where the same
+    // exploit clause names the enemy state as a STATUS NOUN in a multi-status list
+    // ("boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay,
+    // Poison, ..., DEF Reduction, or Paralysis by 1.2x" — #4116/#4125/#4126/#4127/
+    // #4128) or with the newer "Defense Down" spelling ("boosts ATK against enemies
+    // inflicted with Defense Down by 2.25x for 2 turns" — #4140). 143 -> 149.
+    //
+    // The governing frame "boosts ... (against|damage dealt to) ... enemies (inflicted
+    // with|affected by)" is load-bearing: it is what keeps the APPLY-side and
+    // IMMUNITY-side characters out, since those read "reduces the defense of all
+    // enemies by N%" (apply_def_reduction) or "Defense Reduction Debuff Protection"
+    // (the enemy's immunity to it) and never place the status in a boost-TARGET
+    // position. Do NOT relax the frame to a bare "Defense Reduction" token — on its
+    // own that noun is overwhelmingly apply-side.
+    [
+      /\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\benemies with reduced defense\b/i,
+      /\bboosts?\b[^.]{0,160}\b(?:against|damage dealt to)\b[^.]{0,200}\benemies (?:inflicted with|affected by)\b[^.]{0,120}\b(?:Defense Down|DEF Down|DEF Reduction|Defense Reduction)\b/i,
+    ],
   ],
   [
     'boost_against_poisoned_enemies',
@@ -1012,9 +1030,25 @@ const SPECIAL_ABILITY_MATCHERS = [
   // and cooldowns ("... at the end of each turn until it reaches a maximum Nx
   // after 20 turns." — Elizabello II #2423/#2424, a per-turn ramp active from
   // turn 1, nothing launches on turn 20). Requiring the delimiter drops those
-  // ramp caps and zero genuine launches. The "following turn" branch has no
-  // false positives, so it is left broad.
-  ['delayed_effect_launch', [/\bfollowing turn\b/i, /\bafter\s+\d+\s+turns?\s*[,:]/i]],
+  // ramp caps and zero genuine launches (corpus-wide those two ids are the ONLY
+  // non-delimited "after N turns" occurrences).
+  //
+  // "in the next turn" is the rare twin of "in the following turn" — same deferral,
+  // different upstream wording — and was silently missed: Doc Q #4105 ("... for 1
+  // turn in the next turn.") and Blackbeard #4146 ("... inflicts all enemies with
+  // Increase Damage Taken by 1.75x for 1 turn in the next turn."). 182 -> 184.
+  //
+  // The deferral branch is anchored on "in the" rather than a bare "following turn"
+  // /"next turn". That is output-identical today, but the leading preposition is what
+  // separates the DEFERRAL from two non-launch uses of the same nouns: the condition
+  // form "if during the following turn you score N PERFECT hits" (6 occurrences, all
+  // on recent ids 3831+, a growing shape) and the Chain carry-over "carries over Nx of
+  // Chain Multiplier on this turn to the next turn" (#3829/#3830). Both describe a
+  // later turn without scheduling anything to launch on it.
+  [
+    'delayed_effect_launch',
+    [/\bin the following turn\b/i, /\bafter\s+\d+\s+turns?\s*[,:]/i, /\bin the next turn\b/i],
+  ],
   ['boost_max_hp', [/\bboosts?\b[^.]{0,120}\bmax HP\b/i]],
   [
     // "Apply Status Effect (Ally)" = applying a beneficial status to your OWN
@@ -2076,6 +2110,14 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
 // against a buff duration.
 const DURATION_TURN_KEYS = new Set([
   'boost_atk',
+  // boost_base_atk is the FLAT twin of boost_atk and shares its grammar exactly
+  // ("boosts base ATK of <scope> by N for M turns"), so it belongs here for the same
+  // reason: 100% of its specialText grants carry an explicit duration (1t x106,
+  // 2t x45, 3t x26, 5t x1), and the 13 without one are permanent captain passives.
+  // It was the odd one out — its multiplier twin boost_atk and its support-source
+  // counterpart support_base_atk_boost_damage both expose a turn control while it
+  // did not, so the picker omitted a turn filter the data genuinely supports.
+  'boost_base_atk',
   'boost_slot_effects',
   'reduce_damage',
   'reduce_damage_over_threshold',
