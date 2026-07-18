@@ -146,6 +146,15 @@ special and none repeats it in the base special, so no double-tagging occurs. Wo
 *reference* a buff rather than granting it — duration extenders, boost-effect amplifiers and
 trigger conditions — stay excluded on every source.
 
+The three chain debuffs and the three chain buffs are separate mechanics and must keep
+separate labels. `remove_chain_multiplier_limit` ("Chain Multiplier Limit") cures the enemy
+CEILING on the chain multiplier; `remove_chain_coefficient_reduction` cures the enemy shrink of
+its per-tap GROWTH; `chain_multiplier_lock` ("Chain Multiplier: Lock") is the crew buff that
+fixes the multiplier at a value, alongside the additive and growth-rate boosts. Japanese uses a
+single word for both the enemy cap and the crew lock, so translated sources appear to merge
+them — follow the English split. The buff-extension wording `increases duration of any Chain
+Lock/Limit/Boundary buffs` grants none of these; it belongs to `extend_turn_duration`.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

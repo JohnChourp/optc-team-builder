@@ -1582,10 +1582,16 @@ const TARGET_ALIASES = [
     // with the FRIENDLY "Chain Lock" buff (which locks YOUR chain multiplier at a
     // value — the opposite, carried by chain_multiplier_lock): every corpus
     // "chain lock" removal-target actually comes from "increases duration of any
-    // Chain Lock/Limit/Boundary buffs" (a friendly-buff EXTENSION), so all 3
-    // "chain lock"-only matches (#4000/#4128/#4289 — the entire captainAbility
-    // count) were false positives, and ZERO genuine enemy removals use "Chain
-    // Lock" without "Chain Multiplier Limit". Require the real debuff name.
+    // Chain Lock/Limit/Boundary buffs" (a friendly-buff EXTENSION), so the three
+    // "chain lock"-only matches (#4000, #4128, #4289) were false positives, and
+    // ZERO genuine enemy removals use "Chain Lock" without "Chain Multiplier
+    // Limit". Require the real debuff name.
+    //
+    // Corrected 2026-07-18: those three are NOT "the entire captainAbility count".
+    // #4000 and #4289 are captainAbility, but #4128 carries the wording in
+    // superSpecialText, and it is now withheld by the enemy-ownership guard in the
+    // TURN_PATTERNS consumer rather than by this alias — so restoring the alias
+    // today would re-admit two, not three.
     matcher: (target) => target.includes('chain multiplier limit'),
   },
   {

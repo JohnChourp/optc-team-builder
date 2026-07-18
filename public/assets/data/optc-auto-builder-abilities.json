@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T17:54:41.429Z",
+  "generatedAt": "2026-07-18T18:30:35.617Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -44544,7 +44544,7 @@
     },
     {
       "key": "remove_chain_multiplier_limit",
-      "label": "Lock Chain Multiplier",
+      "label": "Chain Multiplier Limit",
       "category": "special",
       "groupLabel": "Reduce Status Effect Duration",
       "groupOrder": 6,

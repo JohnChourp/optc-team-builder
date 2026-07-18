@@ -303,7 +303,7 @@
   },
   {
     "key": "remove_chain_multiplier_limit",
-    "label": "Lock Chain Multiplier",
+    "label": "Chain Multiplier Limit",
     "groupLabel": "Reduce Status Effect Duration",
     "groupOrder": 6,
     "effectOrder": 9

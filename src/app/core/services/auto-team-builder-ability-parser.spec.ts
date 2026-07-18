@@ -3403,6 +3403,15 @@ describe('auto team builder ability parser', () => {
     expect(
       specialCatalog.find((item) => item.key === 'remove_chain_coefficient_reduction')?.label,
     ).toBe('Chain Coefficient Reduction (Decrease Chain Multiplier Growth Rate)');
+    // The cure for the enemy CEILING debuff shipped as "Lock Chain Multiplier" —
+    // word-for-word the mechanic of the different key chain_multiplier_lock
+    // ("Chain Multiplier: Lock", a crew buff). Seven characters carry both keys
+    // from one sentence, so the picker showed two near-synonymous labels for
+    // opposite effects. The app already used the correct name on its enemy
+    // mechanic surface; this makes the two agree.
+    expect(
+      specialCatalog.find((item) => item.key === 'remove_chain_multiplier_limit')?.label,
+    ).toBe('Chain Multiplier Limit');
     // Crew-side survival, revived from a dead key: the bare label "Resilience"
     // names the ENEMY buff everywhere else in the app (`remove_resilience`, and
     // the live enemy-mechanic picker), and OPTC-DB never writes "Resilience"
