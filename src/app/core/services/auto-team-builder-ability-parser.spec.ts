@@ -574,6 +574,56 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('boosts RCV the stat, never the [RCV] orb, the heal, or the RCV DOWN cure', () => {
+    // RCV is both the crew Recovery stat AND an orb colour, and a bare \\bRCV\\b matches
+    // inside the "[RCV]" token because brackets are non-word characters. That single
+    // ambiguity produced 27 false positives across eight families.
+    for (const text of [
+      'Boosts RCV of all characters by 1.5x for 1 turn',
+      'Boosts RCV by 1.5x for 1 turn',
+      'Boosts ATK and RCV of [DEX] characters by 1.25x for 2 turns',
+      // Flat grants must stay in — there is no boost_base_rcv twin.
+      'Boosts ATK and RCV of all characters by 45 for 1 turn',
+      'boosts RCV of Shooter characters by 300 for 3 turns',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'boost_rcv',
+      );
+    }
+    // Every [RCV]-ORB family is a different mechanic and must stay out.
+    for (const orbSense of [
+      'boosts the amount healed by [RCV] orbs by 1.5x for 1 turn',
+      'Boosts chances of getting [RCV] orbs for 3 turns',
+      'boosts Orb Effects of all characters by 1.75x and makes [RCV] orbs beneficial',
+      "Boosts base ATK of all characters depending on how many [RCV] orbs used",
+      'changes all orbs, including [BLOCK] orbs, into [RCV] orbs',
+      'randomizes non-Matching, non-[RCV] orbs',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(orbSense, 'specialText'))).not.toContain(
+        'boost_rcv',
+      );
+    }
+    // A heal scaled off RCV belongs to heal_hp; the guard is now reciprocal (heal_hp
+    // already refuses to cross a "boosts").
+    const healBridge = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        "Boosts chances of getting Matching orbs, recovers 8x character's RCV in HP",
+        'specialText',
+      ),
+    );
+    expect(healBridge).not.toContain('boost_rcv');
+    expect(healBridge).toContain('heal_hp');
+    // An RCV DOWN cure is a different key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'removes Blindness, Poison, RCV DOWN and No Healing duration completely',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('boost_rcv');
+  });
+
   it('matches the Additional Damage grant including decimals and super-special-only carriers', () => {
     // "Additional Damage" is a named buff: a flat post-calculation packet sized as
     // a multiple of the granting character's ATK, almost always Typeless. Two
@@ -1545,7 +1595,13 @@ describe('auto team builder ability parser', () => {
       analyzeBuilderAbilityText('For 2 turns, boosts the amount healed by [RCV] orbs by 1.5x', 'specialText'),
     );
     expect(rcvHeal).not.toContain('boost_slot_effects');
-    expect(rcvHeal).toContain('boost_rcv'); // the RCV-orb heal boost is a Boost RCV effect, not a damage orb-effect
+    // Corrected 2026-07-19 by the boost_rcv audit. This previously asserted
+    // `toContain('boost_rcv')`, which encoded a false positive: boost_rcv's bare
+    // \bRCV\b was matching inside the "[RCV]" ORB token. Boost RCV scales the crew
+    // STAT (meat orbs, post-turn heals and RCV-scaled specials alike); this clause
+    // scales ORB healing only, so it is a different mechanic. It is currently owned
+    // by no key and tracked as a follow-up (`boost_rcv_orb_healing`).
+    expect(rcvHeal).not.toContain('boost_rcv');
   });
 
   it('detects boost_base_atk only when the verb directly grants "base ATK", not for Base ATK Boost buff references', () => {

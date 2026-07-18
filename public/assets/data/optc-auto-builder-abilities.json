@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T20:57:02.301Z",
+  "generatedAt": "2026-07-18T21:35:31.158Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -54976,7 +54976,7 @@
       "groupLabel": "Other",
       "groupOrder": 10,
       "effectOrder": 2,
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
@@ -54985,10 +54985,8 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 71,
+      "matchCount": 44,
       "matchingCharacterIds": [
-        362,
-        363,
         404,
         405,
         468,
@@ -54998,7 +54996,6 @@
         542,
         576,
         583,
-        608,
         612,
         613,
         622,
@@ -55006,8 +55003,6 @@
         681,
         715,
         716,
-        734,
-        735,
         822,
         857,
         858,
@@ -55021,55 +55016,91 @@
         1359,
         1445,
         1582,
-        1638,
-        1789,
-        2028,
-        2029,
-        2073,
-        2074,
         2216,
         2217,
-        2255,
         2288,
         2289,
         2290,
-        2337,
-        2338,
         2379,
         2526,
         2564,
         2565,
-        2695,
-        2696,
         2846,
         2931,
-        3333,
-        3334,
-        3363,
-        3364,
         3413,
         3459,
         3693,
-        3814,
-        4019,
-        4020,
-        4053,
-        4294,
-        4295,
-        4397,
-        4402
+        4053
       ],
-      "turnMatchingCharacterIds": [],
+      "turnMatchingCharacterIds": [
+        {
+          "minTurns": 1,
+          "characterIds": [
+            468,
+            470,
+            542,
+            576,
+            612,
+            613,
+            857,
+            858,
+            915,
+            916,
+            944,
+            945,
+            1164,
+            1165,
+            1445,
+            1582,
+            2216,
+            2217,
+            2379,
+            2526,
+            2846,
+            2931,
+            3459,
+            3693,
+            4053
+          ]
+        },
+        {
+          "minTurns": 2,
+          "characterIds": [
+            404,
+            405,
+            535,
+            536,
+            680,
+            681,
+            715,
+            716,
+            2288,
+            2289,
+            2290,
+            3413
+          ]
+        },
+        {
+          "minTurns": 3,
+          "characterIds": [
+            583,
+            622,
+            822,
+            2564,
+            2565
+          ]
+        }
+      ],
       "sampleCharacterIds": [
-        362,
-        363,
         404,
         405,
-        468
+        468,
+        470,
+        535
       ],
       "sampleTexts": [
-        "For 2 turns, boosts the amount healed by [RCV] orbs by 1.5x, then 2x, then 2.5x from the third crew member onward",
-        "For 2 turns, boosts the amount healed by [RCV] orbs by 1.5x, then 2x, then 2.5x from the third crew member onward",
+        "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
+        "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
         "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
         "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
         "Boosts RCV of all characters by 1.5x for 1 turn"

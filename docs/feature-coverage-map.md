@@ -183,6 +183,15 @@ excluded — they reference the buff without granting it. It is distinct from
 versus the character dealing a tick); seven characters legitimately carry both, from separate
 clauses in different source fields.
 
+**Boost RCV** (`boost_rcv`) matches only crew RCV **stat** grants — `Boosts RCV of ...`,
+`Boosts ATK and RCV of ...` — in both multiplier (`by 2x`) and flat (`by 45`) form, and it
+exposes a turn filter like its twin `boost_atk`. RCV is also an orb colour, so the matcher
+explicitly excludes the `[RCV]`-orb senses (drop-rate boosts, beneficial-orb clauses, orb
+changes, orb-count conditions and orb-heal amplification), plus RCV-scaled heals
+(`recovers Nx character's RCV in HP` → Heal HP) and RCV DOWN cures. Note the decimal-tolerant
+gap construct used elsewhere in the parser is deliberately **not** used here: for this key the
+plain gap acts as a firewall, and widening it admits false positives with no genuine gains.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

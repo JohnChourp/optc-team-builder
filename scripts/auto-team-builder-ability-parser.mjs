@@ -319,8 +319,15 @@ const SPECIAL_ABILITY_MATCHERS = [
       // to distinct orb mechanics: orb DROP RATE ("boosts chances of getting [X]
       // orbs"), "makes [X] orbs beneficial ... boosts ATK by Nx", "Orb
       // Amplification" conditionals, and the RCV-orb HEAL boost "boosts the amount
-      // healed by [RCV] orbs by Nx" (a heal boost — already carried by `boost_rcv`,
-      // and this key is grouped under Boost Damage). Dropping `orbs?` narrows the
+      // healed by [RCV] orbs by Nx" (a heal boost, and this key is grouped under
+      // Boost Damage). NOTE (corrected 2026-07-19): that RCV-orb heal family is
+      // currently owned by NO key. It used to fall into `boost_rcv` only because
+      // that matcher's bare \bRCV\b matched inside the "[RCV]" orb token; the
+      // boost_rcv audit removed it as a false positive, since Boost RCV scales the
+      // crew STAT (meat orbs, post-turn heals and RCV-scaled specials alike) while
+      // this family scales ORB healing only. Tracked as a follow-up key
+      // (`boost_rcv_orb_healing`) covering #362, #363, #608, #734, #735, #4397.
+      // Dropping `orbs?` narrows the
       // captain matches from 29 (26 false) to the 3 genuine "Boosts Orb Effects"
       // grants and removes the analogous special-side false positives.
       // The trailing "x" is optional ONLY when the number cannot be a turn or
@@ -974,7 +981,24 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\brecovers?\b(?:[^.,;]|\.\d){0,30}\bof\s+(?:the\s+)?damage\s+taken\b/i,
     ],
   ],
-  ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],
+  // RCV is BOTH the crew Recovery stat and an ORB COLOUR, and a bare \bRCV\b matches
+  // inside the "[RCV]" orb token because brackets are non-word characters. That single
+  // ambiguity produced 27 false positives across eight distinct families: orb-heal
+  // amplification, orb drop-rate, beneficial-orb bridges, orb-count conditions, heal
+  // bridges, RCV DOWN cure bridges, orb randomize-exclusion and orb changes.
+  // The (?<!\[) ... (?!\s*\]) guard blocks the orb sense; the recovers?|removes?
+  // lookahead stops the gap bridging into a heal ("recovers 8x character's RCV in HP",
+  // heal_hp) or an "RCV DOWN" cure (remove_rcv_down).
+  //
+  // The decimal trap is INVERTED for this key: the bare [^.] is LOAD-BEARING as a
+  // firewall, not a bug. Measured, (?:[^.]|\.\d){0,120} adds 23 pure false positives
+  // and {0,200} adds 6, with ZERO genuine gains. Never widen it, never make it
+  // decimal-tolerant. Amounts stay unconstrained so the FLAT grants ("by 45" #612/#613,
+  // "by 100" #622/#822, "by 300" #583) keep matching — there is no boost_base_rcv twin.
+  //
+  // Do not narrow the tail to [^.\[]: that drops 6 genuine units whose scope list
+  // contains brackets (#680, #681, #857, #858, #1445, #3693).
+  ['boost_rcv', [/\bboosts?\b(?:(?!\b(?:recovers?|removes?)\b)[^.]){0,120}?(?<!\[)\bRCV\b(?!\s*\])/i]],
   [
     // Crew-side survival ("Loss Prevention" / "Zombie"): for a stated window the
     // crew cannot be dropped below 1 HP by a killing blow. OPTC-DB files it under
@@ -2283,6 +2307,14 @@ const DURATION_TURN_KEYS = new Set([
   // did not, so the picker omitted a turn filter the data genuinely supports.
   'boost_base_atk',
   'boost_slot_effects',
+  // boost_rcv is the stat twin of boost_atk and shares its grammar exactly — 14 of
+  // its 44 members read "boosts ATK and RCV of <scope> by Nx for M turns" in ONE
+  // clause, so ATK was turn-filterable while RCV was not, for the same sentence.
+  // That is the same odd-one-out shape that justified boost_base_atk. 42 of 44
+  // carry an explicit duration; the 2 that do not (#1358/#1359) are correct
+  // erasures, since their "1 turn" belongs to the neighbouring delay clause and
+  // not to the RCV boost.
+  'boost_rcv',
   'reduce_damage',
   'reduce_damage_over_threshold',
   'nullify_damage',
