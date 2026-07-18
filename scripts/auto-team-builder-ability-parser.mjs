@@ -1012,9 +1012,25 @@ const SPECIAL_ABILITY_MATCHERS = [
   // and cooldowns ("... at the end of each turn until it reaches a maximum Nx
   // after 20 turns." — Elizabello II #2423/#2424, a per-turn ramp active from
   // turn 1, nothing launches on turn 20). Requiring the delimiter drops those
-  // ramp caps and zero genuine launches. The "following turn" branch has no
-  // false positives, so it is left broad.
-  ['delayed_effect_launch', [/\bfollowing turn\b/i, /\bafter\s+\d+\s+turns?\s*[,:]/i]],
+  // ramp caps and zero genuine launches (corpus-wide those two ids are the ONLY
+  // non-delimited "after N turns" occurrences).
+  //
+  // "in the next turn" is the rare twin of "in the following turn" — same deferral,
+  // different upstream wording — and was silently missed: Doc Q #4105 ("... for 1
+  // turn in the next turn.") and Blackbeard #4146 ("... inflicts all enemies with
+  // Increase Damage Taken by 1.75x for 1 turn in the next turn."). 182 -> 184.
+  //
+  // The deferral branch is anchored on "in the" rather than a bare "following turn"
+  // /"next turn". That is output-identical today, but the leading preposition is what
+  // separates the DEFERRAL from two non-launch uses of the same nouns: the condition
+  // form "if during the following turn you score N PERFECT hits" (6 occurrences, all
+  // on recent ids 3831+, a growing shape) and the Chain carry-over "carries over Nx of
+  // Chain Multiplier on this turn to the next turn" (#3829/#3830). Both describe a
+  // later turn without scheduling anything to launch on it.
+  [
+    'delayed_effect_launch',
+    [/\bin the following turn\b/i, /\bafter\s+\d+\s+turns?\s*[,:]/i, /\bin the next turn\b/i],
+  ],
   ['boost_max_hp', [/\bboosts?\b[^.]{0,120}\bmax HP\b/i]],
   [
     // "Apply Status Effect (Ally)" = applying a beneficial status to your OWN

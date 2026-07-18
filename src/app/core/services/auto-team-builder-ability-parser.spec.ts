@@ -2775,6 +2775,31 @@ describe('auto team builder ability parser', () => {
     ).toContain('remove_increase_damage_taken');
   });
 
+  it('delayed_effect_launch catches "in the next turn" and stays off non-launch turn references', () => {
+    // Both deferral wordings launch on a later turn. "in the next turn" is the rare
+    // twin of "in the following turn" (Doc Q #4105, Blackbeard #4146) and was missed.
+    for (const text of [
+      'Boosts ATK of Slasher characters by 1.75x for 1 turn in the following turn.',
+      'Inflicts all enemies with Increase Damage Taken by 1.75x for 1 turn in the next turn.',
+      'After 2 turns, changes all orbs of Cerebral characters into Matching orbs.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'delayed_effect_launch',
+      );
+    }
+    // Naming a later turn is not scheduling anything to launch on it: the tap-timing
+    // CONDITION form, the Chain carry-over, and the period-terminated ramp cap.
+    for (const text of [
+      'If during the following turn you score 4 PERFECT hits, adds 1.2x to Chain multiplier for 1 turn.',
+      'Carries over 0.5x of Chain Multiplier on this turn to the next turn.',
+      'Increases own ATK multiplier by 0.0875x at the end of each turn until it reaches a maximum 2.75x after 20 turns.',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'delayed_effect_launch',
+      );
+    }
+  });
+
   it('apply_increase_damage_taken requires an inflict/apply grant, not the "Increase" debuff name', () => {
     // Genuine enemy applications tag.
     for (const text of [
