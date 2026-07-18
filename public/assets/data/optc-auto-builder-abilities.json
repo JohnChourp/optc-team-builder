@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T12:29:20.524Z",
+  "generatedAt": "2026-07-18T12:53:44.117Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -10282,9 +10282,9 @@
       "sampleTexts": [
         "Boosts base ATK of all characters by 1-1,000 for 1 turn, depending on your current HP and becomes Zeus & Prometheus & Big Mom for 3 turns. If HP is above 50% when the special is activated, locks the chain multiplier at 3.5x for 1 turn.",
         "Boosts base ATK of all characters by 1-1,000 for 1 turn, depending on your current HP and becomes Zeus & Prometheus & Big Mom for 3 turns. If HP is above 50% when the special is activated, locks the chain multiplier at 3.5x for 1 turn.",
-        "Boosts base ATK of all characters by 1-1,000 for 1 turn, depending on your current HP and becomes Zeus & Prometheus & Big Mom for 3 turns. If HP is above 50% when the special is activated, locks the chain multiplier at 3.5x for 1 turn.",
-        "Boosts base ATK of all characters by 1-1,000 for 1 turn, depending on your current HP and becomes Zeus & Prometheus & Big Mom for 3 turns. If HP is above 50% when the special is activated, locks the chain multiplier at 3.5x for 1 turn.",
-        "Deals 120x character's ATK in Typeless damage to all enemies, boosts ATK of this character by 2.5x for 2 turns, boosts Orb Effects of this character by 2.5x for 2 turns and boosts base ATK of this character by 1-1,000 for 2 turns, depending on your current HP."
+        "Deals 120x character's ATK in Typeless damage to all enemies, boosts ATK of this character by 2.5x for 2 turns, boosts Orb Effects of this character by 2.5x for 2 turns and boosts base ATK of this character by 1-1,000 for 2 turns, depending on your current HP.",
+        "Deals 120x character's ATK in Typeless damage to all enemies, boosts ATK of this character by 2.5x for 2 turns, boosts Orb Effects of this character by 2.5x for 2 turns and boosts base ATK of this character by 1-1,000 for 2 turns, depending on your current HP.",
+        "Deals 300x character's ATK in Typeless damage to all enemies and boosts ATK of [QCK], Free Spirit and Fighter characters by 2.75x for 1 turn. Boosts base ATK of this character by 0-1,000 for 1 turn, depending on how many [RCV] orbs used in normal attacks."
       ]
     },
     {
