@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T21:35:31.158Z",
+  "generatedAt": "2026-07-19T03:27:00.526Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -51079,7 +51079,7 @@
     },
     {
       "key": "inflict_poison",
-      "label": "Poison",
+      "label": "Inflict Poison",
       "category": "special",
       "groupLabel": "Apply Status Effect",
       "groupOrder": 8,
@@ -51095,10 +51095,12 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 67,
+      "matchCount": 72,
       "matchingCharacterIds": [
         58,
         215,
+        383,
+        384,
         391,
         392,
         437,
@@ -51110,6 +51112,8 @@
         769,
         837,
         838,
+        1057,
+        1058,
         1149,
         1158,
         1159,
@@ -51130,12 +51134,12 @@
         2354,
         2453,
         2454,
+        2480,
+        2481,
         2516,
         2517,
         2732,
         2733,
-        2828,
-        2829,
         3022,
         3160,
         3277,
@@ -51163,6 +51167,7 @@
         4509,
         4510,
         4511,
+        4548,
         4550
       ],
       "turnMatchingCharacterIds": [],
@@ -51175,16 +51180,16 @@
       "sampleCharacterIds": [
         58,
         215,
-        391,
-        392,
-        437
+        383,
+        384,
+        391
       ],
       "sampleTexts": [
         "Poisons all enemies",
         "Poisons all enemies",
-        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn",
-        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn",
-        "Recovers 3x character's RCV in HP, reduces damage received by 80% for 1 turn, Poisons enemies for 1,000 for a single turn"
+        "Strongly Poisons one enemy",
+        "Strongly Poisons one enemy",
+        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn"
       ]
     },
     {

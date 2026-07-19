@@ -422,7 +422,7 @@
   },
   {
     "key": "inflict_poison",
-    "label": "Poison",
+    "label": "Inflict Poison",
     "groupLabel": "Apply Status Effect",
     "groupOrder": 8,
     "effectOrder": 3

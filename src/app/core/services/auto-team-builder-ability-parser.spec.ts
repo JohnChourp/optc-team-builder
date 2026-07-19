@@ -574,6 +574,46 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('inflicts poison on enemies without swallowing the cure, and reads the singular enemy', () => {
+    // Two bugs on one line. "enemies?" parses as "enemie" + optional "s", so it could
+    // never match the singular "enemy" — every unit whose only infliction is
+    // "Strongly Poisons one enemy" was systematically missed.
+    for (const text of [
+      'Poisons all enemies',
+      'Poisons enemies for 1,000 damage for 1 turn',
+      'Strongly Poisons one enemy',
+      'Strongly Poisons one enemy and Poisons all other enemies',
+      'Inflicts Toxic to all enemies',
+      'inflicts all enemies with Reiju Poison for 99 turns',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'inflict_poison',
+      );
+    }
+    // And the optional "s" on "poisons?" let the singular NOUN "Poison" — a CURE
+    // token — satisfy the infliction slot by bridging to a later "enemies".
+    const cure = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        "removes Poison duration completely and reduces enemies' Threshold Damage Reduction duration by 5 turns",
+        'specialText',
+      ),
+    );
+    expect(cure).not.toContain('inflict_poison');
+    expect(cure).toContain('remove_poison');
+    // Neither a crew-side precondition nor the immunity-piercing enabler is an
+    // infliction. The enabler strip is load-bearing: without it three pure false
+    // positives return.
+    for (const notAnInfliction of [
+      'If crew is inflicted with Poison or Burn from an enemy action, replaces that debuff',
+      'allows effects that inflict Poison to ignore Debuff Protection',
+      'boosts ATK against Poisoned enemies by 1.35x',
+    ]) {
+      expect(
+        extractAbilityKeys(analyzeBuilderAbilityText(notAnInfliction, 'specialText')),
+      ).not.toContain('inflict_poison');
+    }
+  });
+
   it('boosts RCV the stat, never the [RCV] orb, the heal, or the RCV DOWN cure', () => {
     // RCV is both the crew Recovery stat AND an orb colour, and a bare \\bRCV\\b matches
     // inside the "[RCV]" token because brackets are non-word characters. That single
@@ -3595,6 +3635,14 @@ describe('auto team builder ability parser', () => {
     // Players search this mechanic by "PERFECT"; the primary label alone gave 0 hits.
     expect(specialCatalog.find((item) => item.key === 'tap_timing_requirement')?.label).toBe(
       'Tap-Timing Requirement (PERFECT)',
+    );
+    // "Poison" was the only label duplicated INSIDE one category — the cure
+    // (remove_poison) and this inflict key both shipped it, and a mis-pick returned
+    // a near-disjoint set. The cure keeps "Poison" because it reproduces OPTC-DB's
+    // canonical cure-filter name; the inflict side moves to the parser's own
+    // internal label. After this the special category has no duplicate labels.
+    expect(specialCatalog.find((item) => item.key === 'inflict_poison')?.label).toBe(
+      'Inflict Poison',
     );
     // The picker searches [key, label], and the legacy label "Decrease Chain
     // Multiplier Growth Rate" occurs 0 times in the corpus while its 3-word core

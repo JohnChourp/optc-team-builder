@@ -192,6 +192,16 @@ changes, orb-count conditions and orb-heal amplification), plus RCV-scaled heals
 gap construct used elsewhere in the parser is deliberately **not** used here: for this key the
 plain gap acts as a firewall, and widening it admits false positives with no genuine gains.
 
+**Poison — inflict versus cure.** `inflict_poison` ("Inflict Poison", *Apply Status Effect*)
+covers crew→enemy infliction and folds all four tiers together: Poison, Strong Poison (Venom),
+Toxic (Progressive Poison) and Reiju Poison. `remove_poison` ("Poison", *Reduce Status Effect
+Duration*) is the crew-side cure and keeps the bare name, because that reproduces upstream's
+own cure-filter name. Until this audit both shipped the bare label "Poison" — the only label
+duplicated inside a single category — so a mis-pick returned a nearly disjoint character set.
+The matcher requires the finite verb (`Poisons ... enemy/enemies`) rather than the noun, which
+is what keeps cures, crew-side preconditions and the immunity-piercing enabler
+(`allows effects that inflict Poison to ignore Debuff Protection`) out.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

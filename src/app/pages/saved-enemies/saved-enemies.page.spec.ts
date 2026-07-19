@@ -1245,7 +1245,7 @@ function createPage(overrides: { savedEnemies?: SavedEnemy[] } = {}) {
         },
         {
           key: 'inflict_poison',
-          label: 'Poison',
+          label: 'Inflict Poison',
           category: 'special',
           groupLabel: 'Apply Status Effect',
           groupOrder: 8,

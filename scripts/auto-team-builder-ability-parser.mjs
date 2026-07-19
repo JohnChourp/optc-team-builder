@@ -180,6 +180,19 @@ const EXPLICIT_BUILDER_ABILITIES = [
     // unbounded [^.]* wrongly bridged a poison CURE / condition to a later
     // "enemies" clause (e.g. "removes Poison duration completely ... reduces the
     // defense of all enemies"; "boosts ATK against enemies inflicted with Poison").
+    //
+    // The bridge bound alone is NOT the control. Two further failure modes were
+    // measured (2026-07-19 audit, 67 -> 72):
+    //   * Dropping the optional "s" from "poisons?" is what excludes the singular
+    //     NOUN "Poison" — a CURE token — from satisfying the infliction slot. The
+    //     40-char bound still let "removes Poison duration completely and reduces
+    //     enemies' ..." through on a 33-char bridge (#2828/#2829, pure cures).
+    //   * "enemies?" parses as "enemie" + optional "s", so it can NEVER match the
+    //     singular "enemy". Every unit whose only infliction is "Strongly Poisons
+    //     one enemy" was systematically missed; a few survived by accident only
+    //     because a plural clause followed. Hence the explicit (?:enemy|enemies).
+    // Do NOT relax this to "poisons?...(?:enemy|enemies)": that yields 75 and pulls
+    // in the crew-side condition "If crew is inflicted with Poison or Burn" (#4456).
     matcher: (text) => {
       const stripped = text.replace(
         /\ballows?\b[^.]*?\beffects?\b[^.]*?\binflicts?\b[^.]*?\b(?:poison|strong poison|toxic|venom)\b[^.]*?\b(?:ignore|bypass)\b[^.]*?\b(?:debuff protection|immunit(?:y|ies))\b/gi,
@@ -187,7 +200,7 @@ const EXPLICIT_BUILDER_ABILITIES = [
       );
       return (
         /\binflicts?\b[^.]{0,60}\b(?:poison|strong poison|toxic|venom)\b/i.test(stripped) ||
-        /\bpoisons?\b[^.]{0,40}\benemies?\b/i.test(stripped)
+        /\bpoisons\b[^.]{0,40}\b(?:enemy|enemies)\b/i.test(stripped)
       );
     },
   },
