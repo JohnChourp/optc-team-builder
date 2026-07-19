@@ -138,16 +138,44 @@ const EXPLICIT_BUILDER_ABILITIES = [
   {
     key: 'ignore_normal_attack_only',
     label: 'Ignore Normal Attack Only (NAO)',
-    // "Normal Attack Only" is an enemy defensive buff that limits the crew to
-    // normal attacks (nullifying special damage/effects). Units whose attacks
-    // ignore/bypass it penetrate that buff. Besides the adjacent "ignoring
-    // Normal Attack Only" phrasing, OPTC-DB also lists NAO among the defensive
-    // effects a special "bypass[es]" (e.g. "bypass all defensive Buffs,
-    // Barriers, Defense and Normal Attack Only"), so accept ignore/bypass verbs
-    // with a bounded, ReDoS-safe [^.]{0,80} bridge (kept within one sentence so
-    // the "if your crew has Normal Attack Only" condition wording is excluded).
+    // "Normal Attack Only" (NAO) is a CREW-SIDE STATUS AILMENT applied by enemies,
+    // not an enemy buff: every damage instance belonging to a SKILL — special
+    // multiplier, percent, fixed and end-of-turn follow-up damage, including
+    // captain-effect percent/follow-up — is set to 1. Specials STILL FIRE and
+    // their non-damage effects (orb changes, buffs, duration cuts) work normally;
+    // only normal attacks still deal real damage, which is what the name means.
+    // Corrected 2026-07-19: the previous gloss here ("an enemy defensive buff that
+    // limits the crew to normal attacks") was wrong on both counts. Upstream
+    // classifies it under Requirement: Crew Effect -> Debuffs, alongside Bind and
+    // Despair. This key tags the COUNTER — units whose own damage clause ignores
+    // or bypasses NAO, so their special damage lands at full value through it.
+    //
+    // Note the key name is the accurate one: the label used to read "Ignore
+    // DEF/Defensive Effects", which names two DIFFERENT clauses. The JP/EN
+    // decomposition on #3786 Gol D. Roger is exact — 防御力 (the DEF stat) is
+    // carried by the word "Fixed" (deal_fixed_damage), 全ての防御効果 (all defensive
+    // effects) by the word "True", and NAO-piercing by this third clause.
+    //
+    // Two live phrasings besides the adjacent "ignoring Normal Attack Only":
+    // upstream lists NAO among the defensive effects a special "bypass[es]"
+    // ("bypass all defensive Buffs, Barriers, Defense and Normal Attack Only" —
+    // a 44-char bridge, the sole reason the bound must be >= 44), and newer
+    // upstream text RENAMES the ailment to "Non-Normal Attacks Deal 1 Damage"
+    // (saved-enemies-text-parser.utils.ts already treats the two names as one key).
+    //
+    // The [^.]{0,80} bridge is bounded for ReDoS safety only; it is measurably
+    // INERT as a filter — allowing dots and widening to 400 yields the same id
+    // set. In particular it is NOT what excludes the "If your crew has Normal
+    // Attack Only" PRECONDITION: that text carries no ignore/bypass verb at all.
+    // That exclusion has 1 seed carrier today but 12 upstream, so it becomes 12x
+    // more load-bearing on the next import.
+    //
+    // Do NOT widen to the "damage reducing Barriers and Buffs" family (51 chars,
+    // normal-attack barrier pierce): measured at 90 matches WITH a precondition
+    // false positive. That family needs its own key (upstream: "Normal Attack
+    // Bypassing Enemy Buffs").
     matcher: (text) =>
-      /\b(?:ignor(?:e|es|ing)|bypass(?:es|ing)?)\b[^.]{0,80}\bnormal attack only\b/i.test(
+      /\b(?:ignor(?:e|es|ing)|bypass(?:es|ing)?)\b[^.]{0,80}\b(?:normal attack only|non[- ]?normal attacks? deal 1 damage)\b/i.test(
         text,
       ),
   },
@@ -180,6 +208,19 @@ const EXPLICIT_BUILDER_ABILITIES = [
     // unbounded [^.]* wrongly bridged a poison CURE / condition to a later
     // "enemies" clause (e.g. "removes Poison duration completely ... reduces the
     // defense of all enemies"; "boosts ATK against enemies inflicted with Poison").
+    //
+    // The bridge bound alone is NOT the control. Two further failure modes were
+    // measured (2026-07-19 audit, 67 -> 72):
+    //   * Dropping the optional "s" from "poisons?" is what excludes the singular
+    //     NOUN "Poison" — a CURE token — from satisfying the infliction slot. The
+    //     40-char bound still let "removes Poison duration completely and reduces
+    //     enemies' ..." through on a 33-char bridge (#2828/#2829, pure cures).
+    //   * "enemies?" parses as "enemie" + optional "s", so it can NEVER match the
+    //     singular "enemy". Every unit whose only infliction is "Strongly Poisons
+    //     one enemy" was systematically missed; a few survived by accident only
+    //     because a plural clause followed. Hence the explicit (?:enemy|enemies).
+    // Do NOT relax this to "poisons?...(?:enemy|enemies)": that yields 75 and pulls
+    // in the crew-side condition "If crew is inflicted with Poison or Burn" (#4456).
     matcher: (text) => {
       const stripped = text.replace(
         /\ballows?\b[^.]*?\beffects?\b[^.]*?\binflicts?\b[^.]*?\b(?:poison|strong poison|toxic|venom)\b[^.]*?\b(?:ignore|bypass)\b[^.]*?\b(?:debuff protection|immunit(?:y|ies))\b/gi,
@@ -187,7 +228,7 @@ const EXPLICIT_BUILDER_ABILITIES = [
       );
       return (
         /\binflicts?\b[^.]{0,60}\b(?:poison|strong poison|toxic|venom)\b/i.test(stripped) ||
-        /\bpoisons?\b[^.]{0,40}\benemies?\b/i.test(stripped)
+        /\bpoisons\b[^.]{0,40}\b(?:enemy|enemies)\b/i.test(stripped)
       );
     },
   },
@@ -319,8 +360,15 @@ const SPECIAL_ABILITY_MATCHERS = [
       // to distinct orb mechanics: orb DROP RATE ("boosts chances of getting [X]
       // orbs"), "makes [X] orbs beneficial ... boosts ATK by Nx", "Orb
       // Amplification" conditionals, and the RCV-orb HEAL boost "boosts the amount
-      // healed by [RCV] orbs by Nx" (a heal boost — already carried by `boost_rcv`,
-      // and this key is grouped under Boost Damage). Dropping `orbs?` narrows the
+      // healed by [RCV] orbs by Nx" (a heal boost, and this key is grouped under
+      // Boost Damage). NOTE (corrected 2026-07-19): that RCV-orb heal family is
+      // currently owned by NO key. It used to fall into `boost_rcv` only because
+      // that matcher's bare \bRCV\b matched inside the "[RCV]" orb token; the
+      // boost_rcv audit removed it as a false positive, since Boost RCV scales the
+      // crew STAT (meat orbs, post-turn heals and RCV-scaled specials alike) while
+      // this family scales ORB healing only. Tracked as a follow-up key
+      // (`boost_rcv_orb_healing`) covering #362, #363, #608, #734, #735, #4397.
+      // Dropping `orbs?` narrows the
       // captain matches from 29 (26 false) to the 3 genuine "Boosts Orb Effects"
       // grants and removes the analogous special-side false positives.
       // The trailing "x" is optional ONLY when the number cannot be a turn or
@@ -425,7 +473,32 @@ const SPECIAL_ABILITY_MATCHERS = [
     // gaps between fixed anchors → ReDoS-safe.
     [
       /\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\bpoisoned enemies\b/i,
-      /\bboosts?\b[^.]{0,120}\bagainst enemies inflicted with poison\b/i,
+      // 2026-07-19 audit: also covers the 2024+ STATUS-NOUN LIST form ("boosts damage
+      // dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong
+      // Poison, Toxic, DEF Reduction, or Paralysis by 1.2x" — #4116, #4123-#4128) and
+      // the TOXIC-ONLY object ("boosts ATK against enemies inflicted with Toxic",
+      // #1703/#1704/#2139/#3648). Toxic == Progressive Poison is a genuine Poison
+      // tier and upstream's own `Status ATK Boost: Poison` regex carries it. 53 -> 64.
+      //
+      // The decisive argument is INTERNAL CONSISTENCY, not coverage: all 7 list
+      // carriers ALREADY match boost_against_delayed_enemies via "Delay", and 5 of 7
+      // already match boost_against_def_reduced_enemies via "DEF Reduction" — from the
+      // identical enumeration in the identical clause. This pattern is byte-parallel
+      // with those two siblings, differing only in the terminal alternation.
+      //
+      // "Strong Poison" / "progressive Poison" need no literal, since \bPoison\b
+      // matches inside them. "Venom" is INERT today (its only carrier #4116 also
+      // writes "Poison") and is kept purely as future-proofing for the Global alias
+      // spelling. "Reiju Poison" is deliberately ABSENT: it never appears in
+      // boost-TARGET position, only apply-side or as a trigger.
+      //
+      // The load-bearing guard is `enemies (inflicted with|affected by)`. Removing it
+      // admits the CURE (#2695/#2696 "removes Blindness, Poison, RCV DOWN and No
+      // Healing duration completely") and the TRIGGER gate (#3277/#3278/#3893 "If
+      // enemies are inflicted with Toxic or Poison upon activation of the special").
+      // The `against|damage dealt to` anchor is currently INERT (measured: removing it
+      // leaves the id set unchanged at 64); kept for byte-parity with the siblings.
+      /\bboosts?\b[^.]{0,160}\b(?:against|damage dealt to)\b[^.]{0,200}\benemies (?:inflicted with|affected by)\b[^.]{0,120}\b(?:Poison|Toxic|Venom)\b/i,
     ],
   ],
   [
@@ -485,7 +558,17 @@ const SPECIAL_ABILITY_MATCHERS = [
     // (Jinbe #4202), and the replace-trigger "if a crew member uses a special with
     // an Additional Damage buff, replaces those buffs" (Garp #4239/#4240). Those
     // are not grants and are dropped.
-    [/\badds?\b[^.]{0,80}\bas\s+additional\b[^.]{0,30}\bdamage\b/i],
+    // Decimal-tolerant on BOTH gaps. The amount sits between "adds" and "as", so a
+    // bare [^.] gap dies on the "." in "adds 2.5x character's ATK ..." — the same
+    // trap that once cost chain_multiplier_additive_boost 310 matches. Upstream's
+    // own amount atom is [?.\d]+, i.e. decimals are expected. (+2: #2226, #2718.)
+    // The second gap's widening is inert — measured identical — but both are kept
+    // symmetric to match the special_damage / special_damage_other house style.
+    //
+    // Widths 80/30 must NOT be reduced: the "Health-Loss basis" wording
+    // ("adds Nx the damage taken from enemies before the special is activated as
+    // Additional Typeless Damage", 6 ids) needs at least 70.
+    [/\badds?\b(?:[^.]|\.\d){0,80}\bas\s+additional\b(?:[^.]|\.\d){0,30}\bdamage\b/i],
   ],
   // Chain Lock GRANT = "locks [the] chain multiplier at Nx" (fixes the chain
   // multiplier at a value regardless of tap timing). Require "locks" to directly
@@ -844,30 +927,67 @@ const SPECIAL_ABILITY_MATCHERS = [
   [
     'apply_resistance_reduction',
     [
-      /\bresistance reduction\b/i,
+      // Do NOT re-add a bare /\bresistance reduction\b/ noun branch. It matched
+      // 0 of 4588 characters — OPTC-DB never writes the noun, 0 hits in
+      // details.js — and it is exactly the name-keyed shape that cost
+      // apply_increase_damage_taken 115 false positives, because a noun branch
+      // cannot tell apply from cure from amplify from boost-against. If upstream
+      // ever coins "Resistance Reduction Debuff Protection" or "boosts ATK
+      // against enemies inflicted with Resistance Reduction", an unanchored noun
+      // fires with no direction check. Same hazard documented on
+      // boost_against_def_reduced_enemies, where upstream DOES write the noun.
+      //
+      // Gap measured inert: widths {0,60}..{0,400} and both decimal-tolerant
+      // forms give a byte-identical id set. Width 40 loses 6 (long type lists).
+      // Keep the tight [^.] form at {0,120}; widening buys nothing.
       /\breduces?\b[^.]{0,120}\bresistance\b/i,
       // Same type/class damage-resistance-down debuff written with the verb
-      // "applies -N% <Type/Class> Resistance to enemies" (e.g. Caesar & Monet
-      // #4126 "applies -10% [QCK] Resistance to all enemies for 1 turn"). The
-      // "reduces" branch misses it because the verb is "applies" and never
-      // precedes "resistance". OPTC never phrases a crew-side resistance GAIN
-      // with "applies" (those use "boosts ... Resistance"), so this stays safe.
+      // "applies -N% <Type/Class> Resistance to enemies" (Caesar & Monet #4126,
+      // "applies -10% [QCK] Resistance to all enemies for 1 turn"). This branch
+      // is load-bearing for 0 characters today — #4126 is already secured by the
+      // "reduces" branch via its max-level tier, which independently reads
+      // "reduces enemies' [INT] Resistance by -10%" — but it is the only guard if
+      // that tier changes, and supportData uses the verb form more widely.
+      //
+      // Do NOT widen the alternation to include "increases": #4065 Kozuki Toki's
+      // sailor text carries the INVERSE, "increases enemies' Slasher Resistance
+      // by +50%", a self-inflicted drawback. Upstream has no matcher for it.
       /\bapplies?\b[^.]{0,60}\bresistance\b/i,
     ],
   ],
   ['apply_set_target', [/\bsets?\b[^.]{0,80}\btarget\b/i]],
-  // "Weaken" is an enemy damage-increasing debuff (like ATK Down / Increase
-  // Damage Taken); OPTC-DB applies it as "inflicts (all) enemies with Weaken by
-  // X.Xx". The old bare /\bweakened\b/ required the "-ed" suffix, which the debuff
-  // NEVER uses, so it matched 0 genuine appliers and instead only fired on the
-  // unrelated transform-form name "otherwise transforms into Weakened" (#3895/
-  // #3896 — 2 false positives). Anchor on the applier verb "inflicts … Weaken"
-  // (bounded, ReDoS-safe; max observed inflicts→Weaken gap is 18) and exclude the
-  // "-ed" transform name via a negative lookahead. Non-applier references stay
-  // out because they use different verbs: "boosts ATK against enemies inflicted
-  // with Weaken" (a boost-against condition — "inflicted", not "inflicts") and
-  // "allows … Weaken … to ignore Debuff Protection" (an immunity-pierce enabler).
-  ['apply_weakened', [/\binflicts?\b[^.]{0,60}\bweaken\b(?!ed)/i]],
+  // "Weaken" is an enemy-side damage-amplification debuff, DISTINCT FROM and
+  // CONDITIONED ON Increase Damage Taken: every canonical clause reads "inflicts
+  // all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted
+  // with Increase Damage Taken". An effect cannot be conditioned on itself, so
+  // that proves the IDT boundary structurally from this side.
+  //
+  // Anchored on the VERB PLUS ITS OBJECT, not on the debuff name. Corrected
+  // 2026-07-19: the previous comment claimed non-appliers "stay out because they
+  // use different verbs". That is FALSE and it cost a false positive — the
+  // Debuff-Protection-pierce ENABLER ("allows effects that inflict Increase
+  // Damage Taken and Weaken to ignore Debuff Protection", #4210/#4211/#4490/
+  // #4506) uses the SAME verb "inflict". Only requiring "enem(y|ies) ... with"
+  // between verb and name excludes it. Every genuine applier writes exactly
+  // "inflicts all enemies with Weaken" (verb->name gap 18) while every enabler
+  // has gap >= 27, so a numeric bound has ZERO headroom — do NOT go back to one.
+  //
+  // Use (?:enemy|enemies), NEVER "enemies?": that parses as "enemie" plus an
+  // optional "s" and can never match the singular, the bug the inflict_poison
+  // audit found. The second branch covers the raw/arrival register (#4611
+  // "applies Weakened status"), which is why the (?!ed) lookahead is
+  // belt-and-braces rather than a guard — the transform-FORM name "transforms
+  // into Weakened" (#3895/#3896) is a character form, not a debuff.
+  //
+  // No remove_weakened key and none is warranted: the sole strip clause (#4502
+  // "removes enemies' Weaken duration completely") is an enemy-owned self-cleanse
+  // before re-applying at a higher multiplier, TARGET_ALIASES has no weaken entry
+  // so the rawTarget is absorbed by nothing, and #4502 is already a member via
+  // three genuine apply clauses.
+  [
+    'apply_weakened',
+    [/\binflicts?\s+(?:all\s+)?enem(?:y|ies)\s+with\s+weaken\b(?!ed)/i, /\bapplies\s+weakened\s+status\b/i],
+  ],
   [
     'reduce_ship_special_charge',
     // The SHIP's own Special has its own cooldown, distinct from the crew's (it
@@ -947,7 +1067,24 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\brecovers?\b(?:[^.,;]|\.\d){0,30}\bof\s+(?:the\s+)?damage\s+taken\b/i,
     ],
   ],
-  ['boost_rcv', [/\bboosts?\b[^.]{0,120}\bRCV\b/i]],
+  // RCV is BOTH the crew Recovery stat and an ORB COLOUR, and a bare \bRCV\b matches
+  // inside the "[RCV]" orb token because brackets are non-word characters. That single
+  // ambiguity produced 27 false positives across eight distinct families: orb-heal
+  // amplification, orb drop-rate, beneficial-orb bridges, orb-count conditions, heal
+  // bridges, RCV DOWN cure bridges, orb randomize-exclusion and orb changes.
+  // The (?<!\[) ... (?!\s*\]) guard blocks the orb sense; the recovers?|removes?
+  // lookahead stops the gap bridging into a heal ("recovers 8x character's RCV in HP",
+  // heal_hp) or an "RCV DOWN" cure (remove_rcv_down).
+  //
+  // The decimal trap is INVERTED for this key: the bare [^.] is LOAD-BEARING as a
+  // firewall, not a bug. Measured, (?:[^.]|\.\d){0,120} adds 23 pure false positives
+  // and {0,200} adds 6, with ZERO genuine gains. Never widen it, never make it
+  // decimal-tolerant. Amounts stay unconstrained so the FLAT grants ("by 45" #612/#613,
+  // "by 100" #622/#822, "by 300" #583) keep matching — there is no boost_base_rcv twin.
+  //
+  // Do not narrow the tail to [^.\[]: that drops 6 genuine units whose scope list
+  // contains brackets (#680, #681, #857, #858, #1445, #3693).
+  ['boost_rcv', [/\bboosts?\b(?:(?!\b(?:recovers?|removes?)\b)[^.]){0,120}?(?<!\[)\bRCV\b(?!\s*\])/i]],
   [
     // Crew-side survival ("Loss Prevention" / "Zombie"): for a stated window the
     // crew cannot be dropped below 1 HP by a killing blow. OPTC-DB files it under
@@ -1114,7 +1251,13 @@ const SPECIAL_ABILITY_MATCHERS = [
     'apply_ally_status_effect',
     [/\bapplies?\b[^.]{0,80}\b(?:immunity|turn progress effect)\b/i],
   ],
-  ['swap_captains', [/\bswaps?\b[^.]{0,120}\bcaptains?\b/i]],
+  // Lazy gap: membership is identical greedy or lazy at every width >= 34 (the max
+  // required, #4218/#4219), but a GREEDY gap swallows "for 1 turn" on #4218/#4219
+  // Blackbeard VS Law — whose upstream text is malformed, missing its period — and
+  // would erase their duration now that this key is turn-filterable. Keep [^.]:
+  // measured, there is no decimal trap on this key (the decimal-tolerant form gives
+  // the identical 56).
+  ['swap_captains', [/\bswaps?\b[^.]{0,120}?\bcaptains?\b/i]],
   // Remove Beneficial Effect = an OFFENSIVE debuff that strips the ENEMY's
   // beneficial effects. The negative lookbehind excludes the DEFENSIVE
   // "Nullif(y|ies) Remove Beneficial Effects ..." self-protection captain
@@ -1424,6 +1567,53 @@ const TARGET_ALIASES = [
       !target.includes('chain atk down'),
   },
   {
+    // Revived dead key (7th of this campaign). This alias NEVER EXISTED, so all 34
+    // "reduces/removes ... RCV DOWN ... duration" clauses across 29 characters
+    // resolved to NO key at all — the segment was produced by TURN_PATTERNS and then
+    // silently discarded. Upstream carries the effect in BOTH forks under category
+    // 'Reduce Status Effects' with targets
+    // ["captain","special","superSpecial","swap","sailor","support"], i.e. exactly
+    // the surfaces this parser reads. RCV DOWN (JP 回復力ダウン) is an enemy-applied
+    // debuff that slashes the crew's total RCV stat to a near-floor value, so meat
+    // orbs and RCV-scaled heals recover almost nothing.
+    //
+    // The " down" token is LOAD-BEARING. `Counter-RCV` is a SEPARATE upstream
+    // matcher (9 units: #3943/#3944/#4073/#4135/#4183/#4213/#4241/#4242/#4422), as
+    // is `Counter-Healing` (16) — neither has a key today. A bare includes('rcv')
+    // absorbs all 9 as pure false positives (29 -> 38).
+    //
+    // The `[RCV]` ORB hazard that cost boost_rcv 27 false positives cannot reach
+    // this layer: normalizeTargetText strips bracket tokens BEFORE any alias sees
+    // the target, and the " down" requirement rejects both the orb colour and the
+    // "Reduces RCV of all characters by 90%" self-inflicted stat drawback.
+    //
+    // Deliberately NOT in ENEMY_TARGETED_REMOVAL_ABILITY_KEYS: this is a CREW cure
+    // (all 30 records resolve effectTargetScope 'crew'), and adding it there was
+    // measured to STRIP the scope from every record — the exclusion is required,
+    // not merely harmless. Zero enemy-owned RCV DOWN segments exist.
+    //
+    // Do NOT fold in upstream's `selected debuffs?` alternation: we route that to
+    // remove_pain via SELECTED_DEBUFF_PAIN_PATTERNS, and upstream's own hard
+    // include: [2602, 2603, 3398] on its "Old Crew RCV DOWN reducer" is exactly
+    // those units, all already in remove_pain. Standing cross-key policy.
+    key: 'remove_rcv_down',
+    label: 'Remove RCV Down',
+    matcher: (target) => target.includes('rcv down'),
+  },
+  // NOTE on the sibling key `remove_rcv_bind` (definitions entry, matchCount 0):
+  // it is deliberately left WITHOUT an alias and recorded `no-data`, NOT deleted.
+  // "RCV Bind" is a REAL mechanic, but it exists only in Pirate Rumble / Grand
+  // Party: 12 characters carry it and every occurrence is inside `rumbleData`,
+  // which no special-ability source reads. Upstream's 7 RCV Bind matchers all
+  // target rumbleSpecial/gpSpecial/rumbleResistance, and it appears zero times in
+  // either fork's details.js. Same disposition as auto_change_slots.
+  //
+  // Keeping the key also documents a LATENT LEAK worth preserving: remove_bind's
+  // matcher is `target === 'bind' || target.endsWith(' bind')` with exclusions only
+  // for special/slot/orb/ship bind, so matcher('rcv bind') returns remove_bind. That
+  // is harmless today (0 quest-text occurrences) but would silently miscount RCV
+  // Bind as plain Bind if upstream ever ports the Rumble status into quest text.
+  {
     key: 'remove_damage_reduction',
     label: 'Remove Damage Reduction',
     matcher: (target) => target === 'damage reduction' || target === 'percent damage reduction',
@@ -1537,7 +1727,17 @@ const TARGET_ALIASES = [
   {
     key: 'remove_poison',
     label: 'Remove Poison',
-    matcher: (target) => target === 'poison' || target === 'toxic' || target.includes('poison'),
+    // Strong Poison (== Venom, 5x ATK/turn, shares Poison's debuff slot) and Toxic
+    // (== Progressive Poison, ramping, its OWN slot, stacks on Poison) are real,
+    // distinct statuses and the crew can be inflicted with both. But NO ability
+    // text ever cures them BY NAME: there are zero
+    // "reduces/removes ... (Strong Poison|Toxic|Venom|Progressive Poison) ... duration"
+    // clauses corpus-wide, and one cure clears every poison tier. The `=== 'toxic'`
+    // branch therefore matched nothing and was removed. Do NOT add variant aliases
+    // here — a future genuine Toxic-only cure needs its OWN key, and folding it in
+    // would silently mis-report it as a plain Poison cure. The `=== 'poison'` branch
+    // was likewise redundant, subsumed by the includes.
+    matcher: (target) => target.includes('poison'),
   },
   {
     key: PAIN_ABILITY_KEY,
@@ -1551,11 +1751,14 @@ const TARGET_ALIASES = [
     // "Chain Coefficient Reduction" (129 corpus occurrences, one casing, zero
     // spelling variants, zero abbreviations). The former second branch
     // ('decrease chain multiplier growth rate') was dead code — 0 occurrences in
-    // the corpus, in upstream details.js, and in matchers.js. Dropping it is
-    // provably lossless: 118 -> 118 with a byte-identical id set.
+    // the fields the parser actually reads. (Corrected 2026-07-18: it does occur
+    // twice upstream, in the `limit:` arrays of #4429/#4430, which the parser does
+    // not read — so it IS a genuine upstream synonym for the DEBUFF, just an
+    // unreachable one.) Dropping the branch is provably lossless: 118 -> 118 with
+    // a byte-identical id set.
     //
     // Do NOT re-add a 'chain multiplier growth rate' branch. That phrase occurs
-    // 156 times, but 149 of them are "boosts Chain Multiplier Growth Rate by Nx"
+    // 156 times, but 148 of them are "boosts Chain Multiplier Growth Rate by Nx"
     // — the crew BOOST, i.e. the OPPOSITE mechanic, owned by
     // chain_multiplier_growth_rate. This key cures the enemy-inflicted debuff.
     matcher: (target) => target.includes('chain coefficient reduction'),
@@ -1569,10 +1772,16 @@ const TARGET_ALIASES = [
     // with the FRIENDLY "Chain Lock" buff (which locks YOUR chain multiplier at a
     // value — the opposite, carried by chain_multiplier_lock): every corpus
     // "chain lock" removal-target actually comes from "increases duration of any
-    // Chain Lock/Limit/Boundary buffs" (a friendly-buff EXTENSION), so all 3
-    // "chain lock"-only matches (#4000/#4128/#4289 — the entire captainAbility
-    // count) were false positives, and ZERO genuine enemy removals use "Chain
-    // Lock" without "Chain Multiplier Limit". Require the real debuff name.
+    // Chain Lock/Limit/Boundary buffs" (a friendly-buff EXTENSION), so the three
+    // "chain lock"-only matches (#4000, #4128, #4289) were false positives, and
+    // ZERO genuine enemy removals use "Chain Lock" without "Chain Multiplier
+    // Limit". Require the real debuff name.
+    //
+    // Corrected 2026-07-18: those three are NOT "the entire captainAbility count".
+    // #4000 and #4289 are captainAbility, but #4128 carries the wording in
+    // superSpecialText, and it is now withheld by the enemy-ownership guard in the
+    // TURN_PATTERNS consumer rather than by this alias — so restoring the alias
+    // today would re-admit two, not three.
     matcher: (target) => target.includes('chain multiplier limit'),
   },
   {
@@ -2013,7 +2222,54 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
     // (identical logic already validated for specialText), not the whole
     // special catalog. extractPrimaryAbilityBranchText still bounds parsing to
     // the primary activation branch.
-    addSpecialAbilityMatches(abilities, seen, normalizedText, source, new Set(['territory']));
+    // `chain_multiplier_growth_rate` joins `territory` on this per-key allowlist.
+    // Ten units grant "Boosts Chain Multiplier Growth Rate by Nx" ONLY in their
+    // super special (#3071, #3369, #3430, #3553, #3652, #3669, #3898, #4490,
+    // #4536, #4556) and none of them carries the wording in its base special, so
+    // the double-tagging this restriction exists to prevent cannot occur for it.
+    // Upstream OPTC-DB lists superSpecial among this effect's matcher targets.
+    // Audited 2026-07-18: 104 -> 114, exactly one key of 263 changes.
+    //
+    // Do NOT widen this to the whole matcher set. Dropping the allowlist was
+    // measured to move 37 keys and add 577 ids, including frozen counts
+    // (chain_multiplier_additive_boost 312 -> 323, change_slots 1513 -> 1595).
+    // `restore_advance_special_charge` joins them for the same reason: #4032 Law
+    // and #4345 Tashigi carry "Advances Special Cooldown of this character to MAX"
+    // ONLY in their super special, neither repeats it in the base special, and
+    // both are genuine self-charge grants. 98 -> 100.
+    addSpecialAbilityMatches(
+      abilities,
+      seen,
+      normalizedText,
+      source,
+      new Set([
+        'territory',
+        'chain_multiplier_growth_rate',
+        'restore_advance_special_charge',
+        // apply_resistance_reduction: upstream declares superSpecial among this
+        // effect's carriers, and 23 characters apply enemy Resistance Reduction
+        // ONLY in their super special. 87 -> 110.
+        'apply_resistance_reduction',
+        // additional_damage_boost: upstream targets are
+        // ['special','superSpecial','swap','support']; 9 characters grant the
+        // Additional Damage buff only in their super special. 76 -> 85.
+        'additional_damage_boost',
+        // final_tap_atk_boost: 15 characters grant "boosts Final Tap ATK of <scope>
+        // by N%" ONLY in their super special. 48 -> 63.
+        //
+        // Unlike the entries above, this one DOES produce some base-special overlap:
+        // #4060, #4338, #4518 and #4374 gain a second superSpecialText row (#4374
+        // carries the wording in both fields). Records go 51 -> 70 while matchCount
+        // stays a Set, so membership is unaffected — the same benign double-tagging
+        // already tolerated on chain_multiplier_growth_rate.
+        'final_tap_atk_boost',
+        // apply_weakened: the fork's own matcher declares targets
+        // ['captain','special','superSpecial','swap','support']. #4290, #4477 and
+        // #4611 inflict Weaken ONLY in their super special, and none repeats the
+        // wording in its base special, so double-tagging is impossible. 29 -> 32.
+        'apply_weakened',
+      ]),
+    );
   }
 
   TURN_PATTERNS.forEach(({ pattern, resolveTurns, isCompleteRemoval }) => {
@@ -2037,8 +2293,23 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         match.index + match[0].length,
       );
 
+      // normalizeTargetText strips the "enemies'" possessive before aliasing, so
+      // by the time a segment reaches TARGET_ALIASES an ENEMY-side strip is
+      // indistinguishable from a CREW cure: "removes enemies' Poison duration
+      // completely" resolved to the bare target `poison` and tagged the crew cure
+      // key remove_poison. Recover the ownership from the RAW target and drop
+      // enemy-owned segments for keys that are not enemy-targeted.
+      const enemyOwnedKeys = resolveEnemyOwnedTargetKeys(rawTarget);
+
       normalizeTargetSegments(rawTarget).forEach((segment) => {
         resolveAbilityDefinitions(segment).forEach((normalized) => {
+          if (
+            enemyOwnedKeys.has(normalized.key) &&
+            !ENEMY_TARGETED_REMOVAL_ABILITY_KEYS.has(normalized.key)
+          ) {
+            return;
+          }
+
           const ability = {
             key: normalized.key,
             label: normalized.label,
@@ -2189,6 +2460,24 @@ const DURATION_TURN_KEYS = new Set([
   // did not, so the picker omitted a turn filter the data genuinely supports.
   'boost_base_atk',
   'boost_slot_effects',
+  // boost_rcv is the stat twin of boost_atk and shares its grammar exactly — 14 of
+  // its 44 members read "boosts ATK and RCV of <scope> by Nx for M turns" in ONE
+  // clause, so ATK was turn-filterable while RCV was not, for the same sentence.
+  // That is the same odd-one-out shape that justified boost_base_atk. 42 of 44
+  // carry an explicit duration; the 2 that do not (#1358/#1359) are correct
+  // erasures, since their "1 turn" belongs to the neighbouring delay clause and
+  // not to the RCV boost.
+  'boost_rcv',
+  // swap_captains: 64 of 64 members carry an explicit duration, so the erasure cost
+  // of a turn filter is ZERO, and the value is genuinely selectable — a 10-turn
+  // Captain Swap is a different tool from a 1-turn one. Requires the LAZY gap on its
+  // matcher: a greedy gap swallows "for 1 turn" on #4218/#4219, whose upstream text
+  // is missing its period, and would silently null their duration.
+  //
+  // Contrast territory and apply_resistance_reduction, both declined this batch:
+  // those needed a SHARED duration-extraction change affecting every key and would
+  // have erased members that carry no turn count. Neither applies here.
+  'swap_captains',
   'reduce_damage',
   'reduce_damage_over_threshold',
   'nullify_damage',
@@ -3126,6 +3415,44 @@ function resolveSailorAbilityText(character) {
     .join(' ');
 }
 
+// swapData ("Captain Shift") is NOT a general ability source. Feeding it through
+// analyzeBuilderAbilityText unfiltered was measured to move 40 keys (+564 ids) and
+// break six frozen counts, because TURN_PATTERNS runs ABOVE the
+// specialText/captainAbility gate and is itself ungated by source. It carries
+// exactly one effect we model — "optionally swaps this unit with your captain for
+// N turns" on 8 Captain Shift units — so it is read, analysed normally, and then
+// POST-FILTERED to that single key.
+const SWAP_DATA_ALLOWED_KEYS = new Set([
+  'swap_captains',
+  // #3507/#3508 carry "deals 500,000 Fixed True damage, ignoring Normal Attack
+  // Only, to all enemies" in swapData.super and nowhere else, so the NAO pierce
+  // was invisible for them. Same post-filter discipline as above: swapData is read
+  // and analysed normally, then filtered to this allowlist.
+  'ignore_normal_attack_only',
+  // #4348 inflicts Weaken only in swapData.super, and upstream lists 'swap' among
+  // this effect's targets. Same accepted provenance compromise as #3507/#3508:
+  // the row is labelled source 'specialText'. 32 -> 33.
+  'apply_weakened',
+]);
+
+function resolveSwapDataTexts(character) {
+  const swapData = character?.detail?.swapData ?? null;
+
+  if (!swapData) {
+    return [];
+  }
+
+  if (typeof swapData === 'string') {
+    return [swapData];
+  }
+
+  if (typeof swapData === 'object') {
+    return [swapData.base, swapData.super].filter((text) => typeof text === 'string' && text);
+  }
+
+  return [];
+}
+
 export async function enrichCharactersWithBuilderAbilities(
   characters,
   { batchSize = 200, logger = console.log, abilityCorrections = null } = {},
@@ -3150,6 +3477,20 @@ export async function enrichCharactersWithBuilderAbilities(
         ),
         ...captainAbilityTexts.flatMap((text) => analyzeBuilderAbilityText(text, 'captainAbility')),
         ...analyzeBuilderAbilityText(sailorAbilityText, 'sailorAbilities'),
+        // Rows are labelled source 'specialText' deliberately: AutoBuildAbilitySource
+        // is a closed union consumed via `satisfies Record<AutoBuildAbilitySource,
+        // string>`, so a new 'swapData' member would fail typecheck and demand an
+        // i18n label in every locale, and normalizeExistingBuilderAbilities has no
+        // swapData branch and falls through to 'specialText' regardless. Known
+        // consequence for these 8: a correction rule scoped by sourceScopes would
+        // match a source they do not literally have, and the evidence tooltip points
+        // at specialText, which for them lacks the clause. Adding a real swapData
+        // source member is a separate cross-cutting change.
+        ...resolveSwapDataTexts(character).flatMap((text) =>
+          analyzeBuilderAbilityText(text, 'specialText').filter((ability) =>
+            SWAP_DATA_ALLOWED_KEYS.has(ability.key),
+          ),
+        ),
         ...extractPotentialBuilderAbilities(character),
         ...extractSupportBuilderAbilities(character),
       ];
@@ -3859,6 +4200,47 @@ function isAbilitySource(value) {
 
 function correctionSourceMatches(ability, sourceScopes) {
   return sourceScopes.includes(ability.source);
+}
+
+/**
+ * Keys in a duration-reduction target that belong to the ENEMY rather than the crew.
+ *
+ * `normalizeTargetText` deliberately strips the "enemies'" possessive (it is
+ * load-bearing for ~2,977 emissions across the 11 enemy-targeted keys), so the
+ * alias layer cannot tell "removes enemies' Poison duration completely" from a
+ * crew Poison cure. This walks the RAW target instead, keeping a sticky owner
+ * across the comma/"and" list the way the wording reads, and reports the keys for
+ * which EVERY contributing segment is enemy-owned.
+ *
+ * Per-segment, not whole-target: a mixed list keeps its crew half. Testing the
+ * whole raw target instead regresses real cures — Monet #2010/#2011 ("Bind and
+ * reduces enemies' Percent Damage Reduction" -> remove_bind) and Shirahoshi
+ * #2172/#2173 ("enemies' Percent Damage Reduction and crew's Chain Coefficient
+ * Reduction" -> remove_chain_coefficient_reduction).
+ */
+function resolveEnemyOwnedTargetKeys(rawTarget) {
+  const ownerByKey = new Map();
+  let owner = 'crew';
+
+  String(rawTarget ?? '')
+    .split(/\s*,\s*|\s+and\s+/gi)
+    .forEach((rawSegment) => {
+      if (/\benem(?:y|ies)['’]?s?\b/i.test(rawSegment)) {
+        owner = 'enemy';
+      } else if (/\bcrew['’]?s?\b/i.test(rawSegment)) {
+        owner = 'crew';
+      }
+
+      normalizeTargetSegments(rawSegment).forEach((segment) => {
+        resolveAbilityDefinitions(segment).forEach(({ key }) => {
+          // Any crew-owned contribution keeps the key; only an all-enemy key is
+          // reported, so a mixed list never loses its crew side.
+          ownerByKey.set(key, ownerByKey.get(key) === 'crew' ? 'crew' : owner);
+        });
+      });
+    });
+
+  return new Set([...ownerByKey].filter(([, value]) => value === 'enemy').map(([key]) => key));
 }
 
 function normalizeTargetSegments(targetText) {

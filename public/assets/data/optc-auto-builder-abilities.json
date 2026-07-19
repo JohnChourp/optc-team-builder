@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-18T16:21:08.874Z",
+  "generatedAt": "2026-07-19T09:47:44.699Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -2338,7 +2338,7 @@
     },
     {
       "key": "ignore_normal_attack_only",
-      "label": "Ignore DEF/Defensive Effects",
+      "label": "Ignore Normal Attack Only (NAO)",
       "category": "special",
       "groupLabel": "Damage",
       "groupOrder": 1,
@@ -2354,12 +2354,14 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 34,
+      "matchCount": 37,
       "matchingCharacterIds": [
         3176,
         3177,
         3279,
         3280,
+        3507,
+        3508,
         3744,
         3745,
         3754,
@@ -2389,7 +2391,8 @@
         4440,
         4441,
         4458,
-        4469
+        4469,
+        4612
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -2402,14 +2405,14 @@
         3177,
         3279,
         3280,
-        3744
+        3507
       ],
       "sampleTexts": [
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
         "Boosts ATK of Driven and Powerhouse characters by 4x, their HP by 1.75x, reduces RCV of Driven and Powerhouse characters by 50%, increases damage received by 1.5x and reduces Special Cooldown of this character by 2 turns after each turn you take damage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn.",
         "Boosts ATK of Driven and Powerhouse characters by 4x, their HP by 1.75x, reduces RCV of Driven and Powerhouse characters by 50%, increases damage received by 1.5x and reduces Special Cooldown of this character by 2 turns after each turn you take damage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn.",
-        "Reduces enemies' Damage Nullification duration by 5 turns, changes all orbs, including [BLOCK] orbs, into Matching orbs and Boost ATK of [STR], Slasher and Free Spirit characters by 3x for 2 turns. If \"Inherited Oden Two-Sword Style: Paradise Totsuka\" or \"Oden Two-Sword Style: Paradise Totsuka\" was used in the same turn when special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies, increases boost effects of ATK UP and Orb Amplification buffs by +0.25x and increases duration of any ATK boosting buffs and Orb Amplification buffs by 1 turn, including effects activated in the same Ability."
+        "Reduces Special Cooldown of [STR], [QCK] and Powerhouse characters by 1 turn, deals 500x character's ATK in Typeless damage to all enemies and becomes Kaido & Lead Performers for 3 turns. If your crew has 5 or more Powerhouse characters when the special is activated, boosts the Color Affinity of [STR], [QCK] and Powerhouse characters by 2.5x for 1 turn, by 2.25x otherwise."
       ]
     },
     {
@@ -8320,7 +8323,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 53,
+      "matchCount": 64,
       "matchingCharacterIds": [
         827,
         928,
@@ -8330,6 +8333,9 @@
         1636,
         1637,
         1641,
+        1703,
+        1704,
+        2139,
         2305,
         2306,
         2353,
@@ -8346,6 +8352,7 @@
         3490,
         3491,
         3524,
+        3648,
         3869,
         3870,
         3872,
@@ -8356,6 +8363,13 @@
         4048,
         4114,
         4115,
+        4116,
+        4123,
+        4124,
+        4125,
+        4126,
+        4127,
+        4128,
         4136,
         4137,
         4186,
@@ -8388,6 +8402,13 @@
         4048,
         4114,
         4115,
+        4116,
+        4123,
+        4124,
+        4125,
+        4126,
+        4127,
+        4128,
         4186,
         4256,
         4263,
@@ -8968,12 +8989,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 74,
+      "matchCount": 85,
       "matchingCharacterIds": [
         1046,
         1047,
@@ -9000,6 +9022,7 @@
         2114,
         2115,
         2142,
+        2226,
         2260,
         2261,
         2288,
@@ -9013,19 +9036,23 @@
         2437,
         2509,
         2510,
+        2718,
         2739,
         2803,
         2804,
         2822,
+        2960,
         2974,
         2981,
         2982,
+        3100,
         3142,
         3260,
         3261,
         3436,
         3600,
         3666,
+        3718,
         3890,
         3891,
         4010,
@@ -9039,15 +9066,21 @@
         4245,
         4246,
         4253,
+        4290,
         4293,
+        4294,
         4295,
         4297,
         4298,
+        4300,
+        4323,
         4329,
         4330,
         4335,
+        4391,
         4421,
         4432,
+        4556,
         4587
       ],
       "turnMatchingCharacterIds": [],
@@ -9688,12 +9721,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 104,
+      "matchCount": 114,
       "matchingCharacterIds": [
         366,
         367,
@@ -9748,18 +9782,25 @@
         2930,
         2959,
         2960,
+        3071,
         3178,
         3179,
         3211,
         3240,
+        3369,
         3429,
+        3430,
+        3553,
         3586,
+        3652,
+        3669,
         3718,
         3754,
         3755,
         3816,
         3831,
         3832,
+        3898,
         3932,
         3933,
         3946,
@@ -9797,7 +9838,10 @@
         4469,
         4478,
         4486,
+        4490,
         4524,
+        4536,
+        4556,
         4598
       ],
       "turnMatchingCharacterIds": [],
@@ -10753,12 +10797,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 48,
+      "matchCount": 63,
       "matchingCharacterIds": [
         4040,
         4041,
@@ -10770,8 +10815,10 @@
         4064,
         4098,
         4109,
+        4111,
         4119,
         4120,
+        4162,
         4163,
         4164,
         4173,
@@ -10784,26 +10831,39 @@
         4231,
         4239,
         4240,
+        4266,
         4277,
         4288,
         4308,
+        4317,
+        4318,
         4328,
+        4336,
+        4337,
         4338,
         4349,
         4354,
+        4367,
         4373,
         4374,
         4395,
         4412,
         4418,
+        4425,
         4431,
         4433,
+        4453,
         4459,
         4486,
         4508,
         4518,
         4521,
+        4522,
+        4524,
+        4526,
+        4527,
         4532,
+        4537,
         4544,
         4578,
         4593,
@@ -41920,7 +41980,7 @@
     },
     {
       "key": "remove_increase_damage_taken",
-      "label": "Increased damage taken Duration",
+      "label": "Remove Increase Damage Taken",
       "category": "special",
       "groupLabel": "Reduce Status Effect Duration",
       "groupOrder": 6,
@@ -41988,8 +42048,7 @@
             3526,
             3579,
             3784,
-            3819,
-            4529
+            3819
           ],
           "turnMatchingCharacterIds": [
             {
@@ -42055,8 +42114,7 @@
                 2839,
                 3579,
                 3784,
-                3819,
-                4529
+                3819
               ]
             },
             {
@@ -42071,7 +42129,7 @@
           ]
         }
       ],
-      "matchCount": 49,
+      "matchCount": 48,
       "matchingCharacterIds": [
         2049,
         2050,
@@ -42120,8 +42178,7 @@
         3526,
         3579,
         3784,
-        3819,
-        4529
+        3819
       ],
       "turnMatchingCharacterIds": [
         {
@@ -42187,8 +42244,7 @@
             2839,
             3579,
             3784,
-            3819,
-            4529
+            3819
           ]
         },
         {
@@ -44537,7 +44593,7 @@
     },
     {
       "key": "remove_chain_multiplier_limit",
-      "label": "Lock Chain Multiplier",
+      "label": "Chain Multiplier Limit",
       "category": "special",
       "groupLabel": "Reduce Status Effect Duration",
       "groupOrder": 6,
@@ -45205,7 +45261,6 @@
             4423,
             4434,
             4482,
-            4483,
             4489,
             4510,
             4511,
@@ -45323,7 +45378,6 @@
                 4423,
                 4434,
                 4482,
-                4483,
                 4489,
                 4510,
                 4511,
@@ -45434,7 +45488,6 @@
             4423,
             4434,
             4482,
-            4483,
             4489,
             4510,
             4511,
@@ -45448,7 +45501,7 @@
           ]
         }
       ],
-      "matchCount": 108,
+      "matchCount": 107,
       "matchingCharacterIds": [
         379,
         380,
@@ -45547,7 +45600,6 @@
         4423,
         4434,
         4482,
-        4483,
         4489,
         4510,
         4511,
@@ -45665,7 +45717,6 @@
             4423,
             4434,
             4482,
-            4483,
             4489,
             4510,
             4511,
@@ -45776,7 +45827,6 @@
         4423,
         4434,
         4482,
-        4483,
         4489,
         4510,
         4511,
@@ -45832,20 +45882,253 @@
       "groupLabel": "Reduce Status Effect Duration",
       "groupOrder": 6,
       "effectOrder": 12,
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
-      "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "availableEffectTargetScopes": [
+        "crew"
+      ],
+      "effectTargetScopeMatchingCharacterIds": [
+        {
+          "effectTargetScope": "crew",
+          "characterIds": [
+            1078,
+            1079,
+            2012,
+            2013,
+            2190,
+            2191,
+            2216,
+            2217,
+            2442,
+            2443,
+            2539,
+            2540,
+            2631,
+            2635,
+            2695,
+            2696,
+            2796,
+            2797,
+            2931,
+            3045,
+            3165,
+            3166,
+            3182,
+            3183,
+            3199,
+            3263,
+            3357,
+            3784,
+            4489
+          ],
+          "turnMatchingCharacterIds": [
+            {
+              "minTurns": 3,
+              "characterIds": [
+                2190,
+                2191
+              ]
+            },
+            {
+              "minTurns": 4,
+              "characterIds": [
+                3045
+              ]
+            },
+            {
+              "minTurns": 5,
+              "characterIds": [
+                2012,
+                2013,
+                2631,
+                2796,
+                2797,
+                2931,
+                3182,
+                3183,
+                3199,
+                3263,
+                3784
+              ]
+            },
+            {
+              "minTurns": 10,
+              "characterIds": [
+                2216,
+                2217,
+                2635
+              ]
+            },
+            {
+              "minTurns": 15,
+              "characterIds": [
+                2631
+              ]
+            },
+            {
+              "minTurns": 99,
+              "characterIds": [
+                1078,
+                1079,
+                2442,
+                2443,
+                2539,
+                2540,
+                2695,
+                2696,
+                3165,
+                3166,
+                3357,
+                4489
+              ]
+            }
+          ],
+          "completeRemovalCharacterIds": [
+            1078,
+            1079,
+            2442,
+            2443,
+            2539,
+            2540,
+            2695,
+            2696,
+            3165,
+            3166,
+            3357,
+            4489
+          ]
+        }
+      ],
+      "matchCount": 29,
+      "matchingCharacterIds": [
+        1078,
+        1079,
+        2012,
+        2013,
+        2190,
+        2191,
+        2216,
+        2217,
+        2442,
+        2443,
+        2539,
+        2540,
+        2631,
+        2635,
+        2695,
+        2696,
+        2796,
+        2797,
+        2931,
+        3045,
+        3165,
+        3166,
+        3182,
+        3183,
+        3199,
+        3263,
+        3357,
+        3784,
+        4489
+      ],
+      "turnMatchingCharacterIds": [
+        {
+          "minTurns": 3,
+          "characterIds": [
+            2190,
+            2191
+          ]
+        },
+        {
+          "minTurns": 4,
+          "characterIds": [
+            3045
+          ]
+        },
+        {
+          "minTurns": 5,
+          "characterIds": [
+            2012,
+            2013,
+            2631,
+            2796,
+            2797,
+            2931,
+            3182,
+            3183,
+            3199,
+            3263,
+            3784
+          ]
+        },
+        {
+          "minTurns": 10,
+          "characterIds": [
+            2216,
+            2217,
+            2635
+          ]
+        },
+        {
+          "minTurns": 15,
+          "characterIds": [
+            2631
+          ]
+        },
+        {
+          "minTurns": 99,
+          "characterIds": [
+            1078,
+            1079,
+            2442,
+            2443,
+            2539,
+            2540,
+            2695,
+            2696,
+            3165,
+            3166,
+            3357,
+            4489
+          ]
+        }
+      ],
+      "completeRemovalCharacterIds": [
+        1078,
+        1079,
+        2442,
+        2443,
+        2539,
+        2540,
+        2695,
+        2696,
+        3165,
+        3166,
+        3357,
+        4489
+      ],
+      "sampleCharacterIds": [
+        1078,
+        1079,
+        2012,
+        2013,
+        2190
+      ],
+      "sampleTexts": [
+        "Recovers 6x character's RCV in HP. Reduces Paralysis duration by 3 turns. Recovers 15x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely. Recovers 50x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely",
+        "Recovers 6x character's RCV in HP. Reduces Paralysis duration by 3 turns. Recovers 15x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely. Recovers 50x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely",
+        "Reduces Bind and Paralysis duration by 3 turns and changes [BLOCK] and [BOMB] orbs into [RCV] orbs. If your Captain is a Free Spirit Character, reduces RCV DOWN and Blindness duration by 5 turns. Reduces Bind and Paralysis duration by 10 turns, recovers 50x character's RCV in HP and changes [BLOCK] and [BOMB] orbs into [RCV] orbs. If your Captain is a Free Spirit Character, reduces RCV DOWN, Special Bind and Blindness duration by 5 turns",
+        "Reduces Bind and Paralysis duration by 3 turns and changes [BLOCK] and [BOMB] orbs into [RCV] orbs. If your Captain is a Free Spirit Character, reduces RCV DOWN and Blindness duration by 5 turns. Reduces Bind and Paralysis duration by 10 turns, recovers 50x character's RCV in HP and changes [BLOCK] and [BOMB] orbs into [RCV] orbs. If your Captain is a Free Spirit Character, reduces RCV DOWN, Special Bind and Blindness duration by 5 turns",
+        "Reduces enemies' Threshold Damage Reduction duration by 5 turns and boosts ATK of Slasher and Striker characters by 1.75x for 1 turn. If your Captain is a Slasher or Striker character, reduces RCV DOWN and Increase Damage Taken duration by 3 turns."
+      ]
     },
     {
       "key": "remove_sfx",
@@ -51066,7 +51349,7 @@
     },
     {
       "key": "inflict_poison",
-      "label": "Poison",
+      "label": "Inflict Poison",
       "category": "special",
       "groupLabel": "Apply Status Effect",
       "groupOrder": 8,
@@ -51082,10 +51365,12 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 67,
+      "matchCount": 72,
       "matchingCharacterIds": [
         58,
         215,
+        383,
+        384,
         391,
         392,
         437,
@@ -51097,6 +51382,8 @@
         769,
         837,
         838,
+        1057,
+        1058,
         1149,
         1158,
         1159,
@@ -51117,12 +51404,12 @@
         2354,
         2453,
         2454,
+        2480,
+        2481,
         2516,
         2517,
         2732,
         2733,
-        2828,
-        2829,
         3022,
         3160,
         3277,
@@ -51150,6 +51437,7 @@
         4509,
         4510,
         4511,
+        4548,
         4550
       ],
       "turnMatchingCharacterIds": [],
@@ -51162,16 +51450,16 @@
       "sampleCharacterIds": [
         58,
         215,
-        391,
-        392,
-        437
+        383,
+        384,
+        391
       ],
       "sampleTexts": [
         "Poisons all enemies",
         "Poisons all enemies",
-        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn",
-        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn",
-        "Recovers 3x character's RCV in HP, reduces damage received by 80% for 1 turn, Poisons enemies for 1,000 for a single turn"
+        "Strongly Poisons one enemy",
+        "Strongly Poisons one enemy",
+        "Reduces damage received by 90% for 1 turn, reduces the defense of all enemies by 80% for 1 turn, Poisons enemies for 1,000 damage for 1 turn"
       ]
     },
     {
@@ -51359,13 +51647,15 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 87,
+      "matchCount": 110,
       "matchingCharacterIds": [
+        3654,
         3657,
         3681,
         3682,
@@ -51374,6 +51664,8 @@
         3744,
         3745,
         3778,
+        3824,
+        3830,
         3853,
         3869,
         3870,
@@ -51384,6 +51676,7 @@
         3891,
         3916,
         3917,
+        3948,
         3965,
         3969,
         3989,
@@ -51392,6 +51685,7 @@
         4008,
         4023,
         4031,
+        4043,
         4057,
         4058,
         4059,
@@ -51407,6 +51701,8 @@
         4110,
         4111,
         4126,
+        4127,
+        4128,
         4136,
         4137,
         4158,
@@ -51416,6 +51712,7 @@
         4177,
         4180,
         4193,
+        4221,
         4223,
         4226,
         4230,
@@ -51427,18 +51724,28 @@
         4256,
         4275,
         4288,
+        4300,
         4303,
         4314,
+        4329,
         4336,
         4338,
         4341,
         4342,
+        4367,
+        4371,
+        4380,
         4383,
+        4388,
         4398,
         4399,
+        4401,
         4410,
+        4418,
         4423,
+        4441,
         4457,
+        4460,
         4462,
         4472,
         4476,
@@ -51447,11 +51754,16 @@
         4499,
         4507,
         4508,
+        4514,
         4519,
         4529,
         4540,
         4541,
         4544,
+        4576,
+        4584,
+        4585,
+        4594,
         4610
       ],
       "turnMatchingCharacterIds": [],
@@ -51479,18 +51791,18 @@
         4508
       ],
       "sampleCharacterIds": [
+        3654,
         3657,
         3681,
         3682,
-        3712,
-        3732
+        3712
       ],
       "sampleTexts": [
+        "Changes the orb of this character into a [TND] orb, deals 80x character's ATK in Typeless damage to all enemies, reduces Special Cooldown of [STR], [DEX] and [QCK] characters by 1 turn and reduces enemies' Powerhouse Resistance by -50% for 1 turn and transforms Powerhouse characters into Super Powerhouse characters.",
         "Reduces Burn and Chain Coefficient Reduction duration by 5 turns, locks all orbs for 1 turn, makes [PSY], [INT], [RCV] and [TND] orbs beneficial for all characters for 3 turns and boosts Orb Effects by 1.75x for 1 turn. If your Captain is a [STR] or [QCK] character, reduces enemies' STR, DEX and QCK Resistance by -20% for 1 turn.",
         "Recovers 50x character's RCV in HP, allowing HP Overfill up to 2x MAX HP, reduces Bind and Despair duration by 6 turns, reduces enemies' Cerebral Resistance by -50% for 1 turn and boosts Color Affinity of [INT] and Cerebral characters by 2.25x for 1 turn. If during that turn you score 3 PERFECT hits, boosts Color Affinity of [INT] and Cerebral characters by 2.5x for 1 turn.",
         "Recovers 50x character's RCV in HP, allowing HP Overfill up to 2x MAX HP, reduces Bind and Despair duration by 6 turns, reduces enemies' Cerebral Resistance by -50% for 1 turn and boosts Color Affinity of [INT] and Cerebral characters by 2.25x for 1 turn. If during that turn you score 3 PERFECT hits, boosts Color Affinity of [INT] and Cerebral characters by 2.5x for 1 turn.",
-        "Deals 30x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 4 turns and reduces enemies' [PSY] Resistance by -15% for 1 turn. If HP is below 50% when the special is activated, recovers missing HP to 51% MAX HP.. Deals 50x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 5 turns and reduces enemies' [PSY] Resistance by -20% for 1 turn. If HP is below 50% when the special is activated, recovers missing HP to 75% MAX HP.. Deals 80x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 7 turns, reduces enemies' [PSY] Resistance by -30% for 1 turn and recovers all missing HP.",
-        "Reduces Special Cooldown of all characters by 1 turn, deals 35x character's ATK in [QCK] damage to one enemy, reduces Special Bind duration by 5 turns, makes [STR] and [DEX] orbs beneficial for all characters for 3 turns, boosts Color Affinity of [QCK] characters by 2x for 1 turn and reduces enemies' [QCK] Resistance by -10% for 1 turn."
+        "Deals 30x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 4 turns and reduces enemies' [PSY] Resistance by -15% for 1 turn. If HP is below 50% when the special is activated, recovers missing HP to 51% MAX HP.. Deals 50x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 5 turns and reduces enemies' [PSY] Resistance by -20% for 1 turn. If HP is below 50% when the special is activated, recovers missing HP to 75% MAX HP.. Deals 80x character's ATK in [PSY] damage to one enemy, reduces Burn and Special Bind duration by 7 turns, reduces enemies' [PSY] Resistance by -30% for 1 turn and recovers all missing HP."
       ]
     },
     {
@@ -51571,12 +51883,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 30,
+      "matchCount": 33,
       "matchingCharacterIds": [
         4083,
         4084,
@@ -51586,8 +51899,10 @@
         4166,
         4167,
         4202,
+        4290,
         4307,
         4336,
+        4348,
         4367,
         4402,
         4405,
@@ -51595,8 +51910,8 @@
         4434,
         4463,
         4464,
+        4477,
         4483,
-        4490,
         4494,
         4495,
         4502,
@@ -51607,13 +51922,13 @@
         4566,
         4591,
         4594,
-        4597
+        4597,
+        4611
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
         4083,
         4084,
-        4490,
         4591
       ],
       "sampleCharacterIds": [
@@ -53415,7 +53730,7 @@
     },
     {
       "key": "restore_advance_special_charge",
-      "label": "Restore/Advance Special Cooldown",
+      "label": "Restore/Advance Special Cooldown (Special Rewind Recovery)",
       "category": "special",
       "groupLabel": "Reduction",
       "groupOrder": 9,
@@ -53425,12 +53740,13 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 98,
+      "matchCount": 100,
       "matchingCharacterIds": [
         2690,
         2740,
@@ -53484,6 +53800,7 @@
         4023,
         4025,
         4030,
+        4032,
         4033,
         4078,
         4079,
@@ -53511,6 +53828,7 @@
         4322,
         4329,
         4335,
+        4345,
         4381,
         4416,
         4417,
@@ -54936,7 +55254,7 @@
       "groupLabel": "Other",
       "groupOrder": 10,
       "effectOrder": 2,
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
@@ -54945,10 +55263,8 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 71,
+      "matchCount": 44,
       "matchingCharacterIds": [
-        362,
-        363,
         404,
         405,
         468,
@@ -54958,7 +55274,6 @@
         542,
         576,
         583,
-        608,
         612,
         613,
         622,
@@ -54966,8 +55281,6 @@
         681,
         715,
         716,
-        734,
-        735,
         822,
         857,
         858,
@@ -54981,55 +55294,91 @@
         1359,
         1445,
         1582,
-        1638,
-        1789,
-        2028,
-        2029,
-        2073,
-        2074,
         2216,
         2217,
-        2255,
         2288,
         2289,
         2290,
-        2337,
-        2338,
         2379,
         2526,
         2564,
         2565,
-        2695,
-        2696,
         2846,
         2931,
-        3333,
-        3334,
-        3363,
-        3364,
         3413,
         3459,
         3693,
-        3814,
-        4019,
-        4020,
-        4053,
-        4294,
-        4295,
-        4397,
-        4402
+        4053
       ],
-      "turnMatchingCharacterIds": [],
+      "turnMatchingCharacterIds": [
+        {
+          "minTurns": 1,
+          "characterIds": [
+            468,
+            470,
+            542,
+            576,
+            612,
+            613,
+            857,
+            858,
+            915,
+            916,
+            944,
+            945,
+            1164,
+            1165,
+            1445,
+            1582,
+            2216,
+            2217,
+            2379,
+            2526,
+            2846,
+            2931,
+            3459,
+            3693,
+            4053
+          ]
+        },
+        {
+          "minTurns": 2,
+          "characterIds": [
+            404,
+            405,
+            535,
+            536,
+            680,
+            681,
+            715,
+            716,
+            2288,
+            2289,
+            2290,
+            3413
+          ]
+        },
+        {
+          "minTurns": 3,
+          "characterIds": [
+            583,
+            622,
+            822,
+            2564,
+            2565
+          ]
+        }
+      ],
       "sampleCharacterIds": [
-        362,
-        363,
         404,
         405,
-        468
+        468,
+        470,
+        535
       ],
       "sampleTexts": [
-        "For 2 turns, boosts the amount healed by [RCV] orbs by 1.5x, then 2x, then 2.5x from the third crew member onward",
-        "For 2 turns, boosts the amount healed by [RCV] orbs by 1.5x, then 2x, then 2.5x from the third crew member onward",
+        "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
+        "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
         "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
         "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
         "Boosts RCV of all characters by 1.5x for 1 turn"
@@ -56982,12 +57331,12 @@
     },
     {
       "key": "swap_captains",
-      "label": "Swap Captains",
+      "label": "Captain Swap",
       "category": "special",
       "groupLabel": "Other",
       "groupOrder": 10,
       "effectOrder": 11,
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
@@ -56996,7 +57345,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 56,
+      "matchCount": 64,
       "matchingCharacterIds": [
         1231,
         1232,
@@ -57044,18 +57393,121 @@
         4169,
         4218,
         4219,
+        4257,
+        4267,
+        4268,
         4271,
         4272,
+        4275,
         4311,
         4312,
+        4322,
         4391,
+        4405,
         4460,
         4470,
         4471,
+        4476,
         4501,
+        4506,
         4608
       ],
-      "turnMatchingCharacterIds": [],
+      "turnMatchingCharacterIds": [
+        {
+          "minTurns": 1,
+          "characterIds": [
+            2136,
+            2137,
+            2337,
+            2338,
+            3288,
+            3290,
+            3291,
+            3668,
+            3669,
+            3724,
+            3725,
+            3726,
+            3727,
+            3842,
+            3847,
+            3848,
+            3968,
+            4028,
+            4029,
+            4127,
+            4128,
+            4168,
+            4169,
+            4218,
+            4219,
+            4391,
+            4501,
+            4608
+          ]
+        },
+        {
+          "minTurns": 2,
+          "characterIds": [
+            1231,
+            1232,
+            1398,
+            1399,
+            2632,
+            2885,
+            2886,
+            3070,
+            3071,
+            3289,
+            3655,
+            3736,
+            4032,
+            4311,
+            4312
+          ]
+        },
+        {
+          "minTurns": 3,
+          "characterIds": [
+            2415,
+            2416,
+            3369,
+            3417,
+            3888,
+            3889,
+            4271,
+            4272,
+            4275,
+            4405,
+            4460,
+            4470,
+            4471
+          ]
+        },
+        {
+          "minTurns": 5,
+          "characterIds": [
+            3992,
+            3993,
+            4506
+          ]
+        },
+        {
+          "minTurns": 6,
+          "characterIds": [
+            4476
+          ]
+        },
+        {
+          "minTurns": 10,
+          "characterIds": [
+            4257,
+            4267,
+            4268,
+            4322
+          ]
+        }
+      ],
       "sampleCharacterIds": [
         1231,
         1232,
@@ -57066,9 +57518,9 @@
       "sampleTexts": [
         "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
         "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
-        "For Slasher characters, randomizes all non-Matching orbs. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
-        "For Slasher characters, randomizes all non-Matching orbs. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
-        "Deals 30x character's ATK in [INT] damage to one enemy and boosts ATK of this character by 2x for 1 turn. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 1 turn"
+        "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
+        "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
+        "For Slasher characters, randomizes all non-Matching orbs. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns"
       ]
     },
     {

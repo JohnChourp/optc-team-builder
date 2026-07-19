@@ -15,7 +15,7 @@
   },
   {
     "key": "ignore_normal_attack_only",
-    "label": "Ignore DEF/Defensive Effects",
+    "label": "Ignore Normal Attack Only (NAO)",
     "groupLabel": "Damage",
     "groupOrder": 1,
     "effectOrder": 3
@@ -282,7 +282,7 @@
   },
   {
     "key": "remove_increase_damage_taken",
-    "label": "Increased damage taken Duration",
+    "label": "Remove Increase Damage Taken",
     "groupLabel": "Reduce Status Effect Duration",
     "groupOrder": 6,
     "effectOrder": 6
@@ -303,7 +303,7 @@
   },
   {
     "key": "remove_chain_multiplier_limit",
-    "label": "Lock Chain Multiplier",
+    "label": "Chain Multiplier Limit",
     "groupLabel": "Reduce Status Effect Duration",
     "groupOrder": 6,
     "effectOrder": 9
@@ -422,7 +422,7 @@
   },
   {
     "key": "inflict_poison",
-    "label": "Poison",
+    "label": "Inflict Poison",
     "groupLabel": "Apply Status Effect",
     "groupOrder": 8,
     "effectOrder": 3
@@ -492,7 +492,7 @@
   },
   {
     "key": "restore_advance_special_charge",
-    "label": "Restore/Advance Special Cooldown",
+    "label": "Restore/Advance Special Cooldown (Special Rewind Recovery)",
     "groupLabel": "Reduction",
     "groupOrder": 9,
     "effectOrder": 5
@@ -569,7 +569,7 @@
   },
   {
     "key": "swap_captains",
-    "label": "Swap Captains",
+    "label": "Captain Swap",
     "groupLabel": "Other",
     "groupOrder": 10,
     "effectOrder": 11

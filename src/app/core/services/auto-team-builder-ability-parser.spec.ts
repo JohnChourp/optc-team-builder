@@ -574,6 +574,601 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('cures RCV DOWN without absorbing Counter-RCV, the orb, or the stat drawback', () => {
+    // Revived dead key: the alias never existed, so 34 cure clauses across 29
+    // characters resolved to no key at all.
+    for (const [text, source] of [
+      ['Removes RCV DOWN duration completely', 'specialText'],
+      ['Reduces RCV DOWN duration by 5 turns', 'specialText'],
+      ['reduces RCV DOWN duration completely', 'superSpecialText'],
+      ['Removes Paralysis, Poison, RCV DOWN and Blindness duration completely', 'specialText'],
+      // A condition gates the effect; the effect is still real. These same
+      // sentences already feed remove_increase_damage_taken and remove_sfx.
+      [
+        'If your Captain is a Slasher or Striker character, reduces RCV DOWN and Increase Damage Taken duration by 3 turns',
+        'specialText',
+      ],
+      // Mixed casing (#4489).
+      ['removes Poison, Paralysis, RCV Down and Blindness duration completely', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'remove_rcv_down',
+      );
+    }
+    // The " down" token is load-bearing: a bare "rcv" alias absorbs all nine
+    // Counter-RCV units as pure false positives.
+    for (const notThisCure of [
+      'Reduces Despair, Counter-Healing and Counter-RCV duration by 6 turns',
+      // A self-inflicted stat drawback, not a cure — there is no apply_rcv_down key.
+      'Reduces RCV of all characters by 90% for 3 turns',
+      'Changes [BLOCK] and [BOMB] orbs into [RCV] orbs',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notThisCure, 'specialText'))).not.toContain(
+        'remove_rcv_down',
+      );
+    }
+    // "selected debuffs" is upstream's own alternation on this effect, but we route
+    // it to remove_pain by standing policy. This is the canary for over-reach.
+    const selected = extractAbilityKeys(
+      analyzeBuilderAbilityText('reduces 2 selected debuffs duration by 10 turns', 'specialText'),
+    );
+    expect(selected).not.toContain('remove_rcv_down');
+    expect(selected).toContain('remove_pain');
+    // No Healing is a separate debuff with its own key.
+    const noHealing = extractAbilityKeys(
+      analyzeBuilderAbilityText('Reduces No Healing duration by 5 turns', 'specialText'),
+    );
+    expect(noHealing).not.toContain('remove_rcv_down');
+    expect(noHealing).toContain('remove_no_healing');
+  });
+
+  it('inflicts Weaken only on a verb-plus-object anchor, never on the pierce enabler', () => {
+    // Weaken is distinct from, and conditioned on, Increase Damage Taken — an
+    // effect cannot be conditioned on itself, which is what proves the boundary.
+    for (const [text, source] of [
+      [
+        'inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 2 turns',
+        'specialText',
+      ],
+      ['ignores Debuff Protection and inflicts all enemies with Weaken by 1.2x', 'specialText'],
+      ['inflicts all enemies with Weaken by 1.4x for 2 turns', 'superSpecialText'],
+      // The raw/arrival register (#4611).
+      [
+        'applies Weakened status (increase damage taken by 1.4x for all enemies) to all enemies for 2 turns',
+        'superSpecialText',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_weakened',
+      );
+    }
+    // The pierce ENABLER uses the SAME verb "inflict" — it is excluded only by
+    // requiring "enem(y|ies) ... with" between verb and name, NOT by the verb and
+    // NOT by any gap bound. This is the false positive the previous matcher had.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'allows effects that inflict Increase Damage Taken and Weaken to ignore Debuff Protection',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('apply_weakened');
+    // Boost-against gate (participle), transform-FORM name, and precondition.
+    for (const [notAnApplication, source] of [
+      ['boosts ATK against enemies inflicted with Weaken by 1.75x', 'captainAbility'],
+      ['otherwise transforms into Weakened. Weakened Captain: boosts ATK by 2x', 'captainAbility'],
+      ['if enemies have Weaken when the special is activated, recovers 5,000 HP', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notAnApplication, source))).not.toContain(
+        'apply_weakened',
+      );
+    }
+  });
+
+  it('pierces Normal Attack Only under both upstream names, but not the precondition', () => {
+    // NAO is a CREW-side ailment that floors all skill damage at 1; this key tags
+    // units whose damage clause ignores it. Upstream renamed the ailment in newer
+    // text, so both names must resolve to the same key.
+    for (const text of [
+      "deals 500,000 Fixed True damage, ignoring Normal Attack Only, to all enemies",
+      "deals 20% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies",
+      // 44-char bridge — the sole reason the gap bound must stay >= 44.
+      'makes Damage Specials of all characters bypass all defensive Buffs, Barriers, Defense and Normal Attack Only',
+      // The upstream rename.
+      'Reduces one enemy\'s HP by 25% (ignoring all defensive effects, DEF, and Non-Normal Attacks Deal 1 Damage effect)',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'ignore_normal_attack_only',
+      );
+    }
+    // The PRECONDITION carries no ignore/bypass verb, which is what excludes it —
+    // not the gap bound. It has 1 seed carrier today but 12 upstream.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If your crew has Normal Attack Only when the special is activated, recovers 5,000 HP',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('ignore_normal_attack_only');
+    // Normal-attack barrier pierce is a separate 51-character family with no key;
+    // widening to absorb it was measured at 90 matches with a precondition FP.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'makes own normal attacks ignore defense, damage reducing Barriers and Buffs for 1 turn',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('ignore_normal_attack_only');
+  });
+
+  it('grants Final Tap ATK from super-special text without touching the Last Tap family', () => {
+    // Final Tap ATK is a crew percentage buff on the LAST tap of a turn: additive,
+    // capped at 200%, and spent rather than expiring. Always a percentage, never Nx.
+    for (const [text, source] of [
+      ['boosts Final Tap ATK of all characters by 50%', 'specialText'],
+      ['boosts Final Tap ATK of Striker characters by 30% for 2 turns', 'superSpecialText'],
+      ['Boosts Final Tap ATK of [INT] characters by 100%', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'final_tap_atk_boost',
+      );
+    }
+    // "Last Tap" is a DIFFERENT mechanic (a potential ability, its own key, sourced
+    // from finalTapData/superTandemData). Its official copy renders as "Boosts base
+    // ATK by 700 for user of Final Tap Sugo Special", which contains both "Final Tap"
+    // and "ATK" — so this key must never gain a `last tap` alternation, and
+    // superTandemData must never become one of its sources.
+    for (const notThisKey of [
+      'Boosts base ATK of Last Tap character by +1,500 for 1 turn',
+      'Boosts base ATK by 700 for user of Final Tap Sugo Special for 1 turn',
+      // Tap-timing shares only the word "Tap".
+      'boosts ATK of all characters by 3.5x after scoring 3 PERFECTs in a row',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notThisKey, 'specialText'))).not.toContain(
+        'final_tap_atk_boost',
+      );
+    }
+  });
+
+  it('boosts against every poison tier, including the status-noun list, but not the cure or trigger', () => {
+    for (const [text, source] of [
+      ['Boosts ATK against Poisoned enemies by 1.75x for 3 turns', 'specialText'],
+      ['Boosts ATK against Strongly Poisoned enemies by 1.4x for 2 turns', 'specialText'],
+      // Toxic == Progressive Poison is a genuine tier; this object form was missed.
+      ['boosts ATK against enemies inflicted with Toxic by 1.75x for 2 turns', 'specialText'],
+      // The 2024+ status-noun list. All seven carriers already matched the DELAY and
+      // DEF-REDUCTION siblings from this same enumeration.
+      [
+        'boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.2x',
+        'captainAbility',
+      ],
+      [
+        'boosts damage dealt to enemies inflicted with Increase Damage Taken, delay, Poison, Venom, progressive Poison, DEF Down, or Paralysis by 1.2x',
+        'captainAbility',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'boost_against_poisoned_enemies',
+      );
+    }
+    // The "enemies (inflicted with|affected by)" guard is load-bearing: without it the
+    // CURE and the TRIGGER gate both leak in.
+    for (const notABoost of [
+      'removes Blindness, Poison, RCV DOWN and No Healing duration completely',
+      'If enemies are inflicted with Toxic or Poison upon activation of the special, boosts ATK of all characters by 2.5x',
+      'Poisons all enemies for 1 turn',
+      'allows effects that inflict Poison to ignore Debuff Protection',
+    ]) {
+      expect(
+        extractAbilityKeys(analyzeBuilderAbilityText(notABoost, 'specialText')),
+      ).not.toContain('boost_against_poisoned_enemies');
+    }
+  });
+
+  it('matches Captain Swap applications across every slot wording, but not the cure', () => {
+    for (const text of [
+      'swaps this unit with your captain for 2 turns',
+      'swaps 1 selected character with your captain for 3 turns',
+      'swaps middle-right character with your Captain for 1 turn',
+      'Swaps bottom-right character with your captain for 5 turns',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'swap_captains',
+      );
+    }
+    // The CURE ("removes Captain Swap duration completely") is a separate upstream
+    // effect that currently belongs to no key. It does not self-match only because
+    // the regex needs "swap" BEFORE "captain" and the cure noun phrase is the other
+    // way round — corpus luck, not a structural guarantee, so it is pinned here.
+    for (const notAnApplication of [
+      'optionally removes Captain Swap duration completely',
+      'If your crew is inflicted with Captain Swap when the special is activated, recovers 5,000 HP',
+      'If your Captain is a Striker character, boosts ATK of all characters by 2x',
+    ]) {
+      expect(
+        extractAbilityKeys(analyzeBuilderAbilityText(notAnApplication, 'specialText')),
+      ).not.toContain('swap_captains');
+    }
+    // Orb slot swapping is an unrelated mechanic with its own key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('switches orbs between slots 2 times', 'specialText'),
+      ),
+    ).not.toContain('swap_captains');
+  });
+
+  it('inflicts poison on enemies without swallowing the cure, and reads the singular enemy', () => {
+    // Two bugs on one line. "enemies?" parses as "enemie" + optional "s", so it could
+    // never match the singular "enemy" — every unit whose only infliction is
+    // "Strongly Poisons one enemy" was systematically missed.
+    for (const text of [
+      'Poisons all enemies',
+      'Poisons enemies for 1,000 damage for 1 turn',
+      'Strongly Poisons one enemy',
+      'Strongly Poisons one enemy and Poisons all other enemies',
+      'Inflicts Toxic to all enemies',
+      'inflicts all enemies with Reiju Poison for 99 turns',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'inflict_poison',
+      );
+    }
+    // And the optional "s" on "poisons?" let the singular NOUN "Poison" — a CURE
+    // token — satisfy the infliction slot by bridging to a later "enemies".
+    const cure = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        "removes Poison duration completely and reduces enemies' Threshold Damage Reduction duration by 5 turns",
+        'specialText',
+      ),
+    );
+    expect(cure).not.toContain('inflict_poison');
+    expect(cure).toContain('remove_poison');
+    // Neither a crew-side precondition nor the immunity-piercing enabler is an
+    // infliction. The enabler strip is load-bearing: without it three pure false
+    // positives return.
+    for (const notAnInfliction of [
+      'If crew is inflicted with Poison or Burn from an enemy action, replaces that debuff',
+      'allows effects that inflict Poison to ignore Debuff Protection',
+      'boosts ATK against Poisoned enemies by 1.35x',
+    ]) {
+      expect(
+        extractAbilityKeys(analyzeBuilderAbilityText(notAnInfliction, 'specialText')),
+      ).not.toContain('inflict_poison');
+    }
+  });
+
+  it('boosts RCV the stat, never the [RCV] orb, the heal, or the RCV DOWN cure', () => {
+    // RCV is both the crew Recovery stat AND an orb colour, and a bare \\bRCV\\b matches
+    // inside the "[RCV]" token because brackets are non-word characters. That single
+    // ambiguity produced 27 false positives across eight families.
+    for (const text of [
+      'Boosts RCV of all characters by 1.5x for 1 turn',
+      'Boosts RCV by 1.5x for 1 turn',
+      'Boosts ATK and RCV of [DEX] characters by 1.25x for 2 turns',
+      // Flat grants must stay in — there is no boost_base_rcv twin.
+      'Boosts ATK and RCV of all characters by 45 for 1 turn',
+      'boosts RCV of Shooter characters by 300 for 3 turns',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'boost_rcv',
+      );
+    }
+    // Every [RCV]-ORB family is a different mechanic and must stay out.
+    for (const orbSense of [
+      'boosts the amount healed by [RCV] orbs by 1.5x for 1 turn',
+      'Boosts chances of getting [RCV] orbs for 3 turns',
+      'boosts Orb Effects of all characters by 1.75x and makes [RCV] orbs beneficial',
+      "Boosts base ATK of all characters depending on how many [RCV] orbs used",
+      'changes all orbs, including [BLOCK] orbs, into [RCV] orbs',
+      'randomizes non-Matching, non-[RCV] orbs',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(orbSense, 'specialText'))).not.toContain(
+        'boost_rcv',
+      );
+    }
+    // A heal scaled off RCV belongs to heal_hp; the guard is now reciprocal (heal_hp
+    // already refuses to cross a "boosts").
+    const healBridge = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        "Boosts chances of getting Matching orbs, recovers 8x character's RCV in HP",
+        'specialText',
+      ),
+    );
+    expect(healBridge).not.toContain('boost_rcv');
+    expect(healBridge).toContain('heal_hp');
+    // An RCV DOWN cure is a different key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'removes Blindness, Poison, RCV DOWN and No Healing duration completely',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('boost_rcv');
+  });
+
+  it('matches the Additional Damage grant including decimals and super-special-only carriers', () => {
+    // "Additional Damage" is a named buff: a flat post-calculation packet sized as
+    // a multiple of the granting character's ATK, almost always Typeless. Two
+    // independent defects hid 11 carriers — a decimal amount and super-special text.
+    for (const [text, source] of [
+      // Decimal amount: the "." in "2.5x" sits between "adds" and "as".
+      [
+        "Reduces Paralysis duration by 2 turns and adds 2.5x character's ATK as Additional Typeless Damage for 1 turn.",
+        'specialText',
+      ],
+      ["adds 100x character's ATK as Additional Typeless Damage for 5 turns", 'superSpecialText'],
+      // Health-Loss basis — the longest form, which is why the gap must stay >= 70.
+      [
+        'adds 20x the damage taken from enemies before the special is activated as Additional Typeless Damage for 2 turns',
+        'specialText',
+      ],
+      // Self-scope, no duration.
+      ["adds 500x character's ATK as Additional Typeless Damage to own's attacks", 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'additional_damage_boost',
+      );
+    }
+    // Referencing the buff is not granting it.
+    for (const notAGrant of [
+      'If your crew has Additional Damage Buff for 2 or more turns when the special is activated, recovers 5,000 HP',
+      'increases duration of any Additional Damage buffs by 1 turn',
+      'boosts ATK of all characters by an additional 1.25x for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notAGrant, 'specialText'))).not.toContain(
+        'additional_damage_boost',
+      );
+    }
+    // The near-identically named sibling is a different mechanic: the character
+    // dealing a tick, not a buff on the crew's attacks.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "deals 50x character's ATK in Typeless damage to all enemies at the end of each turn",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('additional_damage_boost');
+  });
+
+  it('detects enemy Resistance Reduction across scopes and sources but never the inverse', () => {
+    // Enemy debuff lowering resistance to a Type or Class, which raises the damage
+    // crew of that Type/Class deal. One mechanic with two scope axes (5 types +
+    // 8 classes), not several. 23 characters carry it only in super-special text.
+    for (const [text, source] of [
+      ["reduces enemies' Cerebral Resistance by -20% for 1 turn", 'specialText'],
+      ["reduces all enemies' Slasher Resistance by -10% for 1 turn", 'specialText'],
+      // Long type lists need the >=60-char gap the matcher allows.
+      [
+        "reduces enemies' [STR], [DEX], [QCK], [PSY] and [INT] Resistance by -25% for 1 turn",
+        'specialText',
+      ],
+      // Unbracketed type names (#3657).
+      ["reduces enemies' STR, DEX and QCK Resistance by -20% for 1 turn", 'specialText'],
+      // No minus sign, scaled by another buff's duration (#4239/#4240) — upstream's
+      // own regex misses this shape; ours must not.
+      [
+        "reduces enemies' Fighter and Free Spirit Resistance by 10%-40% based on the duration of the End of Turn Healing buff",
+        'specialText',
+      ],
+      ["reduces enemies' Cerebral Resistance by -20% for 1 turn", 'superSpecialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_resistance_reduction',
+      );
+    }
+    // The INVERSE is a self-inflicted drawback, not this effect — the verb
+    // alternation must never grow to include "increases" (#4065 Kozuki Toki).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "increases enemies' Slasher Resistance by +50% for 1 turn",
+          'sailorAbilities',
+        ),
+      ),
+    ).not.toContain('apply_resistance_reduction');
+    // Crew-side immunity ("... Resistance" as a potential) and the neighbouring
+    // enemy debuffs are different mechanics with their own keys.
+    for (const notThis of [
+      'Reduces the defense of all enemies by 50% for 3 turns',
+      'Inflicts all enemies with Increase Damage Taken by 2.5x for 1 turn',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notThis, 'specialText'))).not.toContain(
+        'apply_resistance_reduction',
+      );
+    }
+  });
+
+  it('separates Restore (rewind recovery) and Advance (self-charge) from the ship and the reduce family', () => {
+    // RESTORE is recovery from the enemy debuff "Special Rewind", which pushes the
+    // charge gauge backwards. Every restore clause in the corpus carries the rewind
+    // trigger — without an enemy rewinding you it does nothing.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'restores Special Cooldown of all characters by 10 turns when they are rewinded',
+          'captainAbility',
+        ),
+      ),
+    ).toContain('restore_advance_special_charge');
+    // ADVANCE is proactive self-charge, always scoped to this character. Two units
+    // carry it only in super-special text.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Advances Special Cooldown of this character to MAX, optionally removes Captain Swap duration completely',
+          'superSpecialText',
+        ),
+      ),
+    ).toContain('restore_advance_special_charge');
+    // The SHIP has its own separate cooldown and its own key; the ship guard must
+    // hold or five captains leak in.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Advances Special Cooldown of Ship to MAX at the start of the fight, boosts ATK of this crew by 1.2x',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('restore_advance_special_charge');
+    // Plain cooldown REDUCTION is the large sibling key, not this one.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'Reduces Special Cooldown of all characters by 2 turns at the start of the fight',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('restore_advance_special_charge');
+    // ...and when one sentence does both, each verb reaches its own key.
+    const bothVerbs = extractAbilityKeys(
+      analyzeBuilderAbilityText(
+        'Reduces Special Cooldown of all characters by 2 turns and advances Special Cooldown of this character to MAX at the start of the fight',
+        'captainAbility',
+      ),
+    );
+    expect(bothVerbs).toContain('restore_advance_special_charge');
+    expect(bothVerbs).toContain('reduce_special_charge');
+  });
+
+  it('derives Chain Multiplier Growth Rate from super-special text without admitting the amplifiers', () => {
+    // Ten units grant this buff ONLY in their super special, and none carries the
+    // wording in its base special, so the key was added to the per-key allowlist
+    // that lets a matcher run on superSpecialText. The allowlist must stay per-key:
+    // dropping it entirely moves 37 keys and adds 577 ids.
+    for (const text of [
+      'Boosts Chain Multiplier Growth Rate by 1.25x for 1 turn, locks all orbs for 1 turn.',
+      'boosts Chain Multiplier Growth Rate by 1.5x for 3 turns, sets Special Launch Status to (1)',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'superSpecialText'))).toContain(
+        'chain_multiplier_growth_rate',
+      );
+    }
+    // Still matched on the original sources, including decimals, ranges, and the
+    // mid-clause interruption (#4275) that sits after the amount.
+    for (const [text, source] of [
+      ['boosts Chain Multiplier Growth Rate by 4x', 'captainAbility'],
+      ['boosts Chain Multiplier Growth Rate by 1.75x-2.5x for 2 turns', 'specialText'],
+      ['boosts Chain Multiplier Growth Rate by 1.25x, allowing override, for 1 turn', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'chain_multiplier_growth_rate',
+      );
+    }
+    // Referencing the buff is not granting it. Note the amplifier form ENDS in
+    // "+0.3x", so only the "buffs by" adjacency keeps it out — load-bearing.
+    for (const notAGrant of [
+      'increases duration of any Chain Multiplier Growth Rate buffs applied by Specials by 2 turns',
+      'increases boost effects of Chain Multiplier Growth Rate buffs by +0.3x',
+      'If a crew member uses a special to boost Chain Multiplier Growth Rate, recovers 1,000 HP',
+      'and you gain a Chain Multiplier Growth Rate buff, up to 2 times per adventure',
+    ]) {
+      expect(
+        extractAbilityKeys(analyzeBuilderAbilityText(notAGrant, 'specialText')),
+      ).not.toContain('chain_multiplier_growth_rate');
+    }
+    // The neighbouring chain mechanics keep their own keys.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Adds 1.3x to Chain multiplier for 1 turn', 'specialText'),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('Locks the chain multiplier at 2.5x for 3 turns', 'specialText'),
+      ),
+    ).not.toContain('chain_multiplier_growth_rate');
+  });
+
+  it("does not let an enemy-side duration strip reach a crew cure key", () => {
+    // normalizeTargetText strips the "enemies'" possessive before aliasing, so an
+    // ENEMY strip used to be indistinguishable from a CREW cure at the alias layer.
+    // "removes enemies' Poison duration completely" tagged remove_poison
+    // (#4483 Sanji & Reiju), and the identical class hit remove_increase_damage_taken
+    // (#4529 Zoro VS St. Nusjuro).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "increases boost effects of ATK Up buffs by +0.5x, removes enemies' Poison duration completely",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('remove_poison');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "reduces enemies' Increase Damage Taken duration by 5 turns",
+          'specialText',
+        ),
+      ),
+    ).not.toContain('remove_increase_damage_taken');
+    // The genuine crew cure is untouched.
+    expect(
+      extractAbilityKeys(analyzeBuilderAbilityText('Removes Poison duration completely', 'specialText')),
+    ).toContain('remove_poison');
+
+    // The guard is PER-SEGMENT with a sticky owner, not whole-target: a mixed list
+    // keeps its crew half. Testing the whole raw target regresses these four.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces Bind and reduces enemies' Percent Damage Reduction duration by 3 turns",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_bind');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces enemies' Percent Damage Reduction and crew's Chain Coefficient Reduction duration by 4 turns",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_chain_coefficient_reduction');
+    // ...and the enemy half of that same mixed list still resolves to its own key,
+    // because enemy-targeted keys are exempt from the guard by construction.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          "Reduces enemies' Percent Damage Reduction and crew's Chain Coefficient Reduction duration by 4 turns",
+          'specialText',
+        ),
+      ),
+    ).toContain('remove_damage_reduction');
+  });
+
+  it('cures Poison by name only, and never the Strong Poison / Toxic variants or the inflict side', () => {
+    // Strong Poison (== Venom) and Toxic (== Progressive Poison) are distinct real
+    // statuses the crew CAN be inflicted with, but no ability text cures them by
+    // name — one cure clears every tier. A variant alias here would silently
+    // mis-report a future Toxic-only cure as a plain Poison cure.
+    for (const text of [
+      'Removes Poison duration completely',
+      'Reduces Poison duration by 3 turns',
+      'Removes Paralysis, Poison, RCV DOWN and Blindness duration completely',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'remove_poison',
+      );
+    }
+    for (const notACure of [
+      // Inflicting poison on enemies is the opposite mechanic (inflict_poison).
+      'Poisons all enemies for 1 turn, delays all enemies by 1 turn',
+      'Inflicts Toxic to all enemies',
+      // Exploiting the status, not curing it.
+      'boosts ATK against Poisoned enemies by 1.35x',
+      // An enabler for someone else's inflict, not an effect of its own.
+      'allows effects that inflict Poison to ignore Debuff Protection',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notACure, 'specialText'))).not.toContain(
+        'remove_poison',
+      );
+    }
+  });
+
   it('separates the Chain Coefficient Reduction cure from the chain boosts and its immunity', () => {
     // CCR is an enemy-inflicted CREW debuff that shrinks the per-tap growth of the
     // chain multiplier. Three neighbouring chain mechanics must stay distinct.
@@ -1265,7 +1860,13 @@ describe('auto team builder ability parser', () => {
       analyzeBuilderAbilityText('For 2 turns, boosts the amount healed by [RCV] orbs by 1.5x', 'specialText'),
     );
     expect(rcvHeal).not.toContain('boost_slot_effects');
-    expect(rcvHeal).toContain('boost_rcv'); // the RCV-orb heal boost is a Boost RCV effect, not a damage orb-effect
+    // Corrected 2026-07-19 by the boost_rcv audit. This previously asserted
+    // `toContain('boost_rcv')`, which encoded a false positive: boost_rcv's bare
+    // \bRCV\b was matching inside the "[RCV]" ORB token. Boost RCV scales the crew
+    // STAT (meat orbs, post-turn heals and RCV-scaled specials alike); this clause
+    // scales ORB healing only, so it is a different mechanic. It is currently owned
+    // by no key and tracked as a follow-up (`boost_rcv_orb_healing`).
+    expect(rcvHeal).not.toContain('boost_rcv');
   });
 
   it('detects boost_base_atk only when the verb directly grants "base ATK", not for Base ATK Boost buff references', () => {
@@ -3260,6 +3861,27 @@ describe('auto team builder ability parser', () => {
     expect(specialCatalog.find((item) => item.key === 'tap_timing_requirement')?.label).toBe(
       'Tap-Timing Requirement (PERFECT)',
     );
+    // The cure shipped as "Increased damage taken Duration": wrong word ("Increased"
+    // never appears in the corpus, which writes "Increase"), inconsistent casing, and
+    // a trailing "Duration" no sibling carries. It cannot simply become "Increase
+    // Damage Taken" — that is the APPLY key's label, and the picker derives its badge
+    // from the first two words, so both would render "ID" plus identical text.
+    expect(
+      specialCatalog.find((item) => item.key === 'remove_increase_damage_taken')?.label,
+    ).toBe('Remove Increase Damage Taken');
+    // "Swap Captains" read as swapping Captain with Friend Captain — a mechanic with
+    // zero corpus occurrences. Upstream writes the status "Captain Swap" and carries
+    // no IGN alias for it, which under its own convention asserts the DB and in-game
+    // names agree.
+    expect(specialCatalog.find((item) => item.key === 'swap_captains')?.label).toBe('Captain Swap');
+    // "Poison" was the only label duplicated INSIDE one category — the cure
+    // (remove_poison) and this inflict key both shipped it, and a mis-pick returned
+    // a near-disjoint set. The cure keeps "Poison" because it reproduces OPTC-DB's
+    // canonical cure-filter name; the inflict side moves to the parser's own
+    // internal label. After this the special category has no duplicate labels.
+    expect(specialCatalog.find((item) => item.key === 'inflict_poison')?.label).toBe(
+      'Inflict Poison',
+    );
     // The picker searches [key, label], and the legacy label "Decrease Chain
     // Multiplier Growth Rate" occurs 0 times in the corpus while its 3-word core
     // names the OPPOSITE mechanic (the crew boost `chain_multiplier_growth_rate`,
@@ -3268,6 +3890,15 @@ describe('auto team builder ability parser', () => {
     expect(
       specialCatalog.find((item) => item.key === 'remove_chain_coefficient_reduction')?.label,
     ).toBe('Chain Coefficient Reduction (Decrease Chain Multiplier Growth Rate)');
+    // The cure for the enemy CEILING debuff shipped as "Lock Chain Multiplier" —
+    // word-for-word the mechanic of the different key chain_multiplier_lock
+    // ("Chain Multiplier: Lock", a crew buff). Seven characters carry both keys
+    // from one sentence, so the picker showed two near-synonymous labels for
+    // opposite effects. The app already used the correct name on its enemy
+    // mechanic surface; this makes the two agree.
+    expect(
+      specialCatalog.find((item) => item.key === 'remove_chain_multiplier_limit')?.label,
+    ).toBe('Chain Multiplier Limit');
     // Crew-side survival, revived from a dead key: the bare label "Resilience"
     // names the ENEMY buff everywhere else in the app (`remove_resilience`, and
     // the live enemy-mechanic picker), and OPTC-DB never writes "Resilience"

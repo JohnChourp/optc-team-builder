@@ -80,7 +80,8 @@ An audit is not complete until it has covered both halves:
 
 The conditional "boost against <enemy state>" family (`boost_against_delayed_enemies`,
 `boost_against_def_reduced_enemies`, `boost_against_poisoned_enemies`) recognises two clause
-shapes: the canonical participle form `boosts ATK against delayed enemies by Nx`, and the
+shapes, and all three now read both — the poison key additionally covers the Toxic-only object
+form (`boosts ATK against enemies inflicted with Toxic`), since Toxic is a genuine poison tier: the canonical participle form `boosts ATK against delayed enemies by Nx`, and the
 2024+ status-noun list form `boosts damage dealt to enemies inflicted with Increase Damage
 Taken, Delay, Poison, ..., DEF Reduction, or Paralysis by Nx`. The governing frame
 `boosts ... (against|damage dealt to) ... enemies (inflicted with|affected by)` is
@@ -125,6 +126,136 @@ was actively misleading — it appears nowhere in the ability text, while its th
 names the OPPOSITE mechanic, the crew boost `chain_multiplier_growth_rate`. The cure must
 also not be confused with `remove_chain_multiplier_limit` (the ceiling debuff's cure) or
 `chain_multiplier_lock` (the crew fixed-value buff).
+
+**Enemy-scoped duration removal.** `reduces/removes enemies' <X> duration` strips a buff from
+the ENEMY; it is not a crew cure. Because `normalizeTargetText` strips the `enemies'`
+possessive before target aliasing, the two are indistinguishable at the alias layer, so the
+`TURN_PATTERNS` consumer recovers ownership from the raw target: a key is treated as
+enemy-owned only when EVERY segment resolving to it carries the enemy possessive, and
+enemy-owned segments are skipped for keys outside `ENEMY_TARGETED_REMOVAL_ABILITY_KEYS`. The
+check is per-segment with a sticky owner rather than whole-target, so a mixed list
+(`enemies' Percent Damage Reduction and crew's Chain Coefficient Reduction`) keeps both halves
+with each going to its correct key.
+
+**Super-special grants.** Matchers do not run over super-special text by default, because most
+units repeat their base special's wording there and would be double-tagged. Effects whose grants
+appear *only* in super-special text are opted in individually via a per-key allowlist, which
+now holds six keys: `territory`, `chain_multiplier_growth_rate`, `restore_advance_special_charge`,
+`apply_resistance_reduction`, `additional_damage_boost` and `final_tap_atk_boost`. Membership is
+decided per key by measurement, not assumed — `boost_rcv` was tested and rejected, because every
+one of its super-special hits was an orb token rather than a stat grant. The allowlist must stay per-key: removing
+it so every matcher reads super-special text was measured to move 37 keys and add 577 matches.
+For "Chain Multiplier: Growth Rate" specifically, ten units grant the buff only in their super
+special and none repeats it in the base special, so no double-tagging occurs. Wordings that
+*reference* a buff rather than granting it — duration extenders, boost-effect amplifiers and
+trigger conditions — stay excluded on every source.
+
+The three chain debuffs and the three chain buffs are separate mechanics and must keep
+separate labels. `remove_chain_multiplier_limit` ("Chain Multiplier Limit") cures the enemy
+CEILING on the chain multiplier; `remove_chain_coefficient_reduction` cures the enemy shrink of
+its per-tap GROWTH; `chain_multiplier_lock` ("Chain Multiplier: Lock") is the crew buff that
+fixes the multiplier at a value, alongside the additive and growth-rate boosts. Japanese uses a
+single word for both the enemy cap and the crew lock, so translated sources appear to merge
+them — follow the English split. The buff-extension wording `increases duration of any Chain
+Lock/Limit/Boundary buffs` grants none of these; it belongs to `extend_turn_duration`.
+
+Special-cooldown effects split four ways and must not be conflated. `reduce_special_charge` is
+plain cooldown reduction; `reduce_ship_special_charge` is the ship's own separate cooldown;
+`restore_advance_special_charge` covers both recovery from the enemy **Special Rewind** debuff
+(which pushes the charge gauge backwards — every "restores ... when they are rewinded" clause)
+and proactive self-charge ("advances Special Cooldown of this character to MAX"). The label
+carries "Special Rewind Recovery" because the rewind mechanic drives most of that key's members
+and the bare label named neither it nor the debuff. Ship clauses are held out of the crew keys
+by an explicit guard.
+
+**Resistance Reduction** (`apply_resistance_reduction`) is an enemy debuff lowering the enemy's
+resistance to a specific Type (`[STR]/[DEX]/[QCK]/[PSY]/[INT]`) or Class (Fighter, Slasher,
+Striker, Shooter, Free Spirit, Cerebral, Powerhouse, Driven), which raises the damage crew of
+that Type or Class deal. It is one mechanic with two scope axes, not several. Canonical wording
+is `reduces enemies' <Type/Class> Resistance by -N% for M turn(s)`, detected from special,
+captain and super-special text. The inverse (`increases enemies' ... Resistance`, a
+self-inflicted drawback) is deliberately excluded, as is the crew-side immunity family, which
+lives in potential abilities under Status Effect Immunity.
+
+**Additional Damage Boost** (`additional_damage_boost`) matches only the *grant* —
+`adds Nx character's ATK as Additional [Typeless] Damage`, plus the health-loss basis
+(`adds Nx the damage taken from enemies before the special is activated ...`). The amount may
+be decimal, so both gaps use the decimal-tolerant construct. Preconditions, duration extenders,
+replace-triggers, buff-list references and the adverbial `by an additional 1.2x` are all
+excluded — they reference the buff without granting it. It is distinct from
+`end_of_turn_additional_damage` despite the near-identical name (a buff on your crew's attacks
+versus the character dealing a tick); seven characters legitimately carry both, from separate
+clauses in different source fields.
+
+**Boost RCV** (`boost_rcv`) matches only crew RCV **stat** grants — `Boosts RCV of ...`,
+`Boosts ATK and RCV of ...` — in both multiplier (`by 2x`) and flat (`by 45`) form, and it
+exposes a turn filter like its twin `boost_atk`. RCV is also an orb colour, so the matcher
+explicitly excludes the `[RCV]`-orb senses (drop-rate boosts, beneficial-orb clauses, orb
+changes, orb-count conditions and orb-heal amplification), plus RCV-scaled heals
+(`recovers Nx character's RCV in HP` → Heal HP) and RCV DOWN cures. Note the decimal-tolerant
+gap construct used elsewhere in the parser is deliberately **not** used here: for this key the
+plain gap acts as a firewall, and widening it admits false positives with no genuine gains.
+
+**Poison — inflict versus cure.** `inflict_poison` ("Inflict Poison", *Apply Status Effect*)
+covers crew→enemy infliction and folds all four tiers together: Poison, Strong Poison (Venom),
+Toxic (Progressive Poison) and Reiju Poison. `remove_poison` ("Poison", *Reduce Status Effect
+Duration*) is the crew-side cure and keeps the bare name, because that reproduces upstream's
+own cure-filter name. Until this audit both shipped the bare label "Poison" — the only label
+duplicated inside a single category — so a mis-pick returned a nearly disjoint character set.
+The matcher requires the finite verb (`Poisons ... enemy/enemies`) rather than the noun, which
+is what keeps cures, crew-side preconditions and the immunity-piercing enabler
+(`allows effects that inflict Poison to ignore Debuff Protection`) out.
+
+**Captain Swap** (`swap_captains`) exchanges a crewmate into the Captain slot for N turns, so
+that unit's Captain Ability applies to the crew. It is symmetric — bosses inflict it as
+sabotage and crew specials grant it as a tool — and the status is written "Captain Swap" on
+both sides, so the label carries no alias. Detection reads `swapData` in addition to the normal
+sources, but only through a **post-filter to this single key**: `swapData` is not a general
+ability source, and feeding it through the analyser unfiltered was measured to move 40 keys and
+add 564 matches, because the duration-reduction patterns run above the source gate. The cure
+(`removes Captain Swap duration completely`, 34 carriers) is a distinct upstream effect that
+currently belongs to no key.
+
+Where a status exists on both sides of the board, the cure and the application are separate
+keys and must stay separately named. `remove_increase_damage_taken` ("Remove Increase Damage
+Taken") is the crew-side cure; `apply_increase_damage_taken` ("Increase Damage Taken") is the
+enemy-side application. A bare shared noun is not an option here: the picker's selected-rows
+panel shows only a badge and the label, and the badge is derived from the label's first two
+words, so two keys sharing a noun render identically with no way to tell them apart.
+
+**Normal Attack Only** (`ignore_normal_attack_only`, "Ignore Normal Attack Only (NAO)") is a
+crew-side status ailment applied by enemies: every damage instance belonging to a skill —
+special, percent, fixed and end-of-turn follow-up — is floored at 1, while specials still fire
+and their non-damage effects still work. Only normal attacks keep dealing real damage. The key
+tags the *counter*: units whose own damage clause ignores or bypasses the ailment. Both upstream
+names resolve to it, the original and the newer "Non-Normal Attacks Deal 1 Damage". Note the
+label previously read "Ignore DEF/Defensive Effects", which names two different clauses — in
+this game's wording "Fixed" carries ignore-DEF and "True" carries ignore-defensive-effects, so
+those belong to `deal_fixed_damage` and to the damage wording itself, not here.
+
+**Weaken** (`apply_weakened`) is an enemy-side damage-amplification debuff the crew inflicts,
+distinct from Increase Damage Taken and explicitly *conditioned* on it (`inflicts all enemies
+with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken`) —
+an effect cannot be conditioned on itself, which is what separates the two. It is matched on the
+verb **plus its object** rather than on the debuff name, because the corpus also contains a
+debuff-protection pierce enabler using the same verb (`allows effects that inflict Increase
+Damage Taken and Weaken to ignore Debuff Protection`); only requiring `enem(y|ies) ... with`
+between verb and name keeps it out. There is no cure key and none is warranted: the single strip
+clause is an enemy-owned self-cleanse before re-application.
+
+**RCV DOWN** (`remove_rcv_down`) is an enemy-applied debuff that slashes the crew's total RCV
+stat to a near-floor value, so meat orbs and RCV-scaled heals recover almost nothing. The cure
+grammar is `reduces|removes ... RCV DOWN ... duration (by N turns | completely)`. The `down`
+token is load-bearing: `Counter-RCV` and `Counter-Healing` are separate upstream mechanics with
+no key today, and a bare `rcv` alias absorbs all nine Counter-RCV units. Upstream folds
+`selected debuff(s)` into its own RCV DOWN matcher; we deliberately route that wording to
+`remove_pain` instead, so `remove_pain` staying at 16 is the canary for this alias over-reaching.
+
+The sibling `remove_rcv_bind` is deliberately kept at zero rather than deleted. RCV Bind is a
+**real** mechanic, but it exists only in Pirate Rumble and Grand Party — every occurrence is in
+`rumbleData`, which no special-ability source reads. Keeping the key also documents a latent
+leak: `remove_bind` matches any target ending in " bind", so an "rcv bind" target would be
+silently miscounted as plain Bind if upstream ever ports the Rumble status into quest text.
 
 Two conventions come out of this and apply to any new or relabelled effect:
 
