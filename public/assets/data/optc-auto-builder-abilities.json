@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T09:47:44.699Z",
+  "generatedAt": "2026-07-19T10:16:41.539Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -20,7 +20,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1824,
+      "matchCount": 1825,
       "matchingCharacterIds": [
         1,
         2,
@@ -1841,6 +1841,7 @@
         4588,
         4589,
         4596,
+        4611,
         4612,
         5013,
         5014,
@@ -2025,7 +2026,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 285,
+      "matchCount": 286,
       "matchingCharacterIds": [
         20,
         230,
@@ -2311,7 +2312,8 @@
         4535,
         4549,
         4576,
-        4577
+        4577,
+        4612
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -6249,7 +6251,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 780,
+      "matchCount": 781,
       "matchingCharacterIds": [
         263,
         305,
@@ -7028,6 +7030,7 @@
         4597,
         4603,
         4606,
+        4611,
         4613,
         5029,
         5030
@@ -7812,6 +7815,7 @@
             4550,
             4557,
             4558,
+            4611,
             4613
           ]
         },
@@ -9697,17 +9701,11 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1,
-      "matchingCharacterIds": [
-        4611
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [
-        4611
-      ],
-      "sampleTexts": [
-        "Reduces one enemy's HP by 25% (ignoring all defensive effects), and reduces all enemies' Threshold Damage Reduction duration by 15 turns. If character is a Captain/Friend Captain/Helper Captain, changes Cerebral characters' [BLOCK][RCV][STR] slots to Super [STR]. If field has \"Territory: Cerebral class\" and \"Territory: [STR]\", or field has \"Territory: Crew\", boosts the chain multiplier by 3x for 3 turns (boosts the chain multiplier by 1.75x for 1 turn otherwise), then after that, boosts [STR], Cerebral, and Powerhouse characters' slot effects up to 4x based on the result of the Action Special for 3 turns (MISS 3x; GOOD 3.25x; GREAT 3.5x; PERFECT 3.75x; EXCELLENT 4x), and applies \"Territory: Cerebral class\" to the field (boosts crew's ATK up to 1.5x and reduces damage taken up to 25% based on number of characters matching the territory) for 3 turns"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "chain_multiplier_growth_rate",
@@ -9727,7 +9725,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 114,
+      "matchCount": 115,
       "matchingCharacterIds": [
         366,
         367,
@@ -9842,7 +9840,8 @@
         4524,
         4536,
         4556,
-        4598
+        4598,
+        4611
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -10746,7 +10745,8 @@
         4546,
         4594,
         4598,
-        4608
+        4608,
+        4613
       ],
       "sampleCharacterIds": [
         3365,
@@ -10916,7 +10916,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 870,
+      "matchCount": 867,
       "matchingCharacterIds": [
         9,
         11,
@@ -11781,9 +11781,6 @@
         4599,
         4603,
         4607,
-        4611,
-        4612,
-        4613,
         5013,
         5014,
         5054,
@@ -12112,6 +12109,7 @@
             4592,
             4594,
             4599,
+            4603,
             4607
           ]
         },
@@ -12205,8 +12203,6 @@
             4503,
             4530,
             4589,
-            4603,
-            4613,
             5013,
             5014
           ]
@@ -12252,9 +12248,7 @@
             4355,
             4473,
             4528,
-            4598,
-            4611,
-            4612
+            4598
           ]
         },
         {
@@ -29165,7 +29159,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 649,
+      "matchCount": 650,
       "matchingCharacterIds": [
         835,
         836,
@@ -29808,6 +29802,7 @@
         4595,
         4596,
         4610,
+        4613,
         5013,
         5014,
         5029,
@@ -31017,7 +31012,8 @@
             4544,
             4569,
             4571,
-            4586
+            4586,
+            4611
           ],
           "turnMatchingCharacterIds": [
             {
@@ -31056,7 +31052,8 @@
                 4449,
                 4478,
                 4544,
-                4571
+                4571,
+                4611
               ]
             }
           ],
@@ -31073,11 +31070,12 @@
             4449,
             4478,
             4544,
-            4571
+            4571,
+            4611
           ]
         }
       ],
-      "matchCount": 527,
+      "matchCount": 528,
       "matchingCharacterIds": [
         228,
         265,
@@ -31603,6 +31601,7 @@
         4592,
         4596,
         4609,
+        4611,
         5031,
         5032,
         5056
@@ -32229,7 +32228,8 @@
             4449,
             4478,
             4544,
-            4571
+            4571,
+            4611
           ]
         }
       ],
@@ -32253,7 +32253,8 @@
         4449,
         4478,
         4544,
-        4571
+        4571,
+        4611
       ],
       "captainAbilityMatchingCharacterIds": [
         3429,
@@ -36075,7 +36076,8 @@
             4478,
             4510,
             4511,
-            4571
+            4571,
+            4611
           ],
           "turnMatchingCharacterIds": [
             {
@@ -36221,7 +36223,8 @@
                 4478,
                 4510,
                 4511,
-                4571
+                4571,
+                4611
               ]
             }
           ],
@@ -36298,11 +36301,12 @@
             4478,
             4510,
             4511,
-            4571
+            4571,
+            4611
           ]
         }
       ],
-      "matchCount": 575,
+      "matchCount": 576,
       "matchingCharacterIds": [
         73,
         251,
@@ -36875,6 +36879,7 @@
         4602,
         4603,
         4609,
+        4611,
         5031,
         5032,
         5046,
@@ -37580,7 +37585,8 @@
             4489,
             4510,
             4511,
-            4571
+            4571,
+            4611
           ]
         }
       ],
@@ -37668,7 +37674,8 @@
         4489,
         4510,
         4511,
-        4571
+        4571,
+        4611
       ],
       "captainAbilityMatchingCharacterIds": [
         2671,
@@ -52045,29 +52052,16 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility"
+        "specialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 2,
-      "matchingCharacterIds": [
-        4611,
-        4612
-      ],
+      "matchCount": 0,
+      "matchingCharacterIds": [],
       "turnMatchingCharacterIds": [],
-      "captainAbilityMatchingCharacterIds": [
-        4611,
-        4612
-      ],
-      "sampleCharacterIds": [
-        4611,
-        4612
-      ],
-      "sampleTexts": [
-        "Launches the following effect at start of quest: \"Boosts the type effects of normal attacks for [STR], Cerebral, and Powerhouse characters by 3.25x for 7 turns, allows healing up to 2x crew's max HP ignoring max HP limit for 7 turns (if HP is above max limit, it is treated as being full HP), and reduces Cerebral and Powerhouse characters' Special charge time by 2 turns, and VS Effect gauge and Switch Effect by 2\". Boosts Cerebral and Powerhouse characters' ATK by 6x. If field has \"Territory: Cerebral class\", boosts Cerebral characters' ATK by a further 1.1x. If field has \"Territory: Powerhouse class\", boosts Powerhouse characters' ATK by a further 1.1x. If field has \"Territory: [STR]\", boosts [STR] characters' ATK by 1.1x [Applies following effect based on number of applicable Character Tags on crew] If 3 or more [World Government] [Holy Knights] [Celestial Dragon] [Five Elders] characters are on the crew and character is a Captain (Friend/Helper Captain does not count) and performs EXCELLENT for the Action Special, boosts Cerebral and Powerhouse characters' ATK by a further 1.2x for 3 turns. Reduces [World Government] [Holy Knights] [Celestial Dragon] [Five Elders] characters' Special charge time by 5 turns at start of quest",
-        "Launches the following effect at start of quest: \"Allows crew to stack up to 2 different damage boosting effects (cannot stack the damage boost of the same type) for 7 turns, allows healing up to 2x crew's max HP ignoring max HP limit for 7 turns (if HP is above max limit, it is treated as being full HP), and reduces Powerhouse and Cerebral characters' Special charge time by 2 turns, and VS Effect gauge and Switch Effect by 2\". Boosts Powerhouse and Cerebral characters' ATK by 6x. If field has \"Territory: [STR]\", \"Territory: Powerhouse class\", \"Territory: Cerebral class\", or \"Territory: Crew\", boosts [STR], Powerhouse, and Cerebral characters' ATK by a further 1.2x [Applies following effect based on number of applicable Character Tags on crew] If character is a Captain (Friend/Helper Captain does not count) and performs EXCELLENT for the Action Special, boosts [World Government] [Holy Knights] [Celestial Dragon] [Five Elders] characters' ATK by 1.1x for 3 turns. Reduces [World Government] [Holy Knights] [Celestial Dragon] [Five Elders] characters' Special charge time by 5 turns at start of quest"
-      ]
+      "sampleCharacterIds": [],
+      "sampleTexts": []
     },
     {
       "key": "reduce_special_charge",
@@ -52086,7 +52080,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 983,
+      "matchCount": 987,
       "matchingCharacterIds": [
         452,
         453,
@@ -53069,8 +53063,12 @@
         4595,
         4598,
         4599,
+        4603,
         4607,
-        4608
+        4608,
+        4611,
+        4612,
+        4613
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -53710,8 +53708,12 @@
         4591,
         4595,
         4598,
+        4603,
         4607,
-        4608
+        4608,
+        4611,
+        4612,
+        4613
       ],
       "sampleCharacterIds": [
         452,
@@ -55379,9 +55381,9 @@
       "sampleTexts": [
         "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
         "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
-        "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
-        "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns",
-        "Boosts RCV of all characters by 1.5x for 1 turn"
+        "Boosts RCV of all characters by 1.5x for 1 turn",
+        "Boosts RCV of all characters by 1.5x for 1 turn",
+        "Reduces damage received by 50% for 2 turns, boosts RCV of all characters by 2x for 2 turns"
       ]
     },
     {
@@ -55956,7 +55958,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 436,
+      "matchCount": 435,
       "matchingCharacterIds": [
         217,
         224,
@@ -56390,7 +56392,6 @@
         4601,
         4602,
         4609,
-        4611,
         4612,
         5013,
         5014
@@ -57518,9 +57519,9 @@
       "sampleTexts": [
         "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
         "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
-        "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
-        "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
-        "For Slasher characters, randomizes all non-Matching orbs. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns"
+        "For Slasher characters, randomizes all non-Matching orbs. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
+        "For Slasher characters, randomizes all non-Matching orbs. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
+        "Deals 30x character's ATK in [INT] damage to one enemy and boosts ATK of this character by 2x for 1 turn. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 1 turn"
       ]
     },
     {
@@ -58987,7 +58988,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 184,
+      "matchCount": 185,
       "matchingCharacterIds": [
         73,
         251,
@@ -59171,6 +59172,7 @@
         4571,
         4579,
         4596,
+        4611,
         5046,
         5047
       ],
@@ -59390,7 +59392,8 @@
             4478,
             4510,
             4511,
-            4571
+            4571,
+            4611
           ]
         }
       ],
@@ -59632,7 +59635,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1134,
+      "matchCount": 1133,
       "matchingCharacterIds": [
         4,
         12,
@@ -60765,7 +60768,6 @@
         4607,
         4608,
         4611,
-        4612,
         4613,
         5014
       ],
@@ -62334,7 +62336,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 118,
+      "matchCount": 119,
       "matchingCharacterIds": [
         669,
         833,
@@ -62453,7 +62455,8 @@
         4562,
         4585,
         4598,
-        4608
+        4608,
+        4613
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -63777,7 +63780,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 80,
+      "matchCount": 81,
       "matchingCharacterIds": [
         669,
         1045,
@@ -63858,7 +63861,8 @@
         4514,
         4561,
         4562,
-        4608
+        4608,
+        4613
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -65038,7 +65042,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 84,
+      "matchCount": 85,
       "matchingCharacterIds": [
         669,
         882,
@@ -65123,7 +65127,8 @@
         4561,
         4562,
         4598,
-        4608
+        4608,
+        4613
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -71837,7 +71842,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 174,
+      "matchCount": 173,
       "matchingCharacterIds": [
         73,
         257,
@@ -72010,7 +72015,6 @@
         4524,
         4536,
         4537,
-        4612,
         4613,
         5014
       ],
@@ -73507,7 +73511,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 823,
+      "matchCount": 824,
       "matchingCharacterIds": [
         4,
         16,
@@ -74330,6 +74334,7 @@
         4584,
         4588,
         4589,
+        4603,
         4607,
         5055
       ],
