@@ -574,6 +574,41 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('boosts against every poison tier, including the status-noun list, but not the cure or trigger', () => {
+    for (const [text, source] of [
+      ['Boosts ATK against Poisoned enemies by 1.75x for 3 turns', 'specialText'],
+      ['Boosts ATK against Strongly Poisoned enemies by 1.4x for 2 turns', 'specialText'],
+      // Toxic == Progressive Poison is a genuine tier; this object form was missed.
+      ['boosts ATK against enemies inflicted with Toxic by 1.75x for 2 turns', 'specialText'],
+      // The 2024+ status-noun list. All seven carriers already matched the DELAY and
+      // DEF-REDUCTION siblings from this same enumeration.
+      [
+        'boosts damage dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong Poison, Toxic, DEF Reduction, or Paralysis by 1.2x',
+        'captainAbility',
+      ],
+      [
+        'boosts damage dealt to enemies inflicted with Increase Damage Taken, delay, Poison, Venom, progressive Poison, DEF Down, or Paralysis by 1.2x',
+        'captainAbility',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'boost_against_poisoned_enemies',
+      );
+    }
+    // The "enemies (inflicted with|affected by)" guard is load-bearing: without it the
+    // CURE and the TRIGGER gate both leak in.
+    for (const notABoost of [
+      'removes Blindness, Poison, RCV DOWN and No Healing duration completely',
+      'If enemies are inflicted with Toxic or Poison upon activation of the special, boosts ATK of all characters by 2.5x',
+      'Poisons all enemies for 1 turn',
+      'allows effects that inflict Poison to ignore Debuff Protection',
+    ]) {
+      expect(
+        extractAbilityKeys(analyzeBuilderAbilityText(notABoost, 'specialText')),
+      ).not.toContain('boost_against_poisoned_enemies');
+    }
+  });
+
   it('matches Captain Swap applications across every slot wording, but not the cure', () => {
     for (const text of [
       'swaps this unit with your captain for 2 turns',

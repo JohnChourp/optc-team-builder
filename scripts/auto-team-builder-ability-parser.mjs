@@ -445,7 +445,32 @@ const SPECIAL_ABILITY_MATCHERS = [
     // gaps between fixed anchors → ReDoS-safe.
     [
       /\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\bpoisoned enemies\b/i,
-      /\bboosts?\b[^.]{0,120}\bagainst enemies inflicted with poison\b/i,
+      // 2026-07-19 audit: also covers the 2024+ STATUS-NOUN LIST form ("boosts damage
+      // dealt to enemies inflicted with Increase Damage Taken, Delay, Poison, Strong
+      // Poison, Toxic, DEF Reduction, or Paralysis by 1.2x" — #4116, #4123-#4128) and
+      // the TOXIC-ONLY object ("boosts ATK against enemies inflicted with Toxic",
+      // #1703/#1704/#2139/#3648). Toxic == Progressive Poison is a genuine Poison
+      // tier and upstream's own `Status ATK Boost: Poison` regex carries it. 53 -> 64.
+      //
+      // The decisive argument is INTERNAL CONSISTENCY, not coverage: all 7 list
+      // carriers ALREADY match boost_against_delayed_enemies via "Delay", and 5 of 7
+      // already match boost_against_def_reduced_enemies via "DEF Reduction" — from the
+      // identical enumeration in the identical clause. This pattern is byte-parallel
+      // with those two siblings, differing only in the terminal alternation.
+      //
+      // "Strong Poison" / "progressive Poison" need no literal, since \bPoison\b
+      // matches inside them. "Venom" is INERT today (its only carrier #4116 also
+      // writes "Poison") and is kept purely as future-proofing for the Global alias
+      // spelling. "Reiju Poison" is deliberately ABSENT: it never appears in
+      // boost-TARGET position, only apply-side or as a trigger.
+      //
+      // The load-bearing guard is `enemies (inflicted with|affected by)`. Removing it
+      // admits the CURE (#2695/#2696 "removes Blindness, Poison, RCV DOWN and No
+      // Healing duration completely") and the TRIGGER gate (#3277/#3278/#3893 "If
+      // enemies are inflicted with Toxic or Poison upon activation of the special").
+      // The `against|damage dealt to` anchor is currently INERT (measured: removing it
+      // leaves the id set unchanged at 64); kept for byte-parity with the siblings.
+      /\bboosts?\b[^.]{0,160}\b(?:against|damage dealt to)\b[^.]{0,200}\benemies (?:inflicted with|affected by)\b[^.]{0,120}\b(?:Poison|Toxic|Venom)\b/i,
     ],
   ],
   [

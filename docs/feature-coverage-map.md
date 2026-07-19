@@ -80,7 +80,8 @@ An audit is not complete until it has covered both halves:
 
 The conditional "boost against <enemy state>" family (`boost_against_delayed_enemies`,
 `boost_against_def_reduced_enemies`, `boost_against_poisoned_enemies`) recognises two clause
-shapes: the canonical participle form `boosts ATK against delayed enemies by Nx`, and the
+shapes, and all three now read both — the poison key additionally covers the Toxic-only object
+form (`boosts ATK against enemies inflicted with Toxic`), since Toxic is a genuine poison tier: the canonical participle form `boosts ATK against delayed enemies by Nx`, and the
 2024+ status-noun list form `boosts damage dealt to enemies inflicted with Increase Damage
 Taken, Delay, Poison, ..., DEF Reduction, or Paralysis by Nx`. The governing frame
 `boosts ... (against|damage dealt to) ... enemies (inflicted with|affected by)` is
