@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment jsdom
+ */
 import '@angular/compiler';
 import { SimpleChange } from '@angular/core';
 import { readFileSync } from 'node:fs';
