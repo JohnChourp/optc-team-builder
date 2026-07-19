@@ -574,6 +574,35 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('grants Final Tap ATK from super-special text without touching the Last Tap family', () => {
+    // Final Tap ATK is a crew percentage buff on the LAST tap of a turn: additive,
+    // capped at 200%, and spent rather than expiring. Always a percentage, never Nx.
+    for (const [text, source] of [
+      ['boosts Final Tap ATK of all characters by 50%', 'specialText'],
+      ['boosts Final Tap ATK of Striker characters by 30% for 2 turns', 'superSpecialText'],
+      ['Boosts Final Tap ATK of [INT] characters by 100%', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'final_tap_atk_boost',
+      );
+    }
+    // "Last Tap" is a DIFFERENT mechanic (a potential ability, its own key, sourced
+    // from finalTapData/superTandemData). Its official copy renders as "Boosts base
+    // ATK by 700 for user of Final Tap Sugo Special", which contains both "Final Tap"
+    // and "ATK" — so this key must never gain a `last tap` alternation, and
+    // superTandemData must never become one of its sources.
+    for (const notThisKey of [
+      'Boosts base ATK of Last Tap character by +1,500 for 1 turn',
+      'Boosts base ATK by 700 for user of Final Tap Sugo Special for 1 turn',
+      // Tap-timing shares only the word "Tap".
+      'boosts ATK of all characters by 3.5x after scoring 3 PERFECTs in a row',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notThisKey, 'specialText'))).not.toContain(
+        'final_tap_atk_boost',
+      );
+    }
+  });
+
   it('boosts against every poison tier, including the status-noun list, but not the cure or trigger', () => {
     for (const [text, source] of [
       ['Boosts ATK against Poisoned enemies by 1.75x for 3 turns', 'specialText'],

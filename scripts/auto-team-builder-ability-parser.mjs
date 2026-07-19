@@ -2159,6 +2159,15 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // ['special','superSpecial','swap','support']; 9 characters grant the
         // Additional Damage buff only in their super special. 76 -> 85.
         'additional_damage_boost',
+        // final_tap_atk_boost: 15 characters grant "boosts Final Tap ATK of <scope>
+        // by N%" ONLY in their super special. 48 -> 63.
+        //
+        // Unlike the entries above, this one DOES produce some base-special overlap:
+        // #4060, #4338, #4518 and #4374 gain a second superSpecialText row (#4374
+        // carries the wording in both fields). Records go 51 -> 70 while matchCount
+        // stays a Set, so membership is unaffected — the same benign double-tagging
+        // already tolerated on chain_multiplier_growth_rate.
+        'final_tap_atk_boost',
       ]),
     );
   }

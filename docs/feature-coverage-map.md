@@ -139,8 +139,11 @@ with each going to its correct key.
 
 **Super-special grants.** Matchers do not run over super-special text by default, because most
 units repeat their base special's wording there and would be double-tagged. Effects whose grants
-appear *only* in super-special text are opted in individually via a per-key allowlist —
-`territory` and `chain_multiplier_growth_rate` today. The allowlist must stay per-key: removing
+appear *only* in super-special text are opted in individually via a per-key allowlist, which
+now holds six keys: `territory`, `chain_multiplier_growth_rate`, `restore_advance_special_charge`,
+`apply_resistance_reduction`, `additional_damage_boost` and `final_tap_atk_boost`. Membership is
+decided per key by measurement, not assumed — `boost_rcv` was tested and rejected, because every
+one of its super-special hits was an orb token rather than a stat grant. The allowlist must stay per-key: removing
 it so every matcher reads super-special text was measured to move 37 keys and add 577 matches.
 For "Chain Multiplier: Growth Rate" specifically, ten units grant the buff only in their super
 special and none repeats it in the base special, so no double-tagging occurs. Wordings that
