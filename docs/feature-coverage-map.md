@@ -216,6 +216,13 @@ add 564 matches, because the duration-reduction patterns run above the source ga
 (`removes Captain Swap duration completely`, 34 carriers) is a distinct upstream effect that
 currently belongs to no key.
 
+Where a status exists on both sides of the board, the cure and the application are separate
+keys and must stay separately named. `remove_increase_damage_taken` ("Remove Increase Damage
+Taken") is the crew-side cure; `apply_increase_damage_taken` ("Increase Damage Taken") is the
+enemy-side application. A bare shared noun is not an option here: the picker's selected-rows
+panel shows only a badge and the label, and the badge is derived from the label's first two
+words, so two keys sharing a noun render identically with no way to tell them apart.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

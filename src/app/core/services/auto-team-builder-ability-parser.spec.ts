@@ -3732,6 +3732,14 @@ describe('auto team builder ability parser', () => {
     expect(specialCatalog.find((item) => item.key === 'tap_timing_requirement')?.label).toBe(
       'Tap-Timing Requirement (PERFECT)',
     );
+    // The cure shipped as "Increased damage taken Duration": wrong word ("Increased"
+    // never appears in the corpus, which writes "Increase"), inconsistent casing, and
+    // a trailing "Duration" no sibling carries. It cannot simply become "Increase
+    // Damage Taken" — that is the APPLY key's label, and the picker derives its badge
+    // from the first two words, so both would render "ID" plus identical text.
+    expect(
+      specialCatalog.find((item) => item.key === 'remove_increase_damage_taken')?.label,
+    ).toBe('Remove Increase Damage Taken');
     // "Swap Captains" read as swapping Captain with Friend Captain — a mechanic with
     // zero corpus occurrences. Upstream writes the status "Captain Swap" and carries
     // no IGN alias for it, which under its own convention asserts the DB and in-game

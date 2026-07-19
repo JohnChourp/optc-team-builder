@@ -282,7 +282,7 @@
   },
   {
     "key": "remove_increase_damage_taken",
-    "label": "Increased damage taken Duration",
+    "label": "Remove Increase Damage Taken",
     "groupLabel": "Reduce Status Effect Duration",
     "groupOrder": 6,
     "effectOrder": 6
