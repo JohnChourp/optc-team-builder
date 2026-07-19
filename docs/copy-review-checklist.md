@@ -19,6 +19,14 @@ Keep stable OPTC product and transfer terms in English across Greek UI copy:
 | JSON, preset, payload | Transfer and diagnostics formats. |
 | share link, share code | Saved-team sharing formats. |
 | slot, ship, fallback | Team-building mechanics that match app controls and tests. |
+| tag, tags | Character tag and ability tag vocabulary shared with the dataset. |
+
+Tag-filter boolean copy is **not** a glossary case. The AND/OR tag-set modals
+(`public/i18n/ability-tag-sets/`, `public/i18n/character-tag-sets/`) must render
+their operators as natural Greek — «και» / «ή», «Έχει όλα αυτά» / «Έχει έστω ένα
+από αυτά» — never as bare `AND` / `OR`. The whole point of the modal is that a
+non-technical reader understands the logic without knowing boolean algebra, so
+leaving the operators in English defeats the feature in Greek.
 
 Translate the surrounding Greek sentence naturally. Do not leave standalone
 states or button labels in English when they are not one of the glossary terms.
