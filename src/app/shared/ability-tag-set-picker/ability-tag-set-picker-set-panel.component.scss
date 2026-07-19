@@ -1,0 +1,322 @@
+/*
+ * Two independent colour channels, so both questions are answerable at a glance:
+ *  - hue by set index answers "which group is this?"
+ *  - accent by operator answers "is this group strict or loose?"
+ */
+.ability-tag-set-card[data-set-index='1'],
+.ability-tag-set-formula__clause[data-set-index='1'] {
+  --set-hue: 196;
+}
+
+.ability-tag-set-card[data-set-index='2'],
+.ability-tag-set-formula__clause[data-set-index='2'] {
+  --set-hue: 44;
+}
+
+.ability-tag-set-card[data-set-index='3'],
+.ability-tag-set-formula__clause[data-set-index='3'] {
+  --set-hue: 286;
+}
+
+.ability-tag-set-card[data-set-index='4'],
+.ability-tag-set-formula__clause[data-set-index='4'] {
+  --set-hue: 152;
+}
+
+.ability-tag-set-card[data-set-index='5'],
+.ability-tag-set-formula__clause[data-set-index='5'] {
+  --set-hue: 8;
+}
+
+.ability-tag-set-card[data-set-index='6'],
+.ability-tag-set-formula__clause[data-set-index='6'] {
+  --set-hue: 324;
+}
+
+.ability-tag-set-card,
+.ability-tag-set-formula__clause {
+  --set-accent: hsl(var(--set-hue, 196) 82% 64%);
+}
+
+.ability-tag-set-card-list {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+}
+
+.ability-tag-set-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-inline-start: 3px solid var(--set-accent);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ability-tag-set-card.is-active {
+  border-color: var(--set-accent);
+  background: color-mix(in srgb, var(--set-accent) 8%, rgba(255, 255, 255, 0.035));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--set-accent) 32%, transparent);
+}
+
+.ability-tag-set-card.is-empty {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.ability-tag-set-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ability-tag-set-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ability-tag-set-card__index {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: var(--set-accent);
+  color: #08101f;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.ability-tag-set-card__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ability-tag-set-card__count {
+  color: var(--app-muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.ability-tag-set-card__count.is-zero {
+  color: var(--ion-color-danger, #e63946);
+  font-weight: 700;
+}
+
+.ability-tag-set-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ability-tag-set-chip-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ability-tag-set-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 6px 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--set-accent) 42%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--set-accent) 12%, rgba(255, 255, 255, 0.04));
+}
+
+.ability-tag-set-chip__badge {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--set-accent) 26%, transparent);
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.ability-tag-set-chip__label {
+  color: #ffffff;
+  font-size: 0.82rem;
+}
+
+/* A sibling button, never nested inside another interactive element. */
+.ability-tag-set-chip__remove {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 251, 255, 0.76);
+  cursor: pointer;
+}
+
+.ability-tag-set-chip__remove:hover {
+  background: rgba(230, 57, 70, 0.28);
+  color: #ffffff;
+}
+
+.ability-tag-set-chip__remove ion-icon {
+  font-size: 0.72rem;
+}
+
+.ability-tag-set-chip__joiner {
+  color: var(--set-accent);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ability-tag-set-card__empty,
+.ability-tag-set-card__zero {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.ability-tag-set-card__zero {
+  color: var(--ion-color-danger, #e63946);
+}
+
+.ability-tag-set-card__add,
+.ability-tag-set-add-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+  background: transparent;
+  color: rgba(248, 251, 255, 0.82);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ability-tag-set-add-card {
+  width: 100%;
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.ability-tag-set-card__add:hover,
+.ability-tag-set-add-card:not([disabled]):hover {
+  border-color: var(--ion-color-secondary);
+  background: rgba(245, 200, 76, 0.1);
+  color: #ffffff;
+}
+
+.ability-tag-set-add-card[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ability-tag-set-connector {
+  display: grid;
+  place-items: center;
+  padding: 2px 0;
+}
+
+.ability-tag-set-connector span {
+  padding: 3px 12px;
+  border: 1px solid rgba(245, 200, 76, 0.36);
+  border-radius: 999px;
+  background: rgba(245, 200, 76, 0.12);
+  color: var(--ion-color-secondary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ability-tag-set-explainer {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ability-tag-set-explainer > strong {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.ability-tag-set-explainer__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.ability-tag-set-explainer__card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ability-tag-set-explainer__card[data-operator='any'] {
+  --set-accent: var(--ion-color-tertiary);
+}
+
+.ability-tag-set-explainer__card[data-operator='all'] {
+  --set-accent: var(--ion-color-secondary);
+}
+
+.ability-tag-set-explainer__dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.ability-tag-set-explainer__dots i {
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+}
+
+.ability-tag-set-explainer__dots i.is-lit {
+  border-color: var(--set-accent);
+  background: var(--set-accent);
+}
+
+.ability-tag-set-explainer__card strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.ability-tag-set-explainer__card p,
+.ability-tag-set-explainer__sample {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}

@@ -1,0 +1,108 @@
+.ability-tag-set-formula {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin: 0 22px 12px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(24, 33, 58, 0.96), rgba(14, 19, 36, 0.96));
+  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+}
+
+.ability-tag-set-formula__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  max-height: 6.4em;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.ability-tag-set-formula__lead {
+  color: var(--app-muted);
+  font-size: 0.86rem;
+}
+
+.ability-tag-set-formula__empty {
+  color: rgba(248, 251, 255, 0.5);
+  font-size: 0.86rem;
+  font-style: italic;
+}
+
+.ability-tag-set-formula__clause {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--set-accent, rgba(255, 255, 255, 0.14));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--set-accent, #4cc9f0) 12%, transparent);
+}
+
+.ability-tag-set-formula__bracket {
+  color: var(--set-accent, var(--ion-color-tertiary));
+  font-weight: 700;
+}
+
+.ability-tag-set-formula__tag {
+  color: #ffffff;
+  font-size: 0.86rem;
+}
+
+.ability-tag-set-formula__inner-joiner,
+.ability-tag-set-formula__joiner {
+  color: var(--ion-color-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ability-tag-set-formula__inner-joiner {
+  color: var(--set-accent, var(--ion-color-tertiary));
+}
+
+.ability-tag-set-formula__aside {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.ability-tag-set-formula__total {
+  color: #ffffff;
+  font-size: 0.94rem;
+  white-space: nowrap;
+}
+
+.ability-tag-set-formula__swap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid rgba(245, 200, 76, 0.4);
+  border-radius: 999px;
+  background: rgba(245, 200, 76, 0.12);
+  color: var(--ion-color-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ability-tag-set-formula__swap:hover {
+  background: rgba(245, 200, 76, 0.2);
+}
+
+.ability-tag-set-formula__locked {
+  color: var(--app-muted);
+  font-size: 0.74rem;
+}

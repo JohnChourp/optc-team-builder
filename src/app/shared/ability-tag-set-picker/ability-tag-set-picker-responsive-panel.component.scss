@@ -1,0 +1,58 @@
+@media (max-width: 899px) {
+  .ability-tag-set-shell {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /*
+   * Below the split-pane breakpoint the catalog becomes a sheet over the canvas,
+   * so a small screen never has to show both at once.
+   */
+  .ability-tag-set-catalog {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(20, 27, 49, 0.99), rgba(11, 15, 29, 0.99));
+  }
+
+  .ability-tag-set-shell.is-catalog-open .ability-tag-set-catalog {
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .ability-tag-set-catalog__back {
+    display: inline-block;
+  }
+}
+
+@media (max-width: 679px) {
+  .ability-tag-set-formula {
+    grid-template-columns: minmax(0, 1fr);
+    margin: 0 12px 10px;
+    padding: 12px 14px;
+  }
+
+  .ability-tag-set-formula__aside {
+    justify-items: start;
+  }
+
+  .ability-tag-set-shell {
+    padding: 0 12px 12px;
+  }
+
+  .ability-tag-set-head {
+    padding-inline-end: 48px;
+  }
+
+  .ability-tag-set-tile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ability-tag-set-footer {
+    padding: 10px 12px 14px;
+  }
+}

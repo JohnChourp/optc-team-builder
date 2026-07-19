@@ -130,6 +130,30 @@ export interface AutoBuildRequiredCharacterGroup {
   abilities: AutoBuildAbilityRequirement[];
 }
 
+/**
+ * Boolean combinator for tag filtering. Deliberately reuses the `'all' | 'any'`
+ * vocabulary already used by `CharacterSearchQuery.selectedTypesMatchMode` rather
+ * than `'AND' | 'OR'`, and deliberately does not collide with
+ * `AutoBuildAbilityEffectTargetScope`, whose `'any'` means "unscoped".
+ */
+export type AbilityTagSetOperator = 'all' | 'any';
+
+/** One user-authored bucket of ability tags plus the operator that joins them. */
+export interface AbilityFilterTagSet {
+  id: string;
+  operator: AbilityTagSetOperator;
+  requirements: AutoBuildAbilityRequirement[];
+}
+
+/** The full multi-set selection: sets, plus the operator joining the sets. */
+export interface AbilityFilterTagSetSelection {
+  sets: AbilityFilterTagSet[];
+  operator: AbilityTagSetOperator;
+}
+
+/** Mirrors MAX_REQUIRED_CHARACTER_GROUPS in required-character-groups.utils.ts. */
+export const MAX_ABILITY_FILTER_TAG_SETS = 6;
+
 export interface AutoBuildBattleRequirement {
   id: string;
   title: string;
@@ -161,6 +185,14 @@ export interface AutoBuildEnemyMechanicCatalogItem {
   defaultConditionTags: AutoBuildEnemyMechanicConditionTag[];
   derivedAbilityKey: string | null;
   keywords: string[];
+}
+
+export function normalizeAbilityTagSetOperator(
+  value: string | null | undefined,
+): AbilityTagSetOperator {
+  const normalizedValue = typeof value === 'string' ? value.trim() : '';
+
+  return normalizedValue === 'any' ? 'any' : 'all';
 }
 
 export function normalizeAbilityRequirementSlotScope(

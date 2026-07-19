@@ -219,8 +219,7 @@ export function resolveCaptainAbilityMatchingCharacterIds(
   const { captainAbilityKeys, catalogMap } = getCatalogAbilityIndex(catalogItems);
   const captainRequirements = requirements.filter(
     (requirement) =>
-      captainAbilityKeys.has(requirement.abilityKey) &&
-      isCaptainAbilityRequirement(requirement),
+      captainAbilityKeys.has(requirement.abilityKey) && isCaptainAbilityRequirement(requirement),
   );
 
   if (captainRequirements.length === 0) {
@@ -253,7 +252,7 @@ export function resolveCaptainAbilityMatchingCharacterIds(
   return [...(matchingIds ?? new Set<number>())].sort((left, right) => right - left);
 }
 
-function groupCategoryRequirements(
+export function groupCategoryRequirements(
   requirements: readonly AutoBuildAbilityRequirement[],
 ): AutoBuildAbilityRequirement[][] {
   const groups = new Map<string, AutoBuildAbilityRequirement[]>();
@@ -397,6 +396,51 @@ function captainRequirementNeedsEffectMatch(requirement: AutoBuildAbilityRequire
   );
 
   return hasEffectValue || hasSlotTokens || hasEffectScope;
+}
+
+/**
+ * Resolves the characters matched by a single requirement, choosing the captain
+ * effect index or the regular index from the requirement's own source scope.
+ *
+ * Unlike `resolveCategoryAbilityMatchingCharacterIds`, this does not filter by
+ * category, so `legacy`-category keys resolve here instead of being silently
+ * dropped by both category and captain resolvers.
+ */
+export function resolveAbilityRequirementMatchingCharacterIds(
+  requirement: AutoBuildAbilityRequirement,
+  catalogItems: readonly AutoBuildAbilityCatalogItem[],
+): number[] {
+  const { catalogMap } = getCatalogAbilityIndex(catalogItems);
+  const catalogItem = catalogMap.get(requirement.abilityKey);
+
+  if (!catalogItem) {
+    return [];
+  }
+
+  return resolveRequirementMatchingCharacterIds(
+    catalogItem,
+    requirement,
+    isCaptainAbilityRequirement(requirement),
+  );
+}
+
+/** Union sibling of `intersectAbilityMatchingCharacterIds`, with matching `undefined` semantics. */
+export function unionAbilityMatchingCharacterIds(
+  idLists: ReadonlyArray<readonly number[] | undefined>,
+): number[] | undefined {
+  const definedLists = idLists.filter((ids): ids is readonly number[] => ids !== undefined);
+
+  if (definedLists.length === 0) {
+    return undefined;
+  }
+
+  const union = new Set<number>();
+
+  for (const ids of definedLists) {
+    ids.forEach((id) => union.add(id));
+  }
+
+  return [...union];
 }
 
 export function intersectAbilityMatchingCharacterIds(
