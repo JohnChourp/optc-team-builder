@@ -574,6 +574,49 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('inflicts Weaken only on a verb-plus-object anchor, never on the pierce enabler', () => {
+    // Weaken is distinct from, and conditioned on, Increase Damage Taken — an
+    // effect cannot be conditioned on itself, which is what proves the boundary.
+    for (const [text, source] of [
+      [
+        'inflicts all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken, for 2 turns',
+        'specialText',
+      ],
+      ['ignores Debuff Protection and inflicts all enemies with Weaken by 1.2x', 'specialText'],
+      ['inflicts all enemies with Weaken by 1.4x for 2 turns', 'superSpecialText'],
+      // The raw/arrival register (#4611).
+      [
+        'applies Weakened status (increase damage taken by 1.4x for all enemies) to all enemies for 2 turns',
+        'superSpecialText',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_weakened',
+      );
+    }
+    // The pierce ENABLER uses the SAME verb "inflict" — it is excluded only by
+    // requiring "enem(y|ies) ... with" between verb and name, NOT by the verb and
+    // NOT by any gap bound. This is the false positive the previous matcher had.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'allows effects that inflict Increase Damage Taken and Weaken to ignore Debuff Protection',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('apply_weakened');
+    // Boost-against gate (participle), transform-FORM name, and precondition.
+    for (const [notAnApplication, source] of [
+      ['boosts ATK against enemies inflicted with Weaken by 1.75x', 'captainAbility'],
+      ['otherwise transforms into Weakened. Weakened Captain: boosts ATK by 2x', 'captainAbility'],
+      ['if enemies have Weaken when the special is activated, recovers 5,000 HP', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notAnApplication, source))).not.toContain(
+        'apply_weakened',
+      );
+    }
+  });
+
   it('pierces Normal Attack Only under both upstream names, but not the precondition', () => {
     // NAO is a CREW-side ailment that floors all skill damage at 1; this key tags
     // units whose damage clause ignores it. Upstream renamed the ailment in newer

@@ -956,18 +956,38 @@ const SPECIAL_ABILITY_MATCHERS = [
     ],
   ],
   ['apply_set_target', [/\bsets?\b[^.]{0,80}\btarget\b/i]],
-  // "Weaken" is an enemy damage-increasing debuff (like ATK Down / Increase
-  // Damage Taken); OPTC-DB applies it as "inflicts (all) enemies with Weaken by
-  // X.Xx". The old bare /\bweakened\b/ required the "-ed" suffix, which the debuff
-  // NEVER uses, so it matched 0 genuine appliers and instead only fired on the
-  // unrelated transform-form name "otherwise transforms into Weakened" (#3895/
-  // #3896 — 2 false positives). Anchor on the applier verb "inflicts … Weaken"
-  // (bounded, ReDoS-safe; max observed inflicts→Weaken gap is 18) and exclude the
-  // "-ed" transform name via a negative lookahead. Non-applier references stay
-  // out because they use different verbs: "boosts ATK against enemies inflicted
-  // with Weaken" (a boost-against condition — "inflicted", not "inflicts") and
-  // "allows … Weaken … to ignore Debuff Protection" (an immunity-pierce enabler).
-  ['apply_weakened', [/\binflicts?\b[^.]{0,60}\bweaken\b(?!ed)/i]],
+  // "Weaken" is an enemy-side damage-amplification debuff, DISTINCT FROM and
+  // CONDITIONED ON Increase Damage Taken: every canonical clause reads "inflicts
+  // all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted
+  // with Increase Damage Taken". An effect cannot be conditioned on itself, so
+  // that proves the IDT boundary structurally from this side.
+  //
+  // Anchored on the VERB PLUS ITS OBJECT, not on the debuff name. Corrected
+  // 2026-07-19: the previous comment claimed non-appliers "stay out because they
+  // use different verbs". That is FALSE and it cost a false positive — the
+  // Debuff-Protection-pierce ENABLER ("allows effects that inflict Increase
+  // Damage Taken and Weaken to ignore Debuff Protection", #4210/#4211/#4490/
+  // #4506) uses the SAME verb "inflict". Only requiring "enem(y|ies) ... with"
+  // between verb and name excludes it. Every genuine applier writes exactly
+  // "inflicts all enemies with Weaken" (verb->name gap 18) while every enabler
+  // has gap >= 27, so a numeric bound has ZERO headroom — do NOT go back to one.
+  //
+  // Use (?:enemy|enemies), NEVER "enemies?": that parses as "enemie" plus an
+  // optional "s" and can never match the singular, the bug the inflict_poison
+  // audit found. The second branch covers the raw/arrival register (#4611
+  // "applies Weakened status"), which is why the (?!ed) lookahead is
+  // belt-and-braces rather than a guard — the transform-FORM name "transforms
+  // into Weakened" (#3895/#3896) is a character form, not a debuff.
+  //
+  // No remove_weakened key and none is warranted: the sole strip clause (#4502
+  // "removes enemies' Weaken duration completely") is an enemy-owned self-cleanse
+  // before re-applying at a higher multiplier, TARGET_ALIASES has no weaken entry
+  // so the rawTarget is absorbed by nothing, and #4502 is already a member via
+  // three genuine apply clauses.
+  [
+    'apply_weakened',
+    [/\binflicts?\s+(?:all\s+)?enem(?:y|ies)\s+with\s+weaken\b(?!ed)/i, /\bapplies\s+weakened\s+status\b/i],
+  ],
   [
     'reduce_ship_special_charge',
     // The SHIP's own Special has its own cooldown, distinct from the crew's (it
@@ -2196,6 +2216,11 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // stays a Set, so membership is unaffected — the same benign double-tagging
         // already tolerated on chain_multiplier_growth_rate.
         'final_tap_atk_boost',
+        // apply_weakened: the fork's own matcher declares targets
+        // ['captain','special','superSpecial','swap','support']. #4290, #4477 and
+        // #4611 inflict Weaken ONLY in their super special, and none repeats the
+        // wording in its base special, so double-tagging is impossible. 29 -> 32.
+        'apply_weakened',
       ]),
     );
   }
@@ -3357,6 +3382,10 @@ const SWAP_DATA_ALLOWED_KEYS = new Set([
   // was invisible for them. Same post-filter discipline as above: swapData is read
   // and analysed normally, then filtered to this allowlist.
   'ignore_normal_attack_only',
+  // #4348 inflicts Weaken only in swapData.super, and upstream lists 'swap' among
+  // this effect's targets. Same accepted provenance compromise as #3507/#3508:
+  // the row is labelled source 'specialText'. 32 -> 33.
+  'apply_weakened',
 ]);
 
 function resolveSwapDataTexts(character) {

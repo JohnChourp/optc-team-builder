@@ -233,6 +233,16 @@ label previously read "Ignore DEF/Defensive Effects", which names two different 
 this game's wording "Fixed" carries ignore-DEF and "True" carries ignore-defensive-effects, so
 those belong to `deal_fixed_damage` and to the damage wording itself, not here.
 
+**Weaken** (`apply_weakened`) is an enemy-side damage-amplification debuff the crew inflicts,
+distinct from Increase Damage Taken and explicitly *conditioned* on it (`inflicts all enemies
+with Weaken by 1.5x, by 1.875x instead if enemies are inflicted with Increase Damage Taken`) —
+an effect cannot be conditioned on itself, which is what separates the two. It is matched on the
+verb **plus its object** rather than on the debuff name, because the corpus also contains a
+debuff-protection pierce enabler using the same verb (`allows effects that inflict Increase
+Damage Taken and Weaken to ignore Debuff Protection`); only requiring `enem(y|ies) ... with`
+between verb and name keeps it out. There is no cure key and none is warranted: the single strip
+clause is an enemy-owned self-cleanse before re-application.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community
