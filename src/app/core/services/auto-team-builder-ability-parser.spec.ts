@@ -574,6 +574,44 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('pierces Normal Attack Only under both upstream names, but not the precondition', () => {
+    // NAO is a CREW-side ailment that floors all skill damage at 1; this key tags
+    // units whose damage clause ignores it. Upstream renamed the ailment in newer
+    // text, so both names must resolve to the same key.
+    for (const text of [
+      "deals 500,000 Fixed True damage, ignoring Normal Attack Only, to all enemies",
+      "deals 20% of enemies' current HP in True damage, ignoring Normal Attack Only, to all enemies",
+      // 44-char bridge — the sole reason the gap bound must stay >= 44.
+      'makes Damage Specials of all characters bypass all defensive Buffs, Barriers, Defense and Normal Attack Only',
+      // The upstream rename.
+      'Reduces one enemy\'s HP by 25% (ignoring all defensive effects, DEF, and Non-Normal Attacks Deal 1 Damage effect)',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'ignore_normal_attack_only',
+      );
+    }
+    // The PRECONDITION carries no ignore/bypass verb, which is what excludes it —
+    // not the gap bound. It has 1 seed carrier today but 12 upstream.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'If your crew has Normal Attack Only when the special is activated, recovers 5,000 HP',
+          'specialText',
+        ),
+      ),
+    ).not.toContain('ignore_normal_attack_only');
+    // Normal-attack barrier pierce is a separate 51-character family with no key;
+    // widening to absorb it was measured at 90 matches with a precondition FP.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'makes own normal attacks ignore defense, damage reducing Barriers and Buffs for 1 turn',
+          'captainAbility',
+        ),
+      ),
+    ).not.toContain('ignore_normal_attack_only');
+  });
+
   it('grants Final Tap ATK from super-special text without touching the Last Tap family', () => {
     // Final Tap ATK is a crew percentage buff on the LAST tap of a turn: additive,
     // capped at 200%, and spent rather than expiring. Always a percentage, never Nx.

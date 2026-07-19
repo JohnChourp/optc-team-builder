@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T06:13:11.765Z",
+  "generatedAt": "2026-07-19T07:27:29.195Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -2338,7 +2338,7 @@
     },
     {
       "key": "ignore_normal_attack_only",
-      "label": "Ignore DEF/Defensive Effects",
+      "label": "Ignore Normal Attack Only (NAO)",
       "category": "special",
       "groupLabel": "Damage",
       "groupOrder": 1,
@@ -2354,12 +2354,14 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 34,
+      "matchCount": 37,
       "matchingCharacterIds": [
         3176,
         3177,
         3279,
         3280,
+        3507,
+        3508,
         3744,
         3745,
         3754,
@@ -2389,7 +2391,8 @@
         4440,
         4441,
         4458,
-        4469
+        4469,
+        4612
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -2402,14 +2405,14 @@
         3177,
         3279,
         3280,
-        3744
+        3507
       ],
       "sampleTexts": [
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
         "Deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies and boosts ATK of all characters by 2x-3x for 1 turn depending on the amount of normal attack damage dealt before this special was activated. If this character is your Captain/Friend Captain, increases duration of any Orb Amplification buffs by 1 turn.",
         "Boosts ATK of Driven and Powerhouse characters by 4x, their HP by 1.75x, reduces RCV of Driven and Powerhouse characters by 50%, increases damage received by 1.5x and reduces Special Cooldown of this character by 2 turns after each turn you take damage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn.",
         "Boosts ATK of Driven and Powerhouse characters by 4x, their HP by 1.75x, reduces RCV of Driven and Powerhouse characters by 50%, increases damage received by 1.5x and reduces Special Cooldown of this character by 2 turns after each turn you take damage. If a crew member uses a special with a Percent Damage Reduction, Threshold Damage Reduction or Damage Nullification buff, replaces those buffs with an ATK boost that will overwrite ATK boosts in the same special: Boosts ATK of Driven and Powerhouse characters by 2x for 1 turn.",
-        "Reduces enemies' Damage Nullification duration by 5 turns, changes all orbs, including [BLOCK] orbs, into Matching orbs and Boost ATK of [STR], Slasher and Free Spirit characters by 3x for 2 turns. If \"Inherited Oden Two-Sword Style: Paradise Totsuka\" or \"Oden Two-Sword Style: Paradise Totsuka\" was used in the same turn when special is activated, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies, increases boost effects of ATK UP and Orb Amplification buffs by +0.25x and increases duration of any ATK boosting buffs and Orb Amplification buffs by 1 turn, including effects activated in the same Ability."
+        "Reduces Special Cooldown of [STR], [QCK] and Powerhouse characters by 1 turn, deals 500x character's ATK in Typeless damage to all enemies and becomes Kaido & Lead Performers for 3 turns. If your crew has 5 or more Powerhouse characters when the special is activated, boosts the Color Affinity of [STR], [QCK] and Powerhouse characters by 2.5x for 1 turn, by 2.25x otherwise."
       ]
     },
     {

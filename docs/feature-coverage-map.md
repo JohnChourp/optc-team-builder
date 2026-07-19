@@ -223,6 +223,16 @@ enemy-side application. A bare shared noun is not an option here: the picker's s
 panel shows only a badge and the label, and the badge is derived from the label's first two
 words, so two keys sharing a noun render identically with no way to tell them apart.
 
+**Normal Attack Only** (`ignore_normal_attack_only`, "Ignore Normal Attack Only (NAO)") is a
+crew-side status ailment applied by enemies: every damage instance belonging to a skill —
+special, percent, fixed and end-of-turn follow-up — is floored at 1, while specials still fire
+and their non-damage effects still work. Only normal attacks keep dealing real damage. The key
+tags the *counter*: units whose own damage clause ignores or bypasses the ailment. Both upstream
+names resolve to it, the original and the newer "Non-Normal Attacks Deal 1 Damage". Note the
+label previously read "Ignore DEF/Defensive Effects", which names two different clauses — in
+this game's wording "Fixed" carries ignore-DEF and "True" carries ignore-defensive-effects, so
+those belong to `deal_fixed_damage` and to the damage wording itself, not here.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

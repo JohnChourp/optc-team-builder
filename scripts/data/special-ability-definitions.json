@@ -15,7 +15,7 @@
   },
   {
     "key": "ignore_normal_attack_only",
-    "label": "Ignore DEF/Defensive Effects",
+    "label": "Ignore Normal Attack Only (NAO)",
     "groupLabel": "Damage",
     "groupOrder": 1,
     "effectOrder": 3

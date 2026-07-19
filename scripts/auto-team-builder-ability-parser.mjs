@@ -138,16 +138,44 @@ const EXPLICIT_BUILDER_ABILITIES = [
   {
     key: 'ignore_normal_attack_only',
     label: 'Ignore Normal Attack Only (NAO)',
-    // "Normal Attack Only" is an enemy defensive buff that limits the crew to
-    // normal attacks (nullifying special damage/effects). Units whose attacks
-    // ignore/bypass it penetrate that buff. Besides the adjacent "ignoring
-    // Normal Attack Only" phrasing, OPTC-DB also lists NAO among the defensive
-    // effects a special "bypass[es]" (e.g. "bypass all defensive Buffs,
-    // Barriers, Defense and Normal Attack Only"), so accept ignore/bypass verbs
-    // with a bounded, ReDoS-safe [^.]{0,80} bridge (kept within one sentence so
-    // the "if your crew has Normal Attack Only" condition wording is excluded).
+    // "Normal Attack Only" (NAO) is a CREW-SIDE STATUS AILMENT applied by enemies,
+    // not an enemy buff: every damage instance belonging to a SKILL — special
+    // multiplier, percent, fixed and end-of-turn follow-up damage, including
+    // captain-effect percent/follow-up — is set to 1. Specials STILL FIRE and
+    // their non-damage effects (orb changes, buffs, duration cuts) work normally;
+    // only normal attacks still deal real damage, which is what the name means.
+    // Corrected 2026-07-19: the previous gloss here ("an enemy defensive buff that
+    // limits the crew to normal attacks") was wrong on both counts. Upstream
+    // classifies it under Requirement: Crew Effect -> Debuffs, alongside Bind and
+    // Despair. This key tags the COUNTER — units whose own damage clause ignores
+    // or bypasses NAO, so their special damage lands at full value through it.
+    //
+    // Note the key name is the accurate one: the label used to read "Ignore
+    // DEF/Defensive Effects", which names two DIFFERENT clauses. The JP/EN
+    // decomposition on #3786 Gol D. Roger is exact — 防御力 (the DEF stat) is
+    // carried by the word "Fixed" (deal_fixed_damage), 全ての防御効果 (all defensive
+    // effects) by the word "True", and NAO-piercing by this third clause.
+    //
+    // Two live phrasings besides the adjacent "ignoring Normal Attack Only":
+    // upstream lists NAO among the defensive effects a special "bypass[es]"
+    // ("bypass all defensive Buffs, Barriers, Defense and Normal Attack Only" —
+    // a 44-char bridge, the sole reason the bound must be >= 44), and newer
+    // upstream text RENAMES the ailment to "Non-Normal Attacks Deal 1 Damage"
+    // (saved-enemies-text-parser.utils.ts already treats the two names as one key).
+    //
+    // The [^.]{0,80} bridge is bounded for ReDoS safety only; it is measurably
+    // INERT as a filter — allowing dots and widening to 400 yields the same id
+    // set. In particular it is NOT what excludes the "If your crew has Normal
+    // Attack Only" PRECONDITION: that text carries no ignore/bypass verb at all.
+    // That exclusion has 1 seed carrier today but 12 upstream, so it becomes 12x
+    // more load-bearing on the next import.
+    //
+    // Do NOT widen to the "damage reducing Barriers and Buffs" family (51 chars,
+    // normal-attack barrier pierce): measured at 90 matches WITH a precondition
+    // false positive. That family needs its own key (upstream: "Normal Attack
+    // Bypassing Enemy Buffs").
     matcher: (text) =>
-      /\b(?:ignor(?:e|es|ing)|bypass(?:es|ing)?)\b[^.]{0,80}\bnormal attack only\b/i.test(
+      /\b(?:ignor(?:e|es|ing)|bypass(?:es|ing)?)\b[^.]{0,80}\b(?:normal attack only|non[- ]?normal attacks? deal 1 damage)\b/i.test(
         text,
       ),
   },
@@ -3322,7 +3350,14 @@ function resolveSailorAbilityText(character) {
 // exactly one effect we model — "optionally swaps this unit with your captain for
 // N turns" on 8 Captain Shift units — so it is read, analysed normally, and then
 // POST-FILTERED to that single key.
-const SWAP_DATA_ALLOWED_KEYS = new Set(['swap_captains']);
+const SWAP_DATA_ALLOWED_KEYS = new Set([
+  'swap_captains',
+  // #3507/#3508 carry "deals 500,000 Fixed True damage, ignoring Normal Attack
+  // Only, to all enemies" in swapData.super and nowhere else, so the NAO pierce
+  // was invisible for them. Same post-filter discipline as above: swapData is read
+  // and analysed normally, then filtered to this allowlist.
+  'ignore_normal_attack_only',
+]);
 
 function resolveSwapDataTexts(character) {
   const swapData = character?.detail?.swapData ?? null;
