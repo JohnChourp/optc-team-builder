@@ -202,6 +202,16 @@ The matcher requires the finite verb (`Poisons ... enemy/enemies`) rather than t
 is what keeps cures, crew-side preconditions and the immunity-piercing enabler
 (`allows effects that inflict Poison to ignore Debuff Protection`) out.
 
+**Captain Swap** (`swap_captains`) exchanges a crewmate into the Captain slot for N turns, so
+that unit's Captain Ability applies to the crew. It is symmetric — bosses inflict it as
+sabotage and crew specials grant it as a tool — and the status is written "Captain Swap" on
+both sides, so the label carries no alias. Detection reads `swapData` in addition to the normal
+sources, but only through a **post-filter to this single key**: `swapData` is not a general
+ability source, and feeding it through the analyser unfiltered was measured to move 40 keys and
+add 564 matches, because the duration-reduction patterns run above the source gate. The cure
+(`removes Captain Swap duration completely`, 34 carriers) is a distinct upstream effect that
+currently belongs to no key.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

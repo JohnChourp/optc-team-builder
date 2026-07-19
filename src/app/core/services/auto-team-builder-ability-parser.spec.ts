@@ -574,6 +574,38 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('matches Captain Swap applications across every slot wording, but not the cure', () => {
+    for (const text of [
+      'swaps this unit with your captain for 2 turns',
+      'swaps 1 selected character with your captain for 3 turns',
+      'swaps middle-right character with your Captain for 1 turn',
+      'Swaps bottom-right character with your captain for 5 turns',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).toContain(
+        'swap_captains',
+      );
+    }
+    // The CURE ("removes Captain Swap duration completely") is a separate upstream
+    // effect that currently belongs to no key. It does not self-match only because
+    // the regex needs "swap" BEFORE "captain" and the cure noun phrase is the other
+    // way round — corpus luck, not a structural guarantee, so it is pinned here.
+    for (const notAnApplication of [
+      'optionally removes Captain Swap duration completely',
+      'If your crew is inflicted with Captain Swap when the special is activated, recovers 5,000 HP',
+      'If your Captain is a Striker character, boosts ATK of all characters by 2x',
+    ]) {
+      expect(
+        extractAbilityKeys(analyzeBuilderAbilityText(notAnApplication, 'specialText')),
+      ).not.toContain('swap_captains');
+    }
+    // Orb slot swapping is an unrelated mechanic with its own key.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('switches orbs between slots 2 times', 'specialText'),
+      ),
+    ).not.toContain('swap_captains');
+  });
+
   it('inflicts poison on enemies without swallowing the cure, and reads the singular enemy', () => {
     // Two bugs on one line. "enemies?" parses as "enemie" + optional "s", so it could
     // never match the singular "enemy" — every unit whose only infliction is
@@ -3636,6 +3668,11 @@ describe('auto team builder ability parser', () => {
     expect(specialCatalog.find((item) => item.key === 'tap_timing_requirement')?.label).toBe(
       'Tap-Timing Requirement (PERFECT)',
     );
+    // "Swap Captains" read as swapping Captain with Friend Captain — a mechanic with
+    // zero corpus occurrences. Upstream writes the status "Captain Swap" and carries
+    // no IGN alias for it, which under its own convention asserts the DB and in-game
+    // names agree.
+    expect(specialCatalog.find((item) => item.key === 'swap_captains')?.label).toBe('Captain Swap');
     // "Poison" was the only label duplicated INSIDE one category — the cure
     // (remove_poison) and this inflict key both shipped it, and a mis-pick returned
     // a near-disjoint set. The cure keeps "Poison" because it reproduces OPTC-DB's

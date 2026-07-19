@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T03:27:00.526Z",
+  "generatedAt": "2026-07-19T04:09:29.786Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -57058,12 +57058,12 @@
     },
     {
       "key": "swap_captains",
-      "label": "Swap Captains",
+      "label": "Captain Swap",
       "category": "special",
       "groupLabel": "Other",
       "groupOrder": 10,
       "effectOrder": 11,
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
@@ -57072,7 +57072,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 56,
+      "matchCount": 64,
       "matchingCharacterIds": [
         1231,
         1232,
@@ -57120,18 +57120,121 @@
         4169,
         4218,
         4219,
+        4257,
+        4267,
+        4268,
         4271,
         4272,
+        4275,
         4311,
         4312,
+        4322,
         4391,
+        4405,
         4460,
         4470,
         4471,
+        4476,
         4501,
+        4506,
         4608
       ],
-      "turnMatchingCharacterIds": [],
+      "turnMatchingCharacterIds": [
+        {
+          "minTurns": 1,
+          "characterIds": [
+            2136,
+            2137,
+            2337,
+            2338,
+            3288,
+            3290,
+            3291,
+            3668,
+            3669,
+            3724,
+            3725,
+            3726,
+            3727,
+            3842,
+            3847,
+            3848,
+            3968,
+            4028,
+            4029,
+            4127,
+            4128,
+            4168,
+            4169,
+            4218,
+            4219,
+            4391,
+            4501,
+            4608
+          ]
+        },
+        {
+          "minTurns": 2,
+          "characterIds": [
+            1231,
+            1232,
+            1398,
+            1399,
+            2632,
+            2885,
+            2886,
+            3070,
+            3071,
+            3289,
+            3655,
+            3736,
+            4032,
+            4311,
+            4312
+          ]
+        },
+        {
+          "minTurns": 3,
+          "characterIds": [
+            2415,
+            2416,
+            3369,
+            3417,
+            3888,
+            3889,
+            4271,
+            4272,
+            4275,
+            4405,
+            4460,
+            4470,
+            4471
+          ]
+        },
+        {
+          "minTurns": 5,
+          "characterIds": [
+            3992,
+            3993,
+            4506
+          ]
+        },
+        {
+          "minTurns": 6,
+          "characterIds": [
+            4476
+          ]
+        },
+        {
+          "minTurns": 10,
+          "characterIds": [
+            4257,
+            4267,
+            4268,
+            4322
+          ]
+        }
+      ],
       "sampleCharacterIds": [
         1231,
         1232,
@@ -57142,9 +57245,9 @@
       "sampleTexts": [
         "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
         "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
-        "For Slasher characters, randomizes all non-Matching orbs. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
-        "For Slasher characters, randomizes all non-Matching orbs. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
-        "Deals 30x character's ATK in [INT] damage to one enemy and boosts ATK of this character by 2x for 1 turn. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 1 turn"
+        "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
+        "Deals 30x character's ATK in [DEX] damage to one enemy. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns",
+        "For Slasher characters, randomizes all non-Matching orbs. If this character is a Crewmate when the special is activated, swaps this unit with your captain for 2 turns"
       ]
     },
     {

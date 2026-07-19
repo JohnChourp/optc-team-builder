@@ -569,7 +569,7 @@
   },
   {
     "key": "swap_captains",
-    "label": "Swap Captains",
+    "label": "Captain Swap",
     "groupLabel": "Other",
     "groupOrder": 10,
     "effectOrder": 11

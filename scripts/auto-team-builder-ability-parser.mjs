@@ -1178,7 +1178,13 @@ const SPECIAL_ABILITY_MATCHERS = [
     'apply_ally_status_effect',
     [/\bapplies?\b[^.]{0,80}\b(?:immunity|turn progress effect)\b/i],
   ],
-  ['swap_captains', [/\bswaps?\b[^.]{0,120}\bcaptains?\b/i]],
+  // Lazy gap: membership is identical greedy or lazy at every width >= 34 (the max
+  // required, #4218/#4219), but a GREEDY gap swallows "for 1 turn" on #4218/#4219
+  // Blackbeard VS Law — whose upstream text is malformed, missing its period — and
+  // would erase their duration now that this key is turn-filterable. Keep [^.]:
+  // measured, there is no decimal trap on this key (the decimal-tolerant form gives
+  // the identical 56).
+  ['swap_captains', [/\bswaps?\b[^.]{0,120}?\bcaptains?\b/i]],
   // Remove Beneficial Effect = an OFFENSIVE debuff that strips the ENEMY's
   // beneficial effects. The negative lookbehind excludes the DEFENSIVE
   // "Nullif(y|ies) Remove Beneficial Effects ..." self-protection captain
@@ -2328,6 +2334,16 @@ const DURATION_TURN_KEYS = new Set([
   // erasures, since their "1 turn" belongs to the neighbouring delay clause and
   // not to the RCV boost.
   'boost_rcv',
+  // swap_captains: 64 of 64 members carry an explicit duration, so the erasure cost
+  // of a turn filter is ZERO, and the value is genuinely selectable — a 10-turn
+  // Captain Swap is a different tool from a 1-turn one. Requires the LAZY gap on its
+  // matcher: a greedy gap swallows "for 1 turn" on #4218/#4219, whose upstream text
+  // is missing its period, and would silently null their duration.
+  //
+  // Contrast territory and apply_resistance_reduction, both declined this batch:
+  // those needed a SHARED duration-extraction change affecting every key and would
+  // have erased members that carry no turn count. Neither applies here.
+  'swap_captains',
   'reduce_damage',
   'reduce_damage_over_threshold',
   'nullify_damage',
@@ -3265,6 +3281,33 @@ function resolveSailorAbilityText(character) {
     .join(' ');
 }
 
+// swapData ("Captain Shift") is NOT a general ability source. Feeding it through
+// analyzeBuilderAbilityText unfiltered was measured to move 40 keys (+564 ids) and
+// break six frozen counts, because TURN_PATTERNS runs ABOVE the
+// specialText/captainAbility gate and is itself ungated by source. It carries
+// exactly one effect we model — "optionally swaps this unit with your captain for
+// N turns" on 8 Captain Shift units — so it is read, analysed normally, and then
+// POST-FILTERED to that single key.
+const SWAP_DATA_ALLOWED_KEYS = new Set(['swap_captains']);
+
+function resolveSwapDataTexts(character) {
+  const swapData = character?.detail?.swapData ?? null;
+
+  if (!swapData) {
+    return [];
+  }
+
+  if (typeof swapData === 'string') {
+    return [swapData];
+  }
+
+  if (typeof swapData === 'object') {
+    return [swapData.base, swapData.super].filter((text) => typeof text === 'string' && text);
+  }
+
+  return [];
+}
+
 export async function enrichCharactersWithBuilderAbilities(
   characters,
   { batchSize = 200, logger = console.log, abilityCorrections = null } = {},
@@ -3289,6 +3332,20 @@ export async function enrichCharactersWithBuilderAbilities(
         ),
         ...captainAbilityTexts.flatMap((text) => analyzeBuilderAbilityText(text, 'captainAbility')),
         ...analyzeBuilderAbilityText(sailorAbilityText, 'sailorAbilities'),
+        // Rows are labelled source 'specialText' deliberately: AutoBuildAbilitySource
+        // is a closed union consumed via `satisfies Record<AutoBuildAbilitySource,
+        // string>`, so a new 'swapData' member would fail typecheck and demand an
+        // i18n label in every locale, and normalizeExistingBuilderAbilities has no
+        // swapData branch and falls through to 'specialText' regardless. Known
+        // consequence for these 8: a correction rule scoped by sourceScopes would
+        // match a source they do not literally have, and the evidence tooltip points
+        // at specialText, which for them lacks the clause. Adding a real swapData
+        // source member is a separate cross-cutting change.
+        ...resolveSwapDataTexts(character).flatMap((text) =>
+          analyzeBuilderAbilityText(text, 'specialText').filter((ability) =>
+            SWAP_DATA_ALLOWED_KEYS.has(ability.key),
+          ),
+        ),
         ...extractPotentialBuilderAbilities(character),
         ...extractSupportBuilderAbilities(character),
       ];
