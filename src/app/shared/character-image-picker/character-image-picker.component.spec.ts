@@ -4,6 +4,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  type AbilityFilterTagSetSelection,
+  type AbilityTagSetOperator,
+  type AutoBuildAbilityCategory,
+  type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilityRequirement,
+} from '../../core/models/auto-team-builder-ability.models';
 import { CharacterImagePickerComponent } from './character-image-picker.component';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -249,6 +256,152 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.characters().some((character) => [1, 3].includes(character.id))).toBe(false);
   });
 
+  it('counts rail chips per category from the one tag-set selection', async () => {
+    const { component } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    expect(component.abilityFilterCategoryCount('special')).toBe(0);
+
+    await component.saveTagSetSelection(
+      buildSelection('all', [
+        ['all', ['special-a', 'crewmate-a']],
+        ['any', ['special-b']],
+      ]),
+    );
+
+    expect(component.abilityFilterCategoryCount('special')).toBe(2);
+    expect(component.abilityFilterCategoryCount('crewmate')).toBe(1);
+    expect(component.abilityFilterCategoryCount('potential')).toBe(0);
+    expect(component.abilityFilterCategoryCount('support')).toBe(0);
+  });
+
+  it('opens the single tag-set picker from any rail chip', async () => {
+    const { component } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    component.openTagSetPicker();
+
+    expect(component.tagSetPickerOpen()).toBe(true);
+
+    component.closeTagSetPicker();
+
+    expect(component.tagSetPickerOpen()).toBe(false);
+
+    component.applyingSelection = true;
+    component.openTagSetPicker();
+
+    expect(component.tagSetPickerOpen()).toBe(false);
+  });
+
+  it('stores the saved tag-set selection and closes the picker', async () => {
+    const { component } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    component.openTagSetPicker();
+    await component.saveTagSetSelection(buildSelection('all', [['all', ['special-a']]]));
+
+    expect(component.tagSetPickerOpen()).toBe(false);
+    expect(component.tagSetSelection().sets).toHaveLength(1);
+    expect(component.tagSetSelection().sets[0]?.requirements.map((r) => r.abilityKey)).toEqual([
+      'special-a',
+    ]);
+  });
+
+  it('filters the catalog through the tag-set resolver', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.saveTagSetSelection(
+      buildSelection('all', [['all', ['special-a', 'crewmate-a']]]),
+    );
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+      allowedCharacterIds: [2, 3, 4],
+    });
+    expect(component.characters().map((character) => character.id)).toEqual([2, 3, 4]);
+
+    await component.saveTagSetSelection(
+      buildSelection('all', [['any', ['special-a', 'crewmate-a']]]),
+    );
+
+    expect(component.characters().map((character) => character.id)).toEqual([1, 2, 3, 4, 5, 6]);
+  });
+
+  it('clears one category from every set and drops the sets left empty', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.saveTagSetSelection(
+      buildSelection('all', [
+        ['all', ['special-a', 'crewmate-a']],
+        ['any', ['crewmate-a']],
+      ]),
+    );
+
+    expect(component.tagSetSelection().sets).toHaveLength(2);
+
+    await component.clearAbilityFilterCategory('crewmate');
+
+    expect(component.abilityFilterCategoryCount('crewmate')).toBe(0);
+    expect(component.abilityFilterCategoryCount('special')).toBe(1);
+    expect(component.tagSetSelection().sets).toHaveLength(1);
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+      allowedCharacterIds: [1, 2, 3, 4],
+    });
+  });
+
+  it('keeps a stable catalog identity so the ability index stays cached', async () => {
+    const { component } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    expect(component.allCatalogItems()).toBe(component.allCatalogItems());
+    expect(component.allCatalogItems()).toHaveLength(4);
+  });
+
   it('renders the search, filters and confirm action in the template', () => {
     const template = readFileSync(
       resolve(
@@ -272,8 +425,24 @@ describe('CharacterImagePickerComponent', () => {
     expect(template).toContain("t('filters.hideFavorites')");
     expect(template).toContain('toggleHideFavorites()');
     expect(template).toContain('<app-ability-filter-rail');
-    expect(template).toContain('openAbilityFilterCategory($event)');
+    expect(template).toContain("abilityFilterCategoryCount('special')");
+    expect(template).toContain("abilityFilterCategoryCount('crewmate')");
+    expect(template).toContain("abilityFilterCategoryCount('potential')");
+    expect(template).toContain("abilityFilterCategoryCount('support')");
+    expect(template).toContain('(selectCategory)="openTagSetPicker()"');
     expect(template).toContain('clearAbilityFilterCategory($event)');
+    expect(template).toContain('<app-ability-tag-set-picker');
+    expect(template).toContain("t('filters.tagSetsTitle')");
+    expect(template).toContain('[selection]="tagSetSelection()"');
+    expect(template).toContain('(dismiss)="closeTagSetPicker()"');
+    expect(template).toContain('(saveSelection)="saveTagSetSelection($event)"');
+    expect(template).toContain('items: availableSpecialAbilityCatalogItems()');
+    expect(template).toContain('items: availableSupportAbilityCatalogItems()');
+    expect(template).not.toContain('<app-special-ability-picker');
+    expect(template).not.toContain('specialAbilityDrafts()');
+    expect(template).not.toContain('supportAbilityDrafts()');
+    expect(template).not.toContain("t('filters.specialTitle')");
+    expect(template).not.toContain("t('filters.supportCopy')");
     expect(template).toContain('value="captainAtkBoost"');
     expect(template).not.toContain('value="idDesc"');
     expect(template).not.toContain('value="idAsc"');
@@ -308,6 +477,17 @@ function createComponent({ favoriteIds = [] }: { favoriteIds?: number[] } = {}) 
       availableTypes: ['DEX', 'STR', 'PSY'],
       availableClasses: ['Fighter', 'Shooter', 'Slasher'],
       packs: [],
+    }),
+    getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue({
+      generatedAt: '2026-03-30T10:00:00.000Z',
+      sourceVersion: 'test',
+      abilityCount: 4,
+      abilities: [
+        buildAbilityCatalogItem('special-a', 'special', [1, 2, 3, 4]),
+        buildAbilityCatalogItem('special-b', 'special', [3, 4, 5]),
+        buildAbilityCatalogItem('crewmate-a', 'crewmate', [2, 3, 4, 5, 6]),
+        buildAbilityCatalogItem('support-a', 'support', [7]),
+      ],
     }),
   };
   const characterCatalogCache = {
@@ -356,6 +536,50 @@ function createComponent({ favoriteIds = [] }: { favoriteIds?: number[] } = {}) 
   component.copy = 'Choose one OPTC portrait.';
 
   return { component, repository, characterCatalogCache, userState };
+}
+
+function buildAbilityCatalogItem(
+  key: string,
+  category: AutoBuildAbilityCategory,
+  matchingCharacterIds: number[],
+): AutoBuildAbilityCatalogItem {
+  return {
+    key,
+    label: key,
+    category,
+    supportsTurns: false,
+    supportsSlotTokens: false,
+    availableSlotTokens: [],
+    availableSources: ['specialText'],
+    matchCount: matchingCharacterIds.length,
+    matchingCharacterIds,
+    sampleCharacterIds: matchingCharacterIds.slice(0, 1),
+    sampleTexts: [],
+  };
+}
+
+function buildRequirement(abilityKey: string): AutoBuildAbilityRequirement {
+  return {
+    abilityKey,
+    minTurns: null,
+    slotTokens: [],
+    requiredCharacterCount: 1,
+    slotScope: 'any',
+  };
+}
+
+function buildSelection(
+  operator: AbilityTagSetOperator,
+  sets: [AbilityTagSetOperator, string[]][],
+): AbilityFilterTagSetSelection {
+  return {
+    operator,
+    sets: sets.map(([setOperator, abilityKeys], index) => ({
+      id: `set-${index + 1}`,
+      operator: setOperator,
+      requirements: abilityKeys.map((abilityKey) => buildRequirement(abilityKey)),
+    })),
+  };
 }
 
 function buildCharacters() {

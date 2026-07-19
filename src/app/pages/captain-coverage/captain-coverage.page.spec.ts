@@ -5,8 +5,11 @@ import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  type AbilityFilterTagSetSelection,
+  type AbilityTagSetOperator,
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilityRequirement,
   type AutoBuildAbilitySource,
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
@@ -15,7 +18,6 @@ import {
   type CharacterDetailRecord,
   type CharacterListItem,
 } from '../../core/models/optc.models';
-import { type AbilityRequirementDraft } from '../../core/services/ability-requirement-draft.utils';
 import { CaptainCoveragePage } from './captain-coverage.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -316,15 +318,15 @@ describe('CaptainCoveragePage', () => {
 
     page.addSelectedCharacterTag('Straw Hat Pirates');
     expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Straw Hat Candidate',
-    ]);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
 
     page.addSelectedCharacterTag('Worst Generation');
-    expect(page.resultCards().map((card) => card.character.name).sort()).toEqual([
-      'Straw Hat Candidate',
-      'Worst Generation Candidate',
-    ]);
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['Straw Hat Candidate', 'Worst Generation Candidate']);
 
     page.removeSelectedCharacterTag('Straw Hat Pirates');
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
@@ -333,11 +335,12 @@ describe('CaptainCoveragePage', () => {
 
     page.clearSelectedCharacterTags();
     expect(page.selectedCharacterTags()).toEqual([]);
-    expect(page.resultCards().map((card) => card.character.name).sort()).toEqual([
-      'Straw Hat Candidate',
-      'Untagged Candidate',
-      'Worst Generation Candidate',
-    ]);
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['Straw Hat Candidate', 'Untagged Candidate', 'Worst Generation Candidate']);
   });
 
   it('surfaces character tag suggestions and adds the top suggestion on enter', async () => {
@@ -415,9 +418,7 @@ describe('CaptainCoveragePage', () => {
 
     page.addSelectedCharacterTag('  straw hat   pirates ');
     expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Straw Hat Candidate',
-    ]);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
 
     page.addSelectedCharacterTag('Straw Hat Pirates');
     expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
@@ -659,10 +660,9 @@ describe('CaptainCoveragePage', () => {
       'Bind Reducer',
     ]);
 
-    page.saveSpecialAbilityPicker([
-      createAbilityDraft('remove_bind'),
-      createAbilityDraft('boost_orb'),
-    ]);
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'] }]),
+    );
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
       'Orb Booster',
@@ -673,6 +673,83 @@ describe('CaptainCoveragePage', () => {
       category: 'special',
       count: 2,
     });
+  });
+
+  it('ANDs separate tag sets and ORs the tags inside one set', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Tag Sets',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const bothMatcher = createCharacter({ id: 2001, name: 'Both Matcher' });
+    const bindOnly = createCharacter({ id: 2002, name: 'Bind Only' });
+    const orbOnly = createCharacter({ id: 2003, name: 'Orb Only' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, bothMatcher, bindOnly, orbOnly],
+      abilityCatalog: createAbilityCatalog([
+        createAbilityCatalogItem('remove_bind', 'Remove Bind', 'special', [2001, 2002]),
+        createAbilityCatalogItem('boost_orb', 'Boost Orb Effects', 'special', [2001, 2003]),
+      ]),
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'] }]),
+    );
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Orb Only',
+      'Bind Only',
+      'Both Matcher',
+    ]);
+
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_bind'] }, { abilityKeys: ['boost_orb'] }]),
+    );
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
+
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection(
+        [{ abilityKeys: ['remove_bind'] }, { abilityKeys: ['boost_orb'] }],
+        'any',
+      ),
+    );
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Orb Only',
+      'Bind Only',
+      'Both Matcher',
+    ]);
+  });
+
+  it('requires every tag of a set when that set uses the all operator', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Set Operator',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const bothMatcher = createCharacter({ id: 2001, name: 'Both Matcher' });
+    const bindOnly = createCharacter({ id: 2002, name: 'Bind Only' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, bothMatcher, bindOnly],
+      abilityCatalog: createAbilityCatalog([
+        createAbilityCatalogItem('remove_bind', 'Remove Bind', 'special', [2001, 2002]),
+        createAbilityCatalogItem('boost_orb', 'Boost Orb Effects', 'special', [2001]),
+      ]),
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'], operator: 'all' }]),
+    );
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
   });
 
   it('filters covered results to characters with Super Tandem data when enabled', async () => {
@@ -738,12 +815,7 @@ describe('CaptainCoveragePage', () => {
     });
     const { page } = createPage({
       captains: [leader],
-      characters: [
-        leader,
-        superTypeCandidate,
-        superClassCandidate,
-        noSuperTypesClassesCandidate,
-      ],
+      characters: [leader, superTypeCandidate, superClassCandidate, noSuperTypesClassesCandidate],
     });
 
     await page.ngOnInit();
@@ -877,7 +949,7 @@ describe('CaptainCoveragePage', () => {
     ]);
   });
 
-  it('adds Required to the rail and opens or clears its picker', async () => {
+  it('adds Required to the rail and opens or clears the one tag-set picker', async () => {
     const { page } = createPage({
       abilityCatalog: createAbilityCatalog([
         createAbilityCatalogItem(
@@ -899,6 +971,18 @@ describe('CaptainCoveragePage', () => {
       'potential',
       'support',
     ]);
+    expect(page.abilityTagSetPickerSections().map((section) => section.category)).toEqual([
+      'captainAbility',
+      'special',
+      'crewmate',
+      'potential',
+      'support',
+    ]);
+    expect(page.abilityTagSetPickerSections()[0]).toMatchObject({
+      category: 'captainAbility',
+      label: 'Required',
+      captainAbility: true,
+    });
     expect(page.abilityFilterRailItems()[0]).toMatchObject({
       category: 'captainAbility',
       label: 'Required',
@@ -907,17 +991,52 @@ describe('CaptainCoveragePage', () => {
     });
 
     page.openAbilityFilterCategory('captainAbility');
-    expect(page.captainAbilityPickerOpen()).toBe(true);
+    expect(page.abilityTagSetPickerOpen()).toBe(true);
 
-    page.saveCaptainAbilityPicker([createAbilityDraft('remove_despair')]);
-    expect(page.captainAbilityDrafts()).toHaveLength(1);
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_despair'], captainAbility: true }]),
+    );
+    expect(page.abilityTagSetPickerOpen()).toBe(false);
+    expect(page.tagSetSelection().sets).toHaveLength(1);
     expect(page.abilityFilterRailItems()[0]).toMatchObject({
       category: 'captainAbility',
       count: 1,
     });
+    expect(page.abilityFilterRailItems()[1]).toMatchObject({
+      category: 'special',
+      count: 0,
+    });
 
     page.clearAbilityFilterCategory('captainAbility');
-    expect(page.captainAbilityDrafts()).toEqual([]);
+    expect(page.tagSetSelection().sets).toEqual([]);
+    expect(page.abilityFilterRailItems()[0]).toMatchObject({ count: 0 });
+  });
+
+  it('clears only the chip category and drops sets emptied by that clear', async () => {
+    const { page } = createPage({
+      abilityCatalog: createAbilityCatalog([
+        createAbilityCatalogItem('remove_bind', 'Remove Bind', 'special', [2001]),
+        createAbilityCatalogItem('reduce_bind', 'Reduce Bind', 'potential', [2002]),
+      ]),
+    });
+
+    await page.ngOnInit();
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([
+        { abilityKeys: ['remove_bind', 'reduce_bind'] },
+        { abilityKeys: ['reduce_bind'] },
+      ]),
+    );
+
+    expect(page.abilityFilterRailItems().map((item) => item.count)).toEqual([0, 1, 0, 2, 0]);
+
+    page.clearAbilityFilterCategory('potential');
+
+    expect(page.abilityFilterRailItems().map((item) => item.count)).toEqual([0, 1, 0, 0, 0]);
+    expect(page.tagSetSelection().sets).toHaveLength(1);
+    expect(page.tagSetSelection().sets[0]?.requirements.map((item) => item.abilityKey)).toEqual([
+      'remove_bind',
+    ]);
   });
 
   it('applies Required Captain Ability filters to each character own Captain Ability tags', async () => {
@@ -946,13 +1065,16 @@ describe('CaptainCoveragePage', () => {
           'special',
           [2001, 2002],
           ['captainAbility', 'specialText'],
+          [2001],
         ),
       ]),
     });
 
     await page.ngOnInit();
     await page.saveTeamSlotSelection(leader);
-    page.saveCaptainAbilityPicker([createAbilityDraft('remove_bind')]);
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_bind'], captainAbility: true }]),
+    );
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Captain Bind Reducer']);
     expect(page.resultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
@@ -993,6 +1115,7 @@ describe('CaptainCoveragePage', () => {
           'special',
           [2001, 2003],
           ['captainAbility', 'specialText'],
+          [2001],
         ),
         createAbilityCatalogItem(
           'remove_despair',
@@ -1000,16 +1123,18 @@ describe('CaptainCoveragePage', () => {
           'special',
           [2002],
           ['captainAbility'],
+          [2002],
         ),
       ]),
     });
 
     await page.ngOnInit();
     await page.saveTeamSlotSelection(leader);
-    page.saveCaptainAbilityPicker([
-      createAbilityDraft('remove_bind'),
-      createAbilityDraft('remove_despair'),
-    ]);
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([
+        { abilityKeys: ['remove_bind', 'remove_despair'], captainAbility: true },
+      ]),
+    );
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
       'Captain Despair Reducer',
@@ -1017,7 +1142,7 @@ describe('CaptainCoveragePage', () => {
     ]);
   });
 
-  it('ANDs Required Captain Ability filters with existing non-captain ability filters', async () => {
+  it('ANDs a Required Captain Ability set with a non-captain ability set', async () => {
     const leader = createCharacter({
       id: 1001,
       name: 'Leader Captain Ability And',
@@ -1060,14 +1185,19 @@ describe('CaptainCoveragePage', () => {
           'special',
           [2001, 2003],
           ['captainAbility'],
+          [2001, 2003],
         ),
       ]),
     });
 
     await page.ngOnInit();
     await page.saveTeamSlotSelection(leader);
-    page.saveSpecialAbilityPicker([createAbilityDraft('remove_bind')]);
-    page.saveCaptainAbilityPicker([createAbilityDraft('remove_despair')]);
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([
+        { abilityKeys: ['remove_bind'] },
+        { abilityKeys: ['remove_despair'], captainAbility: true },
+      ]),
+    );
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
     expect(page.resultCards()[0]?.abilityMatchCount).toBe(2);
@@ -1113,9 +1243,11 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    page.saveSpecialAbilityPicker([createAbilityDraft('remove_bind')]);
-    page.savePotentialAbilityPicker([createAbilityDraft('reduce_bind')]);
-    page.saveSupportAbilityPicker([createAbilityDraft('support_remove_bind')]);
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([
+        { abilityKeys: ['remove_bind', 'reduce_bind', 'support_remove_bind'] },
+      ]),
+    );
     await page.saveTeamSlotSelection(leader);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
@@ -1165,11 +1297,9 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    page.saveSpecialAbilityPicker([
-      createAbilityDraft('remove_bind'),
-      createAbilityDraft('boost_orb'),
-    ]);
-    page.savePotentialAbilityPicker([createAbilityDraft('reduce_bind')]);
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb', 'reduce_bind'] }]),
+    );
     await page.saveTeamSlotSelection(leader);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
@@ -1222,11 +1352,11 @@ describe('CaptainCoveragePage', () => {
       disabled: false,
     });
 
-    page.openSpecialAbilityPicker();
-    expect(page.specialAbilityPickerOpen()).toBe(true);
+    page.openAbilityFilterCategory('special');
+    expect(page.abilityTagSetPickerOpen()).toBe(true);
 
-    page.saveSpecialAbilityPicker([createAbilityDraft('remove_bind')]);
-    expect(page.specialAbilityDrafts()).toHaveLength(1);
+    page.saveAbilityTagSetSelection(createTagSetSelection([{ abilityKeys: ['remove_bind'] }]));
+    expect(page.selectedAbilityRequirementCount()).toBe(1);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
 
     page.onAbilityMatchRankingChange({
@@ -1236,7 +1366,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.saveTeamSlotSelection(leader);
 
-    expect(page.specialAbilityDrafts()).toHaveLength(1);
+    expect(page.selectedAbilityRequirementCount()).toBe(1);
     expect(page.abilityMatchRankingEnabled()).toBe(true);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
   });
@@ -1267,8 +1397,9 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    page.saveSpecialAbilityPicker([createAbilityDraft('remove_bind')]);
-    page.savePotentialAbilityPicker([createAbilityDraft('reduce_bind')]);
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_bind', 'reduce_bind'] }]),
+    );
     await page.saveTeamSlotSelection(leader);
 
     expect(page.resultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
@@ -1563,11 +1694,21 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('requireSuperTypesClassesPresence()');
     expect(template).toContain("t('filters.superTypesClassesPresence.toggle')");
     expect(template).toContain('onRequireSuperTypesClassesPresenceChange($event)');
-    expect(template).toContain('<app-ability-requirement-picker');
-    expect(template).toContain('captainAbilityPickerOpen()');
-    expect(template).toContain('captainAbilityDrafts()');
-    expect(template).toContain('availableCaptainAbilityCatalogItems()');
-    expect(template).toContain('saveCaptainAbilityPicker($event)');
+    expect(template).toContain('<app-ability-tag-set-picker');
+    expect(template).toContain('[isOpen]="abilityTagSetPickerOpen()"');
+    expect(template).toContain('[title]="t(\'filters.abilityTagSetsTitle\')"');
+    expect(template).toContain('[sections]="abilityTagSetPickerSections()"');
+    expect(template).toContain('[selection]="tagSetSelection()"');
+    expect(template).toContain('(dismiss)="closeAbilityTagSetPicker()"');
+    expect(template).toContain('(saveSelection)="saveAbilityTagSetSelection($event)"');
+    expect(template).toContain('clearAbilityFilterCategory($event)');
+    expect(template).not.toContain('<app-ability-requirement-picker');
+    expect(template).not.toContain('<app-special-ability-picker');
+    expect(template).not.toContain('captainAbilityDrafts()');
+    expect(template).not.toContain('specialAbilityDrafts()');
+    expect(template).not.toContain('crewmateAbilityDrafts()');
+    expect(template).not.toContain('potentialAbilityDrafts()');
+    expect(template).not.toContain('supportAbilityDrafts()');
     expect(template).toContain('resultCards()');
     expect(template).toContain('<app-character-filter-row');
     expect(template).toContain("t('filters.type.label')");
@@ -1622,10 +1763,10 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain("t('results.openCharacterDetails')");
     expect(template).toContain('class="coverage-tag-filter"');
     expect(template).toContain("t('filters.characterTags.label')");
-    expect(template).toContain("[attr.aria-label]=\"t('filters.characterTags.label')\"");
+    expect(template).toContain('[attr.aria-label]="t(\'filters.characterTags.label\')"');
     expect(template).toContain('hasSelectedCharacterTags()');
     expect(template).toContain('(click)="clearSelectedCharacterTags()"');
-    expect(template).toContain("[placeholder]=\"t('filters.characterTags.placeholder')\"");
+    expect(template).toContain('[placeholder]="t(\'filters.characterTags.placeholder\')"');
     expect(template).toContain('[disabled]="loading() || !availableCharacterTags().length"');
     expect(template).toContain('(ionInput)="onCharacterTagSearchChange($event)"');
     expect(template).toContain('(keydown.enter)="selectFirstCharacterTagSuggestion()"');
@@ -1640,28 +1781,33 @@ describe('CaptainCoveragePage', () => {
 
   it('keeps the result title from sharing the desktop auto column with filters', () => {
     const tierStyles = readFileSync(
-      resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage-tier-panel.component.scss'),
+      resolve(
+        process.cwd(),
+        'src/app/pages/captain-coverage/captain-coverage-tier-panel.component.scss',
+      ),
       'utf8',
     ).replace(/\r\n/g, '\n');
     const responsiveStyles = readFileSync(
-      resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage-responsive-panel.component.scss'),
+      resolve(
+        process.cwd(),
+        'src/app/pages/captain-coverage/captain-coverage-responsive-panel.component.scss',
+      ),
       'utf8',
     ).replace(/\r\n/g, '\n');
 
     expect(tierStyles).toContain('.results-toolbar__heading,\n.coverage-ability-filters');
     expect(responsiveStyles).toContain('.results-toolbar__heading,\n  .coverage-ability-filters');
     expect(tierStyles).toContain('.results-toolbar__toggle-grid');
-    expect(tierStyles).toContain('grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));');
+    expect(tierStyles).toContain(
+      'grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));',
+    );
     expect(responsiveStyles).toContain('grid-column: 1 / -1;');
   });
 
   it('keeps Captain Coverage filter labels exact in English and Greek', () => {
     for (const locale of ['en', 'el']) {
       const translations = JSON.parse(
-        readFileSync(
-          resolve(process.cwd(), `public/i18n/captain-coverage/${locale}.json`),
-          'utf8',
-        ),
+        readFileSync(resolve(process.cwd(), `public/i18n/captain-coverage/${locale}.json`), 'utf8'),
       );
 
       expect([
@@ -1669,12 +1815,7 @@ describe('CaptainCoveragePage', () => {
         translations.filters.superTandemPresence.toggle,
         translations.filters.superTypesClassesPresence.toggle,
         translations.filters.tierCoverage.toggle,
-      ]).toEqual([
-        'Required',
-        'Super Tandem',
-        'Super Types/Classes',
-        'Tier Coverage',
-      ]);
+      ]).toEqual(['Required', 'Super Tandem', 'Super Types/Classes', 'Tier Coverage']);
     }
   });
 });
@@ -1852,13 +1993,38 @@ function formatTranslation(key: string, params?: Record<string, string | number>
   );
 }
 
-function createAbilityDraft(abilityKey: string): AbilityRequirementDraft {
+function createTagSetRequirement(
+  abilityKey: string,
+  captainAbility = false,
+): AutoBuildAbilityRequirement {
   return {
-    draftId: `${abilityKey}-draft`,
     abilityKey,
     minTurns: null,
     slotTokens: [],
-    requiredCharacterCount: null,
+    requiredCharacterCount: 1,
+    slotScope: captainAbility ? 'leader' : 'any',
+    ...(captainAbility ? { sourceScope: 'captainAbility' as const } : {}),
+  };
+}
+
+/** Mirrors what the shared tag-set picker emits: sets, plus the joining operator. */
+function createTagSetSelection(
+  sets: Array<{
+    abilityKeys: string[];
+    operator?: AbilityTagSetOperator;
+    captainAbility?: boolean;
+  }>,
+  operator: AbilityTagSetOperator = 'all',
+): AbilityFilterTagSetSelection {
+  return {
+    operator,
+    sets: sets.map((set, index) => ({
+      id: `set-${index + 1}`,
+      operator: set.operator ?? 'any',
+      requirements: set.abilityKeys.map((abilityKey) =>
+        createTagSetRequirement(abilityKey, set.captainAbility),
+      ),
+    })),
   };
 }
 
@@ -1879,6 +2045,7 @@ function createAbilityCatalogItem(
   category: AutoBuildAbilityCatalogItem['category'],
   matchingCharacterIds: number[],
   availableSources: AutoBuildAbilitySource[] = ['specialText'],
+  captainAbilityMatchingCharacterIds?: number[],
 ): AutoBuildAbilityCatalogItem {
   return {
     key,
@@ -1893,6 +2060,7 @@ function createAbilityCatalogItem(
     availableSources,
     matchCount: matchingCharacterIds.length,
     matchingCharacterIds,
+    ...(captainAbilityMatchingCharacterIds ? { captainAbilityMatchingCharacterIds } : {}),
     sampleCharacterIds: matchingCharacterIds.slice(0, 3),
     sampleTexts: [],
   };

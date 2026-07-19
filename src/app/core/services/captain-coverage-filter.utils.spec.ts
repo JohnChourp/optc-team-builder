@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  type AutoBuildAbilityRequirement,
-  type NormalizedBuilderAbility,
-} from '../models/auto-team-builder-ability.models';
+import { type NormalizedBuilderAbility } from '../models/auto-team-builder-ability.models';
 import {
   type CharacterCaptainAbilityCoverage,
   type CharacterCaptainAbilityCoverageTier,
@@ -14,7 +11,7 @@ import {
   getCaptainCoverageAvailableTierNumbers,
   hasCaptainCoverageSuperTandemData,
   hasCaptainCoverageSuperTypesClassesData,
-  matchesCaptainCoverageRequiredAbilityFilters,
+  matchesCaptainCoverageRequiredAbilityCharacterIds,
   matchesCaptainCoverageRequiredTiers,
   resolveCaptainAllTierCoverage,
   resolveCaptainCoverageFilterResult,
@@ -71,22 +68,47 @@ describe('captain coverage filter model', () => {
     expect(result.matches).toBe(true);
   });
 
-  it('matches Required filters only against Captain Ability-derived abilities', () => {
-    const requirement = createRequirement('remove_bind');
-    const specialOnlyAbilities = [
-      createBuilderAbility('remove_bind', 'Remove Bind', 'specialText'),
-    ];
-    const captainAbilityAbilities = [
-      createBuilderAbility('remove_bind', 'Remove Bind', 'captainAbility'),
-    ];
+  it('matches ability filters against the resolved tag-set character index', () => {
+    const requiredAbilityCharacterIds = new Set([2001]);
 
     expect(
-      matchesCaptainCoverageRequiredAbilityFilters(specialOnlyAbilities, [requirement]),
-    ).toBe(false);
-    expect(
-      matchesCaptainCoverageRequiredAbilityFilters(captainAbilityAbilities, [requirement]),
+      matchesCaptainCoverageRequiredAbilityCharacterIds(2001, requiredAbilityCharacterIds),
     ).toBe(true);
-    expect(matchesCaptainCoverageRequiredAbilityFilters([], [])).toBe(true);
+    expect(
+      matchesCaptainCoverageRequiredAbilityCharacterIds(2002, requiredAbilityCharacterIds),
+    ).toBe(false);
+    // No ability filter at all: every character passes.
+    expect(matchesCaptainCoverageRequiredAbilityCharacterIds(2002, null)).toBe(true);
+    // An active filter that resolved to nothing must exclude everything.
+    expect(matchesCaptainCoverageRequiredAbilityCharacterIds(2001, new Set())).toBe(false);
+  });
+
+  it('keeps the filter result path in step with the resolved ability index', () => {
+    const captain = createCharacter({
+      id: 1001,
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const matchedTarget = createCharacter({ id: 2001 });
+    const unmatchedTarget = createCharacter({ id: 2002 });
+    const state = createCaptainCoverageFilterState({
+      requiredAbilityCharacterIds: new Set([2001]),
+    });
+
+    const matchedResult = resolveCaptainCoverageFilterResult(
+      captain,
+      { character: matchedTarget, detail: matchedTarget },
+      state,
+    );
+    const unmatchedResult = resolveCaptainCoverageFilterResult(
+      captain,
+      { character: unmatchedTarget, detail: unmatchedTarget },
+      state,
+    );
+
+    expect(matchedResult.matchesRequiredAbilityFilters).toBe(true);
+    expect(matchedResult.matches).toBe(true);
+    expect(unmatchedResult.matchesRequiredAbilityFilters).toBe(false);
+    expect(unmatchedResult.matches).toBe(false);
   });
 
   it('requires structured Super Tandem data only when the Super Tandem filter is enabled', () => {
@@ -108,16 +130,24 @@ describe('captain coverage filter model', () => {
     expect(hasCaptainCoverageSuperTandemData(noSuperTandem)).toBe(false);
     expect(hasCaptainCoverageSuperTandemData(withSuperTandem)).toBe(true);
     expect(
-      resolveCaptainCoverageFilterResult(captain, {
-        character: noSuperTandem,
-        detail: noSuperTandem,
-      }, state).matches,
+      resolveCaptainCoverageFilterResult(
+        captain,
+        {
+          character: noSuperTandem,
+          detail: noSuperTandem,
+        },
+        state,
+      ).matches,
     ).toBe(false);
     expect(
-      resolveCaptainCoverageFilterResult(captain, {
-        character: withSuperTandem,
-        detail: withSuperTandem,
-      }, state).matches,
+      resolveCaptainCoverageFilterResult(
+        captain,
+        {
+          character: withSuperTandem,
+          detail: withSuperTandem,
+        },
+        state,
+      ).matches,
     ).toBe(true);
   });
 
@@ -141,22 +171,34 @@ describe('captain coverage filter model', () => {
     expect(hasCaptainCoverageSuperTypesClassesData(withSuperType)).toBe(true);
     expect(hasCaptainCoverageSuperTypesClassesData(withSuperClass)).toBe(true);
     expect(
-      resolveCaptainCoverageFilterResult(captain, {
-        character: noSuperTypesClasses,
-        detail: noSuperTypesClasses,
-      }, state).matches,
+      resolveCaptainCoverageFilterResult(
+        captain,
+        {
+          character: noSuperTypesClasses,
+          detail: noSuperTypesClasses,
+        },
+        state,
+      ).matches,
     ).toBe(false);
     expect(
-      resolveCaptainCoverageFilterResult(captain, {
-        character: withSuperType,
-        detail: withSuperType,
-      }, state).matches,
+      resolveCaptainCoverageFilterResult(
+        captain,
+        {
+          character: withSuperType,
+          detail: withSuperType,
+        },
+        state,
+      ).matches,
     ).toBe(true);
     expect(
-      resolveCaptainCoverageFilterResult(captain, {
-        character: withSuperClass,
-        detail: withSuperClass,
-      }, state).matches,
+      resolveCaptainCoverageFilterResult(
+        captain,
+        {
+          character: withSuperClass,
+          detail: withSuperClass,
+        },
+        state,
+      ).matches,
     ).toBe(true);
   });
 
@@ -192,22 +234,34 @@ describe('captain coverage filter model', () => {
     });
 
     expect(
-      resolveCaptainCoverageFilterResult(captain, {
-        character: onlySuperTandem,
-        detail: onlySuperTandem,
-      }, state).matches,
+      resolveCaptainCoverageFilterResult(
+        captain,
+        {
+          character: onlySuperTandem,
+          detail: onlySuperTandem,
+        },
+        state,
+      ).matches,
     ).toBe(false);
     expect(
-      resolveCaptainCoverageFilterResult(captain, {
-        character: onlySuperType,
-        detail: onlySuperType,
-      }, state).matches,
+      resolveCaptainCoverageFilterResult(
+        captain,
+        {
+          character: onlySuperType,
+          detail: onlySuperType,
+        },
+        state,
+      ).matches,
     ).toBe(false);
     expect(
-      resolveCaptainCoverageFilterResult(captain, {
-        character: bothSuperCapabilities,
-        detail: bothSuperCapabilities,
-      }, state).matches,
+      resolveCaptainCoverageFilterResult(
+        captain,
+        {
+          character: bothSuperCapabilities,
+          detail: bothSuperCapabilities,
+        },
+        state,
+      ).matches,
     ).toBe(true);
   });
 
@@ -578,7 +632,8 @@ describe('resolveCaptainAllTierCoverage', () => {
                     classes: [],
                     characterTags: [],
                     minCount: 5,
-                    rawClause: 'there is a [STR], [DEX], [QCK], [PSY] and [INT] character in your crew',
+                    rawClause:
+                      'there is a [STR], [DEX], [QCK], [PSY] and [INT] character in your crew',
                   },
                 ],
                 fieldConditions: [],
@@ -880,7 +935,8 @@ function buildUniversalClassCompositionCoverage(): CharacterCaptainAbilityCovera
                 kind: 'crew-composition',
                 minCount: 6,
                 classes: ['Fighter', 'Slasher', 'Shooter', 'Striker'],
-                rawClause: 'crew has 6 characters with Fighter, Slasher, Shooter or Striker classes',
+                rawClause:
+                  'crew has 6 characters with Fighter, Slasher, Shooter or Striker classes',
               },
             ],
             fieldConditions: [],
@@ -979,7 +1035,10 @@ function buildImuCoverage(): CharacterCaptainAbilityCoverage {
       teamConditions: [],
       fieldConditions: [],
       triggerConditions: [],
-      clauses: ['Boosts ATK of Cost 70 or more characters by 6x', 'boosts HP of all characters by 1.5x'],
+      clauses: [
+        'Boosts ATK of Cost 70 or more characters by 6x',
+        'boosts HP of all characters by 1.5x',
+      ],
       atkBoost: 6,
       hpBoost: 1.5,
     },
@@ -1017,31 +1076,5 @@ function buildImuCoverage(): CharacterCaptainAbilityCoverage {
         tiers,
       },
     ],
-  };
-}
-
-function createRequirement(abilityKey: string): AutoBuildAbilityRequirement {
-  return {
-    abilityKey,
-    minTurns: null,
-    slotTokens: [],
-    requiredCharacterCount: 1,
-    slotScope: 'leader',
-    sourceScope: 'captainAbility',
-  };
-}
-
-function createBuilderAbility(
-  key: string,
-  label: string,
-  source: NormalizedBuilderAbility['source'],
-): NormalizedBuilderAbility {
-  return {
-    key,
-    label,
-    minTurns: null,
-    isCompleteRemoval: false,
-    slotTokens: [],
-    source,
   };
 }

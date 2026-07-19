@@ -24,7 +24,7 @@
     },
     "captainAbility": {
       "label": "Captain Ability filters",
-      "support": "{{count}} selected effects. Results must match those effects in each character's own Captain Ability.",
+      "support": "{{count}} selected Captain Ability effects across your tag groups. Each group matches on its own rule, and the groups combine as the picker shows.",
       "open": "Open Captain Ability picker",
       "clear": "Clear",
       "eyebrow": "Captain Ability",
@@ -33,7 +33,7 @@
     },
     "special": {
       "label": "Special filters",
-      "support": "{{count}} selected effects. Results must match every selected effect.",
+      "support": "{{count}} selected Special effects across your tag groups. Each group matches on its own rule, and the groups combine as the picker shows.",
       "open": "Open Special picker",
       "clear": "Clear",
       "eyebrow": "Special",
@@ -42,21 +42,21 @@
     },
     "crewmate": {
       "label": "Crewmate Ability filters",
-      "support": "{{count}} selected effects. Results must match every selected effect.",
+      "support": "{{count}} selected Crewmate effects across your tag groups. Each group matches on its own rule, and the groups combine as the picker shows.",
       "open": "Open Crewmate picker",
       "clear": "Clear",
       "eyebrow": "Crewmate Ability",
       "title": "Crewmate Ability filters",
-      "copy": "Pick Crewmate effects. Results must cover every selected effect."
+      "copy": "Pick Crewmate effects and group them. A group can require every tag, or just one of them."
     },
     "potential": {
       "label": "Potential Ability filters",
-      "support": "{{count}} selected effects. Results must match every selected effect.",
+      "support": "{{count}} selected Potential effects across your tag groups. Each group matches on its own rule, and the groups combine as the picker shows.",
       "open": "Open Potential picker",
       "clear": "Clear",
       "eyebrow": "Potential Ability",
       "title": "Potential Ability filters",
-      "copy": "Pick Potential effects. Results must cover every selected effect."
+      "copy": "Pick Potential effects and group them. A group can require every tag, or just one of them."
     },
     "type": {
       "label": "Type",
@@ -64,12 +64,15 @@
     },
     "support": {
       "label": "Support Ability filters",
-      "support": "{{count}} selected effects. Results must match every selected effect.",
+      "support": "{{count}} selected Support effects across your tag groups. Each group matches on its own rule, and the groups combine as the picker shows.",
       "open": "Open Support picker",
       "clear": "Clear",
       "eyebrow": "Support Ability",
       "title": "Support Ability filters",
-      "copy": "Pick Support effects. Results must cover every selected effect."
+      "copy": "Pick Support effects and group them. A group can require every tag, or just one of them."
+    },
+    "tagSets": {
+      "title": "Character tag filters"
     }
   },
   "favorites": {

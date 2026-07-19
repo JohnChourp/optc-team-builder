@@ -81,6 +81,9 @@
         "title": "Support Ability filters"
       },
       "tag": "Tag",
+      "tagSets": {
+        "title": "Φίλτρα με ability tags"
+      },
       "type": "Type"
     },
     "loading": "Φόρτωση matching χαρακτήρων...",

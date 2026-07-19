@@ -61,37 +61,30 @@
       "inBox": "Ήδη μέσα στο box",
       "notInBox": "Εκτός box"
     },
+    "abilityTagSets": {
+      "title": "Φίλτρα ability tags"
+    },
     "captainAbility": {
       "open": "Captain Ability filters ({{count}})",
-      "eyebrow": "Captain Ability",
-      "title": "Captain Ability filters",
-      "copy": "Φίλτραρε τα character results του box με βάση effects από το Captain Ability κάθε χαρακτήρα."
+      "eyebrow": "Captain Ability"
     },
     "special": {
       "open": "Special filters ({{count}})",
-      "eyebrow": "Special",
-      "title": "Special filters",
-      "copy": "Φίλτραρε τα character results του box με βάση τα Special effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects."
+      "eyebrow": "Special"
     },
     "crewmate": {
       "open": "Crewmate Ability filters ({{count}})",
-      "eyebrow": "Crewmate Ability",
-      "title": "Crewmate Ability filters",
-      "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
+      "eyebrow": "Crewmate Ability"
     },
     "potential": {
       "open": "Potential Ability filters ({{count}})",
-      "eyebrow": "Potential Ability",
-      "title": "Potential Ability filters",
-      "copy": "Επίλεξε Potential effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
+      "eyebrow": "Potential Ability"
     },
     "support": {
       "label": "Support Ability filters",
       "support": "{{count}} selected effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
       "open": "Άνοιγμα Support picker",
-      "eyebrow": "Support Ability",
-      "title": "Support Ability filters",
-      "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
+      "eyebrow": "Support Ability"
     }
   },
   "displayMode": {

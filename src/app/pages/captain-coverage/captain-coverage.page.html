@@ -198,17 +198,14 @@
             (clearCategory)="clearAbilityFilterCategory($event)"
           ></app-ability-filter-rail>
 
-          <app-ability-requirement-picker
-            [isOpen]="captainAbilityPickerOpen()"
-            [title]="t('filters.captainAbilityTitle')"
-            [copy]="t('filters.captainAbilityCopy')"
-            [drafts]="captainAbilityDrafts()"
-            [catalogItems]="availableCaptainAbilityCatalogItems()"
-            [showCharacterCount]="false"
-            [captainAbilityMode]="true"
-            (dismiss)="closeCaptainAbilityPicker()"
-            (saveDrafts)="saveCaptainAbilityPicker($event)"
-          ></app-ability-requirement-picker>
+          <app-ability-tag-set-picker
+            [isOpen]="abilityTagSetPickerOpen()"
+            [title]="t('filters.abilityTagSetsTitle')"
+            [sections]="abilityTagSetPickerSections()"
+            [selection]="tagSetSelection()"
+            (dismiss)="closeAbilityTagSetPicker()"
+            (saveSelection)="saveAbilityTagSetSelection($event)"
+          ></app-ability-tag-set-picker>
 
           <div class="results-toolbar__toggle-grid">
             <label
@@ -381,54 +378,6 @@
               </section>
             }
           </div>
-
-          <app-special-ability-picker
-            [isOpen]="specialAbilityPickerOpen()"
-            category="special"
-            [eyebrow]="t('filters.specialEyebrow')"
-            [title]="t('filters.specialTitle')"
-            [copy]="t('filters.specialCopy')"
-            [drafts]="specialAbilityDrafts()"
-            [catalogItems]="availableSpecialAbilityCatalogItems()"
-            (dismiss)="closeSpecialAbilityPicker()"
-            (saveDrafts)="saveSpecialAbilityPicker($event)"
-          ></app-special-ability-picker>
-
-          <app-special-ability-picker
-            [isOpen]="crewmateAbilityPickerOpen()"
-            category="crewmate"
-            [eyebrow]="t('filters.crewmateEyebrow')"
-            [title]="t('filters.crewmateTitle')"
-            [copy]="t('filters.crewmateCopy')"
-            [drafts]="crewmateAbilityDrafts()"
-            [catalogItems]="availableCrewmateAbilityCatalogItems()"
-            (dismiss)="closeCrewmateAbilityPicker()"
-            (saveDrafts)="saveCrewmateAbilityPicker($event)"
-          ></app-special-ability-picker>
-
-          <app-special-ability-picker
-            [isOpen]="potentialAbilityPickerOpen()"
-            category="potential"
-            [eyebrow]="t('filters.potentialEyebrow')"
-            [title]="t('filters.potentialTitle')"
-            [copy]="t('filters.potentialCopy')"
-            [drafts]="potentialAbilityDrafts()"
-            [catalogItems]="availablePotentialAbilityCatalogItems()"
-            (dismiss)="closePotentialAbilityPicker()"
-            (saveDrafts)="savePotentialAbilityPicker($event)"
-          ></app-special-ability-picker>
-
-          <app-special-ability-picker
-            [isOpen]="supportAbilityPickerOpen()"
-            category="support"
-            [eyebrow]="t('filters.supportEyebrow')"
-            [title]="t('filters.supportTitle')"
-            [copy]="t('filters.supportCopy')"
-            [drafts]="supportAbilityDrafts()"
-            [catalogItems]="availableSupportAbilityCatalogItems()"
-            (dismiss)="closeSupportAbilityPicker()"
-            (saveDrafts)="saveSupportAbilityPicker($event)"
-          ></app-special-ability-picker>
 
           <div class="results-controls">
             <ion-searchbar

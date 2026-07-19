@@ -24,10 +24,9 @@
   },
   "filters": {
     "abilityRailLabel": "Ability filters",
+    "abilityTagSetsTitle": "Φίλτρο ability tags",
     "bestAbilityMatchesFirst": "Πρώτα τα καλύτερα ability matches",
-    "captainAbilityCopy": "Το Required περιορίζει τα results με tags που έχουν γίνει parse από το Captain Ability κάθε result χαρακτήρα. Αυτό δεν αλλάζει τον επιλεγμένο Captain.",
     "captainAbilityEyebrow": "Required",
-    "captainAbilityTitle": "Required",
     "tierCoverage": {
       "toggle": "Tier Coverage",
       "support": "Φιλτράρει τα results ανάλογα με ποια Captain Ability tiers υποστηρίζει κάθε χαρακτήρας.",
@@ -70,17 +69,11 @@
       "from": "Cost από",
       "to": "Cost έως"
     },
-    "crewmateCopy": "Φίλτραρε τα character results με Crewmate Ability tags.",
     "crewmateEyebrow": "Crewmate Ability",
-    "crewmateTitle": "Crewmate Ability filters",
     "favoritesOnly": "Μόνο favorites",
     "hideFavorites": "Κρύψε favorites",
-    "potentialCopy": "Φίλτραρε τα character results με Potential Ability tags.",
     "potentialEyebrow": "Potential Ability",
-    "potentialTitle": "Potential Ability filters",
-    "specialCopy": "Φίλτραρε τα character results με Special tags.",
     "specialEyebrow": "Special",
-    "specialTitle": "Special filters",
     "superTandemPresence": {
       "toggle": "Super Tandem",
       "support": "Δείξε μόνο χαρακτήρες με structured Super Tandem δεδομένα."
@@ -89,9 +82,7 @@
       "toggle": "Super Types/Classes",
       "support": "Δείξε μόνο χαρακτήρες με structured Super Type ή Super Class δεδομένα."
     },
-    "supportCopy": "Φίλτραρε τα character results με Support Ability tags.",
     "supportEyebrow": "Support Ability",
-    "supportTitle": "Support Ability filters",
     "type": {
       "label": "Type",
       "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά type"

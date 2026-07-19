@@ -28,7 +28,12 @@ import {
   sparklesOutline,
 } from 'ionicons/icons';
 
-import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
+import {
+  type AbilityFilterTagSetSelection,
+  type AutoBuildAbilityCatalog,
+  type AutoBuildAbilityCatalogItem,
+  type AutoBuildAbilityRequirement,
+} from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterIdOrder,
   type CharacterListItem,
@@ -45,23 +50,20 @@ import { OptcRepositoryService } from '../../core/services/optc-repository.servi
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
-  createAbilityRequirementDrafts,
-  type AbilityRequirementDraft,
-} from '../../core/services/ability-requirement-draft.utils';
+  cloneAbilityFilterTagSetSelection,
+  createEmptyAbilityFilterTagSetSelection,
+  resolveTagSetSelectionMatchingCharacterIds,
+} from '../../core/services/ability-filter-tag-set.utils';
 import {
-  createCaptainAbilityDrafts,
   getAbilityCatalogItemsByCategory,
   getCaptainAbilityCatalogItems,
   intersectAbilityMatchingCharacterIds,
-  resolveCaptainAbilityMatchingCharacterIds,
-  resolveCategoryAbilityMatchingCharacterIds,
-  resolveSpecialAbilityMatchingCharacterIds,
-  serializeCaptainAbilityDrafts,
-  serializeCategoryAbilityDrafts,
-  serializeSpecialAbilityDrafts,
+  isCaptainAbilityRequirement,
 } from '../../core/services/special-ability-filter.utils';
-import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
-import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
+import {
+  AbilityTagSetPickerComponent,
+  type AbilityTagSetPickerSection,
+} from '../../shared/ability-tag-set-picker/ability-tag-set-picker.component';
 import {
   AbilityFilterRailComponent,
   type AbilityFilterRailItem,
@@ -81,6 +83,10 @@ import {
 } from './characters-style-panels.component';
 
 const PAGE_SIZE = 100;
+/** Shared empty catalog so `allCatalogItems` keeps a stable identity while loading. */
+const EMPTY_CATALOG_ITEMS: AutoBuildAbilityCatalogItem[] = [];
+/** Non-captain rail categories, in the order a requirement is attributed to one. */
+const CATALOG_ABILITY_CATEGORIES = ['special', 'crewmate', 'potential', 'support'] as const;
 type CharacterDisplayMode = 'list' | 'compact';
 type CompactAbilityFilterCategory = AbilityFilterRailCategory;
 
@@ -89,20 +95,6 @@ interface CharacterCatalogCardView {
   detailLink: string[];
   isFavorite: boolean;
   favoriteAriaLabel: string;
-}
-
-interface AbilityFilterBadgeView {
-  draftId: string;
-  abilityKey: string;
-  label: string;
-  badge: string;
-}
-
-interface AbilityFilterGroupView {
-  category: CompactAbilityFilterCategory;
-  labelKey: string;
-  clearLabelKey: string;
-  badges: AbilityFilterBadgeView[];
 }
 
 @Component({
@@ -125,8 +117,7 @@ interface AbilityFilterGroupView {
     CharacterFilterRowComponent,
     CharactersCatalogPanelComponent,
     CharactersImportPanelComponent,
-    AbilityRequirementPickerComponent,
-    SpecialAbilityPickerComponent,
+    AbilityTagSetPickerComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -150,16 +141,10 @@ export class CharactersPage implements OnInit {
   public readonly hideFavorites = signal(false);
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
-  public readonly captainAbilityPickerOpen = signal(false);
-  public readonly captainAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly specialAbilityPickerOpen = signal(false);
-  public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly crewmateAbilityPickerOpen = signal(false);
-  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly potentialAbilityPickerOpen = signal(false);
-  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly supportAbilityPickerOpen = signal(false);
-  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly tagSetPickerOpen = signal(false);
+  public readonly tagSetSelection = signal<AbilityFilterTagSetSelection>(
+    createEmptyAbilityFilterTagSetSelection(),
+  );
   public readonly displayMode = signal<CharacterDisplayMode>('compact');
   public readonly favoriteIds;
   public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
@@ -198,148 +183,130 @@ export class CharactersPage implements OnInit {
       this.filteredClassOptions().length > 0 && this.classQuery().trim() !== this.selectedClass(),
   );
   public readonly isCompactDisplayMode = computed(() => this.displayMode() === 'compact');
+  /**
+   * The full catalog behind every tag set, kept as one memoized array because
+   * `getCatalogAbilityIndex` caches by array identity — a fresh array per read
+   * would silently downgrade its O(1) lookups to full catalog scans.
+   */
+  public readonly allCatalogItems = computed<AutoBuildAbilityCatalogItem[]>(
+    () => this.abilityCatalog()?.abilities ?? EMPTY_CATALOG_ITEMS,
+  );
   public readonly availableCaptainAbilityCatalogItems = computed(() =>
-    getCaptainAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+    getCaptainAbilityCatalogItems(this.allCatalogItems()),
   );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
-    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
+    getAbilityCatalogItemsByCategory(this.allCatalogItems(), 'special'),
   );
   public readonly availableCrewmateAbilityCatalogItems = computed(() =>
-    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'crewmate'),
+    getAbilityCatalogItemsByCategory(this.allCatalogItems(), 'crewmate'),
   );
   public readonly availablePotentialAbilityCatalogItems = computed(() =>
-    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'potential'),
+    getAbilityCatalogItemsByCategory(this.allCatalogItems(), 'potential'),
   );
   public readonly availableSupportAbilityCatalogItems = computed(() =>
-    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'support'),
+    getAbilityCatalogItemsByCategory(this.allCatalogItems(), 'support'),
   );
-  public readonly captainAbilityRequirements = computed(() =>
-    serializeCaptainAbilityDrafts(
-      this.captainAbilityDrafts(),
-      this.availableCaptainAbilityCatalogItems(),
-    ),
+  public readonly abilityFilterCharacterIds = computed(() =>
+    resolveTagSetSelectionMatchingCharacterIds(this.tagSetSelection(), this.allCatalogItems()),
   );
-  public readonly specialAbilityRequirements = computed(() =>
-    serializeSpecialAbilityDrafts(
-      this.specialAbilityDrafts(),
-      this.availableSpecialAbilityCatalogItems(),
-    ),
-  );
-  public readonly crewmateAbilityRequirements = computed(() =>
-    serializeCategoryAbilityDrafts(
-      this.crewmateAbilityDrafts(),
-      this.availableCrewmateAbilityCatalogItems(),
-      'crewmate',
-    ),
-  );
-  public readonly potentialAbilityRequirements = computed(() =>
-    serializeCategoryAbilityDrafts(
-      this.potentialAbilityDrafts(),
-      this.availablePotentialAbilityCatalogItems(),
-      'potential',
-    ),
-  );
-  public readonly supportAbilityRequirements = computed(() =>
-    serializeCategoryAbilityDrafts(
-      this.supportAbilityDrafts(),
-      this.availableSupportAbilityCatalogItems(),
-      'support',
-    ),
-  );
-  public readonly captainFilterCharacterIds = computed(() =>
-    resolveCaptainAbilityMatchingCharacterIds(
-      this.captainAbilityRequirements(),
-      this.availableCaptainAbilityCatalogItems(),
-    ),
-  );
-  public readonly specialFilterCharacterIds = computed(() =>
-    resolveSpecialAbilityMatchingCharacterIds(
-      this.specialAbilityRequirements(),
-      this.availableSpecialAbilityCatalogItems(),
-    ),
-  );
-  public readonly crewmateFilterCharacterIds = computed(() =>
-    resolveCategoryAbilityMatchingCharacterIds(
-      this.crewmateAbilityRequirements(),
-      this.availableCrewmateAbilityCatalogItems(),
-      'crewmate',
-    ),
-  );
-  public readonly potentialFilterCharacterIds = computed(() =>
-    resolveCategoryAbilityMatchingCharacterIds(
-      this.potentialAbilityRequirements(),
-      this.availablePotentialAbilityCatalogItems(),
-      'potential',
-    ),
-  );
-  public readonly supportFilterCharacterIds = computed(() =>
-    resolveCategoryAbilityMatchingCharacterIds(
-      this.supportAbilityRequirements(),
-      this.availableSupportAbilityCatalogItems(),
-      'support',
-    ),
-  );
-  public readonly activeAbilityFilterGroups = computed<AbilityFilterGroupView[]>(() =>
+  /** Ability keys per rail category, so a requirement can be attributed to a chip. */
+  private readonly abilityFilterCategoryKeys = computed(() => ({
+    captainAbility: new Set(this.availableCaptainAbilityCatalogItems().map((item) => item.key)),
+    special: new Set(this.availableSpecialAbilityCatalogItems().map((item) => item.key)),
+    crewmate: new Set(this.availableCrewmateAbilityCatalogItems().map((item) => item.key)),
+    potential: new Set(this.availablePotentialAbilityCatalogItems().map((item) => item.key)),
+    support: new Set(this.availableSupportAbilityCatalogItems().map((item) => item.key)),
+  }));
+  /** How many requirements of each category the selection holds, across all sets. */
+  private readonly abilityFilterCategoryCounts = computed<
+    Record<CompactAbilityFilterCategory, number>
+  >(() => {
+    const counts: Record<CompactAbilityFilterCategory, number> = {
+      captainAbility: 0,
+      special: 0,
+      crewmate: 0,
+      potential: 0,
+      support: 0,
+    };
+
+    for (const set of this.tagSetSelection().sets) {
+      for (const requirement of set.requirements) {
+        const category = this.resolveRequirementCategory(requirement);
+
+        if (category) {
+          counts[category] += 1;
+        }
+      }
+    }
+
+    return counts;
+  });
+  public readonly tagSetPickerSections = computed<AbilityTagSetPickerSection[]>(() =>
     [
-      this.buildAbilityFilterGroup(
-        'captainAbility',
-        this.captainAbilityDrafts(),
-        this.availableCaptainAbilityCatalogItems(),
-      ),
-      this.buildAbilityFilterGroup(
-        'special',
-        this.specialAbilityDrafts(),
-        this.availableSpecialAbilityCatalogItems(),
-      ),
-      this.buildAbilityFilterGroup(
-        'crewmate',
-        this.crewmateAbilityDrafts(),
-        this.availableCrewmateAbilityCatalogItems(),
-      ),
-      this.buildAbilityFilterGroup(
-        'potential',
-        this.potentialAbilityDrafts(),
-        this.availablePotentialAbilityCatalogItems(),
-      ),
-      this.buildAbilityFilterGroup(
-        'support',
-        this.supportAbilityDrafts(),
-        this.availableSupportAbilityCatalogItems(),
-      ),
-    ].filter((group) => group.badges.length > 0),
+      {
+        category: 'captainAbility',
+        label: this.i18n.translate('filters.captainAbility.eyebrow', undefined, 'characters'),
+        items: this.availableCaptainAbilityCatalogItems(),
+        captainAbility: true,
+      },
+      {
+        category: 'special',
+        label: this.i18n.translate('filters.special.eyebrow', undefined, 'characters'),
+        items: this.availableSpecialAbilityCatalogItems(),
+      },
+      {
+        category: 'crewmate',
+        label: this.i18n.translate('filters.crewmate.eyebrow', undefined, 'characters'),
+        items: this.availableCrewmateAbilityCatalogItems(),
+      },
+      {
+        category: 'potential',
+        label: this.i18n.translate('filters.potential.eyebrow', undefined, 'characters'),
+        items: this.availablePotentialAbilityCatalogItems(),
+      },
+      {
+        category: 'support',
+        label: this.i18n.translate('filters.support.eyebrow', undefined, 'characters'),
+        items: this.availableSupportAbilityCatalogItems(),
+      },
+    ].filter((section) => section.items.length > 0),
   );
-  public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => [
-    {
-      category: 'captainAbility',
-      label: this.i18n.translate('filters.captainAbility.eyebrow', undefined, 'characters'),
-      count: this.captainAbilityDrafts().length,
-      disabled: !this.availableCaptainAbilityCatalogItems().length,
-    },
-    {
-      category: 'special',
-      label: this.i18n.translate('filters.special.eyebrow', undefined, 'characters'),
-      count: this.specialAbilityDrafts().length,
-      disabled: !this.availableSpecialAbilityCatalogItems().length,
-    },
-    {
-      category: 'crewmate',
-      label: this.i18n.translate('filters.crewmate.eyebrow', undefined, 'characters'),
-      count: this.crewmateAbilityDrafts().length,
-      disabled: !this.availableCrewmateAbilityCatalogItems().length,
-    },
-    {
-      category: 'potential',
-      label: this.i18n.translate('filters.potential.eyebrow', undefined, 'characters'),
-      count: this.potentialAbilityDrafts().length,
-      disabled: !this.availablePotentialAbilityCatalogItems().length,
-    },
-    {
-      category: 'support',
-      label: this.i18n.translate('filters.support.eyebrow', undefined, 'characters'),
-      count: this.supportAbilityDrafts().length,
-      disabled: !this.availableSupportAbilityCatalogItems().length,
-    },
-  ]);
+  public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => {
+    const counts = this.abilityFilterCategoryCounts();
+
+    return [
+      {
+        category: 'captainAbility',
+        label: this.i18n.translate('filters.captainAbility.eyebrow', undefined, 'characters'),
+        count: counts.captainAbility,
+        disabled: !this.availableCaptainAbilityCatalogItems().length,
+      },
+      {
+        category: 'special',
+        label: this.i18n.translate('filters.special.eyebrow', undefined, 'characters'),
+        count: counts.special,
+        disabled: !this.availableSpecialAbilityCatalogItems().length,
+      },
+      {
+        category: 'crewmate',
+        label: this.i18n.translate('filters.crewmate.eyebrow', undefined, 'characters'),
+        count: counts.crewmate,
+        disabled: !this.availableCrewmateAbilityCatalogItems().length,
+      },
+      {
+        category: 'potential',
+        label: this.i18n.translate('filters.potential.eyebrow', undefined, 'characters'),
+        count: counts.potential,
+        disabled: !this.availablePotentialAbilityCatalogItems().length,
+      },
+      {
+        category: 'support',
+        label: this.i18n.translate('filters.support.eyebrow', undefined, 'characters'),
+        count: counts.support,
+        disabled: !this.availableSupportAbilityCatalogItems().length,
+      },
+    ];
+  });
   public readonly sortFilterOptions = computed<CharacterFilterOption[]>(() => [
     { value: 'catalog', label: this.i18n.translate('sort.options.catalog', undefined, 'characters') },
     { value: 'nameAsc', label: this.i18n.translate('sort.options.nameAsc', undefined, 'characters') },
@@ -431,6 +398,7 @@ export class CharactersPage implements OnInit {
       this.repository.getDatasetManifest(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       this.characterCatalogCache.ensureLoaded(),
+      this.i18n.preloadScope('ability-tag-sets'),
     ]);
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
@@ -556,221 +524,43 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
-  public openCaptainAbilityPicker(): void {
-    if (!this.availableCaptainAbilityCatalogItems().length) {
+  /** Every rail chip opens the same modal — the chips only report per-category counts. */
+  public openAbilityTagSetPicker(): void {
+    if (!this.tagSetPickerSections().length) {
       return;
     }
 
-    console.log('[CharactersPage] Captain Ability picker opened');
-    this.captainAbilityPickerOpen.set(true);
+    this.tagSetPickerOpen.set(true);
   }
 
-  public closeCaptainAbilityPicker(): void {
-    this.captainAbilityPickerOpen.set(false);
+  public closeAbilityTagSetPicker(): void {
+    this.tagSetPickerOpen.set(false);
   }
 
-  public async saveCaptainAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    this.captainAbilityDrafts.set(
-      createCaptainAbilityDrafts(
-        serializeCaptainAbilityDrafts(drafts, this.availableCaptainAbilityCatalogItems()),
-        this.availableCaptainAbilityCatalogItems(),
-      ),
-    );
-    this.captainAbilityPickerOpen.set(false);
+  public async saveAbilityTagSetPicker(selection: AbilityFilterTagSetSelection): Promise<void> {
+    this.tagSetSelection.set(cloneAbilityFilterTagSetSelection(selection));
+    this.tagSetPickerOpen.set(false);
     await this.loadCharacters(true);
   }
 
-  public async clearCaptainAbilityFilters(): Promise<void> {
-    this.captainAbilityDrafts.set([]);
-    await this.loadCharacters(true);
-  }
-
-  public openSpecialAbilityPicker(): void {
-    if (!this.availableSpecialAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.specialAbilityPickerOpen.set(true);
-  }
-
-  public closeSpecialAbilityPicker(): void {
-    this.specialAbilityPickerOpen.set(false);
-  }
-
-  public async saveSpecialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    this.specialAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
-      ),
-    );
-    this.specialAbilityPickerOpen.set(false);
-    await this.loadCharacters(true);
-  }
-
-  public async clearSpecialAbilityFilters(): Promise<void> {
-    this.specialAbilityDrafts.set([]);
-    await this.loadCharacters(true);
-  }
-
-  public openCrewmateAbilityPicker(): void {
-    if (!this.availableCrewmateAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.crewmateAbilityPickerOpen.set(true);
-  }
-
-  public closeCrewmateAbilityPicker(): void {
-    this.crewmateAbilityPickerOpen.set(false);
-  }
-
-  public async saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    this.crewmateAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(
-          drafts,
-          this.availableCrewmateAbilityCatalogItems(),
-          'crewmate',
-        ),
-      ),
-    );
-    this.crewmateAbilityPickerOpen.set(false);
-    await this.loadCharacters(true);
-  }
-
-  public async clearCrewmateAbilityFilters(): Promise<void> {
-    this.crewmateAbilityDrafts.set([]);
-    await this.loadCharacters(true);
-  }
-
-  public openPotentialAbilityPicker(): void {
-    if (!this.availablePotentialAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.potentialAbilityPickerOpen.set(true);
-  }
-
-  public closePotentialAbilityPicker(): void {
-    this.potentialAbilityPickerOpen.set(false);
-  }
-
-  public async savePotentialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    this.potentialAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(
-          drafts,
-          this.availablePotentialAbilityCatalogItems(),
-          'potential',
-        ),
-      ),
-    );
-    this.potentialAbilityPickerOpen.set(false);
-    await this.loadCharacters(true);
-  }
-
-  public async clearPotentialAbilityFilters(): Promise<void> {
-    this.potentialAbilityDrafts.set([]);
-    await this.loadCharacters(true);
-  }
-
-  public openSupportAbilityPicker(): void {
-    if (!this.availableSupportAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.supportAbilityPickerOpen.set(true);
-  }
-
-  public closeSupportAbilityPicker(): void {
-    this.supportAbilityPickerOpen.set(false);
-  }
-
-  public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    this.supportAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(
-          drafts,
-          this.availableSupportAbilityCatalogItems(),
-          'support',
-        ),
-      ),
-    );
-    this.supportAbilityPickerOpen.set(false);
-    await this.loadCharacters(true);
-  }
-
-  public async clearSupportAbilityFilters(): Promise<void> {
-    this.supportAbilityDrafts.set([]);
-    await this.loadCharacters(true);
-  }
-
-  public async removeAbilityFilterBadge(
-    category: CompactAbilityFilterCategory,
-    draftId: string,
-  ): Promise<void> {
-    const updateDrafts = (drafts: AbilityRequirementDraft[]) =>
-      drafts.filter((draft) => draft.draftId !== draftId);
-
-    switch (category) {
-      case 'captainAbility':
-        this.captainAbilityDrafts.update(updateDrafts);
-        break;
-      case 'special':
-        this.specialAbilityDrafts.update(updateDrafts);
-        break;
-      case 'crewmate':
-        this.crewmateAbilityDrafts.update(updateDrafts);
-        break;
-      case 'potential':
-        this.potentialAbilityDrafts.update(updateDrafts);
-        break;
-      case 'support':
-        this.supportAbilityDrafts.update(updateDrafts);
-        break;
-    }
-
-    await this.loadCharacters(true);
-  }
-
+  /**
+   * Drops one category's requirements out of every set. A set left empty is
+   * removed too: an empty set constrains nothing, so keeping it would only show
+   * a phantom group the next time the modal opens.
+   */
   public async clearAbilityFilterCategory(category: CompactAbilityFilterCategory): Promise<void> {
-    switch (category) {
-      case 'captainAbility':
-        await this.clearCaptainAbilityFilters();
-        break;
-      case 'special':
-        await this.clearSpecialAbilityFilters();
-        break;
-      case 'crewmate':
-        await this.clearCrewmateAbilityFilters();
-        break;
-      case 'potential':
-        await this.clearPotentialAbilityFilters();
-        break;
-      case 'support':
-        await this.clearSupportAbilityFilters();
-        break;
-    }
-  }
-
-  public openAbilityFilterCategory(category: CompactAbilityFilterCategory): void {
-    switch (category) {
-      case 'captainAbility':
-        this.openCaptainAbilityPicker();
-        break;
-      case 'special':
-        this.openSpecialAbilityPicker();
-        break;
-      case 'crewmate':
-        this.openCrewmateAbilityPicker();
-        break;
-      case 'potential':
-        this.openPotentialAbilityPicker();
-        break;
-      case 'support':
-        this.openSupportAbilityPicker();
-        break;
-    }
+    this.tagSetSelection.update((selection) => ({
+      ...selection,
+      sets: selection.sets
+        .map((set) => ({
+          ...set,
+          requirements: set.requirements.filter(
+            (requirement) => this.resolveRequirementCategory(requirement) !== category,
+          ),
+        }))
+        .filter((set) => set.requirements.length > 0),
+    }));
+    await this.loadCharacters(true);
   }
 
   public async loadMore(): Promise<void> {
@@ -930,16 +720,8 @@ export class CharactersPage implements OnInit {
     this.hideFavorites.set(false);
     this.selectedSortMode.set('catalog');
     this.selectedIdOrder.set('newest');
-    this.captainAbilityPickerOpen.set(false);
-    this.captainAbilityDrafts.set([]);
-    this.specialAbilityPickerOpen.set(false);
-    this.specialAbilityDrafts.set([]);
-    this.crewmateAbilityPickerOpen.set(false);
-    this.crewmateAbilityDrafts.set([]);
-    this.potentialAbilityPickerOpen.set(false);
-    this.potentialAbilityDrafts.set([]);
-    this.supportAbilityPickerOpen.set(false);
-    this.supportAbilityDrafts.set([]);
+    this.tagSetPickerOpen.set(false);
+    this.tagSetSelection.set(createEmptyAbilityFilterTagSetSelection());
     this.characters.set([]);
     this.loadingMore.set(false);
     this.hasMore.set(true);
@@ -1005,14 +787,28 @@ export class CharactersPage implements OnInit {
 
   private resolveAllowedCharacterIds(): number[] | undefined {
     const favoriteIds = this.favoritesOnly() ? this.favoriteIds() : undefined;
-    return intersectAbilityMatchingCharacterIds([
-      this.captainFilterCharacterIds(),
-      this.specialFilterCharacterIds(),
-      this.crewmateFilterCharacterIds(),
-      this.potentialFilterCharacterIds(),
-      this.supportFilterCharacterIds(),
-      favoriteIds,
-    ]);
+    return intersectAbilityMatchingCharacterIds([this.abilityFilterCharacterIds(), favoriteIds]);
+  }
+
+  /**
+   * Maps a requirement back to the rail chip that owns it. Captain requirements
+   * are identified by their source scope rather than their key, because the same
+   * ability key also exists as a plain Special entry.
+   */
+  private resolveRequirementCategory(
+    requirement: AutoBuildAbilityRequirement,
+  ): CompactAbilityFilterCategory | null {
+    const categoryKeys = this.abilityFilterCategoryKeys();
+
+    if (isCaptainAbilityRequirement(requirement)) {
+      return categoryKeys.captainAbility.has(requirement.abilityKey) ? 'captainAbility' : null;
+    }
+
+    return (
+      CATALOG_ABILITY_CATEGORIES.find((category) =>
+        categoryKeys[category].has(requirement.abilityKey),
+      ) ?? null
+    );
   }
 
   private normalizeSortMode(value: string | null | undefined): CharacterSortMode {
@@ -1040,41 +836,6 @@ export class CharactersPage implements OnInit {
       .filter((option) => option.toLowerCase().includes(normalizedQuery))
       .filter((option) => option !== selectedValue)
       .slice(0, 8);
-  }
-
-  private buildAbilityFilterGroup(
-    category: CompactAbilityFilterCategory,
-    drafts: AbilityRequirementDraft[],
-    catalogItems: { key: string; label: string }[],
-  ): AbilityFilterGroupView {
-    const catalogMap = new Map(catalogItems.map((item) => [item.key, item.label] as const));
-
-    return {
-      category,
-      labelKey: `filters.${category}.label`,
-      clearLabelKey: `filters.${category}.clear`,
-      badges: drafts.map((draft) => {
-        const label = catalogMap.get(draft.abilityKey) ?? draft.abilityKey;
-
-        return {
-          draftId: draft.draftId,
-          abilityKey: draft.abilityKey,
-          label,
-          badge: this.resolveAbilityBadge(label),
-        };
-      }),
-    };
-  }
-
-  private resolveAbilityBadge(label: string): string {
-    return label
-      .replace(/\[[^\]]+\]/g, ' ')
-      .replace(/[^A-Za-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('');
   }
 
   private async loadImportFile(file: File): Promise<void> {
