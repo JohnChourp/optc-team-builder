@@ -53,9 +53,10 @@ describe('AbilityTagSetPickerComponent', () => {
     openComponent(component);
     component.toggleCatalogItem(HEAL);
 
-    expect(
-      component.workingSelection().sets[0]?.requirements.map((r) => r.abilityKey),
-    ).toEqual(['boost_atk', 'heal']);
+    expect(component.workingSelection().sets[0]?.requirements.map((r) => r.abilityKey)).toEqual([
+      'boost_atk',
+      'heal',
+    ]);
     expect(selection.sets[0]?.requirements.map((r) => r.abilityKey)).toEqual(['boost_atk']);
     expect(component.workingSelection().sets[0]).not.toBe(selection.sets[0]);
   });
@@ -113,9 +114,9 @@ describe('AbilityTagSetPickerComponent', () => {
     component.ngOnChanges({ isOpen: new SimpleChange(true, false, false) });
     openComponent(component);
 
-    expect(
-      component.workingSelection().sets[0]?.requirements.map((r) => r.abilityKey),
-    ).toEqual(['delay']);
+    expect(component.workingSelection().sets[0]?.requirements.map((r) => r.abilityKey)).toEqual([
+      'delay',
+    ]);
   });
 
   it('does not re-emit dismiss when the modal closes after an explicit action', () => {
@@ -365,9 +366,9 @@ describe('AbilityTagSetPickerComponent', () => {
 
     component.onSearchEnter();
 
-    expect(
-      component.workingSelection().sets[0]?.requirements.map((r) => r.abilityKey),
-    ).toEqual(['boost_atk']);
+    expect(component.workingSelection().sets[0]?.requirements.map((r) => r.abilityKey)).toEqual([
+      'boost_atk',
+    ]);
   });
 
   it('drops sections whose tiles all fall outside the search term', () => {
@@ -492,6 +493,23 @@ describe('AbilityTagSetPickerComponent', () => {
 
     expect(stylesheet).toContain('.ability-tag-set-picker-modal::part(backdrop)');
     expect(stylesheet.match(/\.ability-tag-set-picker-modal::part\(content\)/g)?.length).toBe(2);
+  });
+
+  it('scrolls the panels rather than the modal body', () => {
+    // Without this the 263-tag catalog renders at full length inside
+    // ion-content's own scroller: the two-panel layout collapses into one
+    // ~9000px column and a newly added group lands far below the fold.
+    const shellPanel = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/shared/ability-tag-set-picker/ability-tag-set-picker-shell-panel.component.scss',
+      ),
+      'utf8',
+    );
+
+    expect(shellPanel).toContain('.ability-tag-set-content::part(scroll)');
+    expect(shellPanel).toMatch(/::part\(scroll\)\s*\{[^}]*overflow:\s*hidden/);
+    expect(shellPanel).toMatch(/\.ability-tag-set-canvas\s*\{[^}]*overflow-y:\s*auto/);
   });
 });
 

@@ -80,9 +80,15 @@
             </div>
 
             <div class="ability-tag-set-formula__aside">
-              <strong class="ability-tag-set-formula__total">{{
-                t('formula.total', { count: totalMatchCount() })
-              }}</strong>
+              <!--
+                Hidden while no group is populated: "0 characters match" next to
+                "every character — no tag groups yet" contradicts itself.
+              -->
+              @if (formulaClauses().length) {
+                <strong class="ability-tag-set-formula__total">{{
+                  t('formula.total', { count: totalMatchCount() })
+                }}</strong>
+              }
 
               @if (formulaClauses().length > 1) {
                 @if (allowSelectionOperator) {
