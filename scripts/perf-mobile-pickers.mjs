@@ -435,11 +435,7 @@ async function measureSavedTeams(page, screenshots) {
     '[data-testid="saved-teams-ability-filter-panel"]',
   );
   await screenshot(page, screenshots, 'saved-teams-top');
-  const firstToggleMs = await measureClassToggle(
-    page,
-    '[data-testid^="saved-team-ability-chip-"]',
-    'saved-team-ability-chip--selected',
-  );
+  const firstToggleMs = await measureAbilityTagSetFilter(page);
   const scrollToBottomMs = await scrollPrimaryContentToBottom(page);
   await screenshot(page, screenshots, 'saved-teams-bottom');
 
@@ -449,9 +445,34 @@ async function measureSavedTeams(page, screenshots) {
     firstToggleMs: Math.round(firstToggleMs),
     scrollToBottomMs: Math.round(scrollToBottomMs),
     renderedCardCountAfterFilter: await page.locator('.saved-team-list article').count(),
-    chipCount: await page.locator('[data-testid^="saved-team-ability-chip-"]').count(),
+    chipCount: await page.locator('.saved-team-ability-chip--selected').count(),
     maxHorizontalOverflowPx: await measureHorizontalOverflow(page),
   };
+}
+
+/**
+ * Saved teams filters through the tag-set modal now, so the first filter costs a
+ * whole open/pick/save round trip instead of one chip toggle. Measuring the round
+ * trip keeps the metric honest rather than timing an interaction that is gone.
+ */
+async function measureAbilityTagSetFilter(page) {
+  const trigger = page.getByTestId('saved-teams-ability-trigger-leader');
+  await trigger.scrollIntoViewIfNeeded();
+  const start = performance.now();
+  await trigger.click();
+  await page.getByTestId('character-tag-set-start').click();
+  await page
+    .locator('ion-modal.show-modal [data-testid^="character-tag-set-tile-"]')
+    .first()
+    .click();
+  await page.getByTestId('character-tag-set-picker-save').click();
+  await page.locator('.saved-team-ability-chip--selected').first().waitFor({
+    state: 'visible',
+    timeout: 30_000,
+  });
+  await waitForAngular(page);
+
+  return performance.now() - start;
 }
 
 async function measureSavedEnemies(page, screenshots) {

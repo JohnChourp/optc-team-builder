@@ -12,6 +12,7 @@ import {
 } from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterDetailRecord,
+  type CharacterTagSetSelection,
   type DatasetManifest,
   type ShipRecord,
 } from '../../core/models/optc.models';
@@ -66,6 +67,14 @@ describe('ManualTeamBuilderPage', () => {
     expect(template).toContain('[sections]="abilityTagSetSections()"');
     expect(template).toContain('[selection]="tagSetSelection()"');
     expect(template).toContain('(saveSelection)="saveAbilityTagSetPicker($event)"');
+    expect(template).toContain('<app-character-tag-set-picker');
+    expect(template).toContain('[availableTags]="availableCharacterTags()"');
+    expect(template).toContain('[selection]="characterTagSetSelection()"');
+    expect(template).toContain('[tagCharacterIds]="characterTagMatchIndex()"');
+    expect(template).toContain('(saveSelection)="saveCharacterTagSetPicker($event)"');
+    expect(template).toContain('manual-team-character-tag-sets-trigger');
+    expect(template).not.toContain('onCharacterTagFilterChange');
+    expect(template).not.toContain("t('picker.filters.anyTag')");
     expect(template).not.toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).toContain('<app-ship-picker');
@@ -83,6 +92,7 @@ describe('ManualTeamBuilderPage', () => {
     expect(i18n.preloadScope).toHaveBeenCalledWith('ship-picker');
     expect(i18n.preloadScope).toHaveBeenCalledWith('saved-teams');
     expect(i18n.preloadScope).toHaveBeenCalledWith('ability-tag-sets');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-sets');
     expect(repository.getShips).toHaveBeenCalledOnce();
     expect(repository.getDatasetManifest).toHaveBeenCalledOnce();
     expect(repository.getAutoBuilderAbilityCatalog).toHaveBeenCalledOnce();
@@ -615,7 +625,7 @@ describe('ManualTeamBuilderPage', () => {
     await page.saveAbilityTagSetPicker(
       createTagSetSelection([{ abilityKeys: ['captain_boost'], captainAbility: true }]),
     );
-    await page.onCharacterTagFilterChange(createValueEvent('utility'));
+    await page.saveCharacterTagSetPicker(createCharacterTagSetSelection([{ tags: ['utility'] }]));
 
     expect(repository.getDetailedCharacterCatalog).toHaveBeenCalled();
     expect(page.candidates().map((character) => character.id)).toEqual([901]);
@@ -656,10 +666,191 @@ describe('ManualTeamBuilderPage', () => {
     await page.openCharacterPicker(0);
     await page.onTypeFilterChange(createValueEvent('STR'));
     await page.onClassFilterChange(createValueEvent('Shooter'));
-    await page.onCharacterTagFilterChange(createValueEvent('orb boost'));
+    await page.saveCharacterTagSetPicker(createCharacterTagSetSelection([{ tags: ['orb boost'] }]));
 
     expect(repository.getDetailedCharacterCatalog).toHaveBeenCalled();
     expect(page.candidates().map((character) => character.id)).toEqual([801]);
+  });
+
+  it('ORs the tags inside one character tag group', async () => {
+    const strawHat = createCharacterRecord(811, 'Straw Hat');
+    const heart = createCharacterRecord(812, 'Heart');
+    const kid = createCharacterRecord(813, 'Kid');
+
+    strawHat.detail.characterTags = ['Straw Hat Pirates'];
+    heart.detail.characterTags = ['Heart Pirates'];
+    kid.detail.characterTags = ['Kid Pirates'];
+
+    const { page } = createPage({ characters: [strawHat, heart, kid] });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates', 'Heart Pirates'] }]),
+    );
+
+    expect(
+      page
+        .candidates()
+        .map((character) => character.id)
+        .sort(),
+    ).toEqual([811, 812]);
+  });
+
+  it('ANDs across character tag groups so (crew OR crew) AND (arc) narrows the pool', async () => {
+    const strawHatDressrosa = createCharacterRecord(821, 'Straw Hat at Dressrosa');
+    const heartDressrosa = createCharacterRecord(822, 'Heart at Dressrosa');
+    const strawHatMarineford = createCharacterRecord(823, 'Straw Hat at Marineford');
+
+    strawHatDressrosa.detail.characterTags = ['Straw Hat Pirates', 'Dressrosa'];
+    heartDressrosa.detail.characterTags = ['Heart Pirates', 'Dressrosa'];
+    strawHatMarineford.detail.characterTags = ['Straw Hat Pirates', 'Marineford'];
+
+    const { page } = createPage({
+      characters: [strawHatDressrosa, heartDressrosa, strawHatMarineford],
+    });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([
+        { tags: ['Straw Hat Pirates', 'Heart Pirates'] },
+        { tags: ['Dressrosa'] },
+      ]),
+    );
+
+    expect(
+      page
+        .candidates()
+        .map((character) => character.id)
+        .sort(),
+    ).toEqual([821, 822]);
+  });
+
+  it('honours an all operator inside a group and an any operator across groups', async () => {
+    const both = createCharacterRecord(831, 'Both Tags');
+    const onlyOne = createCharacterRecord(832, 'Only One Tag');
+    const otherGroup = createCharacterRecord(833, 'Other Group');
+
+    both.detail.characterTags = ['Straw Hat Pirates', 'Dressrosa'];
+    onlyOne.detail.characterTags = ['Straw Hat Pirates'];
+    otherGroup.detail.characterTags = ['Marineford'];
+
+    const { page } = createPage({ characters: [both, onlyOne, otherGroup] });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection(
+        [{ tags: ['Straw Hat Pirates', 'Dressrosa'], operator: 'all' }, { tags: ['Marineford'] }],
+        'any',
+      ),
+    );
+
+    expect(
+      page
+        .candidates()
+        .map((character) => character.id)
+        .sort(),
+    ).toEqual([831, 833]);
+  });
+
+  it('matches character tags case-insensitively without rewriting the stored case', async () => {
+    const character = createCharacterRecord(841, 'Cased Tag');
+
+    character.detail.characterTags = ['straw hat pirates'];
+
+    const { page } = createPage({ characters: [character] });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates'] }]),
+    );
+
+    expect(page.candidates().map((entry) => entry.id)).toEqual([841]);
+    expect(page.characterTagSetSelection().sets[0]?.tags).toEqual(['Straw Hat Pirates']);
+  });
+
+  it('keeps the any-tag default on the indexed search path until a group is populated', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+    expect(page.characterTagFilterLabel()).toBe('Any tag');
+    expect(page.hasActiveCandidateFilters()).toBe(false);
+    expect(repository.searchDetailedCharacters).toHaveBeenCalled();
+    expect(repository.getDetailedCharacterCatalog).not.toHaveBeenCalled();
+  });
+
+  it('summarises the trigger label as the tag, then as tag and group counts', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates'] }]),
+    );
+
+    expect(page.characterTagFilterLabel()).toBe('Straw Hat Pirates');
+
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates', 'Heart Pirates'] }]),
+    );
+
+    expect(page.characterTagFilterLabel()).toBe('2 tags');
+
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([
+        { tags: ['Straw Hat Pirates', 'Heart Pirates'] },
+        { tags: ['Dressrosa'] },
+      ]),
+    );
+
+    expect(page.characterTagFilterLabel()).toBe('3 tags in 2 groups');
+    expect(page.hasActiveCandidateFilters()).toBe(true);
+  });
+
+  it('builds the picker match index once and closes without touching the selection', async () => {
+    const strawHat = createCharacterRecord(851, 'Straw Hat');
+    const heart = createCharacterRecord(852, 'Heart');
+
+    strawHat.detail.characterTags = ['Straw Hat Pirates'];
+    heart.detail.characterTags = ['Heart Pirates', 'straw hat pirates'];
+
+    const { page, repository } = createPage({ characters: [strawHat, heart] });
+
+    await page.ngOnInit();
+    await page.openCharacterTagSetPicker();
+
+    expect(page.characterTagSetPickerOpen()).toBe(true);
+    expect(repository.getDetailedCharacterCatalog).toHaveBeenCalledOnce();
+    expect(page.characterTagMatchIndex()?.get('straw hat pirates')).toEqual([851, 852]);
+    expect(page.characterTagMatchIndex()?.get('heart pirates')).toEqual([852]);
+
+    page.closeCharacterTagSetPicker();
+    await page.openCharacterTagSetPicker();
+
+    expect(repository.getDetailedCharacterCatalog).toHaveBeenCalledOnce();
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+  });
+
+  it('clears character tag groups with the candidate filter reset action', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates'] }]),
+    );
+
+    expect(page.hasActiveCandidateFilters()).toBe(true);
+
+    await page.clearCandidateFilters();
+
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+    expect(page.hasActiveCandidateFilters()).toBe(false);
   });
 
   it('supports drag/drop assign, swap, clear, and invalid cost feedback', async () => {
@@ -906,6 +1097,18 @@ function createPage(
           return `Min ${params?.['min'] ?? 0} cannot exceed max ${params?.['max'] ?? 0}.`;
         }
 
+        if (key === 'picker.filters.characterTags.any') {
+          return 'Any tag';
+        }
+
+        if (key === 'picker.filters.characterTags.summary') {
+          return `${params?.['count'] ?? 0} tags`;
+        }
+
+        if (key === 'picker.filters.characterTags.groupSummary') {
+          return `${params?.['count'] ?? 0} tags in ${params?.['groups'] ?? 0} groups`;
+        }
+
         if (key === 'drag.invalidCost') {
           return `Cannot drop with max cost ${params?.['max'] ?? 0}.`;
         }
@@ -1132,6 +1335,20 @@ function createAbilityCatalog(
       },
     ],
     ...overrides,
+  };
+}
+
+function createCharacterTagSetSelection(
+  sets: Array<{ tags: string[]; operator?: AbilityTagSetOperator }>,
+  operator: AbilityTagSetOperator = 'all',
+): CharacterTagSetSelection {
+  return {
+    operator,
+    sets: sets.map((set, index) => ({
+      id: `character-tag-set-${index + 1}`,
+      operator: set.operator ?? 'any',
+      tags: set.tags,
+    })),
   };
 }
 

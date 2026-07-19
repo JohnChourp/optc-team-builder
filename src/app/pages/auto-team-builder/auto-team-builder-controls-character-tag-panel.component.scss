@@ -5,65 +5,8 @@
   gap: 8px;
 }
 
-.character-tag-combobox {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-}
-
-.character-tag-search {
-  --background: rgba(255, 255, 255, 0.07);
-  --border-radius: 14px;
-  --box-shadow: none;
-  --color: #ffffff;
-  --icon-color: rgba(248, 251, 255, 0.72);
-  --placeholder-color: rgba(248, 251, 255, 0.52);
-  min-width: 0;
-  padding: 0;
-}
-
-.character-tag-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-height: 132px;
-  min-width: 0;
-  overflow: auto;
-  padding: 8px;
-  border: 1px solid rgba(248, 251, 255, 0.12);
-  border-radius: 14px;
-  background: rgba(5, 10, 24, 0.42);
-}
-
-.character-tag-suggestion {
-  max-width: 100%;
-  min-width: 0;
-  padding: 7px 10px;
-  border: 1px solid rgba(248, 251, 255, 0.16);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(248, 251, 255, 0.84);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8rem;
-  overflow-wrap: anywhere;
-}
-
-.character-tag-suggestion:hover {
-  border-color: rgba(245, 200, 76, 0.48);
-  color: #ffffff;
-}
-
-.character-tag-suggestion:focus-visible {
-  outline: 2px solid rgba(245, 200, 76, 0.72);
-  outline-offset: 2px;
-}
-
-.character-tag-suggestion:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
+/* The combobox/searchbar/suggestion markup moved into the tag-set picker modal;
+   only this muted line survives, reused for the tag-set summary text. */
 .character-tag-suggestions__empty {
   color: rgba(248, 251, 255, 0.58);
 }

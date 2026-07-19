@@ -65,12 +65,21 @@
     },
     "characterTags": {
       "label": "Character Tags",
-      "placeholder": "Επίλεξε character tags",
-      "noMatches": "Δεν βρέθηκαν tags",
       "toggle": "Απαίτησε τα selected tags στην ομάδα",
       "support": {
         "strict": "Κάθε selected character tag πρέπει να εμφανίζεται κάπου στην τελική ομάδα. Ένας χαρακτήρας μπορεί να καλύψει πολλά tags.",
         "flexible": "Τα selected character tags είναι πρώτα preferences και μπορούν να χαλαρώσουν στο fallback."
+      },
+      "sets": {
+        "empty": "Δεν υπάρχουν ακόμη groups από character tags — κάθε χαρακτήρας περνάει.",
+        "open": "Διάλεξε character tags",
+        "edit": "Επεξεργασία groups από character tags",
+        "joinAny": " ή ",
+        "joinAll": " και ",
+        "summarySingleGroup": "{{tags}} character tag(s) σε 1 group.",
+        "summaryAnyGroup": "{{tags}} character tag(s) σε {{groups}} groups — αρκεί ένας χαρακτήρας να ταιριάζει σε ΟΠΟΙΟΔΗΠΟΤΕ group.",
+        "summaryAllGroups": "{{tags}} character tag(s) σε {{groups}} groups — η ομάδα πρέπει να καλύπτει ΚΑΘΕ group.",
+        "title": "Groups από character tags"
       }
     },
     "characterNames": {
@@ -1085,6 +1094,7 @@
       "missingExcludedShips": "Αγνοήθηκαν {{count}} excluded ships που λείπουν από το current dataset.",
       "missingLockedCharacters": "Αγνοήθηκαν {{count}} locked characters που λείπουν από το current dataset.",
       "missingManualShip": "Αγνοήθηκε {{count}} manual ship επειδή λείπει από το current dataset.",
+      "unavailableCharacterTagSets": "Αγνοήθηκαν {{count}} groups από character tags που δεν μπόρεσαν να ανακτηθούν από το preset.",
       "unavailableClasses": "Αγνοήθηκαν {{count}} unavailable imported classes από το preset.",
       "unavailableTypes": "Αγνοήθηκαν {{count}} unavailable imported types από το preset.",
       "unsupportedAbilities": "Αγνοήθηκαν {{count}} unsupported ability requirements από το preset."

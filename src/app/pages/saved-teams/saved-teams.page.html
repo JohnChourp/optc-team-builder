@@ -142,43 +142,51 @@
                         </div>
                       </div>
 
-                      <div class="saved-team-ability-categories">
-                        @for (category of section.categories; track category.category) {
-                          @if (category.abilities.length) {
-                            <div class="saved-team-ability-category">
-                              <div class="saved-team-ability-category__label">
-                                <span>{{ category.label }}</span>
-                                <strong>{{ category.abilityCount }}</strong>
-                              </div>
-                              <div class="saved-team-ability-chip-row">
-                                @for (ability of category.abilities; track ability.identity) {
-                                  <button
-                                    type="button"
-                                    class="saved-team-ability-chip"
-                                    [attr.data-testid]="
-                                      'saved-team-ability-chip-' +
-                                      section.origin +
-                                      '-' +
-                                      ability.identity
-                                    "
-                                    [class.saved-team-ability-chip--selected]="ability.selected"
-                                    [attr.aria-pressed]="ability.selected"
-                                    (click)="toggleAbilityFilter(section.origin, ability.identity)"
-                                  >
-                                    <span>{{ ability.label }}</span>
-                                    @if (ability.metadataLabel) {
-                                      <small>{{ ability.metadataLabel }}</small>
-                                    }
-                                    <strong>{{
-                                      t('abilityFilters.teamCount', { count: ability.teamCount })
-                                    }}</strong>
-                                  </button>
-                                }
-                              </div>
-                            </div>
+                      <ion-button
+                        expand="block"
+                        fill="outline"
+                        color="light"
+                        [attr.data-testid]="'saved-teams-ability-trigger-' + section.origin"
+                        [attr.aria-label]="section.title"
+                        [disabled]="!section.availableTags.length"
+                        (click)="openAbilityTagSetPicker(section.origin)"
+                      >
+                        <ion-icon
+                          slot="start"
+                          [icon]="abilityFilterIcon"
+                          aria-hidden="true"
+                        ></ion-icon>
+                        {{ section.triggerLabel }}
+                      </ion-button>
+
+                      @if (section.chips.length) {
+                        <div class="saved-team-ability-chip-row">
+                          @for (chip of section.chips; track chip.id) {
+                            <button
+                              type="button"
+                              class="saved-team-ability-chip saved-team-ability-chip--selected"
+                              [attr.aria-label]="chip.removeLabel"
+                              (click)="removeAbilityTagSet(section.origin, chip.id)"
+                            >
+                              <span>{{ chip.label }}</span>
+                              <strong aria-hidden="true">×</strong>
+                            </button>
                           }
-                        }
-                      </div>
+                        </div>
+                      }
+
+                      <small class="saved-team-ability-section__support">
+                        {{ section.supportText }}
+                      </small>
+
+                      <app-character-tag-set-picker
+                        [isOpen]="section.pickerOpen"
+                        [title]="section.title"
+                        [availableTags]="section.availableTags"
+                        [selection]="section.selection"
+                        (dismiss)="closeAbilityTagSetPicker()"
+                        (saveSelection)="saveAbilityTagSetSelection(section.origin, $event)"
+                      ></app-character-tag-set-picker>
                     </section>
                   }
                 </div>

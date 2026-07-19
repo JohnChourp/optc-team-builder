@@ -39,6 +39,7 @@ import {
 import { type AutoBuildCaptainBranchMode } from '../../core/models/auto-team-builder.models';
 import {
   type CharacterDetailRecord,
+  type CharacterTagSetSelection,
   type DatasetManifest,
   type SavedTeam,
   type ShipRecord,
@@ -61,6 +62,13 @@ import {
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
 import {
+  cloneCharacterTagSetSelection,
+  countCharacterTagSetTags,
+  countPopulatedCharacterTagSets,
+  createEmptyCharacterTagSetSelection,
+  matchesCharacterTagSets,
+} from '../../core/services/character-tag-set.utils';
+import {
   getAbilityCatalogItemsByCategory,
   getCaptainAbilityCatalogItems,
   intersectAbilityMatchingCharacterIds,
@@ -82,6 +90,10 @@ import {
   type AbilityTagSetPickerSection,
 } from '../../shared/ability-tag-set-picker/ability-tag-set-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import {
+  CharacterTagSetPickerComponent,
+  type CharacterTagMatchIndex,
+} from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
@@ -168,6 +180,7 @@ function createEmptyManualTeamSlots(): Array<CharacterDetailRecord | null> {
     CaptainTeamConditionStatusComponent,
     TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
+    CharacterTagSetPickerComponent,
     ManualTeamBuilderPickerPanelComponent,
     ManualTeamBuilderWorkbenchPanelComponent,
     RouterLink,
@@ -201,7 +214,12 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly availableCharacterTags = signal<string[]>([]);
   public readonly selectedTypeFilter = signal('');
   public readonly selectedClassFilter = signal('');
-  public readonly selectedCharacterTagFilter = signal('');
+  public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  public readonly characterTagSetPickerOpen = signal(false);
+  /** Lazily built `tag -> character ids`; `null` hides the picker's tallies. */
+  public readonly characterTagMatchIndex = signal<CharacterTagMatchIndex | null>(null);
   public readonly candidateMinCost = signal<number | null>(null);
   public readonly candidateMaxCost = signal<number | null>(null);
   public readonly tagSetPickerOpen = signal(false);
@@ -221,11 +239,42 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
   public readonly availableTypes = computed(() => this.summary()?.availableTypes ?? []);
   public readonly availableClasses = computed(() => this.summary()?.availableClasses ?? []);
+  public readonly characterTagFilterCount = computed(() =>
+    countCharacterTagSetTags(this.characterTagSetSelection()),
+  );
+  public readonly characterTagFilterGroupCount = computed(() =>
+    countPopulatedCharacterTagSets(this.characterTagSetSelection()),
+  );
+  /**
+   * Trigger-button copy. A single tag is named outright — the whole filter fits
+   * on the button — and anything larger degrades to counts, with the group
+   * tally added only once the sets actually mean something.
+   */
+  public readonly characterTagFilterLabel = computed(() => {
+    const tagCount = this.characterTagFilterCount();
+
+    if (tagCount === 0) {
+      return this.t('picker.filters.characterTags.any');
+    }
+
+    if (tagCount === 1) {
+      return this.characterTagSetSelection().sets.find((set) => set.tags.length > 0)?.tags[0] ?? '';
+    }
+
+    const groupCount = this.characterTagFilterGroupCount();
+
+    return groupCount > 1
+      ? this.t('picker.filters.characterTags.groupSummary', {
+          count: tagCount,
+          groups: groupCount,
+        })
+      : this.t('picker.filters.characterTags.summary', { count: tagCount });
+  });
   public readonly hasActiveCandidateFilters = computed(
     () =>
       this.selectedTypeFilter().length > 0 ||
       this.selectedClassFilter().length > 0 ||
-      this.selectedCharacterTagFilter().length > 0 ||
+      this.characterTagFilterCount() > 0 ||
       this.candidateMinCost() !== null ||
       this.candidateMaxCost() !== null ||
       countTagSetRequirements(this.tagSetSelection()) > 0,
@@ -565,6 +614,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       this.i18n.preloadScope('saved-teams'),
       this.i18n.preloadScope('ship-picker'),
       this.i18n.preloadScope('ability-tag-sets'),
+      this.i18n.preloadScope('character-tag-sets'),
     ]);
     const [ships, summary, abilityCatalog, availableCharacterTags] = await Promise.all([
       this.repository.getShips(),
@@ -621,10 +671,18 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     await this.refreshCandidates();
   }
 
-  public async onCharacterTagFilterChange(
-    event: CustomEvent<{ value?: string | null }>,
-  ): Promise<void> {
-    this.selectedCharacterTagFilter.set((event.detail.value ?? '').trim());
+  public async openCharacterTagSetPicker(): Promise<void> {
+    await this.ensureCharacterTagMatchIndex();
+    this.characterTagSetPickerOpen.set(true);
+  }
+
+  public closeCharacterTagSetPicker(): void {
+    this.characterTagSetPickerOpen.set(false);
+  }
+
+  public async saveCharacterTagSetPicker(selection: CharacterTagSetSelection): Promise<void> {
+    this.characterTagSetSelection.set(cloneCharacterTagSetSelection(selection));
+    this.characterTagSetPickerOpen.set(false);
     await this.refreshCandidates();
   }
 
@@ -645,10 +703,10 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public async clearCandidateFilters(): Promise<void> {
     this.selectedTypeFilter.set('');
     this.selectedClassFilter.set('');
-    this.selectedCharacterTagFilter.set('');
     this.candidateMinCost.set(null);
     this.candidateMaxCost.set(null);
     this.clearAbilityTagSetFilters();
+    this.clearCharacterTagSetFilters();
     await this.refreshCandidates();
   }
 
@@ -942,10 +1000,10 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.candidates.set([]);
     this.selectedTypeFilter.set('');
     this.selectedClassFilter.set('');
-    this.selectedCharacterTagFilter.set('');
     this.candidateMinCost.set(null);
     this.candidateMaxCost.set(null);
     this.clearAbilityTagSetFilters();
+    this.clearCharacterTagSetFilters();
     this.selectedShipId.set(null);
     this.maxTotalCost.set(null);
     this.captainBranchModes.set({ 0: null, 1: null });
@@ -1201,7 +1259,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
     try {
       const allowedCharacterIds = this.resolveAllowedCandidateCharacterIds();
-      const candidates = this.selectedCharacterTagFilter()
+      const candidates = this.characterTagFilterCount()
         ? await this.loadTagFilteredCandidates(allowedCharacterIds)
         : await this.repository.searchDetailedCharacters({
             searchTerm: this.searchTerm().trim(),
@@ -1332,13 +1390,51 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     return this.candidates().find((candidate) => candidate.id === dragState.characterId) ?? null;
   }
 
+  /**
+   * Builds `tag -> character ids` once, on the first picker open, so the modal
+   * can preview how many characters each tag and each group would match.
+   *
+   * The detailed catalog is cached by the repository and the tag filter path
+   * loads it anyway, so this costs one extra pass over records already in
+   * memory. If it fails the index stays `null` and the picker hides every
+   * tally rather than showing a zero it cannot stand behind.
+   */
+  private async ensureCharacterTagMatchIndex(): Promise<void> {
+    if (this.characterTagMatchIndex()) {
+      return;
+    }
+
+    try {
+      const records = await this.repository.getDetailedCharacterCatalog();
+      const index = new Map<string, number[]>();
+
+      for (const record of records) {
+        for (const tag of record.detail.characterTags ?? []) {
+          const key = tag.trim().toLowerCase();
+
+          if (!key.length) {
+            continue;
+          }
+
+          const characterIds = index.get(key) ?? [];
+          characterIds.push(record.id);
+          index.set(key, characterIds);
+        }
+      }
+
+      this.characterTagMatchIndex.set(index);
+    } catch {
+      this.characterTagMatchIndex.set(null);
+    }
+  }
+
   private async loadTagFilteredCandidates(
     allowedCharacterIds: number[] | undefined,
   ): Promise<CharacterDetailRecord[]> {
     const searchTerm = this.searchTerm().trim().toLowerCase();
     const selectedType = this.selectedTypeFilter().trim().toUpperCase();
     const selectedClass = this.selectedClassFilter().trim();
-    const selectedTag = this.selectedCharacterTagFilter().trim().toLowerCase();
+    const characterTagSelection = this.characterTagSetSelection();
     const minCost = this.candidateMinCost();
     const maxCost = this.candidateMaxCost();
     const allowedCharacterIdSet =
@@ -1374,14 +1470,9 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
           return false;
         }
 
-        if (selectedTag.length > 0) {
-          const characterTags = (character.detail.characterTags ?? []).map((tag) =>
-            tag.trim().toLowerCase(),
-          );
-
-          if (!characterTags.includes(selectedTag)) {
-            return false;
-          }
+        // An empty selection matches everything, so no guard is needed here.
+        if (!matchesCharacterTagSets(character.detail.characterTags ?? [], characterTagSelection)) {
+          return false;
         }
 
         if (minCost !== null && character.cost < minCost) {
@@ -1414,6 +1505,11 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   private clearAbilityTagSetFilters(): void {
     this.tagSetPickerOpen.set(false);
     this.tagSetSelection.set(createEmptyAbilityFilterTagSetSelection());
+  }
+
+  private clearCharacterTagSetFilters(): void {
+    this.characterTagSetPickerOpen.set(false);
+    this.characterTagSetSelection.set(createEmptyCharacterTagSetSelection());
   }
 
   private resolveBudgetCost(slots: readonly (CharacterDetailRecord | null)[]): number {

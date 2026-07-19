@@ -57,9 +57,21 @@
     },
     "characterTags": {
       "label": "Character Tags",
-      "placeholder": "Select character tags",
-      "noMatches": "No matching tags",
-      "support": "Show only result characters that have at least one of the selected tags."
+      "title": "Character tag filter",
+      "trigger": {
+        "empty": "Choose character tags",
+        "active": "{{tags}} tag(s) in {{groups}} group(s)"
+      },
+      "joiners": {
+        "any": "or",
+        "all": "and"
+      },
+      "removeGroup": "Remove tag group {{group}}",
+      "support": {
+        "empty": "Group crew and family tags with OR inside a group and AND across groups, e.g. (Straw Hat Pirates or Heart Pirates) and (Dressrosa).",
+        "all": "Showing characters that match every tag group.",
+        "any": "Showing characters that match at least one tag group."
+      }
     },
     "class": {
       "label": "Class",

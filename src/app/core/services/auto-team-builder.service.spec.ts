@@ -5202,6 +5202,265 @@ describe('Auto team builder', () => {
     expect(result).toBeNull();
   });
 
+  it('accepts a team covering only one tag of an "any" character tag set', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 7120,
+          name: 'Straw Hat Only',
+          primaryClass: 'Fighter',
+          detail: {
+            characterTags: ['Straw Hat Pirates'],
+            specialText: 'Reduces Bind duration by 5 turns.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        selectedCharacterTags: ['Straw Hat Pirates', 'Heart Pirates'],
+        characterTagSets: {
+          operator: 'all',
+          sets: [
+            { id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates', 'Heart Pirates'] },
+          ],
+        },
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.coversCharacterTagSets).toBe(true);
+  });
+
+  it('rejects a team covering neither tag of an "any" character tag set', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        selectedCharacterTags: ['Straw Hat Pirates', 'Heart Pirates'],
+        characterTagSets: {
+          operator: 'all',
+          sets: [
+            { id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates', 'Heart Pirates'] },
+          ],
+        },
+      }),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('matches character tag sets case-insensitively', () => {
+    const result = buildAutoTeamResult(
+      [
+        createCaptainRecord(),
+        createCharacterRecord({
+          id: 7121,
+          name: 'Lower Case Tag',
+          primaryClass: 'Fighter',
+          detail: {
+            characterTags: ['straw hat pirates'],
+            specialText: 'Reduces Bind duration by 5 turns.',
+          },
+        }),
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createUtilitySubRecord(),
+        createConsistencySubRecord(),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        selectedCharacterTags: ['Straw Hat Pirates'],
+        characterTagSets: {
+          operator: 'all',
+          sets: [{ id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates'] }],
+        },
+      }),
+    );
+
+    expect(result).not.toBeNull();
+  });
+
+  it('requires every tag of an "all" character tag set to be covered by the team', () => {
+    const roster = (characterTags: string[]): CharacterDetailRecord[] => [
+      createCaptainRecord(),
+      createCharacterRecord({
+        id: 7122,
+        name: 'Tag Carrier',
+        primaryClass: 'Fighter',
+        detail: {
+          characterTags,
+          specialText: 'Reduces Bind duration by 5 turns.',
+        },
+      }),
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ];
+    const input = createInput(['DEX'], ['Fighter'], {
+      selectedCharacterTags: ['Straw Hat Pirates', 'Driven'],
+      characterTagSets: {
+        operator: 'all',
+        sets: [{ id: 'set-1', operator: 'all', tags: ['Straw Hat Pirates', 'Driven'] }],
+      },
+    });
+
+    expect(buildAutoTeamResult(roster(['Straw Hat Pirates']), input)).toBeNull();
+    expect(buildAutoTeamResult(roster(['Straw Hat Pirates', 'Driven']), input)).not.toBeNull();
+  });
+
+  it('joins character tag sets by the selection operator', () => {
+    const roster = [
+      createCaptainRecord(),
+      createCharacterRecord({
+        id: 7123,
+        name: 'Heart Pirate',
+        primaryClass: 'Fighter',
+        detail: {
+          characterTags: ['Heart Pirates'],
+          specialText: 'Reduces Bind duration by 5 turns.',
+        },
+      }),
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ];
+    const sets = [
+      { id: 'set-1', operator: 'any' as const, tags: ['Straw Hat Pirates'] },
+      { id: 'set-2', operator: 'any' as const, tags: ['Heart Pirates'] },
+    ];
+
+    expect(
+      buildAutoTeamResult(
+        roster,
+        createInput(['DEX'], ['Fighter'], {
+          selectedCharacterTags: ['Straw Hat Pirates', 'Heart Pirates'],
+          characterTagSets: { operator: 'any', sets },
+        }),
+      ),
+    ).not.toBeNull();
+    expect(
+      buildAutoTeamResult(
+        roster,
+        createInput(['DEX'], ['Fighter'], {
+          selectedCharacterTags: ['Straw Hat Pirates', 'Heart Pirates'],
+          characterTagSets: { operator: 'all', sets },
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  it('skips empty character tag sets instead of blanking the results', () => {
+    const roster = [
+      createCaptainRecord(),
+      createCharacterRecord({
+        id: 7124,
+        name: 'Straw Hat Sub',
+        primaryClass: 'Fighter',
+        detail: {
+          characterTags: ['Straw Hat Pirates'],
+          specialText: 'Reduces Bind duration by 5 turns.',
+        },
+      }),
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ];
+
+    expect(
+      buildAutoTeamResult(
+        roster,
+        createInput(['DEX'], ['Fighter'], {
+          selectedCharacterTags: ['Straw Hat Pirates'],
+          characterTagSets: {
+            operator: 'all',
+            sets: [
+              { id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates'] },
+              { id: 'set-2', operator: 'all', tags: [] },
+            ],
+          },
+        }),
+      ),
+    ).not.toBeNull();
+  });
+
+  it('leaves the search untouched when no character tag set holds a tag', () => {
+    const roster = [
+      createCaptainRecord(),
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ];
+    const baseline = buildAutoTeamResult(roster, createInput(['DEX'], ['Fighter']));
+    const withEmptySelection = buildAutoTeamResult(
+      roster,
+      createInput(['DEX'], ['Fighter'], {
+        characterTagSets: { operator: 'all', sets: [] },
+      }),
+    );
+
+    expect(baseline).not.toBeNull();
+    expect(withEmptySelection?.slots.map((slot) => slot.character.id)).toEqual(
+      baseline?.slots.map((slot) => slot.character.id),
+    );
+    expect(withEmptySelection?.coverage.coversCharacterTagSets).toBe(true);
+  });
+
+  it('relaxes a character tag set as the fallback planner drops its tags', () => {
+    const roster = [
+      createCaptainRecord(),
+      createCharacterRecord({
+        id: 7125,
+        name: 'Straw Hat Sub',
+        primaryClass: 'Fighter',
+        detail: {
+          characterTags: ['Straw Hat Pirates'],
+          specialText: 'Reduces Bind duration by 5 turns.',
+        },
+      }),
+      createAtkSubRecord(),
+      createAffinitySubRecord(),
+      createUtilitySubRecord(),
+      createConsistencySubRecord(),
+    ];
+    const characterTagSets = {
+      operator: 'all' as const,
+      sets: [{ id: 'set-1', operator: 'all' as const, tags: ['Straw Hat Pirates', 'Minks'] }],
+    };
+
+    expect(
+      buildAutoTeamResult(
+        roster,
+        createInput(['DEX'], ['Fighter'], {
+          selectedCharacterTags: ['Straw Hat Pirates', 'Minks'],
+          characterTagSets,
+        }),
+      ),
+    ).toBeNull();
+    // The planner keeps the sets but narrows the flat list to the tags it still
+    // wants enforced, so the unreachable 'Minks' requirement falls away.
+    expect(
+      buildAutoTeamResult(
+        roster,
+        createInput(['DEX'], ['Fighter'], {
+          selectedCharacterTags: ['Straw Hat Pirates'],
+          characterTagSets,
+        }),
+      ),
+    ).not.toBeNull();
+  });
+
   it('requires selected character names to be covered by distinct final slots', () => {
     const result = buildAutoTeamResult(
       [
@@ -36870,6 +37129,7 @@ function createInput(
       | 'requireAllSelectedTypesInTeam'
       | 'requireAllSelectedClassesPerCharacter'
       | 'selectedCharacterTags'
+      | 'characterTagSets'
       | 'selectedCharacterNames'
       | 'requireAllSelectedCharacterTagsInTeam'
       | 'requireAllSelectedCharacterNamesInTeam'
@@ -36943,6 +37203,7 @@ function createInput(
     types,
     selectedClasses,
     selectedCharacterTags: overrides.selectedCharacterTags ?? [],
+    characterTagSets: overrides.characterTagSets,
     selectedCharacterNames: overrides.selectedCharacterNames ?? [],
     requiredAbilities: overrides.requiredAbilities ?? [],
     requiredCharacterGroups: overrides.requiredCharacterGroups ?? [],

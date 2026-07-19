@@ -381,18 +381,39 @@ async function measureSavedTeams(page, viewportLabel) {
     path: path.join(artifactDir, `${runLabel}-${viewportLabel}-saved-teams.png`),
     fullPage: true,
   });
-  const toggleMs = await measureToggle(
-    page,
-    '[data-testid^="saved-team-ability-chip-"]',
-    'saved-team-ability-chip--selected',
-  );
+  const toggleMs = await measureAbilityTagSetFilter(page);
 
   return {
     seededCount: 360,
     pageReadyMs: Math.round(pageReadyMs),
     firstToggleMs: Math.round(toggleMs),
-    chipCount: await page.locator('[data-testid^="saved-team-ability-chip-"]').count(),
+    chipCount: await page.locator('.saved-team-ability-chip--selected').count(),
   };
+}
+
+/**
+ * Saved teams filters through the tag-set modal now, so the first filter costs a
+ * whole open/pick/save round trip instead of one chip toggle. Measuring the round
+ * trip keeps the metric honest rather than timing an interaction that is gone.
+ */
+async function measureAbilityTagSetFilter(page) {
+  const trigger = page.getByTestId('saved-teams-ability-trigger-leader');
+  await trigger.scrollIntoViewIfNeeded();
+  const start = performance.now();
+  await trigger.click();
+  await page.getByTestId('character-tag-set-start').click();
+  await page
+    .locator('ion-modal.show-modal [data-testid^="character-tag-set-tile-"]')
+    .first()
+    .click();
+  await page.getByTestId('character-tag-set-picker-save').click();
+  await page.locator('.saved-team-ability-chip--selected').first().waitFor({
+    state: 'visible',
+    timeout: 30_000,
+  });
+  await waitForAngular(page);
+
+  return performance.now() - start;
 }
 
 async function measureSavedEnemies(page, viewportLabel) {

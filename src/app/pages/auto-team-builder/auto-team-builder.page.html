@@ -142,57 +142,49 @@
 
                                     <div class="character-filter-card">
                                       <span>{{ t('filters.characterTags.label') }}</span>
-                                      <div class="character-tag-combobox">
-                                        <ion-searchbar
-                                          class="character-tag-search"
-                                          autocomplete="off"
-                                          [debounce]="0"
-                                          [placeholder]="t('filters.characterTags.placeholder')"
-                                          [value]="characterTagSearchTerm()"
-                                          [disabled]="
-                                            building() || !availableCharacterTags().length
-                                          "
-                                          (ionInput)="onCharacterTagSearchChange($event)"
-                                          (keydown.enter)="selectFirstCharacterTagSuggestion()"
-                                        ></ion-searchbar>
-                                        @if (characterTagSearchTerm().trim()) {
-                                          <div class="character-tag-suggestions" role="listbox">
-                                            @for (
-                                              item of filteredCharacterTagSuggestions();
-                                              track item
-                                            ) {
-                                              <button
-                                                type="button"
-                                                class="character-tag-suggestion"
-                                                role="option"
-                                                [disabled]="building()"
-                                                (click)="addSelectedCharacterTag(item)"
-                                              >
-                                                {{ item }}
-                                              </button>
-                                            } @empty {
-                                              <small class="character-tag-suggestions__empty">
-                                                {{ t('filters.characterTags.noMatches') }}
-                                              </small>
-                                            }
-                                          </div>
-                                        }
-                                      </div>
-                                      @if (selectedCharacterTags().length) {
+                                      <app-character-tag-set-picker
+                                        [isOpen]="characterTagSetPickerOpen()"
+                                        [availableTags]="availableCharacterTags()"
+                                        [selection]="characterTagSets()"
+                                        [title]="t('filters.characterTags.sets.title')"
+                                        (dismiss)="closeCharacterTagSetPicker()"
+                                        (saveSelection)="saveCharacterTagSetSelection($event)"
+                                      ></app-character-tag-set-picker>
+                                      @if (characterTagSetGroups().length) {
                                         <div class="selected-values-row">
-                                          @for (item of selectedCharacterTags(); track item) {
+                                          @for (group of characterTagSetGroups(); track group.id) {
                                             <button
                                               type="button"
                                               class="selected-value-chip"
+                                              data-testid="character-tag-set-group-chip"
                                               [disabled]="building()"
-                                              (click)="removeSelectedCharacterTag(item)"
+                                              (click)="openCharacterTagSetPicker()"
                                             >
-                                              {{ item }}
-                                              <span aria-hidden="true">×</span>
+                                              {{ group.label }}
                                             </button>
                                           }
                                         </div>
                                       }
+                                      <small
+                                        class="character-tag-suggestions__empty"
+                                        data-testid="character-tag-set-summary"
+                                      >
+                                        {{ characterTagSetSummaryLabel() }}
+                                      </small>
+                                      <div class="control-action-row">
+                                        <ion-button
+                                          fill="clear"
+                                          size="small"
+                                          class="select-all-button"
+                                          data-testid="character-tag-set-trigger"
+                                          [disabled]="
+                                            building() || !availableCharacterTags().length
+                                          "
+                                          (click)="openCharacterTagSetPicker()"
+                                        >
+                                          {{ characterTagSetTriggerLabel() }}
+                                        </ion-button>
+                                      </div>
                                     </div>
 
                                     <div class="character-filter-card">

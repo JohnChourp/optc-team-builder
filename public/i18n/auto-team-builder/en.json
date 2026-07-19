@@ -65,12 +65,21 @@
     },
     "characterTags": {
       "label": "Character Tags",
-      "placeholder": "Select character tags",
-      "noMatches": "No matching tags",
       "toggle": "Require selected tags in team",
       "support": {
         "strict": "Every selected character tag must appear somewhere in the final team. One character can cover multiple tags.",
         "flexible": "Selected character tags are preferences first and can be relaxed in fallback."
+      },
+      "sets": {
+        "empty": "No character tag groups yet — every character qualifies.",
+        "open": "Choose character tags",
+        "edit": "Edit character tag groups",
+        "joinAny": " or ",
+        "joinAll": " and ",
+        "summarySingleGroup": "{{tags}} character tag(s) in 1 group.",
+        "summaryAnyGroup": "{{tags}} character tag(s) across {{groups}} groups — a character matching ANY group qualifies.",
+        "summaryAllGroups": "{{tags}} character tag(s) across {{groups}} groups — the team must cover EVERY group.",
+        "title": "Character tag groups"
       }
     },
     "characterNames": {
@@ -1075,16 +1084,17 @@
     },
     "warnings": {
       "adjustedAbilities": "Ignored {{count}} ability requirements with unsupported turns, slot tokens, or character count.",
-      "invalidLeaders": "Ignored {{count}} imported leader choices that do not fit the current slot setup.",
       "conflictingExcludedCharacters": "Ignored {{count}} excluded characters because they are still used by manual slot picks.",
       "conflictingExcludedShips": "Ignored {{count}} excluded ships because they were still selected as the manual ship.",
       "favoriteCountMismatch": "Preset was saved with {{imported}} favorite characters, but this device currently has {{current}}. Favorites were not imported; favorite-only auto-fill uses the current local favorites.",
       "favoriteShipCountMismatch": "Preset was saved with {{imported}} favorite ships, but this device currently has {{current}}. Favorite ships were not imported; favorite ship mode uses the current local favorite ships.",
+      "invalidLeaders": "Ignored {{count}} imported leader choices that do not fit the current slot setup.",
       "lockedLimitExceeded": "Ignored {{count}} legacy locked characters because they cannot be mapped into the current slot model.",
       "missingExcludedCharacters": "Ignored {{count}} excluded characters that are missing from the current dataset.",
       "missingExcludedShips": "Ignored {{count}} excluded ships that are missing from the current dataset.",
       "missingLockedCharacters": "Ignored {{count}} locked characters that are missing from the current dataset.",
       "missingManualShip": "Ignored {{count}} manual ship because it is missing from the current dataset.",
+      "unavailableCharacterTagSets": "Ignored {{count}} character tag groups that the preset could not restore.",
       "unavailableClasses": "Ignored {{count}} unavailable imported classes from the preset.",
       "unavailableTypes": "Ignored {{count}} unavailable imported types from the preset.",
       "unsupportedAbilities": "Ignored {{count}} unsupported ability requirements from the preset."

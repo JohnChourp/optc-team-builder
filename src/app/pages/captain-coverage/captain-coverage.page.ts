@@ -18,6 +18,7 @@ import {
 import {
   alertCircleOutline,
   checkmarkCircleOutline,
+  funnelOutline,
   peopleOutline,
   saveOutline,
   searchOutline,
@@ -53,6 +54,7 @@ import {
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
+  type CharacterTagSetSelection,
   type DatasetManifest,
   type SavedTeam,
 } from '../../core/models/optc.models';
@@ -68,6 +70,15 @@ import {
   flattenTagSetsToRequirements,
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
+import {
+  cloneCharacterTagSetSelection,
+  countCharacterTagSetTags,
+  countPopulatedCharacterTagSets,
+  createEmptyCharacterTagSetSelection,
+  expandCharacterTagsToSets,
+  flattenCharacterTagSets,
+  matchesCharacterTagSets,
+} from '../../core/services/character-tag-set.utils';
 import {
   getAbilityCatalogItemsByCategory,
   getCaptainAbilityCatalogItems,
@@ -87,6 +98,10 @@ import {
   AbilityTagSetPickerComponent,
   type AbilityTagSetPickerSection,
 } from '../../shared/ability-tag-set-picker/ability-tag-set-picker.component';
+import {
+  CharacterTagSetPickerComponent,
+  type CharacterTagMatchIndex,
+} from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
@@ -101,7 +116,6 @@ import { CaptainCoverageStylePanelsComponent } from './captain-coverage-style-pa
 const MAX_CAPTAIN_LOOKUP_COUNT = 12000;
 const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 6;
 const CAPTAIN_ABILITY_FILTER_CATEGORY: AbilityFilterRailCategory = 'captainAbility';
-const CHARACTER_TAG_SUGGESTION_LIMIT = 12;
 
 type CaptainCoverageSortMode =
   | Extract<
@@ -129,6 +143,18 @@ interface CaptainCoverageAbilityTagSetSection extends AbilityTagSetPickerSection
   category: AbilityFilterRailCategory;
 }
 
+/**
+ * One populated character tag group, collapsed to a single removable chip.
+ *
+ * The chip keeps the grouping visible outside the modal — a flat tag row would
+ * read as one bucket and hide the very AND/OR structure the sets exist for.
+ */
+interface CaptainCoverageCharacterTagSetChip {
+  id: string;
+  label: string;
+  removeLabel: string;
+}
+
 @Component({
   selector: 'app-captain-coverage-page',
   standalone: true,
@@ -138,6 +164,7 @@ interface CaptainCoverageAbilityTagSetSection extends AbilityTagSetPickerSection
     CaptainTeamConditionStatusComponent,
     CaptainCoverageStylePanelsComponent,
     CharacterImagePickerComponent,
+    CharacterTagSetPickerComponent,
     IonButton,
     IonButtons,
     IonContent,
@@ -202,8 +229,16 @@ export class CaptainCoveragePage implements OnInit {
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
   public readonly availableCharacterTags = signal<string[]>([]);
+  /**
+   * Flat mirror of the tag-set selection, kept only as the legacy surface other
+   * call sites read. The selection below is authoritative for filtering; this
+   * is re-derived from it on every save so the two can never disagree.
+   */
   public readonly selectedCharacterTags = signal<string[]>([]);
-  public readonly characterTagSearchTerm = signal('');
+  public readonly characterTagSetPickerOpen = signal(false);
+  public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
   public readonly abilityTagSetPickerOpen = signal(false);
   public readonly tagSetSelection = signal<AbilityFilterTagSetSelection>(
     createEmptyAbilityFilterTagSetSelection(),
@@ -237,31 +272,69 @@ export class CaptainCoveragePage implements OnInit {
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
   );
   public readonly hasSelectedCharacterTags = computed(
-    () => this.selectedCharacterTags().length > 0,
+    () => countPopulatedCharacterTagSets(this.characterTagSetSelection()) > 0,
   );
-  public readonly filteredCharacterTagSuggestions = computed<string[]>(() => {
-    const searchTerm = this.normalizeCharacterTagSearchTerm(this.characterTagSearchTerm());
+  /** One chip per populated group, labelled with the group's own join word. */
+  public readonly characterTagSetChips = computed<CaptainCoverageCharacterTagSetChip[]>(() =>
+    this.characterTagSetSelection()
+      .sets.filter((set) => set.tags.length > 0)
+      .map((set) => {
+        // Padding lives here, not in the catalogue, so a translator trimming
+        // whitespace in their editor cannot silently glue the tags together.
+        const label = set.tags.join(` ${this.t(`filters.characterTags.joiners.${set.operator}`)} `);
 
-    if (!searchTerm) {
-      return [];
+        return {
+          id: set.id,
+          label,
+          removeLabel: this.t('filters.characterTags.removeGroup', { group: label }),
+        };
+      }),
+  );
+  public readonly characterTagFilterTriggerLabel = computed(() => {
+    const selection = this.characterTagSetSelection();
+    const groups = countPopulatedCharacterTagSets(selection);
+
+    return groups
+      ? this.t('filters.characterTags.trigger.active', {
+          tags: countCharacterTagSetTags(selection),
+          groups,
+        })
+      : this.t('filters.characterTags.trigger.empty');
+  });
+  public readonly characterTagFilterSupportText = computed(() => {
+    if (countPopulatedCharacterTagSets(this.characterTagSetSelection()) < 2) {
+      return this.t('filters.characterTags.support.empty');
     }
 
-    const selectedTagKeys = new Set(this.selectedCharacterTags().map((tag) => tag.toLowerCase()));
+    return this.t(`filters.characterTags.support.${this.characterTagSetSelection().operator}`);
+  });
+  /**
+   * `tag -> character ids carrying it`, so the picker can preview real match
+   * counts instead of hiding every tally. Keys are lower-cased for lookup while
+   * the catalog keeps the cased values the user actually sees.
+   */
+  public readonly characterTagMatchIndex = computed<CharacterTagMatchIndex>(() => {
+    const characterIdsByTagKey = new Map<string, number[]>();
 
-    return this.availableCharacterTags()
-      .filter((tag) => !selectedTagKeys.has(tag.toLowerCase()))
-      .filter((tag) => tag.toLowerCase().includes(searchTerm))
-      .sort((left, right) => {
-        const leftStartsWith = left.toLowerCase().startsWith(searchTerm);
-        const rightStartsWith = right.toLowerCase().startsWith(searchTerm);
+    for (const record of this.allCharacterDetailsById().values()) {
+      for (const tag of record.detail.characterTags ?? []) {
+        const tagKey = tag.trim().toLowerCase();
 
-        if (leftStartsWith !== rightStartsWith) {
-          return leftStartsWith ? -1 : 1;
+        if (!tagKey) {
+          continue;
         }
 
-        return left.localeCompare(right);
-      })
-      .slice(0, CHARACTER_TAG_SUGGESTION_LIMIT);
+        const characterIds = characterIdsByTagKey.get(tagKey);
+
+        if (characterIds) {
+          characterIds.push(record.id);
+        } else {
+          characterIdsByTagKey.set(tagKey, [record.id]);
+        }
+      }
+    }
+
+    return characterIdsByTagKey;
   });
   public readonly selectedCaptainSubtitle = computed(() => {
     const captain = this.selectedCaptain();
@@ -472,11 +545,7 @@ export class CaptainCoveragePage implements OnInit {
     const selectedAbilityRequirementCount = this.selectedAbilityRequirementCount();
     const characterDetailsById = this.allCharacterDetailsById();
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
-    const selectedCharacterTagKeys = new Set(
-      this.selectedCharacterTags()
-        .map((tag) => tag.trim().toLowerCase())
-        .filter(Boolean),
-    );
+    const characterTagSetSelection = this.characterTagSetSelection();
     const matchingCharacters = this.allCharacters()
       .filter((character) =>
         selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
@@ -510,7 +579,10 @@ export class CaptainCoveragePage implements OnInit {
       .filter(({ characterDetail }) => this.matchesSuperPresenceFilters(characterDetail))
       .filter(({ character }) => !this.hasPartyConflict(character, selectedConflictKeys))
       .filter(({ characterDetail }) =>
-        this.matchesSelectedCharacterTags(characterDetail, selectedCharacterTagKeys),
+        matchesCharacterTagSets(
+          characterDetail?.detail.characterTags ?? [],
+          characterTagSetSelection,
+        ),
       )
       .map(({ character, characterDetail, coverage }) => {
         const detailAbilities = characterDetail?.detail.builderAbilities ?? [];
@@ -688,6 +760,7 @@ export class CaptainCoveragePage implements OnInit {
   public readonly errorIcon = alertCircleOutline;
   public readonly saveIcon = saveOutline;
   public readonly searchIcon = searchOutline;
+  public readonly characterTagFilterIcon = funnelOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -724,11 +797,14 @@ export class CaptainCoveragePage implements OnInit {
         }),
         this.characterCatalogCache.ensureLoaded(),
         this.loadAvailableCharacterTags(),
+        this.i18n.preloadScope('ability-tag-sets'),
+        this.i18n.preloadScope('character-tag-sets'),
       ]);
 
       this.summary.set(summary);
       this.abilityCatalog.set(abilityCatalog);
       this.availableCharacterTags.set(availableCharacterTags);
+      this.seedCharacterTagSetSelection();
       this.allCharacters.set(this.characterCatalogCache.catalog());
       this.allCharacterDetailsById.set(new Map(records.map((record) => [record.id, record])));
       this.allCaptains.set(
@@ -916,39 +992,35 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedClass.set('');
   }
 
-  public onCharacterTagSearchChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.characterTagSearchTerm.set((event.detail.value ?? '').toString());
-  }
-
-  public addSelectedCharacterTag(characterTag: string): void {
-    const currentTags = this.selectedCharacterTags();
-    const nextTags = this.resolveSelectedCharacterTags([...currentTags, characterTag]);
-
-    if (nextTags.length === currentTags.length) {
+  public openCharacterTagSetPicker(): void {
+    if (!this.availableCharacterTags().length) {
       return;
     }
 
-    this.selectedCharacterTags.set(nextTags);
-    this.characterTagSearchTerm.set('');
+    this.characterTagSetPickerOpen.set(true);
   }
 
-  public selectFirstCharacterTagSuggestion(): void {
-    const [firstSuggestion] = this.filteredCharacterTagSuggestions();
-
-    if (firstSuggestion) {
-      this.addSelectedCharacterTag(firstSuggestion);
-    }
+  public closeCharacterTagSetPicker(): void {
+    this.characterTagSetPickerOpen.set(false);
   }
 
-  public removeSelectedCharacterTag(characterTag: string): void {
-    this.selectedCharacterTags.set(
-      this.selectedCharacterTags().filter((selectedTag) => selectedTag !== characterTag),
-    );
+  public saveCharacterTagSetSelection(selection: CharacterTagSetSelection): void {
+    this.applyCharacterTagSetSelection(cloneCharacterTagSetSelection(selection));
+    this.characterTagSetPickerOpen.set(false);
+  }
+
+  /** Drops one whole group, so the chip row stays a single-click undo. */
+  public removeCharacterTagSet(setId: string): void {
+    const selection = this.characterTagSetSelection();
+
+    this.applyCharacterTagSetSelection({
+      ...selection,
+      sets: selection.sets.filter((set) => set.id !== setId),
+    });
   }
 
   public clearSelectedCharacterTags(): void {
-    this.selectedCharacterTags.set([]);
-    this.characterTagSearchTerm.set('');
+    this.applyCharacterTagSetSelection(createEmptyCharacterTagSetSelection());
   }
 
   public onCoverageCostRangeChange(
@@ -1167,17 +1239,27 @@ export class CaptainCoveragePage implements OnInit {
     return selectedClass ? character.classes.includes(selectedClass) : true;
   }
 
-  private matchesSelectedCharacterTags(
-    characterDetail: CharacterDetailRecord | undefined,
-    selectedTagKeys: Set<string>,
-  ): boolean {
-    if (selectedTagKeys.size === 0) {
-      return true;
+  /** Single write path, so the legacy flat mirror can never drift. */
+  private applyCharacterTagSetSelection(selection: CharacterTagSetSelection): void {
+    this.characterTagSetSelection.set(selection);
+    this.selectedCharacterTags.set(flattenCharacterTagSets(selection));
+  }
+
+  /**
+   * Migrates whatever flat tags the page already holds into one group.
+   *
+   * The legacy filter OR-ed the selected tags, so the faithful expansion is a
+   * single `any` group — `requireAll` is false on purpose. Runs only while the
+   * selection is still empty, so it never overwrites a user's own groups.
+   */
+  private seedCharacterTagSetSelection(): void {
+    if (this.characterTagSetSelection().sets.length) {
+      return;
     }
 
-    const tags = characterDetail?.detail.characterTags ?? [];
-
-    return tags.some((tag) => selectedTagKeys.has(tag.trim().toLowerCase()));
+    this.applyCharacterTagSetSelection(
+      expandCharacterTagsToSets(this.selectedCharacterTags(), false),
+    );
   }
 
   private matchesCoverageCostRange(
@@ -1441,29 +1523,6 @@ export class CaptainCoveragePage implements OnInit {
     return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort((left, right) =>
       left.localeCompare(right),
     );
-  }
-
-  private normalizeCharacterTagSearchTerm(value: string): string {
-    return value.trim().replace(/\s+/g, ' ').toLowerCase();
-  }
-
-  private resolveSelectedCharacterTags(value: string[] | string | null | undefined): string[] {
-    const nextValues = Array.isArray(value) ? value : value ? [value] : [];
-    const availableTagByKey = new Map(
-      this.availableCharacterTags().map((tag) => [tag.toLowerCase(), tag] as const),
-    );
-    const uniqueTags = new Map<string, string>();
-
-    for (const candidate of nextValues) {
-      const normalizedTag = candidate.trim().replace(/\s+/g, ' ');
-      const canonicalTag = availableTagByKey.get(normalizedTag.toLowerCase());
-
-      if (canonicalTag && !uniqueTags.has(canonicalTag.toLowerCase())) {
-        uniqueTags.set(canonicalTag.toLowerCase(), canonicalTag);
-      }
-    }
-
-    return [...uniqueTags.values()];
   }
 
   private async loadAvailableCharacterTags(): Promise<string[]> {

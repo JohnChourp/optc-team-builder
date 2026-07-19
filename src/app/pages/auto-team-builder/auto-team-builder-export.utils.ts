@@ -28,8 +28,16 @@ import {
 import {
   type CharacterDetailRecord,
   type CharacterListItem,
+  type CharacterTagSetSelection,
   type ShipRecord,
 } from '../../core/models/optc.models';
+import {
+  cloneCharacterTagSetSelection,
+  createEmptyCharacterTagSetSelection,
+  expandCharacterTagsToSets,
+  flattenCharacterTagSets,
+  normalizeCharacterTagSetSelection,
+} from '../../core/services/character-tag-set.utils';
 import {
   normalizeAbilityRequirementTurns,
   resolveNonNegativeInteger,
@@ -121,7 +129,8 @@ export interface AutoTeamSelectionExportPayload {
     | 29
     | 30
     | 31
-    | 32;
+    | 32
+    | 33;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -129,6 +138,13 @@ export interface AutoTeamSelectionExportPayload {
     selectedTypes: AutoBuildResult['input']['types'];
     selectedClasses: AutoBuildResult['input']['selectedClasses'];
     selectedCharacterTags?: string[];
+    /**
+     * Schema 33+. The flat `selectedCharacterTags` above stays in every payload
+     * as the lossy back-compat projection older readers understand; this field
+     * is the authoritative AND/OR grouping. A v32 payload has no sets and is
+     * back-filled from the flat list plus `requireAllSelectedCharacterTagsInTeam`.
+     */
+    characterTagSets?: CharacterTagSetSelection;
     selectedCharacterNames?: string[];
     requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
     requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
@@ -178,6 +194,12 @@ export interface AutoTeamSelectionImportState {
   selectedTypes: AutoTeamBuilderType[];
   selectedClasses: string[];
   selectedCharacterTags: string[];
+  /**
+   * Optional so the SavedEnemy and saved-team preset builders — which only ever
+   * knew the flat tag list — keep compiling. Hosts back-fill an absent value
+   * with `expandCharacterTagsToSets(selectedCharacterTags, requireAll…)`.
+   */
+  characterTagSets?: CharacterTagSetSelection;
   selectedCharacterNames: string[];
   requiredAbilities: AutoBuildAbilityRequirement[];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
@@ -242,6 +264,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   selectedTypes: AutoBuildResult['input']['types'];
   selectedClasses: AutoBuildResult['input']['selectedClasses'];
   selectedCharacterTags?: string[];
+  characterTagSets?: CharacterTagSetSelection;
   selectedCharacterNames?: string[];
   requiredAbilities: AutoBuildResult['input']['requiredAbilities'];
   requiredCharacterGroups?: AutoBuildRequiredCharacterGroup[];
@@ -805,7 +828,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 29 &&
       parsedPayload['schemaVersion'] !== 30 &&
       parsedPayload['schemaVersion'] !== 31 &&
-      parsedPayload['schemaVersion'] !== 32) ||
+      parsedPayload['schemaVersion'] !== 32 &&
+      parsedPayload['schemaVersion'] !== 33) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -828,6 +852,11 @@ export function parseAutoTeamSelectionImportPayload(
       filters['selectedCharacterTags'] === undefined ||
       (Array.isArray(filters['selectedCharacterTags']) &&
         filters['selectedCharacterTags'].every((tag) => typeof tag === 'string'))
+    ) ||
+    !(
+      filters['characterTagSets'] === undefined ||
+      (isRecord(filters['characterTagSets']) &&
+        Array.isArray((filters['characterTagSets'] as Record<string, unknown>)['sets']))
     ) ||
     !(
       filters['selectedCharacterNames'] === undefined ||
@@ -1048,7 +1077,37 @@ export function sanitizeAutoTeamSelectionImportPayload(
     warnings.push(classWarning);
   }
 
-  const selectedCharacterTags = normalizeStringFilters(payload.filters.selectedCharacterTags);
+  const legacySelectedCharacterTags = normalizeStringFilters(payload.filters.selectedCharacterTags);
+  const normalizedCharacterTagSets = normalizeCharacterTagSetSelection(
+    payload.filters.characterTagSets,
+  );
+  // A v32 payload carries no sets, so rebuild the equivalent single set from the
+  // flat list and the legacy "require all" boolean rather than silently losing
+  // the AND the exporting user had configured.
+  const characterTagSets =
+    normalizedCharacterTagSets ??
+    expandCharacterTagsToSets(
+      legacySelectedCharacterTags,
+      payload.filters.requireAllSelectedCharacterTagsInTeam === true,
+    );
+  // Sets win over the flat list whenever both are present: the flat field is the
+  // back-compat projection, so a disagreement means the reader is newer. That
+  // projection keeps the pre-schema-33 normalisation (case-insensitive dedupe,
+  // collapsed inner whitespace) so old readers still see one entry per tag; the
+  // sets themselves stay verbatim because tag casing is user-visible there.
+  const selectedCharacterTags = normalizeStringFilters(flattenCharacterTagSets(characterTagSets));
+  const rawCharacterTagSetCount = Array.isArray(payload.filters.characterTagSets?.sets)
+    ? payload.filters.characterTagSets.sets.length
+    : 0;
+  const characterTagSetWarning = buildWarning(
+    'preset.warnings.unavailableCharacterTagSets',
+    rawCharacterTagSetCount - (normalizedCharacterTagSets?.sets.length ?? 0),
+  );
+
+  if (characterTagSetWarning) {
+    warnings.push(characterTagSetWarning);
+  }
+
   const selectedCharacterNames = normalizeStringFilters(payload.filters.selectedCharacterNames, {
     lowercase: true,
   });
@@ -1435,6 +1494,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       selectedTypes,
       selectedClasses,
       selectedCharacterTags,
+      characterTagSets,
       selectedCharacterNames,
       requiredAbilities,
       requiredCharacterGroups: normalizedBattleRequirements.length ? [] : requiredCharacterGroups,
@@ -1442,7 +1502,10 @@ export function sanitizeAutoTeamSelectionImportPayload(
       enemyMechanics,
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,
-      requireAllSelectedCharacterTagsInTeam: false,
+      // Preserved rather than forced to false: the operator now lives in
+      // `characterTagSets`, and this flag is what back-fills it for v32 payloads.
+      requireAllSelectedCharacterTagsInTeam:
+        payload.filters.requireAllSelectedCharacterTagsInTeam === true,
       requireAllSelectedCharacterNamesInTeam: false,
       requireAllSlotsInLeaderSuperEffectScope,
       requireFullCaptainAbilityCoverage: payload.filters.requireFullCaptainAbilityCoverage === true,
@@ -1520,6 +1583,7 @@ export function buildAutoTeamSelectionExportPayload({
   selectedTypes,
   selectedClasses,
   selectedCharacterTags = [],
+  characterTagSets = createEmptyCharacterTagSetSelection(),
   selectedCharacterNames = [],
   requiredAbilities,
   requiredCharacterGroups = [],
@@ -1575,9 +1639,10 @@ export function buildAutoTeamSelectionExportPayload({
       : {}),
   }));
   const normalizedBattleRequirements = cloneBattleRequirements(battleRequirements);
+  const normalizedCharacterTagSets = cloneCharacterTagSetSelection(characterTagSets);
 
   return {
-    schemaVersion: 32,
+    schemaVersion: 33,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1585,6 +1650,9 @@ export function buildAutoTeamSelectionExportPayload({
       selectedTypes: [...selectedTypes],
       selectedClasses: [...selectedClasses],
       selectedCharacterTags: normalizeStringFilters(selectedCharacterTags),
+      ...(normalizedCharacterTagSets.sets.length
+        ? { characterTagSets: normalizedCharacterTagSets }
+        : {}),
       selectedCharacterNames: normalizeStringFilters(selectedCharacterNames, { lowercase: true }),
       requiredAbilities: requiredAbilities.map((requirement) => ({
         ...requirement,

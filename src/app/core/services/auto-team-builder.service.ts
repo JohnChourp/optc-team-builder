@@ -40,6 +40,7 @@ import {
   type AutoBuildRequiredCharacterGroup,
 } from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
+import { cloneCharacterTagSetSelection } from './character-tag-set.utils';
 import {
   AutoTeamBuildCancelledError,
   buildAutoTeamBuildTimingSnapshot,
@@ -318,6 +319,9 @@ export class AutoTeamBuilderService {
       types: normalizedTypes.length > 0 ? normalizedTypes : [AUTO_TEAM_BUILDER_DEFAULT_TYPE],
       selectedClasses: normalizedClasses,
       selectedCharacterTags: normalizedCharacterTags,
+      characterTagSets: constraints.characterTagSets
+        ? cloneCharacterTagSetSelection(constraints.characterTagSets)
+        : undefined,
       selectedCharacterNames: normalizedCharacterNames,
       requireAllSelectedTypesInTeam: constraints.requireAllSelectedTypesInTeam ?? false,
       requireAllSelectedClassesPerCharacter:
@@ -366,6 +370,9 @@ export class AutoTeamBuilderService {
       types: [...input.types],
       selectedClasses: [...input.selectedClasses],
       selectedCharacterTags: [...input.selectedCharacterTags],
+      characterTagSets: input.characterTagSets
+        ? cloneCharacterTagSetSelection(input.characterTagSets)
+        : undefined,
       selectedCharacterNames: [...input.selectedCharacterNames],
       requiredAbilities: input.requiredAbilities.map((requirement) => ({
         ...requirement,
@@ -2024,6 +2031,9 @@ export class AutoTeamBuilderService {
       types: [...AUTO_TEAM_BUILDER_TYPES],
       selectedClasses: [],
       selectedCharacterTags: this.normalizeSelectedTextFilters(rosterInput.selectedCharacterTags),
+      characterTagSets: rosterInput.characterTagSets
+        ? cloneCharacterTagSetSelection(rosterInput.characterTagSets)
+        : undefined,
       selectedCharacterNames: this.normalizeSelectedTextFilters(rosterInput.selectedCharacterNames),
       requireAllSelectedTypesInTeam: false,
       requireAllSelectedClassesPerCharacter: false,

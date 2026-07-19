@@ -57,9 +57,21 @@
     },
     "characterTags": {
       "label": "Character Tags",
-      "placeholder": "Επίλεξε character tags",
-      "noMatches": "Δεν βρέθηκαν tags",
-      "support": "Εμφάνισε μόνο χαρακτήρες στα αποτελέσματα που έχουν τουλάχιστον ένα από τα επιλεγμένα tags."
+      "title": "Φίλτρο character tags",
+      "trigger": {
+        "empty": "Επίλεξε character tags",
+        "active": "{{tags}} tag(s) σε {{groups}} group(s)"
+      },
+      "joiners": {
+        "any": "ή",
+        "all": "και"
+      },
+      "removeGroup": "Αφαίρεσε το group tags {{group}}",
+      "support": {
+        "empty": "Ομαδοποίησε tags πληρώματος και οικογένειας με OR μέσα σε ένα group και AND ανάμεσα στα groups, π.χ. (Straw Hat Pirates ή Heart Pirates) και (Dressrosa).",
+        "all": "Εμφανίζονται χαρακτήρες που ταιριάζουν με κάθε group tags.",
+        "any": "Εμφανίζονται χαρακτήρες που ταιριάζουν με τουλάχιστον ένα group tags."
+      }
     },
     "class": {
       "label": "Class",

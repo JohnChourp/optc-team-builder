@@ -1,0 +1,85 @@
+{
+  "eyebrow": "Crew tag filter",
+  "title": "Build your crew tag filter",
+  "copy": "Crew and family tags rarely overlap, so put alternatives in one group and stack a second group when you want both to be true.",
+  "formula": {
+    "lead": "Show characters that are",
+    "empty": "every character — no tag groups yet",
+    "total": "{{count}} characters match",
+    "joiner": {
+      "all": "and",
+      "any": "or"
+    }
+  },
+  "selection": {
+    "all": "Every group must match",
+    "any": "Any group may match",
+    "toggleAria": "Change how the groups combine",
+    "locked": "This page always requires every group to match.",
+    "announced": {
+      "all": "Every group must now match. {{count}} characters match.",
+      "allNoCount": "Every group must now match.",
+      "any": "Any group may now match. {{count}} characters match.",
+      "anyNoCount": "Any group may now match."
+    }
+  },
+  "sets": {
+    "title": "Your tag groups",
+    "count": "{{count}} active",
+    "groupLabel": "Group {{index}}",
+    "matchCount": "{{count}} match",
+    "addGroup": "Add another group",
+    "addTag": "Add tag",
+    "removeGroup": "Remove group {{index}}",
+    "removeTag": "Remove {{label}}",
+    "maxReached": "You can build up to {{max}} groups.",
+    "overCap": "This filter already has {{count}} groups, more than the {{max}} you can add here. Existing groups are kept so your results do not change.",
+    "emptyIgnored": "This group is empty, so it is ignored.",
+    "nullifying": "No character carries every tag in this group, so nothing can match. Most crews and families do not overlap — try switching this group to \"Is any of these\".",
+    "added": "Group {{index}} added.",
+    "operator": {
+      "any": "Is any of these",
+      "all": "Is all of these",
+      "preview": "{{count}} characters",
+      "aria": "How group {{index}} matches",
+      "announced": {
+        "any": "Group {{index}} now matches any of its tags. {{count}} characters match.",
+        "anyNoCount": "Group {{index}} now matches any of its tags.",
+        "all": "Group {{index}} now requires all of its tags. {{count}} characters match.",
+        "allNoCount": "Group {{index}} now requires all of its tags."
+      }
+    }
+  },
+  "chips": {
+    "added": "{{label}} added to group {{index}}. {{count}} characters match.",
+    "addedNoCount": "{{label}} added to group {{index}}.",
+    "removed": "{{label}} removed from group {{index}}. {{count}} characters match.",
+    "removedNoCount": "{{label}} removed from group {{index}}."
+  },
+  "actions": {
+    "clearAll": "Clear all",
+    "clearedAll": "All tag groups cleared."
+  },
+  "explainer": {
+    "title": "Two ways a group can match",
+    "anyTitle": "Is any of these",
+    "anyCopy": "A character needs at least one tag from the group. This is the usual choice, because a character is rarely in two crews at once.",
+    "allTitle": "Is all of these",
+    "allCopy": "A character must carry every tag in the group. Useful for tags that stack, like a crew plus an arc — but it finds nobody when the tags exclude each other.",
+    "sample": "Example: a group with \"Straw Hat Pirates or Heart Pirates\", plus a second group with \"Dressrosa\", finds characters from either crew who also appear in Dressrosa.",
+    "start": "Create my first group"
+  },
+  "catalog": {
+    "title": "Available tags",
+    "allTags": "All tags",
+    "addingTo": "Adding to group {{index}}",
+    "pickGroupFirst": "Pick a group first",
+    "backToGroups": "Back to groups",
+    "searchPlaceholder": "Search tags",
+    "sectionCount": "{{count}} tags",
+    "matchCount": "{{count}} characters",
+    "alreadyInGroup": "already in group {{groups}}",
+    "emptySearchTitle": "No tags matched",
+    "emptySearchCopy": "Try a different search term."
+  }
+}

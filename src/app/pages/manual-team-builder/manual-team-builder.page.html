@@ -475,6 +475,16 @@
                     (saveSelection)="saveAbilityTagSetPicker($event)"
                   ></app-ability-tag-set-picker>
 
+                  <app-character-tag-set-picker
+                    [isOpen]="characterTagSetPickerOpen()"
+                    [availableTags]="availableCharacterTags()"
+                    [selection]="characterTagSetSelection()"
+                    [title]="t('picker.filters.characterTags.title')"
+                    [tagCharacterIds]="characterTagMatchIndex()"
+                    (dismiss)="closeCharacterTagSetPicker()"
+                    (saveSelection)="saveCharacterTagSetPicker($event)"
+                  ></app-character-tag-set-picker>
+
                   <div class="manual-team-picker__filters">
                     <label class="manual-team-picker-filter">
                       <span>{{ t('picker.filters.type') }}</span>
@@ -512,22 +522,23 @@
                       </ion-select>
                     </label>
 
-                    <label class="manual-team-picker-filter">
-                      <span>{{ t('picker.filters.tag') }}</span>
-                      <ion-select
-                        interface="popover"
+                    <div class="manual-team-picker-filter">
+                      <span>{{ t('picker.filters.characterTags.label') }}</span>
+                      <ion-button
                         fill="outline"
-                        [value]="selectedCharacterTagFilter()"
-                        (ionChange)="onCharacterTagFilterChange($event)"
+                        color="light"
+                        data-testid="manual-team-character-tag-sets-trigger"
+                        [attr.aria-label]="
+                          t('picker.filters.characterTags.trigger', {
+                            summary: characterTagFilterLabel(),
+                          })
+                        "
+                        (click)="openCharacterTagSetPicker()"
                       >
-                        <ion-select-option value="">{{
-                          t('picker.filters.anyTag')
-                        }}</ion-select-option>
-                        @for (tag of availableCharacterTags(); track tag) {
-                          <ion-select-option [value]="tag">{{ tag }}</ion-select-option>
-                        }
-                      </ion-select>
-                    </label>
+                        <ion-icon slot="start" [icon]="filterIcon" aria-hidden="true"></ion-icon>
+                        {{ characterTagFilterLabel() }}
+                      </ion-button>
+                    </div>
 
                     <ion-input
                       type="number"

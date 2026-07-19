@@ -462,50 +462,35 @@
               </div>
 
               <div class="character-tag-combobox">
-                <ion-searchbar
-                  class="character-tag-search"
-                  autocomplete="off"
-                  [debounce]="0"
-                  [searchIcon]="searchIcon"
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  color="light"
+                  data-testid="captain-coverage-character-tag-trigger"
                   [attr.aria-label]="t('filters.characterTags.label')"
-                  [placeholder]="t('filters.characterTags.placeholder')"
-                  [value]="characterTagSearchTerm()"
                   [disabled]="loading() || !availableCharacterTags().length"
-                  (ionInput)="onCharacterTagSearchChange($event)"
-                  (keydown.enter)="selectFirstCharacterTagSuggestion()"
-                ></ion-searchbar>
-
-                @if (characterTagSearchTerm().trim()) {
-                  <div class="character-tag-suggestions" role="listbox">
-                    @for (item of filteredCharacterTagSuggestions(); track item) {
-                      <button
-                        type="button"
-                        class="character-tag-suggestion"
-                        role="option"
-                        [disabled]="loading()"
-                        (click)="addSelectedCharacterTag(item)"
-                      >
-                        {{ item }}
-                      </button>
-                    } @empty {
-                      <small class="character-tag-suggestions__empty">
-                        {{ t('filters.characterTags.noMatches') }}
-                      </small>
-                    }
-                  </div>
-                }
+                  (click)="openCharacterTagSetPicker()"
+                >
+                  <ion-icon
+                    slot="start"
+                    [icon]="characterTagFilterIcon"
+                    aria-hidden="true"
+                  ></ion-icon>
+                  {{ characterTagFilterTriggerLabel() }}
+                </ion-button>
               </div>
 
-              @if (selectedCharacterTags().length) {
+              @if (characterTagSetChips().length) {
                 <div class="selected-values-row">
-                  @for (item of selectedCharacterTags(); track item) {
+                  @for (chip of characterTagSetChips(); track chip.id) {
                     <button
                       type="button"
                       class="selected-value-chip"
+                      [attr.aria-label]="chip.removeLabel"
                       [disabled]="loading()"
-                      (click)="removeSelectedCharacterTag(item)"
+                      (click)="removeCharacterTagSet(chip.id)"
                     >
-                      {{ item }}
+                      {{ chip.label }}
                       <span aria-hidden="true">×</span>
                     </button>
                   }
@@ -513,8 +498,18 @@
               }
 
               <small class="coverage-tag-filter__support">
-                {{ t('filters.characterTags.support') }}
+                {{ characterTagFilterSupportText() }}
               </small>
+
+              <app-character-tag-set-picker
+                [isOpen]="characterTagSetPickerOpen()"
+                [title]="t('filters.characterTags.title')"
+                [availableTags]="availableCharacterTags()"
+                [selection]="characterTagSetSelection()"
+                [tagCharacterIds]="characterTagMatchIndex()"
+                (dismiss)="closeCharacterTagSetPicker()"
+                (saveSelection)="saveCharacterTagSetSelection($event)"
+              ></app-character-tag-set-picker>
             </div>
           </div>
         </div>

@@ -17,7 +17,9 @@ import {
   type CharacterBox,
   type CharacterDetailRecord,
   type CharacterListItem,
+  type CharacterTagSetSelection,
 } from '../../core/models/optc.models';
+import { createCharacterTagSet } from '../../core/services/character-tag-set.utils';
 import { CaptainCoveragePage } from './captain-coverage.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -316,11 +318,17 @@ describe('CaptainCoveragePage', () => {
 
     expect(page.availableCharacterTags()).toEqual(['Straw Hat Pirates', 'Worst Generation']);
 
-    page.addSelectedCharacterTag('Straw Hat Pirates');
+    page.saveCharacterTagSetSelection(
+      createSelection([createCharacterTagSet(['Straw Hat Pirates'], 'any', 'set-1')]),
+    );
     expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
 
-    page.addSelectedCharacterTag('Worst Generation');
+    page.saveCharacterTagSetSelection(
+      createSelection([
+        createCharacterTagSet(['Straw Hat Pirates', 'Worst Generation'], 'any', 'set-1'),
+      ]),
+    );
     expect(
       page
         .resultCards()
@@ -328,7 +336,9 @@ describe('CaptainCoveragePage', () => {
         .sort(),
     ).toEqual(['Straw Hat Candidate', 'Worst Generation Candidate']);
 
-    page.removeSelectedCharacterTag('Straw Hat Pirates');
+    page.saveCharacterTagSetSelection(
+      createSelection([createCharacterTagSet(['Worst Generation'], 'any', 'set-1')]),
+    );
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
       'Worst Generation Candidate',
     ]);
@@ -343,64 +353,106 @@ describe('CaptainCoveragePage', () => {
     ).toEqual(['Straw Hat Candidate', 'Untagged Candidate', 'Worst Generation Candidate']);
   });
 
-  it('surfaces character tag suggestions and adds the top suggestion on enter', async () => {
+  it('ANDs character tag groups while ORing the tags inside one group', async () => {
     const leader = createCharacter({
       id: 1001,
-      name: 'Leader Tag Suggestions',
+      name: 'Leader Tag Groups',
       captainAbility: 'Boosts ATK of all characters by 5x.',
     });
-    const strawHat = createCharacter({
+    const strawHatInDressrosa = createCharacter({
       id: 2001,
-      name: 'Straw Hat Candidate',
-      characterTags: ['Straw Hat Pirates'],
+      name: 'Straw Hat In Dressrosa',
+      characterTags: ['Straw Hat Pirates', 'Dressrosa'],
     });
-    const worstGen = createCharacter({
+    const heartPirateInDressrosa = createCharacter({
       id: 2002,
-      name: 'Worst Generation Candidate',
-      characterTags: ['Worst Generation'],
+      name: 'Heart Pirate In Dressrosa',
+      characterTags: ['Heart Pirates', 'Dressrosa'],
     });
-    const warlord = createCharacter({
+    const strawHatElsewhere = createCharacter({
       id: 2003,
-      name: 'Warlord Candidate',
-      characterTags: ['Warlord'],
+      name: 'Straw Hat Elsewhere',
+      characterTags: ['Straw Hat Pirates', 'Land of Wano Arc'],
     });
     const { page } = createPage({
       captains: [leader],
-      characters: [leader, strawHat, worstGen, warlord],
+      characters: [leader, strawHatInDressrosa, heartPirateInDressrosa, strawHatElsewhere],
     });
 
     await page.ngOnInit();
     await page.saveTeamSlotSelection(leader);
 
-    expect(page.filteredCharacterTagSuggestions()).toEqual([]);
+    // (Straw Hat Pirates OR Heart Pirates) AND (Dressrosa)
+    page.saveCharacterTagSetSelection(
+      createSelection([
+        createCharacterTagSet(['Straw Hat Pirates', 'Heart Pirates'], 'any', 'crew'),
+        createCharacterTagSet(['Dressrosa'], 'any', 'arc'),
+      ]),
+    );
 
-    page.onCharacterTagSearchChange({ detail: { value: 'wor' } } as CustomEvent<{
-      value?: string | null;
-    }>);
-    expect(page.filteredCharacterTagSuggestions()).toEqual(['Worst Generation']);
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['Heart Pirate In Dressrosa', 'Straw Hat In Dressrosa']);
 
-    page.selectFirstCharacterTagSuggestion();
-    expect(page.selectedCharacterTags()).toEqual(['Worst Generation']);
-    expect(page.characterTagSearchTerm()).toBe('');
+    // Loosening the cross-group join to OR re-admits the Wano Straw Hat.
+    page.saveCharacterTagSetSelection(
+      createSelection(
+        [
+          createCharacterTagSet(['Straw Hat Pirates', 'Heart Pirates'], 'any', 'crew'),
+          createCharacterTagSet(['Dressrosa'], 'any', 'arc'),
+        ],
+        'any',
+      ),
+    );
 
-    page.onCharacterTagSearchChange({ detail: { value: 'w' } } as CustomEvent<{
-      value?: string | null;
-    }>);
-    expect(page.filteredCharacterTagSuggestions()).toEqual(['Warlord', 'Straw Hat Pirates']);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Worst Generation Candidate',
-    ]);
-
-    page.onCharacterTagSearchChange({ detail: { value: 'zzz-no-match' } } as CustomEvent<{
-      value?: string | null;
-    }>);
-    expect(page.filteredCharacterTagSuggestions()).toEqual([]);
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['Heart Pirate In Dressrosa', 'Straw Hat Elsewhere', 'Straw Hat In Dressrosa']);
   });
 
-  it('canonicalizes selected tags and ignores duplicate or unknown character tags', async () => {
+  it('requires every tag in a group when that group uses the all operator', async () => {
     const leader = createCharacter({
       id: 1001,
-      name: 'Leader Tag Dedupe',
+      name: 'Leader Tag All',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const bothTags = createCharacter({
+      id: 2001,
+      name: 'Both Tags Candidate',
+      characterTags: ['Straw Hat Pirates', 'Worst Generation'],
+    });
+    const oneTag = createCharacter({
+      id: 2002,
+      name: 'One Tag Candidate',
+      characterTags: ['Straw Hat Pirates'],
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, bothTags, oneTag],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    page.saveCharacterTagSetSelection(
+      createSelection([
+        createCharacterTagSet(['Straw Hat Pirates', 'Worst Generation'], 'all', 'set-1'),
+      ]),
+    );
+
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Tags Candidate']);
+  });
+
+  it('matches character tags case-insensitively without rewriting the stored casing', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Tag Case',
       captainAbility: 'Boosts ATK of all characters by 5x.',
     });
     const strawHat = createCharacter({
@@ -416,21 +468,69 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.saveTeamSlotSelection(leader);
 
-    page.addSelectedCharacterTag('  straw hat   pirates ');
-    expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
+    page.saveCharacterTagSetSelection(
+      createSelection([createCharacterTagSet(['  straw hat pirates '], 'any', 'set-1')]),
+    );
+
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
-
-    page.addSelectedCharacterTag('Straw Hat Pirates');
-    expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
-
-    page.addSelectedCharacterTag('Nonexistent Tag');
-    expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
+    // Trimmed, but never case-folded: persisted user tags must not shift.
+    expect(page.selectedCharacterTags()).toEqual(['straw hat pirates']);
+    expect(page.characterTagSetSelection().sets[0]?.tags).toEqual(['straw hat pirates']);
   });
 
-  it('exposes no character tags and empty suggestions when the dataset has no tags', async () => {
+  it('summarises the tag groups as removable chips and drops a whole group on remove', async () => {
     const leader = createCharacter({
       id: 1001,
-      name: 'Leader No Tags',
+      name: 'Leader Tag Chips',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const strawHat = createCharacter({
+      id: 2001,
+      name: 'Straw Hat Candidate',
+      characterTags: ['Straw Hat Pirates', 'Dressrosa'],
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, strawHat],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(page.hasSelectedCharacterTags()).toBe(false);
+    expect(page.characterTagFilterTriggerLabel()).toBe('Choose character tags');
+    expect(page.characterTagFilterSupportText()).toBe('Group tags with OR inside a group.');
+
+    page.saveCharacterTagSetSelection(
+      createSelection([
+        createCharacterTagSet(['Straw Hat Pirates', 'Heart Pirates'], 'any', 'crew'),
+        createCharacterTagSet(['Dressrosa'], 'all', 'arc'),
+      ]),
+    );
+
+    expect(page.hasSelectedCharacterTags()).toBe(true);
+    expect(page.characterTagSetChips()).toEqual([
+      {
+        id: 'crew',
+        label: 'Straw Hat Pirates or Heart Pirates',
+        removeLabel: 'Remove tag group Straw Hat Pirates or Heart Pirates',
+      },
+      { id: 'arc', label: 'Dressrosa', removeLabel: 'Remove tag group Dressrosa' },
+    ]);
+    expect(page.characterTagFilterTriggerLabel()).toBe('3 tag(s) in 2 group(s)');
+    expect(page.characterTagFilterSupportText()).toBe('Matches every tag group.');
+
+    page.removeCharacterTagSet('crew');
+
+    expect(page.characterTagSetChips().map((chip) => chip.id)).toEqual(['arc']);
+    expect(page.selectedCharacterTags()).toEqual(['Dressrosa']);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
+  });
+
+  it('opens the tag-set picker only once the dataset actually has tags', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Tag Picker',
       captainAbility: 'Boosts ATK of all characters by 5x.',
     });
     const untagged = createCharacter({ id: 2001, name: 'Untagged Candidate' });
@@ -440,15 +540,61 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
 
     expect(page.availableCharacterTags()).toEqual([]);
 
-    page.onCharacterTagSearchChange({ detail: { value: 'straw' } } as CustomEvent<{
-      value?: string | null;
-    }>);
-    expect(page.filteredCharacterTagSuggestions()).toEqual([]);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Untagged Candidate']);
+    page.openCharacterTagSetPicker();
+    expect(page.characterTagSetPickerOpen()).toBe(false);
+
+    page.availableCharacterTags.set(['Straw Hat Pirates']);
+    page.openCharacterTagSetPicker();
+    expect(page.characterTagSetPickerOpen()).toBe(true);
+
+    page.closeCharacterTagSetPicker();
+    expect(page.characterTagSetPickerOpen()).toBe(false);
+  });
+
+  it('indexes character ids per tag so the picker can preview match counts', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Tag Index',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+      characterTags: ['Straw Hat Pirates'],
+    });
+    const strawHat = createCharacter({
+      id: 2001,
+      name: 'Straw Hat Candidate',
+      characterTags: ['Straw Hat Pirates', '  Dressrosa  '],
+    });
+    const untagged = createCharacter({ id: 2002, name: 'Untagged Candidate', characterTags: [''] });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, strawHat, untagged],
+    });
+
+    await page.ngOnInit();
+
+    const matchIndex = page.characterTagMatchIndex();
+
+    expect(matchIndex.get('straw hat pirates')).toEqual([1001, 2001]);
+    expect(matchIndex.get('dressrosa')).toEqual([2001]);
+    expect(matchIndex.has('')).toBe(false);
+  });
+
+  it('preloads both tag-set picker scopes before either modal can open', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Tag Scope',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const { page, i18n } = createPage({ captains: [leader], characters: [leader] });
+
+    await page.ngOnInit();
+
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-sets');
+    // The page renders both pickers, so skipping either scope leaves that
+    // modal rendering raw i18n keys on first open.
+    expect(i18n.preloadScope).toHaveBeenCalledWith('ability-tag-sets');
   });
 
   it('degrades to no character tags when the repository tag lookup rejects', async () => {
@@ -1766,17 +1912,24 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('[attr.aria-label]="t(\'filters.characterTags.label\')"');
     expect(template).toContain('hasSelectedCharacterTags()');
     expect(template).toContain('(click)="clearSelectedCharacterTags()"');
-    expect(template).toContain('[placeholder]="t(\'filters.characterTags.placeholder\')"');
+    expect(template).toContain('data-testid="captain-coverage-character-tag-trigger"');
     expect(template).toContain('[disabled]="loading() || !availableCharacterTags().length"');
-    expect(template).toContain('(ionInput)="onCharacterTagSearchChange($event)"');
-    expect(template).toContain('(keydown.enter)="selectFirstCharacterTagSuggestion()"');
-    expect(template).toContain('characterTagSearchTerm()');
-    expect(template).toContain('filteredCharacterTagSuggestions()');
-    expect(template).toContain('(click)="addSelectedCharacterTag(item)"');
-    expect(template).toContain("t('filters.characterTags.noMatches')");
-    expect(template).toContain('selectedCharacterTags().length');
-    expect(template).toContain('(click)="removeSelectedCharacterTag(item)"');
-    expect(template).toContain("t('filters.characterTags.support')");
+    expect(template).toContain('(click)="openCharacterTagSetPicker()"');
+    expect(template).toContain('characterTagFilterTriggerLabel()');
+    expect(template).toContain('characterTagSetChips()');
+    expect(template).toContain('(click)="removeCharacterTagSet(chip.id)"');
+    expect(template).toContain('characterTagFilterSupportText()');
+    expect(template).toContain('<app-character-tag-set-picker');
+    expect(template).toContain('[isOpen]="characterTagSetPickerOpen()"');
+    expect(template).toContain('[availableTags]="availableCharacterTags()"');
+    expect(template).toContain('[selection]="characterTagSetSelection()"');
+    expect(template).toContain('[tagCharacterIds]="characterTagMatchIndex()"');
+    expect(template).toContain('(dismiss)="closeCharacterTagSetPicker()"');
+    expect(template).toContain('(saveSelection)="saveCharacterTagSetSelection($event)"');
+    // The inline combobox is gone: every tag now flows through the modal.
+    expect(template).not.toContain('character-tag-search');
+    expect(template).not.toContain('character-tag-suggestion');
+    expect(template).not.toContain('addSelectedCharacterTag');
   });
 
   it('keeps the result title from sharing the desktop auto column with filters', () => {
@@ -1861,6 +2014,7 @@ function createPage({
   route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   router: { navigate: ReturnType<typeof vi.fn> };
   i18n: {
+    preloadScope: ReturnType<typeof vi.fn>;
     translate: ReturnType<typeof vi.fn>;
   };
 } {
@@ -1901,6 +2055,7 @@ function createPage({
     saveTeam: vi.fn().mockResolvedValue({ id: 'saved-captain-coverage-team' }),
   };
   const i18n = {
+    preloadScope: vi.fn().mockResolvedValue(undefined),
     translate: vi.fn((key: string, params?: Record<string, string | number>) =>
       formatTranslation(key, params),
     ),
@@ -1980,6 +2135,15 @@ function formatTranslation(key: string, params?: Record<string, string | number>
     'captain-coverage.filters.captainAbilityEyebrow': 'Required',
     'captain-coverage.filters.superTandemPresence.toggle': 'Super Tandem',
     'captain-coverage.filters.superTypesClassesPresence.toggle': 'Super Types/Classes',
+    'captain-coverage.filters.characterTags.joiners.any': 'or',
+    'captain-coverage.filters.characterTags.joiners.all': 'and',
+    'captain-coverage.filters.characterTags.removeGroup': 'Remove tag group {{group}}',
+    'captain-coverage.filters.characterTags.trigger.empty': 'Choose character tags',
+    'captain-coverage.filters.characterTags.trigger.active':
+      '{{tags}} tag(s) in {{groups}} group(s)',
+    'captain-coverage.filters.characterTags.support.empty': 'Group tags with OR inside a group.',
+    'captain-coverage.filters.characterTags.support.all': 'Matches every tag group.',
+    'captain-coverage.filters.characterTags.support.any': 'Matches at least one tag group.',
   };
   const translation = translations[key] ?? key;
 
@@ -1991,6 +2155,13 @@ function formatTranslation(key: string, params?: Record<string, string | number>
     (text, [paramKey, value]) => text.replace(`{{${paramKey}}}`, String(value)),
     translation,
   );
+}
+
+function createSelection(
+  sets: CharacterTagSetSelection['sets'],
+  operator: CharacterTagSetSelection['operator'] = 'all',
+): CharacterTagSetSelection {
+  return { operator, sets };
 }
 
 function createTagSetRequirement(

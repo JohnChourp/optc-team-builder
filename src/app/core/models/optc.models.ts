@@ -1,4 +1,5 @@
 import {
+  type AbilityTagSetOperator,
   type AutoBuildAbilityRequirement,
   type AutoBuildBattleRequirement,
   type AutoBuildEnemyMechanicRequirement,
@@ -406,6 +407,31 @@ export interface SavedTeam {
   notes: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * One user-authored bucket of `CharacterDetail.characterTags` values plus the
+ * operator that joins them.
+ *
+ * Deliberately reuses `AbilityTagSetOperator` rather than declaring a second
+ * `'all' | 'any'` type: the two vocabularies (ability tags vs. character tags)
+ * are different, but the boolean combinator is the same one the whole app uses.
+ *
+ * Unlike the ability twin, sets here default to `'any'`. Character tags are
+ * mostly-disjoint crew/family groupings, so ANDing two of them almost always
+ * yields an empty result — see
+ * `optc-team-builder-brain/audits/captain-coverage-character-tag-filter.md`.
+ */
+export interface CharacterTagSet {
+  id: string;
+  operator: AbilityTagSetOperator;
+  tags: string[];
+}
+
+/** The full multi-set selection: sets, plus the operator joining the sets. */
+export interface CharacterTagSetSelection {
+  sets: CharacterTagSet[];
+  operator: AbilityTagSetOperator;
 }
 
 export interface SavedEnemy {

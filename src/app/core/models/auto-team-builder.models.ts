@@ -4,7 +4,11 @@ import {
   type AutoBuildEnemyMechanicRequirement,
   type AutoBuildRequiredCharacterGroup,
 } from './auto-team-builder-ability.models';
-import { type CharacterDetailRecord, type ShipRecord } from './optc.models';
+import {
+  type CharacterDetailRecord,
+  type CharacterTagSetSelection,
+  type ShipRecord,
+} from './optc.models';
 
 export const AUTO_TEAM_BUILDER_TYPES = ['DEX', 'STR', 'QCK', 'PSY', 'INT'] as const;
 export const AUTO_TEAM_BUILDER_CLASSES = [
@@ -106,6 +110,16 @@ export function createEmptyAutoBuildManualSlots(): AutoBuildManualSlotSelection[
 
 export interface AutoBuildConstraints {
   selectedCharacterTags?: string[];
+  /**
+   * AND/OR grouping over the same tags `selectedCharacterTags` carries flat.
+   *
+   * `selectedCharacterTags` stays the authoritative list of tags in play — it
+   * drives scoring, the coverage summary and the fallback planner's per-tag
+   * relaxation — while this selection adds the structure the flat list cannot
+   * express. Callers populate BOTH: the sets narrow which teams qualify, the
+   * flat list says which tags are still active after relaxation.
+   */
+  characterTagSets?: CharacterTagSetSelection;
   selectedCharacterNames?: string[];
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
@@ -458,6 +472,14 @@ export interface AutoBuildCoverageSummary {
   coversAllSelectedClasses: boolean;
   coversAllSelectedTypes: boolean;
   coversAllSelectedCharacterTags: boolean;
+  /**
+   * Whether the team satisfies `characterTagSets`. `summarizeCoverage` always
+   * fills it — `true` when no set holds a tag, so a team is never rejected by a
+   * filter the user never built. Optional only so hand-written summaries (test
+   * fixtures, persisted results from before tag sets existed) stay valid; the
+   * gates read it as "reject on an explicit `false`", never on `undefined`.
+   */
+  coversCharacterTagSets?: boolean;
   coversAllSelectedCharacterNames: boolean;
   selectedClassMatches: number;
   selectedTypeMatches: number;
