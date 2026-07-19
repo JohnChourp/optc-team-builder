@@ -574,6 +574,54 @@ describe('auto team builder ability parser', () => {
     expect(single.filter((a) => a.key === 'remove_bind')).toHaveLength(1);
   });
 
+  it('cures RCV DOWN without absorbing Counter-RCV, the orb, or the stat drawback', () => {
+    // Revived dead key: the alias never existed, so 34 cure clauses across 29
+    // characters resolved to no key at all.
+    for (const [text, source] of [
+      ['Removes RCV DOWN duration completely', 'specialText'],
+      ['Reduces RCV DOWN duration by 5 turns', 'specialText'],
+      ['reduces RCV DOWN duration completely', 'superSpecialText'],
+      ['Removes Paralysis, Poison, RCV DOWN and Blindness duration completely', 'specialText'],
+      // A condition gates the effect; the effect is still real. These same
+      // sentences already feed remove_increase_damage_taken and remove_sfx.
+      [
+        'If your Captain is a Slasher or Striker character, reduces RCV DOWN and Increase Damage Taken duration by 3 turns',
+        'specialText',
+      ],
+      // Mixed casing (#4489).
+      ['removes Poison, Paralysis, RCV Down and Blindness duration completely', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'remove_rcv_down',
+      );
+    }
+    // The " down" token is load-bearing: a bare "rcv" alias absorbs all nine
+    // Counter-RCV units as pure false positives.
+    for (const notThisCure of [
+      'Reduces Despair, Counter-Healing and Counter-RCV duration by 6 turns',
+      // A self-inflicted stat drawback, not a cure — there is no apply_rcv_down key.
+      'Reduces RCV of all characters by 90% for 3 turns',
+      'Changes [BLOCK] and [BOMB] orbs into [RCV] orbs',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notThisCure, 'specialText'))).not.toContain(
+        'remove_rcv_down',
+      );
+    }
+    // "selected debuffs" is upstream's own alternation on this effect, but we route
+    // it to remove_pain by standing policy. This is the canary for over-reach.
+    const selected = extractAbilityKeys(
+      analyzeBuilderAbilityText('reduces 2 selected debuffs duration by 10 turns', 'specialText'),
+    );
+    expect(selected).not.toContain('remove_rcv_down');
+    expect(selected).toContain('remove_pain');
+    // No Healing is a separate debuff with its own key.
+    const noHealing = extractAbilityKeys(
+      analyzeBuilderAbilityText('Reduces No Healing duration by 5 turns', 'specialText'),
+    );
+    expect(noHealing).not.toContain('remove_rcv_down');
+    expect(noHealing).toContain('remove_no_healing');
+  });
+
   it('inflicts Weaken only on a verb-plus-object anchor, never on the pierce enabler', () => {
     // Weaken is distinct from, and conditioned on, Increase Damage Taken — an
     // effect cannot be conditioned on itself, which is what proves the boundary.

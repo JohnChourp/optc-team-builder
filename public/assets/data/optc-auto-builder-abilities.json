@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T08:09:30.074Z",
+  "generatedAt": "2026-07-19T09:47:44.699Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -45882,20 +45882,253 @@
       "groupLabel": "Reduce Status Effect Duration",
       "groupOrder": 6,
       "effectOrder": 12,
-      "supportsTurns": false,
+      "supportsTurns": true,
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
-      "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "availableEffectTargetScopes": [
+        "crew"
+      ],
+      "effectTargetScopeMatchingCharacterIds": [
+        {
+          "effectTargetScope": "crew",
+          "characterIds": [
+            1078,
+            1079,
+            2012,
+            2013,
+            2190,
+            2191,
+            2216,
+            2217,
+            2442,
+            2443,
+            2539,
+            2540,
+            2631,
+            2635,
+            2695,
+            2696,
+            2796,
+            2797,
+            2931,
+            3045,
+            3165,
+            3166,
+            3182,
+            3183,
+            3199,
+            3263,
+            3357,
+            3784,
+            4489
+          ],
+          "turnMatchingCharacterIds": [
+            {
+              "minTurns": 3,
+              "characterIds": [
+                2190,
+                2191
+              ]
+            },
+            {
+              "minTurns": 4,
+              "characterIds": [
+                3045
+              ]
+            },
+            {
+              "minTurns": 5,
+              "characterIds": [
+                2012,
+                2013,
+                2631,
+                2796,
+                2797,
+                2931,
+                3182,
+                3183,
+                3199,
+                3263,
+                3784
+              ]
+            },
+            {
+              "minTurns": 10,
+              "characterIds": [
+                2216,
+                2217,
+                2635
+              ]
+            },
+            {
+              "minTurns": 15,
+              "characterIds": [
+                2631
+              ]
+            },
+            {
+              "minTurns": 99,
+              "characterIds": [
+                1078,
+                1079,
+                2442,
+                2443,
+                2539,
+                2540,
+                2695,
+                2696,
+                3165,
+                3166,
+                3357,
+                4489
+              ]
+            }
+          ],
+          "completeRemovalCharacterIds": [
+            1078,
+            1079,
+            2442,
+            2443,
+            2539,
+            2540,
+            2695,
+            2696,
+            3165,
+            3166,
+            3357,
+            4489
+          ]
+        }
+      ],
+      "matchCount": 29,
+      "matchingCharacterIds": [
+        1078,
+        1079,
+        2012,
+        2013,
+        2190,
+        2191,
+        2216,
+        2217,
+        2442,
+        2443,
+        2539,
+        2540,
+        2631,
+        2635,
+        2695,
+        2696,
+        2796,
+        2797,
+        2931,
+        3045,
+        3165,
+        3166,
+        3182,
+        3183,
+        3199,
+        3263,
+        3357,
+        3784,
+        4489
+      ],
+      "turnMatchingCharacterIds": [
+        {
+          "minTurns": 3,
+          "characterIds": [
+            2190,
+            2191
+          ]
+        },
+        {
+          "minTurns": 4,
+          "characterIds": [
+            3045
+          ]
+        },
+        {
+          "minTurns": 5,
+          "characterIds": [
+            2012,
+            2013,
+            2631,
+            2796,
+            2797,
+            2931,
+            3182,
+            3183,
+            3199,
+            3263,
+            3784
+          ]
+        },
+        {
+          "minTurns": 10,
+          "characterIds": [
+            2216,
+            2217,
+            2635
+          ]
+        },
+        {
+          "minTurns": 15,
+          "characterIds": [
+            2631
+          ]
+        },
+        {
+          "minTurns": 99,
+          "characterIds": [
+            1078,
+            1079,
+            2442,
+            2443,
+            2539,
+            2540,
+            2695,
+            2696,
+            3165,
+            3166,
+            3357,
+            4489
+          ]
+        }
+      ],
+      "completeRemovalCharacterIds": [
+        1078,
+        1079,
+        2442,
+        2443,
+        2539,
+        2540,
+        2695,
+        2696,
+        3165,
+        3166,
+        3357,
+        4489
+      ],
+      "sampleCharacterIds": [
+        1078,
+        1079,
+        2012,
+        2013,
+        2190
+      ],
+      "sampleTexts": [
+        "Recovers 6x character's RCV in HP. Reduces Paralysis duration by 3 turns. Recovers 15x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely. Recovers 50x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely",
+        "Recovers 6x character's RCV in HP. Reduces Paralysis duration by 3 turns. Recovers 15x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely. Recovers 50x character's RCV in HP. Removes Paralysis, Poison, RCV DOWN and Blindness duration completely",
+        "Reduces Bind and Paralysis duration by 3 turns and changes [BLOCK] and [BOMB] orbs into [RCV] orbs. If your Captain is a Free Spirit Character, reduces RCV DOWN and Blindness duration by 5 turns. Reduces Bind and Paralysis duration by 10 turns, recovers 50x character's RCV in HP and changes [BLOCK] and [BOMB] orbs into [RCV] orbs. If your Captain is a Free Spirit Character, reduces RCV DOWN, Special Bind and Blindness duration by 5 turns",
+        "Reduces Bind and Paralysis duration by 3 turns and changes [BLOCK] and [BOMB] orbs into [RCV] orbs. If your Captain is a Free Spirit Character, reduces RCV DOWN and Blindness duration by 5 turns. Reduces Bind and Paralysis duration by 10 turns, recovers 50x character's RCV in HP and changes [BLOCK] and [BOMB] orbs into [RCV] orbs. If your Captain is a Free Spirit Character, reduces RCV DOWN, Special Bind and Blindness duration by 5 turns",
+        "Reduces enemies' Threshold Damage Reduction duration by 5 turns and boosts ATK of Slasher and Striker characters by 1.75x for 1 turn. If your Captain is a Slasher or Striker character, reduces RCV DOWN and Increase Damage Taken duration by 3 turns."
+      ]
     },
     {
       "key": "remove_sfx",

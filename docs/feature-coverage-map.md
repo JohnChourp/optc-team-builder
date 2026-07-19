@@ -243,6 +243,20 @@ Damage Taken and Weaken to ignore Debuff Protection`); only requiring `enem(y|ie
 between verb and name keeps it out. There is no cure key and none is warranted: the single strip
 clause is an enemy-owned self-cleanse before re-application.
 
+**RCV DOWN** (`remove_rcv_down`) is an enemy-applied debuff that slashes the crew's total RCV
+stat to a near-floor value, so meat orbs and RCV-scaled heals recover almost nothing. The cure
+grammar is `reduces|removes ... RCV DOWN ... duration (by N turns | completely)`. The `down`
+token is load-bearing: `Counter-RCV` and `Counter-Healing` are separate upstream mechanics with
+no key today, and a bare `rcv` alias absorbs all nine Counter-RCV units. Upstream folds
+`selected debuff(s)` into its own RCV DOWN matcher; we deliberately route that wording to
+`remove_pain` instead, so `remove_pain` staying at 16 is the canary for this alias over-reaching.
+
+The sibling `remove_rcv_bind` is deliberately kept at zero rather than deleted. RCV Bind is a
+**real** mechanic, but it exists only in Pirate Rumble and Grand Party — every occurrence is in
+`rumbleData`, which no special-ability source reads. Keeping the key also documents a latent
+leak: `remove_bind` matches any target ending in " bind", so an "rcv bind" target would be
+silently miscounted as plain Bind if upstream ever ports the Rumble status into quest text.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community

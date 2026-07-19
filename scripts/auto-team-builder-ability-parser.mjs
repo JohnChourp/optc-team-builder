@@ -1567,6 +1567,53 @@ const TARGET_ALIASES = [
       !target.includes('chain atk down'),
   },
   {
+    // Revived dead key (7th of this campaign). This alias NEVER EXISTED, so all 34
+    // "reduces/removes ... RCV DOWN ... duration" clauses across 29 characters
+    // resolved to NO key at all — the segment was produced by TURN_PATTERNS and then
+    // silently discarded. Upstream carries the effect in BOTH forks under category
+    // 'Reduce Status Effects' with targets
+    // ["captain","special","superSpecial","swap","sailor","support"], i.e. exactly
+    // the surfaces this parser reads. RCV DOWN (JP 回復力ダウン) is an enemy-applied
+    // debuff that slashes the crew's total RCV stat to a near-floor value, so meat
+    // orbs and RCV-scaled heals recover almost nothing.
+    //
+    // The " down" token is LOAD-BEARING. `Counter-RCV` is a SEPARATE upstream
+    // matcher (9 units: #3943/#3944/#4073/#4135/#4183/#4213/#4241/#4242/#4422), as
+    // is `Counter-Healing` (16) — neither has a key today. A bare includes('rcv')
+    // absorbs all 9 as pure false positives (29 -> 38).
+    //
+    // The `[RCV]` ORB hazard that cost boost_rcv 27 false positives cannot reach
+    // this layer: normalizeTargetText strips bracket tokens BEFORE any alias sees
+    // the target, and the " down" requirement rejects both the orb colour and the
+    // "Reduces RCV of all characters by 90%" self-inflicted stat drawback.
+    //
+    // Deliberately NOT in ENEMY_TARGETED_REMOVAL_ABILITY_KEYS: this is a CREW cure
+    // (all 30 records resolve effectTargetScope 'crew'), and adding it there was
+    // measured to STRIP the scope from every record — the exclusion is required,
+    // not merely harmless. Zero enemy-owned RCV DOWN segments exist.
+    //
+    // Do NOT fold in upstream's `selected debuffs?` alternation: we route that to
+    // remove_pain via SELECTED_DEBUFF_PAIN_PATTERNS, and upstream's own hard
+    // include: [2602, 2603, 3398] on its "Old Crew RCV DOWN reducer" is exactly
+    // those units, all already in remove_pain. Standing cross-key policy.
+    key: 'remove_rcv_down',
+    label: 'Remove RCV Down',
+    matcher: (target) => target.includes('rcv down'),
+  },
+  // NOTE on the sibling key `remove_rcv_bind` (definitions entry, matchCount 0):
+  // it is deliberately left WITHOUT an alias and recorded `no-data`, NOT deleted.
+  // "RCV Bind" is a REAL mechanic, but it exists only in Pirate Rumble / Grand
+  // Party: 12 characters carry it and every occurrence is inside `rumbleData`,
+  // which no special-ability source reads. Upstream's 7 RCV Bind matchers all
+  // target rumbleSpecial/gpSpecial/rumbleResistance, and it appears zero times in
+  // either fork's details.js. Same disposition as auto_change_slots.
+  //
+  // Keeping the key also documents a LATENT LEAK worth preserving: remove_bind's
+  // matcher is `target === 'bind' || target.endsWith(' bind')` with exclusions only
+  // for special/slot/orb/ship bind, so matcher('rcv bind') returns remove_bind. That
+  // is harmless today (0 quest-text occurrences) but would silently miscount RCV
+  // Bind as plain Bind if upstream ever ports the Rumble status into quest text.
+  {
     key: 'remove_damage_reduction',
     label: 'Remove Damage Reduction',
     matcher: (target) => target === 'damage reduction' || target === 'percent damage reduction',
