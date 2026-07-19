@@ -1,6 +1,6 @@
 .ability-tag-set-formula {
-  position: sticky;
-  top: 0;
+  /* Pinned by the flex column above it, so it needs no sticky positioning. */
+  flex: 0 0 auto;
   z-index: 3;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
