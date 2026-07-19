@@ -26,6 +26,7 @@ import {
   copyOutline,
   documentTextOutline,
   downloadOutline,
+  funnelOutline,
   linkOutline,
   peopleOutline,
   shareSocialOutline,
@@ -34,13 +35,13 @@ import {
 } from 'ionicons/icons';
 
 import {
-  type AutoBuildAbilityCoverageMode,
   type AutoBuildAbilitySource,
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterDetailRecord,
   type CharacterListItem,
+  type CharacterTagSetSelection,
   type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
@@ -50,10 +51,20 @@ import {
   resolveCaptainTeamConditionStatus,
   type CaptainTeamConditionStatus,
 } from '../../core/services/captain-team-condition-status.utils';
+import {
+  cloneCharacterTagSetSelection,
+  countCharacterTagSetTags,
+  countPopulatedCharacterTagSets,
+  createEmptyCharacterTagSetSelection,
+  expandCharacterTagsToSets,
+  flattenCharacterTagSets,
+  matchesCharacterTagSets,
+} from '../../core/services/character-tag-set.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { CharacterTagSetPickerComponent } from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import {
   buildSavedTeamJson,
@@ -117,35 +128,35 @@ interface SavedTeamsImportFeedbackStats {
 type SavedTeamAbilityOrigin = 'leader' | 'crew';
 type SavedTeamAbilityCategory = 'captain' | 'special' | 'crewmate' | 'potential' | 'support';
 
+/** One catalog entry, kept only long enough to order the picker's tag list. */
 interface SavedTeamAbilityFacet {
   category: SavedTeamAbilityCategory;
-  coverageMode: AutoBuildAbilityCoverageMode;
   identity: string;
   label: string;
-  metadataLabel: string;
-  minTurns: number | null;
-  selected: boolean;
-  slotTokens: string[];
-  source: AutoBuildAbilitySource;
-  teamCount: number;
 }
 
-type SavedTeamAbilityFacetBase = Omit<SavedTeamAbilityFacet, 'selected'>;
-
-interface SavedTeamAbilityCategoryGroup {
-  abilityCount: number;
-  abilities: SavedTeamAbilityFacet[];
-  category: SavedTeamAbilityCategory;
+/**
+ * One populated ability group, so the chip row is a single-click undo for the
+ * whole group instead of hiding the AND/OR structure the groups exist for.
+ */
+interface SavedTeamAbilityTagSetChip {
+  id: string;
   label: string;
+  removeLabel: string;
 }
 
 interface SavedTeamAbilityFilterSection {
-  categories: SavedTeamAbilityCategoryGroup[];
+  availableTags: string[];
+  chips: SavedTeamAbilityTagSetChip[];
   copy: string;
   hasSelection: boolean;
   origin: SavedTeamAbilityOrigin;
+  pickerOpen: boolean;
   selectedCount: number;
+  selection: CharacterTagSetSelection;
+  supportText: string;
   title: string;
+  triggerLabel: string;
 }
 
 const SAVED_TEAM_ABILITY_ORIGINS: SavedTeamAbilityOrigin[] = ['leader', 'crew'];
@@ -156,6 +167,24 @@ const SAVED_TEAM_ABILITY_CATEGORIES: SavedTeamAbilityCategory[] = [
   'potential',
   'support',
 ];
+/**
+ * Ability identities double as the tags the picker renders, so they are built
+ * from data-side values only: a translated identity would stop matching the
+ * team identity sets rebuilt after a language switch, silently emptying the
+ * filter. The dataset labels these identities carry are English-only too, so
+ * nothing translatable is lost by naming the source here.
+ */
+const SAVED_TEAM_ABILITY_SOURCE_TOKENS: Record<AutoBuildAbilitySource, string> = {
+  captainAbility: 'Captain',
+  finalTapData: 'Final Tap',
+  potentialAbilities: 'Potential',
+  rushSugoSpecialData: 'Rush',
+  sailorAbilities: 'Crewmate',
+  specialText: 'Special',
+  superSpecialText: 'Super Special',
+  superTandemData: 'Super Tandem',
+  supportData: 'Support',
+};
 
 @Component({
   selector: 'app-saved-teams-page',
@@ -176,6 +205,7 @@ const SAVED_TEAM_ABILITY_CATEGORIES: SavedTeamAbilityCategory[] = [
     IonTitle,
     IonToolbar,
     CaptainTeamConditionStatusComponent,
+    CharacterTagSetPickerComponent,
     SavedTeamsStylePanelsComponent,
     TeamCoverageSummaryComponent,
     RouterLink,
@@ -191,23 +221,37 @@ export class SavedTeamsPage implements OnInit {
   public readonly loading = signal(true);
   public readonly savedTeams;
   public readonly savedTeamCards = signal<SavedTeamPreviewCard[]>([]);
+  /**
+   * Flat mirror of the tag sets, kept so anything still holding the legacy
+   * per-origin id lists keeps working and so a stored list can be seeded into
+   * groups on the next visit. Written only through `applyAbilityTagSets`.
+   */
   public readonly selectedLeaderAbilityIds = signal<string[]>([]);
   public readonly selectedCrewAbilityIds = signal<string[]>([]);
-  public readonly selectedLeaderAbilityIdSet = computed(
-    () => new Set(this.selectedLeaderAbilityIds()),
+  public readonly leaderAbilityTagSets = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
   );
-  public readonly selectedCrewAbilityIdSet = computed(() => new Set(this.selectedCrewAbilityIds()));
-  public readonly hasAbilityFilters = computed(
-    () => this.selectedLeaderAbilityIds().length > 0 || this.selectedCrewAbilityIds().length > 0,
+  public readonly crewAbilityTagSets = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
   );
-  public readonly selectedAbilityFilterCount = computed(
-    () => this.selectedLeaderAbilityIds().length + this.selectedCrewAbilityIds().length,
+  /** Both origins share one modal, so at most one origin is open at a time. */
+  public readonly abilityTagSetPickerOrigin = signal<SavedTeamAbilityOrigin | null>(null);
+  public readonly hasAbilityFilters = computed(() =>
+    SAVED_TEAM_ABILITY_ORIGINS.some(
+      (origin) => countPopulatedCharacterTagSets(this.resolveAbilityTagSets(origin)) > 0,
+    ),
   );
-  private readonly abilityFacetBasesByOrigin = computed<
-    Record<SavedTeamAbilityOrigin, SavedTeamAbilityFacetBase[]>
+  public readonly selectedAbilityFilterCount = computed(() =>
+    SAVED_TEAM_ABILITY_ORIGINS.reduce(
+      (total, origin) => total + countCharacterTagSetTags(this.resolveAbilityTagSets(origin)),
+      0,
+    ),
+  );
+  private readonly availableAbilityIdentitiesByOrigin = computed<
+    Record<SavedTeamAbilityOrigin, string[]>
   >(() => ({
-    leader: this.buildAbilityFacetBases('leader'),
-    crew: this.buildAbilityFacetBases('crew'),
+    leader: this.buildAvailableAbilityIdentities('leader'),
+    crew: this.buildAvailableAbilityIdentities('crew'),
   }));
   public readonly filteredSavedTeamCards = computed(() =>
     this.savedTeamCards().filter((teamCard) => this.matchesSelectedAbilityFilters(teamCard)),
@@ -229,8 +273,8 @@ export class SavedTeamsPage implements OnInit {
     this.buildAbilityFilterSection('crew'),
   ]);
   public readonly hasAbilityFiltersAvailable = computed(() =>
-    this.abilityFilterSections().some((section) =>
-      section.categories.some((category) => category.abilityCount > 0),
+    SAVED_TEAM_ABILITY_ORIGINS.some(
+      (origin) => this.availableAbilityIdentitiesByOrigin()[origin].length > 0,
     ),
   );
   public readonly savedTeamTotalLabel = computed(() =>
@@ -269,6 +313,7 @@ export class SavedTeamsPage implements OnInit {
   public readonly autoBuilderIcon = sparklesOutline;
   public readonly captainCoverageIcon = shieldCheckmarkOutline;
   public readonly manualBuilderIcon = peopleOutline;
+  public readonly abilityFilterIcon = funnelOutline;
   public constructor(
     private readonly userState: UserStateService,
     private readonly repository: OptcRepositoryService,
@@ -278,14 +323,24 @@ export class SavedTeamsPage implements OnInit {
   }
 
   public async ngOnInit(): Promise<void> {
-    await Promise.all([this.userState.readySavedTeams(), this.i18n.preloadScope('saved-teams')]);
+    await Promise.all([
+      this.userState.readySavedTeams(),
+      this.i18n.preloadScope('saved-teams'),
+      this.i18n.preloadScope('character-tag-sets'),
+    ]);
     this.applySavedTeamsStorageRecoveryFeedback();
+    this.seedAbilityTagSetSelections();
     await this.refreshSavedTeamCards();
   }
 
   public async ionViewWillEnter(): Promise<void> {
-    await Promise.all([this.userState.readySavedTeams(), this.i18n.preloadScope('saved-teams')]);
+    await Promise.all([
+      this.userState.readySavedTeams(),
+      this.i18n.preloadScope('saved-teams'),
+      this.i18n.preloadScope('character-tag-sets'),
+    ]);
     this.applySavedTeamsStorageRecoveryFeedback();
+    this.seedAbilityTagSetSelections();
     await this.refreshSavedTeamCards();
   }
 
@@ -439,6 +494,7 @@ export class SavedTeamsPage implements OnInit {
   public resetPage(): void {
     this.selectedTeamIds.set([]);
     this.clearAllAbilityFilters();
+    this.closeAbilityTagSetPicker();
     this.editModalOpen.set(false);
     this.importModalOpen.set(false);
     this.openTeamModalOpen.set(false);
@@ -607,26 +663,48 @@ export class SavedTeamsPage implements OnInit {
     await this.importSavedTeams(file);
   }
 
-  public isAbilityFilterSelected(origin: SavedTeamAbilityOrigin, identity: string): boolean {
-    return this.resolveSelectedAbilitySet(origin).has(identity);
+  public openAbilityTagSetPicker(origin: SavedTeamAbilityOrigin): void {
+    if (!this.availableAbilityIdentitiesByOrigin()[origin].length) {
+      return;
+    }
+
+    this.abilityTagSetPickerOrigin.set(origin);
   }
 
-  public toggleAbilityFilter(origin: SavedTeamAbilityOrigin, identity: string): void {
-    this.setAbilityFilterSelection(
-      origin,
-      identity,
-      !this.isAbilityFilterSelected(origin, identity),
-    );
+  public closeAbilityTagSetPicker(): void {
+    this.abilityTagSetPickerOrigin.set(null);
+  }
+
+  public saveAbilityTagSetSelection(
+    origin: SavedTeamAbilityOrigin,
+    selection: CharacterTagSetSelection,
+  ): void {
+    this.applyAbilityTagSets(origin, cloneCharacterTagSetSelection(selection));
+    this.abilityTagSetPickerOrigin.set(null);
+    this.pruneSelection();
+  }
+
+  /** Drops one whole group, so the chip row stays a single-click undo. */
+  public removeAbilityTagSet(origin: SavedTeamAbilityOrigin, setId: string): void {
+    const selection = this.resolveAbilityTagSets(origin);
+
+    this.applyAbilityTagSets(origin, {
+      ...selection,
+      sets: selection.sets.filter((set) => set.id !== setId),
+    });
+    this.pruneSelection();
   }
 
   public clearAbilityFilterSection(origin: SavedTeamAbilityOrigin): void {
-    this.setSelectedAbilityIds(origin, []);
+    this.applyAbilityTagSets(origin, createEmptyCharacterTagSetSelection());
     this.pruneSelection();
   }
 
   public clearAllAbilityFilters(): void {
-    this.selectedLeaderAbilityIds.set([]);
-    this.selectedCrewAbilityIds.set([]);
+    for (const origin of SAVED_TEAM_ABILITY_ORIGINS) {
+      this.applyAbilityTagSets(origin, createEmptyCharacterTagSetSelection());
+    }
+
     this.pruneSelection();
   }
 
@@ -738,18 +816,48 @@ export class SavedTeamsPage implements OnInit {
     );
   }
 
+  /**
+   * Drops identities the current saved teams no longer offer, then the groups
+   * that pruning emptied. Rewriting only on a real change keeps the picker's
+   * `selection` input reference-stable across ordinary refreshes.
+   */
   private pruneAbilitySelections(): void {
     for (const origin of SAVED_TEAM_ABILITY_ORIGINS) {
-      const availableAbilityIds = new Set(
-        this.savedTeamCards().flatMap((teamCard) => [
-          ...teamCard.abilityIdentitySets[origin].values(),
-        ]),
-      );
-      const nextAbilityIds = this.resolveSelectedAbilityIds(origin).filter((abilityId) =>
-        availableAbilityIds.has(abilityId),
-      );
+      const availableAbilityIds = new Set(this.availableAbilityIdentitiesByOrigin()[origin]);
+      const selection = this.resolveAbilityTagSets(origin);
+      const sets = selection.sets
+        .map((set) => ({
+          ...set,
+          tags: set.tags.filter((abilityId) => availableAbilityIds.has(abilityId)),
+        }))
+        .filter((set) => set.tags.length > 0);
+      const unchanged =
+        sets.length === selection.sets.length &&
+        sets.every((set, index) => set.tags.length === (selection.sets[index]?.tags.length ?? -1));
 
-      this.setSelectedAbilityIds(origin, nextAbilityIds);
+      if (unchanged) {
+        continue;
+      }
+
+      this.applyAbilityTagSets(origin, { ...selection, sets });
+    }
+  }
+
+  /**
+   * Migrates whatever flat ability ids this origin already holds into one
+   * group. The legacy filter required every selected ability, so the faithful
+   * expansion is a single `all` group. Runs only while the origin has no groups
+   * yet, so it never overwrites a user's own.
+   */
+  private seedAbilityTagSetSelections(): void {
+    for (const origin of SAVED_TEAM_ABILITY_ORIGINS) {
+      const abilityIds = this.resolveSelectedAbilityIds(origin);
+
+      if (this.resolveAbilityTagSets(origin).sets.length || !abilityIds.length) {
+        continue;
+      }
+
+      this.applyAbilityTagSets(origin, expandCharacterTagsToSets(abilityIds, true));
     }
   }
 
@@ -891,105 +999,89 @@ export class SavedTeamsPage implements OnInit {
   }
 
   private buildAbilityFilterSection(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFilterSection {
-    const facets = this.resolveAbilityFacets(origin);
-    const selectedIds = this.resolveSelectedAbilitySet(origin);
-    const categories = SAVED_TEAM_ABILITY_CATEGORIES.map((category) => {
-      const abilities = facets.filter((facet) => facet.category === category);
-
-      return {
-        abilityCount: abilities.length,
-        abilities,
-        category,
-        label: this.i18n.translate(
-          `abilityFilters.categories.${category}`,
-          undefined,
-          'saved-teams',
-        ),
-      };
-    });
+    const selection = this.resolveAbilityTagSets(origin);
+    const populatedSetCount = countPopulatedCharacterTagSets(selection);
+    const tagCount = countCharacterTagSetTags(selection);
 
     return {
-      categories,
+      availableTags: this.availableAbilityIdentitiesByOrigin()[origin],
+      chips: selection.sets
+        .filter((set) => set.tags.length > 0)
+        .map((set) => {
+          // Padding lives here, not in the catalogue, so a translator trimming
+          // whitespace in their editor cannot glue two identities together.
+          const label = set.tags.join(
+            ` ${this.i18n.translate(`abilityFilters.joiners.${set.operator}`, undefined, 'saved-teams')} `,
+          );
+
+          return {
+            id: set.id,
+            label,
+            removeLabel: this.i18n.translate(
+              'abilityFilters.removeGroup',
+              { group: label },
+              'saved-teams',
+            ),
+          };
+        }),
       copy: this.i18n.translate(`abilityFilters.sections.${origin}.copy`, undefined, 'saved-teams'),
-      hasSelection: selectedIds.size > 0,
+      hasSelection: populatedSetCount > 0,
       origin,
-      selectedCount: selectedIds.size,
+      pickerOpen: this.abilityTagSetPickerOrigin() === origin,
+      selectedCount: tagCount,
+      selection,
+      supportText:
+        populatedSetCount < 2
+          ? this.i18n.translate('abilityFilters.support.empty', undefined, 'saved-teams')
+          : this.i18n.translate(
+              `abilityFilters.support.${selection.operator}`,
+              undefined,
+              'saved-teams',
+            ),
       title: this.i18n.translate(
         `abilityFilters.sections.${origin}.title`,
         undefined,
         'saved-teams',
       ),
+      triggerLabel: populatedSetCount
+        ? this.i18n.translate(
+            'abilityFilters.trigger.active',
+            { abilities: tagCount, groups: populatedSetCount },
+            'saved-teams',
+          )
+        : this.i18n.translate('abilityFilters.trigger.empty', undefined, 'saved-teams'),
     };
   }
 
-  private resolveAbilityFacets(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFacet[] {
-    const selectedIds = this.resolveSelectedAbilitySet(origin);
-
-    return this.abilityFacetBasesByOrigin()[origin].map((facet) => ({
-      ...facet,
-      selected: selectedIds.has(facet.identity),
-    }));
-  }
-
-  private buildAbilityFacetBases(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFacetBase[] {
-    const facets = new Map<string, SavedTeamAbilityFacetBase & { teamIds: Set<string> }>();
+  /** Catalog for one origin, ordered by category then label so it reads. */
+  private buildAvailableAbilityIdentities(origin: SavedTeamAbilityOrigin): string[] {
+    const facets = new Map<string, SavedTeamAbilityFacet>();
 
     for (const teamCard of this.savedTeamCards()) {
-      const teamAbilityIdentities = new Set<string>();
+      for (const ability of this.resolveSlotAbilities(teamCard.slots, origin)) {
+        const identity = this.buildAbilityIdentity(ability);
 
-      for (const slotIndex of this.resolveOriginSlotIndexes(origin)) {
-        const slot = teamCard.slots[slotIndex];
-
-        if (!slot) {
+        if (facets.has(identity)) {
           continue;
         }
 
-        for (const ability of slot.detail.builderAbilities) {
-          const identity = this.buildAbilityIdentity(ability);
-          const existingFacet = facets.get(identity);
-
-          teamAbilityIdentities.add(identity);
-
-          if (existingFacet) {
-            continue;
-          }
-
-          facets.set(identity, {
-            category: this.resolveAbilityCategory(ability.source),
-            coverageMode: ability.coverageMode ?? 'explicit',
-            identity,
-            label: ability.label,
-            metadataLabel: this.formatAbilityMetadata(ability),
-            minTurns: ability.minTurns,
-            slotTokens: [...ability.slotTokens],
-            source: ability.source,
-            teamCount: 0,
-            teamIds: new Set<string>(),
-          });
-        }
-      }
-
-      for (const identity of teamAbilityIdentities) {
-        facets.get(identity)?.teamIds.add(teamCard.team.id);
+        facets.set(identity, {
+          category: this.resolveAbilityCategory(ability.source),
+          identity,
+          label: ability.label,
+        });
       }
     }
 
     return [...facets.values()]
-      .map(({ teamIds, ...facet }) => ({
-        ...facet,
-        teamCount: teamIds.size,
-      }))
-      .sort((left, right) => {
-        const categoryDifference =
+      .sort(
+        (left, right) =>
           SAVED_TEAM_ABILITY_CATEGORIES.indexOf(left.category) -
-          SAVED_TEAM_ABILITY_CATEGORIES.indexOf(right.category);
-
-        return (
-          categoryDifference ||
+            SAVED_TEAM_ABILITY_CATEGORIES.indexOf(right.category) ||
           left.label.localeCompare(right.label) ||
-          left.metadataLabel.localeCompare(right.metadataLabel)
-        );
-      });
+          left.identity.localeCompare(right.identity),
+      )
+      .map((facet) => facet.identity);
   }
 
   private buildTeamAbilityIdentitySets(
@@ -1029,50 +1121,41 @@ export class SavedTeamsPage implements OnInit {
     );
   }
 
+  /**
+   * The identities one origin covers are matched exactly like character tags:
+   * joined by each group's own operator, the groups joined by the selection's,
+   * and an origin with no populated group filters nothing.
+   */
   private matchesSelectedAbilityOrigin(
     teamCard: SavedTeamPreviewCard,
     origin: SavedTeamAbilityOrigin,
   ): boolean {
-    const selectedAbilityIds = this.resolveSelectedAbilityIds(origin);
-
-    if (!selectedAbilityIds.length) {
-      return true;
-    }
-
-    const teamAbilityIds = teamCard.abilityIdentitySets[origin];
-
-    return selectedAbilityIds.every((abilityId) => teamAbilityIds.has(abilityId));
+    return matchesCharacterTagSets(
+      [...teamCard.abilityIdentitySets[origin]],
+      this.resolveAbilityTagSets(origin),
+    );
   }
 
-  private setAbilityFilterSelection(
+  /** Single write path, so the flat mirror can never drift from the groups. */
+  private applyAbilityTagSets(
     origin: SavedTeamAbilityOrigin,
-    identity: string,
-    selected: boolean,
+    selection: CharacterTagSetSelection,
   ): void {
-    const currentIds = this.resolveSelectedAbilityIds(origin);
-
-    if (selected) {
-      if (!currentIds.includes(identity)) {
-        this.setSelectedAbilityIds(origin, [...currentIds, identity]);
-      }
+    if (origin === 'leader') {
+      this.leaderAbilityTagSets.set(selection);
     } else {
-      this.setSelectedAbilityIds(
-        origin,
-        currentIds.filter((abilityId) => abilityId !== identity),
-      );
+      this.crewAbilityTagSets.set(selection);
     }
 
-    this.pruneSelection();
+    this.setSelectedAbilityIds(origin, flattenCharacterTagSets(selection));
+  }
+
+  private resolveAbilityTagSets(origin: SavedTeamAbilityOrigin): CharacterTagSetSelection {
+    return origin === 'leader' ? this.leaderAbilityTagSets() : this.crewAbilityTagSets();
   }
 
   private resolveSelectedAbilityIds(origin: SavedTeamAbilityOrigin): string[] {
     return origin === 'leader' ? this.selectedLeaderAbilityIds() : this.selectedCrewAbilityIds();
-  }
-
-  private resolveSelectedAbilitySet(origin: SavedTeamAbilityOrigin): Set<string> {
-    return origin === 'leader'
-      ? this.selectedLeaderAbilityIdSet()
-      : this.selectedCrewAbilityIdSet();
   }
 
   private setSelectedAbilityIds(origin: SavedTeamAbilityOrigin, abilityIds: string[]): void {
@@ -1086,14 +1169,22 @@ export class SavedTeamsPage implements OnInit {
     this.selectedCrewAbilityIds.set(nextAbilityIds);
   }
 
+  /**
+   * The identity is both the match key and the tag the picker renders, so it
+   * spells out everything that makes two same-named abilities different rather
+   * than encoding it: a user reading the modal sees "Remove Bind - Special -
+   * 6T", not an opaque key.
+   */
   private buildAbilityIdentity(ability: NormalizedBuilderAbility): string {
     return [
-      ability.key,
-      ability.source,
-      ability.minTurns ?? 'none',
-      ability.slotTokens.join(','),
-      ability.coverageMode ?? 'explicit',
-    ].join('|');
+      ability.label,
+      SAVED_TEAM_ABILITY_SOURCE_TOKENS[ability.source],
+      ability.minTurns === null ? null : `${ability.minTurns}T`,
+      ability.slotTokens.length ? ability.slotTokens.join('/') : null,
+      ability.coverageMode === 'selectedDebuff' ? 'Selectable' : null,
+    ]
+      .filter((part): part is string => Boolean(part))
+      .join(' - ');
   }
 
   private resolveAbilityCategory(source: AutoBuildAbilitySource): SavedTeamAbilityCategory {
@@ -1113,25 +1204,6 @@ export class SavedTeamsPage implements OnInit {
       case 'rushSugoSpecialData':
         return 'special';
     }
-  }
-
-  private formatAbilityMetadata(ability: NormalizedBuilderAbility): string {
-    const metadata = [
-      ability.minTurns === null
-        ? null
-        : this.i18n.translate(
-            'abilityFilters.metadata.turns',
-            { count: ability.minTurns },
-            'saved-teams',
-          ),
-      ability.slotTokens.length ? ability.slotTokens.join(' / ') : null,
-      this.i18n.translate(`abilityFilters.sources.${ability.source}`, undefined, 'saved-teams'),
-      ability.coverageMode === 'selectedDebuff'
-        ? this.i18n.translate('abilityFilters.metadata.selectableDebuff', undefined, 'saved-teams')
-        : null,
-    ].filter((value): value is string => Boolean(value));
-
-    return metadata.join(' - ');
   }
 
   private async importSavedTeams(file: File): Promise<void> {

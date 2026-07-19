@@ -111,6 +111,37 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  it('sends the character tag sets alongside the flat tags the engine relaxes', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.characterTagSets.set({
+      operator: 'all',
+      sets: [{ id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates', 'Heart Pirates'] }],
+    });
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({
+        selectedCharacterTags: ['Straw Hat Pirates', 'Heart Pirates'],
+        characterTagSets: expect.objectContaining({
+          operator: 'all',
+          sets: [
+            expect.objectContaining({
+              operator: 'any',
+              tags: ['Straw Hat Pirates', 'Heart Pirates'],
+            }),
+          ],
+        }),
+      }),
+      expect.any(Object),
+    );
+  });
+
   it('keeps guided auto build disabled by default', async () => {
     const { page } = await createPage();
 
@@ -420,9 +451,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.ngOnInit();
     page.selectedClasses.set(['Fighter']);
     page.selectedTypes.set(['DEX']);
-    page.selectedCharacterTags.set(['Straw Hat Pirates']);
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [{ id: 'set-1', operator: 'all', tags: ['Straw Hat Pirates'] }],
+    });
     page.selectedCharacterNames.set(['zoro', 'luffy']);
-    page.requireAllSelectedCharacterTagsInTeam.set(true);
     page.requireAllSelectedCharacterNamesInTeam.set(true);
 
     await page.buildTeam();
@@ -440,30 +473,130 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
-  it('filters character tag autocomplete suggestions and adds the selected tag', async () => {
+  it('opens and closes the character tag set picker without touching the selection', async () => {
     const { page } = await createPage();
 
     await page.ngOnInit();
-    page.onCharacterTagSearchChange({
-      detail: {
-        value: 'wor',
-      },
-    } as CustomEvent<{ value: string }>);
+    expect(page.characterTagSetPickerOpen()).toBe(false);
 
-    expect(page.filteredCharacterTagSuggestions()).toEqual(['Worst Generation']);
+    page.openCharacterTagSetPicker();
 
-    page.selectFirstCharacterTagSuggestion();
+    expect(page.characterTagSetPickerOpen()).toBe(true);
 
-    expect(page.selectedCharacterTags()).toEqual(['Worst Generation']);
-    expect(page.characterTagSearchTerm()).toBe('');
+    page.closeCharacterTagSetPicker();
 
-    page.onCharacterTagSearchChange({
-      detail: {
-        value: 'wor',
-      },
-    } as CustomEvent<{ value: string }>);
+    expect(page.characterTagSetPickerOpen()).toBe(false);
+    expect(page.selectedCharacterTags()).toEqual([]);
+  });
 
-    expect(page.filteredCharacterTagSuggestions()).toEqual([]);
+  it('canonicalises saved tag sets against the catalog and drops unknown tags', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [
+        { id: 'set-1', operator: 'any', tags: ['straw hat pirates', 'Not A Real Crew'] },
+        { id: 'set-2', operator: 'any', tags: ['Nothing Known'] },
+      ],
+    });
+
+    const sets = page.characterTagSets().sets;
+
+    expect(page.characterTagSetPickerOpen()).toBe(false);
+    expect(sets).toHaveLength(1);
+    expect(sets[0]?.tags).toEqual(['Straw Hat Pirates']);
+    expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
+  });
+
+  it('flattens every populated set into the flat tag list sent to the builder', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [
+        { id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates', 'Minks'] },
+        { id: 'set-2', operator: 'any', tags: ['Worst Generation'] },
+      ],
+    });
+
+    expect(page.selectedCharacterTags()).toEqual([
+      'Straw Hat Pirates',
+      'Minks',
+      'Worst Generation',
+    ]);
+  });
+
+  it('only demands strict team-wide tag coverage when the selection really means AND', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    expect(page.derivedRequireAllSelectedCharacterTagsInTeam()).toBe(false);
+
+    // A single tag is AND and OR at once, so it stays strict on the 'any' default.
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [{ id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates'] }],
+    });
+
+    expect(page.derivedRequireAllSelectedCharacterTagsInTeam()).toBe(true);
+
+    // Two alternatives in one group is a genuine OR: the team need not cover both.
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [{ id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates', 'Minks'] }],
+    });
+
+    expect(page.derivedRequireAllSelectedCharacterTagsInTeam()).toBe(false);
+
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [{ id: 'set-1', operator: 'all', tags: ['Straw Hat Pirates', 'Minks'] }],
+    });
+
+    expect(page.derivedRequireAllSelectedCharacterTagsInTeam()).toBe(true);
+
+    // OR across groups cannot be expressed as "cover every tag" either.
+    page.saveCharacterTagSetSelection({
+      operator: 'any',
+      sets: [
+        { id: 'set-1', operator: 'all', tags: ['Straw Hat Pirates'] },
+        { id: 'set-2', operator: 'all', tags: ['Minks'] },
+      ],
+    });
+
+    expect(page.derivedRequireAllSelectedCharacterTagsInTeam()).toBe(false);
+  });
+
+  it('summarises tag groups with the operator that joins them', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [
+        { id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates', 'Minks'] },
+        { id: 'set-2', operator: 'any', tags: ['Worst Generation'] },
+      ],
+    });
+
+    expect(page.characterTagSetGroups().map((group) => group.label)).toEqual([
+      'Straw Hat Pirates or Minks',
+      'Worst Generation',
+    ]);
+    expect(page.characterTagSetSummaryLabel()).toContain('EVERY group');
+
+    page.saveCharacterTagSetSelection({
+      operator: 'any',
+      sets: [
+        { id: 'set-1', operator: 'all', tags: ['Straw Hat Pirates', 'Minks'] },
+        { id: 'set-2', operator: 'any', tags: ['Worst Generation'] },
+      ],
+    });
+
+    expect(page.characterTagSetGroups()[0]?.label).toBe('Straw Hat Pirates and Minks');
+    expect(page.characterTagSetSummaryLabel()).toContain('ANY group');
   });
 
   it('applies ability-derived requirement source tags and names from the modal', async () => {
@@ -498,6 +631,51 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
     expect(page.selectedCharacterNames()).toEqual(['roronoa zoro']);
     expect(page.requirementSourceModalOpen()).toBe(false);
+  });
+
+  it('widens an AND group to OR when a requirement source contributes new tags', async () => {
+    const { page, repository } = await createPage();
+    const source = createRequirementSourceCharacter();
+
+    repository.searchDetailedCharacters.mockResolvedValue([source]);
+
+    await page.ngOnInit();
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [{ id: 'set-1', operator: 'all', tags: ['Minks'] }],
+    });
+
+    expect(page.derivedRequireAllSelectedCharacterTagsInTeam()).toBe(true);
+
+    await page.openRequirementSourceModal();
+    page.applyRequirementSourceCharacter(source);
+
+    // Source tags are alternatives, so the group must not demand that one team
+    // cover both affiliations at once.
+    expect(page.characterTagSets().sets).toEqual([
+      { id: 'set-1', operator: 'any', tags: ['Minks', 'Straw Hat Pirates'] },
+    ]);
+    expect(page.derivedRequireAllSelectedCharacterTagsInTeam()).toBe(false);
+  });
+
+  it('keeps the chosen AND operator when a requirement source adds nothing new', async () => {
+    const { page, repository } = await createPage();
+    const source = createRequirementSourceCharacter();
+
+    repository.searchDetailedCharacters.mockResolvedValue([source]);
+
+    await page.ngOnInit();
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [{ id: 'set-1', operator: 'all', tags: ['Straw Hat Pirates'] }],
+    });
+
+    await page.openRequirementSourceModal();
+    page.applyRequirementSourceCharacter(source);
+
+    expect(page.characterTagSets().sets).toEqual([
+      { id: 'set-1', operator: 'all', tags: ['Straw Hat Pirates'] },
+    ]);
   });
 
   it('passes the selected leader boost filters to the builder and restores empty selections', async () => {
@@ -3196,8 +3374,20 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).not.toContain('characterNameStrictToggleLabel()');
     expect(template).not.toContain('onRequireAllSelectedTypesToggle');
     expect(template).not.toContain('onRequireAllSelectedClassesToggle');
-    expect(template).not.toContain('onRequireAllSelectedCharacterTagsToggle');
     expect(template).not.toContain('onRequireAllSelectedCharacterNamesToggle');
+    // The character tag strictness toggle stays absent, but it is no longer a
+    // dead end: the AND/OR the toggle used to hint at is now expressed by the
+    // tag-set modal, which the template must host.
+    expect(template).not.toContain('onRequireAllSelectedCharacterTagsToggle');
+    expect(template).not.toContain('<ion-searchbar class="character-tag-search"');
+    expect(template).not.toContain('addSelectedCharacterTag(');
+    expect(template).not.toContain('removeSelectedCharacterTag(');
+    expect(template).not.toContain('filteredCharacterTagSuggestions()');
+    expect(template).toContain('<app-character-tag-set-picker');
+    expect(template).toContain('[selection]="characterTagSets()"');
+    expect(template).toContain('(saveSelection)="saveCharacterTagSetSelection($event)"');
+    expect(template).toContain('characterTagSetSummaryLabel()');
+    expect(template).toContain('data-testid="character-tag-set-trigger"');
     expect(template).not.toContain("t('filters.cost.label')");
     expect(template).not.toContain("t('filters.totalCost.label')");
     expect(template).not.toContain('onLeaderCostRangeChange');
@@ -3434,9 +3624,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.ngOnInit();
     page.selectedTypes.set(['DEX']);
     page.selectedClasses.set(['Fighter']);
-    page.selectedCharacterTags.set(['Straw Hat Pirates']);
+    page.saveCharacterTagSetSelection({
+      operator: 'all',
+      sets: [{ id: 'set-1', operator: 'any', tags: ['Straw Hat Pirates'] }],
+    });
     page.selectedCharacterNames.set(['zoro']);
-    page.requireAllSelectedCharacterTagsInTeam.set(true);
     page.requireAllSelectedCharacterNamesInTeam.set(true);
     page.enemyMechanicDrafts.set([
       {
@@ -6015,7 +6207,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 32,
+      schemaVersion: 33,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -6102,7 +6294,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     const payload = page.buildSelectionExportPayload('2026-05-05T20:14:45.183Z');
 
-    expect(payload?.schemaVersion).toBe(32);
+    expect(payload?.schemaVersion).toBe(33);
     expect(payload?.generatedTeamExport).toMatchObject({
       source: 'auto-team-builder',
       team: [
@@ -6254,7 +6446,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       availableLockedCharacters: [captain],
     });
 
-    expect(payload.schemaVersion).toBe(32);
+    expect(payload.schemaVersion).toBe(33);
     expect(
       payload.manualSelection.manualSlots.find((slot) => slot.role === 'captain'),
     ).toMatchObject({
@@ -6299,12 +6491,18 @@ describe('AutoTeamBuilder preset export helpers', () => {
       availableLockedCharacters: [],
     });
 
-    expect(payload.schemaVersion).toBe(32);
+    expect(payload.schemaVersion).toBe(33);
     expect(payload.filters.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
     expect(payload.filters.selectedCharacterNames).toEqual(['zoro', 'luffy']);
     expect(result.state.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
     expect(result.state.selectedCharacterNames).toEqual(['zoro', 'luffy']);
-    expect(result.state.requireAllSelectedCharacterTagsInTeam).toBe(false);
+    // A caller that only passes the flat list still gets a group back, rebuilt
+    // from the legacy strict flag rather than losing the operator.
+    expect(result.state.characterTagSets).toEqual({
+      operator: 'all',
+      sets: [{ id: expect.any(String), operator: 'all', tags: ['Straw Hat Pirates'] }],
+    });
+    expect(result.state.requireAllSelectedCharacterTagsInTeam).toBe(true);
     expect(result.state.requireAllSelectedCharacterNamesInTeam).toBe(false);
   });
 
@@ -6415,7 +6613,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(32);
+    expect(payload.schemaVersion).toBe(33);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -6913,7 +7111,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(payload.schemaVersion).toBe(32);
+    expect(payload.schemaVersion).toBe(33);
     expect(result.state.requiredAbilities).toEqual([
       {
         abilityKey: 'remove_bind',
@@ -8274,6 +8472,28 @@ function filterCharactersForManualQuery(
   const limit = query.limit ?? filteredRecords.length;
 
   return sortedRecords.slice(offset, offset + limit);
+}
+
+/** A requirement source whose only contributed character tag is Straw Hat Pirates. */
+function createRequirementSourceCharacter(): CharacterDetailRecord {
+  const source = createCharacterRecord(991, 'Requirement Source');
+
+  source.detail.superSpecialCriteria = {
+    rawText: 'Any 1 of [Straw Hat Pirates]',
+    requiresCaptain: false,
+    hasNonRosterBranches: false,
+    parserStatus: 'roster_only',
+    rosterBranches: [
+      {
+        branchType: 'character_count_any',
+        requiredCount: 1,
+        matchMode: 'any_candidate',
+        options: [{ label: '[Straw Hat Pirates]', acceptedKeys: ['straw hat pirates'] }],
+      },
+    ],
+  };
+
+  return source;
 }
 
 function createManualSlots(

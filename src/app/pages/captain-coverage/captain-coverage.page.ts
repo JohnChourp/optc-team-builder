@@ -18,6 +18,7 @@ import {
 import {
   alertCircleOutline,
   checkmarkCircleOutline,
+  funnelOutline,
   peopleOutline,
   saveOutline,
   searchOutline,
@@ -25,7 +26,9 @@ import {
 } from 'ionicons/icons';
 
 import {
+  type AbilityFilterTagSetSelection,
   type AutoBuildAbilityCatalog,
+  type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
   type AutoBuildAbilitySource,
   type NormalizedBuilderAbility,
@@ -51,6 +54,7 @@ import {
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
+  type CharacterTagSetSelection,
   type DatasetManifest,
   type SavedTeam,
 } from '../../core/models/optc.models';
@@ -60,16 +64,25 @@ import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
 import {
-  createAbilityRequirementDrafts,
-  type AbilityRequirementDraft,
-} from '../../core/services/ability-requirement-draft.utils';
+  cloneAbilityFilterTagSetSelection,
+  countTagSetRequirements,
+  createEmptyAbilityFilterTagSetSelection,
+  flattenTagSetsToRequirements,
+  resolveTagSetSelectionMatchingCharacterIds,
+} from '../../core/services/ability-filter-tag-set.utils';
 import {
-  createCaptainAbilityDrafts,
+  cloneCharacterTagSetSelection,
+  countCharacterTagSetTags,
+  countPopulatedCharacterTagSets,
+  createEmptyCharacterTagSetSelection,
+  expandCharacterTagsToSets,
+  flattenCharacterTagSets,
+  matchesCharacterTagSets,
+} from '../../core/services/character-tag-set.utils';
+import {
   getAbilityCatalogItemsByCategory,
   getCaptainAbilityCatalogItems,
-  serializeCaptainAbilityDrafts,
-  serializeCategoryAbilityDrafts,
-  serializeSpecialAbilityDrafts,
+  isCaptainAbilityRequirement,
 } from '../../core/services/special-ability-filter.utils';
 import {
   buildAbilityRequirementIdentity,
@@ -81,11 +94,17 @@ import {
   type AbilityFilterRailCategory,
   type AbilityFilterRailItem,
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
+import {
+  AbilityTagSetPickerComponent,
+  type AbilityTagSetPickerSection,
+} from '../../shared/ability-tag-set-picker/ability-tag-set-picker.component';
+import {
+  CharacterTagSetPickerComponent,
+  type CharacterTagMatchIndex,
+} from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
-import { AbilityRequirementPickerComponent } from '../../shared/ability-requirement-picker/ability-requirement-picker.component';
-import { SpecialAbilityPickerComponent } from '../../shared/special-ability-picker/special-ability-picker.component';
 import {
   CharacterFilterRowComponent,
   type CharacterFilterCostBound,
@@ -97,7 +116,6 @@ import { CaptainCoverageStylePanelsComponent } from './captain-coverage-style-pa
 const MAX_CAPTAIN_LOOKUP_COUNT = 12000;
 const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 6;
 const CAPTAIN_ABILITY_FILTER_CATEGORY: AbilityFilterRailCategory = 'captainAbility';
-const CHARACTER_TAG_SUGGESTION_LIMIT = 12;
 
 type CaptainCoverageSortMode =
   | Extract<
@@ -120,15 +138,33 @@ interface CaptainCoverageAbilityBadgeView {
   label: string;
 }
 
+/** Rail-typed picker section, so chip counts can key off the same category union. */
+interface CaptainCoverageAbilityTagSetSection extends AbilityTagSetPickerSection {
+  category: AbilityFilterRailCategory;
+}
+
+/**
+ * One populated character tag group, collapsed to a single removable chip.
+ *
+ * The chip keeps the grouping visible outside the modal — a flat tag row would
+ * read as one bucket and hide the very AND/OR structure the sets exist for.
+ */
+interface CaptainCoverageCharacterTagSetChip {
+  id: string;
+  label: string;
+  removeLabel: string;
+}
+
 @Component({
   selector: 'app-captain-coverage-page',
   standalone: true,
   imports: [
     AbilityFilterRailComponent,
-    AbilityRequirementPickerComponent,
+    AbilityTagSetPickerComponent,
     CaptainTeamConditionStatusComponent,
     CaptainCoverageStylePanelsComponent,
     CharacterImagePickerComponent,
+    CharacterTagSetPickerComponent,
     IonButton,
     IonButtons,
     IonContent,
@@ -142,7 +178,6 @@ interface CaptainCoverageAbilityBadgeView {
     IonToggle,
     IonToolbar,
     RouterLink,
-    SpecialAbilityPickerComponent,
     CharacterFilterRowComponent,
     TeamCoverageSummaryComponent,
     TranslocoDirective,
@@ -194,18 +229,20 @@ export class CaptainCoveragePage implements OnInit {
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
   public readonly availableCharacterTags = signal<string[]>([]);
+  /**
+   * Flat mirror of the tag-set selection, kept only as the legacy surface other
+   * call sites read. The selection below is authoritative for filtering; this
+   * is re-derived from it on every save so the two can never disagree.
+   */
   public readonly selectedCharacterTags = signal<string[]>([]);
-  public readonly characterTagSearchTerm = signal('');
-  public readonly captainAbilityPickerOpen = signal(false);
-  public readonly captainAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly specialAbilityPickerOpen = signal(false);
-  public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly crewmateAbilityPickerOpen = signal(false);
-  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly potentialAbilityPickerOpen = signal(false);
-  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly supportAbilityPickerOpen = signal(false);
-  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly characterTagSetPickerOpen = signal(false);
+  public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  public readonly abilityTagSetPickerOpen = signal(false);
+  public readonly tagSetSelection = signal<AbilityFilterTagSetSelection>(
+    createEmptyAbilityFilterTagSetSelection(),
+  );
   public readonly favoriteIds;
   public readonly characterBoxes;
   public readonly selectedCharacterBoxId = signal<string | null>(null);
@@ -235,31 +272,69 @@ export class CaptainCoveragePage implements OnInit {
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
   );
   public readonly hasSelectedCharacterTags = computed(
-    () => this.selectedCharacterTags().length > 0,
+    () => countPopulatedCharacterTagSets(this.characterTagSetSelection()) > 0,
   );
-  public readonly filteredCharacterTagSuggestions = computed<string[]>(() => {
-    const searchTerm = this.normalizeCharacterTagSearchTerm(this.characterTagSearchTerm());
+  /** One chip per populated group, labelled with the group's own join word. */
+  public readonly characterTagSetChips = computed<CaptainCoverageCharacterTagSetChip[]>(() =>
+    this.characterTagSetSelection()
+      .sets.filter((set) => set.tags.length > 0)
+      .map((set) => {
+        // Padding lives here, not in the catalogue, so a translator trimming
+        // whitespace in their editor cannot silently glue the tags together.
+        const label = set.tags.join(` ${this.t(`filters.characterTags.joiners.${set.operator}`)} `);
 
-    if (!searchTerm) {
-      return [];
+        return {
+          id: set.id,
+          label,
+          removeLabel: this.t('filters.characterTags.removeGroup', { group: label }),
+        };
+      }),
+  );
+  public readonly characterTagFilterTriggerLabel = computed(() => {
+    const selection = this.characterTagSetSelection();
+    const groups = countPopulatedCharacterTagSets(selection);
+
+    return groups
+      ? this.t('filters.characterTags.trigger.active', {
+          tags: countCharacterTagSetTags(selection),
+          groups,
+        })
+      : this.t('filters.characterTags.trigger.empty');
+  });
+  public readonly characterTagFilterSupportText = computed(() => {
+    if (countPopulatedCharacterTagSets(this.characterTagSetSelection()) < 2) {
+      return this.t('filters.characterTags.support.empty');
     }
 
-    const selectedTagKeys = new Set(this.selectedCharacterTags().map((tag) => tag.toLowerCase()));
+    return this.t(`filters.characterTags.support.${this.characterTagSetSelection().operator}`);
+  });
+  /**
+   * `tag -> character ids carrying it`, so the picker can preview real match
+   * counts instead of hiding every tally. Keys are lower-cased for lookup while
+   * the catalog keeps the cased values the user actually sees.
+   */
+  public readonly characterTagMatchIndex = computed<CharacterTagMatchIndex>(() => {
+    const characterIdsByTagKey = new Map<string, number[]>();
 
-    return this.availableCharacterTags()
-      .filter((tag) => !selectedTagKeys.has(tag.toLowerCase()))
-      .filter((tag) => tag.toLowerCase().includes(searchTerm))
-      .sort((left, right) => {
-        const leftStartsWith = left.toLowerCase().startsWith(searchTerm);
-        const rightStartsWith = right.toLowerCase().startsWith(searchTerm);
+    for (const record of this.allCharacterDetailsById().values()) {
+      for (const tag of record.detail.characterTags ?? []) {
+        const tagKey = tag.trim().toLowerCase();
 
-        if (leftStartsWith !== rightStartsWith) {
-          return leftStartsWith ? -1 : 1;
+        if (!tagKey) {
+          continue;
         }
 
-        return left.localeCompare(right);
-      })
-      .slice(0, CHARACTER_TAG_SUGGESTION_LIMIT);
+        const characterIds = characterIdsByTagKey.get(tagKey);
+
+        if (characterIds) {
+          characterIds.push(record.id);
+        } else {
+          characterIdsByTagKey.set(tagKey, [record.id]);
+        }
+      }
+    }
+
+    return characterIdsByTagKey;
   });
   public readonly selectedCaptainSubtitle = computed(() => {
     const captain = this.selectedCaptain();
@@ -273,65 +348,114 @@ export class CaptainCoveragePage implements OnInit {
   public readonly allowedCaptainIds = computed(() =>
     this.allCaptains().map((captain) => captain.id),
   );
+  /**
+   * Stable-identity view of the whole catalog. `getCatalogAbilityIndex` caches by
+   * array identity, so rebuilding this per keystroke would silently turn its O(1)
+   * lookups into repeated full-catalog scans.
+   */
+  public readonly allCatalogItems = computed<AutoBuildAbilityCatalogItem[]>(
+    () => this.abilityCatalog()?.abilities ?? [],
+  );
   public readonly availableCaptainAbilityCatalogItems = computed(() =>
-    getCaptainAbilityCatalogItems(this.abilityCatalog()?.abilities ?? []),
+    getCaptainAbilityCatalogItems(this.allCatalogItems()),
   );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
-    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
+    getAbilityCatalogItemsByCategory(this.allCatalogItems(), 'special'),
   );
   public readonly availableCrewmateAbilityCatalogItems = computed(() =>
-    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'crewmate'),
+    getAbilityCatalogItemsByCategory(this.allCatalogItems(), 'crewmate'),
   );
   public readonly availablePotentialAbilityCatalogItems = computed(() =>
-    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'potential'),
+    getAbilityCatalogItemsByCategory(this.allCatalogItems(), 'potential'),
   );
   public readonly availableSupportAbilityCatalogItems = computed(() =>
-    getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'support'),
+    getAbilityCatalogItemsByCategory(this.allCatalogItems(), 'support'),
   );
-  public readonly specialAbilityRequirements = computed(() =>
-    serializeSpecialAbilityDrafts(
-      this.specialAbilityDrafts(),
-      this.availableSpecialAbilityCatalogItems(),
-    ),
+  public readonly abilityTagSetPickerSections = computed<CaptainCoverageAbilityTagSetSection[]>(
+    () => [
+      {
+        category: CAPTAIN_ABILITY_FILTER_CATEGORY,
+        label: this.t('filters.captainAbilityEyebrow'),
+        items: this.availableCaptainAbilityCatalogItems(),
+        captainAbility: true,
+      },
+      {
+        category: 'special',
+        label: this.t('filters.specialEyebrow'),
+        items: this.availableSpecialAbilityCatalogItems(),
+      },
+      {
+        category: 'crewmate',
+        label: this.t('filters.crewmateEyebrow'),
+        items: this.availableCrewmateAbilityCatalogItems(),
+      },
+      {
+        category: 'potential',
+        label: this.t('filters.potentialEyebrow'),
+        items: this.availablePotentialAbilityCatalogItems(),
+      },
+      {
+        category: 'support',
+        label: this.t('filters.supportEyebrow'),
+        items: this.availableSupportAbilityCatalogItems(),
+      },
+    ],
   );
-  public readonly crewmateAbilityRequirements = computed(() =>
-    serializeCategoryAbilityDrafts(
-      this.crewmateAbilityDrafts(),
-      this.availableCrewmateAbilityCatalogItems(),
-      'crewmate',
-    ),
+  /**
+   * Rail category per ability key, built from the non-captain sections only:
+   * captain membership is decided by the requirement's own source scope, because
+   * the same key can live in both the captain section and a category section.
+   */
+  private readonly abilityFilterCategoryByAbilityKey = computed(() => {
+    const categoryByKey = new Map<string, AbilityFilterRailCategory>();
+
+    for (const section of this.abilityTagSetPickerSections()) {
+      if (section.captainAbility) {
+        continue;
+      }
+
+      for (const item of section.items) {
+        categoryByKey.set(item.key, section.category);
+      }
+    }
+
+    return categoryByKey;
+  });
+  private readonly tagSetRequirements = computed<AutoBuildAbilityRequirement[]>(() =>
+    flattenTagSetsToRequirements(this.tagSetSelection()),
   );
-  public readonly potentialAbilityRequirements = computed(() =>
-    serializeCategoryAbilityDrafts(
-      this.potentialAbilityDrafts(),
-      this.availablePotentialAbilityCatalogItems(),
-      'potential',
-    ),
+  /** Non-captain requirements, kept apart so badges never cross source scopes. */
+  public readonly selectedAbilityRequirements = computed<AutoBuildAbilityRequirement[]>(() =>
+    this.tagSetRequirements().filter((requirement) => !isCaptainAbilityRequirement(requirement)),
   );
-  public readonly supportAbilityRequirements = computed(() =>
-    serializeCategoryAbilityDrafts(
-      this.supportAbilityDrafts(),
-      this.availableSupportAbilityCatalogItems(),
-      'support',
-    ),
+  public readonly captainAbilityRequirements = computed<AutoBuildAbilityRequirement[]>(() =>
+    this.tagSetRequirements().filter((requirement) => isCaptainAbilityRequirement(requirement)),
   );
-  public readonly captainAbilityRequirements = computed(() =>
-    serializeCaptainAbilityDrafts(
-      this.captainAbilityDrafts(),
-      this.availableCaptainAbilityCatalogItems(),
-    ),
+  public readonly selectedAbilityRequirementCount = computed(() =>
+    countTagSetRequirements(this.tagSetSelection()),
   );
-  public readonly selectedAbilityRequirements = computed<AutoBuildAbilityRequirement[]>(() => [
-    ...this.specialAbilityRequirements(),
-    ...this.crewmateAbilityRequirements(),
-    ...this.potentialAbilityRequirements(),
-    ...this.supportAbilityRequirements(),
-  ]);
-  public readonly selectedResultAbilityRequirements = computed<AutoBuildAbilityRequirement[]>(
-    () => [...this.selectedAbilityRequirements(), ...this.captainAbilityRequirements()],
+  /** How many requirements of each category the whole selection holds. */
+  private readonly tagSetRequirementCountsByCategory = computed(() => {
+    const categoryByKey = this.abilityFilterCategoryByAbilityKey();
+    const counts = new Map<AbilityFilterRailCategory, number>();
+
+    for (const requirement of this.tagSetRequirements()) {
+      const category = this.resolveAbilityFilterRailCategory(requirement, categoryByKey);
+
+      if (!category) {
+        continue;
+      }
+
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+    }
+
+    return counts;
+  });
+  public readonly tagSetMatchingCharacterIds = computed<number[] | undefined>(() =>
+    resolveTagSetSelectionMatchingCharacterIds(this.tagSetSelection(), this.allCatalogItems()),
   );
   public readonly abilityMatchRankingDisabled = computed(
-    () => this.selectedResultAbilityRequirements().length === 0,
+    () => this.selectedAbilityRequirementCount() === 0,
   );
   public readonly availableTierNumbers = computed<number[]>(() =>
     getCaptainCoverageAvailableTierNumbers(this.selectedCaptainDetail()),
@@ -343,10 +467,7 @@ export class CaptainCoveragePage implements OnInit {
     () => this.availableTierNumbers().length > 0,
   );
   public readonly tierCoverageOptions = computed<number[]>(() => {
-    const slots = Math.max(
-      this.tierCoverageMaxRender,
-      this.availableTierNumbers().length,
-    );
+    const slots = Math.max(this.tierCoverageMaxRender, this.availableTierNumbers().length);
     return Array.from({ length: slots }, (_, index) => index + 1);
   });
   public readonly captainCoverageFilterState = computed<CaptainCoverageFilterState>(() => {
@@ -354,8 +475,14 @@ export class CaptainCoveragePage implements OnInit {
     const requestedTiers = this.requiredTierNumbers().filter((tier) =>
       availableTiers.includes(tier),
     );
+    const abilityMatchingCharacterIds = this.tagSetMatchingCharacterIds();
+
     return createCaptainCoverageFilterState({
-      requiredAbilityRequirements: this.captainAbilityRequirements(),
+      // One resolved id index feeds both this per-character path and the page
+      // level filter below, so the two can never disagree about a character.
+      requiredAbilityCharacterIds: abilityMatchingCharacterIds
+        ? new Set(abilityMatchingCharacterIds)
+        : null,
       requireSuperTandem: this.requireSuperTandemPresence(),
       requireSuperTypesClasses: this.requireSuperTypesClassesPresence(),
       requireCaptainCoverage: true,
@@ -390,38 +517,16 @@ export class CaptainCoveragePage implements OnInit {
     { value: 'newest', label: this.t('idOrder.options.newest') },
     { value: 'oldest', label: this.t('idOrder.options.oldest') },
   ]);
-  public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => [
-    {
-      category: CAPTAIN_ABILITY_FILTER_CATEGORY,
-      label: this.t('filters.captainAbilityEyebrow'),
-      count: this.captainAbilityDrafts().length,
-      disabled: !this.availableCaptainAbilityCatalogItems().length,
-    },
-    {
-      category: 'special',
-      label: this.t('filters.specialEyebrow'),
-      count: this.specialAbilityDrafts().length,
-      disabled: !this.availableSpecialAbilityCatalogItems().length,
-    },
-    {
-      category: 'crewmate',
-      label: this.t('filters.crewmateEyebrow'),
-      count: this.crewmateAbilityDrafts().length,
-      disabled: !this.availableCrewmateAbilityCatalogItems().length,
-    },
-    {
-      category: 'potential',
-      label: this.t('filters.potentialEyebrow'),
-      count: this.potentialAbilityDrafts().length,
-      disabled: !this.availablePotentialAbilityCatalogItems().length,
-    },
-    {
-      category: 'support',
-      label: this.t('filters.supportEyebrow'),
-      count: this.supportAbilityDrafts().length,
-      disabled: !this.availableSupportAbilityCatalogItems().length,
-    },
-  ]);
+  public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => {
+    const countsByCategory = this.tagSetRequirementCountsByCategory();
+
+    return this.abilityTagSetPickerSections().map((section) => ({
+      category: section.category,
+      label: section.label,
+      count: countsByCategory.get(section.category) ?? 0,
+      disabled: !section.items.length,
+    }));
+  });
 
   public readonly resultCards = computed<CaptainCoverageCardView[]>(() => {
     const captain = this.selectedCaptainDetail();
@@ -436,16 +541,19 @@ export class CaptainCoveragePage implements OnInit {
     const selectedAbilityRequirements = this.selectedAbilityRequirements();
     const captainAbilityRequirements = this.captainAbilityRequirements();
     const captainCoverageFilterState = this.captainCoverageFilterState();
+    const requiredAbilityCharacterIds = captainCoverageFilterState.requiredAbilityCharacterIds;
+    const selectedAbilityRequirementCount = this.selectedAbilityRequirementCount();
     const characterDetailsById = this.allCharacterDetailsById();
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
-    const selectedCharacterTagKeys = new Set(
-      this.selectedCharacterTags()
-        .map((tag) => tag.trim().toLowerCase())
-        .filter(Boolean),
-    );
+    const characterTagSetSelection = this.characterTagSetSelection();
     const matchingCharacters = this.allCharacters()
       .filter((character) =>
         selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
+      )
+      // Ability tag sets resolve to character ids once, so the whole AND/OR
+      // formula costs one membership test per character here.
+      .filter((character) =>
+        requiredAbilityCharacterIds ? requiredAbilityCharacterIds.has(character.id) : true,
       )
       .map((character) => {
         const characterDetail = characterDetailsById.get(character.id);
@@ -471,7 +579,10 @@ export class CaptainCoveragePage implements OnInit {
       .filter(({ characterDetail }) => this.matchesSuperPresenceFilters(characterDetail))
       .filter(({ character }) => !this.hasPartyConflict(character, selectedConflictKeys))
       .filter(({ characterDetail }) =>
-        this.matchesSelectedCharacterTags(characterDetail, selectedCharacterTagKeys),
+        matchesCharacterTagSets(
+          characterDetail?.detail.characterTags ?? [],
+          characterTagSetSelection,
+        ),
       )
       .map(({ character, characterDetail, coverage }) => {
         const detailAbilities = characterDetail?.detail.builderAbilities ?? [];
@@ -494,21 +605,12 @@ export class CaptainCoveragePage implements OnInit {
           assignableSlotIndex: this.findAssignableSubSlotIndex(character),
           abilityMatchCount,
           captainAbilityMatchCount,
-          selectedAbilityCount:
-            selectedAbilityRequirements.length + captainAbilityRequirements.length,
+          selectedAbilityCount: selectedAbilityRequirementCount,
           matchedAbilityBadges: [
             ...this.buildMatchedAbilityBadges(abilities, selectedAbilityRequirements),
             ...this.buildMatchedAbilityBadges(captainAbilities, captainAbilityRequirements),
           ],
         };
-      })
-      .filter(({ abilityMatchCount, captainAbilityMatchCount }) => {
-        const matchesSelectedAbilities =
-          selectedAbilityRequirements.length === 0 ? true : abilityMatchCount > 0;
-        const matchesCaptainAbilityRequirements =
-          captainAbilityRequirements.length === 0 ? true : captainAbilityMatchCount > 0;
-
-        return matchesSelectedAbilities && matchesCaptainAbilityRequirements;
       })
       .filter(({ assignableSlotIndex }) => assignableSlotIndex !== null)
       .filter(({ character }) => this.matchesSelectedType(character, selectedType))
@@ -604,8 +706,7 @@ export class CaptainCoveragePage implements OnInit {
       return null;
     }
 
-    const currentSlotCost =
-      this.selectedTeamSlots()[activeIndex]?.cost ?? 0;
+    const currentSlotCost = this.selectedTeamSlots()[activeIndex]?.cost ?? 0;
 
     return Math.max(0, maxTotalCost - this.teamBudgetCost() + currentSlotCost);
   });
@@ -659,6 +760,7 @@ export class CaptainCoveragePage implements OnInit {
   public readonly errorIcon = alertCircleOutline;
   public readonly saveIcon = saveOutline;
   public readonly searchIcon = searchOutline;
+  public readonly characterTagFilterIcon = funnelOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -695,11 +797,14 @@ export class CaptainCoveragePage implements OnInit {
         }),
         this.characterCatalogCache.ensureLoaded(),
         this.loadAvailableCharacterTags(),
+        this.i18n.preloadScope('ability-tag-sets'),
+        this.i18n.preloadScope('character-tag-sets'),
       ]);
 
       this.summary.set(summary);
       this.abilityCatalog.set(abilityCatalog);
       this.availableCharacterTags.set(availableCharacterTags);
+      this.seedCharacterTagSetSelection();
       this.allCharacters.set(this.characterCatalogCache.catalog());
       this.allCharacterDetailsById.set(new Map(records.map((record) => [record.id, record])));
       this.allCaptains.set(
@@ -887,39 +992,35 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedClass.set('');
   }
 
-  public onCharacterTagSearchChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.characterTagSearchTerm.set((event.detail.value ?? '').toString());
-  }
-
-  public addSelectedCharacterTag(characterTag: string): void {
-    const currentTags = this.selectedCharacterTags();
-    const nextTags = this.resolveSelectedCharacterTags([...currentTags, characterTag]);
-
-    if (nextTags.length === currentTags.length) {
+  public openCharacterTagSetPicker(): void {
+    if (!this.availableCharacterTags().length) {
       return;
     }
 
-    this.selectedCharacterTags.set(nextTags);
-    this.characterTagSearchTerm.set('');
+    this.characterTagSetPickerOpen.set(true);
   }
 
-  public selectFirstCharacterTagSuggestion(): void {
-    const [firstSuggestion] = this.filteredCharacterTagSuggestions();
-
-    if (firstSuggestion) {
-      this.addSelectedCharacterTag(firstSuggestion);
-    }
+  public closeCharacterTagSetPicker(): void {
+    this.characterTagSetPickerOpen.set(false);
   }
 
-  public removeSelectedCharacterTag(characterTag: string): void {
-    this.selectedCharacterTags.set(
-      this.selectedCharacterTags().filter((selectedTag) => selectedTag !== characterTag),
-    );
+  public saveCharacterTagSetSelection(selection: CharacterTagSetSelection): void {
+    this.applyCharacterTagSetSelection(cloneCharacterTagSetSelection(selection));
+    this.characterTagSetPickerOpen.set(false);
+  }
+
+  /** Drops one whole group, so the chip row stays a single-click undo. */
+  public removeCharacterTagSet(setId: string): void {
+    const selection = this.characterTagSetSelection();
+
+    this.applyCharacterTagSetSelection({
+      ...selection,
+      sets: selection.sets.filter((set) => set.id !== setId),
+    });
   }
 
   public clearSelectedCharacterTags(): void {
-    this.selectedCharacterTags.set([]);
-    this.characterTagSearchTerm.set('');
+    this.applyCharacterTagSetSelection(createEmptyCharacterTagSetSelection());
   }
 
   public onCoverageCostRangeChange(
@@ -975,9 +1076,7 @@ export class CaptainCoveragePage implements OnInit {
   }
 
   public isTierCoverageActive(tier: number): boolean {
-    return (
-      this.isTierCoverageAvailable(tier) && this.requiredTierNumbers().includes(tier)
-    );
+    return this.isTierCoverageAvailable(tier) && this.requiredTierNumbers().includes(tier);
   }
 
   public onTierCoverageToggle(tier: number, checked: boolean): void {
@@ -1000,184 +1099,44 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedCharacterBoxId.set(this.normalizeCharacterBoxId(this.resolveStringInput(input)));
   }
 
-  public openCaptainAbilityPicker(): void {
-    if (!this.availableCaptainAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.captainAbilityPickerOpen.set(true);
-  }
-
-  public closeCaptainAbilityPicker(): void {
-    this.captainAbilityPickerOpen.set(false);
-  }
-
-  public saveCaptainAbilityPicker(drafts: AbilityRequirementDraft[]): void {
-    const requirements = serializeCaptainAbilityDrafts(
-      drafts,
-      this.availableCaptainAbilityCatalogItems(),
-    );
-
-    this.captainAbilityDrafts.set(
-      createCaptainAbilityDrafts(requirements, this.availableCaptainAbilityCatalogItems()),
-    );
-    this.captainAbilityPickerOpen.set(false);
-  }
-
-  public clearCaptainAbilityFilters(): void {
-    this.captainAbilityDrafts.set([]);
-  }
-
-  public openSpecialAbilityPicker(): void {
-    if (!this.availableSpecialAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.specialAbilityPickerOpen.set(true);
-  }
-
-  public closeSpecialAbilityPicker(): void {
-    this.specialAbilityPickerOpen.set(false);
-  }
-
-  public saveSpecialAbilityPicker(drafts: AbilityRequirementDraft[]): void {
-    this.specialAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
-      ),
-    );
-    this.specialAbilityPickerOpen.set(false);
-  }
-
-  public clearSpecialAbilityFilters(): void {
-    this.specialAbilityDrafts.set([]);
-  }
-
-  public openCrewmateAbilityPicker(): void {
-    if (!this.availableCrewmateAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.crewmateAbilityPickerOpen.set(true);
-  }
-
-  public closeCrewmateAbilityPicker(): void {
-    this.crewmateAbilityPickerOpen.set(false);
-  }
-
-  public saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): void {
-    this.crewmateAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(
-          drafts,
-          this.availableCrewmateAbilityCatalogItems(),
-          'crewmate',
-        ),
-      ),
-    );
-    this.crewmateAbilityPickerOpen.set(false);
-  }
-
-  public clearCrewmateAbilityFilters(): void {
-    this.crewmateAbilityDrafts.set([]);
-  }
-
-  public openPotentialAbilityPicker(): void {
-    if (!this.availablePotentialAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.potentialAbilityPickerOpen.set(true);
-  }
-
-  public closePotentialAbilityPicker(): void {
-    this.potentialAbilityPickerOpen.set(false);
-  }
-
-  public savePotentialAbilityPicker(drafts: AbilityRequirementDraft[]): void {
-    this.potentialAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(
-          drafts,
-          this.availablePotentialAbilityCatalogItems(),
-          'potential',
-        ),
-      ),
-    );
-    this.potentialAbilityPickerOpen.set(false);
-  }
-
-  public clearPotentialAbilityFilters(): void {
-    this.potentialAbilityDrafts.set([]);
-  }
-
-  public openSupportAbilityPicker(): void {
-    if (!this.availableSupportAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.supportAbilityPickerOpen.set(true);
-  }
-
-  public closeSupportAbilityPicker(): void {
-    this.supportAbilityPickerOpen.set(false);
-  }
-
-  public saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): void {
-    this.supportAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(
-          drafts,
-          this.availableSupportAbilityCatalogItems(),
-          'support',
-        ),
-      ),
-    );
-    this.supportAbilityPickerOpen.set(false);
-  }
-
-  public clearSupportAbilityFilters(): void {
-    this.supportAbilityDrafts.set([]);
-  }
-
+  /** Every rail chip opens the one tag-set modal; the chip only picks the scope. */
   public openAbilityFilterCategory(category: AbilityFilterRailCategory): void {
-    switch (category) {
-      case 'special':
-        this.openSpecialAbilityPicker();
-        break;
-      case CAPTAIN_ABILITY_FILTER_CATEGORY:
-        this.openCaptainAbilityPicker();
-        break;
-      case 'crewmate':
-        this.openCrewmateAbilityPicker();
-        break;
-      case 'potential':
-        this.openPotentialAbilityPicker();
-        break;
-      case 'support':
-        this.openSupportAbilityPicker();
-        break;
+    const section = this.abilityTagSetPickerSections().find(
+      (candidate) => candidate.category === category,
+    );
+
+    if (!section?.items.length) {
+      return;
     }
+
+    this.abilityTagSetPickerOpen.set(true);
   }
 
+  public closeAbilityTagSetPicker(): void {
+    this.abilityTagSetPickerOpen.set(false);
+  }
+
+  public saveAbilityTagSetSelection(selection: AbilityFilterTagSetSelection): void {
+    this.tagSetSelection.set(cloneAbilityFilterTagSetSelection(selection));
+    this.abilityTagSetPickerOpen.set(false);
+  }
+
+  /** Drops one category's tags from every set, and any set left empty by that. */
   public clearAbilityFilterCategory(category: AbilityFilterRailCategory): void {
-    switch (category) {
-      case 'special':
-        this.clearSpecialAbilityFilters();
-        break;
-      case CAPTAIN_ABILITY_FILTER_CATEGORY:
-        this.clearCaptainAbilityFilters();
-        break;
-      case 'crewmate':
-        this.clearCrewmateAbilityFilters();
-        break;
-      case 'potential':
-        this.clearPotentialAbilityFilters();
-        break;
-      case 'support':
-        this.clearSupportAbilityFilters();
-        break;
-    }
+    const categoryByKey = this.abilityFilterCategoryByAbilityKey();
+
+    this.tagSetSelection.update((selection) => ({
+      ...selection,
+      sets: selection.sets
+        .map((set) => ({
+          ...set,
+          requirements: set.requirements.filter(
+            (requirement) =>
+              this.resolveAbilityFilterRailCategory(requirement, categoryByKey) !== category,
+          ),
+        }))
+        .filter((set) => set.requirements.length > 0),
+    }));
   }
 
   public formatBoost(value: number): string {
@@ -1215,6 +1174,17 @@ export class CaptainCoveragePage implements OnInit {
     const currentSlotCost = this.selectedTeamSlots()[index]?.cost ?? 0;
 
     return this.teamBudgetCost() - currentSlotCost + character.cost <= maxTotalCost;
+  }
+
+  private resolveAbilityFilterRailCategory(
+    requirement: AutoBuildAbilityRequirement,
+    categoryByKey: ReadonlyMap<string, AbilityFilterRailCategory>,
+  ): AbilityFilterRailCategory | null {
+    if (isCaptainAbilityRequirement(requirement)) {
+      return CAPTAIN_ABILITY_FILTER_CATEGORY;
+    }
+
+    return categoryByKey.get(requirement.abilityKey) ?? null;
   }
 
   private matchesSearchTerm(
@@ -1269,17 +1239,27 @@ export class CaptainCoveragePage implements OnInit {
     return selectedClass ? character.classes.includes(selectedClass) : true;
   }
 
-  private matchesSelectedCharacterTags(
-    characterDetail: CharacterDetailRecord | undefined,
-    selectedTagKeys: Set<string>,
-  ): boolean {
-    if (selectedTagKeys.size === 0) {
-      return true;
+  /** Single write path, so the legacy flat mirror can never drift. */
+  private applyCharacterTagSetSelection(selection: CharacterTagSetSelection): void {
+    this.characterTagSetSelection.set(selection);
+    this.selectedCharacterTags.set(flattenCharacterTagSets(selection));
+  }
+
+  /**
+   * Migrates whatever flat tags the page already holds into one group.
+   *
+   * The legacy filter OR-ed the selected tags, so the faithful expansion is a
+   * single `any` group — `requireAll` is false on purpose. Runs only while the
+   * selection is still empty, so it never overwrites a user's own groups.
+   */
+  private seedCharacterTagSetSelection(): void {
+    if (this.characterTagSetSelection().sets.length) {
+      return;
     }
 
-    const tags = characterDetail?.detail.characterTags ?? [];
-
-    return tags.some((tag) => selectedTagKeys.has(tag.trim().toLowerCase()));
+    this.applyCharacterTagSetSelection(
+      expandCharacterTagsToSets(this.selectedCharacterTags(), false),
+    );
   }
 
   private matchesCoverageCostRange(
@@ -1545,29 +1525,6 @@ export class CaptainCoveragePage implements OnInit {
     );
   }
 
-  private normalizeCharacterTagSearchTerm(value: string): string {
-    return value.trim().replace(/\s+/g, ' ').toLowerCase();
-  }
-
-  private resolveSelectedCharacterTags(value: string[] | string | null | undefined): string[] {
-    const nextValues = Array.isArray(value) ? value : value ? [value] : [];
-    const availableTagByKey = new Map(
-      this.availableCharacterTags().map((tag) => [tag.toLowerCase(), tag] as const),
-    );
-    const uniqueTags = new Map<string, string>();
-
-    for (const candidate of nextValues) {
-      const normalizedTag = candidate.trim().replace(/\s+/g, ' ');
-      const canonicalTag = availableTagByKey.get(normalizedTag.toLowerCase());
-
-      if (canonicalTag && !uniqueTags.has(canonicalTag.toLowerCase())) {
-        uniqueTags.set(canonicalTag.toLowerCase(), canonicalTag);
-      }
-    }
-
-    return [...uniqueTags.values()];
-  }
-
   private async loadAvailableCharacterTags(): Promise<string[]> {
     if (typeof this.repository.getAvailableCharacterTags !== 'function') {
       return [];
@@ -1597,10 +1554,7 @@ export class CaptainCoveragePage implements OnInit {
       const sortMode = this.selectedSortMode();
       const idOrder = this.selectedIdOrder();
 
-      if (
-        this.abilityMatchRankingEnabled() &&
-        this.selectedResultAbilityRequirements().length > 0
-      ) {
+      if (this.abilityMatchRankingEnabled() && this.selectedAbilityRequirementCount() > 0) {
         const abilityMatchDifference = right.abilityMatchCount - left.abilityMatchCount;
 
         if (abilityMatchDifference !== 0) {

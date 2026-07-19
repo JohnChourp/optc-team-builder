@@ -159,79 +159,61 @@
                 {
                   category: 'special',
                   label: t('filters.specialEyebrow'),
-                  count: specialAbilityDrafts().length,
+                  count: abilityFilterCategoryCount('special'),
                   disabled: !availableSpecialAbilityCatalogItems().length,
                 },
                 {
                   category: 'crewmate',
                   label: t('filters.crewmateEyebrow'),
-                  count: crewmateAbilityDrafts().length,
+                  count: abilityFilterCategoryCount('crewmate'),
                   disabled: !availableCrewmateAbilityCatalogItems().length,
                 },
                 {
                   category: 'potential',
                   label: t('filters.potentialEyebrow'),
-                  count: potentialAbilityDrafts().length,
+                  count: abilityFilterCategoryCount('potential'),
                   disabled: !availablePotentialAbilityCatalogItems().length,
                 },
                 {
                   category: 'support',
                   label: t('filters.supportEyebrow'),
-                  count: supportAbilityDrafts().length,
+                  count: abilityFilterCategoryCount('support'),
                   disabled: !availableSupportAbilityCatalogItems().length,
                 },
               ]"
-              (selectCategory)="openAbilityFilterCategory($event)"
+              (selectCategory)="openTagSetPicker()"
               (clearCategory)="clearAbilityFilterCategory($event)"
             ></app-ability-filter-rail>
 
-            <app-special-ability-picker
-              [isOpen]="specialAbilityPickerOpen()"
-              category="special"
-              [eyebrow]="t('filters.specialEyebrow')"
-              [title]="t('filters.specialTitle')"
-              [copy]="t('filters.specialCopy')"
-              [drafts]="specialAbilityDrafts()"
-              [catalogItems]="availableSpecialAbilityCatalogItems()"
-              (dismiss)="closeSpecialAbilityPicker()"
-              (saveDrafts)="saveSpecialAbilityPicker($event)"
-            ></app-special-ability-picker>
-
-            <app-special-ability-picker
-              [isOpen]="crewmateAbilityPickerOpen()"
-              category="crewmate"
-              [eyebrow]="t('filters.crewmateEyebrow')"
-              [title]="t('filters.crewmateTitle')"
-              [copy]="t('filters.crewmateCopy')"
-              [drafts]="crewmateAbilityDrafts()"
-              [catalogItems]="availableCrewmateAbilityCatalogItems()"
-              (dismiss)="closeCrewmateAbilityPicker()"
-              (saveDrafts)="saveCrewmateAbilityPicker($event)"
-            ></app-special-ability-picker>
-
-            <app-special-ability-picker
-              [isOpen]="potentialAbilityPickerOpen()"
-              category="potential"
-              [eyebrow]="t('filters.potentialEyebrow')"
-              [title]="t('filters.potentialTitle')"
-              [copy]="t('filters.potentialCopy')"
-              [drafts]="potentialAbilityDrafts()"
-              [catalogItems]="availablePotentialAbilityCatalogItems()"
-              (dismiss)="closePotentialAbilityPicker()"
-              (saveDrafts)="savePotentialAbilityPicker($event)"
-            ></app-special-ability-picker>
-
-            <app-special-ability-picker
-              [isOpen]="supportAbilityPickerOpen()"
-              category="support"
-              [eyebrow]="t('filters.supportEyebrow')"
-              [title]="t('filters.supportTitle')"
-              [copy]="t('filters.supportCopy')"
-              [drafts]="supportAbilityDrafts()"
-              [catalogItems]="availableSupportAbilityCatalogItems()"
-              (dismiss)="closeSupportAbilityPicker()"
-              (saveDrafts)="saveSupportAbilityPicker($event)"
-            ></app-special-ability-picker>
+            <app-ability-tag-set-picker
+              [isOpen]="tagSetPickerOpen()"
+              [title]="t('filters.tagSetsTitle')"
+              [sections]="[
+                {
+                  category: 'special',
+                  label: t('filters.specialEyebrow'),
+                  items: availableSpecialAbilityCatalogItems(),
+                },
+                {
+                  category: 'crewmate',
+                  label: t('filters.crewmateEyebrow'),
+                  items: availableCrewmateAbilityCatalogItems(),
+                },
+                {
+                  category: 'potential',
+                  label: t('filters.potentialEyebrow'),
+                  items: availablePotentialAbilityCatalogItems(),
+                },
+                {
+                  category: 'support',
+                  label: t('filters.supportEyebrow'),
+                  items: availableSupportAbilityCatalogItems(),
+                },
+              ]"
+              [selection]="tagSetSelection()"
+              (dismiss)="closeTagSetPicker()"
+              (saveSelection)="saveTagSetSelection($event)"
+            ></app-ability-tag-set-picker>
 
             @if (loading()) {
               <div class="character-image-picker-empty">

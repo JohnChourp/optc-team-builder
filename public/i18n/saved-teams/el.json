@@ -10,23 +10,17 @@
   "abilityFilters": {
     "clearAll": "Καθαρισμός ability filters",
     "clearSection": "Καθαρισμός",
-    "copy": "Διάλεξε ένα ή περισσότερα abilities από τα slots. Τα saved teams πρέπει να καλύπτουν κάθε επιλεγμένο ability στο αντίστοιχο slot group.",
-    "categories": {
-      "captain": "Captain",
-      "crewmate": "Crewmate",
-      "potential": "Potential",
-      "special": "Special",
-      "support": "Support"
-    },
+    "copy": "Φτιάξε ability groups ανά slot group: OR μέσα σε ένα group, AND ανάμεσα στα groups.",
     "empty": {
       "copy": "Καθάρισε κάποιο ability filter ή διάλεξε διαφορετικό συνδυασμό.",
-      "title": "Κανένα saved team δεν καλύπτει όλα τα επιλεγμένα abilities."
+      "title": "Κανένα saved team δεν ταιριάζει με τα επιλεγμένα ability groups."
     },
     "eyebrow": "Ability coverage",
-    "metadata": {
-      "selectableDebuff": "Selectable debuff",
-      "turns": "{{count}} turns"
+    "joiners": {
+      "all": "και",
+      "any": "ή"
     },
+    "removeGroup": "Αφαίρεση ability group {{group}}",
     "sections": {
       "crew": {
         "copy": "Abilities που βρέθηκαν στα slots 3-6.",
@@ -38,19 +32,16 @@
       }
     },
     "selected": "επιλεγμένα",
-    "sources": {
-      "captainAbility": "Captain",
-      "finalTapData": "Final Tap",
-      "potentialAbilities": "Potential",
-      "rushSugoSpecialData": "Rush",
-      "sailorAbilities": "Crewmate",
-      "specialText": "Special",
-      "superSpecialText": "Super Special",
-      "superTandemData": "Super Tandem",
-      "supportData": "Support"
+    "support": {
+      "all": "Εμφανίζονται saved teams που ταιριάζουν με κάθε ability group.",
+      "any": "Εμφανίζονται saved teams που ταιριάζουν με τουλάχιστον ένα ability group.",
+      "empty": "Ομαδοποίησε abilities με OR μέσα στο group και AND ανάμεσα στα groups, π.χ. (Remove Bind ή Remove Despair) και (Boost ATK)."
     },
-    "teamCount": "{{count}} teams",
-    "title": "Φίλτραρε saved teams με βάση τα covered abilities"
+    "title": "Φίλτραρε saved teams με βάση τα covered abilities",
+    "trigger": {
+      "active": "{{abilities}} ability σε {{groups}} group",
+      "empty": "Διάλεξε abilities"
+    }
   },
   "confirm": {
     "deleteSelected": "Να διαγραφούν {{count}} επιλεγμένες ομάδες;",

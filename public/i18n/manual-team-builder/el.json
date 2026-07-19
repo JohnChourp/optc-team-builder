@@ -48,12 +48,19 @@
     "filters": {
       "abilityRailLabel": "Κατηγορίες ability filters για manual team",
       "anyClass": "Όλα τα classes",
-      "anyTag": "Όλα τα tags",
       "anyType": "Όλα τα types",
       "captainAbility": {
         "copy": "Φίλτραρε τους slot candidates με effects από το Captain Ability κάθε χαρακτήρα.",
         "eyebrow": "Captain Ability",
         "title": "Captain Ability filters"
+      },
+      "characterTags": {
+        "any": "Όλα τα tags",
+        "groupSummary": "{{count}} tags σε {{groups}} ομάδες",
+        "label": "Tags χαρακτήρα",
+        "summary": "{{count}} επιλεγμένα tags",
+        "title": "Φίλτρα με tags χαρακτήρα",
+        "trigger": "Tags χαρακτήρα: {{summary}}"
       },
       "class": "Class",
       "clear": "Καθαρισμός filters",
@@ -80,7 +87,9 @@
         "eyebrow": "Support Ability",
         "title": "Support Ability filters"
       },
-      "tag": "Tag",
+      "tagSets": {
+        "title": "Φίλτρα με ability tags"
+      },
       "type": "Type"
     },
     "loading": "Φόρτωση matching χαρακτήρων...",

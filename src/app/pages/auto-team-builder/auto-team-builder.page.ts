@@ -93,10 +93,20 @@ import {
   type CharacterDetailRecord,
   type CharacterListItem,
   type CharacterBox,
+  type CharacterTagSetSelection,
   type DatasetManifest,
   type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
+import {
+  cloneCharacterTagSetSelection,
+  countCharacterTagSetTags,
+  countPopulatedCharacterTagSets,
+  createCharacterTagSet,
+  createEmptyCharacterTagSetSelection,
+  expandCharacterTagsToSets,
+  flattenCharacterTagSets,
+} from '../../core/services/character-tag-set.utils';
 import {
   AutoTeamBuilderService,
   isAutoTeamBuildSearchTooLargeError,
@@ -164,6 +174,7 @@ import {
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
+import { CharacterTagSetPickerComponent } from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
 import {
   createAbilityRequirementDrafts,
   formatAbilityRequirementSummary,
@@ -580,7 +591,7 @@ interface ShipPickerPanelState {
 interface AutoTeamBuilderDefaultFilterState {
   selectedTypes: AutoTeamBuilderType[];
   selectedClasses: string[];
-  selectedCharacterTags: string[];
+  characterTagSets: CharacterTagSetSelection;
   selectedCharacterNames: string[];
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
   leaderBoostRanges: AutoBuildLeaderBoostRanges;
@@ -603,7 +614,6 @@ interface AutoTeamBuilderDefaultFilterState {
 }
 
 const AUTO_TEAM_BUILD_BUTTON_LABEL = 'Auto Team Build';
-const CHARACTER_TAG_SUGGESTION_LIMIT = 12;
 const CHARACTER_PICKER_PAGE_SIZE = 100;
 const SIMILAR_MANUAL_PICK_CANDIDATE_LIMIT = 10_000;
 const SHIP_PICKER_PAGE_SIZE = 10;
@@ -647,7 +657,7 @@ function buildDefaultAutoTeamBuilderFilterState(
   return {
     selectedTypes: [...AUTO_TEAM_BUILDER_TYPES],
     selectedClasses: [...availableClasses],
-    selectedCharacterTags: [],
+    characterTagSets: createEmptyCharacterTagSetSelection(),
     selectedCharacterNames: [],
     leaderBoostFilters: [...AUTO_BUILD_LEADER_BOOST_FILTERS],
     leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
@@ -719,6 +729,7 @@ function resolveManualSlotRequiredAbilities(
     CaptainTeamConditionStatusComponent,
     TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
+    CharacterTagSetPickerComponent,
     AutoTeamBuilderActionsPanelComponent,
     AutoTeamBuilderCandidateCardPanelComponent,
     AutoTeamBuilderControlsPanelComponent,
@@ -759,8 +770,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly selectedTypes = signal<AutoTeamBuilderType[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly availableCharacterTags = signal<string[]>([]);
-  public readonly selectedCharacterTags = signal<string[]>([]);
-  public readonly characterTagSearchTerm = signal('');
+  /**
+   * Source of truth for the character tag filter. The flat list the build
+   * engine consumes is derived from it, never written directly, so the AND/OR
+   * grouping can never drift out of sync with the tags actually being sent.
+   */
+  public readonly characterTagSets = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  public readonly characterTagSetPickerOpen = signal(false);
+  public readonly selectedCharacterTags = computed(() =>
+    flattenCharacterTagSets(this.characterTagSets()),
+  );
   public readonly selectedCharacterNames = signal<string[]>([]);
   public readonly characterNameDraft = signal('');
   public readonly leaderBoostFilters = signal<AutoBuildLeaderBoostFilter[]>([
@@ -1391,9 +1412,33 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly derivedRequireAllSelectedClassesPerCharacter = computed(() =>
     this.shouldRequireExactSelectedClassCoverage(),
   );
-  public readonly derivedRequireAllSelectedCharacterTagsInTeam = computed(
-    () => this.selectedCharacterTags().length > 0,
-  );
+  /**
+   * Team-level coverage stays the semantic (a tag counts as satisfied when ANY
+   * slot carries it), but the strictness is now the user's choice instead of
+   * being force-enabled the moment a tag is picked.
+   *
+   * The engine only understands "cover every selected tag" or "treat them as
+   * relaxable preferences", so a selection maps to strict only when it really
+   * means AND across every tag. A set of one tag is AND and OR at once, hence
+   * the length check — without it, picking a single tag (by far the common
+   * case) would silently become a soft preference on the `'any'` default.
+   */
+  public readonly derivedRequireAllSelectedCharacterTagsInTeam = computed(() => {
+    const selection = this.characterTagSets();
+    const populatedSets = selection.sets.filter((set) => set.tags.length > 0);
+
+    if (!populatedSets.length) {
+      return false;
+    }
+
+    const everySetIsConjunctive = populatedSets.every(
+      (set) => set.operator === 'all' || set.tags.length === 1,
+    );
+
+    return populatedSets.length === 1
+      ? everySetIsConjunctive
+      : everySetIsConjunctive && selection.operator === 'all';
+  });
   public readonly derivedRequireAllSelectedCharacterNamesInTeam = computed(
     () => this.selectedCharacterNames().length > 0,
   );
@@ -1499,7 +1544,48 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly typeSupportLabel = computed(() => this.t('filters.types.support.flexible'));
   public readonly classSupportLabel = computed(() => this.t('filters.classes.support.flexible'));
   public readonly characterTagSupportLabel = computed(() =>
-    this.t('filters.characterTags.support.flexible'),
+    this.derivedRequireAllSelectedCharacterTagsInTeam()
+      ? this.t('filters.characterTags.support.strict')
+      : this.t('filters.characterTags.support.flexible'),
+  );
+  /** One chip per populated set, reading "Straw Hat Pirates or Heart Pirates". */
+  public readonly characterTagSetGroups = computed(() =>
+    this.characterTagSets()
+      .sets.filter((set) => set.tags.length > 0)
+      .map((set) => ({
+        id: set.id,
+        label: set.tags.join(
+          set.operator === 'all'
+            ? this.t('filters.characterTags.sets.joinAll')
+            : this.t('filters.characterTags.sets.joinAny'),
+        ),
+      })),
+  );
+  public readonly characterTagSetSummaryLabel = computed(() => {
+    const selection = this.characterTagSets();
+    const tagCount = countCharacterTagSetTags(selection);
+
+    if (!tagCount) {
+      return this.t('filters.characterTags.sets.empty');
+    }
+
+    const setCount = countPopulatedCharacterTagSets(selection);
+
+    if (setCount < 2) {
+      return this.t('filters.characterTags.sets.summarySingleGroup', { tags: tagCount });
+    }
+
+    return this.t(
+      selection.operator === 'all'
+        ? 'filters.characterTags.sets.summaryAllGroups'
+        : 'filters.characterTags.sets.summaryAnyGroup',
+      { tags: tagCount, groups: setCount },
+    );
+  });
+  public readonly characterTagSetTriggerLabel = computed(() =>
+    countCharacterTagSetTags(this.characterTagSets())
+      ? this.t('filters.characterTags.sets.edit')
+      : this.t('filters.characterTags.sets.open'),
   );
   public readonly characterNameSupportLabel = computed(() =>
     this.t('filters.characterNames.support.flexible'),
@@ -1851,30 +1937,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly selectedTypesLabel = computed(() =>
     this.formatSelectedTypes(this.selectedTypes()),
   );
-  public readonly filteredCharacterTagSuggestions = computed(() => {
-    const searchTerm = this.normalizeCharacterTagSearchTerm(this.characterTagSearchTerm());
-
-    if (!searchTerm) {
-      return [];
-    }
-
-    const selectedTagKeys = new Set(this.selectedCharacterTags().map((tag) => tag.toLowerCase()));
-
-    return this.availableCharacterTags()
-      .filter((tag) => !selectedTagKeys.has(tag.toLowerCase()))
-      .filter((tag) => tag.toLowerCase().includes(searchTerm))
-      .sort((left, right) => {
-        const leftStartsWith = left.toLowerCase().startsWith(searchTerm);
-        const rightStartsWith = right.toLowerCase().startsWith(searchTerm);
-
-        if (leftStartsWith !== rightStartsWith) {
-          return leftStartsWith ? -1 : 1;
-        }
-
-        return left.localeCompare(right);
-      })
-      .slice(0, CHARACTER_TAG_SUGGESTION_LIMIT);
-  });
   public readonly selectedCharacterNamesLabel = computed(() =>
     this.formatSelectedValues(this.selectedCharacterNames()),
   );
@@ -2964,6 +3026,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.i18n.preloadScope('auto-team-builder'),
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('enemy-mechanics-picker'),
+      this.i18n.preloadScope('character-tag-sets'),
       this.i18n.preloadScope('saved-teams'),
     ]);
     this.restoreCompareSessionState();
@@ -3054,29 +3117,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.refreshCharacterPickPanels();
   }
 
-  public onCharacterTagSearchChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.characterTagSearchTerm.set((event.detail.value ?? '').toString());
+  public openCharacterTagSetPicker(): void {
+    this.characterTagSetPickerOpen.set(true);
   }
 
-  public addSelectedCharacterTag(characterTag: string): void {
-    const currentTags = this.selectedCharacterTags();
-    const nextTags = this.resolveSelectedCharacterTags([...currentTags, characterTag]);
+  public closeCharacterTagSetPicker(): void {
+    this.characterTagSetPickerOpen.set(false);
+  }
 
-    if (nextTags.length === currentTags.length) {
-      return;
-    }
-
-    this.selectedCharacterTags.set(nextTags);
-    this.characterTagSearchTerm.set('');
+  public saveCharacterTagSetSelection(selection: CharacterTagSetSelection): void {
+    this.characterTagSetPickerOpen.set(false);
+    this.characterTagSets.set(this.resolveCharacterTagSetSelection(selection));
     this.resetBuildState();
-  }
-
-  public selectFirstCharacterTagSuggestion(): void {
-    const [firstSuggestion] = this.filteredCharacterTagSuggestions();
-
-    if (firstSuggestion) {
-      this.addSelectedCharacterTag(firstSuggestion);
-    }
   }
 
   public onCharacterNameDraftChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -3096,13 +3148,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         : [...currentNames, nextName],
     );
     this.characterNameDraft.set('');
-    this.resetBuildState();
-  }
-
-  public removeSelectedCharacterTag(characterTag: string): void {
-    this.selectedCharacterTags.set(
-      this.selectedCharacterTags().filter((selectedTag) => selectedTag !== characterTag),
-    );
     this.resetBuildState();
   }
 
@@ -5350,6 +5395,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       {
         candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
         selectedCharacterTags: this.selectedCharacterTags(),
+        characterTagSets: this.characterTagSets(),
         selectedCharacterNames: this.selectedCharacterNames(),
         requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
         requireAllSelectedClassesPerCharacter: this.derivedRequireAllSelectedClassesPerCharacter(),
@@ -5556,6 +5602,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       selectedTypes: this.selectedTypes(),
       selectedClasses: this.selectedClasses(),
       selectedCharacterTags: this.selectedCharacterTags(),
+      characterTagSets: this.characterTagSets(),
       selectedCharacterNames: this.selectedCharacterNames(),
       requiredAbilities: this.pageRequiredAbilities(),
       requiredCharacterGroups: [],
@@ -5857,8 +5904,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.activeRequiredCharacterGroupId.set(null);
     this.selectedTypes.set(defaultFilters.selectedTypes);
     this.selectedClasses.set(defaultFilters.selectedClasses);
-    this.selectedCharacterTags.set(defaultFilters.selectedCharacterTags);
-    this.characterTagSearchTerm.set('');
+    this.characterTagSets.set(cloneCharacterTagSetSelection(defaultFilters.characterTagSets));
+    this.characterTagSetPickerOpen.set(false);
     this.selectedCharacterNames.set(defaultFilters.selectedCharacterNames);
     this.characterNameDraft.set('');
     this.leaderBoostFilters.set(defaultFilters.leaderBoostFilters);
@@ -6131,8 +6178,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     this.selectedTypes.set([...state.selectedTypes]);
     this.selectedClasses.set([...state.selectedClasses]);
-    this.selectedCharacterTags.set(
-      this.resolveSelectedCharacterTags(state.selectedCharacterTags ?? []),
+    // SavedEnemy and saved-team presets predate tag sets and only carry the flat
+    // list, so back-fill the equivalent grouping from the legacy strict flag
+    // instead of dropping the operator the exporting user had chosen.
+    this.characterTagSets.set(
+      this.resolveCharacterTagSetSelection(
+        state.characterTagSets ??
+          expandCharacterTagsToSets(
+            state.selectedCharacterTags ?? [],
+            state.requireAllSelectedCharacterTagsInTeam,
+          ),
+      ),
     );
     this.mergeSelectedCharacterNames(state.selectedCharacterNames ?? []);
     this.leaderBoostFilters.set([...state.leaderBoostFilters]);
@@ -6195,7 +6251,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.excludedShipIds.set([...state.excludedShipIds]);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
-    this.requireAllSelectedCharacterTagsInTeam.set(false);
+    this.requireAllSelectedCharacterTagsInTeam.set(state.requireAllSelectedCharacterTagsInTeam);
     this.requireAllSelectedCharacterNamesInTeam.set(false);
     this.requireAllSlotsInLeaderSuperEffectScope.set(state.requireAllSlotsInLeaderSuperEffectScope);
     this.requireFullCaptainAbilityCoverage.set(state.requireFullCaptainAbilityCoverage);
@@ -7372,18 +7428,55 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return [...uniqueTags.values()];
   }
 
-  private normalizeCharacterTagSearchTerm(value: string): string {
-    return value.trim().replace(/\s+/g, ' ').toLowerCase();
-  }
-
   private normalizeCharacterNameFilter(value: string): string {
     return value.trim().replace(/\s+/g, ' ').toLowerCase();
   }
 
-  private mergeSelectedCharacterTags(tags: string[]): void {
-    const nextTags = this.resolveSelectedCharacterTags([...this.selectedCharacterTags(), ...tags]);
+  /**
+   * Canonicalises every set's tags against the loaded catalog, dropping sets
+   * left empty. Case is folded only to look the catalog value up — the stored
+   * tag is the catalog's own casing, never the user's typing.
+   */
+  private resolveCharacterTagSetSelection(
+    selection: CharacterTagSetSelection,
+  ): CharacterTagSetSelection {
+    const cloned = cloneCharacterTagSetSelection(selection);
 
-    this.selectedCharacterTags.set(nextTags);
+    return {
+      operator: cloned.operator,
+      sets: cloned.sets
+        .map((set) =>
+          createCharacterTagSet(this.resolveSelectedCharacterTags(set.tags), set.operator, set.id),
+        )
+        .filter((set) => set.tags.length > 0),
+    };
+  }
+
+  /**
+   * Requirement-source characters contribute tags that should widen the current
+   * filter, so they join the first group as alternatives (OR) rather than
+   * tightening it — appending them to an `'all'` group would demand a single
+   * character carry every affiliation at once.
+   */
+  private mergeSelectedCharacterTags(tags: string[]): void {
+    const current = this.characterTagSets();
+    const [firstSet, ...remainingSets] = current.sets;
+    const existingTagCount = firstSet?.tags.length ?? 0;
+    const mergedTags = this.resolveSelectedCharacterTags([...(firstSet?.tags ?? []), ...tags]);
+
+    if (!mergedTags.length) {
+      return;
+    }
+
+    // Re-applying a source that contributes nothing new must not rewrite the
+    // operator the user picked; only a genuine widening switches the group to OR.
+    const mergedOperator =
+      mergedTags.length > existingTagCount ? 'any' : (firstSet?.operator ?? 'any');
+
+    this.characterTagSets.set({
+      operator: current.operator,
+      sets: [createCharacterTagSet(mergedTags, mergedOperator, firstSet?.id), ...remainingSets],
+    });
   }
 
   private mergeSelectedCharacterNames(names: string[]): void {

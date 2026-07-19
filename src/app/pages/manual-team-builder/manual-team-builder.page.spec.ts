@@ -4,10 +4,15 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
-import { type AbilityRequirementDraft } from '../../core/services/ability-requirement-draft.utils';
+import {
+  type AbilityFilterTagSetSelection,
+  type AbilityTagSetOperator,
+  type AutoBuildAbilityCatalog,
+  type AutoBuildAbilityRequirement,
+} from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterDetailRecord,
+  type CharacterTagSetSelection,
   type DatasetManifest,
   type ShipRecord,
 } from '../../core/models/optc.models';
@@ -57,8 +62,21 @@ describe('ManualTeamBuilderPage', () => {
     expect(template).toContain("'manual-team-candidate-' + candidateCard.character.id");
     expect(template).toContain('manual-team-clear-zone');
     expect(template).toContain('<app-ability-filter-rail');
-    expect(template).toContain('<app-ability-requirement-picker');
-    expect(template).toContain('<app-special-ability-picker');
+    expect(template).toContain('[items]="abilityFilterRailItems()"');
+    expect(template).toContain('<app-ability-tag-set-picker');
+    expect(template).toContain('[sections]="abilityTagSetSections()"');
+    expect(template).toContain('[selection]="tagSetSelection()"');
+    expect(template).toContain('(saveSelection)="saveAbilityTagSetPicker($event)"');
+    expect(template).toContain('<app-character-tag-set-picker');
+    expect(template).toContain('[availableTags]="availableCharacterTags()"');
+    expect(template).toContain('[selection]="characterTagSetSelection()"');
+    expect(template).toContain('[tagCharacterIds]="characterTagMatchIndex()"');
+    expect(template).toContain('(saveSelection)="saveCharacterTagSetPicker($event)"');
+    expect(template).toContain('manual-team-character-tag-sets-trigger');
+    expect(template).not.toContain('onCharacterTagFilterChange');
+    expect(template).not.toContain("t('picker.filters.anyTag')");
+    expect(template).not.toContain('<app-ability-requirement-picker');
+    expect(template).not.toContain('<app-special-ability-picker');
     expect(template).toContain('<app-ship-picker');
     expect(template).toContain('<app-captain-team-condition-status');
     expect(template).toContain('<app-character-ability-groups');
@@ -73,6 +91,8 @@ describe('ManualTeamBuilderPage', () => {
     expect(i18n.preloadScope).toHaveBeenCalledWith('manual-team-builder');
     expect(i18n.preloadScope).toHaveBeenCalledWith('ship-picker');
     expect(i18n.preloadScope).toHaveBeenCalledWith('saved-teams');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('ability-tag-sets');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-sets');
     expect(repository.getShips).toHaveBeenCalledOnce();
     expect(repository.getDatasetManifest).toHaveBeenCalledOnce();
     expect(repository.getAutoBuilderAbilityCatalog).toHaveBeenCalledOnce();
@@ -457,7 +477,7 @@ describe('ManualTeamBuilderPage', () => {
     );
   });
 
-  it('applies ability picker filters as allowed character ids through repository search', async () => {
+  it('applies a saved tag-set selection as allowed character ids through repository search', async () => {
     const removeBindSpecialist = createCharacterRecord(801, 'Remove Bind Specialist');
     const orbBooster = createCharacterRecord(802, 'Orb Booster');
     const unrelated = createCharacterRecord(803, 'Unrelated Candidate');
@@ -467,17 +487,124 @@ describe('ManualTeamBuilderPage', () => {
 
     await page.ngOnInit();
     await page.openCharacterPicker(0);
-    await page.saveSpecialAbilityPicker([createAbilityDraft('remove_bind')]);
+    await page.saveAbilityTagSetPicker(createTagSetSelection([{ abilityKeys: ['remove_bind'] }]));
 
     const calls = repository.searchDetailedCharacters.mock.calls;
     const lastQuery = calls[calls.length - 1]?.[0];
 
+    expect(page.tagSetPickerOpen()).toBe(false);
+    expect(page.tagSetSelection().sets).toHaveLength(1);
     expect([...(lastQuery?.allowedCharacterIds ?? [])].sort()).toEqual([801, 802]);
     expect(page.candidates().map((character) => character.id)).toEqual([801, 802]);
     expect(page.hasActiveCandidateFilters()).toBe(true);
     expect(page.abilityFilterRailItems().find((item) => item.category === 'special')?.count).toBe(
       1,
     );
+  });
+
+  it('unions tags inside a set and intersects across sets when resolving candidates', async () => {
+    const sailorCandidate = createCharacterRecord(101, 'Sailor Candidate');
+    const removeBindSpecialist = createCharacterRecord(801, 'Remove Bind Specialist');
+    const orbBooster = createCharacterRecord(802, 'Orb Booster');
+    const { page } = createPage({
+      characters: [sailorCandidate, removeBindSpecialist, orbBooster],
+    });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveAbilityTagSetPicker(
+      createTagSetSelection([{ abilityKeys: ['remove_bind', 'sailor_boost'], operator: 'any' }]),
+    );
+
+    expect([...page.candidates().map((character) => character.id)].sort()).toEqual([101, 801, 802]);
+
+    await page.saveAbilityTagSetPicker(
+      createTagSetSelection([{ abilityKeys: ['remove_bind'] }, { abilityKeys: ['sailor_boost'] }]),
+    );
+
+    expect(page.candidates()).toEqual([]);
+  });
+
+  it('counts rail chips per category from the one tag-set selection', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.saveAbilityTagSetPicker(
+      createTagSetSelection([
+        { abilityKeys: ['captain_boost'], captainAbility: true },
+        { abilityKeys: ['remove_bind', 'sailor_boost'] },
+        { abilityKeys: ['potential_reduce_damage', 'support_slot_change'] },
+      ]),
+    );
+
+    expect(page.abilityFilterCategoryCounts()).toEqual({
+      captainAbility: 1,
+      special: 1,
+      crewmate: 1,
+      potential: 1,
+      support: 1,
+    });
+    expect(
+      page.abilityFilterRailItems().map((item) => [item.category, item.count, item.disabled]),
+    ).toEqual([
+      ['captainAbility', 1, false],
+      ['special', 1, false],
+      ['crewmate', 1, false],
+      ['potential', 1, false],
+      ['support', 1, false],
+    ]);
+  });
+
+  it('opens the single tag-set modal from any rail chip and skips empty catalogs', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.openAbilityFilterCategory('crewmate');
+
+    expect(page.tagSetPickerOpen()).toBe(true);
+
+    page.closeAbilityTagSetPicker();
+    page.openAbilityFilterCategory('captainAbility');
+
+    expect(page.tagSetPickerOpen()).toBe(true);
+
+    page.closeAbilityTagSetPicker();
+    page.abilityCatalog.set(null);
+    page.openAbilityFilterCategory('special');
+
+    expect(page.tagSetPickerOpen()).toBe(false);
+  });
+
+  it('clears one chip category from every set and drops the sets left empty', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.saveAbilityTagSetPicker(
+      createTagSetSelection([
+        { abilityKeys: ['captain_boost'], captainAbility: true },
+        { abilityKeys: ['remove_bind'] },
+      ]),
+    );
+    page.tagSetSelection.update((selection) => ({
+      ...selection,
+      sets: selection.sets.map((set, index) =>
+        index === 0
+          ? { ...set, requirements: [...set.requirements, createTagSetRequirement('remove_bind')] }
+          : set,
+      ),
+    }));
+
+    expect(page.abilityFilterCategoryCounts().special).toBe(2);
+
+    await page.clearAbilityFilterCategory('special');
+
+    expect(page.abilityFilterCategoryCounts()).toEqual(
+      expect.objectContaining({ captainAbility: 1, special: 0 }),
+    );
+    expect(page.tagSetSelection().sets).toHaveLength(1);
+    expect(
+      page.tagSetSelection().sets[0]?.requirements.map((requirement) => requirement.abilityKey),
+    ).toEqual(['captain_boost']);
   });
 
   it('intersects ability filters with local character tag filtering', async () => {
@@ -495,8 +622,10 @@ describe('ManualTeamBuilderPage', () => {
 
     await page.ngOnInit();
     await page.openCharacterPicker(0);
-    await page.saveCaptainAbilityPicker([createAbilityDraft('captain_boost')]);
-    await page.onCharacterTagFilterChange(createValueEvent('utility'));
+    await page.saveAbilityTagSetPicker(
+      createTagSetSelection([{ abilityKeys: ['captain_boost'], captainAbility: true }]),
+    );
+    await page.saveCharacterTagSetPicker(createCharacterTagSetSelection([{ tags: ['utility'] }]));
 
     expect(repository.getDetailedCharacterCatalog).toHaveBeenCalled();
     expect(page.candidates().map((character) => character.id)).toEqual([901]);
@@ -507,14 +636,16 @@ describe('ManualTeamBuilderPage', () => {
 
     await page.ngOnInit();
     await page.openCharacterPicker(0);
-    await page.saveSupportAbilityPicker([createAbilityDraft('support_slot_change')]);
+    await page.saveAbilityTagSetPicker(
+      createTagSetSelection([{ abilityKeys: ['support_slot_change'] }]),
+    );
 
-    expect(page.supportAbilityDrafts()).toHaveLength(1);
+    expect(page.tagSetSelection().sets).toHaveLength(1);
     expect(page.hasActiveCandidateFilters()).toBe(true);
 
     await page.clearCandidateFilters();
 
-    expect(page.supportAbilityDrafts()).toEqual([]);
+    expect(page.tagSetSelection()).toEqual({ operator: 'all', sets: [] });
     expect(page.hasActiveCandidateFilters()).toBe(false);
   });
 
@@ -535,10 +666,191 @@ describe('ManualTeamBuilderPage', () => {
     await page.openCharacterPicker(0);
     await page.onTypeFilterChange(createValueEvent('STR'));
     await page.onClassFilterChange(createValueEvent('Shooter'));
-    await page.onCharacterTagFilterChange(createValueEvent('orb boost'));
+    await page.saveCharacterTagSetPicker(createCharacterTagSetSelection([{ tags: ['orb boost'] }]));
 
     expect(repository.getDetailedCharacterCatalog).toHaveBeenCalled();
     expect(page.candidates().map((character) => character.id)).toEqual([801]);
+  });
+
+  it('ORs the tags inside one character tag group', async () => {
+    const strawHat = createCharacterRecord(811, 'Straw Hat');
+    const heart = createCharacterRecord(812, 'Heart');
+    const kid = createCharacterRecord(813, 'Kid');
+
+    strawHat.detail.characterTags = ['Straw Hat Pirates'];
+    heart.detail.characterTags = ['Heart Pirates'];
+    kid.detail.characterTags = ['Kid Pirates'];
+
+    const { page } = createPage({ characters: [strawHat, heart, kid] });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates', 'Heart Pirates'] }]),
+    );
+
+    expect(
+      page
+        .candidates()
+        .map((character) => character.id)
+        .sort(),
+    ).toEqual([811, 812]);
+  });
+
+  it('ANDs across character tag groups so (crew OR crew) AND (arc) narrows the pool', async () => {
+    const strawHatDressrosa = createCharacterRecord(821, 'Straw Hat at Dressrosa');
+    const heartDressrosa = createCharacterRecord(822, 'Heart at Dressrosa');
+    const strawHatMarineford = createCharacterRecord(823, 'Straw Hat at Marineford');
+
+    strawHatDressrosa.detail.characterTags = ['Straw Hat Pirates', 'Dressrosa'];
+    heartDressrosa.detail.characterTags = ['Heart Pirates', 'Dressrosa'];
+    strawHatMarineford.detail.characterTags = ['Straw Hat Pirates', 'Marineford'];
+
+    const { page } = createPage({
+      characters: [strawHatDressrosa, heartDressrosa, strawHatMarineford],
+    });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([
+        { tags: ['Straw Hat Pirates', 'Heart Pirates'] },
+        { tags: ['Dressrosa'] },
+      ]),
+    );
+
+    expect(
+      page
+        .candidates()
+        .map((character) => character.id)
+        .sort(),
+    ).toEqual([821, 822]);
+  });
+
+  it('honours an all operator inside a group and an any operator across groups', async () => {
+    const both = createCharacterRecord(831, 'Both Tags');
+    const onlyOne = createCharacterRecord(832, 'Only One Tag');
+    const otherGroup = createCharacterRecord(833, 'Other Group');
+
+    both.detail.characterTags = ['Straw Hat Pirates', 'Dressrosa'];
+    onlyOne.detail.characterTags = ['Straw Hat Pirates'];
+    otherGroup.detail.characterTags = ['Marineford'];
+
+    const { page } = createPage({ characters: [both, onlyOne, otherGroup] });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection(
+        [{ tags: ['Straw Hat Pirates', 'Dressrosa'], operator: 'all' }, { tags: ['Marineford'] }],
+        'any',
+      ),
+    );
+
+    expect(
+      page
+        .candidates()
+        .map((character) => character.id)
+        .sort(),
+    ).toEqual([831, 833]);
+  });
+
+  it('matches character tags case-insensitively without rewriting the stored case', async () => {
+    const character = createCharacterRecord(841, 'Cased Tag');
+
+    character.detail.characterTags = ['straw hat pirates'];
+
+    const { page } = createPage({ characters: [character] });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates'] }]),
+    );
+
+    expect(page.candidates().map((entry) => entry.id)).toEqual([841]);
+    expect(page.characterTagSetSelection().sets[0]?.tags).toEqual(['Straw Hat Pirates']);
+  });
+
+  it('keeps the any-tag default on the indexed search path until a group is populated', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+    expect(page.characterTagFilterLabel()).toBe('Any tag');
+    expect(page.hasActiveCandidateFilters()).toBe(false);
+    expect(repository.searchDetailedCharacters).toHaveBeenCalled();
+    expect(repository.getDetailedCharacterCatalog).not.toHaveBeenCalled();
+  });
+
+  it('summarises the trigger label as the tag, then as tag and group counts', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates'] }]),
+    );
+
+    expect(page.characterTagFilterLabel()).toBe('Straw Hat Pirates');
+
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates', 'Heart Pirates'] }]),
+    );
+
+    expect(page.characterTagFilterLabel()).toBe('2 tags');
+
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([
+        { tags: ['Straw Hat Pirates', 'Heart Pirates'] },
+        { tags: ['Dressrosa'] },
+      ]),
+    );
+
+    expect(page.characterTagFilterLabel()).toBe('3 tags in 2 groups');
+    expect(page.hasActiveCandidateFilters()).toBe(true);
+  });
+
+  it('builds the picker match index once and closes without touching the selection', async () => {
+    const strawHat = createCharacterRecord(851, 'Straw Hat');
+    const heart = createCharacterRecord(852, 'Heart');
+
+    strawHat.detail.characterTags = ['Straw Hat Pirates'];
+    heart.detail.characterTags = ['Heart Pirates', 'straw hat pirates'];
+
+    const { page, repository } = createPage({ characters: [strawHat, heart] });
+
+    await page.ngOnInit();
+    await page.openCharacterTagSetPicker();
+
+    expect(page.characterTagSetPickerOpen()).toBe(true);
+    expect(repository.getDetailedCharacterCatalog).toHaveBeenCalledOnce();
+    expect(page.characterTagMatchIndex()?.get('straw hat pirates')).toEqual([851, 852]);
+    expect(page.characterTagMatchIndex()?.get('heart pirates')).toEqual([852]);
+
+    page.closeCharacterTagSetPicker();
+    await page.openCharacterTagSetPicker();
+
+    expect(repository.getDetailedCharacterCatalog).toHaveBeenCalledOnce();
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+  });
+
+  it('clears character tag groups with the candidate filter reset action', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['Straw Hat Pirates'] }]),
+    );
+
+    expect(page.hasActiveCandidateFilters()).toBe(true);
+
+    await page.clearCandidateFilters();
+
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+    expect(page.hasActiveCandidateFilters()).toBe(false);
   });
 
   it('supports drag/drop assign, swap, clear, and invalid cost feedback', async () => {
@@ -785,6 +1097,18 @@ function createPage(
           return `Min ${params?.['min'] ?? 0} cannot exceed max ${params?.['max'] ?? 0}.`;
         }
 
+        if (key === 'picker.filters.characterTags.any') {
+          return 'Any tag';
+        }
+
+        if (key === 'picker.filters.characterTags.summary') {
+          return `${params?.['count'] ?? 0} tags`;
+        }
+
+        if (key === 'picker.filters.characterTags.groupSummary') {
+          return `${params?.['count'] ?? 0} tags in ${params?.['groups'] ?? 0} groups`;
+        }
+
         if (key === 'drag.invalidCost') {
           return `Cannot drop with max cost ${params?.['max'] ?? 0}.`;
         }
@@ -1014,14 +1338,51 @@ function createAbilityCatalog(
   };
 }
 
-function createAbilityDraft(abilityKey: string): AbilityRequirementDraft {
+function createCharacterTagSetSelection(
+  sets: Array<{ tags: string[]; operator?: AbilityTagSetOperator }>,
+  operator: AbilityTagSetOperator = 'all',
+): CharacterTagSetSelection {
   return {
-    draftId: `${abilityKey}-draft`,
+    operator,
+    sets: sets.map((set, index) => ({
+      id: `character-tag-set-${index + 1}`,
+      operator: set.operator ?? 'any',
+      tags: set.tags,
+    })),
+  };
+}
+
+function createTagSetSelection(
+  sets: Array<{
+    abilityKeys: string[];
+    operator?: AbilityTagSetOperator;
+    captainAbility?: boolean;
+  }>,
+  operator: AbilityTagSetOperator = 'all',
+): AbilityFilterTagSetSelection {
+  return {
+    operator,
+    sets: sets.map((set, index) => ({
+      id: `set-${index + 1}`,
+      operator: set.operator ?? 'any',
+      requirements: set.abilityKeys.map((abilityKey) =>
+        createTagSetRequirement(abilityKey, set.captainAbility),
+      ),
+    })),
+  };
+}
+
+function createTagSetRequirement(
+  abilityKey: string,
+  captainAbility = false,
+): AutoBuildAbilityRequirement {
+  return {
     abilityKey,
     minTurns: null,
     slotTokens: [],
     requiredCharacterCount: 1,
-    slotScope: 'any',
+    slotScope: captainAbility ? 'leader' : 'any',
+    ...(captainAbility ? { sourceScope: 'captainAbility' as const } : {}),
   };
 }
 

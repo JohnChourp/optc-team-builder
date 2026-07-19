@@ -48,12 +48,19 @@
     "filters": {
       "abilityRailLabel": "Manual team ability filter categories",
       "anyClass": "Any class",
-      "anyTag": "Any tag",
       "anyType": "Any type",
       "captainAbility": {
         "copy": "Filter slot candidates by effects parsed from each character's own Captain Ability.",
         "eyebrow": "Captain Ability",
         "title": "Captain Ability filters"
+      },
+      "characterTags": {
+        "any": "Any tag",
+        "groupSummary": "{{count}} tags in {{groups}} groups",
+        "label": "Character tags",
+        "summary": "{{count}} tags",
+        "title": "Character tag filters",
+        "trigger": "Character tags: {{summary}}"
       },
       "class": "Class",
       "clear": "Clear filters",
@@ -80,7 +87,9 @@
         "eyebrow": "Support Ability",
         "title": "Support Ability filters"
       },
-      "tag": "Tag",
+      "tagSets": {
+        "title": "Ability tag filters"
+      },
       "type": "Type"
     },
     "loading": "Loading matching characters...",

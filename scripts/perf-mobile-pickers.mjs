@@ -115,7 +115,12 @@ try {
 }
 
 function sanitizeSegment(value) {
-  return String(value).trim().replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'run';
+  return (
+    String(value)
+      .trim()
+      .replace(/[^A-Za-z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'run'
+  );
 }
 
 function resolveGitHead() {
@@ -214,7 +219,7 @@ async function ensureServer() {
 
 function spawnNpmStartServer() {
   const args = ['start', '--', '--host', '127.0.0.1', '--port', String(port)];
-  const command = process.platform === 'win32' ? process.env.ComSpec ?? 'cmd.exe' : npmBin;
+  const command = process.platform === 'win32' ? (process.env.ComSpec ?? 'cmd.exe') : npmBin;
   const commandArgs =
     process.platform === 'win32' ? ['/d', '/s', '/c', [npmBin, ...args].join(' ')] : args;
 
@@ -289,10 +294,7 @@ function killServerProcess(child, signal) {
 }
 
 async function closeBrowser(activeBrowser) {
-  await Promise.race([
-    activeBrowser.close(),
-    new Promise((resolve) => setTimeout(resolve, 5_000)),
-  ]);
+  await Promise.race([activeBrowser.close(), new Promise((resolve) => setTimeout(resolve, 5_000))]);
 }
 
 function selectAbilityKeys(abilities) {
@@ -331,14 +333,22 @@ function buildSavedTeams() {
     name: `Mobile Perf Team ${index + 1}`,
     notes: 'Synthetic mobile picker responsiveness run.',
     shipId: null,
-    slots: Array.from({ length: 6 }, (__, slotIndex) => ids[(index + slotIndex) % ids.length] ?? null),
+    slots: Array.from(
+      { length: 6 },
+      (__, slotIndex) => ids[(index + slotIndex) % ids.length] ?? null,
+    ),
     createdAt: '2026-07-02T00:00:00.000Z',
     updatedAt: '2026-07-02T00:00:00.000Z',
   }));
 }
 
 function buildSavedEnemies(abilities) {
-  const abilityKeys = [abilities.special, abilities.crewmate, abilities.potential, abilities.support];
+  const abilityKeys = [
+    abilities.special,
+    abilities.crewmate,
+    abilities.potential,
+    abilities.support,
+  ];
 
   return Array.from({ length: 420 }, (_, index) => {
     const first = abilityKeys[index % abilityKeys.length];
@@ -370,7 +380,13 @@ function buildSavedEnemies(abilities) {
 }
 
 function createRequirement(abilityKey) {
-  return { abilityKey, minTurns: null, slotTokens: [], requiredCharacterCount: 1, slotScope: 'any' };
+  return {
+    abilityKey,
+    minTurns: null,
+    slotTokens: [],
+    requiredCharacterCount: 1,
+    slotScope: 'any',
+  };
 }
 
 async function waitForAngular(page) {
@@ -419,11 +435,7 @@ async function measureSavedTeams(page, screenshots) {
     '[data-testid="saved-teams-ability-filter-panel"]',
   );
   await screenshot(page, screenshots, 'saved-teams-top');
-  const firstToggleMs = await measureClassToggle(
-    page,
-    '[data-testid^="saved-team-ability-chip-"]',
-    'saved-team-ability-chip--selected',
-  );
+  const firstToggleMs = await measureAbilityTagSetFilter(page);
   const scrollToBottomMs = await scrollPrimaryContentToBottom(page);
   await screenshot(page, screenshots, 'saved-teams-bottom');
 
@@ -433,9 +445,34 @@ async function measureSavedTeams(page, screenshots) {
     firstToggleMs: Math.round(firstToggleMs),
     scrollToBottomMs: Math.round(scrollToBottomMs),
     renderedCardCountAfterFilter: await page.locator('.saved-team-list article').count(),
-    chipCount: await page.locator('[data-testid^="saved-team-ability-chip-"]').count(),
+    chipCount: await page.locator('.saved-team-ability-chip--selected').count(),
     maxHorizontalOverflowPx: await measureHorizontalOverflow(page),
   };
+}
+
+/**
+ * Saved teams filters through the tag-set modal now, so the first filter costs a
+ * whole open/pick/save round trip instead of one chip toggle. Measuring the round
+ * trip keeps the metric honest rather than timing an interaction that is gone.
+ */
+async function measureAbilityTagSetFilter(page) {
+  const trigger = page.getByTestId('saved-teams-ability-trigger-leader');
+  await trigger.scrollIntoViewIfNeeded();
+  const start = performance.now();
+  await trigger.click();
+  await page.getByTestId('character-tag-set-start').click();
+  await page
+    .locator('ion-modal.show-modal [data-testid^="character-tag-set-tile-"]')
+    .first()
+    .click();
+  await page.getByTestId('character-tag-set-picker-save').click();
+  await page.locator('.saved-team-ability-chip--selected').first().waitFor({
+    state: 'visible',
+    timeout: 30_000,
+  });
+  await waitForAngular(page);
+
+  return performance.now() - start;
 }
 
 async function measureSavedEnemies(page, screenshots) {
@@ -472,25 +509,34 @@ async function measureManualPicker(page, screenshots) {
   );
   const openStart = performance.now();
   await page.getByTestId('manual-team-slot-edit-0').click();
-  await page.locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]').first().waitFor({
-    state: 'visible',
-    timeout: 60_000,
-  });
+  await page
+    .locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]')
+    .first()
+    .waitFor({
+      state: 'visible',
+      timeout: 60_000,
+    });
   await waitForAngular(page);
   const pickerOpenMs = performance.now() - openStart;
   await screenshot(page, screenshots, 'manual-picker-open');
   const candidateScrollMs = await scrollElementToBottom(page, '.manual-team-candidates');
   const abilityOpenStart = performance.now();
   await page.getByTestId('ability-filter-chip-special').click();
-  await page.locator('ion-modal.show-modal [data-testid^="special-ability-tile-"]').first().waitFor({
-    state: 'visible',
-    timeout: 60_000,
-  });
+  // The tag-set picker opens on its explainer; the catalog only appears once a
+  // first group exists, so the run has to create one before picking a tag.
+  await page.getByTestId('ability-tag-set-start').click();
+  await page
+    .locator('ion-modal.show-modal [data-testid^="ability-tag-set-tile-"]')
+    .first()
+    .waitFor({
+      state: 'visible',
+      timeout: 60_000,
+    });
   const specialPickerOpenMs = performance.now() - abilityOpenStart;
   await screenshot(page, screenshots, 'manual-special-picker-open');
   const specialSelectStart = performance.now();
-  await page.getByTestId(`special-ability-tile-${selectedAbilities.special}`).click();
-  await page.getByTestId('special-ability-picker-save').click();
+  await page.getByTestId(`ability-tag-set-tile-${selectedAbilities.special}`).click();
+  await page.getByTestId('ability-tag-set-picker-save').click();
   await page.waitForFunction(
     () =>
       document
@@ -499,10 +545,13 @@ async function measureManualPicker(page, screenshots) {
     undefined,
     { timeout: 30_000 },
   );
-  await page.locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]').first().waitFor({
-    state: 'visible',
-    timeout: 60_000,
-  });
+  await page
+    .locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]')
+    .first()
+    .waitFor({
+      state: 'visible',
+      timeout: 60_000,
+    });
   await waitForAngular(page);
   const specialFilterApplyMs = performance.now() - specialSelectStart;
   await screenshot(page, screenshots, 'manual-picker-filtered');
@@ -513,7 +562,9 @@ async function measureManualPicker(page, screenshots) {
     candidateScrollMs: Math.round(candidateScrollMs),
     specialPickerOpenMs: Math.round(specialPickerOpenMs),
     specialFilterApplyMs: Math.round(specialFilterApplyMs),
-    candidateCount: await page.locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]').count(),
+    candidateCount: await page
+      .locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]')
+      .count(),
     maxHorizontalOverflowPx: await measureHorizontalOverflow(page),
   };
 }
@@ -531,16 +582,22 @@ async function measureCharacterImagePicker(page, screenshots) {
   });
   const openStart = performance.now();
   await page.getByTestId('saved-enemies-character-image-picker-open').click();
-  await page.locator('ion-modal.show-modal [data-testid^="character-image-picker-card-"]').first().waitFor({
-    state: 'visible',
-    timeout: 60_000,
-  });
+  await page
+    .locator('ion-modal.show-modal [data-testid^="character-image-picker-card-"]')
+    .first()
+    .waitFor({
+      state: 'visible',
+      timeout: 60_000,
+    });
   const pickerOpenMs = performance.now() - openStart;
   await screenshot(page, screenshots, 'character-image-picker-open');
   const loadMoreStart = performance.now();
   await page.getByTestId('character-image-picker-load-more').click();
   await page.waitForFunction(
-    () => document.querySelectorAll('ion-modal.show-modal [data-testid^="character-image-picker-card-"]').length > 48,
+    () =>
+      document.querySelectorAll(
+        'ion-modal.show-modal [data-testid^="character-image-picker-card-"]',
+      ).length > 48,
     undefined,
     { timeout: 30_000 },
   );
@@ -548,19 +605,31 @@ async function measureCharacterImagePicker(page, screenshots) {
   const loadMoreMs = performance.now() - loadMoreStart;
   await screenshot(page, screenshots, 'character-image-picker-load-more');
   const abilityOpenStart = performance.now();
-  await page.locator('ion-modal.show-modal [data-testid="ability-filter-chip-special"]').first().click();
-  await page.locator('ion-modal.show-modal [data-testid^="special-ability-tile-"]').first().waitFor({
-    state: 'visible',
-    timeout: 60_000,
-  });
+  await page
+    .locator('ion-modal.show-modal [data-testid="ability-filter-chip-special"]')
+    .first()
+    .click();
+  // The tag-set picker opens on its explainer; the catalog only appears once a
+  // first group exists, so the run has to create one before picking a tag.
+  await page.getByTestId('ability-tag-set-start').last().click();
+  await page
+    .locator('ion-modal.show-modal [data-testid^="ability-tag-set-tile-"]')
+    .first()
+    .waitFor({
+      state: 'visible',
+      timeout: 60_000,
+    });
   const specialPickerOpenMs = performance.now() - abilityOpenStart;
   const specialSelectStart = performance.now();
-  await page.getByTestId(`special-ability-tile-${selectedAbilities.special}`).last().click();
-  await page.getByTestId('special-ability-picker-save').last().click();
-  await page.locator('ion-modal.show-modal [data-testid^="character-image-picker-card-"]').first().waitFor({
-    state: 'visible',
-    timeout: 60_000,
-  });
+  await page.getByTestId(`ability-tag-set-tile-${selectedAbilities.special}`).last().click();
+  await page.getByTestId('ability-tag-set-picker-save').last().click();
+  await page
+    .locator('ion-modal.show-modal [data-testid^="character-image-picker-card-"]')
+    .first()
+    .waitFor({
+      state: 'visible',
+      timeout: 60_000,
+    });
   await waitForAngular(page);
   const specialFilterApplyMs = performance.now() - specialSelectStart;
   await screenshot(page, screenshots, 'character-image-picker-filtered');

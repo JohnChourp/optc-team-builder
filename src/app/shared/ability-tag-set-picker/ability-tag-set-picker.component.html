@@ -1,0 +1,433 @@
+<ng-container *transloco="let t; scope: 'ability-tag-sets'; read: 'ability-tag-sets'">
+  <ion-modal
+    #tagSetPickerModal
+    [isOpen]="isOpen"
+    cssClass="ability-tag-set-picker-modal"
+    [attr.aria-label]="title || t('title')"
+    (didPresent)="labelModalDialog($event, title || t('title'))"
+    (didDismiss)="onModalDidDismiss()"
+  >
+    <ng-template>
+      <app-ability-tag-set-picker-style-panels>
+        <ion-header
+          class="ability-tag-set-header ion-no-border"
+          role="group"
+          [attr.aria-label]="title || t('title')"
+        >
+          <ion-toolbar>
+            <div class="ability-tag-set-head">
+              <div>
+                <div class="section-label">
+                  <ion-icon [icon]="pickerIcon" aria-hidden="true"></ion-icon>
+                  <span>{{ t('eyebrow') }}</span>
+                </div>
+                <h2>{{ title || t('title') }}</h2>
+                <p>{{ t('copy') }}</p>
+              </div>
+            </div>
+
+            <ion-buttons slot="end">
+              <ion-button
+                fill="clear"
+                color="light"
+                [attr.aria-label]="'common.actions.close' | transloco"
+                (click)="cancel(); tagSetPickerModal.dismiss(null, 'cancel')"
+              >
+                <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="ability-tag-set-content">
+          <!--
+            The formula is decorative for assistive tech: its meaning is carried
+            by the short deltas in the live region below, so re-reading the whole
+            sentence on every keystroke is avoided.
+          -->
+          <section class="ability-tag-set-formula" [attr.data-operator]="selectionOperator()">
+            <div class="ability-tag-set-formula__body" aria-hidden="true">
+              <span class="ability-tag-set-formula__lead">{{ t('formula.lead') }}</span>
+
+              @if (!formulaClauses().length) {
+                <span class="ability-tag-set-formula__empty">{{ t('formula.empty') }}</span>
+              } @else {
+                @for (clause of formulaClauses(); track clause.setId; let last = $last) {
+                  <span
+                    class="ability-tag-set-formula__clause"
+                    [attr.data-set-index]="clause.index"
+                    [attr.data-operator]="clause.operator"
+                  >
+                    <span class="ability-tag-set-formula__bracket">(</span>
+                    @for (label of clause.labels; track label; let lastLabel = $last) {
+                      <span class="ability-tag-set-formula__tag">{{ label }}</span>
+                      @if (!lastLabel) {
+                        <span class="ability-tag-set-formula__inner-joiner">{{
+                          t('formula.joiner.' + clause.operator)
+                        }}</span>
+                      }
+                    }
+                    <span class="ability-tag-set-formula__bracket">)</span>
+                  </span>
+
+                  @if (!last) {
+                    <span class="ability-tag-set-formula__joiner">{{
+                      t('formula.joiner.' + selectionOperator())
+                    }}</span>
+                  }
+                }
+              }
+            </div>
+
+            <div class="ability-tag-set-formula__aside">
+              <strong class="ability-tag-set-formula__total">{{
+                t('formula.total', { count: totalMatchCount() })
+              }}</strong>
+
+              @if (formulaClauses().length > 1) {
+                @if (allowSelectionOperator) {
+                  <button
+                    type="button"
+                    class="ability-tag-set-formula__swap"
+                    data-testid="ability-tag-set-selection-operator"
+                    [attr.aria-label]="t('selection.toggleAria')"
+                    (click)="toggleSelectionOperator()"
+                  >
+                    <ion-icon [icon]="swapIcon" aria-hidden="true"></ion-icon>
+                    <span>{{ t('selection.' + selectionOperator()) }}</span>
+                  </button>
+                } @else {
+                  <small class="ability-tag-set-formula__locked">{{ t('selection.locked') }}</small>
+                }
+              }
+            </div>
+          </section>
+
+          <p class="ability-tag-set-live" role="status" aria-live="polite">
+            @if (liveAnnouncement(); as announcement) {
+              {{ t(announcement.key, announcement.params) }}
+            }
+          </p>
+
+          <div class="ability-tag-set-shell" [class.is-catalog-open]="isCatalogOpen()">
+            <div class="ability-tag-set-canvas">
+              <div class="ability-tag-set-canvas__head">
+                <div>
+                  <strong>{{ t('sets.title') }}</strong>
+                  <small>{{ t('sets.count', { count: formulaClauses().length }) }}</small>
+                </div>
+
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  color="warning"
+                  [disabled]="!workingSelection().sets.length"
+                  (click)="clearAll()"
+                >
+                  {{ t('actions.clearAll') }}
+                </ion-button>
+              </div>
+
+              @if (isOverCap()) {
+                <p class="ability-tag-set-notice">
+                  {{ t('sets.overCap', { max: maxSets, count: workingSelection().sets.length }) }}
+                </p>
+              }
+
+              @if (!workingSelection().sets.length) {
+                <section class="ability-tag-set-explainer">
+                  <strong>{{ t('explainer.title') }}</strong>
+
+                  <div class="ability-tag-set-explainer__grid">
+                    <article class="ability-tag-set-explainer__card" data-operator="any">
+                      <span class="ability-tag-set-explainer__dots" aria-hidden="true">
+                        <i class="is-lit"></i><i></i><i></i>
+                      </span>
+                      <strong>{{ t('explainer.anyTitle') }}</strong>
+                      <p>{{ t('explainer.anyCopy') }}</p>
+                    </article>
+
+                    <article class="ability-tag-set-explainer__card" data-operator="all">
+                      <span class="ability-tag-set-explainer__dots" aria-hidden="true">
+                        <i class="is-lit"></i><i class="is-lit"></i><i class="is-lit"></i>
+                      </span>
+                      <strong>{{ t('explainer.allTitle') }}</strong>
+                      <p>{{ t('explainer.allCopy') }}</p>
+                    </article>
+                  </div>
+
+                  <p class="ability-tag-set-explainer__sample">{{ t('explainer.sample') }}</p>
+
+                  <ion-button
+                    color="warning"
+                    data-testid="ability-tag-set-start"
+                    (click)="addSet()"
+                  >
+                    {{ t('explainer.start') }}
+                  </ion-button>
+                </section>
+              } @else {
+                <div class="ability-tag-set-card-list" role="list">
+                  @for (card of setCards(); track card.set.id; let last = $last) {
+                    <article
+                      class="ability-tag-set-card"
+                      role="listitem"
+                      [attr.data-set-index]="card.index"
+                      [attr.data-operator]="card.set.operator"
+                      [attr.data-testid]="'ability-tag-set-card-' + card.index"
+                      [class.is-active]="card.isActive"
+                      [class.is-leaving]="leavingSetId() === card.set.id"
+                      [class.is-empty]="!card.chips.length"
+                    >
+                      <header class="ability-tag-set-card__head">
+                        <button
+                          type="button"
+                          class="ability-tag-set-card__title"
+                          [attr.aria-pressed]="card.isActive"
+                          (click)="activateSet(card.set.id)"
+                        >
+                          <span class="ability-tag-set-card__index">{{ card.index }}</span>
+                          <span>{{ t('sets.groupLabel', { index: card.index }) }}</span>
+                        </button>
+
+                        <div class="ability-tag-set-card__meta">
+                          @if (card.chips.length) {
+                            <small
+                              class="ability-tag-set-card__count"
+                              [class.is-zero]="card.matchCount === 0"
+                              >{{ t('sets.matchCount', { count: card.matchCount }) }}</small
+                            >
+                          }
+
+                          <ion-button
+                            fill="clear"
+                            size="small"
+                            color="danger"
+                            [attr.aria-label]="t('sets.removeGroup', { index: card.index })"
+                            (click)="removeSet(card.set.id)"
+                          >
+                            {{ 'common.actions.remove' | transloco }}
+                          </ion-button>
+                        </div>
+                      </header>
+
+                      @if (card.chips.length) {
+                        <ul class="ability-tag-set-chips">
+                          @for (
+                            chip of card.chips;
+                            track chip.requirement.abilityKey;
+                            let lastChip = $last
+                          ) {
+                            <li class="ability-tag-set-chip-wrap">
+                              <span class="ability-tag-set-chip">
+                                <span class="ability-tag-set-chip__badge" aria-hidden="true">{{
+                                  chip.badge
+                                }}</span>
+                                <span class="ability-tag-set-chip__label">{{ chip.label }}</span>
+                                <button
+                                  type="button"
+                                  class="ability-tag-set-chip__remove"
+                                  [attr.aria-label]="t('sets.removeTag', { label: chip.label })"
+                                  (click)="
+                                    removeRequirement(card.set.id, chip.requirement.abilityKey)
+                                  "
+                                >
+                                  <ion-icon [icon]="closeIcon" aria-hidden="true"></ion-icon>
+                                </button>
+                              </span>
+
+                              @if (!lastChip) {
+                                <span class="ability-tag-set-chip__joiner" aria-hidden="true">{{
+                                  t('formula.joiner.' + card.set.operator)
+                                }}</span>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      } @else {
+                        <p class="ability-tag-set-card__empty">{{ t('sets.emptyIgnored') }}</p>
+                      }
+
+                      <div class="ability-tag-set-card__actions">
+                        <button
+                          type="button"
+                          class="ability-tag-set-card__add"
+                          [attr.data-testid]="'ability-tag-set-add-tag-' + card.index"
+                          (click)="openCatalogFor(card.set.id)"
+                        >
+                          <ion-icon [icon]="addIcon" aria-hidden="true"></ion-icon>
+                          <span>{{ t('sets.addTag') }}</span>
+                        </button>
+                      </div>
+
+                      <!--
+                        Rendered only at two or more tags: with one tag the
+                        operator changes nothing, so showing it would be a lie.
+                      -->
+                      @if (card.showsOperator) {
+                        <div
+                          class="ability-tag-set-operator"
+                          role="group"
+                          [attr.aria-label]="t('sets.operator.aria', { index: card.index })"
+                        >
+                          @for (op of operators; track op) {
+                            <button
+                              type="button"
+                              class="ability-tag-set-operator__option"
+                              [attr.data-operator]="op"
+                              [attr.data-testid]="
+                                'ability-tag-set-operator-' + card.index + '-' + op
+                              "
+                              [attr.aria-pressed]="card.set.operator === op"
+                              [class.is-selected]="card.set.operator === op"
+                              (click)="setSetOperator(card.set.id, op)"
+                            >
+                              <strong>{{ t('sets.operator.' + op) }}</strong>
+                              <small>{{
+                                t('sets.operator.preview', {
+                                  count: op === 'any' ? card.anyCount : card.allCount,
+                                })
+                              }}</small>
+                            </button>
+                          }
+                        </div>
+                      }
+
+                      @if (card.isNullifying) {
+                        <p class="ability-tag-set-card__zero">{{ t('sets.nullifying') }}</p>
+                      }
+                    </article>
+
+                    @if (!last) {
+                      <div
+                        class="ability-tag-set-connector"
+                        [attr.data-operator]="selectionOperator()"
+                      >
+                        <span>{{ t('formula.joiner.' + selectionOperator()) }}</span>
+                      </div>
+                    }
+                  }
+
+                  <button
+                    type="button"
+                    class="ability-tag-set-add-card"
+                    data-testid="ability-tag-set-add-group"
+                    [disabled]="!canAddSet()"
+                    (click)="addSet()"
+                  >
+                    <ion-icon [icon]="addIcon" aria-hidden="true"></ion-icon>
+                    <span>{{ t('sets.addGroup') }}</span>
+                  </button>
+
+                  @if (!canAddSet()) {
+                    <small class="ability-tag-set-hint">{{
+                      t('sets.maxReached', { max: maxSets })
+                    }}</small>
+                  }
+                </div>
+              }
+            </div>
+
+            <section class="ability-tag-set-catalog">
+              <div class="ability-tag-set-catalog__head">
+                <div>
+                  <strong>{{ t('catalog.title') }}</strong>
+                  @if (activeSetIndex() > 0) {
+                    <small>{{ t('catalog.addingTo', { index: activeSetIndex() }) }}</small>
+                  } @else {
+                    <small>{{ t('catalog.pickGroupFirst') }}</small>
+                  }
+                </div>
+
+                <ion-button
+                  class="ability-tag-set-catalog__back"
+                  fill="clear"
+                  size="small"
+                  color="light"
+                  (click)="closeCatalog()"
+                >
+                  {{ t('catalog.backToGroups') }}
+                </ion-button>
+              </div>
+
+              <ion-searchbar
+                class="ability-tag-set-catalog__search"
+                [debounce]="150"
+                [placeholder]="t('catalog.searchPlaceholder')"
+                [value]="searchTerm()"
+                (ionInput)="onSearchChange($event)"
+                (keydown.enter)="onSearchEnter()"
+              ></ion-searchbar>
+
+              @if (!filteredSections().length) {
+                <div class="ability-tag-set-catalog__empty">
+                  <strong>{{ t('catalog.emptySearchTitle') }}</strong>
+                  <p>{{ t('catalog.emptySearchCopy') }}</p>
+                </div>
+              } @else {
+                <div class="ability-tag-set-catalog__sections">
+                  @for (section of filteredSections(); track section.key) {
+                    <section class="ability-tag-set-catalog__section">
+                      <div class="ability-tag-set-catalog__section-head">
+                        <strong>{{ section.label }}</strong>
+                        <small>{{
+                          t('catalog.sectionCount', { count: section.tiles.length })
+                        }}</small>
+                      </div>
+
+                      <div class="ability-tag-set-tile-grid">
+                        @for (tile of section.tiles; track tile.item.key) {
+                          <button
+                            type="button"
+                            class="ability-tag-set-tile"
+                            [attr.data-testid]="'ability-tag-set-tile-' + tile.item.key"
+                            [class.is-selected]="tile.inActiveSet"
+                            (click)="toggleCatalogItem(tile.item)"
+                          >
+                            <span class="ability-tag-set-tile__badge" aria-hidden="true">{{
+                              tile.badge
+                            }}</span>
+                            <span class="ability-tag-set-tile__copy">
+                              <strong>{{ tile.item.label }}</strong>
+                              <span class="ability-tag-set-tile__meta">
+                                <small>{{
+                                  t('catalog.matchCount', { count: tile.item.matchCount })
+                                }}</small>
+                                @if (tile.memberSetIndexes.length) {
+                                  <small class="ability-tag-set-tile__member">{{
+                                    t('catalog.alreadyInGroup', {
+                                      groups: tile.memberSetIndexes.join(', '),
+                                    })
+                                  }}</small>
+                                }
+                              </span>
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    </section>
+                  }
+                </div>
+              }
+            </section>
+          </div>
+        </ion-content>
+
+        <footer class="ability-tag-set-footer">
+          <div class="ability-tag-set-footer__actions">
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="cancel(); tagSetPickerModal.dismiss(null, 'cancel')"
+            >
+              {{ 'common.actions.cancel' | transloco }}
+            </ion-button>
+            <ion-button color="warning" data-testid="ability-tag-set-picker-save" (click)="save()">
+              {{ 'common.actions.save' | transloco }}
+            </ion-button>
+          </div>
+        </footer>
+      </app-ability-tag-set-picker-style-panels>
+    </ng-template>
+  </ion-modal>
+</ng-container>

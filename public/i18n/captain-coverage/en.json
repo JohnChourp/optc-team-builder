@@ -24,10 +24,9 @@
   },
   "filters": {
     "abilityRailLabel": "Ability filters",
+    "abilityTagSetsTitle": "Ability tag filter",
     "bestAbilityMatchesFirst": "Best ability matches first",
-    "captainAbilityCopy": "Required narrows results by tags parsed from each result character's own Captain Ability. This does not change the selected Captain.",
     "captainAbilityEyebrow": "Required",
-    "captainAbilityTitle": "Required",
     "tierCoverage": {
       "toggle": "Tier Coverage",
       "support": "Filter results by which Captain Ability tiers each character qualifies for.",
@@ -58,9 +57,21 @@
     },
     "characterTags": {
       "label": "Character Tags",
-      "placeholder": "Select character tags",
-      "noMatches": "No matching tags",
-      "support": "Show only result characters that have at least one of the selected tags."
+      "title": "Character tag filter",
+      "trigger": {
+        "empty": "Choose character tags",
+        "active": "{{tags}} tag(s) in {{groups}} group(s)"
+      },
+      "joiners": {
+        "any": "or",
+        "all": "and"
+      },
+      "removeGroup": "Remove tag group {{group}}",
+      "support": {
+        "empty": "Group crew and family tags with OR inside a group and AND across groups, e.g. (Straw Hat Pirates or Heart Pirates) and (Dressrosa).",
+        "all": "Showing characters that match every tag group.",
+        "any": "Showing characters that match at least one tag group."
+      }
     },
     "class": {
       "label": "Class",
@@ -70,17 +81,11 @@
       "from": "Cost from",
       "to": "Cost to"
     },
-    "crewmateCopy": "Filter character results by Crewmate Ability tags.",
     "crewmateEyebrow": "Crewmate Ability",
-    "crewmateTitle": "Crewmate Ability filters",
     "favoritesOnly": "Show favorites only",
     "hideFavorites": "Hide favorites",
-    "potentialCopy": "Filter character results by Potential Ability tags.",
     "potentialEyebrow": "Potential Ability",
-    "potentialTitle": "Potential Ability filters",
-    "specialCopy": "Filter character results by Special tags.",
     "specialEyebrow": "Special",
-    "specialTitle": "Special filters",
     "superTandemPresence": {
       "toggle": "Super Tandem",
       "support": "Show only characters with structured Super Tandem data."
@@ -89,9 +94,7 @@
       "toggle": "Super Types/Classes",
       "support": "Show only characters with structured Super Type or Super Class data."
     },
-    "supportCopy": "Filter character results by Support Ability tags.",
     "supportEyebrow": "Support Ability",
-    "supportTitle": "Support Ability filters",
     "type": {
       "label": "Type",
       "placeholder": "Type to filter by character type"

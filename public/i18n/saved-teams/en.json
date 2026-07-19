@@ -10,23 +10,17 @@
   "abilityFilters": {
     "clearAll": "Clear ability filters",
     "clearSection": "Clear",
-    "copy": "Pick one or more slot-derived abilities. Saved teams must cover every selected ability in the selected slot group.",
-    "categories": {
-      "captain": "Captain",
-      "crewmate": "Crewmate",
-      "potential": "Potential",
-      "special": "Special",
-      "support": "Support"
-    },
+    "copy": "Build ability groups per slot group: OR inside a group, AND across groups.",
     "empty": {
       "copy": "Clear an ability filter or choose a different combination.",
-      "title": "No saved teams cover every selected ability."
+      "title": "No saved teams match the selected ability groups."
     },
     "eyebrow": "Ability coverage",
-    "metadata": {
-      "selectableDebuff": "Selectable debuff",
-      "turns": "{{count}} turns"
+    "joiners": {
+      "all": "and",
+      "any": "or"
     },
+    "removeGroup": "Remove ability group {{group}}",
     "sections": {
       "crew": {
         "copy": "Abilities found in slots 3-6.",
@@ -38,19 +32,16 @@
       }
     },
     "selected": "selected",
-    "sources": {
-      "captainAbility": "Captain",
-      "finalTapData": "Final Tap",
-      "potentialAbilities": "Potential",
-      "rushSugoSpecialData": "Rush",
-      "sailorAbilities": "Crewmate",
-      "specialText": "Special",
-      "superSpecialText": "Super Special",
-      "superTandemData": "Super Tandem",
-      "supportData": "Support"
+    "support": {
+      "all": "Showing saved teams that match every ability group.",
+      "any": "Showing saved teams that match at least one ability group.",
+      "empty": "Group abilities with OR inside a group and AND across groups, e.g. (Remove Bind or Remove Despair) and (Boost ATK)."
     },
-    "teamCount": "{{count}} teams",
-    "title": "Filter saved teams by covered abilities"
+    "title": "Filter saved teams by covered abilities",
+    "trigger": {
+      "active": "{{abilities}} ability(s) in {{groups}} group(s)",
+      "empty": "Choose abilities"
+    }
   },
   "confirm": {
     "deleteSelected": "Delete {{count}} selected teams?",

@@ -24,7 +24,7 @@
     },
     "captainAbility": {
       "label": "Captain Ability filters",
-      "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν αυτά τα effects στο δικό τους Captain Ability.",
+      "support": "{{count}} επιλεγμένα Captain Ability effects στα tag groups σου. Κάθε group ταιριάζει με τον δικό του κανόνα και τα groups συνδυάζονται όπως δείχνει ο picker.",
       "open": "Άνοιγμα Captain Ability picker",
       "clear": "Καθαρισμός",
       "eyebrow": "Captain Ability",
@@ -33,7 +33,7 @@
     },
     "special": {
       "label": "Special filters",
-      "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
+      "support": "{{count}} επιλεγμένα Special effects στα tag groups σου. Κάθε group ταιριάζει με τον δικό του κανόνα και τα groups συνδυάζονται όπως δείχνει ο picker.",
       "open": "Άνοιγμα Special picker",
       "clear": "Καθαρισμός",
       "eyebrow": "Special",
@@ -42,21 +42,21 @@
     },
     "crewmate": {
       "label": "Crewmate Ability filters",
-      "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
+      "support": "{{count}} επιλεγμένα Crewmate effects στα tag groups σου. Κάθε group ταιριάζει με τον δικό του κανόνα και τα groups συνδυάζονται όπως δείχνει ο picker.",
       "open": "Άνοιγμα Crewmate picker",
       "clear": "Καθαρισμός",
       "eyebrow": "Crewmate Ability",
       "title": "Crewmate Ability filters",
-      "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
+      "copy": "Επίλεξε Crewmate effects και ομαδοποίησέ τα. Ένα group μπορεί να απαιτεί όλα τα tags ή μόνο ένα από αυτά."
     },
     "potential": {
       "label": "Potential Ability filters",
-      "support": "{{count}} επιλεγμένα effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
+      "support": "{{count}} επιλεγμένα Potential effects στα tag groups σου. Κάθε group ταιριάζει με τον δικό του κανόνα και τα groups συνδυάζονται όπως δείχνει ο picker.",
       "open": "Άνοιγμα Potential picker",
       "clear": "Καθαρισμός",
       "eyebrow": "Potential Ability",
       "title": "Potential Ability filters",
-      "copy": "Επίλεξε Potential effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
+      "copy": "Επίλεξε Potential effects και ομαδοποίησέ τα. Ένα group μπορεί να απαιτεί όλα τα tags ή μόνο ένα από αυτά."
     },
     "type": {
       "label": "Type",
@@ -64,12 +64,15 @@
     },
     "support": {
       "label": "Support Ability filters",
-      "support": "{{count}} selected effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
+      "support": "{{count}} επιλεγμένα Support effects στα tag groups σου. Κάθε group ταιριάζει με τον δικό του κανόνα και τα groups συνδυάζονται όπως δείχνει ο picker.",
       "open": "Άνοιγμα Support picker",
       "clear": "Καθαρισμός",
       "eyebrow": "Support Ability",
       "title": "Support Ability filters",
-      "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect."
+      "copy": "Επίλεξε Support effects και ομαδοποίησέ τα. Ένα group μπορεί να απαιτεί όλα τα tags ή μόνο ένα από αυτά."
+    },
+    "tagSets": {
+      "title": "Φίλτρα tag χαρακτήρων"
     }
   },
   "favorites": {

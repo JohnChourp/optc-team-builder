@@ -147,10 +147,7 @@
                                 [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
                                 (click)="$event.stopPropagation(); openCharacterPicker(index)"
                               >
-                                <ion-icon
-                                  [icon]="editIcon"
-                                  aria-hidden="true"
-                                ></ion-icon>
+                                <ion-icon [icon]="editIcon" aria-hidden="true"></ion-icon>
                               </button>
                               <ion-button
                                 fill="clear"
@@ -243,10 +240,7 @@
                           [attr.aria-label]="t('actions.editSlot', { slot: index + 1 })"
                           (click)="$event.stopPropagation(); openCharacterPicker(index)"
                         >
-                          <ion-icon
-                            [icon]="editIcon"
-                            aria-hidden="true"
-                          ></ion-icon>
+                          <ion-icon [icon]="editIcon" aria-hidden="true"></ion-icon>
                         </button>
                       }
                     </div>
@@ -472,65 +466,24 @@
                     (clearCategory)="clearAbilityFilterCategory($event)"
                   ></app-ability-filter-rail>
 
-                  <app-ability-requirement-picker
-                    [isOpen]="captainAbilityPickerOpen()"
-                    [title]="t('picker.filters.captainAbility.title')"
-                    [copy]="t('picker.filters.captainAbility.copy')"
-                    [drafts]="captainAbilityDrafts()"
-                    [catalogItems]="availableCaptainAbilityCatalogItems()"
-                    [showCharacterCount]="false"
-                    [captainAbilityMode]="true"
-                    (dismiss)="closeCaptainAbilityPicker()"
-                    (saveDrafts)="saveCaptainAbilityPicker($event)"
-                  ></app-ability-requirement-picker>
+                  <app-ability-tag-set-picker
+                    [isOpen]="tagSetPickerOpen()"
+                    [sections]="abilityTagSetSections()"
+                    [selection]="tagSetSelection()"
+                    [title]="t('picker.filters.tagSets.title')"
+                    (dismiss)="closeAbilityTagSetPicker()"
+                    (saveSelection)="saveAbilityTagSetPicker($event)"
+                  ></app-ability-tag-set-picker>
 
-                  <app-special-ability-picker
-                    [isOpen]="specialAbilityPickerOpen()"
-                    category="special"
-                    [eyebrow]="t('picker.filters.special.eyebrow')"
-                    [title]="t('picker.filters.special.title')"
-                    [copy]="t('picker.filters.special.copy')"
-                    [drafts]="specialAbilityDrafts()"
-                    [catalogItems]="availableSpecialAbilityCatalogItems()"
-                    (dismiss)="closeSpecialAbilityPicker()"
-                    (saveDrafts)="saveSpecialAbilityPicker($event)"
-                  ></app-special-ability-picker>
-
-                  <app-special-ability-picker
-                    [isOpen]="crewmateAbilityPickerOpen()"
-                    category="crewmate"
-                    [eyebrow]="t('picker.filters.crewmate.eyebrow')"
-                    [title]="t('picker.filters.crewmate.title')"
-                    [copy]="t('picker.filters.crewmate.copy')"
-                    [drafts]="crewmateAbilityDrafts()"
-                    [catalogItems]="availableCrewmateAbilityCatalogItems()"
-                    (dismiss)="closeCrewmateAbilityPicker()"
-                    (saveDrafts)="saveCrewmateAbilityPicker($event)"
-                  ></app-special-ability-picker>
-
-                  <app-special-ability-picker
-                    [isOpen]="potentialAbilityPickerOpen()"
-                    category="potential"
-                    [eyebrow]="t('picker.filters.potential.eyebrow')"
-                    [title]="t('picker.filters.potential.title')"
-                    [copy]="t('picker.filters.potential.copy')"
-                    [drafts]="potentialAbilityDrafts()"
-                    [catalogItems]="availablePotentialAbilityCatalogItems()"
-                    (dismiss)="closePotentialAbilityPicker()"
-                    (saveDrafts)="savePotentialAbilityPicker($event)"
-                  ></app-special-ability-picker>
-
-                  <app-special-ability-picker
-                    [isOpen]="supportAbilityPickerOpen()"
-                    category="support"
-                    [eyebrow]="t('picker.filters.support.eyebrow')"
-                    [title]="t('picker.filters.support.title')"
-                    [copy]="t('picker.filters.support.copy')"
-                    [drafts]="supportAbilityDrafts()"
-                    [catalogItems]="availableSupportAbilityCatalogItems()"
-                    (dismiss)="closeSupportAbilityPicker()"
-                    (saveDrafts)="saveSupportAbilityPicker($event)"
-                  ></app-special-ability-picker>
+                  <app-character-tag-set-picker
+                    [isOpen]="characterTagSetPickerOpen()"
+                    [availableTags]="availableCharacterTags()"
+                    [selection]="characterTagSetSelection()"
+                    [title]="t('picker.filters.characterTags.title')"
+                    [tagCharacterIds]="characterTagMatchIndex()"
+                    (dismiss)="closeCharacterTagSetPicker()"
+                    (saveSelection)="saveCharacterTagSetPicker($event)"
+                  ></app-character-tag-set-picker>
 
                   <div class="manual-team-picker__filters">
                     <label class="manual-team-picker-filter">
@@ -569,22 +522,23 @@
                       </ion-select>
                     </label>
 
-                    <label class="manual-team-picker-filter">
-                      <span>{{ t('picker.filters.tag') }}</span>
-                      <ion-select
-                        interface="popover"
+                    <div class="manual-team-picker-filter">
+                      <span>{{ t('picker.filters.characterTags.label') }}</span>
+                      <ion-button
                         fill="outline"
-                        [value]="selectedCharacterTagFilter()"
-                        (ionChange)="onCharacterTagFilterChange($event)"
+                        color="light"
+                        data-testid="manual-team-character-tag-sets-trigger"
+                        [attr.aria-label]="
+                          t('picker.filters.characterTags.trigger', {
+                            summary: characterTagFilterLabel(),
+                          })
+                        "
+                        (click)="openCharacterTagSetPicker()"
                       >
-                        <ion-select-option value="">{{
-                          t('picker.filters.anyTag')
-                        }}</ion-select-option>
-                        @for (tag of availableCharacterTags(); track tag) {
-                          <ion-select-option [value]="tag">{{ tag }}</ion-select-option>
-                        }
-                      </ion-select>
-                    </label>
+                        <ion-icon slot="start" [icon]="filterIcon" aria-hidden="true"></ion-icon>
+                        {{ characterTagFilterLabel() }}
+                      </ion-button>
+                    </div>
 
                     <ion-input
                       type="number"
@@ -637,10 +591,10 @@
                   } @else {
                     <div class="manual-team-candidates">
                       @for (candidateCard of candidateCards(); track candidateCard.character.id) {
-                          <article
-                            class="manual-team-candidate"
-                            [attr.data-testid]="'manual-team-candidate-' + candidateCard.character.id"
-                            [class.manual-team-candidate--selected]="
+                        <article
+                          class="manual-team-candidate"
+                          [attr.data-testid]="'manual-team-candidate-' + candidateCard.character.id"
+                          [class.manual-team-candidate--selected]="
                             candidateCard.isAssignedToActiveSlot
                           "
                           [class.manual-team-candidate--assigned-other]="

@@ -186,6 +186,37 @@ For the user-facing flow across guided builds, compare mode, saved-team JSON, sh
 
 ## Migration Policy
 
+## Tag-set filter shapes
+
+Ability tag filters and `characterTags` filters are both stored as a *selection*
+of *sets*, each set carrying its own boolean operator:
+
+```jsonc
+{
+  "operator": "all",          // how the sets combine: "all" | "any"
+  "sets": [
+    { "id": "…", "operator": "any", "requirements": [ /* AutoBuildAbilityRequirement */ ] },
+    { "id": "…", "operator": "all", "tags": ["Straw Hat Pirates"] }
+  ]
+}
+```
+
+`AbilityFilterTagSetSelection` carries `requirements`; `CharacterTagSetSelection`
+carries `tags`. Empty sets are skipped during evaluation, so a half-built group
+never blanks a result list.
+
+- Tag values are stored **case-preserved** and compared case-insensitively.
+  Do not lowercase on write: persisted `characterTags` were never normalized, so
+  folding case would shift existing user data.
+- The Auto Team Builder preset payload is `schemaVersion: 33`, which adds
+  `filters.characterTagSets`. Version 32 and earlier import cleanly by expanding
+  the legacy flat `selectedCharacterTags` plus `requireAllSelectedCharacterTagsInTeam`
+  into a single set. The flat field is still emitted for back-compat.
+- `SavedEnemy` and the saved-teams/all-data transfer payloads stay at their
+  existing versions and carry only the flat tag list, so a set structure that
+  round-trips through them widens to one group. This is a widening, never a
+  spurious rejection.
+
 - Generated dataset compatibility is governed by `DatasetManifest.schemaVersion`.
 - User backups use their payload-level `schemaVersion`.
 - Unsupported user backup versions must fail with the existing typed import errors.

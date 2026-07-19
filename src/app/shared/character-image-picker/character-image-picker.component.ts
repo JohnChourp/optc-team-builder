@@ -25,7 +25,10 @@ import {
 } from '@ionic/angular/standalone';
 import { closeOutline } from 'ionicons/icons';
 
-import { type AutoBuildAbilityCatalog } from '../../core/models/auto-team-builder-ability.models';
+import {
+  type AbilityFilterTagSetSelection,
+  type AutoBuildAbilityCatalog,
+} from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterIdOrder,
   type CharacterListItem,
@@ -34,26 +37,23 @@ import {
   type DatasetManifest,
 } from '../../core/models/optc.models';
 import {
-  createAbilityRequirementDrafts,
-  type AbilityRequirementDraft,
-} from '../../core/services/ability-requirement-draft.utils';
+  cloneAbilityFilterTagSetSelection,
+  createEmptyAbilityFilterTagSetSelection,
+  resolveTagSetSelectionMatchingCharacterIds,
+} from '../../core/services/ability-filter-tag-set.utils';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
   getAbilityCatalogItemsByCategory,
   intersectAbilityMatchingCharacterIds,
-  resolveCategoryAbilityMatchingCharacterIds,
-  resolveSpecialAbilityMatchingCharacterIds,
-  serializeCategoryAbilityDrafts,
-  serializeSpecialAbilityDrafts,
 } from '../../core/services/special-ability-filter.utils';
 import { applyIonicModalDialogLabel } from '../a11y/ionic-modal-dialog-label.utils';
 import {
   AbilityFilterRailComponent,
   type AbilityFilterRailCategory,
 } from '../ability-filter-rail/ability-filter-rail.component';
-import { SpecialAbilityPickerComponent } from '../special-ability-picker/special-ability-picker.component';
+import { AbilityTagSetPickerComponent } from '../ability-tag-set-picker/ability-tag-set-picker.component';
 
 const PAGE_SIZE = 48;
 const CHARACTER_IMAGE_PICKER_MODAL_NAME = 'CharacterImagePickerComponent';
@@ -75,7 +75,7 @@ const CHARACTER_IMAGE_PICKER_MODAL_NAME = 'CharacterImagePickerComponent';
     IonSpinner,
     IonToolbar,
     AbilityFilterRailComponent,
-    SpecialAbilityPickerComponent,
+    AbilityTagSetPickerComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],
@@ -105,14 +105,10 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly hideFavorites = signal(false);
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
-  public readonly specialAbilityPickerOpen = signal(false);
-  public readonly specialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly crewmateAbilityPickerOpen = signal(false);
-  public readonly crewmateAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly potentialAbilityPickerOpen = signal(false);
-  public readonly potentialAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
-  public readonly supportAbilityPickerOpen = signal(false);
-  public readonly supportAbilityDrafts = signal<AbilityRequirementDraft[]>([]);
+  public readonly tagSetPickerOpen = signal(false);
+  public readonly tagSetSelection = signal<AbilityFilterTagSetSelection>(
+    createEmptyAbilityFilterTagSetSelection(),
+  );
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly selectedCharacter = signal<CharacterListItem | null>(null);
   public readonly selectedCharacterId = computed(() => this.selectedCharacter()?.id ?? null);
@@ -137,59 +133,56 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly availableSupportAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'support'),
   );
-  public readonly specialAbilityRequirements = computed(() =>
-    serializeSpecialAbilityDrafts(
-      this.specialAbilityDrafts(),
-      this.availableSpecialAbilityCatalogItems(),
-    ),
+  /**
+   * Stable-identity view of the whole catalog. `getCatalogAbilityIndex` caches by
+   * array identity, so rebuilding this per keystroke would silently turn its O(1)
+   * lookups back into repeated full-catalog scans.
+   */
+  public readonly allCatalogItems = computed(() => this.abilityCatalog()?.abilities ?? []);
+  /** Rail category of every ability key the picker exposes, in rail order. */
+  private readonly abilityFilterCategoryByKey = computed(() => {
+    const categoryByKey = new Map<string, AbilityFilterRailCategory>();
+
+    for (const item of this.availableSpecialAbilityCatalogItems()) {
+      categoryByKey.set(item.key, 'special');
+    }
+
+    for (const item of this.availableCrewmateAbilityCatalogItems()) {
+      categoryByKey.set(item.key, 'crewmate');
+    }
+
+    for (const item of this.availablePotentialAbilityCatalogItems()) {
+      categoryByKey.set(item.key, 'potential');
+    }
+
+    for (const item of this.availableSupportAbilityCatalogItems()) {
+      categoryByKey.set(item.key, 'support');
+    }
+
+    return categoryByKey;
+  });
+  public readonly hasAbilityFilterCatalogItems = computed(
+    () => this.abilityFilterCategoryByKey().size > 0,
   );
-  public readonly specialFilterCharacterIds = computed(() =>
-    resolveSpecialAbilityMatchingCharacterIds(
-      this.specialAbilityRequirements(),
-      this.availableSpecialAbilityCatalogItems(),
-    ),
-  );
-  public readonly crewmateAbilityRequirements = computed(() =>
-    serializeCategoryAbilityDrafts(
-      this.crewmateAbilityDrafts(),
-      this.availableCrewmateAbilityCatalogItems(),
-      'crewmate',
-    ),
-  );
-  public readonly potentialAbilityRequirements = computed(() =>
-    serializeCategoryAbilityDrafts(
-      this.potentialAbilityDrafts(),
-      this.availablePotentialAbilityCatalogItems(),
-      'potential',
-    ),
-  );
-  public readonly supportAbilityRequirements = computed(() =>
-    serializeCategoryAbilityDrafts(
-      this.supportAbilityDrafts(),
-      this.availableSupportAbilityCatalogItems(),
-      'support',
-    ),
-  );
-  public readonly crewmateFilterCharacterIds = computed(() =>
-    resolveCategoryAbilityMatchingCharacterIds(
-      this.crewmateAbilityRequirements(),
-      this.availableCrewmateAbilityCatalogItems(),
-      'crewmate',
-    ),
-  );
-  public readonly potentialFilterCharacterIds = computed(() =>
-    resolveCategoryAbilityMatchingCharacterIds(
-      this.potentialAbilityRequirements(),
-      this.availablePotentialAbilityCatalogItems(),
-      'potential',
-    ),
-  );
-  public readonly supportFilterCharacterIds = computed(() =>
-    resolveCategoryAbilityMatchingCharacterIds(
-      this.supportAbilityRequirements(),
-      this.availableSupportAbilityCatalogItems(),
-      'support',
-    ),
+  /** Requirement count per rail category, summed across every tag set. */
+  private readonly abilityFilterCategoryCounts = computed(() => {
+    const categoryByKey = this.abilityFilterCategoryByKey();
+    const counts = new Map<AbilityFilterRailCategory, number>();
+
+    for (const set of this.tagSetSelection().sets) {
+      for (const requirement of set.requirements) {
+        const category = categoryByKey.get(requirement.abilityKey);
+
+        if (category) {
+          counts.set(category, (counts.get(category) ?? 0) + 1);
+        }
+      }
+    }
+
+    return counts;
+  });
+  public readonly tagSetFilterCharacterIds = computed(() =>
+    resolveTagSetSelectionMatchingCharacterIds(this.tagSetSelection(), this.allCatalogItems()),
   );
 
   private dismissReason: 'save' | 'cancel' | null = null;
@@ -305,158 +298,46 @@ export class CharacterImagePickerComponent implements OnChanges {
     await this.loadCharacters(false);
   }
 
-  public openSpecialAbilityPicker(): void {
-    if (this.applyingSelection || !this.availableSpecialAbilityCatalogItems().length) {
+  public abilityFilterCategoryCount(category: AbilityFilterRailCategory): number {
+    return this.abilityFilterCategoryCounts().get(category) ?? 0;
+  }
+
+  /** Every rail chip opens the same tag-set modal; the chips only report counts. */
+  public openTagSetPicker(): void {
+    if (this.applyingSelection || !this.hasAbilityFilterCatalogItems()) {
       return;
     }
 
-    this.specialAbilityPickerOpen.set(true);
+    this.tagSetPickerOpen.set(true);
   }
 
-  public closeSpecialAbilityPicker(): void {
-    this.specialAbilityPickerOpen.set(false);
+  public closeTagSetPicker(): void {
+    this.tagSetPickerOpen.set(false);
   }
 
-  public async saveSpecialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    this.specialAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeSpecialAbilityDrafts(drafts, this.availableSpecialAbilityCatalogItems()),
-      ),
-    );
-    this.specialAbilityPickerOpen.set(false);
+  public async saveTagSetSelection(selection: AbilityFilterTagSetSelection): Promise<void> {
+    this.tagSetSelection.set(cloneAbilityFilterTagSetSelection(selection));
+    this.tagSetPickerOpen.set(false);
     await this.loadCharacters(true);
   }
 
-  public async clearSpecialAbilityFilters(): Promise<void> {
-    this.specialAbilityDrafts.set([]);
-    await this.loadCharacters(true);
-  }
-
-  public openCrewmateAbilityPicker(): void {
-    if (this.applyingSelection || !this.availableCrewmateAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.crewmateAbilityPickerOpen.set(true);
-  }
-
-  public closeCrewmateAbilityPicker(): void {
-    this.crewmateAbilityPickerOpen.set(false);
-  }
-
-  public async saveCrewmateAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    this.crewmateAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(
-          drafts,
-          this.availableCrewmateAbilityCatalogItems(),
-          'crewmate',
-        ),
-      ),
-    );
-    this.crewmateAbilityPickerOpen.set(false);
-    await this.loadCharacters(true);
-  }
-
-  public async clearCrewmateAbilityFilters(): Promise<void> {
-    this.crewmateAbilityDrafts.set([]);
-    await this.loadCharacters(true);
-  }
-
-  public openPotentialAbilityPicker(): void {
-    if (this.applyingSelection || !this.availablePotentialAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.potentialAbilityPickerOpen.set(true);
-  }
-
-  public closePotentialAbilityPicker(): void {
-    this.potentialAbilityPickerOpen.set(false);
-  }
-
-  public async savePotentialAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    this.potentialAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(
-          drafts,
-          this.availablePotentialAbilityCatalogItems(),
-          'potential',
-        ),
-      ),
-    );
-    this.potentialAbilityPickerOpen.set(false);
-    await this.loadCharacters(true);
-  }
-
-  public async clearPotentialAbilityFilters(): Promise<void> {
-    this.potentialAbilityDrafts.set([]);
-    await this.loadCharacters(true);
-  }
-
-  public openSupportAbilityPicker(): void {
-    if (this.applyingSelection || !this.availableSupportAbilityCatalogItems().length) {
-      return;
-    }
-
-    this.supportAbilityPickerOpen.set(true);
-  }
-
-  public closeSupportAbilityPicker(): void {
-    this.supportAbilityPickerOpen.set(false);
-  }
-
-  public async saveSupportAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
-    this.supportAbilityDrafts.set(
-      createAbilityRequirementDrafts(
-        serializeCategoryAbilityDrafts(
-          drafts,
-          this.availableSupportAbilityCatalogItems(),
-          'support',
-        ),
-      ),
-    );
-    this.supportAbilityPickerOpen.set(false);
-    await this.loadCharacters(true);
-  }
-
-  public async clearSupportAbilityFilters(): Promise<void> {
-    this.supportAbilityDrafts.set([]);
-    await this.loadCharacters(true);
-  }
-
-  public openAbilityFilterCategory(category: AbilityFilterRailCategory): void {
-    switch (category) {
-      case 'special':
-        this.openSpecialAbilityPicker();
-        break;
-      case 'crewmate':
-        this.openCrewmateAbilityPicker();
-        break;
-      case 'potential':
-        this.openPotentialAbilityPicker();
-        break;
-      case 'support':
-        this.openSupportAbilityPicker();
-        break;
-    }
-  }
-
+  /** Drops one category's tags from every set, then any set left with no tags. */
   public async clearAbilityFilterCategory(category: AbilityFilterRailCategory): Promise<void> {
-    switch (category) {
-      case 'special':
-        await this.clearSpecialAbilityFilters();
-        break;
-      case 'crewmate':
-        await this.clearCrewmateAbilityFilters();
-        break;
-      case 'potential':
-        await this.clearPotentialAbilityFilters();
-        break;
-      case 'support':
-        await this.clearSupportAbilityFilters();
-        break;
-    }
+    const categoryByKey = this.abilityFilterCategoryByKey();
+
+    this.tagSetSelection.update((selection) => ({
+      ...selection,
+      sets: selection.sets
+        .map((set) => ({
+          ...set,
+          requirements: set.requirements.filter(
+            (requirement) => categoryByKey.get(requirement.abilityKey) !== category,
+          ),
+        }))
+        .filter((set) => set.requirements.length > 0),
+    }));
+
+    await this.loadCharacters(true);
   }
 
   public selectCharacter(character: CharacterListItem): void {
@@ -538,10 +419,7 @@ export class CharacterImagePickerComponent implements OnChanges {
       ]);
       const nextOffset = reset ? 0 : this.characters().length;
       const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
-        this.specialFilterCharacterIds(),
-        this.crewmateFilterCharacterIds(),
-        this.potentialFilterCharacterIds(),
-        this.supportFilterCharacterIds(),
+        this.tagSetFilterCharacterIds(),
       ]);
       const query = {
         searchTerm: this.searchTerm().trim(),
@@ -594,14 +472,8 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.selectedIdOrder.set('newest');
     this.favoritesOnly.set(false);
     this.hideFavorites.set(false);
-    this.specialAbilityPickerOpen.set(false);
-    this.specialAbilityDrafts.set([]);
-    this.crewmateAbilityPickerOpen.set(false);
-    this.crewmateAbilityDrafts.set([]);
-    this.potentialAbilityPickerOpen.set(false);
-    this.potentialAbilityDrafts.set([]);
-    this.supportAbilityPickerOpen.set(false);
-    this.supportAbilityDrafts.set([]);
+    this.tagSetPickerOpen.set(false);
+    this.tagSetSelection.set(createEmptyAbilityFilterTagSetSelection());
     this.characters.set([]);
     this.selectedCharacter.set(null);
   }

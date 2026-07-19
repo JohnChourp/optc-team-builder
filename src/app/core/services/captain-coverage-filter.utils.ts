@@ -1,8 +1,4 @@
 import {
-  type AutoBuildAbilityRequirement,
-  type NormalizedBuilderAbility,
-} from '../models/auto-team-builder-ability.models';
-import {
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildCaptainAbilityCoverageMode,
   type AutoTeamBuilderType,
@@ -13,14 +9,16 @@ import {
   type CharacterDetailRecord,
   type CharacterListItem,
 } from '../models/optc.models';
-import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
-import {
-  type CaptainCoverageResult,
-  resolveCaptainCoverage,
-} from './captain-coverage.utils';
+import { type CaptainCoverageResult, resolveCaptainCoverage } from './captain-coverage.utils';
 
 export interface CaptainCoverageFilterState {
-  requiredAbilityRequirements: AutoBuildAbilityRequirement[];
+  /**
+   * Character ids the ability tag-set selection resolves to, or `null` when no
+   * ability filter is active. The caller resolves the whole AND/OR formula once
+   * with `resolveTagSetSelectionMatchingCharacterIds` and hands the index down,
+   * so this per-character path and the page-level one cannot drift apart.
+   */
+  requiredAbilityCharacterIds: ReadonlySet<number> | null;
   requireSuperTandem: boolean;
   requireSuperTypesClasses: boolean;
   requireCaptainCoverage: boolean;
@@ -45,7 +43,7 @@ export interface CaptainCoverageFilterResult {
 }
 
 const DEFAULT_CAPTAIN_COVERAGE_FILTER_STATE: CaptainCoverageFilterState = {
-  requiredAbilityRequirements: [],
+  requiredAbilityCharacterIds: null,
   requireSuperTandem: false,
   requireSuperTypesClasses: false,
   requireCaptainCoverage: true,
@@ -57,10 +55,12 @@ export function createCaptainCoverageFilterState(
   overrides: Partial<CaptainCoverageFilterState> = {},
 ): CaptainCoverageFilterState {
   return {
-    requiredAbilityRequirements: [
-      ...(overrides.requiredAbilityRequirements ??
-        DEFAULT_CAPTAIN_COVERAGE_FILTER_STATE.requiredAbilityRequirements),
-    ],
+    // Deliberately kept by reference while every other field is copied: this is a
+    // read-only id index that can hold thousands of entries, and
+    // `resolveCaptainCoverageFilterResult` rebuilds the state once per character.
+    requiredAbilityCharacterIds:
+      overrides.requiredAbilityCharacterIds ??
+      DEFAULT_CAPTAIN_COVERAGE_FILTER_STATE.requiredAbilityCharacterIds,
     requireSuperTandem:
       overrides.requireSuperTandem ?? DEFAULT_CAPTAIN_COVERAGE_FILTER_STATE.requireSuperTandem,
     requireSuperTypesClasses:
@@ -90,9 +90,9 @@ export function resolveCaptainCoverageFilterResult(
     targetCharacterTags: target.detail?.detail.characterTags ?? [],
   });
   const matchesCaptainCoverage = filterState.requireCaptainCoverage ? coverage.matches : true;
-  const matchesRequiredAbilityFilters = matchesCaptainCoverageRequiredAbilityFilters(
-    target.detail?.detail.builderAbilities ?? [],
-    filterState.requiredAbilityRequirements,
+  const matchesRequiredAbilityFilters = matchesCaptainCoverageRequiredAbilityCharacterIds(
+    target.character.id,
+    filterState.requiredAbilityCharacterIds,
   );
   const matchesSuperTandem =
     !filterState.requireSuperTandem || hasCaptainCoverageSuperTandemData(target.detail);
@@ -334,7 +334,9 @@ export function matchesCaptainCoverageTier(
   // Fallback tier: target matches iff it does NOT satisfy any more-specific subset tier in the
   // same entry. This is the natural complement reading of "all other characters".
   if (conditions.fallbackOther) {
-    return !subsetTiersInEntry.some((subset) => matchesTierCharacterConditionsInner(subset, target));
+    return !subsetTiersInEntry.some((subset) =>
+      matchesTierCharacterConditionsInner(subset, target),
+    );
   }
 
   return matchesTierCharacterConditionsInner(tier, target);
@@ -593,9 +595,7 @@ function matchesTierCharacterConditionsInner(
   const targetTypes = target.type.split(',').map((entry) => entry.trim().toUpperCase());
   if (
     conditions.dominantType === true &&
-    targetTypes.some((type) =>
-      ['DEX', 'STR', 'QCK', 'PSY', 'INT'].includes(type.toUpperCase()),
-    )
+    targetTypes.some((type) => ['DEX', 'STR', 'QCK', 'PSY', 'INT'].includes(type.toUpperCase()))
   ) {
     return true;
   }
@@ -655,19 +655,16 @@ function resolveCaptainCoverageFilterCoverageMode(
   return state.requireFullCoverage ? 'fullAbilityCoverage' : 'simpleBoostScope';
 }
 
-export function matchesCaptainCoverageRequiredAbilityFilters(
-  abilities: readonly NormalizedBuilderAbility[],
-  requirements: readonly AutoBuildAbilityRequirement[],
+/**
+ * Ability filtering is a membership test now: the tag-set resolver has already
+ * applied every requirement's own source scope (captain effects resolve through
+ * the captain index), so re-reading `builderAbilities` here would second-guess it.
+ */
+export function matchesCaptainCoverageRequiredAbilityCharacterIds(
+  characterId: number,
+  requiredAbilityCharacterIds: ReadonlySet<number> | null,
 ): boolean {
-  if (!requirements.length) {
-    return true;
-  }
-
-  const captainAbilities = abilities.filter((ability) => ability.source === 'captainAbility');
-
-  return captainAbilities.some((ability) =>
-    requirements.some((requirement) => matchesAbilityRequirement(ability, requirement)),
-  );
+  return requiredAbilityCharacterIds === null || requiredAbilityCharacterIds.has(characterId);
 }
 
 export function hasCaptainCoverageSuperTandemData(

@@ -94,7 +94,12 @@ try {
 }
 
 function sanitizeSegment(value) {
-  return value.trim().replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'ability-filter';
+  return (
+    value
+      .trim()
+      .replace(/[^A-Za-z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'ability-filter'
+  );
 }
 
 function resolveGitHead() {
@@ -126,7 +131,7 @@ async function ensureServer() {
 
 function spawnNpmStartServer() {
   const args = ['start', '--', '--host', '127.0.0.1', '--port', String(port)];
-  const command = process.platform === 'win32' ? process.env.ComSpec ?? 'cmd.exe' : npmBin;
+  const command = process.platform === 'win32' ? (process.env.ComSpec ?? 'cmd.exe') : npmBin;
   const commandArgs =
     process.platform === 'win32' ? ['/d', '/s', '/c', [npmBin, ...args].join(' ')] : args;
 
@@ -178,10 +183,7 @@ function killServerProcess(child, signal) {
 }
 
 async function closeBrowser(activeBrowser) {
-  await Promise.race([
-    activeBrowser.close(),
-    new Promise((resolve) => setTimeout(resolve, 5_000)),
-  ]);
+  await Promise.race([activeBrowser.close(), new Promise((resolve) => setTimeout(resolve, 5_000))]);
 }
 
 async function serverResponds() {
@@ -246,14 +248,22 @@ function buildSavedTeams() {
     name: `Perf Team ${index + 1}`,
     notes: 'Synthetic ability-filter performance run.',
     shipId: null,
-    slots: Array.from({ length: 6 }, (__, slotIndex) => ids[(index + slotIndex) % ids.length] ?? null),
+    slots: Array.from(
+      { length: 6 },
+      (__, slotIndex) => ids[(index + slotIndex) % ids.length] ?? null,
+    ),
     createdAt: '2026-06-26T00:00:00.000Z',
     updatedAt: '2026-06-26T00:00:00.000Z',
   }));
 }
 
 function buildSavedEnemies(abilities) {
-  const abilityKeys = [abilities.special, abilities.crewmate, abilities.potential, abilities.support];
+  const abilityKeys = [
+    abilities.special,
+    abilities.crewmate,
+    abilities.potential,
+    abilities.support,
+  ];
 
   return Array.from({ length: 420 }, (_, index) => {
     const first = abilityKeys[index % abilityKeys.length];
@@ -352,7 +362,8 @@ async function measureToggle(page, selector, selectedClass) {
   const start = performance.now();
   await button.click();
   await page.waitForFunction(
-    ({ targetSelector, className }) => document.querySelector(targetSelector)?.classList.contains(className),
+    ({ targetSelector, className }) =>
+      document.querySelector(targetSelector)?.classList.contains(className),
     { targetSelector: selector, className: selectedClass },
     { timeout: 30_000 },
   );
@@ -370,18 +381,39 @@ async function measureSavedTeams(page, viewportLabel) {
     path: path.join(artifactDir, `${runLabel}-${viewportLabel}-saved-teams.png`),
     fullPage: true,
   });
-  const toggleMs = await measureToggle(
-    page,
-    '[data-testid^="saved-team-ability-chip-"]',
-    'saved-team-ability-chip--selected',
-  );
+  const toggleMs = await measureAbilityTagSetFilter(page);
 
   return {
     seededCount: 360,
     pageReadyMs: Math.round(pageReadyMs),
     firstToggleMs: Math.round(toggleMs),
-    chipCount: await page.locator('[data-testid^="saved-team-ability-chip-"]').count(),
+    chipCount: await page.locator('.saved-team-ability-chip--selected').count(),
   };
+}
+
+/**
+ * Saved teams filters through the tag-set modal now, so the first filter costs a
+ * whole open/pick/save round trip instead of one chip toggle. Measuring the round
+ * trip keeps the metric honest rather than timing an interaction that is gone.
+ */
+async function measureAbilityTagSetFilter(page) {
+  const trigger = page.getByTestId('saved-teams-ability-trigger-leader');
+  await trigger.scrollIntoViewIfNeeded();
+  const start = performance.now();
+  await trigger.click();
+  await page.getByTestId('character-tag-set-start').click();
+  await page
+    .locator('ion-modal.show-modal [data-testid^="character-tag-set-tile-"]')
+    .first()
+    .click();
+  await page.getByTestId('character-tag-set-picker-save').click();
+  await page.locator('.saved-team-ability-chip--selected').first().waitFor({
+    state: 'visible',
+    timeout: 30_000,
+  });
+  await waitForAngular(page);
+
+  return performance.now() - start;
 }
 
 async function measureSavedEnemies(page, viewportLabel) {
@@ -416,17 +448,23 @@ async function measureManualPicker(page, viewportLabel) {
   );
   const openStart = performance.now();
   await page.getByTestId('manual-team-slot-edit-0').click();
-  await page.locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]').first().waitFor({
-    state: 'visible',
-    timeout: 60_000,
-  });
+  await page
+    .locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]')
+    .first()
+    .waitFor({
+      state: 'visible',
+      timeout: 60_000,
+    });
   await waitForAngular(page);
   const pickerOpenMs = performance.now() - openStart;
 
   const filterStart = performance.now();
   await page.getByTestId('ability-filter-chip-special').click();
-  await page.getByTestId(`special-ability-tile-${selectedAbilities.special}`).click();
-  await page.getByTestId('special-ability-picker-save').click();
+  // The tag-set picker opens on its explainer; the catalog only appears once a
+  // first group exists, so the run has to create one before picking a tag.
+  await page.getByTestId('ability-tag-set-start').click();
+  await page.getByTestId(`ability-tag-set-tile-${selectedAbilities.special}`).click();
+  await page.getByTestId('ability-tag-set-picker-save').click();
   await page.waitForFunction(
     () =>
       document
@@ -435,10 +473,13 @@ async function measureManualPicker(page, viewportLabel) {
     undefined,
     { timeout: 30_000 },
   );
-  await page.locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]').first().waitFor({
-    state: 'visible',
-    timeout: 60_000,
-  });
+  await page
+    .locator('ion-modal.show-modal [data-testid^="manual-team-candidate-"]')
+    .first()
+    .waitFor({
+      state: 'visible',
+      timeout: 60_000,
+    });
   await waitForAngular(page);
   const specialFilterMs = performance.now() - filterStart;
 

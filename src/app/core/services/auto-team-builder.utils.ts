@@ -37,6 +37,8 @@ import {
   normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
   normalizeAbilityRequirementSlotScope,
+  normalizeAbilityTagSetOperator,
+  type AbilityTagSetOperator,
   type AutoBuildAbilityRequirement,
   type AutoBuildBattleRequirement,
   type AutoBuildRequiredCharacterGroup,
@@ -1979,6 +1981,10 @@ export function buildAutoTeamResultFromPreparedContext(
           continue;
         }
 
+        if (coverage.coversCharacterTagSets === false) {
+          continue;
+        }
+
         if (
           input.requireAllSelectedCharacterNamesInTeam &&
           !coverage.coversAllSelectedCharacterNames
@@ -3009,6 +3015,10 @@ function selectSubs(
       return false;
     }
 
+    if (nextCoverage.coversCharacterTagSets === false) {
+      return false;
+    }
+
     if (
       input.requireAllSelectedCharacterNamesInTeam &&
       !nextCoverage.coversAllSelectedCharacterNames
@@ -3691,6 +3701,7 @@ function pushRejectedSubConstraintReasons(
     ((shouldRequireAllLeaderTiersCovered(input) && !coverage.leaderCriteria.allLeaderTiersCovered) ||
       (input.requireAllSelectedTypesInTeam && !coverage.coversAllSelectedTypes) ||
       (input.requireAllSelectedCharacterTagsInTeam && !coverage.coversAllSelectedCharacterTags) ||
+      coverage.coversCharacterTagSets === false ||
       (input.requireAllSelectedCharacterNamesInTeam && !coverage.coversAllSelectedCharacterNames) ||
       (input.requiredAbilities.length && !coverage.abilityRequirements.matchesAll) ||
       (input.requiredCharacterGroups.length && !coverage.requiredCharacterGroups.matchesAll) ||
@@ -3706,6 +3717,7 @@ function shouldEvaluateRejectedSubRequiredCoverage(input: AutoBuildInput): boole
     shouldRequireAllLeaderTiersCovered(input) ||
     input.requireAllSelectedTypesInTeam ||
     input.requireAllSelectedCharacterTagsInTeam ||
+    hasActiveCharacterTagSetRequirement(input) ||
     input.requireAllSelectedCharacterNamesInTeam ||
     input.requiredAbilities.length > 0 ||
     input.requiredCharacterGroups.length > 0 ||
@@ -4714,6 +4726,7 @@ function summarizeCoverage(
     coversAllSelectedCharacterTags:
       selectedCharacterTags.length === 0 ||
       coveredCharacterTagsList.length === selectedCharacterTags.length,
+    coversCharacterTagSets: teamCoversCharacterTagSets(candidates, input),
     coversAllSelectedCharacterNames:
       selectedCharacterNames.length === 0 ||
       coveredCharacterNamesList.length === selectedCharacterNames.length,
@@ -4844,6 +4857,100 @@ function resolveMatchedSelectedTypes(
   selectedTypes: AutoTeamBuilderType[],
 ): AutoTeamBuilderType[] {
   return selectedTypes.filter((type) => record.typeTokens.includes(type));
+}
+
+/**
+ * True when the whole TEAM satisfies `input.characterTagSets`.
+ *
+ * This page filters at team level, not per character: a set is satisfied by the
+ * union of every slot's tags, so "(Straw Hat Pirates OR Heart Pirates)" passes
+ * when any one slot carries either tag. Within a set the tags join by the set's
+ * operator, the sets join by the selection operator, and empty sets are skipped
+ * — a selection with no populated set filters nothing and returns `true`.
+ *
+ * Set tags are first narrowed to those still listed in `selectedCharacterTags`.
+ * That flat list is what the fallback planner relaxes one tag at a time, so
+ * narrowing is what lets a set weaken (and finally disappear) as its tags are
+ * dropped; without it a fallback attempt would keep enforcing the tags it just
+ * relaxed and could never widen the search. Callers therefore populate the flat
+ * list alongside the sets — the auto-team-builder page derives one from the
+ * other, so they cannot drift.
+ */
+function teamCoversCharacterTagSets(
+  candidates: AutoBuildCandidate[],
+  input: AutoBuildInput,
+): boolean {
+  const activeSets = resolveActiveCharacterTagSets(input);
+
+  if (!activeSets.length) {
+    return true;
+  }
+
+  const teamTagKeys = new Set<string>();
+
+  candidates.forEach((candidate) => {
+    resolveCandidateCharacterTagKeys(candidate).forEach((tagKey) => {
+      if (tagKey.length) {
+        teamTagKeys.add(tagKey);
+      }
+    });
+  });
+
+  const setResults = activeSets.map((set) =>
+    set.operator === 'all'
+      ? set.tagKeys.every((tagKey) => teamTagKeys.has(tagKey))
+      : set.tagKeys.some((tagKey) => teamTagKeys.has(tagKey)),
+  );
+
+  return normalizeAbilityTagSetOperator(input.characterTagSets?.operator ?? 'all') === 'any'
+    ? setResults.some((matches) => matches)
+    : setResults.every((matches) => matches);
+}
+
+/**
+ * The sets that still constrain the search: tags narrowed to the ones the input
+ * still selects, and sets left with no tag dropped entirely.
+ */
+function resolveActiveCharacterTagSets(
+  input: AutoBuildInput,
+): { operator: AbilityTagSetOperator; tagKeys: string[] }[] {
+  const sets = input.characterTagSets?.sets ?? [];
+
+  if (!sets.length) {
+    return [];
+  }
+
+  const selectedTagKeys = new Set(
+    (input.selectedCharacterTags ?? [])
+      .map((selectedTag) => normalizeCaptainTagKey(selectedTag))
+      .filter((tagKey) => tagKey.length > 0),
+  );
+
+  if (!selectedTagKeys.size) {
+    return [];
+  }
+
+  const activeSets: { operator: AbilityTagSetOperator; tagKeys: string[] }[] = [];
+
+  sets.forEach((set) => {
+    const tagKeys = [
+      ...new Set(
+        set.tags
+          .map((tag) => normalizeCaptainTagKey(tag))
+          .filter((tagKey) => tagKey.length > 0 && selectedTagKeys.has(tagKey)),
+      ),
+    ];
+
+    if (tagKeys.length) {
+      activeSets.push({ operator: normalizeAbilityTagSetOperator(set.operator), tagKeys });
+    }
+  });
+
+  return activeSets;
+}
+
+function hasActiveCharacterTagSetRequirement(input: AutoBuildInput): boolean {
+  return resolveActiveCharacterTagSets(input).length > 0;
 }
 
 function resolveMatchedSelectedCharacterTags(

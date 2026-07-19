@@ -61,37 +61,30 @@
       "inBox": "Already in box",
       "notInBox": "Not in box"
     },
+    "abilityTagSets": {
+      "title": "Ability tag filters"
+    },
     "captainAbility": {
       "open": "Captain Ability filters ({{count}})",
-      "eyebrow": "Captain Ability",
-      "title": "Captain Ability filters",
-      "copy": "Filter box character results by effects parsed from each character's own Captain Ability."
+      "eyebrow": "Captain Ability"
     },
     "special": {
       "open": "Special filters ({{count}})",
-      "eyebrow": "Special",
-      "title": "Special filters",
-      "copy": "Filter box character results by Special effects. Results must match every selected effect."
+      "eyebrow": "Special"
     },
     "crewmate": {
       "open": "Crewmate Ability filters ({{count}})",
-      "eyebrow": "Crewmate Ability",
-      "title": "Crewmate Ability filters",
-      "copy": "Pick Crewmate effects. Results must cover every selected effect."
+      "eyebrow": "Crewmate Ability"
     },
     "potential": {
       "open": "Potential Ability filters ({{count}})",
-      "eyebrow": "Potential Ability",
-      "title": "Potential Ability filters",
-      "copy": "Pick Potential effects. Results must cover every selected effect."
+      "eyebrow": "Potential Ability"
     },
     "support": {
       "label": "Support Ability filters",
       "support": "{{count}} selected effects. Results must match every selected effect.",
       "open": "Open Support picker",
-      "eyebrow": "Support Ability",
-      "title": "Support Ability filters",
-      "copy": "Pick Support effects. Results must cover every selected effect."
+      "eyebrow": "Support Ability"
     }
   },
   "displayMode": {

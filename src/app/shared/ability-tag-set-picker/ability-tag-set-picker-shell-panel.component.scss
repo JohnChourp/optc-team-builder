@@ -1,0 +1,114 @@
+.ability-tag-set-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--app-ink);
+}
+
+.ability-tag-set-header ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+  --min-height: auto;
+  --padding-start: 22px;
+  --padding-end: 12px;
+  --padding-top: 22px;
+  --padding-bottom: 0;
+}
+
+.ability-tag-set-header ion-buttons {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.ability-tag-set-content {
+  --background: transparent;
+}
+
+.ability-tag-set-content::part(scroll) {
+  min-height: 100%;
+}
+
+.ability-tag-set-head {
+  min-width: 0;
+  padding-inline-end: 56px;
+}
+
+.ability-tag-set-head h2 {
+  margin: 12px 0 8px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+}
+
+.ability-tag-set-head p {
+  margin: 0;
+  color: var(--app-muted);
+  line-height: 1.6;
+}
+
+.ability-tag-set-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 16px;
+  min-height: 0;
+  padding: 0 22px 18px;
+}
+
+.ability-tag-set-canvas,
+.ability-tag-set-catalog {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 0;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ability-tag-set-canvas__head,
+.ability-tag-set-catalog__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ability-tag-set-canvas__head strong,
+.ability-tag-set-catalog__head strong {
+  display: block;
+  color: #ffffff;
+  font-size: 0.96rem;
+}
+
+.ability-tag-set-canvas__head small,
+.ability-tag-set-catalog__head small {
+  color: var(--app-muted);
+  line-height: 1.45;
+}
+
+/* Visually hidden, but still announced: the live region carries the deltas. */
+.ability-tag-set-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ability-tag-set-notice,
+.ability-tag-set-hint {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.ability-tag-set-notice {
+  padding: 10px 12px;
+  border: 1px solid rgba(245, 200, 76, 0.32);
+  border-radius: 14px;
+  background: rgba(245, 200, 76, 0.1);
+  color: rgba(248, 251, 255, 0.86);
+}
