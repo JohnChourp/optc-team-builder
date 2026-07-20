@@ -11,6 +11,11 @@ import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
+import { type CharacterTagSetSelection } from '../../core/models/optc.models';
+import {
+  createCharacterTagSet,
+  createEmptyCharacterTagSetSelection,
+} from '../../core/services/character-tag-set.utils';
 import { CharacterImagePickerComponent } from './character-image-picker.component';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -402,6 +407,141 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.allCatalogItems()).toHaveLength(4);
   });
 
+  it('narrows the catalog through the character-tag filter', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.onCharacterTagFilterChange({
+      selection: buildCharacterTagSelection([['any', ['Straw Hat Pirates']]]),
+      matchingCharacterIds: [2, 5, 9],
+    });
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+      allowedCharacterIds: [2, 5, 9],
+    });
+    expect(component.characters().map((character) => character.id)).toEqual([2, 5, 9]);
+  });
+
+  it('intersects the character-tag filter with the ability tag-set filter', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.saveTagSetSelection(
+      buildSelection('all', [['all', ['special-a', 'crewmate-a']]]),
+    );
+    await component.onCharacterTagFilterChange({
+      selection: buildCharacterTagSelection([['any', ['Straw Hat Pirates']]]),
+      matchingCharacterIds: [3, 4, 9],
+    });
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowedCharacterIds: [3, 4] }),
+    );
+    expect(component.characters().map((character) => character.id)).toEqual([3, 4]);
+  });
+
+  it('applies no gate when the character-tag selection is empty', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.onCharacterTagFilterChange({
+      selection: createEmptyCharacterTagSetSelection(),
+      matchingCharacterIds: undefined,
+    });
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+    expect(component.characters()).toHaveLength(48);
+  });
+
+  it('clears the character-tag filter when the picker is reopened', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.onCharacterTagFilterChange({
+      selection: buildCharacterTagSelection([['any', ['Straw Hat Pirates']]]),
+      matchingCharacterIds: [2, 5, 9],
+    });
+
+    expect(component.characterTagCharacterIds()).toEqual([2, 5, 9]);
+
+    // The instance is shared by three hosts and is never destroyed between opens,
+    // so a leaked selection would filter an unrelated picker with no visible cause.
+    component.ngOnChanges({
+      isOpen: new SimpleChange(true, true, false),
+    });
+    await flushPromises();
+
+    expect(component.characterTagSetSelection().sets).toHaveLength(0);
+    expect(component.characterTagCharacterIds()).toBeUndefined();
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+    expect(component.characters()).toHaveLength(48);
+  });
+
+  it('builds the very first page with the character-tag ids already applied', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.characterTagCharacterIds.set([4, 6, 8]);
+
+    await (
+      component as unknown as { initializePicker(): Promise<void> }
+    ).initializePicker();
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+      allowedCharacterIds: [4, 6, 8],
+    });
+    expect(component.characters().map((character) => character.id)).toEqual([4, 6, 8]);
+  });
+
   it('renders the search, filters and confirm action in the template', () => {
     const template = readFileSync(
       resolve(
@@ -436,6 +576,13 @@ describe('CharacterImagePickerComponent', () => {
     expect(template).toContain('[selection]="tagSetSelection()"');
     expect(template).toContain('(dismiss)="closeTagSetPicker()"');
     expect(template).toContain('(saveSelection)="saveTagSetSelection($event)"');
+    expect(template).toContain('<app-character-tag-filter');
+    expect(template).toContain('testIdPrefix="character-image-picker"');
+    expect(template).toContain('[selection]="characterTagSetSelection()"');
+    expect(template).toContain('(filterChange)="onCharacterTagFilterChange($event)"');
+    expect(template.indexOf('<app-character-tag-filter')).toBeGreaterThan(
+      template.indexOf('<app-ability-tag-set-picker'),
+    );
     expect(template).toContain('items: availableSpecialAbilityCatalogItems()');
     expect(template).toContain('items: availableSupportAbilityCatalogItems()');
     expect(template).not.toContain('<app-special-ability-picker');
@@ -579,6 +726,18 @@ function buildSelection(
       operator: setOperator,
       requirements: abilityKeys.map((abilityKey) => buildRequirement(abilityKey)),
     })),
+  };
+}
+
+function buildCharacterTagSelection(
+  sets: [AbilityTagSetOperator, string[]][],
+  operator: AbilityTagSetOperator = 'all',
+): CharacterTagSetSelection {
+  return {
+    operator,
+    sets: sets.map(([setOperator, tags], index) =>
+      createCharacterTagSet(tags, setOperator, `character-tag-set-${index + 1}`),
+    ),
   };
 }
 

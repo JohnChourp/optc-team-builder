@@ -95,13 +95,21 @@
 }
 
 /*
- * Scoped to the modal so it cannot leak into the rest of the app. The card-leave
+ * Scoped to the modals so it cannot leak into the rest of the app. The card-leave
  * setTimeout is collapsed separately in TS — CSS cannot shorten a JS timer.
+ *
+ * `.character-tag-set-picker-modal` is listed too: the character tag picker
+ * renders through `AbilityTagSetPickerStylePanelsComponent` and therefore
+ * inherits every keyframe above, but carries its own `cssClass`. Without it,
+ * that modal animated at full speed for users who asked for reduced motion.
  */
 @media (prefers-reduced-motion: reduce) {
   .ability-tag-set-picker-modal *,
   .ability-tag-set-picker-modal *::before,
-  .ability-tag-set-picker-modal *::after {
+  .ability-tag-set-picker-modal *::after,
+  .character-tag-set-picker-modal *,
+  .character-tag-set-picker-modal *::before,
+  .character-tag-set-picker-modal *::after {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;

@@ -50,10 +50,17 @@
           [isOpen]="tagSetPickerOpen()"
           [sections]="tagSetPickerSections()"
           [selection]="tagSetSelection()"
-          [title]="t('filters.tagSets.title')"
+          [title]="t('filters.abilityTagSets.title')"
           (dismiss)="closeAbilityTagSetPicker()"
           (saveSelection)="saveAbilityTagSetPicker($event)"
         ></app-ability-tag-set-picker>
+
+        <app-character-tag-filter
+          testIdPrefix="characters"
+          [selection]="characterTagSetSelection()"
+          [disabled]="loading()"
+          (filterChange)="onCharacterTagFilterChange($event)"
+        ></app-character-tag-filter>
 
         <div class="characters-filter-toolbar">
           <ion-searchbar

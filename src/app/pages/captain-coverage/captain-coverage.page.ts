@@ -71,6 +71,7 @@ import {
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
 import {
+  buildCharacterTagMatchIndex,
   cloneCharacterTagSetSelection,
   countCharacterTagSetTags,
   countPopulatedCharacterTagSets,
@@ -313,29 +314,9 @@ export class CaptainCoveragePage implements OnInit {
    * counts instead of hiding every tally. Keys are lower-cased for lookup while
    * the catalog keeps the cased values the user actually sees.
    */
-  public readonly characterTagMatchIndex = computed<CharacterTagMatchIndex>(() => {
-    const characterIdsByTagKey = new Map<string, number[]>();
-
-    for (const record of this.allCharacterDetailsById().values()) {
-      for (const tag of record.detail.characterTags ?? []) {
-        const tagKey = tag.trim().toLowerCase();
-
-        if (!tagKey) {
-          continue;
-        }
-
-        const characterIds = characterIdsByTagKey.get(tagKey);
-
-        if (characterIds) {
-          characterIds.push(record.id);
-        } else {
-          characterIdsByTagKey.set(tagKey, [record.id]);
-        }
-      }
-    }
-
-    return characterIdsByTagKey;
-  });
+  public readonly characterTagMatchIndex = computed<CharacterTagMatchIndex>(() =>
+    buildCharacterTagMatchIndex(this.allCharacterDetailsById().values()),
+  );
   public readonly selectedCaptainSubtitle = computed(() => {
     const captain = this.selectedCaptain();
 

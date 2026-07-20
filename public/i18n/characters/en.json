@@ -71,8 +71,8 @@
       "title": "Support Ability filters",
       "copy": "Pick Support effects and group them. A group can require every tag, or just one of them."
     },
-    "tagSets": {
-      "title": "Character tag filters"
+    "abilityTagSets": {
+      "title": "Ability tag filters"
     }
   },
   "favorites": {

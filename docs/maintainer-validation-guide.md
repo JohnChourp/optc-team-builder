@@ -43,7 +43,7 @@ script, or workflow prerequisite looks suspect.
 | Auto Team Builder recommendation quality or explanation trust benchmark | `npm run test:ci -- --include src/app/core/services/auto-team-builder.recommendation-benchmark.spec.ts` | Focused benchmark plus engine/service specs when scoring, filtering, fallback, or explanation reason logic changes | Representative team-building cases still pick sensible utility and leader-scope teams, explain fallback, and fail with structural coverage context instead of incidental UI ordering | Test output only |
 | Manual-character overlays or dataset integrity checks | `npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts` | Lightweight manual-character specs plus `npx vitest run scripts --reporter=dot`; add `npm run test:captain-contracts` when generated ability metadata is touched | Manual overlays, linked canonical ids, generated dataset integrity, and broad script sweeps stay trustworthy | Test output only |
 | Dataset-change digest schema, generated-data review summary, or PR digest workflow | `npm run test:dataset-digest` | Focused digest tests plus one real `npm run dataset:digest -- --base-ref origin/main --head-ref HEAD --output /tmp/dataset-change-digest.md --json-output /tmp/dataset-change-digest.json`; add captain/source-data gates for parser changes | Parser/import PRs get a scan-friendly summary of manifest counts, generated records, captain tiers, builder abilities, ability catalog deltas, and suspicious churn | GitHub Actions artifact `dataset-change-digest`; local paths passed to `--output` and `--json-output` |
-| AND/OR tag-set filters (ability tags or `characterTags`) | `npm run test:ci -- --include src/app/core/services/ability-filter-tag-set.utils.spec.ts --include src/app/core/services/character-tag-set.utils.spec.ts` | Focused tag-set utils specs plus the picker component specs and every migrated host spec; add `npm run test:ci` in full when the shared resolver or the Auto Team Builder tag gate changes, and `PERF_ASSERT=0 npm run perf:ability-filters` when the modal flow itself is touched | Multi-set AND/OR semantics stay lossless against the legacy flat filters (the golden replay asserts the expanded sets and the old resolver return identical id sets), empty groups stay skipped rather than blanking results, and the Auto Team Builder engine actually rejects a team that covers none of an `any` group instead of only scoring it | Test output only; perf artifacts under `test-results/ability-filter-performance` |
+| AND/OR tag-set filters (ability tags or `characterTags`) | `npm run test:ci -- --include src/app/core/services/ability-filter-tag-set.utils.spec.ts --include src/app/core/services/character-tag-set.utils.spec.ts`; add `--include src/app/shared/character-tag-filter/character-tag-filter.component.spec.ts --include src/app/shared/character-tag-filter/character-tag-filter.i18n.spec.ts` when the shared character-tag filter shell or its copy changes | Focused tag-set utils specs plus the picker component specs and every migrated host spec (`characters`, `character-boxes`, `rumble-characters`, `character-image-picker`, `captain-coverage`, `manual-team-builder`); add `npm run test:ci` in full when the shared resolver or the Auto Team Builder tag gate changes, `npm run i18n:validate` when `public/i18n/character-tag-filter/` changes, and `PERF_ASSERT=0 npm run perf:ability-filters` when the modal flow itself is touched | Multi-set AND/OR semantics stay lossless against the legacy flat filters (the golden replay asserts the expanded sets and the old resolver return identical id sets), empty groups stay skipped rather than blanking results, the character-tag selection reaches the query only through `allowedCharacterIds` (so an empty selection gates nothing and an empty match list genuinely returns nobody), and the Auto Team Builder engine actually rejects a team that covers none of an `any` group instead of only scoring it | Test output only; perf artifacts under `test-results/ability-filter-performance` |
 | Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters`; use `npm run perf:mobile-pickers` for narrow picker/list responsiveness evidence | Run `npm run perf:ability-filters`, collect the companion explanation/import-share result, then run `npm run perf:budget-report -- --current-dir /path/to/current`; add `npm run perf:mobile-pickers` plus focused unit specs when the change targets mobile pickers, long saved collections, or modal filter lists | Deterministic desktop/mobile ability-filter timings are captured, mobile picker/list screenshots and soft warnings are recorded, and hard budgets are enforced by the budget report for the budgeted harnesses | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` or `test-results/mobile-picker-performance` |
 | Auto Team Builder explanation detail, compare rendering, import/share hydration, or memory pressure | `PERF_ASSERT=0 npm run perf:explanation-compare`; use `npm run perf:memory-pressure` for low-end compare/import memory evidence | `npm run perf:explanation-compare` plus focused Auto Team Builder, Saved Teams, or Manual Team Builder specs; add `npm run perf:memory-pressure` when compare-session persistence, large imports, or low-end recovery behavior changes | Compare-panel rendering, imported compare apply, explanation expansion, heavy saved-team import, share-link hydration, and low-end compare/import memory recovery stay measurable; the memory harness records Chromium heap/DOM counters and session-storage sizes before import, restore, cleanup, and forced GC | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dvr7x5` for explanation/compare and `../optc-team-builder-brain/live-artifacts/869dwcee1` for memory pressure |
 | Saved-team transfer codec format, parser, or large-payload codec performance | `npm run test:saved-team-codecs` plus `PERF_ASSERT=0 npm run perf:saved-team-codecs` | Focused codec specs plus the Node codec benchmark, then include `saved-team-codecs` in the current artifact root before `npm run perf:budget-report -- --current-dir /path/to/current` when publishing budget evidence | Saved Teams export/import/share compatibility stays intact while repeated encode, decode, sanitize, and invalid-input validation costs remain measured against generated heavy fixtures | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dwchtw` |
@@ -304,6 +304,79 @@ already-matched characters (`captainAbilityEffectMatches`, `slotTokens`,
 by an unchanged id set. A clean targeted fix shows only the intended key(s) gaining
 or losing characters with no collateral movement on sibling keys; investigate any
 removal or value change you did not intend.
+
+### Character Tag Filters
+
+`characterTags` (crew, family, and event tags) are filtered through the shared
+`app-character-tag-filter` shell in
+`src/app/shared/character-tag-filter/character-tag-filter.component.ts`. The
+shell owns the trigger button, the removable group chips, the polite live
+region, and the nested `app-character-tag-set-picker` modal; hosts only pass a
+`selection` plus a `testIdPrefix` and react to one `filterChange` event.
+Semantics are OR **inside** a tag group and AND/OR **across** groups, matching
+`matchesCharacterTagSets` in
+`src/app/core/services/character-tag-set.utils.ts`.
+
+Run the focused specs before changing the shell, its copy, or a host wiring:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:ci -- --include src/app/shared/character-tag-filter/character-tag-filter.component.spec.ts --include src/app/shared/character-tag-filter/character-tag-filter.i18n.spec.ts --include src/app/core/services/character-tag-set.utils.spec.ts
+```
+
+Run the i18n audit whenever `public/i18n/character-tag-filter/` changes; the EN
+and EL files must keep identical leaf keys and identical `{{placeholder}}` sets:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run i18n:validate
+```
+
+Two different routing mechanisms are in play, and a change to one does not
+prove the other:
+
+- **Query-backed hosts** (`/tabs/characters`, `/tabs/character-boxes`, and the
+  shared character image picker) convert the selection to matching character
+  ids and pass them through the existing `allowedCharacterIds` channel,
+  intersected with the ability tag-set filter and (on Characters) the favorites
+  filter. An empty selection must send `allowedCharacterIds: undefined` so it
+  gates nothing; an empty match list must genuinely return nobody.
+- **In-memory host** (`/tabs/rumble-characters`) ignores the resolved ids and
+  re-tests each unit in `matchesFilters`, before the `visibleLimit()` slice, so
+  the "load more" affordance stays truthful.
+
+Manual verification (no E2E covers these surfaces yet). Serve the app with
+`npm start`, then for each of `/tabs/characters`, `/tabs/character-boxes`,
+`/tabs/rumble-characters`, and any character image picker (Crew Forge, Captain
+Coverage, Saved Enemies):
+
+1. Open the trigger (`data-testid="<prefix>-character-tag-trigger"`, where
+   `<prefix>` is `characters`, `character-boxes`, `rumble-characters`, or
+   `character-image-picker`). While the tag catalog loads the trigger is
+   disabled, shows a spinner, and reports `aria-busy="true"`.
+2. Pick two tags in one group and save. The result count must shrink to
+   characters carrying **either** tag, the trigger label must report the tag and
+   group counts, and one removable chip must appear per group.
+3. Add a second group and save. With the AND joiner the results must be the
+   intersection of the two groups; switching the joiner to OR must widen them
+   back to the union.
+4. Remove a chip, then use the page's clear/reset control (the `Reset` button in
+   the Characters and Pirate Rumble hero rows, the filter row's clear-filters
+   action on Character Boxes, and simply reopening the modal for the image
+   picker, which resets its own state). Chips, trigger label, and results
+   must all return to the unfiltered state — a selection that survives a reset
+   is the invisible-active-filter bug this control is most prone to.
+5. Confirm the polite live region announces the applied and cleared states, and
+   that with `prefers-reduced-motion: reduce` the chip and modal transitions
+   collapse instead of animating.
+6. Switch the app language to Greek and repeat step 2: the joiner words must
+   read `ή` / `και`, and no key must render as a raw dotted path.
+
+If the dataset exposes no `characterTags` at all, the trigger stays disabled and
+the support line reads the `support.unavailable` string; that is expected, not a
+regression.
 
 ### Browser Performance
 

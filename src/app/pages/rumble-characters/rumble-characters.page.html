@@ -165,6 +165,13 @@
             </div>
           </div>
 
+          <app-character-tag-filter
+            testIdPrefix="rumble-characters"
+            [selection]="characterTagSetSelection()"
+            [disabled]="loading()"
+            (filterChange)="onCharacterTagFilterChange($event)"
+          ></app-character-tag-filter>
+
           <div class="buff-focus-card">
             <div class="buff-focus-card__head">
               <span>{{ t('filters.buffFocus.label') }}</span>
