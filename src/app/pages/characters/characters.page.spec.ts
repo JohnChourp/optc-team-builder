@@ -9,6 +9,7 @@ import {
   type AutoBuildAbilityRequirement,
   type AbilityTagSetOperator,
 } from '../../core/models/auto-team-builder-ability.models';
+import { type CharacterTagSetSelection } from '../../core/models/optc.models';
 import { type OptcbxParsedImport } from '../../core/models/optcbx-import.models';
 import { CharactersPage } from './characters.page';
 
@@ -120,6 +121,12 @@ describe('CharactersPage favorites tools', () => {
     expect(template).toContain('[selection]="tagSetSelection()"');
     expect(template).toContain('closeAbilityTagSetPicker()');
     expect(template).toContain('saveAbilityTagSetPicker($event)');
+    expect(template).toContain("t('filters.abilityTagSets.title')");
+    expect(template).not.toContain("t('filters.tagSets.title')");
+    expect(template).toContain('<app-character-tag-filter');
+    expect(template).toContain('testIdPrefix="characters"');
+    expect(template).toContain('[selection]="characterTagSetSelection()"');
+    expect(template).toContain('(filterChange)="onCharacterTagFilterChange($event)"');
     expect(template).not.toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).not.toContain('activeAbilityFilterGroups()');
@@ -341,6 +348,91 @@ describe('CharactersPage favorites tools', () => {
     expect(page.abilityFilterRailItems()).toEqual(
       expect.arrayContaining([expect.objectContaining({ category: 'crewmate', count: 0 })]),
     );
+  });
+
+  it('intersects character tag matches into the catalog query', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    seedAbilityCatalog(page);
+    await page.saveAbilityTagSetPicker(
+      buildSelection('all', [
+        ['any', [captainRequirement('boost_orb'), requirement('remove_bind')]],
+      ]),
+    );
+
+    await page.onCharacterTagFilterChange({
+      selection: buildCharacterTagSelection('all', [['all', ['Straw Hat Pirates']]]),
+      matchingCharacterIds: [101, 303],
+    });
+
+    expect(page.characterTagSetSelection().sets[0]?.tags).toEqual(['Straw Hat Pirates']);
+    expect(page.characterTagCharacterIds()).toEqual([101, 303]);
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowedCharacterIds: [101] }),
+    );
+  });
+
+  it('leaves allowedCharacterIds undefined for an empty character tag selection', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    await page.onCharacterTagFilterChange({
+      selection: { sets: [], operator: 'all' },
+      matchingCharacterIds: undefined,
+    });
+
+    expect(page.characterTagCharacterIds()).toBeUndefined();
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      typeFilter: '',
+      classFilter: '',
+      allowedCharacterIds: undefined,
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 100,
+      offset: 0,
+    });
+  });
+
+  it('rejects every character when the character tag selection matches nothing', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    await page.onCharacterTagFilterChange({
+      selection: buildCharacterTagSelection('all', [['all', ['Nonexistent']]]),
+      matchingCharacterIds: [],
+    });
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowedCharacterIds: [] }),
+    );
+  });
+
+  it('resetPage clears the character tag selection and its matching ids', async () => {
+    const { page, characterCatalogCache } = createPage();
+
+    await page.onCharacterTagFilterChange({
+      selection: buildCharacterTagSelection('any', [['all', ['Straw Hat Pirates']]]),
+      matchingCharacterIds: [101],
+    });
+
+    expect(page.characterTagCharacterIds()).toEqual([101]);
+
+    await page.resetPage();
+
+    expect(page.characterTagSetSelection()).toEqual({ sets: [], operator: 'all' });
+    expect(page.characterTagCharacterIds()).toBeUndefined();
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowedCharacterIds: undefined }),
+    );
+  });
+
+  it('preloads both tag-set scopes and the tag filter scope', async () => {
+    const { page, i18n } = createPage();
+
+    await page.ngOnInit();
+
+    expect(i18n.preloadScope).toHaveBeenCalledWith('ability-tag-sets');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-sets');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-filter');
   });
 
   it('intersects the tag-set matches with the favorites list', async () => {
@@ -687,6 +779,20 @@ function buildSelection(
   };
 }
 
+function buildCharacterTagSelection(
+  operator: AbilityTagSetOperator,
+  sets: [AbilityTagSetOperator, string[]][],
+): CharacterTagSetSelection {
+  return {
+    operator,
+    sets: sets.map(([setOperator, tags], index) => ({
+      id: `character-tag-set-${index + 1}`,
+      operator: setOperator,
+      tags,
+    })),
+  };
+}
+
 function createPage(overrides: { favoriteIds?: number[] } = {}) {
   const favoriteIds = signal(overrides.favoriteIds ?? []);
   const userState = {
@@ -714,6 +820,7 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
       availableTypes: [],
       availableClasses: [],
     }),
+    getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue(null),
   };
   const characterCatalogCache = {
     ensureLoaded: vi.fn().mockResolvedValue(undefined),

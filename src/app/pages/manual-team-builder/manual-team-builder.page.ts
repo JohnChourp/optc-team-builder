@@ -62,6 +62,7 @@ import {
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
 import {
+  buildCharacterTagMatchIndex,
   cloneCharacterTagSetSelection,
   countCharacterTagSetTags,
   countPopulatedCharacterTagSets,
@@ -1406,23 +1407,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
     try {
       const records = await this.repository.getDetailedCharacterCatalog();
-      const index = new Map<string, number[]>();
 
-      for (const record of records) {
-        for (const tag of record.detail.characterTags ?? []) {
-          const key = tag.trim().toLowerCase();
-
-          if (!key.length) {
-            continue;
-          }
-
-          const characterIds = index.get(key) ?? [];
-          characterIds.push(record.id);
-          index.set(key, characterIds);
-        }
-      }
-
-      this.characterTagMatchIndex.set(index);
+      this.characterTagMatchIndex.set(buildCharacterTagMatchIndex(records));
     } catch {
       this.characterTagMatchIndex.set(null);
     }

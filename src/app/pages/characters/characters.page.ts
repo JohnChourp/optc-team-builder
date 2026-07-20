@@ -38,6 +38,7 @@ import {
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
+  type CharacterTagSetSelection,
   type DatasetManifest,
 } from '../../core/models/optc.models';
 import {
@@ -54,6 +55,7 @@ import {
   createEmptyAbilityFilterTagSetSelection,
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
+import { createEmptyCharacterTagSetSelection } from '../../core/services/character-tag-set.utils';
 import {
   getAbilityCatalogItemsByCategory,
   getCaptainAbilityCatalogItems,
@@ -73,6 +75,10 @@ import {
   CharacterFilterRowComponent,
   type CharacterFilterOption,
 } from '../../shared/character-filter-row/character-filter-row.component';
+import {
+  CharacterTagFilterComponent,
+  type CharacterTagFilterChange,
+} from '../../shared/character-tag-filter/character-tag-filter.component';
 import {
   buildOptcbxFavoritesExportPayload,
   downloadOptcbxFavoritesExport,
@@ -115,6 +121,7 @@ interface CharacterCatalogCardView {
     IonToolbar,
     AbilityFilterRailComponent,
     CharacterFilterRowComponent,
+    CharacterTagFilterComponent,
     CharactersCatalogPanelComponent,
     CharactersImportPanelComponent,
     AbilityTagSetPickerComponent,
@@ -145,6 +152,11 @@ export class CharactersPage implements OnInit {
   public readonly tagSetSelection = signal<AbilityFilterTagSetSelection>(
     createEmptyAbilityFilterTagSetSelection(),
   );
+  public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  /** `undefined` = no tag filter. NEVER assign `[]` here for an empty selection. */
+  public readonly characterTagCharacterIds = signal<number[] | undefined>(undefined);
   public readonly displayMode = signal<CharacterDisplayMode>('compact');
   public readonly favoriteIds;
   public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
@@ -399,6 +411,8 @@ export class CharactersPage implements OnInit {
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       this.characterCatalogCache.ensureLoaded(),
       this.i18n.preloadScope('ability-tag-sets'),
+      this.i18n.preloadScope('character-tag-sets'),
+      this.i18n.preloadScope('character-tag-filter'),
     ]);
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
@@ -540,6 +554,17 @@ export class CharactersPage implements OnInit {
   public async saveAbilityTagSetPicker(selection: AbilityFilterTagSetSelection): Promise<void> {
     this.tagSetSelection.set(cloneAbilityFilterTagSetSelection(selection));
     this.tagSetPickerOpen.set(false);
+    await this.loadCharacters(true);
+  }
+
+  /**
+   * The shared character-tag shell owns the modal and the id resolution; the page
+   * only stores what it emits. `matchingCharacterIds` is `undefined` for a
+   * selection that constrains nothing, and must never be coerced to `[]`.
+   */
+  public async onCharacterTagFilterChange(change: CharacterTagFilterChange): Promise<void> {
+    this.characterTagSetSelection.set(change.selection);
+    this.characterTagCharacterIds.set(change.matchingCharacterIds);
     await this.loadCharacters(true);
   }
 
@@ -722,6 +747,8 @@ export class CharactersPage implements OnInit {
     this.selectedIdOrder.set('newest');
     this.tagSetPickerOpen.set(false);
     this.tagSetSelection.set(createEmptyAbilityFilterTagSetSelection());
+    this.characterTagSetSelection.set(createEmptyCharacterTagSetSelection());
+    this.characterTagCharacterIds.set(undefined);
     this.characters.set([]);
     this.loadingMore.set(false);
     this.hasMore.set(true);
@@ -787,7 +814,11 @@ export class CharactersPage implements OnInit {
 
   private resolveAllowedCharacterIds(): number[] | undefined {
     const favoriteIds = this.favoritesOnly() ? this.favoriteIds() : undefined;
-    return intersectAbilityMatchingCharacterIds([this.abilityFilterCharacterIds(), favoriteIds]);
+    return intersectAbilityMatchingCharacterIds([
+      this.abilityFilterCharacterIds(),
+      this.characterTagCharacterIds(),
+      favoriteIds,
+    ]);
   }
 
   /**

@@ -71,8 +71,8 @@
       "title": "Support Ability filters",
       "copy": "Επίλεξε Support effects και ομαδοποίησέ τα. Ένα group μπορεί να απαιτεί όλα τα tags ή μόνο ένα από αυτά."
     },
-    "tagSets": {
-      "title": "Φίλτρα tag χαρακτήρων"
+    "abilityTagSets": {
+      "title": "Φίλτρα ability tags"
     }
   },
   "favorites": {

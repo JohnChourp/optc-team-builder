@@ -34,6 +34,7 @@ import {
   createCharacterTagSet,
   createEmptyCharacterTagSetSelection,
   isOverCharacterTagSetCap,
+  type CharacterTagMatchIndex,
 } from '../../core/services/character-tag-set.utils';
 import { applyIonicModalDialogLabel } from '../a11y/ionic-modal-dialog-label.utils';
 import { AbilityTagSetPickerStylePanelsComponent } from '../ability-tag-set-picker/ability-tag-set-picker-style-panels.component';
@@ -44,8 +45,12 @@ import { AbilityTagSetPickerStylePanelsComponent } from '../ability-tag-set-pick
  * Keys are matched case-insensitively, mirroring how character tags compare
  * everywhere else. Hosts that cannot afford to build it pass `null` and the
  * picker hides every count instead of rendering a zero it cannot stand behind.
+ *
+ * Re-exported from `character-tag-set.utils` rather than declared here: the
+ * same index now also feeds the id-set resolver in core, and core must not
+ * import from shared. Existing import sites keep working unchanged.
  */
-export type CharacterTagMatchIndex = ReadonlyMap<string, readonly number[]>;
+export { type CharacterTagMatchIndex } from '../../core/services/character-tag-set.utils';
 
 interface CatalogTileView {
   tag: string;

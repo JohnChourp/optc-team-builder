@@ -1,0 +1,71 @@
+<ng-container *transloco="let t; scope: 'character-tag-filter'; read: 'character-tag-filter'">
+  <app-character-tag-filter-style-panels>
+    <div class="character-tag-filter">
+      <div class="character-tag-filter__header">
+        <span class="character-tag-filter__label">{{ t('label') }}</span>
+        @if (hasSelection()) {
+          <ion-button
+            fill="clear"
+            size="small"
+            color="warning"
+            [disabled]="disabled"
+            (click)="clear()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+        }
+      </div>
+
+      <div class="character-tag-filter__combobox">
+        <ion-button
+          expand="block"
+          fill="outline"
+          color="light"
+          [attr.data-testid]="testIdPrefix + '-character-tag-trigger'"
+          [attr.aria-label]="t('label')"
+          [attr.aria-busy]="status() === 'loading' ? 'true' : null"
+          [disabled]="triggerDisabled()"
+          (click)="openPicker()"
+        >
+          @if (status() === 'loading') {
+            <ion-spinner slot="start" name="crescent"></ion-spinner>
+          } @else {
+            <ion-icon slot="start" [icon]="filterIcon" aria-hidden="true"></ion-icon>
+          }
+          {{ triggerLabel() }}
+        </ion-button>
+      </div>
+
+      @if (chips().length) {
+        <div class="character-tag-filter__chips">
+          @for (chip of chips(); track chip.id) {
+            <button
+              type="button"
+              class="character-tag-filter__chip"
+              [attr.aria-label]="chip.removeLabel"
+              [disabled]="disabled"
+              (click)="removeSet(chip.id)"
+            >
+              {{ chip.label }} <span aria-hidden="true">×</span>
+            </button>
+          }
+        </div>
+      }
+
+      <small class="character-tag-filter__support">{{ supportText() }}</small>
+      <p class="character-tag-filter__live" role="status" aria-live="polite">
+        {{ announcement() }}
+      </p>
+
+      <app-character-tag-set-picker
+        [isOpen]="pickerOpen()"
+        [title]="titleOverride || t('title')"
+        [availableTags]="availableTags()"
+        [selection]="workingSelection()"
+        [tagCharacterIds]="matchIndex()"
+        (dismiss)="closePicker()"
+        (saveSelection)="savePicker($event)"
+      ></app-character-tag-set-picker>
+    </div>
+  </app-character-tag-filter-style-panels>
+</ng-container>

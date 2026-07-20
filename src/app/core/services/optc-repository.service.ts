@@ -32,6 +32,10 @@ import {
   applyOverrideToCharacterDetailRecord,
   applyOverrideToCharacterListItem,
 } from './character-overrides.utils';
+import {
+  buildCharacterTagMatchIndex,
+  type CharacterTagMatchIndex,
+} from './character-tag-set.utils';
 
 interface SqlRow {
   [key: string]: string | number | null;
@@ -787,6 +791,8 @@ export class OptcRepositoryService {
   private rumbleBuilderCandidatesOverrideRevision = -1;
   private availableCharacterTagsPromise?: Promise<string[]>;
   private availableCharacterTagsOverrideRevision = -1;
+  private characterTagMatchIndexPromise?: Promise<CharacterTagMatchIndex>;
+  private characterTagMatchIndexOverrideRevision = -1;
 
   public constructor(private readonly characterOverrides: CharacterOverridesService) {
     this.sqlPromise = import('sql.js').then((module) =>
@@ -991,6 +997,38 @@ export class OptcRepositoryService {
       });
 
     return this.availableCharacterTagsPromise;
+  }
+
+  /**
+   * `tag key -> character ids`, memoised against the character-override revision
+   * exactly like `getAvailableCharacterTags()` and sharing the same
+   * `getDetailedCharacterCatalog()` pass, so a host that loads both pays for one
+   * JSON.parse sweep over the detail rows rather than two.
+   */
+  public async getCharacterTagMatchIndex(): Promise<CharacterTagMatchIndex> {
+    await this.characterOverrides.ready();
+    const overrideRevision = this.characterOverrides.revision();
+
+    if (
+      this.characterTagMatchIndexPromise &&
+      this.characterTagMatchIndexOverrideRevision === overrideRevision
+    ) {
+      return this.characterTagMatchIndexPromise;
+    }
+
+    this.characterTagMatchIndexOverrideRevision = overrideRevision;
+    this.characterTagMatchIndexPromise = this.getDetailedCharacterCatalog()
+      .then((records) => buildCharacterTagMatchIndex(records))
+      .catch((error: unknown) => {
+        if (this.characterTagMatchIndexOverrideRevision === overrideRevision) {
+          this.characterTagMatchIndexPromise = undefined;
+          this.characterTagMatchIndexOverrideRevision = -1;
+        }
+
+        throw error;
+      });
+
+    return this.characterTagMatchIndexPromise;
   }
 
   public async searchDetailedCharacters(

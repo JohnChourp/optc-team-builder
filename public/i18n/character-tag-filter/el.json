@@ -1,0 +1,24 @@
+{
+  "label": "Character Tags",
+  "title": "Φίλτρο character tags",
+  "trigger": {
+    "empty": "Επίλεξε character tags",
+    "active": "{{tags}} tag(s) σε {{groups}} group(s)",
+    "loading": "Φόρτωση character tags…"
+  },
+  "joiners": {
+    "any": "ή",
+    "all": "και"
+  },
+  "removeGroup": "Αφαίρεσε το group tags {{group}}",
+  "support": {
+    "empty": "Ομαδοποίησε tags πληρώματος και οικογένειας με OR μέσα σε ένα group και AND ανάμεσα στα groups, π.χ. (Straw Hat Pirates ή Heart Pirates) και (Dressrosa).",
+    "all": "Εμφανίζονται χαρακτήρες που ταιριάζουν με κάθε group tags.",
+    "any": "Εμφανίζονται χαρακτήρες που ταιριάζουν με τουλάχιστον ένα group tags.",
+    "unavailable": "Τα character tags δεν είναι διαθέσιμα για αυτό το dataset."
+  },
+  "a11y": {
+    "applied": "Εφαρμόστηκε φίλτρο character tags: {{tags}} tag(s) σε {{groups}} group(s).",
+    "cleared": "Το φίλτρο character tags καθαρίστηκε."
+  }
+}

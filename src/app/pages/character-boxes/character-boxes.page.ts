@@ -31,6 +31,7 @@ import {
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
+  type CharacterTagSetSelection,
   type DatasetManifest,
   type DetailedCharacterSearchQuery,
 } from '../../core/models/optc.models';
@@ -45,6 +46,7 @@ import {
   createEmptyAbilityFilterTagSetSelection,
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
+import { createEmptyCharacterTagSetSelection } from '../../core/services/character-tag-set.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
   getAbilityCatalogItemsByCategory,
@@ -66,6 +68,10 @@ import {
   type CharacterFilterCostBound,
   type CharacterFilterOption,
 } from '../../shared/character-filter-row/character-filter-row.component';
+import {
+  CharacterTagFilterComponent,
+  type CharacterTagFilterChange,
+} from '../../shared/character-tag-filter/character-tag-filter.component';
 import { CharacterBoxesStylePanelsComponent } from './character-boxes-style-panels.component';
 
 const PAGE_SIZE = 48;
@@ -107,6 +113,7 @@ interface CharacterBoxCharacterCardView {
     AbilityFilterRailComponent,
     AbilityTagSetPickerComponent,
     CharacterFilterRowComponent,
+    CharacterTagFilterComponent,
     CharacterBoxesStylePanelsComponent,
     RouterLink,
     TranslocoDirective,
@@ -136,6 +143,11 @@ export class CharacterBoxesPage implements OnInit {
   public readonly tagSetSelection = signal<AbilityFilterTagSetSelection>(
     createEmptyAbilityFilterTagSetSelection(),
   );
+  public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  /** `undefined` = no character-tag gate. Never assign `[]` for an empty selection. */
+  public readonly characterTagCharacterIds = signal<number[] | undefined>(undefined);
   public readonly displayMode = signal<CharacterBoxesDisplayMode>('list');
   public readonly characters = signal<CharacterDetailRecord[]>([]);
   public readonly loading = signal(true);
@@ -380,6 +392,9 @@ export class CharacterBoxesPage implements OnInit {
     await Promise.all([
       this.userState.readyCharacterBoxes(),
       this.userState.readyFavoriteCharacterIds(),
+      this.i18n.preloadScope('ability-tag-sets'),
+      this.i18n.preloadScope('character-tag-sets'),
+      this.i18n.preloadScope('character-tag-filter'),
     ]);
     const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
@@ -704,6 +719,14 @@ export class CharacterBoxesPage implements OnInit {
     this.costRange.set({ min: null, max: null });
     this.abilityTagSetPickerOpen.set(false);
     this.tagSetSelection.set(createEmptyAbilityFilterTagSetSelection());
+    this.characterTagSetSelection.set(createEmptyCharacterTagSetSelection());
+    this.characterTagCharacterIds.set(undefined);
+    await this.loadCharacters(true);
+  }
+
+  public async onCharacterTagFilterChange(change: CharacterTagFilterChange): Promise<void> {
+    this.characterTagSetSelection.set(change.selection);
+    this.characterTagCharacterIds.set(change.matchingCharacterIds);
     await this.loadCharacters(true);
   }
 
@@ -806,6 +829,7 @@ export class CharacterBoxesPage implements OnInit {
     const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
       scopedAllowedCharacterIds,
       this.abilityFilterCharacterIds(),
+      this.characterTagCharacterIds(),
     ]);
     const excludedCharacterIds = [
       ...(this.selectedMembershipFilter() === 'notInBox' ? selectedBoxCharacterIds : []),

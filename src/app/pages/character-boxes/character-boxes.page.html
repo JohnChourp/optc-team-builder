@@ -173,6 +173,13 @@
                   (saveSelection)="saveAbilityTagSetPicker($event)"
                 ></app-ability-tag-set-picker>
 
+                <app-character-tag-filter
+                  testIdPrefix="character-boxes"
+                  [selection]="characterTagSetSelection()"
+                  [disabled]="loading()"
+                  (filterChange)="onCharacterTagFilterChange($event)"
+                ></app-character-tag-filter>
+
                 <app-character-filter-row
                   [showTypeFilter]="true"
                   [typeLabel]="t('filters.typeLabel')"

@@ -329,6 +329,73 @@ describe('OptcRepositoryService', () => {
     expect(selectAllMock).toHaveBeenCalledTimes(2);
   });
 
+  it('memoizes the character tag match index per override revision', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4104, detail: { characterTags: ['Boosts Orbs', 'Slasher'] } }),
+      createCharacterRow({ id: 4105, detail: { characterTags: ['Boosts Orbs'] } }),
+    ]);
+    const getDetailedCharacterCatalogSpy = vi.spyOn(service, 'getDetailedCharacterCatalog');
+
+    const first = await service.getCharacterTagMatchIndex();
+    const second = await service.getCharacterTagMatchIndex();
+
+    expect(second).toBe(first);
+    expect(getDetailedCharacterCatalogSpy).toHaveBeenCalledTimes(1);
+    expect([...first.get('boosts orbs')!].sort()).toEqual([4104, 4105]);
+    expect([...first.get('slasher')!]).toEqual([4104]);
+  });
+
+  it('rebuilds the character tag match index after the override revision changes', async () => {
+    let overrideRevision = 0;
+    const service = createRepositoryService(
+      [createCharacterRow({ id: 4104, detail: { characterTags: ['Boosts Orbs'] } })],
+      { overrideRevision: () => overrideRevision },
+    );
+    const getDetailedCharacterCatalogSpy = vi.spyOn(service, 'getDetailedCharacterCatalog');
+
+    const first = await service.getCharacterTagMatchIndex();
+    expect(getDetailedCharacterCatalogSpy).toHaveBeenCalledTimes(1);
+
+    overrideRevision = 1;
+    const second = await service.getCharacterTagMatchIndex();
+
+    expect(second).not.toBe(first);
+    expect(getDetailedCharacterCatalogSpy).toHaveBeenCalledTimes(2);
+    expect([...second.get('boosts orbs')!]).toEqual([4104]);
+  });
+
+  it('clears the character tag match index memo when the detailed catalog load rejects', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4104, detail: { characterTags: ['Boosts Orbs'] } }),
+    ]);
+    const getDetailedCharacterCatalogSpy = vi
+      .spyOn(service, 'getDetailedCharacterCatalog')
+      .mockRejectedValueOnce(new Error('catalog unavailable'));
+
+    await expect(service.getCharacterTagMatchIndex()).rejects.toThrow('catalog unavailable');
+    expect(service['characterTagMatchIndexPromise']).toBeUndefined();
+
+    const retried = await service.getCharacterTagMatchIndex();
+
+    expect(getDetailedCharacterCatalogSpy).toHaveBeenCalledTimes(2);
+    expect([...retried.get('boosts orbs')!]).toEqual([4104]);
+  });
+
+  it('lower-cases and collapses character tag index keys while the catalog keeps its casing', async () => {
+    const service = createRepositoryService([
+      createCharacterRow({ id: 4104, detail: { characterTags: ['  Boosts   Orbs ', 'Slasher'] } }),
+      createCharacterRow({ id: 4105, detail: { characterTags: ['boosts orbs', '   '] } }),
+    ]);
+
+    const index = await service.getCharacterTagMatchIndex();
+
+    expect([...index.keys()].sort()).toEqual(['boosts orbs', 'slasher']);
+    expect([...index.get('boosts orbs')!].sort()).toEqual([4104, 4105]);
+    expect(index.has('')).toBe(false);
+    // The catalog sweep visits 4105 first, so the raw catalog casing it carries wins.
+    await expect(service.getAvailableCharacterTags()).resolves.toEqual(['boosts orbs', 'Slasher']);
+  });
+
   it('returns linked variants when searching by a shared canonical id', async () => {
     const service = createRepositoryService([]);
     const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;

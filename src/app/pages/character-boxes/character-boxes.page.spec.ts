@@ -8,7 +8,10 @@ import {
   type AbilityFilterTagSet,
   type AutoBuildAbilityRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord } from '../../core/models/optc.models';
+import {
+  type CharacterDetailRecord,
+  type CharacterTagSetSelection,
+} from '../../core/models/optc.models';
 import { CharacterBoxesPage } from './character-boxes.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -906,6 +909,92 @@ describe('CharacterBoxesPage', () => {
     });
   });
 
+  it('applies the character tag ids to the paged search query', async () => {
+    const { page, repository } = createPage();
+
+    await page.onCharacterTagFilterChange({
+      selection: createCharacterTagSelection(),
+      matchingCharacterIds: [101, 202],
+    });
+
+    expect(page.characterTagSetSelection()).toEqual(createCharacterTagSelection());
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowedCharacterIds: [101, 202], limit: 48 }),
+    );
+  });
+
+  it('applies the same character tag ids to the select-all-filtered sweep', async () => {
+    const { page, repository } = createPage();
+
+    page.selectBox('box-1');
+    await page.onCharacterTagFilterChange({
+      selection: createCharacterTagSelection(),
+      matchingCharacterIds: [101, 202],
+    });
+
+    const pagedCall = repository.searchDetailedCharacters.mock.calls.at(-1)?.[0] as {
+      allowedCharacterIds?: number[];
+    };
+
+    repository.searchDetailedCharacters.mockClear();
+    repository.searchDetailedCharacters.mockResolvedValueOnce([createCharacter(202)]);
+
+    await page.selectAllFilteredCharacters();
+
+    const sweepCalls = repository.searchDetailedCharacters.mock.calls.map(
+      (call) => call[0] as { limit: number; allowedCharacterIds?: number[] },
+    );
+
+    expect(sweepCalls.length).toBeGreaterThan(0);
+
+    for (const call of sweepCalls) {
+      // The bulk action MUST NOT add characters the visible tag filter excluded.
+      expect(call.limit).toBe(500);
+      expect(call.allowedCharacterIds).toEqual(pagedCall.allowedCharacterIds);
+    }
+  });
+
+  it('keeps allowedCharacterIds undefined with an empty tag selection', async () => {
+    const { page, repository } = createPage();
+
+    await page.onCharacterTagFilterChange({
+      selection: { operator: 'all', sets: [] },
+      matchingCharacterIds: undefined,
+    });
+
+    expect(page.characterTagCharacterIds()).toBeUndefined();
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowedCharacterIds: undefined }),
+    );
+  });
+
+  it('clears the character tag selection and its matching ids from clearFilters', async () => {
+    const { page, repository } = createPage();
+
+    await page.onCharacterTagFilterChange({
+      selection: createCharacterTagSelection(),
+      matchingCharacterIds: [101, 202],
+    });
+
+    await page.clearFilters();
+
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+    expect(page.characterTagCharacterIds()).toBeUndefined();
+    expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowedCharacterIds: undefined }),
+    );
+  });
+
+  it('preloads the ability, tag-set and tag-filter scopes', async () => {
+    const { page, i18n } = createPage();
+
+    await page.ngOnInit();
+
+    expect(i18n.preloadScope).toHaveBeenCalledWith('ability-tag-sets');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-sets');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-filter');
+  });
+
   it('keeps the expected empty-state copy and editor actions in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/character-boxes/character-boxes.page.html'),
@@ -930,6 +1019,10 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain("t('filters.abilityTagSets.title')");
     expect(template).toContain('closeAbilityTagSetPicker()');
     expect(template).toContain('saveAbilityTagSetPicker($event)');
+    expect(template).toContain('<app-character-tag-filter');
+    expect(template).toContain('testIdPrefix="character-boxes"');
+    expect(template).toContain('[selection]="characterTagSetSelection()"');
+    expect(template).toContain('(filterChange)="onCharacterTagFilterChange($event)"');
     // The five per-category pickers collapsed into the single tag-set modal.
     expect(template).not.toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-special-ability-picker');
@@ -1031,6 +1124,8 @@ function createPage(
     }),
     getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue(null),
     searchDetailedCharacters: vi.fn().mockResolvedValue([]),
+    getAvailableCharacterTags: vi.fn().mockResolvedValue([]),
+    getCharacterTagMatchIndex: vi.fn().mockResolvedValue(null),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
@@ -1040,10 +1135,18 @@ function createPage(
 
       return key;
     }),
+    preloadScope: vi.fn().mockResolvedValue(undefined),
   };
   const page = new CharacterBoxesPage(repository as never, userState as never, i18n as never);
 
-  return { page, repository, userState };
+  return { page, repository, userState, i18n };
+}
+
+function createCharacterTagSelection(): CharacterTagSetSelection {
+  return {
+    operator: 'all',
+    sets: [{ id: 'tag-set-1', operator: 'any', tags: ['Straw Hat Pirates'] }],
+  };
 }
 
 function createCharacter(id: number, name = `Character ${id}`) {

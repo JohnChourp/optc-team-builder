@@ -215,6 +215,18 @@
               (saveSelection)="saveTagSetSelection($event)"
             ></app-ability-tag-set-picker>
 
+            <!--
+              Placed after the ability picker purely for stable DOM order. The perf
+              script's `.last()` lookups target `ability-tag-set-*` ids, which these
+              `character-tag-set-*` ids cannot collide with.
+            -->
+            <app-character-tag-filter
+              testIdPrefix="character-image-picker"
+              [selection]="characterTagSetSelection()"
+              [disabled]="applyingSelection"
+              (filterChange)="onCharacterTagFilterChange($event)"
+            ></app-character-tag-filter>
+
             @if (loading()) {
               <div class="character-image-picker-empty">
                 <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
