@@ -64,3 +64,15 @@
   max-height: none;
   overflow: visible;
 }
+
+.picker-tag-filter {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 10px;
+}
+
+.picker-tag-filter .picker-tag-filter__caption {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}

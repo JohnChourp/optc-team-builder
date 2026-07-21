@@ -633,6 +633,189 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.requirementSourceModalOpen()).toBe(false);
   });
 
+  it('renders one labelled character tag filter per picker without touching the team-wide gate', () => {
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+    const normalizedTemplate = template.replace(/\s+/g, ' ');
+
+    expect(template.match(/<app-character-tag-filter/g)).toHaveLength(3);
+    expect(template).toContain('testIdPrefix="atb-requirement-source"');
+    expect(template).toContain('testIdPrefix="atb-manual"');
+    expect(template).toContain('testIdPrefix="atb-exclude"');
+    expect(normalizedTemplate).toContain('[selection]="requirementSourceTagSelection()"');
+    expect(normalizedTemplate).toContain('[selection]="manualPickerTagSelection()"');
+    expect(normalizedTemplate).toContain('[selection]="excludePickerTagSelection()"');
+    expect(normalizedTemplate).toContain('[disabled]="requirementSourceCandidatesLoading()"');
+    expect(normalizedTemplate).toContain('[disabled]="manualCandidatesLoading()"');
+    expect(normalizedTemplate).toContain('[disabled]="excludedCandidatesLoading()"');
+    expect(normalizedTemplate).toMatch(
+      /\(filterChange\)="\s*onRequirementSourceTagFilterChange\(\$event\)\s*"/,
+    );
+    expect(normalizedTemplate).toMatch(
+      /\(filterChange\)="\s*onCharacterPickerTagFilterChange\(\s*'manual',\s*\$event\s*\)\s*"/,
+    );
+    expect(normalizedTemplate).toMatch(
+      /\(filterChange\)="\s*onCharacterPickerTagFilterChange\(\s*'excluded',\s*\$event\s*\)\s*"/,
+    );
+
+    // Each per-picker filter carries host copy saying it only narrows the
+    // candidate list, so it cannot be read as the team-wide tag requirement.
+    expect(normalizedTemplate).toContain("t('manual.tagFilterCaption')");
+    expect(normalizedTemplate).toContain("t('exclude.tagFilterCaption')");
+    expect(normalizedTemplate).toContain(
+      "t( 'filters.characterRequirements.modal.tagFilterCaption' )",
+    );
+    expect(template.match(/class="picker-tag-filter__caption"/g)).toHaveLength(3);
+
+    // The page-level team gate stays exactly where it was.
+    expect(template).toContain('openCharacterTagSetPicker()');
+    expect(template).toContain('[selection]="characterTagSets()"');
+  });
+
+  it('gates requirement source candidates on its own tag filter and clears it on close', async () => {
+    const { page, repository } = await createPage();
+    const source = createRequirementSourceCharacter();
+
+    repository.searchDetailedCharacters.mockResolvedValue([source]);
+
+    await page.ngOnInit();
+    await page.openRequirementSourceModal();
+
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toBeUndefined();
+
+    await page.onRequirementSourceTagFilterChange({
+      selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Minks'] }] },
+      matchingCharacterIds: [source.id],
+    });
+
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([source.id]);
+    expect(page.requirementSourceTagSelection().sets).toHaveLength(1);
+
+    page.closeRequirementSourceModal();
+
+    expect(page.requirementSourceTagSelection().sets).toEqual([]);
+    expect(page.requirementSourceTagCharacterIds()).toBeUndefined();
+  });
+
+  it('keeps an empty requirement source tag selection inert and gates an empty match set to nothing', async () => {
+    const { page, repository } = await createPage();
+
+    repository.searchDetailedCharacters.mockResolvedValue([]);
+
+    await page.ngOnInit();
+    await page.openRequirementSourceModal();
+
+    await page.onRequirementSourceTagFilterChange({
+      selection: { operator: 'any', sets: [] },
+      matchingCharacterIds: undefined,
+    });
+
+    // An empty selection must apply no gate at all.
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toBeUndefined();
+
+    await page.onRequirementSourceTagFilterChange({
+      selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Nobody'] }] },
+      matchingCharacterIds: [],
+    });
+
+    // `[]` is "nothing matches" and must never collapse back into "no filter".
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([]);
+  });
+
+  it('gates the manual lock picker on its own tag filter, including load more', async () => {
+    const { page, repository } = await createPage();
+
+    repository.searchDetailedCharacters.mockResolvedValue(
+      Array.from({ length: 100 }, (_unused, index) => createCharacterRecord(2000 + index)),
+    );
+
+    await page.ngOnInit();
+    await page.openManualPickerModal();
+
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toBeUndefined();
+
+    await page.onCharacterPickerTagFilterChange('manual', {
+      selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Minks'] }] },
+      matchingCharacterIds: [2000, 2001],
+    });
+
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([2000, 2001]);
+    // Paging restarts under the new gate rather than keeping ungated rows.
+    expect(lastDetailedSearchQuery(repository)?.offset).toBe(0);
+
+    await page.loadMoreManualCharacterCandidates();
+
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([2000, 2001]);
+    expect(lastDetailedSearchQuery(repository)?.offset).toBe(100);
+
+    // The excludes picker is an independent filter and must stay untouched.
+    expect(page.excludePickerTagSelection().sets).toEqual([]);
+    expect(page.excludePickerTagCharacterIds()).toBeUndefined();
+
+    page.closeManualPickerModal();
+
+    expect(page.manualPickerTagSelection().sets).toEqual([]);
+    expect(page.manualPickerTagCharacterIds()).toBeUndefined();
+  });
+
+  it('gates the exclude picker on its own tag filter and clears it on close', async () => {
+    const { page, repository } = await createPage();
+
+    repository.searchDetailedCharacters.mockResolvedValue([createCharacterRecord(2100)]);
+
+    await page.ngOnInit();
+    await page.openExcludePickerModal();
+
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toBeUndefined();
+
+    await page.onCharacterPickerTagFilterChange('excluded', {
+      selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Minks'] }] },
+      matchingCharacterIds: [2100],
+    });
+
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([2100]);
+    expect(page.manualPickerTagSelection().sets).toEqual([]);
+
+    page.closeExcludePickerModal();
+
+    expect(page.excludePickerTagSelection().sets).toEqual([]);
+    expect(page.excludePickerTagCharacterIds()).toBeUndefined();
+  });
+
+  it('clears every picker tag filter when the page is reset', async () => {
+    const { page, repository } = await createPage();
+
+    repository.searchDetailedCharacters.mockResolvedValue([createCharacterRecord(2200)]);
+
+    await page.ngOnInit();
+    await page.openManualPickerModal();
+    await page.onCharacterPickerTagFilterChange('manual', {
+      selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Minks'] }] },
+      matchingCharacterIds: [2200],
+    });
+    await page.openExcludePickerModal();
+    await page.onCharacterPickerTagFilterChange('excluded', {
+      selection: { operator: 'any', sets: [{ id: 'set-2', operator: 'any', tags: ['Minks'] }] },
+      matchingCharacterIds: [2200],
+    });
+    await page.openRequirementSourceModal();
+    await page.onRequirementSourceTagFilterChange({
+      selection: { operator: 'any', sets: [{ id: 'set-3', operator: 'any', tags: ['Minks'] }] },
+      matchingCharacterIds: [2200],
+    });
+
+    await page.resetPage();
+
+    expect(page.manualPickerTagSelection().sets).toEqual([]);
+    expect(page.manualPickerTagCharacterIds()).toBeUndefined();
+    expect(page.excludePickerTagSelection().sets).toEqual([]);
+    expect(page.excludePickerTagCharacterIds()).toBeUndefined();
+    expect(page.requirementSourceTagSelection().sets).toEqual([]);
+    expect(page.requirementSourceTagCharacterIds()).toBeUndefined();
+  });
+
   it('widens an AND group to OR when a requirement source contributes new tags', async () => {
     const { page, repository } = await createPage();
     const source = createRequirementSourceCharacter();
@@ -8475,6 +8658,15 @@ function filterCharactersForManualQuery(
 }
 
 /** A requirement source whose only contributed character tag is Straw Hat Pirates. */
+/** Last `searchDetailedCharacters` query, so a test can read the gate it carried. */
+function lastDetailedSearchQuery(repository: {
+  searchDetailedCharacters: ReturnType<typeof vi.fn>;
+}): { allowedCharacterIds?: number[]; offset?: number } | undefined {
+  const calls = repository.searchDetailedCharacters.mock.calls;
+
+  return calls[calls.length - 1]?.[0];
+}
+
 function createRequirementSourceCharacter(): CharacterDetailRecord {
   const source = createCharacterRecord(991, 'Requirement Source');
 

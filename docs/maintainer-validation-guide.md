@@ -325,7 +325,20 @@ Command status: manual/illustrative.
 npm run test:ci -- --include src/app/shared/character-tag-filter/character-tag-filter.component.spec.ts --include src/app/shared/character-tag-filter/character-tag-filter.i18n.spec.ts --include src/app/core/services/character-tag-set.utils.spec.ts
 ```
 
-Run the i18n audit whenever `public/i18n/character-tag-filter/` changes; the EN
+Host wiring is only covered by the host page specs, and those specs assert the
+template bindings as literal substrings — a new or renamed binding is invisible
+to them until the "template contains" test is extended. Run the two Auto Team
+Builder hosts when either page changes:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:ci -- --include src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts --include src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble.page.spec.ts
+```
+
+Run the i18n audit whenever `public/i18n/character-tag-filter/` changes, or when
+a host adds its own filter copy (the Auto Team Builder pickers own their caption
+and title strings in `public/i18n/auto-team-builder/`); the EN
 and EL files must keep identical leaf keys and identical `{{placeholder}}` sets:
 
 Command status: manual/illustrative.
@@ -337,24 +350,43 @@ npm run i18n:validate
 Two different routing mechanisms are in play, and a change to one does not
 prove the other:
 
-- **Query-backed hosts** (`/tabs/characters`, `/tabs/character-boxes`, and the
-  shared character image picker) convert the selection to matching character
+- **Query-backed hosts** (`/tabs/characters`, `/tabs/character-boxes`, the
+  shared character image picker, and all three Auto Team Builder candidate
+  pickers) convert the selection to matching character
   ids and pass them through the existing `allowedCharacterIds` channel,
   intersected with the ability tag-set filter and (on Characters) the favorites
   filter. An empty selection must send `allowedCharacterIds: undefined` so it
   gates nothing; an empty match list must genuinely return nobody.
-- **In-memory host** (`/tabs/rumble-characters`) ignores the resolved ids and
-  re-tests each unit in `matchesFilters`, before the `visibleLimit()` slice, so
-  the "load more" affordance stays truthful.
+- **In-memory hosts** (`/tabs/rumble-characters` and the
+  `/tabs/auto-team-builder-rumble` manual slot picker) ignore the resolved ids
+  and re-test each unit with `matchesCharacterTagSets` — in `matchesFilters`
+  before the `visibleLimit()` slice on Rumble characters, and in
+  `manualPickerResults` before the `.slice(0, 80)` cap in the Rumble manual
+  picker — so the "load more" affordance and the 80-result cap stay truthful.
+
+The Auto Team Builder pickers are the paging-sensitive case. `/tabs/auto-team-builder`
+hosts three separate filters — the requirement-source list
+(`atb-requirement-source`), the manual-lock candidate list (`atb-manual`), and
+the exclude candidate list (`atb-exclude`) — and each keeps its **own**
+selection: narrowing the manual-lock list must not narrow the exclude list, and
+none of them touches the page-level team-wide `characterTags` requirement, which
+still lives in the filters panel. Because the ids go into
+`searchDetailedCharacterPage(...)`, the gate is applied inside the SQL query
+before `LIMIT`/`OFFSET`: a filter change must restart paging at offset 0, and
+"load more" must keep carrying the same `allowedCharacterIds`. If a filter ever
+appears to work on the first page and then leaks unfiltered rows on the second,
+the id set was dropped from the load-more call.
 
 Manual verification (no E2E covers these surfaces yet). Serve the app with
 `npm start`, then for each of `/tabs/characters`, `/tabs/character-boxes`,
-`/tabs/rumble-characters`, and any character image picker (Crew Forge, Captain
-Coverage, Saved Enemies):
+`/tabs/rumble-characters`, the three `/tabs/auto-team-builder` candidate
+pickers, the `/tabs/auto-team-builder-rumble` manual slot picker, and any
+character image picker (Crew Forge, Captain Coverage, Saved Enemies):
 
 1. Open the trigger (`data-testid="<prefix>-character-tag-trigger"`, where
-   `<prefix>` is `characters`, `character-boxes`, `rumble-characters`, or
-   `character-image-picker`). While the tag catalog loads the trigger is
+   `<prefix>` is `characters`, `character-boxes`, `rumble-characters`,
+   `atb-requirement-source`, `atb-manual`, `atb-exclude`, `atb-rumble-manual`,
+   or `character-image-picker`). While the tag catalog loads the trigger is
    disabled, shows a spinner, and reports `aria-busy="true"`.
 2. Pick two tags in one group and save. The result count must shrink to
    characters carrying **either** tag, the trigger label must report the tag and
@@ -368,10 +400,21 @@ Coverage, Saved Enemies):
    picker, which resets its own state). Chips, trigger label, and results
    must all return to the unfiltered state — a selection that survives a reset
    is the invisible-active-filter bug this control is most prone to.
-5. Confirm the polite live region announces the applied and cleared states, and
+   For the modal-scoped pickers the reset is on **close**, not on open: closing
+   an Auto Team Builder picker (dismiss, header close, footer cancel, apply, or
+   picking a character) clears that picker's selection, and the Auto Team
+   Builder `Reset` button clears all three at once. Verify it by filtering the
+   manual-lock picker, closing it, and reopening it for a *different* slot —
+   the list must come back unfiltered. Same check for the Rumble manual slot
+   picker.
+5. On `/tabs/auto-team-builder`, scroll the filtered manual-lock or exclude list
+   to the end and press "load more": every additional page must still respect
+   the tag filter. Then confirm the team-wide `characterTags` requirement in the
+   filters panel is untouched by any picker filter, and vice versa.
+6. Confirm the polite live region announces the applied and cleared states, and
    that with `prefers-reduced-motion: reduce` the chip and modal transitions
    collapse instead of animating.
-6. Switch the app language to Greek and repeat step 2: the joiner words must
+7. Switch the app language to Greek and repeat step 2: the joiner words must
    read `ή` / `και`, and no key must render as a raw dotted path.
 
 If the dataset exposes no `characterTags` at all, the trigger stays disabled and

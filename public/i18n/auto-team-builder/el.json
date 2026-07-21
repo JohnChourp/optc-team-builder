@@ -104,7 +104,9 @@
         "support": "Η εφαρμογή αντιγράφει τα ability-derived required tags και names στα relaxed filters.",
         "searchPlaceholder": "Αναζήτηση source χαρακτήρων",
         "count": "{{count}} source χαρακτήρες",
-        "empty": "Δεν βρέθηκαν source χαρακτήρες με extractable roster requirements για αυτή την αναζήτηση."
+        "empty": "Δεν βρέθηκαν source χαρακτήρες με extractable roster requirements για αυτή την αναζήτηση.",
+        "tagFilterCaption": "Περιόρισε αυτή τη λίστα requirement sources με character tags. Δεν αλλάζει την απαίτηση tags για όλη την ομάδα.",
+        "tagFilterTitle": "Φιλτράρισμα requirement sources με character tag"
       }
     },
     "uniqueNames": {
@@ -499,7 +501,9 @@
         "subEmpty": "Δέχεται έναν ή περισσότερους χαρακτήρες. Αν μείνει κενό, ο builder το γεμίζει αυτόματα.",
         "subSelected": "{{count}} OR sub picks με σειρά προτίμησης."
       }
-    }
+    },
+    "tagFilterCaption": "Περιόρισε αυτή τη λίστα υποψηφίων για manual locks με character tags. Δεν αλλάζει την απαίτηση tags για όλη την ομάδα.",
+    "tagFilterTitle": "Φιλτράρισμα υποψηφίων manual lock με character tag"
   },
   "exclude": {
     "title": "Exclude picks",
@@ -555,7 +559,9 @@
       "removesLockedFrom": "Αν κάνεις exclude αυτόν τον character, θα αφαιρεθεί από τα {{slots}}.",
       "alreadyInBox": "Είναι ήδη excluded από το {{name}}.",
       "clearsManualShip": "Αν κάνεις exclude αυτό το ship, θα καθαρίσει το current manual ship override."
-    }
+    },
+    "tagFilterCaption": "Περιόρισε αυτή τη λίστα υποψηφίων για excludes με character tags. Δεν αλλάζει την απαίτηση tags για όλη την ομάδα.",
+    "tagFilterTitle": "Φιλτράρισμα υποψηφίων exclude με character tag"
   },
   "ships": {
     "actions": {
