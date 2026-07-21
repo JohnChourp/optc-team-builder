@@ -30,6 +30,7 @@ import {
   type AutoBuildAbilityCatalog,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
+  type CharacterFacetSelection,
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSearchQuery,
@@ -43,6 +44,11 @@ import {
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
+import {
+  countCharacterFacetMatches,
+  createEmptyCharacterFacetSelection,
+  isCharacterFacetSelectionEmpty,
+} from '../../core/services/character-facet-filter.utils';
 import { createEmptyCharacterTagSetSelection } from '../../core/services/character-tag-set.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -56,6 +62,7 @@ import {
   type AbilityFilterRailCategory,
 } from '../ability-filter-rail/ability-filter-rail.component';
 import { AbilityTagSetPickerComponent } from '../ability-tag-set-picker/ability-tag-set-picker.component';
+import { CharacterFacetFilterComponent } from '../character-facet-filter/character-facet-filter.component';
 import {
   CharacterTagFilterComponent,
   type CharacterTagFilterChange,
@@ -82,6 +89,7 @@ const CHARACTER_IMAGE_PICKER_MODAL_NAME = 'CharacterImagePickerComponent';
     IonToolbar,
     AbilityFilterRailComponent,
     AbilityTagSetPickerComponent,
+    CharacterFacetFilterComponent,
     CharacterTagFilterComponent,
     TranslocoDirective,
     TranslocoPipe,
@@ -104,8 +112,16 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly loadingMore = signal(false);
   public readonly hasMore = signal(true);
   public readonly searchTerm = signal('');
-  public readonly selectedType = signal('');
-  public readonly selectedClass = signal('');
+  /**
+   * Vocabulary C: one flat value list plus one match mode per facet. An empty
+   * selection is NO filter — never "nothing matches".
+   */
+  public readonly typeFacet = signal<CharacterFacetSelection>(
+    createEmptyCharacterFacetSelection(),
+  );
+  public readonly classFacet = signal<CharacterFacetSelection>(
+    createEmptyCharacterFacetSelection(),
+  );
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly favoritesOnly = signal(false);
@@ -132,6 +148,16 @@ export class CharacterImagePickerComponent implements OnChanges {
   );
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
+  );
+  /**
+   * Live per-facet match counts over the cached catalog. Supplied only because
+   * this component already holds the catalog in hand.
+   */
+  public readonly typeFacetMatchCount = computed(() =>
+    countCharacterFacetMatches('type', this.characterCatalogCache.catalog(), this.typeFacet()),
+  );
+  public readonly classFacetMatchCount = computed(() =>
+    countCharacterFacetMatches('class', this.characterCatalogCache.catalog(), this.classFacet()),
   );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
@@ -232,21 +258,21 @@ export class CharacterImagePickerComponent implements OnChanges {
     await this.loadCharacters(true);
   }
 
-  public async onTypeChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+  public async onTypeFacetChange(selection: CharacterFacetSelection): Promise<void> {
     if (this.applyingSelection) {
       return;
     }
 
-    this.selectedType.set(typeof event.detail.value === 'string' ? event.detail.value : '');
+    this.typeFacet.set(selection);
     await this.loadCharacters(true);
   }
 
-  public async onClassChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+  public async onClassFacetChange(selection: CharacterFacetSelection): Promise<void> {
     if (this.applyingSelection) {
       return;
     }
 
-    this.selectedClass.set(typeof event.detail.value === 'string' ? event.detail.value : '');
+    this.classFacet.set(selection);
     await this.loadCharacters(true);
   }
 
@@ -411,10 +437,12 @@ export class CharacterImagePickerComponent implements OnChanges {
         this.tagSetFilterCharacterIds(),
         this.characterTagCharacterIds(),
       ]);
+      const typeFacet = this.typeFacet();
+      const classFacet = this.classFacet();
       const query = {
         searchTerm: '',
-        typeFilter: '',
-        classFilter: '',
+        ...(isCharacterFacetSelectionEmpty(typeFacet) ? {} : { typeFacet }),
+        ...(isCharacterFacetSelectionEmpty(classFacet) ? {} : { classFacet }),
         sortMode: this.selectedSortMode(),
         idOrder: this.selectedIdOrder(),
         limit: PAGE_SIZE,
@@ -452,10 +480,12 @@ export class CharacterImagePickerComponent implements OnChanges {
         this.tagSetFilterCharacterIds(),
         this.characterTagCharacterIds(),
       ]);
+      const typeFacet = this.typeFacet();
+      const classFacet = this.classFacet();
       const query = {
         searchTerm: this.searchTerm().trim(),
-        typeFilter: this.selectedType(),
-        classFilter: this.selectedClass(),
+        ...(isCharacterFacetSelectionEmpty(typeFacet) ? {} : { typeFacet }),
+        ...(isCharacterFacetSelectionEmpty(classFacet) ? {} : { classFacet }),
         sortMode: this.selectedSortMode(),
         idOrder: this.selectedIdOrder(),
         limit: PAGE_SIZE,
@@ -497,8 +527,11 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.loadingMore.set(false);
     this.hasMore.set(true);
     this.searchTerm.set('');
-    this.selectedType.set('');
-    this.selectedClass.set('');
+    // Load-bearing, same reason as the character-tag selection below: this
+    // instance survives every open across three hosts, so a facet left behind
+    // would silently filter an unrelated picker.
+    this.typeFacet.set(createEmptyCharacterFacetSelection());
+    this.classFacet.set(createEmptyCharacterFacetSelection());
     this.selectedSortMode.set('catalog');
     this.selectedIdOrder.set('newest');
     this.favoritesOnly.set(false);

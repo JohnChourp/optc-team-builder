@@ -8,8 +8,6 @@
   "filters": {
     "type": "Type",
     "class": "Class",
-    "anyType": "Όλα τα types",
-    "anyClass": "Όλα τα classes",
     "favoritesOnly": "Μόνο favorites",
     "hideFavorites": "Κρύψε favorites",
     "specialEyebrow": "Special",

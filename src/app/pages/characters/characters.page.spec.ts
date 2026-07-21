@@ -9,8 +9,12 @@ import {
   type AutoBuildAbilityRequirement,
   type AbilityTagSetOperator,
 } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterTagSetSelection } from '../../core/models/optc.models';
+import {
+  type CharacterFacetSelection,
+  type CharacterTagSetSelection,
+} from '../../core/models/optc.models';
 import { type OptcbxParsedImport } from '../../core/models/optcbx-import.models';
+import { matchesCharacterFacet } from '../../core/services/character-facet-filter.utils';
 import { CharactersPage } from './characters.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -132,6 +136,27 @@ describe('CharactersPage favorites tools', () => {
     expect(template).not.toContain('activeAbilityFilterGroups()');
     expect(template).not.toContain('removeAbilityFilterBadge');
     expect(template).toContain('characters-filter-toolbar');
+    expect(template).toContain('<app-character-facet-filter');
+    expect(template).toContain('kind="type"');
+    expect(template).toContain('kind="class"');
+    expect(template).toContain('presentation="chips"');
+    expect(template).toContain('presentation="select"');
+    expect(template).toContain('[selection]="typeFacet()"');
+    expect(template).toContain('[selection]="classFacet()"');
+    expect(template).toContain('[matchCount]="typeFacetMatchCount()"');
+    expect(template).toContain('[matchCount]="classFacetMatchCount()"');
+    expect(template).toContain('(selectionChange)="onTypeFacetChange($event)"');
+    expect(template).toContain('(selectionChange)="onClassFacetChange($event)"');
+    // The retired typeahead must be gone from the shared filter row, or both
+    // controls would drive the same filter from two different shapes.
+    expect(template).not.toContain('[typeQuery]');
+    expect(template).not.toContain('[classQuery]');
+    expect(template).not.toContain('[selectedType]');
+    expect(template).not.toContain('[selectedClass]');
+    expect(template).not.toContain('(typeSelected)');
+    expect(template).not.toContain('(classSelected)');
+    expect(template).not.toContain('(typeCleared)');
+    expect(template).not.toContain('(classCleared)');
     expect(template).toContain('<app-character-filter-row');
     expect(template).toContain("t('filters.favoritesOnly.label')");
     expect(template).toContain('favoritesOnlySupportLabel()');
@@ -252,8 +277,6 @@ describe('CharactersPage favorites tools', () => {
     ]);
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       allowedCharacterIds: [202, 101],
       sortMode: 'catalog',
       idOrder: 'newest',
@@ -383,8 +406,6 @@ describe('CharactersPage favorites tools', () => {
     expect(page.characterTagCharacterIds()).toBeUndefined();
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       allowedCharacterIds: undefined,
       sortMode: 'catalog',
       idOrder: 'newest',
@@ -477,8 +498,6 @@ describe('CharactersPage favorites tools', () => {
     expect(page.hideFavorites()).toBe(false);
     expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       allowedCharacterIds: [101, 202],
       sortMode: 'catalog',
       idOrder: 'newest',
@@ -501,8 +520,6 @@ describe('CharactersPage favorites tools', () => {
     expect(page.hideFavorites()).toBe(true);
     expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101, 202],
       sortMode: 'catalog',
@@ -549,8 +566,6 @@ describe('CharactersPage favorites tools', () => {
 
     expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
       sortMode: 'catalog',
@@ -580,8 +595,6 @@ describe('CharactersPage favorites tools', () => {
     expect(page.displayMode()).toBe('compact');
     expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       allowedCharacterIds: undefined,
       excludedCharacterIds: [101],
       sortMode: 'catalog',
@@ -603,8 +616,6 @@ describe('CharactersPage favorites tools', () => {
     expect(page.selectedSortMode()).toBe('nameAsc');
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       allowedCharacterIds: undefined,
       sortMode: 'nameAsc',
       idOrder: 'newest',
@@ -625,8 +636,6 @@ describe('CharactersPage favorites tools', () => {
     expect(page.selectedIdOrder()).toBe('oldest');
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       allowedCharacterIds: undefined,
       sortMode: 'catalog',
       idOrder: 'oldest',
@@ -654,10 +663,8 @@ describe('CharactersPage favorites tools', () => {
     });
 
     page.searchTerm.set('Luffy');
-    page.typeQuery.set('DEX');
-    page.classQuery.set('Fighter');
-    page.selectedType.set('DEX');
-    page.selectedClass.set('Fighter');
+    page.typeFacet.set({ values: ['DEX', 'QCK'], matchMode: 'all' });
+    page.classFacet.set({ values: ['Fighter'], matchMode: 'any' });
     page.favoritesOnly.set(true);
     page.hideFavorites.set(true);
     page.selectedSortMode.set('nameDesc');
@@ -680,8 +687,8 @@ describe('CharactersPage favorites tools', () => {
     await page.resetPage();
 
     expect(page.searchTerm()).toBe('');
-    expect(page.selectedType()).toBe('');
-    expect(page.selectedClass()).toBe('');
+    expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
     expect(page.favoritesOnly()).toBe(false);
     expect(page.hideFavorites()).toBe(false);
     expect(page.selectedSortMode()).toBe('catalog');
@@ -693,8 +700,6 @@ describe('CharactersPage favorites tools', () => {
     expect(page.parsedImport()).toBeNull();
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       allowedCharacterIds: undefined,
       sortMode: 'catalog',
       idOrder: 'newest',
@@ -703,6 +708,142 @@ describe('CharactersPage favorites tools', () => {
     });
   });
 });
+
+describe('CharactersPage type and class facet filters', () => {
+  it('sends the selected type facet and match mode to the cached query', async () => {
+    const { page, characterCatalogCache } = createFacetPage();
+
+    await page.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ typeFacet: { values: ['STR'], matchMode: 'any' } }),
+    );
+    expect(page.characters().map((character) => character.id)).toEqual([1, 4]);
+  });
+
+  it('omits the facet fields entirely when nothing is selected', async () => {
+    const { page, characterCatalogCache } = createFacetPage();
+
+    await page.onTypeFacetChange({ values: [], matchMode: 'any' });
+
+    const query = characterCatalogCache.queryCharacters.mock.lastCall?.[0] as Record<
+      string,
+      unknown
+    >;
+
+    expect(query).not.toHaveProperty('typeFacet');
+    expect(query).not.toHaveProperty('classFacet');
+    // An empty selection is NO filter, never "nothing matches".
+    expect(page.characters().map((character) => character.id)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('intersects a two-value all-mode class facet instead of unioning it', async () => {
+    const { page } = createFacetPage();
+
+    await page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+
+    expect(page.characters().map((character) => character.id)).toEqual([3]);
+
+    await page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'any' });
+
+    expect(page.characters().map((character) => character.id)).toEqual([2, 3, 5]);
+  });
+
+  it('finds a dual-type character by either of its types, in either stored order', async () => {
+    const { page } = createFacetPage();
+
+    // 2 is stored 'INT,PSY' and 5 is stored 'PSY,INT' — the same pair, both orders.
+    await page.onTypeFacetChange({ values: ['PSY'], matchMode: 'any' });
+
+    expect(page.characters().map((character) => character.id)).toEqual([2, 5]);
+
+    await page.onTypeFacetChange({ values: ['INT'], matchMode: 'any' });
+
+    expect(page.characters().map((character) => character.id)).toEqual([2, 5]);
+
+    await page.onTypeFacetChange({ values: ['INT', 'PSY'], matchMode: 'all' });
+
+    expect(page.characters().map((character) => character.id)).toEqual([2, 5]);
+  });
+
+  it('reports a live match count per facet from the cached catalog', async () => {
+    const { page } = createFacetPage();
+
+    await page.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
+    await page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+
+    expect(page.typeFacetMatchCount()).toBe(2);
+    expect(page.classFacetMatchCount()).toBe(1);
+  });
+
+  it('clears both facets through resetPage, the page-wide clear-all', async () => {
+    const { page, characterCatalogCache } = createFacetPage();
+
+    await page.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
+    await page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
+
+    expect(page.characters().map((character) => character.id)).toEqual([]);
+
+    await page.resetPage();
+
+    expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
+
+    const query = characterCatalogCache.queryCharacters.mock.lastCall?.[0] as Record<
+      string,
+      unknown
+    >;
+
+    expect(query).not.toHaveProperty('typeFacet');
+    expect(query).not.toHaveProperty('classFacet');
+    expect(page.characters().map((character) => character.id)).toEqual([1, 2, 3, 4, 5]);
+  });
+});
+
+/**
+ * Five rows that make every facet failure mode observable: a dual-type pair
+ * stored in BOTH orders, a two-class character, and a single-class character.
+ */
+function buildFacetCharacters() {
+  return [
+    { id: 1, type: 'STR', classes: ['Striker'] },
+    { id: 2, type: 'INT,PSY', classes: ['Fighter'] },
+    { id: 3, type: 'QCK', classes: ['Fighter', 'Slasher'] },
+    { id: 4, type: 'STR', classes: ['Shooter'] },
+    { id: 5, type: 'PSY,INT', classes: ['Slasher'] },
+  ].map((character) => ({
+    ...character,
+    name: `Character ${character.id}`,
+    primaryClass: character.classes[0] ?? '',
+    secondaryClass: character.classes[1] ?? null,
+    cost: 30,
+    imageUrl: `assets/${character.id}.png`,
+    isIncomplete: false,
+  }));
+}
+
+function createFacetPage() {
+  const created = createPage();
+  const catalog = buildFacetCharacters();
+
+  created.characterCatalogCache.catalog.set(catalog as never);
+  created.characterCatalogCache.queryCharacters.mockImplementation(
+    (query: Record<string, unknown>) => {
+      const typeFacet = (query['typeFacet'] ?? null) as CharacterFacetSelection | null;
+      const classFacet = (query['classFacet'] ?? null) as CharacterFacetSelection | null;
+
+      return catalog
+        .filter((character) =>
+          typeFacet === null ? true : matchesCharacterFacet('type', character, typeFacet),
+        )
+        .filter((character) =>
+          classFacet === null ? true : matchesCharacterFacet('class', character, classFacet),
+        );
+    },
+  );
+
+  return created;
+}
 
 function seedAbilityCatalog(page: CharactersPage): void {
   page.abilityCatalog.set({
@@ -823,6 +964,7 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
     getAutoBuilderAbilityCatalog: vi.fn().mockResolvedValue(null),
   };
   const characterCatalogCache = {
+    catalog: signal<unknown[]>([]),
     ensureLoaded: vi.fn().mockResolvedValue(undefined),
     queryCharacters: vi.fn().mockReturnValue([]),
     getCharactersByIds: vi.fn().mockReturnValue([]),

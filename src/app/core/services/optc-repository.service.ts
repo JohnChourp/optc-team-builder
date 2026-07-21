@@ -12,11 +12,11 @@ import {
   type CharacterCaptainAbilityScope,
   type CharacterDetail,
   type CharacterDetailRecord,
+  type CharacterFacetMatchMode,
   type CharacterRecord,
   type CharacterSupportEntry,
   type DetailedCharacterSearchQuery,
   type CharacterListItem,
-  type CharacterSearchQuery,
   type DatasetManifest,
   type NormalizedSuperSpecialCriteria,
   type NormalizedSuperTandemData,
@@ -28,6 +28,11 @@ import {
   type SuperCriteriaBranch,
 } from '../models/optc.models';
 import { CharacterOverridesService } from './character-overrides.service';
+import {
+  buildCharacterFacetSqlClause,
+  matchesCharacterFacet,
+  normalizeCharacterFacetSelection,
+} from './character-facet-filter.utils';
 import {
   applyOverrideToCharacterDetailRecord,
   applyOverrideToCharacterListItem,
@@ -59,6 +64,26 @@ function yieldToMainThread(): Promise<void> {
   });
 }
 
+/**
+ * The single comparator behind `sortMode: 'powerFirst'`.
+ *
+ * Exported because callers that filter the detailed catalog themselves instead
+ * of going through `searchDetailedCharacters` — Manual Team Builder's
+ * tag-filtered candidate path is the only one today — must order their results
+ * with the same function, not by re-deriving `id DESC` by hand. Two hand-rolled
+ * copies of an ordering are how the same filter starts answering differently
+ * depending on which code path happens to serve it.
+ *
+ * `buildCharacterPowerFirstOrderByClause` below is the SQL twin; the two must
+ * always describe the same order.
+ */
+export function compareCharactersByPowerFirst(
+  left: Pick<CharacterRecord, 'id'>,
+  right: Pick<CharacterRecord, 'id'>,
+): number {
+  return right.id - left.id;
+}
+
 function buildCharacterPowerFirstOrderByClause(alias: string): string {
   const prefix = alias ? `${alias}.` : '';
   return `${prefix}id DESC`;
@@ -83,44 +108,6 @@ function buildCharacterBoostOrderByClause(
 ): string {
   const prefix = alias ? `${alias}.` : '';
   return `${prefix}${columnName} DESC, ${buildCharacterIdOrderByClause(alias, idOrder)}, ${prefix}cost DESC, ${prefix}name COLLATE NOCASE ASC`;
-}
-
-function buildCharacterListOrderByClause(
-  alias: string,
-  sortMode: CharacterSearchQuery['sortMode'] | 'catalog',
-  idOrder: CharacterIdOrder | undefined,
-): string {
-  const prefix = alias ? `${alias}.` : '';
-
-  if (sortMode === 'captainHpBoost') {
-    return buildCharacterBoostOrderByClause(alias, 'captain_hp_boost', idOrder);
-  }
-
-  if (sortMode === 'captainAtkBoost') {
-    return buildCharacterBoostOrderByClause(alias, 'captain_atk_boost', idOrder);
-  }
-
-  if (sortMode === 'captainAverageBoost') {
-    return buildCharacterBoostOrderByClause(alias, 'captain_average_boost', idOrder);
-  }
-
-  if (sortMode === 'nameAsc') {
-    return `${prefix}name COLLATE NOCASE ASC, ${buildCharacterIdOrderByClause(alias, idOrder)}`;
-  }
-
-  if (sortMode === 'nameDesc') {
-    return `${prefix}name COLLATE NOCASE DESC, ${buildCharacterIdOrderByClause(alias, idOrder)}`;
-  }
-
-  if (sortMode === 'idAsc') {
-    return `${prefix}id ASC`;
-  }
-
-  if (sortMode === 'idDesc' || sortMode === 'newest' || sortMode === 'powerFirst') {
-    return buildCharacterPowerFirstOrderByClause(alias);
-  }
-
-  return buildCharacterIdOrderByClause(alias, idOrder);
 }
 
 function buildDetailedCharacterOrderByClause(
@@ -817,88 +804,6 @@ export class OptcRepositoryService {
     return this.autoBuilderAbilityCatalogPromise;
   }
 
-  public async searchCharacters(query: CharacterSearchQuery): Promise<CharacterListItem[]> {
-    const allowedCharacterIds = [
-      ...new Set(
-        (query.allowedCharacterIds ?? []).filter(
-          (characterId) => Number.isInteger(characterId) && characterId > 0,
-        ),
-      ),
-    ];
-    const excludedCharacterIds = [
-      ...new Set(
-        (query.excludedCharacterIds ?? []).filter(
-          (characterId) => Number.isInteger(characterId) && characterId > 0,
-        ),
-      ),
-    ];
-    const allowedCharacterClause = allowedCharacterIds.length
-      ? `\n          AND id IN (${allowedCharacterIds.map(() => '?').join(',')})`
-      : query.allowedCharacterIds
-        ? '\n          AND 1 = 0'
-        : '';
-    const excludedCharacterClause = excludedCharacterIds.length
-      ? `\n          AND id NOT IN (${excludedCharacterIds.map(() => '?').join(',')})`
-      : '';
-    const orderByClause = buildCharacterListOrderByClause(
-      '',
-      query.sortMode ?? 'catalog',
-      query.idOrder,
-    );
-    const rows = await this.selectAll(
-      `
-        SELECT
-          id,
-          name,
-          is_incomplete,
-          type,
-          primary_class,
-          secondary_class,
-          classes_json,
-          stars,
-          stars_label,
-          cost,
-          combo,
-          min_hp,
-          min_atk,
-          min_rcv,
-          max_hp,
-          max_atk,
-          max_rcv,
-          growth,
-          captain_hp_boost,
-          captain_atk_boost,
-          captain_average_boost,
-          region_json,
-          assets_json,
-          search_text
-        FROM characters
-        WHERE (? = '' OR search_text LIKE '%' || ? || '%')
-          AND (? = '' OR type LIKE '%' || ? || '%')
-          AND (? = '' OR primary_class = ? OR secondary_class = ?)
-          ${allowedCharacterClause}
-          ${excludedCharacterClause}
-        ORDER BY ${orderByClause}
-        LIMIT ? OFFSET ?
-      `,
-      [
-        query.searchTerm.toLowerCase(),
-        query.searchTerm.toLowerCase(),
-        query.typeFilter,
-        query.typeFilter,
-        query.classFilter,
-        query.classFilter,
-        query.classFilter,
-        ...allowedCharacterIds,
-        ...excludedCharacterIds,
-        query.limit,
-        query.offset,
-      ],
-    );
-
-    return this.decorateCharacterRows(rows);
-  }
-
   public async getAllCharacters(): Promise<CharacterListItem[]> {
     const rows = await this.selectAll(
       `
@@ -1036,15 +941,20 @@ export class OptcRepositoryService {
   ): Promise<CharacterDetailRecord[]> {
     await this.characterOverrides.ready();
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
+    // Built ONCE, above the branch, so the SQL path and the in-memory override
+    // path are provably driven by the same normalized facets. The query-layer
+    // default stays `all` for an omitted mode — back-compat for existing callers.
+    const typeFacet = normalizeCharacterFacetSelection('type', {
+      values: query.selectedTypes,
+      matchMode: query.selectedTypesMatchMode ?? 'all',
+    });
+    const classFacet = normalizeCharacterFacetSelection('class', {
+      values: query.selectedClasses,
+      matchMode: query.selectedClassesMatchMode ?? 'all',
+    });
 
     if (overridesByCharacterId.size === 0) {
       const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
-      const normalizedSelectedTypes = [
-        ...new Set(query.selectedTypes.map((type) => type.trim().toUpperCase())),
-      ].filter((type) => type.length > 0);
-      const normalizedSelectedClasses = [
-        ...new Set(query.selectedClasses.map((characterClass) => characterClass.trim())),
-      ].filter((characterClass) => characterClass.length > 0);
       const allowedCharacterIds = [
         ...new Set(
           (query.allowedCharacterIds ?? []).filter(
@@ -1068,28 +978,14 @@ export class OptcRepositoryService {
         queryParams.push(normalizedSearchTerm);
       }
 
-      if (normalizedSelectedTypes.length > 0) {
-        const typeClauses = normalizedSelectedTypes.map(() => "(',' || c.type || ',') LIKE ?");
-
-        whereClauses.push(
-          query.selectedTypesMatchMode === 'any'
-            ? `(${typeClauses.join(' OR ')})`
-            : `(${typeClauses.join(' AND ')})`,
-        );
-        queryParams.push(...normalizedSelectedTypes.map((type) => `%,${type},%`));
-      }
-
-      if (normalizedSelectedClasses.length > 0) {
-        const classClauses = normalizedSelectedClasses.map(() => 'c.classes_json LIKE ?');
-
-        whereClauses.push(
-          query.selectedClassesMatchMode === 'any'
-            ? `(${classClauses.join(' OR ')})`
-            : `(${classClauses.join(' AND ')})`,
-        );
-        queryParams.push(
-          ...normalizedSelectedClasses.map((selectedClass) => `%\"${selectedClass}\"%`),
-        );
+      for (const facetClause of [
+        buildCharacterFacetSqlClause('type', typeFacet),
+        buildCharacterFacetSqlClause('class', classFacet),
+      ]) {
+        if (facetClause) {
+          whereClauses.push(facetClause.clause);
+          queryParams.push(...facetClause.params);
+        }
       }
 
       if (allowedCharacterIds.length > 0) {
@@ -1162,12 +1058,6 @@ export class OptcRepositoryService {
     }
 
     const records = await this.getDetailedCharacterCatalog();
-    const normalizedSelectedTypes = [
-      ...new Set(query.selectedTypes.map((type) => type.trim().toUpperCase())),
-    ].filter((type) => type.length > 0);
-    const normalizedSelectedClasses = [
-      ...new Set(query.selectedClasses.map((characterClass) => characterClass.trim())),
-    ].filter((characterClass) => characterClass.length > 0);
     const allowedCharacterIdSet =
       query.allowedCharacterIds === undefined
         ? null
@@ -1196,19 +1086,11 @@ export class OptcRepositoryService {
           return false;
         }
 
-        if (
-          !this.matchesTypes(record, normalizedSelectedTypes, query.selectedTypesMatchMode ?? 'all')
-        ) {
+        if (!this.matchesTypes(record, typeFacet.values, typeFacet.matchMode)) {
           return false;
         }
 
-        if (
-          !this.matchesClasses(
-            record,
-            normalizedSelectedClasses,
-            query.selectedClassesMatchMode ?? 'all',
-          )
-        ) {
+        if (!this.matchesClasses(record, classFacet.values, classFacet.matchMode)) {
           return false;
         }
 
@@ -1307,9 +1189,21 @@ export class OptcRepositoryService {
         ),
       ),
     ];
-    const normalizedTypeFilters = [
-      ...new Set(typeFilters.map((type) => type.trim().toUpperCase())),
-    ];
+    // Candidate pools are always OR across types and OR across classes: this is
+    // "any of these", never "simultaneously STR and QCK".
+    const typeFacet = normalizeCharacterFacetSelection('type', {
+      values: typeFilters,
+      matchMode: 'any',
+    });
+    const classFacet = normalizeCharacterFacetSelection('class', {
+      values: selectedClasses,
+      matchMode: 'any',
+    });
+
+    if (!typeFacet.values.length) {
+      return [];
+    }
+
     const costRange = normalizeCandidateCostRange(options.costRange);
     await this.characterOverrides.ready();
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
@@ -1320,16 +1214,14 @@ export class OptcRepositoryService {
     let filteredRecords: CharacterDetailRecord[];
 
     if (overridesByCharacterId.size === 0) {
-      const typeClauses = normalizedTypeFilters.map(() => "(',' || c.type || ',') LIKE ?");
-      const queryParams: Array<string | number> = normalizedTypeFilters.map(
-        (typeFilter) => `%,${typeFilter},%`,
-      );
-      const classClauses = selectedClasses.map(() => 'c.classes_json LIKE ?');
-      let whereClause = `(${typeClauses.join(' OR ')})`;
+      const typeClause = buildCharacterFacetSqlClause('type', typeFacet);
+      const classClause = buildCharacterFacetSqlClause('class', classFacet);
+      const queryParams: Array<string | number> = [...(typeClause?.params ?? [])];
+      let whereClause = typeClause?.clause ?? '1 = 1';
 
-      if (classClauses.length > 0) {
-        whereClause = `(${whereClause} AND (${classClauses.join(' OR ')}))`;
-        queryParams.push(...selectedClasses.map((selectedClass) => `%\"${selectedClass}\"%`));
+      if (classClause) {
+        whereClause = `(${whereClause} AND ${classClause.clause})`;
+        queryParams.push(...classClause.params);
       }
 
       if (costRange.min !== null) {
@@ -1436,15 +1328,15 @@ export class OptcRepositoryService {
 
         if (
           !lockedCharacterIdSet.has(record.id) &&
-          !this.matchesTypes(record, normalizedTypeFilters, 'any')
+          !this.matchesTypes(record, typeFacet.values, typeFacet.matchMode)
         ) {
           return false;
         }
 
         if (
           !lockedCharacterIdSet.has(record.id) &&
-          selectedClasses.length > 0 &&
-          !this.matchesClasses(record, selectedClasses, 'any')
+          classFacet.values.length > 0 &&
+          !this.matchesClasses(record, classFacet.values, classFacet.matchMode)
         ) {
           return false;
         }
@@ -1816,7 +1708,7 @@ export class OptcRepositoryService {
       }
 
       if (sortMode === 'powerFirst' || sortMode === 'idDesc') {
-        return right.id - left.id;
+        return compareCharactersByPowerFirst(left, right);
       }
 
       if (sortMode === 'idAsc') {
@@ -1853,41 +1745,25 @@ export class OptcRepositoryService {
     return this.buildSearchableRecordText(record).includes(normalizedSearchTerm);
   }
 
+  /**
+   * Thin wrapper over the shared predicate. Kept as a private method purely so
+   * `getAutoBuilderCandidates` keeps its existing call shape.
+   */
   private matchesTypes(
     record: CharacterRecord,
     selectedTypes: string[],
-    matchMode: 'all' | 'any',
+    matchMode: CharacterFacetMatchMode,
   ): boolean {
-    if (!selectedTypes.length) {
-      return true;
-    }
-
-    const recordTypes = new Set(
-      record.type
-        .split(',')
-        .map((type) => type.trim().toUpperCase())
-        .filter((type) => type.length > 0),
-    );
-
-    return matchMode === 'any'
-      ? selectedTypes.some((type) => recordTypes.has(type))
-      : selectedTypes.every((type) => recordTypes.has(type));
+    return matchesCharacterFacet('type', record, { values: selectedTypes, matchMode });
   }
 
+  /** Thin wrapper over the shared predicate — see `matchesTypes`. */
   private matchesClasses(
     record: CharacterRecord,
     selectedClasses: string[],
-    matchMode: 'all' | 'any',
+    matchMode: CharacterFacetMatchMode,
   ): boolean {
-    if (!selectedClasses.length) {
-      return true;
-    }
-
-    const recordClasses = new Set(record.classes.map((characterClass) => characterClass.trim()));
-
-    return matchMode === 'any'
-      ? selectedClasses.some((characterClass) => recordClasses.has(characterClass))
-      : selectedClasses.every((characterClass) => recordClasses.has(characterClass));
+    return matchesCharacterFacet('class', record, { values: selectedClasses, matchMode });
   }
 
   private hasUsableRumbleData(rumbleData: Record<string, unknown> | null): boolean {

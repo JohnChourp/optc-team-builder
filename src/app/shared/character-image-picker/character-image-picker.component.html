@@ -40,45 +40,29 @@
             ></ion-searchbar>
 
             <div class="character-image-picker-filter-grid">
-              <label class="character-image-picker-field">
-                <span>{{ t('filters.type') }}</span>
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [value]="selectedType()"
-                  [disabled]="applyingSelection"
-                  (ionChange)="onTypeChange($event)"
-                >
-                  <ion-select-option value="">
-                    {{ t('filters.anyType') }}
-                  </ion-select-option>
-                  @for (type of availableTypes(); track type) {
-                    <ion-select-option [value]="type">
-                      {{ type }}
-                    </ion-select-option>
-                  }
-                </ion-select>
-              </label>
+              <app-character-facet-filter
+                kind="type"
+                presentation="chips"
+                testIdPrefix="character-image-picker"
+                [label]="t('filters.type')"
+                [options]="availableTypes()"
+                [selection]="typeFacet()"
+                [matchCount]="typeFacetMatchCount()"
+                [disabled]="applyingSelection"
+                (selectionChange)="onTypeFacetChange($event)"
+              ></app-character-facet-filter>
 
-              <label class="character-image-picker-field">
-                <span>{{ t('filters.class') }}</span>
-                <ion-select
-                  interface="popover"
-                  fill="outline"
-                  [value]="selectedClass()"
-                  [disabled]="applyingSelection"
-                  (ionChange)="onClassChange($event)"
-                >
-                  <ion-select-option value="">
-                    {{ t('filters.anyClass') }}
-                  </ion-select-option>
-                  @for (characterClass of availableClasses(); track characterClass) {
-                    <ion-select-option [value]="characterClass">
-                      {{ characterClass }}
-                    </ion-select-option>
-                  }
-                </ion-select>
-              </label>
+              <app-character-facet-filter
+                kind="class"
+                presentation="select"
+                testIdPrefix="character-image-picker"
+                [label]="t('filters.class')"
+                [options]="availableClasses()"
+                [selection]="classFacet()"
+                [matchCount]="classFacetMatchCount()"
+                [disabled]="applyingSelection"
+                (selectionChange)="onClassFacetChange($event)"
+              ></app-character-facet-filter>
             </div>
 
             <label class="character-image-picker-field">

@@ -28,6 +28,28 @@ their operators as natural Greek — «και» / «ή», «Έχει όλα αυ
 non-technical reader understands the logic without knowing boolean algebra, so
 leaving the operators in English defeats the feature in Greek.
 
+Character **type** and **class** copy (`public/i18n/character-facet-filter/`, 19
+leaves) is a glossary case in the other direction. `kind.type.label` and
+`kind.class.label` stay `"Type"` / `"Class"` in Greek, matching every shipped
+scope that already labels these facets — `characters.filters.type.label`,
+`character-boxes.filters.typeLabel`, `captain-coverage.filters.type.label`,
+`character-image-picker.filters.type` and `manual-team-builder.picker.filters.type`
+are all English in `el`. The surrounding sentences still read as Greek
+(«Φίλτρο ανά type»). `SHARED_TERM_KEYS` in
+`character-facet-filter.i18n.spec.ts` is the machine-checked list of the two.
+
+Facet **values** are never translated in any scope. `STR`, `QCK`, `Free Spirit`
+and the rest are in-game identifiers that every predicate and every SQL `LIKE`
+parameter compares against the dataset verbatim, so a translated class name would
+silently stop matching in Greek. The i18n spec asserts that no locale file in the
+scope contains one.
+
+The match-mode copy is the tag-modal rule again: `mode.any` / `mode.all` and the
+`mode.capacity.*` / `mode.disjoint.*` explanations must read as natural Greek,
+never as bare `ANY` / `ALL`. `mode.capacity.*` reports something the control did
+on the user's behalf (it demoted an impossible "All" across three values back to
+"Any"), so the Greek must say what changed and why, not merely name the mode.
+
 Translate the surrounding Greek sentence naturally. Do not leave standalone
 states or button labels in English when they are not one of the glossary terms.
 Examples: use Greek labels for source/state words such as `Πηγή`, `Κενό`,

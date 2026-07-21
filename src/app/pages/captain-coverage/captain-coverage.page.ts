@@ -51,6 +51,7 @@ import {
 import {
   type CharacterBox,
   type CharacterDetailRecord,
+  type CharacterFacetSelection,
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
@@ -58,6 +59,11 @@ import {
   type DatasetManifest,
   type SavedTeam,
 } from '../../core/models/optc.models';
+import {
+  countCharacterFacetMatches,
+  createEmptyCharacterFacetSelection,
+  matchesCharacterFacet,
+} from '../../core/services/character-facet-filter.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
@@ -103,6 +109,7 @@ import {
   CharacterTagSetPickerComponent,
   type CharacterTagMatchIndex,
 } from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
+import { CharacterFacetFilterComponent } from '../../shared/character-facet-filter/character-facet-filter.component';
 import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
@@ -164,6 +171,7 @@ interface CaptainCoverageCharacterTagSetChip {
     AbilityTagSetPickerComponent,
     CaptainTeamConditionStatusComponent,
     CaptainCoverageStylePanelsComponent,
+    CharacterFacetFilterComponent,
     CharacterImagePickerComponent,
     CharacterTagSetPickerComponent,
     IonButton,
@@ -212,10 +220,10 @@ export class CaptainCoveragePage implements OnInit {
   public readonly allCaptains = signal<CharacterDetailRecord[]>([]);
   public readonly loading = signal(true);
   public readonly searchTerm = signal('');
-  public readonly typeQuery = signal('');
-  public readonly classQuery = signal('');
-  public readonly selectedType = signal('');
-  public readonly selectedClass = signal('');
+  public readonly typeFacet = signal<CharacterFacetSelection>(createEmptyCharacterFacetSelection());
+  public readonly classFacet = signal<CharacterFacetSelection>(
+    createEmptyCharacterFacetSelection(),
+  );
   public readonly coverageCostRange = signal<CharacterFilterCostRange>({
     min: null,
     max: null,
@@ -271,6 +279,18 @@ export class CaptainCoveragePage implements OnInit {
   );
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
+  );
+  /**
+   * How many catalog characters match THIS facet alone. The page already holds
+   * the whole catalog (it slurps every character up front and filters client
+   * side), so the count is free — and it is what lets the control tell a
+   * satisfiable-but-empty `all` pair apart from an arity-impossible one.
+   */
+  public readonly typeFacetMatchCount = computed(() =>
+    countCharacterFacetMatches('type', this.allCharacters(), this.typeFacet()),
+  );
+  public readonly classFacetMatchCount = computed(() =>
+    countCharacterFacetMatches('class', this.allCharacters(), this.classFacet()),
   );
   public readonly hasSelectedCharacterTags = computed(
     () => countPopulatedCharacterTagSets(this.characterTagSetSelection()) > 0,
@@ -512,8 +532,8 @@ export class CaptainCoveragePage implements OnInit {
   public readonly resultCards = computed<CaptainCoverageCardView[]>(() => {
     const captain = this.selectedCaptainDetail();
     const normalizedSearchTerm = this.searchTerm().trim().toLowerCase();
-    const selectedType = this.selectedType();
-    const selectedClass = this.selectedClass();
+    const typeFacet = this.typeFacet();
+    const classFacet = this.classFacet();
     const coverageCostRange = this.coverageCostRange();
     const favoriteIdSet = new Set(this.favoriteIds());
     const selectedCharacterBoxIdSet = this.selectedCharacterBox()
@@ -594,8 +614,11 @@ export class CaptainCoveragePage implements OnInit {
         };
       })
       .filter(({ assignableSlotIndex }) => assignableSlotIndex !== null)
-      .filter(({ character }) => this.matchesSelectedType(character, selectedType))
-      .filter(({ character }) => this.matchesSelectedClass(character, selectedClass))
+      // One shared predicate: splits the comma-joined `type` column so a
+      // dual-type character is found under either of its types regardless of
+      // stored order, and reads the full `classes` array.
+      .filter(({ character }) => matchesCharacterFacet('type', character, typeFacet))
+      .filter(({ character }) => matchesCharacterFacet('class', character, classFacet))
       .filter(({ character }) => this.matchesCoverageCostRange(character, coverageCostRange))
       .filter(({ character }) => {
         if (this.favoritesOnly()) {
@@ -935,42 +958,18 @@ export class CaptainCoveragePage implements OnInit {
     this.searchTerm.set((event.detail.value ?? '').trimStart());
   }
 
-  public onTypeQueryChange(input: string | CustomEvent<{ value?: string | null }>): void {
-    const nextValue = this.resolveStringInput(input).trimStart();
-    this.typeQuery.set(nextValue);
-
-    if (this.selectedType() && nextValue.trim() !== this.selectedType()) {
-      this.selectedType.set('');
-    }
+  /**
+   * The facet control owns its own Clear button, so these two handlers are the
+   * page's ONLY write path for type/class — including the reset, which arrives
+   * as an empty selection. This page has no clear-all button, which was already
+   * true before the multi-select control landed.
+   */
+  public onTypeFacetChange(selection: CharacterFacetSelection): void {
+    this.typeFacet.set(selection);
   }
 
-  public onClassQueryChange(input: string | CustomEvent<{ value?: string | null }>): void {
-    const nextValue = this.resolveStringInput(input).trimStart();
-    this.classQuery.set(nextValue);
-
-    if (this.selectedClass() && nextValue.trim() !== this.selectedClass()) {
-      this.selectedClass.set('');
-    }
-  }
-
-  public applyTypeFilter(type: string): void {
-    this.typeQuery.set(type);
-    this.selectedType.set(type);
-  }
-
-  public applyClassFilter(characterClass: string): void {
-    this.classQuery.set(characterClass);
-    this.selectedClass.set(characterClass);
-  }
-
-  public clearTypeFilter(): void {
-    this.typeQuery.set('');
-    this.selectedType.set('');
-  }
-
-  public clearClassFilter(): void {
-    this.classQuery.set('');
-    this.selectedClass.set('');
+  public onClassFacetChange(selection: CharacterFacetSelection): void {
+    this.classFacet.set(selection);
   }
 
   public openCharacterTagSetPicker(): void {
@@ -1202,22 +1201,6 @@ export class CaptainCoveragePage implements OnInit {
     }
 
     return true;
-  }
-
-  private matchesSelectedType(character: CharacterListItem, selectedType: string): boolean {
-    if (!selectedType) {
-      return true;
-    }
-
-    return character.type
-      .split(',')
-      .map((type) => type.trim())
-      .filter(Boolean)
-      .includes(selectedType);
-  }
-
-  private matchesSelectedClass(character: CharacterListItem, selectedClass: string): boolean {
-    return selectedClass ? character.classes.includes(selectedClass) : true;
   }
 
   /** Single write path, so the legacy flat mirror can never drift. */

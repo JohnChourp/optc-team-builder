@@ -4,6 +4,11 @@ import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import { type DatasetManifest, type LocalCharacterOverride } from '../models/optc.models';
+import {
+  CHARACTER_CLASS_LIKE_CLAUSE,
+  CHARACTER_TYPE_LIKE_CLAUSE,
+  evaluateSqlLikePattern,
+} from './character-facet-filter.utils';
 import { OptcRepositoryService } from './optc-repository.service';
 
 interface TestSqlRow {
@@ -394,53 +399,6 @@ describe('OptcRepositoryService', () => {
     expect(index.has('')).toBe(false);
     // The catalog sweep visits 4105 first, so the raw catalog casing it carries wins.
     await expect(service.getAvailableCharacterTags()).resolves.toEqual(['boosts orbs', 'Slasher']);
-  });
-
-  it('returns linked variants when searching by a shared canonical id', async () => {
-    const service = createRepositoryService([]);
-    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
-    const zoroRow = createCharacterRow({
-      id: 4529,
-      name: 'Clashing Blades Roronoa Zoro',
-      type: 'DEX',
-      primaryClass: 'Free Spirit',
-      secondaryClass: 'Slasher',
-      classes: ['Free Spirit', 'Slasher'],
-      stars: 6,
-    });
-    const nusjuroRow = createCharacterRow({
-      id: 900005,
-      name: 'Clashing Blades St. Ethanbaron V. Nusjuro',
-      type: 'STR',
-      primaryClass: 'Cerebral',
-      secondaryClass: 'Slasher',
-      classes: ['Cerebral', 'Slasher'],
-      stars: 6,
-    });
-
-    selectAllMock.mockImplementation((query: string, params: Array<string | number> = []) => {
-      if (query.includes('FROM characters') && query.includes('search_text LIKE')) {
-        expect(params[0]).toBe('4529');
-        expect(params[1]).toBe('4529');
-        return Promise.resolve([nusjuroRow, zoroRow]);
-      }
-
-      return Promise.resolve([]);
-    });
-
-    const result = await service.searchCharacters({
-      searchTerm: '4529',
-      typeFilter: '',
-      classFilter: '',
-      limit: 10,
-      offset: 0,
-    });
-
-    expect(result.map((record) => record.id)).toEqual([900005, 4529]);
-    expect(result.map((record) => record.name)).toEqual([
-      'Clashing Blades St. Ethanbaron V. Nusjuro',
-      'Clashing Blades Roronoa Zoro',
-    ]);
   });
 
   it('matches linked variants by shared canonical id in detailed character search', async () => {
@@ -1229,34 +1187,6 @@ describe('OptcRepositoryService', () => {
     ]);
   });
 
-  it('applies excluded character ids to character search queries', async () => {
-    const service = createRepositoryService([]);
-    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
-
-    await service.searchCharacters({
-      searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
-      excludedCharacterIds: [4101, 4102],
-      limit: 10,
-      offset: 0,
-    });
-
-    expect(selectAllMock).toHaveBeenCalledWith(expect.stringContaining('AND id NOT IN (?,?)'), [
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      4101,
-      4102,
-      10,
-      0,
-    ]);
-  });
-
   it('resolves ship thumbnail urls when the ship offline pack is installed', async () => {
     const service = createRepositoryService([], {
       manifest: createManifest({
@@ -1314,6 +1244,158 @@ describe('OptcRepositoryService', () => {
     ]);
   });
 });
+
+describe('OptcRepositoryService character facet filtering', () => {
+  const FACET_ROWS = [
+    createCharacterRow({
+      id: 8001,
+      type: 'STR,QCK',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      classes: ['Fighter', 'Slasher'],
+    }),
+    // Same pair, the OTHER stored order — the dataset ships both.
+    createCharacterRow({
+      id: 8002,
+      type: 'QCK,STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Fighter',
+      classes: ['Slasher', 'Fighter'],
+    }),
+    createCharacterRow({
+      id: 8003,
+      type: 'QCK',
+      primaryClass: 'Free Spirit',
+      secondaryClass: null,
+      // Mixed case on purpose: SQLite LIKE folds ASCII case, so JS must too.
+      classes: ['free spirit'],
+    }),
+    createCharacterRow({
+      id: 8004,
+      type: 'INT,PSY',
+      primaryClass: 'Cerebral',
+      secondaryClass: 'Shooter',
+      classes: ['Cerebral', 'Shooter'],
+    }),
+  ];
+
+  const FACET_CASES: Array<{
+    selectedTypes: string[];
+    selectedTypesMatchMode: 'all' | 'any';
+    selectedClasses: string[];
+    selectedClassesMatchMode: 'all' | 'any';
+  }> = [
+    { selectedTypes: [], selectedTypesMatchMode: 'any', selectedClasses: [], selectedClassesMatchMode: 'any' },
+    { selectedTypes: ['QCK'], selectedTypesMatchMode: 'any', selectedClasses: [], selectedClassesMatchMode: 'any' },
+    { selectedTypes: ['STR', 'QCK'], selectedTypesMatchMode: 'all', selectedClasses: [], selectedClassesMatchMode: 'any' },
+    { selectedTypes: ['STR', 'INT'], selectedTypesMatchMode: 'all', selectedClasses: [], selectedClassesMatchMode: 'any' },
+    { selectedTypes: ['STR', 'INT'], selectedTypesMatchMode: 'any', selectedClasses: [], selectedClassesMatchMode: 'any' },
+    { selectedTypes: [], selectedTypesMatchMode: 'any', selectedClasses: ['Free Spirit'], selectedClassesMatchMode: 'any' },
+    { selectedTypes: [], selectedTypesMatchMode: 'any', selectedClasses: ['Fighter', 'Slasher'], selectedClassesMatchMode: 'all' },
+    { selectedTypes: [], selectedTypesMatchMode: 'any', selectedClasses: ['Fighter', 'Cerebral'], selectedClassesMatchMode: 'all' },
+    { selectedTypes: ['QCK'], selectedTypesMatchMode: 'any', selectedClasses: ['Fighter'], selectedClassesMatchMode: 'any' },
+  ];
+
+  it('returns identical ids from the SQL and in-memory branches for every type and class selection', async () => {
+    // A single no-op override flips searchDetailedCharacters onto the in-memory
+    // branch without changing any facet-relevant field.
+    const inMemoryService = createRepositoryService(FACET_ROWS, {
+      overrides: [
+        createOverride({
+          characterId: 8004,
+          name: 'Unit 8004',
+          type: 'INT,PSY',
+          classes: ['Cerebral', 'Shooter'],
+        }),
+      ],
+    });
+    const sqlService = createRepositoryService(FACET_ROWS);
+
+    for (const facets of FACET_CASES) {
+      const query = { searchTerm: '', ...facets, limit: 50, offset: 0 };
+      const sqlIds = (await sqlService.searchDetailedCharacters(query)).map((record) => record.id);
+      const inMemoryIds = (await inMemoryService.searchDetailedCharacters(query)).map(
+        (record) => record.id,
+      );
+
+      expect({ facets, ids: inMemoryIds }).toEqual({ facets, ids: sqlIds });
+    }
+  });
+
+  it('keeps AND semantics for a two-value all-mode selection', async () => {
+    // Regression for the fake-driver trap: if the driver stops detecting the
+    // AND joiner, this returns the OR set (8001, 8002, 8003) and stays green.
+    const service = createRepositoryService(FACET_ROWS);
+
+    expect(
+      (
+        await service.searchDetailedCharacters({
+          searchTerm: '',
+          selectedTypes: ['STR', 'QCK'],
+          selectedTypesMatchMode: 'all',
+          selectedClasses: [],
+          limit: 50,
+          offset: 0,
+        })
+      ).map((record) => record.id),
+    ).toEqual([8002, 8001]);
+    expect(
+      (
+        await service.searchDetailedCharacters({
+          searchTerm: '',
+          selectedTypes: [],
+          selectedClasses: ['Fighter', 'Cerebral'],
+          selectedClassesMatchMode: 'all',
+          limit: 50,
+          offset: 0,
+        })
+      ).map((record) => record.id),
+    ).toEqual([]);
+  });
+
+  it('escapes wildcard characters in selected class names', async () => {
+    const service = createRepositoryService(FACET_ROWS);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+
+    await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: [],
+      selectedClasses: ['Fig%ter'],
+      selectedClassesMatchMode: 'any',
+      limit: 50,
+      offset: 0,
+    });
+
+    const [emittedQuery, emittedParams] = selectAllMock.mock.calls.at(-1) as [
+      string,
+      Array<string | number>,
+    ];
+
+    expect(emittedQuery).toContain(CHARACTER_CLASS_LIKE_CLAUSE);
+    expect(emittedParams[0]).toBe('%"Fig\\%ter"%');
+  });
+
+  it('emits the exported clause constants so the fake driver and the repository cannot drift', async () => {
+    const service = createRepositoryService(FACET_ROWS);
+    const selectAllMock = service['selectAll'] as ReturnType<typeof vi.fn>;
+
+    await service.searchDetailedCharacters({
+      searchTerm: '',
+      selectedTypes: ['STR', 'QCK'],
+      selectedTypesMatchMode: 'all',
+      selectedClasses: [],
+      limit: 50,
+      offset: 0,
+    });
+
+    const [emittedQuery] = selectAllMock.mock.calls.at(-1) as [string, Array<string | number>];
+
+    expect(emittedQuery).toContain(
+      `${CHARACTER_TYPE_LIKE_CLAUSE} AND ${CHARACTER_TYPE_LIKE_CLAUSE}`,
+    );
+  });
+});
+
 
 function createRepositoryService(
   rows: TestSqlRow[],
@@ -1628,63 +1710,6 @@ function filterCharacterRowsForQuery(
 
   let filteredRows = [...rows];
 
-  if (query.includes("WHERE (? = '' OR search_text LIKE '%' || ? || '%')")) {
-    const searchTerm = String(params[0] ?? '')
-      .trim()
-      .toLowerCase();
-    const typeFilter = String(params[2] ?? '').trim();
-    const classFilter = String(params[4] ?? '').trim();
-    let paramIndex = 7;
-
-    if (searchTerm.length > 0) {
-      filteredRows = filteredRows.filter((row) =>
-        String(row['search_text'] ?? '')
-          .toLowerCase()
-          .includes(searchTerm),
-      );
-    }
-
-    if (typeFilter.length > 0) {
-      filteredRows = filteredRows.filter((row) => String(row['type'] ?? '').includes(typeFilter));
-    }
-
-    if (classFilter.length > 0) {
-      filteredRows = filteredRows.filter((row) => {
-        const classes = [
-          String(row['primary_class'] ?? ''),
-          String(row['secondary_class'] ?? ''),
-        ].filter((value) => value.length > 0);
-
-        return classes.includes(classFilter);
-      });
-    }
-
-    const allowedClauseMatch = query.match(/AND id IN \(([^)]+)\)/);
-
-    if (allowedClauseMatch) {
-      const allowedCount = countClausePlaceholders(allowedClauseMatch[1] ?? '');
-      const allowedIds = new Set(
-        params.slice(paramIndex, paramIndex + allowedCount).map((value) => Number(value)),
-      );
-
-      filteredRows = filteredRows.filter((row) => allowedIds.has(Number(row['id'] ?? 0)));
-      paramIndex += allowedCount;
-    }
-
-    const excludedClauseMatch = query.match(/AND id NOT IN \(([^)]+)\)/);
-
-    if (excludedClauseMatch) {
-      const excludedCount = countClausePlaceholders(excludedClauseMatch[1] ?? '');
-      const excludedIds = new Set(
-        params.slice(paramIndex, paramIndex + excludedCount).map((value) => Number(value)),
-      );
-
-      filteredRows = filteredRows.filter((row) => !excludedIds.has(Number(row['id'] ?? 0)));
-    }
-
-    return applyOrderingAndWindow(filteredRows, query, params);
-  }
-
   let paramIndex = 0;
   const detailedSearchTermToken = "c.search_text LIKE '%' || ? || '%'";
 
@@ -1701,36 +1726,43 @@ function filterCharacterRowsForQuery(
     paramIndex += 1;
   }
 
-  const typeToken = "(',' || c.type || ',') LIKE ?";
+  // Imported, never re-typed. A hard-coded copy that misses the ESCAPE suffix
+  // makes `${token} AND ${token}` never match, silently downgrading every
+  // AND-mode assertion in this suite to OR semantics while staying green.
+  const typeToken = CHARACTER_TYPE_LIKE_CLAUSE;
   const typeTokenCount = countOccurrences(query, typeToken);
 
   if (typeTokenCount > 0) {
     const typePatterns = params
       .slice(paramIndex, paramIndex + typeTokenCount)
-      .map((value) => String(value).replaceAll('%', ''));
+      .map((value) => String(value));
     const requiresAllTypes = query.includes(`${typeToken} AND ${typeToken}`);
 
     filteredRows = filteredRows.filter((row) => {
       const normalizedTypeValue = `,${String(row['type'] ?? '')},`;
-      const matches = typePatterns.map((pattern) => normalizedTypeValue.includes(pattern));
+      const matches = typePatterns.map((pattern) =>
+        evaluateSqlLikePattern(normalizedTypeValue, pattern),
+      );
 
       return requiresAllTypes ? matches.every(Boolean) : matches.some(Boolean);
     });
     paramIndex += typeTokenCount;
   }
 
-  const classToken = 'c.classes_json LIKE ?';
+  const classToken = CHARACTER_CLASS_LIKE_CLAUSE;
   const classTokenCount = countOccurrences(query, classToken);
 
   if (classTokenCount > 0) {
     const classPatterns = params
       .slice(paramIndex, paramIndex + classTokenCount)
-      .map((value) => String(value).replaceAll('%', ''));
+      .map((value) => String(value));
     const requiresAllClasses = query.includes(`${classToken} AND ${classToken}`);
 
     filteredRows = filteredRows.filter((row) => {
       const classesJson = String(row['classes_json'] ?? '');
-      const matches = classPatterns.map((pattern) => classesJson.includes(pattern));
+      const matches = classPatterns.map((pattern) =>
+        evaluateSqlLikePattern(classesJson, pattern),
+      );
 
       return requiresAllClasses ? matches.every(Boolean) : matches.some(Boolean);
     });
