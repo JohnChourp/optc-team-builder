@@ -421,6 +421,134 @@ If the dataset exposes no `characterTags` at all, the trigger stays disabled and
 the support line reads the `support.unavailable` string; that is expected, not a
 regression.
 
+### Type and Class Facet Filters
+
+Character type and class are filtered through the shared
+`app-character-facet-filter` control in
+`src/app/shared/character-facet-filter/character-facet-filter.component.ts`.
+Unlike the tag-set filters above there is **no modal**: the control is a flat
+list of values plus one match mode.
+
+- `all` means the character holds **every** selected value; `any` means it holds
+  at least one. An empty selection applies no filter at all.
+- Type renders as chips (`presentation="chips"`, 5 values); class renders as an
+  `ion-select[multiple]` with a removable chip row (`presentation="select"`,
+  10 values).
+- Hosts: `/tabs/characters`, `/tabs/character-boxes`, `/tabs/captain-coverage`,
+  the `/tabs/manual-team-builder` candidate picker, and the shared character
+  image picker. `testIdPrefix` values are `characters`, `character-boxes`,
+  `captain-coverage`, `manual-team`, and `character-image-picker`; test ids are
+  `${testIdPrefix}-${kind}-facet-*` (`-facet-mode-any`, `-facet-mode-all`,
+  `-facet-clear`, `-facet-match-count`, `-facet-value-<slug>`).
+
+**A character holds at most two types and at most two classes.** That single
+dataset fact drives the whole design: `all` across three or more values can
+never match anything. The control therefore refuses to enter `all` past two
+selected values, and when an existing `all` selection grows past two it demotes
+to `any` **loudly** — a visible hint, an `aria-live` announcement, and automatic
+restoration of `all` when the selection drops back to two. A silently rewritten
+filter is the failure mode to watch for; if you ever see the results widen with
+no hint, that is a bug. Multi-set DNF selections such as
+`(STR AND QCK) OR (INT AND PSY)` are an explicit **non-goal**, documented as such
+in `src/app/core/models/optc.models.ts`.
+
+**Dual-type characters are the correctness trap.** `characters.type` is one
+comma-joined column (189 characters are dual-type, and the same pair is stored in
+both orders), so an exact-string comparison on `type` is wrong. Every path —
+the SQL query, the repository's in-memory override branch, the catalog cache,
+Captain Coverage's client-side predicate, and the Manual Team Builder
+tag-filtered path — goes through `matchesCharacterFacet` /
+`buildCharacterFacetSqlClause` in
+`src/app/core/services/character-facet-filter.utils.ts`. The SQL clause matches
+on `',' || c.type || ','` with an `ESCAPE '\'`, and the exported
+`CHARACTER_TYPE_LIKE_CLAUSE` / `CHARACTER_CLASS_LIKE_CLAUSE` constants are what
+the repository spec's fake driver consumes, so the fake and the repository
+cannot drift apart. Filtering always happens **before** any slice, limit, or
+paging cap.
+
+Run the focused specs before changing the control, its copy, the shared utils, or
+a host wiring:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:ci -- --include src/app/core/services/character-facet-filter.utils.spec.ts --include src/app/shared/character-facet-filter/character-facet-filter.component.spec.ts --include src/app/shared/character-facet-filter/character-facet-filter.i18n.spec.ts
+```
+
+Then the five hosts, plus the two services that own the query paths:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:ci -- --include src/app/pages/characters/characters.page.spec.ts --include src/app/pages/character-boxes/character-boxes.page.spec.ts --include src/app/pages/captain-coverage/captain-coverage.page.spec.ts --include src/app/pages/manual-team-builder/manual-team-builder.page.spec.ts --include src/app/shared/character-image-picker/character-image-picker.component.spec.ts --include src/app/core/services/optc-repository.service.spec.ts --include src/app/core/services/character-catalog-cache.service.spec.ts
+```
+
+Two gaps make green misleading here, and both have bitten this work:
+
+- **Host page specs do not use `TestBed`.** They `new` the page class with
+  `as never` fakes and assert template bindings as literal substrings read with
+  `readFileSync`. A new or renamed binding is invisible to them until the
+  "template contains" test is extended.
+- **`vitest run` and `tsconfig.app.json` do not typecheck spec files.** A wrong
+  `CharacterFacetMatchMode` literal or a stale field name only surfaces under
+  the spec project, which is what CI's `ng test` uses:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npx tsc -p tsconfig.spec.json --noEmit
+```
+
+Whenever `public/i18n/character-facet-filter/` changes, the EN and EL files must
+keep identical leaf keys and identical `{{placeholder}}` sets. Per house style
+the Greek copy keeps `Type` and `Class` as English loanwords, matching every
+other shipped scope, and facet **values** (`STR`, `Free Spirit`, …) are never
+translated in either locale:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run i18n:validate
+```
+
+Manual verification (no E2E covers these surfaces yet). Serve the app with
+`npm start`, then for each host:
+
+1. Select one type. Results narrow, one chip appears, and the match-mode row
+   appears (Characters, Captain Coverage, and the image picker also show a live
+   match count).
+2. Select a second type and switch the mode to `All`. Results must become the
+   **intersection**, not the union — on real data a two-type `All` selection is
+   a small set, and a result list that stays large is the AND-silently-became-OR
+   regression.
+3. With `All` active, add a third value. The control must demote to `Any` with a
+   visible hint and an announcement; removing the third value must restore
+   `All`.
+4. Pick a known dual-type character (its type reads e.g. `INT/PSY`) and confirm
+   it is found by **either** of its types. The same pair is stored in both
+   orders in the dataset, so check one character of each order.
+5. Select two classes with `All` on `/tabs/character-boxes`, then use "select all
+   filtered": the selected count must equal the visible filtered count. The
+   bulk-select sweep and the page query share one builder; a mismatch means they
+   diverged.
+6. Clear: `/tabs/characters` clears through the page `Reset` button,
+   `/tabs/character-boxes` through the filter row's clear-filters action,
+   `/tabs/manual-team-builder` through the candidate filter reset, and the image
+   picker resets itself on reopen. `/tabs/captain-coverage` has **no** clear-all
+   — the per-facet `Clear` button inside each control is the only reset there,
+   so confirm both are reachable.
+7. The character image picker instance is shared across Captain Coverage, Crew
+   Forge, and Saved Enemies. Open it from all three in one session and confirm a
+   facet selected in one does not persist into the next.
+8. On `/tabs/manual-team-builder`, apply a facet selection, then toggle a
+   character-tag filter on and off. That toggle swaps the candidate list between
+   the repository query and the in-memory tag-filtered path; membership **and**
+   order must be identical either way (both ask for `powerFirst`, which is
+   highest id first, and both cap at 48).
+9. Switch the app language to Greek and repeat step 3: the demotion hint must
+   read Greek copy with `type`/`class` as loanwords, and no key may render as a
+   raw dotted path.
+
 ### Browser Performance
 
 Ability-filter harness:

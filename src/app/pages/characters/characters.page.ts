@@ -35,6 +35,7 @@ import {
   type AutoBuildAbilityRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
+  type CharacterFacetSelection,
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
@@ -47,6 +48,11 @@ import {
 } from '../../core/models/optcbx-import.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
+import {
+  countCharacterFacetMatches,
+  createEmptyCharacterFacetSelection,
+  isCharacterFacetSelectionEmpty,
+} from '../../core/services/character-facet-filter.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -75,6 +81,7 @@ import {
   CharacterFilterRowComponent,
   type CharacterFilterOption,
 } from '../../shared/character-filter-row/character-filter-row.component';
+import { CharacterFacetFilterComponent } from '../../shared/character-facet-filter/character-facet-filter.component';
 import {
   CharacterTagFilterComponent,
   type CharacterTagFilterChange,
@@ -120,6 +127,7 @@ interface CharacterCatalogCardView {
     IonTitle,
     IonToolbar,
     AbilityFilterRailComponent,
+    CharacterFacetFilterComponent,
     CharacterFilterRowComponent,
     CharacterTagFilterComponent,
     CharactersCatalogPanelComponent,
@@ -140,10 +148,16 @@ export class CharactersPage implements OnInit {
   public readonly loadingMore = signal(false);
   public readonly hasMore = signal(true);
   public readonly searchTerm = signal('');
-  public readonly typeQuery = signal('');
-  public readonly classQuery = signal('');
-  public readonly selectedType = signal('');
-  public readonly selectedClass = signal('');
+  /**
+   * Vocabulary C: one flat value list plus one match mode per facet. An empty
+   * selection is NO filter — never "nothing matches".
+   */
+  public readonly typeFacet = signal<CharacterFacetSelection>(
+    createEmptyCharacterFacetSelection(),
+  );
+  public readonly classFacet = signal<CharacterFacetSelection>(
+    createEmptyCharacterFacetSelection(),
+  );
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
@@ -181,18 +195,16 @@ export class CharactersPage implements OnInit {
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
   );
-  public readonly filteredTypeOptions = computed(() =>
-    this.filterOptions(this.availableTypes(), this.typeQuery(), this.selectedType()),
+  /**
+   * Live per-facet match counts over the cached catalog. Supplied only because
+   * this page already holds the catalog in hand; the control renders its
+   * `disjoint` explanation only where a count is provable.
+   */
+  public readonly typeFacetMatchCount = computed(() =>
+    countCharacterFacetMatches('type', this.characterCatalogCache.catalog(), this.typeFacet()),
   );
-  public readonly filteredClassOptions = computed(() =>
-    this.filterOptions(this.availableClasses(), this.classQuery(), this.selectedClass()),
-  );
-  public readonly showTypeSuggestions = computed(
-    () => this.filteredTypeOptions().length > 0 && this.typeQuery().trim() !== this.selectedType(),
-  );
-  public readonly showClassSuggestions = computed(
-    () =>
-      this.filteredClassOptions().length > 0 && this.classQuery().trim() !== this.selectedClass(),
+  public readonly classFacetMatchCount = computed(() =>
+    countCharacterFacetMatches('class', this.characterCatalogCache.catalog(), this.classFacet()),
   );
   public readonly isCompactDisplayMode = computed(() => this.displayMode() === 'compact');
   /**
@@ -424,71 +436,13 @@ export class CharactersPage implements OnInit {
     await this.loadCharacters(true);
   }
 
-  public async onTypeQueryChange(
-    input: string | CustomEvent<{ value?: string | null }>,
-  ): Promise<void> {
-    const nextValue = this.resolveStringInput(input).trimStart();
-    this.typeQuery.set(nextValue);
-
-    if (this.selectedType() && nextValue.trim() !== this.selectedType()) {
-      this.selectedType.set('');
-      await this.loadCharacters(true);
-    }
-  }
-
-  public async onClassQueryChange(
-    input: string | CustomEvent<{ value?: string | null }>,
-  ): Promise<void> {
-    const nextValue = this.resolveStringInput(input).trimStart();
-    this.classQuery.set(nextValue);
-
-    if (this.selectedClass() && nextValue.trim() !== this.selectedClass()) {
-      this.selectedClass.set('');
-      await this.loadCharacters(true);
-    }
-  }
-
-  public async applyTypeFilter(type: string): Promise<void> {
-    if (this.selectedType() === type) {
-      return;
-    }
-
-    this.typeQuery.set(type);
-    this.selectedType.set(type);
+  public async onTypeFacetChange(selection: CharacterFacetSelection): Promise<void> {
+    this.typeFacet.set(selection);
     await this.loadCharacters(true);
   }
 
-  public async applyClassFilter(characterClass: string): Promise<void> {
-    if (this.selectedClass() === characterClass) {
-      return;
-    }
-
-    this.classQuery.set(characterClass);
-    this.selectedClass.set(characterClass);
-    await this.loadCharacters(true);
-  }
-
-  public async clearTypeFilter(): Promise<void> {
-    const hadSelection = Boolean(this.selectedType());
-    this.typeQuery.set('');
-
-    if (!hadSelection) {
-      return;
-    }
-
-    this.selectedType.set('');
-    await this.loadCharacters(true);
-  }
-
-  public async clearClassFilter(): Promise<void> {
-    const hadSelection = Boolean(this.selectedClass());
-    this.classQuery.set('');
-
-    if (!hadSelection) {
-      return;
-    }
-
-    this.selectedClass.set('');
+  public async onClassFacetChange(selection: CharacterFacetSelection): Promise<void> {
+    this.classFacet.set(selection);
     await this.loadCharacters(true);
   }
 
@@ -737,10 +691,10 @@ export class CharactersPage implements OnInit {
 
   public async resetPage(): Promise<void> {
     this.searchTerm.set('');
-    this.typeQuery.set('');
-    this.classQuery.set('');
-    this.selectedType.set('');
-    this.selectedClass.set('');
+    // The page's ONLY clear-all: no `[showClearButton]` is ever passed here, so
+    // every new filter must be registered in this method or it survives a reset.
+    this.typeFacet.set(createEmptyCharacterFacetSelection());
+    this.classFacet.set(createEmptyCharacterFacetSelection());
     this.favoritesOnly.set(false);
     this.hideFavorites.set(false);
     this.selectedSortMode.set('catalog');
@@ -781,10 +735,12 @@ export class CharactersPage implements OnInit {
     await this.characterCatalogCache.ensureLoaded();
     const nextOffset = reset ? 0 : this.characters().length;
     const excludedCharacterIds = this.hideFavorites() ? this.favoriteIds() : undefined;
+    const typeFacet = this.typeFacet();
+    const classFacet = this.classFacet();
     const nextPage = this.characterCatalogCache.queryCharacters({
       searchTerm: this.searchTerm(),
-      typeFilter: this.selectedType(),
-      classFilter: this.selectedClass(),
+      ...(isCharacterFacetSelectionEmpty(typeFacet) ? {} : { typeFacet }),
+      ...(isCharacterFacetSelectionEmpty(classFacet) ? {} : { classFacet }),
       allowedCharacterIds: this.resolveAllowedCharacterIds(),
       ...(excludedCharacterIds ? { excludedCharacterIds } : {}),
       sortMode: this.selectedSortMode(),
@@ -854,19 +810,6 @@ export class CharactersPage implements OnInit {
 
   private normalizeIdOrder(value: string | null | undefined): CharacterIdOrder {
     return value === 'oldest' ? 'oldest' : 'newest';
-  }
-
-  private filterOptions(options: string[], query: string, selectedValue: string): string[] {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    if (!normalizedQuery) {
-      return options.slice(0, 8);
-    }
-
-    return options
-      .filter((option) => option.toLowerCase().includes(normalizedQuery))
-      .filter((option) => option !== selectedValue)
-      .slice(0, 8);
   }
 
   private async loadImportFile(file: File): Promise<void> {

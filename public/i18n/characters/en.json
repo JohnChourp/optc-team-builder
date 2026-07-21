@@ -10,7 +10,7 @@
     "abilityRailLabel": "Ability filter categories",
     "class": {
       "label": "Class",
-      "placeholder": "Type to filter by class"
+      "placeholder": "Filter by class"
     },
     "hideFavorites": {
       "empty": "No favorites saved yet.",
@@ -60,7 +60,7 @@
     },
     "type": {
       "label": "Type",
-      "placeholder": "Type to filter by character type"
+      "placeholder": "Filter by type"
     },
     "support": {
       "label": "Support Ability filters",

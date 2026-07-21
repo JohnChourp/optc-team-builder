@@ -75,7 +75,7 @@
     },
     "class": {
       "label": "Class",
-      "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά class"
+      "placeholder": "Φίλτρο ανά class"
     },
     "cost": {
       "from": "Cost από",
@@ -97,7 +97,7 @@
     "supportEyebrow": "Support Ability",
     "type": {
       "label": "Type",
-      "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά type"
+      "placeholder": "Φίλτρο ανά type"
     }
   },
   "loading": "Φόρτωση captain δεδομένων...",

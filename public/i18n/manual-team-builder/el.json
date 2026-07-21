@@ -47,8 +47,6 @@
     "eyebrow": "Επιλογή slot",
     "filters": {
       "abilityRailLabel": "Κατηγορίες ability filters για manual team",
-      "anyClass": "Όλα τα classes",
-      "anyType": "Όλα τα types",
       "captainAbility": {
         "copy": "Φίλτραρε τους slot candidates με effects από το Captain Ability κάθε χαρακτήρα.",
         "eyebrow": "Captain Ability",

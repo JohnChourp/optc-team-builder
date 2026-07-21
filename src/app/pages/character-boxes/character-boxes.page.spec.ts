@@ -12,6 +12,7 @@ import {
   type CharacterDetailRecord,
   type CharacterTagSetSelection,
 } from '../../core/models/optc.models';
+import { matchesCharacterFacet } from '../../core/services/character-facet-filter.utils';
 import { CharacterBoxesPage } from './character-boxes.page';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -211,17 +212,14 @@ describe('CharacterBoxesPage', () => {
     });
   });
 
-  it('applies type and class suggestion selections to repository lookups', async () => {
+  it('applies the selected type and class facets to repository lookups', async () => {
     const { page, repository } = createPage();
 
-    await page.onTypeQueryChange('de');
-    expect(page.typeQuery()).toBe('de');
+    await page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
+    await page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
 
-    await page.applyTypeFilter('DEX');
-    await page.applyClassFilter('Fighter');
-
-    expect(page.typeQuery()).toBe('DEX');
-    expect(page.classQuery()).toBe('Fighter');
+    expect(page.typeFacet()).toEqual({ values: ['DEX'], matchMode: 'any' });
+    expect(page.classFacet()).toEqual({ values: ['Fighter'], matchMode: 'any' });
     expect(repository.searchDetailedCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
       selectedTypes: ['DEX'],
@@ -235,6 +233,94 @@ describe('CharacterBoxesPage', () => {
       limit: 48,
       offset: 0,
     });
+  });
+
+  it('sends no type or class gate for an empty facet selection', async () => {
+    const { page, repository } = createPage();
+
+    await page.onTypeFacetChange({ values: [], matchMode: 'any' });
+    await page.onClassFacetChange({ values: ['  '], matchMode: 'all' });
+
+    const query = repository.searchDetailedCharacters.mock.calls.at(-1)?.[0] as {
+      selectedTypes: string[];
+      selectedTypesMatchMode: string;
+      selectedClasses: string[];
+      selectedClassesMatchMode: string;
+    };
+
+    // An empty selection is NO filter, never "nothing matches". The retained
+    // match mode is irrelevant once the value list is empty — both the predicate
+    // and the SQL builder gate on the values alone — so the fail-open invariant
+    // is asserted through the predicate rather than through the mode literal.
+    expect(query.selectedTypes).toEqual([]);
+    expect(query.selectedClasses).toEqual([]);
+    expect(
+      matchesCharacterFacet(
+        'type',
+        { type: 'STR' },
+        { values: query.selectedTypes, matchMode: query.selectedTypesMatchMode as 'all' | 'any' },
+      ),
+    ).toBe(true);
+    expect(
+      matchesCharacterFacet(
+        'class',
+        { classes: ['Fighter'] },
+        {
+          values: query.selectedClasses,
+          matchMode: query.selectedClassesMatchMode as 'all' | 'any',
+        },
+      ),
+    ).toBe(true);
+  });
+
+  it('sends a two-value all-mode class facet as an intersection', async () => {
+    const { page, repository } = createPage();
+
+    await page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+
+    const query = repository.searchDetailedCharacters.mock.calls.at(-1)?.[0] as {
+      selectedClasses: string[];
+      selectedClassesMatchMode: string;
+    };
+
+    expect(query.selectedClasses).toEqual(['Fighter', 'Slasher']);
+    expect(query.selectedClassesMatchMode).toBe('all');
+
+    const facet = { values: query.selectedClasses, matchMode: 'all' as const };
+
+    expect(matchesCharacterFacet('class', { classes: ['Fighter', 'Slasher'] }, facet)).toBe(true);
+    expect(matchesCharacterFacet('class', { classes: ['Fighter'] }, facet)).toBe(false);
+  });
+
+  it('demotes an all-mode facet that no character could ever satisfy', async () => {
+    const { page, repository } = createPage();
+
+    await page.onTypeFacetChange({ values: ['DEX', 'STR', 'QCK'], matchMode: 'all' });
+
+    const query = repository.searchDetailedCharacters.mock.calls.at(-1)?.[0] as {
+      selectedTypes: string[];
+      selectedTypesMatchMode: string;
+    };
+
+    // A character holds at most two types, so `all` across three is demoted.
+    expect(query.selectedTypes).toEqual(['DEX', 'STR', 'QCK']);
+    expect(query.selectedTypesMatchMode).toBe('any');
+  });
+
+  it('finds a dual-type character from either of its stored type orders', async () => {
+    const { page, repository } = createPage();
+
+    await page.onTypeFacetChange({ values: ['QCK'], matchMode: 'any' });
+
+    const query = repository.searchDetailedCharacters.mock.calls.at(-1)?.[0] as {
+      selectedTypes: string[];
+      selectedTypesMatchMode: 'all' | 'any';
+    };
+    const facet = { values: query.selectedTypes, matchMode: query.selectedTypesMatchMode };
+
+    expect(matchesCharacterFacet('type', { type: 'STR,QCK' }, facet)).toBe(true);
+    expect(matchesCharacterFacet('type', { type: 'QCK,STR' }, facet)).toBe(true);
+    expect(matchesCharacterFacet('type', { type: 'STR' }, facet)).toBe(false);
   });
 
   it('limits repository lookups to favorites when the favorites filter is active', async () => {
@@ -698,8 +784,8 @@ describe('CharacterBoxesPage', () => {
 
     page.selectBox('box-1');
     page.searchTerm.set('Luffy');
-    page.selectedType.set('DEX');
-    page.selectedClass.set('Fighter');
+    page.typeFacet.set({ values: ['DEX'], matchMode: 'any' });
+    page.classFacet.set({ values: ['Fighter'], matchMode: 'any' });
     page.selectedFavoriteFilter.set('favorites');
     page.selectedMembershipFilter.set('notInBox');
     page.selectedSortMode.set('nameAsc');
@@ -881,12 +967,12 @@ describe('CharacterBoxesPage', () => {
         value: '60',
       },
     } as CustomEvent<{ value?: string | number | null }>);
+    await page.onTypeFacetChange({ values: ['DEX', 'STR'], matchMode: 'all' });
+    await page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
     await page.clearFilters();
 
-    expect(page.typeQuery()).toBe('');
-    expect(page.classQuery()).toBe('');
-    expect(page.selectedType()).toBe('');
-    expect(page.selectedClass()).toBe('');
+    expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
     expect(page.selectedFavoriteFilter()).toBe('all');
     expect(page.selectedMembershipFilter()).toBe('all');
     expect(page.selectedSortMode()).toBe('catalog');
@@ -951,6 +1037,39 @@ describe('CharacterBoxesPage', () => {
       // The bulk action MUST NOT add characters the visible tag filter excluded.
       expect(call.limit).toBe(500);
       expect(call.allowedCharacterIds).toEqual(pagedCall.allowedCharacterIds);
+    }
+  });
+
+  it('applies the same type and class facets to the select-all-filtered sweep', async () => {
+    const { page, repository } = createPage();
+
+    page.selectBox('box-1');
+    await page.onTypeFacetChange({ values: ['DEX', 'STR'], matchMode: 'all' });
+    await page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+
+    const pagedCall = repository.searchDetailedCharacters.mock.calls.at(-1)?.[0] as Record<
+      string,
+      unknown
+    >;
+
+    repository.searchDetailedCharacters.mockClear();
+    repository.searchDetailedCharacters.mockResolvedValueOnce([createCharacter(202)]);
+
+    await page.selectAllFilteredCharacters();
+
+    const sweepCalls = repository.searchDetailedCharacters.mock.calls.map(
+      (call) => call[0] as Record<string, unknown>,
+    );
+
+    expect(sweepCalls.length).toBeGreaterThan(0);
+
+    for (const call of sweepCalls) {
+      // The bulk action MUST NOT add characters the visible facet filters excluded.
+      expect(call['limit']).toBe(500);
+      expect(call['selectedTypes']).toEqual(pagedCall['selectedTypes']);
+      expect(call['selectedTypesMatchMode']).toEqual(pagedCall['selectedTypesMatchMode']);
+      expect(call['selectedClasses']).toEqual(pagedCall['selectedClasses']);
+      expect(call['selectedClassesMatchMode']).toEqual(pagedCall['selectedClassesMatchMode']);
     }
   });
 
@@ -1031,6 +1150,24 @@ describe('CharacterBoxesPage', () => {
     expect(template).not.toContain('crewmateAbilityPickerOpen()');
     expect(template).not.toContain('potentialAbilityPickerOpen()');
     expect(template).not.toContain('supportAbilityPickerOpen()');
+    expect(template).toContain('<app-character-facet-filter');
+    expect(template).toContain('kind="type"');
+    expect(template).toContain('kind="class"');
+    expect(template).toContain('presentation="chips"');
+    expect(template).toContain('presentation="select"');
+    expect(template).toContain('[options]="availableTypes()"');
+    expect(template).toContain('[options]="availableClasses()"');
+    expect(template).toContain('[selection]="typeFacet()"');
+    expect(template).toContain('[selection]="classFacet()"');
+    expect(template).toContain('(selectionChange)="onTypeFacetChange($event)"');
+    expect(template).toContain('(selectionChange)="onClassFacetChange($event)"');
+    // The retired typeahead inputs and outputs are gone from the filter row.
+    expect(template).not.toContain('[typeQuery]');
+    expect(template).not.toContain('[classQuery]');
+    expect(template).not.toContain('[showTypeFilter]');
+    expect(template).not.toContain('[showClassFilter]');
+    expect(template).not.toContain('(typeSelected)');
+    expect(template).not.toContain('(classSelected)');
     expect(template).toContain('<app-character-filter-row');
     expect(template).toContain("t('filters.typeLabel')");
     expect(template).toContain("t('filters.classLabel')");
