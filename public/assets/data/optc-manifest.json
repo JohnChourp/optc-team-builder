@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-20T20:09:21.892Z",
+  "generatedAt": "2026-07-21T15:08:45.472Z",
   "sourceVersion": "36",
   "characterCount": 4588,
   "detailCount": 4500,
   "shipCount": 66,
-  "rumbleCount": 4566,
+  "rumbleCount": 4570,
   "availableTypes": [
     "DEX",
     "INT",
