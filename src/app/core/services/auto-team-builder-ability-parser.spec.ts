@@ -2725,6 +2725,34 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('apply_resistance_reduction');
   });
 
+  it('detects apply_def_reduction from the spelled-out "reduces the defense of enemies by N%" wording', () => {
+    // Canonical DEF Down application (was a dead key: the legacy /reduces..enem..DEF/
+    // and /inflicts..DEF Down/ branches matched 0 because upstream spells out "defense").
+    // Base special, super special (per-key allowlist) and the placeholder "?%" form.
+    for (const [text, source] of [
+      ['Reduces the defense of all enemies by 50% for 2 turns', 'specialText'],
+      ['reduces the defense of all enemies by 30% for 1 turn', 'superSpecialText'],
+      ['Sharply reduces the defense of all enemies by ?% for 1 turn', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_def_reduction',
+      );
+    }
+    // The enemy Increased Defense BUFF removal (a different key) is worded as a
+    // duration reduction "by N turns", never "defense of enemies ... by N%".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("reduces enemies' Increased Defense duration by 7 turns", 'specialText'),
+      ),
+    ).not.toContain('apply_def_reduction');
+    // The crew self-drawback "reduces defense of all characters" is not an enemy DEF Down.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces defense of all characters by 50% for 1 turn', 'specialText'),
+      ),
+    ).not.toContain('apply_def_reduction');
+  });
+
   it('scopes delayed_effect_launch to genuine launches, excluding "after N turns" ramp caps', () => {
     // Genuine delayed launches (kept): named-special activation, delayed boost,
     // "After N turns, <effect>" (comma), and the colon "launches ... after N turn:" form.

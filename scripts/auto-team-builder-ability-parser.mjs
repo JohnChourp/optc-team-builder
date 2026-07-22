@@ -898,10 +898,18 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['apply_delay', [/\bdelays?\b[^.]{0,120}\benemies\b/i]],
   [
     'apply_def_reduction',
-    [
-      /\breduces?\b[^.]{0,120}\benem(?:y|ies)[^.]{0,80}\bDEF\b/i,
-      /\binflicts?\b[^.]{0,120}\bDEF Down\b/i,
-    ],
+    // Crew applies DEF Down to enemies. OPTC-DB canonical wording is the spelled-out
+    // "reduces the defense of all/one enem(y|ies) by N% for N turns" (259 carriers) —
+    // NOT the abbreviation. The legacy /reduces..enem..DEF/ and /inflicts..DEF Down/
+    // branches BOTH matched 0 of 4588 (upstream never abbreviates it here), so this
+    // was a DEAD KEY; they are removed. The "by (N|?)%" anchor (3 older units carry the
+    // placeholder "?%") confirms a STAT reduction and separates this from the enemy
+    // Increased Defense BUFF removal ("reduces enemies' Increased Defense duration by N
+    // turns" → remove_enemy_increased_defense) — those never write "defense of enemies
+    // ... by N%". "defense of" also excludes the crew self-drawback "reduces defense of
+    // all characters". superSpecialText is on the per-key allowlist for the 8 super-only
+    // appliers (#3118, #3870, #4054, #4172, #4460, #4465, #4559, #4560).
+    [/\breduces?\s+(?:the\s+)?defense\s+of\b[^.]{0,40}\benem(?:y|ies)\b[^.]{0,30}\bby\s+(?:\d+|\?)%/i],
   ],
   // The crew INFLICTS the "Increase Damage Taken" (IDT) debuff ON ENEMIES so they
   // take Nx more damage: OPTC-DB "Inflicts all enemies with Increase Damage Taken by
@@ -2298,6 +2306,11 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // "Class 1/Class 2/both classes", so the old "Advantageous class" false
         // positive cannot reappear on super text. 10 -> 19.
         'class_change',
+        // apply_def_reduction: crew "reduces the defense of all enemies by N%" DEF Down.
+        // Eight units apply it ONLY in their super special (#3118, #3870, #4054, #4172,
+        // #4460, #4465, #4559, #4560); none repeats the wording in the base special, so
+        // double-tagging is impossible. 251 -> 259.
+        'apply_def_reduction',
       ]),
     );
   }
