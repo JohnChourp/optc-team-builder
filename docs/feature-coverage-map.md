@@ -309,3 +309,44 @@ audited wording), `npm run test:captain-contracts`, `npm run test:dataset-digest
 `npm run perf:dataset -- --assert`. Ledger status comes from the ledger tool at
 `optc-team-builder-brain/scripts/optc-ability-audit/ledger.py`, invoked from the brain repo
 with the ability type and the `status` subcommand.
+
+## Support-ability audit batch (2026-07-22)
+
+A full pass over the remaining un-audited **support** effects (source `supportData`) closed the
+board at 67/67 — 44 keys corrected, 15 verified correct, 6 genuine no-data. Highlights:
+
+- **Base-stat grants** (`base_atk_boost` 824 → 317, and `base_atk/hp/rcv_boost_additional`
+  +507 each): OPTC-DB writes the three-stat grant as the Oxford list `base ATK, HP and RCV`,
+  but the stat-list regex only traversed ` and ` separators, so it captured just `ATK` and mis-filed
+  the grant under the single-stat key. The separator now accepts a comma, so a multi-stat grant
+  emits the `_additional` variant for every stat it names.
+- **Applied status effects** (`apply_status_effect_def_down` 0 → 22, `_reduce_resistance` 0 → 21,
+  `_delay` 0 → 5, `_increased_damage_taken` 3 → 6, `_poison` 4 → 5): these are always granted
+  `for N turns`, so they were nulled by the shared duration/turns guard on the apply-effect list.
+  Each now has a dedicated pre-gate check keyed on the crew→enemy action clause (e.g. `reduces the
+  defense of all enemies by N% for M turns`, never the abbreviation "DEF Down").
+- **Status-effect recovery** now uses the OPTC-DB debuff names: *Chain Coefficient Reduction*
+  (`_reduce_chain_multiplier_growth_rate` 0 → 16), *Chain Multiplier Limit*
+  (`_lock_chain_multiplier` 0 → 12), *Silence* = Special Bind (`_special_bind` 40 → 41), and the
+  `Increase Damage Taken duration` cure (`_increased_damage_taken` 0 → 4). The poisons cure is
+  anchored on `<poison> duration` so a poison-offense clause is not read as a cure.
+- **Enemy-effect duration reductions** are keyed off the reduce action, and a trailing `[AUTO+]`
+  auto-ability clause (a trigger, not the support's own action) is stripped before matching — so
+  a "DEF Up" named only in `[AUTO+] When enemy launches DEF Up status` (#4600) no longer
+  false-positives `reduce_enemy_effect_turns_def_up`, while a genuine reduction worded `by N turns`
+  without the literal "duration" (#4193) still matches. The `(except Threshold Damage Reduction)`
+  carve-out routes #4600 to `_damage_reduction`, not `_damage_threshold`.
+- **Damage boosts** now read `boosts ATK against delayed / poisoned enemies` (`damage_boost_delay`
+  0 → 9, `_poison` 0 → 3, `_venom` 0 → 2 via the Toxic tier, `_def_down` 0 → 13) and the decimal
+  `adds 0.Nx to Chain multiplier` grant (`chain_multiplier_boost` 15 → 44) that a bare `[^.]` gap
+  had died on at the decimal point.
+- **Other**: permanent vs turn vs threshold damage reduction disambiguated
+  (`damage_reduction_permanent` 280 → 201, keyed on `reduces damage received from …` / flat
+  `by N%`); designated-turn activation now recognises `when you reach the final stage`
+  (`effect_activation_on_designated_turn` 4 → 188); and Special Cooldown reduction is scoped to
+  self (`reduce_special_charge_time_self` 0 → 67 — `of (the) supported character`, deliberately
+  excluding the Captain/Powerhouse/all-scope cooldown reductions that are not a `(Self)` effect).
+
+Every fix was verified by a deterministic parser harness over the 2,235-text `supportData` corpus
+(reproduces the shipped catalog exactly) plus the offline regen, whose catalog semantic diff was
+support-only. Seven new regression cases in the parser spec pin the corrected wordings.
