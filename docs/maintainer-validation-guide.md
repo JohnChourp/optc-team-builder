@@ -305,6 +305,17 @@ by an unchanged id set. A clean targeted fix shows only the intended key(s) gain
 or losing characters with no collateral movement on sibling keys; investigate any
 removal or value change you did not intend.
 
+When a rule change both **adds and removes** matches for a key (common for the
+crewmate `sailorAbilities` stat-boost families, where one grammar under- and
+over-matches at once), the offline regen alone is not enough: `data:apply-manual`
+*merges* the seed's stored `builderAbilities` with the freshly-derived ones, so
+removed matches survive from `optc-seed.sql`. Purge the affected keys from every
+`character_details.detail_json.builderAbilities` in the seed first (e.g. strip
+`crewmate_*` for a crewmate audit), then regenerate, so the diff reflects the new
+parser exactly. Confirm the regenerated catalog equals an independent per-key
+wording oracle (0 miss / 0 false-positive) and that only the intended category's
+keys moved — a crewmate audit must leave every non-crewmate key untouched.
+
 ### Character Tag Filters
 
 `characterTags` (crew, family, and event tags) are filtered through the shared

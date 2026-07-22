@@ -1359,44 +1359,83 @@ const CAPTAIN_ABILITY_SPECIAL_MATCHER_EXCLUDED_KEYS = new Set([
   'make_slots_favorable',
 ]);
 const CAPTAIN_STRUCTURED_EFFECT_KEYS = new Set(['reduce_damage', 'make_slots_favorable']);
-const CREWMATE_STAT_SCOPE_MATCHERS = {
-  crew: [/\b(?:crew|all characters?)\b/i],
-  self: [/\b(?:this character|self|own)\b/i],
-  position: [
-    /\b(?:position|positions?|1st|2nd|3rd|4th|5th|6th|first|second|third|fourth|fifth|sixth)\b/i,
-  ],
-  cost: [/\bcost\b/i, /\bcost of \d+(?: or less)?\b/i],
-};
-
 function createCrewmateTypeDamageMatcher(type) {
+  // OPTC-DB sailor wording is "Boosts this character's damage against [QCK]
+  // characters by Nx" — a BRACKETED type token followed by "characters" (which
+  // here denotes ENEMIES of that type). The old "against <TYPE> enemies" (bare
+  // token + literal "enemies") matched 0 of ~75 real sailors; accept the
+  // bracket and both "characters"/"enemies".
   return new RegExp(
-    String.raw`\b(?:boosts?|increases?)\b[^.]{0,160}\bdamage\b[^.]{0,160}\b(?:against|to)\s+${type}\s+enemies\b|\bdamage dealt to\s+${type}\s+enemies\b`,
+    String.raw`\b(?:boosts?|increases?)\b[^.]{0,120}\bdamage\b[^.]{0,120}\b(?:against|to)\s+\[?${type}\]?\s+(?:characters?|enemies)\b|\bdamage dealt to\s+\[?${type}\]?\s+(?:characters?|enemies)\b`,
     'i',
   );
 }
 
-function createCrewmateStatMatchers(stat, scopePatterns) {
-  return scopePatterns.map(
-    (scopePattern) =>
-      new RegExp(
-        String.raw`\b(?:boosts?|adds?|increases?)\b[^.]{0,120}\b${stat}\b[^.]{0,160}${scopePattern.source}|${scopePattern.source}[^.]{0,160}\b${stat}\b`,
-        'i',
-      ),
-  );
+// A single elemental-Type token is ALWAYS bracketed in sailor text ("[STR]");
+// a Class token is ALWAYS bare ("Fighter"). A base-stat-boost scope may list
+// several, mixing types and classes, before one shared "characters"
+// ("of [PSY], Free Spirit and Shooter characters").
+const CREWMATE_SCOPE_TYPE_TOKEN = String.raw`\[?\b(?:STR|DEX|QCK|PSY|INT)\b\]?`;
+const CREWMATE_SCOPE_CLASS_TOKEN = String.raw`\b(?:${CREWMATE_CLASSES.map((e) => e.label).join('|')})\b`;
+const CREWMATE_SCOPE_ANY_TOKEN = `(?:${CREWMATE_SCOPE_TYPE_TOKEN}|${CREWMATE_SCOPE_CLASS_TOKEN})`;
+const CREWMATE_SCOPE_SEP = String.raw`[\s,]+(?:and\s+)?`;
+
+// Fixed (non type/class) scope objects, worded exactly as OPTC-DB writes the
+// object of "Boosts base <STAT> of <object>". "last in the chain to attack" and
+// "Nth in the chain" are SELF conditionals ("of this character"), NOT position;
+// position is only "top/bottom row characters".
+const CREWMATE_FIXED_SCOPE_OBJECTS = {
+  crew: String.raw`all\s+characters?`,
+  self: String.raw`this\s+character`,
+  position: String.raw`(?:top|bottom)\s+row\s+characters?`,
+  cost: String.raw`cost\s+\d+\s+or\s+(?:less|lower)\s+characters?`,
+};
+
+// A contiguous base-stat list that must CONTAIN the target stat, as OPTC-DB
+// writes it: "base ATK, HP and RCV", "base ATK and HP", or "base ATK". Binding
+// the stat list directly to "of <object>" (below) is what keeps one clause's
+// stat from bleeding into a later clause's object across a "," / ";" — every
+// base boost is worded "Boosts base <stat-list> of <object>".
+function crewmateStatList(stat) {
+  return String.raw`(?:(?:ATK|HP|RCV)[,\s]+(?:and\s+)?)*${stat}(?:[,\s]+(?:and\s+)?(?:ATK|HP|RCV))*`;
 }
 
-function createCrewmateStatScopePatterns(scope) {
-  if (scope in CREWMATE_STAT_SCOPE_MATCHERS) {
-    return CREWMATE_STAT_SCOPE_MATCHERS[scope];
+// Base-stat-boost matcher for one (stat, scope). A boost is ALWAYS "boosts base
+// <stat-list> of <object>" (verb is invariably "boost"; never adds/increases),
+// and the scope is that object. The same scope token also appears in conditions
+// ("if your Captain is a [STR] character", "if your crew has 6 [INT] characters")
+// and orb clauses ("[RCV] orbs beneficial for [PSY] characters"), none of which
+// boost that scope's base stat — anchoring the stat list contiguously to "of
+// <object>" excludes them and stops "[RCV] orbs" bleeding into RCV boosts.
+function createCrewmateStatMatchers(stat, scope) {
+  const statList = crewmateStatList(stat);
+  if (scope in CREWMATE_FIXED_SCOPE_OBJECTS) {
+    return [
+      new RegExp(
+        String.raw`\bboosts?\s+base\s+${statList}\s+of\s+${CREWMATE_FIXED_SCOPE_OBJECTS[scope]}`,
+        'i',
+      ),
+    ];
   }
 
-  if (CREWMATE_TYPES.includes(scope.toUpperCase())) {
-    return [new RegExp(String.raw`\b${scope.toUpperCase()}\s+characters?\b`, 'i')];
-  }
-
+  const isType = CREWMATE_TYPES.includes(scope.toUpperCase());
   const classEntry = CREWMATE_CLASSES.find((entry) => entry.slug === scope);
+  const target = isType
+    ? String.raw`\[?\b${scope.toUpperCase()}\b\]?`
+    : classEntry
+      ? String.raw`\b${classEntry.label}\b`
+      : null;
+  if (!target) {
+    return [];
+  }
 
-  return classEntry ? [new RegExp(String.raw`\b${classEntry.label}\s+characters?\b`, 'i')] : [];
+  const list = String.raw`(?:${CREWMATE_SCOPE_ANY_TOKEN}${CREWMATE_SCOPE_SEP})*${target}(?:${CREWMATE_SCOPE_SEP}${CREWMATE_SCOPE_ANY_TOKEN})*`;
+  return [
+    // "Boosts base <stat-list> of <type/class list> characters".
+    new RegExp(String.raw`\bboosts?\s+base\s+${statList}\s+of\s+${list}\s+characters?`, 'i'),
+    // Possessive form: "Boosts <type/class list> characters' base <stat-list>".
+    new RegExp(String.raw`\bboosts?\s+${list}\s+characters'\s+base\s+${statList}`, 'i'),
+  ];
 }
 
 const CREWMATE_ABILITY_MATCHERS = [
@@ -1427,12 +1466,16 @@ const CREWMATE_ABILITY_MATCHERS = [
     patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\b(?:blindness|SFX)\b/i],
   },
   {
+    // Also "Recovers N turns of Paralysis on self" (#642/#643) — the crew-side
+    // cure is worded with "recovers" as well as "reduces/removes".
     key: 'crewmate_recover_paralysis',
-    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bparalysis\b/i],
+    patterns: [/\b(?:reduces?|removes?|recovers?)\b[^.]{0,160}\bparalysis\b/i],
   },
   {
+    // Plural "reduces Burns duration" (#4279/#4280) must match too — \bburn\b
+    // stops before the "s".
     key: 'crewmate_recover_burn',
-    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bburn\b/i],
+    patterns: [/\b(?:reduces?|removes?)\b[^.]{0,160}\bburns?\b/i],
   },
   {
     key: 'crewmate_recover_poisons',
@@ -1453,17 +1496,24 @@ const CREWMATE_ABILITY_MATCHERS = [
     ],
   },
   {
+    // OPTC-DB wording is "Boosts amount healed from [RCV] orbs by N each"; the
+    // literal "slot/orb effect ... RCV" the old matcher wanted never appears, so
+    // it matched 0 despite 45 real sailors.
     key: 'crewmate_boost_slot_effect_rcv',
     patterns: [
+      /\bboosts?\b[^.]{0,60}\bamount healed\b[^.]{0,40}\[RCV\]\s*orbs\b/i,
       /\bboosts?\b[^.]{0,160}\b(?:slot|orb) effects?\b[^.]{0,80}\bRCV\b/i,
-      /\bRCV\b[^.]{0,80}\b(?:slot|orb) effects?\b/i,
     ],
   },
   {
+    // OPTC-DB wording is "If this character has a [X] orb and you hit a PERFECT
+    // with him/her, keep his/her [X] orb for the next turn"; "carry over" /
+    // "next stage" never appear on sailors, so the old matcher matched 0 despite
+    // 117 real "keep ... orb ... next turn" units.
     key: 'crewmate_slot_carry_over',
     patterns: [
-      /\b(?:orbs?|slots?)\b[^.]{0,160}\bcarry over\b/i,
-      /\b(?:orbs?|slots?)\b[^.]{0,160}\bcarried over\b/i,
+      /\bkeeps?\b[^.]{0,40}\b(?:orbs?|slots?)\b[^.]{0,40}\bnext turn\b/i,
+      /\b(?:orbs?|slots?)\b[^.]{0,160}\bcarr(?:y|ied) over\b/i,
       /\b(?:orbs?|slots?)\b[^.]{0,160}\bremain\b[^.]{0,80}\bnext stage\b/i,
     ],
   },
@@ -1479,15 +1529,24 @@ const CREWMATE_ABILITY_MATCHERS = [
     patterns: [/\bcertain slots?\b/i, /\btap-?timing\b[^.]{0,120}\bslots?\b/i],
   },
   {
+    // OPTC-DB puts the TRIGGER FIRST and writes "any other" (optionally with a
+    // class/type qualifier), not "another": "When any other [Free Spirit]
+    // character uses a special, reduces special cooldown of this character by N
+    // turns". The old reduce-first/"another" matcher hit 0 of ~127 real sailors.
     key: 'crewmate_special_charge_when_specials_used_by_others',
     patterns: [
-      /\breduces?\b[^.]{0,160}\bspecial (?:cooldown|charge)\b[^.]{0,160}\bwhen another character uses? a special\b/i,
+      /\bwhen any other\b[^.]{0,80}\buses?\s+a\s+special\b[^.]{0,80}\bspecial (?:cooldown|charge)\b/i,
+      /\breduces?\b[^.]{0,160}\bspecial (?:cooldown|charge)\b[^.]{0,160}\bwhen (?:any other|another) character uses? a special\b/i,
       /\bwhen specials? used by others\b/i,
     ],
   },
   {
+    // OPTC-DB wording is "after each turn you take damage", never the app label
+    // "when taking damage" (which appears 0 times); 13 real sailors were missed.
     key: 'crewmate_special_charge_when_taking_damage',
     patterns: [
+      /\bafter each turn you take damage\b[^.]{0,120}\bspecial (?:cooldown|charge)\b/i,
+      /\breduces?\b[^.]{0,160}\bspecial (?:cooldown|charge)\b[^.]{0,160}\bafter each turn you take damage\b/i,
       /\breduces?\b[^.]{0,160}\bspecial (?:cooldown|charge)\b[^.]{0,160}\bwhen taking damage\b/i,
     ],
   },
@@ -1514,10 +1573,7 @@ const CREWMATE_ABILITY_MATCHERS = [
       ...CREWMATE_CLASSES.map((entry) => entry.slug),
     ].map((scope) => ({
       key: `crewmate_${stat}_boost_${scope}`,
-      patterns: createCrewmateStatMatchers(
-        stat.toUpperCase(),
-        createCrewmateStatScopePatterns(scope),
-      ),
+      patterns: createCrewmateStatMatchers(stat.toUpperCase(), scope),
     })),
   ),
   {
@@ -2519,11 +2575,16 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
   // publish their max, while the intermediate tier still stays out. This adds 144
   // records across 75 characters and 22 keys, every one at a turn count >= its own
   // tier-1 count, and changes no key's membership.
-  // Scoped to specialText, where multi-level
-  // specials occur. The `foldMaxLevelTier = false` argument on the inner call
+  // Scoped to specialText AND sailorAbilities, both of which carry multi-level
+  // tiers ("... by 1.1x.. Boosts base ATK, HP and RCV of Powerhouse and Cerebral
+  // characters by 100"): a MAXED unit's sailor ability is its final tier exactly
+  // as a maxed special is, so a base-stat boost / orb effect introduced only at
+  // the max sailor tier (e.g. Saintess Gunko #4612, Oden&Kin'emon&Denjiro #4275)
+  // must be folded in too, or it is silently dropped. 474 sailors are multi-tier.
+  // The `foldMaxLevelTier = false` argument on the inner call
   // disables re-folding, so this cannot recurse more than one level even when the
   // extracted max-level text itself still contains nested tier restatements.
-  if (foldMaxLevelTier && source === 'specialText') {
+  if (foldMaxLevelTier && (source === 'specialText' || source === 'sailorAbilities')) {
     const maxLevelText = extractMaxLevelAbilityBranchText(value);
 
     if (maxLevelText && maxLevelText !== normalizedText) {
