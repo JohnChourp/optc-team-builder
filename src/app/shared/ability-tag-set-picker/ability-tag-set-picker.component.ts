@@ -40,6 +40,7 @@ import {
   resolveTagSetMatchingCharacterIds,
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
+import { isCaptainAbilityRequirement } from '../../core/services/special-ability-filter.utils';
 import { applyIonicModalDialogLabel } from '../a11y/ionic-modal-dialog-label.utils';
 import { AbilityTagSetPickerStylePanelsComponent } from './ability-tag-set-picker-style-panels.component';
 
@@ -57,6 +58,15 @@ interface CatalogTileView {
   badge: string;
   memberSetIndexes: number[];
   inActiveSet: boolean;
+  /**
+   * Whether this tile is rendered under the captain-ability section. The same
+   * ability key can appear in BOTH the captain section and its category section
+   * (e.g. "Enemy Damage Reduction" is captain- and special-sourced), so every
+   * selection/highlight identity is keyed on (abilityKey, captain-scope), never
+   * on the bare key — otherwise one click would light the tile in both sections
+   * and force the requirement to captain scope regardless of where it was picked.
+   */
+  isCaptainScope: boolean;
 }
 
 interface CatalogSectionView {
@@ -150,15 +160,6 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
   private readonly catalogMap = computed(
     () => new Map(this.catalogItems().map((item) => [item.key, item] as const)),
   );
-  private readonly captainKeys = computed(
-    () =>
-      new Set(
-        this.sectionsState()
-          .filter((section) => section.captainAbility)
-          .flatMap((section) => section.items.map((item) => item.key)),
-      ),
-  );
-
   public readonly selectionOperator = computed(() =>
     this.allowSelectionOperator
       ? normalizeAbilityTagSetOperator(this.workingSelection().operator)
@@ -235,29 +236,39 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
     const memberIndexes = this.requirementSetIndexes();
 
     return this.sectionsState()
-      .map((section) => ({
-        key: section.category,
-        label: section.label,
-        tiles: section.items
-          .filter((item) => {
-            if (!searchTerm.length) {
-              return true;
-            }
+      .map((section) => {
+        const isCaptainScope = Boolean(section.captainAbility);
 
-            return [item.label, item.key, item.groupLabel ?? '']
-              .join(' ')
-              .toLowerCase()
-              .includes(searchTerm);
-          })
-          .map((item) => ({
-            item,
-            badge: this.resolveBadge(item.label),
-            memberSetIndexes: memberIndexes.get(item.key) ?? [],
-            inActiveSet: Boolean(
-              activeSet?.requirements.some((requirement) => requirement.abilityKey === item.key),
-            ),
-          })),
-      }))
+        return {
+          key: section.category,
+          label: section.label,
+          tiles: section.items
+            .filter((item) => {
+              if (!searchTerm.length) {
+                return true;
+              }
+
+              return [item.label, item.key, item.groupLabel ?? '']
+                .join(' ')
+                .toLowerCase()
+                .includes(searchTerm);
+            })
+            .map((item) => ({
+              item,
+              badge: this.resolveBadge(item.label),
+              isCaptainScope,
+              memberSetIndexes:
+                memberIndexes.get(this.tileMembershipKey(item.key, isCaptainScope)) ?? [],
+              inActiveSet: Boolean(
+                activeSet?.requirements.some(
+                  (requirement) =>
+                    requirement.abilityKey === item.key &&
+                    isCaptainAbilityRequirement(requirement) === isCaptainScope,
+                ),
+              ),
+            })),
+        };
+      })
       .filter((section) => section.tiles.length > 0);
   });
 
@@ -296,7 +307,7 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
     const firstTile = this.filteredSections()[0]?.tiles[0];
 
     if (firstTile) {
-      this.toggleCatalogItem(firstTile.item);
+      this.toggleCatalogItem(firstTile.item, firstTile.isCaptainScope);
     }
   }
 
@@ -378,16 +389,19 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
     this.announce(`selection.announced.${next}`, { count: this.totalMatchCount() });
   }
 
-  public toggleCatalogItem(item: AutoBuildAbilityCatalogItem): void {
+  public toggleCatalogItem(item: AutoBuildAbilityCatalogItem, isCaptainScope = false): void {
     const targetSet = this.activeSet() ?? this.ensureSet();
 
     if (!targetSet) {
       return;
     }
 
-    const alreadyPresent = targetSet.requirements.some(
-      (requirement) => requirement.abilityKey === item.key,
-    );
+    // Identity is (abilityKey, captain-scope): the same key can be picked from
+    // both the captain section and its category section as two independent tags.
+    const matchesTile = (requirement: AutoBuildAbilityRequirement): boolean =>
+      requirement.abilityKey === item.key &&
+      isCaptainAbilityRequirement(requirement) === isCaptainScope;
+    const alreadyPresent = targetSet.requirements.some(matchesTile);
 
     this.workingSelection.update((selection) => ({
       ...selection,
@@ -397,8 +411,8 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
           : {
               ...set,
               requirements: alreadyPresent
-                ? set.requirements.filter((requirement) => requirement.abilityKey !== item.key)
-                : [...set.requirements, this.createRequirement(item)],
+                ? set.requirements.filter((requirement) => !matchesTile(requirement))
+                : [...set.requirements, this.createRequirement(item, isCaptainScope)],
             },
       ),
     }));
@@ -410,8 +424,9 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
     });
   }
 
-  public removeRequirement(setId: string, abilityKey: string): void {
-    const label = this.catalogMap().get(abilityKey)?.label ?? abilityKey;
+  public removeRequirement(setId: string, target: AutoBuildAbilityRequirement): void {
+    const label = this.catalogMap().get(target.abilityKey)?.label ?? target.abilityKey;
+    const targetIsCaptain = isCaptainAbilityRequirement(target);
 
     this.workingSelection.update((selection) => ({
       ...selection,
@@ -420,8 +435,14 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
           ? set
           : {
               ...set,
+              // Drop only the chip that shares this key AND captain-scope, so the
+              // other scope of the same key (if also picked) stays selected.
               requirements: set.requirements.filter(
-                (requirement) => requirement.abilityKey !== abilityKey,
+                (requirement) =>
+                  !(
+                    requirement.abilityKey === target.abilityKey &&
+                    isCaptainAbilityRequirement(requirement) === targetIsCaptain
+                  ),
               ),
             },
       ),
@@ -495,25 +516,39 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
 
     this.workingSelection().sets.forEach((set, index) => {
       for (const requirement of set.requirements) {
-        const current = indexes.get(requirement.abilityKey) ?? [];
+        const key = this.tileMembershipKey(
+          requirement.abilityKey,
+          isCaptainAbilityRequirement(requirement),
+        );
+        const current = indexes.get(key) ?? [];
         current.push(index + 1);
-        indexes.set(requirement.abilityKey, current);
+        indexes.set(key, current);
       }
     });
 
     return indexes;
   }
 
-  private createRequirement(item: AutoBuildAbilityCatalogItem): AutoBuildAbilityRequirement {
-    const isCaptainAbility = this.captainKeys().has(item.key);
+  /**
+   * Membership/highlight identity for a catalog tile. Composite of the ability
+   * key and whether the tile lives in the captain section, so a shared key never
+   * lights up (or counts against) both sections from a single-section pick.
+   */
+  private tileMembershipKey(abilityKey: string, isCaptainScope: boolean): string {
+    return `${isCaptainScope ? 'captain' : 'any'}:${abilityKey}`;
+  }
 
+  private createRequirement(
+    item: AutoBuildAbilityCatalogItem,
+    isCaptainScope: boolean,
+  ): AutoBuildAbilityRequirement {
     return {
       abilityKey: item.key,
       minTurns: null,
       slotTokens: [],
       requiredCharacterCount: 1,
-      slotScope: isCaptainAbility ? 'leader' : 'any',
-      ...(isCaptainAbility ? { sourceScope: 'captainAbility' as const } : {}),
+      slotScope: isCaptainScope ? 'leader' : 'any',
+      ...(isCaptainScope ? { sourceScope: 'captainAbility' as const } : {}),
     };
   }
 
