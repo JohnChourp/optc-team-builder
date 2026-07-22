@@ -5398,9 +5398,9 @@ describe('auto team builder ability parser', () => {
       'Reduces Special Cooldown of this character by 2 turns at start of quest.',
       'crewmate_special_charge_start_of_quest',
     ],
-    ['atk boost', 'Boosts ATK of Fighter characters by 75.', 'crewmate_atk_boost_fighter'],
-    ['rcv boost', 'Boosts RCV of this character by 100.', 'crewmate_rcv_boost_self'],
-    ['hp boost', 'Boosts HP of STR characters by 200.', 'crewmate_hp_boost_str'],
+    ['atk boost', 'Boosts base ATK of Fighter characters by 75.', 'crewmate_atk_boost_fighter'],
+    ['rcv boost', 'Boosts base RCV of this character by 100.', 'crewmate_rcv_boost_self'],
+    ['hp boost', 'Boosts base HP of [STR] characters by 200.', 'crewmate_hp_boost_str'],
     [
       'end of turn recovery',
       'Recovers 1000 HP at the end of each turn.',
@@ -5415,6 +5415,100 @@ describe('auto team builder ability parser', () => {
         }),
       ]),
     );
+  });
+
+  describe('crewmate sailor ability wording audit (2026-07 batch)', () => {
+    const crewmateKeys = (text: string): string[] =>
+      analyzeBuilderAbilityText(text, 'sailorAbilities')
+        .map((ability) => ability.key)
+        .filter((key) => key.startsWith('crewmate_'));
+
+    it.each([
+      // Bracketed type token in a comma/and list — the whole reason 15 type keys matched 0.
+      [
+        'Boosts base ATK, HP and RCV of [STR], [DEX] and [QCK] characters by 30',
+        ['crewmate_atk_boost_str', 'crewmate_hp_boost_dex', 'crewmate_rcv_boost_qck'],
+      ],
+      // Mixed type + class list sharing one "characters".
+      [
+        'Boosts base ATK of [PSY], Free Spirit and Shooter characters by 100',
+        ['crewmate_atk_boost_psy', 'crewmate_atk_boost_free_spirit', 'crewmate_atk_boost_shooter'],
+      ],
+      // Multi-class list.
+      [
+        'Boosts base ATK, HP and RCV of Powerhouse and Cerebral characters by 100',
+        ['crewmate_atk_boost_powerhouse', 'crewmate_rcv_boost_cerebral'],
+      ],
+      // Possessive form.
+      [
+        "Boosts Fighter characters' base ATK, HP and RCV by 45",
+        ['crewmate_atk_boost_fighter', 'crewmate_hp_boost_fighter', 'crewmate_rcv_boost_fighter'],
+      ],
+      // Position is "top row characters"; cost accepts "or less"/"or lower".
+      ['Boosts base ATK of top row characters by 100', ['crewmate_atk_boost_position']],
+      [
+        'Boosts base ATK, HP and RCV of Cost 40 or less characters by 50',
+        ['crewmate_atk_boost_cost', 'crewmate_hp_boost_cost', 'crewmate_rcv_boost_cost'],
+      ],
+      // Type-damage: bracketed [TYPE] characters == that type's enemies.
+      [
+        "Boosts this character's damage against [QCK] characters by 2x",
+        ['crewmate_damage_boost_qck_enemy'],
+      ],
+      // Slot: RCV-orb heal boost and keep-orb-next-turn.
+      ['Boosts amount healed from [RCV] orbs by 100 each', ['crewmate_boost_slot_effect_rcv']],
+      [
+        'If this character has an [INT] orb and you hit a PERFECT with him, keep his [INT] orb for the next turn',
+        ['crewmate_slot_carry_over'],
+      ],
+      // Special charge: trigger-first "any other" and "after each turn you take damage".
+      [
+        'When any other Free Spirit character uses a special, reduces special cooldown of this character by 1 turn',
+        ['crewmate_special_charge_when_specials_used_by_others'],
+      ],
+      [
+        'After each turn you take damage, reduces special cooldown of this character by 1 turn',
+        ['crewmate_special_charge_when_taking_damage'],
+      ],
+      // Recovery: "Recovers N turns of Paralysis" and plural "Burns".
+      ['Recovers 2 turns of Paralysis on self', ['crewmate_recover_paralysis']],
+      ['If your Captain is a [QCK] character, reduces Burns duration by 1 turn', ['crewmate_recover_burn']],
+    ] as Array<[string, string[]]>)('detects %s', (text, expectedKeys) => {
+      const keys = crewmateKeys(text);
+      for (const key of expectedKeys) {
+        expect(keys).toContain(key);
+      }
+    });
+
+    it.each([
+      // A [TYPE] in a CAPTAIN condition is not that type's boost scope (scope = all characters).
+      [
+        'If your Captain is a [STR] or [DEX] character, boosts base ATK, HP and RCV of all characters by 75',
+        'crewmate_atk_boost_str',
+      ],
+      // A [TYPE] in a CREW-COMPOSITION condition is not the boost scope (scope = top row).
+      [
+        'If your crew has 6 [INT] characters, boosts base ATK of top row characters by 100',
+        'crewmate_atk_boost_int',
+      ],
+      // "[RCV] orbs beneficial for [PSY] characters" is an orb effect, not an RCV boost.
+      ['Makes [RCV] and [TND] orbs beneficial for [DEX] and [PSY] characters', 'crewmate_rcv_boost_psy'],
+      // "last in the chain to attack" is a SELF conditional, not a Position scope.
+      [
+        'Boosts base ATK of this character by 100 if this character is the last in the chain to attack',
+        'crewmate_atk_boost_position',
+      ],
+    ] as Array<[string, string]>)('does not mis-tag %s as %s', (text, forbiddenKey) => {
+      expect(crewmateKeys(text)).not.toContain(forbiddenKey);
+    });
+
+    it('folds the MAX sailor tier so a max-only boost is not dropped', () => {
+      const keys = crewmateKeys(
+        'Boosts base ATK of [STR] characters by 1.1x.. Boosts base ATK, HP and RCV of Powerhouse and Cerebral characters by 100',
+      );
+      expect(keys).toContain('crewmate_atk_boost_powerhouse');
+      expect(keys).toContain('crewmate_hp_boost_cerebral');
+    });
   });
 
   it('carries turn requirements onto structured crewmate recovery abilities', () => {
@@ -5547,7 +5641,7 @@ describe('auto team builder ability parser', () => {
           specialText: null,
           captainAbility: null,
           sailorAbilities: [
-            'Boosts ATK of Fighter characters by 75.',
+            'Boosts base ATK of Fighter characters by 75.',
             'Reduces Special Cooldown of this character by 2 turns at start of quest.',
           ],
           builderAbilities: [],

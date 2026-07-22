@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T11:41:45.698Z",
+  "generatedAt": "2026-07-22T14:16:48.178Z",
   "characters": [
     {
       "id": 1,
@@ -1049,6 +1049,15 @@
             "coverageMode": "explicit"
           },
           {
+            "key": "crewmate_atk_boost_dex",
+            "label": "ATK Boost: DEX",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
             "key": "potential_qck_damage_reduction",
             "label": "QCK Damage Reduction",
             "minTurns": null,
@@ -1638,6 +1647,33 @@
           {
             "key": "crewmate_make_slots_favorable",
             "label": "Make Slots Favorable",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_atk_boost_int",
+            "label": "ATK Boost: INT",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_rcv_boost_int",
+            "label": "RCV Boost: INT",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_hp_boost_int",
+            "label": "HP Boost: INT",
             "minTurns": null,
             "isCompleteRemoval": false,
             "slotTokens": [],
