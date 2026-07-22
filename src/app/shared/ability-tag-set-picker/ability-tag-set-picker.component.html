@@ -235,7 +235,7 @@
                                   class="ability-tag-set-chip__remove"
                                   [attr.aria-label]="t('sets.removeTag', { label: chip.label })"
                                   (click)="
-                                    removeRequirement(card.set.id, chip.requirement.abilityKey)
+                                    removeRequirement(card.set.id, chip.requirement)
                                   "
                                 >
                                   <ion-icon [icon]="closeIcon" aria-hidden="true"></ion-icon>
@@ -388,7 +388,7 @@
                             class="ability-tag-set-tile"
                             [attr.data-testid]="'ability-tag-set-tile-' + tile.item.key"
                             [class.is-selected]="tile.inActiveSet"
-                            (click)="toggleCatalogItem(tile.item)"
+                            (click)="toggleCatalogItem(tile.item, tile.isCaptainScope)"
                           >
                             <span class="ability-tag-set-tile__badge" aria-hidden="true">{{
                               tile.badge

@@ -264,7 +264,7 @@ describe('AbilityTagSetPickerComponent', () => {
 
     openComponent(component);
     component.addSet();
-    component.toggleCatalogItem(CAPTAIN_BOOST_ATK);
+    component.toggleCatalogItem(CAPTAIN_BOOST_ATK, true);
 
     expect(component.workingSelection().sets[0]?.requirements[0]).toEqual(
       expect.objectContaining({
@@ -297,6 +297,130 @@ describe('AbilityTagSetPickerComponent', () => {
       }),
     );
     expect(requirementEntry).not.toHaveProperty('sourceScope');
+  });
+
+  describe('a key shared by the captain + a category section', () => {
+    // "Enemy Damage Reduction" is captain- AND special-sourced, so the same key
+    // is offered in both sections. Broad vs captain-only match indexes let each
+    // test prove which scope actually drove the selection.
+    const SHARED: AutoBuildAbilityCatalogItem = {
+      ...catalogItem('remove_damage_reduction', 'Enemy Damage Reduction', [1, 2, 3, 4, 5]),
+      availableSources: ['captainAbility', 'specialText'],
+      captainAbilityMatchingCharacterIds: [3],
+    };
+
+    function createSharedComponent(): AbilityTagSetPickerComponent {
+      const component = new AbilityTagSetPickerComponent();
+      component.title = 'Ability tags';
+      component.sections = [
+        { category: 'special', label: 'Special effects', items: [SHARED, BOOST_ATK] },
+        { category: 'captain', label: 'Captain effects', items: [SHARED], captainAbility: true },
+      ];
+      component.selection = createEmptyAbilityFilterTagSetSelection();
+      openComponent(component);
+      component.addSet();
+      return component;
+    }
+
+    function sharedTileIn(
+      component: AbilityTagSetPickerComponent,
+      sectionKey: string,
+    ): { item: AutoBuildAbilityCatalogItem; isCaptainScope: boolean; inActiveSet: boolean } {
+      const tile = component
+        .filteredSections()
+        .find((section) => section.key === sectionKey)
+        ?.tiles.find((t) => t.item.key === 'remove_damage_reduction');
+
+      if (!tile) {
+        throw new Error(`no shared tile in section ${sectionKey}`);
+      }
+
+      return tile;
+    }
+
+    it('leaves a shared key unscoped and highlights only the special tile when picked there', () => {
+      const component = createSharedComponent();
+      const specialTile = sharedTileIn(component, 'special');
+
+      component.toggleCatalogItem(specialTile.item, specialTile.isCaptainScope);
+
+      const req = component.workingSelection().sets[0]?.requirements[0];
+      expect(req).toEqual(
+        expect.objectContaining({ abilityKey: 'remove_damage_reduction', slotScope: 'any' }),
+      );
+      expect(req).not.toHaveProperty('sourceScope');
+      expect(sharedTileIn(component, 'special').inActiveSet).toBe(true);
+      expect(sharedTileIn(component, 'captain').inActiveSet).toBe(false);
+    });
+
+    it('captain-scopes a shared key and highlights only the captain tile when picked there', () => {
+      const component = createSharedComponent();
+      const captainTile = sharedTileIn(component, 'captain');
+
+      component.toggleCatalogItem(captainTile.item, captainTile.isCaptainScope);
+
+      expect(component.workingSelection().sets[0]?.requirements[0]).toEqual(
+        expect.objectContaining({
+          abilityKey: 'remove_damage_reduction',
+          slotScope: 'leader',
+          sourceScope: 'captainAbility',
+        }),
+      );
+      expect(sharedTileIn(component, 'captain').inActiveSet).toBe(true);
+      expect(sharedTileIn(component, 'special').inActiveSet).toBe(false);
+    });
+
+    it('keeps both scopes of a shared key as independent tags in one set', () => {
+      const component = createSharedComponent();
+      const specialTile = sharedTileIn(component, 'special');
+      component.toggleCatalogItem(specialTile.item, specialTile.isCaptainScope);
+      const captainTile = sharedTileIn(component, 'captain');
+      component.toggleCatalogItem(captainTile.item, captainTile.isCaptainScope);
+
+      const reqs = component.workingSelection().sets[0]?.requirements ?? [];
+      expect(reqs).toHaveLength(2);
+      expect(reqs.filter((r) => r.sourceScope === 'captainAbility')).toHaveLength(1);
+      expect(reqs.filter((r) => !r.sourceScope)).toHaveLength(1);
+      expect(sharedTileIn(component, 'special').inActiveSet).toBe(true);
+      expect(sharedTileIn(component, 'captain').inActiveSet).toBe(true);
+    });
+
+    it('removes only the picked scope of a shared key, leaving the other selected', () => {
+      const component = createSharedComponent();
+      const specialTile = sharedTileIn(component, 'special');
+      component.toggleCatalogItem(specialTile.item, specialTile.isCaptainScope);
+      const captainTile = sharedTileIn(component, 'captain');
+      component.toggleCatalogItem(captainTile.item, captainTile.isCaptainScope);
+
+      const setId = component.workingSelection().sets[0]!.id;
+      const unscoped = component.workingSelection().sets[0]!.requirements.find((r) => !r.sourceScope)!;
+      component.removeRequirement(setId, unscoped);
+
+      const reqs = component.workingSelection().sets[0]?.requirements ?? [];
+      expect(reqs).toHaveLength(1);
+      expect(reqs[0]?.sourceScope).toBe('captainAbility');
+      expect(sharedTileIn(component, 'special').inActiveSet).toBe(false);
+      expect(sharedTileIn(component, 'captain').inActiveSet).toBe(true);
+    });
+
+    it('resolves the special scope against the broad index, not the captain one', () => {
+      const component = createSharedComponent();
+      const specialTile = sharedTileIn(component, 'special');
+
+      component.toggleCatalogItem(specialTile.item, specialTile.isCaptainScope);
+
+      // Broad matchingCharacterIds ([1..5]) — NOT the captain subset ([3]).
+      expect(component.setCards()[0]?.matchCount).toBe(5);
+    });
+
+    it('resolves the captain scope against the captain index', () => {
+      const component = createSharedComponent();
+      const captainTile = sharedTileIn(component, 'captain');
+
+      component.toggleCatalogItem(captainTile.item, captainTile.isCaptainScope);
+
+      expect(component.setCards()[0]?.matchCount).toBe(1);
+    });
   });
 
   it('combines groups by the selection operator when totalling matches', () => {
