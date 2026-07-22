@@ -798,7 +798,17 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'change_slot_chance',
-    [/\b(?:changes?|boosts?|increases?)\b[^.]{0,120}\b(?:orb|slot)\b[^.]{0,80}\bchance\b/i],
+    // "Boost Orb Chance": raises the probability of specific orb colours dropping.
+    // OPTC-DB canonical wording is "boosts/increases [the] chance(s) of getting <orb
+    // list> orbs" — note the order chance→orb. The previous matcher required orb→chance
+    // (/(?:changes?|boosts?|increases?) ... (orb|slot) ... chance/), the REVERSE order,
+    // so it matched 0 of 4588 (a dead key). Anchor on "chance(s) of getting ... orbs"
+    // (the {0,40} gap spans multi-colour lists "[X], [Y] and [Z] orbs", "Matching orbs",
+    // "Dominant Type orbs"). Verb kept to boosts/increases only: the drawback/debuff
+    // "reduces/lowers chances of getting <orb> orbs" (self-inflicted captain tradeoffs,
+    // enemy debuffs) is deliberately excluded, matching the original beneficial intent.
+    // Crew-side only (enemies have no orbs), so no enemy-ownership hazard. 0 -> 227.
+    [/\b(?:boosts?|increases?)\s+(?:the\s+)?chances?\s+of\s+getting\b[^.]{0,40}\borbs?\b/i],
   ],
   [
     // Position-only orb movement ("Slot Swap" on the wiki — explicitly NOT a

@@ -1613,6 +1613,30 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('change_slots');
   });
 
+  it('detects change_slot_chance from "boosts chances of getting <orb> orbs", not the reduce drawback', () => {
+    // Boost Orb Chance. Canonical wording is chance→orb ("boosts chances of getting
+    // [X] orbs"); the prior matcher required orb→chance and matched 0 (a dead key).
+    // Special and captain sources, single and multi-colour lists.
+    for (const [text, source] of [
+      ['Boosts chances of getting [QCK] orbs for 3 turns', 'specialText'],
+      ['boosts ATK of Fighter characters by 2x, boosts chances of getting [PSY] and [INT] orbs', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'change_slot_chance',
+      );
+    }
+    // The self-inflicted / debuff direction "lowers/reduces chances of getting <orb>"
+    // is a drawback, not a beneficial orb-chance boost, and must NOT be tagged.
+    for (const text of [
+      'boosts ATK of all characters by 1.3x, lowers chances of getting [STR] orbs',
+      'reduces chances of getting [RCV] orbs for 2 turns',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).not.toContain(
+        'change_slot_chance',
+      );
+    }
+  });
+
   it('extracts multiple unique effects from one special text without duplicates', () => {
     expect(
       analyzeBuilderAbilityText(
