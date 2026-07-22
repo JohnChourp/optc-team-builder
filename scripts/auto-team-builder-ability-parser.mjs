@@ -99,7 +99,10 @@ const SUPER_TANDEM_BOOST_PATTERNS = [
   /\bATK Boost \(Tandem\)\b/i,
 ];
 const SUPPORT_TAP_TIMING_TRIGGER_PATTERNS = [
-  /\bperfects?\b/i,
+  // "hits a PERFECT" is the universal tap-timing trigger wording. The old bare
+  // /\bperfects?\b/ fired on any "PERFECT" token (e.g. "makes PERFECTs easier to
+  // hit"), mis-routing non-tap reductions into the *_tap_timing sibling keys.
+  /\bhits? a perfect\b/i,
   /\btap-?timing\b/i,
   /\bafter scoring\b[^.]{0,80}\bperfects?\b/i,
   /\bafter landing\b[^.]{0,80}\bperfects?\b/i,
@@ -112,6 +115,9 @@ const SUPPORT_DESIGNATED_TURN_PATTERNS = [
   /\bon battle \d+\b/i,
   /\bon stage \d+\b/i,
   /\bon turn \d+\b/i,
+  // "when you reach [the final/Nth] stage/battle" is a designated-turn activation
+  // trigger, by far the most common form in supportData.
+  /\bwhen you reach\b[^.]{0,30}\b(?:stage|battle)\b/i,
   /\bdesignated turn\b/i,
   /\bfollowing turn\b/i,
   /\bafter \d+ turns?\b/i,
@@ -2065,6 +2071,8 @@ const STRUCTURED_GENERIC_TURN_KEYS = new Set([
   'crewmate_special_charge_when_afflicted_by_paralysis',
 ]);
 const SUPPORT_GENERIC_TURN_KEYS = new Set([
+  'support_change_slot_chance',
+  'support_damage_reduction_reduce_damage_over_certain_amount',
   'support_atk_boost',
   'support_type_effect_boost',
   'support_slot_effect_boost',
@@ -3083,7 +3091,7 @@ function addSupportPassiveBaseStatKeys(keys, text) {
     (
       text
         .match(
-          /supported character'?s\s+base\s+([A-Z]+)(?:\s+and\s+([A-Z]+))?(?:\s+and\s+([A-Z]+))?/i,
+          /supported character'?s\s+base\s+([A-Z]+)(?:(?:\s*,\s*|\s+and\s+)([A-Z]+))?(?:(?:\s*,\s*|\s+and\s+)([A-Z]+))?/i,
         )
         ?.slice(1) ?? []
     )
@@ -3115,8 +3123,10 @@ function addSupportPassiveBaseStatKeys(keys, text) {
 }
 
 function addSupportDamageReductionKeys(keys, text) {
+  // Threshold damage reduction: "reduces any damage received over/above N HP".
+  // OPTC-DB writes both "over" and "above".
   if (
-    /\breduce(?:s|d)?\b[^.]{0,160}\bdamage\b[^.]{0,160}\bover\b/i.test(text) ||
+    /\breduce(?:s|d)?\b[^.]{0,160}\bdamage\b[^.]{0,160}\b(?:over|above)\b/i.test(text) ||
     /\breduce damage over certain amount\b/i.test(text) ||
     /\bdamage threshold\b/i.test(text)
   ) {
@@ -3130,7 +3140,7 @@ function addSupportDamageReductionKeys(keys, text) {
   }
 
   if (
-    /\breduce(?:s|d)?\b[^.]{0,160}\bdamage (?:received|taken)\b[^.]{0,80}\bfor \d+ turns?\b/i.test(
+    /\breduce(?:s|d)?\b[^.]{0,160}\bdamage (?:received|recieved|taken)\b[^.]{0,80}\bfor \d+ turns?\b/i.test(
       text,
     ) ||
     /\bdamage reduction\b[^.]{0,80}\bfor \d+ turns?\b/i.test(text)
@@ -3139,56 +3149,81 @@ function addSupportDamageReductionKeys(keys, text) {
     return;
   }
 
+  // Permanent damage reduction is the passive "reduces damage received/taken FROM
+  // [Type/Class] characters by N%" or the flat "reduces damage received by N%". The
+  // bare "reduces ... damage received" / "damage reduction" forms over-matched
+  // turn-limited and enemy-side clauses; the turn-bound form is already peeled off
+  // by the branch above.
   if (
-    /\breduce(?:s|d)?\b[^.]{0,160}\bdamage (?:received|taken)\b/i.test(text) ||
-    /\bdamage reduction\b/i.test(text)
+    /\breduce(?:s|d)?\s+damage\s+(?:received|recieved|taken)\s+(?:from\b|by\s+[\d,]+%)/i.test(text)
   ) {
     keys.add('support_damage_reduction_permanent');
   }
 }
 
 function addSupportEnemyEffectReductionKeys(keys, text) {
+  // A trailing "[AUTO+]" auto-ability clause is a TRIGGER appended to the support
+  // description, not the support's own action, and can name an enemy effect only as
+  // a condition ("When enemy launches DEF Up status", #4600). Strip it so it never
+  // drives an enemy-effect-duration reduction match.
+  const scanText = text.replace(/\s*(?:<b>\s*)?\[AUTO\+?\][\s\S]*$/i, '');
+
   if (
-    !/\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b/i.test(text) ||
-    !/\b(?:duration|turns?)\b/i.test(text)
+    !/\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b/i.test(scanText) ||
+    !/\b(?:duration|turns?)\b/i.test(scanText)
   ) {
     return;
   }
 
-  const isTapTiming = SUPPORT_TAP_TIMING_TRIGGER_PATTERNS.some((pattern) => pattern.test(text));
+  const isTapTiming = SUPPORT_TAP_TIMING_TRIGGER_PATTERNS.some((pattern) =>
+    pattern.test(scanText),
+  );
   const entries = [
     {
       key: isTapTiming
         ? 'support_reduce_enemy_effect_turns_def_up_tap_timing'
         : 'support_reduce_enemy_effect_turns_def_up',
+      // The [AUTO+] tail strip above removes trigger-only "DEF Up" mentions (#4600),
+      // so a bare keyword match here is safe for the genuine "reduces enemies'
+      // Increased Defense duration by N turns" grants — including list forms (#4546)
+      // and the "by N turns" wording without the literal "duration" (#4193).
       pattern: /\b(?:DEF Up|defense up|increased defense)\b/i,
     },
     {
       key: isTapTiming
         ? 'support_reduce_enemy_effect_turns_damage_reduction_tap_timing'
         : 'support_reduce_enemy_effect_turns_damage_reduction',
-      pattern: /\b(?:damage reduction|percent damage reduction)\b/i,
-      exclude: /\bthreshold damage reduction\b/i,
+      // "reduces enemies' Percent Damage Reduction duration", or the general
+      // "reduces all enemies' damage reduction (except ...)" carve-out form.
+      pattern:
+        /\breduces?\s+(?:all\s+)?enem(?:y|ies)[^.]{0,120}?(?:percent damage reduction|damage reduction\s*\(except)/i,
     },
     {
       key: isTapTiming
         ? 'support_reduce_enemy_effect_turns_damage_threshold_tap_timing'
         : 'support_reduce_enemy_effect_turns_damage_threshold',
       pattern: /\b(?:damage threshold|threshold damage reduction)\b/i,
+      // A "(except Threshold Damage Reduction)" carve-out means THIS effect is NOT
+      // reduced (#4600), so it must not match on the parenthetical.
+      exclude: /\(except[^)]*threshold damage reduction[^)]*\)/i,
     },
     {
       key: isTapTiming
         ? 'support_reduce_enemy_effect_turns_end_of_turn_damage_tap_timing'
         : 'support_reduce_enemy_effect_turns_end_of_turn_damage',
-      pattern: /\bend of turn damage\b|\bpercent cut\b/i,
+      // Anchor on the reduce verb so an enemy "End of Turn Damage buff" named only
+      // as a trigger (#1564) is not counted as a duration reduction.
+      pattern:
+        /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,40}\b(?:end of turn damage|percent cut)\b/i,
     },
     {
       key: 'support_reduce_enemy_effect_turns_enrage',
-      pattern: /\benrage\b/i,
+      pattern: /\b(?:reduce|remove)(?:s|d)?\b[^.]{0,80}\benrage\b[^.]{0,40}\b(?:duration|turns?)\b/i,
     },
     {
       key: 'support_reduce_enemy_effect_turns_atk_boost',
-      pattern: /\b(?:ATK Up|attack up|ATK boost|attack boost)\b/i,
+      pattern:
+        /\breduce(?:s|d)?\s+enem(?:y|ies)'?s?\b[^.]{0,200}\b(?:ATK Up|attack up|ATK boost|attack boost)\b[^.]{0,80}\bduration\b/i,
     },
     {
       key: 'support_reduce_enemy_effect_turns_resilience',
@@ -3201,7 +3236,7 @@ function addSupportEnemyEffectReductionKeys(keys, text) {
   ];
 
   entries.forEach((entry) => {
-    if (!entry.pattern.test(text) || entry.exclude?.test(text)) {
+    if (!entry.pattern.test(scanText) || entry.exclude?.test(scanText)) {
       return;
     }
 
@@ -3210,7 +3245,9 @@ function addSupportEnemyEffectReductionKeys(keys, text) {
 }
 
 function addSupportSlotKeys(keys, text) {
-  if (/\blocks?\b[^.]{0,120}\b(?:slots?|orbs?)\b/i.test(text)) {
+  // Exclude the comma so a "locks" governing a different object (e.g. "locks the
+  // chain multiplier") does not bridge across a comma to a later slot/orb clause.
+  if (/\blocks?\b[^.,]{0,120}\b(?:slots?|orbs?)\b/i.test(text)) {
     keys.add('support_lock_slots');
   }
 
@@ -3222,13 +3259,20 @@ function addSupportSlotKeys(keys, text) {
     keys.add('support_favorable_slots');
   }
 
+  // OPTC-DB wording is chance->orb ("boosts chances of getting Matching orbs"), not
+  // slot/orb->chance; require the beneficial verb + "chances of getting ... orbs"
+  // (mirrors the shipped sibling change_slot_chance key), excluding "reduces chances"
+  // drawbacks.
   if (
-    /\b(?:changes?|boosts?|increases?)\b[^.]{0,120}\b(?:slot|orb)\b[^.]{0,80}\bchance\b/i.test(text)
+    /\b(?:boosts?|increases?)\s+(?:the\s+)?chances?\s+of\s+getting\b[^.]{0,40}\borbs?\b/i.test(text)
   ) {
     keys.add('support_change_slot_chance');
   }
 
-  if (/\bswaps?\b[^.]{0,120}\b(?:slots?|orbs?)\b/i.test(text)) {
+  if (
+    /\bswaps?\b[^.]{0,120}\b(?:slots?|orbs?)\b/i.test(text) ||
+    /\bswitch(?:es)?\s+orbs?\s+between\s+slots?\b/i.test(text)
+  ) {
     keys.add('support_swap_slots');
   }
 
@@ -3243,10 +3287,17 @@ function addSupportSlotKeys(keys, text) {
 
   if (
     /\b(?:changes?|transforms?)\b[^.]{0,180}\[BLOCK\][^.]{0,160}\b(?:slots?|orbs?)\b/i.test(text) ||
-    /\bchange\b[^.]{0,160}\[BLOCK\][^.]{0,160}\b(?:slots?|orbs?)\b/i.test(text)
+    /\bchange\b[^.]{0,160}\[BLOCK\][^.]{0,160}\b(?:slots?|orbs?)\b/i.test(text) ||
+    // "Randomizes all orbs, including [BLOCK] orbs" — a block-immunity-piercing
+    // orb change, the same family the captain/special twin keys here.
+    /\bincluding\s+\[BLOCK\]/i.test(text)
   ) {
     keys.add('support_change_block_slots');
-  } else if (/\b(?:changes?|transforms?)\b[^.]{0,160}\b(?:slots?|orbs?)\b/i.test(text)) {
+  } else if (
+    // Require "... into" so a "change" that is only a trigger noun-phrase ("uses an
+    // orb change special", #4613) is not counted as a slot-change grant.
+    /\b(?:changes?|transforms?)\b[^.]{0,160}\b(?:slots?|orbs?)\b[^.]{0,80}\binto\b/i.test(text)
+  ) {
     keys.add('support_slot_change_normal');
   }
 }
@@ -3273,48 +3324,73 @@ function addSupportBoostKeys(keys, text) {
     keys.add('support_end_of_turn_additional_damage');
   }
 
-  if (
-    /\bboosts?\b[^.]{0,120}\badditional damage\b/i.test(text) ||
-    /\badditional damage boost\b/i.test(text)
-  ) {
+  // "adds Nx supported character's ATK as Additional Damage ..." — mirrors the
+  // captain/special additional_damage_boost matcher (line 571); supportData never
+  // uses the old "boosts ... additional damage" wording (that key was dead).
+  if (/\badds?\b(?:[^.]|\.\d){0,80}\bas\s+additional\b(?:[^.]|\.\d){0,30}\bdamage\b/i.test(text)) {
     keys.add('support_additional_damage_boost');
   }
 
-  if (/\bboosts?\b[^.]{0,120}\bATK\b/i.test(text) && !/\bbase ATK\b/i.test(text)) {
+  // ATK-multiplier GRANT. Exclude only the adjacent "base ATK" stat-add (owned by
+  // the base-stat keys) via lookbehind and the "ATK Down" debuff, rather than
+  // globally dropping any text that merely contains "base ATK" — that suppressed
+  // dual-effect "Adds base ATK ... Boosts ATK by Nx against <enemy>" grants.
+  if (/\bboosts?\b[^.]{0,120}\b(?<!base )ATK\b(?!\s*Down\b)/i.test(text)) {
     keys.add('support_atk_boost');
   }
 
-  if (/\b(?:type effects?|color affinity)\b/i.test(text)) {
+  // Only a GRANT that boosts the type effect / color affinity, not a text that
+  // merely references a Color Affinity trigger ("when the supported character uses
+  // a ... Color Affinity special").
+  if (
+    /\bboosts?\s+(?:the\s+)?(?:type effects?|color affinity)\b/i.test(text) ||
+    /\b(?:type effects?|color affinity) buffs?\b/i.test(text)
+  ) {
     keys.add('support_type_effect_boost');
   }
 
+  // Exclude the amplifier "increases boost effects of ... Orb Effect buffs" via the
+  // "boosts effects" negative lookahead.
   if (
-    /\bboosts?\b[^.]{0,120}\b(?:slot|orb) effects?\b/i.test(text) ||
+    /\bboosts?\b(?!\s+effects?\b)[^.]{0,120}\b(?:slot|orb) effects?\b/i.test(text) ||
     /\bslot effect boost\b/i.test(text)
   ) {
     keys.add('support_slot_effect_boost');
   }
 
-  if (
-    /\blocks?\b[^.]{0,120}\bchain(?: multiplier)?\b/i.test(text) ||
-    /\bchain multiplier lock\b/i.test(text)
-  ) {
+  // "locks the chain multiplier" is the lock; a numeric "adds Nx to / boosts the
+  // chain multiplier by Nx" is the boost. The old loose verb+chain pattern used
+  // [^.] which cannot cross the decimal in "0.Nx", so it MISSED genuine "adds 0.Nx
+  // to Chain multiplier" grants while FP-matching sibling Chain Addition / Chain
+  // Tap Timing / Chain-lock texts.
+  if (/\blocks?\s+(?:the\s+)?chain\s+multiplier\b/i.test(text)) {
     keys.add('support_chain_multiplier_lock');
-  } else if (/\b(?:adds?|boosts?|increases?)\b[^.]{0,120}\bchain(?: multiplier)?\b/i.test(text)) {
+  } else if (
+    /\badds?\s+\d+(?:\.\d+)?x?\s+to\s+(?:the\s+)?chain multiplier\b/i.test(text) ||
+    /\bboosts?\s+(?:the\s+)?chain multiplier by\s+\d+(?:\.\d+)?x/i.test(text)
+  ) {
     keys.add('support_chain_multiplier_boost');
   }
 
-  if (
-    /\b(?:boosts?|adds?|increases?)\b[^.]{0,120}\bbase ATK\b/i.test(text) &&
-    !/this character'?s\s+base ATK/i.test(text)
-  ) {
+  // Triggered, turn-limited "boosts base ATK of <scope> by Nx/N ..." buff. Anchor
+  // on the "boosts base ATK" verb so the permanent base-stat grant ("Adds N% of
+  // this character's base ATK ...", owned by support_base_atk_boost) and the
+  // "increases boost effects of Base ATK Boost buffs" amplifiers are excluded.
+  if (/\bboosts?\s+base ATK\b/i.test(text)) {
     keys.add('support_base_atk_boost_damage');
+  }
+
+  // "boosts ATK against enemies with reduced defense" carries no "damage" token,
+  // so it never reaches the gated cascade below — tag DEF Down here.
+  if (/\benem(?:y|ies)\s+with\s+reduced\s+defen[cs]e\b/i.test(text)) {
+    keys.add('support_damage_boost_def_down');
   }
 
   const isDamageBoostText =
     /\bboosts?\b[^.]{0,160}\bdamage\b/i.test(text) ||
     /\bdamage boost\b/i.test(text) ||
-    /\bdamage dealt to\b/i.test(text);
+    /\bdamage dealt to\b/i.test(text) ||
+    /\bboosts?\b[^.]{0,160}\bagainst\b[^.]{0,160}\benem(?:y|ies)\b/i.test(text);
 
   if (!isDamageBoostText) {
     return;
@@ -3335,7 +3411,7 @@ function addSupportBoostKeys(keys, text) {
     return;
   }
 
-  if (/\bvenom\b|\btoxic\b/i.test(text)) {
+  if (/\bboosts?\b[^.]{0,200}\bagainst\b[^.]{0,200}\b(?:venom|toxic)\b/i.test(text)) {
     keys.add('support_damage_boost_venom');
     return;
   }
@@ -3355,7 +3431,19 @@ function addSupportBoostKeys(keys, text) {
     return;
   }
 
-  keys.add('support_damage_boost_other');
+  // The final fallback must still require a real damage-boost clause. The widened
+  // gate above (now admitting "boosts X against enemies") let non-damage-boost
+  // texts reach this line and be mislabelled; guard it so only genuine
+  // "boosts damage" / "damage dealt to" / "damage boost" grants and the
+  // Increase-Damage-Taken amplifier survive here.
+  if (
+    /\bboosts? damage\b/i.test(text) ||
+    /\bdamage dealt to\b/i.test(text) ||
+    /\bdamage boost\b/i.test(text) ||
+    /\bincreases? boost effects? of\b[^.]{0,80}\bIncrease Damage Taken\b/i.test(text)
+  ) {
+    keys.add('support_damage_boost_other');
+  }
 }
 
 function addSupportStatusRecoveryKeys(keys, text) {
@@ -3373,32 +3461,43 @@ function addSupportStatusRecoveryKeys(keys, text) {
       /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bparalysis\b/i,
     ],
     [
+      // "Silence" is the in-game name for the Special Bind debuff (specials locked)
+      // — see the specialText Silence/Special Bind mapping earlier in this file.
       'support_status_effect_recovery_special_bind',
-      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bspecial bind\b/i,
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:special bind|silence)\b/i,
     ],
     [
+      // Anchor on "<poison> duration" so a poison-offense clause ("poisons all
+      // enemies", "boosts ATK against Poisoned enemies") within 160 chars of a
+      // reduce/remove verb is not mistaken for a crew poison CURE.
       'support_status_effect_recovery_poisons',
-      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:poison|venom|toxic)\b/i,
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:poison|venom|toxic)\b\s+duration\b/i,
     ],
     [
       'support_status_effect_recovery_burn',
       /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bburn\b/i,
     ],
     [
+      // OPTC-DB writes the debuff "Increase Damage Taken" (not "increased"); the
+      // cure is "reduces Increase Damage Taken duration by N turns".
       'support_status_effect_recovery_increased_damage_taken',
-      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bincreased damage taken\b/i,
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bincrease damage taken duration\b/i,
     ],
     [
       'support_status_effect_recovery_atk_down',
       /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:ATK Down|attack down)\b/i,
     ],
     [
+      // The debuff that reduces chain-multiplier growth rate is named "Chain
+      // Coefficient Reduction" in OPTC-DB; the cure reduces its duration.
       'support_status_effect_recovery_reduce_chain_multiplier_growth_rate',
-      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\b(?:reduce|decrease)\s+chain multiplier growth rate\b/i,
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bchain coefficient reduction\b/i,
     ],
     [
+      // The chain-multiplier-lock debuff is named "Chain Multiplier Limit" in
+      // OPTC-DB (matching this key's remove_chain_multiplier_limit turn alias).
       'support_status_effect_recovery_lock_chain_multiplier',
-      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\block chain multiplier\b/i,
+      /\b(?:reduce(?:s|d)?|remove(?:s|d)?)\b[^.]{0,160}\bchain multiplier limit\b/i,
     ],
     [
       // "Remove SFX" debuff == OPTC-DB "Blindness" in support ability text.
@@ -3435,47 +3534,73 @@ function addSupportOtherKeys(keys, text) {
     keys.add('support_effect_activation_on_designated_turn');
   }
 
+  // Self-scope cooldown reduction: "reduces Special Cooldown of (the) supported
+  // character by N turns" (the support's recipient == self). Scope-anchored so
+  // OTHER-scope cooldown reductions ("of Captain/Powerhouse/all/right column
+  // characters") are NOT mislabelled under this "(Self)" key. The old adjacency
+  // requirement on "this character/self/own" matched nothing (support text never
+  // uses that wording).
   if (
-    /\b(?:reduce(?:s|d)?|shorten(?:s|ed)?)\b[^.]{0,160}\b(?:special cooldown|special charge|special charge time)\b[^.]{0,120}\b(?:this character|self|own)\b/i.test(
-      text,
-    ) ||
-    /\b(?:this character|self|own)\b[^.]{0,120}\b(?:special cooldown|special charge|special charge time)\b[^.]{0,120}\b(?:reduce(?:s|d)?|shorten(?:s|ed)?)\b/i.test(
+    /\breduces?\s+(?:the\s+)?special cooldown\s+of\s+(?:the\s+)?(?:supported character|self|own|this character)\b/i.test(
       text,
     )
   ) {
     keys.add('support_reduce_special_charge_time_self');
   }
 
+  // "reduces crew's current HP by N%" — anchor the verb tightly to "crew('s) current
+  // HP" so it is not bridged from an unrelated reduce clause.
   if (
-    /\b(?:reduce(?:s|d)?|cut(?:s)?)\b[^.]{0,160}\bcurrent HP\b[^.]{0,120}\b(?:crew|all characters|characters)\b/i.test(
-      text,
-    )
+    /\b(?:reduce(?:s|d)?|cut(?:s)?)\b[^.]{0,30}\bcrew(?:['’]s)?\b[^.]{0,30}\bcurrent HP\b/i.test(text)
   ) {
     keys.add('support_reduce_current_hp_crew');
   }
 }
 
 function addSupportApplyStatusEffectKeys(keys, text) {
-  const entries = [
-    [
-      'support_apply_status_effect_def_down',
-      /\b(?:inflict(?:s|ed)?|apply|applies|reduce(?:s|d)?)\b[^.]{0,160}\b(?:DEF Down|defense down)\b/i,
-    ],
-    ['support_apply_status_effect_unique_effect', /\bunique effect\b/i],
-    [
-      'support_apply_status_effect_poison',
-      /\b(?:inflict(?:s|ed)?|poisons?|apply|applies)\b[^.]{0,160}\b(?:poison|venom|toxic)\b/i,
-    ],
-    [
-      'support_apply_status_effect_increased_damage_taken',
-      /\b(?:increase(?:s|d)?|inflict(?:s|ed)?|apply|applies)\b[^.]{0,160}\bdamage taken\b/i,
-    ],
-    [
-      'support_apply_status_effect_reduce_resistance',
-      /\b(?:resistance reduction|reduce(?:s|d)? resistance)\b/i,
-    ],
-    ['support_apply_status_effect_delay', /\bdelay(?:s|ed)?\b[^.]{0,120}\benem/i],
-  ];
+  // DEF Down, Resistance Reduction, Increase Damage Taken and Delay are ALWAYS
+  // applied "for N turns", so they MUST bypass the shared duration/turns guard used
+  // by the `entries` list below (that guard would exclude every real instance).
+  // Each keys off the crew->enemy ACTION clause, never a trigger reference
+  // ("when an enemy inflicts you with X").
+  //
+  // OPTC-DB writes DEF Down as "reduces the defense of all enemies by N% for M
+  // turns", never the literal "DEF Down".
+  if (/\breduces?\s+the\s+defense\s+of\b[^.]{0,60}\benem/i.test(text)) {
+    keys.add('support_apply_status_effect_def_down');
+  }
+
+  if (
+    /\b(?:inflict(?:s|ed)?|apply|applies|reduce(?:s|d)?|lower(?:s|ed)?)\b[^.]{0,160}\bresistance\b/i.test(
+      text,
+    ) &&
+    /\benem/i.test(text)
+  ) {
+    keys.add('support_apply_status_effect_reduce_resistance');
+  }
+
+  if (/\binflicts?\b[^.]{0,40}\benemies\b[^.]{0,40}\bincrease damage taken\b/i.test(text)) {
+    keys.add('support_apply_status_effect_increased_damage_taken');
+  }
+
+  // The verb form "delays" distinguishes a crew-granted delay application from a
+  // reference to already-"delayed enemies" (the Damage Boost: Delay condition) or a
+  // "Delay special" trigger.
+  if (/\bdelays?\b[^.]{0,40}\benem/i.test(text)) {
+    keys.add('support_apply_status_effect_delay');
+  }
+
+  if (
+    /\bpoisons\b[^.]{0,40}\benem/i.test(text) ||
+    /\binflict(?:s|ed)?\b[^.]{0,80}\b(?:poison|toxic|venom)\b[^.]{0,40}\b(?:to|on)\b[^.]{0,25}\benem/i.test(
+      text,
+    )
+  ) {
+    keys.add('support_apply_status_effect_poison');
+  }
+
+  // Unique Effect carries no duration, so it stays on the turn-guarded path.
+  const entries = [['support_apply_status_effect_unique_effect', /\bunique effect\b/i]];
 
   entries.forEach(([key, pattern]) => {
     if (pattern.test(text) && !/\b(?:duration|turns?)\b/i.test(text)) {

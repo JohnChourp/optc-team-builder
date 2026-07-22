@@ -93,6 +93,28 @@ function extractAbilityKeys(
   return abilities.map((ability) => ability.key);
 }
 
+async function deriveSupportKeysFromText(...texts: string[]): Promise<string[]> {
+  const characters = [
+    {
+      id: 987654,
+      detail: {
+        specialText: null,
+        captainAbility: null,
+        sailorAbilities: [],
+        supportData: texts.map((text) => ({
+          supportedCharactersText: 'Tester',
+          levelDescriptions: [text],
+        })),
+        builderAbilities: [],
+      },
+    },
+  ];
+
+  await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+  return extractAbilityKeys(characters[0]?.detail.builderAbilities ?? []);
+}
+
 describe('auto team builder ability parser', () => {
   it('parser contract: utility-effect', () => {
     const contractCase = getCaptainContractCase('utility-effect');
@@ -6013,6 +6035,114 @@ describe('auto team builder ability parser', () => {
     await enrichCharactersWithBuilderAbilities(characters, { logger: null });
 
     expect(characters[0]?.detail.builderAbilities).toEqual([]);
+  });
+
+  // Support ability-audit regressions (2026-07-22): 44 support keys corrected.
+  it('splits a comma-listed base-stat grant into every _additional key', async () => {
+    const keys = await deriveSupportKeysFromText(
+      "Adds 5% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV",
+    );
+
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        'support_base_atk_boost_additional',
+        'support_base_hp_boost_additional',
+        'support_base_rcv_boost_additional',
+      ]),
+    );
+    // The single-stat key must NOT fire for a multi-stat grant.
+    expect(keys).not.toContain('support_base_atk_boost');
+  });
+
+  it('detects apply-status-effect grants that always carry a turn count', async () => {
+    expect(
+      await deriveSupportKeysFromText('reduces the defense of all enemies by 50% for 3 turns.'),
+    ).toContain('support_apply_status_effect_def_down');
+    expect(
+      await deriveSupportKeysFromText("reduces enemies' [INT] Resistance by -3% for 1 turn."),
+    ).toContain('support_apply_status_effect_reduce_resistance');
+    expect(await deriveSupportKeysFromText('delays all enemies by 1 turn.')).toContain(
+      'support_apply_status_effect_delay',
+    );
+    // Trigger-only reference is NOT an infliction.
+    expect(
+      await deriveSupportKeysFromText(
+        'when the supported character uses a special to inflict Increase Damage Taken, reduces VS Gauge of all characters by 2.',
+      ),
+    ).not.toContain('support_apply_status_effect_increased_damage_taken');
+  });
+
+  it('maps OPTC-DB debuff names to status-effect recovery keys', async () => {
+    expect(
+      await deriveSupportKeysFromText(
+        "when an enemy inflicts you with Chain Coefficient Reduction, reduces Chain Coefficient Reduction duration by 3 turns.",
+      ),
+    ).toContain('support_status_effect_recovery_reduce_chain_multiplier_growth_rate');
+    expect(
+      await deriveSupportKeysFromText(
+        "when an enemy inflicts you with Chain Multiplier Limit, reduces Chain Multiplier Limit duration by 3 turns.",
+      ),
+    ).toContain('support_status_effect_recovery_lock_chain_multiplier');
+    expect(
+      await deriveSupportKeysFromText('reduces Silence duration by 5 turns.'),
+    ).toContain('support_status_effect_recovery_special_bind');
+    // A poison-offense clause is not a poison CURE.
+    expect(
+      await deriveSupportKeysFromText('poisons all enemies and boosts ATK against Poisoned enemies'),
+    ).not.toContain('support_status_effect_recovery_poisons');
+  });
+
+  it('ignores DEF Up named only in a trailing [AUTO+] trigger but keeps genuine reductions', async () => {
+    // 4600: "DEF Up" lives in the [AUTO+] trigger; the real action reduces damage reduction.
+    const shiryu = await deriveSupportKeysFromText(
+      "reduces all enemies' damage reduction (except Threshold Damage Reduction) duration by 2 turns [AUTO+] When enemy launches DEF Up status and at final battle, activates supported character's Special",
+    );
+    expect(shiryu).not.toContain('support_reduce_enemy_effect_turns_def_up');
+    expect(shiryu).not.toContain('support_reduce_enemy_effect_turns_damage_threshold');
+    expect(shiryu).toContain('support_reduce_enemy_effect_turns_damage_reduction');
+    // A genuine reduction worded "by N turns" (no literal "duration") still matches.
+    expect(
+      await deriveSupportKeysFromText(
+        "reduces enemies' Increased Defense and Percent Damage Reduction by 1 turn",
+      ),
+    ).toContain('support_reduce_enemy_effect_turns_def_up');
+  });
+
+  it('detects damage-boost grants worded "boosts ATK against <condition> enemies"', async () => {
+    expect(
+      await deriveSupportKeysFromText('boosts ATK against delayed enemies by 1.3x for 1 turn.'),
+    ).toContain('support_damage_boost_delay');
+    expect(
+      await deriveSupportKeysFromText('boosts ATK against Poisoned enemies by 1.3x for 1 turn.'),
+    ).toContain('support_damage_boost_poison');
+    expect(
+      await deriveSupportKeysFromText(
+        'boosts ATK against enemies with reduced defense by 1.5x for 1 turn.',
+      ),
+    ).toContain('support_damage_boost_def_down');
+  });
+
+  it('detects decimal chain-multiplier boosts and self-scope cooldown reduction', async () => {
+    expect(
+      await deriveSupportKeysFromText(
+        'when the supported character uses their special, adds 0.3x to Chain multiplier for 1 turn.',
+      ),
+    ).toContain('support_chain_multiplier_boost');
+    expect(
+      await deriveSupportKeysFromText('reduces Special Cooldown of supported character by 2 turns.'),
+    ).toContain('support_reduce_special_charge_time_self');
+    // Cooldown reduction scoped to OTHER team roles is not the "(Self)" key.
+    expect(
+      await deriveSupportKeysFromText('reduces Special Cooldown of Captain character by 1 turn.'),
+    ).not.toContain('support_reduce_special_charge_time_self');
+  });
+
+  it('flags "when you reach the final stage" as designated-turn activation', async () => {
+    expect(
+      await deriveSupportKeysFromText(
+        'Once per adventure, when you reach the final stage, boosts the Color Affinity of all characters by 1.75x for 1 turn.',
+      ),
+    ).toContain('support_effect_activation_on_designated_turn');
   });
 });
 
