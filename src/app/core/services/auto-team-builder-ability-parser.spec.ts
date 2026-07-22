@@ -665,6 +665,46 @@ describe('auto team builder ability parser', () => {
     }
   });
 
+  it('tags Set Target only on the applier, across special / super / captain, never boost-against or cure', () => {
+    // Enemy-inflicted debuff: "inflicts all enemies with Set Target, increasing
+    // damage taken from <types/classes> by Nx ...". Anchored on the applier verb,
+    // so it fires from the base special, the super special (per-key allowlist:
+    // #4242/#4502 carry it only there), and captain text (#4461/#4523).
+    for (const [text, source] of [
+      [
+        'Inflicts all enemies with Set Target, increasing damage taken from Driven and Slasher characters by 2x and reducing Special Cooldown of Driven and Slasher characters by 2 turns when they defeat an enemy, for 3 turns',
+        'specialText',
+      ],
+      [
+        'Inflicts all enemies with Set Target, increasing damage taken from Slasher, Shooter and Striker characters by 2x, for 3 turns',
+        'superSpecialText',
+      ],
+      [
+        'inflicts all enemies with Set Target, increasing damage taken from [DEX] and Shooter characters by 2x, for 3 turns',
+        'captainAbility',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_set_target',
+      );
+    }
+    // The bare "Set Target" noun also appears in boost-against, cure/duration and
+    // precondition clauses — none of which APPLY the debuff. The applier anchor
+    // (\binflicts?\b, which never matches the participle "inflicted") excludes them.
+    for (const [notAnApplication, source] of [
+      ['boosts ATK against enemies inflicted with Set Target by 1.75x', 'captainAbility'],
+      ["reduces enemies' Set Target duration by 3 turns", 'specialText'],
+      [
+        'if enemies are inflicted with Set Target when the special is activated, recovers 5,000 HP',
+        'specialText',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notAnApplication, source))).not.toContain(
+        'apply_set_target',
+      );
+    }
+  });
+
   it('pierces Normal Attack Only under both upstream names, but not the precondition', () => {
     // NAO is a CREW-side ailment that floors all skill damage at 1; this key tags
     // units whose damage clause ignores it. Upstream renamed the ailment in newer

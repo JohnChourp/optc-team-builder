@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-21T15:08:45.472Z",
+  "generatedAt": "2026-07-22T06:59:56.113Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -51825,16 +51825,18 @@
       "availableSlotTokens": [],
       "availableSources": [
         "captainAbility",
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 26,
+      "matchCount": 28,
       "matchingCharacterIds": [
         4110,
         4111,
         4179,
+        4242,
         4253,
         4285,
         4322,
@@ -51847,6 +51849,7 @@
         4479,
         4481,
         4492,
+        4502,
         4510,
         4511,
         4523,
@@ -51868,15 +51871,15 @@
         4110,
         4111,
         4179,
-        4253,
-        4285
+        4242,
+        4253
       ],
       "sampleTexts": [
         "Applies effects based on a cycle: Effect 0: Inflicts all enemies with Set Target, increasing damage taken from Driven and Slasher characters by 2x and reducing Special Cooldown of Driven and Slasher characters by 2 turns when they defeat an enemy, for 3 turns, advances Special Cooldown of this character by 13 turns, and changes next launched effect to Effect 1. Effect 1: Reduces enemies' Increased Defense and Threshold Damage Reduction duration by 6 turns, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies, boosts Orb Effects of Driven and Slasher characters by 2.75x for 2 turns, advances Special Cooldown of this character by 13 turns, and changes next launched effect to Effect 2. Effect 2: Reduces Despair duration by 6 turns, sets Chain Boundaries to 3x and 20.0x for 3 turns, reduces enemies' Driven and Slasher Resistance by -20% for 1 turn, and changes next launched effect to Effect 0.",
         "Applies effects based on a cycle: Effect 0: Inflicts all enemies with Set Target, increasing damage taken from Driven and Slasher characters by 2x and reducing Special Cooldown of Driven and Slasher characters by 2 turns when they defeat an enemy, for 3 turns, advances Special Cooldown of this character by 13 turns, and changes next launched effect to Effect 1. Effect 1: Reduces enemies' Increased Defense and Threshold Damage Reduction duration by 6 turns, deals 1,000,000 Fixed True damage, ignoring Normal Attack Only, to all enemies, boosts Orb Effects of Driven and Slasher characters by 2.75x for 2 turns, advances Special Cooldown of this character by 13 turns, and changes next launched effect to Effect 2. Effect 2: Reduces Despair duration by 6 turns, sets Chain Boundaries to 3x and 20.0x for 3 turns, reduces enemies' Driven and Slasher Resistance by -20% for 1 turn, and changes next launched effect to Effect 0.",
         "Ignores Debuff Protection and delays all enemies by 1 turn, and reduces enemies' Threshold Damage Reduction duration by 7 turns. If your Captain is a [DEX] or Shooter character, inflicts all enemies with Set Target, increasing damage taken from [DEX], Shooter and Free Spirit characters by 2x and reducing Special Cooldown of [DEX], Shooter and Free Spirit characters by 2 turns when they defeat an enemy, for 2 turns, and enables Orb Amplification buffs to be enhanced up to 2 times. If \"Becoming a Brave Warrior of the Sea\" is used again in the same turn the Special is activated in, increases boost effects of ATK Up and Orb Amplification buffs by +0.5x.",
-        "Deals 20% of enemies' current HP in damage to all enemies, reduces Beneficial Orb Buff and Non-beneficial Orb Debuff duration by 7 turns, adds 1.8x to Chain Multiplier for 1 turn, and changes the orb, including [BLOCK] orbs, of this character into a [TND] orb. If enemies are inflicted with Set Target when the special is activated, reduces the defense of all enemies by 100% for 2 turns, and ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 2x for 1 turn. If HP is below 20% when the special is activated, inflicts all enemies with Set Target, increasing damage taken from Slasher and Powerhouse characters by 2x and reducing Special Cooldown of Slasher and Powerhouse characters by 2 turns when they defeat an enemy, for 1 turn. If HP is above 20% when the special is activated, inflicts all enemies with Set Target, increasing damage taken from Slasher and Powerhouse characters by 1.75x and reducing Special Cooldown of Slasher and Powerhouse characters by 1 turn when they defeat an enemy, for 1 turn.",
-        "Boosts Chain Multiplier Growth Rate by 1.5x, can be enhanced up to 2 times, for 1 turn, and ignores Debuff Protection and reduces the defense of all enemies by 100% for 1 turn. If your crew has Chain Multiplication when the special is activated, increases Chain Tap Timing Bonus of Cerebral characters to +0.2x-0.6x, can be enhanced up to 2 times, for 1 turn depending on Tap Timing, reduces enemies' Percent Damage Reduction and Threshold Damage Reduction duration by 1 turn, and reduces ATK Down duration by 1 turn. If your crew has Chain Multiplication and Chain Tap Timing Bonus when the special is activated, inflicts all enemies with Set Target, increasing damage taken from Cerebral characters by 2x and reducing Special Cooldown of Cerebral characters by 2 turns when they defeat an enemy, for 1 turn, increases boost effects of Chain Multiplication buffs by +0.2x, and increases boost effects of Chain Tap Timing Bonus buffs by +0.1x. Up to 1 time per adventure, if the Special Counter of this characters is 1, reduces Special Cooldown of Dr. Vegapunk (Stella), Dr. Vegapunk \"Lilith the Evil\", Dr. Vegapunk \"York the Greedy\" and Dr. Vegapunk \"Atlas the Violent\" characters by 15 turns."
+        "Reduces Special Cooldown of top row characters by 2 turns, inflicts all enemies with Set Target, increasing damage taken from Fighter, Slasher, Striker and Shooter characters by 1.75x and reducing Special Cooldown of Fighter, Slasher, Striker and Shooter characters by 2 turns when they defeat an enemy, for 1 turn, and transforms [INT] characters into Super [INT] characters.",
+        "Deals 20% of enemies' current HP in damage to all enemies, reduces Beneficial Orb Buff and Non-beneficial Orb Debuff duration by 7 turns, adds 1.8x to Chain Multiplier for 1 turn, and changes the orb, including [BLOCK] orbs, of this character into a [TND] orb. If enemies are inflicted with Set Target when the special is activated, reduces the defense of all enemies by 100% for 2 turns, and ignores Debuff Protection and inflicts all enemies with Increase Damage Taken by 2x for 1 turn. If HP is below 20% when the special is activated, inflicts all enemies with Set Target, increasing damage taken from Slasher and Powerhouse characters by 2x and reducing Special Cooldown of Slasher and Powerhouse characters by 2 turns when they defeat an enemy, for 1 turn. If HP is above 20% when the special is activated, inflicts all enemies with Set Target, increasing damage taken from Slasher and Powerhouse characters by 1.75x and reducing Special Cooldown of Slasher and Powerhouse characters by 1 turn when they defeat an enemy, for 1 turn."
       ]
     },
     {

@@ -955,7 +955,20 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\bapplies?\b[^.]{0,60}\bresistance\b/i,
     ],
   ],
-  ['apply_set_target', [/\bsets?\b[^.]{0,80}\btarget\b/i]],
+  // apply_set_target — an enemy-inflicted debuff that amplifies the damage the
+  // marked enemy takes from listed types/classes ("inflicts all enemies with Set
+  // Target, increasing damage taken from <types/classes> by Nx ..."). Anchored on
+  // the APPLIER verb+object, NOT the bare "Set Target" noun: a noun branch would
+  // also tag a boost-against clause ("boosts ATK against enemies inflicted with
+  // Set Target"), a cure ("removes Set Target"), or the precondition ("if enemies
+  // are inflicted with Set Target") — none of which APPLY the debuff. \binflicts?\b
+  // never matches the participle "inflicted", so only the true applier survives.
+  // Verified across all 4588 seed characters: byte-identical id set to the legacy
+  // /\bsets?\b..\btarget\b/ noun matcher (28 appliers), with zero boost-against or
+  // cure carriers in the data today. superSpecialText is added on the per-key
+  // allowlist above (#4242 Prince Grus & Kujaku & Hibari, #4502 Drake & Apoo
+  // inflict it only in their super special); captainAbility carries #4461/#4523.
+  ['apply_set_target', [/\binflicts?\b[^.]{0,40}\bwith set target\b/i]],
   // "Weaken" is an enemy-side damage-amplification debuff, DISTINCT FROM and
   // CONDITIONED ON Increase Damage Taken: every canonical clause reads "inflicts
   // all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted
@@ -2268,6 +2281,14 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // #4611 inflict Weaken ONLY in their super special, and none repeats the
         // wording in its base special, so double-tagging is impossible. 29 -> 32.
         'apply_weakened',
+        // apply_set_target: enemy-inflicted debuff, sibling of the apply_weakened
+        // / apply_resistance_reduction family that already reads super text.
+        // Canonical OPTC-DB wording "inflicts all enemies with Set Target,
+        // increasing damage taken from <types/classes> by Nx ...". #4242 (Prince
+        // Grus & Kujaku & Hibari) and #4502 (Drake & Apoo) inflict Set Target
+        // ONLY in their super special, neither repeats it in the base special, so
+        // double-tagging is impossible. 26 -> 28.
+        'apply_set_target',
       ]),
     );
   }
