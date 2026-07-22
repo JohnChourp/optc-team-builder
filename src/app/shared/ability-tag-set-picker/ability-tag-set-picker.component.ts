@@ -18,6 +18,8 @@ import {
   IonIcon,
   IonModal,
   IonSearchbar,
+  IonSelect,
+  IonSelectOption,
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { addOutline, closeOutline, funnelOutline, swapHorizontalOutline } from 'ionicons/icons';
@@ -41,6 +43,7 @@ import {
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
 import { isCaptainAbilityRequirement } from '../../core/services/special-ability-filter.utils';
+import { normalizeAbilityRequirementTurns } from '../../core/services/ability-requirement-draft.utils';
 import { applyIonicModalDialogLabel } from '../a11y/ionic-modal-dialog-label.utils';
 import { AbilityTagSetPickerStylePanelsComponent } from './ability-tag-set-picker-style-panels.component';
 
@@ -75,10 +78,29 @@ interface CatalogSectionView {
   tiles: CatalogTileView[];
 }
 
+/** A selectable "minimum turns" threshold offered for a turn-based chip. */
+interface TurnOption {
+  value: number;
+  /** A 99+/999 sentinel bucket ("effectively permanent"), labelled as such. */
+  permanent: boolean;
+}
+
 interface TagChipView {
   requirement: AutoBuildAbilityRequirement;
   label: string;
   badge: string;
+  /** Stable (abilityKey, captain-scope) identity — the @for track key, since a
+   * set can hold the same key in both the captain and the category scope. */
+  chipKey: string;
+  /**
+   * Whether to show a turn selector: the ability supports turns AND its
+   * scope-appropriate bucket list is non-empty. The scope check hides the
+   * control where a captain-source has no per-turn index (e.g. captain
+   * "Reduce Damage"), which would otherwise collapse the match set to 0.
+   */
+  supportsTurns: boolean;
+  /** Distinct minimum-turn thresholds for this chip's scope, ascending. */
+  turnOptions: TurnOption[];
 }
 
 interface SetCardView {
@@ -95,6 +117,12 @@ interface SetCardView {
 }
 
 const CARD_LEAVE_MS = 180;
+/**
+ * Turn counts at/above this are upstream's "effectively permanent" sentinels
+ * ("for 99+ turns", "for 999 turns"); the picker collapses them into one
+ * "Permanent" threshold rather than offering a literal 99/999-turn option.
+ */
+const PERMANENT_TURN_SENTINEL = 99;
 
 @Component({
   selector: 'app-ability-tag-set-picker',
@@ -108,6 +136,8 @@ const CARD_LEAVE_MS = 180;
     IonIcon,
     IonModal,
     IonSearchbar,
+    IonSelect,
+    IonSelectOption,
     IonToolbar,
     TranslocoDirective,
     TranslocoPipe,
@@ -553,9 +583,89 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
   }
 
   private buildChip(requirement: AutoBuildAbilityRequirement): TagChipView {
-    const label = this.catalogMap().get(requirement.abilityKey)?.label ?? requirement.abilityKey;
+    const item = this.catalogMap().get(requirement.abilityKey);
+    const label = item?.label ?? requirement.abilityKey;
+    const isCaptainScope = isCaptainAbilityRequirement(requirement);
+    // Read the SCOPE-appropriate per-turn index: captain chips filter against the
+    // captain turn buckets, category chips against the crew-wide ones. Picking the
+    // wrong list would offer thresholds the matching then resolves to nobody.
+    const buckets = isCaptainScope
+      ? (item?.captainAbilityTurnMatchingCharacterIds ?? [])
+      : (item?.turnMatchingCharacterIds ?? []);
+    const turnOptions = this.buildTurnOptions(buckets);
 
-    return { requirement, label, badge: this.resolveBadge(label) };
+    return {
+      requirement,
+      label,
+      badge: this.resolveBadge(label),
+      chipKey: this.tileMembershipKey(requirement.abilityKey, isCaptainScope),
+      // Gate on the scope buckets, not just item.supportsTurns, so a scope with no
+      // per-turn data shows no control instead of a filter that matches nobody.
+      supportsTurns: Boolean(item?.supportsTurns) && turnOptions.length > 0,
+      turnOptions,
+    };
+  }
+
+  /**
+   * Distinct minimum-turn thresholds from a chip's turn buckets. Buckets at or
+   * above the 99 sentinel ("for 99+/999 turns" — effectively permanent) collapse
+   * into ONE permanent option valued at 99, so filtering `>= 99` keeps every
+   * permanent holder and the picker never offers a misleading literal "999 turns".
+   */
+  private buildTurnOptions(buckets: readonly { minTurns: number }[]): TurnOption[] {
+    const finite = [
+      ...new Set(
+        buckets
+          .map((bucket) => bucket.minTurns)
+          .filter((minTurns) => minTurns >= 1 && minTurns < PERMANENT_TURN_SENTINEL),
+      ),
+    ].sort((left, right) => left - right);
+    const options: TurnOption[] = finite.map((value) => ({ value, permanent: false }));
+
+    if (buckets.some((bucket) => bucket.minTurns >= PERMANENT_TURN_SENTINEL)) {
+      options.push({ value: PERMANENT_TURN_SENTINEL, permanent: true });
+    }
+
+    return options;
+  }
+
+  /**
+   * Sets the minimum-turn threshold on exactly the (abilityKey, captain-scope)
+   * requirement the chip represents, so the captain and category copies of a
+   * shared key keep independent turn thresholds. `'any'`/blank/0 clear to null.
+   */
+  public setRequirementTurns(
+    setId: string,
+    target: AutoBuildAbilityRequirement,
+    value: number | string | null,
+  ): void {
+    const targetIsCaptain = isCaptainAbilityRequirement(target);
+    const minTurns = normalizeAbilityRequirementTurns(
+      typeof value === 'number' || typeof value === 'string' ? value : null,
+    );
+
+    this.workingSelection.update((selection) => ({
+      ...selection,
+      sets: selection.sets.map((set) =>
+        set.id !== setId
+          ? set
+          : {
+              ...set,
+              requirements: set.requirements.map((requirement) =>
+                requirement.abilityKey === target.abilityKey &&
+                isCaptainAbilityRequirement(requirement) === targetIsCaptain
+                  ? { ...requirement, minTurns }
+                  : requirement,
+              ),
+            },
+      ),
+    }));
+
+    this.announce('chips.turnsChanged', {
+      label: this.catalogMap().get(target.abilityKey)?.label ?? target.abilityKey,
+      index: this.indexOfSet(setId),
+      count: this.totalMatchCount(),
+    });
   }
 
   private announce(key: string, params: Record<string, string | number>): void {

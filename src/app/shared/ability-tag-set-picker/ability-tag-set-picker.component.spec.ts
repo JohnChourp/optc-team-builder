@@ -27,6 +27,8 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonIcon: class {},
   IonModal: class {},
   IonSearchbar: class {},
+  IonSelect: class {},
+  IonSelectOption: class {},
   IonToolbar: class {},
 }));
 
@@ -420,6 +422,190 @@ describe('AbilityTagSetPickerComponent', () => {
       component.toggleCatalogItem(captainTile.item, captainTile.isCaptainScope);
 
       expect(component.setCards()[0]?.matchCount).toBe(1);
+    });
+  });
+
+  describe('per-turn selection', () => {
+    // Non-captain special effect with three ascending turn buckets.
+    const REDUCE: AutoBuildAbilityCatalogItem = {
+      ...catalogItem('reduce_damage', 'Reduce Damage', [1, 2, 3, 4, 5]),
+      supportsTurns: true,
+      turnMatchingCharacterIds: [
+        { minTurns: 1, characterIds: [1, 2, 3, 4, 5] },
+        { minTurns: 2, characterIds: [2, 3, 4, 5] },
+        { minTurns: 3, characterIds: [3, 4, 5] },
+      ],
+    };
+    // A cure whose only bucket is the 99 sentinel plus a finite bucket.
+    const CURE: AutoBuildAbilityCatalogItem = {
+      ...catalogItem('crewmate_recover_stun', 'Recover Stun', [10, 20]),
+      category: 'crewmate',
+      supportsTurns: true,
+      turnMatchingCharacterIds: [
+        { minTurns: 1, characterIds: [10] },
+        { minTurns: 99, characterIds: [20] },
+      ],
+    };
+    // Turn-supporting item that is ALSO captain-sourced WITH captain turn buckets.
+    const CAPTAIN_WITH_BUCKETS: AutoBuildAbilityCatalogItem = {
+      ...catalogItem('boost_base_atk', 'Boost Base ATK', [1, 2, 7]),
+      supportsTurns: true,
+      availableSources: ['specialText', 'captainAbility'],
+      captainAbilityMatchingCharacterIds: [1, 2, 7],
+      turnMatchingCharacterIds: [
+        { minTurns: 1, characterIds: [1, 2, 7] },
+        { minTurns: 2, characterIds: [2, 7] },
+      ],
+      captainAbilityTurnMatchingCharacterIds: [{ minTurns: 1, characterIds: [7] }],
+    };
+    // Captain-sourced turn item WITHOUT a captain per-turn index (the empty-set trap).
+    const CAPTAIN_NO_BUCKETS: AutoBuildAbilityCatalogItem = {
+      ...catalogItem('nullify_damage', 'Nullify Damage', [1, 2, 3]),
+      supportsTurns: true,
+      availableSources: ['specialText', 'captainAbility'],
+      captainAbilityMatchingCharacterIds: [1, 2, 3],
+      turnMatchingCharacterIds: [{ minTurns: 1, characterIds: [1, 2, 3] }],
+    };
+    // supportsTurns is false (e.g. a potential resistance).
+    const NO_TURNS = catalogItem('potential_str_damage_reduction', 'STR Damage Reduction', [9]);
+
+    function turnComponent(): AbilityTagSetPickerComponent {
+      const component = new AbilityTagSetPickerComponent();
+      component.title = 'Ability tags';
+      component.sections = [
+        {
+          category: 'special',
+          label: 'Special',
+          items: [REDUCE, CURE, NO_TURNS, CAPTAIN_WITH_BUCKETS, CAPTAIN_NO_BUCKETS],
+        },
+        {
+          category: 'captain',
+          label: 'Captain',
+          items: [CAPTAIN_WITH_BUCKETS, CAPTAIN_NO_BUCKETS],
+          captainAbility: true,
+        },
+      ];
+      component.selection = createEmptyAbilityFilterTagSetSelection();
+      openComponent(component);
+      component.addSet();
+      return component;
+    }
+
+    function chipFor(
+      component: AbilityTagSetPickerComponent,
+      abilityKey: string,
+      captainScoped: boolean,
+    ) {
+      return component
+        .setCards()[0]
+        ?.chips.find(
+          (chip) =>
+            chip.requirement.abilityKey === abilityKey &&
+            (chip.requirement.sourceScope === 'captainAbility') === captainScoped,
+        );
+    }
+
+    it('offers each ascending turn bucket for a turn-based chip', () => {
+      const component = turnComponent();
+      component.toggleCatalogItem(REDUCE, false);
+
+      const chip = chipFor(component, 'reduce_damage', false);
+      expect(chip?.supportsTurns).toBe(true);
+      expect(chip?.turnOptions).toEqual([
+        { value: 1, permanent: false },
+        { value: 2, permanent: false },
+        { value: 3, permanent: false },
+      ]);
+    });
+
+    it('shows no turn control for an ability that does not support turns', () => {
+      const component = turnComponent();
+      component.toggleCatalogItem(NO_TURNS, false);
+
+      const chip = chipFor(component, 'potential_str_damage_reduction', false);
+      expect(chip?.supportsTurns).toBe(false);
+      expect(chip?.turnOptions).toEqual([]);
+    });
+
+    it('collapses 99+ sentinel buckets into a single permanent option', () => {
+      const component = turnComponent();
+      component.toggleCatalogItem(CURE, false);
+
+      const chip = chipFor(component, 'crewmate_recover_stun', false);
+      expect(chip?.turnOptions).toEqual([
+        { value: 1, permanent: false },
+        { value: 99, permanent: true },
+      ]);
+    });
+
+    it('reads the captain per-turn index for a captain-scoped chip', () => {
+      const component = turnComponent();
+      component.toggleCatalogItem(CAPTAIN_WITH_BUCKETS, true);
+
+      const chip = chipFor(component, 'boost_base_atk', true);
+      // captainAbilityTurnMatchingCharacterIds has only minTurns=1, unlike the
+      // crew-wide buckets [1,2] — proving the scope-appropriate list is used.
+      expect(chip?.supportsTurns).toBe(true);
+      expect(chip?.turnOptions).toEqual([{ value: 1, permanent: false }]);
+    });
+
+    it('hides the turn control for a captain scope with no captain turn buckets', () => {
+      const component = turnComponent();
+      component.toggleCatalogItem(CAPTAIN_NO_BUCKETS, true);
+      component.toggleCatalogItem(CAPTAIN_NO_BUCKETS, false);
+
+      // Captain scope: no captainAbilityTurnMatchingCharacterIds -> no control,
+      // so the user cannot collapse the captain match set to zero.
+      expect(chipFor(component, 'nullify_damage', true)?.supportsTurns).toBe(false);
+      // Non-captain scope: crew-wide buckets exist -> control shows.
+      expect(chipFor(component, 'nullify_damage', false)?.supportsTurns).toBe(true);
+    });
+
+    it('sets minTurns on only the matching (key, scope) requirement', () => {
+      const component = turnComponent();
+      component.toggleCatalogItem(CAPTAIN_WITH_BUCKETS, false);
+      component.toggleCatalogItem(CAPTAIN_WITH_BUCKETS, true);
+
+      const captainReq = chipFor(component, 'boost_base_atk', true)!.requirement;
+      component.setRequirementTurns(component.workingSelection().sets[0]!.id, captainReq, 1);
+
+      const reqs = component.workingSelection().sets[0]!.requirements;
+      expect(reqs.find((r) => r.sourceScope === 'captainAbility')?.minTurns).toBe(1);
+      expect(reqs.find((r) => r.sourceScope !== 'captainAbility')?.minTurns).toBeNull();
+    });
+
+    it('normalizes any/0/blank turn values to null', () => {
+      const component = turnComponent();
+      component.toggleCatalogItem(REDUCE, false);
+      const setId = component.workingSelection().sets[0]!.id;
+      const req = chipFor(component, 'reduce_damage', false)!.requirement;
+
+      component.setRequirementTurns(setId, req, 3);
+      expect(chipFor(component, 'reduce_damage', false)?.requirement.minTurns).toBe(3);
+
+      component.setRequirementTurns(setId, req, 'any');
+      expect(chipFor(component, 'reduce_damage', false)?.requirement.minTurns).toBeNull();
+
+      component.setRequirementTurns(setId, req, 0);
+      expect(chipFor(component, 'reduce_damage', false)?.requirement.minTurns).toBeNull();
+    });
+
+    it('recomputes the live match count from the chosen turn threshold', () => {
+      const component = turnComponent();
+      component.toggleCatalogItem(REDUCE, false);
+      const setId = component.workingSelection().sets[0]!.id;
+      const req = chipFor(component, 'reduce_damage', false)!.requirement;
+
+      // minTurns=null -> full matchingCharacterIds [1..5] = 5.
+      expect(component.setCards()[0]?.matchCount).toBe(5);
+
+      // minTurns=2 -> union of buckets >=2 ({2,3,4,5}) = 4.
+      component.setRequirementTurns(setId, req, 2);
+      expect(component.setCards()[0]?.matchCount).toBe(4);
+
+      // minTurns=3 -> bucket {3,4,5} = 3.
+      component.setRequirementTurns(setId, req, 3);
+      expect(component.setCards()[0]?.matchCount).toBe(3);
     });
   });
 
