@@ -583,21 +583,20 @@ const SPECIAL_ABILITY_MATCHERS = [
   // to be enhanced", "Chain Lock and Chain Boundary buffs". All 3 captainAbility
   // matches (#4267/#4268/#4289) were such references, so captain 3→0.
   ['chain_multiplier_lock', [/\blocks?\s+(?:the\s+)?chain\s+multiplier\b/i]],
-  // Chain Multiplier min/max lock ("Chain Boundary") sets a floor/ceiling on the
-  // chain multiplier — the canonical object is the "minimum/maximum chain
-  // multiplier". The old `chain … (min|max)` 80-char bridge over-matched every
-  // clause where a "chain" word sat near an unrelated "MAX"/"min": "…Chain
-  // Coefficient Reduction … recovers 30% of crew's MAX HP" (#3293/#3776/#4429/
-  // #4430 — MAX from MAX HP) and "Chain Coefficient Reduction and Minimum-Chain
-  // ATK Down …" (#4067/#4068 — Minimum belongs to the separate Minimum-Chain ATK
-  // Down debuff), so ALL 6 detections (incl. the entire captain count) were false
-  // positives. Anchor on the real locked object "(minimum|maximum) chain
-  // multiplier"; the only "Chain Boundary" mention in the corpus (#3742 "boost
-  // effects of Chain Lock and Chain Boundary buffs") is an effect_boost REFERENCE,
-  // not a grant — so no genuine grant exists yet and the key correctly resolves to
-  // 0, while staying ready for a real future "locks the minimum/maximum chain
-  // multiplier at Nx" grant. ReDoS-safe (fixed adjacency, no unbounded bridge).
-  ['chain_multiplier_lock_min_max', [/\b(?:minimum|maximum)\s+chain\s+multiplier\b/i]],
+  // Chain Multiplier min/max lock = the "Chain Boundary" buff, which sets a floor
+  // and ceiling on the chain multiplier. The canonical OPTC-DB GRANT wording is
+  // "sets Chain Boundaries to <min>x and <max>x for N turns" (e.g. "sets Chain
+  // Boundaries to 2.0x and 35.0x for 3 turns"), NOT "minimum/maximum chain
+  // multiplier" — the previous /(?:minimum|maximum)\s+chain\s+multiplier/ matcher
+  // was a DEAD KEY (0 of 4588) because that phrase never appears. Anchor on the
+  // applier verb+object "sets Chain Boundary/ies": this excludes the effect_boost
+  // REFERENCE ("boost effects of Chain Lock and Chain Boundary buffs", #3742) and
+  // the condition-list references ("Chain Limit, Chain Lock or Chain Boundary",
+  // #3429/#3563), none of which carry the "sets" verb. Chain Boundary is always a
+  // crew self-buff, so no enemy-ownership hazard. superSpecialText is on the per-key
+  // allowlist for the 2 super-only granters (#3861, #4187). ReDoS-safe (fixed
+  // adjacency). 0 -> 118.
+  ['chain_multiplier_lock_min_max', [/\bsets?\s+chain\s+boundar(?:y|ies)\b/i]],
   [
     'chain_multiplier_additive_boost',
     // A chain ADDITION is always fractional — "Adds 0.5x to Chain multiplier for 2
@@ -2311,6 +2310,11 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // #4460, #4465, #4559, #4560); none repeats the wording in the base special, so
         // double-tagging is impossible. 251 -> 259.
         'apply_def_reduction',
+        // chain_multiplier_lock_min_max: the "sets Chain Boundaries to Nx and Mx"
+        // min/max chain lock. Two units grant it ONLY in their super special (#3861,
+        // #4187); neither repeats it in the base special, so double-tagging is
+        // impossible. 116 -> 118.
+        'chain_multiplier_lock_min_max',
       ]),
     );
   }

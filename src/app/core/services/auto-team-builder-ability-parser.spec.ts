@@ -1863,6 +1863,29 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('chain_multiplier_lock');
   });
 
+  it('detects chain_multiplier_lock_min_max from the "sets Chain Boundaries" grant, not references', () => {
+    // The min/max chain lock = the "Chain Boundary" buff. Canonical grant wording is
+    // "sets Chain Boundaries to <min>x and <max>x for N turns" (was a dead key keyed on
+    // the non-existent "minimum/maximum chain multiplier"). Base + super special.
+    for (const [text, source] of [
+      ['sets Chain Boundaries to 2.0x and 35.0x for 3 turns', 'specialText'],
+      ['Sets Chain Boundaries to 3.25x-4x and 35.0x for 2 turns', 'superSpecialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'chain_multiplier_lock_min_max',
+      );
+    }
+    // References to the Chain Boundary buff by name (no "sets" verb) are NOT grants.
+    for (const [text, source] of [
+      ['increases boost effects of Chain Lock and Chain Boundary buffs to 3.75x', 'specialText'],
+      ['If enemies have Chain Limit, Chain Lock or Chain Boundary, boosts ATK by 2x', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).not.toContain(
+        'chain_multiplier_lock_min_max',
+      );
+    }
+  });
+
   it('detects boost_slot_effects only for the literal "Orb Effects"/"Slot Effects" grant', () => {
     // Genuine grants (modern, legacy lowercase, legacy possessive "Slot Effects").
     expect(
@@ -3013,11 +3036,11 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('class_change');
   });
 
-  it('scopes chain_multiplier_lock_min_max to the "minimum/maximum chain multiplier" object', () => {
-    // Genuine min/max lock grant wording (the key must catch it if it appears).
+  it('scopes chain_multiplier_lock_min_max to the "sets Chain Boundaries" grant object', () => {
+    // Genuine min/max lock grant wording: "sets Chain Boundaries to <min>x and <max>x".
     expect(
       extractAbilityKeys(
-        analyzeBuilderAbilityText('Locks the minimum chain multiplier at 2x for 3 turns.', 'specialText'),
+        analyzeBuilderAbilityText('sets Chain Boundaries to 2.5x and 35.0x for 2 turns.', 'specialText'),
       ),
     ).toContain('chain_multiplier_lock_min_max');
     // "MAX" of "crew's MAX HP" near a "Chain …" clause must NOT match (old
