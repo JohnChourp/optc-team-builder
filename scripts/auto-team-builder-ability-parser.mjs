@@ -1037,8 +1037,20 @@ const SPECIAL_ABILITY_MATCHERS = [
     // a key spelled the way players say it, not the way OPTC-DB writes it).
     [/\breduces?\s+(?:the\s+)?special cooldown\s+of\s+ship\b/i],
   ],
-  ['reduce_switch_effect_use', [/\breduces?\b[^.]{0,120}\bswitch effect\b[^.]{0,80}\buse/i]],
-  ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,120}\bVS effect gauge\b/i]],
+  // Reduces the "Switch Effect" cooldown of a VS unit so it can switch forms sooner.
+  // OPTC-DB wording is "reduces [the] Switch Effect of <scope> by N turns" — the old
+  // matcher additionally required the token "use" (…switch effect…use), which never
+  // follows the phrase, so it matched 0 of 4588 (a dead key). superSpecialText is on
+  // the per-key allowlist for the 1 super-only granter (#4333). All "Switch Effect"
+  // mentions in special/captain/super text are reductions (the support-side reference
+  // "supported character's Switch Effect" lives in supportData, not read here). 0 -> 89.
+  ['reduce_switch_effect_use', [/\breduces?\b[^.]{0,60}\bswitch effect\b/i]],
+  // Reduces the "VS Gauge" of a VS unit. OPTC-DB wording is "reduces … VS Gauge of
+  // <scope> by N" (often "reduces Switch Effect and VS Gauge of all characters by N");
+  // the old matcher required "VS effect gauge", an extra "effect" token that never
+  // appears, so it matched 0 (a dead key). superSpecialText allowlist covers the 1
+  // super-only granter (#4333). 0 -> 48.
+  ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,60}\bVS Gauge\b/i]],
   [
     'reduce_special_charge',
     // Require "reduces" to directly govern "special cooldown" — the canonical
@@ -2348,6 +2360,11 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // units grant it ONLY in their super special (#4171, #4410); neither repeats it
         // in the base special, so double-tagging is impossible. 8 -> 10.
         'critical_hit_chance_boost',
+        // reduce_switch_effect_use / reduce_vs_effect_gauge: #4333 reduces both the
+        // Switch Effect cooldown and the VS Gauge ONLY in its super special; neither
+        // phrase repeats in the base special, so double-tagging is impossible.
+        'reduce_switch_effect_use',
+        'reduce_vs_effect_gauge',
       ]),
     );
   }

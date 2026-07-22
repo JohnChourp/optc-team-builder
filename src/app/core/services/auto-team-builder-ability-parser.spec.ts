@@ -1683,6 +1683,33 @@ describe('auto team builder ability parser', () => {
     }
   });
 
+  it('detects reduce_switch_effect_use and reduce_vs_effect_gauge from the real VS-mechanic wording', () => {
+    // "reduces [the] Switch Effect of <scope> by N turns" (was a dead key requiring a
+    // trailing "use") and "reduces … VS Gauge …" (was a dead key requiring "VS effect
+    // gauge"). Both fire — including from the shared "Switch Effect and VS Gauge" clause.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces Switch Effect of this character by 8 turns', 'specialText'),
+      ),
+    ).toContain('reduce_switch_effect_use');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces VS Gauge of this character by 1', 'specialText'),
+      ),
+    ).toContain('reduce_vs_effect_gauge');
+    const both = extractAbilityKeys(
+      analyzeBuilderAbilityText('Reduces Switch Effect and VS Gauge of all characters by 2 turns', 'captainAbility'),
+    );
+    expect(both).toContain('reduce_switch_effect_use');
+    expect(both).toContain('reduce_vs_effect_gauge');
+    // Super special grant (per-key allowlist).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces Switch Effect of all characters by 3 turns', 'superSpecialText'),
+      ),
+    ).toContain('reduce_switch_effect_use');
+  });
+
   it('extracts multiple unique effects from one special text without duplicates', () => {
     expect(
       analyzeBuilderAbilityText(
