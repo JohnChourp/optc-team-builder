@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T06:59:56.113Z",
+  "generatedAt": "2026-07-22T07:20:57.672Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -57552,12 +57552,13 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 10,
+      "matchCount": 19,
       "matchingCharacterIds": [
         3522,
         3523,
@@ -57565,10 +57566,19 @@
         4062,
         4136,
         4137,
+        4150,
+        4152,
+        4153,
+        4154,
         4216,
         4239,
         4240,
-        4293
+        4250,
+        4293,
+        4387,
+        4490,
+        4557,
+        4558
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [

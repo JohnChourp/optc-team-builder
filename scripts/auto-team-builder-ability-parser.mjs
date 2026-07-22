@@ -2289,6 +2289,15 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // ONLY in their super special, neither repeats it in the base special, so
         // double-tagging is impossible. 26 -> 28.
         'apply_set_target',
+        // class_change: the "changes Class 1/Class 2 of all non-<X> characters"
+        // / "changes both Classes to any selected combination" transform. Nine
+        // units carry it ONLY in their super special (#4150 Luffy, #4152/#4153
+        // Shanks, #4154 Ace, #4250 Coby, #4387 Roger & Rayleigh & Gaban, #4490
+        // Luffy & Bonney, #4557/#4558 Luffy), none repeats it in the base special,
+        // so double-tagging is impossible. The matcher already requires the literal
+        // "Class 1/Class 2/both classes", so the old "Advantageous class" false
+        // positive cannot reappear on super text. 10 -> 19.
+        'class_change',
       ]),
     );
   }

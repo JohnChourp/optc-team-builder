@@ -2952,6 +2952,18 @@ describe('auto team builder ability parser', () => {
         analyzeBuilderAbilityText('Changes own Type and both Classes to any selected combination.', 'specialText'),
       ),
     ).toContain('class_change');
+    // Nine units (Luffy #4150, Shanks #4152/#4153, Ace #4154, Coby #4250, Roger &
+    // Rayleigh & Gaban #4387, Luffy & Bonney #4490, Luffy #4557/#4558) carry the
+    // class change ONLY in their super special, so class_change reads superSpecialText
+    // via the per-key allowlist. 10 -> 19.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'changes Class 1 of all non-Fighter Class 1 Free Spirit characters to Fighter for 1 turn.',
+          'superSpecialText',
+        ),
+      ),
+    ).toContain('class_change');
     // "boosts Advantageous Class" is a damage boost bridged from a "changes orbs"
     // clause — NOT a class change. The old 120-char `changes … class` bridge
     // mis-tagged these (#4372 special, #4477 captainAbility — the lone captain match).
