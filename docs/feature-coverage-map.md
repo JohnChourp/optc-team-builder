@@ -259,6 +259,42 @@ The sibling `remove_rcv_bind` is deliberately kept at zero rather than deleted. 
 leak: `remove_bind` matches any target ending in " bind", so an "rcv bind" target would be
 silently miscounted as plain Bind if upstream ever ports the Rumble status into quest text.
 
+## Special-ability audit batch (2026-07-22)
+
+A full pass over the remaining un-audited **special** effects revived six dead keys — each had a
+matcher keyed on a wording OPTC-DB never uses — and hardened two more:
+
+- **Chain Boundary** (`chain_multiplier_lock_min_max`, 0 → 118) sets a floor/ceiling on the chain
+  multiplier (OPTC-DB *Chain Limit: Boundary*, Lower/Upper Bound). Grant wording is `sets Chain
+  Boundaries to <min>x and <max>x for N turns`; the old matcher looked for the non-existent
+  "minimum/maximum chain multiplier". Distinct from `chain_multiplier_lock` ("locks the chain
+  multiplier at Nx"); the `sets` verb keeps effect_boost and condition-list references out.
+- **DEF Reduction** (`apply_def_reduction`, 0 → 259) is the crew applying DEF Down to enemies,
+  spelled out as `reduces the defense of all enemies by N% for N turns` — never the abbreviation
+  "DEF". The `by (N|?)%` anchor separates it from the Increased Defense *buff* removal
+  (`remove_enemy_increased_defense`, a duration reduction).
+- **Boost Orb Chance** (`change_slot_chance`, 0 → 227) raises the probability of specific orb
+  colours: `boosts/increases [the] chance(s) of getting <orb> orbs` (chance→orb; the old matcher
+  required orb→chance). The "lowers/reduces chances" drawback direction is excluded.
+- **Critical Hit Rate / Damage** (`critical_hit_chance_boost` 0 → 10, `critical_damage_boost`
+  0 → 15) are the special/captain grants of the Critical Hit buffs — OPTC-DB names them "Critical
+  Hit Rate" and "Critical Hit Damage", not the bare "Chance"/"Damage" the old matchers used.
+  Distinct from the innate `potential_critical_atk`.
+- **VS switch reductions** (`reduce_switch_effect_use` 0 → 89, `reduce_vs_effect_gauge` 0 → 48)
+  let a VS/dual unit switch forms sooner: `reduces [the] Switch Effect of <scope> by N turns` and
+  `reduces ... VS Gauge of <scope> by N` (often the shared clause "Reduces Switch Effect and VS
+  Gauge of all characters by N").
+
+`apply_set_target` (26 → 28) and `class_change` (10 → 19) additionally gained **superSpecialText**
+sourcing via the per-key allowlist, for units that carry the effect only in their super special.
+Seven further keys were verified correct with no change, and four (`apply_unique_effect`,
+`boost_max_hp`, `chain_multiplier_multiplicative_boost`, `remove_beneficial_effect`) are genuine
+no-data placeholders whose matchers are correct but whose effect no current unit produces.
+
+On the Characters (Vault) page, an unrelated UI fix drops the search bar below the facet /
+favorite / sort controls on phones (`max-width: 640px`) so it sits directly above the character
+grid; the desktop search-first single-row layout is unchanged.
+
 Two conventions come out of this and apply to any new or relabelled effect:
 
 - Where an effect is named differently depending on who applies it, or where the community
