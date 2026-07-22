@@ -221,7 +221,7 @@
                         <ul class="ability-tag-set-chips">
                           @for (
                             chip of card.chips;
-                            track chip.requirement.abilityKey;
+                            track chip.chipKey;
                             let lastChip = $last
                           ) {
                             <li class="ability-tag-set-chip-wrap">
@@ -230,6 +230,34 @@
                                   chip.badge
                                 }}</span>
                                 <span class="ability-tag-set-chip__label">{{ chip.label }}</span>
+                                @if (chip.supportsTurns) {
+                                  <ion-select
+                                    class="ability-tag-set-chip__turns"
+                                    interface="popover"
+                                    [value]="chip.requirement.minTurns ?? 'any'"
+                                    [attr.aria-label]="
+                                      t('sets.turns.aria', { label: chip.label })
+                                    "
+                                    (ionChange)="
+                                      setRequirementTurns(
+                                        card.set.id,
+                                        chip.requirement,
+                                        $event.detail.value
+                                      )
+                                    "
+                                  >
+                                    <ion-select-option value="any">{{
+                                      t('sets.turns.any')
+                                    }}</ion-select-option>
+                                    @for (option of chip.turnOptions; track option.value) {
+                                      <ion-select-option [value]="option.value">{{
+                                        option.permanent
+                                          ? t('sets.turns.permanent')
+                                          : t('sets.turns.option', { turns: option.value })
+                                      }}</ion-select-option>
+                                    }
+                                  </ion-select>
+                                }
                                 <button
                                   type="button"
                                   class="ability-tag-set-chip__remove"
