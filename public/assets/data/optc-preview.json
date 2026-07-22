@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-21T17:06:12.288Z",
+  "generatedAt": "2026-07-22T08:45:10.262Z",
   "characters": [
     {
       "id": 1,
@@ -2898,7 +2898,17 @@
           "sanji"
         ],
         "characterTags": [],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_def_reduction",
+            "label": "DEF Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "potentialAbilities": [],
@@ -3796,7 +3806,17 @@
           "chopper"
         ],
         "characterTags": [],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_def_reduction",
+            "label": "DEF Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "potentialAbilities": [],

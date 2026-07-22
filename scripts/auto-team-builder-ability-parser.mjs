@@ -583,21 +583,20 @@ const SPECIAL_ABILITY_MATCHERS = [
   // to be enhanced", "Chain Lock and Chain Boundary buffs". All 3 captainAbility
   // matches (#4267/#4268/#4289) were such references, so captain 3→0.
   ['chain_multiplier_lock', [/\blocks?\s+(?:the\s+)?chain\s+multiplier\b/i]],
-  // Chain Multiplier min/max lock ("Chain Boundary") sets a floor/ceiling on the
-  // chain multiplier — the canonical object is the "minimum/maximum chain
-  // multiplier". The old `chain … (min|max)` 80-char bridge over-matched every
-  // clause where a "chain" word sat near an unrelated "MAX"/"min": "…Chain
-  // Coefficient Reduction … recovers 30% of crew's MAX HP" (#3293/#3776/#4429/
-  // #4430 — MAX from MAX HP) and "Chain Coefficient Reduction and Minimum-Chain
-  // ATK Down …" (#4067/#4068 — Minimum belongs to the separate Minimum-Chain ATK
-  // Down debuff), so ALL 6 detections (incl. the entire captain count) were false
-  // positives. Anchor on the real locked object "(minimum|maximum) chain
-  // multiplier"; the only "Chain Boundary" mention in the corpus (#3742 "boost
-  // effects of Chain Lock and Chain Boundary buffs") is an effect_boost REFERENCE,
-  // not a grant — so no genuine grant exists yet and the key correctly resolves to
-  // 0, while staying ready for a real future "locks the minimum/maximum chain
-  // multiplier at Nx" grant. ReDoS-safe (fixed adjacency, no unbounded bridge).
-  ['chain_multiplier_lock_min_max', [/\b(?:minimum|maximum)\s+chain\s+multiplier\b/i]],
+  // Chain Multiplier min/max lock = the "Chain Boundary" buff, which sets a floor
+  // and ceiling on the chain multiplier. The canonical OPTC-DB GRANT wording is
+  // "sets Chain Boundaries to <min>x and <max>x for N turns" (e.g. "sets Chain
+  // Boundaries to 2.0x and 35.0x for 3 turns"), NOT "minimum/maximum chain
+  // multiplier" — the previous /(?:minimum|maximum)\s+chain\s+multiplier/ matcher
+  // was a DEAD KEY (0 of 4588) because that phrase never appears. Anchor on the
+  // applier verb+object "sets Chain Boundary/ies": this excludes the effect_boost
+  // REFERENCE ("boost effects of Chain Lock and Chain Boundary buffs", #3742) and
+  // the condition-list references ("Chain Limit, Chain Lock or Chain Boundary",
+  // #3429/#3563), none of which carry the "sets" verb. Chain Boundary is always a
+  // crew self-buff, so no enemy-ownership hazard. superSpecialText is on the per-key
+  // allowlist for the 2 super-only granters (#3861, #4187). ReDoS-safe (fixed
+  // adjacency). 0 -> 118.
+  ['chain_multiplier_lock_min_max', [/\bsets?\s+chain\s+boundar(?:y|ies)\b/i]],
   [
     'chain_multiplier_additive_boost',
     // A chain ADDITION is always fractional — "Adds 0.5x to Chain multiplier for 2
@@ -688,7 +687,14 @@ const SPECIAL_ABILITY_MATCHERS = [
     [/\bboosts?\s+base ATK\b/i],
   ],
   ['effect_boost', [/\bincreases?\b[^.]{0,120}\bboost effects?\b/i, /\beffect boost\b/i]],
-  ['critical_damage_boost', [/\bcritical damage\b/i]],
+  // Critical Hit DAMAGE grant: "boosts [the] Critical Hit Damage of <scope> by N%".
+  // OPTC-DB names the buff "Critical Hit Damage", never the bare "Critical Damage" —
+  // so the old /\bcritical damage\b/ matched 0 of 4588 (a dead key). Anchor on the
+  // grant verb governing the buff name so the "performs a Critical Hit" trigger, the
+  // "if your crew has Critical Hit Damage" condition, and the "increases boost effects
+  // of Critical Hit Damage buffs" amplifier are all excluded. superSpecialText is on
+  // the per-key allowlist for the 3 super-only granters (#4257, #4426, #4584). 0 -> 15.
+  ['critical_damage_boost', [/\bboosts?\s+(?:the\s+)?critical hit damage\b/i]],
   ['final_tap_atk_boost', [/\bfinal tap\b[^.]{0,120}\bATK\b/i]],
   // Require "reduces" to directly govern "damage received/taken" (canonical
   // OPTC-DB "reduces damage received/taken by N%"; "take" handles an upstream
@@ -799,7 +805,17 @@ const SPECIAL_ABILITY_MATCHERS = [
   ],
   [
     'change_slot_chance',
-    [/\b(?:changes?|boosts?|increases?)\b[^.]{0,120}\b(?:orb|slot)\b[^.]{0,80}\bchance\b/i],
+    // "Boost Orb Chance": raises the probability of specific orb colours dropping.
+    // OPTC-DB canonical wording is "boosts/increases [the] chance(s) of getting <orb
+    // list> orbs" — note the order chance→orb. The previous matcher required orb→chance
+    // (/(?:changes?|boosts?|increases?) ... (orb|slot) ... chance/), the REVERSE order,
+    // so it matched 0 of 4588 (a dead key). Anchor on "chance(s) of getting ... orbs"
+    // (the {0,40} gap spans multi-colour lists "[X], [Y] and [Z] orbs", "Matching orbs",
+    // "Dominant Type orbs"). Verb kept to boosts/increases only: the drawback/debuff
+    // "reduces/lowers chances of getting <orb> orbs" (self-inflicted captain tradeoffs,
+    // enemy debuffs) is deliberately excluded, matching the original beneficial intent.
+    // Crew-side only (enemies have no orbs), so no enemy-ownership hazard. 0 -> 227.
+    [/\b(?:boosts?|increases?)\s+(?:the\s+)?chances?\s+of\s+getting\b[^.]{0,40}\borbs?\b/i],
   ],
   [
     // Position-only orb movement ("Slot Swap" on the wiki — explicitly NOT a
@@ -898,10 +914,18 @@ const SPECIAL_ABILITY_MATCHERS = [
   ['apply_delay', [/\bdelays?\b[^.]{0,120}\benemies\b/i]],
   [
     'apply_def_reduction',
-    [
-      /\breduces?\b[^.]{0,120}\benem(?:y|ies)[^.]{0,80}\bDEF\b/i,
-      /\binflicts?\b[^.]{0,120}\bDEF Down\b/i,
-    ],
+    // Crew applies DEF Down to enemies. OPTC-DB canonical wording is the spelled-out
+    // "reduces the defense of all/one enem(y|ies) by N% for N turns" (259 carriers) —
+    // NOT the abbreviation. The legacy /reduces..enem..DEF/ and /inflicts..DEF Down/
+    // branches BOTH matched 0 of 4588 (upstream never abbreviates it here), so this
+    // was a DEAD KEY; they are removed. The "by (N|?)%" anchor (3 older units carry the
+    // placeholder "?%") confirms a STAT reduction and separates this from the enemy
+    // Increased Defense BUFF removal ("reduces enemies' Increased Defense duration by N
+    // turns" → remove_enemy_increased_defense) — those never write "defense of enemies
+    // ... by N%". "defense of" also excludes the crew self-drawback "reduces defense of
+    // all characters". superSpecialText is on the per-key allowlist for the 8 super-only
+    // appliers (#3118, #3870, #4054, #4172, #4460, #4465, #4559, #4560).
+    [/\breduces?\s+(?:the\s+)?defense\s+of\b[^.]{0,40}\benem(?:y|ies)\b[^.]{0,30}\bby\s+(?:\d+|\?)%/i],
   ],
   // The crew INFLICTS the "Increase Damage Taken" (IDT) debuff ON ENEMIES so they
   // take Nx more damage: OPTC-DB "Inflicts all enemies with Increase Damage Taken by
@@ -955,7 +979,20 @@ const SPECIAL_ABILITY_MATCHERS = [
       /\bapplies?\b[^.]{0,60}\bresistance\b/i,
     ],
   ],
-  ['apply_set_target', [/\bsets?\b[^.]{0,80}\btarget\b/i]],
+  // apply_set_target — an enemy-inflicted debuff that amplifies the damage the
+  // marked enemy takes from listed types/classes ("inflicts all enemies with Set
+  // Target, increasing damage taken from <types/classes> by Nx ..."). Anchored on
+  // the APPLIER verb+object, NOT the bare "Set Target" noun: a noun branch would
+  // also tag a boost-against clause ("boosts ATK against enemies inflicted with
+  // Set Target"), a cure ("removes Set Target"), or the precondition ("if enemies
+  // are inflicted with Set Target") — none of which APPLY the debuff. \binflicts?\b
+  // never matches the participle "inflicted", so only the true applier survives.
+  // Verified across all 4588 seed characters: byte-identical id set to the legacy
+  // /\bsets?\b..\btarget\b/ noun matcher (28 appliers), with zero boost-against or
+  // cure carriers in the data today. superSpecialText is added on the per-key
+  // allowlist above (#4242 Prince Grus & Kujaku & Hibari, #4502 Drake & Apoo
+  // inflict it only in their super special); captainAbility carries #4461/#4523.
+  ['apply_set_target', [/\binflicts?\b[^.]{0,40}\bwith set target\b/i]],
   // "Weaken" is an enemy-side damage-amplification debuff, DISTINCT FROM and
   // CONDITIONED ON Increase Damage Taken: every canonical clause reads "inflicts
   // all enemies with Weaken by 1.5x, by 1.875x instead if enemies are inflicted
@@ -1000,8 +1037,20 @@ const SPECIAL_ABILITY_MATCHERS = [
     // a key spelled the way players say it, not the way OPTC-DB writes it).
     [/\breduces?\s+(?:the\s+)?special cooldown\s+of\s+ship\b/i],
   ],
-  ['reduce_switch_effect_use', [/\breduces?\b[^.]{0,120}\bswitch effect\b[^.]{0,80}\buse/i]],
-  ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,120}\bVS effect gauge\b/i]],
+  // Reduces the "Switch Effect" cooldown of a VS unit so it can switch forms sooner.
+  // OPTC-DB wording is "reduces [the] Switch Effect of <scope> by N turns" — the old
+  // matcher additionally required the token "use" (…switch effect…use), which never
+  // follows the phrase, so it matched 0 of 4588 (a dead key). superSpecialText is on
+  // the per-key allowlist for the 1 super-only granter (#4333). All "Switch Effect"
+  // mentions in special/captain/super text are reductions (the support-side reference
+  // "supported character's Switch Effect" lives in supportData, not read here). 0 -> 89.
+  ['reduce_switch_effect_use', [/\breduces?\b[^.]{0,60}\bswitch effect\b/i]],
+  // Reduces the "VS Gauge" of a VS unit. OPTC-DB wording is "reduces … VS Gauge of
+  // <scope> by N" (often "reduces Switch Effect and VS Gauge of all characters by N");
+  // the old matcher required "VS effect gauge", an extra "effect" token that never
+  // appears, so it matched 0 (a dead key). superSpecialText allowlist covers the 1
+  // super-only granter (#4333). 0 -> 48.
+  ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,60}\bVS Gauge\b/i]],
   [
     'reduce_special_charge',
     // Require "reduces" to directly govern "special cooldown" — the canonical
@@ -1282,7 +1331,15 @@ const SPECIAL_ABILITY_MATCHERS = [
   // the wording only in superSpecialText and stay undetected under the pre-
   // existing territory-only super limitation for SPECIAL_ABILITY_MATCHERS.)
   ['class_change', [/\bclass change\b/i, /\bchanges?\b[^.]{0,40}\b(?:class\s*[12]\b|both classes\b)/i]],
-  ['critical_hit_chance_boost', [/\bcritical hit chance\b/i]],
+  // Critical Hit RATE (chance) grant: "boosts [the] Critical Hit Rate of <scope> by
+  // N%". OPTC-DB names the buff "Critical Hit Rate" (the chance to land a Critical
+  // Hit), never "Critical Hit Chance" — so the old /\bcritical hit chance\b/ matched
+  // 0 of 4588 (a dead key); the definition label "Critical Hit Chance Boost" is just a
+  // synonym (Rate == Chance). Anchor on the grant verb governing the buff name to
+  // exclude the "performs a Critical Hit" trigger and "if your crew has Critical Hit
+  // Rate" condition. superSpecialText is on the per-key allowlist for the 2 super-only
+  // granters (#4171, #4410). 0 -> 10.
+  ['critical_hit_chance_boost', [/\bboosts?\s+(?:the\s+)?critical hit rate\b/i]],
   ['territory', TERRITORY_PROVIDER_PATTERNS],
 ].map(([key, patterns]) => ({
   key,
@@ -2268,6 +2325,46 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // #4611 inflict Weaken ONLY in their super special, and none repeats the
         // wording in its base special, so double-tagging is impossible. 29 -> 32.
         'apply_weakened',
+        // apply_set_target: enemy-inflicted debuff, sibling of the apply_weakened
+        // / apply_resistance_reduction family that already reads super text.
+        // Canonical OPTC-DB wording "inflicts all enemies with Set Target,
+        // increasing damage taken from <types/classes> by Nx ...". #4242 (Prince
+        // Grus & Kujaku & Hibari) and #4502 (Drake & Apoo) inflict Set Target
+        // ONLY in their super special, neither repeats it in the base special, so
+        // double-tagging is impossible. 26 -> 28.
+        'apply_set_target',
+        // class_change: the "changes Class 1/Class 2 of all non-<X> characters"
+        // / "changes both Classes to any selected combination" transform. Nine
+        // units carry it ONLY in their super special (#4150 Luffy, #4152/#4153
+        // Shanks, #4154 Ace, #4250 Coby, #4387 Roger & Rayleigh & Gaban, #4490
+        // Luffy & Bonney, #4557/#4558 Luffy), none repeats it in the base special,
+        // so double-tagging is impossible. The matcher already requires the literal
+        // "Class 1/Class 2/both classes", so the old "Advantageous class" false
+        // positive cannot reappear on super text. 10 -> 19.
+        'class_change',
+        // apply_def_reduction: crew "reduces the defense of all enemies by N%" DEF Down.
+        // Eight units apply it ONLY in their super special (#3118, #3870, #4054, #4172,
+        // #4460, #4465, #4559, #4560); none repeats the wording in the base special, so
+        // double-tagging is impossible. 251 -> 259.
+        'apply_def_reduction',
+        // chain_multiplier_lock_min_max: the "sets Chain Boundaries to Nx and Mx"
+        // min/max chain lock. Two units grant it ONLY in their super special (#3861,
+        // #4187); neither repeats it in the base special, so double-tagging is
+        // impossible. 116 -> 118.
+        'chain_multiplier_lock_min_max',
+        // critical_damage_boost: "boosts Critical Hit Damage of <scope> by N%". Three
+        // units grant it ONLY in their super special (#4257, #4426, #4584); none
+        // repeats it in the base special, so double-tagging is impossible. 12 -> 15.
+        'critical_damage_boost',
+        // critical_hit_chance_boost: "boosts Critical Hit Rate of <scope> by N%". Two
+        // units grant it ONLY in their super special (#4171, #4410); neither repeats it
+        // in the base special, so double-tagging is impossible. 8 -> 10.
+        'critical_hit_chance_boost',
+        // reduce_switch_effect_use / reduce_vs_effect_gauge: #4333 reduces both the
+        // Switch Effect cooldown and the VS Gauge ONLY in its super special; neither
+        // phrase repeats in the base special, so double-tagging is impossible.
+        'reduce_switch_effect_use',
+        'reduce_vs_effect_gauge',
       ]),
     );
   }

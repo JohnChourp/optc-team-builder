@@ -665,6 +665,46 @@ describe('auto team builder ability parser', () => {
     }
   });
 
+  it('tags Set Target only on the applier, across special / super / captain, never boost-against or cure', () => {
+    // Enemy-inflicted debuff: "inflicts all enemies with Set Target, increasing
+    // damage taken from <types/classes> by Nx ...". Anchored on the applier verb,
+    // so it fires from the base special, the super special (per-key allowlist:
+    // #4242/#4502 carry it only there), and captain text (#4461/#4523).
+    for (const [text, source] of [
+      [
+        'Inflicts all enemies with Set Target, increasing damage taken from Driven and Slasher characters by 2x and reducing Special Cooldown of Driven and Slasher characters by 2 turns when they defeat an enemy, for 3 turns',
+        'specialText',
+      ],
+      [
+        'Inflicts all enemies with Set Target, increasing damage taken from Slasher, Shooter and Striker characters by 2x, for 3 turns',
+        'superSpecialText',
+      ],
+      [
+        'inflicts all enemies with Set Target, increasing damage taken from [DEX] and Shooter characters by 2x, for 3 turns',
+        'captainAbility',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_set_target',
+      );
+    }
+    // The bare "Set Target" noun also appears in boost-against, cure/duration and
+    // precondition clauses — none of which APPLY the debuff. The applier anchor
+    // (\binflicts?\b, which never matches the participle "inflicted") excludes them.
+    for (const [notAnApplication, source] of [
+      ['boosts ATK against enemies inflicted with Set Target by 1.75x', 'captainAbility'],
+      ["reduces enemies' Set Target duration by 3 turns", 'specialText'],
+      [
+        'if enemies are inflicted with Set Target when the special is activated, recovers 5,000 HP',
+        'specialText',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notAnApplication, source))).not.toContain(
+        'apply_set_target',
+      );
+    }
+  });
+
   it('pierces Normal Attack Only under both upstream names, but not the precondition', () => {
     // NAO is a CREW-side ailment that floors all skill damage at 1; this key tags
     // units whose damage clause ignores it. Upstream renamed the ailment in newer
@@ -1573,6 +1613,103 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('change_slots');
   });
 
+  it('detects change_slot_chance from "boosts chances of getting <orb> orbs", not the reduce drawback', () => {
+    // Boost Orb Chance. Canonical wording is chance→orb ("boosts chances of getting
+    // [X] orbs"); the prior matcher required orb→chance and matched 0 (a dead key).
+    // Special and captain sources, single and multi-colour lists.
+    for (const [text, source] of [
+      ['Boosts chances of getting [QCK] orbs for 3 turns', 'specialText'],
+      ['boosts ATK of Fighter characters by 2x, boosts chances of getting [PSY] and [INT] orbs', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'change_slot_chance',
+      );
+    }
+    // The self-inflicted / debuff direction "lowers/reduces chances of getting <orb>"
+    // is a drawback, not a beneficial orb-chance boost, and must NOT be tagged.
+    for (const text of [
+      'boosts ATK of all characters by 1.3x, lowers chances of getting [STR] orbs',
+      'reduces chances of getting [RCV] orbs for 2 turns',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).not.toContain(
+        'change_slot_chance',
+      );
+    }
+  });
+
+  it('detects critical_damage_boost from "boosts Critical Hit Damage", not the trigger or condition', () => {
+    // Grant: "boosts [the] Critical Hit Damage of <scope> by N%". OPTC-DB names the
+    // buff "Critical Hit Damage", so the old /critical damage/ matcher was a dead key.
+    for (const [text, source] of [
+      ['boosts Critical Hit Damage of Slasher and Shooter characters by 50% for 2 turns', 'specialText'],
+      ['boosts Critical Hit Damage of all characters by 75% for 2 turns', 'superSpecialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'critical_damage_boost',
+      );
+    }
+    // The "performs a Critical Hit" trigger and "if your crew has Critical Hit Damage"
+    // condition are NOT grants of the buff.
+    for (const text of [
+      "when a Slasher character performs a Critical Hit, reduces enemies' DEF by 20%",
+      'If your crew has Critical Hit Damage when the special is activated, boosts ATK by 2x',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'critical_damage_boost',
+      );
+    }
+  });
+
+  it('detects critical_hit_chance_boost from "boosts Critical Hit Rate", not "Critical Hit Chance"', () => {
+    // Grant: "boosts [the] Critical Hit Rate of <scope> by N%". OPTC-DB names the buff
+    // "Critical Hit Rate" (== chance), so the old /critical hit chance/ was a dead key.
+    for (const [text, source] of [
+      ['boosts Critical Hit Rate of Slasher characters by 30% for 1 turn', 'specialText'],
+      ['boosts Critical Hit Rate of Slasher and Free Spirit characters by 30% for 2 turns', 'superSpecialText'],
+      ['boosts ATK of [STR] characters by 2x and boosts Critical Hit Rate of all characters by 20%', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'critical_hit_chance_boost',
+      );
+    }
+    // Trigger and condition references are not grants.
+    for (const text of [
+      'when a Cerebral character performs a Critical Hit, reduces enemies’ Percent Damage Reduction duration by 2 turns',
+      'If your crew has Critical Hit Rate when the special is activated, boosts ATK by 2x',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'critical_hit_chance_boost',
+      );
+    }
+  });
+
+  it('detects reduce_switch_effect_use and reduce_vs_effect_gauge from the real VS-mechanic wording', () => {
+    // "reduces [the] Switch Effect of <scope> by N turns" (was a dead key requiring a
+    // trailing "use") and "reduces … VS Gauge …" (was a dead key requiring "VS effect
+    // gauge"). Both fire — including from the shared "Switch Effect and VS Gauge" clause.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces Switch Effect of this character by 8 turns', 'specialText'),
+      ),
+    ).toContain('reduce_switch_effect_use');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces VS Gauge of this character by 1', 'specialText'),
+      ),
+    ).toContain('reduce_vs_effect_gauge');
+    const both = extractAbilityKeys(
+      analyzeBuilderAbilityText('Reduces Switch Effect and VS Gauge of all characters by 2 turns', 'captainAbility'),
+    );
+    expect(both).toContain('reduce_switch_effect_use');
+    expect(both).toContain('reduce_vs_effect_gauge');
+    // Super special grant (per-key allowlist).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces Switch Effect of all characters by 3 turns', 'superSpecialText'),
+      ),
+    ).toContain('reduce_switch_effect_use');
+  });
+
   it('extracts multiple unique effects from one special text without duplicates', () => {
     expect(
       analyzeBuilderAbilityText(
@@ -1821,6 +1958,29 @@ describe('auto team builder ability parser', () => {
         analyzeBuilderAbilityText('Locks the minimum chain multiplier to 2x', 'specialText'),
       ),
     ).not.toContain('chain_multiplier_lock');
+  });
+
+  it('detects chain_multiplier_lock_min_max from the "sets Chain Boundaries" grant, not references', () => {
+    // The min/max chain lock = the "Chain Boundary" buff. Canonical grant wording is
+    // "sets Chain Boundaries to <min>x and <max>x for N turns" (was a dead key keyed on
+    // the non-existent "minimum/maximum chain multiplier"). Base + super special.
+    for (const [text, source] of [
+      ['sets Chain Boundaries to 2.0x and 35.0x for 3 turns', 'specialText'],
+      ['Sets Chain Boundaries to 3.25x-4x and 35.0x for 2 turns', 'superSpecialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'chain_multiplier_lock_min_max',
+      );
+    }
+    // References to the Chain Boundary buff by name (no "sets" verb) are NOT grants.
+    for (const [text, source] of [
+      ['increases boost effects of Chain Lock and Chain Boundary buffs to 3.75x', 'specialText'],
+      ['If enemies have Chain Limit, Chain Lock or Chain Boundary, boosts ATK by 2x', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).not.toContain(
+        'chain_multiplier_lock_min_max',
+      );
+    }
   });
 
   it('detects boost_slot_effects only for the literal "Orb Effects"/"Slot Effects" grant', () => {
@@ -2685,6 +2845,34 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('apply_resistance_reduction');
   });
 
+  it('detects apply_def_reduction from the spelled-out "reduces the defense of enemies by N%" wording', () => {
+    // Canonical DEF Down application (was a dead key: the legacy /reduces..enem..DEF/
+    // and /inflicts..DEF Down/ branches matched 0 because upstream spells out "defense").
+    // Base special, super special (per-key allowlist) and the placeholder "?%" form.
+    for (const [text, source] of [
+      ['Reduces the defense of all enemies by 50% for 2 turns', 'specialText'],
+      ['reduces the defense of all enemies by 30% for 1 turn', 'superSpecialText'],
+      ['Sharply reduces the defense of all enemies by ?% for 1 turn', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_def_reduction',
+      );
+    }
+    // The enemy Increased Defense BUFF removal (a different key) is worded as a
+    // duration reduction "by N turns", never "defense of enemies ... by N%".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("reduces enemies' Increased Defense duration by 7 turns", 'specialText'),
+      ),
+    ).not.toContain('apply_def_reduction');
+    // The crew self-drawback "reduces defense of all characters" is not an enemy DEF Down.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces defense of all characters by 50% for 1 turn', 'specialText'),
+      ),
+    ).not.toContain('apply_def_reduction');
+  });
+
   it('scopes delayed_effect_launch to genuine launches, excluding "after N turns" ramp caps', () => {
     // Genuine delayed launches (kept): named-special activation, delayed boost,
     // "After N turns, <effect>" (comma), and the colon "launches ... after N turn:" form.
@@ -2912,6 +3100,18 @@ describe('auto team builder ability parser', () => {
         analyzeBuilderAbilityText('Changes own Type and both Classes to any selected combination.', 'specialText'),
       ),
     ).toContain('class_change');
+    // Nine units (Luffy #4150, Shanks #4152/#4153, Ace #4154, Coby #4250, Roger &
+    // Rayleigh & Gaban #4387, Luffy & Bonney #4490, Luffy #4557/#4558) carry the
+    // class change ONLY in their super special, so class_change reads superSpecialText
+    // via the per-key allowlist. 10 -> 19.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'changes Class 1 of all non-Fighter Class 1 Free Spirit characters to Fighter for 1 turn.',
+          'superSpecialText',
+        ),
+      ),
+    ).toContain('class_change');
     // "boosts Advantageous Class" is a damage boost bridged from a "changes orbs"
     // clause — NOT a class change. The old 120-char `changes … class` bridge
     // mis-tagged these (#4372 special, #4477 captainAbility — the lone captain match).
@@ -2933,11 +3133,11 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('class_change');
   });
 
-  it('scopes chain_multiplier_lock_min_max to the "minimum/maximum chain multiplier" object', () => {
-    // Genuine min/max lock grant wording (the key must catch it if it appears).
+  it('scopes chain_multiplier_lock_min_max to the "sets Chain Boundaries" grant object', () => {
+    // Genuine min/max lock grant wording: "sets Chain Boundaries to <min>x and <max>x".
     expect(
       extractAbilityKeys(
-        analyzeBuilderAbilityText('Locks the minimum chain multiplier at 2x for 3 turns.', 'specialText'),
+        analyzeBuilderAbilityText('sets Chain Boundaries to 2.5x and 35.0x for 2 turns.', 'specialText'),
       ),
     ).toContain('chain_multiplier_lock_min_max');
     // "MAX" of "crew's MAX HP" near a "Chain …" clause must NOT match (old
