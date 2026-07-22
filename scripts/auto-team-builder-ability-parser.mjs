@@ -687,7 +687,14 @@ const SPECIAL_ABILITY_MATCHERS = [
     [/\bboosts?\s+base ATK\b/i],
   ],
   ['effect_boost', [/\bincreases?\b[^.]{0,120}\bboost effects?\b/i, /\beffect boost\b/i]],
-  ['critical_damage_boost', [/\bcritical damage\b/i]],
+  // Critical Hit DAMAGE grant: "boosts [the] Critical Hit Damage of <scope> by N%".
+  // OPTC-DB names the buff "Critical Hit Damage", never the bare "Critical Damage" —
+  // so the old /\bcritical damage\b/ matched 0 of 4588 (a dead key). Anchor on the
+  // grant verb governing the buff name so the "performs a Critical Hit" trigger, the
+  // "if your crew has Critical Hit Damage" condition, and the "increases boost effects
+  // of Critical Hit Damage buffs" amplifier are all excluded. superSpecialText is on
+  // the per-key allowlist for the 3 super-only granters (#4257, #4426, #4584). 0 -> 15.
+  ['critical_damage_boost', [/\bboosts?\s+(?:the\s+)?critical hit damage\b/i]],
   ['final_tap_atk_boost', [/\bfinal tap\b[^.]{0,120}\bATK\b/i]],
   // Require "reduces" to directly govern "damage received/taken" (canonical
   // OPTC-DB "reduces damage received/taken by N%"; "take" handles an upstream
@@ -2325,6 +2332,10 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // #4187); neither repeats it in the base special, so double-tagging is
         // impossible. 116 -> 118.
         'chain_multiplier_lock_min_max',
+        // critical_damage_boost: "boosts Critical Hit Damage of <scope> by N%". Three
+        // units grant it ONLY in their super special (#4257, #4426, #4584); none
+        // repeats it in the base special, so double-tagging is impossible. 12 -> 15.
+        'critical_damage_boost',
       ]),
     );
   }

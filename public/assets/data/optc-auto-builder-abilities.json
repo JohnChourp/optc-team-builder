@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T07:58:26.994Z",
+  "generatedAt": "2026-07-22T08:02:44.822Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -10912,16 +10912,45 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "specialText"
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 15,
+      "matchingCharacterIds": [
+        3994,
+        3995,
+        4109,
+        4171,
+        4257,
+        4299,
+        4345,
+        4410,
+        4426,
+        4480,
+        4481,
+        4543,
+        4563,
+        4564,
+        4584
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "sampleCharacterIds": [
+        3994,
+        3995,
+        4109,
+        4171,
+        4257
+      ],
+      "sampleTexts": [
+        "Deals 10 hits of 50x character's ATK in Typeless damage to random enemies, boosts Critical Hit Rate of Slasher and Shooter characters by 30% for 1 turn, boosts Critical Hit Damage of Slasher and Shooter characters by up to 75% for 1 turn, deals 10% of enemies' current HP in damage to all enemies at the end of the turn for 3 turns and becomes Kizaru & Fujitora for 3 turns. If your Captain is a Slasher or Shooter character, increases Chain Tap Timing Bonus of Slasher and Shooter characters to +0.0x-0.7x for 1 turn depending on Tap Timing.",
+        "Deals 10 hits of 50x character's ATK in Typeless damage to random enemies, boosts Critical Hit Rate of Slasher and Shooter characters by 30% for 1 turn, boosts Critical Hit Damage of Slasher and Shooter characters by up to 75% for 1 turn, deals 10% of enemies' current HP in damage to all enemies at the end of the turn for 3 turns and becomes Kizaru & Fujitora for 3 turns. If your Captain is a Slasher or Shooter character, increases Chain Tap Timing Bonus of Slasher and Shooter characters to +0.0x-0.7x for 1 turn depending on Tap Timing.",
+        "Reduces Paralysis and Special Bind duration by 6 turns, deals 0.5x the damage dealt in the previous turn in Typeless damage to all enemies, increases Chain Tap Timing Bonus of Slasher and Driven characters to +0.2x-0.6x for 1 turn depending on Tap Timing, and boosts Final Tap ATK of Slasher and Driven characters by 30%. If your crew has Dracule Mihawk or Daz Bones (Mr. 1) who has used a special this turn, boosts Critical Hit Damage of all characters by up to 50% for 1 turn.",
+        "Reduces Paralysis duration by 7 turns, boosts Base ATK of [DEX], Slasher and Free Spirit characters by 1,750 for 2 turns, boosts Critical Hit Damage of all characters by 75% for 2 turns, and enables ATK Up buffs to be enhanced up to 2 times. If \"Dream of Becoming the Greatest Swordsman\" is used again in the same turn the special is activated in, increases boost effects of Base ATK Boost buffs by +500, including effects activated in the same Ability, and increases boost effects of ATK Up buffs by +0.5x.",
+        "Optionally removes Captain Swap duration completely, boosts Critical Hit Damage of [STR] and [INT] characters by 50% for 2 turns, and transforms Slasher characters into Super Slasher characters."
+      ]
     },
     {
       "key": "final_tap_atk_boost",

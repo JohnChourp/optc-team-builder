@@ -1637,6 +1637,29 @@ describe('auto team builder ability parser', () => {
     }
   });
 
+  it('detects critical_damage_boost from "boosts Critical Hit Damage", not the trigger or condition', () => {
+    // Grant: "boosts [the] Critical Hit Damage of <scope> by N%". OPTC-DB names the
+    // buff "Critical Hit Damage", so the old /critical damage/ matcher was a dead key.
+    for (const [text, source] of [
+      ['boosts Critical Hit Damage of Slasher and Shooter characters by 50% for 2 turns', 'specialText'],
+      ['boosts Critical Hit Damage of all characters by 75% for 2 turns', 'superSpecialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'critical_damage_boost',
+      );
+    }
+    // The "performs a Critical Hit" trigger and "if your crew has Critical Hit Damage"
+    // condition are NOT grants of the buff.
+    for (const text of [
+      "when a Slasher character performs a Critical Hit, reduces enemies' DEF by 20%",
+      'If your crew has Critical Hit Damage when the special is activated, boosts ATK by 2x',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'critical_damage_boost',
+      );
+    }
+  });
+
   it('extracts multiple unique effects from one special text without duplicates', () => {
     expect(
       analyzeBuilderAbilityText(
