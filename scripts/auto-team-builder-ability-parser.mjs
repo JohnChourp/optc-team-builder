@@ -8,8 +8,14 @@ const SPECIAL_UNIQUE_ABILITY_SOURCES = {
 };
 const POTENTIAL_UNIQUE_ABILITY_SOURCES = {
   potential_super_tandem: ['superTandemData'],
-  potential_final_tap_sugo_special: ['finalTapData'],
-  potential_rush_sugo_special: ['rushSugoSpecialData'],
+  // "Last Tap" and "Rush" ship inside the character's `potentialAbilities` list
+  // (Name "Last Tap" / "Rush"), NOT in the dedicated finalTapData /
+  // rushSugoSpecialData fields — those are null across the entire dataset. So the
+  // real source is potentialAbilities (matched via the name-alias path below); the
+  // dedicated-field blocks in extractPotentialBuilderAbilities stay as a
+  // forward-compatible fallback for any future data that populates them.
+  potential_final_tap_sugo_special: ['potentialAbilities', 'finalTapData'],
+  potential_rush_sugo_special: ['potentialAbilities', 'rushSugoSpecialData'],
   potential_super_tandem_boost: ['superTandemData'],
 };
 const STRUCTURED_ABILITY_DEFINITIONS = [
@@ -52,28 +58,81 @@ const CREWMATE_CLASSES = [
   { slug: 'cerebral', label: 'Cerebral' },
   { slug: 'powerhouse', label: 'Powerhouse' },
 ];
+// The left column is the potentialAbilities[].Name string OPTC-DB actually stores.
+// Historically this map was keyed on the app's own display *labels* (e.g. "Special
+// Double Launch", "Bind Ship Ability Resistance", "Cooldown Reduction"), but OPTC-DB
+// words most potentials differently on the character record — the same
+// "Remove SFX" == "Blindness" gotcha, at scale. The DB-Name aliases added below
+// (audited 2026-07-22) are what real characters carry; the retained app-label
+// entries are harmless legacy keys that simply never match live data. OPTC-DB also
+// renamed several resistance potentials from the long "Reduce <X> duration" form to
+// a short "<X>" / "<X> Resistance" form for newer units — both forms are aliased so
+// old and new records resolve to the same key.
 const POTENTIAL_ABILITY_ALIASES = new Map(
   [
     ['Super Tandem', 'potential_super_tandem'],
     ['Final Tap Sugo Special', 'potential_final_tap_sugo_special'],
+    // OPTC-DB stores this unique potential as Name "Last Tap" ("Obtain Last Tap
+    // Lv.5") in potentialAbilities; the finalTapData field is null everywhere.
+    ['Last Tap', 'potential_final_tap_sugo_special'],
+    // Form-toggling units (e.g. Luffy/Kaido) grant Last Tap on one form and Super
+    // Tandem on the other; superTandemData already covers their Super Tandem grant,
+    // so route the combined Name to the otherwise-missed Last Tap side.
+    ['Super Tandem/Last Tap', 'potential_final_tap_sugo_special'],
     ['Rush Sugo Special', 'potential_rush_sugo_special'],
+    // OPTC-DB stores this unique potential as Name "Rush" ("Obtain Rush Lv.5") in
+    // potentialAbilities; the rushSugoSpecialData field is null everywhere.
+    ['Rush', 'potential_rush_sugo_special'],
     ['Super Tandem Boost', 'potential_super_tandem_boost'],
     ['Slot Bind Resistance', 'potential_slot_bind_resistance'],
     ['Reduce Slot Bind duration', 'potential_slot_bind_resistance'],
+    // Newer units carry the short Name "Slot Bind" (still "Reduces Slot Bind
+    // duration ... on this character" — a crew resistance, never an enemy inflict).
+    ['Slot Bind', 'potential_slot_bind_resistance'],
     ['Slot Changes Impossible Resistance', 'potential_slot_changes_impossible_resistance'],
     ['Bind Ship Ability Resistance', 'potential_bind_ship_ability_resistance'],
+    // Real DB Names for the Ship Bind resistance potential (all "Reduces Ship Bind
+    // duration by N turns"); the "Bind Ship Ability Resistance" label never appears.
+    ['Reduce Ship Bind duration', 'potential_bind_ship_ability_resistance'],
+    ['Ship Bind Resistance', 'potential_bind_ship_ability_resistance'],
+    ['Ship Bind', 'potential_bind_ship_ability_resistance'],
     ['Fear Resistance', 'potential_fear_resistance'],
     ['Limit Special Uses Resistance', 'potential_limit_special_uses_resistance'],
+    // Real DB Names for the Special Use Limit resistance ("Reduces Special Use Limit
+    // duration by N turns"); the "Limit Special Uses Resistance" label never matches.
+    ['Reduce Special Use Limit duration', 'potential_limit_special_uses_resistance'],
+    ['Special Use Limit', 'potential_limit_special_uses_resistance'],
     ['RCV Bind Resistance', 'potential_rcv_bind_resistance'],
     ['Recoverable HP Amount Down Resistance', 'potential_recoverable_hp_amount_down_resistance'],
     ['Recovery ATK Boost/Hunger Resistance', 'potential_recovery_atk_boost_hunger_resistance'],
+    // OPTC-DB Names for the "Nutrition" potential (ATK boost after recovering HP +
+    // reduce Hunger stacks) that the app labels "Recovery ATK Boost/Hunger Resistance".
+    ['Nutrition/Reduce Hunger stacks', 'potential_recovery_atk_boost_hunger_resistance'],
+    ['Nutrition/Hunger', 'potential_recovery_atk_boost_hunger_resistance'],
     [
       'Provoked ATK Boost/Received Damage Up Resistance',
       'potential_provoked_atk_boost_received_damage_up_resistance',
     ],
+    // OPTC-DB Names for the "Enrage" potential (ATK boost the turn after taking
+    // damage + reduce Increase Damage Taken duration) — the app's largest missed key.
+    [
+      'Enrage/Reduce Increase Damage Taken duration',
+      'potential_provoked_atk_boost_received_damage_up_resistance',
+    ],
+    [
+      'Enrage/Increase Damage Taken',
+      'potential_provoked_atk_boost_received_damage_up_resistance',
+    ],
     ['Own Special Charge Time Reduced', 'potential_own_special_charge_time_reduced'],
+    // OPTC-DB Name for own-special-charge reduction at start of fight.
+    ['Cooldown Reduction', 'potential_own_special_charge_time_reduced'],
     ['Special Double Launch', 'potential_special_double_launch'],
+    // OPTC-DB Name for the double-launch potential ("Once per adventure, reduces
+    // Special Cooldown of this character completely after the first use").
+    ['Double Special Activation', 'potential_special_double_launch'],
     ['Special Triple Launch', 'potential_special_triple_launch'],
+    // OPTC-DB Name for the triple-launch potential ("N times per adventure ...").
+    ['Triple Special Activation', 'potential_special_triple_launch'],
     ['STR Damage Reduction', 'potential_str_damage_reduction'],
     ['[STR] Damage Reduction', 'potential_str_damage_reduction'],
     ['DEX Damage Reduction', 'potential_dex_damage_reduction'],

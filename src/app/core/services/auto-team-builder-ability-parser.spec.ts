@@ -5846,6 +5846,74 @@ describe('auto team builder ability parser', () => {
     ]);
   });
 
+  it('resolves the OPTC-DB potentialAbilities Name strings the app used to miss (audit 2026-07-22)', async () => {
+    // OPTC-DB records these potentials on the character under descriptive/legacy
+    // Name strings, not the app's display labels. Before the audit these keys had
+    // matchCount 0 because the alias map was keyed on the labels ("Special Double
+    // Launch", "Cooldown Reduction", "Bind Ship Ability Resistance", ...). Every
+    // Name below must resolve to its key via the potentialAbilities source. Last
+    // Tap / Rush additionally migrated off the always-null finalTapData /
+    // rushSugoSpecialData fields onto potentialAbilities.
+    const nameToKey: Array<[string, string]> = [
+      ['Last Tap', 'potential_final_tap_sugo_special'],
+      ['Rush', 'potential_rush_sugo_special'],
+      ['Slot Bind', 'potential_slot_bind_resistance'],
+      ['Reduce Ship Bind duration', 'potential_bind_ship_ability_resistance'],
+      ['Ship Bind Resistance', 'potential_bind_ship_ability_resistance'],
+      ['Ship Bind', 'potential_bind_ship_ability_resistance'],
+      ['Reduce Special Use Limit duration', 'potential_limit_special_uses_resistance'],
+      ['Special Use Limit', 'potential_limit_special_uses_resistance'],
+      ['Cooldown Reduction', 'potential_own_special_charge_time_reduced'],
+      ['Double Special Activation', 'potential_special_double_launch'],
+      ['Triple Special Activation', 'potential_special_triple_launch'],
+      [
+        'Enrage/Reduce Increase Damage Taken duration',
+        'potential_provoked_atk_boost_received_damage_up_resistance',
+      ],
+      [
+        'Enrage/Increase Damage Taken',
+        'potential_provoked_atk_boost_received_damage_up_resistance',
+      ],
+      ['Nutrition/Reduce Hunger stacks', 'potential_recovery_atk_boost_hunger_resistance'],
+      ['Nutrition/Hunger', 'potential_recovery_atk_boost_hunger_resistance'],
+      ['Super Tandem/Last Tap', 'potential_final_tap_sugo_special'],
+    ];
+
+    const characters = nameToKey.map(([name], index) => ({
+      id: 7000 + index,
+      detail: {
+        specialText: null,
+        captainAbility: null,
+        sailorAbilities: [],
+        potentialAbilities: [{ Name: name, description: [`Ground-truth wording for ${name}`] }],
+        builderAbilities: [],
+      },
+    }));
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    nameToKey.forEach(([, key], index) => {
+      expect(characters[index]?.detail.builderAbilities).toEqual([
+        expect.objectContaining({ key, source: 'potentialAbilities' }),
+      ]);
+    });
+
+    // The audited keys carry the expected number of distinct matching characters
+    // and none leak onto a sibling key (collision guard).
+    const matchCountByKey = new Map(
+      catalog.map((item) => [item.key, item['matchCount']] as const),
+    );
+    expect(matchCountByKey.get('potential_bind_ship_ability_resistance')).toBe(3);
+    expect(matchCountByKey.get('potential_limit_special_uses_resistance')).toBe(2);
+    expect(matchCountByKey.get('potential_provoked_atk_boost_received_damage_up_resistance')).toBe(2);
+    expect(matchCountByKey.get('potential_recovery_atk_boost_hunger_resistance')).toBe(2);
+    expect(matchCountByKey.get('potential_final_tap_sugo_special')).toBe(2);
+    expect(matchCountByKey.get('potential_special_double_launch')).toBe(1);
+    // No-data keys stay empty even with this rich fixture set.
+    expect(matchCountByKey.get('potential_fear_resistance')).toBe(0);
+    expect(matchCountByKey.get('potential_slot_changes_impossible_resistance')).toBe(0);
+  });
+
   it('seeds all 67 support catalog entries with stable ordering even without matches', async () => {
     const catalog = await enrichCharactersWithBuilderAbilities([], { logger: null });
     const supportCatalog = catalog.filter((item) => item.category === 'support');
