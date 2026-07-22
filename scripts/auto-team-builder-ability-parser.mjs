@@ -1319,7 +1319,15 @@ const SPECIAL_ABILITY_MATCHERS = [
   // the wording only in superSpecialText and stay undetected under the pre-
   // existing territory-only super limitation for SPECIAL_ABILITY_MATCHERS.)
   ['class_change', [/\bclass change\b/i, /\bchanges?\b[^.]{0,40}\b(?:class\s*[12]\b|both classes\b)/i]],
-  ['critical_hit_chance_boost', [/\bcritical hit chance\b/i]],
+  // Critical Hit RATE (chance) grant: "boosts [the] Critical Hit Rate of <scope> by
+  // N%". OPTC-DB names the buff "Critical Hit Rate" (the chance to land a Critical
+  // Hit), never "Critical Hit Chance" — so the old /\bcritical hit chance\b/ matched
+  // 0 of 4588 (a dead key); the definition label "Critical Hit Chance Boost" is just a
+  // synonym (Rate == Chance). Anchor on the grant verb governing the buff name to
+  // exclude the "performs a Critical Hit" trigger and "if your crew has Critical Hit
+  // Rate" condition. superSpecialText is on the per-key allowlist for the 2 super-only
+  // granters (#4171, #4410). 0 -> 10.
+  ['critical_hit_chance_boost', [/\bboosts?\s+(?:the\s+)?critical hit rate\b/i]],
   ['territory', TERRITORY_PROVIDER_PATTERNS],
 ].map(([key, patterns]) => ({
   key,
@@ -2336,6 +2344,10 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         // units grant it ONLY in their super special (#4257, #4426, #4584); none
         // repeats it in the base special, so double-tagging is impossible. 12 -> 15.
         'critical_damage_boost',
+        // critical_hit_chance_boost: "boosts Critical Hit Rate of <scope> by N%". Two
+        // units grant it ONLY in their super special (#4171, #4410); neither repeats it
+        // in the base special, so double-tagging is impossible. 8 -> 10.
+        'critical_hit_chance_boost',
       ]),
     );
   }

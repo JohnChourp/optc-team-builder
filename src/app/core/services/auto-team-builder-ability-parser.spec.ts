@@ -1660,6 +1660,29 @@ describe('auto team builder ability parser', () => {
     }
   });
 
+  it('detects critical_hit_chance_boost from "boosts Critical Hit Rate", not "Critical Hit Chance"', () => {
+    // Grant: "boosts [the] Critical Hit Rate of <scope> by N%". OPTC-DB names the buff
+    // "Critical Hit Rate" (== chance), so the old /critical hit chance/ was a dead key.
+    for (const [text, source] of [
+      ['boosts Critical Hit Rate of Slasher characters by 30% for 1 turn', 'specialText'],
+      ['boosts Critical Hit Rate of Slasher and Free Spirit characters by 30% for 2 turns', 'superSpecialText'],
+      ['boosts ATK of [STR] characters by 2x and boosts Critical Hit Rate of all characters by 20%', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'critical_hit_chance_boost',
+      );
+    }
+    // Trigger and condition references are not grants.
+    for (const text of [
+      'when a Cerebral character performs a Critical Hit, reduces enemies’ Percent Damage Reduction duration by 2 turns',
+      'If your crew has Critical Hit Rate when the special is activated, boosts ATK by 2x',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'critical_hit_chance_boost',
+      );
+    }
+  });
+
   it('extracts multiple unique effects from one special text without duplicates', () => {
     expect(
       analyzeBuilderAbilityText(

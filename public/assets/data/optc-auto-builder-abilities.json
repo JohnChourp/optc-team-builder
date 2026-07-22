@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T08:02:44.822Z",
+  "generatedAt": "2026-07-22T08:05:12.900Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -58472,16 +58472,45 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "specialText"
+        "captainAbility",
+        "specialText",
+        "superSpecialText"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 0,
-      "matchingCharacterIds": [],
+      "matchCount": 10,
+      "matchingCharacterIds": [
+        3994,
+        3995,
+        4171,
+        4230,
+        4231,
+        4235,
+        4299,
+        4410,
+        4543,
+        4569
+      ],
       "turnMatchingCharacterIds": [],
-      "sampleCharacterIds": [],
-      "sampleTexts": []
+      "captainAbilityMatchingCharacterIds": [
+        4230,
+        4231
+      ],
+      "sampleCharacterIds": [
+        3994,
+        3995,
+        4171,
+        4230,
+        4231
+      ],
+      "sampleTexts": [
+        "Deals 10 hits of 50x character's ATK in Typeless damage to random enemies, boosts Critical Hit Rate of Slasher and Shooter characters by 30% for 1 turn, boosts Critical Hit Damage of Slasher and Shooter characters by up to 75% for 1 turn, deals 10% of enemies' current HP in damage to all enemies at the end of the turn for 3 turns and becomes Kizaru & Fujitora for 3 turns. If your Captain is a Slasher or Shooter character, increases Chain Tap Timing Bonus of Slasher and Shooter characters to +0.0x-0.7x for 1 turn depending on Tap Timing.",
+        "Deals 10 hits of 50x character's ATK in Typeless damage to random enemies, boosts Critical Hit Rate of Slasher and Shooter characters by 30% for 1 turn, boosts Critical Hit Damage of Slasher and Shooter characters by up to 75% for 1 turn, deals 10% of enemies' current HP in damage to all enemies at the end of the turn for 3 turns and becomes Kizaru & Fujitora for 3 turns. If your Captain is a Slasher or Shooter character, increases Chain Tap Timing Bonus of Slasher and Shooter characters to +0.0x-0.7x for 1 turn depending on Tap Timing.",
+        "Reduces Special Cooldown of this character by 10 turns, boosts Critical Hit Rate of Slasher and Free Spirit characters by 20% for 2 turns, boosts ATK of [DEX], Slasher and Free Spirit characters by 2.5x for 2 turns, and transforms Slasher characters into Super Slasher characters.",
+        "Boosts ATK of all characters by 5x-6x depending on the number of Slasher characters on the crew, boosts HP of all characters by 1.3x, and makes [TND] orbs beneficial for all characters. If your crew has 4 or more Slasher characters, reduces Despair duration by 10 turns, and boosts Critical Hit Rate of Slasher characters by 30% for 10 turns at the start of the fight. If your crew has 6 Slasher characters and this character has a [INT] or [TND] orb and you attack with this character, reduces enemies' Slasher Resistance by -10% for 1 turn. If your crew has 6 Slasher characters and Territory: Slasher is on the field, boosts ATK of Slasher characters by 6.5x. If this character is your Captain and performs EXCELLENT with their Action Special, boosts Final Tap ATK of Slasher characters by 8% when a Slasher character performs a Critical Hit.",
+        "Boosts ATK of all characters by 5x-6x depending on the number of Slasher characters on the crew, boosts HP of all characters by 1.3x, and makes [TND] orbs beneficial for all characters. If your crew has 4 or more Slasher characters, reduces Despair duration by 10 turns, and boosts Critical Hit Rate of Slasher characters by 30% for 10 turns at the start of the fight. If your crew has 6 Slasher characters and this character has a [INT] or [TND] orb and you attack with this character, reduces enemies' Slasher Resistance by -10% for 1 turn. If your crew has 6 Slasher characters and Territory: Slasher is on the field, boosts ATK of Slasher characters by 6.5x. If this character is your Captain and performs EXCELLENT with their Action Special, boosts Final Tap ATK of Slasher characters by 8% when a Slasher character performs a Critical Hit."
+      ]
     },
     {
       "key": "territory",
