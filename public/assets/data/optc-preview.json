@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-22T14:49:15.126Z",
+  "generatedAt": "2026-07-22T15:21:23.642Z",
   "characters": [
     {
       "id": 1,
@@ -479,6 +479,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_provoked_atk_boost_received_damage_up_resistance",
+            "label": "Provoked ATK Boost/Received Damage Up Resistance",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
             "coverageMode": "explicit"
           },
           {
