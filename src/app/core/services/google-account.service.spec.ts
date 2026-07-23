@@ -10,6 +10,23 @@ describe('GoogleAccountService', () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
+    // Tests that sign in persist `optc_google_account_session`; in environments where
+    // localStorage is a real shared store (CI's ng test) that would leak into later
+    // tests. Clear it up front so each test starts with no remembered session.
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('optc_google_account_session');
+      }
+    } catch {
+      // localStorage unavailable in this environment — nothing to clear.
+    }
+    try {
+      if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+        globalThis.localStorage.removeItem('optc_google_account_session');
+      }
+    } catch {
+      // localStorage unavailable in this environment — nothing to clear.
+    }
     vi.stubGlobal('location', {
       assign: vi.fn(),
       hash: '',

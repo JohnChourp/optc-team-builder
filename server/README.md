@@ -64,7 +64,7 @@ Prefer the subdomain.
   reverse proxy in front of `PORT`).
 - Point DNS `drive-sync.optcteambuilder.com` at the host (PaaS custom domain or VPS A/AAAA).
 - Run it: `npm ci` then `npm run server:drive-sync` (or
-  `node --env-file=/path/to/prod.env ./server/drive-sync-server.mjs`).
+  `node --env-file=/path/to/prod.env server/drive-sync-server.mjs`).
 
 ### 2. Environment (set in the host's secret store — never commit)
 
@@ -118,6 +118,8 @@ URL into `app-config.js`, and the app switches every user to the server-session 
 
 ### 5. Deploy & verify
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 # backend is up and healthy (no session yet):
 curl -s https://drive-sync.optcteambuilder.com/auth/google/status
