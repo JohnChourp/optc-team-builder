@@ -10,6 +10,23 @@ describe('GoogleAccountService', () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
+    // Tests that sign in persist `optc_google_account_session`; in environments where
+    // localStorage is a real shared store (CI's ng test) that would leak into later
+    // tests. Clear it up front so each test starts with no remembered session.
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('optc_google_account_session');
+      }
+    } catch {
+      // localStorage unavailable in this environment — nothing to clear.
+    }
+    try {
+      if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+        globalThis.localStorage.removeItem('optc_google_account_session');
+      }
+    } catch {
+      // localStorage unavailable in this environment — nothing to clear.
+    }
     vi.stubGlobal('location', {
       assign: vi.fn(),
       hash: '',
@@ -283,10 +300,161 @@ describe('GoogleAccountService', () => {
       encodeURIComponent('https://optcteambuilder.com/tabs/account'),
     );
   });
+
+  it('keeps the account connected after the access token expires instead of signing out', async () => {
+    const storage = createMemoryStorage();
+
+    stubBrowserWindow(storage);
+    socialLogin.initialize.mockResolvedValue(undefined);
+    socialLogin.isLoggedIn.mockResolvedValue({ isLoggedIn: true });
+    socialLogin.getAuthorizationCode.mockResolvedValue({
+      accessToken: 'access-token',
+      jwt: buildIdToken({
+        email: 'captain@example.com',
+        name: 'Monkey D. Luffy',
+        sub: 'google-user-1',
+      }),
+    });
+
+    const firstLoad = createService(webConfig());
+    await firstLoad.ready();
+
+    expect(firstLoad.isSignedIn()).toBe(true);
+    expect(storage.getItem('optc_google_account_session')).not.toBeNull();
+
+    // A later load, hours on: the web plugin has discarded the expired token and
+    // reports the user as logged out. The account must stay connected regardless.
+    socialLogin.isLoggedIn.mockResolvedValue({ isLoggedIn: false });
+    socialLogin.getAuthorizationCode.mockReset();
+
+    const laterLoad = createService(webConfig());
+    await laterLoad.ready();
+
+    expect(laterLoad.isSignedIn()).toBe(true);
+    expect(laterLoad.status()).toBe('signed-in');
+    expect(laterLoad.needsReconnect()).toBe(false);
+    expect(laterLoad.profile()).toMatchObject({ id: 'google-user-1' });
+    expect(socialLogin.getAuthorizationCode).not.toHaveBeenCalled();
+  });
+
+  it('forgets the remembered session only after an explicit sign-out', async () => {
+    const storage = createMemoryStorage();
+
+    stubBrowserWindow(storage);
+    socialLogin.initialize.mockResolvedValue(undefined);
+    socialLogin.isLoggedIn.mockResolvedValue({ isLoggedIn: true });
+    socialLogin.getAuthorizationCode.mockResolvedValue({
+      accessToken: 'access-token',
+      jwt: buildIdToken({ name: 'Monkey D. Luffy', sub: 'google-user-1' }),
+    });
+    socialLogin.logout.mockResolvedValue(undefined);
+
+    const service = createService(webConfig());
+    await service.ready();
+
+    expect(service.isSignedIn()).toBe(true);
+
+    await service.signOut();
+
+    expect(service.isSignedIn()).toBe(false);
+    expect(storage.getItem('optc_google_account_session')).toBeNull();
+
+    // Reloading after a real sign-out stays signed out — no remembered profile.
+    socialLogin.isLoggedIn.mockResolvedValue({ isLoggedIn: false });
+
+    const reloaded = createService(webConfig());
+    await reloaded.ready();
+
+    expect(reloaded.isSignedIn()).toBe(false);
+    expect(reloaded.status()).toBe('signed-out');
+  });
+
+  it('keeps a remembered account connected when an interactive re-auth is cancelled', async () => {
+    const storage = createMemoryStorage();
+
+    stubBrowserWindow(storage);
+    storage.setItem(
+      'optc_google_account_session',
+      JSON.stringify({
+        profile: {
+          email: 'captain@example.com',
+          familyName: null,
+          givenName: null,
+          id: 'google-user-1',
+          imageUrl: null,
+          name: 'Monkey D. Luffy',
+        },
+      }),
+    );
+    socialLogin.initialize.mockResolvedValue(undefined);
+    socialLogin.isLoggedIn.mockResolvedValue({ isLoggedIn: false });
+
+    const service = createService(webConfig());
+    await service.ready();
+
+    expect(service.isSignedIn()).toBe(true);
+
+    // The user starts an interactive re-auth and closes the popup.
+    socialLogin.login.mockRejectedValue(new Error('Popup closed'));
+
+    await expect(service.signIn(true)).rejects.toThrow('Popup closed');
+
+    // A cancelled re-auth is not a disconnect: the remembered account survives.
+    expect(service.isSignedIn()).toBe(true);
+    expect(service.status()).toBe('signed-in');
+    expect(service.profile()).toMatchObject({ id: 'google-user-1' });
+    expect(storage.getItem('optc_google_account_session')).not.toBeNull();
+  });
 });
 
 function createService(config: AppSyncConfig): GoogleAccountService {
   return new GoogleAccountService(config, socialLogin);
+}
+
+function webConfig(): AppSyncConfig {
+  return {
+    googleDriveFolderName: 'OPTC Team Builder',
+    googleIosClientId: '',
+    googleWebClientId: '123456.apps.googleusercontent.com',
+  };
+}
+
+function createMemoryStorage(): Storage {
+  const store = new Map<string, string>();
+
+  return {
+    get length(): number {
+      return store.size;
+    },
+    clear(): void {
+      store.clear();
+    },
+    getItem(key: string): string | null {
+      return store.has(key) ? (store.get(key) ?? null) : null;
+    },
+    key(index: number): string | null {
+      return [...store.keys()][index] ?? null;
+    },
+    removeItem(key: string): void {
+      store.delete(key);
+    },
+    setItem(key: string, value: string): void {
+      store.set(key, String(value));
+    },
+  } satisfies Storage;
+}
+
+function stubBrowserWindow(storage: Storage): void {
+  vi.stubGlobal('window', {
+    localStorage: storage,
+    location: {
+      hash: '',
+      href: 'https://optcteambuilder.com/',
+      origin: 'https://optcteambuilder.com',
+      pathname: '/',
+      search: '',
+    },
+  });
 }
 
 function buildIdToken(payload: Record<string, unknown>): string {
