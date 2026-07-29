@@ -174,6 +174,10 @@ import {
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
+import {
+  CharacterTagFilterComponent,
+  type CharacterTagFilterChange,
+} from '../../shared/character-tag-filter/character-tag-filter.component';
 import { CharacterTagSetPickerComponent } from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
 import {
   createAbilityRequirementDrafts,
@@ -729,6 +733,7 @@ function resolveManualSlotRequiredAbilities(
     CaptainTeamConditionStatusComponent,
     TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
+    CharacterTagFilterComponent,
     CharacterTagSetPickerComponent,
     AutoTeamBuilderActionsPanelComponent,
     AutoTeamBuilderCandidateCardPanelComponent,
@@ -844,6 +849,31 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly requirementSourceCandidates = signal<CharacterDetailRecord[]>([]);
   public readonly requirementSourceCandidatesLoading = signal(false);
+  /*
+   * Per-picker candidate tag filters. These only narrow the CANDIDATE LIST the
+   * picker in question shows and are deliberately separate from
+   * `characterTagSets`, which is the page-level gate demanding the built TEAM
+   * cover those tags. Each picker keeps its own selection because the user sets
+   * them independently.
+   *
+   * The ids are the shell's resolved match set: `undefined` means "no filter"
+   * and `[]` means "nothing matches" — never conflated. Both are handed straight
+   * to `searchDetailedCharacters({ allowedCharacterIds })`, so the gate is
+   * applied inside the query, before any limit/offset, and paging plus
+   * "load more" keep telling the truth.
+   */
+  public readonly manualPickerTagSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  public readonly manualPickerTagCharacterIds = signal<number[] | undefined>(undefined);
+  public readonly excludePickerTagSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  public readonly excludePickerTagCharacterIds = signal<number[] | undefined>(undefined);
+  public readonly requirementSourceTagSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  public readonly requirementSourceTagCharacterIds = signal<number[] | undefined>(undefined);
   private readonly manualShipPanelState = signal<ShipPickerPanelState>(
     createShipPickerPanelState(),
   );
@@ -3289,6 +3319,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public closeManualPickerModal(): void {
     this.manualPickerModalOpen.set(false);
+    this.clearCharacterPickerTagFilter('manual');
   }
 
   public async openExcludePickerModal(): Promise<void> {
