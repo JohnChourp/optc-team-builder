@@ -6559,6 +6559,12 @@ describe('Auto team builder', () => {
             captain: noCaptainLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6603,6 +6609,12 @@ describe('Auto team builder', () => {
             friendCaptain: noCaptainLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6634,6 +6646,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6678,6 +6696,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6709,6 +6733,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6753,6 +6783,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6784,6 +6820,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6829,6 +6871,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6860,6 +6908,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6904,6 +6958,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6935,6 +6995,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -6980,6 +7046,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7011,6 +7083,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7056,6 +7134,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7087,6 +7171,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7132,6 +7222,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7238,6 +7334,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7283,6 +7385,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7314,6 +7422,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7359,6 +7473,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7390,6 +7510,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7435,6 +7561,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7466,6 +7598,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7510,6 +7648,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7541,6 +7685,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7585,6 +7735,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7616,6 +7772,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7660,6 +7822,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7691,6 +7859,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7735,6 +7909,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7766,6 +7946,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7810,6 +7996,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7841,6 +8033,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7886,6 +8084,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7917,6 +8121,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7962,6 +8172,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -7993,6 +8209,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -8038,6 +8260,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -8523,6 +8751,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -8567,6 +8801,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -8598,6 +8838,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -8642,6 +8888,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9127,6 +9379,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9172,6 +9430,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9203,6 +9467,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9248,6 +9518,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9279,6 +9555,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9324,6 +9606,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9355,6 +9643,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9400,6 +9694,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9431,6 +9731,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9476,6 +9782,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9657,6 +9969,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9702,6 +10020,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9883,6 +10207,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9928,6 +10258,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -9959,6 +10295,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10004,6 +10346,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10035,6 +10383,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10079,6 +10433,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10110,6 +10470,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10154,6 +10520,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10185,6 +10557,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10229,6 +10607,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10410,6 +10794,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10454,6 +10844,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10939,6 +11335,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -10984,6 +11386,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11015,6 +11423,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11059,6 +11473,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11090,6 +11510,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11135,6 +11561,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11166,6 +11598,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11211,6 +11649,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11394,6 +11838,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11439,6 +11889,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11470,6 +11926,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -11515,6 +11977,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12076,6 +12544,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12121,6 +12595,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12152,6 +12632,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12197,6 +12683,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12228,6 +12720,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12273,6 +12771,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12304,6 +12808,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12349,6 +12859,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12380,6 +12896,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12424,6 +12946,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12455,6 +12983,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12499,6 +13033,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12530,6 +13070,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12574,6 +13120,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12605,6 +13157,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12649,6 +13207,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12680,6 +13244,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12724,6 +13294,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12755,6 +13331,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12799,6 +13381,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12830,6 +13418,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12874,6 +13468,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12905,6 +13505,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12949,6 +13555,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -12980,6 +13592,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13024,6 +13642,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13055,6 +13679,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13099,6 +13729,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13130,6 +13766,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13174,6 +13816,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13205,6 +13853,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13249,6 +13903,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13280,6 +13940,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13324,6 +13990,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13355,6 +14027,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13399,6 +14077,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13430,6 +14114,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13474,6 +14164,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13505,6 +14201,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13549,6 +14251,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13580,6 +14288,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13624,6 +14338,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13655,6 +14375,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13699,6 +14425,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13730,6 +14462,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13774,6 +14512,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13805,6 +14549,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13849,6 +14599,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13880,6 +14636,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13924,6 +14686,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13955,6 +14723,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -13999,6 +14773,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14030,6 +14810,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14074,6 +14860,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14105,6 +14897,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14149,6 +14947,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14180,6 +14984,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14224,6 +15034,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14255,6 +15071,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14299,6 +15121,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14330,6 +15158,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14374,6 +15208,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14405,6 +15245,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14449,6 +15295,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14480,6 +15332,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14524,6 +15382,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14555,6 +15419,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14599,6 +15469,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14630,6 +15506,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14674,6 +15556,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14705,6 +15593,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14749,6 +15643,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14780,6 +15680,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14824,6 +15730,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14855,6 +15767,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14899,6 +15817,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14930,6 +15854,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -14974,6 +15904,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15005,6 +15941,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15049,6 +15991,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15080,6 +16028,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15124,6 +16078,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15155,6 +16115,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15199,6 +16165,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15230,6 +16202,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15274,6 +16252,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15305,6 +16289,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15349,6 +16339,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15380,6 +16376,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15424,6 +16426,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15455,6 +16463,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15499,6 +16513,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15530,6 +16550,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15574,6 +16600,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15605,6 +16637,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15649,6 +16687,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15680,6 +16724,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15724,6 +16774,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15755,6 +16811,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15799,6 +16861,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15830,6 +16898,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15874,6 +16948,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15905,6 +16985,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15949,6 +17035,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -15980,6 +17072,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16024,6 +17122,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16055,6 +17159,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16099,6 +17209,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16130,6 +17246,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16174,6 +17296,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16205,6 +17333,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16249,6 +17383,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16280,6 +17420,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16324,6 +17470,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16355,6 +17507,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16399,6 +17557,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16430,6 +17594,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16474,6 +17644,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16505,6 +17681,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16549,6 +17731,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16580,6 +17768,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16624,6 +17818,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16655,6 +17855,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16699,6 +17905,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16730,6 +17942,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16774,6 +17992,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16805,6 +18029,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16849,6 +18079,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16880,6 +18116,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16924,6 +18166,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16955,6 +18203,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -16999,6 +18253,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17030,6 +18290,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17074,6 +18340,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17105,6 +18377,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17149,6 +18427,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17180,6 +18464,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17224,6 +18514,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17255,6 +18551,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17299,6 +18601,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17330,6 +18638,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17374,6 +18688,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17405,6 +18725,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17449,6 +18775,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17480,6 +18812,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17524,6 +18862,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17555,6 +18899,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17599,6 +18949,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17630,6 +18986,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17674,6 +19036,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17705,6 +19073,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17749,6 +19123,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17780,6 +19160,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17824,6 +19210,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17855,6 +19247,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17899,6 +19297,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17930,6 +19334,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -17974,6 +19384,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18005,6 +19421,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18049,6 +19471,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18080,6 +19508,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18124,6 +19558,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18155,6 +19595,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18199,6 +19645,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18230,6 +19682,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18274,6 +19732,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18305,6 +19769,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18349,6 +19819,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18380,6 +19856,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18424,6 +19906,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18455,6 +19943,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18499,6 +19993,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18530,6 +20030,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18574,6 +20080,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18605,6 +20117,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18649,6 +20167,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18680,6 +20204,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18724,6 +20254,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18830,6 +20366,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18874,6 +20416,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18905,6 +20453,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18949,6 +20503,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -18980,6 +20540,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19024,6 +20590,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19055,6 +20627,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19099,6 +20677,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19130,6 +20714,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19174,6 +20764,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19205,6 +20801,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19249,6 +20851,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19280,6 +20888,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19324,6 +20938,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19355,6 +20975,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19399,6 +21025,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19430,6 +21062,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19474,6 +21112,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19505,6 +21149,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19549,6 +21199,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19580,6 +21236,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19624,6 +21286,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19655,6 +21323,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19699,6 +21373,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19730,6 +21410,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19774,6 +21460,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19805,6 +21497,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19849,6 +21547,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19880,6 +21584,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19924,6 +21634,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19955,6 +21671,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -19999,6 +21721,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20030,6 +21758,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20074,6 +21808,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20105,6 +21845,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20149,6 +21895,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20180,6 +21932,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20224,6 +21982,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20255,6 +22019,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20299,6 +22069,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20330,6 +22106,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20374,6 +22156,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20405,6 +22193,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20449,6 +22243,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20480,6 +22280,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20524,6 +22330,12 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20555,6 +22367,12 @@ describe('Auto team builder', () => {
             captain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 
@@ -20599,6 +22417,82 @@ describe('Auto team builder', () => {
             friendCaptain: requiredLeader.id,
           },
         ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[1]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+    expect(result?.slots[1]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #187 Pistol Seaman - Navy as the single required manual captain under user strict preset', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(187);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        manualSlots: createManualSlots(
+          { captain: [requiredLeader.id] },
+          { captain: requiredLeader.id },
+        ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
+      },
+    );
+
+    expectCompleteAutoTeam(result);
+    expect(result?.slots[0]?.character.id).toBe(requiredLeader.id);
+    expect(result?.slots[0]?.reasonChips).toContain('Manual pick');
+  });
+
+  it('keeps #187 Pistol Seaman - Navy as both required manual leaders under user strict preset', async () => {
+    const requiredLeader = loadGeneratedCharacterRecord(187);
+    const repository = {
+      getAutoBuilderCandidates: vi
+        .fn()
+        .mockResolvedValue(createManualLeaderSweepRecords(requiredLeader)),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(
+      [...AUTO_TEAM_BUILDER_CLASSES],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        manualSlots: createManualSlots(
+          {
+            captain: [requiredLeader.id],
+            friendCaptain: [requiredLeader.id],
+          },
+          {
+            captain: requiredLeader.id,
+            friendCaptain: requiredLeader.id,
+          },
+        ),
+        requireFullCaptainAbilityCoverage: true,
+        requireBothLeadersFullCaptainAbilityCoverage: true,
+        strictSuperSpecialCriteriaCoverage: true,
+        strictSuperTandemCriteriaCoverage: true,
+        requireUniqueBaseCharacterNames: true,
+        leaderBoostFilters: ['HP', 'ATK'],
       },
     );
 

@@ -4188,10 +4188,25 @@ function resolveActiveLeaderCriteriaEntries(
   leaderSlots: AutoBuildCandidate[],
   input: AutoBuildInput,
 ): ActiveLeaderCriteriaLeader[] {
-  const entries = leaderSlots.slice(0, 2).map((candidate, index): ActiveLeaderCriteriaLeader => {
-    const role: AutoBuildLeaderSlotRole = index === 0 ? 'captain' : 'friendCaptain';
-    return resolveLeaderCriteriaEntryForSlot(role, candidate, input);
-  });
+  const entries = leaderSlots
+    .slice(0, 2)
+    .map((candidate, index): ActiveLeaderCriteriaLeader | null => {
+      const role: AutoBuildLeaderSlotRole = index === 0 ? 'captain' : 'friendCaptain';
+      const characterId = candidate.character.id;
+      const isRequiredManualLeader = input.manualSlots.some(
+        (slot) => slot.role === role && slot.requiredCharacterId === characterId,
+      );
+      const captainAbility = candidate.character.detail.captainAbility;
+      const hasReadableCaptainText =
+        typeof captainAbility === 'string' && captainAbility.trim().length > 0;
+
+      if (isRequiredManualLeader && !hasReadableCaptainText) {
+        return null;
+      }
+
+      return resolveLeaderCriteriaEntryForSlot(role, candidate, input);
+    })
+    .filter((entry): entry is ActiveLeaderCriteriaLeader => entry !== null);
 
   return input.requireBothLeadersFullCaptainAbilityCoverage
     ? entries
