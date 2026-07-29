@@ -89,7 +89,7 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     name: 'test:release-check',
     group: 'release-check',
     expectedCommand:
-      'vitest run scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-decision-history.spec.ts scripts/release-provenance-report.spec.ts scripts/post-dispatch-production-smoke.spec.ts',
+      'vitest run scripts/bump-version.spec.ts scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-decision-history.spec.ts scripts/release-provenance-report.spec.ts scripts/post-dispatch-production-smoke.spec.ts',
     fix: 'Restore the release detector replay and post-dispatch smoke package script.',
   },
   {
@@ -196,6 +196,8 @@ export const REQUIRED_APP_PATHS = [
   { relativePath: 'scripts/release-provenance-report.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/post-dispatch-production-smoke.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/post-dispatch-production-smoke.spec.ts', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/bump-version.sh', kind: 'file', group: 'release-check' },
+  { relativePath: 'scripts/bump-version.spec.ts', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/fixtures/shared/release-check-fixtures.mjs', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/fixtures/release-check/history/corpus.json', kind: 'file', group: 'release-check' },
   { relativePath: 'scripts/fixtures/release-provenance/release-trigger-released.json', kind: 'file', group: 'release-check' },

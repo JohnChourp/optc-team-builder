@@ -35,20 +35,6 @@ export class CharacterFilterRowComponent {
   @Input() public clearLabel = 'Clear';
   @Input() public showClearButton = false;
 
-  @Input() public showTypeFilter = false;
-  @Input() public typeLabel = 'Type';
-  @Input() public typePlaceholder = 'Filter by type';
-  @Input() public typeOptions: string[] = [];
-  @Input() public typeQuery = '';
-  @Input() public selectedType = '';
-
-  @Input() public showClassFilter = false;
-  @Input() public classLabel = 'Class';
-  @Input() public classPlaceholder = 'Filter by class';
-  @Input() public classOptions: string[] = [];
-  @Input() public classQuery = '';
-  @Input() public selectedClass = '';
-
   @Input() public showCharacterBoxFilter = false;
   @Input() public characterBoxLabel = 'Character box';
   @Input() public characterBoxPlaceholder = 'Select character box';
@@ -89,12 +75,6 @@ export class CharacterFilterRowComponent {
   @Input() public idOrderOptions: CharacterFilterOption[] = [];
   @Input() public selectedIdOrderValue = '';
 
-  @Output() public readonly typeQueryChange = new EventEmitter<string>();
-  @Output() public readonly typeSelected = new EventEmitter<string>();
-  @Output() public readonly typeCleared = new EventEmitter<void>();
-  @Output() public readonly classQueryChange = new EventEmitter<string>();
-  @Output() public readonly classSelected = new EventEmitter<string>();
-  @Output() public readonly classCleared = new EventEmitter<void>();
   @Output() public readonly characterBoxChange = new EventEmitter<string>();
   @Output() public readonly favoritesOnlyChange = new EventEmitter<boolean>();
   @Output() public readonly hideFavoritesChange = new EventEmitter<boolean>();
@@ -108,30 +88,6 @@ export class CharacterFilterRowComponent {
   @Output() public readonly idOrderChange = new EventEmitter<string>();
   @Output() public readonly clearFilters = new EventEmitter<void>();
 
-  public filteredTypeOptions(): string[] {
-    return this.filterTextOptions(this.typeOptions, this.typeQuery, this.selectedType);
-  }
-
-  public filteredClassOptions(): string[] {
-    return this.filterTextOptions(this.classOptions, this.classQuery, this.selectedClass);
-  }
-
-  public showTypeSuggestions(): boolean {
-    return (
-      !this.disabled &&
-      this.filteredTypeOptions().length > 0 &&
-      this.typeQuery.trim() !== this.selectedType
-    );
-  }
-
-  public showClassSuggestions(): boolean {
-    return (
-      !this.disabled &&
-      this.filteredClassOptions().length > 0 &&
-      this.classQuery.trim() !== this.selectedClass
-    );
-  }
-
   public selectedCharacterBoxSupportText(): string {
     return this.selectedOption(this.characterBoxOptions, this.selectedCharacterBoxValue)
       ?.supportText ?? '';
@@ -142,50 +98,6 @@ export class CharacterFilterRowComponent {
       this.selectedOption(this.characterBoxOptions, this.selectedCharacterBoxValue)?.label ??
       this.characterBoxPlaceholder
     );
-  }
-
-  public onTypeInput(event: CustomEvent<{ value?: string | null }>): void {
-    this.typeQueryChange.emit(event.detail.value ?? '');
-  }
-
-  public selectType(option: string): void {
-    if (this.disabled) {
-      return;
-    }
-
-    this.typeSelected.emit(option);
-  }
-
-  public clearType(event: Event): void {
-    event.preventDefault();
-
-    if (this.disabled) {
-      return;
-    }
-
-    this.typeCleared.emit();
-  }
-
-  public onClassInput(event: CustomEvent<{ value?: string | null }>): void {
-    this.classQueryChange.emit(event.detail.value ?? '');
-  }
-
-  public selectClass(option: string): void {
-    if (this.disabled) {
-      return;
-    }
-
-    this.classSelected.emit(option);
-  }
-
-  public clearClass(event: Event): void {
-    event.preventDefault();
-
-    if (this.disabled) {
-      return;
-    }
-
-    this.classCleared.emit();
   }
 
   public onCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -229,24 +141,6 @@ export class CharacterFilterRowComponent {
     }
 
     this.clearFilters.emit();
-  }
-
-  private filterTextOptions(
-    options: string[],
-    query: string,
-    selectedValue: string,
-  ): string[] {
-    const normalizedQuery = query.trim().toLowerCase();
-    const normalizedOptions = [...new Set(options.map((option) => option.trim()).filter(Boolean))];
-
-    if (!normalizedQuery) {
-      return normalizedOptions.slice(0, 8);
-    }
-
-    return normalizedOptions
-      .filter((option) => option.toLowerCase().includes(normalizedQuery))
-      .filter((option) => option !== selectedValue)
-      .slice(0, 8);
   }
 
   private selectedOption(

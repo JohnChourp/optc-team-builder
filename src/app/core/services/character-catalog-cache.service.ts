@@ -6,6 +6,11 @@ import {
   type CharacterSearchQuery,
   type CharacterSortMode,
 } from '../models/optc.models';
+import {
+  createEmptyCharacterFacetSelection,
+  matchesCharacterFacet,
+  normalizeCharacterFacetSelection,
+} from './character-facet-filter.utils';
 import { CharacterOverridesService } from './character-overrides.service';
 import { OptcRepositoryService } from './optc-repository.service';
 
@@ -85,8 +90,16 @@ export class CharacterCatalogCacheService {
       ),
     );
     const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
-    const normalizedTypeFilter = query.typeFilter.trim().toLowerCase();
-    const normalizedClassFilter = query.classFilter.trim().toLowerCase();
+    // Boundary invariant: normalize here too, so no host bug can smuggle an
+    // unsatisfiable `all` (3+ values) into a cached query.
+    const typeFacet = normalizeCharacterFacetSelection(
+      'type',
+      query.typeFacet ?? createEmptyCharacterFacetSelection(),
+    );
+    const classFacet = normalizeCharacterFacetSelection(
+      'class',
+      query.classFacet ?? createEmptyCharacterFacetSelection(),
+    );
     const maxCost =
       query.maxCost === null || query.maxCost === undefined || !Number.isInteger(query.maxCost)
         ? null
@@ -108,18 +121,11 @@ export class CharacterCatalogCacheService {
         }
       }
 
-      if (
-        normalizedTypeFilter.length &&
-        !character.type.toLowerCase().includes(normalizedTypeFilter)
-      ) {
+      if (!matchesCharacterFacet('type', character, typeFacet)) {
         return false;
       }
 
-      if (
-        normalizedClassFilter.length &&
-        character.primaryClass.toLowerCase() !== normalizedClassFilter &&
-        character.secondaryClass?.toLowerCase() !== normalizedClassFilter
-      ) {
+      if (!matchesCharacterFacet('class', character, classFacet)) {
         return false;
       }
 

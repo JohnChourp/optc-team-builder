@@ -50,10 +50,43 @@
           [isOpen]="tagSetPickerOpen()"
           [sections]="tagSetPickerSections()"
           [selection]="tagSetSelection()"
-          [title]="t('filters.tagSets.title')"
+          [title]="t('filters.abilityTagSets.title')"
           (dismiss)="closeAbilityTagSetPicker()"
           (saveSelection)="saveAbilityTagSetPicker($event)"
         ></app-ability-tag-set-picker>
+
+        <app-character-tag-filter
+          testIdPrefix="characters"
+          [selection]="characterTagSetSelection()"
+          [disabled]="loading()"
+          (filterChange)="onCharacterTagFilterChange($event)"
+        ></app-character-tag-filter>
+
+        <app-character-facet-filter
+          kind="type"
+          presentation="chips"
+          testIdPrefix="characters"
+          [label]="t('filters.type.label')"
+          [placeholder]="t('filters.type.placeholder')"
+          [options]="availableTypes()"
+          [selection]="typeFacet()"
+          [matchCount]="typeFacetMatchCount()"
+          [disabled]="loading()"
+          (selectionChange)="onTypeFacetChange($event)"
+        ></app-character-facet-filter>
+
+        <app-character-facet-filter
+          kind="class"
+          presentation="select"
+          testIdPrefix="characters"
+          [label]="t('filters.class.label')"
+          [placeholder]="t('filters.class.placeholder')"
+          [options]="availableClasses()"
+          [selection]="classFacet()"
+          [matchCount]="classFacetMatchCount()"
+          [disabled]="loading()"
+          (selectionChange)="onClassFacetChange($event)"
+        ></app-character-facet-filter>
 
         <div class="characters-filter-toolbar">
           <ion-searchbar
@@ -67,18 +100,6 @@
 
           <app-character-filter-row
             class="characters-filter-row"
-            [showTypeFilter]="true"
-            [typeLabel]="t('filters.type.label')"
-            [typePlaceholder]="t('filters.type.placeholder')"
-            [typeOptions]="availableTypes()"
-            [typeQuery]="typeQuery()"
-            [selectedType]="selectedType()"
-            [showClassFilter]="true"
-            [classLabel]="t('filters.class.label')"
-            [classPlaceholder]="t('filters.class.placeholder')"
-            [classOptions]="availableClasses()"
-            [classQuery]="classQuery()"
-            [selectedClass]="selectedClass()"
             favoriteMode="toggles"
             [favoritesOnlyLabel]="t('filters.favoritesOnly.label')"
             [favoritesOnlySupportText]="favoritesOnlySupportLabel()"
@@ -96,12 +117,6 @@
             [idOrderOptions]="idOrderFilterOptions()"
             [selectedIdOrderValue]="selectedIdOrder()"
             [clearLabel]="'common.actions.clear' | transloco"
-            (typeQueryChange)="onTypeQueryChange($event)"
-            (typeSelected)="applyTypeFilter($event)"
-            (typeCleared)="clearTypeFilter()"
-            (classQueryChange)="onClassQueryChange($event)"
-            (classSelected)="applyClassFilter($event)"
-            (classCleared)="clearClassFilter()"
             (favoritesOnlyChange)="onFavoritesOnlyToggle($event)"
             (hideFavoritesChange)="onHideFavoritesToggle($event)"
             (sortChange)="onSortModeChange($event)"

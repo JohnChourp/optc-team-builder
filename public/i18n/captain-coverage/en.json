@@ -75,7 +75,7 @@
     },
     "class": {
       "label": "Class",
-      "placeholder": "Type to filter by class"
+      "placeholder": "Filter by class"
     },
     "cost": {
       "from": "Cost from",
@@ -97,7 +97,7 @@
     "supportEyebrow": "Support Ability",
     "type": {
       "label": "Type",
-      "placeholder": "Type to filter by character type"
+      "placeholder": "Filter by type"
     }
   },
   "loading": "Loading captain data...",

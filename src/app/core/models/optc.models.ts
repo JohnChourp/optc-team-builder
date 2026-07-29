@@ -434,6 +434,37 @@ export interface CharacterTagSetSelection {
   operator: AbilityTagSetOperator;
 }
 
+/** The two character facets that are stored on the character row itself. */
+export type CharacterFacetKind = 'type' | 'class';
+
+/** The boolean combinator joining the values of ONE facet. */
+export type CharacterFacetMatchMode = 'all' | 'any';
+
+/**
+ * One flat list of facet values plus one match mode. Deliberately NOT the
+ * multi-set shape used by `CharacterTagSetSelection`.
+ *
+ * NON-GOAL, recorded on purpose: this shape cannot express a disjunction of
+ * conjunctions such as `(STR and QCK) or (INT and PSY)`. That is a real query
+ * over the 189 dual-type and 4086 two-class characters, and it is out of scope
+ * because a character holds at most two values of either facet, which makes
+ * every other multi-set formula degenerate. If it is ever demanded, the escape
+ * hatch is `CharacterTagSetPickerComponent` behind a new i18n scope — do not
+ * grow this interface into a set list.
+ *
+ * INVARIANT on `values`, enforced by `normalizeCharacterFacetSelection`:
+ * trimmed, internal whitespace collapsed to single spaces, de-duplicated,
+ * non-empty, and UPPER-CASE for `type` / author-case for `class`. That is the
+ * same case the dataset and `DatasetManifest.availableTypes` /
+ * `availableClasses` use, so a value is always identity-equal to the option
+ * that produced it and `ion-select` / chip active states can never desync.
+ * Matching folds case internally; storage never does.
+ */
+export interface CharacterFacetSelection {
+  readonly values: string[];
+  readonly matchMode: CharacterFacetMatchMode;
+}
+
 export interface SavedEnemy {
   id: string;
   name: string;
@@ -496,8 +527,10 @@ export type CharacterIdOrder = 'newest' | 'oldest';
 
 export interface CharacterSearchQuery {
   searchTerm: string;
-  typeFilter: string;
-  classFilter: string;
+  /** Omit (or pass an empty selection) to apply no type filter at all. */
+  typeFacet?: CharacterFacetSelection;
+  /** Omit (or pass an empty selection) to apply no class filter at all. */
+  classFacet?: CharacterFacetSelection;
   allowedCharacterIds?: number[];
   excludedCharacterIds?: number[];
   maxCost?: number | null;
@@ -510,9 +543,9 @@ export interface CharacterSearchQuery {
 export interface DetailedCharacterSearchQuery {
   searchTerm: string;
   selectedTypes: string[];
-  selectedTypesMatchMode?: 'all' | 'any';
+  selectedTypesMatchMode?: CharacterFacetMatchMode;
   selectedClasses: string[];
-  selectedClassesMatchMode?: 'all' | 'any';
+  selectedClassesMatchMode?: CharacterFacetMatchMode;
   allowedCharacterIds?: number[];
   excludedCharacterIds?: number[];
   costRange?: {

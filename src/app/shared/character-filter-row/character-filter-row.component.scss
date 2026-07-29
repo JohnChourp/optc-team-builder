@@ -12,7 +12,6 @@
 }
 
 .character-filter-field {
-  position: relative;
   display: grid;
   flex: 1 1 180px;
   gap: 4px;
@@ -79,62 +78,11 @@ ion-select {
   background: rgba(245, 200, 76, 0.12);
 }
 
-.character-filter-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  background: rgba(14, 19, 36, 0.98);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
-  z-index: 2;
-}
-
-.character-filter-suggestion {
-  padding: 6px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #e9f1ff;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.76rem;
-  text-align: left;
-}
-
-.character-filter-suggestion:hover {
-  border-color: rgba(245, 200, 76, 0.36);
-}
-
-.character-filter-inline-clear {
-  position: absolute;
-  right: 6px;
-  top: 23px;
-  padding: 5px 7px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(245, 200, 76, 0.16);
-  color: #f5c84c;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.68rem;
-  font-weight: 800;
-}
-
 .character-filter-clear {
   align-self: start;
   flex: 0 0 auto;
   min-height: 38px;
   margin-top: 18px;
-}
-
-.character-filter-suggestion:focus-visible,
-.character-filter-inline-clear:focus-visible {
-  outline: 2px solid rgba(245, 200, 76, 0.72);
-  outline-offset: 2px;
 }
 
 @media (max-width: 640px) {

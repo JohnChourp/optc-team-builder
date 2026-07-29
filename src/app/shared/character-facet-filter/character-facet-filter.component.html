@@ -1,0 +1,146 @@
+<ng-container *transloco="let t; scope: 'character-facet-filter'; read: 'character-facet-filter'">
+  <app-character-facet-filter-style-panels>
+    <div
+      class="character-facet-filter"
+      [attr.data-facet]="kindState()"
+      [attr.data-match-mode]="matchMode()"
+    >
+      <div class="character-facet-filter__header">
+        <span class="character-facet-filter__label">{{
+          label || t('kind.' + kindState() + '.label')
+        }}</span>
+        @if (values().length) {
+          <span class="character-facet-filter__count">{{
+            t('selectedCount', { count: values().length })
+          }}</span>
+          <ion-button
+            fill="clear"
+            size="small"
+            color="warning"
+            [attr.data-testid]="facetTestId('clear')"
+            [disabled]="disabledState()"
+            (click)="clear()"
+          >
+            {{ 'common.actions.clear' | transloco }}
+          </ion-button>
+        }
+      </div>
+
+      @if (presentation === 'chips') {
+        <div
+          class="character-facet-filter__options"
+          role="group"
+          [attr.aria-label]="label || t('kind.' + kindState() + '.label')"
+        >
+          @for (option of optionsState(); track option) {
+            <button
+              type="button"
+              class="character-facet-filter__option"
+              [class.character-facet-filter__option--active]="isSelected(option)"
+              [attr.data-testid]="valueTestId(option)"
+              [attr.aria-pressed]="isSelected(option)"
+              [disabled]="disabledState()"
+              (click)="toggleValue(option)"
+            >
+              {{ option }}
+            </button>
+          }
+        </div>
+      } @else {
+        <ion-select
+          interface="popover"
+          fill="outline"
+          [multiple]="true"
+          [attr.data-testid]="facetTestId('select')"
+          [attr.aria-label]="label || t('kind.' + kindState() + '.label')"
+          [disabled]="disabledState()"
+          [placeholder]="placeholder || t('kind.' + kindState() + '.placeholder')"
+          [value]="values()"
+          [selectedText]="selectedText()"
+          (ionChange)="onValuesChange($event)"
+        >
+          @for (option of optionsState(); track option) {
+            <ion-select-option [value]="option">{{ option }}</ion-select-option>
+          }
+        </ion-select>
+
+        @if (values().length) {
+          <div class="character-facet-filter__chips">
+            @for (value of values(); track value) {
+              <button
+                type="button"
+                class="character-facet-filter__chip"
+                [attr.data-testid]="valueTestId(value)"
+                [attr.aria-label]="t('removeValue', { value: value })"
+                [disabled]="disabledState()"
+                (click)="removeValue(value)"
+              >
+                {{ value }} <span aria-hidden="true">×</span>
+              </button>
+            }
+          </div>
+        }
+      }
+
+      @if (showModeControl()) {
+        <div
+          class="character-facet-filter__mode"
+          role="group"
+          [attr.aria-label]="t('mode.toggleAria')"
+        >
+          <ion-icon [icon]="swapIcon" aria-hidden="true"></ion-icon>
+          <button
+            type="button"
+            class="character-facet-filter__mode-button"
+            [class.character-facet-filter__mode-button--active]="matchMode() === 'any'"
+            [attr.data-testid]="facetTestId('mode-any')"
+            [attr.aria-pressed]="matchMode() === 'any'"
+            [disabled]="disabledState()"
+            (click)="setMatchMode('any')"
+          >
+            {{ t('mode.any') }}
+          </button>
+          <button
+            type="button"
+            class="character-facet-filter__mode-button"
+            [class.character-facet-filter__mode-button--active]="matchMode() === 'all'"
+            [attr.data-testid]="facetTestId('mode-all')"
+            [attr.aria-pressed]="matchMode() === 'all'"
+            [disabled]="disabledState() || !allModeSatisfiable()"
+            (click)="setMatchMode('all')"
+          >
+            {{ t('mode.all') }}
+          </button>
+          @if (matchCountState() !== null) {
+            <span
+              class="character-facet-filter__match-count"
+              [attr.data-testid]="facetTestId('match-count')"
+            >
+              {{ t('matchCount', { count: matchCountState() }) }}
+            </span>
+          }
+        </div>
+      }
+
+      @if (zeroReason()) {
+        <p
+          class="character-facet-filter__zero"
+          [attr.data-testid]="facetTestId('zero-' + zeroReason())"
+          role="status"
+        >
+          {{
+            t('mode.' + zeroReason() + '.' + kindState(), {
+              max: maxAllValues(),
+              count: values().length,
+            })
+          }}
+        </p>
+      }
+
+      <small class="character-facet-filter__support">{{ supportText() }}</small>
+      <p class="character-facet-filter__live" role="status" aria-live="polite">
+        {{ announcement() }}
+      </p>
+    </div>
+  </app-character-facet-filter-style-panels>
+</ng-container>

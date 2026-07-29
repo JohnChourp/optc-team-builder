@@ -405,6 +405,27 @@ describe('CharacterTagSetPickerComponent', () => {
     expect(stylesheet).toContain('.character-tag-set-picker-modal::part(backdrop)');
     expect(stylesheet.match(/\.character-tag-set-picker-modal::part\(content\)/g)?.length).toBe(2);
   });
+
+  it('collapses its inherited animations under prefers-reduced-motion', () => {
+    // The modal renders through AbilityTagSetPickerStylePanelsComponent, so its
+    // reduced-motion override lives in the ability panel's stylesheet and must
+    // name this modal's own cssClass or it never applies here.
+    const stylesheet = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/shared/ability-tag-set-picker/ability-tag-set-picker-motion-panel.component.scss',
+      ),
+      'utf8',
+    );
+    const reducedMotionBlock = stylesheet.slice(
+      stylesheet.indexOf('@media (prefers-reduced-motion: reduce)'),
+    );
+
+    expect(reducedMotionBlock).toContain('.character-tag-set-picker-modal *,');
+    expect(reducedMotionBlock).toContain('.character-tag-set-picker-modal *::before,');
+    expect(reducedMotionBlock).toContain('.character-tag-set-picker-modal *::after');
+    expect(reducedMotionBlock).toContain('.ability-tag-set-picker-modal *,');
+  });
 });
 
 function createComponent(

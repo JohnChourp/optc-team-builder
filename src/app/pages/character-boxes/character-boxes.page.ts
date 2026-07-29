@@ -28,9 +28,11 @@ import {
 import {
   type CharacterBox,
   type CharacterDetailRecord,
+  type CharacterFacetSelection,
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSortMode,
+  type CharacterTagSetSelection,
   type DatasetManifest,
   type DetailedCharacterSearchQuery,
 } from '../../core/models/optc.models';
@@ -45,6 +47,11 @@ import {
   createEmptyAbilityFilterTagSetSelection,
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
+import {
+  createEmptyCharacterFacetSelection,
+  toDetailedQueryFacetFields,
+} from '../../core/services/character-facet-filter.utils';
+import { createEmptyCharacterTagSetSelection } from '../../core/services/character-tag-set.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
   getAbilityCatalogItemsByCategory,
@@ -61,11 +68,16 @@ import {
   AbilityTagSetPickerComponent,
   type AbilityTagSetPickerSection,
 } from '../../shared/ability-tag-set-picker/ability-tag-set-picker.component';
+import { CharacterFacetFilterComponent } from '../../shared/character-facet-filter/character-facet-filter.component';
 import {
   CharacterFilterRowComponent,
   type CharacterFilterCostBound,
   type CharacterFilterOption,
 } from '../../shared/character-filter-row/character-filter-row.component';
+import {
+  CharacterTagFilterComponent,
+  type CharacterTagFilterChange,
+} from '../../shared/character-tag-filter/character-tag-filter.component';
 import { CharacterBoxesStylePanelsComponent } from './character-boxes-style-panels.component';
 
 const PAGE_SIZE = 48;
@@ -106,7 +118,9 @@ interface CharacterBoxCharacterCardView {
     IonToolbar,
     AbilityFilterRailComponent,
     AbilityTagSetPickerComponent,
+    CharacterFacetFilterComponent,
     CharacterFilterRowComponent,
+    CharacterTagFilterComponent,
     CharacterBoxesStylePanelsComponent,
     RouterLink,
     TranslocoDirective,
@@ -123,10 +137,15 @@ export class CharacterBoxesPage implements OnInit {
   public readonly selectedBoxId = signal<string | null>(null);
   public readonly boxNameDraft = signal('');
   public readonly searchTerm = signal('');
-  public readonly typeQuery = signal('');
-  public readonly classQuery = signal('');
-  public readonly selectedType = signal('');
-  public readonly selectedClass = signal('');
+  /**
+   * Flat value list + one match mode, per facet. An empty selection is NO
+   * filter; `toDetailedQueryFacetFields` turns both into the four detailed-query
+   * fields so the paged load and the select-all-filtered sweep can never diverge.
+   */
+  public readonly typeFacet = signal<CharacterFacetSelection>(createEmptyCharacterFacetSelection());
+  public readonly classFacet = signal<CharacterFacetSelection>(
+    createEmptyCharacterFacetSelection(),
+  );
   public readonly selectedFavoriteFilter = signal<CharacterBoxesFavoriteFilter>('all');
   public readonly selectedMembershipFilter = signal<CharacterBoxesMembershipFilter>('all');
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
@@ -136,6 +155,11 @@ export class CharacterBoxesPage implements OnInit {
   public readonly tagSetSelection = signal<AbilityFilterTagSetSelection>(
     createEmptyAbilityFilterTagSetSelection(),
   );
+  public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  /** `undefined` = no character-tag gate. Never assign `[]` for an empty selection. */
+  public readonly characterTagCharacterIds = signal<number[] | undefined>(undefined);
   public readonly displayMode = signal<CharacterBoxesDisplayMode>('list');
   public readonly characters = signal<CharacterDetailRecord[]>([]);
   public readonly loading = signal(true);
@@ -380,6 +404,9 @@ export class CharacterBoxesPage implements OnInit {
     await Promise.all([
       this.userState.readyCharacterBoxes(),
       this.userState.readyFavoriteCharacterIds(),
+      this.i18n.preloadScope('ability-tag-sets'),
+      this.i18n.preloadScope('character-tag-sets'),
+      this.i18n.preloadScope('character-tag-filter'),
     ]);
     const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
@@ -513,71 +540,13 @@ export class CharacterBoxesPage implements OnInit {
     await this.loadCharacters(true);
   }
 
-  public async onTypeQueryChange(
-    input: string | CustomEvent<{ value?: string | null }>,
-  ): Promise<void> {
-    const nextValue = this.resolveStringInput(input).trimStart();
-    this.typeQuery.set(nextValue);
-
-    if (this.selectedType() && nextValue.trim() !== this.selectedType()) {
-      this.selectedType.set('');
-      await this.loadCharacters(true);
-    }
-  }
-
-  public async onClassQueryChange(
-    input: string | CustomEvent<{ value?: string | null }>,
-  ): Promise<void> {
-    const nextValue = this.resolveStringInput(input).trimStart();
-    this.classQuery.set(nextValue);
-
-    if (this.selectedClass() && nextValue.trim() !== this.selectedClass()) {
-      this.selectedClass.set('');
-      await this.loadCharacters(true);
-    }
-  }
-
-  public async applyTypeFilter(type: string): Promise<void> {
-    if (this.selectedType() === type) {
-      return;
-    }
-
-    this.typeQuery.set(type);
-    this.selectedType.set(type);
+  public async onTypeFacetChange(selection: CharacterFacetSelection): Promise<void> {
+    this.typeFacet.set(selection);
     await this.loadCharacters(true);
   }
 
-  public async applyClassFilter(characterClass: string): Promise<void> {
-    if (this.selectedClass() === characterClass) {
-      return;
-    }
-
-    this.classQuery.set(characterClass);
-    this.selectedClass.set(characterClass);
-    await this.loadCharacters(true);
-  }
-
-  public async clearTypeFilter(): Promise<void> {
-    const hadSelection = Boolean(this.selectedType());
-    this.typeQuery.set('');
-
-    if (!hadSelection) {
-      return;
-    }
-
-    this.selectedType.set('');
-    await this.loadCharacters(true);
-  }
-
-  public async clearClassFilter(): Promise<void> {
-    const hadSelection = Boolean(this.selectedClass());
-    this.classQuery.set('');
-
-    if (!hadSelection) {
-      return;
-    }
-
-    this.selectedClass.set('');
+  public async onClassFacetChange(selection: CharacterFacetSelection): Promise<void> {
+    this.classFacet.set(selection);
     await this.loadCharacters(true);
   }
 
@@ -693,10 +662,8 @@ export class CharacterBoxesPage implements OnInit {
 
   public async clearFilters(): Promise<void> {
     this.searchTerm.set('');
-    this.typeQuery.set('');
-    this.classQuery.set('');
-    this.selectedType.set('');
-    this.selectedClass.set('');
+    this.typeFacet.set(createEmptyCharacterFacetSelection());
+    this.classFacet.set(createEmptyCharacterFacetSelection());
     this.selectedFavoriteFilter.set('all');
     this.selectedMembershipFilter.set('all');
     this.selectedSortMode.set('catalog');
@@ -704,6 +671,14 @@ export class CharacterBoxesPage implements OnInit {
     this.costRange.set({ min: null, max: null });
     this.abilityTagSetPickerOpen.set(false);
     this.tagSetSelection.set(createEmptyAbilityFilterTagSetSelection());
+    this.characterTagSetSelection.set(createEmptyCharacterTagSetSelection());
+    this.characterTagCharacterIds.set(undefined);
+    await this.loadCharacters(true);
+  }
+
+  public async onCharacterTagFilterChange(change: CharacterTagFilterChange): Promise<void> {
+    this.characterTagSetSelection.set(change.selection);
+    this.characterTagCharacterIds.set(change.matchingCharacterIds);
     await this.loadCharacters(true);
   }
 
@@ -806,6 +781,7 @@ export class CharacterBoxesPage implements OnInit {
     const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
       scopedAllowedCharacterIds,
       this.abilityFilterCharacterIds(),
+      this.characterTagCharacterIds(),
     ]);
     const excludedCharacterIds = [
       ...(this.selectedMembershipFilter() === 'notInBox' ? selectedBoxCharacterIds : []),
@@ -814,10 +790,7 @@ export class CharacterBoxesPage implements OnInit {
 
     return {
       searchTerm: this.searchTerm(),
-      selectedTypes: this.selectedType() ? [this.selectedType()] : [],
-      selectedTypesMatchMode: 'any',
-      selectedClasses: this.selectedClass() ? [this.selectedClass()] : [],
-      selectedClassesMatchMode: 'any',
+      ...toDetailedQueryFacetFields(this.typeFacet(), this.classFacet()),
       allowedCharacterIds,
       excludedCharacterIds: excludedCharacterIds.length
         ? [...new Set(excludedCharacterIds)]

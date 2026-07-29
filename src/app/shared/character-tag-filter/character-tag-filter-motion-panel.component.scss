@@ -1,0 +1,24 @@
+/*
+ * The modal owns all of its own animation, so the shell adds nothing beyond a
+ * short hover/state transition on the trigger and the removable chips. Pure
+ * CSS on purpose — no `@angular/animations` import anywhere in this repo.
+ */
+.character-tag-filter__chip {
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.character-tag-filter__combobox ion-button {
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-tag-filter__chip,
+  .character-tag-filter__combobox ion-button {
+    transition-duration: 1ms !important;
+  }
+}

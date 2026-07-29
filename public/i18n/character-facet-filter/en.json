@@ -1,0 +1,37 @@
+{
+  "kind": {
+    "type": {
+      "label": "Type",
+      "placeholder": "Filter by type"
+    },
+    "class": {
+      "label": "Class",
+      "placeholder": "Filter by class"
+    }
+  },
+  "mode": {
+    "any": "Any of these",
+    "all": "All of these",
+    "toggleAria": "Choose whether a character must match any or all of the selected values",
+    "capacity": {
+      "type": "Switched to \"Any\": a character has at most {{max}} types, so \"All\" can never match {{count}}.",
+      "class": "Switched to \"Any\": a character has at most {{max}} classes, so \"All\" can never match {{count}}."
+    },
+    "disjoint": {
+      "type": "No character carries every selected type, so nothing matches. Switch to \"Any\" or remove one.",
+      "class": "No character carries every selected class, so nothing matches. Switch to \"Any\" or remove one."
+    }
+  },
+  "removeValue": "Remove {{value}}",
+  "selectedCount": "{{count}} selected",
+  "matchCount": "{{count}} match this filter",
+  "support": {
+    "empty": "Pick one or more values. Nothing selected means no filter.",
+    "any": "Showing characters that match any of the selected values.",
+    "all": "Showing characters that match every selected value."
+  },
+  "a11y": {
+    "applied": "Filter applied: {{count}} value(s), {{mode}}.",
+    "cleared": "Filter cleared."
+  }
+}

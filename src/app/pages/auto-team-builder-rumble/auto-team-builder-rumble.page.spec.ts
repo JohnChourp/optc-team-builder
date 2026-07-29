@@ -8,7 +8,11 @@ import {
   type NormalizedRumbleEffect,
   type RumbleBuildProgressSnapshot,
   type RumbleTeamResult,
+  type RumbleUnitScore,
 } from '../../core/models/auto-team-builder-rumble.models';
+import { type CharacterTagSetSelection } from '../../core/models/optc.models';
+import { createCharacterTagSet } from '../../core/services/character-tag-set.utils';
+import { type CharacterTagFilterChange } from '../../shared/character-tag-filter/character-tag-filter.component';
 import {
   captureJsonDownloads,
   readJsonDownloadPayload,
@@ -333,6 +337,141 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(page.errorMessage()).toBe('Dataset unavailable');
   });
 
+  it('filters manual picker candidates by character tag groups before the result slice', () => {
+    const { page } = createPage();
+
+    page.manualPickerCandidates.set([
+      ...createTaggedCandidates(2001, 100, ['Straw Hat Pirates']),
+      ...createTaggedCandidates(3001, 40, ['Heart Pirates']),
+    ]);
+
+    // Unfiltered the 80-row cap shows only the Straw Hat block, so a tag clause
+    // applied AFTER the slice would resolve to zero Heart Pirates rows.
+    expect(page.manualPickerResults()).toHaveLength(80);
+    expect(page.manualPickerResults().every((c) => c.character.id < 3001)).toBe(true);
+
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [createCharacterTagSet(['Heart Pirates'], 'any', 'set-a')],
+    });
+
+    expect(page.manualPickerResults()).toHaveLength(40);
+    expect(page.manualPickerResults().every((c) => c.character.id >= 3001)).toBe(true);
+  });
+
+  it('keeps the 80-row manual picker cap after the tag filter narrows the candidates', () => {
+    const { page } = createPage();
+
+    page.manualPickerCandidates.set([
+      ...createTaggedCandidates(2001, 120, ['Straw Hat Pirates']),
+      ...createTaggedCandidates(3001, 40, ['Heart Pirates']),
+    ]);
+
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [createCharacterTagSet(['Straw Hat Pirates'], 'any', 'set-a')],
+    });
+
+    expect(page.manualPickerResults()).toHaveLength(80);
+  });
+
+  it('ANDs manual picker tag groups while ORing tags inside a group', () => {
+    const { page } = createPage();
+
+    page.manualPickerCandidates.set([
+      createTaggedCandidate(2001, ['Straw Hat Pirates', 'Dressrosa']),
+      createTaggedCandidate(2002, ['Heart Pirates', 'Dressrosa']),
+      createTaggedCandidate(2003, ['Straw Hat Pirates']),
+      createTaggedCandidate(2004, ['Dressrosa']),
+    ]);
+
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [
+        createCharacterTagSet(['Straw Hat Pirates', 'Heart Pirates'], 'any', 'set-a'),
+        createCharacterTagSet(['Dressrosa'], 'any', 'set-b'),
+      ],
+    });
+
+    expect(page.manualPickerResults().map((c) => c.character.id)).toEqual([2001, 2002]);
+  });
+
+  it('ignores an empty character tag selection in the manual picker', () => {
+    const { page } = createPage();
+
+    page.manualPickerCandidates.set([
+      createTaggedCandidate(2001, ['Straw Hat Pirates']),
+      createTaggedCandidate(2002, []),
+    ]);
+
+    // An "add group, add no tag" selection must gate nothing.
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [createCharacterTagSet([], 'any', 'set-a')],
+    });
+
+    expect(page.manualPickerResults()).toHaveLength(2);
+
+    applyTagFilter(page, { operator: 'all', sets: [] });
+
+    expect(page.manualPickerResults()).toHaveLength(2);
+  });
+
+  it('clears the character tag selection whenever the manual picker closes', () => {
+    const { page } = createPage();
+
+    page.manualPickerCandidates.set([
+      createTaggedCandidate(2001, ['Straw Hat Pirates']),
+      createTaggedCandidate(2002, ['Heart Pirates']),
+    ]);
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [createCharacterTagSet(['Straw Hat Pirates'], 'any', 'set-a')],
+    });
+
+    expect(page.manualPickerResults()).toHaveLength(1);
+
+    page.closeManualCharacterPicker();
+
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+    expect(page.manualPickerResults()).toHaveLength(2);
+  });
+
+  it('leaves the tag filter cleared when the picker reopens for another slot target', async () => {
+    const { page } = createPage();
+
+    page.manualPickerCandidates.set([
+      createTaggedCandidate(2001, ['Straw Hat Pirates']),
+      createTaggedCandidate(2002, ['Heart Pirates']),
+    ]);
+
+    await page.openOpponentCharacterPicker('active', 0);
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [createCharacterTagSet(['Straw Hat Pirates'], 'any', 'set-a')],
+    });
+
+    expect(page.manualPickerResults().map((c) => c.character.id)).toEqual([2001]);
+
+    page.selectManualCharacter(page.manualPickerResults()[0]);
+
+    expect(page.manualPickerOpen()).toBe(false);
+
+    await page.openOpponentCharacterPicker('active', 1);
+
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+    expect(page.manualPickerResults().map((c) => c.character.id)).toContain(2002);
+  });
+
+  it('preloads the shared character tag scopes so the filter never renders a raw key', async () => {
+    const { page, i18n } = createPage();
+
+    await page.ngOnInit();
+
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-sets');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-filter');
+  });
+
   it('renders active and bench groups with rebuild controls in the template', () => {
     const template = readFileSync(
       resolve(
@@ -403,6 +542,11 @@ describe('AutoTeamBuilderRumblePage', () => {
     expect(template).toContain('excludedCharacters()');
     expect(template).toContain('manualPickerOpen()');
     expect(template).toContain('selectManualCharacter(candidate)');
+    expect(template).toContain('<app-character-tag-filter');
+    expect(template).toContain('testIdPrefix="atb-rumble-manual"');
+    expect(template).toContain('[selection]="characterTagSetSelection()"');
+    expect(template).toContain('[disabled]="manualPickerLoading()"');
+    expect(template).toContain('(filterChange)="onCharacterTagFilterChange($event)"');
     expect(template).not.toContain('slot.reasonChips');
     expect(template).toContain("t('slot.totalBuffs')");
     expect(template).toContain("t('slot.noBuffs')");
@@ -1409,7 +1553,42 @@ function createPage(
     router as never,
   );
 
-  return { page, rumbleBuilder, repository, route, router, userState };
+  return { page, rumbleBuilder, repository, route, router, userState, i18n };
+}
+
+function applyTagFilter(
+  page: AutoTeamBuilderRumblePage,
+  selection: CharacterTagSetSelection,
+): void {
+  // The shell always emits both fields; this page ignores `matchingCharacterIds`.
+  page.onCharacterTagFilterChange({
+    selection,
+    matchingCharacterIds: undefined,
+  } satisfies CharacterTagFilterChange);
+}
+
+function createTaggedCandidate(id: number, characterTags: string[]): RumbleUnitScore {
+  const { unit } = createSlot('active', 0);
+
+  return {
+    ...unit,
+    character: {
+      ...unit.character,
+      id,
+      name: `Unit ${id}`,
+      detail: { ...unit.character.detail, characterTags },
+    },
+  };
+}
+
+function createTaggedCandidates(
+  firstId: number,
+  count: number,
+  characterTags: string[],
+): RumbleUnitScore[] {
+  return Array.from({ length: count }, (_value, index) =>
+    createTaggedCandidate(firstId + index, characterTags),
+  );
 }
 
 function createProgressSnapshot(

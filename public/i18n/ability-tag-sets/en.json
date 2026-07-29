@@ -35,6 +35,12 @@
     "emptyIgnored": "This group is empty, so it is ignored.",
     "nullifying": "No character has every tag in this group, so nothing can match. Try switching this group to \"Has any of these\".",
     "added": "Group {{index}} added.",
+    "turns": {
+      "any": "Any turns",
+      "option": "{{turns}}+ turns",
+      "permanent": "Permanent",
+      "aria": "Minimum turns for {{label}}"
+    },
     "operator": {
       "any": "Has any of these",
       "all": "Has all of these",
@@ -48,7 +54,8 @@
   },
   "chips": {
     "added": "{{label}} added to group {{index}}. {{count}} characters match.",
-    "removed": "{{label}} removed from group {{index}}. {{count}} characters match."
+    "removed": "{{label}} removed from group {{index}}. {{count}} characters match.",
+    "turnsChanged": "{{label}} turn threshold updated in group {{index}}. {{count}} characters match."
   },
   "actions": {
     "clearAll": "Clear all",

@@ -53,7 +53,11 @@ import {
   type RumbleTeamSlotRole,
   type RumbleUnitScore,
 } from '../../core/models/auto-team-builder-rumble.models';
-import { type CharacterBox, type CharacterDetailRecord } from '../../core/models/optc.models';
+import {
+  type CharacterBox,
+  type CharacterDetailRecord,
+  type CharacterTagSetSelection,
+} from '../../core/models/optc.models';
 import {
   AutoTeamBuilderRumbleService,
   type RumbleTeamBuildExecutionOptions,
@@ -65,11 +69,19 @@ import {
   moveRumbleBuffFocusStat,
   type RumbleBuffFocusDirection,
 } from '../../core/services/auto-team-builder-rumble-focus.utils';
+import {
+  createEmptyCharacterTagSetSelection,
+  matchesCharacterTagSets,
+} from '../../core/services/character-tag-set.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
   UserStateService,
   type AutoTeamBuilderWorkerMode,
 } from '../../core/services/user-state.service';
+import {
+  CharacterTagFilterComponent,
+  type CharacterTagFilterChange,
+} from '../../shared/character-tag-filter/character-tag-filter.component';
 import * as rumbleExportUtils from './auto-team-builder-rumble-export.utils';
 import {
   type RumbleBuilderSettingsExportPayload,
@@ -170,6 +182,7 @@ function createEmptyRumbleSlots(count: number): OptionalRumbleTeamSlot[] {
     AutoTeamBuilderRumbleControlsPanelComponent,
     AutoTeamBuilderRumbleResultsPanelComponent,
     AutoTeamBuilderRumbleRosterPanelComponent,
+    CharacterTagFilterComponent,
     RouterLink,
     TranslocoDirective,
   ],
@@ -199,6 +212,17 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public readonly manualPickerSearchTerm = signal('');
   public readonly manualPickerCandidates = signal<RumbleUnitScore[]>([]);
   public readonly manualPickerTarget = signal<ManualSlotTarget | null>(null);
+  /**
+   * Picker-local tag filter. Reset in `closeManualCharacterPicker()`, the single
+   * funnel every close path goes through, so the filter can never survive into a
+   * later open: the trigger only exists inside the modal, and the modal is closed
+   * most of the time, so a persisting selection would gate the candidate list
+   * with no on-screen cause. It also matters that the picker is shared between
+   * player and opponent targets, whose scope semantics differ.
+   */
+  public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
   public readonly opponentActiveSlots = signal<OptionalRumbleTeamSlot[]>(
     createEmptyRumbleSlots(RUMBLE_ACTIVE_SLOT_COUNT),
   );
@@ -614,6 +638,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     const searchTerm = this.manualPickerSearchTerm().trim().toLowerCase();
     const target = this.manualPickerTarget();
     const selectedIds = this.resolveSelectedCharacterIds(target);
+    const tagSelection = this.characterTagSetSelection();
 
     return this.manualPickerCandidates()
       .filter((candidate) => this.manualPickerCandidateMatchesScope(candidate, target))
@@ -634,6 +659,14 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
         return haystack.includes(searchTerm);
       })
+      // Runs BEFORE the `.slice(0, 80)` cap, so the visible grid is the first 80
+      // of the tag-filtered candidates rather than a tag-filtered slice of the
+      // first 80. Every candidate carries its `CharacterDetailRecord`, so the
+      // per-character predicate is the correct evaluator and no match index is
+      // needed (`matchingCharacterIds` from the shell is ignored on purpose).
+      .filter((candidate) =>
+        matchesCharacterTagSets(candidate.character.detail.characterTags ?? [], tagSelection),
+      )
       .slice(0, 80);
   });
 
@@ -662,6 +695,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   public async ngOnInit(): Promise<void> {
     await Promise.all([
       this.i18n.preloadScope('auto-team-builder-rumble'),
+      this.i18n.preloadScope('character-tag-sets'),
+      this.i18n.preloadScope('character-tag-filter'),
       this.userState.readyFavoriteCharacterIds(),
       this.userState.readyCharacterBoxes(),
       this.userState.readyAutoTeamBuilderWorkerPreference(),
@@ -1100,10 +1135,21 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     this.manualPickerOpen.set(false);
     this.manualPickerTarget.set(null);
     this.manualPickerSearchTerm.set('');
+    // Every close path funnels through here (backdrop dismiss, header close,
+    // footer cancel and both `selectManualCharacter` branches), so this is the
+    // one place the tag filter has to be cleared.
+    this.characterTagSetSelection.set(createEmptyCharacterTagSetSelection());
   }
 
   public onManualPickerSearch(event: CustomEvent<{ value?: string | null }>): void {
     this.manualPickerSearchTerm.set(event.detail.value ?? '');
+  }
+
+  public onCharacterTagFilterChange(change: CharacterTagFilterChange): void {
+    // `change.matchingCharacterIds` is ignored on purpose: every candidate here
+    // already carries its `CharacterDetailRecord`, so the per-character predicate
+    // is the equivalent and cheaper evaluator and needs no tag match index.
+    this.characterTagSetSelection.set(change.selection);
   }
 
   public selectManualCharacter(candidate: RumbleUnitScore): void {

@@ -16,6 +16,7 @@ Offline-first Ionic Angular app for browsing One Piece Treasure Cruise character
 - Local OPTC dataset importer that reads from the raw `optc-db.github.io` source repository, defaulting to the `2Shankz` fork.
 - Generated SQLite seed loaded inside the app through `sql.js`.
 - Offline-friendly character browser, detail view, collection view, and team builder.
+- Multi-select character type and class filters with an AND/OR match mode, shared by Characters, Character Boxes, Captain Coverage, the Manual Team Builder candidate picker, and the character image picker. Select several types or classes at once and choose whether a character must match **all** of them or **any** of them; dual-type characters are found by either of their types. Because a character holds at most two types and two classes, `all` is limited to two values and says so instead of silently returning nothing.
 - Capacitor Android and iOS projects already scaffolded.
 - Manual update workflow for metadata and optional image packs.
 

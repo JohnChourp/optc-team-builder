@@ -57,3 +57,4 @@ Thumbs.db
 # The real parser is scripts/auto-team-builder-ability-parser.mjs; audit probes are
 # written as dotfiles in scripts/ only so the parser's relative imports resolve.
 scripts/.*.mjs
+.optc-live-capture.mjs
