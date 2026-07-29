@@ -1,59 +1,65 @@
 <ng-container *transloco="let t; scope: 'saved-enemies'; read: 'saved-enemies'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
-      <ion-title>{{ t("title") }}</ion-title>
+      <ion-title>{{ t('title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content [fullscreen]="true">
     <div class="page-shell saved-enemies-shell">
       <section class="glass-card hero-card">
-        <div class="section-label">{{ t("hero.eyebrow") }}</div>
-        <h1 class="section-title">{{ t("hero.title") }}</h1>
-        <p class="section-copy">{{ t("hero.copy") }}</p>
+        <div class="section-label">{{ t('hero.eyebrow') }}</div>
+        <h1 class="section-title">{{ t('hero.title') }}</h1>
+        <p class="section-copy">{{ t('hero.copy') }}</p>
 
         <div class="hero-actions">
           <ion-button fill="outline" color="light" [routerLink]="['/tabs/saved-teams']">
-            {{ t("hero.savedTeamsCta") }}
+            {{ t('hero.savedTeamsCta') }}
           </ion-button>
           <ion-button color="warning" (click)="openCreateModal()">
             <ion-icon slot="start" [icon]="addIcon"></ion-icon>
-            {{ t("hero.createCta") }}
+            {{ t('hero.createCta') }}
           </ion-button>
         </div>
       </section>
 
       <section *ngIf="loading()" class="glass-card loading-card">
         <ion-spinner name="crescent"></ion-spinner>
-        <span>{{ t("loading") }}</span>
+        <span>{{ t('loading') }}</span>
       </section>
 
       <section *ngIf="!loading() && !hasSavedEnemies()" class="glass-card empty-card">
-        <h2>{{ t("empty.title") }}</h2>
-        <p>{{ t("empty.copy") }}</p>
+        <h2>{{ t('empty.title') }}</h2>
+        <p>{{ t('empty.copy') }}</p>
         <ion-button color="warning" (click)="openCreateModal()">
-          {{ t("empty.cta") }}
+          {{ t('empty.cta') }}
         </ion-button>
       </section>
 
       <section *ngIf="!loading() && hasSavedEnemies()" class="glass-card section-card">
         <div class="section-head">
           <div>
-            <h2>{{ t("list.title") }}</h2>
-            <span>{{ t("list.total", { count: savedEnemies().length }) }}</span>
+            <h2>{{ t('list.title') }}</h2>
+            <span>{{ t('list.total', { count: savedEnemies().length }) }}</span>
           </div>
 
           <ion-button fill="outline" color="warning" (click)="openCreateModal()">
-            {{ t("list.addAnother") }}
+            {{ t('list.addAnother') }}
           </ion-button>
         </div>
 
         <div class="saved-enemy-list">
           <article *ngFor="let enemy of savedEnemies()">
             <div class="saved-enemy-head">
-              <div class="saved-enemy-copy">
-                <strong>{{ enemy.name }}</strong>
-                <p>{{ enemy.notes || ("common.defaults.noNotesYet" | transloco) }}</p>
+              <div class="saved-enemy-main">
+                <div *ngIf="enemy.imageDataUrl" class="saved-enemy-thumb">
+                  <img [src]="enemy.imageDataUrl" [alt]="enemy.name" loading="lazy" />
+                </div>
+
+                <div class="saved-enemy-copy">
+                  <strong>{{ enemy.name }}</strong>
+                  <p>{{ enemy.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
+                </div>
               </div>
 
               <div class="saved-enemy-actions">
@@ -63,54 +69,71 @@
                   [routerLink]="['/tabs/auto-team-builder']"
                   [queryParams]="getEnemyBuilderQueryParams(enemy)"
                 >
-                  {{ t("actions.openBuilder") }}
+                  {{ t('actions.openBuilder') }}
                 </ion-button>
                 <ion-button fill="clear" color="light" (click)="openEditModal(enemy)">
-                  {{ t("actions.edit") }}
+                  {{ t('actions.edit') }}
                 </ion-button>
                 <ion-button fill="clear" color="danger" (click)="confirmAndDeleteEnemy(enemy.id)">
-                  {{ "common.actions.delete" | transloco }}
+                  {{ 'common.actions.delete' | transloco }}
                 </ion-button>
               </div>
             </div>
 
             <div class="enemy-chip-groups">
               <div class="enemy-chip-group">
-                <span>{{ t("summary.types") }}</span>
+                <span>{{ t('summary.types') }}</span>
                 <div class="chip-row">
-                  <small *ngFor="let item of enemy.selectedTypes" class="enemy-chip">{{ item }}</small>
+                  <small *ngFor="let item of enemy.selectedTypes" class="enemy-chip">{{
+                    item
+                  }}</small>
                 </div>
               </div>
 
               <div class="enemy-chip-group">
-                <span>{{ t("summary.classes") }}</span>
+                <span>{{ t('summary.classes') }}</span>
                 <div class="chip-row">
-                  <small *ngFor="let item of enemy.selectedClasses" class="enemy-chip enemy-chip--secondary">
+                  <small
+                    *ngFor="let item of enemy.selectedClasses"
+                    class="enemy-chip enemy-chip--secondary"
+                  >
                     {{ item }}
                   </small>
                 </div>
               </div>
 
               <div *ngIf="enemy.requiredAbilities.length" class="enemy-chip-group">
-                <span>{{ t("summary.abilities") }}</span>
+                <span>{{ t('summary.abilities') }}</span>
                 <div class="chip-row">
-                  <small *ngFor="let requirement of enemy.requiredAbilities" class="enemy-chip enemy-chip--ability">
+                  <small
+                    *ngFor="let requirement of enemy.requiredAbilities"
+                    class="enemy-chip enemy-chip--ability"
+                  >
                     {{ formatAbilityRequirement(requirement) }}
                   </small>
                 </div>
               </div>
 
               <div class="enemy-chip-group">
-                <span>{{ t("summary.rules") }}</span>
+                <span>{{ t('summary.rules') }}</span>
                 <div class="chip-row">
-                  <small *ngIf="enemy.requireAllSelectedTypesInTeam" class="enemy-chip enemy-chip--rule">
-                    {{ t("summary.ruleLabels.types") }}
+                  <small
+                    *ngIf="enemy.requireAllSelectedTypesInTeam"
+                    class="enemy-chip enemy-chip--rule"
+                  >
+                    {{ t('summary.ruleLabels.types') }}
                   </small>
-                  <small *ngIf="enemy.requireAllSelectedClassesPerCharacter" class="enemy-chip enemy-chip--rule">
-                    {{ t("summary.ruleLabels.classes") }}
+                  <small
+                    *ngIf="enemy.requireAllSelectedClassesPerCharacter"
+                    class="enemy-chip enemy-chip--rule"
+                  >
+                    {{ t('summary.ruleLabels.classes') }}
                   </small>
-                  <small *ngIf="enemy.requireAllSpecialsSupportTeam" class="enemy-chip enemy-chip--rule">
-                    {{ t("summary.ruleLabels.specials") }}
+                  <small
+                    *ngIf="enemy.requireAllSpecialsSupportTeam"
+                    class="enemy-chip enemy-chip--rule"
+                  >
+                    {{ t('summary.ruleLabels.specials') }}
                   </small>
                   <small
                     *ngIf="
@@ -120,7 +143,7 @@
                     "
                     class="enemy-chip enemy-chip--secondary"
                   >
-                    {{ t("summary.noRules") }}
+                    {{ t('summary.noRules') }}
                   </small>
                 </div>
               </div>
@@ -130,19 +153,28 @@
       </section>
     </div>
 
-    <ion-modal [isOpen]="editorOpen()" cssClass="saved-enemies-editor-modal" (didDismiss)="closeEditor()">
+    <ion-modal
+      [isOpen]="editorOpen()"
+      cssClass="saved-enemies-editor-modal"
+      (didDismiss)="closeEditor()"
+    >
       <ng-template>
         <div class="editor-modal-shell">
           <div class="editor-modal-head">
             <div>
               <div class="section-label">
-                {{ editingEnemy() ? t("editor.editEyebrow") : t("editor.createEyebrow") }}
+                {{ editingEnemy() ? t('editor.editEyebrow') : t('editor.createEyebrow') }}
               </div>
-              <h2>{{ editingEnemy() ? t("editor.editTitle") : t("editor.createTitle") }}</h2>
-              <p>{{ t("editor.copy") }}</p>
+              <h2>{{ editingEnemy() ? t('editor.editTitle') : t('editor.createTitle') }}</h2>
+              <p>{{ t('editor.copy') }}</p>
             </div>
 
-            <ion-button fill="clear" color="light" [disabled]="savingEnemy()" (click)="closeEditor()">
+            <ion-button
+              fill="clear"
+              color="light"
+              [disabled]="savingEnemy()"
+              (click)="closeEditor()"
+            >
               <ion-icon slot="icon-only" [icon]="closeIcon"></ion-icon>
             </ion-button>
           </div>
@@ -166,9 +198,66 @@
             (ionInput)="onEnemyNotesChange($event)"
           ></ion-textarea>
 
+          <input
+            #enemyImageInput
+            type="file"
+            accept="image/*"
+            hidden
+            (change)="onEnemyImageSelected($event, enemyImageInput)"
+          />
+
+          <section class="enemy-image-card">
+            <div class="section-head section-head--editor">
+              <div>
+                <h3>{{ t('editor.image.title') }}</h3>
+                <span>{{ t('editor.image.copy') }}</span>
+              </div>
+
+              <div class="enemy-image-actions">
+                <ion-button
+                  fill="outline"
+                  color="warning"
+                  size="small"
+                  [disabled]="savingEnemy() || processingEnemyImage()"
+                  (click)="openEnemyImagePicker(enemyImageInput)"
+                >
+                  {{ enemyImageDataUrl() ? t('editor.image.replace') : t('editor.image.upload') }}
+                </ion-button>
+                <ion-button
+                  fill="clear"
+                  color="light"
+                  size="small"
+                  [disabled]="savingEnemy() || processingEnemyImage() || !enemyImageDataUrl()"
+                  (click)="removeEnemyImage()"
+                >
+                  {{ t('editor.image.remove') }}
+                </ion-button>
+              </div>
+            </div>
+
+            <div *ngIf="enemyImageDataUrl(); else emptyEnemyImageState" class="enemy-image-preview">
+              <img
+                [src]="enemyImageDataUrl()"
+                [alt]="enemyName() || t('editor.image.previewAlt')"
+              />
+            </div>
+
+            <ng-template #emptyEnemyImageState>
+              <p class="editor-empty-copy">{{ t('editor.image.empty') }}</p>
+            </ng-template>
+
+            <p *ngIf="processingEnemyImage()" class="enemy-image-status">
+              {{ t('editor.image.processing') }}
+            </p>
+
+            <p *ngIf="enemyImageErrorMessage()" class="enemy-image-error">
+              {{ enemyImageErrorMessage() }}
+            </p>
+          </section>
+
           <div class="editor-grid">
             <div class="editor-field">
-              <span>{{ t("editor.typesLabel") }}</span>
+              <span>{{ t('editor.typesLabel') }}</span>
               <ion-select
                 interface="popover"
                 [multiple]="true"
@@ -184,7 +273,7 @@
             </div>
 
             <div class="editor-field">
-              <span>{{ t("editor.classesLabel") }}</span>
+              <span>{{ t('editor.classesLabel') }}</span>
               <ion-select
                 interface="popover"
                 [multiple]="true"
@@ -203,8 +292,8 @@
           <div class="toggle-grid">
             <div class="strict-toggle-row">
               <div class="strict-toggle-copy">
-                <strong>{{ t("editor.toggles.types") }}</strong>
-                <small>{{ t("editor.toggles.typesCopy") }}</small>
+                <strong>{{ t('editor.toggles.types') }}</strong>
+                <small>{{ t('editor.toggles.typesCopy') }}</small>
               </div>
               <ion-toggle
                 color="warning"
@@ -216,8 +305,8 @@
 
             <div class="strict-toggle-row">
               <div class="strict-toggle-copy">
-                <strong>{{ t("editor.toggles.classes") }}</strong>
-                <small>{{ t("editor.toggles.classesCopy") }}</small>
+                <strong>{{ t('editor.toggles.classes') }}</strong>
+                <small>{{ t('editor.toggles.classesCopy') }}</small>
               </div>
               <ion-toggle
                 color="warning"
@@ -229,8 +318,8 @@
 
             <div class="strict-toggle-row">
               <div class="strict-toggle-copy">
-                <strong>{{ t("editor.toggles.specials") }}</strong>
-                <small>{{ t("editor.toggles.specialsCopy") }}</small>
+                <strong>{{ t('editor.toggles.specials') }}</strong>
+                <small>{{ t('editor.toggles.specialsCopy') }}</small>
               </div>
               <ion-toggle
                 color="warning"
@@ -244,8 +333,8 @@
           <section class="ability-card">
             <div class="section-head section-head--editor">
               <div>
-                <h3>{{ t("editor.abilitiesTitle") }}</h3>
-                <span>{{ t("editor.abilitiesCopy") }}</span>
+                <h3>{{ t('editor.abilitiesTitle') }}</h3>
+                <span>{{ t('editor.abilitiesCopy') }}</span>
               </div>
 
               <ion-button
@@ -255,24 +344,26 @@
                 [disabled]="savingEnemy() || !availableAbilityCatalogItems().length"
                 (click)="addRequiredAbility()"
               >
-                {{ t("editor.addAbility") }}
+                {{ t('editor.addAbility') }}
               </ion-button>
             </div>
 
             <p *ngIf="!availableAbilityCatalogItems().length" class="editor-empty-copy">
-              {{ t("editor.noAbilityCatalog") }}
+              {{ t('editor.noAbilityCatalog') }}
             </p>
 
             <div class="ability-list" *ngIf="requiredAbilityDrafts().length">
               <article *ngFor="let draft of requiredAbilityDrafts()" class="ability-card-row">
                 <div class="ability-card-grid">
                   <div class="editor-field">
-                    <span>{{ t("editor.abilityFields.ability") }}</span>
+                    <span>{{ t('editor.abilityFields.ability') }}</span>
                     <ion-select
                       interface="popover"
                       fill="outline"
                       [value]="draft.abilityKey"
-                      [selectedText]="resolveAbilityCatalogItem(draft.abilityKey)?.label ?? draft.abilityKey"
+                      [selectedText]="
+                        resolveAbilityCatalogItem(draft.abilityKey)?.label ?? draft.abilityKey
+                      "
                       (ionChange)="onRequiredAbilityKeyChange(draft.draftId, $event)"
                     >
                       <ion-select-option
@@ -285,7 +376,7 @@
                   </div>
 
                   <label class="editor-field editor-field--number">
-                    <span>{{ t("editor.abilityFields.characters") }}</span>
+                    <span>{{ t('editor.abilityFields.characters') }}</span>
                     <input
                       type="number"
                       min="1"
@@ -299,7 +390,7 @@
                     *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsTurns"
                     class="editor-field editor-field--number"
                   >
-                    <span>{{ t("editor.abilityFields.turns") }}</span>
+                    <span>{{ t('editor.abilityFields.turns') }}</span>
                     <input
                       type="number"
                       min="1"
@@ -313,7 +404,7 @@
                     *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsSlotTokens"
                     class="editor-field"
                   >
-                    <span>{{ t("editor.abilityFields.slotTokens") }}</span>
+                    <span>{{ t('editor.abilityFields.slotTokens') }}</span>
                     <ion-select
                       interface="popover"
                       [multiple]="true"
@@ -323,7 +414,10 @@
                       (ionChange)="onRequiredAbilitySlotTokensChange(draft.draftId, $event)"
                     >
                       <ion-select-option
-                        *ngFor="let token of resolveAbilityCatalogItem(draft.abilityKey)?.availableSlotTokens ?? []"
+                        *ngFor="
+                          let token of resolveAbilityCatalogItem(draft.abilityKey)
+                            ?.availableSlotTokens ?? []
+                        "
                         [value]="token"
                       >
                         {{ token }}
@@ -339,18 +433,27 @@
                   [disabled]="savingEnemy()"
                   (click)="removeRequiredAbility(draft.draftId)"
                 >
-                  {{ t("editor.removeAbility") }}
+                  {{ t('editor.removeAbility') }}
                 </ion-button>
               </article>
             </div>
           </section>
 
           <div class="editor-modal-actions">
-            <ion-button fill="outline" color="light" [disabled]="savingEnemy()" (click)="closeEditor()">
-              {{ "common.actions.cancel" | transloco }}
+            <ion-button
+              fill="outline"
+              color="light"
+              [disabled]="savingEnemy()"
+              (click)="closeEditor()"
+            >
+              {{ 'common.actions.cancel' | transloco }}
             </ion-button>
-            <ion-button color="warning" [disabled]="savingEnemy() || !canSaveEnemy()" (click)="saveEnemy()">
-              {{ editingEnemy() ? t("actions.saveChanges") : t("actions.saveEnemy") }}
+            <ion-button
+              color="warning"
+              [disabled]="savingEnemy() || processingEnemyImage() || !canSaveEnemy()"
+              (click)="saveEnemy()"
+            >
+              {{ editingEnemy() ? t('actions.saveChanges') : t('actions.saveEnemy') }}
             </ion-button>
           </div>
         </div>

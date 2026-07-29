@@ -271,11 +271,72 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
       'utf8',
     );
 
+    expect(template).toContain("'common.actions.reset' | transloco");
     expect(template.match(/common\.actions\.viewDetails/g)).toHaveLength(3);
-    expect(template).toContain("[routerLink]=\"getCharacterDetailLink(character)\"");
-    expect(template).toContain("[routerLink]=\"getCharacterDetailLink(leader)\"");
-    expect(template).toContain("[routerLink]=\"getCharacterDetailLink(slot.character)\"");
+    expect(template).toContain('[routerLink]="getCharacterDetailLink(character)"');
+    expect(template).toContain('[routerLink]="getCharacterDetailLink(leader)"');
+    expect(template).toContain('[routerLink]="getCharacterDetailLink(slot.character)"');
     expect(template).toContain('(click)="saveTeam()"');
+  });
+
+  it('resets the full page state through resetPage', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+    page.requiredAbilityDrafts.set([
+      {
+        draftId: 'bind-1',
+        abilityKey: 'remove_bind',
+        minTurns: 5,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+    page.lockedCharacterRecords.set({
+      101: createCharacterRecord(101),
+    });
+    page.lockedCharacterIds.set([101]);
+    page.selectedLeaderIds.set([101]);
+    page.captainLeaderId.set(101);
+    page.selectedManualShipId.set(9001);
+    page.favoritesOnly.set(true);
+    page.manualSearchTerm.set('Luffy');
+    page.shipSearchTerm.set('Going Merry');
+    page.shipPickerMode.set('ships');
+    page.teamName.set('Auto Crew');
+    page.notes.set('Generated');
+    page.result.set(createAutoBuildResult());
+    page.errorMessage.set('Build failed');
+    page.currentTeamId.set('saved-team-1');
+    page.presetImportFeedback.set({
+      tone: 'success',
+      title: 'Loaded',
+      details: ['Done'],
+    });
+    page.loadedEnemyPresetName.set('Forest Boss');
+
+    await page.resetPage();
+
+    expect(page.selectedTypes()).toEqual([]);
+    expect(page.selectedClasses()).toEqual([]);
+    expect(page.requiredAbilityDrafts()).toEqual([]);
+    expect(page.lockedCharacterIds()).toEqual([]);
+    expect(page.selectedLeaderIds()).toEqual([]);
+    expect(page.captainLeaderId()).toBeNull();
+    expect(page.selectedManualShipId()).toBeNull();
+    expect(page.favoritesOnly()).toBe(false);
+    expect(page.manualSearchTerm()).toBe('');
+    expect(page.shipSearchTerm()).toBe('');
+    expect(page.shipPickerMode()).toBe('characters');
+    expect(page.teamName()).toBe('New Crew');
+    expect(page.notes()).toBe('');
+    expect(page.result()).toBeNull();
+    expect(page.errorMessage()).toBe('');
+    expect(page.currentTeamId()).toBeNull();
+    expect(page.presetImportFeedback()).toBeNull();
+    expect(page.loadedEnemyPresetName()).toBeNull();
   });
 
   it('updates build progress from the service execution callback', async () => {
@@ -597,6 +658,44 @@ describe('AutoTeamBuilderPage special-support toggle', () => {
 
     expect(page.result()).toEqual(previousResult);
     expect(page.errorMessage()).toBe('');
+    expect(page.building()).toBe(false);
+  });
+
+  it('cancels the active build before resetPage and does not restore the previous result', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const previousResult = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockImplementation(
+      async (
+        _selectedClasses: string[],
+        _selectedTypes: string[],
+        _constraints: unknown,
+        executionOptions?: { signal?: AbortSignal; onProgress?: (snapshot: any) => void },
+      ) =>
+        new Promise<null>((_resolve, reject) => {
+          executionOptions?.signal?.addEventListener(
+            'abort',
+            () => reject(new AutoTeamBuildCancelledError()),
+            { once: true },
+          );
+        }),
+    );
+
+    await page.ngOnInit();
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.result.set(previousResult);
+    page.currentTeamId.set('saved-team-before-reset');
+
+    const buildPromise = page.buildTeam();
+
+    await page.resetPage();
+    await buildPromise;
+
+    expect(page.result()).toBeNull();
+    expect(page.currentTeamId()).toBeNull();
+    expect(page.selectedTypes()).toEqual([]);
+    expect(page.selectedClasses()).toEqual([]);
     expect(page.building()).toBe(false);
   });
 });
@@ -1831,6 +1930,7 @@ async function createPage(options: { routeEnemyId?: string | null } = {}): Promi
       id: 'enemy-1',
       name: 'Forest Boss',
       notes: 'Needs bind removal',
+      imageDataUrl: null,
       selectedTypes: ['DEX', 'PSY'],
       selectedClasses: ['Fighter'],
       requiredAbilities: [
@@ -1851,8 +1951,8 @@ async function createPage(options: { routeEnemyId?: string | null } = {}): Promi
   const userState = {
     favoriteCharacterIds: signal<number[]>([]),
     savedEnemies,
-    getSavedEnemyById: vi.fn((enemyId: string) =>
-      savedEnemies().find((enemy) => enemy.id === enemyId) ?? null,
+    getSavedEnemyById: vi.fn(
+      (enemyId: string) => savedEnemies().find((enemy) => enemy.id === enemyId) ?? null,
     ),
     ready: vi.fn().mockResolvedValue(undefined),
     saveTeam: vi.fn().mockResolvedValue({ id: 'saved-auto-team' }),
@@ -1901,7 +2001,12 @@ function createManifest(): DatasetManifest {
   };
 }
 
-function createShipRecord(id: number): { id: number; name: string; thumb: null; description: string } {
+function createShipRecord(id: number): {
+  id: number;
+  name: string;
+  thumb: null;
+  description: string;
+} {
   return {
     id,
     name: `Ship ${id}`,
@@ -1951,10 +2056,7 @@ function loadJson(relativePath: string): Record<string, unknown> {
   ) as Record<string, unknown>;
 }
 
-function resolveTranslationValue(
-  source: Record<string, unknown>,
-  key: string,
-): unknown {
+function resolveTranslationValue(source: Record<string, unknown>, key: string): unknown {
   return key.split('.').reduce<unknown>((current, part) => {
     if (!current || typeof current !== 'object' || Array.isArray(current)) {
       return undefined;

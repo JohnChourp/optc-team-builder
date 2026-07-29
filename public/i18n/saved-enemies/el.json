@@ -25,6 +25,20 @@
     "createTitle": "Δημιουργία saved enemy",
     "editEyebrow": "Ενημέρωση εχθρού",
     "editTitle": "Επεξεργασία saved enemy",
+    "image": {
+      "copy": "Ανέβασε τοπική εικόνα enemy μόνο για preview στη saved enemies σελίδα.",
+      "empty": "Δεν έχει οριστεί ακόμα εικόνα enemy.",
+      "errors": {
+        "invalidType": "Επίλεξε αρχείο εικόνας από τον υπολογιστή σου.",
+        "loadFailed": "Η εικόνα δεν μπόρεσε να φορτωθεί."
+      },
+      "previewAlt": "Preview εικόνας enemy",
+      "processing": "Γίνεται επεξεργασία εικόνας...",
+      "remove": "Αφαίρεση εικόνας",
+      "replace": "Αλλαγή εικόνας",
+      "title": "Εικόνα enemy",
+      "upload": "Ανέβασμα εικόνας"
+    },
     "nameLabel": "Όνομα εχθρού",
     "noAbilityCatalog": "Το ability catalog δεν είναι ακόμα διαθέσιμο σε αυτό το dataset.",
     "notesLabel": "Σημειώσεις",

@@ -1,8 +1,8 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit, signal } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { RouterLink } from "@angular/router";
-import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
   IonContent,
@@ -18,16 +18,20 @@ import {
   IonTextarea,
   IonTitle,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { heart, heartOutline } from "ionicons/icons";
+} from '@ionic/angular/standalone';
+import { heart, heartOutline } from 'ionicons/icons';
 
-import { type CharacterListItem, type SavedTeam, type ShipRecord } from "../../core/models/optc.models";
-import { OptcRepositoryService } from "../../core/services/optc-repository.service";
-import { AppI18nService } from "../../core/services/app-i18n.service";
-import { UserStateService } from "../../core/services/user-state.service";
+import {
+  type CharacterListItem,
+  type SavedTeam,
+  type ShipRecord,
+} from '../../core/models/optc.models';
+import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { AppI18nService } from '../../core/services/app-i18n.service';
+import { UserStateService } from '../../core/services/user-state.service';
 
 @Component({
-  selector: "app-team-builder-page",
+  selector: 'app-team-builder-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -50,17 +54,20 @@ import { UserStateService } from "../../core/services/user-state.service";
     TranslocoDirective,
     TranslocoPipe,
   ],
-  templateUrl: "./team-builder.page.html",
-  styleUrl: "./team-builder.page.scss",
+  templateUrl: './team-builder.page.html',
+  styleUrl: './team-builder.page.scss',
 })
 export class TeamBuilderPage implements OnInit {
   public readonly ships = signal<ShipRecord[]>([]);
+  public readonly candidateSearchTerm = signal('');
   public readonly candidateCharacters = signal<CharacterListItem[]>([]);
-  public readonly slotCharacters = signal<Array<CharacterListItem | null>>(Array.from({ length: 6 }, () => null));
+  public readonly slotCharacters = signal<Array<CharacterListItem | null>>(
+    Array.from({ length: 6 }, () => null),
+  );
   public readonly selectedSlotIndex = signal(0);
   public readonly selectedShipId = signal<number | null>(null);
-  public readonly teamName = signal("");
-  public readonly notes = signal("");
+  public readonly teamName = signal('');
+  public readonly notes = signal('');
   public readonly savedTeams;
   public readonly favoriteIds;
   public readonly teamTotals = signal({ hp: 0, atk: 0, rcv: 0, cost: 0 });
@@ -75,25 +82,26 @@ export class TeamBuilderPage implements OnInit {
   ) {
     this.savedTeams = this.userState.savedTeams;
     this.favoriteIds = this.userState.favoriteCharacterIds;
-    this.teamName.set(this.i18n.translate("common.defaults.newCrew"));
+    this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
   public async ngOnInit(): Promise<void> {
     await this.userState.ready();
     this.ships.set(await this.repository.getShips());
-    await this.refreshCandidateCharacters("");
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
   public async onSearchCandidates(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    await this.refreshCandidateCharacters((event.detail.value ?? "").trim());
+    this.candidateSearchTerm.set((event.detail.value ?? '').trim());
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.teamName.set((event.detail.value ?? "").trimStart());
+    this.teamName.set((event.detail.value ?? '').trimStart());
   }
 
   public onNotesChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.notes.set((event.detail.value ?? "").toString());
+    this.notes.set((event.detail.value ?? '').toString());
   }
 
   public selectSlot(index: number): void {
@@ -128,10 +136,12 @@ export class TeamBuilderPage implements OnInit {
 
   public async loadTeam(team: SavedTeam): Promise<void> {
     const characters = await this.repository.getCharactersByIds(
-      team.slots.filter((value): value is number => typeof value === "number"),
+      team.slots.filter((value): value is number => typeof value === 'number'),
     );
     const characterMap = new Map(characters.map((character) => [character.id, character]));
-    const slots = team.slots.map((characterId) => (characterId ? characterMap.get(characterId) ?? null : null));
+    const slots = team.slots.map((characterId) =>
+      characterId ? (characterMap.get(characterId) ?? null) : null,
+    );
 
     this.currentTeamId.set(team.id);
     this.teamName.set(team.name);
@@ -149,6 +159,13 @@ export class TeamBuilderPage implements OnInit {
     }
   }
 
+  public async resetPage(): Promise<void> {
+    this.candidateSearchTerm.set('');
+    this.selectedSlotIndex.set(0);
+    this.resetEditor();
+    await this.refreshCandidateCharacters(this.candidateSearchTerm());
+  }
+
   public async toggleFavorite(characterId: number, event: Event): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
@@ -160,15 +177,15 @@ export class TeamBuilderPage implements OnInit {
   }
 
   public getCharacterDetailLink(character: CharacterListItem | null): string[] | null {
-    return character ? ["/characters", character.id.toString()] : null;
+    return character ? ['/characters', character.id.toString()] : null;
   }
 
   private async refreshCandidateCharacters(searchTerm: string): Promise<void> {
     this.candidateCharacters.set(
       await this.repository.searchCharacters({
         searchTerm,
-        typeFilter: "",
-        classFilter: "",
+        typeFilter: '',
+        classFilter: '',
         limit: 24,
         offset: 0,
       }),
@@ -176,7 +193,9 @@ export class TeamBuilderPage implements OnInit {
   }
 
   private async refreshTeamTotals(): Promise<void> {
-    const selected = this.slotCharacters().filter((character): character is CharacterListItem => Boolean(character));
+    const selected = this.slotCharacters().filter((character): character is CharacterListItem =>
+      Boolean(character),
+    );
 
     this.teamTotals.set(
       selected.reduce(
@@ -193,9 +212,10 @@ export class TeamBuilderPage implements OnInit {
 
   private resetEditor(): void {
     this.currentTeamId.set(null);
-    this.teamName.set(this.i18n.translate("common.defaults.newCrew"));
-    this.notes.set("");
+    this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
+    this.notes.set('');
     this.selectedShipId.set(null);
+    this.selectedSlotIndex.set(0);
     this.slotCharacters.set(Array.from({ length: 6 }, () => null));
     this.teamTotals.set({ hp: 0, atk: 0, rcv: 0, cost: 0 });
   }

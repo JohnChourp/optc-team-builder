@@ -44,6 +44,7 @@
       "import": "Import",
       "load": "Load",
       "remove": "Remove",
+      "reset": "Reset",
       "save": "Save",
       "select": "Select",
       "viewDetails": "View details"

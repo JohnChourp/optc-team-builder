@@ -1,7 +1,7 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit, computed, signal } from "@angular/core";
-import { RouterLink } from "@angular/router";
-import { type ViewWillEnter } from "@ionic/angular";
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { type ViewWillEnter } from '@ionic/angular';
 import {
   IonButton,
   IonContent,
@@ -16,20 +16,20 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
-} from "@ionic/angular/standalone";
-import { TranslocoDirective, TranslocoPipe } from "@jsverse/transloco";
-import { addCircleOutline, closeOutline } from "ionicons/icons";
+} from '@ionic/angular/standalone';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
+import { addCircleOutline, closeOutline } from 'ionicons/icons';
 
-import { AUTO_TEAM_BUILDER_TYPES } from "../../core/models/auto-team-builder.models";
+import { AUTO_TEAM_BUILDER_TYPES } from '../../core/models/auto-team-builder.models';
 import {
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
-} from "../../core/models/auto-team-builder-ability.models";
-import { type DatasetManifest, type SavedEnemy } from "../../core/models/optc.models";
-import { AppI18nService } from "../../core/services/app-i18n.service";
-import { OptcRepositoryService } from "../../core/services/optc-repository.service";
-import { UserStateService } from "../../core/services/user-state.service";
+} from '../../core/models/auto-team-builder-ability.models';
+import { type DatasetManifest, type SavedEnemy } from '../../core/models/optc.models';
+import { AppI18nService } from '../../core/services/app-i18n.service';
+import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { UserStateService } from '../../core/services/user-state.service';
 
 interface EnemyAbilityRequirementDraft {
   draftId: string;
@@ -40,7 +40,7 @@ interface EnemyAbilityRequirementDraft {
 }
 
 @Component({
-  selector: "app-saved-enemies-page",
+  selector: 'app-saved-enemies-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -61,18 +61,22 @@ interface EnemyAbilityRequirementDraft {
     TranslocoDirective,
     TranslocoPipe,
   ],
-  templateUrl: "./saved-enemies.page.html",
-  styleUrl: "./saved-enemies.page.scss",
+  templateUrl: './saved-enemies.page.html',
+  styleUrl: './saved-enemies.page.scss',
 })
 export class SavedEnemiesPage implements OnInit, ViewWillEnter {
+  private readonly maxEnemyImageDimension = 1200;
   public readonly loading = signal(true);
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly savedEnemies;
   public readonly editorOpen = signal(false);
   public readonly editingEnemy = signal<SavedEnemy | null>(null);
-  public readonly enemyName = signal("");
-  public readonly enemyNotes = signal("");
+  public readonly enemyName = signal('');
+  public readonly enemyNotes = signal('');
+  public readonly enemyImageDataUrl = signal<string | null>(null);
+  public readonly enemyImageErrorMessage = signal('');
+  public readonly processingEnemyImage = signal(false);
   public readonly selectedTypes = signal<string[]>([]);
   public readonly selectedClasses = signal<string[]>([]);
   public readonly requiredAbilityDrafts = signal<EnemyAbilityRequirementDraft[]>([]);
@@ -127,9 +131,12 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public openCreateModal(): void {
     this.editingEnemy.set(null);
-    this.enemyName.set("");
-    this.enemyNotes.set("");
-    this.selectedTypes.set(["DEX"]);
+    this.enemyName.set('');
+    this.enemyNotes.set('');
+    this.enemyImageDataUrl.set(null);
+    this.enemyImageErrorMessage.set('');
+    this.processingEnemyImage.set(false);
+    this.selectedTypes.set(['DEX']);
     this.selectedClasses.set([]);
     this.requiredAbilityDrafts.set([]);
     this.requireAllSelectedTypesInTeam.set(false);
@@ -143,6 +150,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.editingEnemy.set(enemy);
     this.enemyName.set(enemy.name);
     this.enemyNotes.set(enemy.notes);
+    this.enemyImageDataUrl.set(enemy.imageDataUrl);
+    this.enemyImageErrorMessage.set('');
+    this.processingEnemyImage.set(false);
     this.selectedTypes.set([...enemy.selectedTypes]);
     this.selectedClasses.set([...enemy.selectedClasses]);
     this.requiredAbilityDrafts.set(
@@ -159,14 +169,42 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.editorOpen.set(false);
     this.editingEnemy.set(null);
     this.savingEnemy.set(false);
+    this.enemyImageErrorMessage.set('');
+    this.processingEnemyImage.set(false);
   }
 
   public onEnemyNameChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.enemyName.set((event.detail.value ?? "").trimStart());
+    this.enemyName.set((event.detail.value ?? '').trimStart());
   }
 
   public onEnemyNotesChange(event: CustomEvent<{ value?: string | null }>): void {
-    this.enemyNotes.set((event.detail.value ?? "").toString());
+    this.enemyNotes.set((event.detail.value ?? '').toString());
+  }
+
+  public openEnemyImagePicker(input: HTMLInputElement): void {
+    if (this.savingEnemy() || this.processingEnemyImage()) {
+      return;
+    }
+
+    input.click();
+  }
+
+  public async onEnemyImageSelected(event: Event, input: HTMLInputElement): Promise<void> {
+    const target = event.target as HTMLInputElement;
+    const [file] = Array.from(target.files ?? []);
+
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    await this.loadEnemyImage(file);
+  }
+
+  public removeEnemyImage(): void {
+    this.enemyImageDataUrl.set(null);
+    this.enemyImageErrorMessage.set('');
   }
 
   public onTypeChange(event: CustomEvent<{ value?: string[] | string | null }>): void {
@@ -205,7 +243,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     draftId: string,
     event: CustomEvent<{ value?: string | null }>,
   ): void {
-    const abilityKey = (event.detail.value ?? "").trim();
+    const abilityKey = (event.detail.value ?? '').trim();
 
     this.requiredAbilityDrafts.update((currentDrafts) =>
       currentDrafts.map((draft) => {
@@ -218,7 +256,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         return {
           ...draft,
           abilityKey,
-          minTurns: ability?.supportsTurns ? draft.minTurns ?? 1 : null,
+          minTurns: ability?.supportsTurns ? (draft.minTurns ?? 1) : null,
           slotTokens: ability?.supportsSlotTokens ? draft.slotTokens : [],
         };
       }),
@@ -242,7 +280,9 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     event: CustomEvent<{ value?: string[] | string | null }>,
   ): void {
     this.updateRequiredAbilityDraft(draftId, {
-      slotTokens: this.resolveSelectedValues(event.detail.value).map((token) => token.toUpperCase()),
+      slotTokens: this.resolveSelectedValues(event.detail.value).map((token) =>
+        token.toUpperCase(),
+      ),
     });
   }
 
@@ -270,6 +310,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         id: this.editingEnemy()?.id ?? undefined,
         name: this.enemyName().trim(),
         notes: this.enemyNotes(),
+        imageDataUrl: this.enemyImageDataUrl(),
         selectedTypes: this.selectedTypes(),
         selectedClasses: this.selectedClasses(),
         requiredAbilities: this.serializeRequiredAbilities(),
@@ -289,7 +330,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     if (
       !enemy ||
       !this.confirmDelete(
-        this.i18n.translate("confirm.deleteSingle", { name: enemy.name }, "saved-enemies"),
+        this.i18n.translate('confirm.deleteSingle', { name: enemy.name }, 'saved-enemies'),
       )
     ) {
       return;
@@ -299,39 +340,42 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   public formatAbilityRequirement(requirement: AutoBuildAbilityRequirement): string {
-    const label = this.abilityCatalogMap().get(requirement.abilityKey)?.label ?? requirement.abilityKey;
+    const label =
+      this.abilityCatalogMap().get(requirement.abilityKey)?.label ?? requirement.abilityKey;
     const metadata: string[] = [];
 
     if (requirement.requiredCharacterCount > 1) {
       metadata.push(
         this.i18n.translate(
-          "editor.requirementSummary.characters",
+          'editor.requirementSummary.characters',
           { count: requirement.requiredCharacterCount },
-          "saved-enemies",
+          'saved-enemies',
         ),
       );
     }
 
     if (requirement.minTurns) {
       metadata.push(
-        this.i18n.translate("editor.requirementSummary.turns", { count: requirement.minTurns }, "saved-enemies"),
+        this.i18n.translate(
+          'editor.requirementSummary.turns',
+          { count: requirement.minTurns },
+          'saved-enemies',
+        ),
       );
     }
 
     if (requirement.slotTokens.length) {
-      metadata.push(requirement.slotTokens.join(" / "));
+      metadata.push(requirement.slotTokens.join(' / '));
     }
 
-    return metadata.length ? `${label} (${metadata.join(" • ")})` : label;
+    return metadata.length ? `${label} (${metadata.join(' • ')})` : label;
   }
 
   public formatAbilityCatalogItemLabel(item: AutoBuildAbilityCatalogItem): string {
     return item.label;
   }
 
-  public resolveAbilityCatalogItem(
-    abilityKey: string,
-  ): AutoBuildAbilityCatalogItem | null {
+  public resolveAbilityCatalogItem(abilityKey: string): AutoBuildAbilityCatalogItem | null {
     return this.abilityCatalogMap().get(abilityKey) ?? null;
   }
 
@@ -362,25 +406,101 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private serializeRequiredAbilities(): AutoBuildAbilityRequirement[] {
-    return this.requiredAbilityDrafts().reduce<AutoBuildAbilityRequirement[]>((requirements, draft) => {
-      const abilityKey = draft.abilityKey.trim();
+    return this.requiredAbilityDrafts().reduce<AutoBuildAbilityRequirement[]>(
+      (requirements, draft) => {
+        const abilityKey = draft.abilityKey.trim();
 
-      if (!abilityKey.length) {
+        if (!abilityKey.length) {
+          return requirements;
+        }
+
+        requirements.push({
+          abilityKey,
+          minTurns: draft.minTurns && draft.minTurns > 0 ? draft.minTurns : null,
+          slotTokens: [
+            ...new Set(
+              draft.slotTokens.map((token) => token.trim()).filter((token) => token.length > 0),
+            ),
+          ],
+          requiredCharacterCount:
+            draft.requiredCharacterCount && draft.requiredCharacterCount > 0
+              ? draft.requiredCharacterCount
+              : 1,
+        });
+
         return requirements;
-      }
+      },
+      [],
+    );
+  }
 
-      requirements.push({
-        abilityKey,
-        minTurns: draft.minTurns && draft.minTurns > 0 ? draft.minTurns : null,
-        slotTokens: [...new Set(draft.slotTokens.map((token) => token.trim()).filter((token) => token.length > 0))],
-        requiredCharacterCount:
-          draft.requiredCharacterCount && draft.requiredCharacterCount > 0
-            ? draft.requiredCharacterCount
-            : 1,
-      });
+  private async loadEnemyImage(file: File): Promise<void> {
+    if (!file.type.startsWith('image/')) {
+      this.enemyImageErrorMessage.set(
+        this.i18n.translate('editor.image.errors.invalidType', undefined, 'saved-enemies'),
+      );
+      return;
+    }
 
-      return requirements;
-    }, []);
+    this.processingEnemyImage.set(true);
+    this.enemyImageErrorMessage.set('');
+
+    try {
+      const rawImageDataUrl = await this.readFileAsDataUrl(file);
+      const resizedImageDataUrl = await this.resizeImageDataUrl(
+        rawImageDataUrl,
+        this.maxEnemyImageDimension,
+      );
+
+      this.enemyImageDataUrl.set(resizedImageDataUrl);
+    } catch {
+      this.enemyImageErrorMessage.set(
+        this.i18n.translate('editor.image.errors.loadFailed', undefined, 'saved-enemies'),
+      );
+    } finally {
+      this.processingEnemyImage.set(false);
+    }
+  }
+
+  private readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+          return;
+        }
+
+        reject(new Error('Unable to read image data.'));
+      };
+      reader.onerror = () => reject(reader.error ?? new Error('Unable to read image data.'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  private resizeImageDataUrl(imageDataUrl: string, maxDimension: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+
+      image.onload = () => {
+        const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        if (!context) {
+          reject(new Error('Unable to create image canvas.'));
+          return;
+        }
+
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      image.onerror = () => reject(new Error('Unable to load image.'));
+      image.src = imageDataUrl;
+    });
   }
 
   private resolveSelectedValues(value?: string[] | string | null): string[] {
@@ -388,7 +508,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       return [...new Set(value.map((entry) => entry.trim()).filter((entry) => entry.length > 0))];
     }
 
-    if (typeof value === "string" && value.trim().length > 0) {
+    if (typeof value === 'string' && value.trim().length > 0) {
       return [value.trim()];
     }
 
@@ -402,6 +522,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   }
 
   private confirmDelete(message: string): boolean {
-    return typeof globalThis.confirm === "function" ? globalThis.confirm(message) : false;
+    return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
   }
 }

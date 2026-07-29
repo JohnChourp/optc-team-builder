@@ -16,6 +16,10 @@
       "placeholder": "Type to filter by character type"
     }
   },
+  "favorites": {
+    "clearAll": "Clear all favorites",
+    "clearAllConfirm": "Delete all favorites? This does not affect your saved teams."
+  },
   "hero": {
     "copy": "{{characterCount}} units, {{detailCount}} detailed records, and {{rumbleCount}} rumble entries from the OPTC source repo.",
     "eyebrow": "Offline-first database",

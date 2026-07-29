@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; scope: 'characters'; read: 'characters'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
-      <ion-title>{{ t("title") }}</ion-title>
+      <ion-title>{{ t('title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -11,15 +11,15 @@
         <div class="hero-copy">
           <div class="section-label">
             <ion-icon [icon]="sparklesIcon"></ion-icon>
-            <span>{{ t("hero.eyebrow") }}</span>
+            <span>{{ t('hero.eyebrow') }}</span>
           </div>
-          <h1 class="section-title">{{ t("hero.title") }}</h1>
+          <h1 class="section-title">{{ t('hero.title') }}</h1>
           <p class="section-copy">
             {{
-              t("hero.copy", {
+              t('hero.copy', {
                 characterCount: summary()?.characterCount ?? 0,
                 detailCount: summary()?.detailCount ?? 0,
-                rumbleCount: summary()?.rumbleCount ?? 0
+                rumbleCount: summary()?.rumbleCount ?? 0,
               })
             }}
           </p>
@@ -28,11 +28,13 @@
         <div class="hero-meta">
           <div class="meta-pill">
             <ion-icon [icon]="layersIcon"></ion-icon>
-            <span>{{ t("hero.typesCount", { count: summary()?.availableTypes?.length ?? 0 }) }}</span>
+            <span>{{
+              t('hero.typesCount', { count: summary()?.availableTypes?.length ?? 0 })
+            }}</span>
           </div>
           <div class="meta-pill">
             <ion-icon [icon]="favoriteIcon"></ion-icon>
-            <span>{{ t("hero.favoritesCount", { count: favoriteIds().length }) }}</span>
+            <span>{{ t('hero.favoritesCount', { count: favoriteIds().length }) }}</span>
           </div>
         </div>
       </section>
@@ -40,20 +42,31 @@
       <section class="glass-card controls-card">
         <div class="favorites-tools-head">
           <div>
-            <div class="section-label">{{ t("tools.title") }}</div>
-            <p>{{ t("tools.copy") }}</p>
+            <div class="section-label">{{ t('tools.title') }}</div>
+            <p>{{ t('tools.copy') }}</p>
           </div>
           <div class="favorites-tools-actions">
+            <ion-button fill="outline" color="light" (click)="resetPage()">
+              {{ 'common.actions.reset' | transloco }}
+            </ion-button>
             <ion-button
               fill="outline"
               color="light"
               [disabled]="!canDownloadFavoritesExport()"
               (click)="downloadFavoritesExport()"
             >
-              {{ t("tools.export") }}
+              {{ t('tools.export') }}
             </ion-button>
             <ion-button fill="outline" color="warning" (click)="openImportModal()">
-              {{ t("tools.import") }}
+              {{ t('tools.import') }}
+            </ion-button>
+            <ion-button
+              fill="outline"
+              color="danger"
+              [disabled]="!canClearAllFavorites()"
+              (click)="clearAllFavorites()"
+            >
+              {{ t('favorites.clearAll') }}
             </ion-button>
           </div>
         </div>
@@ -69,7 +82,7 @@
 
         <div class="favorites-toggle-row">
           <div class="favorites-toggle-copy">
-            <strong>{{ t("filters.favoritesOnly.label") }}</strong>
+            <strong>{{ t('filters.favoritesOnly.label') }}</strong>
             <small>{{ favoritesOnlySupportLabel() }}</small>
           </div>
           <ion-toggle
@@ -80,7 +93,7 @@
         </div>
 
         <div class="filter-group">
-          <span>{{ t("filters.type.label") }}</span>
+          <span>{{ t('filters.type.label') }}</span>
           <ion-input
             class="filter-input"
             fill="outline"
@@ -90,9 +103,9 @@
           ></ion-input>
 
           <div *ngIf="selectedType()" class="filter-selection">
-            <span>{{ t("filters.active", { value: selectedType() }) }}</span>
+            <span>{{ t('filters.active', { value: selectedType() }) }}</span>
             <button type="button" class="filter-clear" (click)="clearTypeFilter()">
-              {{ "common.actions.clear" | transloco }}
+              {{ 'common.actions.clear' | transloco }}
             </button>
           </div>
 
@@ -109,7 +122,7 @@
         </div>
 
         <div class="filter-group">
-          <span>{{ t("filters.class.label") }}</span>
+          <span>{{ t('filters.class.label') }}</span>
           <ion-input
             class="filter-input"
             fill="outline"
@@ -119,9 +132,9 @@
           ></ion-input>
 
           <div *ngIf="selectedClass()" class="filter-selection">
-            <span>{{ t("filters.active", { value: selectedClass() }) }}</span>
+            <span>{{ t('filters.active', { value: selectedClass() }) }}</span>
             <button type="button" class="filter-clear" (click)="clearClassFilter()">
-              {{ "common.actions.clear" | transloco }}
+              {{ 'common.actions.clear' | transloco }}
             </button>
           </div>
 
@@ -140,23 +153,35 @@
 
       <section *ngIf="loading()" class="loading-card glass-card">
         <ion-spinner name="crescent"></ion-spinner>
-        <span>{{ t("loading") }}</span>
+        <span>{{ t('loading') }}</span>
       </section>
 
-      <section *ngIf="!loading() && !characters().length" class="loading-card glass-card empty-card">
-        <span>{{ t("empty") }}</span>
+      <section
+        *ngIf="!loading() && !characters().length"
+        class="loading-card glass-card empty-card"
+      >
+        <span>{{ t('empty') }}</span>
       </section>
 
       <section *ngIf="!loading() && characters().length" class="character-grid">
-        <article *ngFor="let character of characters(); trackBy: trackCharacter" class="character-card glass-card">
+        <article
+          *ngFor="let character of characters(); trackBy: trackCharacter"
+          class="character-card glass-card"
+        >
           <a class="character-card__link" [routerLink]="['/characters', character.id]">
             <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
 
             <div class="character-card__content">
               <div class="character-card__title-row">
                 <h2>{{ character.name }}</h2>
-                <button type="button" class="favorite-button" (click)="toggleFavorite(character.id, $event)">
-                  <ion-icon [icon]="isFavorite(character.id) ? favoriteIcon : favoriteOutlineIcon"></ion-icon>
+                <button
+                  type="button"
+                  class="favorite-button"
+                  (click)="toggleFavorite(character.id, $event)"
+                >
+                  <ion-icon
+                    [icon]="isFavorite(character.id) ? favoriteIcon : favoriteOutlineIcon"
+                  ></ion-icon>
                 </button>
               </div>
 
@@ -169,15 +194,15 @@
               <div class="metrics-row">
                 <div>
                   <strong>{{ character.stats.max.hp }}</strong>
-                  <span>{{ t("stats.hp") }}</span>
+                  <span>{{ t('stats.hp') }}</span>
                 </div>
                 <div>
                   <strong>{{ character.stats.max.atk }}</strong>
-                  <span>{{ t("stats.atk") }}</span>
+                  <span>{{ t('stats.atk') }}</span>
                 </div>
                 <div>
                   <strong>{{ character.stats.max.rcv }}</strong>
-                  <span>{{ t("stats.rcv") }}</span>
+                  <span>{{ t('stats.rcv') }}</span>
                 </div>
               </div>
             </div>
@@ -188,19 +213,23 @@
       <div *ngIf="!loading() && hasMore()" class="load-more">
         <ion-button fill="outline" color="light" [disabled]="loadingMore()" (click)="loadMore()">
           <ion-spinner *ngIf="loadingMore()" slot="start" name="crescent"></ion-spinner>
-          {{ t("loadMore") }}
+          {{ t('loadMore') }}
         </ion-button>
       </div>
     </div>
 
-    <ion-modal [isOpen]="importModalOpen()" cssClass="favorites-import-modal" (didDismiss)="closeImportModal()">
+    <ion-modal
+      [isOpen]="importModalOpen()"
+      cssClass="favorites-import-modal"
+      (didDismiss)="closeImportModal()"
+    >
       <ng-template>
         <div class="import-modal-shell">
           <div class="import-modal-head">
             <div>
-              <div class="section-label">{{ t("import.eyebrow") }}</div>
-              <h2>{{ t("import.title") }}</h2>
-              <p>{{ t("import.copy") }}</p>
+              <div class="section-label">{{ t('import.eyebrow') }}</div>
+              <h2>{{ t('import.title') }}</h2>
+              <p>{{ t('import.copy') }}</p>
             </div>
 
             <ion-button fill="clear" color="light" (click)="closeImportModal()">
@@ -226,8 +255,8 @@
             (drop)="onImportDrop($event)"
           >
             <ion-icon [icon]="uploadIcon"></ion-icon>
-            <strong>{{ t("import.dropzone.title") }}</strong>
-            <span>{{ t("import.dropzone.subtitle") }}</span>
+            <strong>{{ t('import.dropzone.title') }}</strong>
+            <span>{{ t('import.dropzone.subtitle') }}</span>
           </button>
 
           <div *ngIf="importFileName()" class="import-file-chip">
@@ -235,12 +264,19 @@
             <span>{{ importFileName() }}</span>
           </div>
 
-          <div *ngIf="parsedImport() && !importResult()" class="import-feedback import-feedback--ready">
+          <div
+            *ngIf="parsedImport() && !importResult()"
+            class="import-feedback import-feedback--ready"
+          >
             <ion-icon [icon]="successIcon"></ion-icon>
             <div>
-              <strong>{{ t("import.ready", { count: parsedImport()?.importedNumbers?.length ?? 0 }) }}</strong>
+              <strong>{{
+                t('import.ready', { count: parsedImport()?.importedNumbers?.length ?? 0 })
+              }}</strong>
               <span *ngIf="(parsedImport()?.duplicatesRemoved ?? 0) > 0">
-                {{ t("import.removedDuplicates", { count: parsedImport()?.duplicatesRemoved ?? 0 }) }}
+                {{
+                  t('import.removedDuplicates', { count: parsedImport()?.duplicatesRemoved ?? 0 })
+                }}
               </span>
             </div>
           </div>
@@ -252,50 +288,60 @@
 
           <section *ngIf="importResult()" class="import-result-card">
             <div class="import-result-card__head">
-              <h3>{{ t("import.summary.title") }}</h3>
-              <p>{{ t("import.summary.copy") }}</p>
+              <h3>{{ t('import.summary.title') }}</h3>
+              <p>{{ t('import.summary.copy') }}</p>
             </div>
 
             <div class="import-stats-grid">
               <article>
-                <span>{{ t("import.stats.matched") }}</span>
+                <span>{{ t('import.stats.matched') }}</span>
                 <strong>{{ importResult()?.matchedIds?.length ?? 0 }}</strong>
               </article>
               <article>
-                <span>{{ t("import.stats.added") }}</span>
+                <span>{{ t('import.stats.added') }}</span>
                 <strong>{{ importResult()?.addedCount ?? 0 }}</strong>
               </article>
               <article>
-                <span>{{ t("import.stats.alreadyFavorited") }}</span>
+                <span>{{ t('import.stats.alreadyFavorited') }}</span>
                 <strong>{{ importResult()?.alreadyFavoritedCount ?? 0 }}</strong>
               </article>
               <article>
-                <span>{{ t("import.stats.unknownIds") }}</span>
+                <span>{{ t('import.stats.unknownIds') }}</span>
                 <strong>{{ importResult()?.unmatchedIds?.length ?? 0 }}</strong>
               </article>
             </div>
 
             <p *ngIf="(importResult()?.duplicatesRemoved ?? 0) > 0" class="import-result-note">
-              {{ t("import.ignoredDuplicates", { count: importResult()?.duplicatesRemoved ?? 0 }) }}
+              {{ t('import.ignoredDuplicates', { count: importResult()?.duplicatesRemoved ?? 0 }) }}
             </p>
 
             <div *ngIf="unmatchedPreview().length" class="import-unmatched">
-              <strong>{{ t("import.stats.unknownIds") }}</strong>
+              <strong>{{ t('import.stats.unknownIds') }}</strong>
               <p>
-                {{ unmatchedPreview().join(", ") }}
+                {{ unmatchedPreview().join(', ') }}
                 <span *ngIf="remainingUnmatchedCount() > 0">
-                  {{ t("import.andMore", { count: remainingUnmatchedCount() }) }}
+                  {{ t('import.andMore', { count: remainingUnmatchedCount() }) }}
                 </span>
               </p>
             </div>
           </section>
 
           <div class="import-modal-actions">
-            <ion-button fill="clear" color="light" (click)="resetSelectedFile()" [disabled]="importingFavorites()">
-              {{ t("import.chooseAnotherFile") }}
+            <ion-button
+              fill="clear"
+              color="light"
+              (click)="resetSelectedFile()"
+              [disabled]="importingFavorites()"
+            >
+              {{ t('import.chooseAnotherFile') }}
             </ion-button>
-            <ion-button fill="outline" color="light" (click)="closeImportModal()" [disabled]="importingFavorites()">
-              {{ importResult() ? t("import.done") : ("common.actions.cancel" | transloco) }}
+            <ion-button
+              fill="outline"
+              color="light"
+              (click)="closeImportModal()"
+              [disabled]="importingFavorites()"
+            >
+              {{ importResult() ? t('import.done') : ('common.actions.cancel' | transloco) }}
             </ion-button>
             <ion-button
               color="warning"
@@ -303,7 +349,7 @@
               [disabled]="!hasImportReady() || importingFavorites() || !!importResult()"
             >
               <ion-spinner *ngIf="importingFavorites()" slot="start" name="crescent"></ion-spinner>
-              {{ t("import.importFavorites") }}
+              {{ t('import.importFavorites') }}
             </ion-button>
           </div>
         </div>

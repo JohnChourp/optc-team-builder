@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; scope: 'auto-team-builder'; read: 'auto-team-builder'">
   <ion-header class="ion-no-border">
     <ion-toolbar>
-      <ion-title>{{ t("title") }}</ion-title>
+      <ion-title>{{ t('title') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -20,7 +20,7 @@
         <div class="hero-meta">
           <div class="meta-pill">
             <ion-icon [icon]="layersIcon"></ion-icon>
-            <span>{{ t("hero.meta.availableClasses", { count: availableClasses().length }) }}</span>
+            <span>{{ t('hero.meta.availableClasses', { count: availableClasses().length }) }}</span>
           </div>
           <div class="meta-pill">
             <ion-icon [icon]="coverageIcon"></ion-icon>
@@ -32,7 +32,7 @@
       <section class="glass-card controls-card">
         <div class="controls-grid">
           <div class="fixed-type-card">
-            <span>{{ t("filters.types.label") }}</span>
+            <span>{{ t('filters.types.label') }}</span>
             <ion-select
               interface="popover"
               [multiple]="true"
@@ -84,7 +84,7 @@
           </div>
 
           <div class="class-select-card">
-            <span>{{ t("filters.classes.label") }}</span>
+            <span>{{ t('filters.classes.label') }}</span>
             <ion-select
               interface="popover"
               [multiple]="true"
@@ -166,12 +166,14 @@
 
         <section class="ability-requirements-card">
           <div class="slot-grid__header">
-            <h2>{{ t("abilityRequirements.title") }}</h2>
-            <p>{{ t("abilityRequirements.copy") }}</p>
+            <h2>{{ t('abilityRequirements.title') }}</h2>
+            <p>{{ t('abilityRequirements.copy') }}</p>
           </div>
 
           <div class="manual-locks-meta ability-requirements-meta">
-            <strong>{{ t("abilityRequirements.configuredRows", { count: requiredAbilityDrafts().length }) }}</strong>
+            <strong>{{
+              t('abilityRequirements.configuredRows', { count: requiredAbilityDrafts().length })
+            }}</strong>
             <div class="ability-requirements-actions">
               <ion-button
                 fill="clear"
@@ -180,7 +182,7 @@
                 [disabled]="building() || !availableAbilityCatalogItems().length"
                 (click)="addRequiredAbility()"
               >
-                {{ t("abilityRequirements.actions.addRequirement") }}
+                {{ t('abilityRequirements.actions.addRequirement') }}
               </ion-button>
               <ion-button
                 fill="clear"
@@ -189,7 +191,7 @@
                 [disabled]="building() || !requiredAbilityDrafts().length"
                 (click)="clearRequiredAbilities()"
               >
-                {{ t("abilityRequirements.actions.clearRequirements") }}
+                {{ t('abilityRequirements.actions.clearRequirements') }}
               </ion-button>
               <ion-button
                 fill="clear"
@@ -204,9 +206,9 @@
           </div>
 
           <p *ngIf="!availableAbilityCatalogItems().length" class="favorites-only-warning">
-            {{ t("abilityRequirements.emptyCatalog") }}
+            {{ t('abilityRequirements.emptyCatalog') }}
             <code>npm run data:import:all</code>
-            {{ t("abilityRequirements.emptyCatalogSuffix") }}
+            {{ t('abilityRequirements.emptyCatalogSuffix') }}
           </p>
 
           <div
@@ -225,7 +227,7 @@
             <article *ngFor="let draft of requiredAbilityDrafts()" class="ability-requirement-card">
               <div class="ability-requirement-fields">
                 <div class="ability-requirement-field">
-                  <span>{{ t("abilityRequirements.fields.ability") }}</span>
+                  <span>{{ t('abilityRequirements.fields.ability') }}</span>
                   <ion-select
                     interface="popover"
                     fill="outline"
@@ -244,7 +246,7 @@
                 </div>
 
                 <label class="ability-requirement-field ability-requirement-field--number">
-                  <span>{{ t("abilityRequirements.fields.characters") }}</span>
+                  <span>{{ t('abilityRequirements.fields.characters') }}</span>
                   <input
                     type="number"
                     min="1"
@@ -258,7 +260,7 @@
                   *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsTurns"
                   class="ability-requirement-field ability-requirement-field--number"
                 >
-                  <span>{{ t("abilityRequirements.fields.turns") }}</span>
+                  <span>{{ t('abilityRequirements.fields.turns') }}</span>
                   <input
                     type="number"
                     min="1"
@@ -272,7 +274,7 @@
                   *ngIf="resolveAbilityCatalogItem(draft.abilityKey)?.supportsSlotTokens"
                   class="ability-requirement-field"
                 >
-                  <span>{{ t("abilityRequirements.fields.slotTokens") }}</span>
+                  <span>{{ t('abilityRequirements.fields.slotTokens') }}</span>
                   <ion-select
                     interface="popover"
                     [multiple]="true"
@@ -302,7 +304,7 @@
                 [disabled]="building()"
                 (click)="removeRequiredAbility(draft.draftId)"
               >
-                {{ t("abilityRequirements.actions.removeRequirement") }}
+                {{ t('abilityRequirements.actions.removeRequirement') }}
               </ion-button>
             </article>
           </div>
@@ -316,8 +318,8 @@
           <div class="manual-locks-layout">
             <div class="manual-locks-overview">
               <div class="slot-grid__header manual-locks-overview__header">
-                <h2>{{ t("manual.title") }}</h2>
-                <p>{{ t("manual.copy") }}</p>
+                <h2>{{ t('manual.title') }}</h2>
+                <p>{{ t('manual.copy') }}</p>
               </div>
 
               <div class="manual-locks-meta">
@@ -329,7 +331,7 @@
                   [disabled]="clearAllButtonDisabled()"
                   (click)="clearAllManualSelections()"
                 >
-                  {{ t("manual.actions.clearAll") }}
+                  {{ t('manual.actions.clearAll') }}
                 </ion-button>
               </div>
 
@@ -337,9 +339,9 @@
                 <div class="manual-filter-summary-copy">
                   <div class="section-label">
                     <ion-icon [icon]="manualFilterIcon"></ion-icon>
-                    <span>{{ t("manual.sync.eyebrow") }}</span>
+                    <span>{{ t('manual.sync.eyebrow') }}</span>
                   </div>
-                  <strong>{{ t("manual.sync.title") }}</strong>
+                  <strong>{{ t('manual.sync.title') }}</strong>
                   <p>{{ manualFilterSummaryLabel() }}</p>
                 </div>
               </div>
@@ -353,7 +355,7 @@
                   [class.manual-panel-toggle__button--active]="shipPickerMode() === 'characters'"
                   (click)="setShipPickerMode('characters')"
                 >
-                  {{ t("manual.modes.characters") }}
+                  {{ t('manual.modes.characters') }}
                 </button>
                 <button
                   type="button"
@@ -361,7 +363,7 @@
                   [class.manual-panel-toggle__button--active]="shipPickerMode() === 'ships'"
                   (click)="setShipPickerMode('ships')"
                 >
-                  {{ t("manual.modes.ships") }}
+                  {{ t('manual.modes.ships') }}
                 </button>
               </div>
 
@@ -379,14 +381,14 @@
                 </div>
 
                 <div *ngIf="manualCandidatesLoading()" class="manual-candidate-empty-state">
-                  {{ t("manual.empty.loadingCandidates") }}
+                  {{ t('manual.empty.loadingCandidates') }}
                 </div>
 
                 <div
                   *ngIf="!manualCandidatesLoading() && !manualCandidateCards().length"
                   class="manual-candidate-empty-state"
                 >
-                  {{ t("manual.empty.noCandidates") }}
+                  {{ t('manual.empty.noCandidates') }}
                 </div>
 
                 <div
@@ -436,8 +438,8 @@
                     >
                       {{
                         isLockedCharacter(candidateCard.character.id)
-                          ? ("common.actions.remove" | transloco)
-                          : t("manual.actions.lock")
+                          ? ('common.actions.remove' | transloco)
+                          : t('manual.actions.lock')
                       }}
                     </ion-button>
                   </article>
@@ -457,7 +459,10 @@
                   <small>{{ shipPickerSupportLabel() }}</small>
                 </div>
 
-                <div *ngIf="hasSelectedManualShip()" class="selected-values-row manual-selected-row">
+                <div
+                  *ngIf="hasSelectedManualShip()"
+                  class="selected-values-row manual-selected-row"
+                >
                   <button
                     type="button"
                     class="selected-value-chip manual-lock-chip manual-lock-chip--ship"
@@ -471,7 +476,7 @@
                 </div>
 
                 <div *ngIf="!shipCandidates().length" class="manual-candidate-empty-state">
-                  {{ t("ships.emptySearch") }}
+                  {{ t('ships.emptySearch') }}
                 </div>
 
                 <div
@@ -489,7 +494,7 @@
                       <strong>{{ shipCard.ship.name }}</strong>
                       <span>{{ shipCard.subtitle }}</span>
                       <small *ngIf="shipCard.matchesManualSelection" class="manual-candidate-role">
-                        {{ t("ships.manualBadge") }}
+                        {{ t('ships.manualBadge') }}
                       </small>
                     </div>
                     <ion-button
@@ -505,8 +510,8 @@
                     >
                       {{
                         shipCard.matchesManualSelection
-                          ? ("common.actions.clear" | transloco)
-                          : ("common.actions.select" | transloco)
+                          ? ('common.actions.clear' | transloco)
+                          : ('common.actions.select' | transloco)
                       }}
                     </ion-button>
                   </article>
@@ -520,13 +525,13 @@
               *ngFor="let item of manualCandidateFilters().selectedTypes"
               class="selected-value-chip ability-requirement-chip"
             >
-              {{ t("manual.applied.type", { value: item }) }}
+              {{ t('manual.applied.type', { value: item }) }}
             </span>
             <span
               *ngFor="let item of manualCandidateFilters().selectedClasses"
               class="selected-value-chip ability-requirement-chip"
             >
-              {{ t("manual.applied.class", { value: item }) }}
+              {{ t('manual.applied.class', { value: item }) }}
             </span>
             <span
               *ngFor="let item of manualFilterAppliedAbilityLabels()"
@@ -552,7 +557,7 @@
 
           <section *ngIf="hasLockedCharacters()" class="manual-leaders-card">
             <div class="slot-grid__header">
-              <h3>{{ t("manual.leaders.title") }}</h3>
+              <h3>{{ t('manual.leaders.title') }}</h3>
               <p>{{ leaderPickerSupportLabel() }}</p>
             </div>
 
@@ -565,7 +570,7 @@
                 [disabled]="!hasDualLeaders() || building()"
                 (click)="swapLeaderAssignments()"
               >
-                {{ t("manual.actions.swapRoles") }}
+                {{ t('manual.actions.swapRoles') }}
               </ion-button>
             </div>
 
@@ -592,7 +597,7 @@
                     class="detail-link-button"
                     [routerLink]="getCharacterDetailLink(character)"
                   >
-                    {{ "common.actions.viewDetails" | transloco }}
+                    {{ 'common.actions.viewDetails' | transloco }}
                   </ion-button>
                   <ion-button
                     size="small"
@@ -606,8 +611,8 @@
                   >
                     {{
                       isLeaderCharacter(character.id)
-                        ? t("manual.leaders.actions.removeLeader")
-                        : t("manual.leaders.actions.setLeader")
+                        ? t('manual.leaders.actions.removeLeader')
+                        : t('manual.leaders.actions.setLeader')
                     }}
                   </ion-button>
                 </div>
@@ -633,7 +638,7 @@
                     class="detail-link-button"
                     [routerLink]="getCharacterDetailLink(leader)"
                   >
-                    {{ "common.actions.viewDetails" | transloco }}
+                    {{ 'common.actions.viewDetails' | transloco }}
                   </ion-button>
                   <button
                     type="button"
@@ -641,7 +646,7 @@
                     [disabled]="building() || isCaptainLeader(leader.id)"
                     (click)="setCaptainLeader(leader.id)"
                   >
-                    {{ t("manual.leaders.actions.makeCaptain") }}
+                    {{ t('manual.leaders.actions.makeCaptain') }}
                   </button>
                 </div>
               </article>
@@ -650,6 +655,14 @@
         </section>
 
         <div class="build-action-row">
+          <ion-button
+            fill="outline"
+            color="light"
+            class="download-preset-button"
+            (click)="resetPage()"
+          >
+            {{ 'common.actions.reset' | transloco }}
+          </ion-button>
           <input
             #presetFileInput
             type="file"
@@ -664,7 +677,7 @@
             [disabled]="building()"
             (click)="openPresetFilePicker(presetFileInput)"
           >
-            {{ t("actions.importPresetJson") }}
+            {{ t('actions.importPresetJson') }}
           </ion-button>
           <ion-button
             fill="outline"
@@ -685,7 +698,9 @@
           [class.preset-import-feedback--error]="presetFeedback.tone === 'error'"
         >
           <ion-icon
-            [icon]="presetFeedback.tone === 'error' ? presetImportErrorIcon : presetImportSuccessIcon"
+            [icon]="
+              presetFeedback.tone === 'error' ? presetImportErrorIcon : presetImportSuccessIcon
+            "
           ></ion-icon>
           <div>
             <strong>{{ presetFeedback.title }}</strong>
@@ -699,12 +714,19 @@
         >
           <ion-icon [icon]="presetImportSuccessIcon"></ion-icon>
           <div>
-            <strong>{{ t("enemyPreset.loadedTitle") }}</strong>
-            <small>{{ t("enemyPreset.loadedDescription", { name: loadedEnemyPresetName() }) }}</small>
+            <strong>{{ t('enemyPreset.loadedTitle') }}</strong>
+            <small>{{
+              t('enemyPreset.loadedDescription', { name: loadedEnemyPresetName() })
+            }}</small>
           </div>
         </section>
 
-        <ion-button expand="block" color="warning" [disabled]="buildDisabled()" (click)="buildTeam()">
+        <ion-button
+          expand="block"
+          color="warning"
+          [disabled]="buildDisabled()"
+          (click)="buildTeam()"
+        >
           <ion-spinner *ngIf="building()" slot="start" name="crescent"></ion-spinner>
           {{ buildButtonLabel() }}
         </ion-button>
@@ -725,7 +747,12 @@
             </div>
           </div>
         </div>
-        <ion-button fill="outline" color="light" class="loading-card__action" (click)="cancelBuild()">
+        <ion-button
+          fill="outline"
+          color="light"
+          class="loading-card__action"
+          (click)="cancelBuild()"
+        >
           {{ cancelBuildButtonLabel() }}
         </ion-button>
       </section>
@@ -737,22 +764,25 @@
       <ng-container *ngIf="!building() && result() as current">
         <section *ngIf="resultUsesFallback()" class="glass-card fallback-card">
           <div class="slot-grid__header">
-            <h2>{{ t("fallback.title") }}</h2>
-            <p>{{ t("fallback.copy") }}</p>
+            <h2>{{ t('fallback.title') }}</h2>
+            <p>{{ t('fallback.copy') }}</p>
           </div>
 
           <div class="coverage-groups">
             <div *ngIf="droppedResultTypes().length">
-              <span>{{ t("fallback.droppedTypes") }}</span>
+              <span>{{ t('fallback.droppedTypes') }}</span>
               <div class="chip-row">
-                <small *ngFor="let item of droppedResultTypes()" class="coverage-chip fallback-chip">
+                <small
+                  *ngFor="let item of droppedResultTypes()"
+                  class="coverage-chip fallback-chip"
+                >
                   {{ item }}
                 </small>
               </div>
             </div>
 
             <div *ngIf="droppedResultClasses().length">
-              <span>{{ t("fallback.droppedClasses") }}</span>
+              <span>{{ t('fallback.droppedClasses') }}</span>
               <div class="chip-row">
                 <small
                   *ngFor="let item of droppedResultClasses()"
@@ -767,34 +797,36 @@
 
         <section class="summary-grid">
           <article class="glass-card summary-card">
-            <span>{{ t("summary.requestedClasses") }}</span>
+            <span>{{ t('summary.requestedClasses') }}</span>
             <strong>{{ requestedResultClassesLabel() }}</strong>
-            <small>{{ t("summary.effectiveClasses", { value: effectiveResultClassesLabel() }) }}</small>
+            <small>{{
+              t('summary.effectiveClasses', { value: effectiveResultClassesLabel() })
+            }}</small>
           </article>
 
           <article class="glass-card summary-card">
-            <span>{{ t("summary.requestedTypes") }}</span>
+            <span>{{ t('summary.requestedTypes') }}</span>
             <strong>{{ requestedResultTypesLabel() }}</strong>
-            <small>{{ t("summary.effectiveTypes", { value: effectiveResultTypesLabel() }) }}</small>
+            <small>{{ t('summary.effectiveTypes', { value: effectiveResultTypesLabel() }) }}</small>
           </article>
 
           <article class="glass-card summary-card">
-            <span>{{ t("summary.candidatePool") }}</span>
+            <span>{{ t('summary.candidatePool') }}</span>
             <strong>{{ current.candidateCount }}</strong>
             <small>{{ candidatePoolLabel() }}</small>
           </article>
 
           <article class="glass-card summary-card">
-            <span>{{ t("summary.burstCoverage") }}</span>
+            <span>{{ t('summary.burstCoverage') }}</span>
             <strong>{{ current.coverage.burst.length }}</strong>
-            <small>{{ current.coverage.burst.join(' • ') || t("summary.noBurstTags") }}</small>
+            <small>{{ current.coverage.burst.join(' • ') || t('summary.noBurstTags') }}</small>
           </article>
         </section>
 
         <section class="glass-card save-team-card">
           <div class="slot-grid__header">
-            <h2>{{ t("save.title") }}</h2>
-            <p>{{ t("save.copy") }}</p>
+            <h2>{{ t('save.title') }}</h2>
+            <p>{{ t('save.copy') }}</p>
           </div>
 
           <div class="save-team-fields">
@@ -817,56 +849,66 @@
           ></ion-textarea>
 
           <ion-button expand="block" color="warning" (click)="saveTeam()">
-            {{ t("save.saveOffline") }}
+            {{ t('save.saveOffline') }}
           </ion-button>
         </section>
 
         <section class="glass-card coverage-card">
           <div class="slot-grid__header">
-            <h2>{{ t("coverage.title") }}</h2>
-            <p>{{ t("coverage.copy") }}</p>
+            <h2>{{ t('coverage.title') }}</h2>
+            <p>{{ t('coverage.copy') }}</p>
           </div>
 
           <div class="coverage-groups coverage-groups--summary">
             <div>
-              <span>{{ t("coverage.groups.classRequest") }}</span>
+              <span>{{ t('coverage.groups.classRequest') }}</span>
               <div class="chip-row">
-                <small class="coverage-chip summary-status-chip">{{ selectedClassSummaryLabel() }}</small>
+                <small class="coverage-chip summary-status-chip">{{
+                  selectedClassSummaryLabel()
+                }}</small>
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.typeRequest") }}</span>
+              <span>{{ t('coverage.groups.typeRequest') }}</span>
               <div class="chip-row">
-                <small class="coverage-chip summary-status-chip">{{ selectedTypeSummaryLabel() }}</small>
+                <small class="coverage-chip summary-status-chip">{{
+                  selectedTypeSummaryLabel()
+                }}</small>
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.leaderScope") }}</span>
+              <span>{{ t('coverage.groups.leaderScope') }}</span>
               <div class="chip-row">
-                <small class="coverage-chip summary-status-chip">{{ leaderCriteriaScopeSummaryLabel() }}</small>
+                <small class="coverage-chip summary-status-chip">{{
+                  leaderCriteriaScopeSummaryLabel()
+                }}</small>
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.specialSupport") }}</span>
+              <span>{{ t('coverage.groups.specialSupport') }}</span>
               <div class="chip-row">
-                <small class="coverage-chip summary-status-chip">{{ specialSupportSummaryLabel() }}</small>
+                <small class="coverage-chip summary-status-chip">{{
+                  specialSupportSummaryLabel()
+                }}</small>
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.abilityRequirements") }}</span>
+              <span>{{ t('coverage.groups.abilityRequirements') }}</span>
               <div class="chip-row">
-                <small class="coverage-chip summary-status-chip">{{ requiredAbilitySummaryLabel() }}</small>
+                <small class="coverage-chip summary-status-chip">{{
+                  requiredAbilitySummaryLabel()
+                }}</small>
               </div>
             </div>
           </div>
 
           <div class="coverage-groups">
             <div>
-              <span>{{ t("coverage.groups.leaderSource") }}</span>
+              <span>{{ t('coverage.groups.leaderSource') }}</span>
               <div class="chip-row">
                 <small class="coverage-chip">{{ leaderCriteriaSourceLabel() }}</small>
                 <small class="coverage-chip">{{ leaderCriteriaLeadersLabel() }}</small>
@@ -874,80 +916,92 @@
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.leaderClasses") }}</span>
+              <span>{{ t('coverage.groups.leaderClasses') }}</span>
               <div class="chip-row">
                 <small class="coverage-chip">{{ leaderCriteriaClassesLabel() }}</small>
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.leaderTypes") }}</span>
+              <span>{{ t('coverage.groups.leaderTypes') }}</span>
               <div class="chip-row">
                 <small class="coverage-chip">{{ leaderCriteriaTypesLabel() }}</small>
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.classCoverage") }}</span>
+              <span>{{ t('coverage.groups.classCoverage') }}</span>
               <div class="chip-row">
                 <small
                   *ngFor="let item of current.coverage.coveredSelectedClasses"
                   class="coverage-chip"
                   >{{ item }}</small
                 >
-                <small *ngIf="!current.coverage.coveredSelectedClasses.length" class="coverage-chip"
-                  >{{ t("coverage.empty.noClassCoverage") }}</small
+                <small
+                  *ngIf="!current.coverage.coveredSelectedClasses.length"
+                  class="coverage-chip"
+                  >{{ t('coverage.empty.noClassCoverage') }}</small
                 >
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.typeCoverage") }}</span>
+              <span>{{ t('coverage.groups.typeCoverage') }}</span>
               <div class="chip-row">
                 <small
                   *ngFor="let item of current.coverage.coveredSelectedTypes"
                   class="coverage-chip"
                   >{{ item }}</small
                 >
-                <small *ngIf="!current.coverage.coveredSelectedTypes.length" class="coverage-chip"
-                  >{{ t("coverage.empty.noTypeCoverage") }}</small
+                <small
+                  *ngIf="!current.coverage.coveredSelectedTypes.length"
+                  class="coverage-chip"
+                  >{{ t('coverage.empty.noTypeCoverage') }}</small
                 >
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.burst") }}</span>
+              <span>{{ t('coverage.groups.burst') }}</span>
               <div class="chip-row">
-                <small *ngFor="let item of current.coverage.burst" class="coverage-chip">{{ item }}</small>
+                <small *ngFor="let item of current.coverage.burst" class="coverage-chip">{{
+                  item
+                }}</small>
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.consistency") }}</span>
+              <span>{{ t('coverage.groups.consistency') }}</span>
               <div class="chip-row">
-                <small *ngFor="let item of current.coverage.consistency" class="coverage-chip">{{ item }}</small>
+                <small *ngFor="let item of current.coverage.consistency" class="coverage-chip">{{
+                  item
+                }}</small>
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.utility") }}</span>
+              <span>{{ t('coverage.groups.utility') }}</span>
               <div class="chip-row">
-                <small *ngFor="let item of current.coverage.utility" class="coverage-chip">{{ item }}</small>
+                <small *ngFor="let item of current.coverage.utility" class="coverage-chip">{{
+                  item
+                }}</small>
               </div>
             </div>
 
             <div>
-              <span>{{ t("coverage.groups.matchedRequirements") }}</span>
+              <span>{{ t('coverage.groups.matchedRequirements') }}</span>
               <div class="chip-row">
-                <small *ngFor="let item of matchedRequiredAbilityLabels()" class="coverage-chip">{{ item }}</small>
-                <small *ngIf="!matchedRequiredAbilityLabels().length" class="coverage-chip"
-                  >{{ t("coverage.empty.noAbilityRequirements") }}</small
-                >
+                <small *ngFor="let item of matchedRequiredAbilityLabels()" class="coverage-chip">{{
+                  item
+                }}</small>
+                <small *ngIf="!matchedRequiredAbilityLabels().length" class="coverage-chip">{{
+                  t('coverage.empty.noAbilityRequirements')
+                }}</small>
               </div>
             </div>
 
             <div *ngIf="missingRequiredAbilityLabels().length">
-              <span>{{ t("coverage.groups.missingRequirements") }}</span>
+              <span>{{ t('coverage.groups.missingRequirements') }}</span>
               <div class="chip-row">
                 <small
                   *ngFor="let item of missingRequiredAbilityLabels()"
@@ -980,8 +1034,8 @@
             <div class="result-ship-card__head">
               <span class="role-pill">{{
                 shipSelection.source === 'manual'
-                  ? t("result.ship.manualSource")
-                  : t("result.ship.recommendedSource")
+                  ? t('result.ship.manualSource')
+                  : t('result.ship.recommendedSource')
               }}</span>
               <strong>{{ shipSelection.ship.name }}</strong>
             </div>
@@ -989,7 +1043,10 @@
             <p>{{ shipSelection.ship.description }}</p>
 
             <div class="chip-row result-ship-chip-row">
-              <small *ngFor="let chip of shipSelection.reasonChips" class="coverage-chip reason-chip">
+              <small
+                *ngFor="let chip of shipSelection.reasonChips"
+                class="coverage-chip reason-chip"
+              >
                 {{ chip }}
               </small>
             </div>
@@ -1032,7 +1089,9 @@
                 >
 
                 <div class="chip-row">
-                  <small *ngFor="let chip of slot.reasonChips" class="reason-chip">{{ chip }}</small>
+                  <small *ngFor="let chip of slot.reasonChips" class="reason-chip">{{
+                    chip
+                  }}</small>
                 </div>
 
                 <div class="chip-row result-ability-chip-row">
@@ -1056,7 +1115,7 @@
                     class="detail-link-button"
                     [routerLink]="getCharacterDetailLink(slot.character)"
                   >
-                    {{ "common.actions.viewDetails" | transloco }}
+                    {{ 'common.actions.viewDetails' | transloco }}
                   </ion-button>
                 </div>
               </div>

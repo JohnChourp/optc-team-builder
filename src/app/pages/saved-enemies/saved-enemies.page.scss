@@ -34,6 +34,7 @@
 }
 
 .hero-actions,
+.saved-enemy-main,
 .saved-enemy-head,
 .saved-enemy-actions,
 .section-head,
@@ -78,6 +79,12 @@
   gap: 6px;
 }
 
+.saved-enemy-main {
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
 .saved-enemy-list {
   display: grid;
   gap: 12px;
@@ -94,6 +101,22 @@
 .saved-enemy-copy {
   flex: 1;
   min-width: 0;
+}
+
+.saved-enemy-thumb {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.saved-enemy-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .saved-enemy-copy strong,
@@ -214,6 +237,47 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
+.enemy-image-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.enemy-image-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.enemy-image-preview {
+  width: min(100%, 320px);
+  aspect-ratio: 1;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.enemy-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.enemy-image-status {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.7);
+  line-height: 1.5;
+}
+
+.enemy-image-error {
+  margin: 0;
+  color: #ff9b9b;
+  line-height: 1.5;
+}
+
 .section-head--editor {
   margin-bottom: 0;
 }
@@ -266,6 +330,7 @@
 
 @media (max-width: 720px) {
   .saved-enemy-head,
+  .saved-enemy-main,
   .section-head,
   .editor-modal-head,
   .strict-toggle-row {
