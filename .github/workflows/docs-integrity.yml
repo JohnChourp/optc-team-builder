@@ -70,7 +70,7 @@ jobs:
           git -c "http.https://github.com/.extraheader=${auth_header}" clone --branch "$sibling_branch" "$repo" optc-team-builder-brain
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: optc-team-builder/.nvmrc
           cache: npm
