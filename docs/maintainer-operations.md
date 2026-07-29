@@ -67,6 +67,30 @@ that private detail.
 7. Close ClickUp only after the merged state, validation, and evidence links are
    recorded.
 
+## Release Version Rule
+
+Release versions keep **two-digit segments**. `scripts/bump-version.sh` enforces
+this, so a `patch` bump does not run past 99:
+
+| Current | Bump | Next |
+| --- | --- | --- |
+| `0.0.98` | patch | `0.0.99` |
+| `0.0.99` | patch | `0.1.0` |
+| `0.99.99` | patch | `1.0.0` |
+| `0.99.5` | minor | `1.0.0` |
+
+A `patch` at 99 rolls into the minor; a `minor` at 99 rolls into the major; a
+`patch` at 99 with the minor also at 99 rolls straight to the next major. An
+explicit `--version` is never rewritten, cap or no cap.
+
+This was added after a release from `0.0.99` shipped `v0.0.100`. If a version
+ever runs past the cap again, the next `patch` bump pulls it back into shape
+(`0.0.100` → `0.1.0`) rather than continuing to `0.0.101`.
+
+Covered by `scripts/bump-version.spec.ts`, which runs in the `release-check`
+script suite. That suite enumerates its spec files explicitly — a new script
+spec must be added to the matching `test:*` npm script or it never runs in CI.
+
 ## Maintenance Rule
 
 When a change adds, removes, renames, or materially changes a maintainer-facing

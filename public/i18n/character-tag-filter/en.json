@@ -1,0 +1,24 @@
+{
+  "label": "Character Tags",
+  "title": "Character tag filter",
+  "trigger": {
+    "empty": "Choose character tags",
+    "active": "{{tags}} tag(s) in {{groups}} group(s)",
+    "loading": "Loading character tags…"
+  },
+  "joiners": {
+    "any": "or",
+    "all": "and"
+  },
+  "removeGroup": "Remove tag group {{group}}",
+  "support": {
+    "empty": "Group crew and family tags with OR inside a group and AND across groups, e.g. (Straw Hat Pirates or Heart Pirates) and (Dressrosa).",
+    "all": "Showing characters that match every tag group.",
+    "any": "Showing characters that match at least one tag group.",
+    "unavailable": "Character tags are unavailable for this dataset."
+  },
+  "a11y": {
+    "applied": "Character tag filter applied: {{tags}} tag(s) in {{groups}} group(s).",
+    "cleared": "Character tag filter cleared."
+  }
+}

@@ -260,8 +260,8 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.saveTeamSlotSelection(leader);
-    page.applyTypeFilter('DEX');
-    page.applyClassFilter('Fighter');
+    page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
+    page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
     page.onCoverageCostRangeChange('min', '10');
     page.onCoverageCostRangeChange('max', '30');
 
@@ -269,13 +269,15 @@ describe('CaptainCoveragePage', () => {
       'DEX Fighter Candidate',
     ]);
 
-    page.clearTypeFilter();
-    page.clearClassFilter();
+    // The facet control's own Clear button emits an empty selection: that is
+    // this page's only clear path for type/class.
+    page.onTypeFacetChange({ values: [], matchMode: 'any' });
+    page.onClassFacetChange({ values: [], matchMode: 'any' });
     page.onCoverageCostRangeChange('min', null);
     page.onCoverageCostRangeChange('max', null);
 
-    expect(page.selectedType()).toBe('');
-    expect(page.selectedClass()).toBe('');
+    expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
     expect(page.coverageCostRange()).toEqual({ min: null, max: null });
     expect(page.resultCards().map((card) => card.character.name)).toEqual(
       expect.arrayContaining([
@@ -285,6 +287,221 @@ describe('CaptainCoveragePage', () => {
         'Expensive DEX Fighter Candidate',
       ]),
     );
+  });
+
+  it('treats a two-value class facet in all mode as an intersection, not a union', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Class Facet',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const both = createCharacter({
+      id: 2001,
+      name: 'Fighter Slasher',
+      classes: ['Fighter', 'Slasher'],
+    });
+    const fighterOnly = createCharacter({
+      id: 2002,
+      name: 'Fighter Shooter',
+      classes: ['Fighter', 'Shooter'],
+    });
+    const slasherOnly = createCharacter({
+      id: 2003,
+      name: 'Slasher Striker',
+      classes: ['Slasher', 'Striker'],
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, both, fighterOnly, slasherOnly],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'any' });
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['Fighter Shooter', 'Fighter Slasher', 'Slasher Striker']);
+
+    page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Fighter Slasher']);
+  });
+
+  it('finds a dual-type character by either of its types regardless of stored order', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Dual Type',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    // The dataset stores the same pair in BOTH orders, so an exact-string
+    // comparison on `type` would find one of these two and miss the other.
+    const intPsy = createCharacter({ id: 2001, name: 'INT PSY Candidate', type: 'INT,PSY' });
+    const psyInt = createCharacter({ id: 2002, name: 'PSY INT Candidate', type: 'PSY,INT' });
+    const strOnly = createCharacter({ id: 2003, name: 'STR Candidate', type: 'STR' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, intPsy, psyInt, strOnly],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    page.onTypeFacetChange({ values: ['PSY'], matchMode: 'any' });
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['INT PSY Candidate', 'PSY INT Candidate']);
+
+    page.onTypeFacetChange({ values: ['INT'], matchMode: 'any' });
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['INT PSY Candidate', 'PSY INT Candidate']);
+
+    // A dual-type character really does hold both, so `all` over the pair is a
+    // satisfiable query on this facet — not a degenerate one.
+    page.onTypeFacetChange({ values: ['INT', 'PSY'], matchMode: 'all' });
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['INT PSY Candidate', 'PSY INT Candidate']);
+  });
+
+  it('applies no type or class gate while both facets are empty', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Empty Facets',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const dex = createCharacter({ id: 2001, name: 'DEX Candidate', type: 'DEX' });
+    const qck = createCharacter({
+      id: 2002,
+      name: 'QCK Candidate',
+      type: 'QCK',
+      classes: ['Cerebral'],
+    });
+    const { page } = createPage({ captains: [leader], characters: [leader, dex, qck] });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['DEX Candidate', 'QCK Candidate']);
+
+    // An empty selection whose mode happens to be `all` is still no filter.
+    page.onTypeFacetChange({ values: [], matchMode: 'all' });
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['DEX Candidate', 'QCK Candidate']);
+  });
+
+  it('supplies a live per-facet match count from the loaded catalog', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Match Count',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+      type: 'STR',
+      classes: ['Striker'],
+    });
+    const dexFighter = createCharacter({
+      id: 2001,
+      name: 'DEX Fighter',
+      type: 'DEX',
+      classes: ['Fighter', 'Slasher'],
+    });
+    const dexShooter = createCharacter({
+      id: 2002,
+      name: 'DEX Shooter',
+      type: 'DEX',
+      classes: ['Shooter'],
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, dexFighter, dexShooter],
+    });
+
+    await page.ngOnInit();
+
+    // No selection => the count is the whole catalog, so the control never
+    // renders a misleading zero before the user has chosen anything.
+    expect(page.typeFacetMatchCount()).toBe(3);
+    expect(page.classFacetMatchCount()).toBe(3);
+
+    page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
+    expect(page.typeFacetMatchCount()).toBe(2);
+
+    page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+    expect(page.classFacetMatchCount()).toBe(1);
+
+    // A satisfiable `all` pair that simply matches nothing: a real query, and
+    // the evidence the control needs before it may claim disjointness.
+    page.onClassFacetChange({ values: ['Fighter', 'Striker'], matchMode: 'all' });
+    expect(page.classFacetMatchCount()).toBe(0);
+  });
+
+  it('restores every result card when the facet controls emit their cleared selection', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Facet Clear',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const dexFighter = createCharacter({
+      id: 2001,
+      name: 'DEX Fighter Clearable',
+      type: 'DEX',
+      classes: ['Fighter'],
+    });
+    const qckShooter = createCharacter({
+      id: 2002,
+      name: 'QCK Shooter Clearable',
+      type: 'QCK',
+      classes: ['Shooter'],
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, dexFighter, qckShooter],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
+    page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'DEX Fighter Clearable',
+    ]);
+
+    // This page has no clear-all button; `clear()` inside each control is the
+    // only reset path, and it arrives here as an empty selection.
+    page.onTypeFacetChange({ values: [], matchMode: 'any' });
+    page.onClassFacetChange({ values: [], matchMode: 'any' });
+
+    expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.name)
+        .sort(),
+    ).toEqual(['DEX Fighter Clearable', 'QCK Shooter Clearable']);
   });
 
   it('filters result characters by selected character tags (matches any selected tag)', async () => {
@@ -1857,8 +2074,35 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('supportAbilityDrafts()');
     expect(template).toContain('resultCards()');
     expect(template).toContain('<app-character-filter-row');
+    expect(template).toContain('<app-character-facet-filter');
+    expect(template).toContain('kind="type"');
+    expect(template).toContain('kind="class"');
+    expect(template).toContain('presentation="chips"');
+    expect(template).toContain('presentation="select"');
+    expect(template).toContain('testIdPrefix="captain-coverage"');
+    expect(template).toContain('[selection]="typeFacet()"');
+    expect(template).toContain('[selection]="classFacet()"');
+    expect(template).toContain('[options]="availableTypes()"');
+    expect(template).toContain('[options]="availableClasses()"');
+    expect(template).toContain('[matchCount]="typeFacetMatchCount()"');
+    expect(template).toContain('[matchCount]="classFacetMatchCount()"');
+    expect(template).toContain('(selectionChange)="onTypeFacetChange($event)"');
+    expect(template).toContain('(selectionChange)="onClassFacetChange($event)"');
     expect(template).toContain("t('filters.type.label')");
     expect(template).toContain("t('filters.class.label')");
+    expect(template).toContain("t('filters.type.placeholder')");
+    expect(template).toContain("t('filters.class.placeholder')");
+    // The retired typeahead surface is gone from the filter row on this page.
+    expect(template).not.toContain('[showTypeFilter]');
+    expect(template).not.toContain('[showClassFilter]');
+    expect(template).not.toContain('[typeQuery]');
+    expect(template).not.toContain('[classQuery]');
+    expect(template).not.toContain('[selectedType]');
+    expect(template).not.toContain('[selectedClass]');
+    expect(template).not.toContain('(typeSelected)');
+    expect(template).not.toContain('(classSelected)');
+    expect(template).not.toContain('(typeCleared)');
+    expect(template).not.toContain('(classCleared)');
     expect(template).toContain("t('filters.cost.from')");
     expect(template).toContain("t('filters.cost.to')");
     expect(template).toContain('onFavoritesOnlyFilterChange($event)');

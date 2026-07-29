@@ -47,8 +47,6 @@
     "eyebrow": "Slot picker",
     "filters": {
       "abilityRailLabel": "Manual team ability filter categories",
-      "anyClass": "Any class",
-      "anyType": "Any type",
       "captainAbility": {
         "copy": "Filter slot candidates by effects parsed from each character's own Captain Ability.",
         "eyebrow": "Captain Ability",

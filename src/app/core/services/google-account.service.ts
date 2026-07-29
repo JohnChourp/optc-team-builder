@@ -11,6 +11,13 @@ import { APP_SYNC_CONFIG, type AppSyncConfig } from '../sync/app-sync.config';
 const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const GOOGLE_DEFAULT_SCOPES = ['email', 'profile', GOOGLE_DRIVE_SCOPE];
 const SOCIAL_LOGIN_OAUTH_STATE_KEY = 'social_login_oauth_pending';
+// Locally remembered identity for the client-side (implicit) token flow. Google
+// access tokens expire ~hourly and the web plugin wipes its own stored state when
+// they do, so without this the user would be silently signed out on the next page
+// load. We keep the remembered profile until an explicit signOut() so the account
+// only ever disconnects on purpose. The backend-session flow does not use this key
+// (its server-side refresh token is authoritative), so a stale value is inert there.
+const GOOGLE_ACCOUNT_SESSION_KEY = 'optc_google_account_session';
 
 type GoogleSocialLoginClient = Pick<
   typeof SocialLogin,
@@ -117,6 +124,28 @@ function mapProfileFromJwt(idToken: string | null): GoogleAccountProfile | null 
   };
 }
 
+function sanitizeStoredProfile(value: unknown): GoogleAccountProfile | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const id = normalizeOptionalString(record['id']);
+
+  if (!id) {
+    return null;
+  }
+
+  return {
+    email: normalizeOptionalString(record['email']),
+    familyName: normalizeOptionalString(record['familyName']),
+    givenName: normalizeOptionalString(record['givenName']),
+    id,
+    imageUrl: normalizeOptionalString(record['imageUrl']),
+    name: normalizeOptionalString(record['name']),
+  };
+}
+
 function mapProfileFromLoginResult(result: GoogleLoginResponseOnline): GoogleAccountProfile | null {
   const id = normalizeOptionalString(result.profile.id);
 
@@ -205,7 +234,12 @@ export class GoogleAccountService {
     }
 
     if (!options.interactive) {
-      this.status.set('reconnect-required');
+      // Only a caller with no remembered identity gets pushed to reconnect-required;
+      // a remembered account stays connected and simply reports "no token right now".
+      if (!this.profile()) {
+        this.status.set('reconnect-required');
+      }
+
       return null;
     }
 
@@ -273,6 +307,7 @@ export class GoogleAccountService {
         idToken: result.result.idToken,
       };
       this.profile.set(profile);
+      this.persistLocalSession(profile);
       this.status.set('signed-in');
       this.sessionRevision.update((value) => value + 1);
 
@@ -281,9 +316,16 @@ export class GoogleAccountService {
       const message = this.resolveErrorMessage(error);
 
       this.authorizationState = null;
-      this.profile.set(null);
-      this.lastError.set(message);
-      this.status.set('reconnect-required');
+
+      // A cancelled or failed interactive re-auth must not visibly disconnect a
+      // remembered account — keep the user connected (they can retry) so the account
+      // only ever drops on an explicit signOut(). Only a first-time sign-in with no
+      // remembered identity falls through to the reconnect-required state.
+      if (!this.applyRememberedSession()) {
+        this.profile.set(null);
+        this.lastError.set(message);
+        this.status.set('reconnect-required');
+      }
 
       throw error;
     }
@@ -304,6 +346,7 @@ export class GoogleAccountService {
       } catch {
         // Clear local account state even if the backend session has already expired.
       } finally {
+        this.clearLocalSession();
         this.authorizationState = null;
         this.profile.set(null);
         this.lastError.set(null);
@@ -318,6 +361,7 @@ export class GoogleAccountService {
     } catch {
       // Ignore logout failures and clear local account state anyway.
     } finally {
+      this.clearLocalSession();
       this.authorizationState = null;
       this.profile.set(null);
       this.lastError.set(null);
@@ -457,6 +501,14 @@ export class GoogleAccountService {
       return;
     }
 
+    // The access token has expired (it lives ~1 hour), but a remembered profile
+    // means the user connected before and never signed out — keep them connected
+    // and mint a fresh token lazily the next time a Drive action needs one.
+    if (this.profile()) {
+      this.status.set('signed-in');
+      return;
+    }
+
     if (this.status() === 'reconnect-required') {
       return;
     }
@@ -572,6 +624,14 @@ export class GoogleAccountService {
 
       if (!isLoggedIn) {
         this.authorizationState = null;
+
+        // The web plugin returns false (and discards its own token) once the access
+        // token expires. Never treat that as a sign-out when we still remember the
+        // account — only an explicit signOut() clears the remembered profile.
+        if (this.applyRememberedSession()) {
+          return null;
+        }
+
         this.profile.set(null);
         this.status.set('signed-out');
         return null;
@@ -583,6 +643,11 @@ export class GoogleAccountService {
 
       if (!accessToken || !profile) {
         this.authorizationState = null;
+
+        if (this.applyRememberedSession()) {
+          return null;
+        }
+
         this.profile.set(null);
         this.status.set('reconnect-required');
         return null;
@@ -593,15 +658,99 @@ export class GoogleAccountService {
         idToken: authorizationCode.jwt ?? null,
       };
       this.profile.set(profile);
+      this.persistLocalSession(profile);
       this.lastError.set(null);
 
       return this.authorizationState;
     } catch (error) {
       this.authorizationState = null;
+
+      // A network hiccup while validating the token (e.g. the tokeninfo call) must
+      // not sign a remembered user out either.
+      if (this.applyRememberedSession()) {
+        return null;
+      }
+
       this.profile.set(null);
       this.lastError.set(this.resolveErrorMessage(error));
       this.status.set('reconnect-required');
       return null;
+    }
+  }
+
+  private applyRememberedSession(): boolean {
+    const remembered = this.loadLocalSession();
+
+    if (!remembered) {
+      return false;
+    }
+
+    this.profile.set(remembered);
+    this.status.set('signed-in');
+    this.lastError.set(null);
+
+    return true;
+  }
+
+  private getLocalStorage(): Storage | null {
+    try {
+      if (typeof window === 'undefined') {
+        return null;
+      }
+
+      return window.localStorage ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private persistLocalSession(profile: GoogleAccountProfile): void {
+    const storage = this.getLocalStorage();
+
+    if (!storage) {
+      return;
+    }
+
+    try {
+      storage.setItem(GOOGLE_ACCOUNT_SESSION_KEY, JSON.stringify({ profile }));
+    } catch {
+      // Ignore storage quota or privacy-mode failures; remembering is best-effort.
+    }
+  }
+
+  private loadLocalSession(): GoogleAccountProfile | null {
+    const storage = this.getLocalStorage();
+
+    if (!storage) {
+      return null;
+    }
+
+    try {
+      const rawSession = storage.getItem(GOOGLE_ACCOUNT_SESSION_KEY);
+
+      if (!rawSession) {
+        return null;
+      }
+
+      const parsedSession = JSON.parse(rawSession) as { profile?: unknown };
+
+      return sanitizeStoredProfile(parsedSession?.profile);
+    } catch {
+      return null;
+    }
+  }
+
+  private clearLocalSession(): void {
+    const storage = this.getLocalStorage();
+
+    if (!storage) {
+      return;
+    }
+
+    try {
+      storage.removeItem(GOOGLE_ACCOUNT_SESSION_KEY);
+    } catch {
+      // Ignore storage failures; the in-memory state is already cleared by callers.
     }
   }
 

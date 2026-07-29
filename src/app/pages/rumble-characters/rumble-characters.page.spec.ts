@@ -8,8 +8,13 @@ import {
   type NormalizedRumbleRoleTag,
   type RumbleUnitScore,
 } from '../../core/models/auto-team-builder-rumble.models';
+import { type CharacterTagSetSelection } from '../../core/models/optc.models';
+import { createCharacterTagSet } from '../../core/services/character-tag-set.utils';
+import { type CharacterTagFilterChange } from '../../shared/character-tag-filter/character-tag-filter.component';
 import { RumbleCharactersPage } from './rumble-characters.page';
 
+// `IonModal` is only reachable through the character-tag filter shell, which
+// transitively pulls in `CharacterTagSetPickerComponent`.
 vi.mock('@ionic/angular/standalone', () => ({
   IonButton: class {},
   IonButtons: class {},
@@ -18,6 +23,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonIcon: class {},
   IonInput: class {},
   IonMenuButton: class {},
+  IonModal: class {},
   IonSearchbar: class {},
   IonSelect: class {},
   IonSelectOption: class {},
@@ -139,6 +145,124 @@ describe('RumbleCharactersPage', () => {
     expect(page.cardViews().map((card) => card.character.id)).toEqual([1003]);
   });
 
+  it('filters ranked scores by character tag groups before the visible page slice', () => {
+    const units = [
+      ...createTaggedUnits(2001, 40, ['Straw Hat Pirates']),
+      ...createTaggedUnits(3001, 20, ['Heart Pirates']),
+    ];
+    const { page } = createPage({ scoredUnits: units });
+
+    page.candidates.set(units);
+
+    expect(page.filteredScores()).toHaveLength(60);
+    expect(page.hasMore()).toBe(true);
+
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [createCharacterTagSet(['Straw Hat Pirates'], 'any', 'set-a')],
+    });
+
+    // Asserted on `filteredScores` AND `hasMore`, not only `visibleScores`:
+    // a clause added after the slice would leave `hasMore()` lying.
+    expect(page.filteredScores()).toHaveLength(40);
+    expect(page.hasMore()).toBe(false);
+    expect(page.visibleScores()).toHaveLength(40);
+  });
+
+  it('ANDs tag groups while ORing tags inside a group', () => {
+    const units = [
+      createUnit({ id: 1001, characterTags: ['Straw Hat Pirates', 'Dressrosa'] }),
+      createUnit({ id: 1002, characterTags: ['Heart Pirates', 'Dressrosa'] }),
+      createUnit({ id: 1003, characterTags: ['Straw Hat Pirates'] }),
+      createUnit({ id: 1004, characterTags: ['Dressrosa'] }),
+    ];
+    const { page } = createPage({ scoredUnits: units });
+
+    page.candidates.set(units);
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [
+        createCharacterTagSet(['Straw Hat Pirates', 'Heart Pirates'], 'any', 'set-a'),
+        createCharacterTagSet(['Dressrosa'], 'any', 'set-b'),
+      ],
+    });
+
+    const matchedIds = page.filteredScores().map((score) => score.unit.character.id);
+
+    expect(matchedIds.sort()).toEqual([1001, 1002]);
+  });
+
+  it('ignores an empty character tag selection', () => {
+    const units = [
+      createUnit({ id: 1001, characterTags: ['Straw Hat Pirates'] }),
+      createUnit({ id: 1002, characterTags: [] }),
+    ];
+    const { page } = createPage({ scoredUnits: units });
+
+    page.candidates.set(units);
+
+    const baseline = page.filteredScores().length;
+
+    // An "add group, add no tag" selection must gate nothing.
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [createCharacterTagSet([], 'any', 'set-a')],
+    });
+
+    expect(page.filteredScores()).toHaveLength(baseline);
+
+    applyTagFilter(page, { operator: 'all', sets: [] });
+
+    expect(page.filteredScores()).toHaveLength(baseline);
+  });
+
+  it('resets the visible page when the tag selection changes', () => {
+    const units = createTaggedUnits(2001, 120, ['Straw Hat Pirates']);
+    const { page } = createPage({ scoredUnits: units });
+
+    page.candidates.set(units);
+    page.loadMore();
+
+    expect(page.visibleScores()).toHaveLength(96);
+
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [createCharacterTagSet(['Straw Hat Pirates'], 'any', 'set-a')],
+    });
+
+    expect(page.visibleScores()).toHaveLength(48);
+  });
+
+  it('clears the character tag selection from the page reset control', () => {
+    const units = [
+      createUnit({ id: 1001, characterTags: ['Straw Hat Pirates'] }),
+      createUnit({ id: 1002, characterTags: ['Heart Pirates'] }),
+    ];
+    const { page } = createPage({ scoredUnits: units });
+
+    page.candidates.set(units);
+    applyTagFilter(page, {
+      operator: 'all',
+      sets: [createCharacterTagSet(['Straw Hat Pirates'], 'any', 'set-a')],
+    });
+
+    expect(page.filteredScores()).toHaveLength(1);
+
+    page.resetPage();
+
+    expect(page.characterTagSetSelection()).toEqual({ operator: 'all', sets: [] });
+    expect(page.filteredScores()).toHaveLength(2);
+  });
+
+  it('preloads the shared character tag scopes so the filter never renders a raw key', async () => {
+    const { page, i18n } = createPage({ scoredUnits: [] });
+
+    await page.ngOnInit();
+
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-sets');
+    expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-filter');
+  });
+
   it('keeps the Build Focus control and core filters in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/rumble-characters/rumble-characters.page.html'),
@@ -154,8 +278,30 @@ describe('RumbleCharactersPage', () => {
     expect(template).toContain('onMaxCostChange($event)');
     expect(template).toContain('buffFocusRanks');
     expect(template).toContain('moveBuffFocusStat(stat,');
+    expect(template).toContain('<app-character-tag-filter');
+    expect(template).toContain('testIdPrefix="rumble-characters"');
+    expect(template).toContain('[selection]="characterTagSetSelection()"');
+    expect(template).toContain('(filterChange)="onCharacterTagFilterChange($event)"');
   });
 });
+
+function applyTagFilter(page: RumbleCharactersPage, selection: CharacterTagSetSelection): void {
+  // The shell always emits both fields; this page ignores `matchingCharacterIds`.
+  page.onCharacterTagFilterChange({
+    selection,
+    matchingCharacterIds: undefined,
+  } satisfies CharacterTagFilterChange);
+}
+
+function createTaggedUnits(
+  firstId: number,
+  count: number,
+  characterTags: string[],
+): RumbleUnitScore[] {
+  return Array.from({ length: count }, (_unused, offset) =>
+    createUnit({ id: firstId + offset, characterTags }),
+  );
+}
 
 function createPage(
   overrides: {
@@ -209,6 +355,7 @@ function createPage(
 }
 
 function createUnit(overrides: {
+  characterTags?: string[];
   classes?: string[];
   cooldown?: number | null;
   cost?: number;
@@ -257,6 +404,7 @@ function createUnit(overrides: {
       detail: {
         characterId: overrides.id,
         rumbleData: {},
+        characterTags: overrides.characterTags ?? [],
       },
       detailImageUrl: `/characters/${overrides.id}.png`,
     },

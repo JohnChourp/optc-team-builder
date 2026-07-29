@@ -486,41 +486,27 @@
                   ></app-character-tag-set-picker>
 
                   <div class="manual-team-picker__filters">
-                    <label class="manual-team-picker-filter">
-                      <span>{{ t('picker.filters.type') }}</span>
-                      <ion-select
-                        interface="popover"
-                        fill="outline"
-                        [value]="selectedTypeFilter()"
-                        (ionChange)="onTypeFilterChange($event)"
-                      >
-                        <ion-select-option value="">{{
-                          t('picker.filters.anyType')
-                        }}</ion-select-option>
-                        @for (type of availableTypes(); track type) {
-                          <ion-select-option [value]="type">{{ type }}</ion-select-option>
-                        }
-                      </ion-select>
-                    </label>
+                    <app-character-facet-filter
+                      kind="type"
+                      presentation="chips"
+                      testIdPrefix="manual-team"
+                      [label]="t('picker.filters.type')"
+                      [options]="availableTypes()"
+                      [selection]="typeFacet()"
+                      [disabled]="candidatesLoading()"
+                      (selectionChange)="onTypeFacetChange($event)"
+                    ></app-character-facet-filter>
 
-                    <label class="manual-team-picker-filter">
-                      <span>{{ t('picker.filters.class') }}</span>
-                      <ion-select
-                        interface="popover"
-                        fill="outline"
-                        [value]="selectedClassFilter()"
-                        (ionChange)="onClassFilterChange($event)"
-                      >
-                        <ion-select-option value="">{{
-                          t('picker.filters.anyClass')
-                        }}</ion-select-option>
-                        @for (characterClass of availableClasses(); track characterClass) {
-                          <ion-select-option [value]="characterClass">
-                            {{ characterClass }}
-                          </ion-select-option>
-                        }
-                      </ion-select>
-                    </label>
+                    <app-character-facet-filter
+                      kind="class"
+                      presentation="select"
+                      testIdPrefix="manual-team"
+                      [label]="t('picker.filters.class')"
+                      [options]="availableClasses()"
+                      [selection]="classFacet()"
+                      [disabled]="candidatesLoading()"
+                      (selectionChange)="onClassFacetChange($event)"
+                    ></app-character-facet-filter>
 
                     <div class="manual-team-picker-filter">
                       <span>{{ t('picker.filters.characterTags.label') }}</span>

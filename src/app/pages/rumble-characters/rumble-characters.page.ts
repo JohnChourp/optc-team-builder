@@ -37,7 +37,11 @@ import {
   type RumbleBuffFocusRank,
   type RumbleBuffFocusStat,
 } from '../../core/models/auto-team-builder-rumble.models';
-import { type CharacterDetailRecord, type DatasetManifest } from '../../core/models/optc.models';
+import {
+  type CharacterDetailRecord,
+  type CharacterTagSetSelection,
+  type DatasetManifest,
+} from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import {
   canMoveRumbleBuffFocusStat,
@@ -46,8 +50,16 @@ import {
   type RumbleBuffFocusDirection,
 } from '../../core/services/auto-team-builder-rumble-focus.utils';
 import { AutoTeamBuilderRumbleService } from '../../core/services/auto-team-builder-rumble.service';
+import {
+  createEmptyCharacterTagSetSelection,
+  matchesCharacterTagSets,
+} from '../../core/services/character-tag-set.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import {
+  CharacterTagFilterComponent,
+  type CharacterTagFilterChange,
+} from '../../shared/character-tag-filter/character-tag-filter.component';
 import {
   rankRumbleCharacters,
   type RumbleCharacterRankedScore,
@@ -76,6 +88,7 @@ interface RumbleCharacterCardView {
   selector: 'app-rumble-characters-page',
   standalone: true,
   imports: [
+    CharacterTagFilterComponent,
     CommonModule,
     IonButton,
     IonButtons,
@@ -110,6 +123,9 @@ export class RumbleCharactersPage implements OnInit {
   public readonly hideFavorites = signal(false);
   public readonly selectedRoles = signal<NormalizedRumbleRoleTag[]>([]);
   public readonly selectedRumbleType = signal('');
+  public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
   public readonly maxCooldownInput = signal('');
   public readonly maxCostInput = signal('');
   public readonly visibleLimit = signal(PAGE_SIZE);
@@ -210,6 +226,8 @@ export class RumbleCharactersPage implements OnInit {
     try {
       await Promise.all([
         this.i18n.preloadScope('rumble-characters'),
+        this.i18n.preloadScope('character-tag-sets'),
+        this.i18n.preloadScope('character-tag-filter'),
         this.userState.readyFavoriteCharacterIds(),
       ]);
       const [summary, candidates] = await Promise.all([
@@ -277,6 +295,14 @@ export class RumbleCharactersPage implements OnInit {
     this.resetVisiblePage();
   }
 
+  public onCharacterTagFilterChange(change: CharacterTagFilterChange): void {
+    // `change.matchingCharacterIds` is ignored on purpose: every row here already
+    // carries its `CharacterDetailRecord`, so the per-character predicate is the
+    // cheaper and equivalent evaluator and needs no tag match index.
+    this.characterTagSetSelection.set(change.selection);
+    this.resetVisiblePage();
+  }
+
   public onRumbleTypeChange(event: CustomEvent<{ value?: string | null }>): void {
     this.selectedRumbleType.set(String(event.detail.value ?? '').trim());
     this.resetVisiblePage();
@@ -337,6 +363,9 @@ export class RumbleCharactersPage implements OnInit {
     this.selectedRumbleType.set('');
     this.maxCooldownInput.set('');
     this.maxCostInput.set('');
+    // Must stay registered here: an omitted reset leaves an active tag filter
+    // with no on-screen cause.
+    this.characterTagSetSelection.set(createEmptyCharacterTagSetSelection());
     this.buffFocus.set(DEFAULT_RUMBLE_BUFF_FOCUS.map((preference) => ({ ...preference })));
     this.resetVisiblePage();
   }
@@ -389,6 +418,17 @@ export class RumbleCharactersPage implements OnInit {
     if (
       selectedClass &&
       !character.classes.some((characterClass) => characterClass.toLowerCase() === selectedClass)
+    ) {
+      return false;
+    }
+
+    // Runs inside `matchesFilters`, i.e. before `visibleScores()` slices by
+    // `visibleLimit()`, so `hasMore()` stays truthful.
+    if (
+      !matchesCharacterTagSets(
+        character.detail.characterTags ?? [],
+        this.characterTagSetSelection(),
+      )
     ) {
       return false;
     }

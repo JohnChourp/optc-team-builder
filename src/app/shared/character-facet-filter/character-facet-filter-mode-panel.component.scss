@@ -1,0 +1,90 @@
+/*
+ * The match-mode row and the zero-result line are PROGRESSIVE DISCLOSURE: both
+ * appear only once the user has selected something. Reserving their height up
+ * front is what stops the first tap from shoving the rest of the filter panel
+ * down the page. The reserved heights are sized for the Greek copy, which is
+ * the longer of the two locales for every string that lands here.
+ *
+ * Pure CSS transitions on purpose — no `@angular/animations` import anywhere in
+ * this repo — and every one of them collapses under `prefers-reduced-motion`.
+ */
+.character-facet-filter__mode {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.character-facet-filter__mode ion-icon {
+  font-size: 1rem;
+  color: rgba(248, 251, 255, 0.46);
+}
+
+.character-facet-filter__mode-button {
+  padding: 6px 12px;
+  border: 1px solid rgba(248, 251, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(248, 251, 255, 0.06);
+  color: rgba(248, 251, 255, 0.78);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+}
+
+.character-facet-filter__mode-button:hover:not(:disabled) {
+  border-color: rgba(248, 251, 255, 0.36);
+  background: rgba(248, 251, 255, 0.1);
+}
+
+.character-facet-filter__mode-button:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.character-facet-filter__mode-button--active {
+  border-color: rgba(112, 190, 255, 0.54);
+  background: rgba(112, 190, 255, 0.18);
+  color: #a8d8ff;
+}
+
+.character-facet-filter__mode-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.character-facet-filter__match-count {
+  margin-inline-start: auto;
+  font-size: 0.74rem;
+  color: rgba(248, 251, 255, 0.58);
+}
+
+/*
+ * `mode.disjoint.class` is the longest string in the scope and wraps to three
+ * lines in Greek at 375 px, so the reserved height covers three lines rather
+ * than the two English needs.
+ */
+.character-facet-filter__zero {
+  min-height: 52px;
+  margin: 0;
+  color: #f5c84c;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.character-facet-filter__option,
+.character-facet-filter__chip,
+.character-facet-filter__mode-button {
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-facet-filter__option,
+  .character-facet-filter__chip,
+  .character-facet-filter__mode-button {
+    transition-duration: 1ms !important;
+  }
+}

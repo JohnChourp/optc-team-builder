@@ -93,6 +93,28 @@ function extractAbilityKeys(
   return abilities.map((ability) => ability.key);
 }
 
+async function deriveSupportKeysFromText(...texts: string[]): Promise<string[]> {
+  const characters = [
+    {
+      id: 987654,
+      detail: {
+        specialText: null,
+        captainAbility: null,
+        sailorAbilities: [],
+        supportData: texts.map((text) => ({
+          supportedCharactersText: 'Tester',
+          levelDescriptions: [text],
+        })),
+        builderAbilities: [],
+      },
+    },
+  ];
+
+  await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+  return extractAbilityKeys(characters[0]?.detail.builderAbilities ?? []);
+}
+
 describe('auto team builder ability parser', () => {
   it('parser contract: utility-effect', () => {
     const contractCase = getCaptainContractCase('utility-effect');
@@ -661,6 +683,46 @@ describe('auto team builder ability parser', () => {
     ] as const) {
       expect(extractAbilityKeys(analyzeBuilderAbilityText(notAnApplication, source))).not.toContain(
         'apply_weakened',
+      );
+    }
+  });
+
+  it('tags Set Target only on the applier, across special / super / captain, never boost-against or cure', () => {
+    // Enemy-inflicted debuff: "inflicts all enemies with Set Target, increasing
+    // damage taken from <types/classes> by Nx ...". Anchored on the applier verb,
+    // so it fires from the base special, the super special (per-key allowlist:
+    // #4242/#4502 carry it only there), and captain text (#4461/#4523).
+    for (const [text, source] of [
+      [
+        'Inflicts all enemies with Set Target, increasing damage taken from Driven and Slasher characters by 2x and reducing Special Cooldown of Driven and Slasher characters by 2 turns when they defeat an enemy, for 3 turns',
+        'specialText',
+      ],
+      [
+        'Inflicts all enemies with Set Target, increasing damage taken from Slasher, Shooter and Striker characters by 2x, for 3 turns',
+        'superSpecialText',
+      ],
+      [
+        'inflicts all enemies with Set Target, increasing damage taken from [DEX] and Shooter characters by 2x, for 3 turns',
+        'captainAbility',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_set_target',
+      );
+    }
+    // The bare "Set Target" noun also appears in boost-against, cure/duration and
+    // precondition clauses — none of which APPLY the debuff. The applier anchor
+    // (\binflicts?\b, which never matches the participle "inflicted") excludes them.
+    for (const [notAnApplication, source] of [
+      ['boosts ATK against enemies inflicted with Set Target by 1.75x', 'captainAbility'],
+      ["reduces enemies' Set Target duration by 3 turns", 'specialText'],
+      [
+        'if enemies are inflicted with Set Target when the special is activated, recovers 5,000 HP',
+        'specialText',
+      ],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(notAnApplication, source))).not.toContain(
+        'apply_set_target',
       );
     }
   });
@@ -1573,6 +1635,103 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('change_slots');
   });
 
+  it('detects change_slot_chance from "boosts chances of getting <orb> orbs", not the reduce drawback', () => {
+    // Boost Orb Chance. Canonical wording is chance→orb ("boosts chances of getting
+    // [X] orbs"); the prior matcher required orb→chance and matched 0 (a dead key).
+    // Special and captain sources, single and multi-colour lists.
+    for (const [text, source] of [
+      ['Boosts chances of getting [QCK] orbs for 3 turns', 'specialText'],
+      ['boosts ATK of Fighter characters by 2x, boosts chances of getting [PSY] and [INT] orbs', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'change_slot_chance',
+      );
+    }
+    // The self-inflicted / debuff direction "lowers/reduces chances of getting <orb>"
+    // is a drawback, not a beneficial orb-chance boost, and must NOT be tagged.
+    for (const text of [
+      'boosts ATK of all characters by 1.3x, lowers chances of getting [STR] orbs',
+      'reduces chances of getting [RCV] orbs for 2 turns',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'captainAbility'))).not.toContain(
+        'change_slot_chance',
+      );
+    }
+  });
+
+  it('detects critical_damage_boost from "boosts Critical Hit Damage", not the trigger or condition', () => {
+    // Grant: "boosts [the] Critical Hit Damage of <scope> by N%". OPTC-DB names the
+    // buff "Critical Hit Damage", so the old /critical damage/ matcher was a dead key.
+    for (const [text, source] of [
+      ['boosts Critical Hit Damage of Slasher and Shooter characters by 50% for 2 turns', 'specialText'],
+      ['boosts Critical Hit Damage of all characters by 75% for 2 turns', 'superSpecialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'critical_damage_boost',
+      );
+    }
+    // The "performs a Critical Hit" trigger and "if your crew has Critical Hit Damage"
+    // condition are NOT grants of the buff.
+    for (const text of [
+      "when a Slasher character performs a Critical Hit, reduces enemies' DEF by 20%",
+      'If your crew has Critical Hit Damage when the special is activated, boosts ATK by 2x',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'critical_damage_boost',
+      );
+    }
+  });
+
+  it('detects critical_hit_chance_boost from "boosts Critical Hit Rate", not "Critical Hit Chance"', () => {
+    // Grant: "boosts [the] Critical Hit Rate of <scope> by N%". OPTC-DB names the buff
+    // "Critical Hit Rate" (== chance), so the old /critical hit chance/ was a dead key.
+    for (const [text, source] of [
+      ['boosts Critical Hit Rate of Slasher characters by 30% for 1 turn', 'specialText'],
+      ['boosts Critical Hit Rate of Slasher and Free Spirit characters by 30% for 2 turns', 'superSpecialText'],
+      ['boosts ATK of [STR] characters by 2x and boosts Critical Hit Rate of all characters by 20%', 'captainAbility'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'critical_hit_chance_boost',
+      );
+    }
+    // Trigger and condition references are not grants.
+    for (const text of [
+      'when a Cerebral character performs a Critical Hit, reduces enemies’ Percent Damage Reduction duration by 2 turns',
+      'If your crew has Critical Hit Rate when the special is activated, boosts ATK by 2x',
+    ]) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, 'specialText'))).not.toContain(
+        'critical_hit_chance_boost',
+      );
+    }
+  });
+
+  it('detects reduce_switch_effect_use and reduce_vs_effect_gauge from the real VS-mechanic wording', () => {
+    // "reduces [the] Switch Effect of <scope> by N turns" (was a dead key requiring a
+    // trailing "use") and "reduces … VS Gauge …" (was a dead key requiring "VS effect
+    // gauge"). Both fire — including from the shared "Switch Effect and VS Gauge" clause.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces Switch Effect of this character by 8 turns', 'specialText'),
+      ),
+    ).toContain('reduce_switch_effect_use');
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces VS Gauge of this character by 1', 'specialText'),
+      ),
+    ).toContain('reduce_vs_effect_gauge');
+    const both = extractAbilityKeys(
+      analyzeBuilderAbilityText('Reduces Switch Effect and VS Gauge of all characters by 2 turns', 'captainAbility'),
+    );
+    expect(both).toContain('reduce_switch_effect_use');
+    expect(both).toContain('reduce_vs_effect_gauge');
+    // Super special grant (per-key allowlist).
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces Switch Effect of all characters by 3 turns', 'superSpecialText'),
+      ),
+    ).toContain('reduce_switch_effect_use');
+  });
+
   it('extracts multiple unique effects from one special text without duplicates', () => {
     expect(
       analyzeBuilderAbilityText(
@@ -1821,6 +1980,29 @@ describe('auto team builder ability parser', () => {
         analyzeBuilderAbilityText('Locks the minimum chain multiplier to 2x', 'specialText'),
       ),
     ).not.toContain('chain_multiplier_lock');
+  });
+
+  it('detects chain_multiplier_lock_min_max from the "sets Chain Boundaries" grant, not references', () => {
+    // The min/max chain lock = the "Chain Boundary" buff. Canonical grant wording is
+    // "sets Chain Boundaries to <min>x and <max>x for N turns" (was a dead key keyed on
+    // the non-existent "minimum/maximum chain multiplier"). Base + super special.
+    for (const [text, source] of [
+      ['sets Chain Boundaries to 2.0x and 35.0x for 3 turns', 'specialText'],
+      ['Sets Chain Boundaries to 3.25x-4x and 35.0x for 2 turns', 'superSpecialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'chain_multiplier_lock_min_max',
+      );
+    }
+    // References to the Chain Boundary buff by name (no "sets" verb) are NOT grants.
+    for (const [text, source] of [
+      ['increases boost effects of Chain Lock and Chain Boundary buffs to 3.75x', 'specialText'],
+      ['If enemies have Chain Limit, Chain Lock or Chain Boundary, boosts ATK by 2x', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).not.toContain(
+        'chain_multiplier_lock_min_max',
+      );
+    }
   });
 
   it('detects boost_slot_effects only for the literal "Orb Effects"/"Slot Effects" grant', () => {
@@ -2685,6 +2867,34 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('apply_resistance_reduction');
   });
 
+  it('detects apply_def_reduction from the spelled-out "reduces the defense of enemies by N%" wording', () => {
+    // Canonical DEF Down application (was a dead key: the legacy /reduces..enem..DEF/
+    // and /inflicts..DEF Down/ branches matched 0 because upstream spells out "defense").
+    // Base special, super special (per-key allowlist) and the placeholder "?%" form.
+    for (const [text, source] of [
+      ['Reduces the defense of all enemies by 50% for 2 turns', 'specialText'],
+      ['reduces the defense of all enemies by 30% for 1 turn', 'superSpecialText'],
+      ['Sharply reduces the defense of all enemies by ?% for 1 turn', 'specialText'],
+    ] as const) {
+      expect(extractAbilityKeys(analyzeBuilderAbilityText(text, source))).toContain(
+        'apply_def_reduction',
+      );
+    }
+    // The enemy Increased Defense BUFF removal (a different key) is worded as a
+    // duration reduction "by N turns", never "defense of enemies ... by N%".
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText("reduces enemies' Increased Defense duration by 7 turns", 'specialText'),
+      ),
+    ).not.toContain('apply_def_reduction');
+    // The crew self-drawback "reduces defense of all characters" is not an enemy DEF Down.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText('reduces defense of all characters by 50% for 1 turn', 'specialText'),
+      ),
+    ).not.toContain('apply_def_reduction');
+  });
+
   it('scopes delayed_effect_launch to genuine launches, excluding "after N turns" ramp caps', () => {
     // Genuine delayed launches (kept): named-special activation, delayed boost,
     // "After N turns, <effect>" (comma), and the colon "launches ... after N turn:" form.
@@ -2912,6 +3122,18 @@ describe('auto team builder ability parser', () => {
         analyzeBuilderAbilityText('Changes own Type and both Classes to any selected combination.', 'specialText'),
       ),
     ).toContain('class_change');
+    // Nine units (Luffy #4150, Shanks #4152/#4153, Ace #4154, Coby #4250, Roger &
+    // Rayleigh & Gaban #4387, Luffy & Bonney #4490, Luffy #4557/#4558) carry the
+    // class change ONLY in their super special, so class_change reads superSpecialText
+    // via the per-key allowlist. 10 -> 19.
+    expect(
+      extractAbilityKeys(
+        analyzeBuilderAbilityText(
+          'changes Class 1 of all non-Fighter Class 1 Free Spirit characters to Fighter for 1 turn.',
+          'superSpecialText',
+        ),
+      ),
+    ).toContain('class_change');
     // "boosts Advantageous Class" is a damage boost bridged from a "changes orbs"
     // clause — NOT a class change. The old 120-char `changes … class` bridge
     // mis-tagged these (#4372 special, #4477 captainAbility — the lone captain match).
@@ -2933,11 +3155,11 @@ describe('auto team builder ability parser', () => {
     ).not.toContain('class_change');
   });
 
-  it('scopes chain_multiplier_lock_min_max to the "minimum/maximum chain multiplier" object', () => {
-    // Genuine min/max lock grant wording (the key must catch it if it appears).
+  it('scopes chain_multiplier_lock_min_max to the "sets Chain Boundaries" grant object', () => {
+    // Genuine min/max lock grant wording: "sets Chain Boundaries to <min>x and <max>x".
     expect(
       extractAbilityKeys(
-        analyzeBuilderAbilityText('Locks the minimum chain multiplier at 2x for 3 turns.', 'specialText'),
+        analyzeBuilderAbilityText('sets Chain Boundaries to 2.5x and 35.0x for 2 turns.', 'specialText'),
       ),
     ).toContain('chain_multiplier_lock_min_max');
     // "MAX" of "crew's MAX HP" near a "Chain …" clause must NOT match (old
@@ -5176,9 +5398,9 @@ describe('auto team builder ability parser', () => {
       'Reduces Special Cooldown of this character by 2 turns at start of quest.',
       'crewmate_special_charge_start_of_quest',
     ],
-    ['atk boost', 'Boosts ATK of Fighter characters by 75.', 'crewmate_atk_boost_fighter'],
-    ['rcv boost', 'Boosts RCV of this character by 100.', 'crewmate_rcv_boost_self'],
-    ['hp boost', 'Boosts HP of STR characters by 200.', 'crewmate_hp_boost_str'],
+    ['atk boost', 'Boosts base ATK of Fighter characters by 75.', 'crewmate_atk_boost_fighter'],
+    ['rcv boost', 'Boosts base RCV of this character by 100.', 'crewmate_rcv_boost_self'],
+    ['hp boost', 'Boosts base HP of [STR] characters by 200.', 'crewmate_hp_boost_str'],
     [
       'end of turn recovery',
       'Recovers 1000 HP at the end of each turn.',
@@ -5193,6 +5415,100 @@ describe('auto team builder ability parser', () => {
         }),
       ]),
     );
+  });
+
+  describe('crewmate sailor ability wording audit (2026-07 batch)', () => {
+    const crewmateKeys = (text: string): string[] =>
+      analyzeBuilderAbilityText(text, 'sailorAbilities')
+        .map((ability) => ability.key)
+        .filter((key) => key.startsWith('crewmate_'));
+
+    it.each([
+      // Bracketed type token in a comma/and list — the whole reason 15 type keys matched 0.
+      [
+        'Boosts base ATK, HP and RCV of [STR], [DEX] and [QCK] characters by 30',
+        ['crewmate_atk_boost_str', 'crewmate_hp_boost_dex', 'crewmate_rcv_boost_qck'],
+      ],
+      // Mixed type + class list sharing one "characters".
+      [
+        'Boosts base ATK of [PSY], Free Spirit and Shooter characters by 100',
+        ['crewmate_atk_boost_psy', 'crewmate_atk_boost_free_spirit', 'crewmate_atk_boost_shooter'],
+      ],
+      // Multi-class list.
+      [
+        'Boosts base ATK, HP and RCV of Powerhouse and Cerebral characters by 100',
+        ['crewmate_atk_boost_powerhouse', 'crewmate_rcv_boost_cerebral'],
+      ],
+      // Possessive form.
+      [
+        "Boosts Fighter characters' base ATK, HP and RCV by 45",
+        ['crewmate_atk_boost_fighter', 'crewmate_hp_boost_fighter', 'crewmate_rcv_boost_fighter'],
+      ],
+      // Position is "top row characters"; cost accepts "or less"/"or lower".
+      ['Boosts base ATK of top row characters by 100', ['crewmate_atk_boost_position']],
+      [
+        'Boosts base ATK, HP and RCV of Cost 40 or less characters by 50',
+        ['crewmate_atk_boost_cost', 'crewmate_hp_boost_cost', 'crewmate_rcv_boost_cost'],
+      ],
+      // Type-damage: bracketed [TYPE] characters == that type's enemies.
+      [
+        "Boosts this character's damage against [QCK] characters by 2x",
+        ['crewmate_damage_boost_qck_enemy'],
+      ],
+      // Slot: RCV-orb heal boost and keep-orb-next-turn.
+      ['Boosts amount healed from [RCV] orbs by 100 each', ['crewmate_boost_slot_effect_rcv']],
+      [
+        'If this character has an [INT] orb and you hit a PERFECT with him, keep his [INT] orb for the next turn',
+        ['crewmate_slot_carry_over'],
+      ],
+      // Special charge: trigger-first "any other" and "after each turn you take damage".
+      [
+        'When any other Free Spirit character uses a special, reduces special cooldown of this character by 1 turn',
+        ['crewmate_special_charge_when_specials_used_by_others'],
+      ],
+      [
+        'After each turn you take damage, reduces special cooldown of this character by 1 turn',
+        ['crewmate_special_charge_when_taking_damage'],
+      ],
+      // Recovery: "Recovers N turns of Paralysis" and plural "Burns".
+      ['Recovers 2 turns of Paralysis on self', ['crewmate_recover_paralysis']],
+      ['If your Captain is a [QCK] character, reduces Burns duration by 1 turn', ['crewmate_recover_burn']],
+    ] as Array<[string, string[]]>)('detects %s', (text, expectedKeys) => {
+      const keys = crewmateKeys(text);
+      for (const key of expectedKeys) {
+        expect(keys).toContain(key);
+      }
+    });
+
+    it.each([
+      // A [TYPE] in a CAPTAIN condition is not that type's boost scope (scope = all characters).
+      [
+        'If your Captain is a [STR] or [DEX] character, boosts base ATK, HP and RCV of all characters by 75',
+        'crewmate_atk_boost_str',
+      ],
+      // A [TYPE] in a CREW-COMPOSITION condition is not the boost scope (scope = top row).
+      [
+        'If your crew has 6 [INT] characters, boosts base ATK of top row characters by 100',
+        'crewmate_atk_boost_int',
+      ],
+      // "[RCV] orbs beneficial for [PSY] characters" is an orb effect, not an RCV boost.
+      ['Makes [RCV] and [TND] orbs beneficial for [DEX] and [PSY] characters', 'crewmate_rcv_boost_psy'],
+      // "last in the chain to attack" is a SELF conditional, not a Position scope.
+      [
+        'Boosts base ATK of this character by 100 if this character is the last in the chain to attack',
+        'crewmate_atk_boost_position',
+      ],
+    ] as Array<[string, string]>)('does not mis-tag %s as %s', (text, forbiddenKey) => {
+      expect(crewmateKeys(text)).not.toContain(forbiddenKey);
+    });
+
+    it('folds the MAX sailor tier so a max-only boost is not dropped', () => {
+      const keys = crewmateKeys(
+        'Boosts base ATK of [STR] characters by 1.1x.. Boosts base ATK, HP and RCV of Powerhouse and Cerebral characters by 100',
+      );
+      expect(keys).toContain('crewmate_atk_boost_powerhouse');
+      expect(keys).toContain('crewmate_hp_boost_cerebral');
+    });
   });
 
   it('carries turn requirements onto structured crewmate recovery abilities', () => {
@@ -5325,7 +5641,7 @@ describe('auto team builder ability parser', () => {
           specialText: null,
           captainAbility: null,
           sailorAbilities: [
-            'Boosts ATK of Fighter characters by 75.',
+            'Boosts base ATK of Fighter characters by 75.',
             'Reduces Special Cooldown of this character by 2 turns at start of quest.',
           ],
           builderAbilities: [],
@@ -5528,6 +5844,74 @@ describe('auto team builder ability parser', () => {
         source: 'superTandemData',
       }),
     ]);
+  });
+
+  it('resolves the OPTC-DB potentialAbilities Name strings the app used to miss (audit 2026-07-22)', async () => {
+    // OPTC-DB records these potentials on the character under descriptive/legacy
+    // Name strings, not the app's display labels. Before the audit these keys had
+    // matchCount 0 because the alias map was keyed on the labels ("Special Double
+    // Launch", "Cooldown Reduction", "Bind Ship Ability Resistance", ...). Every
+    // Name below must resolve to its key via the potentialAbilities source. Last
+    // Tap / Rush additionally migrated off the always-null finalTapData /
+    // rushSugoSpecialData fields onto potentialAbilities.
+    const nameToKey: Array<[string, string]> = [
+      ['Last Tap', 'potential_final_tap_sugo_special'],
+      ['Rush', 'potential_rush_sugo_special'],
+      ['Slot Bind', 'potential_slot_bind_resistance'],
+      ['Reduce Ship Bind duration', 'potential_bind_ship_ability_resistance'],
+      ['Ship Bind Resistance', 'potential_bind_ship_ability_resistance'],
+      ['Ship Bind', 'potential_bind_ship_ability_resistance'],
+      ['Reduce Special Use Limit duration', 'potential_limit_special_uses_resistance'],
+      ['Special Use Limit', 'potential_limit_special_uses_resistance'],
+      ['Cooldown Reduction', 'potential_own_special_charge_time_reduced'],
+      ['Double Special Activation', 'potential_special_double_launch'],
+      ['Triple Special Activation', 'potential_special_triple_launch'],
+      [
+        'Enrage/Reduce Increase Damage Taken duration',
+        'potential_provoked_atk_boost_received_damage_up_resistance',
+      ],
+      [
+        'Enrage/Increase Damage Taken',
+        'potential_provoked_atk_boost_received_damage_up_resistance',
+      ],
+      ['Nutrition/Reduce Hunger stacks', 'potential_recovery_atk_boost_hunger_resistance'],
+      ['Nutrition/Hunger', 'potential_recovery_atk_boost_hunger_resistance'],
+      ['Super Tandem/Last Tap', 'potential_final_tap_sugo_special'],
+    ];
+
+    const characters = nameToKey.map(([name], index) => ({
+      id: 7000 + index,
+      detail: {
+        specialText: null,
+        captainAbility: null,
+        sailorAbilities: [],
+        potentialAbilities: [{ Name: name, description: [`Ground-truth wording for ${name}`] }],
+        builderAbilities: [],
+      },
+    }));
+
+    const catalog = await enrichCharactersWithBuilderAbilities(characters, { logger: null });
+
+    nameToKey.forEach(([, key], index) => {
+      expect(characters[index]?.detail.builderAbilities).toEqual([
+        expect.objectContaining({ key, source: 'potentialAbilities' }),
+      ]);
+    });
+
+    // The audited keys carry the expected number of distinct matching characters
+    // and none leak onto a sibling key (collision guard).
+    const matchCountByKey = new Map(
+      catalog.map((item) => [item.key, item['matchCount']] as const),
+    );
+    expect(matchCountByKey.get('potential_bind_ship_ability_resistance')).toBe(3);
+    expect(matchCountByKey.get('potential_limit_special_uses_resistance')).toBe(2);
+    expect(matchCountByKey.get('potential_provoked_atk_boost_received_damage_up_resistance')).toBe(2);
+    expect(matchCountByKey.get('potential_recovery_atk_boost_hunger_resistance')).toBe(2);
+    expect(matchCountByKey.get('potential_final_tap_sugo_special')).toBe(2);
+    expect(matchCountByKey.get('potential_special_double_launch')).toBe(1);
+    // No-data keys stay empty even with this rich fixture set.
+    expect(matchCountByKey.get('potential_fear_resistance')).toBe(0);
+    expect(matchCountByKey.get('potential_slot_changes_impossible_resistance')).toBe(0);
   });
 
   it('seeds all 67 support catalog entries with stable ordering even without matches', async () => {
@@ -5813,6 +6197,114 @@ describe('auto team builder ability parser', () => {
     await enrichCharactersWithBuilderAbilities(characters, { logger: null });
 
     expect(characters[0]?.detail.builderAbilities).toEqual([]);
+  });
+
+  // Support ability-audit regressions (2026-07-22): 44 support keys corrected.
+  it('splits a comma-listed base-stat grant into every _additional key', async () => {
+    const keys = await deriveSupportKeysFromText(
+      "Adds 5% of this character's base ATK, HP and RCV to the supported character's base ATK, HP and RCV",
+    );
+
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        'support_base_atk_boost_additional',
+        'support_base_hp_boost_additional',
+        'support_base_rcv_boost_additional',
+      ]),
+    );
+    // The single-stat key must NOT fire for a multi-stat grant.
+    expect(keys).not.toContain('support_base_atk_boost');
+  });
+
+  it('detects apply-status-effect grants that always carry a turn count', async () => {
+    expect(
+      await deriveSupportKeysFromText('reduces the defense of all enemies by 50% for 3 turns.'),
+    ).toContain('support_apply_status_effect_def_down');
+    expect(
+      await deriveSupportKeysFromText("reduces enemies' [INT] Resistance by -3% for 1 turn."),
+    ).toContain('support_apply_status_effect_reduce_resistance');
+    expect(await deriveSupportKeysFromText('delays all enemies by 1 turn.')).toContain(
+      'support_apply_status_effect_delay',
+    );
+    // Trigger-only reference is NOT an infliction.
+    expect(
+      await deriveSupportKeysFromText(
+        'when the supported character uses a special to inflict Increase Damage Taken, reduces VS Gauge of all characters by 2.',
+      ),
+    ).not.toContain('support_apply_status_effect_increased_damage_taken');
+  });
+
+  it('maps OPTC-DB debuff names to status-effect recovery keys', async () => {
+    expect(
+      await deriveSupportKeysFromText(
+        "when an enemy inflicts you with Chain Coefficient Reduction, reduces Chain Coefficient Reduction duration by 3 turns.",
+      ),
+    ).toContain('support_status_effect_recovery_reduce_chain_multiplier_growth_rate');
+    expect(
+      await deriveSupportKeysFromText(
+        "when an enemy inflicts you with Chain Multiplier Limit, reduces Chain Multiplier Limit duration by 3 turns.",
+      ),
+    ).toContain('support_status_effect_recovery_lock_chain_multiplier');
+    expect(
+      await deriveSupportKeysFromText('reduces Silence duration by 5 turns.'),
+    ).toContain('support_status_effect_recovery_special_bind');
+    // A poison-offense clause is not a poison CURE.
+    expect(
+      await deriveSupportKeysFromText('poisons all enemies and boosts ATK against Poisoned enemies'),
+    ).not.toContain('support_status_effect_recovery_poisons');
+  });
+
+  it('ignores DEF Up named only in a trailing [AUTO+] trigger but keeps genuine reductions', async () => {
+    // 4600: "DEF Up" lives in the [AUTO+] trigger; the real action reduces damage reduction.
+    const shiryu = await deriveSupportKeysFromText(
+      "reduces all enemies' damage reduction (except Threshold Damage Reduction) duration by 2 turns [AUTO+] When enemy launches DEF Up status and at final battle, activates supported character's Special",
+    );
+    expect(shiryu).not.toContain('support_reduce_enemy_effect_turns_def_up');
+    expect(shiryu).not.toContain('support_reduce_enemy_effect_turns_damage_threshold');
+    expect(shiryu).toContain('support_reduce_enemy_effect_turns_damage_reduction');
+    // A genuine reduction worded "by N turns" (no literal "duration") still matches.
+    expect(
+      await deriveSupportKeysFromText(
+        "reduces enemies' Increased Defense and Percent Damage Reduction by 1 turn",
+      ),
+    ).toContain('support_reduce_enemy_effect_turns_def_up');
+  });
+
+  it('detects damage-boost grants worded "boosts ATK against <condition> enemies"', async () => {
+    expect(
+      await deriveSupportKeysFromText('boosts ATK against delayed enemies by 1.3x for 1 turn.'),
+    ).toContain('support_damage_boost_delay');
+    expect(
+      await deriveSupportKeysFromText('boosts ATK against Poisoned enemies by 1.3x for 1 turn.'),
+    ).toContain('support_damage_boost_poison');
+    expect(
+      await deriveSupportKeysFromText(
+        'boosts ATK against enemies with reduced defense by 1.5x for 1 turn.',
+      ),
+    ).toContain('support_damage_boost_def_down');
+  });
+
+  it('detects decimal chain-multiplier boosts and self-scope cooldown reduction', async () => {
+    expect(
+      await deriveSupportKeysFromText(
+        'when the supported character uses their special, adds 0.3x to Chain multiplier for 1 turn.',
+      ),
+    ).toContain('support_chain_multiplier_boost');
+    expect(
+      await deriveSupportKeysFromText('reduces Special Cooldown of supported character by 2 turns.'),
+    ).toContain('support_reduce_special_charge_time_self');
+    // Cooldown reduction scoped to OTHER team roles is not the "(Self)" key.
+    expect(
+      await deriveSupportKeysFromText('reduces Special Cooldown of Captain character by 1 turn.'),
+    ).not.toContain('support_reduce_special_charge_time_self');
+  });
+
+  it('flags "when you reach the final stage" as designated-turn activation', async () => {
+    expect(
+      await deriveSupportKeysFromText(
+        'Once per adventure, when you reach the final stage, boosts the Color Affinity of all characters by 1.75x for 1 turn.',
+      ),
+    ).toContain('support_effect_activation_on_designated_turn');
   });
 });
 

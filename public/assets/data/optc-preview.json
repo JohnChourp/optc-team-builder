@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T19:18:39.018Z",
+  "generatedAt": "2026-07-24T10:01:04.998Z",
   "characters": [
     {
       "id": 1,
@@ -479,6 +479,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "potential_provoked_atk_boost_received_damage_up_resistance",
+            "label": "Provoked ATK Boost/Received Damage Up Resistance",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "potentialAbilities",
             "coverageMode": "explicit"
           },
           {
@@ -1046,6 +1055,15 @@
             "isCompleteRemoval": false,
             "slotTokens": [],
             "source": "specialText",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_atk_boost_dex",
+            "label": "ATK Boost: DEX",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
             "coverageMode": "explicit"
           },
           {
@@ -1638,6 +1656,33 @@
           {
             "key": "crewmate_make_slots_favorable",
             "label": "Make Slots Favorable",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_atk_boost_int",
+            "label": "ATK Boost: INT",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_rcv_boost_int",
+            "label": "RCV Boost: INT",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "sailorAbilities",
+            "coverageMode": "explicit"
+          },
+          {
+            "key": "crewmate_hp_boost_int",
+            "label": "HP Boost: INT",
             "minTurns": null,
             "isCompleteRemoval": false,
             "slotTokens": [],
@@ -2898,7 +2943,17 @@
           "sanji"
         ],
         "characterTags": [],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_def_reduction",
+            "label": "DEF Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "potentialAbilities": [],
@@ -3796,7 +3851,17 @@
           "chopper"
         ],
         "characterTags": [],
-        "builderAbilities": [],
+        "builderAbilities": [
+          {
+            "key": "apply_def_reduction",
+            "label": "DEF Reduction",
+            "minTurns": null,
+            "isCompleteRemoval": false,
+            "slotTokens": [],
+            "source": "specialText",
+            "coverageMode": "explicit"
+          }
+        ],
         "sailorAbilities": [],
         "sailorNotes": null,
         "potentialAbilities": [],

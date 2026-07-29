@@ -90,19 +90,44 @@ if (!isValidSemver(current)) {
   process.exit(1);
 }
 
+/*
+ * Version segments stay two-digit: a patch bump at 99 rolls into the minor
+ * instead of producing 0.0.100, and a minor bump at 99 rolls into the major.
+ * Without this, 0.0.99 -> 0.0.100 sorts and reads worse than 0.1.0 and drifts
+ * away from the two-digit shape the released versions have always used.
+ */
+const MAX_SEGMENT = 99;
+
 const parts = current.split('.').map((value) => Number.parseInt(value, 10));
+const [major, minor, patch] = parts;
+
 switch (bumpType) {
   case 'major':
-    parts[0] += 1;
+    parts[0] = major + 1;
     parts[1] = 0;
     parts[2] = 0;
     break;
   case 'minor':
-    parts[1] += 1;
+    if (minor >= MAX_SEGMENT) {
+      parts[0] = major + 1;
+      parts[1] = 0;
+    } else {
+      parts[1] = minor + 1;
+    }
     parts[2] = 0;
     break;
   case 'patch':
-    parts[2] += 1;
+    if (patch >= MAX_SEGMENT) {
+      if (minor >= MAX_SEGMENT) {
+        parts[0] = major + 1;
+        parts[1] = 0;
+      } else {
+        parts[1] = minor + 1;
+      }
+      parts[2] = 0;
+    } else {
+      parts[2] = patch + 1;
+    }
     break;
   default:
     console.error(`ERROR: Unsupported bump type: ${bumpType}`);

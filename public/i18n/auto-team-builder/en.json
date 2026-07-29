@@ -104,7 +104,9 @@
         "support": "Apply copies ability-derived required tags and names into the relaxed filters.",
         "searchPlaceholder": "Search requirement source characters",
         "count": "{{count}} source characters",
-        "empty": "No source characters with extractable roster requirements matched this search."
+        "empty": "No source characters with extractable roster requirements matched this search.",
+        "tagFilterCaption": "Narrow this requirement source list by character tags. This does not change the team-wide tag requirement.",
+        "tagFilterTitle": "Filter requirement sources by character tag"
       }
     },
     "uniqueNames": {
@@ -499,7 +501,9 @@
         "subEmpty": "Accepts one or more characters. If left empty, the builder fills it automatically.",
         "subSelected": "{{count}} OR sub picks in preference order."
       }
-    }
+    },
+    "tagFilterCaption": "Narrow this manual-lock candidate list by character tags. This does not change the team-wide tag requirement.",
+    "tagFilterTitle": "Filter manual-lock candidates by character tag"
   },
   "exclude": {
     "title": "Exclude picks",
@@ -555,7 +559,9 @@
       "removesLockedFrom": "Excluding this character will remove it from {{slots}}.",
       "alreadyInBox": "Already excluded by {{name}}.",
       "clearsManualShip": "Excluding this ship will clear the current manual ship override."
-    }
+    },
+    "tagFilterCaption": "Narrow this exclude candidate list by character tags. This does not change the team-wide tag requirement.",
+    "tagFilterTitle": "Filter exclude candidates by character tag"
   },
   "ships": {
     "actions": {
