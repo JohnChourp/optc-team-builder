@@ -3,8 +3,23 @@ import {
   normalizeAbilityTagSetOperator,
   type AbilityTagSetOperator,
 } from '../models/auto-team-builder-ability.models';
-import { type CharacterTagSet, type CharacterTagSetSelection } from '../models/optc.models';
+import {
+  type CharacterDetailRecord,
+  type CharacterTagSet,
+  type CharacterTagSetSelection,
+} from '../models/optc.models';
 import { createAbilityTagSetId } from './ability-filter-tag-set.utils';
+import {
+  intersectAbilityMatchingCharacterIds,
+  unionAbilityMatchingCharacterIds,
+} from './special-ability-filter.utils';
+
+/**
+ * `tag key -> ids of the characters carrying it`, keyed by the lower-cased tag
+ * so lookups are case-insensitive while the catalog keeps the cased values the
+ * user actually reads.
+ */
+export type CharacterTagMatchIndex = ReadonlyMap<string, readonly number[]>;
 
 /**
  * Character tag sets share the ability picker's cap: the modal chrome, the
@@ -188,6 +203,132 @@ export function matchesCharacterTagSets(
     : setResults.every((matches) => matches);
 }
 
+/**
+ * Builds the `tag key -> character ids` index the picker previews counts from
+ * and the id-set resolver below filters with.
+ *
+ * Lives here rather than on a page because four hosts need the identical map;
+ * captain-coverage and manual-team-builder previously each carried their own
+ * verbatim copy of this loop.
+ */
+export function buildCharacterTagMatchIndex(
+  records: Iterable<{
+    readonly id: number;
+    readonly detail?: { readonly characterTags?: readonly string[] } | null;
+  }>,
+): CharacterTagMatchIndex {
+  const characterIdsByTagKey = new Map<string, number[]>();
+
+  for (const record of records) {
+    for (const tag of record.detail?.characterTags ?? []) {
+      const tagKey = normalizeCharacterTagKey(tag);
+
+      if (!tagKey.length) {
+        continue;
+      }
+
+      const characterIds = characterIdsByTagKey.get(tagKey);
+
+      if (!characterIds) {
+        characterIdsByTagKey.set(tagKey, [record.id]);
+        continue;
+      }
+
+      // One character can list the same tag twice in different casing; both
+      // normalize to the same key and would otherwise double-count it.
+      if (characterIds[characterIds.length - 1] !== record.id) {
+        characterIds.push(record.id);
+      }
+    }
+  }
+
+  return characterIdsByTagKey;
+}
+
+/**
+ * Resolves a selection to the ids of the characters it matches, for the hosts
+ * that filter through a repository/cache query rather than a client-side
+ * predicate. It is the vocabulary-B twin of
+ * `resolveTagSetSelectionMatchingCharacterIds`.
+ *
+ * Returns `undefined` — never `[]` — when no POPULATED set remains, and that
+ * distinction is load-bearing: `intersectAbilityMatchingCharacterIds` drops
+ * `undefined` but intersects `[]` down to empty, and `queryCharacters` reads
+ * `undefined` as "no gate" and an empty list as "reject everyone". Testing
+ * `selection.sets.length` instead of the populated count would blank the whole
+ * catalog the moment a user adds a group in the modal before picking a tag.
+ *
+ * Within a set: union for `any`, intersection for `all`. Across sets:
+ * `selection.operator`. This mirrors `matchesCharacterTagSets` exactly, and the
+ * spec replays a matrix through both so they cannot drift.
+ *
+ * A `null` index (catalog not loaded, or the load failed) is deliberately
+ * fail-open: it returns `undefined`, so an infrastructure failure can never
+ * present an empty catalog as though it were a real filter result.
+ */
+export function resolveCharacterTagSetSelectionMatchingCharacterIds(
+  selection: CharacterTagSetSelection,
+  index: CharacterTagMatchIndex | null,
+): number[] | undefined {
+  if (!index) {
+    return undefined;
+  }
+
+  const populatedSets = selection.sets.filter((set) => set.tags.length > 0);
+
+  if (!populatedSets.length) {
+    return undefined;
+  }
+
+  const selectionOperator = normalizeAbilityTagSetOperator(selection.operator);
+  const setIdLists: number[][] = [];
+
+  for (const set of populatedSets) {
+    const tagKeys = set.tags
+      .map((tag) => normalizeCharacterTagKey(tag))
+      .filter((tagKey) => tagKey.length > 0);
+
+    if (!tagKeys.length) {
+      /*
+       * `matchesCharacterTagSet` returns TRUE for a set whose tags all normalize
+       * away, i.e. that set matches every character. ORed across sets that makes
+       * the whole selection match everyone (no filter at all); ANDed it
+       * constrains nothing and is simply skipped. Returning an empty id list
+       * here instead would silently disagree with the predicate and blank the
+       * page for a filter the predicate considers inert.
+       */
+      if (selectionOperator === 'any') {
+        return undefined;
+      }
+
+      continue;
+    }
+
+    const perTagIdLists = tagKeys.map((tagKey) => index.get(tagKey) ?? []);
+
+    /*
+     * The `?? []` only satisfies the return type: these helpers return
+     * `undefined` solely when EVERY input list is `undefined`, and every list
+     * here is a defined array. It is not a safety net.
+     */
+    setIdLists.push(
+      (normalizeAbilityTagSetOperator(set.operator) === 'all'
+        ? intersectAbilityMatchingCharacterIds(perTagIdLists)
+        : unionAbilityMatchingCharacterIds(perTagIdLists)) ?? [],
+    );
+  }
+
+  if (!setIdLists.length) {
+    return undefined;
+  }
+
+  return (
+    (selectionOperator === 'any'
+      ? unionAbilityMatchingCharacterIds(setIdLists)
+      : intersectAbilityMatchingCharacterIds(setIdLists)) ?? []
+  );
+}
+
 function matchesCharacterTagSet(
   characterTagKeys: ReadonlySet<string>,
   set: CharacterTagSet,
@@ -225,6 +366,18 @@ function dedupeCharacterTags(tags: readonly unknown[]): string[] {
 }
 
 /** Match key only — never persisted, so stored tags keep their original case. */
-function normalizeCharacterTagKey(tag: string): string {
-  return typeof tag === 'string' ? tag.trim().toLowerCase() : '';
+/**
+ * Match key only — never persisted, so the stored tags keep their original case.
+ *
+ * Internal whitespace is collapsed because
+ * `OptcRepositoryService.getAvailableCharacterTags()` hands the picker
+ * `tag.trim().replace(/\s+/g, ' ')`. Without the same collapse here, a raw
+ * catalog tag carrying a double space would index under a key the user's
+ * (already collapsed) selected value can never produce, and the filter would
+ * silently match nothing. No tag in the current dataset is affected, so this is
+ * latent rather than live — but it makes the predicate and the id-set resolver
+ * provably agree instead of agreeing by luck.
+ */
+export function normalizeCharacterTagKey(tag: string): string {
+  return typeof tag === 'string' ? tag.trim().replace(/\s+/g, ' ').toLowerCase() : '';
 }

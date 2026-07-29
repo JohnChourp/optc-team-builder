@@ -980,6 +980,13 @@
             (ionInput)="onManualPickerSearch($event)"
           ></ion-searchbar>
 
+          <app-character-tag-filter
+            testIdPrefix="atb-rumble-manual"
+            [selection]="characterTagSetSelection()"
+            [disabled]="manualPickerLoading()"
+            (filterChange)="onCharacterTagFilterChange($event)"
+          ></app-character-tag-filter>
+
           @if (manualPickerLoading()) {
             <section class="rumble-manual-picker-state">
               <ion-spinner name="crescent"></ion-spinner>

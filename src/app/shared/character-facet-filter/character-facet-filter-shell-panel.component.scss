@@ -1,0 +1,143 @@
+/*
+ * Ported from `character-tag-filter-shell-panel.component.scss` with the class
+ * rename, so the two shared filter controls stack in a host panel without any
+ * visual seam between them.
+ */
+.character-facet-filter {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.character-facet-filter__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.character-facet-filter__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(248, 251, 255, 0.82);
+}
+
+.character-facet-filter__count {
+  margin-inline-start: auto;
+  font-size: 0.74rem;
+  color: rgba(248, 251, 255, 0.58);
+}
+
+.character-facet-filter__header ion-button {
+  --padding-start: 8px;
+  --padding-end: 8px;
+  margin: 0;
+}
+
+.character-facet-filter__support {
+  color: rgba(248, 251, 255, 0.58);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+/*
+ * The five type codes wrap onto a second row at 320 px rather than opening a
+ * horizontal scroll rail inside `ion-content` — see the plan's live checklist.
+ */
+.character-facet-filter__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.character-facet-filter__option {
+  flex: 0 1 auto;
+  padding: 7px 14px;
+  border: 1px solid rgba(248, 251, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(248, 251, 255, 0.06);
+  color: rgba(248, 251, 255, 0.82);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.character-facet-filter__option:hover {
+  border-color: rgba(248, 251, 255, 0.36);
+  background: rgba(248, 251, 255, 0.1);
+}
+
+.character-facet-filter__option:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.character-facet-filter__option--active {
+  border-color: rgba(245, 200, 76, 0.54);
+  background: rgba(245, 200, 76, 0.2);
+  color: #f8d36b;
+}
+
+.character-facet-filter__option:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.character-facet-filter__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.character-facet-filter__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 7px 12px;
+  border: 1px solid rgba(245, 200, 76, 0.36);
+  border-radius: 999px;
+  background: rgba(245, 200, 76, 0.16);
+  color: #f8d36b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.character-facet-filter__chip:hover {
+  border-color: rgba(245, 200, 76, 0.54);
+  background: rgba(245, 200, 76, 0.22);
+}
+
+.character-facet-filter__chip:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.character-facet-filter__chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Visually hidden, but still announced: the live region carries the deltas. */
+.character-facet-filter__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

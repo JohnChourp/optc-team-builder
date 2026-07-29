@@ -54,8 +54,6 @@ describe('CharacterCatalogCacheService', () => {
     expect(
       service.queryCharacters({
         searchTerm: '',
-        typeFilter: '',
-        classFilter: '',
         limit: 10,
         offset: 0,
       }),
@@ -64,8 +62,6 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '202',
-          typeFilter: '',
-          classFilter: '',
           limit: 10,
           offset: 0,
         })
@@ -112,8 +108,6 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: 'luffy',
-          typeFilter: '',
-          classFilter: '',
           limit: 10,
           offset: 0,
         })
@@ -123,8 +117,7 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: 'DEX',
-          classFilter: '',
+          typeFacet: { values: ['DEX'], matchMode: 'any' },
           limit: 10,
           offset: 0,
         })
@@ -134,19 +127,19 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: '',
-          classFilter: 'Slasher',
+          classFacet: { values: ['Slasher'], matchMode: 'any' },
           limit: 10,
           offset: 0,
         })
         .map((character) => character.id),
-    ).toEqual([305]);
+      // 401 carries Slasher as its SECOND entry in `classes` while its
+      // primary/secondary pair only names Fighter. The old primary/secondary
+      // read dropped it; the shared predicate reads the full array.
+    ).toEqual([401, 305]);
     expect(
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: '',
-          classFilter: '',
           allowedCharacterIds: [305, 299],
           excludedCharacterIds: [299],
           limit: 1,
@@ -158,8 +151,6 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: '',
-          classFilter: '',
           limit: 1,
           offset: 1,
         })
@@ -168,8 +159,6 @@ describe('CharacterCatalogCacheService', () => {
     expect(
       service.queryCharacters({
         searchTerm: '',
-        typeFilter: '',
-        classFilter: '',
         allowedCharacterIds: [],
         limit: 10,
         offset: 0,
@@ -202,8 +191,6 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: '',
-          classFilter: '',
           sortMode: 'catalog',
           limit: 10,
           offset: 0,
@@ -214,8 +201,6 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: '',
-          classFilter: '',
           sortMode: 'catalog',
           idOrder: 'oldest',
           limit: 2,
@@ -227,8 +212,6 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: '',
-          classFilter: '',
           sortMode: 'nameAsc',
           limit: 2,
           offset: 1,
@@ -239,8 +222,6 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: '',
-          classFilter: '',
           sortMode: 'nameDesc',
           limit: 10,
           offset: 0,
@@ -251,8 +232,6 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: '',
-          classFilter: '',
           sortMode: 'idAsc',
           limit: 10,
           offset: 0,
@@ -263,8 +242,6 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '',
-          typeFilter: '',
-          classFilter: '',
           sortMode: 'idDesc',
           limit: 10,
           offset: 0,
@@ -291,8 +268,6 @@ describe('CharacterCatalogCacheService', () => {
 
     const baseQuery = {
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       limit: 10,
       offset: 0,
     };
@@ -368,13 +343,142 @@ describe('CharacterCatalogCacheService', () => {
       service
         .queryCharacters({
           searchTerm: '4529',
-          typeFilter: '',
-          classFilter: '',
           limit: 10,
           offset: 0,
         })
         .map((character) => character.id),
     ).toEqual([900005, 4529]);
+  });
+
+  it('matches dual-type characters for either selected type in any mode', async () => {
+    const service = await createFacetService();
+
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFacet: { values: ['QCK'], matchMode: 'any' },
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+      // 701 stores 'STR,QCK' and 702 stores 'QCK,STR' — the same pair, both orders.
+    ).toEqual([703, 702, 701]);
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFacet: { values: ['STR'], matchMode: 'any' },
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([702, 701]);
+  });
+
+  it('requires both selected types in all mode', async () => {
+    const service = await createFacetService();
+
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFacet: { values: ['STR', 'QCK'], matchMode: 'all' },
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([702, 701]);
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFacet: { values: ['STR', 'INT'], matchMode: 'all' },
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([]);
+  });
+
+  it('matches a class from the full classes array, not only primary and secondary', async () => {
+    const service = await createFacetService();
+
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          classFacet: { values: ['Cerebral'], matchMode: 'any' },
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+      // 704 is a three-class local override: Cerebral is only in `classes`.
+    ).toEqual([704]);
+  });
+
+  it('returns nothing for an all-mode selection of three classes only because the mode is demoted', async () => {
+    const service = await createFacetService();
+
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          // Demoted to `any` by the boundary normalizer, so this is NOT an empty result.
+          classFacet: { values: ['Fighter', 'Slasher', 'Cerebral'], matchMode: 'all' },
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([704, 703, 702, 701]);
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          classFacet: { values: ['Fighter', 'Cerebral'], matchMode: 'all' },
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([704]);
+  });
+
+  it('applies no filter for an omitted or empty facet', async () => {
+    const service = await createFacetService();
+
+    expect(
+      service
+        .queryCharacters({ searchTerm: '', limit: 10, offset: 0 })
+        .map((character) => character.id),
+    ).toEqual([704, 703, 702, 701]);
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFacet: { values: ['   '], matchMode: 'all' },
+          classFacet: { values: [], matchMode: 'all' },
+          limit: 10,
+          offset: 0,
+        })
+        .map((character) => character.id),
+    ).toEqual([704, 703, 702, 701]);
+  });
+
+  it('filters before sorting and slicing', async () => {
+    const service = await createFacetService();
+
+    expect(
+      service
+        .queryCharacters({
+          searchTerm: '',
+          typeFacet: { values: ['QCK'], matchMode: 'any' },
+          sortMode: 'idAsc',
+          limit: 2,
+          offset: 1,
+        })
+        .map((character) => character.id),
+      // Filter (3 of 4 rows) -> sort ascending -> slice(1, 3).
+    ).toEqual([702, 703]);
   });
 
   it('reloads the cached catalog after the override revision changes', async () => {
@@ -402,6 +506,45 @@ describe('CharacterCatalogCacheService', () => {
     expect(service.catalog()[0]?.name).toBe('Edited name');
   });
 });
+
+async function createFacetService(): Promise<CharacterCatalogCacheService> {
+  const repository = {
+    getAllCharacters: vi.fn().mockResolvedValue([
+      createCharacter(701, {
+        type: 'STR,QCK',
+        primaryClass: 'Fighter',
+        secondaryClass: 'Slasher',
+        classes: ['Fighter', 'Slasher'],
+      }),
+      createCharacter(702, {
+        type: 'QCK,STR',
+        primaryClass: 'Slasher',
+        secondaryClass: 'Fighter',
+        classes: ['Slasher', 'Fighter'],
+      }),
+      createCharacter(703, {
+        type: 'QCK',
+        primaryClass: 'Fighter',
+        secondaryClass: null,
+        classes: ['Fighter'],
+      }),
+      createCharacter(704, {
+        type: 'INT',
+        primaryClass: 'Fighter',
+        secondaryClass: 'Slasher',
+        // Three-class local override: `Cerebral` is reachable only via `classes`.
+        classes: ['Fighter', 'Slasher', 'Cerebral'],
+      }),
+    ]),
+  };
+  const service = new CharacterCatalogCacheService(repository as never, {
+    revision: () => 0,
+  } as never);
+
+  await service.ensureLoaded();
+
+  return service;
+}
 
 function createCharacter(
   id: number,

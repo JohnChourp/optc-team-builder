@@ -415,6 +415,27 @@
                                               (ionInput)="onRequirementSourceSearchChange($event)"
                                             ></ion-searchbar>
 
+                                            <div class="picker-tag-filter">
+                                              <small class="picker-tag-filter__caption">{{
+                                                t(
+                                                  'filters.characterRequirements.modal.tagFilterCaption'
+                                                )
+                                              }}</small>
+                                              <app-character-tag-filter
+                                                testIdPrefix="atb-requirement-source"
+                                                [titleOverride]="
+                                                  t(
+                                                    'filters.characterRequirements.modal.tagFilterTitle'
+                                                  )
+                                                "
+                                                [selection]="requirementSourceTagSelection()"
+                                                [disabled]="requirementSourceCandidatesLoading()"
+                                                (filterChange)="
+                                                  onRequirementSourceTagFilterChange($event)
+                                                "
+                                              ></app-character-tag-filter>
+                                            </div>
+
                                             @if (requirementSourceCandidatesLoading()) {
                                               <div class="manual-candidate-empty-state">
                                                 <ion-spinner name="crescent"></ion-spinner>
@@ -1190,6 +1211,23 @@
                                                     [value]="manualSearchTerm()"
                                                     (ionInput)="onManualSearchChange($event)"
                                                   ></ion-searchbar>
+                                                  <div class="picker-tag-filter">
+                                                    <small class="picker-tag-filter__caption">{{
+                                                      t('manual.tagFilterCaption')
+                                                    }}</small>
+                                                    <app-character-tag-filter
+                                                      testIdPrefix="atb-manual"
+                                                      [titleOverride]="t('manual.tagFilterTitle')"
+                                                      [selection]="manualPickerTagSelection()"
+                                                      [disabled]="manualCandidatesLoading()"
+                                                      (filterChange)="
+                                                        onCharacterPickerTagFilterChange(
+                                                          'manual',
+                                                          $event
+                                                        )
+                                                      "
+                                                    ></app-character-tag-filter>
+                                                  </div>
                                                   <div
                                                     class="view-toggle picker-view-toggle"
                                                     [attr.aria-label]="
@@ -2023,6 +2061,23 @@
                                                       onExcludeCharacterSearchChange($event)
                                                     "
                                                   ></ion-searchbar>
+                                                  <div class="picker-tag-filter">
+                                                    <small class="picker-tag-filter__caption">{{
+                                                      t('exclude.tagFilterCaption')
+                                                    }}</small>
+                                                    <app-character-tag-filter
+                                                      testIdPrefix="atb-exclude"
+                                                      [titleOverride]="t('exclude.tagFilterTitle')"
+                                                      [selection]="excludePickerTagSelection()"
+                                                      [disabled]="excludedCandidatesLoading()"
+                                                      (filterChange)="
+                                                        onCharacterPickerTagFilterChange(
+                                                          'excluded',
+                                                          $event
+                                                        )
+                                                      "
+                                                    ></app-character-tag-filter>
+                                                  </div>
                                                   <div
                                                     class="view-toggle picker-view-toggle"
                                                     [attr.aria-label]="

@@ -12,6 +12,8 @@ import {
 } from '../../core/models/auto-team-builder-ability.models';
 import {
   type CharacterDetailRecord,
+  type CharacterFacetMatchMode,
+  type CharacterFacetSelection,
   type CharacterTagSetSelection,
   type DatasetManifest,
   type ShipRecord,
@@ -73,6 +75,22 @@ describe('ManualTeamBuilderPage', () => {
     expect(template).toContain('[tagCharacterIds]="characterTagMatchIndex()"');
     expect(template).toContain('(saveSelection)="saveCharacterTagSetPicker($event)"');
     expect(template).toContain('manual-team-character-tag-sets-trigger');
+    expect(template).toContain('<app-character-facet-filter');
+    expect(template).toContain('kind="type"');
+    expect(template).toContain('kind="class"');
+    expect(template).toContain('presentation="chips"');
+    expect(template).toContain('presentation="select"');
+    expect(template).toContain('testIdPrefix="manual-team"');
+    expect(template).toContain('[options]="availableTypes()"');
+    expect(template).toContain('[options]="availableClasses()"');
+    expect(template).toContain('[selection]="typeFacet()"');
+    expect(template).toContain('[selection]="classFacet()"');
+    expect(template).toContain('(selectionChange)="onTypeFacetChange($event)"');
+    expect(template).toContain('(selectionChange)="onClassFacetChange($event)"');
+    expect(template).not.toContain('selectedTypeFilter()');
+    expect(template).not.toContain('selectedClassFilter()');
+    expect(template).not.toContain("t('picker.filters.anyType')");
+    expect(template).not.toContain("t('picker.filters.anyClass')");
     expect(template).not.toContain('onCharacterTagFilterChange');
     expect(template).not.toContain("t('picker.filters.anyTag')");
     expect(template).not.toContain('<app-ability-requirement-picker');
@@ -456,8 +474,8 @@ describe('ManualTeamBuilderPage', () => {
 
     await page.ngOnInit();
     await page.openCharacterPicker(0);
-    await page.onTypeFilterChange(createValueEvent('STR'));
-    await page.onClassFilterChange(createValueEvent('Shooter'));
+    await page.onTypeFacetChange(createFacetSelection(['STR']));
+    await page.onClassFacetChange(createFacetSelection(['Shooter']));
     await page.onCandidateMinCostChange(createValueEvent('20'));
     await page.onCandidateMaxCostChange(createValueEvent('60'));
 
@@ -475,6 +493,130 @@ describe('ManualTeamBuilderPage', () => {
         limit: 48,
       }),
     );
+  });
+
+  it('sends a two-value all-mode facet pair on the repository candidate path', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.onTypeFacetChange(createFacetSelection(['STR', 'QCK'], 'all'));
+    await page.onClassFacetChange(createFacetSelection(['Fighter', 'Slasher'], 'all'));
+
+    const calls = repository.searchDetailedCharacters.mock.calls;
+    const lastQuery = calls[calls.length - 1]?.[0];
+
+    expect(lastQuery).toEqual(
+      expect.objectContaining({
+        selectedTypes: ['STR', 'QCK'],
+        selectedTypesMatchMode: 'all',
+        selectedClasses: ['Fighter', 'Slasher'],
+        selectedClassesMatchMode: 'all',
+      }),
+    );
+  });
+
+  it('sends no type or class gate to the repository when both facets are empty', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+
+    const calls = repository.searchDetailedCharacters.mock.calls;
+    const lastQuery = calls[calls.length - 1]?.[0];
+
+    expect(lastQuery).toEqual(
+      expect.objectContaining({
+        selectedTypes: [],
+        selectedTypesMatchMode: 'any',
+        selectedClasses: [],
+        selectedClassesMatchMode: 'any',
+      }),
+    );
+    expect(page.hasActiveCandidateFilters()).toBe(false);
+  });
+
+  it('narrows the tag-filtered candidate path by the selected type facet', async () => {
+    const { page } = createPage({ characters: createFacetCandidates() });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(createCharacterTagSetSelection([{ tags: ['utility'] }]));
+    await page.onTypeFacetChange(createFacetSelection(['STR']));
+
+    expect(page.candidates().map((character) => character.id)).toEqual([8801]);
+  });
+
+  it('matches a dual-type character from either stored type on the tag-filtered path', async () => {
+    const { page } = createPage({ characters: createFacetCandidates() });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(createCharacterTagSetSelection([{ tags: ['utility'] }]));
+
+    // 8803 is stored as 'INT,PSY': the second code must be as findable as the first.
+    await page.onTypeFacetChange(createFacetSelection(['PSY']));
+
+    expect(page.candidates().map((character) => character.id)).toEqual([8803]);
+
+    await page.onTypeFacetChange(createFacetSelection(['INT']));
+
+    expect(page.candidates().map((character) => character.id)).toEqual([8803]);
+  });
+
+  it('intersects a two-value all-mode class facet on the tag-filtered path', async () => {
+    const { page } = createPage({ characters: createFacetCandidates() });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(createCharacterTagSetSelection([{ tags: ['utility'] }]));
+    await page.onClassFacetChange(createFacetSelection(['Fighter', 'Shooter'], 'all'));
+
+    expect(page.candidates().map((character) => character.id)).toEqual([8804]);
+
+    await page.onClassFacetChange(createFacetSelection(['Fighter', 'Shooter'], 'any'));
+
+    expect(page.candidates().map((character) => character.id)).toEqual([8805, 8804, 8802, 8801]);
+  });
+
+  it('applies no type or class gate on the tag-filtered path for empty facets', async () => {
+    const { page } = createPage({ characters: createFacetCandidates() });
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.saveCharacterTagSetPicker(createCharacterTagSetSelection([{ tags: ['utility'] }]));
+
+    expect(page.candidates().map((character) => character.id)).toEqual([
+      8805, 8804, 8803, 8802, 8801,
+    ]);
+  });
+
+  it('clears both facets from every candidate filter reset path', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.onTypeFacetChange(createFacetSelection(['STR']));
+    await page.onClassFacetChange(createFacetSelection(['Fighter']));
+
+    expect(page.hasActiveCandidateFilters()).toBe(true);
+
+    await page.clearCandidateFilters();
+
+    expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.hasActiveCandidateFilters()).toBe(false);
+
+    await page.onTypeFacetChange(createFacetSelection(['STR', 'QCK'], 'all'));
+    await page.onClassFacetChange(createFacetSelection(['Fighter']));
+
+    expect(page.hasActiveCandidateFilters()).toBe(true);
+
+    page.resetPage();
+
+    expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(page.hasActiveCandidateFilters()).toBe(false);
   });
 
   it('applies a saved tag-set selection as allowed character ids through repository search', async () => {
@@ -495,7 +637,10 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.tagSetPickerOpen()).toBe(false);
     expect(page.tagSetSelection().sets).toHaveLength(1);
     expect([...(lastQuery?.allowedCharacterIds ?? [])].sort()).toEqual([801, 802]);
-    expect(page.candidates().map((character) => character.id)).toEqual([801, 802]);
+    // `powerFirst` is highest id first. The repository fake used to ignore
+    // `sortMode` entirely and hand back catalog order, so this assertion used
+    // to pin a sequence the real repository never returns.
+    expect(page.candidates().map((character) => character.id)).toEqual([802, 801]);
     expect(page.hasActiveCandidateFilters()).toBe(true);
     expect(page.abilityFilterRailItems().find((item) => item.category === 'special')?.count).toBe(
       1,
@@ -664,12 +809,76 @@ describe('ManualTeamBuilderPage', () => {
 
     await page.ngOnInit();
     await page.openCharacterPicker(0);
-    await page.onTypeFilterChange(createValueEvent('STR'));
-    await page.onClassFilterChange(createValueEvent('Shooter'));
+    await page.onTypeFacetChange(createFacetSelection(['STR']));
+    await page.onClassFacetChange(createFacetSelection(['Shooter']));
     await page.saveCharacterTagSetPicker(createCharacterTagSetSelection([{ tags: ['orb boost'] }]));
 
     expect(repository.getDetailedCharacterCatalog).toHaveBeenCalled();
     expect(page.candidates().map((character) => character.id)).toEqual([801]);
+  });
+
+  it('returns the candidates in the same order from the query path and the tag-filtered path', async () => {
+    /*
+     * The catalog is deliberately NOT in id order, so a path that forgets to
+     * sort would return this exact sequence and be caught.
+     */
+    const catalog = [700, 903, 42, 512, 88].map((id) => {
+      const character = createCharacterRecord(id);
+      character.detail.characterTags = ['utility'];
+      return character;
+    });
+
+    const queryPath = createPage({ characters: catalog });
+    await queryPath.page.ngOnInit();
+    await queryPath.page.openCharacterPicker(0);
+    const queryPathIds = queryPath.page.candidates().map((character) => character.id);
+
+    const tagPath = createPage({ characters: catalog });
+    await tagPath.page.ngOnInit();
+    await tagPath.page.openCharacterPicker(0);
+    await tagPath.page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['utility'] }]),
+    );
+    const tagPathIds = tagPath.page.candidates().map((character) => character.id);
+
+    expect(queryPath.repository.getDetailedCharacterCatalog).not.toHaveBeenCalled();
+    expect(tagPath.repository.getDetailedCharacterCatalog).toHaveBeenCalled();
+    expect(queryPathIds).toEqual([903, 700, 512, 88, 42]);
+    expect(tagPathIds).toEqual(queryPathIds);
+  });
+
+  it('asks the repository for the same sort mode and candidate cap the tag-filtered path applies', async () => {
+    const catalog = Array.from({ length: 60 }, (_, index) => {
+      const character = createCharacterRecord(1000 + index);
+      character.detail.characterTags = ['utility'];
+      return character;
+    });
+    const expectedTopIds = catalog
+      .map((character) => character.id)
+      .sort((left, right) => right - left)
+      .slice(0, 48);
+
+    const queryPath = createPage({ characters: catalog });
+    await queryPath.page.ngOnInit();
+    await queryPath.page.openCharacterPicker(0);
+
+    const [queryPathCall] = queryPath.repository.searchDetailedCharacters.mock.calls.at(-1) as [
+      { sortMode?: string; limit?: number; offset?: number },
+    ];
+
+    expect(queryPathCall.sortMode).toBe('powerFirst');
+    expect(queryPathCall.limit).toBe(48);
+    expect(queryPathCall.offset).toBe(0);
+    expect(queryPath.page.candidates().map((character) => character.id)).toEqual(expectedTopIds);
+
+    const tagPath = createPage({ characters: catalog });
+    await tagPath.page.ngOnInit();
+    await tagPath.page.openCharacterPicker(0);
+    await tagPath.page.saveCharacterTagSetPicker(
+      createCharacterTagSetSelection([{ tags: ['utility'] }]),
+    );
+
+    expect(tagPath.page.candidates().map((character) => character.id)).toEqual(expectedTopIds);
   });
 
   it('ORs the tags inside one character tag group', async () => {
@@ -999,6 +1208,7 @@ function createPage(
         async (query: {
           allowedCharacterIds?: number[];
           searchTerm: string;
+          sortMode?: string;
           limit?: number;
           offset?: number;
         }) => {
@@ -1012,10 +1222,24 @@ function createPage(
 
             return searchTerm ? character.name.toLowerCase().includes(searchTerm) : true;
           });
+          /*
+           * Re-derived from the `sortMode` string on purpose, NOT by calling the
+           * comparator the page uses. If the page ever stops asking for
+           * `powerFirst` on one of its two candidate paths, this fake keeps
+           * telling the truth and the order-parity test fails.
+           */
+          const sortedCharacters =
+            query.sortMode === 'powerFirst' ||
+            query.sortMode === 'idDesc' ||
+            query.sortMode === 'newest'
+              ? [...filteredCharacters].sort((left, right) => right.id - left.id)
+              : query.sortMode === 'idAsc'
+                ? [...filteredCharacters].sort((left, right) => left.id - right.id)
+                : filteredCharacters;
           const offset = query.offset ?? 0;
-          const limit = query.limit ?? filteredCharacters.length;
+          const limit = query.limit ?? sortedCharacters.length;
 
-          return filteredCharacters.slice(offset, offset + limit);
+          return sortedCharacters.slice(offset, offset + limit);
         },
       ),
   };
@@ -1529,6 +1753,40 @@ function createShipRecord(id: number): ShipRecord {
     thumbUrl: null,
     description: 'Boosts ATK by 1.5x.',
   };
+}
+
+/**
+ * Fixture for the in-memory (character-tag-filtered) candidate path: one single
+ * type per code, one dual-type row stored as 'INT,PSY', and two rows whose class
+ * arrays overlap on exactly one value so an `all` pair is a real intersection.
+ */
+function createFacetCandidates(): CharacterDetailRecord[] {
+  const rows: Array<{ id: number; type: string; classes: string[] }> = [
+    { id: 8801, type: 'STR', classes: ['Fighter'] },
+    { id: 8802, type: 'QCK', classes: ['Fighter'] },
+    { id: 8803, type: 'INT,PSY', classes: ['Cerebral'] },
+    { id: 8804, type: 'DEX', classes: ['Fighter', 'Shooter'] },
+    { id: 8805, type: 'DEX', classes: ['Fighter', 'Slasher'] },
+  ];
+
+  return rows.map((row) => {
+    const record = createCharacterRecord(row.id);
+
+    record.type = row.type;
+    record.classes = row.classes;
+    record.primaryClass = row.classes[0] ?? '';
+    record.secondaryClass = row.classes[1] ?? null;
+    record.detail.characterTags = ['utility'];
+
+    return record;
+  });
+}
+
+function createFacetSelection(
+  values: string[],
+  matchMode: CharacterFacetMatchMode = 'any',
+): CharacterFacetSelection {
+  return { values, matchMode };
 }
 
 function createValueEvent(value: string | null): CustomEvent<{ value: string | null }> {

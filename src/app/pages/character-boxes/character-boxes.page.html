@@ -173,19 +173,38 @@
                   (saveSelection)="saveAbilityTagSetPicker($event)"
                 ></app-ability-tag-set-picker>
 
+                <app-character-tag-filter
+                  testIdPrefix="character-boxes"
+                  [selection]="characterTagSetSelection()"
+                  [disabled]="loading()"
+                  (filterChange)="onCharacterTagFilterChange($event)"
+                ></app-character-tag-filter>
+
+                <app-character-facet-filter
+                  kind="type"
+                  presentation="chips"
+                  testIdPrefix="character-boxes"
+                  [label]="t('filters.typeLabel')"
+                  [placeholder]="t('filters.typePlaceholder')"
+                  [options]="availableTypes()"
+                  [selection]="typeFacet()"
+                  [disabled]="loading()"
+                  (selectionChange)="onTypeFacetChange($event)"
+                ></app-character-facet-filter>
+
+                <app-character-facet-filter
+                  kind="class"
+                  presentation="select"
+                  testIdPrefix="character-boxes"
+                  [label]="t('filters.classLabel')"
+                  [placeholder]="t('filters.classPlaceholder')"
+                  [options]="availableClasses()"
+                  [selection]="classFacet()"
+                  [disabled]="loading()"
+                  (selectionChange)="onClassFacetChange($event)"
+                ></app-character-facet-filter>
+
                 <app-character-filter-row
-                  [showTypeFilter]="true"
-                  [typeLabel]="t('filters.typeLabel')"
-                  [typePlaceholder]="t('filters.typePlaceholder')"
-                  [typeOptions]="availableTypes()"
-                  [typeQuery]="typeQuery()"
-                  [selectedType]="selectedType()"
-                  [showClassFilter]="true"
-                  [classLabel]="t('filters.classLabel')"
-                  [classPlaceholder]="t('filters.classPlaceholder')"
-                  [classOptions]="availableClasses()"
-                  [classQuery]="classQuery()"
-                  [selectedClass]="selectedClass()"
                   favoriteMode="select"
                   [favoritesSelectLabel]="t('filters.favoritesLabel')"
                   [favoritesSelectPlaceholder]="t('filters.favoritesPlaceholder')"
@@ -211,12 +230,6 @@
                   [selectedIdOrderValue]="selectedIdOrder()"
                   [showClearButton]="true"
                   [clearLabel]="'common.actions.clear' | transloco"
-                  (typeQueryChange)="onTypeQueryChange($event)"
-                  (typeSelected)="applyTypeFilter($event)"
-                  (typeCleared)="clearTypeFilter()"
-                  (classQueryChange)="onClassQueryChange($event)"
-                  (classSelected)="applyClassFilter($event)"
-                  (classCleared)="clearClassFilter()"
                   (favoriteFilterChange)="onFavoriteFilterChange($event)"
                   (costRangeChange)="onCostRangeChange($event.bound, $event.value)"
                   (membershipFilterChange)="onMembershipFilterChange($event)"

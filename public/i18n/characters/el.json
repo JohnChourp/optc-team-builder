@@ -10,7 +10,7 @@
     "abilityRailLabel": "Κατηγορίες ability filters",
     "class": {
       "label": "Class",
-      "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά class"
+      "placeholder": "Φίλτρο ανά class"
     },
     "hideFavorites": {
       "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
@@ -60,7 +60,7 @@
     },
     "type": {
       "label": "Type",
-      "placeholder": "Πληκτρολόγησε για φιλτράρισμα ανά type"
+      "placeholder": "Φίλτρο ανά type"
     },
     "support": {
       "label": "Support Ability filters",
@@ -71,8 +71,8 @@
       "title": "Support Ability filters",
       "copy": "Επίλεξε Support effects και ομαδοποίησέ τα. Ένα group μπορεί να απαιτεί όλα τα tags ή μόνο ένα από αυτά."
     },
-    "tagSets": {
-      "title": "Φίλτρα tag χαρακτήρων"
+    "abilityTagSets": {
+      "title": "Φίλτρα ability tags"
     }
   },
   "favorites": {

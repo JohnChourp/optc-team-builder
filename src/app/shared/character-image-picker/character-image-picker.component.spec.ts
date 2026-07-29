@@ -1,5 +1,5 @@
 import '@angular/compiler';
-import { SimpleChange } from '@angular/core';
+import { SimpleChange, signal } from '@angular/core';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -11,6 +11,15 @@ import {
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
+import {
+  type CharacterFacetSelection,
+  type CharacterTagSetSelection,
+} from '../../core/models/optc.models';
+import { matchesCharacterFacet } from '../../core/services/character-facet-filter.utils';
+import {
+  createCharacterTagSet,
+  createEmptyCharacterTagSetSelection,
+} from '../../core/services/character-tag-set.utils';
 import { CharacterImagePickerComponent } from './character-image-picker.component';
 
 vi.mock('@ionic/angular/standalone', () => ({
@@ -47,8 +56,6 @@ describe('CharacterImagePickerComponent', () => {
     expect(repository.getDatasetManifest).toHaveBeenCalledOnce();
     expect(characterCatalogCache.queryCharacters).toHaveBeenCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       sortMode: 'catalog',
       idOrder: 'newest',
       limit: 48,
@@ -83,17 +90,13 @@ describe('CharacterImagePickerComponent', () => {
     await component.onSearchChange({
       detail: { value: 'Luffy' },
     } as CustomEvent<{ value?: string | null }>);
-    await component.onTypeChange({
-      detail: { value: 'DEX' },
-    } as CustomEvent<{ value?: string | null }>);
-    await component.onClassChange({
-      detail: { value: 'Fighter' },
-    } as CustomEvent<{ value?: string | null }>);
+    await component.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
+    await component.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
 
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: 'Luffy',
-      typeFilter: 'DEX',
-      classFilter: 'Fighter',
+      typeFacet: { values: ['DEX'], matchMode: 'any' },
+      classFacet: { values: ['Fighter'], matchMode: 'any' },
       sortMode: 'catalog',
       idOrder: 'newest',
       limit: 48,
@@ -119,8 +122,6 @@ describe('CharacterImagePickerComponent', () => {
 
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       sortMode: 'catalog',
       idOrder: 'newest',
       limit: 48,
@@ -180,8 +181,6 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.selectedSortMode()).toBe('captainAtkBoost');
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       sortMode: 'captainAtkBoost',
       idOrder: 'newest',
       limit: 48,
@@ -205,8 +204,6 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.selectedIdOrder()).toBe('oldest');
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       sortMode: 'catalog',
       idOrder: 'oldest',
       limit: 48,
@@ -229,8 +226,6 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.hideFavorites()).toBe(false);
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       sortMode: 'catalog',
       idOrder: 'newest',
       limit: 48,
@@ -245,8 +240,6 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.hideFavorites()).toBe(true);
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       sortMode: 'catalog',
       idOrder: 'newest',
       limit: 48,
@@ -337,8 +330,6 @@ describe('CharacterImagePickerComponent', () => {
 
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       sortMode: 'catalog',
       idOrder: 'newest',
       limit: 48,
@@ -379,8 +370,6 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.tagSetSelection().sets).toHaveLength(1);
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
-      typeFilter: '',
-      classFilter: '',
       sortMode: 'catalog',
       idOrder: 'newest',
       limit: 48,
@@ -402,6 +391,133 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.allCatalogItems()).toHaveLength(4);
   });
 
+  it('narrows the catalog through the character-tag filter', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.onCharacterTagFilterChange({
+      selection: buildCharacterTagSelection([['any', ['Straw Hat Pirates']]]),
+      matchingCharacterIds: [2, 5, 9],
+    });
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+      allowedCharacterIds: [2, 5, 9],
+    });
+    expect(component.characters().map((character) => character.id)).toEqual([2, 5, 9]);
+  });
+
+  it('intersects the character-tag filter with the ability tag-set filter', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.saveTagSetSelection(
+      buildSelection('all', [['all', ['special-a', 'crewmate-a']]]),
+    );
+    await component.onCharacterTagFilterChange({
+      selection: buildCharacterTagSelection([['any', ['Straw Hat Pirates']]]),
+      matchingCharacterIds: [3, 4, 9],
+    });
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowedCharacterIds: [3, 4] }),
+    );
+    expect(component.characters().map((character) => character.id)).toEqual([3, 4]);
+  });
+
+  it('applies no gate when the character-tag selection is empty', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.onCharacterTagFilterChange({
+      selection: createEmptyCharacterTagSetSelection(),
+      matchingCharacterIds: undefined,
+    });
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+    expect(component.characters()).toHaveLength(48);
+  });
+
+  it('clears the character-tag filter when the picker is reopened', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+    });
+    await flushPromises();
+
+    await component.onCharacterTagFilterChange({
+      selection: buildCharacterTagSelection([['any', ['Straw Hat Pirates']]]),
+      matchingCharacterIds: [2, 5, 9],
+    });
+
+    expect(component.characterTagCharacterIds()).toEqual([2, 5, 9]);
+
+    // The instance is shared by three hosts and is never destroyed between opens,
+    // so a leaked selection would filter an unrelated picker with no visible cause.
+    component.ngOnChanges({
+      isOpen: new SimpleChange(true, true, false),
+    });
+    await flushPromises();
+
+    expect(component.characterTagSetSelection().sets).toHaveLength(0);
+    expect(component.characterTagCharacterIds()).toBeUndefined();
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+    });
+    expect(component.characters()).toHaveLength(48);
+  });
+
+  it('builds the very first page with the character-tag ids already applied', async () => {
+    const { component, characterCatalogCache } = createComponent();
+
+    component.characterTagCharacterIds.set([4, 6, 8]);
+
+    await (
+      component as unknown as { initializePicker(): Promise<void> }
+    ).initializePicker();
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
+      searchTerm: '',
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      limit: 48,
+      offset: 0,
+      allowedCharacterIds: [4, 6, 8],
+    });
+    expect(component.characters().map((character) => character.id)).toEqual([4, 6, 8]);
+  });
+
   it('renders the search, filters and confirm action in the template', () => {
     const template = readFileSync(
       resolve(
@@ -414,6 +530,23 @@ describe('CharacterImagePickerComponent', () => {
     expect(template).toContain("t('catalog.searchPlaceholder')");
     expect(template).toContain("t('filters.type')");
     expect(template).toContain("t('filters.class')");
+    expect(template).toContain('<app-character-facet-filter');
+    expect(template).toContain('kind="type"');
+    expect(template).toContain('kind="class"');
+    expect(template).toContain('presentation="chips"');
+    expect(template).toContain('presentation="select"');
+    expect(template).toContain('testIdPrefix="character-image-picker"');
+    expect(template).toContain('[selection]="typeFacet()"');
+    expect(template).toContain('[selection]="classFacet()"');
+    expect(template).toContain('[matchCount]="typeFacetMatchCount()"');
+    expect(template).toContain('[matchCount]="classFacetMatchCount()"');
+    expect(template).toContain('(selectionChange)="onTypeFacetChange($event)"');
+    expect(template).toContain('(selectionChange)="onClassFacetChange($event)"');
+    // The empty-value sentinel options are gone with the single-value selects.
+    expect(template).not.toContain("t('filters.anyType')");
+    expect(template).not.toContain("t('filters.anyClass')");
+    expect(template).not.toContain('onTypeChange($event)');
+    expect(template).not.toContain('onClassChange($event)');
     expect(template).toContain("t('sort.label')");
     expect(template).toContain('selectedSortMode()');
     expect(template).toContain('onSortModeChange($event)');
@@ -436,6 +569,13 @@ describe('CharacterImagePickerComponent', () => {
     expect(template).toContain('[selection]="tagSetSelection()"');
     expect(template).toContain('(dismiss)="closeTagSetPicker()"');
     expect(template).toContain('(saveSelection)="saveTagSetSelection($event)"');
+    expect(template).toContain('<app-character-tag-filter');
+    expect(template).toContain('testIdPrefix="character-image-picker"');
+    expect(template).toContain('[selection]="characterTagSetSelection()"');
+    expect(template).toContain('(filterChange)="onCharacterTagFilterChange($event)"');
+    expect(template.indexOf('<app-character-tag-filter')).toBeGreaterThan(
+      template.indexOf('<app-ability-tag-set-picker'),
+    );
     expect(template).toContain('items: availableSpecialAbilityCatalogItems()');
     expect(template).toContain('items: availableSupportAbilityCatalogItems()');
     expect(template).not.toContain('<app-special-ability-picker');
@@ -462,6 +602,165 @@ describe('CharacterImagePickerComponent', () => {
     expect(template).not.toContain("t('selected.emptyTitle')");
   });
 });
+
+describe('CharacterImagePickerComponent type and class facet filters', () => {
+  it('narrows the catalog by a selected type and applies no gate for an empty selection', async () => {
+    const { component, characterCatalogCache } = await createFacetComponent();
+
+    await component.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
+
+    expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ typeFacet: { values: ['STR'], matchMode: 'any' } }),
+    );
+    expect(component.characters().map((character) => character.id)).toEqual([1, 4]);
+
+    await component.onTypeFacetChange({ values: [], matchMode: 'any' });
+
+    const query = characterCatalogCache.queryCharacters.mock.lastCall?.[0] as Record<
+      string,
+      unknown
+    >;
+
+    expect(query).not.toHaveProperty('typeFacet');
+    expect(component.characters().map((character) => character.id)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('intersects a two-value all-mode class facet instead of unioning it', async () => {
+    const { component } = await createFacetComponent();
+
+    await component.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+
+    expect(component.characters().map((character) => character.id)).toEqual([3]);
+
+    await component.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'any' });
+
+    expect(component.characters().map((character) => character.id)).toEqual([2, 3, 5]);
+  });
+
+  it('finds a dual-type character by either of its types, in either stored order', async () => {
+    const { component } = await createFacetComponent();
+
+    await component.onTypeFacetChange({ values: ['PSY'], matchMode: 'any' });
+
+    expect(component.characters().map((character) => character.id)).toEqual([2, 5]);
+
+    await component.onTypeFacetChange({ values: ['INT', 'PSY'], matchMode: 'all' });
+
+    expect(component.characters().map((character) => character.id)).toEqual([2, 5]);
+  });
+
+  it('builds the very first page with the same facet fields every later page uses', async () => {
+    const { component, characterCatalogCache } = await createFacetComponent();
+
+    component.typeFacet.set({ values: ['STR'], matchMode: 'any' });
+    await (component as unknown as { initializePicker(): Promise<void> }).initializePicker();
+
+    const initialQuery = characterCatalogCache.queryCharacters.mock.lastCall?.[0] as Record<
+      string,
+      unknown
+    >;
+
+    // loadMore() short-circuits once a page comes back short, so drive the other
+    // builder through the reload path instead.
+    await component.onSearchChange({ detail: { value: '' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    const pagedQuery = characterCatalogCache.queryCharacters.mock.lastCall?.[0] as Record<
+      string,
+      unknown
+    >;
+
+    // The two builders are duplicated by design; page 1 must never ignore a
+    // filter that every later page honours.
+    expect(initialQuery['typeFacet']).toEqual({ values: ['STR'], matchMode: 'any' });
+    expect(pagedQuery['typeFacet']).toEqual({ values: ['STR'], matchMode: 'any' });
+    expect(component.characters().map((character) => character.id)).toEqual([1, 4]);
+  });
+
+  it('resets both facets when the picker is reopened so a shared instance stays clean', async () => {
+    const { component, characterCatalogCache } = await createFacetComponent();
+
+    await component.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
+    await component.onClassFacetChange({ values: ['Striker'], matchMode: 'any' });
+
+    expect(component.characters().map((character) => character.id)).toEqual([1]);
+
+    component.ngOnChanges({ isOpen: new SimpleChange(true, true, false) });
+    await flushPromises();
+
+    expect(component.typeFacet()).toEqual({ values: [], matchMode: 'any' });
+    expect(component.classFacet()).toEqual({ values: [], matchMode: 'any' });
+
+    const query = characterCatalogCache.queryCharacters.mock.lastCall?.[0] as Record<
+      string,
+      unknown
+    >;
+
+    expect(query).not.toHaveProperty('typeFacet');
+    expect(query).not.toHaveProperty('classFacet');
+    expect(component.characters().map((character) => character.id)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('reports a live match count per facet from the cached catalog', async () => {
+    const { component } = await createFacetComponent();
+
+    await component.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
+    await component.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+
+    expect(component.typeFacetMatchCount()).toBe(2);
+    expect(component.classFacetMatchCount()).toBe(1);
+  });
+});
+
+/**
+ * Five rows that make every facet failure mode observable: a dual-type pair
+ * stored in BOTH orders, a two-class character, and single-class characters.
+ */
+function buildFacetCharacters() {
+  return [
+    { id: 1, type: 'STR', classes: ['Striker'] },
+    { id: 2, type: 'INT,PSY', classes: ['Fighter'] },
+    { id: 3, type: 'QCK', classes: ['Fighter', 'Slasher'] },
+    { id: 4, type: 'STR', classes: ['Shooter'] },
+    { id: 5, type: 'PSY,INT', classes: ['Slasher'] },
+  ].map((character) => ({
+    ...character,
+    name: `Character ${character.id}`,
+    primaryClass: character.classes[0] ?? '',
+    secondaryClass: character.classes[1] ?? null,
+    cost: 30,
+    imageUrl: `assets/${character.id}.png`,
+    isIncomplete: false,
+  }));
+}
+
+async function createFacetComponent() {
+  const created = createComponent();
+  const catalog = buildFacetCharacters();
+
+  created.characterCatalogCache.catalog.set(catalog as never);
+  created.characterCatalogCache.queryCharacters.mockImplementation(
+    (query: Record<string, unknown>) => {
+      const typeFacet = (query['typeFacet'] ?? null) as CharacterFacetSelection | null;
+      const classFacet = (query['classFacet'] ?? null) as CharacterFacetSelection | null;
+
+      return catalog
+        .filter((character) =>
+          typeFacet === null ? true : matchesCharacterFacet('type', character, typeFacet),
+        )
+        .filter((character) =>
+          classFacet === null ? true : matchesCharacterFacet('class', character, classFacet),
+        );
+    },
+  );
+
+  created.component.isOpen = true;
+  created.component.ngOnChanges({ isOpen: new SimpleChange(false, true, true) });
+  await flushPromises();
+
+  return created;
+}
 
 function createComponent({ favoriteIds = [] }: { favoriteIds?: number[] } = {}) {
   const availableCharacters = buildCharacters();
@@ -491,11 +790,12 @@ function createComponent({ favoriteIds = [] }: { favoriteIds?: number[] } = {}) 
     }),
   };
   const characterCatalogCache = {
+    catalog: signal(availableCharacters),
     ensureLoaded: vi.fn().mockResolvedValue(undefined),
     queryCharacters: vi.fn().mockImplementation((query: Record<string, unknown>) => {
       const searchTerm = String(query['searchTerm'] ?? '').toLowerCase();
-      const typeFilter = String(query['typeFilter'] ?? '');
-      const classFilter = String(query['classFilter'] ?? '');
+      const typeFacet = (query['typeFacet'] ?? null) as CharacterFacetSelection | null;
+      const classFacet = (query['classFacet'] ?? null) as CharacterFacetSelection | null;
       const allowedCharacterIds = Array.isArray(query['allowedCharacterIds'])
         ? new Set(query['allowedCharacterIds'])
         : null;
@@ -511,12 +811,11 @@ function createComponent({ favoriteIds = [] }: { favoriteIds?: number[] } = {}) 
         )
         .filter((character) => !excludedCharacterIds.has(character.id))
         .filter((character) => character.name.toLowerCase().includes(searchTerm))
-        .filter((character) => !typeFilter || character.type === typeFilter)
-        .filter(
-          (character) =>
-            !classFilter ||
-            character.primaryClass === classFilter ||
-            character.secondaryClass === classFilter,
+        .filter((character) =>
+          typeFacet === null ? true : matchesCharacterFacet('type', character, typeFacet),
+        )
+        .filter((character) =>
+          classFacet === null ? true : matchesCharacterFacet('class', character, classFacet),
         )
         .slice(offset, offset + limit);
     }),
@@ -579,6 +878,18 @@ function buildSelection(
       operator: setOperator,
       requirements: abilityKeys.map((abilityKey) => buildRequirement(abilityKey)),
     })),
+  };
+}
+
+function buildCharacterTagSelection(
+  sets: [AbilityTagSetOperator, string[]][],
+  operator: AbilityTagSetOperator = 'all',
+): CharacterTagSetSelection {
+  return {
+    operator,
+    sets: sets.map(([setOperator, tags], index) =>
+      createCharacterTagSet(tags, setOperator, `character-tag-set-${index + 1}`),
+    ),
   };
 }
 

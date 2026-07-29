@@ -186,6 +186,43 @@ For the user-facing flow across guided builds, compare mode, saved-team JSON, sh
 
 ## Migration Policy
 
+## Character facet filter shapes
+
+Character **type** and **class** filters use a different, deliberately simpler
+shape than the tag-set filters below: a flat list of values plus one match mode,
+not a selection of sets.
+
+```jsonc
+{
+  "values": ["STR", "QCK"],   // author-cased facet values, order-insensitive
+  "matchMode": "all"          // "all" = holds every value; "any" = holds one
+}
+```
+
+- `CharacterFacetSelection` is defined in `src/app/core/models/optc.models.ts`;
+  `CharacterSearchQuery` carries it as the optional `typeFacet` / `classFacet`.
+  `DetailedCharacterSearchQuery` keeps its flat
+  `selectedTypes` / `selectedTypesMatchMode` (and the class twin) wire fields;
+  `toDetailedQueryFacetFields` converts between the two.
+- An **empty `values` list applies no filter**, whatever `matchMode` says.
+- Values are normalized (trimmed, de-duplicated, whitespace-collapsed) but keep
+  their author case, because `ion-select[multiple]` compares option values by
+  strict equality against the stored manifest strings — lowercasing would make
+  `Free Spirit` render a chip while showing nothing selected in the dropdown.
+- A character holds **at most two** types and **at most two** classes, so an
+  `all` selection of three or more values can never match. The UI prevents
+  reaching that state and demotes to `any` visibly where it cannot; the
+  normalizer enforces the same rule as a boundary invariant.
+- `characters.type` is a single **comma-joined** column, and dual-type pairs are
+  stored in both orders (`INT,PSY` and `PSY,INT` both occur). Never compare
+  `type` by exact string; match through `matchesCharacterFacet` (in-memory) or
+  `buildCharacterFacetSqlClause` (SQL, `',' || c.type || ','` with `ESCAPE '\'`).
+  `classes_json` is the authoritative class list — `primary_class` /
+  `secondary_class` alone under-report characters that carry a class only in the
+  JSON list.
+- Multi-set facet formulas such as `(STR AND QCK) OR (INT AND PSY)` are an
+  explicit non-goal and are not representable in this shape.
+
 ## Tag-set filter shapes
 
 Ability tag filters and `characterTags` filters are both stored as a *selection*

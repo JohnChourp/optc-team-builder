@@ -157,6 +157,20 @@
   font-size: 0.82rem;
 }
 
+/* Compact inline "min turns" select; only rendered for turn-based effects. */
+.ability-tag-set-chip__turns {
+  --padding-start: 8px;
+  --padding-end: 6px;
+  --padding-top: 2px;
+  --padding-bottom: 2px;
+  min-height: 22px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--set-accent) 22%, rgba(255, 255, 255, 0.06));
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 /* A sibling button, never nested inside another interactive element. */
 .ability-tag-set-chip__remove {
   display: grid;

@@ -39,12 +39,20 @@ import {
 import { type AutoBuildCaptainBranchMode } from '../../core/models/auto-team-builder.models';
 import {
   type CharacterDetailRecord,
+  type CharacterFacetSelection,
   type CharacterTagSetSelection,
   type DatasetManifest,
   type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import {
+  cloneCharacterFacetSelection,
+  createEmptyCharacterFacetSelection,
+  isCharacterFacetSelectionEmpty,
+  matchesCharacterFacet,
+  toDetailedQueryFacetFields,
+} from '../../core/services/character-facet-filter.utils';
 import {
   resolveCaptainTeamConditionStatus,
   type CaptainTeamConditionStatus,
@@ -54,7 +62,10 @@ import {
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverageBranchOptions,
 } from '../../core/services/captain-coverage.utils';
-import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import {
+  compareCharactersByPowerFirst,
+  OptcRepositoryService,
+} from '../../core/services/optc-repository.service';
 import {
   cloneAbilityFilterTagSetSelection,
   countTagSetRequirements,
@@ -62,6 +73,7 @@ import {
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
 import {
+  buildCharacterTagMatchIndex,
   cloneCharacterTagSetSelection,
   countCharacterTagSetTags,
   countPopulatedCharacterTagSets,
@@ -90,6 +102,7 @@ import {
   type AbilityTagSetPickerSection,
 } from '../../shared/ability-tag-set-picker/ability-tag-set-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
+import { CharacterFacetFilterComponent } from '../../shared/character-facet-filter/character-facet-filter.component';
 import {
   CharacterTagSetPickerComponent,
   type CharacterTagMatchIndex,
@@ -105,6 +118,17 @@ import {
 
 const MANUAL_TEAM_SLOT_COUNT = 6;
 const MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX = 1;
+
+/*
+ * The candidate list is served by two interchangeable paths: the repository
+ * query, and `loadTagFilteredCandidates` the moment a character-tag filter is
+ * set. Both the sort and the cap live here, as one constant each, so the two
+ * paths cannot answer the same filter with a different list. `sortMode:
+ * 'powerFirst'` and `compareCharactersByPowerFirst` are the query-side and
+ * in-memory halves of one ordering, owned by the repository.
+ */
+const MANUAL_TEAM_CANDIDATE_SORT_MODE = 'powerFirst' as const;
+const MANUAL_TEAM_CANDIDATE_LIMIT = 48;
 type ManualTeamAbilityFilterCategory = AbilityFilterRailCategory;
 
 /** Picker section narrowed to the rail categories this page exposes. */
@@ -178,6 +202,7 @@ function createEmptyManualTeamSlots(): Array<CharacterDetailRecord | null> {
     AbilityFilterRailComponent,
     AbilityTagSetPickerComponent,
     CaptainTeamConditionStatusComponent,
+    CharacterFacetFilterComponent,
     TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
     CharacterTagSetPickerComponent,
@@ -212,8 +237,15 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly availableCharacterTags = signal<string[]>([]);
-  public readonly selectedTypeFilter = signal('');
-  public readonly selectedClassFilter = signal('');
+  /**
+   * Flat value list + one match mode, for both candidate paths. The page keeps
+   * the facets in host state so `clearCandidateFilters()` and `resetPage()` can
+   * clear them; the control mirrors a reset back through its `selection` input.
+   */
+  public readonly typeFacet = signal<CharacterFacetSelection>(createEmptyCharacterFacetSelection());
+  public readonly classFacet = signal<CharacterFacetSelection>(
+    createEmptyCharacterFacetSelection(),
+  );
   public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
     createEmptyCharacterTagSetSelection(),
   );
@@ -272,8 +304,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   });
   public readonly hasActiveCandidateFilters = computed(
     () =>
-      this.selectedTypeFilter().length > 0 ||
-      this.selectedClassFilter().length > 0 ||
+      !isCharacterFacetSelectionEmpty(this.typeFacet()) ||
+      !isCharacterFacetSelectionEmpty(this.classFacet()) ||
       this.characterTagFilterCount() > 0 ||
       this.candidateMinCost() !== null ||
       this.candidateMaxCost() !== null ||
@@ -661,13 +693,13 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     await this.refreshCandidates();
   }
 
-  public async onTypeFilterChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    this.selectedTypeFilter.set((event.detail.value ?? '').trim());
+  public async onTypeFacetChange(selection: CharacterFacetSelection): Promise<void> {
+    this.typeFacet.set(cloneCharacterFacetSelection(selection));
     await this.refreshCandidates();
   }
 
-  public async onClassFilterChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
-    this.selectedClassFilter.set((event.detail.value ?? '').trim());
+  public async onClassFacetChange(selection: CharacterFacetSelection): Promise<void> {
+    this.classFacet.set(cloneCharacterFacetSelection(selection));
     await this.refreshCandidates();
   }
 
@@ -701,8 +733,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   public async clearCandidateFilters(): Promise<void> {
-    this.selectedTypeFilter.set('');
-    this.selectedClassFilter.set('');
+    this.typeFacet.set(createEmptyCharacterFacetSelection());
+    this.classFacet.set(createEmptyCharacterFacetSelection());
     this.candidateMinCost.set(null);
     this.candidateMaxCost.set(null);
     this.clearAbilityTagSetFilters();
@@ -998,8 +1030,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.selectedSlotIndex.set(0);
     this.searchTerm.set('');
     this.candidates.set([]);
-    this.selectedTypeFilter.set('');
-    this.selectedClassFilter.set('');
+    this.typeFacet.set(createEmptyCharacterFacetSelection());
+    this.classFacet.set(createEmptyCharacterFacetSelection());
     this.candidateMinCost.set(null);
     this.candidateMaxCost.set(null);
     this.clearAbilityTagSetFilters();
@@ -1263,17 +1295,14 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
         ? await this.loadTagFilteredCandidates(allowedCharacterIds)
         : await this.repository.searchDetailedCharacters({
             searchTerm: this.searchTerm().trim(),
-            selectedTypes: this.selectedTypeFilter() ? [this.selectedTypeFilter()] : [],
-            selectedTypesMatchMode: 'any',
-            selectedClasses: this.selectedClassFilter() ? [this.selectedClassFilter()] : [],
-            selectedClassesMatchMode: 'any',
+            ...toDetailedQueryFacetFields(this.typeFacet(), this.classFacet()),
             allowedCharacterIds,
             costRange: {
               min: this.candidateMinCost(),
               max: this.candidateMaxCost(),
             },
-            sortMode: 'powerFirst',
-            limit: 48,
+            sortMode: MANUAL_TEAM_CANDIDATE_SORT_MODE,
+            limit: MANUAL_TEAM_CANDIDATE_LIMIT,
             offset: 0,
           });
 
@@ -1406,23 +1435,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
     try {
       const records = await this.repository.getDetailedCharacterCatalog();
-      const index = new Map<string, number[]>();
 
-      for (const record of records) {
-        for (const tag of record.detail.characterTags ?? []) {
-          const key = tag.trim().toLowerCase();
-
-          if (!key.length) {
-            continue;
-          }
-
-          const characterIds = index.get(key) ?? [];
-          characterIds.push(record.id);
-          index.set(key, characterIds);
-        }
-      }
-
-      this.characterTagMatchIndex.set(index);
+      this.characterTagMatchIndex.set(buildCharacterTagMatchIndex(records));
     } catch {
       this.characterTagMatchIndex.set(null);
     }
@@ -1432,8 +1446,14 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     allowedCharacterIds: number[] | undefined,
   ): Promise<CharacterDetailRecord[]> {
     const searchTerm = this.searchTerm().trim().toLowerCase();
-    const selectedType = this.selectedTypeFilter().trim().toUpperCase();
-    const selectedClass = this.selectedClassFilter().trim();
+    /*
+     * Same facets, same predicate, same order and same cap as the repository
+     * path above. These two paths swap the moment a character-tag filter is set,
+     * so any divergence here would make the identical filter give different
+     * answers depending on whether a tag filter happens to be active.
+     */
+    const typeFacet = this.typeFacet();
+    const classFacet = this.classFacet();
     const characterTagSelection = this.characterTagSetSelection();
     const minCost = this.candidateMinCost();
     const maxCost = this.candidateMaxCost();
@@ -1456,17 +1476,11 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
           return false;
         }
 
-        if (
-          selectedType.length > 0 &&
-          !character.type
-            .split(',')
-            .map((type) => type.trim().toUpperCase())
-            .includes(selectedType)
-        ) {
+        if (!matchesCharacterFacet('type', character, typeFacet)) {
           return false;
         }
 
-        if (selectedClass.length > 0 && !character.classes.includes(selectedClass)) {
+        if (!matchesCharacterFacet('class', character, classFacet)) {
           return false;
         }
 
@@ -1485,8 +1499,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
         return true;
       })
-      .sort((left, right) => right.id - left.id)
-      .slice(0, 48);
+      .sort(compareCharactersByPowerFirst)
+      .slice(0, MANUAL_TEAM_CANDIDATE_LIMIT);
   }
 
   private resolveAllowedCandidateCharacterIds(): number[] | undefined {

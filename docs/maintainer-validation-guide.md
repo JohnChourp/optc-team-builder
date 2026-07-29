@@ -43,7 +43,7 @@ script, or workflow prerequisite looks suspect.
 | Auto Team Builder recommendation quality or explanation trust benchmark | `npm run test:ci -- --include src/app/core/services/auto-team-builder.recommendation-benchmark.spec.ts` | Focused benchmark plus engine/service specs when scoring, filtering, fallback, or explanation reason logic changes | Representative team-building cases still pick sensible utility and leader-scope teams, explain fallback, and fail with structural coverage context instead of incidental UI ordering | Test output only |
 | Manual-character overlays or dataset integrity checks | `npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts` | Lightweight manual-character specs plus `npx vitest run scripts --reporter=dot`; add `npm run test:captain-contracts` when generated ability metadata is touched | Manual overlays, linked canonical ids, generated dataset integrity, and broad script sweeps stay trustworthy | Test output only |
 | Dataset-change digest schema, generated-data review summary, or PR digest workflow | `npm run test:dataset-digest` | Focused digest tests plus one real `npm run dataset:digest -- --base-ref origin/main --head-ref HEAD --output /tmp/dataset-change-digest.md --json-output /tmp/dataset-change-digest.json`; add captain/source-data gates for parser changes | Parser/import PRs get a scan-friendly summary of manifest counts, generated records, captain tiers, builder abilities, ability catalog deltas, and suspicious churn | GitHub Actions artifact `dataset-change-digest`; local paths passed to `--output` and `--json-output` |
-| AND/OR tag-set filters (ability tags or `characterTags`) | `npm run test:ci -- --include src/app/core/services/ability-filter-tag-set.utils.spec.ts --include src/app/core/services/character-tag-set.utils.spec.ts` | Focused tag-set utils specs plus the picker component specs and every migrated host spec; add `npm run test:ci` in full when the shared resolver or the Auto Team Builder tag gate changes, and `PERF_ASSERT=0 npm run perf:ability-filters` when the modal flow itself is touched | Multi-set AND/OR semantics stay lossless against the legacy flat filters (the golden replay asserts the expanded sets and the old resolver return identical id sets), empty groups stay skipped rather than blanking results, and the Auto Team Builder engine actually rejects a team that covers none of an `any` group instead of only scoring it | Test output only; perf artifacts under `test-results/ability-filter-performance` |
+| AND/OR tag-set filters (ability tags or `characterTags`) | `npm run test:ci -- --include src/app/core/services/ability-filter-tag-set.utils.spec.ts --include src/app/core/services/character-tag-set.utils.spec.ts`; add `--include src/app/shared/character-tag-filter/character-tag-filter.component.spec.ts --include src/app/shared/character-tag-filter/character-tag-filter.i18n.spec.ts` when the shared character-tag filter shell or its copy changes | Focused tag-set utils specs plus the picker component specs and every migrated host spec (`characters`, `character-boxes`, `rumble-characters`, `character-image-picker`, `captain-coverage`, `manual-team-builder`); add `npm run test:ci` in full when the shared resolver or the Auto Team Builder tag gate changes, `npm run i18n:validate` when `public/i18n/character-tag-filter/` changes, and `PERF_ASSERT=0 npm run perf:ability-filters` when the modal flow itself is touched | Multi-set AND/OR semantics stay lossless against the legacy flat filters (the golden replay asserts the expanded sets and the old resolver return identical id sets), empty groups stay skipped rather than blanking results, the character-tag selection reaches the query only through `allowedCharacterIds` (so an empty selection gates nothing and an empty match list genuinely returns nobody), and the Auto Team Builder engine actually rejects a team that covers none of an `any` group instead of only scoring it | Test output only; perf artifacts under `test-results/ability-filter-performance` |
 | Saved Teams, Saved Enemies, Manual Team Builder, or ability-filter performance | `PERF_ASSERT=0 npm run perf:ability-filters`; use `npm run perf:mobile-pickers` for narrow picker/list responsiveness evidence | Run `npm run perf:ability-filters`, collect the companion explanation/import-share result, then run `npm run perf:budget-report -- --current-dir /path/to/current`; add `npm run perf:mobile-pickers` plus focused unit specs when the change targets mobile pickers, long saved collections, or modal filter lists | Deterministic desktop/mobile ability-filter timings are captured, mobile picker/list screenshots and soft warnings are recorded, and hard budgets are enforced by the budget report for the budgeted harnesses | `PERF_ARTIFACT_DIR` when set; otherwise `test-results/ability-filter-performance` or `test-results/mobile-picker-performance` |
 | Auto Team Builder explanation detail, compare rendering, import/share hydration, or memory pressure | `PERF_ASSERT=0 npm run perf:explanation-compare`; use `npm run perf:memory-pressure` for low-end compare/import memory evidence | `npm run perf:explanation-compare` plus focused Auto Team Builder, Saved Teams, or Manual Team Builder specs; add `npm run perf:memory-pressure` when compare-session persistence, large imports, or low-end recovery behavior changes | Compare-panel rendering, imported compare apply, explanation expansion, heavy saved-team import, share-link hydration, and low-end compare/import memory recovery stay measurable; the memory harness records Chromium heap/DOM counters and session-storage sizes before import, restore, cleanup, and forced GC | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dvr7x5` for explanation/compare and `../optc-team-builder-brain/live-artifacts/869dwcee1` for memory pressure |
 | Saved-team transfer codec format, parser, or large-payload codec performance | `npm run test:saved-team-codecs` plus `PERF_ASSERT=0 npm run perf:saved-team-codecs` | Focused codec specs plus the Node codec benchmark, then include `saved-team-codecs` in the current artifact root before `npm run perf:budget-report -- --current-dir /path/to/current` when publishing budget evidence | Saved Teams export/import/share compatibility stays intact while repeated encode, decode, sanitize, and invalid-input validation costs remain measured against generated heavy fixtures | `PERF_ARTIFACT_DIR` when set; otherwise local OPTC checkouts default to `../optc-team-builder-brain/live-artifacts/869dwchtw` |
@@ -304,6 +304,261 @@ already-matched characters (`captainAbilityEffectMatches`, `slotTokens`,
 by an unchanged id set. A clean targeted fix shows only the intended key(s) gaining
 or losing characters with no collateral movement on sibling keys; investigate any
 removal or value change you did not intend.
+
+When a rule change both **adds and removes** matches for a key (common for the
+crewmate `sailorAbilities` stat-boost families, where one grammar under- and
+over-matches at once), the offline regen alone is not enough: `data:apply-manual`
+*merges* the seed's stored `builderAbilities` with the freshly-derived ones, so
+removed matches survive from `optc-seed.sql`. Purge the affected keys from every
+`character_details.detail_json.builderAbilities` in the seed first (e.g. strip
+`crewmate_*` for a crewmate audit), then regenerate, so the diff reflects the new
+parser exactly. Confirm the regenerated catalog equals an independent per-key
+wording oracle (0 miss / 0 false-positive) and that only the intended category's
+keys moved — a crewmate audit must leave every non-crewmate key untouched.
+
+### Character Tag Filters
+
+`characterTags` (crew, family, and event tags) are filtered through the shared
+`app-character-tag-filter` shell in
+`src/app/shared/character-tag-filter/character-tag-filter.component.ts`. The
+shell owns the trigger button, the removable group chips, the polite live
+region, and the nested `app-character-tag-set-picker` modal; hosts only pass a
+`selection` plus a `testIdPrefix` and react to one `filterChange` event.
+Semantics are OR **inside** a tag group and AND/OR **across** groups, matching
+`matchesCharacterTagSets` in
+`src/app/core/services/character-tag-set.utils.ts`.
+
+Run the focused specs before changing the shell, its copy, or a host wiring:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:ci -- --include src/app/shared/character-tag-filter/character-tag-filter.component.spec.ts --include src/app/shared/character-tag-filter/character-tag-filter.i18n.spec.ts --include src/app/core/services/character-tag-set.utils.spec.ts
+```
+
+Host wiring is only covered by the host page specs, and those specs assert the
+template bindings as literal substrings — a new or renamed binding is invisible
+to them until the "template contains" test is extended. Run the two Auto Team
+Builder hosts when either page changes:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:ci -- --include src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts --include src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble.page.spec.ts
+```
+
+Run the i18n audit whenever `public/i18n/character-tag-filter/` changes, or when
+a host adds its own filter copy (the Auto Team Builder pickers own their caption
+and title strings in `public/i18n/auto-team-builder/`); the EN
+and EL files must keep identical leaf keys and identical `{{placeholder}}` sets:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run i18n:validate
+```
+
+Two different routing mechanisms are in play, and a change to one does not
+prove the other:
+
+- **Query-backed hosts** (`/tabs/characters`, `/tabs/character-boxes`, the
+  shared character image picker, and all three Auto Team Builder candidate
+  pickers) convert the selection to matching character
+  ids and pass them through the existing `allowedCharacterIds` channel,
+  intersected with the ability tag-set filter and (on Characters) the favorites
+  filter. An empty selection must send `allowedCharacterIds: undefined` so it
+  gates nothing; an empty match list must genuinely return nobody.
+- **In-memory hosts** (`/tabs/rumble-characters` and the
+  `/tabs/auto-team-builder-rumble` manual slot picker) ignore the resolved ids
+  and re-test each unit with `matchesCharacterTagSets` — in `matchesFilters`
+  before the `visibleLimit()` slice on Rumble characters, and in
+  `manualPickerResults` before the `.slice(0, 80)` cap in the Rumble manual
+  picker — so the "load more" affordance and the 80-result cap stay truthful.
+
+The Auto Team Builder pickers are the paging-sensitive case. `/tabs/auto-team-builder`
+hosts three separate filters — the requirement-source list
+(`atb-requirement-source`), the manual-lock candidate list (`atb-manual`), and
+the exclude candidate list (`atb-exclude`) — and each keeps its **own**
+selection: narrowing the manual-lock list must not narrow the exclude list, and
+none of them touches the page-level team-wide `characterTags` requirement, which
+still lives in the filters panel. Because the ids go into
+`searchDetailedCharacterPage(...)`, the gate is applied inside the SQL query
+before `LIMIT`/`OFFSET`: a filter change must restart paging at offset 0, and
+"load more" must keep carrying the same `allowedCharacterIds`. If a filter ever
+appears to work on the first page and then leaks unfiltered rows on the second,
+the id set was dropped from the load-more call.
+
+Manual verification (no E2E covers these surfaces yet). Serve the app with
+`npm start`, then for each of `/tabs/characters`, `/tabs/character-boxes`,
+`/tabs/rumble-characters`, the three `/tabs/auto-team-builder` candidate
+pickers, the `/tabs/auto-team-builder-rumble` manual slot picker, and any
+character image picker (Crew Forge, Captain Coverage, Saved Enemies):
+
+1. Open the trigger (`data-testid="<prefix>-character-tag-trigger"`, where
+   `<prefix>` is `characters`, `character-boxes`, `rumble-characters`,
+   `atb-requirement-source`, `atb-manual`, `atb-exclude`, `atb-rumble-manual`,
+   or `character-image-picker`). While the tag catalog loads the trigger is
+   disabled, shows a spinner, and reports `aria-busy="true"`.
+2. Pick two tags in one group and save. The result count must shrink to
+   characters carrying **either** tag, the trigger label must report the tag and
+   group counts, and one removable chip must appear per group.
+3. Add a second group and save. With the AND joiner the results must be the
+   intersection of the two groups; switching the joiner to OR must widen them
+   back to the union.
+4. Remove a chip, then use the page's clear/reset control (the `Reset` button in
+   the Characters and Pirate Rumble hero rows, the filter row's clear-filters
+   action on Character Boxes, and simply reopening the modal for the image
+   picker, which resets its own state). Chips, trigger label, and results
+   must all return to the unfiltered state — a selection that survives a reset
+   is the invisible-active-filter bug this control is most prone to.
+   For the modal-scoped pickers the reset is on **close**, not on open: closing
+   an Auto Team Builder picker (dismiss, header close, footer cancel, apply, or
+   picking a character) clears that picker's selection, and the Auto Team
+   Builder `Reset` button clears all three at once. Verify it by filtering the
+   manual-lock picker, closing it, and reopening it for a *different* slot —
+   the list must come back unfiltered. Same check for the Rumble manual slot
+   picker.
+5. On `/tabs/auto-team-builder`, scroll the filtered manual-lock or exclude list
+   to the end and press "load more": every additional page must still respect
+   the tag filter. Then confirm the team-wide `characterTags` requirement in the
+   filters panel is untouched by any picker filter, and vice versa.
+6. Confirm the polite live region announces the applied and cleared states, and
+   that with `prefers-reduced-motion: reduce` the chip and modal transitions
+   collapse instead of animating.
+7. Switch the app language to Greek and repeat step 2: the joiner words must
+   read `ή` / `και`, and no key must render as a raw dotted path.
+
+If the dataset exposes no `characterTags` at all, the trigger stays disabled and
+the support line reads the `support.unavailable` string; that is expected, not a
+regression.
+
+### Type and Class Facet Filters
+
+Character type and class are filtered through the shared
+`app-character-facet-filter` control in
+`src/app/shared/character-facet-filter/character-facet-filter.component.ts`.
+Unlike the tag-set filters above there is **no modal**: the control is a flat
+list of values plus one match mode.
+
+- `all` means the character holds **every** selected value; `any` means it holds
+  at least one. An empty selection applies no filter at all.
+- Type renders as chips (`presentation="chips"`, 5 values); class renders as an
+  `ion-select[multiple]` with a removable chip row (`presentation="select"`,
+  10 values).
+- Hosts: `/tabs/characters`, `/tabs/character-boxes`, `/tabs/captain-coverage`,
+  the `/tabs/manual-team-builder` candidate picker, and the shared character
+  image picker. `testIdPrefix` values are `characters`, `character-boxes`,
+  `captain-coverage`, `manual-team`, and `character-image-picker`; test ids are
+  `${testIdPrefix}-${kind}-facet-*` (`-facet-mode-any`, `-facet-mode-all`,
+  `-facet-clear`, `-facet-match-count`, `-facet-value-<slug>`).
+
+**A character holds at most two types and at most two classes.** That single
+dataset fact drives the whole design: `all` across three or more values can
+never match anything. The control therefore refuses to enter `all` past two
+selected values, and when an existing `all` selection grows past two it demotes
+to `any` **loudly** — a visible hint, an `aria-live` announcement, and automatic
+restoration of `all` when the selection drops back to two. A silently rewritten
+filter is the failure mode to watch for; if you ever see the results widen with
+no hint, that is a bug. Multi-set DNF selections such as
+`(STR AND QCK) OR (INT AND PSY)` are an explicit **non-goal**, documented as such
+in `src/app/core/models/optc.models.ts`.
+
+**Dual-type characters are the correctness trap.** `characters.type` is one
+comma-joined column (189 characters are dual-type, and the same pair is stored in
+both orders), so an exact-string comparison on `type` is wrong. Every path —
+the SQL query, the repository's in-memory override branch, the catalog cache,
+Captain Coverage's client-side predicate, and the Manual Team Builder
+tag-filtered path — goes through `matchesCharacterFacet` /
+`buildCharacterFacetSqlClause` in
+`src/app/core/services/character-facet-filter.utils.ts`. The SQL clause matches
+on `',' || c.type || ','` with an `ESCAPE '\'`, and the exported
+`CHARACTER_TYPE_LIKE_CLAUSE` / `CHARACTER_CLASS_LIKE_CLAUSE` constants are what
+the repository spec's fake driver consumes, so the fake and the repository
+cannot drift apart. Filtering always happens **before** any slice, limit, or
+paging cap.
+
+Run the focused specs before changing the control, its copy, the shared utils, or
+a host wiring:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:ci -- --include src/app/core/services/character-facet-filter.utils.spec.ts --include src/app/shared/character-facet-filter/character-facet-filter.component.spec.ts --include src/app/shared/character-facet-filter/character-facet-filter.i18n.spec.ts
+```
+
+Then the five hosts, plus the two services that own the query paths:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run test:ci -- --include src/app/pages/characters/characters.page.spec.ts --include src/app/pages/character-boxes/character-boxes.page.spec.ts --include src/app/pages/captain-coverage/captain-coverage.page.spec.ts --include src/app/pages/manual-team-builder/manual-team-builder.page.spec.ts --include src/app/shared/character-image-picker/character-image-picker.component.spec.ts --include src/app/core/services/optc-repository.service.spec.ts --include src/app/core/services/character-catalog-cache.service.spec.ts
+```
+
+Two gaps make green misleading here, and both have bitten this work:
+
+- **Host page specs do not use `TestBed`.** They `new` the page class with
+  `as never` fakes and assert template bindings as literal substrings read with
+  `readFileSync`. A new or renamed binding is invisible to them until the
+  "template contains" test is extended.
+- **`vitest run` and `tsconfig.app.json` do not typecheck spec files.** A wrong
+  `CharacterFacetMatchMode` literal or a stale field name only surfaces under
+  the spec project, which is what CI's `ng test` uses:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npx tsc -p tsconfig.spec.json --noEmit
+```
+
+Whenever `public/i18n/character-facet-filter/` changes, the EN and EL files must
+keep identical leaf keys and identical `{{placeholder}}` sets. Per house style
+the Greek copy keeps `Type` and `Class` as English loanwords, matching every
+other shipped scope, and facet **values** (`STR`, `Free Spirit`, …) are never
+translated in either locale:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run i18n:validate
+```
+
+Manual verification (no E2E covers these surfaces yet). Serve the app with
+`npm start`, then for each host:
+
+1. Select one type. Results narrow, one chip appears, and the match-mode row
+   appears (Characters, Captain Coverage, and the image picker also show a live
+   match count).
+2. Select a second type and switch the mode to `All`. Results must become the
+   **intersection**, not the union — on real data a two-type `All` selection is
+   a small set, and a result list that stays large is the AND-silently-became-OR
+   regression.
+3. With `All` active, add a third value. The control must demote to `Any` with a
+   visible hint and an announcement; removing the third value must restore
+   `All`.
+4. Pick a known dual-type character (its type reads e.g. `INT/PSY`) and confirm
+   it is found by **either** of its types. The same pair is stored in both
+   orders in the dataset, so check one character of each order.
+5. Select two classes with `All` on `/tabs/character-boxes`, then use "select all
+   filtered": the selected count must equal the visible filtered count. The
+   bulk-select sweep and the page query share one builder; a mismatch means they
+   diverged.
+6. Clear: `/tabs/characters` clears through the page `Reset` button,
+   `/tabs/character-boxes` through the filter row's clear-filters action,
+   `/tabs/manual-team-builder` through the candidate filter reset, and the image
+   picker resets itself on reopen. `/tabs/captain-coverage` has **no** clear-all
+   — the per-facet `Clear` button inside each control is the only reset there,
+   so confirm both are reachable.
+7. The character image picker instance is shared across Captain Coverage, Crew
+   Forge, and Saved Enemies. Open it from all three in one session and confirm a
+   facet selected in one does not persist into the next.
+8. On `/tabs/manual-team-builder`, apply a facet selection, then toggle a
+   character-tag filter on and off. That toggle swaps the candidate list between
+   the repository query and the in-memory tag-filtered path; membership **and**
+   order must be identical either way (both ask for `powerFirst`, which is
+   highest id first, and both cap at 48).
+9. Switch the app language to Greek and repeat step 3: the demotion hint must
+   read Greek copy with `type`/`class` as loanwords, and no key may render as a
+   raw dotted path.
 
 ### Browser Performance
 

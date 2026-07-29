@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { type CharacterTagSetSelection } from '../models/optc.models';
+import { type CharacterDetailRecord, type CharacterTagSetSelection } from '../models/optc.models';
 import {
   MAX_CHARACTER_TAG_SETS,
+  buildCharacterTagMatchIndex,
   cloneCharacterTagSetSelection,
   countCharacterTagSetTags,
   countPopulatedCharacterTagSets,
@@ -13,6 +14,7 @@ import {
   isOverCharacterTagSetCap,
   matchesCharacterTagSets,
   normalizeCharacterTagSetSelection,
+  resolveCharacterTagSetSelectionMatchingCharacterIds,
 } from './character-tag-set.utils';
 
 const STRAW_HAT = 'Straw Hat Pirates';
@@ -432,4 +434,236 @@ describe('matchesCharacterTagSets', () => {
     expect(matchesCharacterTagSets([HEART, WORST_GENERATION, DRESSROSA], selection)).toBe(true);
     expect(matchesCharacterTagSets([HEART, DRESSROSA], selection)).toBe(false);
   });
+});
+
+function recordOf(id: number, characterTags: string[] | undefined): CharacterDetailRecord {
+  return { id, detail: { characterTags } } as unknown as CharacterDetailRecord;
+}
+
+/**
+ * A small corpus with deliberate overlaps: 1 and 2 share Straw Hat, 2 and 3
+ * share Worst Generation, 4 carries nothing, 5 has the tag field absent.
+ */
+const CORPUS: CharacterDetailRecord[] = [
+  recordOf(1, [STRAW_HAT, DRESSROSA]),
+  recordOf(2, [STRAW_HAT, WORST_GENERATION]),
+  recordOf(3, [HEART, WORST_GENERATION]),
+  recordOf(4, []),
+  recordOf(5, undefined),
+  recordOf(6, [' straw hat pirates ']),
+];
+
+describe('buildCharacterTagMatchIndex', () => {
+  it('maps every tag to the ids carrying it, keyed case-insensitively', () => {
+    const index = buildCharacterTagMatchIndex(CORPUS);
+
+    expect(index.get('straw hat pirates')).toEqual([1, 2, 6]);
+    expect(index.get('worst generation')).toEqual([2, 3]);
+    expect(index.get('heart pirates')).toEqual([3]);
+  });
+
+  it('skips characters with no tags and tolerates an absent tag field', () => {
+    const index = buildCharacterTagMatchIndex(CORPUS);
+
+    for (const ids of index.values()) {
+      expect(ids).not.toContain(4);
+      expect(ids).not.toContain(5);
+    }
+  });
+
+  it('drops blank tags rather than indexing an empty key', () => {
+    const index = buildCharacterTagMatchIndex([recordOf(9, ['  ', STRAW_HAT])]);
+
+    expect(index.has('')).toBe(false);
+    expect(index.get('straw hat pirates')).toEqual([9]);
+  });
+});
+
+describe('resolveCharacterTagSetSelectionMatchingCharacterIds', () => {
+  const index = buildCharacterTagMatchIndex(CORPUS);
+
+  it('returns undefined for an empty selection so no gate is applied', () => {
+    expect(
+      resolveCharacterTagSetSelectionMatchingCharacterIds(
+        createEmptyCharacterTagSetSelection(),
+        index,
+      ),
+    ).toBeUndefined();
+  });
+
+  /**
+   * The app-blanking regression: a user who taps "add group" and picks no tag
+   * yet must still see the whole catalog. Returning [] here would intersect the
+   * caller's id set down to empty and blank the page.
+   */
+  it('returns undefined — not an empty list — when sets exist but none are populated', () => {
+    const selection = selectionOf([
+      { operator: 'any', tags: [] },
+      { operator: 'all', tags: [] },
+    ]);
+
+    expect(resolveCharacterTagSetSelectionMatchingCharacterIds(selection, index)).toBeUndefined();
+  });
+
+  it('unions inside an any set', () => {
+    const selection = selectionOf([{ operator: 'any', tags: [HEART, DRESSROSA] }]);
+
+    expect(
+      resolveCharacterTagSetSelectionMatchingCharacterIds(selection, index)?.sort(),
+    ).toEqual([1, 3]);
+  });
+
+  it('intersects inside an all set', () => {
+    const selection = selectionOf([{ operator: 'all', tags: [STRAW_HAT, WORST_GENERATION] }]);
+
+    expect(resolveCharacterTagSetSelectionMatchingCharacterIds(selection, index)).toEqual([2]);
+  });
+
+  it('intersects across sets when the selection operator is all', () => {
+    const selection = selectionOf(
+      [
+        { operator: 'any', tags: [STRAW_HAT] },
+        { operator: 'any', tags: [WORST_GENERATION] },
+      ],
+      'all',
+    );
+
+    expect(resolveCharacterTagSetSelectionMatchingCharacterIds(selection, index)).toEqual([2]);
+  });
+
+  it('unions across sets when the selection operator is any', () => {
+    const selection = selectionOf(
+      [
+        { operator: 'any', tags: [DRESSROSA] },
+        { operator: 'any', tags: [HEART] },
+      ],
+      'any',
+    );
+
+    expect(
+      resolveCharacterTagSetSelectionMatchingCharacterIds(selection, index)?.sort(),
+    ).toEqual([1, 3]);
+  });
+
+  it('skips an unpopulated set instead of letting it collapse the result', () => {
+    const selection = selectionOf(
+      [
+        { operator: 'any', tags: [HEART] },
+        { operator: 'all', tags: [] },
+      ],
+      'all',
+    );
+
+    expect(resolveCharacterTagSetSelectionMatchingCharacterIds(selection, index)).toEqual([3]);
+  });
+
+  it('matches nobody when an all set names a tag no character carries', () => {
+    const selection = selectionOf([{ operator: 'all', tags: [STRAW_HAT, 'Nonexistent Crew'] }]);
+
+    expect(resolveCharacterTagSetSelectionMatchingCharacterIds(selection, index)).toEqual([]);
+  });
+
+  it('fails open on a null index so a failed catalog load never fakes an empty result', () => {
+    const selection = selectionOf([{ operator: 'any', tags: [HEART] }]);
+
+    expect(resolveCharacterTagSetSelectionMatchingCharacterIds(selection, null)).toBeUndefined();
+  });
+
+  it('treats a set whose tags all normalize away as no constraint, like the predicate', () => {
+    const anded = selectionOf(
+      [
+        { operator: 'any', tags: ['   '] },
+        { operator: 'any', tags: [HEART] },
+      ],
+      'all',
+    );
+    const ored = selectionOf([{ operator: 'any', tags: ['  '] }], 'any');
+
+    expect(resolveCharacterTagSetSelectionMatchingCharacterIds(anded, index)).toEqual([3]);
+    expect(resolveCharacterTagSetSelectionMatchingCharacterIds(ored, index)).toBeUndefined();
+  });
+
+  it('collapses internal whitespace so a padded tag still resolves', () => {
+    const selection = selectionOf([{ operator: 'any', tags: ['Straw   Hat  Pirates'] }]);
+
+    expect(resolveCharacterTagSetSelectionMatchingCharacterIds(selection, index)?.sort()).toEqual([
+      1, 2, 6,
+    ]);
+  });
+});
+
+/**
+ * Anti-drift gate. The id-set resolver and the per-character predicate are two
+ * independent implementations of the same semantics, used by different hosts;
+ * this replays a matrix of selections through both and demands identical
+ * verdicts, so neither can be "fixed" in isolation.
+ */
+describe('id-set resolver agrees with the per-character predicate', () => {
+  const index = buildCharacterTagMatchIndex(CORPUS);
+
+  const SELECTIONS: CharacterTagSetSelection[] = [
+    createEmptyCharacterTagSetSelection(),
+    selectionOf([{ operator: 'any', tags: [] }]),
+    selectionOf([{ operator: 'any', tags: [STRAW_HAT] }]),
+    selectionOf([{ operator: 'all', tags: [STRAW_HAT, WORST_GENERATION] }]),
+    selectionOf([{ operator: 'any', tags: [STRAW_HAT, HEART] }]),
+    selectionOf([{ operator: 'all', tags: ['Nonexistent Crew'] }]),
+    selectionOf([{ operator: 'any', tags: ['STRAW HAT PIRATES'] }]),
+    selectionOf(
+      [
+        { operator: 'any', tags: [STRAW_HAT] },
+        { operator: 'any', tags: [WORST_GENERATION] },
+      ],
+      'all',
+    ),
+    selectionOf(
+      [
+        { operator: 'any', tags: [DRESSROSA] },
+        { operator: 'any', tags: [HEART] },
+      ],
+      'any',
+    ),
+    selectionOf(
+      [
+        { operator: 'all', tags: [STRAW_HAT, DRESSROSA] },
+        { operator: 'any', tags: [] },
+      ],
+      'all',
+    ),
+    // A set whose tags all normalize away matches EVERY character, so ANDed it
+    // constrains nothing and ORed it makes the whole selection inert. Both
+    // shapes are replayed because the two operators take different code paths.
+    selectionOf([{ operator: 'any', tags: ['   '] }]),
+    selectionOf(
+      [
+        { operator: 'any', tags: ['   '] },
+        { operator: 'any', tags: [HEART] },
+      ],
+      'all',
+    ),
+    selectionOf(
+      [
+        { operator: 'any', tags: ['   '] },
+        { operator: 'any', tags: [HEART] },
+      ],
+      'any',
+    ),
+    // Whitespace collapse: the picker hands back collapsed tags, the catalog may
+    // hold uncollapsed ones, and both must resolve to the same key.
+    selectionOf([{ operator: 'any', tags: ['Straw   Hat  Pirates'] }]),
+  ];
+
+  for (const [caseIndex, selection] of SELECTIONS.entries()) {
+    it(`agrees on selection ${caseIndex}`, () => {
+      const resolved = resolveCharacterTagSetSelectionMatchingCharacterIds(selection, index);
+      const allowed = resolved === undefined ? null : new Set(resolved);
+
+      for (const record of CORPUS) {
+        const viaPredicate = matchesCharacterTagSets(record.detail.characterTags ?? [], selection);
+        const viaIdSet = allowed === null ? true : allowed.has(record.id);
+
+        expect(viaIdSet, `character ${record.id} on selection ${caseIndex}`).toBe(viaPredicate);
+      }
+    });
+  }
 });

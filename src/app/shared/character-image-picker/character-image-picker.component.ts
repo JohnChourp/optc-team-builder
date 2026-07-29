@@ -30,10 +30,12 @@ import {
   type AutoBuildAbilityCatalog,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
+  type CharacterFacetSelection,
   type CharacterIdOrder,
   type CharacterListItem,
   type CharacterSearchQuery,
   type CharacterSortMode,
+  type CharacterTagSetSelection,
   type DatasetManifest,
 } from '../../core/models/optc.models';
 import {
@@ -42,6 +44,12 @@ import {
   resolveTagSetSelectionMatchingCharacterIds,
 } from '../../core/services/ability-filter-tag-set.utils';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
+import {
+  countCharacterFacetMatches,
+  createEmptyCharacterFacetSelection,
+  isCharacterFacetSelectionEmpty,
+} from '../../core/services/character-facet-filter.utils';
+import { createEmptyCharacterTagSetSelection } from '../../core/services/character-tag-set.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
@@ -54,6 +62,11 @@ import {
   type AbilityFilterRailCategory,
 } from '../ability-filter-rail/ability-filter-rail.component';
 import { AbilityTagSetPickerComponent } from '../ability-tag-set-picker/ability-tag-set-picker.component';
+import { CharacterFacetFilterComponent } from '../character-facet-filter/character-facet-filter.component';
+import {
+  CharacterTagFilterComponent,
+  type CharacterTagFilterChange,
+} from '../character-tag-filter/character-tag-filter.component';
 
 const PAGE_SIZE = 48;
 const CHARACTER_IMAGE_PICKER_MODAL_NAME = 'CharacterImagePickerComponent';
@@ -76,6 +89,8 @@ const CHARACTER_IMAGE_PICKER_MODAL_NAME = 'CharacterImagePickerComponent';
     IonToolbar,
     AbilityFilterRailComponent,
     AbilityTagSetPickerComponent,
+    CharacterFacetFilterComponent,
+    CharacterTagFilterComponent,
     TranslocoDirective,
     TranslocoPipe,
   ],
@@ -97,8 +112,16 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly loadingMore = signal(false);
   public readonly hasMore = signal(true);
   public readonly searchTerm = signal('');
-  public readonly selectedType = signal('');
-  public readonly selectedClass = signal('');
+  /**
+   * Vocabulary C: one flat value list plus one match mode per facet. An empty
+   * selection is NO filter — never "nothing matches".
+   */
+  public readonly typeFacet = signal<CharacterFacetSelection>(
+    createEmptyCharacterFacetSelection(),
+  );
+  public readonly classFacet = signal<CharacterFacetSelection>(
+    createEmptyCharacterFacetSelection(),
+  );
   public readonly selectedSortMode = signal<CharacterSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
   public readonly favoritesOnly = signal(false);
@@ -109,6 +132,11 @@ export class CharacterImagePickerComponent implements OnChanges {
   public readonly tagSetSelection = signal<AbilityFilterTagSetSelection>(
     createEmptyAbilityFilterTagSetSelection(),
   );
+  public readonly characterTagSetSelection = signal<CharacterTagSetSelection>(
+    createEmptyCharacterTagSetSelection(),
+  );
+  /** `undefined` means "no character-tag filter"; `[]` means "nothing matches". */
+  public readonly characterTagCharacterIds = signal<number[] | undefined>(undefined);
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly selectedCharacter = signal<CharacterListItem | null>(null);
   public readonly selectedCharacterId = computed(() => this.selectedCharacter()?.id ?? null);
@@ -120,6 +148,16 @@ export class CharacterImagePickerComponent implements OnChanges {
   );
   public readonly availableClasses = computed(() =>
     this.normalizeOptions(this.summary()?.availableClasses ?? []),
+  );
+  /**
+   * Live per-facet match counts over the cached catalog. Supplied only because
+   * this component already holds the catalog in hand.
+   */
+  public readonly typeFacetMatchCount = computed(() =>
+    countCharacterFacetMatches('type', this.characterCatalogCache.catalog(), this.typeFacet()),
+  );
+  public readonly classFacetMatchCount = computed(() =>
+    countCharacterFacetMatches('class', this.characterCatalogCache.catalog(), this.classFacet()),
   );
   public readonly availableSpecialAbilityCatalogItems = computed(() =>
     getAbilityCatalogItemsByCategory(this.abilityCatalog()?.abilities ?? [], 'special'),
@@ -220,21 +258,21 @@ export class CharacterImagePickerComponent implements OnChanges {
     await this.loadCharacters(true);
   }
 
-  public async onTypeChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+  public async onTypeFacetChange(selection: CharacterFacetSelection): Promise<void> {
     if (this.applyingSelection) {
       return;
     }
 
-    this.selectedType.set(typeof event.detail.value === 'string' ? event.detail.value : '');
+    this.typeFacet.set(selection);
     await this.loadCharacters(true);
   }
 
-  public async onClassChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
+  public async onClassFacetChange(selection: CharacterFacetSelection): Promise<void> {
     if (this.applyingSelection) {
       return;
     }
 
-    this.selectedClass.set(typeof event.detail.value === 'string' ? event.detail.value : '');
+    this.classFacet.set(selection);
     await this.loadCharacters(true);
   }
 
@@ -321,6 +359,12 @@ export class CharacterImagePickerComponent implements OnChanges {
     await this.loadCharacters(true);
   }
 
+  public async onCharacterTagFilterChange(change: CharacterTagFilterChange): Promise<void> {
+    this.characterTagSetSelection.set(change.selection);
+    this.characterTagCharacterIds.set(change.matchingCharacterIds);
+    await this.loadCharacters(true);
+  }
+
   /** Drops one category's tags from every set, then any set left with no tags. */
   public async clearAbilityFilterCategory(category: AbilityFilterRailCategory): Promise<void> {
     const categoryByKey = this.abilityFilterCategoryByKey();
@@ -385,16 +429,30 @@ export class CharacterImagePickerComponent implements OnChanges {
           : Promise.resolve(null),
         this.characterCatalogCache.ensureLoaded(),
       ]);
+      // Composed the same way loadCharacters() does. resetState() has just cleared
+      // both selections so this normally resolves to `undefined`, but keeping the
+      // two paths identical removes the ordering dependency where page 1 could
+      // ignore a filter that every later page honours.
+      const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
+        this.tagSetFilterCharacterIds(),
+        this.characterTagCharacterIds(),
+      ]);
+      const typeFacet = this.typeFacet();
+      const classFacet = this.classFacet();
       const query = {
         searchTerm: '',
-        typeFilter: '',
-        classFilter: '',
+        ...(isCharacterFacetSelectionEmpty(typeFacet) ? {} : { typeFacet }),
+        ...(isCharacterFacetSelectionEmpty(classFacet) ? {} : { classFacet }),
         sortMode: this.selectedSortMode(),
         idOrder: this.selectedIdOrder(),
         limit: PAGE_SIZE,
         offset: 0,
       };
-      const characters = this.characterCatalogCache.queryCharacters(this.applyPickerScope(query));
+      const characters = this.characterCatalogCache.queryCharacters(
+        this.applyPickerScope(
+          allowedCharacterIds === undefined ? query : { ...query, allowedCharacterIds },
+        ),
+      );
 
       this.summary.set(summary);
       this.abilityCatalog.set(abilityCatalog);
@@ -420,11 +478,14 @@ export class CharacterImagePickerComponent implements OnChanges {
       const nextOffset = reset ? 0 : this.characters().length;
       const allowedCharacterIds = intersectAbilityMatchingCharacterIds([
         this.tagSetFilterCharacterIds(),
+        this.characterTagCharacterIds(),
       ]);
+      const typeFacet = this.typeFacet();
+      const classFacet = this.classFacet();
       const query = {
         searchTerm: this.searchTerm().trim(),
-        typeFilter: this.selectedType(),
-        classFilter: this.selectedClass(),
+        ...(isCharacterFacetSelectionEmpty(typeFacet) ? {} : { typeFacet }),
+        ...(isCharacterFacetSelectionEmpty(classFacet) ? {} : { classFacet }),
         sortMode: this.selectedSortMode(),
         idOrder: this.selectedIdOrder(),
         limit: PAGE_SIZE,
@@ -466,14 +527,21 @@ export class CharacterImagePickerComponent implements OnChanges {
     this.loadingMore.set(false);
     this.hasMore.set(true);
     this.searchTerm.set('');
-    this.selectedType.set('');
-    this.selectedClass.set('');
+    // Load-bearing, same reason as the character-tag selection below: this
+    // instance survives every open across three hosts, so a facet left behind
+    // would silently filter an unrelated picker.
+    this.typeFacet.set(createEmptyCharacterFacetSelection());
+    this.classFacet.set(createEmptyCharacterFacetSelection());
     this.selectedSortMode.set('catalog');
     this.selectedIdOrder.set('newest');
     this.favoritesOnly.set(false);
     this.hideFavorites.set(false);
     this.tagSetPickerOpen.set(false);
     this.tagSetSelection.set(createEmptyAbilityFilterTagSetSelection());
+    // Load-bearing: this instance survives every open (three hosts share it), so a
+    // leaked character-tag selection would silently filter an unrelated picker.
+    this.characterTagSetSelection.set(createEmptyCharacterTagSetSelection());
+    this.characterTagCharacterIds.set(undefined);
     this.characters.set([]);
     this.selectedCharacter.set(null);
   }
