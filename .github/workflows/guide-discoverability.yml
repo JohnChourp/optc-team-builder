@@ -1,52 +1,20 @@
 name: Guide Discoverability
 
+# Scheduled and manual only by policy: this build-and-verify pass is not
+# allowed to run on pull requests or main pushes. Run it locally with
+# `npm run build:pages && npm run discoverability:verify`.
+# See docs/ci-trigger-policy.md and `npm run actions:ci-triggers`.
 on:
   workflow_dispatch:
   schedule:
     - cron: '17 6 * * 2'
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/guide-discoverability.yml'
-      - 'README.md'
-      - 'docs/**'
-      - 'scripts/generate-seo-pages.mjs'
-      - 'scripts/audit-seo-pages.mjs'
-      - 'scripts/verify-guide-discoverability.mjs'
-      - 'scripts/verify-guide-discoverability.spec.ts'
-      - 'src/index.html'
-      - 'src/app/app.routes.ts'
-      - 'src/app/pages/seo-content/**'
-      - 'src/app/pages/auto-team-builder/auto-team-builder.page.html'
-      - 'src/app/pages/saved-teams/saved-teams.page.html'
-      - 'package.json'
-      - 'package-lock.json'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/guide-discoverability.yml'
-      - 'README.md'
-      - 'docs/**'
-      - 'scripts/generate-seo-pages.mjs'
-      - 'scripts/audit-seo-pages.mjs'
-      - 'scripts/verify-guide-discoverability.mjs'
-      - 'scripts/verify-guide-discoverability.spec.ts'
-      - 'src/index.html'
-      - 'src/app/app.routes.ts'
-      - 'src/app/pages/seo-content/**'
-      - 'src/app/pages/auto-team-builder/auto-team-builder.page.html'
-      - 'src/app/pages/saved-teams/saved-teams.page.html'
-      - 'package.json'
-      - 'package-lock.json'
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   verify:
@@ -59,7 +27,7 @@ jobs:
           {
             echo "### Workflow budget"
             echo "- Timeout budget: 25 minutes"
-            echo "- Concurrency policy: PR guide-discoverability runs cancel stale attempts for the same PR; scheduled and main runs are preserved."
+            echo "- Concurrency policy: scheduled and manual guide-discoverability runs are isolated per run and are never cancelled."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Checkout

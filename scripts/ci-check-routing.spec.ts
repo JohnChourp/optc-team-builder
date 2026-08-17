@@ -129,6 +129,18 @@ describe('ci-check-routing', () => {
     expect(plan.scriptSuites).toEqual(['workflow-budgets']);
   });
 
+  it('routes CI trigger policy checker changes to the focused trigger suite', () => {
+    const plan = buildCheckPlan([
+      'scripts/check-github-ci-triggers.mjs',
+      'scripts/check-github-ci-triggers.spec.ts',
+    ]);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.runE2e).toBe(false);
+    expect(plan.scriptSuites).toEqual(['ci-triggers']);
+  });
+
   it('routes dataset digest changes to the focused digest suite', () => {
     const plan = buildCheckPlan([
       'scripts/dataset-change-digest.mjs',
@@ -204,6 +216,7 @@ describe('ci-check-routing', () => {
       'ci-routing',
       'actions-pins',
       'workflow-budgets',
+      'ci-triggers',
       'maintainer-doctor',
       'branch-cleanup',
       'dataset-digest',

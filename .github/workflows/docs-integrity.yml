@@ -1,17 +1,23 @@
 name: Docs Integrity
 
+# Manual-only by policy. Docs integrity is validated locally
+# (`npm run verify:local`) instead of on every pull request and main push.
+# See docs/ci-trigger-policy.md and `npm run actions:ci-triggers`.
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Base ref or SHA the docs drift check compares against.
+        required: false
+        default: origin/main
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   docs-integrity:
@@ -24,13 +30,8 @@ jobs:
           {
             echo "### Workflow budget"
             echo "- Timeout budget: 25 minutes"
-            echo "- Concurrency policy: PR Docs Integrity runs cancel stale attempts for the same PR; main runs are preserved."
+            echo "- Concurrency policy: manual Docs Integrity runs are isolated per run and are never cancelled."
           } >> "${GITHUB_STEP_SUMMARY}"
-
-      - name: Note app-only validation for untrusted PR
-        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
-        run: |
-          echo "::notice::Running app-only Docs Integrity because this pull_request context cannot receive RELEASE_PUSH_TOKEN for the private optc-team-builder-brain repo. Full app+brain docs integrity still runs for trusted PRs and main pushes."
 
       - name: Checkout app
         uses: actions/checkout@v7
@@ -39,13 +40,12 @@ jobs:
           fetch-depth: 0
 
       - name: Checkout sibling brain
-        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
         shell: bash
         env:
           SIBLING_CHECKOUT_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN || github.token }}
         run: |
           set -euo pipefail
-          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          branch="${GITHUB_REF_NAME}"
           ref="refs/heads/${branch}"
           repo="https://github.com/JohnChourp/optc-team-builder-brain.git"
           if [[ -z "${SIBLING_CHECKOUT_TOKEN:-}" ]]; then
@@ -81,22 +81,18 @@ jobs:
         run: npm ci
 
       - name: Check full docs integrity
-        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
         working-directory: optc-team-builder
         run: npm run docs:integrity -- --brain-root ../optc-team-builder-brain
 
       - name: Check full docs commands
-        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
         working-directory: optc-team-builder
         run: npm run docs:commands -- --brain-root ../optc-team-builder-brain
 
       - name: Check release runbook drift
-        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
         working-directory: optc-team-builder
         run: npm run docs:release-runbook-drift -- --brain-root ../optc-team-builder-brain
 
       - name: Check app and brain workflow budgets
-        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
         working-directory: optc-team-builder
         shell: bash
         run: |
@@ -107,51 +103,19 @@ jobs:
             npm run actions:workflow-budgets -- --app-only
           fi
 
+      - name: Check CI trigger policy
+        working-directory: optc-team-builder
+        run: npm run actions:ci-triggers
+
       - name: Check full docs drift
-        if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
         working-directory: optc-team-builder
         shell: bash
         env:
-          EVENT_BEFORE: ${{ github.event.before }}
+          BASE_REF: ${{ inputs.base_ref || 'origin/main' }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_EVENT_NAME}" == "push" && -n "${EVENT_BEFORE:-}" && ! "${EVENT_BEFORE}" =~ ^0+$ ]]; then
-            base_ref="${EVENT_BEFORE}"
-          else
-            base_ref="origin/${GITHUB_BASE_REF:-main}"
-          fi
-          npm run docs:drift -- --base-ref "${base_ref}" --head-ref HEAD --brain-root ../optc-team-builder-brain
-
-      - name: Check app-only docs integrity
-        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
-        working-directory: optc-team-builder
-        run: npm run docs:integrity -- --app-only
-
-      - name: Check app-only docs commands
-        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
-        working-directory: optc-team-builder
-        run: npm run docs:commands -- --app-only
-
-      - name: Check app-only docs drift
-        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
-        working-directory: optc-team-builder
-        shell: bash
-        env:
-          EVENT_BEFORE: ${{ github.event.before }}
-        run: |
-          set -euo pipefail
-          if [[ "${GITHUB_EVENT_NAME}" == "push" && -n "${EVENT_BEFORE:-}" && ! "${EVENT_BEFORE}" =~ ^0+$ ]]; then
-            base_ref="${EVENT_BEFORE}"
-          else
-            base_ref="origin/${GITHUB_BASE_REF:-main}"
-          fi
-          npm run docs:drift -- --base-ref "${base_ref}" --head-ref HEAD --app-only
-
-      - name: Check app-only workflow budgets
-        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}
-        working-directory: optc-team-builder
-        run: npm run actions:workflow-budgets -- --app-only
+          npm run docs:drift -- --base-ref "${BASE_REF}" --head-ref HEAD --brain-root ../optc-team-builder-brain
 
       - name: Docs integrity script tests
         working-directory: optc-team-builder

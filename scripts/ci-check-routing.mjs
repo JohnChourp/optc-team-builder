@@ -19,6 +19,10 @@ export const SCRIPT_SUITES = {
     label: 'GitHub workflow budget tests',
     command: 'npm run test:workflow-budgets && npm run actions:workflow-budgets',
   },
+  'ci-triggers': {
+    label: 'GitHub CI trigger policy tests',
+    command: 'npm run test:ci-triggers && npm run actions:ci-triggers',
+  },
   'maintainer-doctor': {
     label: 'Maintainer environment doctor tests',
     command: 'npm run test:maintainer-doctor',
@@ -206,6 +210,12 @@ function isWorkflowBudgetPath(filePath) {
   return (
     filePath === 'scripts/check-github-workflow-budgets.mjs' ||
     filePath === 'scripts/check-github-workflow-budgets.spec.ts'
+  );
+}
+
+function isCiTriggerPolicyPath(filePath) {
+  return (
+    filePath === 'scripts/check-github-ci-triggers.mjs' || filePath === 'scripts/check-github-ci-triggers.spec.ts'
   );
 }
 
@@ -440,6 +450,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isWorkflowBudgetPath(filePath)) {
       categories.add('workflow-budgets');
       addScriptSuite(scriptSuites, 'workflow-budgets');
+      continue;
+    }
+
+    if (isCiTriggerPolicyPath(filePath)) {
+      categories.add('ci-trigger-policy');
+      addScriptSuite(scriptSuites, 'ci-triggers');
       continue;
     }
 

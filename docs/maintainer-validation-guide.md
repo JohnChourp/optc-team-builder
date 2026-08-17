@@ -30,6 +30,10 @@ Use `docs/docs-drift-map.json` when a feature/workflow path moves and you need
 the required docs entry points that should move with it.
 Use `docs/branch-lifecycle-policy.md` before retrying or documenting post-merge
 branch cleanup, especially when GitHub returns GH013 for a merged branch.
+Use `docs/ci-trigger-policy.md` before adding or restoring any workflow trigger:
+GitHub Actions never runs on pull requests or main pushes, so `npm run
+verify:local` is what proves a change, and `npm run actions:ci-triggers` fails
+the moment a workflow tries to schedule itself off a PR or a main push again.
 Use `npm run doctor:maintainer -- --profile=ci --brain-root
 ../optc-team-builder-brain` first when a local setup, sibling checkout, package
 script, or workflow prerequisite looks suspect.
@@ -60,7 +64,7 @@ script, or workflow prerequisite looks suspect.
 | Dependency maintenance policy, Dependabot cadence, or toolchain update review | `npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain` plus the focused row for the changed surface | Follow `docs/dependency-maintenance-policy.md`: batch safe minor/patch updates, split focused-review updates, and add the package/workflow/browser/performance/release/native checks that match the update | Maintainers can tell which dependency and tooling updates are safe to batch, which require focused review, and how to roll out or roll back changes after merge | Brain task audit and default-branch workflow runs |
 | Maintainer environment, sibling checkout, or validation prerequisite drift | `npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain` | Doctor command plus `npm run test:maintainer-doctor`; add docs command and integrity checks when command examples or workflow references changed | Node/npm engines, app/brain layout, required workflow files, contract/performance/release-check scripts, release fixtures, brain evidence paths, and instruction parity are ready before deeper validation | Doctor output only |
 | Branch lifecycle, post-merge branch cleanup, or GH013 deletion blockers | `npm run test:branch-cleanup` plus `npm run branch:cleanup-report -- --repo JohnChourp/optc-team-builder --format markdown` for current state | Focused cleanup tests plus docs integrity, docs commands, docs drift, and the brain task audit when policy or evidence changes | Merged routine branches are classified without deleting anything, active deletion rules are visible, and maintainers know when to keep, investigate, or request separate cleanup approval | Report output and task-scoped evidence under `../optc-team-builder-brain/live-artifacts/<task-id>/` when ClickUp-backed |
-| CI routing, dependency, workflow, workflow-budget, or package changes | `npm run test:ci-routing`, `npm run test:workflow-budgets`, `npm run actions:workflow-budgets`, plus a YAML parse of the touched workflow | Full local validation for the changed routing surface, `npm run actions:workflow-budgets -- --brain-root ../optc-team-builder-brain` when paired brain workflow budgets are in scope, then rely on the PR `Test` workflow to prove the selected GitHub jobs | The executable routing rules stay fail-closed, workflow timeout/concurrency policy remains explicit, and the workflow still emits check-selection evidence before running targeted jobs | `ci-check-routing-summary` workflow artifact and workflow step summaries |
+| CI routing, dependency, workflow, workflow-budget, trigger-policy, or package changes | `npm run test:ci-routing`, `npm run test:workflow-budgets`, `npm run actions:workflow-budgets`, `npm run test:ci-triggers`, `npm run actions:ci-triggers`, plus a YAML parse of the touched workflow | `npm run verify:local` for the changed routing surface, plus `npm run actions:workflow-budgets -- --brain-root ../optc-team-builder-brain` when paired brain workflow budgets are in scope | The executable routing rules stay fail-closed, workflow timeout/concurrency policy remains explicit, and no workflow re-acquires an automatic pull-request or main-push trigger | Local `verify:local` summary; `ci-check-routing-summary` artifact when the manual `Test` workflow is dispatched |
 | Broad app UI behavior, routing, saved-team/share flows, or regression-prone user journeys | Focused `npm run test:ci -- --include ...` for touched components/services | `npm run test:ci`, scoped `npm run test:e2e:*` browser runs, `npm run i18n:validate`, and `npm run build`; use all browser projects when browser-specific behavior changed | Angular units, deterministic cross-browser journeys, translation keys, and production build health remain intact; browser flakes follow the `e2e/README.md` quarantine workflow before any coverage is excluded from blocking CI | Compact Playwright summary artifacts for every browser leg; full Playwright debug reports only for failed browser legs |
 | Docs drift map, docs guardrails, release runbook contract, runbook-only, or audit-only changes | `npm run docs:integrity -- --brain-root ../optc-team-builder-brain`, `npm run docs:commands -- --brain-root ../optc-team-builder-brain`, `npm run docs:release-runbook-drift -- --brain-root ../optc-team-builder-brain`, `npm run docs:drift -- --base-ref origin/main --head-ref HEAD --brain-root ../optc-team-builder-brain`, plus `git diff --check` | Add `npm run test:docs-drift` when the map or detector changes; add `npm run test:release-runbook-drift` when release runbook workflow/package/policy alignment changes; add targeted command validation when command examples or workflow references changed | Markdown links, explicit repo file references, OPTC public URLs, ClickUp task URLs, documented maintainer commands, release runbook workflow/package/policy alignment, mapped feature-to-doc ownership, and whitespace stay valid across app and brain docs | None |
 
@@ -113,11 +117,14 @@ a runnable command that must be proven through the UI. UI evidence, when needed
 for an OPTC task, belongs in the brain repo under
 `../optc-team-builder-brain/live-artifacts/<task-id>/`.
 
-## Executable CI Routing
+## Executable Check Routing
 
-The `Test` workflow uses `scripts/ci-check-routing.mjs` as the source of truth
-for selecting pull-request and `main` push checks. The workflow first records a
-`ci-check-routing-summary` artifact, then runs only the selected job groups.
+`scripts/ci-check-routing.mjs` is the source of truth for which check groups a
+change needs. `npm run verify:local` runs those groups locally, and the
+manual-dispatch `Test` workflow reuses the same router when it is given a
+`base_ref` input, recording a `ci-check-routing-summary` artifact before running
+the selected job groups. With no `base_ref` the manual run executes the full
+plan.
 
 Routing defaults are:
 
@@ -125,6 +132,7 @@ Routing defaults are:
 - docs-drift map or detector changes run the docs drift script tests with the
   other docs script suites
 - workflow-budget checker changes run the focused workflow-budget tests
+- CI trigger policy checker changes run the focused trigger-policy tests
 - maintainer doctor changes run the focused doctor script tests
 - branch cleanup report changes run the focused branch cleanup suite
 - dataset-change digest changes run the focused digest script tests
@@ -142,12 +150,12 @@ Routing defaults are:
 - package, dependency, workflow, routing-script, missing-diff, or unclassified
   changes fail closed to the full plan
 
-This reduces common docs/script PR lead time by avoiding six browser jobs that
-do not cover those surfaces. Runtime changes still get blocking cross-browser
-coverage, and workflow/dependency changes keep the full historical confidence
-path. When investigating a surprising route, run `npm run test:ci-routing` and
-inspect the workflow's `ci-check-routing-summary` artifact before changing the
-YAML.
+This keeps a docs or script change from paying for six browser runs that do not
+cover those surfaces. Runtime changes still get the blocking cross-browser
+matrix through `npm run verify:local:full`, and workflow/dependency changes keep
+the full historical confidence path. When investigating a surprising route, run
+`npm run test:ci-routing` and `node scripts/ci-check-routing.mjs --base
+origin/main --head HEAD --format markdown` before changing the YAML.
 
 Workflow budget changes also need `npm run test:workflow-budgets` and
 `npm run actions:workflow-budgets`; include `-- --brain-root
