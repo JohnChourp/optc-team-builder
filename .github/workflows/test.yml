@@ -1,17 +1,23 @@
 name: Test
 
+# Manual-only by policy. This suite is not allowed to run automatically on
+# pull requests or on pushes to main; it is validated locally instead
+# (`npm run verify:local` / `npm run verify:local:full`). See
+# docs/ci-trigger-policy.md and `npm run actions:ci-triggers`.
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Optional base ref or SHA to route checks from. Leave empty to run the full check plan.
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   changes:
@@ -37,7 +43,7 @@ jobs:
           {
             echo "### Workflow budget"
             echo "- Timeout budget: 10 minutes"
-            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+            echo "- Concurrency policy: manual Test runs are isolated per run and are never cancelled."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Checkout
@@ -45,26 +51,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Checkout trusted router
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: .ci-router-base
-
       - name: Resolve diff range
         id: diff
         shell: bash
+        env:
+          BASE_REF: ${{ inputs.base_ref }}
         run: |
           set -euo pipefail
 
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            base_sha="${{ github.event.pull_request.base.sha }}"
-            head_sha="${{ github.event.pull_request.head.sha }}"
-          else
-            base_sha="${{ github.event.before }}"
-            head_sha="${GITHUB_SHA}"
+          base_sha=""
+          if [[ -n "${BASE_REF:-}" ]]; then
+            base_sha="$(git rev-parse --verify "${BASE_REF}^{commit}")"
           fi
+          head_sha="${GITHUB_SHA}"
 
           echo "base_sha=${base_sha}" >> "${GITHUB_OUTPUT}"
           echo "head_sha=${head_sha}" >> "${GITHUB_OUTPUT}"
@@ -77,8 +76,8 @@ jobs:
 
           base_sha="${{ steps.diff.outputs.base_sha }}"
           head_sha="${{ steps.diff.outputs.head_sha }}"
-          full_script_suites="ci-routing,actions-pins,workflow-budgets,maintainer-doctor,branch-cleanup,dataset-digest,saved-team-codecs,captain-contracts,release-check,release-runbook-drift,release-readiness,docs-integrity,docs-commands,docs-drift,discoverability,public-entry-synthetics,i18n-regression,drive-sync-server,source-data,perf-budget,e2e-triage,pwa-shell"
-          full_script_matrix='{"include":[{"suite":"ci-routing","label":"CI routing tests","command":"npm run test:ci-routing"},{"suite":"actions-pins","label":"GitHub Actions pin tests","command":"npm run test:actions-pins && npm run actions:pins"},{"suite":"workflow-budgets","label":"GitHub workflow budget tests","command":"npm run test:workflow-budgets && npm run actions:workflow-budgets"},{"suite":"maintainer-doctor","label":"Maintainer environment doctor tests","command":"npm run test:maintainer-doctor"},{"suite":"branch-cleanup","label":"Branch cleanup report tests","command":"npm run test:branch-cleanup"},{"suite":"dataset-digest","label":"Dataset change digest tests","command":"npm run test:dataset-digest"},{"suite":"saved-team-codecs","label":"Saved-team codec fuzz tests","command":"npm run test:saved-team-codecs"},{"suite":"captain-contracts","label":"Captain contract script tests","command":"npm run test:captain-contracts"},{"suite":"release-check","label":"Release detector replay tests","command":"npm run test:release-check"},{"suite":"release-runbook-drift","label":"Release runbook drift tests","command":"npm run test:release-runbook-drift"},{"suite":"release-readiness","label":"Release readiness report tests","command":"npm run test:release-readiness"},{"suite":"docs-integrity","label":"Docs integrity script tests","command":"npm run test:docs-integrity"},{"suite":"docs-commands","label":"Docs command script tests","command":"npm run test:docs-commands"},{"suite":"docs-drift","label":"Docs drift script tests","command":"npm run test:docs-drift"},{"suite":"discoverability","label":"Guide discoverability tests","command":"npm run test:discoverability"},{"suite":"public-entry-synthetics","label":"Public entry synthetic monitor tests","command":"npm run test:public-entry-synthetics"},{"suite":"i18n-regression","label":"Multilingual regression tests","command":"npm run test:i18n-regression"},{"suite":"drive-sync-server","label":"Drive sync backend tests","command":"npm run test:drive-sync-server"},{"suite":"source-data","label":"Source data validation tests","command":"npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/upsert-manual-character.spec.ts"},{"suite":"perf-budget","label":"Performance budget script tests","command":"npm run test:perf-budget"},{"suite":"e2e-triage","label":"Playwright routing and quarantine tests","command":"npm run test:e2e-triage"},{"suite":"pwa-shell","label":"PWA shell safety tests","command":"npm run test:pwa-shell"}]}'
+          full_script_suites="ci-routing,actions-pins,workflow-budgets,ci-triggers,maintainer-doctor,branch-cleanup,dataset-digest,saved-team-codecs,captain-contracts,release-check,release-runbook-drift,release-readiness,docs-integrity,docs-commands,docs-drift,discoverability,public-entry-synthetics,i18n-regression,drive-sync-server,source-data,perf-budget,e2e-triage,pwa-shell"
+          full_script_matrix='{"include":[{"suite":"ci-routing","label":"CI routing tests","command":"npm run test:ci-routing"},{"suite":"actions-pins","label":"GitHub Actions pin tests","command":"npm run test:actions-pins && npm run actions:pins"},{"suite":"workflow-budgets","label":"GitHub workflow budget tests","command":"npm run test:workflow-budgets && npm run actions:workflow-budgets"},{"suite":"ci-triggers","label":"GitHub CI trigger policy tests","command":"npm run test:ci-triggers && npm run actions:ci-triggers"},{"suite":"maintainer-doctor","label":"Maintainer environment doctor tests","command":"npm run test:maintainer-doctor"},{"suite":"branch-cleanup","label":"Branch cleanup report tests","command":"npm run test:branch-cleanup"},{"suite":"dataset-digest","label":"Dataset change digest tests","command":"npm run test:dataset-digest"},{"suite":"saved-team-codecs","label":"Saved-team codec fuzz tests","command":"npm run test:saved-team-codecs"},{"suite":"captain-contracts","label":"Captain contract script tests","command":"npm run test:captain-contracts"},{"suite":"release-check","label":"Release detector replay tests","command":"npm run test:release-check"},{"suite":"release-runbook-drift","label":"Release runbook drift tests","command":"npm run test:release-runbook-drift"},{"suite":"release-readiness","label":"Release readiness report tests","command":"npm run test:release-readiness"},{"suite":"docs-integrity","label":"Docs integrity script tests","command":"npm run test:docs-integrity"},{"suite":"docs-commands","label":"Docs command script tests","command":"npm run test:docs-commands"},{"suite":"docs-drift","label":"Docs drift script tests","command":"npm run test:docs-drift"},{"suite":"discoverability","label":"Guide discoverability tests","command":"npm run test:discoverability"},{"suite":"public-entry-synthetics","label":"Public entry synthetic monitor tests","command":"npm run test:public-entry-synthetics"},{"suite":"i18n-regression","label":"Multilingual regression tests","command":"npm run test:i18n-regression"},{"suite":"drive-sync-server","label":"Drive sync backend tests","command":"npm run test:drive-sync-server"},{"suite":"source-data","label":"Source data validation tests","command":"npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/upsert-manual-character.spec.ts"},{"suite":"perf-budget","label":"Performance budget script tests","command":"npm run test:perf-budget"},{"suite":"e2e-triage","label":"Playwright routing and quarantine tests","command":"npm run test:e2e-triage"},{"suite":"pwa-shell","label":"PWA shell safety tests","command":"npm run test:pwa-shell"}]}'
 
           write_full_plan() {
             local reason="$1"
@@ -118,6 +117,11 @@ jobs:
             } > ci-check-routing-summary.md
           }
 
+          if [[ -z "${base_sha}" ]]; then
+            write_full_plan "manual run without a base ref executes the full check plan" "[]"
+            exit 0
+          fi
+
           if ! name_status="$(git diff --name-status --diff-filter=ACMRTD "${base_sha}...${head_sha}" 2>&1)"; then
             reason="$(printf '%s' "git diff unavailable: ${name_status}" | tr '\r\n' ' ' | sed 's/[[:space:]][[:space:]]*/ /g')"
             write_full_plan "${reason}" "[]"
@@ -133,18 +137,14 @@ jobs:
           )"
 
           if [[ "${critical_change}" == "true" ]]; then
-            write_full_plan "dependency, workflow, or routing changes fail closed before running PR-modified router code" "${changed_files_json}"
+            write_full_plan "dependency, workflow, or routing changes fail closed before running routed checks" "${changed_files_json}"
             exit 0
           fi
 
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            router_script=".ci-router-base/scripts/ci-check-routing.mjs"
-          else
-            router_script="./scripts/ci-check-routing.mjs"
-          fi
+          router_script="./scripts/ci-check-routing.mjs"
 
           if [[ ! -f "${router_script}" ]]; then
-            write_full_plan "trusted routing script is unavailable on the base ref" "${changed_files_json}"
+            write_full_plan "routing script is unavailable in this checkout" "${changed_files_json}"
             exit 0
           fi
 
@@ -156,13 +156,7 @@ jobs:
       - name: Summarize routing
         run: |
           if [[ ! -f ci-check-routing-summary.md ]]; then
-            if [[ "${GITHUB_EVENT_NAME}" == "pull_request" && -f .ci-router-base/scripts/ci-check-routing.mjs ]]; then
-              router_script=".ci-router-base/scripts/ci-check-routing.mjs"
-            else
-              router_script="./scripts/ci-check-routing.mjs"
-            fi
-
-            node "${router_script}" \
+            node ./scripts/ci-check-routing.mjs \
               --base "${{ steps.diff.outputs.base_sha }}" \
               --head "${{ steps.diff.outputs.head_sha }}" \
               --format markdown > ci-check-routing-summary.md
@@ -189,7 +183,7 @@ jobs:
           {
             echo "### Workflow budget"
             echo "- Timeout budget: 20 minutes"
-            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+            echo "- Concurrency policy: manual Test runs are isolated per run and are never cancelled."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Note skipped Angular tests
@@ -233,7 +227,7 @@ jobs:
           {
             echo "### Workflow budget"
             echo "- Timeout budget: 25 minutes"
-            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+            echo "- Concurrency policy: manual Test runs are isolated per run and are never cancelled."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Checkout
@@ -285,7 +279,7 @@ jobs:
           {
             echo "### Workflow budget"
             echo "- Timeout budget: 20 minutes"
-            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+            echo "- Concurrency policy: manual Test runs are isolated per run and are never cancelled."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Checkout
@@ -320,7 +314,7 @@ jobs:
           {
             echo "### Workflow budget"
             echo "- Timeout budget: 35 minutes"
-            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+            echo "- Concurrency policy: manual Test runs are isolated per run and are never cancelled."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Checkout
@@ -402,7 +396,7 @@ jobs:
           {
             echo "### Workflow budget"
             echo "- Timeout budget: 35 minutes"
-            echo "- Concurrency policy: PR Test runs cancel stale attempts for the same PR; main push runs are preserved."
+            echo "- Concurrency policy: manual Test runs are isolated per run and are never cancelled."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Checkout

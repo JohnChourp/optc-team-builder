@@ -1,13 +1,15 @@
 name: PR Traceability
 
+# Manual-only by policy: no workflow in this repo runs because of a pull
+# request. Run the same gate locally with `npm run pr:traceability -- --pr <n>`.
+# See docs/ci-trigger-policy.md and `npm run actions:ci-triggers`.
 on:
-  pull_request_target:
-    types:
-      - opened
-      - edited
-      - reopened
-      - synchronize
-      - ready_for_review
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to check.
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -15,7 +17,6 @@ permissions:
 
 jobs:
   pr-traceability:
-    if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
 
     steps:
@@ -28,4 +29,6 @@ jobs:
           node-version-file: .nvmrc
 
       - name: Check PR traceability
-        run: node .github/scripts/check-pr-traceability.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/check-pr-traceability.mjs --pr "${{ inputs.pr_number }}"

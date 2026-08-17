@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const REQUIRED_FIELDS = ['ClickUp task', 'Evidence', 'Verification'];
@@ -14,10 +15,62 @@ function readEvent() {
   const eventPath = process.env.GITHUB_EVENT_PATH;
 
   if (!eventPath) {
-    throw new Error('GITHUB_EVENT_PATH is not set.');
+    throw new Error(
+      'GITHUB_EVENT_PATH is not set. Outside a pull-request event, pass --pr <number> to read the PR from the GitHub API.',
+    );
   }
 
   return JSON.parse(readFileSync(eventPath, 'utf8'));
+}
+
+function parseArgs(argv) {
+  const args = { pr: undefined, repo: undefined };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+
+    if (arg === '--pr' || arg === '--repo') {
+      const key = arg.slice('--'.length);
+      index += 1;
+      if (!argv[index]) {
+        throw new Error(`${arg} requires a value`);
+      }
+      args[key] = argv[index];
+    } else if (arg.startsWith('--pr=')) {
+      args.pr = arg.slice('--pr='.length);
+    } else if (arg.startsWith('--repo=')) {
+      args.repo = arg.slice('--repo='.length);
+    } else {
+      throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+
+  if (args.pr !== undefined && !/^\d+$/u.test(args.pr)) {
+    throw new Error(`--pr expects a pull request number, received: ${args.pr}`);
+  }
+
+  return args;
+}
+
+function resolveRepository(explicitRepo) {
+  const repo = explicitRepo ?? process.env.GITHUB_REPOSITORY;
+
+  if (repo) {
+    return repo;
+  }
+
+  return execFileSync('gh', ['repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner'], {
+    encoding: 'utf8',
+  }).trim();
+}
+
+function readPullRequest(prNumber, repo) {
+  const output = execFileSync('gh', ['api', `repos/${repo}/pulls/${prNumber}`], {
+    encoding: 'utf8',
+    maxBuffer: 16 * 1024 * 1024,
+  });
+
+  return JSON.parse(output);
 }
 
 function isBotUser(user = {}) {
@@ -186,8 +239,16 @@ function validateTraceability(pr) {
 }
 
 function main() {
-  const event = readEvent();
-  const pr = event.pull_request;
+  let args;
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    console.error(`[pr-traceability] ${error instanceof Error ? error.message : String(error)}`);
+    console.error('Usage: node .github/scripts/check-pr-traceability.mjs [--pr <number>] [--repo <owner/name>]');
+    process.exit(1);
+  }
+
+  const pr = args.pr ? readPullRequest(args.pr, resolveRepository(args.repo)) : readEvent().pull_request;
 
   if (!pr) {
     console.log('No pull_request payload found; skipping traceability check.');

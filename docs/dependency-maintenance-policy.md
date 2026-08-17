@@ -44,7 +44,7 @@ Strictly pinned workflows:
 | `.github/workflows/check-optc-db-release.yml` | Can dispatch Android releases and writes release-trigger evidence. |
 | `.github/workflows/release-android.yml` | Builds, tags, pushes, publishes GitHub releases, deploys Pages, and uploads release provenance. |
 | `.github/workflows/deploy-pages.yml` | Publishes the production web app and dispatches public-entry synthetics. |
-| `.github/workflows/test.yml` | Runs PR and `main` test routing, browser e2e, quarantine, artifact, and performance confidence lanes. |
+| `.github/workflows/test.yml` | Manual-only clean-room copy of the local suites: test routing, browser e2e, quarantine, artifact, and performance confidence lanes. |
 | `.github/workflows/public-entry-synthetics.yml` | Monitors production entry points with Playwright. |
 | `.github/workflows/performance-budgets.yml` | Runs browser-backed performance reporting and baseline artifact reads. |
 | `.github/workflows/guide-discoverability.yml` | Builds production Pages output and verifies public guide discoverability. |
@@ -77,12 +77,14 @@ npm run test:actions-pins
 
 Action-pin PRs require focused review. Confirm the SHA belongs to the upstream
 action repository, scan release notes for permission, cache, artifact, deploy,
-or token behavior changes, run the pin guard locally, and let the app PR `Test`
-workflow re-run the guard in CI. Non-strict workflows such as CodeQL, Docs
-Integrity, PR Traceability, and Dataset Change Digest remain on explicit major
-tags unless they become release-critical or browser/test-critical; they still
-stay covered by Dependabot, CODEOWNERS, PR traceability, and default-branch
-monitoring.
+or token behavior changes, and run the pin guard locally with
+`npm run verify:local -- --only=actions-pins`. GitHub Actions does not re-run the
+guard for the PR: workflows never trigger on pull requests or main pushes, so
+local validation is the review evidence (see `docs/ci-trigger-policy.md`).
+Non-strict workflows such as CodeQL, Docs Integrity, PR Traceability, and
+Dataset Change Digest remain on explicit major tags unless they become
+release-critical or browser/test-critical; they still stay covered by
+Dependabot, CODEOWNERS, PR traceability, and default-branch monitoring.
 
 ## GitHub Workflow Budgets
 
@@ -108,7 +110,7 @@ Task-specific evidence for the workflow-budget policy closeout is recorded in
 
 | Surface | Examples | Why it is sensitive |
 | --- | --- | --- |
-| GitHub Actions | `.github/workflows/`, action versions, workflow permissions, upload/download-artifact behavior | Workflow drift can skip CI, lose evidence, break Pages deploys, or dispatch releases incorrectly. |
+| GitHub Actions | `.github/workflows/`, action versions, workflow permissions, upload/download-artifact behavior | Workflow drift can lose evidence, break Pages deploys, dispatch releases incorrectly, or re-introduce automatic pull-request and main-push runs that `npm run actions:ci-triggers` forbids. |
 | npm, Node, and toolchain packages | `package.json`, `package-lock.json`, `.nvmrc`, `.node-version`, Angular CLI/build tooling, TypeScript, Vitest, jsdom, Node overrides | Runtime or test-runner changes can break local validation, CI selection, generated docs, or Angular browser tests. |
 | Playwright and browser regression tooling | `@playwright/test`, `playwright.config.ts`, `e2e/`, `scripts/run-playwright-e2e.mjs`, quarantine/failure-summary helpers | Browser drift can hide guided build, saved-team transfer, compare, accessibility, or cross-browser regressions. |
 | Performance harnesses | `scripts/perf-*.mjs`, `scripts/perf-budget-*.mjs`, `Performance Budgets` workflow | Harness or browser changes can invalidate timing comparisons or turn report-only signals into noisy failures. |

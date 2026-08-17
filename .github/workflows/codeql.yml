@@ -1,12 +1,9 @@
 name: CodeQL
 
+# Scheduled and manual only by policy: CodeQL is not allowed to run on every
+# pull request or main push. The weekly scan keeps security coverage.
+# See docs/ci-trigger-policy.md and `npm run actions:ci-triggers`.
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   schedule:
     - cron: '31 3 * * 2'
   workflow_dispatch:
@@ -33,7 +30,7 @@ jobs:
             build-mode: none
           # The Android wrapper has 3 Capacitor-scaffolding Java files (MainActivity +
           # 2 example tests). Default-setup auto-enabled this language at some point —
-          # keep it in the explicit matrix so PRs against main don't get
+          # keep it in the explicit matrix so scans don't get
           # "1 configuration not found" warnings when CodeQL diffs against historical state.
           - language: java-kotlin
             build-mode: none

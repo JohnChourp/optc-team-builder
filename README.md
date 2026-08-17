@@ -57,7 +57,10 @@ Maintainer validation guide:
 - `docs/feature-coverage-map.md` maps major product and operational flows to
   their tests, docs, performance checks, evidence, and owning area.
 - `docs/docs-drift-map.json` maps those flows to documentation entry points so
-  PR checks can flag likely stale docs when mapped features move.
+  `npm run docs:drift` can flag likely stale docs when mapped features move.
+- `docs/ci-trigger-policy.md` records why GitHub Actions never runs on pull
+  requests or main pushes, which two workflows are allowlisted, and how
+  `npm run verify:local` replaces the old PR check run.
 - `docs/release-notes/` publishes user-facing release summaries generated from
   ClickUp and brain-audit evidence.
 - `docs/review-ownership-policy.md` explains CODEOWNERS review routing,
@@ -228,8 +231,8 @@ This repo publishes Pages through the `Deploy GitHub Pages` GitHub Actions workf
 - `PAGES_ENABLEMENT_TOKEN` is no longer part of the normal setup for this repo.
 - Public guide discoverability is checked by `npm run discoverability:verify`
   against the generated Pages artifact. The scheduled `Guide Discoverability`
-  workflow repeats that audit weekly and on relevant `main` changes so guide
-  sitemap, metadata, source-doc, and in-app help links do not silently drift.
+  workflow repeats that audit weekly so guide sitemap, metadata, source-doc, and
+  in-app help links do not silently drift.
 - Public guide and share-link landing availability is checked by
   `npm run synthetic:public-entry` against `https://optcteambuilder.com` by
   default. The `Deploy GitHub Pages` workflow dispatches `Public Entry
