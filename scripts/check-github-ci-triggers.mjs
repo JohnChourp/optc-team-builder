@@ -7,12 +7,13 @@ import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 
 /**
- * CI trigger policy for optc-team-builder.
+ * CI trigger policy for optc-team-builder and optc-team-builder-brain.
  *
- * Validation runs locally (`npm run verify:local`), not on GitHub Actions minutes.
- * No workflow may start itself from a pull request or from a push to main unless
- * it is listed below with a concrete reason. Everything else must be manual
- * (`workflow_dispatch`) or scheduled (`schedule`).
+ * Validation runs locally (`npm run verify:local` in the app,
+ * `scripts/verify-local.sh` in the brain), not on GitHub Actions minutes.
+ * No workflow in either repo may start itself from a pull request or from a
+ * push to main unless it is listed below with a concrete reason. Everything
+ * else must be manual (`workflow_dispatch`) or scheduled (`schedule`).
  *
  * See docs/ci-trigger-policy.md before adding an entry.
  */
@@ -28,6 +29,9 @@ export const APP_CI_TRIGGER_ALLOWLIST = [
     },
   },
 ];
+
+/** The brain repo publishes nothing, so it has no automatic trigger at all. */
+export const BRAIN_CI_TRIGGER_ALLOWLIST = [];
 
 function normalizePath(value) {
   return String(value ?? '')
@@ -80,22 +84,15 @@ export function readTriggerEvents(workflow) {
   return [];
 }
 
-export function inspectCiTriggers({
-  appRoot = process.cwd(),
-  allowlist = APP_CI_TRIGGER_ALLOWLIST,
-  alwaysAllowedEvents = ALWAYS_ALLOWED_EVENTS,
-} = {}) {
-  const findings = [];
-  const checkedWorkflows = [];
-
-  const alwaysAllowed = new Set(alwaysAllowedEvents);
+function inspectRepository({ findings, checkedWorkflows, repo, root, allowlist, alwaysAllowed, localCommand }) {
   const allowlistByPath = new Map(allowlist.map((entry) => [normalizePath(entry.workflowPath), entry]));
-  const workflowFiles = listWorkflowFiles(appRoot);
+  const workflowFiles = listWorkflowFiles(root);
   const knownWorkflowPaths = new Set(workflowFiles);
 
   for (const workflowPath of allowlistByPath.keys()) {
     if (!knownWorkflowPaths.has(workflowPath)) {
       findings.push({
+        repo,
         workflowPath,
         event: '-',
         message: 'Allowlisted workflow no longer exists; remove the stale CI trigger exception.',
@@ -104,10 +101,10 @@ export function inspectCiTriggers({
   }
 
   for (const workflowPath of workflowFiles) {
-    const { workflow, error } = readWorkflow(appRoot, workflowPath);
+    const { workflow, error } = readWorkflow(root, workflowPath);
 
     if (error) {
-      findings.push({ workflowPath, event: '-', message: error });
+      findings.push({ repo, workflowPath, event: '-', message: error });
       continue;
     }
 
@@ -115,6 +112,7 @@ export function inspectCiTriggers({
 
     if (events.length === 0) {
       findings.push({
+        repo,
         workflowPath,
         event: '-',
         message: 'Workflow declares no triggers, so its intent cannot be checked.',
@@ -125,25 +123,65 @@ export function inspectCiTriggers({
     const allowedEvents = allowlistByPath.get(workflowPath)?.events ?? {};
 
     for (const event of events) {
-      if (alwaysAllowed.has(event)) {
-        continue;
-      }
-
-      if (Object.hasOwn(allowedEvents, event)) {
+      if (alwaysAllowed.has(event) || Object.hasOwn(allowedEvents, event)) {
         continue;
       }
 
       findings.push({
+        repo,
         workflowPath,
         event,
         message:
           `Trigger "${event}" runs GitHub Actions automatically. Validation runs locally ` +
-          `(npm run verify:local), so use workflow_dispatch or schedule, or document an ` +
-          `exception in APP_CI_TRIGGER_ALLOWLIST and docs/ci-trigger-policy.md.`,
+          `(${localCommand}), so use workflow_dispatch or schedule, or document an exception ` +
+          `in the ${repo} allowlist and docs/ci-trigger-policy.md.`,
       });
     }
 
-    checkedWorkflows.push({ workflowPath, events });
+    checkedWorkflows.push({ repo, workflowPath, events });
+  }
+}
+
+export function inspectCiTriggers({
+  appRoot = process.cwd(),
+  brainRoot,
+  appOnly = false,
+  appAllowlist = APP_CI_TRIGGER_ALLOWLIST,
+  brainAllowlist = BRAIN_CI_TRIGGER_ALLOWLIST,
+  alwaysAllowedEvents = ALWAYS_ALLOWED_EVENTS,
+} = {}) {
+  const targets = [
+    {
+      repo: 'app',
+      root: appRoot,
+      allowlist: appAllowlist,
+      localCommand: 'npm run verify:local',
+    },
+  ];
+
+  if (!appOnly && brainRoot) {
+    targets.push({
+      repo: 'brain',
+      root: brainRoot,
+      allowlist: brainAllowlist,
+      localCommand: 'scripts/verify-local.sh',
+    });
+  }
+
+  const findings = [];
+  const checkedWorkflows = [];
+  const alwaysAllowed = new Set(alwaysAllowedEvents);
+
+  for (const target of targets) {
+    inspectRepository({
+      findings,
+      checkedWorkflows,
+      repo: target.repo,
+      root: target.root,
+      allowlist: target.allowlist,
+      alwaysAllowed,
+      localCommand: target.localCommand,
+    });
   }
 
   return {
@@ -165,7 +203,7 @@ export function formatCiTriggerResult(result) {
 
   lines.push('Status: failed', '');
   for (const finding of result.findings) {
-    lines.push(`- ${finding.workflowPath}:${finding.event} - ${finding.message}`);
+    lines.push(`- ${finding.repo}:${finding.workflowPath}:${finding.event} - ${finding.message}`);
   }
 
   return `${lines.join('\n')}\n`;
@@ -174,6 +212,8 @@ export function formatCiTriggerResult(result) {
 function parseArgs(argv) {
   const args = {
     appRoot: process.cwd(),
+    brainRoot: undefined,
+    appOnly: false,
     json: false,
   };
 
@@ -181,14 +221,24 @@ function parseArgs(argv) {
     const arg = argv[index];
     if (arg === '--json') {
       args.json = true;
+    } else if (arg === '--app-only') {
+      args.appOnly = true;
     } else if (arg === '--app-root') {
       index += 1;
       if (!argv[index]) {
         throw new Error('--app-root requires a value');
       }
       args.appRoot = path.resolve(argv[index]);
+    } else if (arg === '--brain-root') {
+      index += 1;
+      if (!argv[index]) {
+        throw new Error('--brain-root requires a value');
+      }
+      args.brainRoot = path.resolve(argv[index]);
     } else if (arg.startsWith('--app-root=')) {
       args.appRoot = path.resolve(arg.slice('--app-root='.length));
+    } else if (arg.startsWith('--brain-root=')) {
+      args.brainRoot = path.resolve(arg.slice('--brain-root='.length));
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }

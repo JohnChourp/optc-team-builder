@@ -6,9 +6,6 @@ import { fileURLToPath } from 'node:url';
 
 import YAML from 'yaml';
 
-const PR_FRESHNESS_GROUP = '${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}';
-const PR_FRESHNESS_CANCEL = "${{ github.event_name == 'pull_request' }}";
-
 // Manual-only workflows have no PR or main-push trigger to keep fresh, so each
 // run is isolated by run id and is never cancelled. See docs/ci-trigger-policy.md.
 const MANUAL_RUN_GROUP = '${{ github.workflow }}-${{ github.run_id }}';
@@ -125,8 +122,8 @@ export const BRAIN_WORKFLOW_BUDGET_CONTRACT = [
   {
     workflowPath: '.github/workflows/docs-integrity.yml',
     concurrency: {
-      group: PR_FRESHNESS_GROUP,
-      cancelInProgress: PR_FRESHNESS_CANCEL,
+      group: MANUAL_RUN_GROUP,
+      cancelInProgress: false,
     },
     jobs: {
       'docs-integrity': { timeoutMinutes: 25 },
