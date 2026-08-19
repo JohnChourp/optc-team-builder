@@ -99,10 +99,59 @@ describe('check-docs-commands', () => {
       { command: 'npm run test:i18n-regression', cwd: appRoot },
       { command: 'npm run test:public-entry-synthetics', cwd: appRoot },
       {
-        command: 'node scripts/audit-docs-integrity.mjs --brain . --app ../optc-team-builder',
+        // The canonical `../optc-team-builder` in the doc is resolved to the root
+        // this run was configured with, so --app-root/--brain-root are honoured by
+        // the command itself and not only by its working directory.
+        command: `node scripts/audit-docs-integrity.mjs --brain . --app ${appRoot}`,
         cwd: brainRoot,
       },
     ]);
+  });
+
+  it('reports the canonical command text even though it runs the resolved one', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace({
+      'optc-team-builder/README.md': '# App',
+      'optc-team-builder-brain/README.md': [
+        '# Brain',
+        '',
+        'Command status: CI-executable.',
+        '<!-- docs-command: ci-executable -->',
+        '```bash',
+        'node scripts/audit-docs-integrity.mjs --brain . --app ../optc-team-builder',
+        '```',
+      ].join('\n'),
+    });
+
+    const result = await checkDocsCommands({ appRoot, brainRoot }, async () => ({ status: 1 }));
+
+    // A reader has to find the failing command in the doc, so the message keeps the
+    // text as written rather than the machine-specific resolved path.
+    expect(result.failures).toHaveLength(1);
+    expect(result.failures[0]).toContain('--app ../optc-team-builder');
+    expect(result.failures[0]).not.toContain(appRoot);
+  });
+
+  it('leaves a command with no sibling path untouched', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace({
+      'optc-team-builder/README.md': [
+        '# App',
+        '',
+        'Command status: CI-executable.',
+        '<!-- docs-command: ci-executable -->',
+        '```bash',
+        'npm run test:i18n-regression',
+        '```',
+      ].join('\n'),
+      'optc-team-builder-brain/README.md': '# Brain',
+    });
+    const seen: string[] = [];
+
+    await checkDocsCommands({ appRoot, brainRoot }, async (command) => {
+      seen.push(command);
+      return { status: 0 };
+    });
+
+    expect(seen).toEqual(['npm run test:i18n-regression']);
   });
 
   it('requires visible and machine-readable metadata before command fences', async () => {
