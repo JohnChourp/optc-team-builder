@@ -19,12 +19,13 @@ interface FakeEntry {
 }
 
 /**
- * Minimal in-memory CacheStorage double, matching the shape
+ * Minimal in-memory CacheStorage double, matching the members
  * SwDownloadProgressTracker reads: top-level `keys()`/`open()`, and per-cache
- * `keys()`/`matchAll()`.
+ * `keys()`/`match()`.
  */
 class FakeCacheStorage {
   private readonly caches = new Map<string, FakeEntry[]>();
+  private readonly throwingCaches = new Set<string>();
 
   public constructor(shape: Record<string, FakeEntry[]>) {
     for (const [name, entries] of Object.entries(shape)) {
@@ -36,22 +37,41 @@ class FakeCacheStorage {
     this.caches.set(name, entries);
   }
 
+  /** Makes one cache unreadable, modelling a transient storage failure. */
+  public throwOn(name: string): void {
+    this.throwingCaches.add(name);
+  }
+
   public async keys(): Promise<string[]> {
     return [...this.caches.keys()];
   }
 
   public async open(name: string): Promise<unknown> {
     const entries = this.caches.get(name) ?? [];
+    const shouldThrow = this.throwingCaches.has(name);
 
     return {
-      keys: async () => entries.map((entry) => ({ url: entry.url })),
-      matchAll: async () =>
-        entries.map((entry) => ({
+      keys: async () => {
+        if (shouldThrow) {
+          throw new Error(`cache ${name} is unreadable`);
+        }
+
+        return entries.map((entry) => ({ url: entry.url }));
+      },
+      match: async (request: { url: string }) => {
+        const entry = entries.find((candidate) => candidate.url === request.url);
+
+        if (!entry) {
+          return undefined;
+        }
+
+        return {
           url: entry.url,
           headers: {
             get: (header: string) => (header === 'content-length' ? String(entry.bytes) : null),
           },
-        })),
+        };
+      },
     };
   }
 }
@@ -370,16 +390,20 @@ describe('AppUpdateService', () => {
       service.init();
       versionUpdates.next(versionDetectedEvent());
 
-      let previous = service.downloadProgress();
+      const first = service.downloadProgress();
+      let previous = first;
 
       for (let tick = 0; tick < 20; tick++) {
         await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
         const current = service.downloadProgress();
 
-        expect(current).toBeGreaterThanOrEqual(previous);
+        // Strictly increasing, not merely non-decreasing: a frozen bar must fail.
+        expect(current).toBeGreaterThan(previous);
         expect(current).toBeLessThan(UPDATE_PROGRESS_MODELLED_CEILING);
         previous = current;
       }
+
+      expect(previous).toBeGreaterThan(first + 0.5);
     });
 
     it('reports that progress is modelled, not measured', async () => {
@@ -536,6 +560,214 @@ describe('AppUpdateService', () => {
 
       expect(service.updatePhase()).toBe('downloading');
       expect(service.downloadProgress()).toBeCloseTo(0.2, 10);
+    });
+
+    it('still abandons a measured download whose census saturated but never went ready', async () => {
+      const cacheStorage = measurableCacheStorage();
+      const { service, versionUpdates } = createService({ cacheStorage });
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent(NEW_HASH));
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+
+      // Everything is cached, so every later sample reads exactly 1 while the
+      // emitted value stays pinned at the ceiling. A saturated census must NOT keep
+      // re-arming the watchdogs — otherwise a suppressed VERSION_READY sticks the
+      // banner at 99% forever.
+      cacheStorage.setEntries(assetCache(NEW_HASH), [
+        { url: 'https://app/index.html', bytes: 1000 },
+        { url: 'https://app/main.js', bytes: 3000 },
+      ]);
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+      expect(service.downloadProgress()).toBe(UPDATE_PROGRESS_MEASURED_CEILING);
+
+      await vi.advanceTimersByTimeAsync(UPDATE_DOWNLOAD_STALL_MS);
+      expect(service.updateStalled()).toBe(true);
+
+      await vi.advanceTimersByTimeAsync(UPDATE_DOWNLOAD_ABANDON_MS);
+      expect(service.updatePhase()).toBe('idle');
+    });
+
+    it('never emits a non-finite value when a version supersedes an in-flight sample', async () => {
+      const cacheStorage = measurableCacheStorage();
+      cacheStorage.setEntries(assetCache('v2'), []);
+      const { service, versionUpdates } = createService({ cacheStorage });
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent(NEW_HASH));
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+      expect(service.measuredProgress()).toBe(true);
+
+      // Fire the ticker WITHOUT flushing microtasks, so a census sample is parked on
+      // its first await, then land a superseding version. The synchronous reset
+      // inside the tracker's begin() is what used to zero the denominator under the
+      // in-flight sample.
+      vi.advanceTimersByTime(UPDATE_PROGRESS_TICK_MS);
+      versionUpdates.next(versionDetectedEvent('v2'));
+      await vi.advanceTimersByTimeAsync(4 * UPDATE_PROGRESS_TICK_MS);
+
+      expect(Number.isFinite(service.downloadProgress())).toBe(true);
+      expect(service.downloadProgress()).toBeGreaterThanOrEqual(UPDATE_PROGRESS_MIN);
+      expect(service.downloadProgress()).toBeLessThanOrEqual(1);
+    });
+
+    it('restarts a frozen bar and clears the stall copy when a version supersedes', async () => {
+      const { service, versionUpdates } = createService();
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent('v1'));
+      await vi.advanceTimersByTimeAsync(UPDATE_DOWNLOAD_STALL_MS);
+      expect(service.updateStalled()).toBe(true);
+      const frozen = service.downloadProgress();
+
+      versionUpdates.next(versionDetectedEvent('v2'));
+
+      expect(service.updateStalled()).toBe(false);
+
+      // The modelled ticker was stopped by markStalled(); a superseding version must
+      // get it back rather than inherit a dead bar.
+      await vi.advanceTimersByTimeAsync(2 * UPDATE_PROGRESS_TICK_MS);
+      expect(service.downloadProgress()).toBeGreaterThan(frozen);
+    });
+
+    it('keeps a previously ready version when a later download fails', async () => {
+      const { service, versionUpdates } = createService();
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent('v1'));
+      versionUpdates.next(versionReadyEvent(OLD_HASH, 'v1'));
+      expect(service.updatePhase()).toBe('ready');
+
+      versionUpdates.next(versionDetectedEvent('v2'));
+      expect(service.updatePhase()).toBe('downloading');
+
+      versionUpdates.next(versionFailedEvent('v2'));
+
+      // v1 is still what ngsw would activate, so the banner must not vanish.
+      expect(service.updatePhase()).toBe('ready');
+      expect(service.downloadProgress()).toBe(1);
+    });
+
+    it('keeps a previously ready version when a later download is abandoned', async () => {
+      const { service, versionUpdates } = createService();
+
+      service.init();
+      versionUpdates.next(versionReadyEvent(OLD_HASH, 'v1'));
+      versionUpdates.next(versionDetectedEvent('v2'));
+
+      await vi.advanceTimersByTimeAsync(UPDATE_DOWNLOAD_ABANDON_MS);
+
+      expect(service.updatePhase()).toBe('ready');
+      expect(service.downloadProgress()).toBe(1);
+    });
+
+    it('un-snoozes a poll-derived ready state when a genuinely new version downloads', async () => {
+      const { service, swUpdate, versionUpdates } = createService({ hasUpdate: true });
+
+      service.init();
+      await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+      expect(service.updatePhase()).toBe('ready');
+
+      // The poll path knows no hash, so the snooze is recorded against null.
+      service.snooze();
+      expect(service.updateAvailable()).toBe(false);
+
+      versionUpdates.next(versionDetectedEvent('v9'));
+
+      expect(service.updateAvailable()).toBe(true);
+      expect(service.updatePhase()).toBe('downloading');
+      expect(swUpdate.checkForUpdate).toHaveBeenCalled();
+    });
+
+    it('does not let a repeated poll defeat a snooze taken on the same state', async () => {
+      const { service } = createService({ hasUpdate: true });
+
+      service.init();
+      await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+      service.snooze();
+      expect(service.updateAvailable()).toBe(false);
+
+      // Another hourly poll resolves true for the same unknown-hash state.
+      await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+
+      expect(service.updateAvailable()).toBe(false);
+    });
+
+    it('ignores a version event that arrives after the service was destroyed', () => {
+      const { service, versionUpdates } = createService();
+
+      service.init();
+      service.ngOnDestroy();
+
+      versionUpdates.next(versionDetectedEvent());
+
+      expect(service.updatePhase()).toBe('idle');
+      expect(service.downloadProgress()).toBe(0);
+    });
+
+    it('holds the last measured value through a transient cache read failure', async () => {
+      const cacheStorage = measurableCacheStorage();
+      const { service, versionUpdates } = createService({ cacheStorage });
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent(NEW_HASH));
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+
+      cacheStorage.setEntries(assetCache(NEW_HASH), [
+        { url: 'https://app/index.html', bytes: 1000 },
+      ]);
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+      const measured = service.downloadProgress();
+      expect(measured).toBeCloseTo(0.25, 10);
+
+      // The incoming cache becomes unreadable. Flipping to the modelled curve here
+      // would teleport the bar to roughly 0.6 for a download that is 25% done.
+      cacheStorage.throwOn(assetCache(NEW_HASH));
+      await vi.advanceTimersByTimeAsync(6 * UPDATE_PROGRESS_TICK_MS);
+
+      expect(service.downloadProgress()).toBe(measured);
+      expect(service.measuredProgress()).toBe(true);
+    });
+
+    it('re-anchors the modelled curve so a structural handover does not jump', async () => {
+      const cacheStorage = measurableCacheStorage();
+      const { service, versionUpdates } = createService({ cacheStorage });
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent(NEW_HASH));
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+
+      cacheStorage.setEntries(assetCache(NEW_HASH), [
+        { url: 'https://app/index.html', bytes: 1000 },
+      ]);
+
+      // A genuinely slow download: 15 s of wall clock with the census parked at 25%.
+      // By now the elapsed-time curve would read ~0.90, so an un-anchored handover
+      // teleports the bar from a quarter full to almost complete.
+      await vi.advanceTimersByTimeAsync(15_000);
+      const measured = service.downloadProgress();
+      expect(measured).toBeCloseTo(0.25, 10);
+
+      // The whole storage stops answering, so the next begin() is structurally
+      // unmeasurable rather than transiently unreadable.
+      cacheStorage.throwOn(assetCache(OLD_HASH));
+      cacheStorage.throwOn(assetCache(NEW_HASH));
+      versionUpdates.next(versionDetectedEvent('v2'));
+      // Flush the pending begin() without letting the ticker fire, so the handover
+      // value is observable on its own.
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(service.measuredProgress()).toBe(false);
+      expect(service.downloadProgress()).toBeGreaterThanOrEqual(measured);
+      expect(service.downloadProgress()).toBeLessThan(measured + 0.001);
+
+      // From the re-anchored point it resumes easing at the curve's normal rate
+      // rather than sitting frozen or snapping to the un-anchored ~0.90.
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+      const oneTickLater = service.downloadProgress();
+
+      expect(oneTickLater).toBeGreaterThan(measured);
+      expect(oneTickLater).toBeLessThan(0.4);
     });
 
     it('falls back to the modelled curve when the cache holds nothing to weigh', async () => {

@@ -34,6 +34,13 @@
  * incoming version. Numerator and denominator are therefore measured the same way
  * over (essentially) the same asset set, which is what makes the ratio honest.
  *
+ * What this measures is INSTALL progress, not wire bytes. ngsw copies an unchanged
+ * asset from the outgoing version's cache instead of re-fetching it, so on a deploy
+ * that only changes the JS bundle the bar races through the copied assets and then
+ * slows on the changed ones. That is the intended reading: the question the banner
+ * answers is "how much of the new version is in place", not "how many bytes crossed
+ * the network".
+ *
  * When there is nothing to measure against — no `CacheStorage`, a first install
  * with no previous version, or responses served without `content-length` —
  * {@link SwDownloadProgressTracker.sample} reports `null` and the caller falls
@@ -47,6 +54,13 @@ const ASSET_CACHE_NAME_PATTERN = /^ngsw:(?<scope>.*):(?<hash>[^:]+):assets:(?<gr
 interface ParsedAssetCacheName {
   readonly name: string;
   readonly hash: string;
+}
+
+interface VersionByteWeights {
+  readonly byteSizeByUrl: Map<string, number>;
+  readonly totalBytes: number;
+  /** Mean size of the sized entries, used to price a URL the baseline lacks. */
+  readonly averageBytes: number;
 }
 
 /**
@@ -94,8 +108,7 @@ export class SwDownloadProgressTracker {
 
       this.byteSizeByUrl = outgoing.byteSizeByUrl;
       this.totalBytes = outgoing.totalBytes;
-      this.averageBytes =
-        outgoing.byteSizeByUrl.size > 0 ? outgoing.totalBytes / outgoing.byteSizeByUrl.size : 0;
+      this.averageBytes = outgoing.averageBytes;
 
       return this.measurable;
     } catch {
@@ -114,9 +127,15 @@ export class SwDownloadProgressTracker {
    * including when {@link begin} was never called for the current download.
    */
   public async sample(): Promise<number | null> {
+    // Every input is captured up front. A `begin()` for a superseding version can
+    // land while the awaits below are pending, and reading `this.totalBytes` after
+    // that reset would divide by zero and poison the signal with NaN forever.
     const hash = this.targetHash;
+    const totalBytes = this.totalBytes;
+    const averageBytes = this.averageBytes;
+    const byteSizeByUrl = this.byteSizeByUrl;
 
-    if (!this.cacheStorage || hash === null || this.totalBytes <= 0) {
+    if (!this.cacheStorage || hash === null || totalBytes <= 0) {
       return null;
     }
 
@@ -130,11 +149,17 @@ export class SwDownloadProgressTracker {
         const requests = await cache.keys();
 
         for (const request of requests) {
-          cachedBytes += this.byteSizeByUrl.get(request.url) ?? this.averageBytes;
+          cachedBytes += byteSizeByUrl.get(request.url) ?? averageBytes;
         }
       }
 
-      return Math.min(1, Math.max(0, cachedBytes / this.totalBytes));
+      if (this.targetHash !== hash || this.byteSizeByUrl !== byteSizeByUrl) {
+        // Re-targeted mid-sample: this reading belongs to a download nobody is
+        // watching any more.
+        return null;
+      }
+
+      return Math.min(1, Math.max(0, cachedBytes / totalBytes));
     } catch {
       return null;
     }
@@ -152,11 +177,9 @@ export class SwDownloadProgressTracker {
    * Builds the URL → byte-size map from the most complete version that is not
    * `excludedHash`, i.e. the version being replaced.
    */
-  private async resolveOutgoingBaseline(
-    excludedHash: string,
-  ): Promise<{ byteSizeByUrl: Map<string, number>; totalBytes: number } | null> {
+  private async resolveOutgoingBaseline(excludedHash: string): Promise<VersionByteWeights | null> {
     const grouped = this.groupAssetCachesByHash(await this.cacheNames());
-    let best: { byteSizeByUrl: Map<string, number>; totalBytes: number } | null = null;
+    let best: VersionByteWeights | null = null;
 
     for (const [hash, caches] of grouped) {
       if (hash === excludedHash) {
@@ -173,12 +196,21 @@ export class SwDownloadProgressTracker {
     return best;
   }
 
-  /** Sums `content-length` across every entry of one version's asset caches. */
+  /**
+   * Weighs one version's asset caches by `content-length`.
+   *
+   * This is the one heavy read in this class and it runs once per download rather
+   * than once per sample.
+   */
   private async measureVersion(
     caches: readonly ParsedAssetCacheName[],
-  ): Promise<{ byteSizeByUrl: Map<string, number>; totalBytes: number }> {
-    const byteSizeByUrl = new Map<string, number>();
-    let totalBytes = 0;
+  ): Promise<VersionByteWeights> {
+    // Keyed by the REQUEST url, never the response's. ngsw stores a cache-busted
+    // or redirected response under the clean request it was asked for, so
+    // `Response.url` can carry an `ngsw-cache-bust` query — or a redirect target —
+    // that a later `cache.keys()` will never produce. Keying by the response would
+    // silently drop exactly the assets that actually changed in this deploy.
+    const rawSizeByUrl = new Map<string, number | null>();
 
     for (const { name } of caches) {
       const cache = await this.openExisting(name);
@@ -187,21 +219,48 @@ export class SwDownloadProgressTracker {
         continue;
       }
 
-      // `matchAll()` is the one heavy read in this class, and it runs once per
-      // download rather than once per sample.
-      for (const response of await cache.matchAll()) {
-        const bytes = readContentLength(response);
-
-        if (bytes === null) {
+      for (const request of await cache.keys()) {
+        if (rawSizeByUrl.has(request.url)) {
           continue;
         }
 
-        byteSizeByUrl.set(response.url, bytes);
-        totalBytes += bytes;
+        const response = await this.matchRequest(cache, request);
+        rawSizeByUrl.set(request.url, response ? readContentLength(response) : null);
       }
     }
 
-    return { byteSizeByUrl, totalBytes };
+    const sizes = [...rawSizeByUrl.values()].filter((bytes): bytes is number => bytes !== null);
+    const averageBytes =
+      sizes.length > 0 ? sizes.reduce((total, bytes) => total + bytes, 0) / sizes.length : 0;
+
+    const byteSizeByUrl = new Map<string, number>();
+    let totalBytes = 0;
+
+    for (const [url, bytes] of rawSizeByUrl) {
+      // An entry served without `content-length` is priced at the average on BOTH
+      // sides of the ratio. Counting it only in the numerator (as an unknown URL)
+      // while omitting it from the denominator would let the bar reach 100% with
+      // most of the payload still untransferred.
+      const weight = bytes ?? averageBytes;
+
+      if (weight <= 0) {
+        continue;
+      }
+
+      byteSizeByUrl.set(url, weight);
+      totalBytes += weight;
+    }
+
+    return { byteSizeByUrl, totalBytes, averageBytes };
+  }
+
+  /** Reads one cached response, tolerating a `Cache` double without `match()`. */
+  private async matchRequest(cache: Cache, request: Request): Promise<Response | undefined> {
+    try {
+      return await cache.match(request);
+    } catch {
+      return undefined;
+    }
   }
 
   /** Opens the asset caches belonging to one manifest hash. */

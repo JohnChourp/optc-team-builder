@@ -702,6 +702,57 @@ service worker only if the app remains pinned to stale assets. Maintainers can
 use browser DevTools Application > Service Workers to inspect/unregister the
 worker and Application > Storage to clear site data during local diagnosis.
 
+### Update Banner Download Progress
+
+Use this when changing the update banner, `AppUpdateService`,
+`SwDownloadProgressTracker`, or the `appUpdate` i18n keys.
+
+Command status: manual.
+<!-- docs-command: manual -->
+```bash
+npm run test:ci -- --include src/app/core/services/app-update.service.spec.ts --include src/app/core/services/sw-download-progress.tracker.spec.ts --include src/app/app.component.spec.ts
+```
+
+The banner appears on the service worker's `VERSION_DETECTED` event — while the
+new version is still downloading — and carries an `ion-progress-bar` that stays
+mounted at exactly `1` once `VERSION_READY` lands. Three properties are worth
+re-checking by hand after any change, because each one is a behaviour a passing
+build can still get wrong:
+
+- **The number is a byte census, not an animation.** `SwDownloadProgressTracker`
+  weighs the incoming version's `ngsw:<scope>:<hash>:assets:<group>:cache`
+  entries against a URL → `content-length` map built once from the outgoing
+  version. It is keyed by the *request* url, because ngsw stores a cache-busted
+  or redirected response under the clean request it was asked for. Byte weighting
+  is load-bearing: `optc-seed.sql` alone is ~25 MB (~2.1 MB gzipped) against 56
+  i18n files totalling ~60 KB, so a file-count ratio would sit frozen near 100%
+  for the whole seed transfer.
+- **What it measures is install progress, not wire bytes.** ngsw copies an
+  unchanged asset out of the outgoing cache instead of re-fetching it, so a
+  deploy that only changes the JS bundle races through the copied assets and then
+  slows on the changed ones. That is the intended reading.
+- **The modelled curve is a fallback, never a blend.** With no `CacheStorage`, no
+  outgoing version, or responses without `content-length`, the bar eases over
+  elapsed time instead and `measuredProgress()` reports `false`. A structural
+  handover re-anchors the curve so the bar cannot teleport; a *transient* read
+  failure holds the last measured value instead of degrading.
+
+The banner's primary action is disabled while `updatePhase()` is `'downloading'`,
+because activating a half-installed version discards it. A stalled download
+(2 min without progress) only changes the copy; a download that makes real
+measured progress pushes both the stall and abandon (15 min) watchdogs back, so a
+slow-but-moving install is never abandoned.
+
+Adding an `appUpdate` key means adding it to both `public/i18n/en.json` and
+`public/i18n/el.json` and to the `root` scope entry in
+`scripts/i18n-regression-check.mjs`, then running `npm run i18n:regression` and
+`npm run i18n:validate`.
+
+Live verification of the real `VERSION_DETECTED` → `VERSION_READY` sequence needs
+two published releases, so it is gated behind an explicit `$optc-live-fix-loop`
+invocation per the brain's Live Testing Gate. The nearest automated proxy is the
+PWA shell check's upgrade and cache-freshness phases above.
+
 ### Performance Budgets
 
 Use the `Performance Budgets` GitHub Actions workflow for recurring or release

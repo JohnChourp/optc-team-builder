@@ -90,4 +90,6 @@ Examples: use Greek labels for source/state words such as `Πηγή`, `Κενό`
   wording.
 - Do not add critical runtime help/error text for Saved Teams, Auto Team Builder,
   or Manual Team Builder without deciding whether the key belongs in
-  `scripts/i18n-regression-check.mjs`.
+  `scripts/i18n-regression-check.mjs`. The same applies to root-scope shell copy
+  such as the `appUpdate` banner: its keys live in the `root` scope entry of that
+  file, so a new one is only covered once it is listed there.

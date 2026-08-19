@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Inject, Injectable, type Signal, computed, signal } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
+import { type Subscription } from 'rxjs';
 
 import { SwDownloadProgressTracker, resolveCacheStorage } from './sw-download-progress.tracker';
 
@@ -103,11 +104,17 @@ export class AppUpdateService {
   private readonly progressTracker: SwDownloadProgressTracker;
 
   private started = false;
+  private destroyed = false;
   private trackedHash: string | null = null;
+  /** Hash of the last version that actually became installable, if any. */
+  private readyHash: string | null = null;
   private snoozedHash: string | null = null;
   private detectedAtMs = 0;
   private lastEmittedProgress = 0;
+  /** Previous raw census reading, used to tell real motion from a saturated bar. */
+  private lastSampledProgress = 0;
   private sampleInFlight = false;
+  private versionSubscription: Subscription | null = null;
 
   private tickHandle: ReturnType<typeof setInterval> | null = null;
   private pollHandle: ReturnType<typeof setInterval> | null = null;
@@ -128,7 +135,7 @@ export class AppUpdateService {
 
   /** Starts listening for new versions. Safe to call more than once. */
   public init(): void {
-    if (this.started || !this.swUpdate.isEnabled) {
+    if (this.started || this.destroyed || !this.swUpdate.isEnabled) {
       return;
     }
 
@@ -140,7 +147,7 @@ export class AppUpdateService {
     // eager checkForUpdate() (an eager check perturbs ngsw's controlled version
     // assignment). The periodic poll then covers long-lived sessions where a new
     // build ships mid-session.
-    this.swUpdate.versionUpdates.subscribe((event) => {
+    this.versionSubscription = this.swUpdate.versionUpdates.subscribe((event) => {
       switch (event.type) {
         case 'VERSION_DETECTED':
           this.beginDownload(event.version.hash);
@@ -198,6 +205,9 @@ export class AppUpdateService {
 
   /** Releases every timer when the root injector is destroyed. */
   public ngOnDestroy(): void {
+    this.destroyed = true;
+    this.versionSubscription?.unsubscribe();
+    this.versionSubscription = null;
     this.stopTicker();
     this.clearWatchdogs();
     this.clearSnoozeTimer();
@@ -213,7 +223,7 @@ export class AppUpdateService {
    * before the first byte lands, which is exactly what makes the bar meaningful.
    */
   private beginDownload(hash: string): void {
-    if (!this.started) {
+    if (!this.started || this.destroyed) {
       return;
     }
 
@@ -223,7 +233,12 @@ export class AppUpdateService {
       // value — rewinding a bar the user is watching is worse than a stale one.
       if (hash !== this.trackedHash) {
         this.trackedHash = hash;
+        this.lastSampledProgress = 0;
+        this.stalledSignal.set(false);
         void this.retargetTracker(hash);
+        // markStalled() may already have stopped the modelled ticker; a fresh
+        // version must not inherit a frozen bar.
+        this.startTicker();
         this.armWatchdogs();
       }
 
@@ -232,13 +247,14 @@ export class AppUpdateService {
 
     this.trackedHash = hash;
 
-    if (this.snoozedHash !== null && this.snoozedHash !== hash) {
-      // A version newer than the snoozed one overrides an active snooze.
+    if (!this.isSnoozeFor(hash)) {
+      // A version other than the snoozed one overrides an active snooze.
       this.cancelSnooze();
     }
 
     this.detectedAtMs = Date.now();
     this.lastEmittedProgress = 0;
+    this.lastSampledProgress = 0;
     this.sampleInFlight = false;
     this.measuredSignal.set(false);
     this.stalledSignal.set(false);
@@ -258,8 +274,9 @@ export class AppUpdateService {
     this.stopTicker();
     this.clearWatchdogs();
     this.trackedHash = hash ?? this.trackedHash;
+    this.readyHash = this.trackedHash;
 
-    if (this.snoozedHash === null || this.snoozedHash !== this.trackedHash) {
+    if (!this.isSnoozeFor(this.trackedHash)) {
       // Honour a "Later" pressed during *this* download; un-snooze when a
       // different (newer) version is what became ready.
       this.cancelSnooze();
@@ -283,7 +300,7 @@ export class AppUpdateService {
       return;
     }
 
-    this.resetDownload();
+    this.giveUpOnDownload();
   }
 
   /** Returns the banner to idle and forgets the in-flight download. */
@@ -292,8 +309,10 @@ export class AppUpdateService {
     this.clearWatchdogs();
     this.progressTracker.reset();
     this.trackedHash = null;
+    this.readyHash = null;
     this.detectedAtMs = 0;
     this.lastEmittedProgress = 0;
+    this.lastSampledProgress = 0;
     this.sampleInFlight = false;
     this.measuredSignal.set(false);
     this.stalledSignal.set(false);
@@ -319,8 +338,28 @@ export class AppUpdateService {
 
     // Only adopt the answer while this hash is still the one being downloaded.
     if (this.rawPhaseSignal() === 'downloading' && this.trackedHash === hash) {
-      this.measuredSignal.set(measurable);
+      this.setMeasured(measurable);
     }
+  }
+
+  /**
+   * Adopts a measurability answer, routing a true -> false transition through
+   * {@link degradeToModelled} so the bar never teleports to the modelled curve.
+   */
+  private setMeasured(measurable: boolean): void {
+    if (measurable) {
+      this.measuredSignal.set(true);
+
+      return;
+    }
+
+    if (this.measuredSignal()) {
+      this.degradeToModelled();
+
+      return;
+    }
+
+    this.measuredSignal.set(false);
   }
 
   private startTicker(): void {
@@ -362,21 +401,34 @@ export class AppUpdateService {
     this.sampleInFlight = true;
 
     try {
+      const trackedHash = this.trackedHash;
       const sampled = await this.progressTracker.sample();
 
-      if (this.rawPhaseSignal() !== 'downloading') {
+      if (this.rawPhaseSignal() !== 'downloading' || this.trackedHash !== trackedHash) {
         return;
       }
 
       if (sampled === null) {
-        this.measuredSignal.set(false);
-        this.emitProgress(this.modelledProgress());
+        if (this.progressTracker.measurable) {
+          // A transient cache read failure carries no new information. Keeping the
+          // last value beats flipping to the modelled curve, whose value at this
+          // point in the install can be tens of points higher and would visibly
+          // teleport the bar.
+          return;
+        }
+
+        this.degradeToModelled();
 
         return;
       }
 
-      const advanced = sampled - this.lastEmittedProgress >= UPDATE_PROGRESS_ADVANCE_EPSILON;
+      // Compared against the previous RAW sample, never against the emitted value:
+      // once the census saturates at 1 the emitted value is pinned to the ceiling,
+      // so a `sampled - emitted` test would report motion on every tick forever and
+      // the abandon watchdog could never fire.
+      const advanced = sampled - this.lastSampledProgress >= UPDATE_PROGRESS_ADVANCE_EPSILON;
 
+      this.lastSampledProgress = Math.max(this.lastSampledProgress, sampled);
       this.emitProgress(Math.min(sampled, UPDATE_PROGRESS_MEASURED_CEILING));
 
       if (advanced) {
@@ -388,6 +440,28 @@ export class AppUpdateService {
     } finally {
       this.sampleInFlight = false;
     }
+  }
+
+  /**
+   * Abandons the census for the modelled curve without a visible jump.
+   *
+   * The curve's clock is re-anchored so its value *now* equals what the bar already
+   * shows, which keeps the handover continuous in both directions — the monotonic
+   * clamp in {@link emitProgress} covers downward motion, this covers upward.
+   */
+  private degradeToModelled(): void {
+    this.measuredSignal.set(false);
+    this.reanchorModelledClock();
+    this.emitProgress(this.modelledProgress());
+  }
+
+  /** Solves the modelled curve for the elapsed time that yields the shown value. */
+  private reanchorModelledClock(): void {
+    const span = UPDATE_PROGRESS_MODELLED_CEILING - UPDATE_PROGRESS_MIN;
+    const shown = Math.min(this.lastEmittedProgress, UPDATE_PROGRESS_MODELLED_CEILING);
+    const ratio = Math.min(0.999_9, Math.max(0, (shown - UPDATE_PROGRESS_MIN) / span));
+
+    this.detectedAtMs = Date.now() + UPDATE_PROGRESS_TAU_MS * Math.log(1 - ratio);
   }
 
   /**
@@ -408,6 +482,10 @@ export class AppUpdateService {
 
   /** Writes a progress value, clamped to `[0, 1]` and never allowed to regress. */
   private emitProgress(next: number): void {
+    if (!Number.isFinite(next)) {
+      return;
+    }
+
     const clamped = Math.min(1, Math.max(0, next));
     // Monotonic on purpose: a backwards system-clock step, a re-targeted hash or a
     // cache eviction must never visibly rewind the bar. Do not "simplify" away.
@@ -464,7 +542,31 @@ export class AppUpdateService {
       return;
     }
 
+    this.giveUpOnDownload();
+  }
+
+  /**
+   * Abandons the in-flight download.
+   *
+   * ngsw only advances `latestHash` after a successful install, so a version that
+   * already reported `VERSION_READY` before this download started is still
+   * activatable. Falling back to it beats throwing away a usable update.
+   */
+  private giveUpOnDownload(): void {
+    const previousReadyHash = this.readyHash;
+
+    if (previousReadyHash !== null && previousReadyHash !== this.trackedHash) {
+      this.completeDownload(previousReadyHash);
+
+      return;
+    }
+
     this.resetDownload();
+  }
+
+  /** True when an active snooze belongs to exactly this version. */
+  private isSnoozeFor(hash: string | null): boolean {
+    return this.snoozedSignal() && this.snoozedHash === hash;
   }
 
   private cancelSnooze(): void {
