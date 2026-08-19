@@ -31,6 +31,23 @@ export const UPDATE_PROGRESS_MODELLED_CEILING = 0.92;
 /** Time constant of the modelled fallback curve. */
 const UPDATE_PROGRESS_TAU_MS = 5_000;
 
+/**
+ * Time constant for interpolating across the asset currently being fetched.
+ *
+ * Slower than the fallback curve because a single asset can take a long time — live
+ * measurement put `optc-seed.sql` at ~24 s on a throttled link, and it is ~76% of
+ * this app's payload.
+ */
+const UPDATE_INFLIGHT_TAU_MS = 12_000;
+
+/**
+ * Fraction of the in-flight asset's share the interpolation may approach.
+ *
+ * Strictly below 1 so the bar never claims an asset has landed before the census
+ * confirms it.
+ */
+const UPDATE_INFLIGHT_CEILING = 0.9;
+
 /** Sampling cadence. Matches the bar's CSS transition so the fill interpolates. */
 export const UPDATE_PROGRESS_TICK_MS = 500;
 
@@ -154,6 +171,11 @@ export class AppUpdateService {
   private lastEmittedProgress = 0;
   /** Raw census reading at the last watchdog re-arm, used to detect real motion. */
   private progressAtLastRearm = 0;
+  /** Last CONFIRMED census ratio, and when it last advanced. */
+  private confirmedRatio = 0;
+  private confirmedAtMs = 0;
+  /** Byte share of the asset currently being fetched, per the last sample. */
+  private inFlightShare = 0;
   /** True while the first measurability answer for this download is outstanding. */
   private measurabilityPending = false;
   private sampleInFlight = false;
@@ -279,6 +301,9 @@ export class AppUpdateService {
       if (hash !== this.trackedHash) {
         this.trackedHash = hash;
         this.progressAtLastRearm = 0;
+        this.confirmedRatio = 0;
+        this.confirmedAtMs = Date.now();
+        this.inFlightShare = 0;
         this.measurabilityPending = true;
         this.stalledSignal.set(false);
 
@@ -308,6 +333,9 @@ export class AppUpdateService {
     this.detectedAtMs = Date.now();
     this.lastEmittedProgress = 0;
     this.progressAtLastRearm = 0;
+    this.confirmedRatio = 0;
+    this.confirmedAtMs = Date.now();
+    this.inFlightShare = 0;
     this.measurabilityPending = true;
     this.sampleInFlight = false;
     this.measuredSignal.set(false);
@@ -367,6 +395,9 @@ export class AppUpdateService {
     this.detectedAtMs = 0;
     this.lastEmittedProgress = 0;
     this.progressAtLastRearm = 0;
+    this.confirmedRatio = 0;
+    this.confirmedAtMs = 0;
+    this.inFlightShare = 0;
     this.measurabilityPending = false;
     this.sampleInFlight = false;
     this.measuredSignal.set(false);
@@ -440,6 +471,9 @@ export class AppUpdateService {
     }
 
     if (this.measuredSignal()) {
+      // Paint the interpolation every tick; the census read is async and lands when
+      // it lands, so the bar must not wait on it to keep moving.
+      this.emitProgress(Math.min(this.interpolatedProgress(), UPDATE_PROGRESS_MEASURED_CEILING));
       void this.sampleMeasuredProgress();
 
       return;
@@ -485,24 +519,52 @@ export class AppUpdateService {
         return;
       }
 
+      if (sampled.ratio > this.confirmedRatio) {
+        this.confirmedRatio = sampled.ratio;
+        this.confirmedAtMs = Date.now();
+      }
+
+      this.inFlightShare = sampled.inFlightShare;
+
       // Measured against the RAW reading at the last re-arm, never against the
       // emitted value: once the census saturates the emitted value is pinned to the
       // ceiling, so a `sampled - emitted` test would report motion on every tick
       // forever and the abandon watchdog could never fire.
-      const advanced = sampled - this.progressAtLastRearm >= UPDATE_PROGRESS_ADVANCE_EPSILON;
+      const advanced = sampled.ratio - this.progressAtLastRearm >= UPDATE_PROGRESS_ADVANCE_EPSILON;
 
-      this.emitProgress(Math.min(sampled, UPDATE_PROGRESS_MEASURED_CEILING));
+      this.emitProgress(Math.min(this.interpolatedProgress(), UPDATE_PROGRESS_MEASURED_CEILING));
 
       if (advanced) {
         // A slow-but-moving download must never be declared stalled or abandoned,
         // so real forward motion pushes both watchdogs back.
-        this.progressAtLastRearm = sampled;
+        this.progressAtLastRearm = sampled.ratio;
         this.stalledSignal.set(false);
         this.armWatchdogs();
       }
     } finally {
       this.sampleInFlight = false;
     }
+  }
+
+  /**
+   * Confirmed progress plus a bounded interpolation across the asset being fetched.
+   *
+   * The census only moves when an asset finishes, and one asset can own most of the
+   * payload — live measurement had the bar frozen at 18% for 24 s while
+   * `optc-seed.sql` (~76% of the bytes) streamed, then snapping to 100%. Easing
+   * across that one asset's known share keeps the bar moving without inventing
+   * anything: the ceiling is `confirmed + share * 0.9`, so it can never claim the
+   * asset has landed, and the moment it does the confirmed value takes over.
+   */
+  private interpolatedProgress(): number {
+    if (this.inFlightShare <= 0 || this.confirmedAtMs === 0) {
+      return this.confirmedRatio;
+    }
+
+    const elapsedMs = Math.max(0, Date.now() - this.confirmedAtMs);
+    const eased = 1 - Math.exp(-elapsedMs / UPDATE_INFLIGHT_TAU_MS);
+
+    return this.confirmedRatio + this.inFlightShare * UPDATE_INFLIGHT_CEILING * eased;
   }
 
   /**

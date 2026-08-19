@@ -603,7 +603,10 @@ describe('AppUpdateService', () => {
 
       // Well past the abandon window in wall-clock terms, but never stuck.
       expect(service.updatePhase()).toBe('downloading');
-      expect(service.downloadProgress()).toBeCloseTo(0.25, 10);
+      // 10 of 40 equal assets confirmed, plus a bounded interpolation across the
+      // eleventh (one asset = 2.5% of the payload, capped at 90% of that).
+      expect(service.downloadProgress()).toBeGreaterThanOrEqual(0.25);
+      expect(service.downloadProgress()).toBeLessThan(0.25 + 0.025);
     });
 
     it('does not raise the bar above the census start while measurability is pending', async () => {
@@ -621,7 +624,10 @@ describe('AppUpdateService', () => {
 
       await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
       expect(service.measuredProgress()).toBe(true);
-      expect(service.downloadProgress()).toBe(UPDATE_PROGRESS_MIN);
+      // The census confirms nothing yet, so the only movement allowed is the bounded
+      // interpolation across the first in-flight asset — nowhere near the modelled
+      // curve, which would read about 0.35 by now.
+      expect(service.downloadProgress()).toBeLessThan(0.1);
     });
   });
 
@@ -643,6 +649,56 @@ describe('AppUpdateService', () => {
       await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
 
       expect(service.downloadProgress()).toBeCloseTo(0.75, 10);
+    });
+
+    it('keeps the bar moving while one dominant asset is still in flight', async () => {
+      // Mirrors this app's real shape, measured live: optc-seed.sql is ~76% of the
+      // prefetch bytes, so the census confirms nothing for the whole of its transfer.
+      // Before the in-flight interpolation the bar sat frozen at 18% for 24 s and
+      // then snapped to 100%.
+      const cacheStorage = new FakeCacheStorage({
+        [assetCache(OLD_HASH)]: [
+          { url: 'https://app/main.js', bytes: 1000 },
+          { url: 'https://app/i18n.json', bytes: 1400 },
+          { url: 'https://app/seed.sql', bytes: 7600 },
+        ],
+        [assetCache(NEW_HASH)]: [],
+      });
+      const { service, versionUpdates } = createService({ cacheStorage });
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent(NEW_HASH));
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+      expect(service.measuredProgress()).toBe(true);
+
+      // The two small assets land, confirming 24%.
+      cacheStorage.setEntries(assetCache(NEW_HASH), [
+        { url: 'https://app/main.js', bytes: 1000 },
+        { url: 'https://app/i18n.json', bytes: 1400 },
+      ]);
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+      const confirmed = service.downloadProgress();
+      expect(confirmed).toBeGreaterThanOrEqual(0.24);
+
+      // Now the dominant asset streams and the census cannot move at all. The bar
+      // must still advance, and must keep advancing.
+      const trail = [];
+      for (let step = 0; step < 8; step++) {
+        await vi.advanceTimersByTimeAsync(2_000);
+        trail.push(service.downloadProgress());
+      }
+
+      expect(trail[0]).toBeGreaterThan(confirmed);
+      for (let index = 1; index < trail.length; index++) {
+        expect(trail[index]).toBeGreaterThan(trail[index - 1]);
+      }
+      // ...but it must never claim the asset has landed: 0.24 + 0.76 * 0.9 = 0.924.
+      expect(trail[trail.length - 1]).toBeLessThan(0.93);
+      expect(service.updatePhase()).toBe('downloading');
+
+      // And the real completion still owns the last stretch to exactly 1.
+      versionUpdates.next(versionReadyEvent(OLD_HASH, NEW_HASH));
+      expect(service.downloadProgress()).toBe(1);
     });
 
     it('holds a fully cached but not-yet-ready version below 100%', async () => {
@@ -681,7 +737,8 @@ describe('AppUpdateService', () => {
       cacheStorage.setEntries(assetCache(NEW_HASH), []);
       await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
 
-      expect(service.downloadProgress()).toBe(peak);
+      // The confirmed ratio collapsed to 0, but the bar must never go backwards.
+      expect(service.downloadProgress()).toBeGreaterThanOrEqual(peak);
     });
 
     it('does not abandon a slow download that is still making real progress', async () => {
@@ -712,7 +769,9 @@ describe('AppUpdateService', () => {
       }
 
       expect(service.updatePhase()).toBe('downloading');
-      expect(service.downloadProgress()).toBeCloseTo(0.2, 10);
+      // 4 of 20 equal assets confirmed, plus at most one more asset's worth.
+      expect(service.downloadProgress()).toBeGreaterThanOrEqual(0.2);
+      expect(service.downloadProgress()).toBeLessThan(0.2 + 0.05);
     });
 
     it('still abandons a measured download whose census saturated but never went ready', async () => {
@@ -858,7 +917,7 @@ describe('AppUpdateService', () => {
       expect(service.downloadProgress()).toBe(0);
     });
 
-    it('holds the last measured value through a transient cache read failure', async () => {
+    it('stays within one asset of the census through a transient read failure', async () => {
       const cacheStorage = measurableCacheStorage();
       const { service, versionUpdates } = createService({ cacheStorage });
 
@@ -873,13 +932,16 @@ describe('AppUpdateService', () => {
       const measured = service.downloadProgress();
       expect(measured).toBeCloseTo(0.25, 10);
 
-      // The incoming cache becomes unreadable. Flipping to the modelled curve here
-      // would teleport the bar to roughly 0.6 for a download that is 25% done.
+      // The incoming cache becomes unreadable. The bar keeps interpolating across the
+      // asset it last knew was in flight, which is bounded by that asset's share, but
+      // it must NOT flip to the modelled curve and it must not exceed the bound.
       cacheStorage.throwOn(assetCache(NEW_HASH));
       await vi.advanceTimersByTimeAsync(6 * UPDATE_PROGRESS_TICK_MS);
 
-      expect(service.downloadProgress()).toBe(measured);
       expect(service.measuredProgress()).toBe(true);
+      expect(service.downloadProgress()).toBeGreaterThanOrEqual(measured);
+      // main.js is 0.75 of the payload; the interpolation may approach 90% of that.
+      expect(service.downloadProgress()).toBeLessThanOrEqual(measured + 0.75 * 0.9);
     });
 
     it('re-anchors the modelled curve so a structural handover does not jump', async () => {
@@ -894,12 +956,14 @@ describe('AppUpdateService', () => {
         { url: 'https://app/index.html', bytes: 1000 },
       ]);
 
-      // A genuinely slow download: 15 s of wall clock with the census parked at 25%.
-      // By now the elapsed-time curve would read ~0.90, so an un-anchored handover
-      // teleports the bar from a quarter full to almost complete.
+      // A genuinely slow download: 15 s of wall clock with the census confirmed at
+      // 25% and the rest interpolated across the one asset in flight. By now the
+      // elapsed-time curve would read ~0.90, so an un-anchored handover would
+      // teleport the bar there regardless of what it is actually showing.
       await vi.advanceTimersByTimeAsync(15_000);
       const measured = service.downloadProgress();
-      expect(measured).toBeCloseTo(0.25, 10);
+      expect(measured).toBeGreaterThanOrEqual(0.25);
+      expect(measured).toBeLessThan(0.9);
 
       // The whole storage stops answering, so the next begin() is structurally
       // unmeasurable rather than transiently unreadable.
@@ -915,12 +979,12 @@ describe('AppUpdateService', () => {
       expect(service.downloadProgress()).toBeLessThan(measured + 0.001);
 
       // From the re-anchored point it resumes easing at the curve's normal rate
-      // rather than sitting frozen or snapping to the un-anchored ~0.90.
+      // rather than snapping to whatever the un-anchored curve happened to say.
       await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
       const oneTickLater = service.downloadProgress();
 
-      expect(oneTickLater).toBeGreaterThan(measured);
-      expect(oneTickLater).toBeLessThan(0.4);
+      expect(oneTickLater).toBeGreaterThanOrEqual(measured);
+      expect(oneTickLater).toBeLessThan(measured + 0.05);
     });
 
     it('falls back to the modelled curve when the cache holds nothing to weigh', async () => {

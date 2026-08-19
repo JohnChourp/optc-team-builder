@@ -736,12 +736,16 @@ build can still get wrong:
   elapsed time instead and `measuredProgress()` reports `false`. A structural
   handover re-anchors the curve so the bar cannot teleport; a *transient* read
   failure holds the last measured value instead of degrading.
-- **The census is per-asset, so it pauses on the big file.** `PrefetchAssetGroup`
-  commits one `cache.put` per URL and `optc-seed.sql` is ~2.1 MB gzipped of a
-  roughly 3 MB prefetch payload, so on a slow link the bar legitimately sits still
-  for the whole of that transfer. That is expected and is why the stall state only
-  changes copy. Do not "smooth" it by easing the modelled curve on top of a
-  measured reading — that reintroduces a fabricated number.
+- **The census is per-asset, so it is interpolated across the asset in flight.**
+  `PrefetchAssetGroup` commits one `cache.put` per URL, and live measurement put
+  `optc-seed.sql` at ~76% of this app's prefetch bytes — which left the bar frozen at
+  18% for 24 s and then snapping to 100%. So a sample reports both the confirmed
+  ratio and the byte share of the next asset expected to land, and the service eases
+  across that share while the confirmed value is static. The bound is what makes it
+  honest: the ceiling is `confirmed + share * 0.9`, so the bar can never claim the
+  in-flight asset has landed, and the census takes over the instant it does. Never
+  ease the free-running *modelled* curve on top of a measured reading — that is
+  unbounded and the number stops meaning anything.
 
 The banner's primary action is disabled only when there is genuinely nothing to
 activate, which is not the same as "a download is running": ngsw advances

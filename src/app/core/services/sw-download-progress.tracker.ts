@@ -41,16 +41,21 @@
  * answers is "how much of the new version is in place", not "how many bytes crossed
  * the network".
  *
- * KNOWN GRANULARITY LIMIT, and the reason it is still worth it. `PrefetchAssetGroup`
- * commits one `cache.put` per URL, so the census cannot move at all while a single
- * asset is in flight — and this app's prefetch payload is dominated by one file,
- * `optc-seed.sql` at ~2.1 MB gzipped out of roughly 3 MB. On a slow link the bar
- * therefore pauses for the whole of that transfer. Byte weighting is what makes that
- * pause tolerable rather than absurd: weighted by FILES the bar would pause at ~96%,
- * which reads as broken, whereas weighted by BYTES it pauses partway with most of
- * the remaining budget visibly unfilled, which reads as "still working". Do not
- * paper over the pause by easing the modelled curve on top of a measured reading —
- * that reintroduces a fabricated number and the bar stops meaning anything.
+ * GRANULARITY, and why a sample also reports an in-flight share. `PrefetchAssetGroup`
+ * commits one `cache.put` per URL, so the confirmed count cannot move at all while a
+ * single asset is being fetched — and this app's payload is dominated by one file:
+ * live measurement showed `optc-seed.sql` accounting for ~76% of the prefetch bytes,
+ * which left the bar frozen at 18% for 24 s and then snapping to 100%. Byte
+ * weighting alone does not fix that; it only moves the freeze point.
+ *
+ * So {@link SwDownloadProgressTracker.sample} reports two numbers: the CONFIRMED
+ * ratio, and the byte share of the next asset expected to land. The caller may
+ * interpolate across that share while the confirmed value is static, which is
+ * bounded rather than fabricated — the bar can never claim more than "the asset
+ * currently being fetched is nearly done", and the moment it lands the confirmed
+ * value takes over. What must never happen is easing the free-running MODELLED
+ * curve on top of a measured reading; that is unbounded and the bar stops meaning
+ * anything.
  *
  * When there is nothing to measure against — no `CacheStorage`, a first install
  * with no previous version, or responses served without `content-length` —
@@ -72,6 +77,19 @@ interface VersionByteWeights {
   readonly totalBytes: number;
   /** Mean size of the sized entries, used to price a URL the baseline lacks. */
   readonly averageBytes: number;
+}
+
+/** One reading of an in-flight install. */
+export interface SwDownloadSample {
+  /** Fraction of the payload's bytes actually present in the new caches, `[0, 1]`. */
+  readonly ratio: number;
+  /**
+   * Byte share of the next asset expected to land, as a fraction of the payload.
+   *
+   * This is the only amount a caller may interpolate across while {@link ratio} is
+   * static: it bounds the interpolation to one asset's worth of optimism.
+   */
+  readonly inFlightShare: number;
 }
 
 /**
@@ -146,7 +164,7 @@ export class SwDownloadProgressTracker {
    * Returns a value in `[0, 1]`, or `null` when the install is not measurable —
    * including when {@link begin} was never called for the current download.
    */
-  public async sample(): Promise<number | null> {
+  public async sample(): Promise<SwDownloadSample | null> {
     // Every input is captured up front. A `begin()` for a superseding version can
     // land while the awaits below are pending, and reading `this.totalBytes` after
     // that reset would divide by zero and poison the signal with NaN forever.
@@ -161,6 +179,7 @@ export class SwDownloadProgressTracker {
 
     try {
       const caches = await this.assetCachesForHash(hash);
+      const cachedUrls = new Set<string>();
       let cachedBytes = 0;
 
       for (const cache of caches) {
@@ -169,6 +188,7 @@ export class SwDownloadProgressTracker {
         const requests = await cache.keys();
 
         for (const request of requests) {
+          cachedUrls.add(request.url);
           cachedBytes += byteSizeByUrl.get(request.url) ?? averageBytes;
         }
       }
@@ -179,7 +199,10 @@ export class SwDownloadProgressTracker {
         return null;
       }
 
-      return Math.min(1, Math.max(0, cachedBytes / totalBytes));
+      return {
+        ratio: Math.min(1, Math.max(0, cachedBytes / totalBytes)),
+        inFlightShare: resolveInFlightShare(byteSizeByUrl, cachedUrls, totalBytes),
+      };
     } catch {
       return null;
     }
@@ -347,6 +370,28 @@ export class SwDownloadProgressTracker {
 
     return grouped;
   }
+}
+
+/**
+ * Byte share of the next asset expected to land.
+ *
+ * The baseline map preserves the outgoing version's cache insertion order, which is
+ * the manifest order ngsw prefetches in, so the FIRST not-yet-cached entry is the
+ * one being fetched right now. Taking the first rather than the largest is what
+ * keeps the caller's interpolation bounded by reality instead of by the worst case.
+ */
+function resolveInFlightShare(
+  byteSizeByUrl: ReadonlyMap<string, number>,
+  cachedUrls: ReadonlySet<string>,
+  totalBytes: number,
+): number {
+  for (const [url, bytes] of byteSizeByUrl) {
+    if (!cachedUrls.has(url)) {
+      return Math.min(1, Math.max(0, bytes / totalBytes));
+    }
+  }
+
+  return 0;
 }
 
 /**

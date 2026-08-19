@@ -143,17 +143,17 @@ describe('SwDownloadProgressTracker', () => {
     const tracker = new SwDownloadProgressTracker(asCacheStorage(fake));
 
     expect(await tracker.begin(NEW_HASH)).toBe(true);
-    expect(await tracker.sample()).toBe(0);
+    expect((await tracker.sample())?.ratio).toBe(0);
 
     // The small file lands first: 1 of 2 files, but only 1000 of 4000 bytes.
     fake.setEntries(assetCache(NEW_HASH), [{ url: 'https://app/index.html', bytes: 1000 }]);
-    expect(await tracker.sample()).toBeCloseTo(0.25, 10);
+    expect((await tracker.sample())?.ratio).toBeCloseTo(0.25, 10);
 
     fake.setEntries(assetCache(NEW_HASH), [
       { url: 'https://app/index.html', bytes: 1000 },
       { url: 'https://app/main.js', bytes: 3000 },
     ]);
-    expect(await tracker.sample()).toBe(1);
+    expect((await tracker.sample())?.ratio).toBe(1);
   });
 
   it('keys byte weights by the request url, not the stored response url', async () => {
@@ -178,7 +178,7 @@ describe('SwDownloadProgressTracker', () => {
     // Keyed by Response.url this would miss the map and be priced at the 2000-byte
     // average, reporting 0.5 instead of the true 0.75.
     fake.setEntries(assetCache(NEW_HASH), [{ url: 'https://app/main.js', bytes: 3000 }]);
-    expect(await tracker.sample()).toBeCloseTo(0.75, 10);
+    expect((await tracker.sample())?.ratio).toBeCloseTo(0.75, 10);
   });
 
   it('prices an unsized baseline entry on both sides of the ratio', async () => {
@@ -197,13 +197,13 @@ describe('SwDownloadProgressTracker', () => {
     // Counting the unsized entry only in the numerator would report 1.0 here while
     // index.html has not been transferred at all.
     fake.setEntries(assetCache(NEW_HASH), [{ url: 'https://app/chunked.js', bytes: null }]);
-    expect(await tracker.sample()).toBeCloseTo(0.5, 10);
+    expect((await tracker.sample())?.ratio).toBeCloseTo(0.5, 10);
 
     fake.setEntries(assetCache(NEW_HASH), [
       { url: 'https://app/chunked.js', bytes: null },
       { url: 'https://app/index.html', bytes: 1000 },
     ]);
-    expect(await tracker.sample()).toBe(1);
+    expect((await tracker.sample())?.ratio).toBe(1);
   });
 
   it('sums bytes across every asset group of the tracked version', async () => {
@@ -216,7 +216,7 @@ describe('SwDownloadProgressTracker', () => {
     const tracker = new SwDownloadProgressTracker(asCacheStorage(fake));
 
     expect(await tracker.begin(NEW_HASH)).toBe(true);
-    expect(await tracker.sample()).toBeCloseTo(0.1, 10);
+    expect((await tracker.sample())?.ratio).toBeCloseTo(0.1, 10);
   });
 
   it('parses a group literally named "assets" without confusing the hash segment', async () => {
@@ -229,7 +229,7 @@ describe('SwDownloadProgressTracker', () => {
     const tracker = new SwDownloadProgressTracker(asCacheStorage(fake));
 
     expect(await tracker.begin(NEW_HASH)).toBe(true);
-    expect(await tracker.sample()).toBe(1);
+    expect((await tracker.sample())?.ratio).toBe(1);
   });
 
   it('ignores data-group and control caches when weighing a version', async () => {
@@ -240,7 +240,7 @@ describe('SwDownloadProgressTracker', () => {
 
     // The 500_000-byte runtime-media entry would swamp the ratio if it counted.
     fake.setEntries(assetCache(NEW_HASH), [{ url: 'https://app/main.js', bytes: 3000 }]);
-    expect(await tracker.sample()).toBeCloseTo(0.75, 10);
+    expect((await tracker.sample())?.ratio).toBeCloseTo(0.75, 10);
   });
 
   it('prices a URL the outgoing version did not have at the average asset size', async () => {
@@ -251,7 +251,7 @@ describe('SwDownloadProgressTracker', () => {
 
     // Average of the 2 baseline entries is 2000 bytes -> 2000 / 4000.
     fake.setEntries(assetCache(NEW_HASH), [{ url: 'https://app/brand-new.js', bytes: 7 }]);
-    expect(await tracker.sample()).toBeCloseTo(0.5, 10);
+    expect((await tracker.sample())?.ratio).toBeCloseTo(0.5, 10);
   });
 
   it('clamps a version that outgrew its baseline to 1', async () => {
@@ -265,7 +265,7 @@ describe('SwDownloadProgressTracker', () => {
       { url: 'https://app/main.js', bytes: 3000 },
       { url: 'https://app/extra.js', bytes: 12_000 },
     ]);
-    expect(await tracker.sample()).toBe(1);
+    expect((await tracker.sample())?.ratio).toBe(1);
   });
 
   it('picks the most complete outgoing version when several old ones linger', async () => {
@@ -282,7 +282,7 @@ describe('SwDownloadProgressTracker', () => {
     expect(await tracker.begin(NEW_HASH)).toBe(true);
     // Weighed against OLD_HASH (4000) this is 0.75. Weighed against `ancient` (10)
     // it would saturate at 1, and averaging the two would give something else again.
-    expect(await tracker.sample()).toBeCloseTo(0.75, 10);
+    expect((await tracker.sample())?.ratio).toBeCloseTo(0.75, 10);
   });
 
   it('excludes the incoming version from its own baseline', async () => {
@@ -329,7 +329,7 @@ describe('SwDownloadProgressTracker', () => {
     const tracker = new SwDownloadProgressTracker(asCacheStorage(fake));
 
     expect(await tracker.begin(NEW_HASH)).toBe(true);
-    expect(await tracker.sample()).toBe(0);
+    expect((await tracker.sample())?.ratio).toBe(0);
 
     // The incoming version's cache becomes unreadable mid-download.
     fake.throwOn(assetCache(NEW_HASH));
@@ -383,6 +383,43 @@ describe('SwDownloadProgressTracker', () => {
     await retarget;
   });
 
+  it('reports the in-flight share of the next asset expected to land', async () => {
+    // The dominant asset owns 3000 of 4000 bytes, so its share is 0.75 — this is the
+    // budget a caller may interpolate across while the confirmed ratio is static.
+    const fake = FakeCacheStorage.from(baselineShape());
+    const tracker = new SwDownloadProgressTracker(asCacheStorage(fake));
+
+    await tracker.begin(NEW_HASH);
+
+    const start = await tracker.sample();
+    expect(start?.ratio).toBe(0);
+    // Baseline insertion order puts index.html first, so that is what ngsw is
+    // fetching right now: 1000 / 4000.
+    expect(start?.inFlightShare).toBeCloseTo(0.25, 10);
+
+    fake.setEntries(assetCache(NEW_HASH), [{ url: 'https://app/index.html', bytes: 1000 }]);
+    const next = await tracker.sample();
+    expect(next?.ratio).toBeCloseTo(0.25, 10);
+    // Now main.js is the one in flight: 3000 / 4000.
+    expect(next?.inFlightShare).toBeCloseTo(0.75, 10);
+  });
+
+  it('reports a zero in-flight share once everything is cached', async () => {
+    const fake = FakeCacheStorage.from(baselineShape());
+    const tracker = new SwDownloadProgressTracker(asCacheStorage(fake));
+
+    await tracker.begin(NEW_HASH);
+    fake.setEntries(assetCache(NEW_HASH), [
+      { url: 'https://app/index.html', bytes: 1000 },
+      { url: 'https://app/main.js', bytes: 3000 },
+    ]);
+
+    const sample = await tracker.sample();
+
+    expect(sample?.ratio).toBe(1);
+    expect(sample?.inFlightShare).toBe(0);
+  });
+
   it('does not let a superseded begin() clobber the active version baseline', async () => {
     // Two candidate baselines of very different sizes, so a clobber is visible in
     // the ratio: weighed against `older` the total is 1000, against 'h2' it is 4000.
@@ -409,7 +446,7 @@ describe('SwDownloadProgressTracker', () => {
     fake.setEntries(assetCache('h3'), [{ url: 'https://app/a.js', bytes: 1000 }]);
     // 1000 / 4000. Without the identity guard the stale pass would have installed
     // h2's 1000-byte baseline and this would read a saturated 1.
-    expect(await tracker.sample()).toBeCloseTo(0.25, 10);
+    expect((await tracker.sample())?.ratio).toBeCloseTo(0.25, 10);
   });
 
   it('resolves the window CacheStorage and null during prerender', () => {
