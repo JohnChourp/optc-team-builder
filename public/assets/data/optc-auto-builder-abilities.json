@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-17T19:38:32.760Z",
+  "generatedAt": "2026-08-19T11:46:08.761Z",
   "sourceVersion": "36",
   "abilityCount": 263,
   "abilities": [
@@ -20,7 +20,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1832,
+      "matchCount": 1833,
       "matchingCharacterIds": [
         1,
         2,
@@ -1849,6 +1849,7 @@
         4618,
         4619,
         4623,
+        4626,
         4628,
         5013,
         5014,
@@ -3510,7 +3511,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 1345,
+      "matchCount": 1346,
       "matchingCharacterIds": [
         209,
         210,
@@ -4855,6 +4856,7 @@
         4616,
         4617,
         4624,
+        4627,
         5013,
         5014
       ],
@@ -5818,7 +5820,8 @@
             4609,
             4614,
             4615,
-            4624
+            4624,
+            4627
           ]
         },
         {
@@ -8360,7 +8363,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 65,
+      "matchCount": 64,
       "matchingCharacterIds": [
         827,
         928,
@@ -8425,8 +8428,7 @@
         4510,
         4511,
         4548,
-        4550,
-        4628
+        4550
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -8486,13 +8488,12 @@
       "supportsSlotTokens": false,
       "availableSlotTokens": [],
       "availableSources": [
-        "captainAbility",
-        "specialText"
+        "captainAbility"
       ],
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 8,
+      "matchCount": 7,
       "matchingCharacterIds": [
         4116,
         4123,
@@ -8500,8 +8501,7 @@
         4125,
         4126,
         4127,
-        4128,
-        4627
+        4128
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -8545,7 +8545,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 429,
+      "matchCount": 430,
       "matchingCharacterIds": [
         1233,
         1234,
@@ -8975,7 +8975,8 @@
         4617,
         4620,
         4621,
-        4624
+        4624,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -9904,7 +9905,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 116,
+      "matchCount": 117,
       "matchingCharacterIds": [
         366,
         367,
@@ -10021,7 +10022,8 @@
         4556,
         4598,
         4611,
-        4616
+        4616,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -10974,7 +10976,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 15,
+      "matchCount": 16,
       "matchingCharacterIds": [
         3994,
         3995,
@@ -10990,7 +10992,8 @@
         4543,
         4563,
         4564,
-        4584
+        4584,
+        4626
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -11142,7 +11145,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 872,
+      "matchCount": 870,
       "matchingCharacterIds": [
         9,
         11,
@@ -12010,8 +12013,6 @@
         4616,
         4617,
         4623,
-        4626,
-        4627,
         5013,
         5014,
         5054,
@@ -12342,8 +12343,7 @@
             4599,
             4603,
             4607,
-            4623,
-            4627
+            4623
           ]
         },
         {
@@ -12436,7 +12436,6 @@
             4503,
             4530,
             4589,
-            4626,
             5013,
             5014
           ]
@@ -31110,6 +31109,7 @@
             4614,
             4622,
             4624,
+            4626,
             5031,
             5032,
             5056
@@ -31702,7 +31702,8 @@
                 4506,
                 4544,
                 4559,
-                4560
+                4560,
+                4626
               ]
             },
             {
@@ -31825,7 +31826,7 @@
           ]
         }
       ],
-      "matchCount": 532,
+      "matchCount": 533,
       "matchingCharacterIds": [
         228,
         265,
@@ -32356,6 +32357,7 @@
         4617,
         4622,
         4624,
+        4626,
         5031,
         5032,
         5056
@@ -32954,7 +32956,8 @@
             4506,
             4544,
             4559,
-            4560
+            4560,
+            4626
           ]
         },
         {
@@ -33074,7 +33077,8 @@
         4571,
         4572,
         4573,
-        4596
+        4596,
+        4626
       ],
       "captainAbilityCompleteRemovalCharacterIds": [
         3897,
@@ -33166,7 +33170,8 @@
             4442,
             4443,
             4492,
-            4506
+            4506,
+            4626
           ]
         },
         {
@@ -39869,6 +39874,7 @@
             4615,
             4622,
             4624,
+            4626,
             5031,
             5032
           ],
@@ -40182,7 +40188,8 @@
                 4476,
                 4487,
                 4492,
-                4547
+                4547,
+                4626
               ]
             },
             {
@@ -46131,6 +46138,7 @@
             4550,
             4587,
             4609,
+            4628,
             5031,
             5032
           ],
@@ -46248,6 +46256,7 @@
                 4550,
                 4587,
                 4609,
+                4628,
                 5031,
                 5032
               ]
@@ -46358,12 +46367,13 @@
             4550,
             4587,
             4609,
+            4628,
             5031,
             5032
           ]
         }
       ],
-      "matchCount": 107,
+      "matchCount": 108,
       "matchingCharacterIds": [
         379,
         380,
@@ -46470,6 +46480,7 @@
         4550,
         4587,
         4609,
+        4628,
         5031,
         5032
       ],
@@ -46587,6 +46598,7 @@
             4550,
             4587,
             4609,
+            4628,
             5031,
             5032
           ]
@@ -46697,6 +46709,7 @@
         4550,
         4587,
         4609,
+        4628,
         5031,
         5032
       ],
@@ -52543,7 +52556,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 72,
+      "matchCount": 73,
       "matchingCharacterIds": [
         58,
         215,
@@ -52616,14 +52629,16 @@
         4510,
         4511,
         4548,
-        4550
+        4550,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
         1698,
         2159,
         3402,
-        3403
+        3403,
+        4628
       ],
       "sampleCharacterIds": [
         58,
@@ -53006,7 +53021,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 29,
+      "matchCount": 30,
       "matchingCharacterIds": [
         4110,
         4111,
@@ -53036,7 +53051,8 @@
         4563,
         4564,
         4586,
-        4614
+        4614,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -53547,7 +53563,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 993,
+      "matchCount": 995,
       "matchingCharacterIds": [
         452,
         453,
@@ -54541,7 +54557,9 @@
         4620,
         4621,
         4622,
-        4623
+        4623,
+        4626,
+        4627
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -55190,7 +55208,8 @@
         4614,
         4615,
         4622,
-        4623
+        4623,
+        4626
       ],
       "sampleCharacterIds": [
         452,
@@ -55446,7 +55465,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 828,
+      "matchCount": 827,
       "matchingCharacterIds": [
         9,
         17,
@@ -56271,7 +56290,6 @@
         4614,
         4626,
         4627,
-        4628,
         5031,
         5032,
         5046,
@@ -58505,7 +58523,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 185,
+      "matchCount": 186,
       "matchingCharacterIds": [
         668,
         669,
@@ -58691,7 +58709,8 @@
         4575,
         4609,
         4610,
-        4615
+        4615,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -58713,7 +58732,8 @@
         4253,
         4269,
         4345,
-        4436
+        4436,
+        4628
       ],
       "sampleCharacterIds": [
         668,
@@ -59097,7 +59117,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 10,
+      "matchCount": 11,
       "matchingCharacterIds": [
         3994,
         3995,
@@ -59108,7 +59128,8 @@
         4299,
         4410,
         4543,
-        4569
+        4569,
+        4627
       ],
       "turnMatchingCharacterIds": [],
       "captainAbilityMatchingCharacterIds": [
@@ -63459,7 +63480,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 353,
+      "matchCount": 354,
       "matchingCharacterIds": [
         20,
         22,
@@ -63812,6 +63833,7 @@
         4606,
         4610,
         4623,
+        4627,
         5054,
         5055
       ],
@@ -64932,7 +64954,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 173,
+      "matchCount": 174,
       "matchingCharacterIds": [
         219,
         418,
@@ -65106,7 +65128,8 @@
         4563,
         4564,
         4569,
-        4584
+        4584,
+        4626
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -65140,7 +65163,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 125,
+      "matchCount": 126,
       "matchingCharacterIds": [
         261,
         314,
@@ -65266,7 +65289,8 @@
         4585,
         4591,
         4608,
-        4616
+        4616,
+        4626
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -65795,7 +65819,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 175,
+      "matchCount": 176,
       "matchingCharacterIds": [
         311,
         312,
@@ -65971,7 +65995,8 @@
         4560,
         4566,
         4612,
-        4613
+        4613,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -66005,7 +66030,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 146,
+      "matchCount": 147,
       "matchingCharacterIds": [
         261,
         748,
@@ -66152,7 +66177,8 @@
         4520,
         4543,
         4591,
-        4612
+        4612,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -66186,7 +66212,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 252,
+      "matchCount": 253,
       "matchingCharacterIds": [
         20,
         22,
@@ -66438,6 +66464,7 @@
         4609,
         4610,
         4617,
+        4627,
         5054,
         5055
       ],
@@ -67214,7 +67241,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 88,
+      "matchCount": 89,
       "matchingCharacterIds": [
         219,
         1018,
@@ -67303,7 +67330,8 @@
         4478,
         4563,
         4564,
-        4569
+        4569,
+        4626
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -67337,7 +67365,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 63,
+      "matchCount": 64,
       "matchingCharacterIds": [
         314,
         575,
@@ -67401,7 +67429,8 @@
         4477,
         4489,
         4505,
-        4608
+        4608,
+        4626
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -67778,7 +67807,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 113,
+      "matchCount": 114,
       "matchingCharacterIds": [
         872,
         939,
@@ -67892,7 +67921,8 @@
         4560,
         4566,
         4612,
-        4613
+        4613,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -67926,7 +67956,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 69,
+      "matchCount": 70,
       "matchingCharacterIds": [
         748,
         1085,
@@ -67996,7 +68026,8 @@
         4477,
         4478,
         4505,
-        4612
+        4612,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -68030,7 +68061,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 283,
+      "matchCount": 284,
       "matchingCharacterIds": [
         20,
         22,
@@ -68313,6 +68344,7 @@
         4605,
         4606,
         4609,
+        4627,
         5054,
         5055
       ],
@@ -69170,7 +69202,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 100,
+      "matchCount": 101,
       "matchingCharacterIds": [
         219,
         418,
@@ -69271,7 +69303,8 @@
         4503,
         4563,
         4564,
-        4569
+        4569,
+        4626
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -69305,7 +69338,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 80,
+      "matchCount": 81,
       "matchingCharacterIds": [
         314,
         575,
@@ -69386,7 +69419,8 @@
         4505,
         4608,
         4618,
-        4619
+        4619,
+        4626
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -69806,7 +69840,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 118,
+      "matchCount": 119,
       "matchingCharacterIds": [
         872,
         939,
@@ -69925,7 +69959,8 @@
         4560,
         4566,
         4612,
-        4613
+        4613,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -69959,7 +69994,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 117,
+      "matchCount": 118,
       "matchingCharacterIds": [
         360,
         361,
@@ -70077,7 +70112,8 @@
         4478,
         4505,
         4543,
-        4612
+        4612,
+        4628
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -79353,7 +79389,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 31,
+      "matchCount": 32,
       "matchingCharacterIds": [
         1908,
         2332,
@@ -79385,7 +79421,8 @@
         4484,
         4546,
         4600,
-        4623
+        4623,
+        4626
       ],
       "turnMatchingCharacterIds": [
         {
@@ -79423,7 +79460,8 @@
             4115,
             4444,
             4484,
-            4600
+            4600,
+            4626
           ]
         },
         {
@@ -83007,7 +83045,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 194,
+      "matchCount": 196,
       "matchingCharacterIds": [
         73,
         75,
@@ -83202,7 +83240,9 @@
         4618,
         4619,
         4620,
-        4621
+        4621,
+        4626,
+        4627
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
@@ -83236,7 +83276,7 @@
       "availableCoverageModes": [
         "explicit"
       ],
-      "matchCount": 68,
+      "matchCount": 69,
       "matchingCharacterIds": [
         453,
         1045,
@@ -83305,7 +83345,8 @@
         4574,
         4575,
         4599,
-        4615
+        4615,
+        4627
       ],
       "turnMatchingCharacterIds": [],
       "sampleCharacterIds": [
