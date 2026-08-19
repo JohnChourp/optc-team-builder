@@ -59,6 +59,15 @@ export const CRITICAL_TRANSLATION_CASES = [
       'summary.copy',
     ],
   },
+  {
+    scope: 'root',
+    keys: [
+      'appUpdate.downloading',
+      'appUpdate.downloadedNative',
+      'appUpdate.downloadStalled',
+      'appUpdate.progressLabel',
+    ],
+  },
 ];
 
 export const PUBLIC_GUIDE_CASES = [

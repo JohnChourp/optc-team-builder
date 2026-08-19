@@ -38,4 +38,11 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+      Lets the in-app updater hand a downloaded release apk to the system package
+      installer. From Android 8 this manifest entry is necessary but not sufficient:
+      the user must also allow this app to install unknown apps, which ApkUpdater
+      checks with canInstall() and deep-links to with openInstallSettings().
+    -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 </manifest>
