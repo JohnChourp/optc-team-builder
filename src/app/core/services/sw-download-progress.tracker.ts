@@ -41,6 +41,17 @@
  * answers is "how much of the new version is in place", not "how many bytes crossed
  * the network".
  *
+ * KNOWN GRANULARITY LIMIT, and the reason it is still worth it. `PrefetchAssetGroup`
+ * commits one `cache.put` per URL, so the census cannot move at all while a single
+ * asset is in flight — and this app's prefetch payload is dominated by one file,
+ * `optc-seed.sql` at ~2.1 MB gzipped out of roughly 3 MB. On a slow link the bar
+ * therefore pauses for the whole of that transfer. Byte weighting is what makes that
+ * pause tolerable rather than absurd: weighted by FILES the bar would pause at ~96%,
+ * which reads as broken, whereas weighted by BYTES it pauses partway with most of
+ * the remaining budget visibly unfilled, which reads as "still working". Do not
+ * paper over the pause by easing the modelled curve on top of a measured reading —
+ * that reintroduces a fabricated number and the bar stops meaning anything.
+ *
  * When there is nothing to measure against — no `CacheStorage`, a first install
  * with no previous version, or responses served without `content-length` —
  * {@link SwDownloadProgressTracker.sample} reports `null` and the caller falls
@@ -102,6 +113,13 @@ export class SwDownloadProgressTracker {
     try {
       const outgoing = await this.resolveOutgoingBaseline(hash);
 
+      // A later begin() may have re-targeted the tracker while the baseline pass was
+      // running. Committing this one would hand the newer version the older
+      // version's weights, so drop it instead.
+      if (this.targetHash !== hash) {
+        return false;
+      }
+
       if (!outgoing) {
         return false;
       }
@@ -114,7 +132,9 @@ export class SwDownloadProgressTracker {
     } catch {
       // A cache read can reject on a browser that blocks storage (private mode,
       // storage pressure). Treat it as "not measurable" rather than an error.
-      this.reset();
+      if (this.targetHash === hash) {
+        this.reset();
+      }
 
       return false;
     }
@@ -279,8 +299,11 @@ export class SwDownloadProgressTracker {
   }
 
   /**
-   * Opens a cache that `CacheStorage.keys()` already reported, so this never
-   * creates one as a side effect.
+   * Opens a cache whose name `CacheStorage.keys()` already reported.
+   *
+   * `CacheStorage.open()` CREATES a cache that does not exist, so every call site
+   * must feed it a name that came from `keys()` — otherwise a census would litter
+   * the origin with empty caches on every sample.
    */
   private async openExisting(name: string): Promise<Cache | null> {
     if (!this.cacheStorage) {

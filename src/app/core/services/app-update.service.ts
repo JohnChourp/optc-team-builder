@@ -34,14 +34,42 @@ const UPDATE_PROGRESS_TAU_MS = 5_000;
 /** Sampling cadence. Matches the bar's CSS transition so the fill interpolates. */
 export const UPDATE_PROGRESS_TICK_MS = 500;
 
-/** Smallest measured advance that counts as "this download is still moving". */
-const UPDATE_PROGRESS_ADVANCE_EPSILON = 0.005;
+/**
+ * Smallest measured advance SINCE THE LAST WATCHDOG RE-ARM that counts as "this
+ * download is still moving".
+ *
+ * Deliberately tiny and deliberately cumulative. A per-tick threshold would
+ * declare a healthy download stalled whenever the link is slower than
+ * `threshold * payload / tick` — at 0.5% of a ~2.1 MB payload every 500 ms that is
+ * ~22 KB/s, which a poor mobile connection is genuinely below. Measured
+ * cumulatively, any real transfer clears it, while a census that has SATURATED
+ * reports the same value forever and correctly stops re-arming.
+ */
+const UPDATE_PROGRESS_ADVANCE_EPSILON = 0.000_5;
 
-/** How long without progress before the copy admits the download is slow. */
+/**
+ * How long without progress before the copy admits the download is slow.
+ *
+ * The census advances one asset at a time, and this app's prefetch payload is
+ * dominated by a single ~2.1 MB gzipped `optc-seed.sql`, so a genuinely healthy
+ * install on a slow link shows NO motion for as long as that one file takes. The
+ * stall state therefore only changes copy — "this is taking longer than usual" is
+ * true and useful in exactly that case, and nothing is torn down.
+ */
 export const UPDATE_DOWNLOAD_STALL_MS = 120_000;
 
-/** How long without progress before the banner gives up and resets to idle. */
-export const UPDATE_DOWNLOAD_ABANDON_MS = 900_000;
+/**
+ * How long without progress before the banner stops showing a bar and resets.
+ *
+ * Generous for the same single-large-file reason above, and safe because it is
+ * RECOVERABLE rather than destructive: the `versionUpdates` subscription stays
+ * live, so an install that really was still running restores the banner as
+ * ready-at-100% when its `VERSION_READY` finally lands, and a genuinely failed one
+ * arrives as `VERSION_INSTALLATION_FAILED`. Its job is only to stop a bar sitting
+ * on screen forever when ngsw suppresses `VERSION_READY` for this client — a state
+ * `checkForUpdate()` provably cannot rescue.
+ */
+export const UPDATE_DOWNLOAD_ABANDON_MS = 1_800_000;
 
 /**
  * Watches the Angular service worker for freshly deployed builds and exposes the
@@ -78,6 +106,8 @@ export class AppUpdateService {
   private readonly measuredSignal = signal(false);
   private readonly stalledSignal = signal(false);
   private readonly snoozedSignal = signal(false);
+  /** Hash of the last version that actually became installable, if any. */
+  private readonly readyHashSignal = signal<string | null>(null);
 
   /** 'idle' | 'downloading' | 'ready'. Collapses to 'idle' while snoozed. */
   public readonly updatePhase: Signal<AppUpdatePhase> = computed(() =>
@@ -101,18 +131,31 @@ export class AppUpdateService {
     () => !this.snoozedSignal() && this.stalledSignal(),
   );
 
+  /**
+   * True when {@link applyUpdate} would actually do something.
+   *
+   * Note this is NOT the same as `updatePhase() === 'ready'`: ngsw only advances
+   * `latestHash` after a successful install, so a version that already reported
+   * `VERSION_READY` stays activatable while a NEWER version downloads behind it.
+   * Disabling the banner's action for that whole second download would take away a
+   * usable update the user already had.
+   */
+  public readonly updateActivatable: Signal<boolean> = computed(
+    () => !this.snoozedSignal() && this.readyHashSignal() !== null,
+  );
+
   private readonly progressTracker: SwDownloadProgressTracker;
 
   private started = false;
   private destroyed = false;
   private trackedHash: string | null = null;
-  /** Hash of the last version that actually became installable, if any. */
-  private readyHash: string | null = null;
   private snoozedHash: string | null = null;
   private detectedAtMs = 0;
   private lastEmittedProgress = 0;
-  /** Previous raw census reading, used to tell real motion from a saturated bar. */
-  private lastSampledProgress = 0;
+  /** Raw census reading at the last watchdog re-arm, used to detect real motion. */
+  private progressAtLastRearm = 0;
+  /** True while the first measurability answer for this download is outstanding. */
+  private measurabilityPending = false;
   private sampleInFlight = false;
   private versionSubscription: Subscription | null = null;
 
@@ -177,7 +220,9 @@ export class AppUpdateService {
    * throws away the partially-fetched version and starts over.
    */
   public async applyUpdate(): Promise<void> {
-    if (this.rawPhaseSignal() === 'downloading') {
+    if (this.readyHashSignal() === null) {
+      // Nothing is installable yet. Reloading now would only throw away the
+      // partially-fetched version and start the download over.
       return;
     }
 
@@ -233,8 +278,16 @@ export class AppUpdateService {
       // value — rewinding a bar the user is watching is worse than a stale one.
       if (hash !== this.trackedHash) {
         this.trackedHash = hash;
-        this.lastSampledProgress = 0;
+        this.progressAtLastRearm = 0;
+        this.measurabilityPending = true;
         this.stalledSignal.set(false);
+
+        if (!this.isSnoozeFor(hash)) {
+          // A "Later" taken on the version this one supersedes must not keep the
+          // banner hidden for the whole of the new download.
+          this.cancelSnooze();
+        }
+
         void this.retargetTracker(hash);
         // markStalled() may already have stopped the modelled ticker; a fresh
         // version must not inherit a frozen bar.
@@ -254,7 +307,8 @@ export class AppUpdateService {
 
     this.detectedAtMs = Date.now();
     this.lastEmittedProgress = 0;
-    this.lastSampledProgress = 0;
+    this.progressAtLastRearm = 0;
+    this.measurabilityPending = true;
     this.sampleInFlight = false;
     this.measuredSignal.set(false);
     this.stalledSignal.set(false);
@@ -274,7 +328,7 @@ export class AppUpdateService {
     this.stopTicker();
     this.clearWatchdogs();
     this.trackedHash = hash ?? this.trackedHash;
-    this.readyHash = this.trackedHash;
+    this.readyHashSignal.set(this.trackedHash);
 
     if (!this.isSnoozeFor(this.trackedHash)) {
       // Honour a "Later" pressed during *this* download; un-snooze when a
@@ -309,10 +363,11 @@ export class AppUpdateService {
     this.clearWatchdogs();
     this.progressTracker.reset();
     this.trackedHash = null;
-    this.readyHash = null;
+    this.readyHashSignal.set(null);
     this.detectedAtMs = 0;
     this.lastEmittedProgress = 0;
-    this.lastSampledProgress = 0;
+    this.progressAtLastRearm = 0;
+    this.measurabilityPending = false;
     this.sampleInFlight = false;
     this.measuredSignal.set(false);
     this.stalledSignal.set(false);
@@ -338,6 +393,7 @@ export class AppUpdateService {
 
     // Only adopt the answer while this hash is still the one being downloaded.
     if (this.rawPhaseSignal() === 'downloading' && this.trackedHash === hash) {
+      this.measurabilityPending = false;
       this.setMeasured(measurable);
     }
   }
@@ -389,6 +445,13 @@ export class AppUpdateService {
       return;
     }
 
+    if (this.measurabilityPending) {
+      // Measurability is still being resolved. Emitting the modelled curve here
+      // would raise the bar above the census's true starting point, and the
+      // monotonic clamp would then freeze it until the real reading caught up.
+      return;
+    }
+
     this.emitProgress(this.modelledProgress());
   }
 
@@ -422,18 +485,18 @@ export class AppUpdateService {
         return;
       }
 
-      // Compared against the previous RAW sample, never against the emitted value:
-      // once the census saturates at 1 the emitted value is pinned to the ceiling,
-      // so a `sampled - emitted` test would report motion on every tick forever and
-      // the abandon watchdog could never fire.
-      const advanced = sampled - this.lastSampledProgress >= UPDATE_PROGRESS_ADVANCE_EPSILON;
+      // Measured against the RAW reading at the last re-arm, never against the
+      // emitted value: once the census saturates the emitted value is pinned to the
+      // ceiling, so a `sampled - emitted` test would report motion on every tick
+      // forever and the abandon watchdog could never fire.
+      const advanced = sampled - this.progressAtLastRearm >= UPDATE_PROGRESS_ADVANCE_EPSILON;
 
-      this.lastSampledProgress = Math.max(this.lastSampledProgress, sampled);
       this.emitProgress(Math.min(sampled, UPDATE_PROGRESS_MEASURED_CEILING));
 
       if (advanced) {
         // A slow-but-moving download must never be declared stalled or abandoned,
         // so real forward motion pushes both watchdogs back.
+        this.progressAtLastRearm = sampled;
         this.stalledSignal.set(false);
         this.armWatchdogs();
       }
@@ -519,7 +582,19 @@ export class AppUpdateService {
     }
   }
 
-  /** Swaps the copy for a slow download and probes for a suppressed VERSION_READY. */
+  /**
+   * Swaps the copy for a slow download.
+   *
+   * Deliberately does NOT probe `swUpdate.checkForUpdate()`. ngsw only inserts a
+   * version into `this.versions` AFTER `initializeFully` resolves, so during an
+   * in-flight install the probe does not find the hash, emits a second
+   * `VERSION_DETECTED` and calls `setupUpdate` again — a second concurrent install
+   * of the same manifest, doubling traffic at exactly the moment the connection has
+   * already proven slow. And it cannot achieve what it was for: once a version IS
+   * installed, `checkForUpdate()` returns false without re-emitting
+   * `VERSION_READY`, so a suppressed ready event is unrecoverable this way. The
+   * abandon watchdog bounds the state instead.
+   */
   private markStalled(): void {
     if (this.rawPhaseSignal() !== 'downloading') {
       return;
@@ -532,8 +607,6 @@ export class AppUpdateService {
       // a timer on it; the measured path keeps sampling because it can still move.
       this.stopTicker();
     }
-
-    void this.checkForUpdate();
   }
 
   /** Gives up on a download that has not advanced for a very long time. */
@@ -553,7 +626,7 @@ export class AppUpdateService {
    * activatable. Falling back to it beats throwing away a usable update.
    */
   private giveUpOnDownload(): void {
-    const previousReadyHash = this.readyHash;
+    const previousReadyHash = this.readyHashSignal();
 
     if (previousReadyHash !== null && previousReadyHash !== this.trackedHash) {
       this.completeDownload(previousReadyHash);

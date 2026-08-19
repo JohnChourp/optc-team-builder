@@ -42,7 +42,26 @@ class FakeCacheStorage {
     this.throwingCaches.add(name);
   }
 
+  private pendingKeysGate: Promise<void> | null = null;
+
+  /** Parks the NEXT `keys()` call until the returned release function is called. */
+  public gateNextKeys(): () => void {
+    let release = (): void => {};
+    this.pendingKeysGate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    return release;
+  }
+
   public async keys(): Promise<string[]> {
+    const gate = this.pendingKeysGate;
+
+    if (gate) {
+      this.pendingKeysGate = null;
+      await gate;
+    }
+
     return [...this.caches.keys()];
   }
 
@@ -362,6 +381,35 @@ describe('SwDownloadProgressTracker', () => {
 
     await expect(pending).resolves.toBeNull();
     await retarget;
+  });
+
+  it('does not let a superseded begin() clobber the active version baseline', async () => {
+    // Two candidate baselines of very different sizes, so a clobber is visible in
+    // the ratio: weighed against `older` the total is 1000, against 'h2' it is 4000.
+    const fake = FakeCacheStorage.from({
+      [assetCache('older')]: [{ url: 'https://app/small.js', bytes: 1000 }],
+      [assetCache('h2')]: [
+        { url: 'https://app/a.js', bytes: 1000 },
+        { url: 'https://app/b.js', bytes: 3000 },
+      ],
+      [assetCache('h3')]: [],
+    });
+    const tracker = new SwDownloadProgressTracker(asCacheStorage(fake));
+
+    // begin('h2') parks inside its baseline pass...
+    const release = fake.gateNextKeys();
+    const superseded = tracker.begin('h2');
+
+    // ...while a superseding begin('h3') completes and installs ITS baseline (4000).
+    expect(await tracker.begin('h3')).toBe(true);
+
+    release();
+    expect(await superseded).toBe(false);
+
+    fake.setEntries(assetCache('h3'), [{ url: 'https://app/a.js', bytes: 1000 }]);
+    // 1000 / 4000. Without the identity guard the stale pass would have installed
+    // h2's 1000-byte baseline and this would read a saturated 1.
+    expect(await tracker.sample()).toBeCloseTo(0.25, 10);
   });
 
   it('resolves the window CacheStorage and null during prerender', () => {

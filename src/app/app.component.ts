@@ -93,7 +93,6 @@ const defaultSeo: RouteSeoData = {
                 <ion-progress-bar
                   class="app-update-banner__progress"
                   type="determinate"
-                  color="warning"
                   [value]="updateProgress()"
                   [attr.aria-label]="'appUpdate.progressLabel' | transloco"
                 ></ion-progress-bar>
@@ -107,7 +106,7 @@ const defaultSeo: RouteSeoData = {
                   fill="solid"
                   color="warning"
                   size="small"
-                  [disabled]="updateDownloading()"
+                  [disabled]="updateActionDisabled()"
                   (click)="openUpdatePrompt()"
                 >
                   <ion-icon slot="start" [icon]="updateIcon"></ion-icon>
@@ -234,7 +233,9 @@ export class AppComponent {
   public readonly dismissIcon = closeOutline;
   public readonly updateIcon = refreshOutline;
   public readonly showUpdateBanner = computed(
-    () => this.appUpdateService.updateAvailable() || this.nativeUpdateService.availableUpdate() !== null,
+    () =>
+      this.appUpdateService.updateAvailable() ||
+      this.nativeUpdateService.availableUpdate() !== null,
   );
   public readonly updateCopyKey = computed(() => {
     // Native precedence first: with a simultaneous native + web update the confirm
@@ -253,8 +254,20 @@ export class AppComponent {
 
     return 'appUpdate.copy';
   });
+  // Native-gated like every other update computed: with a native update pending the
+  // action opens the release page, which is always safe.
   public readonly updateDownloading = computed(
-    () => this.appUpdateService.updatePhase() === 'downloading',
+    () =>
+      this.nativeUpdateService.availableUpdate() === null &&
+      this.appUpdateService.updatePhase() === 'downloading',
+  );
+  // Disabled only when there is genuinely nothing to activate. A version that
+  // already reported VERSION_READY stays activatable while a newer one downloads
+  // behind it, so a supersede must not take the action away.
+  public readonly updateActionDisabled = computed(
+    () =>
+      this.nativeUpdateService.availableUpdate() === null &&
+      !this.appUpdateService.updateActivatable(),
   );
   // No in-app download exists on Capacitor — openReleasePage() hands the APK to the
   // system browser — so the native banner never gets a bar.
@@ -343,9 +356,9 @@ export class AppComponent {
   }
 
   public async openUpdatePrompt(): Promise<void> {
-    // Defence in depth behind the button's [disabled] binding: reloading mid-install
-    // throws away the partially-fetched version.
-    if (this.updateDownloading()) {
+    // Defence in depth behind the button's [disabled] binding: reloading with
+    // nothing installable would only throw away the partially-fetched version.
+    if (this.updateActionDisabled()) {
       return;
     }
 

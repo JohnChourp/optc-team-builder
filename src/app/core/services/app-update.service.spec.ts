@@ -195,7 +195,10 @@ describe('AppUpdateService', () => {
   });
 
   it('activates the pending version and reloads when applying the update', async () => {
-    const { service, swUpdate, reload } = createService();
+    const { service, swUpdate, versionUpdates, reload } = createService();
+
+    service.init();
+    versionUpdates.next(versionReadyEvent());
 
     await service.applyUpdate();
 
@@ -204,8 +207,11 @@ describe('AppUpdateService', () => {
   });
 
   it('still reloads even if activating the update fails', async () => {
-    const { service, swUpdate, reload } = createService();
+    const { service, swUpdate, versionUpdates, reload } = createService();
     swUpdate.activateUpdate.mockRejectedValueOnce(new Error('boom'));
+
+    service.init();
+    versionUpdates.next(versionReadyEvent());
 
     await service.applyUpdate();
 
@@ -370,6 +376,17 @@ describe('AppUpdateService', () => {
       expect(reload).not.toHaveBeenCalled();
     });
 
+    it('refuses to apply an update when nothing is installable at all', async () => {
+      const { service, swUpdate, reload } = createService();
+
+      // Not reachable from the banner (it only renders when something is pending),
+      // but reloading here would be a pointless refresh.
+      await service.applyUpdate();
+
+      expect(swUpdate.activateUpdate).not.toHaveBeenCalled();
+      expect(reload).not.toHaveBeenCalled();
+    });
+
     it('releases every timer on destroy', () => {
       const { service, swUpdate, versionUpdates } = createService();
 
@@ -416,7 +433,7 @@ describe('AppUpdateService', () => {
       expect(service.measuredProgress()).toBe(false);
     });
 
-    it('flags a stalled download and probes for a suppressed VERSION_READY', async () => {
+    it('flags a stalled download without starting a second install of it', async () => {
       const { service, swUpdate, versionUpdates } = createService();
 
       service.init();
@@ -427,7 +444,10 @@ describe('AppUpdateService', () => {
 
       expect(service.updateStalled()).toBe(true);
       expect(service.updatePhase()).toBe('downloading');
-      expect(swUpdate.checkForUpdate).toHaveBeenCalled();
+      // ngsw only inserts a version into `versions` after initializeFully resolves,
+      // so probing mid-install makes it call setupUpdate a second time for the same
+      // manifest — a duplicate concurrent download on an already-slow connection.
+      expect(swUpdate.checkForUpdate).not.toHaveBeenCalled();
     });
 
     it('hides the stall copy while the banner is snoozed', async () => {
@@ -469,6 +489,139 @@ describe('AppUpdateService', () => {
 
       expect(service.updateStalled()).toBe(false);
       expect(service.downloadProgress()).toBe(1);
+    });
+  });
+
+  describe('activatability', () => {
+    it('is not activatable during a first download', () => {
+      const { service, versionUpdates } = createService();
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent());
+
+      expect(service.updateActivatable()).toBe(false);
+    });
+
+    it('stays activatable while a newer version downloads behind a ready one', () => {
+      const { service, versionUpdates } = createService();
+
+      service.init();
+      versionUpdates.next(versionReadyEvent(OLD_HASH, 'v1'));
+      expect(service.updateActivatable()).toBe(true);
+
+      versionUpdates.next(versionDetectedEvent('v2'));
+
+      // ngsw only advances latestHash after a successful install, so v1 is still
+      // what activateUpdate() would apply.
+      expect(service.updatePhase()).toBe('downloading');
+      expect(service.updateActivatable()).toBe(true);
+    });
+
+    it('applies the still-installable version while a newer one downloads', async () => {
+      const { service, swUpdate, versionUpdates, reload } = createService();
+
+      service.init();
+      versionUpdates.next(versionReadyEvent(OLD_HASH, 'v1'));
+      versionUpdates.next(versionDetectedEvent('v2'));
+
+      await service.applyUpdate();
+
+      expect(swUpdate.activateUpdate).toHaveBeenCalledOnce();
+      expect(reload).toHaveBeenCalledOnce();
+    });
+
+    it('is not activatable while snoozed', () => {
+      const { service, versionUpdates } = createService();
+
+      service.init();
+      versionUpdates.next(versionReadyEvent());
+      expect(service.updateActivatable()).toBe(true);
+
+      service.snooze();
+
+      expect(service.updateActivatable()).toBe(false);
+    });
+
+    it('un-snoozes a supersede so the banner is not hidden for the new download', () => {
+      const { service, versionUpdates } = createService();
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent('v1'));
+      service.snooze();
+      expect(service.updateAvailable()).toBe(false);
+
+      // A second deploy lands while the snoozed first one is still downloading.
+      versionUpdates.next(versionDetectedEvent('v2'));
+
+      expect(service.updateAvailable()).toBe(true);
+      expect(service.updatePhase()).toBe('downloading');
+    });
+  });
+
+  describe('watchdogs', () => {
+    it('restores the banner at 100% when an abandoned install finishes anyway', async () => {
+      const { service, versionUpdates } = createService();
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent(NEW_HASH));
+
+      await vi.advanceTimersByTimeAsync(UPDATE_DOWNLOAD_ABANDON_MS);
+      expect(service.updatePhase()).toBe('idle');
+
+      // Abandoning only stops showing a bar; the subscription is still live, so a
+      // download that really was still running comes back as ready-at-100%.
+      versionUpdates.next(versionReadyEvent(OLD_HASH, NEW_HASH));
+
+      expect(service.updatePhase()).toBe('ready');
+      expect(service.downloadProgress()).toBe(1);
+      expect(service.updateActivatable()).toBe(true);
+    });
+
+    it('does not abandon a download whose census creeps forward very slowly', async () => {
+      // 40 assets of 1000 bytes: each one is 2.5% of the payload, arriving every
+      // 4 minutes. A per-tick advance threshold would call this stalled; measured
+      // cumulatively since the last re-arm it is plainly still moving.
+      const baseline = Array.from({ length: 40 }, (_, index) => ({
+        url: `https://app/part-${index}.js`,
+        bytes: 1000,
+      }));
+      const cacheStorage = new FakeCacheStorage({
+        [assetCache(OLD_HASH)]: baseline,
+        [assetCache(NEW_HASH)]: [],
+      });
+      const { service, versionUpdates } = createService({ cacheStorage });
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent(NEW_HASH));
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+      expect(service.measuredProgress()).toBe(true);
+
+      for (let cached = 1; cached <= 10; cached++) {
+        cacheStorage.setEntries(assetCache(NEW_HASH), baseline.slice(0, cached));
+        await vi.advanceTimersByTimeAsync(4 * 60 * 1000);
+      }
+
+      // Well past the abandon window in wall-clock terms, but never stuck.
+      expect(service.updatePhase()).toBe('downloading');
+      expect(service.downloadProgress()).toBeCloseTo(0.25, 10);
+    });
+
+    it('does not raise the bar above the census start while measurability is pending', async () => {
+      const cacheStorage = measurableCacheStorage();
+      const { service, versionUpdates } = createService({ cacheStorage });
+
+      service.init();
+      versionUpdates.next(versionDetectedEvent(NEW_HASH));
+
+      // Fire several ticks without flushing, so begin() is still outstanding. The
+      // modelled curve must not run ahead here: the monotonic clamp would then
+      // freeze the bar until the real reading caught up.
+      vi.advanceTimersByTime(4 * UPDATE_PROGRESS_TICK_MS);
+      expect(service.downloadProgress()).toBe(UPDATE_PROGRESS_MIN);
+
+      await vi.advanceTimersByTimeAsync(UPDATE_PROGRESS_TICK_MS);
+      expect(service.measuredProgress()).toBe(true);
+      expect(service.downloadProgress()).toBe(UPDATE_PROGRESS_MIN);
     });
   });
 

@@ -41,6 +41,7 @@ let appUpdateStub: {
   updatePhase: ReturnType<typeof signal>;
   downloadProgress: ReturnType<typeof signal>;
   updateStalled: ReturnType<typeof signal>;
+  updateActivatable: ReturnType<typeof signal>;
   init: ReturnType<typeof vi.fn>;
   applyUpdate: ReturnType<typeof vi.fn>;
   snooze: ReturnType<typeof vi.fn>;
@@ -150,6 +151,7 @@ describe('AppComponent', () => {
       updatePhase: signal('idle'),
       downloadProgress: signal(0),
       updateStalled: signal(false),
+      updateActivatable: signal(false),
       init: vi.fn(),
       applyUpdate: vi.fn().mockResolvedValue(undefined),
       snooze: vi.fn(),
@@ -262,7 +264,7 @@ describe('AppComponent', () => {
     expect(template).toContain('type="determinate"');
     expect(template).toContain('[value]="updateProgress()"');
     expect(template).toContain("'appUpdate.progressLabel' | transloco");
-    expect(template).toContain('[disabled]="updateDownloading()"');
+    expect(template).toContain('[disabled]="updateActionDisabled()"');
   });
 
   it('surfaces the update banner when a new version is available and snoozes it', async () => {
@@ -281,6 +283,8 @@ describe('AppComponent', () => {
   it('opens an Ionic confirmation alert that applies the update when confirmed', async () => {
     const { AppComponent } = await import('./app.component');
     const component = new AppComponent();
+
+    appUpdateStub.updateActivatable.set(true);
 
     await component.openUpdatePrompt();
 
@@ -351,11 +355,53 @@ describe('AppComponent', () => {
     const component = new AppComponent();
 
     appUpdateStub.updatePhase.set('downloading');
+    appUpdateStub.updateActivatable.set(false);
+
+    expect(component.updateActionDisabled()).toBe(true);
 
     await component.openUpdatePrompt();
 
     expect(alertControllerStub.create).not.toHaveBeenCalled();
     expect(appUpdateStub.applyUpdate).not.toHaveBeenCalled();
+  });
+
+  it('keeps the update action alive while a newer version downloads behind a ready one', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    // ngsw only advances latestHash after a successful install, so the earlier
+    // version is still activatable and the action must not be taken away.
+    appUpdateStub.updatePhase.set('downloading');
+    appUpdateStub.updateActivatable.set(true);
+
+    expect(component.updateActionDisabled()).toBe(false);
+    expect(component.showUpdateProgress()).toBe(true);
+
+    await component.openUpdatePrompt();
+
+    expect(alertControllerStub.create).toHaveBeenCalledOnce();
+  });
+
+  it('never disables the native update action, even during a web download', async () => {
+    nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    // The native action opens the release page, which is always safe.
+    appUpdateStub.updatePhase.set('downloading');
+    appUpdateStub.updateActivatable.set(false);
+
+    expect(component.updateActionDisabled()).toBe(false);
+    expect(component.updateDownloading()).toBe(false);
+
+    await component.openUpdatePrompt();
+
+    const alertConfig = alertControllerStub.create.mock.calls[0]?.[0] as {
+      buttons: { role?: string; handler?: () => void }[];
+    };
+    alertConfig.buttons.find((button) => button.role === 'confirm')?.handler?.();
+
+    expect(nativeUpdateStub.openReleasePage).toHaveBeenCalledOnce();
   });
 
   it('switches the banner copy through the download lifecycle', async () => {
@@ -364,6 +410,7 @@ describe('AppComponent', () => {
 
     appUpdateStub.updatePhase.set('downloading');
     expect(component.updateCopyKey()).toBe('appUpdate.downloading');
+    expect(component.updateDownloading()).toBe(true);
 
     appUpdateStub.updateStalled.set(true);
     expect(component.updateCopyKey()).toBe('appUpdate.downloadStalled');
@@ -519,8 +566,7 @@ describe('AppComponent', () => {
       {
         url: '/tabs/auto-team-builder-rumble',
         title: 'Auto Team Rumble Builder | OPTC Team Builder',
-        canonicalUrl:
-          'https://optcteambuilder.com/tabs/auto-team-builder-rumble/',
+        canonicalUrl: 'https://optcteambuilder.com/tabs/auto-team-builder-rumble/',
       },
       {
         url: '/tabs/rumble-characters',

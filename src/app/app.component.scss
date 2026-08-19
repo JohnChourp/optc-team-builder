@@ -130,8 +130,12 @@
 // between samples instead of stepping.
 .app-update-banner__progress {
   // These two are the ONLY custom properties ion-progress-bar exposes in Ionic 8;
-  // --buffer-background does not exist. Height must be set on the host because the
-  // component declares `contain: strict` and ships no --height property.
+  // --buffer-background does not exist. They also require the element to carry NO
+  // `color` attribute: Ionic's `:host(.ion-color) .progress` rule sets `background`
+  // directly and outranks `background: var(--progress-background)`, so a
+  // `color="warning"` bar would silently render Ionic's #ffc409 instead of the
+  // banner's amber. Height must be set on the host because the component declares
+  // `contain: strict` and ships no --height property.
   --background: rgba(245, 200, 76, 0.18);
   --progress-background: #f5c84c;
 
