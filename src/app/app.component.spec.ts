@@ -38,6 +38,9 @@ let characterCatalogCacheStub: {
 };
 let appUpdateStub: {
   updateAvailable: ReturnType<typeof signal>;
+  updatePhase: ReturnType<typeof signal>;
+  downloadProgress: ReturnType<typeof signal>;
+  updateStalled: ReturnType<typeof signal>;
   init: ReturnType<typeof vi.fn>;
   applyUpdate: ReturnType<typeof vi.fn>;
   snooze: ReturnType<typeof vi.fn>;
@@ -64,6 +67,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonApp: class {},
   IonButton: class {},
   IonIcon: class {},
+  IonProgressBar: class {},
   IonRouterOutlet: class {},
   AlertController: class AlertController {},
 }));
@@ -143,6 +147,9 @@ describe('AppComponent', () => {
     };
     appUpdateStub = {
       updateAvailable: signal(false),
+      updatePhase: signal('idle'),
+      downloadProgress: signal(0),
+      updateStalled: signal(false),
       init: vi.fn(),
       applyUpdate: vi.fn().mockResolvedValue(undefined),
       snooze: vi.fn(),
@@ -249,6 +256,13 @@ describe('AppComponent', () => {
     expect(template).toContain('(click)="snoozeUpdate()"');
     expect(template).toContain('(click)="openUpdatePrompt()"');
     expect(template).toContain('[icon]="updateIcon"');
+    expect(template).toContain('@if (showUpdateProgress())');
+    expect(template).toContain('<ion-progress-bar');
+    expect(template).toContain('app-update-banner__progress');
+    expect(template).toContain('type="determinate"');
+    expect(template).toContain('[value]="updateProgress()"');
+    expect(template).toContain("'appUpdate.progressLabel' | transloco");
+    expect(template).toContain('[disabled]="updateDownloading()"');
   });
 
   it('surfaces the update banner when a new version is available and snoozes it', async () => {
@@ -282,6 +296,92 @@ describe('AppComponent', () => {
     confirmButton?.handler?.();
 
     expect(appUpdateStub.applyUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('shows the progress bar while the service-worker download is running', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    appUpdateStub.updateAvailable.set(true);
+    appUpdateStub.updatePhase.set('downloading');
+    appUpdateStub.downloadProgress.set(0.33);
+
+    expect(component.showUpdateBanner()).toBe(true);
+    expect(component.showUpdateProgress()).toBe(true);
+    expect(component.updateProgress()).toBe(0.33);
+    expect(component.updateDownloading()).toBe(true);
+  });
+
+  it('keeps the progress bar visible at 100% after the download completes', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    appUpdateStub.updateAvailable.set(true);
+    appUpdateStub.updatePhase.set('ready');
+    appUpdateStub.downloadProgress.set(1);
+
+    expect(component.showUpdateProgress()).toBe(true);
+    expect(component.updateProgress()).toBe(1);
+    expect(component.updateDownloading()).toBe(false);
+    expect(component.updateCopyKey()).toBe('appUpdate.copy');
+  });
+
+  it('renders no progress bar for a native-only update', async () => {
+    nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    expect(component.showUpdateBanner()).toBe(true);
+    expect(component.showUpdateProgress()).toBe(false);
+  });
+
+  it('clamps a stray out-of-range progress value into the bar fraction domain', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    appUpdateStub.downloadProgress.set(1.4);
+    expect(component.updateProgress()).toBe(1);
+
+    appUpdateStub.downloadProgress.set(-0.2);
+    expect(component.updateProgress()).toBe(0);
+  });
+
+  it('does not open the update alert while the new version is downloading', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    appUpdateStub.updatePhase.set('downloading');
+
+    await component.openUpdatePrompt();
+
+    expect(alertControllerStub.create).not.toHaveBeenCalled();
+    expect(appUpdateStub.applyUpdate).not.toHaveBeenCalled();
+  });
+
+  it('switches the banner copy through the download lifecycle', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    appUpdateStub.updatePhase.set('downloading');
+    expect(component.updateCopyKey()).toBe('appUpdate.downloading');
+
+    appUpdateStub.updateStalled.set(true);
+    expect(component.updateCopyKey()).toBe('appUpdate.downloadStalled');
+
+    appUpdateStub.updateStalled.set(false);
+    appUpdateStub.updatePhase.set('ready');
+    expect(component.updateCopyKey()).toBe('appUpdate.copy');
+  });
+
+  it('keeps native copy precedence over the downloading copy', async () => {
+    nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    appUpdateStub.updatePhase.set('downloading');
+
+    expect(component.updateCopyKey()).toBe('appUpdate.copyNative');
+    expect(component.showUpdateProgress()).toBe(false);
   });
 
   it('surfaces the native update banner and opens the release page on confirm', async () => {

@@ -448,6 +448,9 @@
     "title": "New version available",
     "copy": "A fresh OPTC Team Builder update is ready. Refresh to get the latest fixes.",
     "copyNative": "A new OPTC Team Builder version is available to download.",
+    "downloading": "Downloading the new version…",
+    "downloadStalled": "This is taking longer than usual. The download is still running.",
+    "progressLabel": "Update download progress",
     "update": "Update",
     "later": "Later",
     "confirm": {

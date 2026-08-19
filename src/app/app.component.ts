@@ -1,7 +1,14 @@
 import { App } from '@capacitor/app';
 import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AlertController, IonApp, IonButton, IonIcon, IonRouterOutlet } from '@ionic/angular/standalone';
+import {
+  AlertController,
+  IonApp,
+  IonButton,
+  IonIcon,
+  IonProgressBar,
+  IonRouterOutlet,
+} from '@ionic/angular/standalone';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -51,7 +58,7 @@ const defaultSeo: RouteSeoData = {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [IonApp, IonButton, IonIcon, IonRouterOutlet, RouterLink, TranslocoPipe],
+  imports: [IonApp, IonButton, IonIcon, IonProgressBar, IonRouterOutlet, RouterLink, TranslocoPipe],
   template: `
     <ion-app class="app-shell">
       @if (routeLoading()) {
@@ -73,11 +80,36 @@ const defaultSeo: RouteSeoData = {
                 <p>{{ updateCopyKey() | transloco }}</p>
               </div>
 
+              @if (showUpdateProgress()) {
+                <!--
+                  type is hardcoded to determinate and there is deliberately no
+                  indeterminate fallback: Ionic 8's indeterminate variant runs two
+                  infinite translate animations on inner elements that expose no
+                  ::part(), so they are unreachable from outside the shadow root and
+                  are not gated behind prefers-reduced-motion. aria-label is
+                  mandatory — ion-progress-bar renders role/aria-valuenow itself but
+                  emits no accessible name.
+                -->
+                <ion-progress-bar
+                  class="app-update-banner__progress"
+                  type="determinate"
+                  color="warning"
+                  [value]="updateProgress()"
+                  [attr.aria-label]="'appUpdate.progressLabel' | transloco"
+                ></ion-progress-bar>
+              }
+
               <div class="app-update-banner__actions">
                 <ion-button fill="clear" color="light" size="small" (click)="snoozeUpdate()">
                   {{ 'appUpdate.later' | transloco }}
                 </ion-button>
-                <ion-button fill="solid" color="warning" size="small" (click)="openUpdatePrompt()">
+                <ion-button
+                  fill="solid"
+                  color="warning"
+                  size="small"
+                  [disabled]="updateDownloading()"
+                  (click)="openUpdatePrompt()"
+                >
                   <ion-icon slot="start" [icon]="updateIcon"></ion-icon>
                   {{ 'appUpdate.update' | transloco }}
                 </ion-button>
@@ -204,8 +236,35 @@ export class AppComponent {
   public readonly showUpdateBanner = computed(
     () => this.appUpdateService.updateAvailable() || this.nativeUpdateService.availableUpdate() !== null,
   );
-  public readonly updateCopyKey = computed(() =>
-    this.nativeUpdateService.availableUpdate() ? 'appUpdate.copyNative' : 'appUpdate.copy',
+  public readonly updateCopyKey = computed(() => {
+    // Native precedence first: with a simultaneous native + web update the confirm
+    // handler opens the release page, so the copy must stay the native copy.
+    if (this.nativeUpdateService.availableUpdate()) {
+      return 'appUpdate.copyNative';
+    }
+
+    if (this.appUpdateService.updateStalled()) {
+      return 'appUpdate.downloadStalled';
+    }
+
+    if (this.appUpdateService.updatePhase() === 'downloading') {
+      return 'appUpdate.downloading';
+    }
+
+    return 'appUpdate.copy';
+  });
+  public readonly updateDownloading = computed(
+    () => this.appUpdateService.updatePhase() === 'downloading',
+  );
+  // No in-app download exists on Capacitor — openReleasePage() hands the APK to the
+  // system browser — so the native banner never gets a bar.
+  public readonly showUpdateProgress = computed(
+    () =>
+      this.nativeUpdateService.availableUpdate() === null &&
+      this.appUpdateService.updatePhase() !== 'idle',
+  );
+  public readonly updateProgress = computed(() =>
+    Math.min(1, Math.max(0, this.appUpdateService.downloadProgress())),
   );
   public readonly installPromptEvent = signal<BeforeInstallPromptEvent | null>(null);
   public readonly installBannerDismissed = signal(false);
@@ -284,6 +343,12 @@ export class AppComponent {
   }
 
   public async openUpdatePrompt(): Promise<void> {
+    // Defence in depth behind the button's [disabled] binding: reloading mid-install
+    // throws away the partially-fetched version.
+    if (this.updateDownloading()) {
+      return;
+    }
+
     const isNativeUpdate = this.nativeUpdateService.availableUpdate() !== null;
     const alert = await this.alertController.create({
       header: this.i18n.translate('appUpdate.confirm.title'),
