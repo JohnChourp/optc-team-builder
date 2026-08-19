@@ -736,12 +736,27 @@ build can still get wrong:
   elapsed time instead and `measuredProgress()` reports `false`. A structural
   handover re-anchors the curve so the bar cannot teleport; a *transient* read
   failure holds the last measured value instead of degrading.
+- **The census is per-asset, so it pauses on the big file.** `PrefetchAssetGroup`
+  commits one `cache.put` per URL and `optc-seed.sql` is ~2.1 MB gzipped of a
+  roughly 3 MB prefetch payload, so on a slow link the bar legitimately sits still
+  for the whole of that transfer. That is expected and is why the stall state only
+  changes copy. Do not "smooth" it by easing the modelled curve on top of a
+  measured reading — that reintroduces a fabricated number.
 
-The banner's primary action is disabled while `updatePhase()` is `'downloading'`,
-because activating a half-installed version discards it. A stalled download
-(2 min without progress) only changes the copy; a download that makes real
-measured progress pushes both the stall and abandon (15 min) watchdogs back, so a
-slow-but-moving install is never abandoned.
+The banner's primary action is disabled only when there is genuinely nothing to
+activate, which is not the same as "a download is running": ngsw advances
+`latestHash` only after a successful install, so a version that already reported
+`VERSION_READY` stays activatable while a newer one downloads behind it. Read
+`updateActivatable()` for that, never the phase. The native action is never
+disabled — it opens the release page, which is always safe.
+
+A stalled download (2 min without measured progress) only changes the copy, and
+deliberately does **not** probe `checkForUpdate()`: mid-install that probe makes
+ngsw start a second concurrent install of the same manifest, and it cannot recover
+a suppressed `VERSION_READY` anyway. The abandon watchdog (30 min) is recoverable
+rather than destructive — the `versionUpdates` subscription stays live, so an
+install that really was still running restores the banner as ready-at-100% when
+its `VERSION_READY` lands.
 
 Adding an `appUpdate` key means adding it to both `public/i18n/en.json` and
 `public/i18n/el.json` and to the `root` scope entry in
