@@ -993,6 +993,23 @@ Command status: CI-executable.
 npm run docs:release-runbook-drift -- --brain-root ../optc-team-builder-brain
 ```
 
+The two repos do not have to be filesystem siblings. `--brain-root` / `--app-root`
+(and `--brain` / `--app` on the brain's own checker) are honoured end to end, which
+matters because brain changes are worked from a per-task clone rather than a
+sibling checkout:
+
+- `check-docs-commands.mjs` substitutes the resolved roots into the canonical
+  `../optc-team-builder-brain` / `../optc-team-builder` paths before executing a
+  documented command, so the flags reach the command itself and not just its
+  working directory. Failure messages keep the canonical text, because that is what
+  you have to find in the doc.
+- `audit-docs-integrity.mjs` adds a root-remapped candidate for a link that walks
+  out of its own repo into a sibling checkout. The filesystem-relative candidate is
+  still tried first, so the canonical layout behaves exactly as before, and a link
+  that stays *inside* its own repo is never remapped: from a file one directory deep
+  in the brain, a single `../` step still lands inside the brain, so it is treated
+  as an intra-repo link rather than a cross-repo one.
+
 For untrusted pull requests that cannot receive the private brain checkout, CI
 also exercises the app-only docs path:
 

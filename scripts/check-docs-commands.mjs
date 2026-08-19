@@ -16,6 +16,20 @@ const APP_DOCS = [
 
 const BRAIN_DOCS = ['README.md', 'OPTC_DB_AUTO_RELEASE_RUNBOOK.md'];
 
+/**
+ * Canonical sibling paths as the docs write them, longest first so
+ * `../optc-team-builder-brain` is never matched as `../optc-team-builder`.
+ *
+ * Documented commands are written for the canonical layout (app and brain as
+ * siblings), but `--app-root` / `--brain-root` exist so the two checkouts can live
+ * anywhere — which is exactly what the per-task brain clone workflow does. Running
+ * the documented text verbatim would ignore those flags and reach for a sibling
+ * that is missing or stale, so the roots are substituted in at execution time.
+ * The allowlist keys and every failure message keep the canonical text, because
+ * that is what a reader has to find in the doc.
+ */
+const SIBLING_PATH_PATTERN = /\.\.\/optc-team-builder-brain|\.\.\/optc-team-builder/gu;
+
 const SHELL_FENCE_LANGUAGES = new Set(['', 'bash', 'sh', 'shell', 'zsh']);
 const DOCS_COMMAND_PATTERN = /<!--\s*docs-command:\s*(ci-executable|manual(?:\/illustrative)?|illustrative)\s*-->/iu;
 const VISIBLE_STATUS_PATTERN = /\bCommand status:\s*(CI-executable|manual(?:\/illustrative)?|manual|illustrative)\b/iu;
@@ -147,7 +161,8 @@ export async function checkDocsCommands(options = {}, runner = runAllowedCommand
     }
 
     const cwd = config.cwd === 'brain' ? brainRoot : appRoot;
-    const result = await runner(command, { cwd, expected: config.expected, firstSeen });
+    const resolvedCommand = resolveCommandPaths(command, { appRoot, brainRoot });
+    const result = await runner(resolvedCommand, { cwd, expected: config.expected, firstSeen });
     executions.push({ command, cwd: config.cwd, expected: config.expected, status: result.status, firstSeen });
 
     if (!isExpectedExit(result.status, config.expected)) {
@@ -278,6 +293,21 @@ export function extractShellCommands(source) {
 
 export function normalizeCommand(command) {
   return String(command ?? '').trim().replace(/\s+/gu, ' ');
+}
+
+function shellQuote(value) {
+  return /[\s"'$`\\]/u.test(value) ? `"${value.replace(/(["$`\\])/gu, '\\$1')}"` : value;
+}
+
+/**
+ * Rewrites the canonical sibling paths in a documented command to the roots this
+ * run actually resolved, so `--app-root` / `--brain-root` are honoured by the
+ * command itself and not only by its working directory.
+ */
+export function resolveCommandPaths(command, { appRoot, brainRoot }) {
+  return String(command ?? '').replace(SIBLING_PATH_PATTERN, (match) =>
+    shellQuote(match.endsWith('-brain') ? brainRoot : appRoot),
+  );
 }
 
 function findClassification(lines, fenceStartLine) {
