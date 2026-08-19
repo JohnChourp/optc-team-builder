@@ -239,8 +239,16 @@ export class AppComponent {
   );
   public readonly updateCopyKey = computed(() => {
     // Native precedence first: with a simultaneous native + web update the confirm
-    // handler opens the release page, so the copy must stay the native copy.
+    // handler drives the native download, so the copy must stay the native copy.
     if (this.nativeUpdateService.availableUpdate()) {
+      if (this.nativeUpdateService.updatePhase() === 'downloading') {
+        return 'appUpdate.downloading';
+      }
+
+      if (this.nativeUpdateService.updatePhase() === 'ready') {
+        return 'appUpdate.downloadedNative';
+      }
+
       return 'appUpdate.copyNative';
     }
 
@@ -254,31 +262,34 @@ export class AppComponent {
 
     return 'appUpdate.copy';
   });
-  // Native-gated like every other update computed: with a native update pending the
-  // action opens the release page, which is always safe.
-  public readonly updateDownloading = computed(
-    () =>
-      this.nativeUpdateService.availableUpdate() === null &&
-      this.appUpdateService.updatePhase() === 'downloading',
+  public readonly updateDownloading = computed(() =>
+    this.nativeUpdateService.availableUpdate()
+      ? this.nativeUpdateService.updatePhase() === 'downloading'
+      : this.appUpdateService.updatePhase() === 'downloading',
   );
-  // Disabled only when there is genuinely nothing to activate. A version that
-  // already reported VERSION_READY stays activatable while a newer one downloads
-  // behind it, so a supersede must not take the action away.
-  public readonly updateActionDisabled = computed(
-    () =>
-      this.nativeUpdateService.availableUpdate() === null &&
-      !this.appUpdateService.updateActivatable(),
+  // Disabled only when there is genuinely nothing to act on. On the web a version
+  // that already reported VERSION_READY stays activatable while a newer one
+  // downloads behind it, so a supersede must not take the action away; on native
+  // the action is only blocked while the APK is actually streaming.
+  public readonly updateActionDisabled = computed(() =>
+    this.nativeUpdateService.availableUpdate()
+      ? this.nativeUpdateService.updatePhase() === 'downloading'
+      : !this.appUpdateService.updateActivatable(),
   );
-  // No in-app download exists on Capacitor — openReleasePage() hands the APK to the
-  // system browser — so the native banner never gets a bar.
-  public readonly showUpdateProgress = computed(
-    () =>
-      this.nativeUpdateService.availableUpdate() === null &&
-      this.appUpdateService.updatePhase() !== 'idle',
+  // Both paths now download in-app, so both get a bar: the web one measures ngsw's
+  // caches, the native one measures real APK bytes streamed by ApkUpdaterPlugin.
+  public readonly showUpdateProgress = computed(() =>
+    this.nativeUpdateService.availableUpdate()
+      ? this.nativeUpdateService.updatePhase() !== 'idle'
+      : this.appUpdateService.updatePhase() !== 'idle',
   );
-  public readonly updateProgress = computed(() =>
-    Math.min(1, Math.max(0, this.appUpdateService.downloadProgress())),
-  );
+  public readonly updateProgress = computed(() => {
+    const raw = this.nativeUpdateService.availableUpdate()
+      ? this.nativeUpdateService.downloadProgress()
+      : this.appUpdateService.downloadProgress();
+
+    return Math.min(1, Math.max(0, raw));
+  });
   public readonly installPromptEvent = signal<BeforeInstallPromptEvent | null>(null);
   public readonly installBannerDismissed = signal(false);
   public readonly appInstalled = signal(false);
@@ -380,7 +391,7 @@ export class AppComponent {
           role: 'confirm',
           handler: () => {
             if (isNativeUpdate) {
-              this.nativeUpdateService.openReleasePage();
+              void this.nativeUpdateService.downloadAndInstall();
               return;
             }
 

@@ -449,6 +449,7 @@
     "copy": "A fresh OPTC Team Builder update is ready. Refresh to get the latest fixes.",
     "copyNative": "A new OPTC Team Builder version is available to download.",
     "downloading": "Downloading the new version…",
+    "downloadedNative": "The new version has downloaded. Confirm the install to finish.",
     "downloadStalled": "This is taking longer than usual. The download is still running.",
     "progressLabel": "Update download progress",
     "update": "Update",
@@ -456,10 +457,10 @@
     "confirm": {
       "title": "Update available",
       "message": "A new version is ready. Reload now to update OPTC Team Builder?",
-      "messageNative": "A new version is available. Open the download page now?",
+      "messageNative": "A new version is available. Download and install it now?",
       "cancel": "Not now",
       "confirm": "Update now",
-      "download": "Download"
+      "download": "Download and install"
     }
   },
   "installPrompt": {

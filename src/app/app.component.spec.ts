@@ -48,10 +48,13 @@ let appUpdateStub: {
 };
 let nativeUpdateStub: {
   availableUpdate: ReturnType<typeof signal>;
+  updatePhase: ReturnType<typeof signal>;
+  downloadProgress: ReturnType<typeof signal>;
   init: ReturnType<typeof vi.fn>;
   check: ReturnType<typeof vi.fn>;
   snooze: ReturnType<typeof vi.fn>;
   openReleasePage: ReturnType<typeof vi.fn>;
+  downloadAndInstall: ReturnType<typeof vi.fn>;
 };
 let alertControllerStub: {
   create: ReturnType<typeof vi.fn>;
@@ -158,10 +161,13 @@ describe('AppComponent', () => {
     };
     nativeUpdateStub = {
       availableUpdate: signal(null),
+      updatePhase: signal('idle'),
+      downloadProgress: signal(0),
       init: vi.fn(),
       check: vi.fn().mockResolvedValue(undefined),
       snooze: vi.fn(),
       openReleasePage: vi.fn(),
+      downloadAndInstall: vi.fn().mockResolvedValue(undefined),
     };
     alertControllerStub = {
       create: vi.fn().mockResolvedValue({
@@ -330,13 +336,57 @@ describe('AppComponent', () => {
     expect(component.updateCopyKey()).toBe('appUpdate.copy');
   });
 
-  it('renders no progress bar for a native-only update', async () => {
+  it('renders no progress bar for a native update that has not started downloading', async () => {
     nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
     const { AppComponent } = await import('./app.component');
     const component = new AppComponent();
 
     expect(component.showUpdateBanner()).toBe(true);
     expect(component.showUpdateProgress()).toBe(false);
+  });
+
+  it('shows real apk byte progress while the native download runs', async () => {
+    nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    nativeUpdateStub.updatePhase.set('downloading');
+    nativeUpdateStub.downloadProgress.set(0.42);
+
+    expect(component.showUpdateProgress()).toBe(true);
+    // The bar must read the NATIVE progress, not the service-worker one.
+    expect(component.updateProgress()).toBe(0.42);
+    expect(component.updateDownloading()).toBe(true);
+    expect(component.updateActionDisabled()).toBe(true);
+    expect(component.updateCopyKey()).toBe('appUpdate.downloading');
+  });
+
+  it('keeps the native bar full once the apk has downloaded', async () => {
+    nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    nativeUpdateStub.updatePhase.set('ready');
+    nativeUpdateStub.downloadProgress.set(1);
+
+    expect(component.showUpdateProgress()).toBe(true);
+    expect(component.updateProgress()).toBe(1);
+    expect(component.updateActionDisabled()).toBe(false);
+    expect(component.updateCopyKey()).toBe('appUpdate.downloadedNative');
+  });
+
+  it('ignores service-worker progress while a native update owns the banner', async () => {
+    nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    // A web download can be in flight underneath; the native banner must not show it.
+    appUpdateStub.updatePhase.set('downloading');
+    appUpdateStub.downloadProgress.set(0.9);
+    nativeUpdateStub.updatePhase.set('downloading');
+    nativeUpdateStub.downloadProgress.set(0.1);
+
+    expect(component.updateProgress()).toBe(0.1);
   });
 
   it('clamps a stray out-of-range progress value into the bar fraction domain', async () => {
@@ -390,7 +440,8 @@ describe('AppComponent', () => {
     // The native action opens the release page, which is always safe.
     appUpdateStub.updatePhase.set('downloading');
     appUpdateStub.updateActivatable.set(false);
-
+    // The native update is not downloading, so its action stays live regardless of
+    // whatever the service worker is doing underneath.
     expect(component.updateActionDisabled()).toBe(false);
     expect(component.updateDownloading()).toBe(false);
 
@@ -401,7 +452,7 @@ describe('AppComponent', () => {
     };
     alertConfig.buttons.find((button) => button.role === 'confirm')?.handler?.();
 
-    expect(nativeUpdateStub.openReleasePage).toHaveBeenCalledOnce();
+    expect(nativeUpdateStub.downloadAndInstall).toHaveBeenCalledOnce();
   });
 
   it('switches the banner copy through the download lifecycle', async () => {
@@ -431,7 +482,7 @@ describe('AppComponent', () => {
     expect(component.showUpdateProgress()).toBe(false);
   });
 
-  it('surfaces the native update banner and opens the release page on confirm', async () => {
+  it('surfaces the native update banner and downloads the apk in-app on confirm', async () => {
     nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
     const { AppComponent } = await import('./app.component');
     const component = new AppComponent();
@@ -446,7 +497,10 @@ describe('AppComponent', () => {
     };
     alertConfig.buttons.find((button) => button.role === 'confirm')?.handler?.();
 
-    expect(nativeUpdateStub.openReleasePage).toHaveBeenCalledOnce();
+    // The APK is fetched in-app now; NativeUpdateService still falls back to the
+    // release page on its own when there is no asset or the download fails.
+    expect(nativeUpdateStub.downloadAndInstall).toHaveBeenCalledOnce();
+    expect(nativeUpdateStub.openReleasePage).not.toHaveBeenCalled();
     expect(appUpdateStub.applyUpdate).not.toHaveBeenCalled();
   });
 

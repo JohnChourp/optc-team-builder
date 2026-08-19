@@ -61,7 +61,12 @@ export const CRITICAL_TRANSLATION_CASES = [
   },
   {
     scope: 'root',
-    keys: ['appUpdate.downloading', 'appUpdate.downloadStalled', 'appUpdate.progressLabel'],
+    keys: [
+      'appUpdate.downloading',
+      'appUpdate.downloadedNative',
+      'appUpdate.downloadStalled',
+      'appUpdate.progressLabel',
+    ],
   },
 ];
 
