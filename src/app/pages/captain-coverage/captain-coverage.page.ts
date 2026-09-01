@@ -139,6 +139,12 @@ interface CaptainCoverageCardView {
   abilityMatchCount: number;
   selectedAbilityCount: number;
   matchedAbilityBadges: CaptainCoverageAbilityBadgeView[];
+  /** Raw coverage verdict, or `null` while no Captain is selected. */
+  captainBoosted: boolean | null;
+  /** False for the characters that carry no Captain Ability at all. */
+  canBeLeader: boolean;
+  /** False when the cost budget would reject this character in the leader slot. */
+  leaderFitsBudget: boolean;
 }
 
 interface CaptainCoverageAbilityBadgeView {
@@ -350,6 +356,41 @@ export class CaptainCoveragePage implements OnInit {
     this.allCaptains().map((captain) => captain.id),
   );
   /**
+   * Set form of the same ids. `resultCards` tests every character against it,
+   * so an array scan here would turn one render into millions of comparisons.
+   */
+  private readonly allowedCaptainIdSet = computed(() => new Set(this.allowedCaptainIds()));
+  /** True while at least one sub slot (index 2..5) is still empty. */
+  public readonly hasFreeSubSlot = computed(() =>
+    this.selectedTeamSlots()
+      .slice(2)
+      .some((slot) => !slot),
+  );
+  /**
+   * Where the result-card leader button writes: the first empty leader slot,
+   * and the Captain slot once both are taken, so the Captain can still be
+   * swapped out of an otherwise full team.
+   */
+  public readonly leaderButtonSlotIndex = computed<0 | 1>(() => {
+    const slots = this.selectedTeamSlots();
+
+    if (!slots[0]) {
+      return 0;
+    }
+
+    return slots[1] ? 0 : 1;
+  });
+  public readonly leaderButtonIcon = computed(() =>
+    this.leaderButtonSlotIndex() === 0 ? this.coverageIcon : this.targetIcon,
+  );
+  public readonly leaderButtonLabel = computed(() =>
+    this.t(
+      this.leaderButtonSlotIndex() === 0
+        ? 'team.actions.setAsCaptain'
+        : 'team.actions.setAsFriendCaptain',
+    ),
+  );
+  /**
    * Stable-identity view of the whole catalog. `getCatalogAbilityIndex` caches by
    * array identity, so rebuilding this per keystroke would silently turn its O(1)
    * lookups into repeated full-catalog scans.
@@ -486,7 +527,11 @@ export class CaptainCoveragePage implements OnInit {
         : null,
       requireSuperTandem: this.requireSuperTandemPresence(),
       requireSuperTypesClasses: this.requireSuperTypesClassesPresence(),
-      requireCaptainCoverage: true,
+      // Deliberately off: picking a Captain must not hide anybody. The page
+      // reports coverage per card instead, so only the filters the user picks
+      // ever shrink the list (issue #268). The shared model keeps the flag, so
+      // other callers can still require coverage.
+      requireCaptainCoverage: false,
       requireFullCoverage: false,
       requiredTiers: requestedTiers,
     });
@@ -547,6 +592,9 @@ export class CaptainCoveragePage implements OnInit {
     const characterDetailsById = this.allCharacterDetailsById();
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
     const characterTagSetSelection = this.characterTagSetSelection();
+    const allowedCaptainIdSet = this.allowedCaptainIdSet();
+    const hasFreeSubSlot = this.hasFreeSubSlot();
+    const leaderButtonSlotIndex = this.leaderButtonSlotIndex();
     const matchingCharacters = this.allCharacters()
       .filter((character) =>
         selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
@@ -603,6 +651,12 @@ export class CaptainCoveragePage implements OnInit {
         return {
           character,
           coverage,
+          // Raw verdict, not the filter's `matches`: coverage no longer gates
+          // the list, so the only honest source for the badge is the coverage
+          // result itself.
+          captainBoosted: captain ? (coverage?.matches ?? false) : null,
+          canBeLeader: allowedCaptainIdSet.has(character.id),
+          leaderFitsBudget: this.canAssignTeamSlotCharacter(leaderButtonSlotIndex, character),
           assignableSlotIndex: this.findAssignableSubSlotIndex(character),
           abilityMatchCount,
           captainAbilityMatchCount,
@@ -613,7 +667,11 @@ export class CaptainCoveragePage implements OnInit {
           ],
         };
       })
-      .filter(({ assignableSlotIndex }) => assignableSlotIndex !== null)
+      // With a free sub slot this still hides whoever cannot take it (cost
+      // budget). With every sub slot taken there is nothing to hide anyone
+      // from, so the cards stay and only the sub button goes dead - otherwise
+      // the leader button would be unreachable exactly when it is needed.
+      .filter(({ assignableSlotIndex }) => !hasFreeSubSlot || assignableSlotIndex !== null)
       // One shared predicate: splits the comma-joined `type` column so a
       // dual-type character is found under either of its types regardless of
       // stored order, and reads the full `classes` array.
@@ -642,6 +700,9 @@ export class CaptainCoveragePage implements OnInit {
         ({
           character,
           coverage,
+          captainBoosted,
+          canBeLeader,
+          leaderFitsBudget,
           assignableSlotIndex,
           abilityMatchCount,
           captainAbilityMatchCount,
@@ -650,6 +711,9 @@ export class CaptainCoveragePage implements OnInit {
         }) => ({
           character,
           coverage,
+          captainBoosted,
+          canBeLeader,
+          leaderFitsBudget,
           assignableSlotIndex,
           abilityMatchCount: abilityMatchCount + captainAbilityMatchCount,
           selectedAbilityCount,
@@ -661,6 +725,12 @@ export class CaptainCoveragePage implements OnInit {
   });
 
   public readonly totalMatchingCharacters = computed(() => this.resultCards().length);
+  /** How many of the shown characters the selected Captain actually boosts. */
+  public readonly boostedMatchingCharacters = computed(
+    () => this.resultCards().filter((card) => card.captainBoosted === true).length,
+  );
+  /** The coverage count only means something once a Captain is in slot 1. */
+  public readonly showsCoverageCount = computed(() => Boolean(this.selectedCaptainDetail()));
   public readonly filledTeamSlotCount = computed(
     () => this.selectedTeamSlots().filter(Boolean).length,
   );
@@ -848,7 +918,33 @@ export class CaptainCoveragePage implements OnInit {
   }
 
   public async saveTeamSlotSelection(character: CharacterListItem): Promise<void> {
-    const index = this.activeTeamSlotIndex();
+    await this.assignTeamSlotCharacter(this.activeTeamSlotIndex(), character);
+    this.teamPickerOpen.set(false);
+  }
+
+  /**
+   * Sets the Captain (or Friend Captain) straight from a result card, so the
+   * leader no longer has to come from the picker modal.
+   */
+  public async assignLeaderFromResult(card: CaptainCoverageCardView): Promise<void> {
+    if (!card.canBeLeader || !card.leaderFitsBudget) {
+      return;
+    }
+
+    await this.assignTeamSlotCharacter(this.leaderButtonSlotIndex(), card.character);
+  }
+
+  /**
+   * The single write path for every team slot. The modal and the result-card
+   * buttons both land here, so the guards can never disagree between them.
+   */
+  private async assignTeamSlotCharacter(
+    index: number,
+    character: CharacterListItem,
+  ): Promise<void> {
+    if (index < 0 || index >= CAPTAIN_COVERAGE_TEAM_SLOT_COUNT) {
+      return;
+    }
 
     if (!this.canAssignTeamSlotCharacter(index, character)) {
       return;
@@ -862,10 +958,10 @@ export class CaptainCoveragePage implements OnInit {
       slots.map((slot, slotIndex) => (slotIndex === index ? character : slot)),
     );
     this.clearSavedTeamDraftState();
-    this.teamPickerOpen.set(false);
 
     if (index === 0) {
-      this.searchTerm.set('');
+      // The search box is the user's own filter: picking a Captain from a
+      // search result must not wipe what they typed (issue #268).
       this.selectedCaptainDetail.set(null);
       this.selectedCaptainDetail.set(await this.repository.getCharacterById(character.id));
     }
@@ -898,7 +994,6 @@ export class CaptainCoveragePage implements OnInit {
 
     if (index === 0) {
       this.selectedCaptainDetail.set(null);
-      this.searchTerm.set('');
     }
   }
 

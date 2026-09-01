@@ -364,7 +364,7 @@
       },
       "captainCoverage": {
         "title": "Captain Coverage",
-        "copy": "Pick a Captain and find characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching."
+        "copy": "Pick a Captain and see which characters that Captain Ability boosts, while the whole catalogue stays in the list and only your own filters narrow it."
       },
       "autoRumble": {
         "title": "Auto Team Rumble Builder",

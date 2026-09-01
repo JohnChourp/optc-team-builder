@@ -33,3 +33,17 @@
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
+
+.captain-result__not-boosted {
+  justify-self: start;
+  max-width: 100%;
+  padding: 3px 6px;
+  border: 1px solid rgba(248, 251, 255, 0.16);
+  border-radius: 6px;
+  background: rgba(248, 251, 255, 0.05);
+  color: rgba(248, 251, 255, 0.6);
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}

@@ -42,7 +42,7 @@ vi.mock('@ionic/angular/standalone', () => ({
 }));
 
 describe('CaptainCoveragePage', () => {
-  it('loads captain candidates and renders covered character results after selecting the Captain slot', async () => {
+  it('loads captain candidates and keeps every character after selecting the Captain slot', async () => {
     const leader = createCharacter({
       id: 1001,
       name: 'Leader Alpha',
@@ -85,12 +85,26 @@ describe('CaptainCoveragePage', () => {
       offset: 0,
     });
     expect(page.selectedCaptainDetail()?.id).toBe(1001);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Covered Dex Fighter']);
-    expect(page.resultCards()[0]?.coverage?.boosts).toEqual({
-      hp: 1.3,
-      atk: 5,
-    });
-    expect(page.totalMatchingCharacters()).toBe(1);
+    // The Captain no longer hides anybody: the uncovered character stays in the
+    // list and is told apart by `captainBoosted` rather than by disappearing.
+    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+      'Rejected Dex Shooter',
+      'Covered Dex Fighter',
+    ]);
+    expect(page.resultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
+      ['Rejected Dex Shooter', false],
+      ['Covered Dex Fighter', true],
+    ]);
+    expect(page.captainCoverageFilterState().requireCaptainCoverage).toBe(false);
+    expect(page.resultCards().find((card) => card.character.id === 2001)?.coverage?.boosts).toEqual(
+      {
+        hp: 1.3,
+        atk: 5,
+      },
+    );
+    expect(page.totalMatchingCharacters()).toBe(2);
+    expect(page.boostedMatchingCharacters()).toBe(1);
+    expect(page.showsCoverageCount()).toBe(true);
   });
 
   it('renders simple boost-scope results for Kid Aimed Damned Punk after selecting him as Captain', async () => {
@@ -151,15 +165,19 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.saveTeamSlotSelection(kid);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Rejected Untagged STR Candidate',
-      'Covered Driven Candidate',
-      'Covered STR Candidate',
+    // Every candidate stays listed; only `captainBoosted` separates them now.
+    expect(page.resultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
+      ['Rejected Tagged Unboosted Candidate', false],
+      ['Rejected Untagged STR Candidate', true],
+      ['Rejected Candidate', false],
+      ['Covered Driven Candidate', true],
+      ['Covered STR Candidate', true],
     ]);
-    expect(page.totalMatchingCharacters()).toBe(3);
+    expect(page.totalMatchingCharacters()).toBe(5);
+    expect(page.boostedMatchingCharacters()).toBe(3);
   });
 
-  it('keeps selected Captain coverage enforced from the page filter state', async () => {
+  it('never hides uncovered characters and reports coverage per card instead', async () => {
     const leader = createCharacter({
       id: 1001,
       name: 'Leader Captain Coverage Scope',
@@ -184,10 +202,188 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.saveTeamSlotSelection(leader);
 
-    expect(page.captainCoverageFilterState().requireCaptainCoverage).toBe(true);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Covered DEX Candidate',
+    expect(page.captainCoverageFilterState().requireCaptainCoverage).toBe(false);
+    expect(page.resultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
+      ['Uncovered QCK Candidate', false],
+      ['Covered DEX Candidate', true],
     ]);
+    expect(page.totalMatchingCharacters()).toBe(2);
+    expect(page.boostedMatchingCharacters()).toBe(1);
+  });
+
+  it('fills Captain, then Friend Captain, then replaces the Captain from a result card', async () => {
+    const leaderOne = createCharacter({
+      id: 1001,
+      name: 'Leader One',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const leaderTwo = createCharacter({
+      id: 1002,
+      name: 'Leader Two',
+      captainAbility: 'Boosts ATK of all characters by 4x.',
+    });
+    const leaderThree = createCharacter({
+      id: 1003,
+      name: 'Leader Three',
+      captainAbility: 'Boosts ATK of all characters by 3x.',
+    });
+    const { page } = createPage({
+      captains: [leaderOne, leaderTwo, leaderThree],
+      characters: [leaderOne, leaderTwo, leaderThree],
+    });
+
+    await page.ngOnInit();
+
+    expect(page.leaderButtonSlotIndex()).toBe(0);
+    expect(page.leaderButtonLabel()).toBe('Set as Captain');
+
+    const first = page.resultCards().find((card) => card.character.id === 1001);
+    await page.assignLeaderFromResult(first!);
+
+    expect(page.selectedTeamSlots()[0]?.id).toBe(1001);
+    expect(page.selectedCaptainDetail()?.id).toBe(1001);
+    // Captain taken, so the same button now targets the Friend Captain slot.
+    expect(page.leaderButtonSlotIndex()).toBe(1);
+    expect(page.leaderButtonLabel()).toBe('Set as Friend Captain');
+
+    const second = page.resultCards().find((card) => card.character.id === 1002);
+    await page.assignLeaderFromResult(second!);
+
+    expect(page.selectedTeamSlots()[1]?.id).toBe(1002);
+    // Both leader slots taken: the button falls back to replacing the Captain,
+    // so a finished team can still be re-led without emptying a slot first.
+    expect(page.leaderButtonSlotIndex()).toBe(0);
+    expect(page.leaderButtonLabel()).toBe('Set as Captain');
+
+    const third = page.resultCards().find((card) => card.character.id === 1003);
+    await page.assignLeaderFromResult(third!);
+
+    expect(page.selectedTeamSlots()[0]?.id).toBe(1003);
+    expect(page.selectedTeamSlots()[1]?.id).toBe(1002);
+    expect(page.selectedCaptainDetail()?.id).toBe(1003);
+  });
+
+  it('refuses the leader button for characters with no Captain Ability or over budget', async () => {
+    const subs = [3001, 3002, 3003, 3004].map((id) =>
+      createCharacter({ id, name: `Sub ${id}`, cost: 10 }),
+    );
+    const noCaptainAbility = createCharacter({ id: 2001, name: 'No Captain Ability', cost: 10 });
+    const expensiveLeader = createCharacter({
+      id: 2002,
+      name: 'Expensive Leader',
+      captainAbility: 'Boosts ATK of all characters by 2x.',
+      cost: 90,
+    });
+    const { page } = createPage({
+      captains: [expensiveLeader],
+      characters: [...subs, noCaptainAbility, expensiveLeader],
+    });
+
+    await page.ngOnInit();
+    page.onMaxTotalCostChange({ detail: { value: '50' } } as CustomEvent<{ value: string }>);
+
+    // Fill every sub slot: that is the state where cost no longer hides cards,
+    // so an unaffordable leader is actually on screen and its button must say
+    // why it is dead instead of silently doing nothing.
+    for (const sub of subs) {
+      const card = page.resultCards().find((entry) => entry.character.id === sub.id);
+      page.assignCharacterFromResult(card!);
+    }
+
+    expect(page.hasFreeSubSlot()).toBe(false);
+    expect(page.leaderButtonSlotIndex()).toBe(0);
+
+    const plainCard = page.resultCards().find((card) => card.character.id === 2001);
+    const expensiveCard = page.resultCards().find((card) => card.character.id === 2002);
+
+    expect(plainCard?.canBeLeader).toBe(false);
+    expect(expensiveCard?.canBeLeader).toBe(true);
+    expect(expensiveCard?.leaderFitsBudget).toBe(false);
+
+    await page.assignLeaderFromResult(plainCard!);
+    await page.assignLeaderFromResult(expensiveCard!);
+
+    expect(page.selectedTeamSlots()[0]).toBeNull();
+  });
+
+  it('keeps every card once the sub slots are full and dies only on the sub button', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Full Team Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const subs = [2001, 2002, 2003, 2004].map((id) => createCharacter({ id, name: `Sub ${id}` }));
+    const spare = createCharacter({ id: 2005, name: 'Spare Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, ...subs, spare],
+    });
+
+    await page.ngOnInit();
+    await page.saveTeamSlotSelection(leader);
+
+    for (const sub of subs) {
+      const card = page.resultCards().find((entry) => entry.character.id === sub.id);
+      page.assignCharacterFromResult(card!);
+    }
+
+    expect(page.hasFreeSubSlot()).toBe(false);
+    const spareCard = page.resultCards().find((card) => card.character.id === 2005);
+    expect(spareCard).toBeDefined();
+    expect(spareCard?.assignableSlotIndex).toBeNull();
+    expect(spareCard?.canBeLeader).toBe(false);
+  });
+
+  it('still hides cost-blocked and conflicting characters while a sub slot is free', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Monkey D. Luffy Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+      cost: 60,
+      partyConflictKeys: ['luffy'],
+    });
+    const fitting = createCharacter({ id: 2001, name: 'Fitting Candidate', cost: 40 });
+    const expensive = createCharacter({ id: 2002, name: 'Expensive Candidate', cost: 41 });
+    const conflicting = createCharacter({
+      id: 2003,
+      name: 'Another Luffy',
+      cost: 20,
+      partyConflictKeys: ['luffy'],
+    });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, fitting, expensive, conflicting],
+    });
+
+    await page.ngOnInit();
+    page.onMaxTotalCostChange({ detail: { value: '100' } } as CustomEvent<{ value: string }>);
+    await page.saveTeamSlotSelection(leader);
+
+    // Unchanged on purpose: the Captain stops filtering, the game's own rules
+    // do not.
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Fitting Candidate']);
+  });
+
+  it('keeps the typed search when the Captain is set or cleared', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Search Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const other = createCharacter({ id: 2001, name: 'Search Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, other],
+    });
+
+    await page.ngOnInit();
+    page.onSearchChange({ detail: { value: 'Search' } } as CustomEvent<{ value: string }>);
+
+    await page.saveTeamSlotSelection(leader);
+    expect(page.searchTerm()).toBe('Search');
+
+    page.clearTeamSlot(0);
+    expect(page.searchTerm()).toBe('Search');
   });
 
   it('filters covered character results by search text and favorite state', async () => {
@@ -2043,7 +2239,19 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('abilityMatchRankingDisabled()');
     expect(template).toContain('onAbilityMatchRankingChange($event)');
     expect(template).toContain("t('filters.bestAbilityMatchesFirst')");
+    // The old bypass toggle stays gone: coverage no longer gates the list, so
+    // there is nothing left to bypass.
     expect(template).not.toContain('requireCaptainCoverage()');
+    expect(template).toContain('data-test="captain-result-set-leader"');
+    expect(template).toContain('assignLeaderFromResult(card)');
+    expect(template).toContain('[icon]="leaderButtonIcon()"');
+    expect(template).toContain('!card.canBeLeader || !card.leaderFitsBudget');
+    expect(template).toContain('data-test="captain-result-not-boosted"');
+    expect(template).toContain("t('results.notBoostedBadge')");
+    expect(template).toContain("t('results.titleWithCoverage'");
+    expect(template).toContain('showsCoverageCount()');
+    expect(template).toContain('[debounce]="500"');
+    expect(template).toContain('[costDebounce]="500"');
     expect(template).not.toContain("t('filters.captainCoverage.toggle')");
     expect(template).not.toContain('captainCoverageSupportLabel()');
     expect(template).not.toContain('onRequireCaptainCoverageChange($event)');
@@ -2388,6 +2596,8 @@ function formatTranslation(key: string, params?: Record<string, string | number>
     'captain-coverage.filters.characterTags.support.empty': 'Group tags with OR inside a group.',
     'captain-coverage.filters.characterTags.support.all': 'Matches every tag group.',
     'captain-coverage.filters.characterTags.support.any': 'Matches at least one tag group.',
+    'captain-coverage.team.actions.setAsCaptain': 'Set as Captain',
+    'captain-coverage.team.actions.setAsFriendCaptain': 'Set as Friend Captain',
   };
   const translation = translations[key] ?? key;
 

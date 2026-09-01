@@ -6,10 +6,6 @@
     "hp": "HP"
   },
   "empty": {
-    "noCaptain": {
-      "copy": "Δες πρώτα όλους τους χαρακτήρες ή διάλεξε Captain για να περιορίσεις τα results σε units που καλύπτει το captain ability του.",
-      "title": "Επίλεξε Captain"
-    },
     "noResults": {
       "copy": "Κανένας χαρακτήρας δεν χωράει με τα τρέχοντα team slots, cost budget, search, favorites και ability filters.",
       "title": "Δεν βρέθηκαν χαρακτήρες"
@@ -18,8 +14,8 @@
   "hero": {
     "captainsCount": "{{count}} captains",
     "charactersCount": "{{count}} χαρακτήρες",
-    "copy": "Δες πρώτα όλους τους χαρακτήρες ή διάλεξε Captain στο team slot για να κρατήσεις μόνο units που καλύπτονται από το ability του, με type, class, cost, universal και self-only clauses.",
-    "eyebrow": "Strict captain scope",
+    "copy": "Όλοι οι χαρακτήρες μένουν στη λίστα. Διάλεξε Captain για να δεις ποιους ενισχύει το Captain Ability του - σημειώνονται στην κάρτα - και περιόρισε τα results μόνο με τα φίλτρα που επιλέγεις.",
+    "eyebrow": "Όλοι οι χαρακτήρες, τα φίλτρα σου",
     "title": "Browse χαρακτήρες για Captain Coverage"
   },
   "filters": {
@@ -105,7 +101,9 @@
     "eyebrow": "Character results",
     "openCharacterDetails": "Άνοιγμα character details",
     "title": "Character αποτελέσματα",
-    "titleWithCount": "{{count}} matching characters"
+    "titleWithCount": "{{count}} matching characters",
+    "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που εμφανίζονται",
+    "notBoostedBadge": "Δεν ενισχύεται από αυτόν τον Captain"
   },
   "search": {
     "placeholder": "Αναζήτηση στα character results..."
@@ -132,7 +130,11 @@
   },
   "team": {
     "actions": {
-      "addToTeam": "Προσθήκη στο team"
+      "addToTeam": "Προσθήκη στο team",
+      "setAsCaptain": "Ορισμός ως Captain",
+      "setAsFriendCaptain": "Ορισμός ως Friend Captain",
+      "leaderUnavailable": "Αυτός ο χαρακτήρας δεν έχει Captain Ability, οπότε δεν μπορεί να γίνει leader.",
+      "leaderOverBudget": "Αυτός ο χαρακτήρας δεν χωράει στο υπόλοιπο cost budget."
     },
     "captainRequired": "Επίλεξε Captain",
     "copy": "Διάλεξε Captain, Friend Captain και τέσσερα subs με συνολικό cost budget. Το Friend Captain cost δεν μετράει.",

@@ -6,10 +6,6 @@
     "hp": "HP"
   },
   "empty": {
-    "noCaptain": {
-      "copy": "Browse characters first, or choose a Captain to narrow results to units covered by that Captain ability.",
-      "title": "Select a Captain"
-    },
     "noResults": {
       "copy": "No character fits the current team slots, cost budget, search, favorites, and ability filters.",
       "title": "No matching characters"
@@ -18,8 +14,8 @@
   "hero": {
     "captainsCount": "{{count}} captains",
     "charactersCount": "{{count}} characters",
-    "copy": "Browse every character first, or pick a Captain in the team slot to narrow results to units covered by that Captain ability across type, class, cost, universal, and self-only clauses.",
-    "eyebrow": "Strict captain scope",
+    "copy": "Every character stays in the list. Pick a Captain to see which of them that Captain Ability boosts - marked on each card - and narrow the results only with the filters you choose.",
+    "eyebrow": "Every character, your filters",
     "title": "Browse Captain Coverage characters"
   },
   "filters": {
@@ -105,7 +101,9 @@
     "eyebrow": "Character results",
     "openCharacterDetails": "Open character details",
     "title": "Character results",
-    "titleWithCount": "{{count}} matching characters"
+    "titleWithCount": "{{count}} matching characters",
+    "titleWithCoverage": "{{boosted}} boosted of {{count}} shown",
+    "notBoostedBadge": "Not boosted by this Captain"
   },
   "search": {
     "placeholder": "Search character results..."
@@ -132,7 +130,11 @@
   },
   "team": {
     "actions": {
-      "addToTeam": "Add to team"
+      "addToTeam": "Add to team",
+      "setAsCaptain": "Set as Captain",
+      "setAsFriendCaptain": "Set as Friend Captain",
+      "leaderUnavailable": "This character has no Captain Ability, so it cannot lead.",
+      "leaderOverBudget": "This character does not fit the remaining cost budget."
     },
     "captainRequired": "Select Captain",
     "copy": "Choose a Captain, Friend Captain, and four subs against a total cost budget. Friend Captain cost is not counted.",

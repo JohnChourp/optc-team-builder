@@ -364,7 +364,7 @@
       },
       "captainCoverage": {
         "title": "Captain Coverage",
-        "copy": "Διάλεξε Captain και βρες χαρακτήρες που καλύπτονται από το Captain Ability του με strict type, class, cost, universal και self-scope matching."
+        "copy": "Διάλεξε Captain και δες ποιους χαρακτήρες ενισχύει το Captain Ability του, με όλο τον κατάλογο να μένει στη λίστα και μόνο τα δικά σου φίλτρα να τον περιορίζουν."
       },
       "autoRumble": {
         "title": "Auto Team Rumble Builder",
