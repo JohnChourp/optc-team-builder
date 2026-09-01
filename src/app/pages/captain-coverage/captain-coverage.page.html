@@ -69,18 +69,33 @@
 
         <div class="coverage-team-slots">
           @for (slot of selectedTeamSlots(); track trackTeamSlot($index); let index = $index) {
-            <button
-              type="button"
-              class="coverage-team-slot"
-              [class.coverage-team-slot--filled]="slot"
-              (click)="openTeamSlotPicker(index)"
-            >
+            <div class="coverage-team-slot" [class.coverage-team-slot--filled]="slot">
+              <button
+                type="button"
+                class="coverage-team-slot__pick"
+                [attr.aria-label]="t('team.pickFromResults')"
+                (click)="scrollToResults()"
+              >
+                @if (slot) {
+                  <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
+                  <span>
+                    <strong>{{ teamSlotLabel(index) }}</strong>
+                    <small>{{ t('team.cost.slot', { name: slot.name, cost: slot.cost }) }}</small>
+                  </span>
+                } @else {
+                  <img
+                    src="assets/placeholders/character-card.svg"
+                    [alt]="t('team.emptyAlt')"
+                    loading="lazy"
+                  />
+                  <span>
+                    <strong>{{ teamSlotLabel(index) }}</strong>
+                    <small>{{ index === 0 ? t('team.captainRequired') : t('team.empty') }}</small>
+                  </span>
+                }
+              </button>
+
               @if (slot) {
-                <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
-                <span>
-                  <strong>{{ teamSlotLabel(index) }}</strong>
-                  <small>{{ t('team.cost.slot', { name: slot.name, cost: slot.cost }) }}</small>
-                </span>
                 <ion-button
                   fill="clear"
                   size="small"
@@ -90,18 +105,8 @@
                 >
                   {{ 'common.actions.clear' | transloco }}
                 </ion-button>
-              } @else {
-                <img
-                  src="assets/placeholders/character-card.svg"
-                  [alt]="t('team.emptyAlt')"
-                  loading="lazy"
-                />
-                <span>
-                  <strong>{{ teamSlotLabel(index) }}</strong>
-                  <small>{{ index === 0 ? t('team.captainRequired') : t('team.empty') }}</small>
-                </span>
               }
-            </button>
+            </div>
           }
         </div>
 
@@ -169,17 +174,7 @@
         }
       </section>
 
-      <app-character-image-picker
-        [isOpen]="teamPickerOpen()"
-        [title]="activeTeamSlotTitle()"
-        [copy]="t(activeTeamSlotIndex() === 0 ? 'team.picker.captainCopy' : 'team.picker.copy')"
-        [allowedCharacterIds]="activeTeamSlotAllowedCharacterIds()"
-        [maxCost]="teamPickerMaxCost()"
-        (dismiss)="closeTeamSlotPicker()"
-        (saveSelection)="saveTeamSlotSelection($event)"
-      ></app-character-image-picker>
-
-      <section class="results-panel glass-card">
+      <section class="results-panel glass-card" #resultsPanel>
         <div class="results-toolbar">
           <div class="results-toolbar__heading">
             <div class="section-label">{{ t('results.eyebrow') }}</div>

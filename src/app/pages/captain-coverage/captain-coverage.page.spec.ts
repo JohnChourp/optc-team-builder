@@ -70,7 +70,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(characterCatalogCache.ensureLoaded).toHaveBeenCalled();
     expect(repository.searchDetailedCharacters).toHaveBeenCalledWith({
@@ -163,7 +163,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(kid);
+    await page.setTeamSlotCharacter(0, kid);
 
     // Every candidate stays listed; only `captainBoosted` separates them now.
     expect(page.resultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
@@ -200,7 +200,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.captainCoverageFilterState().requireCaptainCoverage).toBe(false);
     expect(page.resultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
@@ -320,7 +320,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     for (const sub of subs) {
       const card = page.resultCards().find((entry) => entry.character.id === sub.id);
@@ -357,7 +357,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     page.onMaxTotalCostChange({ detail: { value: '100' } } as CustomEvent<{ value: string }>);
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     // Unchanged on purpose: the Captain stops filtering, the game's own rules
     // do not.
@@ -379,7 +379,7 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     page.onSearchChange({ detail: { value: 'Search' } } as CustomEvent<{ value: string }>);
 
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
     expect(page.searchTerm()).toBe('Search');
 
     page.clearTeamSlot(0);
@@ -401,7 +401,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
     page.onSearchChange({ detail: { value: 'luffy' } } as CustomEvent<{ value?: string | null }>);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Luffy Candidate']);
@@ -455,7 +455,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
     page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
     page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
     page.onCoverageCostRangeChange('min', '10');
@@ -512,7 +512,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'any' });
     expect(
@@ -543,7 +543,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     page.onTypeFacetChange({ values: ['PSY'], matchMode: 'any' });
     expect(
@@ -588,7 +588,7 @@ describe('CaptainCoveragePage', () => {
     const { page } = createPage({ captains: [leader], characters: [leader, dex, qck] });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
     expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
@@ -677,7 +677,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
     page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
@@ -727,7 +727,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.availableCharacterTags()).toEqual(['Straw Hat Pirates', 'Worst Generation']);
 
@@ -793,7 +793,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     // (Straw Hat Pirates OR Heart Pirates) AND (Dressrosa)
     page.saveCharacterTagSetSelection(
@@ -851,7 +851,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     page.saveCharacterTagSetSelection(
       createSelection([
@@ -879,7 +879,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     page.saveCharacterTagSetSelection(
       createSelection([createCharacterTagSet(['  straw hat pirates '], 'any', 'set-1')]),
@@ -908,7 +908,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.hasSelectedCharacterTags()).toBe(false);
     expect(page.characterTagFilterTriggerLabel()).toBe('Choose character tags');
@@ -1062,7 +1062,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(userState.readyCharacterBoxes).toHaveBeenCalledOnce();
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
@@ -1099,7 +1099,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
     page.onCharacterBoxChange({
       detail: { value: 'box-1' },
     } as CustomEvent<{ value?: string | null }>);
@@ -1126,7 +1126,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.resultCards()).toHaveLength(1);
 
@@ -1179,7 +1179,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     page.onMaxTotalCostChange({ detail: { value: '100' } } as CustomEvent<{ value: string }>);
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Fitting Candidate']);
   });
@@ -1211,7 +1211,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
       'No Utility',
@@ -1253,7 +1253,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'] }]),
@@ -1303,7 +1303,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
     page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'], operator: 'all' }]),
     );
@@ -1336,7 +1336,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
       'No Super Tandem',
@@ -1378,7 +1378,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
       'No Super Types Classes',
@@ -1630,7 +1630,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
     page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind'], captainAbility: true }]),
     );
@@ -1688,7 +1688,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
     page.saveAbilityTagSetSelection(
       createTagSetSelection([
         { abilityKeys: ['remove_bind', 'remove_despair'], captainAbility: true },
@@ -1750,7 +1750,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
     page.saveAbilityTagSetSelection(
       createTagSetSelection([
         { abilityKeys: ['remove_bind'] },
@@ -1807,7 +1807,7 @@ describe('CaptainCoveragePage', () => {
         { abilityKeys: ['remove_bind', 'reduce_bind', 'support_remove_bind'] },
       ]),
     );
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
       'Support Matcher',
@@ -1859,7 +1859,7 @@ describe('CaptainCoveragePage', () => {
     page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb', 'reduce_bind'] }]),
     );
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
       'Single Match',
@@ -1923,7 +1923,7 @@ describe('CaptainCoveragePage', () => {
     } as CustomEvent<{ checked?: boolean | null }>);
     expect(page.abilityMatchRankingEnabled()).toBe(true);
 
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.selectedAbilityRequirementCount()).toBe(1);
     expect(page.abilityMatchRankingEnabled()).toBe(true);
@@ -1959,7 +1959,7 @@ describe('CaptainCoveragePage', () => {
     page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'reduce_bind'] }]),
     );
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.resultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
       'Special: Remove Bind',
@@ -1980,7 +1980,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
     page.assignCharacterFromResult(page.resultCards()[0]);
 
     expect(page.selectedTeamSlots()[2]?.id).toBe(2001);
@@ -2000,7 +2000,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     expect(page.selectedSortMode()).toBe('catalog');
     expect(page.selectedIdOrder()).toBe('newest');
@@ -2037,26 +2037,37 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     page.onMaxTotalCostChange({ detail: { value: '100' } } as CustomEvent<{ value: string }>);
 
-    await page.saveTeamSlotSelection(expensiveLeader);
+    await page.setTeamSlotCharacter(0, expensiveLeader);
     expect(page.selectedCaptain()).toBeNull();
 
-    await page.saveTeamSlotSelection(cheapLeader);
-    page.openTeamSlotPicker(1);
+    await page.setTeamSlotCharacter(0, cheapLeader);
+    expect(page.selectedCaptain()?.id).toBe(1001);
 
-    expect(page.teamPickerMaxCost()).toBeNull();
-
-    await page.saveTeamSlotSelection(expensiveLeader);
+    // Friend Captain cost is never counted, so the budget cannot block slot 1.
+    await page.setTeamSlotCharacter(1, expensiveLeader);
     expect(page.selectedTeamSlots()[1]?.id).toBe(1002);
 
-    page.openTeamSlotPicker(2);
-
-    expect(page.teamPickerMaxCost()).toBe(20);
-
-    await page.saveTeamSlotSelection(expensiveSub);
+    // 100 minus the Captain's 80 leaves 20 for the subs.
+    await page.setTeamSlotCharacter(2, expensiveSub);
     expect(page.selectedTeamSlots()[2]).toBeNull();
 
-    await page.saveTeamSlotSelection(fittingSub);
+    await page.setTeamSlotCharacter(2, fittingSub);
     expect(page.selectedTeamSlots()[2]?.id).toBe(2002);
+  });
+
+  it('survives a slot tap before the results section is attached', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Scroll Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const { page } = createPage({ captains: [leader], characters: [leader] });
+
+    await page.ngOnInit();
+
+    // No modal to open any more, and no view attached in this harness: the slot
+    // tap must stay a no-op instead of throwing on a missing element.
+    expect(() => page.scrollToResults()).not.toThrow();
   });
 
   it('formats captain boost values without multiplier suffixes', () => {
@@ -2085,15 +2096,13 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    await page.saveTeamSlotSelection(leader);
-    page.openTeamSlotPicker(1);
-    await page.saveTeamSlotSelection(friendCaptain);
+    await page.setTeamSlotCharacter(0, leader);
+    await page.setTeamSlotCharacter(1, friendCaptain);
 
     expect(page.teamConditionStatus()?.state).toBe('pending');
 
     for (const [index, sub] of subs.entries()) {
-      page.openTeamSlotPicker(index + 2);
-      await page.saveTeamSlotSelection(sub);
+      await page.setTeamSlotCharacter(index + 2, sub);
     }
 
     expect(page.teamConditionStatus()?.state).toBe('full');
@@ -2119,11 +2128,10 @@ describe('CaptainCoveragePage', () => {
     page.onTeamNameChange({ detail: { value: 'Captain Coverage Crew' } } as CustomEvent<{
       value?: string | null;
     }>);
-    await page.saveTeamSlotSelection(leader);
+    await page.setTeamSlotCharacter(0, leader);
 
     for (const [index, sub] of subs.entries()) {
-      page.openTeamSlotPicker(index + 2);
-      await page.saveTeamSlotSelection(sub);
+      await page.setTeamSlotCharacter(index + 2, sub);
     }
 
     await page.saveTeam();
@@ -2221,15 +2229,21 @@ describe('CaptainCoveragePage', () => {
     });
   });
 
-  it('keeps the leader-driven picker, ability filters, and result surfaces wired in the template', () => {
+  it('keeps the slot, ability filter, and result surfaces wired in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage.page.html'),
       'utf8',
     );
 
-    expect(template).toContain('<app-character-image-picker');
-    expect(template).toContain('[allowedCharacterIds]="activeTeamSlotAllowedCharacterIds()"');
-    expect(template).toContain('(saveSelection)="saveTeamSlotSelection($event)"');
+    // Team slots no longer open a picker: characters come from the result list
+    // only, and tapping a slot just moves the user down to it.
+    expect(template).not.toContain('<app-character-image-picker');
+    expect(template).not.toContain('openTeamSlotPicker');
+    expect(template).not.toContain('saveTeamSlotSelection');
+    expect(template).not.toContain("t('team.picker.");
+    expect(template).toContain('class="coverage-team-slot__pick"');
+    expect(template).toContain('(click)="scrollToResults()"');
+    expect(template).toContain('<section class="results-panel glass-card" #resultsPanel>');
     expect(template).toContain('class="results-toolbar__heading"');
     expect(template).toContain('<app-ability-filter-rail');
     expect(template).toContain('class="results-toolbar__toggle-grid"');

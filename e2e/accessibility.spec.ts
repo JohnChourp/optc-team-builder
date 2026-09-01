@@ -199,14 +199,15 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     await expect(page.locator('.coverage-team-slot').first()).toBeVisible();
     await expectNoAxeViolations(page, '.captain-coverage-shell');
 
-    const firstCoverageSlot = page.locator('.coverage-team-slot').first();
+    // Team slots no longer open a picker. Characters are chosen from the result
+    // list, so the slot is a keyboard-reachable jump to that list and nothing
+    // else must appear on top of the page.
+    const firstCoverageSlot = page.locator('.coverage-team-slot__pick').first();
     await firstCoverageSlot.focus();
     await page.keyboard.press('Enter');
-    const captainPicker = page.locator('ion-modal.character-image-picker-modal.show-modal');
-    await expect(captainPicker).toBeVisible();
-    await expect(captainPicker.getByRole('button', { name: 'Close' })).toBeVisible();
-    await expectModalDialogName(captainPicker);
-    await expectNoAxeViolations(page, 'ion-modal.character-image-picker-modal');
+    await expect(page.locator('ion-modal.character-image-picker-modal')).toHaveCount(0);
+    await expect(page.locator('.captain-result').first()).toBeVisible();
+    await expect(page.locator('[data-test="captain-result-set-leader"]').first()).toBeVisible();
   });
 });
 

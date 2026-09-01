@@ -25,9 +25,8 @@
 
 .coverage-team-slot {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   min-height: 76px;
   padding: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -35,4 +34,24 @@
   background: rgba(255, 255, 255, 0.06);
   color: inherit;
   text-align: left;
+}
+
+.coverage-team-slot__pick {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.coverage-team-slot__pick:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 3px;
 }
