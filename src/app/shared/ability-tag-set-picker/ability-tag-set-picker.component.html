@@ -414,7 +414,11 @@
                           <button
                             type="button"
                             class="ability-tag-set-tile"
-                            [attr.data-testid]="'ability-tag-set-tile-' + tile.item.key"
+                            [attr.data-testid]="
+                              'ability-tag-set-tile-' +
+                              (tile.isCaptainScope ? 'captain-' : '') +
+                              tile.item.key
+                            "
                             [class.is-selected]="tile.inActiveSet"
                             (click)="toggleCatalogItem(tile.item, tile.isCaptainScope)"
                           >

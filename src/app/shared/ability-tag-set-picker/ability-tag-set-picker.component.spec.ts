@@ -787,6 +787,12 @@ describe('AbilityTagSetPickerComponent', () => {
       'utf8',
     );
 
+    // The same ability key legitimately appears in the captain section and in
+    // its own category section, and every other identity here is composite.
+    // The test id has to be composite too, or a strict selector resolves to two
+    // elements - which is what broke the Performance Budgets cron.
+    expect(template).toContain("(tile.isCaptainScope ? 'captain-' : '')");
+    expect(template).toContain("'ability-tag-set-tile-' +");
     expect(template).toContain('cssClass="ability-tag-set-picker-modal"');
     expect(template).toContain('<app-ability-tag-set-picker-style-panels>');
     expect(template).toContain('(didPresent)="labelModalDialog($event, title || t(\'title\'))"');
