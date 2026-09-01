@@ -149,10 +149,6 @@
     "empty": "Empty slot",
     "emptyAlt": "Empty team slot",
     "eyebrow": "Team coverage",
-    "picker": {
-      "captainCopy": "Choose a Captain. Only characters with captain abilities are shown.",
-      "copy": "Choose a character that fits the remaining team cost."
-    },
     "selectedCaptain": "Selected Captain",
     "save": {
       "action": "Save team",
@@ -167,7 +163,8 @@
       "friendCaptain": "Friend Captain",
       "sub": "Sub {{index}}"
     },
-    "title": "Build from a Captain"
+    "title": "Build from a Captain",
+    "pickFromResults": "Pick a character from the results below"
   },
   "title": "Captain Coverage"
 }

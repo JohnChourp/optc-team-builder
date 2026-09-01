@@ -11,9 +11,12 @@
   }
 
   .coverage-team-slot {
-    grid-template-columns: 44px minmax(0, 1fr);
     min-height: 64px;
     padding: 8px;
+  }
+
+  .coverage-team-slot__pick {
+    grid-template-columns: 44px minmax(0, 1fr);
   }
 
   .coverage-team-slot img {

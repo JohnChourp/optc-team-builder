@@ -1,4 +1,11 @@
-import { Component, type OnInit, computed, signal } from '@angular/core';
+import {
+  Component,
+  type ElementRef,
+  type OnInit,
+  ViewChild,
+  computed,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -110,7 +117,6 @@ import {
   type CharacterTagMatchIndex,
 } from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
 import { CharacterFacetFilterComponent } from '../../shared/character-facet-filter/character-facet-filter.component';
-import { CharacterImagePickerComponent } from '../../shared/character-image-picker/character-image-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import {
@@ -178,7 +184,6 @@ interface CaptainCoverageCharacterTagSetChip {
     CaptainTeamConditionStatusComponent,
     CaptainCoverageStylePanelsComponent,
     CharacterFacetFilterComponent,
-    CharacterImagePickerComponent,
     CharacterTagSetPickerComponent,
     IonButton,
     IonButtons,
@@ -216,8 +221,6 @@ export class CaptainCoveragePage implements OnInit {
 
     return friendCaptain ? (this.allCharacterDetailsById().get(friendCaptain.id) ?? null) : null;
   });
-  public readonly activeTeamSlotIndex = signal(0);
-  public readonly teamPickerOpen = signal(false);
   public readonly teamName = signal('');
   public readonly currentTeamId = signal<string | null>(null);
   public readonly saveUiLocked = signal(false);
@@ -768,30 +771,6 @@ export class CaptainCoveragePage implements OnInit {
         })
       : '',
   );
-  public readonly teamPickerMaxCost = computed(() => {
-    const maxTotalCost = this.maxTotalCost();
-
-    if (maxTotalCost === null) {
-      return null;
-    }
-
-    const activeIndex = this.activeTeamSlotIndex();
-    if (activeIndex === 1) {
-      return null;
-    }
-
-    const currentSlotCost = this.selectedTeamSlots()[activeIndex]?.cost ?? 0;
-
-    return Math.max(0, maxTotalCost - this.teamBudgetCost() + currentSlotCost);
-  });
-  public readonly activeTeamSlotTitle = computed(() =>
-    this.teamSlotLabel(this.activeTeamSlotIndex()),
-  );
-  public readonly activeTeamSlotAllowedCharacterIds = computed(() =>
-    this.activeTeamSlotIndex() === 0 || this.activeTeamSlotIndex() === 1
-      ? this.allowedCaptainIds()
-      : null,
-  );
   public readonly teamConditionStatus = computed<CaptainTeamConditionStatus | null>(() => {
     const captain = this.selectedCaptainDetail();
 
@@ -827,6 +806,9 @@ export class CaptainCoveragePage implements OnInit {
       slots,
     });
   });
+
+  @ViewChild('resultsPanel')
+  private readonly resultsPanel?: ElementRef<HTMLElement>;
 
   public readonly coverageIcon = shieldCheckmarkOutline;
   public readonly targetIcon = peopleOutline;
@@ -904,22 +886,13 @@ export class CaptainCoveragePage implements OnInit {
     await this.applySavedTeamFromRoute();
   }
 
-  public openTeamSlotPicker(index: number): void {
-    if (index < 0 || index >= CAPTAIN_COVERAGE_TEAM_SLOT_COUNT) {
-      return;
-    }
-
-    this.activeTeamSlotIndex.set(index);
-    this.teamPickerOpen.set(true);
-  }
-
-  public closeTeamSlotPicker(): void {
-    this.teamPickerOpen.set(false);
-  }
-
-  public async saveTeamSlotSelection(character: CharacterListItem): Promise<void> {
-    await this.assignTeamSlotCharacter(this.activeTeamSlotIndex(), character);
-    this.teamPickerOpen.set(false);
+  /**
+   * Team slots no longer open a picker modal. Characters come from the result
+   * list only, so tapping a slot moves the user to that list instead of
+   * doing nothing at all.
+   */
+  public scrollToResults(): void {
+    this.resultsPanel?.nativeElement?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 
   /**
@@ -931,17 +904,14 @@ export class CaptainCoveragePage implements OnInit {
       return;
     }
 
-    await this.assignTeamSlotCharacter(this.leaderButtonSlotIndex(), card.character);
+    await this.setTeamSlotCharacter(this.leaderButtonSlotIndex(), card.character);
   }
 
   /**
-   * The single write path for every team slot. The modal and the result-card
-   * buttons both land here, so the guards can never disagree between them.
+   * The single write path for every team slot. Both result-card buttons land
+   * here, so their guards can never disagree.
    */
-  private async assignTeamSlotCharacter(
-    index: number,
-    character: CharacterListItem,
-  ): Promise<void> {
+  public async setTeamSlotCharacter(index: number, character: CharacterListItem): Promise<void> {
     if (index < 0 || index >= CAPTAIN_COVERAGE_TEAM_SLOT_COUNT) {
       return;
     }
@@ -1455,9 +1425,7 @@ export class CaptainCoveragePage implements OnInit {
     });
     const captain = selectedSlots[0] ?? null;
 
-    this.closeTeamSlotPicker();
     this.selectedTeamSlots.set(selectedSlots);
-    this.activeTeamSlotIndex.set(0);
     this.teamName.set(team.name);
     this.currentTeamId.set(null);
     this.saveFeedbackError.set('');

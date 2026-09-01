@@ -149,10 +149,6 @@
     "empty": "Κενό slot",
     "emptyAlt": "Κενό team slot",
     "eyebrow": "Team coverage",
-    "picker": {
-      "captainCopy": "Διάλεξε Captain. Εμφανίζονται μόνο χαρακτήρες με captain abilities.",
-      "copy": "Διάλεξε χαρακτήρα που χωράει στο remaining team cost."
-    },
     "selectedCaptain": "Επιλεγμένος Captain",
     "save": {
       "action": "Αποθήκευση team",
@@ -167,7 +163,8 @@
       "friendCaptain": "Friend Captain",
       "sub": "Sub {{index}}"
     },
-    "title": "Χτίσιμο από Captain"
+    "title": "Χτίσιμο από Captain",
+    "pickFromResults": "Διάλεξε χαρακτήρα από τα αποτελέσματα πιο κάτω"
   },
   "title": "Captain Coverage"
 }
