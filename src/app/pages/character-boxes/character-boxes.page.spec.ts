@@ -1120,6 +1120,7 @@ describe('CharacterBoxesPage', () => {
       'utf8',
     );
 
+    expect(template).toContain('[costDebounce]="500"');
     expect(template).toContain("t('empty.noBoxes.title')");
     expect(template).toContain("t('empty.selectBox.title')");
     expect(template).toContain("t('empty.noCharacters.title')");
