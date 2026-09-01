@@ -97,7 +97,7 @@ describe('app routes', () => {
     expect(coverageRoute?.loadComponent).toBeTypeOf('function');
     expect(seo?.['title']).toBe('Captain Coverage | OPTC Team Builder');
     expect(seo?.['description']).toBe(
-      'Choose an OPTC Captain and find characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching.',
+      'Pick an OPTC Captain and see which characters that Captain Ability boosts, with the full catalogue still listed and only your own filters narrowing it.',
     );
     expect(seo?.['canonicalPath']).toBe('tabs/captain-coverage');
   });

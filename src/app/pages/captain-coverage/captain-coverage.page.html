@@ -54,6 +54,7 @@
             fill="outline"
             [label]="t('team.cost.input')"
             labelPlacement="stacked"
+            [debounce]="500"
             [value]="maxTotalCost()"
             (ionInput)="onMaxTotalCostChange($event)"
           ></ion-input>
@@ -183,9 +184,18 @@
           <div class="results-toolbar__heading">
             <div class="section-label">{{ t('results.eyebrow') }}</div>
             <h2>
-              {{
-                t('results.titleWithCount', { count: totalMatchingCharacters() })
-              }}
+              @if (showsCoverageCount()) {
+                {{
+                  t('results.titleWithCoverage', {
+                    boosted: boostedMatchingCharacters(),
+                    count: totalMatchingCharacters()
+                  })
+                }}
+              } @else {
+                {{
+                  t('results.titleWithCount', { count: totalMatchingCharacters() })
+                }}
+              }
             </h2>
           </div>
 
@@ -382,7 +392,7 @@
           <div class="results-controls">
             <ion-searchbar
               class="coverage-search"
-              [debounce]="150"
+              [debounce]="500"
               [disabled]="loading()"
               [placeholder]="t('search.placeholder')"
               [searchIcon]="searchIcon"
@@ -433,6 +443,7 @@
               [costFromLabel]="t('filters.cost.from')"
               [costToLabel]="t('filters.cost.to')"
               [costRange]="coverageCostRange()"
+              [costDebounce]="500"
               [showSortFilter]="true"
               [sortLabel]="t('sort.label')"
               [sortPlaceholder]="t('sort.label')"
@@ -552,6 +563,15 @@
                     </div>
                   }
 
+                  @if (card.captainBoosted === false) {
+                    <span
+                      class="captain-result__not-boosted"
+                      data-test="captain-result-not-boosted"
+                    >
+                      {{ t('results.notBoostedBadge') }}
+                    </span>
+                  }
+
                   @if (card.matchedAbilityBadges.length) {
                     <div class="captain-result__ability-badges">
                       @for (badge of card.matchedAbilityBadges; track badge.key) {
@@ -560,15 +580,40 @@
                     </div>
                   }
 
-                  <ion-button
-                    size="small"
-                    fill="outline"
-                    color="warning"
-                    [disabled]="card.assignableSlotIndex === null"
-                    (click)="assignCharacterFromResult(card)"
-                  >
-                    {{ t('team.actions.addToTeam') }}
-                  </ion-button>
+                  <div class="captain-result__actions">
+                    <ion-button
+                      size="small"
+                      fill="outline"
+                      color="warning"
+                      [disabled]="card.assignableSlotIndex === null"
+                      (click)="assignCharacterFromResult(card)"
+                    >
+                      {{ t('team.actions.addToTeam') }}
+                    </ion-button>
+
+                    <ion-button
+                      size="small"
+                      fill="outline"
+                      color="light"
+                      data-test="captain-result-set-leader"
+                      [disabled]="!card.canBeLeader || !card.leaderFitsBudget"
+                      [title]="
+                        !card.canBeLeader
+                          ? t('team.actions.leaderUnavailable')
+                          : !card.leaderFitsBudget
+                            ? t('team.actions.leaderOverBudget')
+                            : leaderButtonLabel()
+                      "
+                      (click)="assignLeaderFromResult(card)"
+                    >
+                      <ion-icon
+                        slot="start"
+                        [icon]="leaderButtonIcon()"
+                        aria-hidden="true"
+                      ></ion-icon>
+                      {{ leaderButtonLabel() }}
+                    </ion-button>
+                  </div>
                 </div>
               </article>
             }

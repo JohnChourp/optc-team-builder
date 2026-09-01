@@ -57,6 +57,13 @@ export class CharacterFilterRowComponent {
   @Input() public costFromLabel = 'Cost from';
   @Input() public costToLabel = 'Cost to';
   @Input() public costRange: CharacterFilterCostRange = { min: null, max: null };
+  /**
+   * Milliseconds to hold a typed cost before it reaches the host, `0` for the
+   * historical every-keystroke behaviour. Opt-in on purpose: the host that
+   * renders thousands of rows wants the pause, the smaller ones did not ask
+   * for a behaviour change.
+   */
+  @Input() public costDebounce = 0;
 
   @Input() public showMembershipFilter = false;
   @Input() public membershipLabel = 'Membership';
