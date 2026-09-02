@@ -334,3 +334,13 @@
   font-size: 0.82rem;
   line-height: 1.55;
 }
+
+/* Opt-in captain-scope marker on a chip; absent unless the host asked for it. */
+.ability-tag-set-chip__scope {
+  margin-inline-end: 4px;
+  color: var(--ion-color-warning);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

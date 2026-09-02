@@ -22,7 +22,14 @@ import {
   IonSelectOption,
   IonToolbar,
 } from '@ionic/angular/standalone';
-import { addOutline, closeOutline, funnelOutline, swapHorizontalOutline } from 'ionicons/icons';
+import {
+  addOutline,
+  closeOutline,
+  eyeOffOutline,
+  eyeOutline,
+  funnelOutline,
+  swapHorizontalOutline,
+} from 'ionicons/icons';
 
 import {
   MAX_ABILITY_FILTER_TAG_SETS,
@@ -54,6 +61,12 @@ export interface AbilityTagSetPickerSection {
   items: AutoBuildAbilityCatalogItem[];
   /** Adds `sourceScope: 'captainAbility'` + `slotScope: 'leader'` to picked tags. */
   captainAbility?: boolean;
+  /**
+   * Optional one-line explanation rendered under the section head. Host-supplied
+   * and already translated, because the picker's transloco scope is shared by
+   * every host and cannot carry per-host copy.
+   */
+  description?: string;
 }
 
 interface CatalogTileView {
@@ -70,11 +83,21 @@ interface CatalogTileView {
    * and force the requirement to captain scope regardless of where it was picked.
    */
   isCaptainScope: boolean;
+  /**
+   * The number the tile prints. Identical to `item.matchCount` unless the host
+   * opted into `captainScopedTileCounts`, where a captain-section tile reports
+   * how many characters carry the ability AS A CAPTAIN ABILITY - the only set
+   * the filter can actually return for that scope.
+   */
+  matchCount: number;
+  /** Section name shown before the label when the host opted into scope markers. */
+  scopeLabel: string;
 }
 
 interface CatalogSectionView {
   key: string;
   label: string;
+  description: string;
   tiles: CatalogTileView[];
 }
 
@@ -101,6 +124,12 @@ interface TagChipView {
   supportsTurns: boolean;
   /** Distinct minimum-turn thresholds for this chip's scope, ascending. */
   turnOptions: TurnOption[];
+  /**
+   * Section name rendered before the label so the same ability picked as a
+   * captain requirement and as a category requirement is not two identical
+   * chips. Empty unless the host opted into `scopeMarkers`.
+   */
+  scopeLabel: string;
 }
 
 interface SetCardView {
@@ -160,17 +189,37 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
    * operator to `all` and explain why, instead of offering a control that lies.
    */
   @Input() public allowSelectionOperator = true;
+  /**
+   * Extra class placed on the ion-modal alongside `ability-tag-set-picker-modal`,
+   * so one host can style its own instance. The modal content is teleported to
+   * the app root, so a class on the modal is the only selector a page's own
+   * (unencapsulated) style panel can reach it by.
+   */
+  @Input() public modalScopeClass = '';
+  /** Hides the per-tile character count behind a header toggle, hidden first. */
+  @Input() public collapsibleTileCounts = false;
+  /** Captain-section tiles report the captain-scoped match count. */
+  @Input() public captainScopedTileCounts = false;
+  /** Renders the always-available "how this filter works" block. */
+  @Input() public showHelp = false;
+  /** Prefixes captain-scope tiles and chips with their section name. */
+  @Input() public scopeMarkers = false;
 
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<AbilityFilterTagSetSelection>();
 
   public readonly closeIcon = closeOutline;
+  public readonly countsShownIcon = eyeOutline;
+  public readonly countsHiddenIcon = eyeOffOutline;
   public readonly pickerIcon = funnelOutline;
   public readonly addIcon = addOutline;
   public readonly swapIcon = swapHorizontalOutline;
   public readonly operators: AbilityTagSetOperator[] = ['any', 'all'];
 
   public readonly searchTerm = signal('');
+  /** Per-tile counts start hidden only where the host asked for the toggle. */
+  public readonly tileCountsVisible = signal(true);
+  public readonly helpOpen = signal(false);
   public readonly workingSelection = signal<AbilityFilterTagSetSelection>(
     createEmptyAbilityFilterTagSetSelection(),
   );
@@ -272,6 +321,7 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
         return {
           key: section.category,
           label: section.label,
+          description: section.description ?? '',
           tiles: section.items
             .filter((item) => {
               if (!searchTerm.length) {
@@ -287,6 +337,8 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
               item,
               badge: this.resolveBadge(item.label),
               isCaptainScope,
+              matchCount: this.resolveTileMatchCount(item, isCaptainScope),
+              scopeLabel: this.scopeMarkers && isCaptainScope ? section.label : '',
               memberSetIndexes:
                 memberIndexes.get(this.tileMembershipKey(item.key, isCaptainScope)) ?? [],
               inActiveSet: Boolean(
@@ -317,6 +369,8 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
       this.liveAnnouncement.set(null);
       this.leavingSetId.set(null);
       this.isCatalogOpen.set(false);
+      this.tileCountsVisible.set(!this.collapsibleTileCounts);
+      this.helpOpen.set(false);
 
       const cloned = cloneAbilityFilterTagSetSelection(this.selection);
       this.workingSelection.set(cloned);
@@ -559,6 +613,40 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
     return indexes;
   }
 
+  /** Extra class the host asked for, kept beside the picker's own modal class. */
+  public modalCssClass(): string {
+    return this.modalScopeClass
+      ? `ability-tag-set-picker-modal ${this.modalScopeClass}`
+      : 'ability-tag-set-picker-modal';
+  }
+
+  public toggleTileCounts(): void {
+    this.tileCountsVisible.update((visible) => !visible);
+  }
+
+  public toggleHelp(): void {
+    this.helpOpen.update((open) => !open);
+  }
+
+  /**
+   * A captain-section tile must report the captain-scoped list, not the
+   * crew-wide `matchCount`: the same key is usually a crew ability too, so the
+   * crew-wide number promises matches the captain-scoped filter cannot return
+   * (Damage prints 1,837 crew-wide against 142 captains). Hosts that have not
+   * opted in keep the crew-wide number, so nothing changes for them.
+   */
+  private resolveTileMatchCount(item: AutoBuildAbilityCatalogItem, isCaptainScope: boolean): number {
+    if (!this.captainScopedTileCounts || !isCaptainScope) {
+      return item.matchCount;
+    }
+
+    return item.captainAbilityMatchingCharacterIds?.length ?? item.matchCount;
+  }
+
+  private captainSectionLabel(): string {
+    return this.sectionsState().find((section) => section.captainAbility)?.label ?? '';
+  }
+
   /**
    * Membership/highlight identity for a catalog tile. Composite of the ability
    * key and whether the tile lives in the captain section, so a shared key never
@@ -597,6 +685,7 @@ export class AbilityTagSetPickerComponent implements OnChanges, OnDestroy {
     return {
       requirement,
       label,
+      scopeLabel: this.scopeMarkers && isCaptainScope ? this.captainSectionLabel() : '',
       badge: this.resolveBadge(label),
       chipKey: this.tileMembershipKey(requirement.abilityKey, isCaptainScope),
       // Gate on the scope buckets, not just item.supportsTurns, so a scope with no

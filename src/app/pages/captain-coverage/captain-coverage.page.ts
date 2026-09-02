@@ -104,9 +104,7 @@ import {
   matchesAnyAbilityRequirement,
 } from '../../core/services/auto-team-builder-ability-match.utils';
 import {
-  AbilityFilterRailComponent,
   type AbilityFilterRailCategory,
-  type AbilityFilterRailItem,
 } from '../../shared/ability-filter-rail/ability-filter-rail.component';
 import {
   AbilityTagSetPickerComponent,
@@ -130,6 +128,44 @@ import { CaptainCoverageStylePanelsComponent } from './captain-coverage-style-pa
 const MAX_CAPTAIN_LOOKUP_COUNT = 12000;
 const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 6;
 const CAPTAIN_ABILITY_FILTER_CATEGORY: AbilityFilterRailCategory = 'captainAbility';
+/**
+ * How many result cards the page paints before the "show more" control.
+ *
+ * Measured on 2026-09-02 (local production build, headless Chromium): opening
+ * the ability modal with all 4,613 cards rendered costs 2,675 ms on a 4x
+ * CPU-throttled phone profile, against 249 ms with 61 cards and 275 ms with
+ * none - the modal itself is a quarter of a second and the rest is this list
+ * being re-evaluated under default change detection. The heading still reports
+ * the true total; only the painted slice is capped. Matches the Characters page.
+ */
+const RESULT_PAGE_SIZE = 100;
+
+/**
+ * Whether two result sets hold the same characters in the same order.
+ *
+ * The paging position must survive anything that rebuilds a card WITHOUT
+ * changing which characters matched - assigning a result to the team is the
+ * one that bites, because `resultCards` reads the team slots for the per-card
+ * leader and sub-slot state. Comparing the array reference would collapse the
+ * list back to page one on every add-to-team, set-leader and clear-slot.
+ */
+function isSameResultSequence(left: readonly number[], right: readonly number[]): boolean {
+  if (left === right) {
+    return true;
+  }
+
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 type CaptainCoverageSortMode =
   | Extract<
@@ -179,7 +215,6 @@ interface CaptainCoverageCharacterTagSetChip {
   selector: 'app-captain-coverage-page',
   standalone: true,
   imports: [
-    AbilityFilterRailComponent,
     AbilityTagSetPickerComponent,
     CaptainTeamConditionStatusComponent,
     CaptainCoverageStylePanelsComponent,
@@ -229,6 +264,15 @@ export class CaptainCoveragePage implements OnInit {
   public readonly allCaptains = signal<CharacterDetailRecord[]>([]);
   public readonly loading = signal(true);
   public readonly searchTerm = signal('');
+  /**
+   * How far "show more" has paged, tied to the characters it paged through.
+   * Any change to which characters match resets the page; a change to how an
+   * already-matching card renders does not.
+   */
+  private readonly loadMoreState = signal<{
+    sourceIds: readonly number[];
+    count: number;
+  } | null>(null);
   public readonly typeFacet = signal<CharacterFacetSelection>(createEmptyCharacterFacetSelection());
   public readonly classFacet = signal<CharacterFacetSelection>(
     createEmptyCharacterFacetSelection(),
@@ -421,51 +465,90 @@ export class CaptainCoveragePage implements OnInit {
       {
         category: CAPTAIN_ABILITY_FILTER_CATEGORY,
         label: this.t('filters.captainAbilityEyebrow'),
+        description: this.t('filters.abilityTagSets.sections.captainAbility'),
         items: this.availableCaptainAbilityCatalogItems(),
         captainAbility: true,
       },
       {
         category: 'special',
         label: this.t('filters.specialEyebrow'),
+        description: this.t('filters.abilityTagSets.sections.special'),
         items: this.availableSpecialAbilityCatalogItems(),
       },
       {
         category: 'crewmate',
         label: this.t('filters.crewmateEyebrow'),
+        description: this.t('filters.abilityTagSets.sections.crewmate'),
         items: this.availableCrewmateAbilityCatalogItems(),
       },
       {
         category: 'potential',
         label: this.t('filters.potentialEyebrow'),
+        description: this.t('filters.abilityTagSets.sections.potential'),
         items: this.availablePotentialAbilityCatalogItems(),
       },
       {
         category: 'support',
         label: this.t('filters.supportEyebrow'),
+        description: this.t('filters.abilityTagSets.sections.support'),
         items: this.availableSupportAbilityCatalogItems(),
       },
     ],
   );
+  /** Every ability kind lives in the one modal, so one empty section is fine. */
+  public readonly hasAbilityFilterSections = computed(() =>
+    this.abilityTagSetPickerSections().some((section) => section.items.length > 0),
+  );
+  public readonly populatedAbilityTagSets = computed(() =>
+    this.tagSetSelection().sets.filter((set) => set.requirements.length > 0),
+  );
+  public readonly hasSelectedAbilityTags = computed(
+    () => this.populatedAbilityTagSets().length > 0,
+  );
   /**
-   * Rail category per ability key, built from the non-captain sections only:
-   * captain membership is decided by the requirement's own source scope, because
-   * the same key can live in both the captain section and a category section.
+   * One removable chip per populated group, mirroring the character-tag filter
+   * on this same page. The chips are what replaces the five rail chips: without
+   * them the page would lose both the "a filter is active" signal and the only
+   * way to drop part of the selection without reopening the modal.
    */
-  private readonly abilityFilterCategoryByAbilityKey = computed(() => {
-    const categoryByKey = new Map<string, AbilityFilterRailCategory>();
+  public readonly abilityTagSetChips = computed<CaptainCoverageCharacterTagSetChip[]>(() => {
+    const labelByKey = new Map(this.allCatalogItems().map((item) => [item.key, item.label]));
+    const captainLabel = this.t('filters.captainAbilityEyebrow');
 
-    for (const section of this.abilityTagSetPickerSections()) {
-      if (section.captainAbility) {
-        continue;
-      }
+    return this.populatedAbilityTagSets().map((set) => {
+      const joiner = this.t(`filters.abilityTagSets.joiners.${set.operator}`);
+      const label = set.requirements
+        .map((requirement) => {
+          const name = labelByKey.get(requirement.abilityKey) ?? requirement.abilityKey;
 
-      for (const item of section.items) {
-        categoryByKey.set(item.key, section.category);
-      }
-    }
+          // The same ability can sit in a group twice, once captain-scoped and
+          // once crew-wide, so the scope has to ride on the chip text too.
+          return isCaptainAbilityRequirement(requirement) ? `${captainLabel}: ${name}` : name;
+        })
+        .join(` ${joiner} `);
 
-    return categoryByKey;
+      return {
+        id: set.id,
+        label,
+        removeLabel: this.t('filters.abilityTagSets.removeGroup', { group: label }),
+      };
+    });
   });
+  public readonly abilityFilterTriggerLabel = computed(() => {
+    const groups = this.populatedAbilityTagSets().length;
+
+    return groups
+      ? this.t('filters.abilityTagSets.trigger.active', {
+          tags: countTagSetRequirements(this.tagSetSelection()),
+          groups,
+        })
+      : this.t('filters.abilityTagSets.trigger.empty');
+  });
+  public readonly abilityFilterSupportText = computed(() =>
+    this.populatedAbilityTagSets().length
+      ? this.t('filters.abilityTagSets.support.active')
+      : this.t('filters.abilityTagSets.support.empty'),
+  );
   private readonly tagSetRequirements = computed<AutoBuildAbilityRequirement[]>(() =>
     flattenTagSetsToRequirements(this.tagSetSelection()),
   );
@@ -479,23 +562,6 @@ export class CaptainCoveragePage implements OnInit {
   public readonly selectedAbilityRequirementCount = computed(() =>
     countTagSetRequirements(this.tagSetSelection()),
   );
-  /** How many requirements of each category the whole selection holds. */
-  private readonly tagSetRequirementCountsByCategory = computed(() => {
-    const categoryByKey = this.abilityFilterCategoryByAbilityKey();
-    const counts = new Map<AbilityFilterRailCategory, number>();
-
-    for (const requirement of this.tagSetRequirements()) {
-      const category = this.resolveAbilityFilterRailCategory(requirement, categoryByKey);
-
-      if (!category) {
-        continue;
-      }
-
-      counts.set(category, (counts.get(category) ?? 0) + 1);
-    }
-
-    return counts;
-  });
   public readonly tagSetMatchingCharacterIds = computed<number[] | undefined>(() =>
     resolveTagSetSelectionMatchingCharacterIds(this.tagSetSelection(), this.allCatalogItems()),
   );
@@ -566,17 +632,6 @@ export class CaptainCoveragePage implements OnInit {
     { value: 'newest', label: this.t('idOrder.options.newest') },
     { value: 'oldest', label: this.t('idOrder.options.oldest') },
   ]);
-  public readonly abilityFilterRailItems = computed<AbilityFilterRailItem[]>(() => {
-    const countsByCategory = this.tagSetRequirementCountsByCategory();
-
-    return this.abilityTagSetPickerSections().map((section) => ({
-      category: section.category,
-      label: section.label,
-      count: countsByCategory.get(section.category) ?? 0,
-      disabled: !section.items.length,
-    }));
-  });
-
   public readonly resultCards = computed<CaptainCoverageCardView[]>(() => {
     const captain = this.selectedCaptainDetail();
     const normalizedSearchTerm = this.searchTerm().trim().toLowerCase();
@@ -728,6 +783,26 @@ export class CaptainCoveragePage implements OnInit {
   });
 
   public readonly totalMatchingCharacters = computed(() => this.resultCards().length);
+  private readonly resultCardIds = computed<readonly number[]>(() =>
+    this.resultCards().map((card) => card.character.id),
+  );
+  private readonly visibleResultCount = computed(() => {
+    const state = this.loadMoreState();
+
+    return state && isSameResultSequence(state.sourceIds, this.resultCardIds())
+      ? state.count
+      : RESULT_PAGE_SIZE;
+  });
+  /** The painted slice; `totalMatchingCharacters` stays the real total. */
+  public readonly visibleResultCards = computed<CaptainCoverageCardView[]>(() =>
+    this.resultCards().slice(0, this.visibleResultCount()),
+  );
+  public readonly hasMoreResults = computed(
+    () => this.resultCards().length > this.visibleResultCount(),
+  );
+  public readonly remainingResultCount = computed(() =>
+    Math.max(0, this.resultCards().length - this.visibleResultCount()),
+  );
   /** How many of the shown characters the selected Captain actually boosts. */
   public readonly boostedMatchingCharacters = computed(
     () => this.resultCards().filter((card) => card.captainBoosted === true).length,
@@ -924,6 +999,8 @@ export class CaptainCoveragePage implements OnInit {
       return;
     }
 
+    const pagedCount = this.visibleResultCount();
+
     this.selectedTeamSlots.update((slots) =>
       slots.map((slot, slotIndex) => (slotIndex === index ? character : slot)),
     );
@@ -935,6 +1012,8 @@ export class CaptainCoveragePage implements OnInit {
       this.selectedCaptainDetail.set(null);
       this.selectedCaptainDetail.set(await this.repository.getCharacterById(character.id));
     }
+
+    this.keepPagePositionAfterTeamChange(pagedCount);
   }
 
   public assignCharacterFromResult(card: CaptainCoverageCardView): void {
@@ -944,10 +1023,13 @@ export class CaptainCoveragePage implements OnInit {
       return;
     }
 
+    const pagedCount = this.visibleResultCount();
+
     this.selectedTeamSlots.update((slots) =>
       slots.map((slot, index) => (index === slotIndex ? card.character : slot)),
     );
     this.clearSavedTeamDraftState();
+    this.keepPagePositionAfterTeamChange(pagedCount);
   }
 
   public clearTeamSlot(index: number, event?: Event): void {
@@ -957,6 +1039,8 @@ export class CaptainCoveragePage implements OnInit {
       return;
     }
 
+    const pagedCount = this.visibleResultCount();
+
     this.selectedTeamSlots.update((slots) =>
       slots.map((slot, slotIndex) => (slotIndex === index ? null : slot)),
     );
@@ -965,6 +1049,8 @@ export class CaptainCoveragePage implements OnInit {
     if (index === 0) {
       this.selectedCaptainDetail.set(null);
     }
+
+    this.keepPagePositionAfterTeamChange(pagedCount);
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -1144,13 +1230,9 @@ export class CaptainCoveragePage implements OnInit {
     this.selectedCharacterBoxId.set(this.normalizeCharacterBoxId(this.resolveStringInput(input)));
   }
 
-  /** Every rail chip opens the one tag-set modal; the chip only picks the scope. */
-  public openAbilityFilterCategory(category: AbilityFilterRailCategory): void {
-    const section = this.abilityTagSetPickerSections().find(
-      (candidate) => candidate.category === category,
-    );
-
-    if (!section?.items.length) {
+  /** One trigger, one modal: every ability kind is a section inside it. */
+  public openAbilityTagSetPicker(): void {
+    if (!this.hasAbilityFilterSections()) {
       return;
     }
 
@@ -1166,22 +1248,43 @@ export class CaptainCoveragePage implements OnInit {
     this.abilityTagSetPickerOpen.set(false);
   }
 
-  /** Drops one category's tags from every set, and any set left empty by that. */
-  public clearAbilityFilterCategory(category: AbilityFilterRailCategory): void {
-    const categoryByKey = this.abilityFilterCategoryByAbilityKey();
-
+  /** Drops one whole group, which is what the page-level chip represents. */
+  public removeAbilityTagSet(setId: string): void {
     this.tagSetSelection.update((selection) => ({
       ...selection,
-      sets: selection.sets
-        .map((set) => ({
-          ...set,
-          requirements: set.requirements.filter(
-            (requirement) =>
-              this.resolveAbilityFilterRailCategory(requirement, categoryByKey) !== category,
-          ),
-        }))
-        .filter((set) => set.requirements.length > 0),
+      sets: selection.sets.filter((set) => set.id !== setId),
     }));
+  }
+
+  public clearSelectedAbilityTags(): void {
+    this.tagSetSelection.update((selection) => ({ ...selection, sets: [] }));
+  }
+
+  /**
+   * Re-anchors the "show more" position to the list as it now stands.
+   *
+   * A team write rebuilds `resultCards` and genuinely changes which characters
+   * are listed - the character just assigned drops out while a sub slot is
+   * still free. Without this the paging key reads that as a new result set and
+   * throws the user back to page one at the exact moment they acted on a card,
+   * unmounting the card they touched. A filter change still resets the page,
+   * because nothing re-anchors there.
+   */
+  private keepPagePositionAfterTeamChange(count: number): void {
+    if (count <= RESULT_PAGE_SIZE) {
+      this.loadMoreState.set(null);
+
+      return;
+    }
+
+    this.loadMoreState.set({ sourceIds: this.resultCardIds(), count });
+  }
+
+  public loadMoreResults(): void {
+    this.loadMoreState.set({
+      sourceIds: this.resultCardIds(),
+      count: this.visibleResultCount() + RESULT_PAGE_SIZE,
+    });
   }
 
   public formatBoost(value: number): string {
@@ -1219,17 +1322,6 @@ export class CaptainCoveragePage implements OnInit {
     const currentSlotCost = this.selectedTeamSlots()[index]?.cost ?? 0;
 
     return this.teamBudgetCost() - currentSlotCost + character.cost <= maxTotalCost;
-  }
-
-  private resolveAbilityFilterRailCategory(
-    requirement: AutoBuildAbilityRequirement,
-    categoryByKey: ReadonlyMap<string, AbilityFilterRailCategory>,
-  ): AbilityFilterRailCategory | null {
-    if (isCaptainAbilityRequirement(requirement)) {
-      return CAPTAIN_ABILITY_FILTER_CATEGORY;
-    }
-
-    return categoryByKey.get(requirement.abilityKey) ?? null;
   }
 
   private matchesSearchTerm(

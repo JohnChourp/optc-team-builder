@@ -19,7 +19,6 @@
     "title": "Browse Captain Coverage characters"
   },
   "filters": {
-    "abilityRailLabel": "Ability filters",
     "abilityTagSetsTitle": "Ability tag filter",
     "bestAbilityMatchesFirst": "Best ability matches first",
     "captainAbilityEyebrow": "Required",
@@ -94,6 +93,29 @@
     "type": {
       "label": "Type",
       "placeholder": "Filter by type"
+    },
+    "abilityTagSets": {
+      "label": "Ability filters",
+      "trigger": {
+        "empty": "Choose ability filters",
+        "active": "{{tags}} filter(s) in {{groups}} group(s)"
+      },
+      "joiners": {
+        "any": "or",
+        "all": "and"
+      },
+      "removeGroup": "Remove ability group {{group}}",
+      "support": {
+        "empty": "One button, every kind of ability filter: captain, special, crewmate, potential and support. Group them with OR inside a group and AND across groups.",
+        "active": "Showing characters that match every ability group. Remove a group with its chip, or reopen the filter to edit it."
+      },
+      "sections": {
+        "captainAbility": "Abilities the character must carry as a Captain Ability. Counts here are captain-only, so they are smaller than the crew-wide ones.",
+        "special": "Abilities from the character's activated special.",
+        "crewmate": "Sailor abilities the character has while it fights as a crewmate.",
+        "potential": "Potential abilities, including Super Tandem, Final Tap and Rush Sugo effects.",
+        "support": "Abilities the character grants to the crewmate it supports."
+      }
     }
   },
   "loading": "Loading captain data...",
@@ -102,8 +124,9 @@
     "openCharacterDetails": "Open character details",
     "title": "Character results",
     "titleWithCount": "{{count}} matching characters",
-    "titleWithCoverage": "{{boosted}} boosted of {{count}} shown",
-    "notBoostedBadge": "Not boosted by this Captain"
+    "titleWithCoverage": "{{boosted}} boosted of {{count}} matching",
+    "notBoostedBadge": "Not boosted by this Captain",
+    "loadMore": "Show more ({{count}} left)"
   },
   "search": {
     "placeholder": "Search character results..."

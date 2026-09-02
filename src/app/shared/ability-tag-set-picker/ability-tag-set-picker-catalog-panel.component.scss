@@ -126,3 +126,23 @@
   color: var(--app-muted);
   font-size: 0.82rem;
 }
+
+/*
+ * Opt-in section blurb and captain-scope marker. Both render only when a host
+ * passes `section.description` / `scopeMarkers`, so every other host keeps the
+ * same DOM and these selectors match nothing there.
+ */
+.ability-tag-set-catalog__section-copy {
+  margin: 0 0 8px;
+  color: var(--app-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.ability-tag-set-tile__scope {
+  color: var(--ion-color-warning);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

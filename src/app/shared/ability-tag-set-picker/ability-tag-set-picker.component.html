@@ -2,7 +2,7 @@
   <ion-modal
     #tagSetPickerModal
     [isOpen]="isOpen"
-    cssClass="ability-tag-set-picker-modal"
+    [cssClass]="modalCssClass()"
     [attr.aria-label]="title || t('title')"
     (didPresent)="labelModalDialog($event, title || t('title'))"
     (didDismiss)="onModalDidDismiss()"
@@ -27,6 +27,24 @@
             </div>
 
             <ion-buttons slot="end">
+              @if (collapsibleTileCounts) {
+                <ion-button
+                  fill="clear"
+                  color="light"
+                  data-testid="ability-tag-set-counts-toggle"
+                  [attr.aria-pressed]="tileCountsVisible()"
+                  [attr.aria-label]="t('counts.label')"
+                  [attr.title]="tileCountsVisible() ? t('counts.hide') : t('counts.show')"
+                  (click)="toggleTileCounts()"
+                >
+                  <ion-icon
+                    slot="icon-only"
+                    [icon]="tileCountsVisible() ? countsShownIcon : countsHiddenIcon"
+                    aria-hidden="true"
+                  ></ion-icon>
+                </ion-button>
+              }
+
               <ion-button
                 fill="clear"
                 color="light"
@@ -134,6 +152,30 @@
                 </ion-button>
               </div>
 
+              @if (showHelp) {
+                <section class="ability-tag-set-help">
+                  <button
+                    type="button"
+                    class="ability-tag-set-help__toggle"
+                    data-testid="ability-tag-set-help-toggle"
+                    [attr.aria-expanded]="helpOpen()"
+                    (click)="toggleHelp()"
+                  >
+                    <span>{{ t('help.title') }}</span>
+                    <span aria-hidden="true">{{ helpOpen() ? '-' : '+' }}</span>
+                  </button>
+
+                  @if (helpOpen()) {
+                    <div class="ability-tag-set-help__body">
+                      <p>{{ t('help.groups') }}</p>
+                      <p>{{ t('help.operators') }}</p>
+                      <p>{{ t('help.turns') }}</p>
+                      <p>{{ t('help.counts') }}</p>
+                    </div>
+                  }
+                </section>
+              }
+
               @if (isOverCap()) {
                 <p class="ability-tag-set-notice">
                   {{ t('sets.overCap', { max: maxSets, count: workingSelection().sets.length }) }}
@@ -229,7 +271,14 @@
                                 <span class="ability-tag-set-chip__badge" aria-hidden="true">{{
                                   chip.badge
                                 }}</span>
-                                <span class="ability-tag-set-chip__label">{{ chip.label }}</span>
+                                <span class="ability-tag-set-chip__label">
+                                  @if (chip.scopeLabel) {
+                                    <small class="ability-tag-set-chip__scope"
+                                      >{{ chip.scopeLabel }}:</small
+                                    >
+                                  }
+                                  {{ chip.label }}
+                                </span>
                                 @if (chip.supportsTurns) {
                                   <ion-select
                                     class="ability-tag-set-chip__turns"
@@ -409,6 +458,12 @@
                         }}</small>
                       </div>
 
+                      @if (section.description) {
+                        <p class="ability-tag-set-catalog__section-copy">
+                          {{ section.description }}
+                        </p>
+                      }
+
                       <div class="ability-tag-set-tile-grid">
                         @for (tile of section.tiles; track tile.item.key) {
                           <button
@@ -426,11 +481,18 @@
                               tile.badge
                             }}</span>
                             <span class="ability-tag-set-tile__copy">
+                              @if (tile.scopeLabel) {
+                                <small class="ability-tag-set-tile__scope">{{
+                                  tile.scopeLabel
+                                }}</small>
+                              }
                               <strong>{{ tile.item.label }}</strong>
                               <span class="ability-tag-set-tile__meta">
-                                <small>{{
-                                  t('catalog.matchCount', { count: tile.item.matchCount })
-                                }}</small>
+                                @if (tileCountsVisible()) {
+                                  <small>{{
+                                    t('catalog.matchCount', { count: tile.matchCount })
+                                  }}</small>
+                                }
                                 @if (tile.memberSetIndexes.length) {
                                   <small class="ability-tag-set-tile__member">{{
                                     t('catalog.alreadyInGroup', {

@@ -793,7 +793,7 @@ describe('AbilityTagSetPickerComponent', () => {
     // elements - which is what broke the Performance Budgets cron.
     expect(template).toContain("(tile.isCaptainScope ? 'captain-' : '')");
     expect(template).toContain("'ability-tag-set-tile-' +");
-    expect(template).toContain('cssClass="ability-tag-set-picker-modal"');
+    expect(template).toContain('[cssClass]="modalCssClass()"');
     expect(template).toContain('<app-ability-tag-set-picker-style-panels>');
     expect(template).toContain('(didPresent)="labelModalDialog($event, title || t(\'title\'))"');
     expect(template).toContain('(didDismiss)="onModalDidDismiss()"');
@@ -826,6 +826,78 @@ describe('AbilityTagSetPickerComponent', () => {
     expect(shellPanel).toContain('.ability-tag-set-content::part(scroll)');
     expect(shellPanel).toMatch(/::part\(scroll\)\s*\{[^}]*overflow:\s*hidden/);
     expect(shellPanel).toMatch(/\.ability-tag-set-canvas\s*\{[^}]*overflow-y:\s*auto/);
+  });
+
+  /*
+   * The host-opt-in guards. Every one of these inputs defaults off precisely so
+   * Characters, Character Boxes, Manual Team Builder, Crew Forge and Saved
+   * Enemies keep rendering what they render today; a regression here is a
+   * silent redesign of five pages nobody asked to change.
+   */
+  it('keeps every host opt-in off by default, so unchanged hosts render as before', () => {
+    const component = createComponent();
+    openComponent(component);
+
+    expect(component.modalCssClass()).toBe('ability-tag-set-picker-modal');
+    expect(component.collapsibleTileCounts).toBe(false);
+    expect(component.captainScopedTileCounts).toBe(false);
+    expect(component.showHelp).toBe(false);
+    expect(component.scopeMarkers).toBe(false);
+    // Counts stay visible where the host never asked for the toggle.
+    expect(component.tileCountsVisible()).toBe(true);
+    expect(tileFor(component, 'captain_boost_atk')?.matchCount).toBe(3);
+    expect(tileFor(component, 'captain_boost_atk')?.scopeLabel).toBe('');
+    expect(component.filteredSections()[0]?.description).toBe('');
+  });
+
+  it('appends the host scope class to the modal without dropping its own', () => {
+    const component = createComponent({ modalScopeClass: 'captain-coverage-ability-modal' });
+
+    expect(component.modalCssClass()).toBe(
+      'ability-tag-set-picker-modal captain-coverage-ability-modal',
+    );
+  });
+
+  it('hides the per-tile counts behind the header toggle only where the host opted in', () => {
+    const component = createComponent({ collapsibleTileCounts: true });
+    openComponent(component);
+
+    expect(component.tileCountsVisible()).toBe(false);
+
+    component.toggleTileCounts();
+    expect(component.tileCountsVisible()).toBe(true);
+
+    // Reopening starts hidden again: the modal resets every other piece of its
+    // own state on open, and a half-remembered toggle would read as a bug.
+    openComponent(component);
+    expect(component.tileCountsVisible()).toBe(false);
+  });
+
+  it('reports the captain-scoped count on captain tiles when the host opted in', () => {
+    const component = createComponent({ captainScopedTileCounts: true });
+    openComponent(component);
+
+    // Crew-wide says 3, but only character 7 carries it AS a Captain Ability -
+    // and the captain-scoped filter can only ever return that one.
+    expect(tileFor(component, 'captain_boost_atk')?.matchCount).toBe(1);
+    // A non-captain section is untouched by the opt-in.
+    expect(tileFor(component, 'boost_atk')?.matchCount).toBe(3);
+  });
+
+  it('marks captain-scope tiles and chips with their section name when asked', () => {
+    const component = createComponent({ scopeMarkers: true });
+    openComponent(component);
+    component.addSet();
+    component.toggleCatalogItem(CAPTAIN_BOOST_ATK, true);
+
+    expect(tileFor(component, 'captain_boost_atk')?.scopeLabel).toBe('Captain effects');
+    expect(component.setCards()[0]?.chips[0]?.scopeLabel).toBe('Captain effects');
+
+    const plain = createComponent();
+    openComponent(plain);
+    plain.addSet();
+    plain.toggleCatalogItem(CAPTAIN_BOOST_ATK, true);
+    expect(plain.setCards()[0]?.chips[0]?.scopeLabel).toBe('');
   });
 });
 
@@ -879,7 +951,18 @@ function createSections(): AbilityTagSetPickerSection[] {
 }
 
 function createComponent(
-  overrides: Partial<Pick<AbilityTagSetPickerComponent, 'allowSelectionOperator' | 'maxSets'>> = {},
+  overrides: Partial<
+    Pick<
+      AbilityTagSetPickerComponent,
+      | 'allowSelectionOperator'
+      | 'maxSets'
+      | 'modalScopeClass'
+      | 'collapsibleTileCounts'
+      | 'captainScopedTileCounts'
+      | 'showHelp'
+      | 'scopeMarkers'
+    >
+  > = {},
 ): AbilityTagSetPickerComponent {
   const component = new AbilityTagSetPickerComponent();
 
@@ -902,7 +985,9 @@ function openComponent(component: AbilityTagSetPickerComponent): void {
 function tileFor(
   component: AbilityTagSetPickerComponent,
   key: string,
-): { memberSetIndexes: number[]; inActiveSet: boolean } | undefined {
+):
+  | { memberSetIndexes: number[]; inActiveSet: boolean; matchCount: number; scopeLabel: string }
+  | undefined {
   return component
     .filteredSections()
     .flatMap((section) => section.tiles)
