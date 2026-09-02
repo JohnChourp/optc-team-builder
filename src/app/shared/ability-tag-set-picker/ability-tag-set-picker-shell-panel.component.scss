@@ -128,3 +128,52 @@
   background: rgba(245, 200, 76, 0.1);
   color: rgba(248, 251, 255, 0.86);
 }
+
+/*
+ * The always-available "how this filter works" block. Rendered only for hosts
+ * that pass `showHelp`, and collapsed by default so it costs no modal height
+ * until it is opened - the point is that it survives once a group exists,
+ * unlike the zero-state explainer it complements.
+ */
+.ability-tag-set-help {
+  margin: 0 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ability-tag-set-help__toggle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+}
+
+.ability-tag-set-help__toggle:focus-visible {
+  outline: 2px solid var(--ion-color-warning);
+  outline-offset: 2px;
+}
+
+.ability-tag-set-help__body {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.ability-tag-set-help__body p {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}

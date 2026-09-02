@@ -1228,10 +1228,8 @@ describe('CaptainCoveragePage', () => {
       'Bind Reducer',
     ]);
     expect(page.resultCards().map((card) => card.abilityMatchCount)).toEqual([1, 1]);
-    expect(page.abilityFilterRailItems()[1]).toMatchObject({
-      category: 'special',
-      count: 2,
-    });
+    expect(page.hasSelectedAbilityTags()).toBe(true);
+    expect(page.abilityTagSetChips()).toHaveLength(1);
   });
 
   it('ANDs separate tag sets and ORs the tags inside one set', async () => {
@@ -1508,7 +1506,7 @@ describe('CaptainCoveragePage', () => {
     ]);
   });
 
-  it('adds Required to the rail and opens or clears the one tag-set picker', async () => {
+  it('builds every ability section and opens or clears the one tag-set picker', async () => {
     const { page } = createPage({
       abilityCatalog: createAbilityCatalog([
         createAbilityCatalogItem(
@@ -1523,13 +1521,6 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
 
-    expect(page.abilityFilterRailItems().map((item) => item.category)).toEqual([
-      'captainAbility',
-      'special',
-      'crewmate',
-      'potential',
-      'support',
-    ]);
     expect(page.abilityTagSetPickerSections().map((section) => section.category)).toEqual([
       'captainAbility',
       'special',
@@ -1542,14 +1533,13 @@ describe('CaptainCoveragePage', () => {
       label: 'Required',
       captainAbility: true,
     });
-    expect(page.abilityFilterRailItems()[0]).toMatchObject({
-      category: 'captainAbility',
-      label: 'Required',
-      count: 0,
-      disabled: false,
-    });
+    expect(page.hasAbilityFilterSections()).toBe(true);
+    expect(page.hasSelectedAbilityTags()).toBe(false);
+    expect(page.abilityFilterTriggerLabel()).toBe(
+      'captain-coverage.filters.abilityTagSets.trigger.empty',
+    );
 
-    page.openAbilityFilterCategory('captainAbility');
+    page.openAbilityTagSetPicker();
     expect(page.abilityTagSetPickerOpen()).toBe(true);
 
     page.saveAbilityTagSetSelection(
@@ -1557,21 +1547,18 @@ describe('CaptainCoveragePage', () => {
     );
     expect(page.abilityTagSetPickerOpen()).toBe(false);
     expect(page.tagSetSelection().sets).toHaveLength(1);
-    expect(page.abilityFilterRailItems()[0]).toMatchObject({
-      category: 'captainAbility',
-      count: 1,
-    });
-    expect(page.abilityFilterRailItems()[1]).toMatchObject({
-      category: 'special',
-      count: 0,
-    });
+    expect(page.abilityTagSetChips()).toHaveLength(1);
+    expect(page.abilityFilterTriggerLabel()).toBe(
+      'captain-coverage.filters.abilityTagSets.trigger.active',
+    );
 
-    page.clearAbilityFilterCategory('captainAbility');
+    page.clearSelectedAbilityTags();
     expect(page.tagSetSelection().sets).toEqual([]);
-    expect(page.abilityFilterRailItems()[0]).toMatchObject({ count: 0 });
+    expect(page.abilityTagSetChips()).toEqual([]);
+    expect(page.hasSelectedAbilityTags()).toBe(false);
   });
 
-  it('clears only the chip category and drops sets emptied by that clear', async () => {
+  it('drops one whole group when its page chip is removed, and leaves the rest', async () => {
     const { page } = createPage({
       abilityCatalog: createAbilityCatalog([
         createAbilityCatalogItem('remove_bind', 'Remove Bind', 'special', [2001]),
@@ -1587,14 +1574,15 @@ describe('CaptainCoveragePage', () => {
       ]),
     );
 
-    expect(page.abilityFilterRailItems().map((item) => item.count)).toEqual([0, 1, 0, 2, 0]);
+    expect(page.abilityTagSetChips().map((chip) => chip.id)).toEqual(['set-1', 'set-2']);
 
-    page.clearAbilityFilterCategory('potential');
+    page.removeAbilityTagSet('set-2');
 
-    expect(page.abilityFilterRailItems().map((item) => item.count)).toEqual([0, 1, 0, 0, 0]);
+    expect(page.abilityTagSetChips().map((chip) => chip.id)).toEqual(['set-1']);
     expect(page.tagSetSelection().sets).toHaveLength(1);
     expect(page.tagSetSelection().sets[0]?.requirements.map((item) => item.abilityKey)).toEqual([
       'remove_bind',
+      'reduce_bind',
     ]);
   });
 
@@ -1906,12 +1894,9 @@ describe('CaptainCoveragePage', () => {
       'Early Bind Reducer',
       'Leader Before Filters',
     ]);
-    expect(page.abilityFilterRailItems()[1]).toMatchObject({
-      category: 'special',
-      disabled: false,
-    });
+    expect(page.hasAbilityFilterSections()).toBe(true);
 
-    page.openAbilityFilterCategory('special');
+    page.openAbilityTagSetPicker();
     expect(page.abilityTagSetPickerOpen()).toBe(true);
 
     page.saveAbilityTagSetSelection(createTagSetSelection([{ abilityKeys: ['remove_bind'] }]));
@@ -2245,10 +2230,15 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('(click)="scrollToResults()"');
     expect(template).toContain('<section class="results-panel glass-card" #resultsPanel>');
     expect(template).toContain('class="results-toolbar__heading"');
-    expect(template).toContain('<app-ability-filter-rail');
+    expect(template).not.toContain('<app-ability-filter-rail');
+    expect(template).toContain('data-testid="captain-coverage-ability-filter-trigger"');
+    expect(template).toContain('abilityFilterTriggerLabel()');
+    expect(template).toContain('removeAbilityTagSet(chip.id)');
+    expect(template).toContain('clearSelectedAbilityTags()');
+    expect(template).toContain('abilityFilterSupportText()');
     expect(template).toContain('class="results-toolbar__toggle-grid"');
     expect(template).toContain('[disabled]="loading()"');
-    expect(template).toContain('openAbilityFilterCategory($event)');
+    expect(template).toContain('openAbilityTagSetPicker()');
     expect(template).toContain('abilityMatchRankingEnabled()');
     expect(template).toContain('abilityMatchRankingDisabled()');
     expect(template).toContain('onAbilityMatchRankingChange($event)');
@@ -2286,7 +2276,13 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('[selection]="tagSetSelection()"');
     expect(template).toContain('(dismiss)="closeAbilityTagSetPicker()"');
     expect(template).toContain('(saveSelection)="saveAbilityTagSetSelection($event)"');
-    expect(template).toContain('clearAbilityFilterCategory($event)');
+    expect(template).toContain('modalScopeClass="captain-coverage-ability-modal"');
+    expect(template).toContain('[collapsibleTileCounts]="true"');
+    expect(template).toContain('[captainScopedTileCounts]="true"');
+    expect(template).toContain('[showHelp]="true"');
+    expect(template).toContain('[scopeMarkers]="true"');
+    expect(template).toContain('@for (card of visibleResultCards(); track');
+    expect(template).toContain('data-testid="captain-coverage-load-more"');
     expect(template).not.toContain('<app-ability-requirement-picker');
     expect(template).not.toContain('<app-special-ability-picker');
     expect(template).not.toContain('captainAbilityDrafts()');
@@ -2436,6 +2432,88 @@ describe('CaptainCoveragePage', () => {
         translations.filters.tierCoverage.toggle,
       ]).toEqual(['Required', 'Super Tandem', 'Super Types/Classes', 'Tier Coverage']);
     }
+  });
+
+  /*
+   * Measured on 2026-09-02 against a local production build: opening the
+   * ability modal with all 4,613 cards painted cost 2,675 ms on a 4x
+   * CPU-throttled phone, against 249 ms with 61 painted and 275 ms with none.
+   * The cap is the fix for that, so it has to hold - and it has to reset, or a
+   * search that narrows the list still pays for the slots a previous "show
+   * more" opened.
+   */
+  it('paints one page of results, shows the rest on demand, and resets when the filters move', async () => {
+    const { page } = createPage({
+      characters: Array.from({ length: 250 }, (_, index) =>
+        createCharacter({ id: 3000 + index, name: `Crew ${index}` }),
+      ),
+    });
+
+    await page.ngOnInit();
+
+    expect(page.totalMatchingCharacters()).toBe(250);
+    expect(page.visibleResultCards()).toHaveLength(100);
+    expect(page.hasMoreResults()).toBe(true);
+    expect(page.remainingResultCount()).toBe(150);
+
+    page.loadMoreResults();
+    expect(page.visibleResultCards()).toHaveLength(200);
+
+    page.loadMoreResults();
+    expect(page.visibleResultCards()).toHaveLength(250);
+    expect(page.hasMoreResults()).toBe(false);
+    expect(page.remainingResultCount()).toBe(0);
+
+    // A narrower list starts at page one again.
+    page.onSearchChange({ detail: { value: 'Crew 1' } } as CustomEvent<{ value?: string | null }>);
+    expect(page.totalMatchingCharacters()).toBeLessThan(250);
+    expect(page.visibleResultCards().length).toBeLessThanOrEqual(100);
+
+    // Coming back to the identical list restores where the user was, because
+    // the page is keyed on which characters matched, not on when they matched.
+    page.onSearchChange({ detail: { value: '' } } as CustomEvent<{ value?: string | null }>);
+    expect(page.totalMatchingCharacters()).toBe(250);
+    expect(page.visibleResultCards()).toHaveLength(250);
+  });
+
+  /*
+   * The regression the first cut of this feature shipped: the page position was
+   * keyed on the identity of the resultCards array, and `resultCards` reads the
+   * team slots for each card's leader/sub-slot state. Every add-to-team then
+   * silently collapsed the painted list back to the first page, throwing the
+   * user's scroll position away at the moment they acted on a card.
+   */
+  it('keeps the paged position when a result is assigned to the team', async () => {
+    const { page } = createPage({
+      characters: Array.from({ length: 250 }, (_, index) =>
+        createCharacter({ id: 3000 + index, name: `Crew ${index}` }),
+      ),
+    });
+
+    await page.ngOnInit();
+    page.loadMoreResults();
+    const paged = page.visibleResultCards().length;
+    expect(paged).toBe(200);
+
+    const target = page.visibleResultCards().at(-1);
+    expect(target?.assignableSlotIndex).not.toBeNull();
+
+    page.assignCharacterFromResult(target!);
+
+    expect(page.selectedTeamSlots().some((slot) => slot !== null)).toBe(true);
+    // The assigned character drops out of the list, but the user's position in
+    // it does not: the page is re-anchored across the team write.
+    expect(page.visibleResultCards().length).toBe(paged);
+
+    const filledSlot = page.selectedTeamSlots().findIndex((slot) => slot !== null);
+    page.clearTeamSlot(filledSlot);
+
+    expect(page.selectedTeamSlots().every((slot) => slot === null)).toBe(true);
+    expect(page.visibleResultCards().length).toBe(paged);
+
+    // A real filter change still starts over.
+    page.onSearchChange({ detail: { value: 'Crew 1' } } as CustomEvent<{ value?: string | null }>);
+    expect(page.visibleResultCards().length).toBeLessThanOrEqual(100);
   });
 });
 

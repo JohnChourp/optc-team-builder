@@ -81,5 +81,17 @@
     "alreadyInGroup": "already in group {{groups}}",
     "emptySearchTitle": "No tags matched",
     "emptySearchCopy": "Try a different search term."
+  },
+  "counts": {
+    "show": "Show how many characters have each ability",
+    "hide": "Hide how many characters have each ability",
+    "label": "Character counts"
+  },
+  "help": {
+    "title": "How this filter works",
+    "groups": "A group is a set of abilities you want together. Add as many groups as you need; a character must satisfy every group to appear in the results.",
+    "operators": "Each group matches in one of two ways: \"Has any of these\" needs one tag from the group, \"Has all of these\" needs every tag in it.",
+    "turns": "Abilities that last a number of turns get a minimum-turns selector, so you can ask for the ability only when it lasts long enough.",
+    "counts": "The number under an ability is how many characters carry it. In the captain section it counts only characters that carry it as a Captain Ability."
   }
 }

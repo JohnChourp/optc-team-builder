@@ -19,7 +19,6 @@
     "title": "Browse χαρακτήρες για Captain Coverage"
   },
   "filters": {
-    "abilityRailLabel": "Ability filters",
     "abilityTagSetsTitle": "Φίλτρο ability tags",
     "bestAbilityMatchesFirst": "Πρώτα τα καλύτερα ability matches",
     "captainAbilityEyebrow": "Required",
@@ -94,6 +93,29 @@
     "type": {
       "label": "Type",
       "placeholder": "Φίλτρο ανά type"
+    },
+    "abilityTagSets": {
+      "label": "Ability filters",
+      "trigger": {
+        "empty": "Επίλεξε ability filters",
+        "active": "{{tags}} φίλτρο/α σε {{groups}} group(s)"
+      },
+      "joiners": {
+        "any": "ή",
+        "all": "και"
+      },
+      "removeGroup": "Αφαίρεσε το group abilities {{group}}",
+      "support": {
+        "empty": "Ένα κουμπί για κάθε είδος ability filter: captain, special, crewmate, potential και support. Ομαδοποίησέ τα με OR μέσα σε ένα group και AND ανάμεσα στα groups.",
+        "active": "Εμφανίζονται χαρακτήρες που ταιριάζουν με κάθε group abilities. Αφαίρεσε ένα group από το chip του ή άνοιξε ξανά το φίλτρο για επεξεργασία."
+      },
+      "sections": {
+        "captainAbility": "Abilities που πρέπει να έχει ο χαρακτήρας ως Captain Ability. Οι αριθμοί εδώ μετρούν μόνο captains, γι’ αυτό είναι μικρότεροι από τους γενικούς.",
+        "special": "Abilities από το ενεργοποιημένο special του χαρακτήρα.",
+        "crewmate": "Sailor abilities που έχει ο χαρακτήρας όταν πολεμά ως crewmate.",
+        "potential": "Potential abilities, μαζί με Super Tandem, Final Tap και Rush Sugo.",
+        "support": "Abilities που δίνει ο χαρακτήρας στον crewmate που υποστηρίζει."
+      }
     }
   },
   "loading": "Φόρτωση captain δεδομένων...",
@@ -102,8 +124,9 @@
     "openCharacterDetails": "Άνοιγμα character details",
     "title": "Character αποτελέσματα",
     "titleWithCount": "{{count}} matching characters",
-    "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που εμφανίζονται",
-    "notBoostedBadge": "Δεν ενισχύεται από αυτόν τον Captain"
+    "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που ταιριάζουν",
+    "notBoostedBadge": "Δεν ενισχύεται από αυτόν τον Captain",
+    "loadMore": "Δείξε περισσότερα (απομένουν {{count}})"
   },
   "search": {
     "placeholder": "Αναζήτηση στα character results..."

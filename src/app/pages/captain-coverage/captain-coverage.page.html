@@ -194,23 +194,76 @@
             </h2>
           </div>
 
-          <app-ability-filter-rail
-            class="coverage-ability-filters"
-            [items]="abilityFilterRailItems()"
-            [ariaLabel]="t('filters.abilityRailLabel')"
-            [disabled]="loading()"
-            (selectCategory)="openAbilityFilterCategory($event)"
-            (clearCategory)="clearAbilityFilterCategory($event)"
-          ></app-ability-filter-rail>
+          <div class="coverage-tag-filter coverage-ability-filters">
+            <div class="coverage-tag-filter__header">
+              <span class="coverage-tag-filter__label">
+                {{ t('filters.abilityTagSets.label') }}
+              </span>
+              @if (hasSelectedAbilityTags()) {
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  color="warning"
+                  data-testid="captain-coverage-ability-filter-clear"
+                  [disabled]="loading()"
+                  (click)="clearSelectedAbilityTags()"
+                >
+                  {{ 'common.actions.clear' | transloco }}
+                </ion-button>
+              }
+            </div>
 
-          <app-ability-tag-set-picker
-            [isOpen]="abilityTagSetPickerOpen()"
-            [title]="t('filters.abilityTagSetsTitle')"
-            [sections]="abilityTagSetPickerSections()"
-            [selection]="tagSetSelection()"
-            (dismiss)="closeAbilityTagSetPicker()"
-            (saveSelection)="saveAbilityTagSetSelection($event)"
-          ></app-ability-tag-set-picker>
+            <div class="character-tag-combobox">
+              <ion-button
+                expand="block"
+                fill="outline"
+                color="light"
+                data-testid="captain-coverage-ability-filter-trigger"
+                [attr.aria-label]="t('filters.abilityTagSets.label')"
+                [disabled]="loading() || !hasAbilityFilterSections()"
+                (click)="openAbilityTagSetPicker()"
+              >
+                <ion-icon slot="start" [icon]="characterTagFilterIcon" aria-hidden="true"></ion-icon>
+                {{ abilityFilterTriggerLabel() }}
+              </ion-button>
+            </div>
+
+            @if (abilityTagSetChips().length) {
+              <div class="selected-values-row">
+                @for (chip of abilityTagSetChips(); track chip.id) {
+                  <button
+                    type="button"
+                    class="selected-value-chip"
+                    [attr.data-testid]="'captain-coverage-ability-filter-chip-' + chip.id"
+                    [attr.aria-label]="chip.removeLabel"
+                    [disabled]="loading()"
+                    (click)="removeAbilityTagSet(chip.id)"
+                  >
+                    {{ chip.label }}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                }
+              </div>
+            }
+
+            <small class="coverage-tag-filter__support">
+              {{ abilityFilterSupportText() }}
+            </small>
+
+            <app-ability-tag-set-picker
+              [isOpen]="abilityTagSetPickerOpen()"
+              [title]="t('filters.abilityTagSetsTitle')"
+              [sections]="abilityTagSetPickerSections()"
+              [selection]="tagSetSelection()"
+              modalScopeClass="captain-coverage-ability-modal"
+              [collapsibleTileCounts]="true"
+              [captainScopedTileCounts]="true"
+              [showHelp]="true"
+              [scopeMarkers]="true"
+              (dismiss)="closeAbilityTagSetPicker()"
+              (saveSelection)="saveAbilityTagSetSelection($event)"
+            ></app-ability-tag-set-picker>
+          </div>
 
           <div class="results-toolbar__toggle-grid">
             <label
@@ -540,7 +593,7 @@
           </div>
         } @else {
           <div class="captain-result-list">
-            @for (card of resultCards(); track trackCharacter($index, card)) {
+            @for (card of visibleResultCards(); track trackCharacter($index, card)) {
               <article class="captain-result">
                 <a
                   class="captain-result__thumb"
@@ -613,6 +666,20 @@
               </article>
             }
           </div>
+
+          @if (hasMoreResults()) {
+            <div class="captain-result-more">
+              <ion-button
+                expand="block"
+                fill="outline"
+                color="light"
+                data-testid="captain-coverage-load-more"
+                (click)="loadMoreResults()"
+              >
+                {{ t('results.loadMore', { count: remainingResultCount() }) }}
+              </ion-button>
+            </div>
+          }
         }
       </section>
       </div>
