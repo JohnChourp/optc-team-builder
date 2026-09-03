@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.2.1',
+    date: '2026-09-03',
+    userVisible: true,
+    headline: {
+      en: 'The Captain Coverage crown is properly round',
+      el: 'Το στέμμα στο Captain Coverage έγινε επιτέλους στρογγυλό',
+    },
+    summaryEn:
+      'The little crown button in the top-right corner of each Captain Coverage result card was not quite round: four pale, see-through triangles poked out past its edge, one at each corner, so it looked like a circle sitting inside a faint square box. Those corners were the shine across the top of the crown, which was being drawn square over a round button. It is a clean circle now, with the shine curving along the round edge. Pressing it still does exactly what it did — it asks whether you want that character as Captain or Friend Captain.',
+    summaryEl:
+      'Το κουμπί με το στέμμα, πάνω δεξιά σε κάθε κάρτα αποτελεσμάτων του Captain Coverage, δεν ήταν εντελώς στρογγυλό: σε κάθε γωνία ξεπεταγόταν κι από ένα χλωμό, ημιδιάφανο τριγωνάκι, σαν να κάθεται ο κύκλος μέσα σε ένα αχνό τετράγωνο πλαίσιο. Αυτά τα τριγωνάκια ήταν οι γωνίες της γυαλάδας στο πάνω μέρος του στέμματος, που σχεδιαζόταν τετράγωνη πάνω σε στρογγυλό κουμπί. Τώρα ο κύκλος είναι καθαρός και η γυαλάδα ακολουθεί τη στρογγυλή άκρη. Το κουμπί κάνει ακριβώς ό,τι έκανε: το πατάς και σε ρωτάει αν θέλεις τον χαρακτήρα ως Captain ή ως Friend Captain.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: 'On Captain Coverage, the crown button in the top-right corner of each result card is a clean circle — the four pale see-through triangles that poked out past its corners are gone, and the shine now curves along the round edge instead of squaring off at them.',
+        el: 'Στο Captain Coverage, το κουμπί με το στέμμα πάνω δεξιά σε κάθε κάρτα αποτελεσμάτων είναι πλέον καθαρός κύκλος — τα τέσσερα χλωμά ημιδιάφανα τριγωνάκια που ξεπετάγονταν από τις γωνίες του έφυγαν, και η γυαλάδα ακολουθεί τώρα τη στρογγυλή άκρη αντί να αγκωνιάζει.',
+      },
+    ],
+  },
+  {
     version: '0.2.0',
     date: '2026-09-03',
     userVisible: true,
