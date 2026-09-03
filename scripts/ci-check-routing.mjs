@@ -104,6 +104,10 @@ export const SCRIPT_SUITES = {
     label: 'Ionic overlay contrast tests',
     command: 'npm run test:overlay-contrast',
   },
+  'whats-new': {
+    label: "What's New changelog tests",
+    command: 'npm run test:whats-new',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -317,6 +321,16 @@ function isE2ePath(filePath) {
  * The theme tokens and the global stylesheet decide every Ionic overlay's text
  * colour, so a change to either has to re-run the contrast guard.
  */
+/** The changelog data and its guard; a release must not forget its entry. */
+function isWhatsNewPath(filePath) {
+  return (
+    filePath === 'src/app/core/data/whats-new.data.ts' ||
+    filePath === 'scripts/check-whats-new.mjs' ||
+    filePath === 'scripts/check-whats-new.spec.ts' ||
+    filePath.startsWith('src/app/shared/whats-new/')
+  );
+}
+
 function isOverlayContrastPath(filePath) {
   return (
     filePath === 'src/theme/variables.scss' ||
@@ -563,6 +577,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       runQuarantine = true;
       addScriptSuite(scriptSuites, 'e2e-triage');
       continue;
+    }
+
+    if (isWhatsNewPath(filePath)) {
+      categories.add('whats-new');
+      addScriptSuite(scriptSuites, 'whats-new');
     }
 
     if (isOverlayContrastPath(filePath)) {

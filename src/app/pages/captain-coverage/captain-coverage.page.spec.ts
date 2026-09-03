@@ -2718,9 +2718,14 @@ describe('CaptainCoveragePage', () => {
     const filterStyles = readCaptainCoverageStyles('captain-coverage-filter-panel');
     const teamStyles = readCaptainCoverageStyles('captain-coverage-team-panel');
 
-    expect(tierStyles).toContain(
-      '.results-toolbar__toggle-grid .ability-rank-toggle--tier {\n  grid-column: 1 / -1;',
-    );
+    /*
+     * The three filter cards flow in one auto-fit row and wrap only when a
+     * track would fall under the readable minimum. `align-items: start` is the
+     * load-bearing half: without it the tall tier card pads its neighbours with
+     * exactly the empty space this pass removed.
+     */
+    expect(tierStyles).toContain('align-items: start;');
+    expect(tierStyles).not.toContain('grid-column: 1 / -1;');
     // The floor is no longer scoped to the ability trigger alone.
     expect(filterStyles).toContain('.coverage-tag-filter .character-tag-combobox ion-button');
     expect(filterStyles).not.toContain('.coverage-ability-filters .character-tag-combobox ion-button');

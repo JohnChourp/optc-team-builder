@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, type IsActiveMatchOptions } from '@angular/router';
 import {
   IonAccordion,
@@ -30,10 +30,12 @@ import {
   saveOutline,
   shieldCheckmarkOutline,
   shieldHalfOutline,
+  sparklesOutline,
 } from 'ionicons/icons';
 import { type SupportedLanguage } from '../core/i18n/app-i18n.types';
 import { AppI18nService } from '../core/services/app-i18n.service';
 import { GoogleAccountService } from '../core/services/google-account.service';
+import { WhatsNewModalComponent } from '../shared/whats-new/whats-new-modal.component';
 
 interface NavigationItem {
   icon: string | readonly string[];
@@ -70,6 +72,7 @@ interface NavigationGroup {
     IonRouterOutlet,
     IonTitle,
     IonToolbar,
+    WhatsNewModalComponent,
     RouterLink,
     RouterLinkActive,
     TranslocoPipe,
@@ -182,6 +185,19 @@ export class TabsPage {
       ],
     },
   ];
+  /** Sits directly above Settings in the menu footer. */
+  public readonly whatsNewNavItem: NavigationItem = {
+    icon: sparklesOutline,
+    labelKey: 'tabs.whatsNew',
+    route: '',
+  };
+  /**
+   * Two signals, not one: `requested` latches so the deferred chunk is fetched
+   * once and stays, while `open` drives the modal and flips back on dismiss.
+   * Sharing one signal would tear the modal out of the DOM mid-dismiss.
+   */
+  public readonly whatsNewRequested = signal(false);
+  public readonly whatsNewOpen = signal(false);
   public readonly settingsNavItem: NavigationItem = {
     icon: cogOutline,
     labelKey: 'tabs.settings',
@@ -192,6 +208,15 @@ export class TabsPage {
 
     return profile?.name ?? profile?.email ?? '';
   });
+
+  public openWhatsNew(): void {
+    this.whatsNewRequested.set(true);
+    this.whatsNewOpen.set(true);
+  }
+
+  public closeWhatsNew(): void {
+    this.whatsNewOpen.set(false);
+  }
 
   public async onLanguageSelect(language: SupportedLanguage): Promise<void> {
     if (language === this.activeLanguage()) {

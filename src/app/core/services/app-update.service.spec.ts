@@ -296,15 +296,23 @@ describe('AppUpdateService', () => {
       expect(service.downloadProgress()).toBe(UPDATE_PROGRESS_MIN);
     });
 
-    it('drops back to idle when the install fails for the tracked version', async () => {
+    it('keeps the banner up in a failed phase when the install fails, instead of vanishing', () => {
       const { service, versionUpdates } = createService();
 
       service.init();
       versionUpdates.next(versionDetectedEvent('v1'));
+      expect(service.updatePhase()).toBe('downloading');
+
       versionUpdates.next(versionFailedEvent('v1'));
 
-      expect(service.updatePhase()).toBe('idle');
-      expect(service.updateAvailable()).toBe(false);
+      /*
+       * The whole point of the phase. Tearing the banner down here is what made
+       * a real service-worker install failure look like the UI flickering for
+       * no reason - the reader saw a banner appear and vanish with nothing said.
+       */
+      expect(service.updatePhase()).toBe('failed');
+      expect(service.updateAvailable()).toBe(true);
+      expect(service.updateActivatable()).toBe(false);
       expect(service.downloadProgress()).toBe(0);
     });
 

@@ -237,6 +237,7 @@ describe('ci-check-routing', () => {
       'e2e-triage',
       'pwa-shell',
       'overlay-contrast',
+      'whats-new',
     ]);
   });
 

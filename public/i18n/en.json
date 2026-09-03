@@ -432,7 +432,8 @@
     "savedRumbleTeams": "Saved Rumble Teams",
     "savedEnemies": "Saved Enemies",
     "settings": "Settings",
-    "savedTeams": "Saved Teams"
+    "savedTeams": "Saved Teams",
+    "whatsNew": "What's new"
   },
   "analyticsConsent": {
     "banner": {
@@ -451,6 +452,7 @@
     "downloading": "Downloading the new version…",
     "downloadedNative": "The new version has downloaded. Confirm the install to finish.",
     "downloadStalled": "This is taking longer than usual. The download is still running.",
+    "downloadFailed": "The update could not be downloaded. We will try again shortly.",
     "progressLabel": "Update download progress",
     "update": "Update",
     "later": "Later",
@@ -488,5 +490,13 @@
     "cost": "Missing value for 'totals.cost'",
     "hp": "Missing value for 'totals.hp'",
     "rcv": "Missing value for 'totals.rcv'"
+  },
+  "whatsNew": {
+    "eyebrow": "Release history",
+    "title": "What's new",
+    "copy": "Every version of OPTC Team Builder, newest first, in plain language.",
+    "added": "Added",
+    "improved": "Improved",
+    "fixed": "Fixed"
   }
 }

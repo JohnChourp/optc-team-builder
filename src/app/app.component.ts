@@ -74,7 +74,11 @@ const defaultSeo: RouteSeoData = {
       @if (showUpdateBanner() || showInstallBanner() || showAnalyticsConsentBanner()) {
         <div class="app-floating-banners">
           @if (showUpdateBanner()) {
-            <section class="app-update-banner" aria-live="polite">
+            <section
+              class="app-update-banner"
+              aria-live="polite"
+              [attr.data-update-phase]="updateBannerPhase()"
+            >
               <div class="app-update-banner__copy">
                 <strong>{{ 'appUpdate.title' | transloco }}</strong>
                 <p>{{ updateCopyKey() | transloco }}</p>
@@ -252,6 +256,12 @@ export class AppComponent {
       return 'appUpdate.copyNative';
     }
 
+    // A failed install used to tear the banner down silently, which read as the
+    // UI flickering. It now says what happened and that a retry is coming.
+    if (this.appUpdateService.updatePhase() === 'failed') {
+      return 'appUpdate.downloadFailed';
+    }
+
     if (this.appUpdateService.updateStalled()) {
       return 'appUpdate.downloadStalled';
     }
@@ -281,7 +291,15 @@ export class AppComponent {
   public readonly showUpdateProgress = computed(() =>
     this.nativeUpdateService.availableUpdate()
       ? this.nativeUpdateService.updatePhase() !== 'idle'
-      : this.appUpdateService.updatePhase() !== 'idle',
+      : // Not `!== 'idle'`: a failed banner would otherwise render a 0% bar.
+        this.appUpdateService.updatePhase() === 'downloading' ||
+        this.appUpdateService.updatePhase() === 'ready',
+  );
+  /** The phase the banner is rendering, so a test can assert state, not copy. */
+  public readonly updateBannerPhase = computed(() =>
+    this.nativeUpdateService.availableUpdate()
+      ? this.nativeUpdateService.updatePhase()
+      : this.appUpdateService.updatePhase(),
   );
   public readonly updateProgress = computed(() => {
     const raw = this.nativeUpdateService.availableUpdate()

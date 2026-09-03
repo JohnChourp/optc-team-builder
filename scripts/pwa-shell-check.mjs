@@ -3,6 +3,7 @@ import { chromium, request as playwrightRequest } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -32,7 +33,37 @@ const DEFAULT_ARTIFACT_DIR = fs.existsSync(path.resolve(ROOT_DIR, '..', 'optc-te
   : path.join(ROOT_DIR, 'test-results', 'pwa-shell');
 const ARTIFACT_DIR = path.resolve(process.env.PWA_SHELL_ARTIFACT_DIR || DEFAULT_ARTIFACT_DIR);
 const SCREENSHOT_DIR = path.join(ARTIFACT_DIR, 'screenshots');
-const TEMP_ROOT = path.join(ROOT_DIR, 'dist', `.pwa-shell-check-${process.pid}-${Date.now()}`);
+/*
+ * Deliberately NOT under dist/. A running `ng serve` writes into dist/ on every
+ * rebuild, and it wrote into this scratch tree while the run was tearing it
+ * down - the checks all passed and then the lane failed on
+ * `ENOTEMPTY .../dist/.pwa-shell-check-...`. The OS temp dir has no such writer.
+ */
+const TEMP_ROOT = path.join(
+  os.tmpdir(),
+  `optc-pwa-shell-check-${process.pid}-${Date.now()}`,
+);
+/**
+ * Removing the scratch tree must never turn a passing run into a failing lane.
+ * `rmSync` can still raise ENOTEMPTY when another process writes into the tree
+ * mid-delete, so retry briefly and then warn rather than throw: the artifacts
+ * are already written by this point and the directory is in the OS temp dir.
+ */
+function removeTempRoot() {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      fs.rmSync(TEMP_ROOT, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      return;
+    } catch (error) {
+      if (attempt === 2) {
+        console.warn(
+          `[pwa-shell] could not remove ${TEMP_ROOT}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+  }
+}
+
 const RELEASE_A_DIR = path.join(TEMP_ROOT, 'release-a');
 const RELEASE_B_DIR = path.join(TEMP_ROOT, 'release-b');
 const ROUTES = [
@@ -1005,7 +1036,7 @@ function failOnDiagnostics(diagnostics) {
 async function main() {
   ensureDir(ARTIFACT_DIR);
   ensureDir(SCREENSHOT_DIR);
-  fs.rmSync(TEMP_ROOT, { recursive: true, force: true });
+  removeTempRoot();
   ensureDir(TEMP_ROOT);
 
   const npm = npmCommand();
@@ -1087,7 +1118,7 @@ async function main() {
       await browser.close();
     }
     await serverHandle.close();
-    fs.rmSync(TEMP_ROOT, { recursive: true, force: true });
+    removeTempRoot();
   }
 }
 

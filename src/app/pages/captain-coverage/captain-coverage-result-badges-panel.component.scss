@@ -133,7 +133,8 @@
   --background-hover: linear-gradient(140deg, #142042 0%, #1e4a86 48%, #6fd8f7 100%);
   --background-activated: linear-gradient(140deg, #142042 0%, #1e4a86 48%, #6fd8f7 100%);
   --color: #f2fbff;
-  --border-radius: 12px;
+  /* A circle: it is a round badge on the card, not another rectangular button. */
+  --border-radius: 999px;
   /* Reads as a raised object at rest, before any hover. */
   --box-shadow:
     0 6px 16px rgba(3, 7, 18, 0.55),

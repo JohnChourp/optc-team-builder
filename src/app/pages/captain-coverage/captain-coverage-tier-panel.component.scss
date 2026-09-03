@@ -16,19 +16,32 @@
   min-width: 0;
 }
 
+/*
+ * All three filter cards flow in one auto-fit row and wrap to the next line
+ * only when a track would fall under the readable minimum - so Tier Coverage
+ * sits beside Super Types/Classes wherever it fits.
+ *
+ * `align-items: start` is what makes that safe. Grid rows stretch every cell to
+ * the tallest one by default, and the tier card is the tall one once its chips
+ * wrap; without this, giving it a neighbour would pad that neighbour with the
+ * empty space this whole pass set out to remove.
+ */
 .results-toolbar__toggle-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: start;
   gap: 12px;
 }
 
 /*
- * The tier group takes a row of its own however many chips it holds, so the
- * three toggles beside it are never stretched to its height and the chips wrap
- * onto a second line instead of forcing a wider track.
+ * The tier card stacks its label above its chips instead of putting them side
+ * by side like the two toggle cards do. Sharing a row with them, the `auto`
+ * chip column took 348px of a 449px track and squeezed the label to 62px - one
+ * word per line. Two class selectors so this wins on specificity rather than on
+ * which style panel happens to be instantiated last.
  */
 .results-toolbar__toggle-grid .ability-rank-toggle--tier {
-  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .ability-rank-toggle {

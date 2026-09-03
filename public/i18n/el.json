@@ -432,7 +432,8 @@
     "savedRumbleTeams": "Saved Rumble Teams",
     "savedEnemies": "Αποθηκευμένοι εχθροί",
     "settings": "Ρυθμίσεις",
-    "savedTeams": "Αποθηκευμένες ομάδες"
+    "savedTeams": "Αποθηκευμένες ομάδες",
+    "whatsNew": "Τι νέο υπάρχει"
   },
   "analyticsConsent": {
     "banner": {
@@ -451,6 +452,7 @@
     "downloading": "Γίνεται λήψη της νέας έκδοσης…",
     "downloadedNative": "Η νέα έκδοση κατέβηκε. Επιβεβαίωσε την εγκατάσταση για να ολοκληρωθεί.",
     "downloadStalled": "Η λήψη αργεί περισσότερο από το συνηθισμένο. Συνεχίζεται κανονικά.",
+    "downloadFailed": "Η λήψη της ενημέρωσης απέτυχε. Θα γίνει νέα προσπάθεια σε λίγο.",
     "progressLabel": "Πρόοδος λήψης ενημέρωσης",
     "update": "Ενημέρωση",
     "later": "Αργότερα",
@@ -488,5 +490,13 @@
     "cost": "Missing value for 'totals.cost'",
     "hp": "Missing value for 'totals.hp'",
     "rcv": "Missing value for 'totals.rcv'"
+  },
+  "whatsNew": {
+    "eyebrow": "Ιστορικό εκδόσεων",
+    "title": "Τι νέο υπάρχει",
+    "copy": "Κάθε έκδοση του OPTC Team Builder, από την πιο πρόσφατη, σε απλά λόγια.",
+    "added": "Προστέθηκαν",
+    "improved": "Βελτιώθηκαν",
+    "fixed": "Διορθώθηκαν"
   }
 }
