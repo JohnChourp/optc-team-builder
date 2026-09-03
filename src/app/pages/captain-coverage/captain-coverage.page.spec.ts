@@ -891,7 +891,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.characterTagSetSelection().sets[0]?.tags).toEqual(['straw hat pirates']);
   });
 
-  it('summarises the tag groups as removable chips and drops a whole group on remove', async () => {
+  it('keeps the tag groups in the modal and reports them only through the trigger label', async () => {
     const leader = createCharacter({
       id: 1001,
       name: 'Leader Tag Chips',
@@ -922,20 +922,19 @@ describe('CaptainCoveragePage', () => {
     );
 
     expect(page.hasSelectedCharacterTags()).toBe(true);
-    expect(page.characterTagSetChips()).toEqual([
-      {
-        id: 'crew',
-        label: 'Straw Hat Pirates or Heart Pirates',
-        removeLabel: 'Remove tag group Straw Hat Pirates or Heart Pirates',
-      },
-      { id: 'arc', label: 'Dressrosa', removeLabel: 'Remove tag group Dressrosa' },
-    ]);
+    // The page no longer echoes the groups as chips; the trigger label is the
+    // only on-page trace, and the groups themselves live inside the modal.
     expect(page.characterTagFilterTriggerLabel()).toBe('3 tag(s) in 2 group(s)');
     expect(page.characterTagFilterSupportText()).toBe('Matches every tag group.');
+    expect(page.characterTagSetSelection().sets.map((set) => set.id)).toEqual(['crew', 'arc']);
 
-    page.removeCharacterTagSet('crew');
+    // Dropping one group is now a save from the modal, not a chip press.
+    page.saveCharacterTagSetSelection(
+      createSelection([createCharacterTagSet(['Dressrosa'], 'all', 'arc')]),
+    );
 
-    expect(page.characterTagSetChips().map((chip) => chip.id)).toEqual(['arc']);
+    expect(page.characterTagSetSelection().sets.map((set) => set.id)).toEqual(['arc']);
+    expect(page.characterTagFilterTriggerLabel()).toBe('1 tag(s) in 1 group(s)');
     expect(page.selectedCharacterTags()).toEqual(['Dressrosa']);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
   });
@@ -1229,7 +1228,7 @@ describe('CaptainCoveragePage', () => {
     ]);
     expect(page.resultCards().map((card) => card.abilityMatchCount)).toEqual([1, 1]);
     expect(page.hasSelectedAbilityTags()).toBe(true);
-    expect(page.abilityTagSetChips()).toHaveLength(1);
+    expect(page.tagSetSelection().sets).toHaveLength(1);
   });
 
   it('ANDs separate tag sets and ORs the tags inside one set', async () => {
@@ -1547,18 +1546,18 @@ describe('CaptainCoveragePage', () => {
     );
     expect(page.abilityTagSetPickerOpen()).toBe(false);
     expect(page.tagSetSelection().sets).toHaveLength(1);
-    expect(page.abilityTagSetChips()).toHaveLength(1);
+    expect(page.tagSetSelection().sets).toHaveLength(1);
     expect(page.abilityFilterTriggerLabel()).toBe(
       'captain-coverage.filters.abilityTagSets.trigger.active',
     );
 
     page.clearSelectedAbilityTags();
     expect(page.tagSetSelection().sets).toEqual([]);
-    expect(page.abilityTagSetChips()).toEqual([]);
+    expect(page.tagSetSelection().sets).toEqual([]);
     expect(page.hasSelectedAbilityTags()).toBe(false);
   });
 
-  it('drops one whole group when its page chip is removed, and leaves the rest', async () => {
+  it('drops one whole group when the modal saves without it, and leaves the rest', async () => {
     const { page } = createPage({
       abilityCatalog: createAbilityCatalog([
         createAbilityCatalogItem('remove_bind', 'Remove Bind', 'special', [2001]),
@@ -1574,11 +1573,13 @@ describe('CaptainCoveragePage', () => {
       ]),
     );
 
-    expect(page.abilityTagSetChips().map((chip) => chip.id)).toEqual(['set-1', 'set-2']);
+    expect(page.tagSetSelection().sets.map((set) => set.id)).toEqual(['set-1', 'set-2']);
 
-    page.removeAbilityTagSet('set-2');
+    page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_bind', 'reduce_bind'] }]),
+    );
 
-    expect(page.abilityTagSetChips().map((chip) => chip.id)).toEqual(['set-1']);
+    expect(page.tagSetSelection().sets.map((set) => set.id)).toEqual(['set-1']);
     expect(page.tagSetSelection().sets).toHaveLength(1);
     expect(page.tagSetSelection().sets[0]?.requirements.map((item) => item.abilityKey)).toEqual([
       'remove_bind',
@@ -2233,7 +2234,10 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('<app-ability-filter-rail');
     expect(template).toContain('data-testid="captain-coverage-ability-filter-trigger"');
     expect(template).toContain('abilityFilterTriggerLabel()');
-    expect(template).toContain('removeAbilityTagSet(chip.id)');
+    // Selected groups are not echoed on the page; they live inside the modal.
+    expect(template).not.toContain('removeAbilityTagSet(chip.id)');
+    expect(template).not.toContain('abilityTagSetChips()');
+    expect(template).not.toContain('selected-value-chip');
     expect(template).toContain('clearSelectedAbilityTags()');
     expect(template).toContain('abilityFilterSupportText()');
     expect(template).toContain('class="results-toolbar__toggle-grid"');
@@ -2378,8 +2382,10 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('[disabled]="loading() || !availableCharacterTags().length"');
     expect(template).toContain('(click)="openCharacterTagSetPicker()"');
     expect(template).toContain('characterTagFilterTriggerLabel()');
-    expect(template).toContain('characterTagSetChips()');
-    expect(template).toContain('(click)="removeCharacterTagSet(chip.id)"');
+    expect(template).not.toContain('characterTagSetChips()');
+    expect(template).not.toContain('(click)="removeCharacterTagSet(chip.id)"');
+    // The Class facet's own chip row is the third one on this page, so it goes too.
+    expect(template).toContain('[showSelectedChips]="false"');
     expect(template).toContain('characterTagFilterSupportText()');
     expect(template).toContain('<app-character-tag-set-picker');
     expect(template).toContain('[isOpen]="characterTagSetPickerOpen()"');

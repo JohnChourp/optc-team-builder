@@ -108,6 +108,15 @@ export class CharacterFacetFilterComponent implements OnChanges, OnInit {
    */
   @Input() public matchCount: number | null = null;
 
+  /**
+   * Whether the selected values are echoed as removable chips under the select.
+   * Default true, so every existing host keeps today's behaviour; Captain
+   * Coverage turns it off because that page now keeps every selection display
+   * inside the filter's own modal. Mirrored into a signal for the same reason
+   * `disabled` is.
+   */
+  @Input() public showSelectedChips = true;
+
   @Output() public readonly selectionChange = new EventEmitter<CharacterFacetSelection>();
 
   public readonly kindState = signal<CharacterFacetKind>('type');
@@ -117,6 +126,8 @@ export class CharacterFacetFilterComponent implements OnChanges, OnInit {
   );
   /** Signal mirror of the `disabled` @Input — see the note on that property. */
   public readonly disabledState = signal(false);
+  /** Signal mirror of `showSelectedChips`, for the same reason. */
+  public readonly showSelectedChipsState = signal(true);
   public readonly matchCountState = signal<number | null>(null);
   public readonly announcement = signal('');
   public readonly swapIcon = swapHorizontalOutline;
@@ -199,6 +210,10 @@ export class CharacterFacetFilterComponent implements OnChanges, OnInit {
 
     if (changes['matchCount']) {
       this.matchCountState.set(this.matchCount);
+    }
+
+    if (changes['showSelectedChips']) {
+      this.showSelectedChipsState.set(this.showSelectedChips);
     }
 
     if (changes['selection']) {

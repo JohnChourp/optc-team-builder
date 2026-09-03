@@ -64,7 +64,7 @@
           }
         </ion-select>
 
-        @if (values().length) {
+        @if (showSelectedChipsState() && values().length) {
           <div class="character-facet-filter__chips">
             @for (value of values(); track value) {
               <button

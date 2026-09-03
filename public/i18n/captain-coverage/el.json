@@ -59,11 +59,6 @@
         "empty": "Επίλεξε character tags",
         "active": "{{tags}} tag(s) σε {{groups}} group(s)"
       },
-      "joiners": {
-        "any": "ή",
-        "all": "και"
-      },
-      "removeGroup": "Αφαίρεσε το group tags {{group}}",
       "support": {
         "empty": "Ομαδοποίησε tags πληρώματος και οικογένειας με OR μέσα σε ένα group και AND ανάμεσα στα groups, π.χ. (Straw Hat Pirates ή Heart Pirates) και (Dressrosa).",
         "all": "Εμφανίζονται χαρακτήρες που ταιριάζουν με κάθε group tags.",
@@ -102,14 +97,9 @@
         "empty": "Επίλεξε ability filters",
         "active": "{{tags}} φίλτρο/α σε {{groups}} group(s)"
       },
-      "joiners": {
-        "any": "ή",
-        "all": "και"
-      },
-      "removeGroup": "Αφαίρεσε το group abilities {{group}}",
       "support": {
         "empty": "Ένα κουμπί για κάθε είδος ability filter: captain, special, crewmate, potential και support. Ομαδοποίησέ τα με OR μέσα σε ένα group και AND ανάμεσα στα groups.",
-        "active": "Εμφανίζονται χαρακτήρες που ταιριάζουν με κάθε group abilities. Αφαίρεσε ένα group από το chip του ή άνοιξε ξανά το φίλτρο για επεξεργασία."
+        "active": "Εμφανίζονται χαρακτήρες που ταιριάζουν με κάθε group abilities. Άνοιξε ξανά το φίλτρο για να επεξεργαστείς ή να αφαιρέσεις ένα group."
       },
       "sections": {
         "captainAbility": "Abilities που πρέπει να έχει ο χαρακτήρας ως Captain Ability. Οι αριθμοί εδώ μετρούν μόνο captains, γι’ αυτό είναι μικρότεροι από τους γενικούς.",

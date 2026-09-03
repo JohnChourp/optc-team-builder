@@ -146,46 +146,6 @@
   color: rgba(248, 251, 255, 0.58);
 }
 
-.coverage-tag-filter .selected-values-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: 100%;
-  min-width: 0;
-  margin-top: 2px;
-}
-
-.coverage-tag-filter .selected-value-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  padding: 7px 12px;
-  border: 1px solid rgba(245, 200, 76, 0.36);
-  border-radius: 999px;
-  background: rgba(245, 200, 76, 0.16);
-  color: #f8d36b;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8rem;
-  overflow-wrap: anywhere;
-}
-
-.coverage-tag-filter .selected-value-chip:hover {
-  border-color: rgba(245, 200, 76, 0.54);
-  background: rgba(245, 200, 76, 0.22);
-}
-
-.coverage-tag-filter .selected-value-chip:focus-visible {
-  outline: 2px solid rgba(245, 200, 76, 0.72);
-  outline-offset: 2px;
-}
-
-.coverage-tag-filter .selected-value-chip:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
 /*
  * Captain Coverage only. The shared ability modal is rendered at the app root,
  * so the host class the picker puts on the ion-modal is the one selector this
