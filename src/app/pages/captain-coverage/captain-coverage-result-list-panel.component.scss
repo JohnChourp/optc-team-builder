@@ -5,6 +5,8 @@
 }
 
 .captain-result {
+  /* Positioning context for the crown, which overlays the card's top corner. */
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: start;

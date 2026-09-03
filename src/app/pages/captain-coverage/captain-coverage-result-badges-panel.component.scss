@@ -83,15 +83,26 @@
 }
 
 /*
- * The crown is the only control on the card with no text, so it has to carry
- * the 44px tap floor this page was signed off against on its own. Ionic sizes
- * a small button from its own padding, hence the explicit height too.
+ * The crown sits in the card's own top-right corner rather than in the action
+ * row: it belongs to the character, not to the row of things you do next, and
+ * overlaying it gives the row back its line. It is the only control on the card
+ * with no text, so it carries the 44px tap floor this page was signed off
+ * against on its own - and Ionic sizes a small button from its own padding, so
+ * width and height are set explicitly rather than left to min-*.
  */
 .captain-result__leader {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
   --padding-start: 8px;
   --padding-end: 8px;
   --padding-top: 10px;
   --padding-bottom: 10px;
+  --background: rgba(12, 18, 30, 0.72);
+  --background-hover: rgba(12, 18, 30, 0.86);
+  --border-radius: 12px;
+  margin: 0;
   min-width: 44px;
   min-height: 44px;
   width: 44px;
