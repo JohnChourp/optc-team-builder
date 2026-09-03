@@ -1,0 +1,72 @@
+/*
+ * Tier help. The tier explanation used to be a permanently mounted section in
+ * `.results-toolbar__toggle-grid`. Because grid rows stretch to their tallest
+ * cell, that one tall panel padded every toggle card beside it with empty
+ * space. It now lives in a popover anchored above its own chip, so it costs no
+ * layout height at all until the reader asks for it.
+ */
+.tier-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tier-chip__help {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(248, 251, 255, 0.72);
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tier-chip__help:hover,
+.tier-chip__help:focus-visible {
+  border-color: rgba(245, 200, 76, 0.55);
+  color: #fff8e0;
+}
+
+.tier-chip__help--open {
+  border-color: rgba(245, 200, 76, 0.6);
+  background: rgba(245, 200, 76, 0.18);
+  color: #fff8e0;
+}
+
+.tier-chip__popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  gap: 6px;
+  width: max-content;
+  max-width: min(340px, calc(100vw - 48px));
+  padding: 12px;
+  border: 1px solid rgba(245, 200, 76, 0.32);
+  border-radius: 12px;
+  background: rgba(12, 18, 30, 0.98);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  color: #f8fbff;
+  text-align: left;
+  white-space: normal;
+}
+
+/* The arrow keeps the panel visually tied to the chip it explains. */
+.tier-chip__popover::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 18px;
+  border: 6px solid transparent;
+  border-top-color: rgba(245, 200, 76, 0.32);
+}

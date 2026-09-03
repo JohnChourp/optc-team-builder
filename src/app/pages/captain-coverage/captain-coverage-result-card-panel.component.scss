@@ -13,35 +13,3 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
-
-.captain-tier-breakdown {
-  display: grid;
-  gap: 10px;
-}
-
-.captain-tier-breakdown--inline {
-  margin-top: 4px;
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(15, 22, 36, 0.55);
-}
-
-.captain-tier-breakdown__panel-header {
-  display: grid;
-  gap: 2px;
-}
-
-.captain-tier-breakdown__panel-eyebrow {
-  color: rgba(245, 200, 76, 0.85);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.captain-tier-breakdown__panel-title {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-}

@@ -194,75 +194,140 @@
             </h2>
           </div>
 
-          <div class="coverage-tag-filter coverage-ability-filters">
-            <div class="coverage-tag-filter__header">
-              <span class="coverage-tag-filter__label">
-                {{ t('filters.abilityTagSets.label') }}
-              </span>
-              @if (hasSelectedAbilityTags()) {
-                <ion-button
-                  fill="clear"
-                  size="small"
-                  color="warning"
-                  data-testid="captain-coverage-ability-filter-clear"
-                  [disabled]="loading()"
-                  (click)="clearSelectedAbilityTags()"
-                >
-                  {{ 'common.actions.clear' | transloco }}
-                </ion-button>
-              }
-            </div>
-
-            <div class="character-tag-combobox">
-              <ion-button
-                expand="block"
-                fill="outline"
-                color="light"
-                data-testid="captain-coverage-ability-filter-trigger"
-                [attr.aria-label]="t('filters.abilityTagSets.label')"
-                [disabled]="loading() || !hasAbilityFilterSections()"
-                (click)="openAbilityTagSetPicker()"
-              >
-                <ion-icon slot="start" [icon]="characterTagFilterIcon" aria-hidden="true"></ion-icon>
-                {{ abilityFilterTriggerLabel() }}
-              </ion-button>
-            </div>
-
-            @if (abilityTagSetChips().length) {
-              <div class="selected-values-row">
-                @for (chip of abilityTagSetChips(); track chip.id) {
-                  <button
-                    type="button"
-                    class="selected-value-chip"
-                    [attr.data-testid]="'captain-coverage-ability-filter-chip-' + chip.id"
-                    [attr.aria-label]="chip.removeLabel"
+          <div class="coverage-filter-pair">
+            <div class="coverage-tag-filter coverage-ability-filters">
+              <div class="coverage-tag-filter__header">
+                <span class="coverage-tag-filter__label">
+                  {{ t('filters.abilityTagSets.label') }}
+                </span>
+                @if (hasSelectedAbilityTags()) {
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    color="warning"
+                    data-testid="captain-coverage-ability-filter-clear"
                     [disabled]="loading()"
-                    (click)="removeAbilityTagSet(chip.id)"
+                    (click)="clearSelectedAbilityTags()"
                   >
-                    {{ chip.label }}
-                    <span aria-hidden="true">×</span>
-                  </button>
+                    {{ 'common.actions.clear' | transloco }}
+                  </ion-button>
                 }
               </div>
-            }
 
-            <small class="coverage-tag-filter__support">
-              {{ abilityFilterSupportText() }}
-            </small>
+              <div class="character-tag-combobox">
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  color="light"
+                  data-testid="captain-coverage-ability-filter-trigger"
+                  [attr.aria-label]="t('filters.abilityTagSets.label')"
+                  [disabled]="loading() || !hasAbilityFilterSections()"
+                  (click)="openAbilityTagSetPicker()"
+                >
+                  <ion-icon slot="start" [icon]="characterTagFilterIcon" aria-hidden="true"></ion-icon>
+                  {{ abilityFilterTriggerLabel() }}
+                </ion-button>
+              </div>
 
-            <app-ability-tag-set-picker
-              [isOpen]="abilityTagSetPickerOpen()"
-              [title]="t('filters.abilityTagSetsTitle')"
-              [sections]="abilityTagSetPickerSections()"
-              [selection]="tagSetSelection()"
-              modalScopeClass="captain-coverage-ability-modal"
-              [collapsibleTileCounts]="true"
-              [captainScopedTileCounts]="true"
-              [showHelp]="true"
-              [scopeMarkers]="true"
-              (dismiss)="closeAbilityTagSetPicker()"
-              (saveSelection)="saveAbilityTagSetSelection($event)"
-            ></app-ability-tag-set-picker>
+              @if (abilityTagSetChips().length) {
+                <div class="selected-values-row">
+                  @for (chip of abilityTagSetChips(); track chip.id) {
+                    <button
+                      type="button"
+                      class="selected-value-chip"
+                      [attr.data-testid]="'captain-coverage-ability-filter-chip-' + chip.id"
+                      [attr.aria-label]="chip.removeLabel"
+                      [disabled]="loading()"
+                      (click)="removeAbilityTagSet(chip.id)"
+                    >
+                      {{ chip.label }}
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  }
+                </div>
+              }
+
+              <app-ability-tag-set-picker
+                [isOpen]="abilityTagSetPickerOpen()"
+                [title]="t('filters.abilityTagSetsTitle')"
+                [supportText]="abilityFilterSupportText()"
+                [sections]="abilityTagSetPickerSections()"
+                [selection]="tagSetSelection()"
+                modalScopeClass="captain-coverage-ability-modal"
+                [collapsibleTileCounts]="true"
+                [captainScopedTileCounts]="true"
+                [showHelp]="true"
+                [scopeMarkers]="true"
+                (dismiss)="closeAbilityTagSetPicker()"
+                (saveSelection)="saveAbilityTagSetSelection($event)"
+              ></app-ability-tag-set-picker>
+            </div>
+
+            <div class="coverage-tag-filter">
+              <div class="coverage-tag-filter__header">
+                <span class="coverage-tag-filter__label">
+                  {{ t('filters.characterTags.label') }}
+                </span>
+                @if (hasSelectedCharacterTags()) {
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    color="warning"
+                    [disabled]="loading()"
+                    (click)="clearSelectedCharacterTags()"
+                  >
+                    {{ 'common.actions.clear' | transloco }}
+                  </ion-button>
+                }
+              </div>
+
+              <div class="character-tag-combobox">
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  color="light"
+                  data-testid="captain-coverage-character-tag-trigger"
+                  [attr.aria-label]="t('filters.characterTags.label')"
+                  [disabled]="loading() || !availableCharacterTags().length"
+                  (click)="openCharacterTagSetPicker()"
+                >
+                  <ion-icon
+                    slot="start"
+                    [icon]="characterTagFilterIcon"
+                    aria-hidden="true"
+                  ></ion-icon>
+                  {{ characterTagFilterTriggerLabel() }}
+                </ion-button>
+              </div>
+
+              @if (characterTagSetChips().length) {
+                <div class="selected-values-row">
+                  @for (chip of characterTagSetChips(); track chip.id) {
+                    <button
+                      type="button"
+                      class="selected-value-chip"
+                      [attr.aria-label]="chip.removeLabel"
+                      [disabled]="loading()"
+                      (click)="removeCharacterTagSet(chip.id)"
+                    >
+                      {{ chip.label }}
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  }
+                </div>
+              }
+
+              <app-character-tag-set-picker
+                [isOpen]="characterTagSetPickerOpen()"
+                [title]="t('filters.characterTags.title')"
+                [supportText]="characterTagFilterSupportText()"
+                [availableTags]="availableCharacterTags()"
+                [selection]="characterTagSetSelection()"
+                [tagCharacterIds]="characterTagMatchIndex()"
+                (dismiss)="closeCharacterTagSetPicker()"
+                (saveSelection)="saveCharacterTagSetSelection($event)"
+              ></app-character-tag-set-picker>
+            </div>
           </div>
 
           <div class="results-toolbar__toggle-grid">
@@ -314,140 +379,124 @@
               ></ion-toggle>
             </label>
 
-            <div class="ability-rank-toggle ability-rank-toggle--tier" data-test="tier-coverage-group">
+            <div
+              class="ability-rank-toggle ability-rank-toggle--tier"
+              data-test="tier-coverage-group"
+            >
               <div class="ability-rank-toggle__copy">
                 <span>{{ t('filters.tierCoverage.toggle') }}</span>
                 <small>{{ t('filters.tierCoverage.support') }}</small>
               </div>
               <div class="ability-rank-toggle__chip-row">
                 @for (tier of tierCoverageOptions(); track tier) {
-                  <button
-                    type="button"
-                    class="ability-rank-toggle__chip"
-                    [class.ability-rank-toggle__chip--active]="isTierCoverageActive(tier)"
-                    [disabled]="
-                      loading() || !selectedCaptainDetail() || !isTierCoverageAvailable(tier)
-                    "
-                    [attr.data-test]="'tier-coverage-toggle-' + tier"
-                    [attr.aria-pressed]="isTierCoverageActive(tier)"
-                    [title]="
-                      isTierCoverageAvailable(tier)
-                        ? t('filters.tierCoverage.chipAvailable', { tier })
-                        : t('filters.tierCoverage.chipUnavailable', { tier })
-                    "
-                    (click)="onTierCoverageToggle(tier, !isTierCoverageActive(tier))"
-                  >
-                    {{ t('filters.tierCoverage.chip', { tier }) }}
-                  </button>
+                  <div class="tier-chip">
+                    <button
+                      type="button"
+                      class="ability-rank-toggle__chip"
+                      [class.ability-rank-toggle__chip--active]="isTierCoverageActive(tier)"
+                      [disabled]="
+                        loading() || !selectedCaptainDetail() || !isTierCoverageAvailable(tier)
+                      "
+                      [attr.data-test]="'tier-coverage-toggle-' + tier"
+                      [attr.aria-pressed]="isTierCoverageActive(tier)"
+                      [title]="tierCoverageChipTitle(tier)"
+                      (click)="onTierCoverageToggle(tier, !isTierCoverageActive(tier))"
+                    >
+                      {{ t('filters.tierCoverage.chip', { tier }) }}
+                    </button>
+
+                    @if (tierHelpView(tier); as help) {
+                      <button
+                        type="button"
+                        class="tier-chip__help"
+                        [class.tier-chip__help--open]="openTierHelp() === tier"
+                        [attr.data-test]="'tier-coverage-help-' + tier"
+                        [attr.aria-label]="t('filters.tierCoverage.help', { tier })"
+                        [attr.aria-expanded]="openTierHelp() === tier"
+                        (click)="toggleTierHelp(tier)"
+                      >
+                        <span aria-hidden="true">?</span>
+                      </button>
+
+                      @if (openTierHelp() === tier) {
+                        <div
+                          class="tier-chip__popover"
+                          role="dialog"
+                          [attr.aria-label]="t('filters.tierCoverage.help', { tier })"
+                          [attr.data-test]="'tier-coverage-popover-' + tier"
+                        >
+                          <header class="captain-tier-breakdown__header">
+                            <span class="captain-tier-breakdown__label">
+                              {{ t('filters.tierCoverage.chip', { tier: help.tier }) }}
+                            </span>
+                            <span class="captain-tier-breakdown__scope">{{ help.scopeLabel }}</span>
+                            <span class="captain-tier-breakdown__kind">
+                              {{ t('filters.tierCoverage.kinds.' + help.kind) }}
+                            </span>
+                          </header>
+
+                          @if (
+                            help.kind === 'baseline-and-conditional' &&
+                            help.baselineEffectClauses?.length &&
+                            help.conditionalEffectClauses?.length
+                          ) {
+                            <div
+                              class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--baseline"
+                            >
+                              <span class="captain-tier-breakdown__subsection-label">
+                                {{ t('filters.tierCoverage.kinds.baseline') }}
+                              </span>
+                              <ul class="captain-tier-breakdown__effects">
+                                @for (effect of help.baselineEffectClauses; track $index) {
+                                  <li>{{ effect }}</li>
+                                }
+                              </ul>
+                            </div>
+                            <div
+                              class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--conditional"
+                            >
+                              <span class="captain-tier-breakdown__subsection-label">
+                                {{ t('filters.tierCoverage.kinds.conditional') }}
+                              </span>
+                              @if (help.conditionLines.length) {
+                                <ul class="captain-tier-breakdown__conditions">
+                                  @for (line of help.conditionLines; track $index) {
+                                    <li>{{ line }}</li>
+                                  }
+                                </ul>
+                              }
+                              <ul class="captain-tier-breakdown__effects">
+                                @for (effect of help.conditionalEffectClauses; track $index) {
+                                  <li>{{ effect }}</li>
+                                }
+                              </ul>
+                            </div>
+                          } @else {
+                            @if (help.conditionLines.length) {
+                              <ul class="captain-tier-breakdown__conditions">
+                                @for (line of help.conditionLines; track $index) {
+                                  <li>{{ line }}</li>
+                                }
+                              </ul>
+                            }
+                            @if (help.effectClauses.length) {
+                              <ul class="captain-tier-breakdown__effects">
+                                @for (effect of help.effectClauses; track $index) {
+                                  <li>{{ effect }}</li>
+                                }
+                              </ul>
+                            }
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
                 }
               </div>
             </div>
-
-            @if (captainTierBreakdown().length) {
-              <section
-                class="captain-tier-breakdown captain-tier-breakdown--inline"
-                data-test="captain-coverage-tier-panel"
-              >
-                <header class="captain-tier-breakdown__panel-header">
-                  <span class="captain-tier-breakdown__panel-eyebrow">
-                    {{ t('filters.tierCoverage.panelEyebrow') }}
-                  </span>
-                  <h3 class="captain-tier-breakdown__panel-title">
-                    {{ t('filters.tierCoverage.panelTitle') }}
-                  </h3>
-                </header>
-                <ul class="captain-tier-breakdown__list">
-                  @for (tier of captainTierBreakdown(); track tier.tier) {
-                    <li
-                      class="captain-tier-breakdown__tier"
-                      [class.captain-tier-breakdown__tier--baseline]="tier.kind === 'baseline'"
-                      [class.captain-tier-breakdown__tier--top]="tier.kind === 'unconditional-top'"
-                      [class.captain-tier-breakdown__tier--conditional]="tier.kind === 'conditional'"
-                      [class.captain-tier-breakdown__tier--mixed]="
-                        tier.kind === 'baseline-and-conditional'
-                      "
-                      [class.captain-tier-breakdown__tier--active]="isTierCoverageActive(tier.tier)"
-                      [attr.data-test]="'captain-coverage-tier-panel-row-' + tier.tier"
-                    >
-                      <header class="captain-tier-breakdown__header">
-                        <span class="captain-tier-breakdown__label">
-                          {{ t('filters.tierCoverage.chip', { tier: tier.tier }) }}
-                        </span>
-                        <span class="captain-tier-breakdown__scope">{{ tier.scopeLabel }}</span>
-                        <span class="captain-tier-breakdown__kind">
-                          {{ t('filters.tierCoverage.kinds.' + tier.kind) }}
-                        </span>
-                      </header>
-                      @if (
-                        tier.kind === 'baseline-and-conditional' &&
-                        tier.baselineEffectClauses?.length &&
-                        tier.conditionalEffectClauses?.length
-                      ) {
-                        <div
-                          class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--baseline"
-                        >
-                          <span class="captain-tier-breakdown__subsection-label">
-                            {{ t('filters.tierCoverage.kinds.baseline') }}
-                          </span>
-                          <ul class="captain-tier-breakdown__effects">
-                            @for (effect of tier.baselineEffectClauses; track $index) {
-                              <li>{{ effect }}</li>
-                            }
-                          </ul>
-                        </div>
-                        <div
-                          class="captain-tier-breakdown__subsection captain-tier-breakdown__subsection--conditional"
-                        >
-                          <span class="captain-tier-breakdown__subsection-label">
-                            {{ t('filters.tierCoverage.kinds.conditional') }}
-                          </span>
-                          @if (tier.conditionLines.length) {
-                            <ul class="captain-tier-breakdown__conditions">
-                              @for (line of tier.conditionLines; track $index) {
-                                <li>{{ line }}</li>
-                              }
-                            </ul>
-                          }
-                          <ul class="captain-tier-breakdown__effects">
-                            @for (effect of tier.conditionalEffectClauses; track $index) {
-                              <li>{{ effect }}</li>
-                            }
-                          </ul>
-                        </div>
-                      } @else {
-                        @if (tier.conditionLines.length) {
-                          <ul class="captain-tier-breakdown__conditions">
-                            @for (line of tier.conditionLines; track $index) {
-                              <li>{{ line }}</li>
-                            }
-                          </ul>
-                        }
-                        @if (tier.effectClauses.length) {
-                          <ul class="captain-tier-breakdown__effects">
-                            @for (effect of tier.effectClauses; track $index) {
-                              <li>{{ effect }}</li>
-                            }
-                          </ul>
-                        }
-                      }
-                    </li>
-                  }
-                </ul>
-              </section>
-            }
           </div>
 
           <div class="results-controls">
-            <ion-searchbar
-              class="coverage-search"
-              [debounce]="500"
-              [disabled]="loading()"
-              [placeholder]="t('search.placeholder')"
-              [searchIcon]="searchIcon"
-              [value]="searchTerm()"
-              (ionInput)="onSearchChange($event)"
-            ></ion-searchbar>
-
             <app-character-facet-filter
               kind="type"
               presentation="chips"
@@ -510,74 +559,15 @@
               (idOrderChange)="onIdOrderChange($event)"
             ></app-character-filter-row>
 
-            <div class="coverage-tag-filter">
-              <div class="coverage-tag-filter__header">
-                <span class="coverage-tag-filter__label">
-                  {{ t('filters.characterTags.label') }}
-                </span>
-                @if (hasSelectedCharacterTags()) {
-                  <ion-button
-                    fill="clear"
-                    size="small"
-                    color="warning"
-                    [disabled]="loading()"
-                    (click)="clearSelectedCharacterTags()"
-                  >
-                    {{ 'common.actions.clear' | transloco }}
-                  </ion-button>
-                }
-              </div>
-
-              <div class="character-tag-combobox">
-                <ion-button
-                  expand="block"
-                  fill="outline"
-                  color="light"
-                  data-testid="captain-coverage-character-tag-trigger"
-                  [attr.aria-label]="t('filters.characterTags.label')"
-                  [disabled]="loading() || !availableCharacterTags().length"
-                  (click)="openCharacterTagSetPicker()"
-                >
-                  <ion-icon
-                    slot="start"
-                    [icon]="characterTagFilterIcon"
-                    aria-hidden="true"
-                  ></ion-icon>
-                  {{ characterTagFilterTriggerLabel() }}
-                </ion-button>
-              </div>
-
-              @if (characterTagSetChips().length) {
-                <div class="selected-values-row">
-                  @for (chip of characterTagSetChips(); track chip.id) {
-                    <button
-                      type="button"
-                      class="selected-value-chip"
-                      [attr.aria-label]="chip.removeLabel"
-                      [disabled]="loading()"
-                      (click)="removeCharacterTagSet(chip.id)"
-                    >
-                      {{ chip.label }}
-                      <span aria-hidden="true">×</span>
-                    </button>
-                  }
-                </div>
-              }
-
-              <small class="coverage-tag-filter__support">
-                {{ characterTagFilterSupportText() }}
-              </small>
-
-              <app-character-tag-set-picker
-                [isOpen]="characterTagSetPickerOpen()"
-                [title]="t('filters.characterTags.title')"
-                [availableTags]="availableCharacterTags()"
-                [selection]="characterTagSetSelection()"
-                [tagCharacterIds]="characterTagMatchIndex()"
-                (dismiss)="closeCharacterTagSetPicker()"
-                (saveSelection)="saveCharacterTagSetSelection($event)"
-              ></app-character-tag-set-picker>
-            </div>
+            <ion-searchbar
+              class="coverage-search"
+              [debounce]="500"
+              [disabled]="loading()"
+              [placeholder]="t('search.placeholder')"
+              [searchIcon]="searchIcon"
+              [value]="searchTerm()"
+              (ionInput)="onSearchChange($event)"
+            ></ion-searchbar>
           </div>
         </div>
 

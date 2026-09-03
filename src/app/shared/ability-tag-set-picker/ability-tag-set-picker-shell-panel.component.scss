@@ -53,6 +53,16 @@
   line-height: 1.6;
 }
 
+/*
+ * The host's own one-line explanation of the filter. It used to sit on the page
+ * under the trigger button; it reads better here, next to the control it
+ * describes, and it costs the page no permanent height.
+ */
+.ability-tag-set-head__support {
+  margin-top: 6px;
+  font-size: 0.9rem;
+}
+
 .ability-tag-set-shell {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);

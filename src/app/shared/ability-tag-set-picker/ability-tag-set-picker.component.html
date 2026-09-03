@@ -23,6 +23,9 @@
                 </div>
                 <h2>{{ title || t('title') }}</h2>
                 <p>{{ t('copy') }}</p>
+                @if (supportText) {
+                  <p class="ability-tag-set-head__support">{{ supportText }}</p>
+                }
               </div>
             </div>
 

@@ -28,6 +28,8 @@
       "chip": "Tier {{tier}}",
       "chipAvailable": "Φιλτράρει τα results σε χαρακτήρες που υποστηρίζονται από το Tier {{tier}}.",
       "chipUnavailable": "Ο επιλεγμένος Captain δεν έχει Tier {{tier}}.",
+      "chipNoCaptain": "Διάλεξε πρώτα Captain για να φιλτράρεις ανά tier.",
+      "help": "Τι απαιτεί το Tier {{tier}}",
       "panelEyebrow": "Captain Ability tiers",
       "panelTitle": "Τι ζητάει κάθε tier",
       "kinds": {

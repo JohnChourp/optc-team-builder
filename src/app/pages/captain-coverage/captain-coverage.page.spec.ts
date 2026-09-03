@@ -2419,6 +2419,120 @@ describe('CaptainCoveragePage', () => {
     expect(responsiveStyles).toContain('grid-column: 1 / -1;');
   });
 
+  /*
+   * Layout pass. The tier explanation used to be a permanently mounted section
+   * inside `.results-toolbar__toggle-grid`. Grid rows stretch to their tallest
+   * cell, so that one panel padded every toggle card in its row with empty
+   * space. It now opens from a help button on the chip it explains.
+   */
+  it('moves the tier explanation into a per-chip help popover', () => {
+    const template = readCaptainCoverageTemplate();
+
+    expect(template).not.toContain('captain-tier-breakdown--inline');
+    expect(template).not.toContain("t('filters.tierCoverage.panelEyebrow')");
+    expect(template).not.toContain("t('filters.tierCoverage.panelTitle')");
+    expect(template).toContain('class="tier-chip"');
+    expect(template).toContain("'tier-coverage-help-' + tier");
+    expect(template).toContain("'tier-coverage-popover-' + tier");
+    expect(template).toContain('(click)="toggleTierHelp(tier)"');
+    expect(template).toContain('@if (tierHelpView(tier); as help)');
+    expect(template).toContain('[title]="tierCoverageChipTitle(tier)"');
+    // The popover still renders the same clause lists the section used to.
+    expect(template).toContain('captain-tier-breakdown__conditions');
+    expect(template).toContain('captain-tier-breakdown__effects');
+  });
+
+  it('pairs the two filter triggers and drops the search bar to its own last row', () => {
+    const template = readCaptainCoverageTemplate();
+    const pairIndex = template.indexOf('<div class="coverage-filter-pair">');
+    const abilityIndex = template.indexOf('coverage-tag-filter coverage-ability-filters');
+    const tagTriggerIndex = template.indexOf('data-testid="captain-coverage-character-tag-trigger"');
+    const controlsIndex = template.indexOf('<div class="results-controls">');
+    const searchIndex = template.indexOf('<ion-searchbar');
+    const filterRowIndex = template.indexOf('<app-character-filter-row');
+
+    expect(pairIndex).toBeGreaterThan(-1);
+    // Both group filters live inside the pair, above the toggle grid.
+    expect(abilityIndex).toBeGreaterThan(pairIndex);
+    expect(tagTriggerIndex).toBeGreaterThan(pairIndex);
+    expect(tagTriggerIndex).toBeLessThan(controlsIndex);
+    // Search is the last control, immediately above the result grid.
+    expect(searchIndex).toBeGreaterThan(controlsIndex);
+    expect(searchIndex).toBeGreaterThan(filterRowIndex);
+  });
+
+  it('moves each filter support sentence inside its own modal', () => {
+    const template = readCaptainCoverageTemplate();
+
+    expect(template).not.toContain('coverage-tag-filter__support');
+    expect(template).toContain('[supportText]="abilityFilterSupportText()"');
+    expect(template).toContain('[supportText]="characterTagFilterSupportText()"');
+  });
+
+  it('gives the tier row a full grid row and both triggers the same tap-target floor', () => {
+    const tierStyles = readCaptainCoverageStyles('captain-coverage-tier-panel');
+    const filterStyles = readCaptainCoverageStyles('captain-coverage-filter-panel');
+    const teamStyles = readCaptainCoverageStyles('captain-coverage-team-panel');
+
+    expect(tierStyles).toContain(
+      '.results-toolbar__toggle-grid .ability-rank-toggle--tier {\n  grid-column: 1 / -1;',
+    );
+    // The floor is no longer scoped to the ability trigger alone.
+    expect(filterStyles).toContain('.coverage-tag-filter .character-tag-combobox ion-button');
+    expect(filterStyles).not.toContain('.coverage-ability-filters .character-tag-combobox ion-button');
+    expect(filterStyles).toContain('.coverage-filter-pair {');
+    /*
+     * Caught in the live sweep: `.coverage-ability-filters` still carries the
+     * toolbar's own `grid-column: 1 / -1`, so inside the pair it spanned every
+     * column and pushed the tag block onto a second line.
+     */
+    expect(filterStyles).toContain(
+      '.coverage-filter-pair > .coverage-tag-filter {\n  grid-column: auto;',
+    );
+    // Search spans the whole controls line rather than sharing it with a facet.
+    expect(filterStyles).toContain('flex: 1 1 100%;\n  min-width: 0;\n  padding: 0;');
+    // The budget cap shares its row with the sentence that explains it.
+    expect(teamStyles).toContain('.team-budget-controls {\n  display: grid;\n  grid-template-columns:');
+    // The pair replaced `.coverage-ability-filters` as the toolbar's own child,
+    // so it has to claim the full desktop row the ability block used to claim.
+    expect(readCaptainCoverageStyles('captain-coverage-responsive-panel')).toContain(
+      '.coverage-ability-filters,\n  .coverage-filter-pair,',
+    );
+  });
+
+  it('names the no-Captain tier state instead of blaming a Captain nobody picked', () => {
+    const { page } = createPage();
+
+    expect(page.tierCoverageChipTitle(1)).toContain('tierCoverage.chipNoCaptain');
+
+    page.selectedCaptainDetail.set(createCharacter({ id: 1 }));
+
+    expect(page.tierCoverageChipTitle(1)).toContain('tierCoverage.chipUnavailable');
+  });
+
+  it('opens one tier help popover at a time and closes it on a second press', () => {
+    const { page } = createPage();
+
+    expect(page.openTierHelp()).toBeNull();
+
+    page.toggleTierHelp(2);
+    expect(page.openTierHelp()).toBe(2);
+
+    page.toggleTierHelp(3);
+    expect(page.openTierHelp()).toBe(3);
+
+    page.toggleTierHelp(3);
+    expect(page.openTierHelp()).toBeNull();
+  });
+
+  it('has no tier help to show for a Captain with no tiers', () => {
+    const { page } = createPage();
+
+    page.selectedCaptainDetail.set(createCharacter({ id: 1 }));
+
+    expect(page.tierHelpView(1)).toBeNull();
+  });
+
   it('keeps Captain Coverage filter labels exact in English and Greek', () => {
     for (const locale of ['en', 'el']) {
       const translations = JSON.parse(
@@ -2516,6 +2630,20 @@ describe('CaptainCoveragePage', () => {
     expect(page.visibleResultCards().length).toBeLessThanOrEqual(100);
   });
 });
+
+function readCaptainCoverageTemplate(): string {
+  return readFileSync(
+    resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage.page.html'),
+    'utf8',
+  ).replace(/\r\n/g, '\n');
+}
+
+function readCaptainCoverageStyles(panel: string): string {
+  return readFileSync(
+    resolve(process.cwd(), `src/app/pages/captain-coverage/${panel}.component.scss`),
+    'utf8',
+  ).replace(/\r\n/g, '\n');
+}
 
 function createPage({
   captains = [],

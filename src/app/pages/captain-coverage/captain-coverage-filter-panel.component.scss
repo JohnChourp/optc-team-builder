@@ -5,15 +5,43 @@
   gap: 10px;
 }
 
+/*
+ * Search sits last in the controls block and owns a full-width line of its own,
+ * directly above the result grid, at every width.
+ */
 .coverage-search {
   --background: rgba(255, 255, 255, 0.08);
   --border-radius: 16px;
   --box-shadow: none;
   --color: #f8fbff;
   --placeholder-color: rgba(248, 251, 255, 0.54);
-  flex: 1 1 260px;
-  min-width: min(100%, 240px);
+  flex: 1 1 100%;
+  min-width: 0;
   padding: 0;
+}
+
+/*
+ * The two modal triggers are one control each with the same job, so they share
+ * a row and only stack when a column would be narrower than a readable label.
+ */
+.coverage-filter-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 12px;
+  align-items: start;
+  min-width: 0;
+}
+
+/*
+ * `.coverage-ability-filters` still carries the toolbar's own `grid-column:
+ * 1 / -1` from the 880px block. Inside the pair that made the ability block
+ * span every column and pushed the tag block onto a second line, which is the
+ * opposite of the point - so both children are reset to a single track here.
+ */
+.coverage-filter-pair > .coverage-tag-filter {
+  grid-column: auto;
+  flex: initial;
+  min-width: 0;
 }
 
 .captain-coverage-filter-row {
@@ -221,7 +249,12 @@
   min-height: 26px;
 }
 
-.coverage-ability-filters .character-tag-combobox ion-button {
+/*
+ * Both triggers, not just the ability one: side by side, two identical outline
+ * buttons rendering at different heights reads as a bug, and the 44 px floor is
+ * the tap target this page was signed off against.
+ */
+.coverage-tag-filter .character-tag-combobox ion-button {
   --padding-top: 10px;
   --padding-bottom: 10px;
   min-height: 44px;

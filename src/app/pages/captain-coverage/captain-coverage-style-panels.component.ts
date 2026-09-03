@@ -13,7 +13,7 @@ const stylePanelsTemplate = `
                 <app-captain-coverage-tier-panel>
                   <app-captain-coverage-tier-details-panel>
                     <app-captain-coverage-result-card-panel>
-                      <app-captain-coverage-result-meta-panel>
+                      <app-captain-coverage-tier-help-panel>
                         <app-captain-coverage-tier-copy-panel>
                           <app-captain-coverage-tier-copy-detail-panel>
                             <app-captain-coverage-filter-panel>
@@ -31,7 +31,7 @@ const stylePanelsTemplate = `
                             </app-captain-coverage-filter-panel>
                           </app-captain-coverage-tier-copy-detail-panel>
                         </app-captain-coverage-tier-copy-panel>
-                      </app-captain-coverage-result-meta-panel>
+                      </app-captain-coverage-tier-help-panel>
                     </app-captain-coverage-result-card-panel>
                   </app-captain-coverage-tier-details-panel>
                 </app-captain-coverage-tier-panel>
@@ -165,14 +165,14 @@ export class CaptainCoverageTierCopyDetailPanelComponent {}
 export class CaptainCoverageResultCardPanelComponent {}
 
 @Component({
-  selector: 'app-captain-coverage-result-meta-panel',
+  selector: 'app-captain-coverage-tier-help-panel',
   standalone: true,
   encapsulation: ViewEncapsulation.None,
   template: projectedTemplate,
-  styleUrl: './captain-coverage-result-meta-panel.component.scss',
+  styleUrl: './captain-coverage-tier-help-panel.component.scss',
   host: panelHost,
 })
-export class CaptainCoverageResultMetaPanelComponent {}
+export class CaptainCoverageTierHelpPanelComponent {}
 
 @Component({
   selector: 'app-captain-coverage-filter-panel',
@@ -247,7 +247,7 @@ export class CaptainCoverageMobileDetailPanelComponent {}
     CaptainCoverageResultBadgesPanelComponent,
     CaptainCoverageResultCardPanelComponent,
     CaptainCoverageResultListPanelComponent,
-    CaptainCoverageResultMetaPanelComponent,
+    CaptainCoverageTierHelpPanelComponent,
     CaptainCoverageResultsPanelComponent,
     CaptainCoverageSavePanelComponent,
     CaptainCoverageTargetPanelComponent,
