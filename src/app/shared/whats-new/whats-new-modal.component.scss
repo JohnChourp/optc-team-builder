@@ -1,0 +1,114 @@
+.whats-new {
+  --background: transparent;
+}
+
+.whats-new__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 20px 20px 8px;
+}
+
+.whats-new__head h2 {
+  margin: 10px 0 6px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.whats-new__head p {
+  margin: 0;
+  color: var(--app-muted);
+  line-height: 1.6;
+}
+
+.whats-new__list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 20px 28px;
+  list-style: none;
+}
+
+.whats-new__entry {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* A release with nothing to show recedes rather than disappearing. */
+.whats-new__entry--quiet {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  opacity: 0.72;
+}
+
+.whats-new__entry-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.whats-new__version {
+  color: var(--ion-color-secondary);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.whats-new__date {
+  color: rgba(248, 251, 255, 0.5);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.whats-new__headline {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.whats-new__summary {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.whats-new__group {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.whats-new__group > span {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.whats-new__group ul {
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(248, 251, 255, 0.82);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.whats-new__group--added > span {
+  color: rgba(102, 220, 130, 0.9);
+}
+
+.whats-new__group--improved > span {
+  color: rgba(76, 201, 240, 0.9);
+}
+
+.whats-new__group--fixed > span {
+  color: rgba(245, 200, 76, 0.9);
+}

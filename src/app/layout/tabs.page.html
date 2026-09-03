@@ -89,6 +89,25 @@
       </nav>
 
       <div class="tabs-menu__footer">
+        <!--
+          Above Settings on purpose: it is the last thing in the menu a reader
+          reaches for, and it belongs next to the app's own housekeeping rather
+          than among the tools. The modal is deferred, so the release history -
+          every version the app has ever shipped - loads only when asked for.
+        -->
+        <ion-menu-toggle autoHide="true">
+          <ion-item
+            button
+            detail="false"
+            class="menu-item menu-item--whats-new"
+            data-test="menu-whats-new"
+            (click)="openWhatsNew()"
+          >
+            <ion-icon slot="start" [icon]="whatsNewNavItem.icon"></ion-icon>
+            <ion-label>{{ whatsNewNavItem.labelKey | transloco }}</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+
         <ion-menu-toggle autoHide="true">
           <ion-item
             button
@@ -129,5 +148,12 @@
     </div>
   </ion-content>
 </ion-menu>
+
+@defer (when whatsNewRequested()) {
+  <app-whats-new-modal
+    [isOpen]="whatsNewOpen()"
+    (dismiss)="closeWhatsNew()"
+  ></app-whats-new-modal>
+}
 
 <ion-router-outlet id="tabs-menu-content"></ion-router-outlet>

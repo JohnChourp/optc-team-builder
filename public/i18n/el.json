@@ -432,7 +432,8 @@
     "savedRumbleTeams": "Saved Rumble Teams",
     "savedEnemies": "Αποθηκευμένοι εχθροί",
     "settings": "Ρυθμίσεις",
-    "savedTeams": "Αποθηκευμένες ομάδες"
+    "savedTeams": "Αποθηκευμένες ομάδες",
+    "whatsNew": "Τι νέο υπάρχει"
   },
   "analyticsConsent": {
     "banner": {
@@ -489,5 +490,13 @@
     "cost": "Missing value for 'totals.cost'",
     "hp": "Missing value for 'totals.hp'",
     "rcv": "Missing value for 'totals.rcv'"
+  },
+  "whatsNew": {
+    "eyebrow": "Ιστορικό εκδόσεων",
+    "title": "Τι νέο υπάρχει",
+    "copy": "Κάθε έκδοση του OPTC Team Builder, από την πιο πρόσφατη, σε απλά λόγια.",
+    "added": "Προστέθηκαν",
+    "improved": "Βελτιώθηκαν",
+    "fixed": "Διορθώθηκαν"
   }
 }

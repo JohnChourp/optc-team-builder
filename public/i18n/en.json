@@ -432,7 +432,8 @@
     "savedRumbleTeams": "Saved Rumble Teams",
     "savedEnemies": "Saved Enemies",
     "settings": "Settings",
-    "savedTeams": "Saved Teams"
+    "savedTeams": "Saved Teams",
+    "whatsNew": "What's new"
   },
   "analyticsConsent": {
     "banner": {
@@ -489,5 +490,13 @@
     "cost": "Missing value for 'totals.cost'",
     "hp": "Missing value for 'totals.hp'",
     "rcv": "Missing value for 'totals.rcv'"
+  },
+  "whatsNew": {
+    "eyebrow": "Release history",
+    "title": "What's new",
+    "copy": "Every version of OPTC Team Builder, newest first, in plain language.",
+    "added": "Added",
+    "improved": "Improved",
+    "fixed": "Fixed"
   }
 }
