@@ -4,6 +4,8 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import ts from 'typescript';
+
 /**
  * The player-facing release history has to stay honest and complete.
  *
@@ -32,26 +34,110 @@ export function normalizePath(value) {
     .trim();
 }
 
-/** Reads the exported array without executing the module. */
+/**
+ * Reads the exported array by walking the TypeScript AST.
+ *
+ * The obvious shortcut - slice out the array literal and JSON.parse it - worked
+ * only while the file happened to be JSON-shaped, with double-quoted keys. The
+ * generator wrote it that way, but the repo's own Prettier config does not: one
+ * `prettier --write` rewrites every key bare and every string single-quoted, and
+ * the guard that is supposed to protect the release then dies on the release
+ * that touched it. Parsing the source properly costs nothing and cannot care.
+ */
 export function parseEntries(source) {
-  const marker = 'export const WHATS_NEW_ENTRIES';
-  const start = source.indexOf(marker);
+  const file = ts.createSourceFile('whats-new.data.ts', source, ts.ScriptTarget.Latest, true);
+  let literal = null;
 
-  if (start === -1) {
+  const visit = (node) => {
+    if (literal) {
+      return;
+    }
+
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === 'WHATS_NEW_ENTRIES'
+    ) {
+      // `as const`, `satisfies`, and parentheses may wrap the literal.
+      let value = node.initializer;
+
+      while (
+        value &&
+        (ts.isAsExpression(value) ||
+          ts.isSatisfiesExpression(value) ||
+          ts.isParenthesizedExpression(value))
+      ) {
+        value = value.expression;
+      }
+
+      if (!value || !ts.isArrayLiteralExpression(value)) {
+        throw new Error('WHATS_NEW_ENTRIES is not an array literal.');
+      }
+
+      literal = value;
+
+      return;
+    }
+
+    ts.forEachChild(node, visit);
+  };
+
+  ts.forEachChild(file, visit);
+
+  if (!literal) {
     throw new Error('WHATS_NEW_ENTRIES is not exported from the data module.');
   }
 
-  // Anchor on the assignment, not the first '[': the type annotation
-  // `readonly WhatsNewEntry[]` sits between the name and the array literal.
-  const assignment = source.indexOf('= [', start);
-  const open = assignment === -1 ? -1 : assignment + 2;
-  const close = source.lastIndexOf(']');
+  return literal.elements.map((element) => readNode(element));
+}
 
-  if (open === -1 || close === -1 || close < open) {
-    throw new Error('WHATS_NEW_ENTRIES is not an array literal.');
+/** Turns a literal AST node into the plain value it denotes. */
+function readNode(node) {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return node.text;
   }
 
-  return JSON.parse(source.slice(open, close + 1));
+  if (ts.isNumericLiteral(node)) {
+    return Number(node.text);
+  }
+
+  if (node.kind === ts.SyntaxKind.TrueKeyword) {
+    return true;
+  }
+
+  if (node.kind === ts.SyntaxKind.FalseKeyword) {
+    return false;
+  }
+
+  if (ts.isArrayLiteralExpression(node)) {
+    return node.elements.map((element) => readNode(element));
+  }
+
+  if (ts.isObjectLiteralExpression(node)) {
+    const value = {};
+
+    for (const property of node.properties) {
+      if (!ts.isPropertyAssignment(property)) {
+        throw new Error('Only plain property assignments are supported in the entry data.');
+      }
+
+      const key = ts.isIdentifier(property.name)
+        ? property.name.text
+        : ts.isStringLiteral(property.name)
+          ? property.name.text
+          : null;
+
+      if (key === null) {
+        throw new Error('Computed property names are not supported in the entry data.');
+      }
+
+      value[key] = readNode(property.initializer);
+    }
+
+    return value;
+  }
+
+  throw new Error(`Unsupported node in the entry data: ${ts.SyntaxKind[node.kind]}`);
 }
 
 export function compareVersionsDescending(left, right) {

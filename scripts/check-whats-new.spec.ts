@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
-import path from 'node:path';
+import path, { resolve } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -48,7 +49,10 @@ async function makeRoot(entries: unknown[], version = '1.0.0') {
 
 describe('check-whats-new', () => {
   it('accepts a complete, newest-first history', async () => {
-    const appRoot = await makeRoot([entry({ version: '1.0.1' }), entry({ version: '1.0.0' })], '1.0.1');
+    const appRoot = await makeRoot(
+      [entry({ version: '1.0.1' }), entry({ version: '1.0.0' })],
+      '1.0.1',
+    );
 
     const result = inspectWhatsNew({ appRoot });
 
@@ -68,7 +72,10 @@ describe('check-whats-new', () => {
   });
 
   it('rejects entries that are not newest-first', async () => {
-    const appRoot = await makeRoot([entry({ version: '1.0.0' }), entry({ version: '1.0.1' })], '1.0.1');
+    const appRoot = await makeRoot(
+      [entry({ version: '1.0.0' }), entry({ version: '1.0.1' })],
+      '1.0.1',
+    );
 
     const result = inspectWhatsNew({ appRoot });
 
@@ -112,6 +119,47 @@ describe('check-whats-new', () => {
       'export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [{"version":"1.0.0"}];\n';
 
     expect(parseEntries(source)).toEqual([{ version: '1.0.0' }]);
+  });
+
+  /*
+   * The generator writes double-quoted keys; one `prettier --write` rewrites the
+   * same file with bare keys and single quotes. Both are the same data, and the
+   * guard must not care - it used to JSON.parse the slice and died on the second
+   * shape, taking the release check down with it.
+   */
+  it('reads the file after Prettier has reformatted it', () => {
+    const source = [
+      'export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [',
+      '  {',
+      "    version: '1.0.0',",
+      '    userVisible: true,',
+      "    headline: { en: \"What's new\", el: 'Τι νέο υπάρχει' },",
+      '    added: [],',
+      '  },',
+      '];',
+      '',
+    ].join('\n');
+
+    expect(parseEntries(source)).toEqual([
+      {
+        version: '1.0.0',
+        userVisible: true,
+        headline: { en: "What's new", el: 'Τι νέο υπάρχει' },
+        added: [],
+      },
+    ]);
+  });
+
+  it('reads the real data file whichever way it happens to be formatted', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/app/core/data/whats-new.data.ts'),
+      'utf8',
+    );
+
+    const entries = parseEntries(source);
+
+    expect(entries.length).toBeGreaterThan(100);
+    expect(entries[0]?.version).toMatch(/^\d+\.\d+\.\d+$/u);
   });
 
   it('orders versions numerically, not as strings', () => {
