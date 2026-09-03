@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AlertController } from '@ionic/angular';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   IonButton,
@@ -27,6 +28,7 @@ import {
   checkmarkCircleOutline,
   funnelOutline,
   peopleOutline,
+  ribbonOutline,
   saveOutline,
   searchOutline,
   shieldCheckmarkOutline,
@@ -130,6 +132,12 @@ import { CaptainCoverageStylePanelsComponent } from './captain-coverage-style-pa
 
 const MAX_CAPTAIN_LOOKUP_COUNT = 12000;
 const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 6;
+/** Slots 0 and 1 are the two leader seats; the subs start here. */
+const CAPTAIN_COVERAGE_FIRST_SUB_SLOT_INDEX = 2;
+/** Borrowed from another crew, so it constrains nothing on this team. */
+const CAPTAIN_COVERAGE_FRIEND_CAPTAIN_SLOT_INDEX = 1;
+/** Where a leftover in-progress team is parked while the reader opens a character. */
+const CAPTAIN_COVERAGE_TEAM_DRAFT_KEY = 'optc.captainCoverage.teamDraft';
 const CAPTAIN_ABILITY_FILTER_CATEGORY: AbilityFilterRailCategory = 'captainAbility';
 /**
  * How many result cards the page paints before the "show more" control.
@@ -176,6 +184,16 @@ type CaptainCoverageSortMode =
       'catalog' | 'captainAtkBoost' | 'captainAverageBoost' | 'captainHpBoost' | 'nameAsc'
     >
   | 'nameDesc';
+/** One seat in the crown alert: which leader slot, and why it might refuse. */
+export interface CaptainCoverageLeaderSlotOption {
+  index: 0 | 1;
+  label: string;
+  occupantName: string | null;
+  isSameCharacter: boolean;
+  disabled: boolean;
+  disabledReason: string | null;
+}
+
 interface CaptainCoverageCardView {
   character: CharacterListItem;
   coverage: CaptainCoverageResult | null;
@@ -189,7 +207,6 @@ interface CaptainCoverageCardView {
   /** False for the characters that carry no Captain Ability at all. */
   canBeLeader: boolean;
   /** False when the cost budget would reject this character in the leader slot. */
-  leaderFitsBudget: boolean;
 }
 
 interface CaptainCoverageAbilityBadgeView {
@@ -365,15 +382,6 @@ export class CaptainCoveragePage implements OnInit {
   public readonly characterTagMatchIndex = computed<CharacterTagMatchIndex>(() =>
     buildCharacterTagMatchIndex(this.allCharacterDetailsById().values()),
   );
-  public readonly selectedCaptainSubtitle = computed(() => {
-    const captain = this.selectedCaptain();
-
-    return captain
-      ? [captain.type, captain.primaryClass, captain.secondaryClass]
-          .filter((value): value is string => Boolean(value))
-          .join(' / ')
-      : '';
-  });
   public readonly allowedCaptainIds = computed(() =>
     this.allCaptains().map((captain) => captain.id),
   );
@@ -389,29 +397,32 @@ export class CaptainCoveragePage implements OnInit {
       .some((slot) => !slot),
   );
   /**
-   * Where the result-card leader button writes: the first empty leader slot,
-   * and the Captain slot once both are taken, so the Captain can still be
-   * swapped out of an otherwise full team.
+   * The two leader seats, as the crown alert offers them.
+   *
+   * Both are always offered. In the game the Friend Captain is borrowed from
+   * another player's crew, so the same character may hold both seats, and
+   * neither seat is ever blocked by the name-derived party-conflict rule that
+   * governs the four sub slots. Only the Captain seat can be refused, and only
+   * by the cost budget - the Friend Captain's cost is not counted at all.
    */
-  public readonly leaderButtonSlotIndex = computed<0 | 1>(() => {
+  public leaderSlotOptions(character: CharacterListItem): CaptainCoverageLeaderSlotOption[] {
     const slots = this.selectedTeamSlots();
 
-    if (!slots[0]) {
-      return 0;
-    }
+    return ([0, 1] as const).map((index) => {
+      const occupant = slots[index] ?? null;
+      const fitsBudget = this.canAssignTeamSlotCharacter(index, character);
 
-    return slots[1] ? 0 : 1;
-  });
-  public readonly leaderButtonIcon = computed(() =>
-    this.leaderButtonSlotIndex() === 0 ? this.coverageIcon : this.targetIcon,
-  );
-  public readonly leaderButtonLabel = computed(() =>
-    this.t(
-      this.leaderButtonSlotIndex() === 0
-        ? 'team.actions.setAsCaptain'
-        : 'team.actions.setAsFriendCaptain',
-    ),
-  );
+      return {
+        index,
+        label: this.t(index === 0 ? 'team.actions.setAsCaptain' : 'team.actions.setAsFriendCaptain'),
+        occupantName: occupant?.name ?? null,
+        isSameCharacter: occupant?.id === character.id,
+        disabled: !fitsBudget,
+        disabledReason: fitsBudget ? null : this.t('team.actions.leaderOverBudget'),
+      };
+    });
+  }
+
   /**
    * Stable-identity view of the whole catalog. `getCatalogAbilityIndex` caches by
    * array identity, so rebuilding this per keystroke would silently turn its O(1)
@@ -529,6 +540,12 @@ export class CaptainCoveragePage implements OnInit {
    * them would overlap each other rather than tile.
    */
   public readonly openTierHelp = signal<number | null>(null);
+  /**
+   * Character id whose cost hint is showing. The card prints the bare number,
+   * which is all a reader who knows the game needs; pressing it says what the
+   * number is, for a reader who does not.
+   */
+  public readonly openResultCostHint = signal<number | null>(null);
   private readonly tierBreakdownByTier = computed(
     () => new Map(this.captainTierBreakdown().map((view) => [view.tier, view])),
   );
@@ -606,8 +623,6 @@ export class CaptainCoveragePage implements OnInit {
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
     const characterTagSetSelection = this.characterTagSetSelection();
     const allowedCaptainIdSet = this.allowedCaptainIdSet();
-    const hasFreeSubSlot = this.hasFreeSubSlot();
-    const leaderButtonSlotIndex = this.leaderButtonSlotIndex();
     const matchingCharacters = this.allCharacters()
       .filter((character) =>
         selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
@@ -639,7 +654,6 @@ export class CaptainCoveragePage implements OnInit {
       })
       .filter(({ matchesCaptainCoverageFilters }) => matchesCaptainCoverageFilters)
       .filter(({ characterDetail }) => this.matchesSuperPresenceFilters(characterDetail))
-      .filter(({ character }) => !this.hasPartyConflict(character, selectedConflictKeys))
       .filter(({ characterDetail }) =>
         matchesCharacterTagSets(
           characterDetail?.detail.characterTags ?? [],
@@ -669,8 +683,10 @@ export class CaptainCoveragePage implements OnInit {
           // result itself.
           captainBoosted: captain ? (coverage?.matches ?? false) : null,
           canBeLeader: allowedCaptainIdSet.has(character.id),
-          leaderFitsBudget: this.canAssignTeamSlotCharacter(leaderButtonSlotIndex, character),
-          assignableSlotIndex: this.findAssignableSubSlotIndex(character),
+          assignableSlotIndex: this.findAssignableSubSlotIndex(
+            character,
+            selectedConflictKeys,
+          ),
           abilityMatchCount,
           captainAbilityMatchCount,
           selectedAbilityCount: selectedAbilityRequirementCount,
@@ -680,11 +696,6 @@ export class CaptainCoveragePage implements OnInit {
           ],
         };
       })
-      // With a free sub slot this still hides whoever cannot take it (cost
-      // budget). With every sub slot taken there is nothing to hide anyone
-      // from, so the cards stay and only the sub button goes dead - otherwise
-      // the leader button would be unreachable exactly when it is needed.
-      .filter(({ assignableSlotIndex }) => !hasFreeSubSlot || assignableSlotIndex !== null)
       // One shared predicate: splits the comma-joined `type` column so a
       // dual-type character is found under either of its types regardless of
       // stored order, and reads the full `classes` array.
@@ -715,7 +726,6 @@ export class CaptainCoveragePage implements OnInit {
           coverage,
           captainBoosted,
           canBeLeader,
-          leaderFitsBudget,
           assignableSlotIndex,
           abilityMatchCount,
           captainAbilityMatchCount,
@@ -726,7 +736,6 @@ export class CaptainCoveragePage implements OnInit {
           coverage,
           captainBoosted,
           canBeLeader,
-          leaderFitsBudget,
           assignableSlotIndex,
           abilityMatchCount: abilityMatchCount + captainAbilityMatchCount,
           selectedAbilityCount,
@@ -847,6 +856,8 @@ export class CaptainCoveragePage implements OnInit {
   public readonly saveIcon = saveOutline;
   public readonly searchIcon = searchOutline;
   public readonly characterTagFilterIcon = funnelOutline;
+  /** The crown on a result card: "make this one a leader".  */
+  public readonly leaderIcon = ribbonOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -855,6 +866,7 @@ export class CaptainCoveragePage implements OnInit {
     private readonly i18n: AppI18nService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly alertController: AlertController,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
     this.characterBoxes = this.userState.characterBoxes;
@@ -902,6 +914,7 @@ export class CaptainCoveragePage implements OnInit {
       );
       this.clearMissingSelectedCharacterBox();
       await this.applySavedTeamFromRoute();
+      this.restoreTeamDraft();
     } finally {
       this.loading.set(false);
     }
@@ -926,15 +939,79 @@ export class CaptainCoveragePage implements OnInit {
   }
 
   /**
-   * Sets the Captain (or Friend Captain) straight from a result card, so the
-   * leader no longer has to come from the picker modal.
+   * The crown. One control for both leader seats: it asks which one rather than
+   * guessing, which is also what makes replacing an occupied seat possible
+   * without clearing it first.
    */
-  public async assignLeaderFromResult(card: CaptainCoverageCardView): Promise<void> {
-    if (!card.canBeLeader || !card.leaderFitsBudget) {
+  public async openLeaderSlotPicker(card: CaptainCoverageCardView): Promise<void> {
+    if (!card.canBeLeader) {
       return;
     }
 
-    await this.setTeamSlotCharacter(this.leaderButtonSlotIndex(), card.character);
+    const options = this.leaderSlotOptions(card.character);
+    const firstEnabled = options.find((option) => !option.disabled);
+
+    if (!firstEnabled) {
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: card.character.name,
+      message: this.t('team.actions.leaderSlotPicker.message'),
+      cssClass: 'captain-coverage-leader-slot-alert',
+      inputs: options.map((option) => ({
+        type: 'radio' as const,
+        label: this.leaderSlotOptionLabel(option),
+        value: option.index,
+        disabled: option.disabled,
+        checked: option.index === firstEnabled.index,
+      })),
+      buttons: [
+        { text: this.i18n.translate('common.actions.cancel'), role: 'cancel' },
+        {
+          text: this.i18n.translate('common.actions.confirm'),
+          handler: (slotIndex: 0 | 1 | undefined) => {
+            if (slotIndex === undefined) {
+              return;
+            }
+
+            void this.assignLeaderFromResult(card, slotIndex);
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
+  /** "Captain - replaces Nami", "Friend Captain - over the cost budget". */
+  public leaderSlotOptionLabel(option: CaptainCoverageLeaderSlotOption): string {
+    if (option.disabledReason) {
+      return `${option.label} - ${option.disabledReason}`;
+    }
+
+    if (option.isSameCharacter) {
+      return `${option.label} - ${this.t('team.actions.leaderSlotPicker.alreadyHere')}`;
+    }
+
+    if (option.occupantName) {
+      return `${option.label} - ${this.t('team.actions.leaderSlotPicker.replaces', {
+        name: option.occupantName,
+      })}`;
+    }
+
+    return `${option.label} - ${this.t('team.actions.leaderSlotPicker.empty')}`;
+  }
+
+  public async assignLeaderFromResult(
+    card: CaptainCoverageCardView,
+    slotIndex: 0 | 1,
+  ): Promise<void> {
+    if (!card.canBeLeader) {
+      return;
+    }
+
+    await this.setTeamSlotCharacter(slotIndex, card.character);
   }
 
   /**
@@ -960,6 +1037,7 @@ export class CaptainCoveragePage implements OnInit {
       slots.map((slot, slotIndex) => (slotIndex === index ? character : slot)),
     );
     this.clearSavedTeamDraftState();
+    this.persistTeamDraft();
 
     if (index === 0) {
       // The search box is the user's own filter: picking a Captain from a
@@ -984,6 +1062,7 @@ export class CaptainCoveragePage implements OnInit {
       slots.map((slot, index) => (index === slotIndex ? card.character : slot)),
     );
     this.clearSavedTeamDraftState();
+    this.persistTeamDraft();
     this.keepPagePositionAfterTeamChange(pagedCount);
   }
 
@@ -1000,6 +1079,7 @@ export class CaptainCoveragePage implements OnInit {
       slots.map((slot, slotIndex) => (slotIndex === index ? null : slot)),
     );
     this.clearSavedTeamDraftState();
+    this.persistTeamDraft();
 
     if (index === 0) {
       this.selectedCaptainDetail.set(null);
@@ -1010,6 +1090,7 @@ export class CaptainCoveragePage implements OnInit {
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
     this.teamName.set((event.detail.value ?? '').trimStart());
+    this.persistTeamDraft();
   }
 
   public async saveTeam(): Promise<void> {
@@ -1168,6 +1249,10 @@ export class CaptainCoveragePage implements OnInit {
   /** The tier's own breakdown, or null when this Captain has no such tier. */
   public tierHelpView(tier: number): CaptainCoverageTierViewModel | null {
     return this.tierBreakdownByTier().get(tier) ?? null;
+  }
+
+  public toggleResultCostHint(characterId: number): void {
+    this.openResultCostHint.update((open) => (open === characterId ? null : characterId));
   }
 
   public toggleTierHelp(tier: number): void {
@@ -1371,16 +1456,46 @@ export class CaptainCoveragePage implements OnInit {
     );
   }
 
+  /**
+   * What the four sub slots must not collide with: the Captain and the other
+   * subs. The Friend Captain is deliberately left out.
+   *
+   * `resolveCharacterPartyConflictKeys` is name-derived and always includes the
+   * character's own primary key, so a character conflicts with itself. In the
+   * game the Friend Captain is borrowed from another player's crew, so it
+   * constrains nothing on your side - and the same character may hold both
+   * leader seats. Neither of these keys is consulted when filling a leader
+   * seat; this set only ever gates a sub.
+   */
   private resolveSelectedTeamConflictKeys(): Set<string> {
     return new Set(
       this.selectedTeamSlots()
-        .filter((character): character is CharacterListItem => Boolean(character))
+        .filter(
+          (character, index): character is CharacterListItem =>
+            index !== CAPTAIN_COVERAGE_FRIEND_CAPTAIN_SLOT_INDEX && Boolean(character),
+        )
         .flatMap((character) => resolveCharacterPartyConflictKeys(character)),
     );
   }
 
-  private findAssignableSubSlotIndex(character: CharacterListItem): number | null {
-    for (let index = 2; index < CAPTAIN_COVERAGE_TEAM_SLOT_COUNT; index += 1) {
+  /**
+   * The conflict rule moved here from the result filter: a conflicting
+   * character keeps its card and loses only the sub button, so it stays
+   * available for the two leader seats.
+   */
+  private findAssignableSubSlotIndex(
+    character: CharacterListItem,
+    selectedConflictKeys: Set<string>,
+  ): number | null {
+    if (this.hasPartyConflict(character, selectedConflictKeys)) {
+      return null;
+    }
+
+    for (
+      let index = CAPTAIN_COVERAGE_FIRST_SUB_SLOT_INDEX;
+      index < CAPTAIN_COVERAGE_TEAM_SLOT_COUNT;
+      index += 1
+    ) {
       if (this.selectedTeamSlots()[index] || !this.canAssignTeamSlotCharacter(index, character)) {
         continue;
       }
@@ -1483,6 +1598,7 @@ export class CaptainCoveragePage implements OnInit {
 
     this.selectedTeamSlots.set(selectedSlots);
     this.teamName.set(team.name);
+    this.persistTeamDraft();
     this.currentTeamId.set(null);
     this.saveFeedbackError.set('');
     this.saveUiLocked.set(false);
@@ -1511,6 +1627,74 @@ export class CaptainCoveragePage implements OnInit {
       slots[4]?.id ?? null,
       slots[5]?.id ?? null,
     ];
+  }
+
+  /**
+   * Opening a character detail page leaves the tabs subtree entirely - the
+   * route is root-level - so the half-built team would be gone on the way back.
+   * It is parked in session storage instead, which lives exactly as long as the
+   * tab does and never follows the reader into a new session.
+   */
+  private persistTeamDraft(): void {
+    const slots = this.selectedTeamSlots().map((slot) => slot?.id ?? null);
+
+    try {
+      if (slots.every((id) => id === null)) {
+        sessionStorage.removeItem(CAPTAIN_COVERAGE_TEAM_DRAFT_KEY);
+        return;
+      }
+
+      sessionStorage.setItem(
+        CAPTAIN_COVERAGE_TEAM_DRAFT_KEY,
+        JSON.stringify({ slots, teamName: this.teamName() }),
+      );
+    } catch {
+      // Private browsing and storage-blocked contexts throw here. A draft that
+      // cannot be parked is not a reason to break the page.
+    }
+  }
+
+  /** Only runs when nothing was loaded from `?teamId=`, which always wins. */
+  private restoreTeamDraft(): void {
+    if (this.selectedTeamSlots().some(Boolean)) {
+      return;
+    }
+
+    let parsed: { slots?: Array<number | null>; teamName?: string } | null = null;
+
+    try {
+      const raw = sessionStorage.getItem(CAPTAIN_COVERAGE_TEAM_DRAFT_KEY);
+      parsed = raw ? JSON.parse(raw) : null;
+    } catch {
+      parsed = null;
+    }
+
+    if (!parsed || !Array.isArray(parsed.slots)) {
+      return;
+    }
+
+    const charactersById = new Map(this.allCharacters().map((character) => [character.id, character]));
+    const slots = Array.from({ length: CAPTAIN_COVERAGE_TEAM_SLOT_COUNT }, (_value, index) => {
+      const id = parsed?.slots?.[index];
+
+      return typeof id === 'number' ? (charactersById.get(id) ?? null) : null;
+    });
+
+    if (!slots.some(Boolean)) {
+      return;
+    }
+
+    this.selectedTeamSlots.set(slots);
+
+    if (typeof parsed.teamName === 'string' && parsed.teamName.length) {
+      this.teamName.set(parsed.teamName);
+    }
+
+    const captain = slots[0];
+
+    if (captain) {
+      this.selectedCaptainDetail.set(this.allCharacterDetailsById().get(captain.id) ?? null);
+    }
   }
 
   private clearSavedTeamDraftState(): void {

@@ -24,6 +24,7 @@
 }
 
 .coverage-team-slot {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
@@ -54,4 +55,76 @@
 .coverage-team-slot__pick:focus-visible {
   outline: 2px solid rgba(245, 200, 76, 0.72);
   outline-offset: 3px;
+}
+
+/*
+ * A filled slot: the portrait and the name open the character, and the rest of
+ * the tile still jumps to the results. The jump target is a real button laid
+ * behind the two links rather than a wrapper around them, so nothing focusable
+ * is nested inside anything else and all three affordances stay tabbable.
+ */
+.coverage-team-slot--filled {
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+}
+
+.coverage-team-slot__surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  cursor: pointer;
+}
+
+.coverage-team-slot__surface:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 3px;
+}
+
+.coverage-team-slot__detail-target,
+.coverage-team-slot__meta {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.coverage-team-slot__detail-target {
+  display: block;
+  border-radius: 14px;
+}
+
+.coverage-team-slot__meta {
+  display: grid;
+  gap: 2px;
+}
+
+.coverage-team-slot__name-link {
+  color: #f8fbff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-decoration: none;
+  /* Wraps onto as many lines as it needs; the cost below is never clipped. */
+  overflow-wrap: anywhere;
+}
+
+.coverage-team-slot__name-link:hover,
+.coverage-team-slot__name-link:focus-visible {
+  text-decoration: underline;
+}
+
+.coverage-team-slot__cost {
+  color: rgba(248, 251, 255, 0.66);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* The clear button has to stay above the jump surface. */
+.coverage-team-slot__clear {
+  position: relative;
+  z-index: 2;
 }

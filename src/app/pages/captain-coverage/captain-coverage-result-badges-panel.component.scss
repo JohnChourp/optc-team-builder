@@ -47,3 +47,53 @@
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
+
+/*
+ * Cost sits with HP and ATK because that is where the eye already is, and it is
+ * the bare number on purpose - a reader who plays the game reads "55" without
+ * a label. Pressing it says what the number is, for a reader who does not.
+ */
+.captain-result__cost {
+  appearance: none;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid rgba(245, 200, 76, 0.34);
+  border-radius: 999px;
+  background: rgba(245, 200, 76, 0.12);
+  color: #f8d36b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.captain-result__cost:hover,
+.captain-result__cost:focus-visible {
+  border-color: rgba(245, 200, 76, 0.6);
+  background: rgba(245, 200, 76, 0.2);
+}
+
+.captain-result__cost-hint {
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: normal;
+}
+
+/*
+ * The crown is the only control on the card with no text, so it has to carry
+ * the 44px tap floor this page was signed off against on its own. Ionic sizes
+ * a small button from its own padding, hence the explicit height too.
+ */
+.captain-result__leader {
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
+}
