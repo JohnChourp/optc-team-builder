@@ -20,7 +20,6 @@
   },
   "filters": {
     "abilityTagSetsTitle": "Ability tag filter",
-    "bestAbilityMatchesFirst": "Best ability matches first",
     "captainAbilityEyebrow": "Required",
     "tierCoverage": {
       "toggle": "Tier Coverage",
@@ -117,7 +116,6 @@
     "title": "Character results",
     "titleWithCount": "{{count}} matching characters",
     "titleWithCoverage": "{{boosted}} boosted of {{count}} matching",
-    "notBoostedBadge": "Not boosted by this Captain",
     "loadMore": "Show more ({{count}} left)",
     "cost": "Cost: {{cost}}"
   },

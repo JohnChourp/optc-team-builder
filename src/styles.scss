@@ -191,11 +191,21 @@ img {
   }
 }
 
-ion-alert.manual-branch-picker-alert .alert-radio-label,
-ion-alert.manual-branch-picker-alert .alert-checkbox-label {
-  color: #f8fbff !important;
+/*
+ * Overlay chrome the Ionic step ramp cannot express. The ramp in
+ * theme/variables.scss does the actual work; these two rules only pick the
+ * app's own accent where Ionic would otherwise choose for us.
+ *
+ * Never scope any of this to a cssClass. The class-scoped patch this replaced
+ * covered one alert and two of its text parts, left that same alert's message
+ * at 4.14:1, and a second alert shipped months later with a cssClass no rule
+ * ever matched. Guarded by: npm run theme:overlay-contrast
+ */
+ion-alert [aria-checked='true'] .alert-radio-label {
+  color: var(--ion-color-secondary);
 }
 
-ion-alert.manual-branch-picker-alert [aria-checked='true'] .alert-radio-label {
-  color: #f5c84c !important;
+ion-alert .alert-button:not(.alert-button-role-destructive),
+ion-alert .alert-tappable:not(.alert-button-role-destructive) {
+  color: var(--ion-color-primary-tint);
 }

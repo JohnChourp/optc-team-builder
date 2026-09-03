@@ -32,6 +32,72 @@
   --ion-text-color: #f8fbff;
   --ion-text-color-rgb: 248, 251, 255;
 
+  /*
+   * Ionic's step ramp, interpolated between --ion-background-color (#070b17)
+   * and --ion-text-color (#f8fbff).
+   *
+   * Ionic writes every non-primary overlay colour as
+   *   var(--ion-color-step-N, var(--ion-text-color-step-M, <light literal>))
+   * so with neither family defined the light literal wins and overlays render
+   * light-theme text on this app's near-black surface. That is how
+   * .alert-radio-label shipped at #262626 - 1.30:1 - and .alert-message at
+   * #737373 - 4.14:1 - while .alert-title looked fine, because the title is the
+   * one alert part wired to a token this file already set.
+   *
+   * Do NOT define the legacy --ion-color-step-* family: Ionic's own dark
+   * palette leaves it undefined and its inverted numbering is a second thing to
+   * get wrong. Guarded by: npm run theme:overlay-contrast
+   */
+  --ion-text-color-step-50: #eceff3;
+  --ion-text-color-step-100: #e0e3e8;
+  --ion-text-color-step-150: #d4d7dc;
+  --ion-text-color-step-200: #c8cbd1;
+  --ion-text-color-step-250: #bcbfc5;
+  --ion-text-color-step-300: #b0b3b9;
+  --ion-text-color-step-350: #a4a7ae;
+  --ion-text-color-step-400: #989ba2;
+  --ion-text-color-step-450: #8c8f97;
+  --ion-text-color-step-500: #80838b;
+  --ion-text-color-step-550: #73777f;
+  --ion-text-color-step-600: #676b74;
+  --ion-text-color-step-650: #5b5f68;
+  --ion-text-color-step-700: #4f535d;
+  --ion-text-color-step-750: #434751;
+  --ion-text-color-step-800: #373b45;
+  --ion-text-color-step-850: #2b2f3a;
+  --ion-text-color-step-900: #1f232e;
+  --ion-text-color-step-950: #131723;
+
+  --ion-background-color-step-50: #131723;
+  --ion-background-color-step-100: #1f232e;
+  --ion-background-color-step-150: #2b2f3a;
+  --ion-background-color-step-200: #373b45;
+  --ion-background-color-step-250: #434751;
+  --ion-background-color-step-300: #4f535d;
+  --ion-background-color-step-350: #5b5f68;
+  --ion-background-color-step-400: #676b74;
+  --ion-background-color-step-450: #73777f;
+  --ion-background-color-step-500: #80838b;
+  --ion-background-color-step-550: #8c8f97;
+  --ion-background-color-step-600: #989ba2;
+  --ion-background-color-step-650: #a4a7ae;
+  --ion-background-color-step-700: #b0b3b9;
+  --ion-background-color-step-750: #bcbfc5;
+  --ion-background-color-step-800: #c8cbd1;
+  --ion-background-color-step-850: #d4d7dc;
+  --ion-background-color-step-900: #e0e3e8;
+  --ion-background-color-step-950: #eceff3;
+
+  /*
+   * alert.ios.css and action-sheet.ios.css reach for this BEFORE
+   * --ion-background-color; undefined, it lands on the literal #f9f9f9 - a
+   * near-white card in a dark-only app. Pinned so md and ios agree.
+   */
+  --ion-overlay-background-color: #070b17;
+
+  /* Placeholders read this first; the ramp fallback alone is only 3.68:1 here. */
+  --ion-placeholder-color: var(--ion-text-color-step-350);
+
   --app-surface: #070b17;
   --app-surface-strong: #131c33;
   --app-surface-card: linear-gradient(180deg, rgba(18, 25, 46, 0.96), rgba(10, 14, 27, 0.96));

@@ -34,19 +34,6 @@
   overflow-wrap: anywhere;
 }
 
-.captain-result__not-boosted {
-  justify-self: start;
-  max-width: 100%;
-  padding: 3px 6px;
-  border: 1px solid rgba(248, 251, 255, 0.16);
-  border-radius: 6px;
-  background: rgba(248, 251, 255, 0.05);
-  color: rgba(248, 251, 255, 0.6);
-  font-size: 0.66rem;
-  font-weight: 700;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
-}
 
 /*
  * Cost sits with HP and ATK because that is where the eye already is, and it is
@@ -75,11 +62,45 @@
   background: rgba(245, 200, 76, 0.2);
 }
 
+.captain-result__cost-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/*
+ * Floats above the number rather than sitting beside it. Inline, it took width
+ * out of the same flex row as HP and ATK and pushed them sideways on every
+ * press - the tier help popover has the same shape for the same reason.
+ */
 .captain-result__cost-hint {
-  color: rgba(248, 251, 255, 0.78);
-  font-size: 0.68rem;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: max-content;
+  max-width: min(220px, calc(100vw - 48px));
+  padding: 6px 10px;
+  border: 1px solid rgba(245, 200, 76, 0.32);
+  border-radius: 10px;
+  background: rgba(12, 18, 30, 0.98);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+  color: #f8fbff;
+  font-size: 0.7rem;
   font-weight: 700;
+  text-align: center;
   white-space: normal;
+}
+
+.captain-result__cost-hint::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(245, 200, 76, 0.32);
 }
 
 /*
@@ -99,12 +120,58 @@
   --padding-end: 8px;
   --padding-top: 10px;
   --padding-bottom: 10px;
-  --background: rgba(12, 18, 30, 0.72);
-  --background-hover: rgba(12, 18, 30, 0.86);
+  /*
+   * No outline: the crown reads as part of the card, not as another button in a
+   * row. The fill borrows the page's own two lights - the deep navy the shell
+   * fades to and the cyan of its top-right glow - so it belongs to the theme
+   * rather than announcing itself.
+   */
+  --border-width: 0;
+  --border-style: none;
+  --box-shadow: none;
+  --background: linear-gradient(140deg, #0d1324 0%, #16305c 48%, #4cc9f0 100%);
+  --background-hover: linear-gradient(140deg, #142042 0%, #1e4a86 48%, #6fd8f7 100%);
+  --background-activated: linear-gradient(140deg, #142042 0%, #1e4a86 48%, #6fd8f7 100%);
+  --color: #f2fbff;
   --border-radius: 12px;
+  /* Reads as a raised object at rest, before any hover. */
+  --box-shadow:
+    0 6px 16px rgba(3, 7, 18, 0.55),
+    0 0 0 1px rgba(76, 201, 240, 0.28);
   margin: 0;
   min-width: 44px;
   min-height: 44px;
   width: 44px;
   height: 44px;
+  overflow: hidden;
+  transition:
+    transform 150ms ease,
+    filter 150ms ease;
+}
+
+/* The gloss: one highlight across the top half, like light on a badge. */
+.captain-result__leader::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.1) 38%,
+    rgba(255, 255, 255, 0) 62%
+  );
+  pointer-events: none;
+}
+
+.captain-result__leader:hover,
+.captain-result__leader:focus-visible {
+  transform: scale(1.12);
+  filter: brightness(1.12);
+}
+
+.captain-result__leader ion-icon {
+  font-size: 1.25rem;
+  /* A second, tighter shadow keeps the crown legible over the bright end. */
+  filter: drop-shadow(0 1px 2px rgba(3, 7, 18, 0.6));
 }
