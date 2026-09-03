@@ -451,6 +451,7 @@
     "downloading": "Downloading the new version…",
     "downloadedNative": "The new version has downloaded. Confirm the install to finish.",
     "downloadStalled": "This is taking longer than usual. The download is still running.",
+    "downloadFailed": "The update could not be downloaded. We will try again shortly.",
     "progressLabel": "Update download progress",
     "update": "Update",
     "later": "Later",

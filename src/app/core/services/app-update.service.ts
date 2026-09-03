@@ -6,7 +6,7 @@ import { type Subscription } from 'rxjs';
 import { SwDownloadProgressTracker, resolveCacheStorage } from './sw-download-progress.tracker';
 
 /** Lifecycle of the pending web (PWA) update, as the shell renders it. */
-export type AppUpdatePhase = 'idle' | 'downloading' | 'ready';
+export type AppUpdatePhase = 'idle' | 'downloading' | 'ready' | 'failed';
 
 /**
  * Progress shown the instant the banner appears, so the bar reads as "started"
@@ -89,6 +89,30 @@ export const UPDATE_DOWNLOAD_STALL_MS = 120_000;
 export const UPDATE_DOWNLOAD_ABANDON_MS = 1_800_000;
 
 /**
+ * Backoff before re-checking after ngsw fails to install a detected version.
+ *
+ * A failed install is usually a mid-deploy race: `ngsw.json` is already the new
+ * build while an UNHASHED prefetch asset - `/assets/data/optc-seed.sql` and the
+ * rest of the `data`, `i18n` and `app` groups in ngsw-config.json - is still the
+ * previous body, so `initializeFully` throws on the hash check. That window
+ * closes on its own in seconds to minutes. Waiting the full hourly poll wastes
+ * an update the reader already saw announced; retrying harder just re-downloads
+ * the payload.
+ */
+export const UPDATE_FAILURE_RETRY_MS: readonly number[] = [60_000, 300_000];
+
+/**
+ * Stand-in ready hash for an update only the hourly poll saw.
+ *
+ * ngsw withholds `VERSION_DETECTED` from a client it has no entry for, so the
+ * poll can be the first thing to learn of an update. `completeDownload(null)`
+ * then set the phase to `ready` while leaving the ready hash null - a full
+ * "update ready" banner whose Update button was permanently disabled. Only ever
+ * compared for null-ness and snooze identity.
+ */
+export const POLLED_READY_HASH = '__polled__';
+
+/**
  * Watches the Angular service worker for freshly deployed builds and exposes the
  * install as a phase plus a download-progress fraction, so the shell can show the
  * update banner the moment a new version starts downloading rather than only once
@@ -166,6 +190,9 @@ export class AppUpdateService {
   private started = false;
   private destroyed = false;
   private trackedHash: string | null = null;
+  /** Pending short-backoff retry after a failed install, and how far into it. */
+  private failureRetryHandle: ReturnType<typeof setTimeout> | null = null;
+  private failureRetryIndex = 0;
   private snoozedHash: string | null = null;
   private detectedAtMs = 0;
   private lastEmittedProgress = 0;
@@ -340,6 +367,8 @@ export class AppUpdateService {
     this.sampleInFlight = false;
     this.measuredSignal.set(false);
     this.stalledSignal.set(false);
+    this.clearFailureRetry();
+    this.failureRetryIndex = 0;
     this.rawPhaseSignal.set('downloading');
     // Emitted synchronously, in the same frame the banner appears.
     this.emitProgress(UPDATE_PROGRESS_MIN);
@@ -382,11 +411,11 @@ export class AppUpdateService {
       return;
     }
 
-    this.giveUpOnDownload();
+    this.markDownloadFailed();
   }
 
-  /** Returns the banner to idle and forgets the in-flight download. */
-  private resetDownload(): void {
+  /** Clears every in-flight artefact and leaves the phase to the caller. */
+  private clearInFlightDownload(): void {
     this.stopTicker();
     this.clearWatchdogs();
     this.progressTracker.reset();
@@ -403,7 +432,60 @@ export class AppUpdateService {
     this.measuredSignal.set(false);
     this.stalledSignal.set(false);
     this.downloadProgressSignal.set(0);
+  }
+
+  /** Returns the banner to idle and forgets the in-flight download. */
+  private resetDownload(): void {
+    this.clearInFlightDownload();
     this.rawPhaseSignal.set('idle');
+  }
+
+  /**
+   * ngsw could not install the version it just announced.
+   *
+   * The banner stays mounted and says so, rather than vanishing: it was the
+   * silent teardown here that made a real install failure look like the UI
+   * flickering for no reason. A retry is scheduled on a short backoff, because
+   * the usual cause is a deploy window that closes on its own.
+   */
+  private markDownloadFailed(): void {
+    const previousReadyHash = this.readyHashSignal();
+
+    // An older version is still installed and activatable, so the honest state
+    // is "ready", not "failed" - the reader can act on what they already have.
+    if (previousReadyHash !== null && previousReadyHash !== this.trackedHash) {
+      this.giveUpOnDownload();
+
+      return;
+    }
+
+    this.clearInFlightDownload();
+    this.trackedHash = null;
+    this.rawPhaseSignal.set('failed');
+    this.scheduleFailureRetry();
+  }
+
+  private scheduleFailureRetry(): void {
+    this.clearFailureRetry();
+
+    const delay = UPDATE_FAILURE_RETRY_MS[this.failureRetryIndex];
+
+    if (delay === undefined) {
+      return;
+    }
+
+    this.failureRetryIndex += 1;
+    this.failureRetryHandle = setTimeout(() => {
+      this.failureRetryHandle = null;
+      void this.checkForUpdate();
+    }, delay);
+  }
+
+  private clearFailureRetry(): void {
+    if (this.failureRetryHandle !== null) {
+      clearTimeout(this.failureRetryHandle);
+      this.failureRetryHandle = null;
+    }
   }
 
   private async checkForUpdate(): Promise<void> {
@@ -411,7 +493,7 @@ export class AppUpdateService {
       const hasUpdate = await this.swUpdate.checkForUpdate();
 
       if (hasUpdate) {
-        this.completeDownload(null);
+        this.completeDownload(this.trackedHash ?? POLLED_READY_HASH);
       }
     } catch {
       // Transient network/registration failures are retried by the next poll tick.
