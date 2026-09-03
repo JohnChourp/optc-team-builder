@@ -229,24 +229,6 @@
                 </ion-button>
               </div>
 
-              @if (abilityTagSetChips().length) {
-                <div class="selected-values-row">
-                  @for (chip of abilityTagSetChips(); track chip.id) {
-                    <button
-                      type="button"
-                      class="selected-value-chip"
-                      [attr.data-testid]="'captain-coverage-ability-filter-chip-' + chip.id"
-                      [attr.aria-label]="chip.removeLabel"
-                      [disabled]="loading()"
-                      (click)="removeAbilityTagSet(chip.id)"
-                    >
-                      {{ chip.label }}
-                      <span aria-hidden="true">×</span>
-                    </button>
-                  }
-                </div>
-              }
-
               <app-ability-tag-set-picker
                 [isOpen]="abilityTagSetPickerOpen()"
                 [title]="t('filters.abilityTagSetsTitle')"
@@ -299,23 +281,6 @@
                   {{ characterTagFilterTriggerLabel() }}
                 </ion-button>
               </div>
-
-              @if (characterTagSetChips().length) {
-                <div class="selected-values-row">
-                  @for (chip of characterTagSetChips(); track chip.id) {
-                    <button
-                      type="button"
-                      class="selected-value-chip"
-                      [attr.aria-label]="chip.removeLabel"
-                      [disabled]="loading()"
-                      (click)="removeCharacterTagSet(chip.id)"
-                    >
-                      {{ chip.label }}
-                      <span aria-hidden="true">×</span>
-                    </button>
-                  }
-                </div>
-              }
 
               <app-character-tag-set-picker
                 [isOpen]="characterTagSetPickerOpen()"
@@ -519,6 +484,7 @@
               [options]="availableClasses()"
               [selection]="classFacet()"
               [matchCount]="classFacetMatchCount()"
+              [showSelectedChips]="false"
               [disabled]="loading()"
               (selectionChange)="onClassFacetChange($event)"
             ></app-character-facet-filter>

@@ -79,6 +79,31 @@ describe('CharacterFacetFilterComponent', () => {
     expect(i18n.preloadScope).toHaveBeenCalledWith('character-facet-filter');
   });
 
+  it('shows the selected-value chips unless a host opts out', () => {
+    const { component } = createComponent({ kind: 'class', options: CLASS_OPTIONS });
+
+    // Default is on, so every existing host keeps today's behaviour.
+    expect(component.showSelectedChips).toBe(true);
+    expect(component.showSelectedChipsState()).toBe(true);
+
+    component.showSelectedChips = false;
+    component.ngOnChanges({
+      showSelectedChips: new SimpleChange(true, false, false),
+    });
+
+    expect(component.showSelectedChipsState()).toBe(false);
+
+    const template = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/shared/character-facet-filter/character-facet-filter.component.html',
+      ),
+      'utf8',
+    );
+
+    expect(template).toContain('@if (showSelectedChipsState() && values().length) {');
+  });
+
   it('emits a normalized selection when values change', () => {
     const { component, emitted } = createComponent();
 

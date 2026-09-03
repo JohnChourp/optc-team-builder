@@ -202,18 +202,6 @@ interface CaptainCoverageAbilityTagSetSection extends AbilityTagSetPickerSection
   category: AbilityFilterRailCategory;
 }
 
-/**
- * One populated character tag group, collapsed to a single removable chip.
- *
- * The chip keeps the grouping visible outside the modal — a flat tag row would
- * read as one bucket and hide the very AND/OR structure the sets exist for.
- */
-interface CaptainCoverageCharacterTagSetChip {
-  id: string;
-  label: string;
-  removeLabel: string;
-}
-
 @Component({
   selector: 'app-captain-coverage-page',
   standalone: true,
@@ -350,22 +338,6 @@ export class CaptainCoveragePage implements OnInit {
   );
   public readonly hasSelectedCharacterTags = computed(
     () => countPopulatedCharacterTagSets(this.characterTagSetSelection()) > 0,
-  );
-  /** One chip per populated group, labelled with the group's own join word. */
-  public readonly characterTagSetChips = computed<CaptainCoverageCharacterTagSetChip[]>(() =>
-    this.characterTagSetSelection()
-      .sets.filter((set) => set.tags.length > 0)
-      .map((set) => {
-        // Padding lives here, not in the catalogue, so a translator trimming
-        // whitespace in their editor cannot silently glue the tags together.
-        const label = set.tags.join(` ${this.t(`filters.characterTags.joiners.${set.operator}`)} `);
-
-        return {
-          id: set.id,
-          label,
-          removeLabel: this.t('filters.characterTags.removeGroup', { group: label }),
-        };
-      }),
   );
   public readonly characterTagFilterTriggerLabel = computed(() => {
     const selection = this.characterTagSetSelection();
@@ -508,35 +480,6 @@ export class CaptainCoveragePage implements OnInit {
   public readonly hasSelectedAbilityTags = computed(
     () => this.populatedAbilityTagSets().length > 0,
   );
-  /**
-   * One removable chip per populated group, mirroring the character-tag filter
-   * on this same page. The chips are what replaces the five rail chips: without
-   * them the page would lose both the "a filter is active" signal and the only
-   * way to drop part of the selection without reopening the modal.
-   */
-  public readonly abilityTagSetChips = computed<CaptainCoverageCharacterTagSetChip[]>(() => {
-    const labelByKey = new Map(this.allCatalogItems().map((item) => [item.key, item.label]));
-    const captainLabel = this.t('filters.captainAbilityEyebrow');
-
-    return this.populatedAbilityTagSets().map((set) => {
-      const joiner = this.t(`filters.abilityTagSets.joiners.${set.operator}`);
-      const label = set.requirements
-        .map((requirement) => {
-          const name = labelByKey.get(requirement.abilityKey) ?? requirement.abilityKey;
-
-          // The same ability can sit in a group twice, once captain-scoped and
-          // once crew-wide, so the scope has to ride on the chip text too.
-          return isCaptainAbilityRequirement(requirement) ? `${captainLabel}: ${name}` : name;
-        })
-        .join(` ${joiner} `);
-
-      return {
-        id: set.id,
-        label,
-        removeLabel: this.t('filters.abilityTagSets.removeGroup', { group: label }),
-      };
-    });
-  });
   public readonly abilityFilterTriggerLabel = computed(() => {
     const groups = this.populatedAbilityTagSets().length;
 
@@ -1152,16 +1095,6 @@ export class CaptainCoveragePage implements OnInit {
     this.characterTagSetPickerOpen.set(false);
   }
 
-  /** Drops one whole group, so the chip row stays a single-click undo. */
-  public removeCharacterTagSet(setId: string): void {
-    const selection = this.characterTagSetSelection();
-
-    this.applyCharacterTagSetSelection({
-      ...selection,
-      sets: selection.sets.filter((set) => set.id !== setId),
-    });
-  }
-
   public clearSelectedCharacterTags(): void {
     this.applyCharacterTagSetSelection(createEmptyCharacterTagSetSelection());
   }
@@ -1285,14 +1218,6 @@ export class CaptainCoveragePage implements OnInit {
   public saveAbilityTagSetSelection(selection: AbilityFilterTagSetSelection): void {
     this.tagSetSelection.set(cloneAbilityFilterTagSetSelection(selection));
     this.abilityTagSetPickerOpen.set(false);
-  }
-
-  /** Drops one whole group, which is what the page-level chip represents. */
-  public removeAbilityTagSet(setId: string): void {
-    this.tagSetSelection.update((selection) => ({
-      ...selection,
-      sets: selection.sets.filter((set) => set.id !== setId),
-    }));
   }
 
   public clearSelectedAbilityTags(): void {

@@ -59,11 +59,6 @@
         "empty": "Choose character tags",
         "active": "{{tags}} tag(s) in {{groups}} group(s)"
       },
-      "joiners": {
-        "any": "or",
-        "all": "and"
-      },
-      "removeGroup": "Remove tag group {{group}}",
       "support": {
         "empty": "Group crew and family tags with OR inside a group and AND across groups, e.g. (Straw Hat Pirates or Heart Pirates) and (Dressrosa).",
         "all": "Showing characters that match every tag group.",
@@ -102,14 +97,9 @@
         "empty": "Choose ability filters",
         "active": "{{tags}} filter(s) in {{groups}} group(s)"
       },
-      "joiners": {
-        "any": "or",
-        "all": "and"
-      },
-      "removeGroup": "Remove ability group {{group}}",
       "support": {
         "empty": "One button, every kind of ability filter: captain, special, crewmate, potential and support. Group them with OR inside a group and AND across groups.",
-        "active": "Showing characters that match every ability group. Remove a group with its chip, or reopen the filter to edit it."
+        "active": "Showing characters that match every ability group. Reopen the filter to edit or remove a group."
       },
       "sections": {
         "captainAbility": "Abilities the character must carry as a Captain Ability. Counts here are captain-only, so they are smaller than the crew-wide ones.",
