@@ -2481,6 +2481,14 @@ describe('CaptainCoveragePage', () => {
     expect(filterStyles).toContain('.coverage-tag-filter .character-tag-combobox ion-button');
     expect(filterStyles).not.toContain('.coverage-ability-filters .character-tag-combobox ion-button');
     expect(filterStyles).toContain('.coverage-filter-pair {');
+    /*
+     * Caught in the live sweep: `.coverage-ability-filters` still carries the
+     * toolbar's own `grid-column: 1 / -1`, so inside the pair it spanned every
+     * column and pushed the tag block onto a second line.
+     */
+    expect(filterStyles).toContain(
+      '.coverage-filter-pair > .coverage-tag-filter {\n  grid-column: auto;',
+    );
     // Search spans the whole controls line rather than sharing it with a facet.
     expect(filterStyles).toContain('flex: 1 1 100%;\n  min-width: 0;\n  padding: 0;');
     // The budget cap shares its row with the sentence that explains it.

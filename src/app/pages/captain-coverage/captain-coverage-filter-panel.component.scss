@@ -32,7 +32,14 @@
   min-width: 0;
 }
 
-.coverage-filter-pair .coverage-tag-filter {
+/*
+ * `.coverage-ability-filters` still carries the toolbar's own `grid-column:
+ * 1 / -1` from the 880px block. Inside the pair that made the ability block
+ * span every column and pushed the tag block onto a second line, which is the
+ * opposite of the point - so both children are reset to a single track here.
+ */
+.coverage-filter-pair > .coverage-tag-filter {
+  grid-column: auto;
   flex: initial;
   min-width: 0;
 }
