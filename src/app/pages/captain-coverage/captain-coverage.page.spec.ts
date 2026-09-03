@@ -2727,6 +2727,14 @@ describe('CaptainCoveragePage', () => {
     expect(readCaptainCoverageStyles('captain-coverage-result-badges-panel')).toContain(
       '  width: 44px;\n  height: 44px;',
     );
+    // It overlays the card's own top-right corner, so the action row keeps its
+    // single line - which needs the card to be the positioned ancestor.
+    expect(readCaptainCoverageStyles('captain-coverage-result-badges-panel')).toContain(
+      '.captain-result__leader {\n  position: absolute;\n  top: 8px;\n  right: 8px;',
+    );
+    expect(readCaptainCoverageStyles('captain-coverage-result-list-panel')).toContain(
+      '.captain-result {\n  /* Positioning context for the crown, which overlays the card',
+    );
     // The pair replaced `.coverage-ability-filters` as the toolbar's own child,
     // so it has to claim the full desktop row the ability block used to claim.
     expect(readCaptainCoverageStyles('captain-coverage-responsive-panel')).toContain(
