@@ -22,6 +22,15 @@
   gap: 12px;
 }
 
+/*
+ * The tier group takes a row of its own however many chips it holds, so the
+ * three toggles beside it are never stretched to its height and the chips wrap
+ * onto a second line instead of forcing a wider track.
+ */
+.results-toolbar__toggle-grid .ability-rank-toggle--tier {
+  grid-column: 1 / -1;
+}
+
 .ability-rank-toggle {
   display: inline-grid;
   grid-template-columns: minmax(0, 1fr) auto;

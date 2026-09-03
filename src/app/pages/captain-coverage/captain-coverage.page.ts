@@ -41,7 +41,10 @@ import {
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
 import { type CaptainCoverageResult } from '../../core/services/captain-coverage.utils';
-import { buildCaptainCoverageTierView } from '../../core/services/captain-coverage-tier-view.utils';
+import {
+  buildCaptainCoverageTierView,
+  type CaptainCoverageTierViewModel,
+} from '../../core/services/captain-coverage-tier-view.utils';
 import {
   createCaptainCoverageFilterState,
   type CaptainCoverageFilterState,
@@ -576,6 +579,15 @@ export class CaptainCoveragePage implements OnInit {
   );
   public readonly hasTierCoverageData = computed<boolean>(
     () => this.availableTierNumbers().length > 0,
+  );
+  /**
+   * Tier number of the chip whose help popover is open, or null. Only one is
+   * ever open: the popover is absolutely positioned above its chip, so two of
+   * them would overlap each other rather than tile.
+   */
+  public readonly openTierHelp = signal<number | null>(null);
+  private readonly tierBreakdownByTier = computed(
+    () => new Map(this.captainTierBreakdown().map((view) => [view.tier, view])),
   );
   public readonly tierCoverageOptions = computed<number[]>(() => {
     const slots = Math.max(this.tierCoverageMaxRender, this.availableTierNumbers().length);
@@ -1204,6 +1216,33 @@ export class CaptainCoveragePage implements OnInit {
 
   public isTierCoverageAvailable(tier: number): boolean {
     return this.availableTierNumbers().includes(tier);
+  }
+
+  /**
+   * Three states, not two: with no Captain picked at all, "Selected Captain has
+   * no Tier N" would name a Captain the user never chose.
+   */
+  public tierCoverageChipTitle(tier: number): string {
+    if (!this.selectedCaptainDetail()) {
+      return this.t('filters.tierCoverage.chipNoCaptain');
+    }
+
+    return this.isTierCoverageAvailable(tier)
+      ? this.t('filters.tierCoverage.chipAvailable', { tier })
+      : this.t('filters.tierCoverage.chipUnavailable', { tier });
+  }
+
+  /** The tier's own breakdown, or null when this Captain has no such tier. */
+  public tierHelpView(tier: number): CaptainCoverageTierViewModel | null {
+    return this.tierBreakdownByTier().get(tier) ?? null;
+  }
+
+  public toggleTierHelp(tier: number): void {
+    this.openTierHelp.update((open) => (open === tier ? null : tier));
+  }
+
+  public closeTierHelp(): void {
+    this.openTierHelp.set(null);
   }
 
   public isTierCoverageActive(tier: number): boolean {

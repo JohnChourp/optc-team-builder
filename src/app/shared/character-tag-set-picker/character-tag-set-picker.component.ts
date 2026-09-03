@@ -116,6 +116,12 @@ export class CharacterTagSetPickerComponent implements OnChanges, OnDestroy {
    */
   @Input() public allowSelectionOperator = true;
   @Input() public tagCharacterIds: CharacterTagMatchIndex | null = null;
+  /**
+   * The host's own one-line explanation of what this filter does. Hosts that
+   * used to print it on the page pass it here instead, so the sentence lives
+   * next to the control it describes. Empty renders nothing.
+   */
+  @Input() public supportText = '';
 
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<CharacterTagSetSelection>();
