@@ -34,7 +34,6 @@
   overflow-wrap: anywhere;
 }
 
-
 /*
  * Cost sits with HP and ATK because that is where the eye already is, and it is
  * the bare number on purpose - a reader who plays the game reads "55" without
@@ -133,12 +132,20 @@
   --background-hover: linear-gradient(140deg, #142042 0%, #1e4a86 48%, #6fd8f7 100%);
   --background-activated: linear-gradient(140deg, #142042 0%, #1e4a86 48%, #6fd8f7 100%);
   --color: #f2fbff;
-  /* A circle: it is a round badge on the card, not another rectangular button. */
+  /*
+   * A circle: it is a round badge on the card, not another rectangular button.
+   *
+   * BOTH are needed. `--border-radius` is Ionic's custom property and only
+   * reaches the inner `.button-native`; the host element's own `border-radius`
+   * stays 0. That left the gloss layer below - which takes `border-radius:
+   * inherit` from this host - painting a SQUARE over a round button, so its
+   * four corners hung outside the circle as translucent triangles, and
+   * `overflow: hidden` clipped to that same square instead of to the circle.
+   */
   --border-radius: 999px;
+  border-radius: 999px;
   /* Reads as a raised object at rest, before any hover. */
-  --box-shadow:
-    0 6px 16px rgba(3, 7, 18, 0.55),
-    0 0 0 1px rgba(76, 201, 240, 0.28);
+  --box-shadow: 0 6px 16px rgba(3, 7, 18, 0.55), 0 0 0 1px rgba(76, 201, 240, 0.28);
   margin: 0;
   min-width: 44px;
   min-height: 44px;

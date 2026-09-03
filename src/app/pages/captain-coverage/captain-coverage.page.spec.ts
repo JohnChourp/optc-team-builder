@@ -452,7 +452,12 @@ describe('CaptainCoveragePage', () => {
     // No Captain yet, so `coverage` is null on every card - which is exactly
     // the state the cost has to survive.
     expect(page.resultCards().every((card) => card.coverage === null)).toBe(true);
-    expect(page.resultCards().map((card) => card.character.cost).sort()).toEqual([0, 55]);
+    expect(
+      page
+        .resultCards()
+        .map((card) => card.character.cost)
+        .sort(),
+    ).toEqual([0, 55]);
   });
 
   it('holds the boost numbers back until a tier is pressed', async () => {
@@ -2690,7 +2695,9 @@ describe('CaptainCoveragePage', () => {
     const template = readCaptainCoverageTemplate();
     const pairIndex = template.indexOf('<div class="coverage-filter-pair">');
     const abilityIndex = template.indexOf('coverage-tag-filter coverage-ability-filters');
-    const tagTriggerIndex = template.indexOf('data-testid="captain-coverage-character-tag-trigger"');
+    const tagTriggerIndex = template.indexOf(
+      'data-testid="captain-coverage-character-tag-trigger"',
+    );
     const controlsIndex = template.indexOf('<div class="results-controls">');
     const searchIndex = template.indexOf('<ion-searchbar');
     const filterRowIndex = template.indexOf('<app-character-filter-row');
@@ -2728,7 +2735,9 @@ describe('CaptainCoveragePage', () => {
     expect(tierStyles).not.toContain('grid-column: 1 / -1;');
     // The floor is no longer scoped to the ability trigger alone.
     expect(filterStyles).toContain('.coverage-tag-filter .character-tag-combobox ion-button');
-    expect(filterStyles).not.toContain('.coverage-ability-filters .character-tag-combobox ion-button');
+    expect(filterStyles).not.toContain(
+      '.coverage-ability-filters .character-tag-combobox ion-button',
+    );
     expect(filterStyles).toContain('.coverage-filter-pair {');
     /*
      * Caught in the live sweep: `.coverage-ability-filters` still carries the
@@ -2741,7 +2750,9 @@ describe('CaptainCoveragePage', () => {
     // Search spans the whole controls line rather than sharing it with a facet.
     expect(filterStyles).toContain('flex: 1 1 100%;\n  min-width: 0;\n  padding: 0;');
     // The budget cap shares its row with the sentence that explains it.
-    expect(teamStyles).toContain('.team-budget-controls {\n  display: grid;\n  grid-template-columns:');
+    expect(teamStyles).toContain(
+      '.team-budget-controls {\n  display: grid;\n  grid-template-columns:',
+    );
     // The crown is the only text-free control on a card, so it carries the
     // 44px tap floor on its own. Measured live at 320/390/1440 before this
     // was pinned: 38x36 until `width`/`height` were set explicitly.
@@ -2768,6 +2779,15 @@ describe('CaptainCoveragePage', () => {
       '--background: linear-gradient(140deg, #0d1324 0%, #16305c 48%, #4cc9f0 100%);',
     );
     expect(badgeStyles).toContain('.captain-result__leader::after {');
+    /*
+     * The host needs a real `border-radius`, not only Ionic's custom property:
+     * `--border-radius` reaches `.button-native` alone, so the gloss `::after`
+     * inheriting from this host was a square whose corners hung outside the
+     * circle as translucent triangles. Reported live after the round crown
+     * shipped in v0.2.0.
+     */
+    expect(badgeStyles).toContain('--border-radius: 999px;\n  border-radius: 999px;');
+    expect(badgeStyles).toContain('border-radius: inherit;');
     expect(badgeStyles).toContain('transform: scale(1.12);');
     // The pair replaced `.coverage-ability-filters` as the toolbar's own child,
     // so it has to claim the full desktop row the ability block used to claim.
