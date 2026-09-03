@@ -70,19 +70,45 @@
         <div class="coverage-team-slots">
           @for (slot of selectedTeamSlots(); track trackTeamSlot($index); let index = $index) {
             <div class="coverage-team-slot" [class.coverage-team-slot--filled]="slot">
-              <button
-                type="button"
-                class="coverage-team-slot__pick"
-                [attr.aria-label]="t('team.pickFromResults')"
-                (click)="scrollToResults()"
-              >
-                @if (slot) {
+              @if (slot) {
+                <!--
+                  The portrait and the name open the character; the rest of the
+                  slot still jumps to the results. The jump surface is a real
+                  button sitting behind the two links rather than a wrapper
+                  around them, so nothing interactive is nested inside anything
+                  else and every affordance stays reachable by keyboard.
+                -->
+                <button
+                  type="button"
+                  class="coverage-team-slot__surface"
+                  [attr.aria-label]="t('team.pickFromResults')"
+                  (click)="scrollToResults()"
+                ></button>
+
+                <a
+                  class="coverage-team-slot__detail-target"
+                  [routerLink]="['/characters', slot.id]"
+                  [attr.aria-label]="t('team.viewSlotDetails', { name: slot.name })"
+                >
                   <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
-                  <span>
-                    <strong>{{ teamSlotLabel(index) }}</strong>
-                    <small>{{ t('team.cost.slot', { name: slot.name, cost: slot.cost }) }}</small>
-                  </span>
-                } @else {
+                </a>
+
+                <span class="coverage-team-slot__meta">
+                  <strong>{{ teamSlotLabel(index) }}</strong>
+                  <a class="coverage-team-slot__name-link" [routerLink]="['/characters', slot.id]">
+                    {{ slot.name }}
+                  </a>
+                  <small class="coverage-team-slot__cost">
+                    {{ t('team.cost.slot', { cost: slot.cost }) }}
+                  </small>
+                </span>
+              } @else {
+                <button
+                  type="button"
+                  class="coverage-team-slot__pick"
+                  [attr.aria-label]="t('team.pickFromResults')"
+                  (click)="scrollToResults()"
+                >
                   <img
                     src="assets/placeholders/character-card.svg"
                     [alt]="t('team.emptyAlt')"
@@ -92,8 +118,8 @@
                     <strong>{{ teamSlotLabel(index) }}</strong>
                     <small>{{ index === 0 ? t('team.captainRequired') : t('team.empty') }}</small>
                   </span>
-                }
-              </button>
+                </button>
+              }
 
               @if (slot) {
                 <ion-button
@@ -158,20 +184,6 @@
           </section>
         }
 
-        @if (selectedCaptain(); as captain) {
-          <a
-            class="selected-target"
-            [routerLink]="['/characters', captain.id]"
-            [attr.aria-label]="t('results.openCharacterDetails')"
-          >
-            <img [src]="captain.imageUrl" [alt]="captain.name" loading="lazy" />
-            <div>
-              <span>{{ t('team.selectedCaptain') }}</span>
-              <strong>{{ captain.name }}</strong>
-              <small>#{{ captain.id }} - {{ selectedCaptainSubtitle() }}</small>
-            </div>
-          </a>
-        }
       </section>
 
       <section class="results-panel glass-card" #resultsPanel>
@@ -560,12 +572,32 @@
                 </a>
 
                 <div class="captain-result__body">
-                  @if (card.coverage; as coverage) {
-                    <div class="captain-result__boosts" aria-label="Captain boosts">
+                  <!--
+                    The meta row is rendered unconditionally, unlike the boosts
+                    inside it: cost has to be readable while browsing with no
+                    Captain picked, which is exactly when `card.coverage` is null.
+                  -->
+                  <div class="captain-result__boosts" aria-label="Captain boosts">
+                    @if (card.coverage; as coverage) {
                       <span>HP:{{ formatBoost(coverage.boosts.hp) }}</span>
                       <span>ATK:{{ formatBoost(coverage.boosts.atk) }}</span>
-                    </div>
-                  }
+                    }
+                    <button
+                      type="button"
+                      class="captain-result__cost"
+                      data-test="captain-result-cost"
+                      [title]="t('results.cost', { cost: card.character.cost })"
+                      [attr.aria-label]="t('results.cost', { cost: card.character.cost })"
+                      (click)="toggleResultCostHint(card.character.id)"
+                    >
+                      {{ card.character.cost }}
+                    </button>
+                    @if (openResultCostHint() === card.character.id) {
+                      <span class="captain-result__cost-hint" role="status">
+                        {{ t('results.cost', { cost: card.character.cost }) }}
+                      </span>
+                    }
+                  </div>
 
                   @if (card.captainBoosted === false) {
                     <span
@@ -595,28 +627,26 @@
                       {{ t('team.actions.addToTeam') }}
                     </ion-button>
 
-                    <ion-button
-                      size="small"
-                      fill="outline"
-                      color="light"
-                      data-test="captain-result-set-leader"
-                      [disabled]="!card.canBeLeader || !card.leaderFitsBudget"
-                      [title]="
-                        !card.canBeLeader
-                          ? t('team.actions.leaderUnavailable')
-                          : !card.leaderFitsBudget
-                            ? t('team.actions.leaderOverBudget')
-                            : leaderButtonLabel()
-                      "
-                      (click)="assignLeaderFromResult(card)"
-                    >
-                      <ion-icon
-                        slot="start"
-                        [icon]="leaderButtonIcon()"
-                        aria-hidden="true"
-                      ></ion-icon>
-                      {{ leaderButtonLabel() }}
-                    </ion-button>
+                    <!--
+                      One crown for both leader seats. It only exists on a
+                      character that can actually lead, and pressing it asks
+                      which seat - which is also what makes replacing an
+                      occupied seat possible without clearing it first.
+                    -->
+                    @if (card.canBeLeader) {
+                      <ion-button
+                        size="small"
+                        fill="outline"
+                        color="light"
+                        class="captain-result__leader"
+                        data-test="captain-result-set-leader"
+                        [title]="t('team.actions.leaderSlotPicker.trigger')"
+                        [attr.aria-label]="t('team.actions.leaderSlotPicker.trigger')"
+                        (click)="openLeaderSlotPicker(card)"
+                      >
+                        <ion-icon [icon]="leaderIcon" aria-hidden="true"></ion-icon>
+                      </ion-button>
+                    }
                   </div>
                 </div>
               </article>

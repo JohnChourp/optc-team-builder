@@ -7,7 +7,7 @@
   },
   "empty": {
     "noResults": {
-      "copy": "Κανένας χαρακτήρας δεν χωράει με τα τρέχοντα team slots, cost budget, search, favorites και ability filters.",
+      "copy": "Κανένας χαρακτήρας δεν χωράει με τα τρέχοντα team slots, όριο κόστους, search, favorites και ability filters.",
       "title": "Δεν βρέθηκαν χαρακτήρες"
     }
   },
@@ -70,8 +70,8 @@
       "placeholder": "Φίλτρο ανά class"
     },
     "cost": {
-      "from": "Cost από",
-      "to": "Cost έως"
+      "from": "Κόστος από",
+      "to": "Κόστος έως"
     },
     "crewmateEyebrow": "Crewmate Ability",
     "favoritesOnly": "Μόνο favorites",
@@ -118,7 +118,8 @@
     "titleWithCount": "{{count}} matching characters",
     "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που ταιριάζουν",
     "notBoostedBadge": "Δεν ενισχύεται από αυτόν τον Captain",
-    "loadMore": "Δείξε περισσότερα (απομένουν {{count}})"
+    "loadMore": "Δείξε περισσότερα (απομένουν {{count}})",
+    "cost": "Κόστος: {{cost}}"
   },
   "search": {
     "placeholder": "Αναζήτηση στα character results..."
@@ -149,22 +150,28 @@
       "setAsCaptain": "Ορισμός ως Captain",
       "setAsFriendCaptain": "Ορισμός ως Friend Captain",
       "leaderUnavailable": "Αυτός ο χαρακτήρας δεν έχει Captain Ability, οπότε δεν μπορεί να γίνει leader.",
-      "leaderOverBudget": "Αυτός ο χαρακτήρας δεν χωράει στο υπόλοιπο cost budget."
+      "leaderOverBudget": "Αυτός ο χαρακτήρας δεν χωράει στο υπόλοιπο όριο κόστους.",
+      "leaderSlotPicker": {
+        "trigger": "Βάλ’ τον ως Captain ή Friend Captain",
+        "message": "Σε ποια θέση leader να μπει ο χαρακτήρας; Ο ίδιος χαρακτήρας μπορεί να κρατήσει και τις δύο.",
+        "empty": "κενή θέση",
+        "replaces": "αντικαθιστά τον {{name}}",
+        "alreadyHere": "βρίσκεται ήδη εδώ"
+      }
     },
     "captainRequired": "Επίλεξε Captain",
-    "copy": "Διάλεξε Captain, Friend Captain και τέσσερα subs με συνολικό cost budget. Το Friend Captain cost δεν μετράει.",
+    "copy": "Διάλεξε Captain, Friend Captain και τέσσερα subs με συνολικό όριο κόστους. Το κόστος του Friend Captain δεν μετράει.",
     "cost": {
-      "active": "{{used}} / {{max}} cost. Μένουν {{remaining}}.",
-      "default": "Χωρίς max team cost",
-      "input": "Μέγιστο συνολικό cost",
-      "label": "Cost budget",
-      "overBudget": "{{used}} cost ξεπερνά το όριο {{max}}.",
-      "slot": "{{name}} · Cost {{cost}}"
+      "active": "{{used}} / {{max}} κόστος. Μένουν {{remaining}}.",
+      "default": "Χωρίς μέγιστο κόστος ομάδας",
+      "input": "Μέγιστο συνολικό κόστος",
+      "label": "Όριο κόστους",
+      "overBudget": "{{used}} κόστος ξεπερνά το όριο {{max}}.",
+      "slot": "Κόστος: {{cost}}"
     },
     "empty": "Κενό slot",
     "emptyAlt": "Κενό team slot",
     "eyebrow": "Team coverage",
-    "selectedCaptain": "Επιλεγμένος Captain",
     "save": {
       "action": "Αποθήκευση team",
       "error": "Η αποθήκευση της ομάδας δεν ολοκληρώθηκε. Δοκίμασε ξανά.",
@@ -179,7 +186,8 @@
       "sub": "Sub {{index}}"
     },
     "title": "Χτίσιμο από Captain",
-    "pickFromResults": "Διάλεξε χαρακτήρα από τα αποτελέσματα πιο κάτω"
+    "pickFromResults": "Διάλεξε χαρακτήρα από τα αποτελέσματα πιο κάτω",
+    "viewSlotDetails": "Άνοιξε τον χαρακτήρα {{name}}"
   },
   "title": "Captain Coverage"
 }
