@@ -455,6 +455,28 @@ describe('CaptainCoveragePage', () => {
     expect(page.resultCards().map((card) => card.character.cost).sort()).toEqual([0, 55]);
   });
 
+  it('holds the boost numbers back until a tier is pressed', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Boost Gate Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const other = createCharacter({ id: 2001, name: 'Boost Gate Candidate' });
+    const { page } = createPage({ captains: [leader], characters: [leader, other] });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+
+    // A Captain alone says nothing yet: every card looks the same.
+    expect(page.showCaptainBoosts()).toBe(false);
+
+    page.onTierCoverageToggle(1, true);
+
+    // Only a tier this Captain actually has counts, so an unavailable one
+    // leaves the cards exactly as they were.
+    expect(page.showCaptainBoosts()).toBe(page.isTierCoverageAvailable(1));
+  });
+
   it('opens one cost hint at a time and closes it on a second press', async () => {
     const { page } = createPage();
 
@@ -2011,7 +2033,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.resultCards().map((card) => card.selectedAbilityCount)).toEqual([3, 3, 3]);
   });
 
-  it('sorts selected ability matches from strongest to weakest when ranking is enabled', async () => {
+  it('counts selected ability matches per card, without reordering the list', async () => {
     const leader = createCharacter({
       id: 1001,
       name: 'Leader Ranking',
@@ -2061,17 +2083,9 @@ describe('CaptainCoveragePage', () => {
       'Full Match',
     ]);
 
-    page.onAbilityMatchRankingChange({
-      detail: { checked: true },
-    } as CustomEvent<{ checked?: boolean | null }>);
-
-    expect(page.abilityMatchRankingEnabled()).toBe(true);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
-      'Full Match',
-      'Partial Match',
-      'Single Match',
-    ]);
-    expect(page.resultCards().map((card) => card.abilityMatchCount)).toEqual([3, 2, 1]);
+    // The ability-match ranking toggle is gone, so the order is the catalogue's
+    // own and the per-card match counts are what carry the ranking information.
+    expect(page.resultCards().map((card) => card.abilityMatchCount)).toEqual([1, 2, 3]);
   });
 
   it('allows ability filters before selecting a Captain and keeps them for later results', async () => {
@@ -2109,15 +2123,9 @@ describe('CaptainCoveragePage', () => {
     expect(page.selectedAbilityRequirementCount()).toBe(1);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
 
-    page.onAbilityMatchRankingChange({
-      detail: { checked: true },
-    } as CustomEvent<{ checked?: boolean | null }>);
-    expect(page.abilityMatchRankingEnabled()).toBe(true);
-
     await page.setTeamSlotCharacter(0, leader);
 
     expect(page.selectedAbilityRequirementCount()).toBe(1);
-    expect(page.abilityMatchRankingEnabled()).toBe(true);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
   });
 
@@ -2448,10 +2456,12 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('class="results-toolbar__toggle-grid"');
     expect(template).toContain('[disabled]="loading()"');
     expect(template).toContain('openAbilityTagSetPicker()');
-    expect(template).toContain('abilityMatchRankingEnabled()');
-    expect(template).toContain('abilityMatchRankingDisabled()');
-    expect(template).toContain('onAbilityMatchRankingChange($event)');
-    expect(template).toContain("t('filters.bestAbilityMatchesFirst')");
+    // The "best ability matches first" toggle is gone for good: the owner never
+    // used it and asked for it out, so the ranking branch left the sort too.
+    expect(template).not.toContain('abilityMatchRankingEnabled()');
+    expect(template).not.toContain('abilityMatchRankingDisabled()');
+    expect(template).not.toContain('onAbilityMatchRankingChange($event)');
+    expect(template).not.toContain("t('filters.bestAbilityMatchesFirst')");
     // The old bypass toggle stays gone: coverage no longer gates the list, so
     // there is nothing left to bypass.
     expect(template).not.toContain('requireCaptainCoverage()');
@@ -2472,8 +2482,17 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('class="coverage-team-slot__detail-target"');
     expect(template).toContain('class="coverage-team-slot__name-link"');
     expect(template).toContain('class="coverage-team-slot__surface"');
-    expect(template).toContain('data-test="captain-result-not-boosted"');
-    expect(template).toContain("t('results.notBoostedBadge')");
+    /*
+     * No per-card boosted badge. Until a tier is pressed the page makes no
+     * claim about who a Captain boosts, so labelling some cards and not others
+     * only read as noise; a pressed tier then narrows the list to the
+     * qualifying characters, which is where the answer actually lives.
+     */
+    expect(template).not.toContain('data-test="captain-result-not-boosted"');
+    expect(template).not.toContain("t('results.notBoostedBadge')");
+    expect(template).not.toContain('card.captainBoosted');
+    // HP and ATK follow the same rule: they appear once a tier is pressed.
+    expect(template).toContain('@if (showCaptainBoosts() && card.coverage) {');
     expect(template).toContain("t('results.titleWithCoverage'");
     expect(template).toContain('showsCoverageCount()');
     expect(template).toContain('[debounce]="500"');
@@ -2566,9 +2585,9 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('class="selected-target"');
     expect(template).toContain('[routerLink]="[\'/characters\', slot.id]"');
     expect(template).toContain('class="captain-result__boosts"');
-    expect(template).toContain('@if (card.coverage; as coverage)');
-    expect(template).toContain('HP:{{ formatBoost(coverage.boosts.hp) }}');
-    expect(template).toContain('ATK:{{ formatBoost(coverage.boosts.atk) }}');
+    expect(template).toContain('@if (showCaptainBoosts() && card.coverage)');
+    expect(template).toContain('HP:{{ formatBoost(card.coverage.boosts.hp) }}');
+    expect(template).toContain('ATK:{{ formatBoost(card.coverage.boosts.atk) }}');
     expect(template).toContain('card.matchedAbilityBadges.length');
     expect(template).toContain('class="captain-result__ability-badge"');
     expect(template).toContain('selectedIdOrder()');
@@ -2735,6 +2754,16 @@ describe('CaptainCoveragePage', () => {
     expect(readCaptainCoverageStyles('captain-coverage-result-list-panel')).toContain(
       '.captain-result {\n  /* Positioning context for the crown, which overlays the card',
     );
+    // No outline, the page's own navy-to-cyan fill, a gloss pass, and a hover
+    // that grows it. Measured live: 44x44 at rest, 49.28x49.28 on hover.
+    const badgeStyles = readCaptainCoverageStyles('captain-coverage-result-badges-panel');
+
+    expect(badgeStyles).toContain('--border-width: 0;');
+    expect(badgeStyles).toContain(
+      '--background: linear-gradient(140deg, #0d1324 0%, #16305c 48%, #4cc9f0 100%);',
+    );
+    expect(badgeStyles).toContain('.captain-result__leader::after {');
+    expect(badgeStyles).toContain('transform: scale(1.12);');
     // The pair replaced `.coverage-ability-filters` as the toolbar's own child,
     // so it has to claim the full desktop row the ability block used to claim.
     expect(readCaptainCoverageStyles('captain-coverage-responsive-panel')).toContain(

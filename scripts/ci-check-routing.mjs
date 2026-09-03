@@ -100,6 +100,10 @@ export const SCRIPT_SUITES = {
     label: 'PWA shell safety tests',
     command: 'npm run test:pwa-shell',
   },
+  'overlay-contrast': {
+    label: 'Ionic overlay contrast tests',
+    command: 'npm run test:overlay-contrast',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -306,6 +310,19 @@ function isE2ePath(filePath) {
     filePath === 'scripts/summarize-playwright-failures.mjs' ||
     filePath === 'scripts/summarize-playwright-failures.spec.ts' ||
     filePath.startsWith('scripts/lib/playwright-')
+  );
+}
+
+/**
+ * The theme tokens and the global stylesheet decide every Ionic overlay's text
+ * colour, so a change to either has to re-run the contrast guard.
+ */
+function isOverlayContrastPath(filePath) {
+  return (
+    filePath === 'src/theme/variables.scss' ||
+    filePath === 'src/styles.scss' ||
+    filePath === 'scripts/check-ionic-overlay-contrast.mjs' ||
+    filePath === 'scripts/check-ionic-overlay-contrast.spec.ts'
   );
 }
 
@@ -546,6 +563,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       runQuarantine = true;
       addScriptSuite(scriptSuites, 'e2e-triage');
       continue;
+    }
+
+    if (isOverlayContrastPath(filePath)) {
+      categories.add('overlay-contrast');
+      addScriptSuite(scriptSuites, 'overlay-contrast');
     }
 
     if (isPwaShellPath(filePath)) {

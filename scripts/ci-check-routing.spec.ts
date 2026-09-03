@@ -236,6 +236,7 @@ describe('ci-check-routing', () => {
       'perf-budget',
       'e2e-triage',
       'pwa-shell',
+      'overlay-contrast',
     ]);
   });
 

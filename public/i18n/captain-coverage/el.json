@@ -20,7 +20,6 @@
   },
   "filters": {
     "abilityTagSetsTitle": "Φίλτρο ability tags",
-    "bestAbilityMatchesFirst": "Πρώτα τα καλύτερα ability matches",
     "captainAbilityEyebrow": "Required",
     "tierCoverage": {
       "toggle": "Tier Coverage",
@@ -117,7 +116,6 @@
     "title": "Character αποτελέσματα",
     "titleWithCount": "{{count}} matching characters",
     "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που ταιριάζουν",
-    "notBoostedBadge": "Δεν ενισχύεται από αυτόν τον Captain",
     "loadMore": "Δείξε περισσότερα (απομένουν {{count}})",
     "cost": "Κόστος: {{cost}}"
   },

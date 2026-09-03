@@ -310,20 +310,6 @@
           <div class="results-toolbar__toggle-grid">
             <label
               class="ability-rank-toggle"
-              [class.ability-rank-toggle--active]="abilityMatchRankingEnabled()"
-            >
-              <span>{{ t('filters.bestAbilityMatchesFirst') }}</span>
-              <ion-toggle
-                justify="space-between"
-                [attr.aria-label]="t('filters.bestAbilityMatchesFirst')"
-                [checked]="abilityMatchRankingEnabled()"
-                [disabled]="abilityMatchRankingDisabled()"
-                (ionChange)="onAbilityMatchRankingChange($event)"
-              ></ion-toggle>
-            </label>
-
-            <label
-              class="ability-rank-toggle"
               [class.ability-rank-toggle--active]="requireSuperTandemPresence()"
             >
               <div class="ability-rank-toggle__copy">
@@ -578,35 +564,37 @@
                     Captain picked, which is exactly when `card.coverage` is null.
                   -->
                   <div class="captain-result__boosts" aria-label="Captain boosts">
-                    @if (card.coverage; as coverage) {
-                      <span>HP:{{ formatBoost(coverage.boosts.hp) }}</span>
-                      <span>ATK:{{ formatBoost(coverage.boosts.atk) }}</span>
+                    @if (showCaptainBoosts() && card.coverage) {
+                      <span>HP:{{ formatBoost(card.coverage.boosts.hp) }}</span>
+                      <span>ATK:{{ formatBoost(card.coverage.boosts.atk) }}</span>
                     }
-                    <button
-                      type="button"
-                      class="captain-result__cost"
-                      data-test="captain-result-cost"
-                      [title]="t('results.cost', { cost: card.character.cost })"
-                      [attr.aria-label]="t('results.cost', { cost: card.character.cost })"
-                      (click)="toggleResultCostHint(card.character.id)"
-                    >
-                      {{ card.character.cost }}
-                    </button>
-                    @if (openResultCostHint() === card.character.id) {
-                      <span class="captain-result__cost-hint" role="status">
-                        {{ t('results.cost', { cost: card.character.cost }) }}
-                      </span>
-                    }
-                  </div>
-
-                  @if (card.captainBoosted === false) {
-                    <span
-                      class="captain-result__not-boosted"
-                      data-test="captain-result-not-boosted"
-                    >
-                      {{ t('results.notBoostedBadge') }}
+                    <!--
+                      The hint floats above the number, the way the tier help
+                      does: inline it stole width from HP and ATK and shoved
+                      them sideways every time it opened.
+                    -->
+                    <span class="captain-result__cost-wrap">
+                      <button
+                        type="button"
+                        class="captain-result__cost"
+                        data-test="captain-result-cost"
+                        [attr.aria-label]="t('results.cost', { cost: card.character.cost })"
+                        [attr.aria-expanded]="openResultCostHint() === card.character.id"
+                        (click)="toggleResultCostHint(card.character.id)"
+                      >
+                        {{ card.character.cost }}
+                      </button>
+                      @if (openResultCostHint() === card.character.id) {
+                        <span
+                          class="captain-result__cost-hint"
+                          role="status"
+                          [attr.data-test]="'captain-result-cost-hint-' + card.character.id"
+                        >
+                          {{ t('results.cost', { cost: card.character.cost }) }}
+                        </span>
+                      }
                     </span>
-                  }
+                  </div>
 
                   @if (card.matchedAbilityBadges.length) {
                     <div class="captain-result__ability-badges">
@@ -636,8 +624,7 @@
                     @if (card.canBeLeader) {
                       <ion-button
                         size="small"
-                        fill="outline"
-                        color="light"
+                        fill="solid"
                         class="captain-result__leader"
                         data-test="captain-result-set-leader"
                         [title]="t('team.actions.leaderSlotPicker.trigger')"

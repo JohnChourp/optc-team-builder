@@ -28,7 +28,7 @@ import {
   checkmarkCircleOutline,
   funnelOutline,
   peopleOutline,
-  ribbonOutline,
+  ribbon,
   saveOutline,
   searchOutline,
   shieldCheckmarkOutline,
@@ -291,7 +291,6 @@ export class CaptainCoveragePage implements OnInit {
   });
   public readonly selectedSortMode = signal<CaptainCoverageSortMode>('catalog');
   public readonly selectedIdOrder = signal<CharacterIdOrder>('newest');
-  public readonly abilityMatchRankingEnabled = signal(false);
   public readonly requireSuperTandemPresence = signal(false);
   public readonly requireSuperTypesClassesPresence = signal(false);
   public readonly requiredTierNumbers = signal<number[]>([]);
@@ -522,9 +521,6 @@ export class CaptainCoveragePage implements OnInit {
   public readonly tagSetMatchingCharacterIds = computed<number[] | undefined>(() =>
     resolveTagSetSelectionMatchingCharacterIds(this.tagSetSelection(), this.allCatalogItems()),
   );
-  public readonly abilityMatchRankingDisabled = computed(
-    () => this.selectedAbilityRequirementCount() === 0,
-  );
   public readonly availableTierNumbers = computed<number[]>(() =>
     getCaptainCoverageAvailableTierNumbers(this.selectedCaptainDetail()),
   );
@@ -577,6 +573,18 @@ export class CaptainCoveragePage implements OnInit {
       requiredTiers: requestedTiers,
     });
   });
+  /**
+   * The cards show HP and ATK only once a tier is pressed.
+   *
+   * Until then the page makes no claim about who a Captain boosts: printing
+   * `HP:1.5 ATK:1.5` on some cards and `HP:- ATK:-` on others separated them by
+   * something the reader had not asked about yet. A pressed tier narrows the
+   * list to the characters that qualify, and that is when the numbers mean
+   * something.
+   */
+  public readonly showCaptainBoosts = computed(
+    () => this.captainCoverageFilterState().requiredTiers.length > 0,
+  );
   public readonly characterBoxSupportLabel = computed(() => {
     return this.buildCharacterBoxSupportText(this.selectedCharacterBox());
   });
@@ -857,7 +865,7 @@ export class CaptainCoveragePage implements OnInit {
   public readonly searchIcon = searchOutline;
   public readonly characterTagFilterIcon = funnelOutline;
   /** The crown on a result card: "make this one a leader".  */
-  public readonly leaderIcon = ribbonOutline;
+  public readonly leaderIcon = ribbon;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -1216,10 +1224,6 @@ export class CaptainCoveragePage implements OnInit {
 
   public onIdOrderChange(input: string | CustomEvent<{ value?: string | null }>): void {
     this.selectedIdOrder.set(normalizeCharacterIdOrder(this.resolveStringInput(input)));
-  }
-
-  public onAbilityMatchRankingChange(event: CustomEvent<{ checked?: boolean | null }>): void {
-    this.abilityMatchRankingEnabled.set(Boolean(event.detail.checked));
   }
 
   public onRequireSuperTandemPresenceChange(
@@ -1820,14 +1824,6 @@ export class CaptainCoveragePage implements OnInit {
     return [...cards].sort((left, right) => {
       const sortMode = this.selectedSortMode();
       const idOrder = this.selectedIdOrder();
-
-      if (this.abilityMatchRankingEnabled() && this.selectedAbilityRequirementCount() > 0) {
-        const abilityMatchDifference = right.abilityMatchCount - left.abilityMatchCount;
-
-        if (abilityMatchDifference !== 0) {
-          return abilityMatchDifference;
-        }
-      }
 
       if (sortMode === 'captainHpBoost') {
         return compareBoostCards(left, right, 'captainHpBoost', idOrder);
