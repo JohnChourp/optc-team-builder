@@ -85,6 +85,15 @@ export class CharacterTagFilterComponent implements OnChanges, OnInit {
   /** Optional modal-heading override. Hosts normally pass nothing. */
   @Input() public titleOverride = '';
 
+  /**
+   * Pass-through to the picker's support paragraph. Six of the twelve
+   * tag-picker call sites in the app sit inside this wrapper or the character
+   * image picker, and neither exposed a way to reach the picker's own inputs -
+   * so those hosts could not be fixed "per page" at all. Default empty, so
+   * every existing host renders exactly as before.
+   */
+  @Input() public pickerSupportText = '';
+
   @Output() public readonly filterChange = new EventEmitter<CharacterTagFilterChange>();
 
   public readonly pickerOpen = signal(false);
