@@ -14,16 +14,31 @@
   min-width: 0;
 }
 
+/*
+ * Slot text wraps; it is never ellipsised. "Friend Captain" is 14 characters
+ * against a meta column that is ~96px wide whenever the slot grid sits on its
+ * 180px floor - which happens at 820px and 1024px as readily as at 390px, so
+ * this is not a narrow-screen rule. Clipping it to "Friend ..." was the same
+ * defect the ability modal already rejected: every letter has to be readable.
+ */
 .coverage-team-slot strong,
 .coverage-team-slot small {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
+/*
+ * The seat name is a label, not the headline: it used to inherit 1rem bold,
+ * rendering LARGER than the character name under it (0.82rem). Matched to the
+ * equivalent Manual Team Builder slot label, which also stops most of the
+ * overflow that made the wrap above necessary in the first place.
+ */
 .coverage-team-slot strong {
   color: #f8fbff;
+  font-size: 0.74rem;
 }
 
 .coverage-team-slot small {

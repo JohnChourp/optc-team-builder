@@ -352,7 +352,7 @@
               </div>
               <div class="ability-rank-toggle__chip-row">
                 @for (tier of tierCoverageOptions(); track tier) {
-                  <div class="tier-chip">
+                  <div class="tier-chip" (keydown.escape)="closeTierHelp()">
                     <button
                       type="button"
                       class="ability-rank-toggle__chip"
@@ -376,15 +376,23 @@
                         [attr.data-test]="'tier-coverage-help-' + tier"
                         [attr.aria-label]="t('filters.tierCoverage.help', { tier })"
                         [attr.aria-expanded]="openTierHelp() === tier"
+                        [attr.aria-controls]="'tier-coverage-popover-' + tier"
                         (click)="toggleTierHelp(tier)"
                       >
                         <span aria-hidden="true">?</span>
                       </button>
 
                       @if (openTierHelp() === tier) {
+                        <!--
+                          A disclosure, not a dialog. It used to carry a dialog
+                          role while focus never entered it and nothing could
+                          dismiss it - a contract assistive tech was promised and
+                          the code did not keep. aria-expanded on the trigger
+                          plus aria-controls to this id is the honest one.
+                        -->
                         <div
                           class="tier-chip__popover"
-                          role="dialog"
+                          [attr.id]="'tier-coverage-popover-' + tier"
                           [attr.aria-label]="t('filters.tierCoverage.help', { tier })"
                           [attr.data-test]="'tier-coverage-popover-' + tier"
                         >
@@ -573,7 +581,7 @@
                       does: inline it stole width from HP and ATK and shoved
                       them sideways every time it opened.
                     -->
-                    <span class="captain-result__cost-wrap">
+                    <span class="captain-result__cost-wrap" (keydown.escape)="closeResultCostHint()">
                       <button
                         type="button"
                         class="captain-result__cost"
@@ -605,11 +613,20 @@
                   }
 
                   <div class="captain-result__actions">
+                    <!--
+                      A disabled button that never says why is the same defect
+                      the crown alert already avoids. `title` still shows on a
+                      disabled button, and aria-label carries it to assistive
+                      tech, so the three refusals - already in the team, over
+                      the cost budget, no free sub slot - each name themselves.
+                    -->
                     <ion-button
                       size="small"
                       fill="outline"
                       color="warning"
                       [disabled]="card.assignableSlotIndex === null"
+                      [title]="addToTeamBlockedLabel(card)"
+                      [attr.aria-label]="addToTeamBlockedLabel(card)"
                       (click)="assignCharacterFromResult(card)"
                     >
                       {{ t('team.actions.addToTeam') }}

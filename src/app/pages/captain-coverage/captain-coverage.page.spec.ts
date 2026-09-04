@@ -2821,6 +2821,149 @@ describe('CaptainCoveragePage', () => {
     expect(page.openTierHelp()).toBeNull();
   });
 
+  /*
+   * 869euu6fj decision 2. The popover is hand-rolled, not an ion-popover, so it
+   * inherits no dismissal at all. Escape is bound on the `.tier-chip` wrapper,
+   * which already contains the focused "?" trigger, so the key bubbles to it
+   * without a document listener.
+   */
+  it('closes the tier help popover on Escape', () => {
+    const { page } = createPage();
+
+    page.toggleTierHelp(2);
+    expect(page.openTierHelp()).toBe(2);
+
+    page.closeTierHelp();
+    expect(page.openTierHelp()).toBeNull();
+  });
+
+  it('closes the result cost hint on Escape', () => {
+    const { page } = createPage();
+
+    page.toggleResultCostHint(4242);
+    expect(page.openResultCostHint()).toBe(4242);
+
+    page.closeResultCostHint();
+    expect(page.openResultCostHint()).toBeNull();
+  });
+
+  it('binds Escape to both hand-rolled popovers and drops the unkept dialog role', () => {
+    const template = readCaptainCoverageTemplate();
+
+    expect(template).toContain('<div class="tier-chip" (keydown.escape)="closeTierHelp()">');
+    expect(template).toContain(
+      '<span class="captain-result__cost-wrap" (keydown.escape)="closeResultCostHint()">',
+    );
+    // A disclosure, not a dialog: focus never enters the panel.
+    expect(template).not.toContain('role="dialog"');
+    expect(template).toContain('[attr.aria-controls]="\'tier-coverage-popover-\' + tier"');
+  });
+
+  /*
+   * 869euu6fj decision 5 + B12. `.coverage-team-slot strong, small` clamped every
+   * label AND the cost to one ellipsised line. The slot grid sits on its 180px
+   * floor at 820px and 1024px just as readily as at 390px, so this was never a
+   * narrow-screen defect and the fix is unconditional.
+   */
+  it('lets every team slot label and cost wrap instead of ellipsising', () => {
+    const slotStyles = readCaptainCoverageStyles('captain-coverage-save-panel');
+
+    expect(slotStyles).not.toContain('text-overflow: ellipsis;');
+    expect(slotStyles).not.toContain('white-space: nowrap;');
+    expect(slotStyles).toContain('white-space: normal;');
+    expect(slotStyles).toContain('overflow-wrap: anywhere;');
+    // The seat name is a label, not the headline: it used to out-size the
+    // character name under it at 1rem bold against 0.82rem.
+    expect(slotStyles).toContain('font-size: 0.74rem;');
+  });
+
+  /*
+   * 869euu6fj decision 4. scrollIntoView is correct - ion-content slots its
+   * children inside its own shadow scroller - but [fullscreen]="true" means
+   * block:'start' parks the heading under the toolbar.
+   */
+  it('keeps the results jump target clear of the fullscreen toolbar', () => {
+    const tierStyles = readCaptainCoverageStyles('captain-coverage-tier-panel');
+
+    expect(tierStyles).toContain('scroll-margin-top: calc(var(--ion-safe-area-top, 0px) + 60px);');
+  });
+
+  /*
+   * The cap decides who fits a seat, so a draft that restored the team without
+   * it restored a team whose slots refuse characters for an invisible reason.
+   */
+  it('parks the cost budget with the team draft and restores it', async () => {
+    const leader = createCharacter({
+      id: 7001,
+      name: 'Draft Leader',
+      captainAbility: 'Boosts ATK of [DEX] characters by 2x.',
+    });
+    const { page } = createPage({ captains: [leader], characters: [leader] });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+    page.onMaxTotalCostChange({ detail: { value: 42 } } as CustomEvent<{
+      value?: string | number | null;
+    }>);
+
+    const raw = globalThis.sessionStorage?.getItem('optc.captainCoverage.teamDraft');
+    expect(raw).toBeTruthy();
+    expect(JSON.parse(raw ?? '{}').maxTotalCost).toBe(42);
+
+    const { page: reopened } = createPage({ captains: [leader], characters: [leader] });
+    await reopened.ngOnInit();
+
+    expect(reopened.maxTotalCost()).toBe(42);
+  });
+
+  it('ignores a draft written before the cost budget was stored', async () => {
+    const leader = createCharacter({
+      id: 7002,
+      name: 'Legacy Draft Leader',
+      captainAbility: 'Boosts ATK of [DEX] characters by 2x.',
+    });
+    globalThis.sessionStorage?.setItem(
+      'optc.captainCoverage.teamDraft',
+      JSON.stringify({ slots: [7002, null, null, null, null, null], teamName: 'Legacy' }),
+    );
+
+    const { page } = createPage({ captains: [leader], characters: [leader] });
+    await page.ngOnInit();
+
+    expect(page.maxTotalCost()).toBeNull();
+    expect(page.teamName()).toBe('Legacy');
+  });
+
+  /*
+   * The crown alert has always explained its refusal; the sub button just went
+   * grey for three different reasons at once.
+   */
+  it('names each reason the Add to team button is refused', () => {
+    const { page } = createPage();
+    const card = { subSlotBlockedReason: null } as Parameters<typeof page.addToTeamBlockedLabel>[0];
+
+    expect(page.addToTeamBlockedLabel(card)).toContain('team.actions.addToTeam');
+
+    for (const [reason, key] of [
+      ['conflict', 'team.actions.subConflict'],
+      ['budget', 'team.actions.subOverBudget'],
+      ['full', 'team.actions.subSlotsFull'],
+    ] as const) {
+      const blocked = { subSlotBlockedReason: reason } as Parameters<
+        typeof page.addToTeamBlockedLabel
+      >[0];
+
+      expect(page.addToTeamBlockedLabel(blocked)).toContain(key);
+    }
+  });
+
+  it('shows the refusal on the disabled Add to team button', () => {
+    const template = readCaptainCoverageTemplate();
+
+    expect(template).toContain('[title]="addToTeamBlockedLabel(card)"');
+    expect(template).toContain('[attr.aria-label]="addToTeamBlockedLabel(card)"');
+  });
+
   it('has no tier help to show for a Captain with no tiers', () => {
     const { page } = createPage();
 

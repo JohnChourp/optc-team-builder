@@ -1,6 +1,21 @@
+/*
+ * `scrollToResults()` uses scrollIntoView, which is correct: ion-content slots
+ * its children inside its own shadow `.inner-scroll`, so that div is simply the
+ * nearest scrolling ancestor box. What it cannot know is that ion-content here
+ * is [fullscreen]="true" - `.inner-scroll` starts at `top: calc(var(--offset-top)
+ * * -1)`, so aligning the panel with the scrollport's top edge parks its eyebrow
+ * and heading UNDER the toolbar. scroll-margin-top is the mechanism built for
+ * exactly this, and it keeps the one-line scrollIntoView call.
+ *
+ * (This rule is the page's only `.results-panel`-exclusive one. The rule in
+ * captain-coverage-layout-panel.component.scss looks like the natural home but
+ * is a three-selector group that also covers .coverage-summary and
+ * .team-budget-panel, neither of which is ever a scroll target.)
+ */
 .results-panel {
   display: grid;
   gap: 16px;
+  scroll-margin-top: calc(var(--ion-safe-area-top, 0px) + 60px);
 }
 
 .results-toolbar {
