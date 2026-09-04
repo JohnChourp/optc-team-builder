@@ -206,8 +206,16 @@ interface CaptainCoverageCardView {
   captainBoosted: boolean | null;
   /** False for the characters that carry no Captain Ability at all. */
   canBeLeader: boolean;
-  /** False when the cost budget would reject this character in the leader slot. */
+  /**
+   * Why `assignableSlotIndex` is null, so the disabled "Add to team" button can
+   * say which of the three refusals it is instead of going quiet. Null when the
+   * button is enabled.
+   */
+  subSlotBlockedReason: CaptainCoverageSubSlotBlockedReason | null;
 }
+
+/** The three distinct reasons a character cannot take a sub slot. */
+type CaptainCoverageSubSlotBlockedReason = 'conflict' | 'budget' | 'full';
 
 interface CaptainCoverageAbilityBadgeView {
   key: string;
@@ -413,7 +421,9 @@ export class CaptainCoveragePage implements OnInit {
 
       return {
         index,
-        label: this.t(index === 0 ? 'team.actions.setAsCaptain' : 'team.actions.setAsFriendCaptain'),
+        label: this.t(
+          index === 0 ? 'team.actions.setAsCaptain' : 'team.actions.setAsFriendCaptain',
+        ),
         occupantName: occupant?.name ?? null,
         isSameCharacter: occupant?.id === character.id,
         disabled: !fitsBudget,
@@ -691,10 +701,7 @@ export class CaptainCoveragePage implements OnInit {
           // result itself.
           captainBoosted: captain ? (coverage?.matches ?? false) : null,
           canBeLeader: allowedCaptainIdSet.has(character.id),
-          assignableSlotIndex: this.findAssignableSubSlotIndex(
-            character,
-            selectedConflictKeys,
-          ),
+          subSlotAssignment: this.resolveSubSlotAssignment(character, selectedConflictKeys),
           abilityMatchCount,
           captainAbilityMatchCount,
           selectedAbilityCount: selectedAbilityRequirementCount,
@@ -734,7 +741,7 @@ export class CaptainCoveragePage implements OnInit {
           coverage,
           captainBoosted,
           canBeLeader,
-          assignableSlotIndex,
+          subSlotAssignment,
           abilityMatchCount,
           captainAbilityMatchCount,
           selectedAbilityCount,
@@ -744,7 +751,8 @@ export class CaptainCoveragePage implements OnInit {
           coverage,
           captainBoosted,
           canBeLeader,
-          assignableSlotIndex,
+          assignableSlotIndex: subSlotAssignment.index,
+          subSlotBlockedReason: subSlotAssignment.blockedReason,
           abilityMatchCount: abilityMatchCount + captainAbilityMatchCount,
           selectedAbilityCount,
           matchedAbilityBadges,
@@ -1129,6 +1137,7 @@ export class CaptainCoveragePage implements OnInit {
 
   public onMaxTotalCostChange(event: CustomEvent<{ value?: string | number | null }>): void {
     this.maxTotalCost.set(normalizeCostValue(event.detail.value));
+    this.persistTeamDraft();
   }
 
   public toggleFavoritesOnly(): void {
@@ -1255,6 +1264,10 @@ export class CaptainCoveragePage implements OnInit {
     return this.tierBreakdownByTier().get(tier) ?? null;
   }
 
+  public closeResultCostHint(): void {
+    this.openResultCostHint.set(null);
+  }
+
   public toggleResultCostHint(characterId: number): void {
     this.openResultCostHint.update((open) => (open === characterId ? null : characterId));
   }
@@ -1263,6 +1276,12 @@ export class CaptainCoveragePage implements OnInit {
     this.openTierHelp.update((open) => (open === tier ? null : tier));
   }
 
+  /**
+   * Bound to `(keydown.escape)` on the chip wrapper, not to a document-level
+   * listener. The wrapper already contains the focused "?" trigger, so the key
+   * bubbles to it for free - no global listener, no lifecycle to clean up, and
+   * no capture-phase interception of every click on the page.
+   */
   public closeTierHelp(): void {
     this.openTierHelp.set(null);
   }
@@ -1350,6 +1369,24 @@ export class CaptainCoveragePage implements OnInit {
 
   public trackTeamSlot(index: number): number {
     return index;
+  }
+
+  /**
+   * The sentence the disabled "Add to team" button shows. The crown alert has
+   * always explained its refusal (`team.actions.leaderOverBudget`); the sub
+   * button was the one control that just went grey.
+   */
+  public addToTeamBlockedLabel(card: CaptainCoverageCardView): string {
+    switch (card.subSlotBlockedReason) {
+      case 'conflict':
+        return this.t('team.actions.subConflict');
+      case 'budget':
+        return this.t('team.actions.subOverBudget');
+      case 'full':
+        return this.t('team.actions.subSlotsFull');
+      default:
+        return this.t('team.actions.addToTeam');
+    }
   }
 
   public teamSlotLabel(index: number): string {
@@ -1487,27 +1524,40 @@ export class CaptainCoveragePage implements OnInit {
    * character keeps its card and loses only the sub button, so it stays
    * available for the two leader seats.
    */
-  private findAssignableSubSlotIndex(
+  private resolveSubSlotAssignment(
     character: CharacterListItem,
     selectedConflictKeys: Set<string>,
-  ): number | null {
+  ): {
+    index: number | null;
+    blockedReason: CaptainCoverageSubSlotBlockedReason | null;
+  } {
     if (this.hasPartyConflict(character, selectedConflictKeys)) {
-      return null;
+      return { index: null, blockedReason: 'conflict' };
     }
+
+    let sawFreeSlot = false;
 
     for (
       let index = CAPTAIN_COVERAGE_FIRST_SUB_SLOT_INDEX;
       index < CAPTAIN_COVERAGE_TEAM_SLOT_COUNT;
       index += 1
     ) {
-      if (this.selectedTeamSlots()[index] || !this.canAssignTeamSlotCharacter(index, character)) {
+      if (this.selectedTeamSlots()[index]) {
         continue;
       }
 
-      return index;
+      sawFreeSlot = true;
+
+      if (!this.canAssignTeamSlotCharacter(index, character)) {
+        continue;
+      }
+
+      return { index, blockedReason: null };
     }
 
-    return null;
+    // A free slot that refused the character can only have refused it on cost;
+    // no free slot at all is the plain "team is full" case.
+    return { index: null, blockedReason: sawFreeSlot ? 'budget' : 'full' };
   }
 
   private resolveSelectedTeamSlotDetails(): Array<CharacterDetailRecord | null> {
@@ -1650,7 +1700,14 @@ export class CaptainCoveragePage implements OnInit {
 
       sessionStorage.setItem(
         CAPTAIN_COVERAGE_TEAM_DRAFT_KEY,
-        JSON.stringify({ slots, teamName: this.teamName() }),
+        JSON.stringify({
+          slots,
+          teamName: this.teamName(),
+          // The cap decides who fits a seat, so a draft that restores the team
+          // without it restores a team whose slots start refusing characters
+          // for a reason the reader can no longer see.
+          maxTotalCost: this.maxTotalCost(),
+        }),
       );
     } catch {
       // Private browsing and storage-blocked contexts throw here. A draft that
@@ -1664,7 +1721,11 @@ export class CaptainCoveragePage implements OnInit {
       return;
     }
 
-    let parsed: { slots?: Array<number | null>; teamName?: string } | null = null;
+    let parsed: {
+      slots?: Array<number | null>;
+      teamName?: string;
+      maxTotalCost?: number | null;
+    } | null = null;
 
     try {
       const raw = sessionStorage.getItem(CAPTAIN_COVERAGE_TEAM_DRAFT_KEY);
@@ -1677,7 +1738,9 @@ export class CaptainCoveragePage implements OnInit {
       return;
     }
 
-    const charactersById = new Map(this.allCharacters().map((character) => [character.id, character]));
+    const charactersById = new Map(
+      this.allCharacters().map((character) => [character.id, character]),
+    );
     const slots = Array.from({ length: CAPTAIN_COVERAGE_TEAM_SLOT_COUNT }, (_value, index) => {
       const id = parsed?.slots?.[index];
 
@@ -1692,6 +1755,11 @@ export class CaptainCoveragePage implements OnInit {
 
     if (typeof parsed.teamName === 'string' && parsed.teamName.length) {
       this.teamName.set(parsed.teamName);
+    }
+
+    // Drafts written before the cap was stored simply have no key here.
+    if (typeof parsed.maxTotalCost === 'number') {
+      this.maxTotalCost.set(parsed.maxTotalCost);
     }
 
     const captain = slots[0];

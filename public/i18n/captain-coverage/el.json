@@ -155,7 +155,10 @@
         "empty": "κενή θέση",
         "replaces": "αντικαθιστά τον {{name}}",
         "alreadyHere": "βρίσκεται ήδη εδώ"
-      }
+      },
+      "subConflict": "Ο ίδιος χαρακτήρας βρίσκεται ήδη στο team.",
+      "subOverBudget": "Καμία ελεύθερη θέση δεν χωράει αυτόν τον χαρακτήρα μέσα στο όριο κόστους.",
+      "subSlotsFull": "Και οι τέσσερις θέσεις sub είναι πιασμένες."
     },
     "captainRequired": "Επίλεξε Captain",
     "copy": "Διάλεξε Captain, Friend Captain και τέσσερα subs με συνολικό όριο κόστους. Το κόστος του Friend Captain δεν μετράει.",

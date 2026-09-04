@@ -155,7 +155,10 @@
         "empty": "empty seat",
         "replaces": "replaces {{name}}",
         "alreadyHere": "already here"
-      }
+      },
+      "subConflict": "The same character is already in the team.",
+      "subOverBudget": "No free slot fits this character within the cost budget.",
+      "subSlotsFull": "All four sub slots are taken."
     },
     "captainRequired": "Select Captain",
     "copy": "Choose a Captain, Friend Captain, and four subs against a total cost budget. Friend Captain cost is not counted.",
