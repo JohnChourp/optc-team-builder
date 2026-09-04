@@ -6,7 +6,6 @@
  * layout height at all until the reader asks for it.
  */
 .tier-chip {
-  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -42,15 +41,23 @@
   color: #fff8e0;
 }
 
+/*
+ * Anchored to `.ability-rank-toggle__chip-row`, not to the chip. The chip row
+ * wraps, so a chip's own left offset grows across the row and a panel anchored
+ * to it ran off the right edge with no flip and no clamp - invisible to a
+ * responsive sweep, because a closed popover has no layout at all. Spanning the
+ * row cannot overflow it, and the panel names its own tier in its header, so
+ * nothing is lost by no longer pointing at the chip.
+ */
 .tier-chip__popover {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
+  right: 0;
   z-index: 20;
   display: grid;
   gap: 6px;
-  width: max-content;
-  max-width: min(340px, calc(100vw - 48px));
+  max-width: 100%;
   padding: 12px;
   border: 1px solid rgba(245, 200, 76, 0.32);
   border-radius: 12px;
@@ -61,12 +68,7 @@
   white-space: normal;
 }
 
-/* The arrow keeps the panel visually tied to the chip it explains. */
-.tier-chip__popover::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 18px;
-  border: 6px solid transparent;
-  border-top-color: rgba(245, 200, 76, 0.32);
-}
+/*
+ * No arrow. It pointed at a chip the panel is no longer anchored to, and the
+ * panel's header already says which tier it explains.
+ */

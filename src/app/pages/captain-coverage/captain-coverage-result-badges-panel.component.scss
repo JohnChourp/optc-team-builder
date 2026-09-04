@@ -124,10 +124,13 @@
    * row. The fill borrows the page's own two lights - the deep navy the shell
    * fades to and the cyan of its top-right glow - so it belongs to the theme
    * rather than announcing itself.
+   *
+   * The shadow is set once, further down. It used to be declared `none` here
+   * too, which read as "no shadow" while the later declaration silently won -
+   * two adjacent comments describing opposite intents for one property.
    */
   --border-width: 0;
   --border-style: none;
-  --box-shadow: none;
   --background: linear-gradient(140deg, #0d1324 0%, #16305c 48%, #4cc9f0 100%);
   --background-hover: linear-gradient(140deg, #142042 0%, #1e4a86 48%, #6fd8f7 100%);
   --background-activated: linear-gradient(140deg, #142042 0%, #1e4a86 48%, #6fd8f7 100%);

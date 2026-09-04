@@ -2612,10 +2612,15 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('neutral-note');
     expect(template).not.toContain('card.character.name }}</a>');
     expect(template).not.toContain('card.subtitle');
-    expect(template).not.toContain('card.character.name');
+    // The name stays out of the card's VISIBLE text (B10/B11), but it is the
+    // only thing that tells one card's link from another's, so it belongs in
+    // the accessible name. Every card used to announce the same six words.
+    expect(template).not.toContain('{{ card.character.name }}');
+    expect(template).toContain(
+      '[attr.aria-label]="t(\'results.openCharacterDetailsFor\', { name: card.character.name })"',
+    );
     expect(template).not.toContain('card.coverage.chips');
     expect(template).not.toContain('coverage-chip');
-    expect(template).toContain("t('results.openCharacterDetails')");
     expect(template).toContain('class="coverage-tag-filter"');
     expect(template).toContain("t('filters.characterTags.label')");
     expect(template).toContain('[attr.aria-label]="t(\'filters.characterTags.label\')"');
@@ -2980,9 +2985,7 @@ describe('CaptainCoveragePage', () => {
 
   it('tooltips only the refused button, and keeps the visible label in the accessible name', () => {
     const { page } = createPage();
-    const free = { subSlotBlockedReason: null } as Parameters<
-      typeof page.addToTeamBlockedTitle
-    >[0];
+    const free = { subSlotBlockedReason: null } as Parameters<typeof page.addToTeamBlockedTitle>[0];
     const blocked = { subSlotBlockedReason: 'full' } as Parameters<
       typeof page.addToTeamBlockedTitle
     >[0];
@@ -3036,6 +3039,93 @@ describe('CaptainCoveragePage', () => {
     }>);
 
     expect(globalThis.sessionStorage?.getItem('optc.captainCoverage.teamDraft')).toBeNull();
+  });
+
+  /*
+   * 869evyn6j - the nine findings the 869euu6fj audit left out of scope.
+   */
+  it('stops labelling a toggle card that labels nothing', () => {
+    const template = readCaptainCoverageTemplate();
+
+    // ion-toggle is shadow-encapsulated, so a custom element is not a labelable
+    // control: the <label> wrapper had no labelled control and clicking the card
+    // never did anything. The toggle keeps its own aria-label.
+    expect(template).not.toContain('<label');
+    expect(template).not.toContain('</label>');
+    expect(template).toContain('class="ability-rank-toggle"');
+    expect(template).toContain("t('filters.superTandemPresence.toggle')");
+  });
+
+  it('gives every slot button a name that says which seat it is', () => {
+    const template = readCaptainCoverageTemplate();
+
+    expect(template).toContain("t('team.showResultsForSlot', { slot: teamSlotLabel(index) })");
+    expect(template).toContain("t('team.pickForSlot', { slot: teamSlotLabel(index) })");
+    // Six identically named buttons was the defect.
+    expect(template).not.toContain('[attr.aria-label]="t(\'team.pickFromResults\')"');
+  });
+
+  it('drops the untranslated aria-label ARIA would never announce', () => {
+    const template = readCaptainCoverageTemplate();
+
+    // role=generic forbids an accessible name, so this was untranslated AND unread.
+    expect(template).not.toContain('aria-label="Captain boosts"');
+    expect(template).toContain('class="captain-result__boosts"');
+  });
+
+  it('puts the crown first in the DOM, where it is painted', () => {
+    const template = readCaptainCoverageTemplate();
+    const article = template.indexOf('<article class="captain-result">');
+    const crown = template.indexOf('captain-result-set-leader');
+    const addToTeam = template.indexOf('addToTeamBlockedTitle');
+
+    expect(article).toBeGreaterThan(-1);
+    expect(crown).toBeGreaterThan(article);
+    // It paints in the card's top-right corner, so it must not tab last.
+    expect(crown).toBeLessThan(addToTeam);
+  });
+
+  it('bounds the tier popover by the chip row it can never overflow', () => {
+    const help = readCaptainCoverageStyles('captain-coverage-tier-help-panel');
+    const details = readCaptainCoverageStyles('captain-coverage-tier-details-panel');
+
+    // The row is the positioning context now; the chip is not.
+    expect(details).toContain('.ability-rank-toggle__chip-row {\n  position: relative;');
+    expect(help).not.toContain('.tier-chip {\n  position: relative;');
+    expect(help).toContain('right: 0;');
+    expect(help).toContain('max-width: 100%;');
+    expect(help).not.toContain('width: max-content;');
+  });
+
+  it('keeps one crown shadow, not two that disagree', () => {
+    const badges = readCaptainCoverageStyles('captain-coverage-result-badges-panel');
+    const declarations = badges.match(/--box-shadow:/gu) ?? [];
+
+    expect(declarations).toHaveLength(1);
+    expect(badges).toContain('--box-shadow: 0 6px 16px');
+  });
+
+  it('leaves no styling hook on the leader alert for a contrast patch to land on', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage.page.ts'),
+      'utf8',
+    );
+
+    // The overlay-contrast rule forbids scoping overlay colour to a cssClass; a
+    // dangling hook is exactly where the next complaint gets wrongly patched.
+    expect(source).not.toContain('captain-coverage-leader-slot-alert');
+  });
+
+  it('drops the stylesheet for a combobox that no longer exists, and keeps the one that does', () => {
+    const filters = readCaptainCoverageStyles('captain-coverage-filter-panel');
+    const template = readCaptainCoverageTemplate();
+
+    expect(filters).not.toContain('.coverage-tag-filter .character-tag-search {');
+    expect(filters).not.toContain('.character-tag-suggestion {');
+    expect(filters).not.toContain('.coverage-tag-filter__support {');
+    // Still rendered, so its rule stays.
+    expect(template).toContain('class="character-tag-combobox"');
+    expect(filters).toContain('.coverage-tag-filter .character-tag-combobox {');
   });
 
   it('has no tier help to show for a Captain with no tiers', () => {

@@ -117,7 +117,8 @@
     "titleWithCount": "{{count}} matching characters",
     "titleWithCoverage": "{{boosted}} boosted of {{count}} matching",
     "loadMore": "Show more ({{count}} left)",
-    "cost": "Cost: {{cost}}"
+    "cost": "Cost: {{cost}}",
+    "openCharacterDetailsFor": "Open {{name}}"
   },
   "search": {
     "placeholder": "Search character results..."
@@ -188,7 +189,9 @@
     },
     "title": "Build from a Captain",
     "pickFromResults": "Pick a character from the results below",
-    "viewSlotDetails": "Open {{name}}"
+    "viewSlotDetails": "Open {{name}}",
+    "showResultsForSlot": "Show the results for {{slot}}",
+    "pickForSlot": "Pick {{slot}} from the results below"
   },
   "title": "Captain Coverage"
 }

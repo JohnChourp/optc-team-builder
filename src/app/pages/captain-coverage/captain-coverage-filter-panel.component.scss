@@ -77,82 +77,23 @@
   margin: 0;
 }
 
-.coverage-tag-filter__support {
-  color: rgba(248, 251, 255, 0.58);
-  font-size: 0.78rem;
-  line-height: 1.4;
-}
-
+/*
+ * The inline tag search and its page-level support paragraph were deleted in
+ * a9969a5f ("the selection lives in the modal, not on the page"); their rules
+ * outlived them. `.character-tag-search`, `.character-tag-suggestions`,
+ * `.character-tag-suggestion` and `.coverage-tag-filter__support` match nothing
+ * in any template in this repo.
+ *
+ * `.character-tag-combobox` is NOT dead - captain-coverage.page.html:229 and
+ * :278 still render it as the wrapper around each modal trigger - so its layout
+ * rule stays.
+ */
 .coverage-tag-filter .character-tag-combobox {
   display: grid;
   gap: 8px;
   min-width: 0;
 }
 
-.coverage-tag-filter .character-tag-search {
-  --background: rgba(255, 255, 255, 0.07);
-  --border-radius: 14px;
-  --box-shadow: none;
-  --color: #ffffff;
-  --icon-color: rgba(248, 251, 255, 0.72);
-  --placeholder-color: rgba(248, 251, 255, 0.52);
-  min-width: 0;
-  padding: 0;
-}
-
-.coverage-tag-filter .character-tag-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-height: 132px;
-  min-width: 0;
-  overflow: auto;
-  padding: 8px;
-  border: 1px solid rgba(248, 251, 255, 0.12);
-  border-radius: 14px;
-  background: rgba(5, 10, 24, 0.42);
-}
-
-.coverage-tag-filter .character-tag-suggestion {
-  max-width: 100%;
-  min-width: 0;
-  padding: 7px 10px;
-  border: 1px solid rgba(248, 251, 255, 0.16);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(248, 251, 255, 0.84);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8rem;
-  overflow-wrap: anywhere;
-}
-
-.coverage-tag-filter .character-tag-suggestion:hover {
-  border-color: rgba(245, 200, 76, 0.48);
-  color: #ffffff;
-}
-
-.coverage-tag-filter .character-tag-suggestion:focus-visible {
-  outline: 2px solid rgba(245, 200, 76, 0.72);
-  outline-offset: 2px;
-}
-
-.coverage-tag-filter .character-tag-suggestion:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.coverage-tag-filter .character-tag-suggestions__empty {
-  color: rgba(248, 251, 255, 0.58);
-}
-
-/*
- * Captain Coverage only. The shared ability modal is rendered at the app root,
- * so the host class the picker puts on the ion-modal is the one selector this
- * page can reach it by; every rule below is nested under it, which is what
- * keeps Characters, Character Boxes, Manual Team Builder, Crew Forge and Saved
- * Enemies rendering exactly as before.
- */
 .captain-coverage-ability-modal .ability-tag-set-tile__copy strong {
   /*
    * 61 of the 263 ability labels are longer than the ~28 characters a tile can

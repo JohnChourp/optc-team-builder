@@ -974,7 +974,6 @@ export class CaptainCoveragePage implements OnInit {
     const alert = await this.alertController.create({
       header: card.character.name,
       message: this.t('team.actions.leaderSlotPicker.message'),
-      cssClass: 'captain-coverage-leader-slot-alert',
       inputs: options.map((option) => ({
         type: 'radio' as const,
         label: this.leaderSlotOptionLabel(option),
