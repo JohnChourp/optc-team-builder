@@ -1389,6 +1389,26 @@ export class CaptainCoveragePage implements OnInit {
     }
   }
 
+  /**
+   * Only the refused button carries a tooltip. An enabled one would otherwise
+   * hover its own visible label back at the reader.
+   */
+  public addToTeamBlockedTitle(card: CaptainCoverageCardView): string | null {
+    return card.subSlotBlockedReason === null ? null : this.addToTeamBlockedLabel(card);
+  }
+
+  /**
+   * WCAG 2.5.3: the accessible name has to still contain the visible label, so
+   * the refusal is appended to it rather than replacing it.
+   */
+  public addToTeamAccessibleLabel(card: CaptainCoverageCardView): string {
+    const addToTeam = this.t('team.actions.addToTeam');
+
+    return card.subSlotBlockedReason === null
+      ? addToTeam
+      : `${addToTeam} - ${this.addToTeamBlockedLabel(card)}`;
+  }
+
   public teamSlotLabel(index: number): string {
     if (index === 0) {
       return this.t('team.slots.captain');
@@ -1691,9 +1711,14 @@ export class CaptainCoveragePage implements OnInit {
    */
   private persistTeamDraft(): void {
     const slots = this.selectedTeamSlots().map((slot) => slot?.id ?? null);
+    const maxTotalCost = this.maxTotalCost();
 
     try {
-      if (slots.every((id) => id === null)) {
+      // An empty team is only worth forgetting when there is no cap either. The
+      // budget panel sits ABOVE the results, so typing a cap before picking
+      // anyone is the natural order - and dropping the draft here was silently
+      // throwing that cap away on the trip to a character's detail page.
+      if (slots.every((id) => id === null) && maxTotalCost === null) {
         sessionStorage.removeItem(CAPTAIN_COVERAGE_TEAM_DRAFT_KEY);
         return;
       }
@@ -1706,7 +1731,7 @@ export class CaptainCoveragePage implements OnInit {
           // The cap decides who fits a seat, so a draft that restores the team
           // without it restores a team whose slots start refusing characters
           // for a reason the reader can no longer see.
-          maxTotalCost: this.maxTotalCost(),
+          maxTotalCost,
         }),
       );
     } catch {
@@ -1747,6 +1772,11 @@ export class CaptainCoveragePage implements OnInit {
       return typeof id === 'number' ? (charactersById.get(id) ?? null) : null;
     });
 
+    // A cap with no team is still worth restoring - it is what the reader typed.
+    if (typeof parsed.maxTotalCost === 'number') {
+      this.maxTotalCost.set(parsed.maxTotalCost);
+    }
+
     if (!slots.some(Boolean)) {
       return;
     }
@@ -1757,10 +1787,6 @@ export class CaptainCoveragePage implements OnInit {
       this.teamName.set(parsed.teamName);
     }
 
-    // Drafts written before the cap was stored simply have no key here.
-    if (typeof parsed.maxTotalCost === 'number') {
-      this.maxTotalCost.set(parsed.maxTotalCost);
-    }
 
     const captain = slots[0];
 

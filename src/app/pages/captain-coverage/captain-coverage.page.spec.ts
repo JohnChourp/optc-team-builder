@@ -2850,10 +2850,15 @@ describe('CaptainCoveragePage', () => {
   it('binds Escape to both hand-rolled popovers and drops the unkept dialog role', () => {
     const template = readCaptainCoverageTemplate();
 
-    expect(template).toContain('<div class="tier-chip" (keydown.escape)="closeTierHelp()">');
-    expect(template).toContain(
-      '<span class="captain-result__cost-wrap" (keydown.escape)="closeResultCostHint()">',
-    );
+    // Attribute-level, not whole-tag: the cost-wrap tag was 101 characters
+    // against Prettier's printWidth of 100, so a format run would reflow it and
+    // fail an assertion that had nothing to say about the reflow.
+    expect(template).toContain('class="tier-chip" (keydown.escape)="closeTierHelp()"');
+    expect(template).toContain('class="captain-result__cost-wrap"');
+    expect(template).toContain('(keydown.escape)="closeResultCostHint()"');
+    // Clicking a non-focusable popover body would send focus to <body> and kill
+    // Escape for the rest of the visit; tabindex keeps focus inside the wrapper.
+    expect(template).toContain('tabindex="-1"');
     // A disclosure, not a dialog: focus never enters the panel.
     expect(template).not.toContain('role="dialog"');
     expect(template).toContain('[attr.aria-controls]="\'tier-coverage-popover-\' + tier"');
@@ -2957,11 +2962,80 @@ describe('CaptainCoveragePage', () => {
     }
   });
 
-  it('shows the refusal on the disabled Add to team button', () => {
+  /*
+   * Ionic sets `pointer-events: none` on `:host(.button-disabled)`
+   * (@ionic/core button.md.css:110-114), so a disabled ion-button is never
+   * hit-tested and the browser cannot paint its own tooltip. The title has to
+   * hang on a wrapper that is still hit-tested, or the sentence never reaches a
+   * mouse user at all.
+   */
+  it('hangs the refusal tooltip on a wrapper, not on the disabled button', () => {
     const template = readCaptainCoverageTemplate();
 
-    expect(template).toContain('[title]="addToTeamBlockedLabel(card)"');
-    expect(template).toContain('[attr.aria-label]="addToTeamBlockedLabel(card)"');
+    expect(template).toContain('class="captain-result__add-wrap"');
+    expect(template).toContain('[title]="addToTeamBlockedTitle(card)"');
+    expect(template).toContain('[attr.aria-label]="addToTeamAccessibleLabel(card)"');
+    expect(template).not.toContain('[title]="addToTeamBlockedLabel(card)"');
+  });
+
+  it('tooltips only the refused button, and keeps the visible label in the accessible name', () => {
+    const { page } = createPage();
+    const free = { subSlotBlockedReason: null } as Parameters<
+      typeof page.addToTeamBlockedTitle
+    >[0];
+    const blocked = { subSlotBlockedReason: 'full' } as Parameters<
+      typeof page.addToTeamBlockedTitle
+    >[0];
+
+    expect(page.addToTeamBlockedTitle(free)).toBeNull();
+    expect(page.addToTeamBlockedTitle(blocked)).toContain('team.actions.subSlotsFull');
+
+    // WCAG 2.5.3 Label in Name: the accessible name must still carry the label.
+    expect(page.addToTeamAccessibleLabel(free)).toContain('team.actions.addToTeam');
+    expect(page.addToTeamAccessibleLabel(blocked)).toContain('team.actions.addToTeam');
+    expect(page.addToTeamAccessibleLabel(blocked)).toContain('team.actions.subSlotsFull');
+  });
+
+  it('keeps a cost budget typed before any character is picked', async () => {
+    const leader = createCharacter({
+      id: 7003,
+      name: 'Budget First Leader',
+      captainAbility: 'Boosts ATK of [DEX] characters by 2x.',
+    });
+    const { page } = createPage({ captains: [leader], characters: [leader] });
+
+    await page.ngOnInit();
+    // The budget panel sits above the results, so this is the natural order.
+    page.onMaxTotalCostChange({ detail: { value: 33 } } as CustomEvent<{
+      value?: string | number | null;
+    }>);
+
+    const raw = globalThis.sessionStorage?.getItem('optc.captainCoverage.teamDraft');
+    expect(raw).toBeTruthy();
+    expect(JSON.parse(raw ?? '{}').maxTotalCost).toBe(33);
+
+    const { page: reopened } = createPage({ captains: [leader], characters: [leader] });
+    await reopened.ngOnInit();
+
+    expect(reopened.maxTotalCost()).toBe(33);
+    expect(reopened.selectedTeamSlots().some(Boolean)).toBe(false);
+  });
+
+  it('still forgets a draft that has neither a team nor a budget', async () => {
+    const leader = createCharacter({
+      id: 7004,
+      name: 'Nothing Leader',
+      captainAbility: 'Boosts ATK of [DEX] characters by 2x.',
+    });
+    globalThis.sessionStorage?.setItem('optc.captainCoverage.teamDraft', '{"slots":[1,null]}');
+
+    const { page } = createPage({ captains: [leader], characters: [leader] });
+    await page.ngOnInit();
+    page.onMaxTotalCostChange({ detail: { value: null } } as CustomEvent<{
+      value?: string | number | null;
+    }>);
+
+    expect(globalThis.sessionStorage?.getItem('optc.captainCoverage.teamDraft')).toBeNull();
   });
 
   it('has no tier help to show for a Captain with no tiers', () => {
