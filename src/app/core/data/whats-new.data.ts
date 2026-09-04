@@ -31,6 +31,44 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.2.5',
+    date: '2026-09-04',
+    userVisible: true,
+    headline: {
+      en: 'Captain Coverage reads properly out loud',
+      el: 'Το Captain Coverage διαβάζεται σωστά φωναχτά',
+    },
+    summaryEn:
+      'A round of fixes for anyone using Captain Coverage with a screen reader or a keyboard, plus one thing everybody can see. Every result card used to announce the same six words - "Open character details" - so a list of forty cards read as forty identical links; each one now says the character it opens. The six team slots had the same problem and now name their seat: Captain, Friend Captain, Sub 1 and so on. Tabbing through the results no longer jumps backwards: the crown button is painted in a card\'s top corner but used to come last, so focus went to the bottom of a card and then back up to it before moving on. The two filter cards with a switch on them looked clickable anywhere but only ever responded on the switch itself - now they no longer pretend otherwise. And the "?" help beside a tier could open a panel that ran off the right edge of the screen if you pressed a "?" on the right-hand side; it now fits the row it belongs to.',
+    summaryEl:
+      'Ένας γύρος διορθώσεων για όποιον χρησιμοποιεί το Captain Coverage με αναγνώστη οθόνης ή πληκτρολόγιο, συν ένα που το βλέπουν όλοι. Κάθε κάρτα αποτελέσματος ανακοίνωνε τις ίδιες λέξεις - «Άνοιγμα λεπτομερειών χαρακτήρα» - οπότε μια λίστα σαράντα καρτών διαβαζόταν ως σαράντα πανομοιότυποι σύνδεσμοι· τώρα η καθεμία λέει ποιον χαρακτήρα ανοίγει. Τα έξι team slots είχαν το ίδιο πρόβλημα και τώρα λένε τη θέση τους: Captain, Friend Captain, Sub 1 και ούτω καθεξής. Το tab στα αποτελέσματα δεν πηδά πια προς τα πίσω: το κουμπί με το στέμμα ζωγραφίζεται στην πάνω γωνία της κάρτας αλλά ερχόταν τελευταίο, οπότε το focus πήγαινε στο κάτω μέρος μιας κάρτας και μετά πίσω πάνω της. Οι δύο κάρτες φίλτρων με διακόπτη έμοιαζαν να πατιούνται παντού ενώ αντιδρούσαν μόνο στον ίδιο τον διακόπτη - τώρα δεν το προσποιούνται. Και η βοήθεια «?» δίπλα σε ένα tier μπορούσε να ανοίξει πάνελ που έβγαινε έξω από τη δεξιά άκρη της οθόνης αν πατούσες ένα «?» στα δεξιά· τώρα χωράει στη σειρά που ανήκει.',
+    added: [],
+    improved: [
+      {
+        en: 'Each result card now tells a screen reader which character it opens, instead of every card in the list saying the same thing.',
+        el: 'Κάθε κάρτα αποτελέσματος λέει τώρα στον αναγνώστη οθόνης ποιον χαρακτήρα ανοίγει, αντί να λένε όλες οι κάρτες το ίδιο πράγμα.',
+      },
+      {
+        en: 'The six team slots name their seat - Captain, Friend Captain, Sub 1 and so on - instead of all six reading as the same button.',
+        el: 'Τα έξι team slots λένε τη θέση τους - Captain, Friend Captain, Sub 1 και ούτω καθεξής - αντί να διαβάζονται και τα έξι ως το ίδιο κουμπί.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'The "?" tier help no longer runs off the right edge of the screen when you open it from a tier button on the right-hand side.',
+        el: 'Η βοήθεια «?» των tiers δεν βγαίνει πια έξω από τη δεξιά άκρη της οθόνης όταν την ανοίγεις από κουμπί tier στα δεξιά.',
+      },
+      {
+        en: 'Tabbing through the results no longer jumps back up to a card you have already passed, because the crown button now comes in the order it is drawn.',
+        el: 'Το tab στα αποτελέσματα δεν γυρίζει πια πίσω σε κάρτα που έχεις ήδη προσπεράσει, γιατί το κουμπί με το στέμμα έρχεται τώρα με τη σειρά που ζωγραφίζεται.',
+      },
+      {
+        en: 'The two filter cards with a switch on them no longer look like the whole card can be pressed when only the switch ever responded.',
+        el: 'Οι δύο κάρτες φίλτρων με διακόπτη δεν δείχνουν πια σαν να πατιέται ολόκληρη η κάρτα, ενώ αντιδρούσε μόνο ο διακόπτης.',
+      },
+    ],
+  },
+  {
     version: '0.2.4',
     date: '2026-09-04',
     userVisible: true,
