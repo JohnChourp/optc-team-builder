@@ -40,6 +40,17 @@
   min-width: 0;
 }
 
+/*
+ * The refusal tooltip hangs here rather than on the button, because Ionic sets
+ * `pointer-events: none` on a disabled ion-button and the browser never paints
+ * a tooltip for an element it does not hit-test. Neutral box: the flex item
+ * must not change the row it used to be.
+ */
+.captain-result__add-wrap {
+  display: inline-flex;
+  min-width: 0;
+}
+
 .captain-result__actions ion-button {
   margin: 0;
   min-width: 0;

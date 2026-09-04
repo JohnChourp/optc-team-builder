@@ -392,6 +392,7 @@
                         -->
                         <div
                           class="tier-chip__popover"
+                          tabindex="-1"
                           [attr.id]="'tier-coverage-popover-' + tier"
                           [attr.aria-label]="t('filters.tierCoverage.help', { tier })"
                           [attr.data-test]="'tier-coverage-popover-' + tier"
@@ -581,7 +582,10 @@
                       does: inline it stole width from HP and ATK and shoved
                       them sideways every time it opened.
                     -->
-                    <span class="captain-result__cost-wrap" (keydown.escape)="closeResultCostHint()">
+                    <span
+                      class="captain-result__cost-wrap"
+                      (keydown.escape)="closeResultCostHint()"
+                    >
                       <button
                         type="button"
                         class="captain-result__cost"
@@ -595,6 +599,7 @@
                       @if (openResultCostHint() === card.character.id) {
                         <span
                           class="captain-result__cost-hint"
+                          tabindex="-1"
                           role="status"
                           [attr.data-test]="'captain-result-cost-hint-' + card.character.id"
                         >
@@ -615,22 +620,31 @@
                   <div class="captain-result__actions">
                     <!--
                       A disabled button that never says why is the same defect
-                      the crown alert already avoids. `title` still shows on a
-                      disabled button, and aria-label carries it to assistive
-                      tech, so the three refusals - already in the team, over
-                      the cost budget, no free sub slot - each name themselves.
+                      the crown alert already avoids. The `title` sits on this
+                      wrapper and NOT on the button: Ionic sets
+                      `pointer-events: none` on `:host(.button-disabled)`, so a
+                      disabled ion-button is never hit-tested and the browser
+                      would never paint its own tooltip. The wrapper still is,
+                      so the sentence reaches a mouse user; aria-label carries
+                      the same sentence to assistive tech, and keeps the visible
+                      label inside it so the accessible name still contains what
+                      the button says.
                     -->
-                    <ion-button
-                      size="small"
-                      fill="outline"
-                      color="warning"
-                      [disabled]="card.assignableSlotIndex === null"
-                      [title]="addToTeamBlockedLabel(card)"
-                      [attr.aria-label]="addToTeamBlockedLabel(card)"
-                      (click)="assignCharacterFromResult(card)"
+                    <span
+                      class="captain-result__add-wrap"
+                      [title]="addToTeamBlockedTitle(card)"
                     >
-                      {{ t('team.actions.addToTeam') }}
-                    </ion-button>
+                      <ion-button
+                        size="small"
+                        fill="outline"
+                        color="warning"
+                        [disabled]="card.assignableSlotIndex === null"
+                        [attr.aria-label]="addToTeamAccessibleLabel(card)"
+                        (click)="assignCharacterFromResult(card)"
+                      >
+                        {{ t('team.actions.addToTeam') }}
+                      </ion-button>
+                    </span>
 
                     <!--
                       One crown for both leader seats. It only exists on a
