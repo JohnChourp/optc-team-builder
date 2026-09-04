@@ -282,6 +282,15 @@ fi
 
 "${PROJECT_ROOT}/scripts/bump-version.sh" "${BUMP_ARGS[@]}" >/dev/null
 
+# The nightly release chain has no human to write the What's New entry, and
+# check-whats-new.mjs fails the moment package.json moves ahead of the list -
+# so an unattended data release used to leave main red until someone noticed.
+# This never overwrites an entry a person already wrote for this version.
+echo "[release] Ensuring ${RELEASE_TAG} has a What's New entry." >&2
+node "${PROJECT_ROOT}/scripts/generate-whats-new-entry.mjs" \
+    --app-root "${PROJECT_ROOT}" \
+    --version "${RELEASE_VERSION}"
+
 mkdir -p "${BUILD_ARTIFACTS_DIR}/${RELEASE_TAG}"
 
 # Allow CI to override the web/native sync command without changing the local default.

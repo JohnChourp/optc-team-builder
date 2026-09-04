@@ -63,7 +63,7 @@
     "test:pwa-shell": "node ./scripts/pwa-shell-check.mjs",
     "test:overlay-contrast": "vitest run scripts/check-ionic-overlay-contrast.spec.ts && npm run theme:overlay-contrast",
     "theme:overlay-contrast": "node ./scripts/check-ionic-overlay-contrast.mjs",
-    "test:whats-new": "vitest run scripts/check-whats-new.spec.ts && npm run whats-new:check",
+    "test:whats-new": "vitest run scripts/check-whats-new.spec.ts scripts/generate-whats-new-entry.spec.ts && npm run whats-new:check",
     "whats-new:check": "node ./scripts/check-whats-new.mjs",
     "audit:dead-code": "npx tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false && npx knip --include files,exports,types",
     "perf:dataset": "node ./scripts/benchmark-dataset.mjs",
