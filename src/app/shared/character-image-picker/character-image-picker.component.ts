@@ -104,6 +104,20 @@ export class CharacterImagePickerComponent implements OnChanges {
   @Input() public applyingSelection = false;
   @Input() public allowedCharacterIds: number[] | null = null;
   @Input() public maxCost: number | null = null;
+
+  /**
+   * Pass-throughs to the pickers this wrapper hosts. Crew Forge and Saved
+   * Enemies reach the shared ability/tag pickers only through here, so without
+   * these they could not be fixed "per page" at all - the wrapper exposed no
+   * route to the picker's own inputs. Defaults leave every existing host
+   * rendering exactly as it does today: empty support text, and the facet
+   * filter's own `showSelectedChips` default of true.
+   */
+  @Input() public abilityPickerSupportText = '';
+
+  @Input() public characterTagPickerSupportText = '';
+
+  @Input() public showFacetSelectedChips = true;
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<CharacterListItem>();
 

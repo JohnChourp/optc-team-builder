@@ -503,9 +503,7 @@ describe('CharacterImagePickerComponent', () => {
 
     component.characterTagCharacterIds.set([4, 6, 8]);
 
-    await (
-      component as unknown as { initializePicker(): Promise<void> }
-    ).initializePicker();
+    await (component as unknown as { initializePicker(): Promise<void> }).initializePicker();
 
     expect(characterCatalogCache.queryCharacters).toHaveBeenLastCalledWith({
       searchTerm: '',
@@ -892,6 +890,43 @@ function buildCharacterTagSelection(
     ),
   };
 }
+
+/*
+ * 869evz13a. Crew Forge and Saved Enemies reach the shared ability and tag
+ * pickers only through this wrapper, which exposed no route to the pickers'
+ * own inputs - so those pages could not be fixed "per page" at all. The
+ * pass-throughs exist now; the defaults are what keep every current host
+ * rendering exactly as it does today.
+ */
+describe('CharacterImagePickerComponent picker pass-throughs', () => {
+  function readTemplate(): string {
+    return readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/shared/character-image-picker/character-image-picker.component.html',
+      ),
+      'utf8',
+    ).replace(/\r\n/g, '\n');
+  }
+
+  it('forwards support text and the facet chip flag to the pickers it hosts', () => {
+    const template = readTemplate();
+
+    expect(template).toContain('[supportText]="abilityPickerSupportText"');
+    expect(template).toContain('[pickerSupportText]="characterTagPickerSupportText"');
+    // Both facet filters inside the modal, not just the first.
+    expect(template.match(/\[showSelectedChips\]="showFacetSelectedChips"/gu)).toHaveLength(2);
+  });
+
+  it('defaults leave every existing host exactly as it was', () => {
+    const { component } = createComponent();
+
+    expect(component.abilityPickerSupportText).toBe('');
+    expect(component.characterTagPickerSupportText).toBe('');
+    // The facet filter's own default is true; opting out stays the host's call.
+    expect(component.showFacetSelectedChips).toBe(true);
+  });
+});
 
 function buildCharacters() {
   return Array.from({ length: 72 }, (_, index) => {

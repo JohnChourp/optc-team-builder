@@ -41,6 +41,7 @@
 
             <div class="character-image-picker-filter-grid">
               <app-character-facet-filter
+                [showSelectedChips]="showFacetSelectedChips"
                 kind="type"
                 presentation="chips"
                 testIdPrefix="character-image-picker"
@@ -53,6 +54,7 @@
               ></app-character-facet-filter>
 
               <app-character-facet-filter
+                [showSelectedChips]="showFacetSelectedChips"
                 kind="class"
                 presentation="select"
                 testIdPrefix="character-image-picker"
@@ -197,6 +199,7 @@
               [selection]="tagSetSelection()"
               (dismiss)="closeTagSetPicker()"
               (saveSelection)="saveTagSetSelection($event)"
+              [supportText]="abilityPickerSupportText"
             ></app-ability-tag-set-picker>
 
             <!--
@@ -209,6 +212,7 @@
               [selection]="characterTagSetSelection()"
               [disabled]="applyingSelection"
               (filterChange)="onCharacterTagFilterChange($event)"
+              [pickerSupportText]="characterTagPickerSupportText"
             ></app-character-tag-filter>
 
             @if (loading()) {
