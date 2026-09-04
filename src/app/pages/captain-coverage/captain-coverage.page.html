@@ -81,7 +81,7 @@
                 <button
                   type="button"
                   class="coverage-team-slot__surface"
-                  [attr.aria-label]="t('team.pickFromResults')"
+                  [attr.aria-label]="t('team.showResultsForSlot', { slot: teamSlotLabel(index) })"
                   (click)="scrollToResults()"
                 ></button>
 
@@ -106,7 +106,7 @@
                 <button
                   type="button"
                   class="coverage-team-slot__pick"
-                  [attr.aria-label]="t('team.pickFromResults')"
+                  [attr.aria-label]="t('team.pickForSlot', { slot: teamSlotLabel(index) })"
                   (click)="scrollToResults()"
                 >
                   <img
@@ -308,7 +308,15 @@
           </div>
 
           <div class="results-toolbar__toggle-grid">
-            <label
+            <!--
+              A div, not a label. ion-toggle is shadow-encapsulated, and a custom
+              element is not a labelable control - implicit association cannot
+              cross the shadow boundary and there is no `for` that could. The
+              label therefore labelled nothing and clicking the card never did
+              anything; the toggle carries its own aria-label and is operable on
+              its own.
+            -->
+            <div
               class="ability-rank-toggle"
               [class.ability-rank-toggle--active]="requireSuperTandemPresence()"
             >
@@ -323,9 +331,9 @@
                 [disabled]="loading()"
                 (ionChange)="onRequireSuperTandemPresenceChange($event)"
               ></ion-toggle>
-            </label>
+            </div>
 
-            <label
+            <div
               class="ability-rank-toggle"
               [class.ability-rank-toggle--active]="requireSuperTypesClassesPresence()"
             >
@@ -340,7 +348,7 @@
                 [disabled]="loading()"
                 (ionChange)="onRequireSuperTypesClassesPresenceChange($event)"
               ></ion-toggle>
-            </label>
+            </div>
 
             <div
               class="ability-rank-toggle ability-rank-toggle--tier"
@@ -558,10 +566,33 @@
           <div class="captain-result-list">
             @for (card of visibleResultCards(); track trackCharacter($index, card)) {
               <article class="captain-result">
+                <!--
+                  One crown for both leader seats. It only exists on a character
+                  that can actually lead, and pressing it asks which seat - which
+                  is also what makes replacing an occupied seat possible without
+                  clearing it first.
+
+                  First in the DOM because it is painted first: the stylesheet
+                  lifts it out of flow into the card's top-right corner, so
+                  leaving it last made focus jump backwards up the card.
+                -->
+                @if (card.canBeLeader) {
+                  <ion-button
+                    size="small"
+                    fill="solid"
+                    class="captain-result__leader"
+                    data-test="captain-result-set-leader"
+                    [title]="t('team.actions.leaderSlotPicker.trigger')"
+                    [attr.aria-label]="t('team.actions.leaderSlotPicker.trigger')"
+                    (click)="openLeaderSlotPicker(card)"
+                  >
+                    <ion-icon [icon]="leaderIcon" aria-hidden="true"></ion-icon>
+                  </ion-button>
+                }
                 <a
                   class="captain-result__thumb"
                   [routerLink]="card.detailLink"
-                  [attr.aria-label]="t('results.openCharacterDetails')"
+                  [attr.aria-label]="t('results.openCharacterDetailsFor', { name: card.character.name })"
                 >
                   <img [src]="card.character.imageUrl" alt="" loading="lazy" />
                 </a>
@@ -572,7 +603,7 @@
                     inside it: cost has to be readable while browsing with no
                     Captain picked, which is exactly when `card.coverage` is null.
                   -->
-                  <div class="captain-result__boosts" aria-label="Captain boosts">
+                  <div class="captain-result__boosts">
                     @if (showCaptainBoosts() && card.coverage) {
                       <span>HP:{{ formatBoost(card.coverage.boosts.hp) }}</span>
                       <span>ATK:{{ formatBoost(card.coverage.boosts.atk) }}</span>
@@ -646,25 +677,6 @@
                       </ion-button>
                     </span>
 
-                    <!--
-                      One crown for both leader seats. It only exists on a
-                      character that can actually lead, and pressing it asks
-                      which seat - which is also what makes replacing an
-                      occupied seat possible without clearing it first.
-                    -->
-                    @if (card.canBeLeader) {
-                      <ion-button
-                        size="small"
-                        fill="solid"
-                        class="captain-result__leader"
-                        data-test="captain-result-set-leader"
-                        [title]="t('team.actions.leaderSlotPicker.trigger')"
-                        [attr.aria-label]="t('team.actions.leaderSlotPicker.trigger')"
-                        (click)="openLeaderSlotPicker(card)"
-                      >
-                        <ion-icon [icon]="leaderIcon" aria-hidden="true"></ion-icon>
-                      </ion-button>
-                    }
                   </div>
                 </div>
               </article>

@@ -117,7 +117,8 @@
     "titleWithCount": "{{count}} matching characters",
     "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που ταιριάζουν",
     "loadMore": "Δείξε περισσότερα (απομένουν {{count}})",
-    "cost": "Κόστος: {{cost}}"
+    "cost": "Κόστος: {{cost}}",
+    "openCharacterDetailsFor": "Άνοιξε τον χαρακτήρα {{name}}"
   },
   "search": {
     "placeholder": "Αναζήτηση στα character results..."
@@ -188,7 +189,9 @@
     },
     "title": "Χτίσιμο από Captain",
     "pickFromResults": "Διάλεξε χαρακτήρα από τα αποτελέσματα πιο κάτω",
-    "viewSlotDetails": "Άνοιξε τον χαρακτήρα {{name}}"
+    "viewSlotDetails": "Άνοιξε τον χαρακτήρα {{name}}",
+    "showResultsForSlot": "Δείξε τα αποτελέσματα για {{slot}}",
+    "pickForSlot": "Διάλεξε {{slot}} από τα αποτελέσματα πιο κάτω"
   },
   "title": "Captain Coverage"
 }

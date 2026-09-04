@@ -27,7 +27,15 @@
   gap: 10px;
 }
 
+/*
+ * Positioning context for the tier help popover. The popover used to anchor to
+ * its own chip with `left: 0` and `width: max-content`, in a row that wraps -
+ * so a chip sitting to the right opened a panel that ran off the right edge,
+ * with nothing to flip or clamp it. Anchoring to the row instead bounds it by
+ * a box that is already the width of the toolbar cell.
+ */
 .ability-rank-toggle__chip-row {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
