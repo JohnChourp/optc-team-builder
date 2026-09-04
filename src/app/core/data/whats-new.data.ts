@@ -31,6 +31,44 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.2.4',
+    date: '2026-09-04',
+    userVisible: true,
+    headline: {
+      en: 'The greyed-out button really does tell you why now',
+      el: 'Το γκρι κουμπί όντως σου λέει τώρα γιατί',
+    },
+    summaryEn:
+      'Last release promised that a greyed-out "Add to team" on Captain Coverage would tell you which of the three reasons it was. It told screen readers, but not you: hovering a greyed-out button gave you nothing, because a disabled button ignores the mouse entirely and the browser never showed the note attached to it. The note now sits just outside the button, so hovering it works. It also no longer replaces the button\'s own name when read aloud, and an enabled button has stopped showing you a tooltip that just repeats what it already says. One more thing from last release: if you typed a max total cost before picking anyone - which is the natural order, since the budget sits above the results - it was still being forgotten when you opened a character and came back. It is kept now, team or no team.',
+    summaryEl:
+      'Η προηγούμενη έκδοση υποσχέθηκε ότι το γκριζαρισμένο «Προσθήκη στο team» στο Captain Coverage θα σου έλεγε ποιος από τους τρεις λόγους ισχύει. Το έλεγε στους αναγνώστες οθόνης, όχι σε σένα: περνώντας το ποντίκι πάνω από το γκρι κουμπί δεν έβλεπες τίποτα, γιατί ένα ανενεργό κουμπί αγνοεί εντελώς το ποντίκι και ο browser δεν εμφάνιζε ποτέ τη σημείωση που ήταν κολλημένη πάνω του. Η σημείωση μετακόμισε λίγο έξω από το κουμπί, οπότε τώρα δουλεύει. Επίσης δεν αντικαθιστά πια το ίδιο το όνομα του κουμπιού όταν διαβάζεται φωναχτά, και ένα ενεργό κουμπί σταμάτησε να σου δείχνει tooltip που απλώς επαναλάμβανε αυτό που ήδη γράφει. Κάτι ακόμη από την προηγούμενη έκδοση: αν έγραφες μέγιστο συνολικό κόστος πριν διαλέξεις κανέναν - που είναι και η φυσική σειρά, αφού το όριο βρίσκεται πάνω από τα αποτελέσματα - ξεχνιόταν ακόμη όταν άνοιγες έναν χαρακτήρα και επέστρεφες. Τώρα κρατιέται, με ομάδα ή χωρίς.',
+    added: [],
+    improved: [
+      {
+        en: 'The reason a greyed-out "Add to team" is refusing a character now also reads aloud together with the button\'s own name, instead of replacing it.',
+        el: 'Ο λόγος που το γκριζαρισμένο «Προσθήκη στο team» αρνείται έναν χαρακτήρα διαβάζεται τώρα μαζί με το όνομα του ίδιου του κουμπιού, αντί να το αντικαθιστά.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'Hovering a greyed-out "Add to team" on Captain Coverage now actually shows why it is refusing. The note was attached to the button itself, and a disabled button ignores the mouse, so it could never appear.',
+        el: 'Περνώντας το ποντίκι πάνω από ένα γκριζαρισμένο «Προσθήκη στο team» στο Captain Coverage βλέπεις επιτέλους γιατί αρνείται. Η σημείωση ήταν κολλημένη στο ίδιο το κουμπί, και ένα ανενεργό κουμπί αγνοεί το ποντίκι, οπότε δεν μπορούσε ποτέ να εμφανιστεί.',
+      },
+      {
+        en: 'A button that is not refusing anything has stopped showing a tooltip that just repeated its own label.',
+        el: 'Ένα κουμπί που δεν αρνείται τίποτα σταμάτησε να δείχνει tooltip που απλώς επαναλάμβανε την ετικέτα του.',
+      },
+      {
+        en: 'A max total cost typed before you pick any character is kept when you open a character and come back. Only a team with characters in it was being remembered before.',
+        el: 'Το μέγιστο συνολικό κόστος που γράφεις πριν διαλέξεις χαρακτήρα κρατιέται όταν ανοίγεις έναν χαρακτήρα και επιστρέφεις. Πριν θυμόταν μόνο ομάδα που είχε ήδη χαρακτήρες.',
+      },
+      {
+        en: 'The "?" tier help and the cost note stay closable with Escape even after you click inside them.',
+        el: 'Η βοήθεια «?» των tiers και η σημείωση κόστους κλείνουν με Escape ακόμη κι αφού κάνεις κλικ μέσα τους.',
+      },
+    ],
+  },
+  {
     version: '0.2.3',
     date: '2026-09-04',
     userVisible: true,
