@@ -31,6 +31,69 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.2.3',
+    date: '2026-09-04',
+    userVisible: true,
+    headline: {
+      en: 'Captain Coverage stops keeping things to itself',
+      el: 'Το Captain Coverage σταματά να κρατά πράγματα για τον εαυτό του',
+    },
+    summaryEn:
+      'Five small things on Captain Coverage that were either cut off, forgotten or unexplained. The seat under your Captain said "Friend ..." instead of "Friend Captain", and the cost under each team slot was clipped the same way - both now wrap and show every letter, on a phone and on a wide screen alike, and the seat name is sized to sit under the character name rather than over it. The max total cost you type is remembered when you leave the page and come back, so a restored team no longer quietly refuses characters because the budget it was built against has vanished. When "Add to team" is greyed out it now tells you which of the three reasons it is: the same character is already in the team, no free slot fits it within the budget, or all four sub slots are taken. The "?" help next to each tier closes with Escape, and so does the little cost note on a result card. And jumping to the results from a team slot no longer parks the heading behind the top bar.',
+    summaryEl:
+      'Πέντε μικρά πράγματα στο Captain Coverage που ήταν είτε κομμένα, είτε ξεχασμένα, είτε ανεξήγητα. Η θέση κάτω από τον Captain έγραφε «Friend ...» αντί για «Friend Captain», και το cost κάτω από κάθε team slot κοβόταν με τον ίδιο τρόπο - τώρα αναδιπλώνονται και τα δύο και φαίνεται κάθε γράμμα, τόσο στο κινητό όσο και σε φαρδιά οθόνη, ενώ το όνομα της θέσης πήρε μέγεθος που το βάζει κάτω από το όνομα του χαρακτήρα αντί για πάνω του. Το μέγιστο συνολικό κόστος που πληκτρολογείς θυμάται όταν φεύγεις από τη σελίδα και επιστρέφεις, οπότε μια ομάδα που επανέρχεται δεν αρνείται πια σιωπηλά χαρακτήρες επειδή χάθηκε το όριο με το οποίο φτιάχτηκε. Όταν το «Προσθήκη στο team» είναι ανενεργό, σου λέει πλέον ποιος από τους τρεις λόγους ισχύει: ο ίδιος χαρακτήρας είναι ήδη στο team, καμία ελεύθερη θέση δεν τον χωράει μέσα στο όριο, ή είναι πιασμένες και οι τέσσερις θέσεις sub. Η βοήθεια «?» δίπλα σε κάθε tier κλείνει με Escape, το ίδιο και η μικρή σημείωση κόστους σε μια κάρτα αποτελέσματος. Και το άλμα στα αποτελέσματα από ένα team slot δεν κρύβει πια τον τίτλο πίσω από την πάνω μπάρα.',
+    added: [],
+    improved: [
+      {
+        en: 'The "?" help beside each Captain Ability tier now closes with Escape, as does the cost note that opens from the number on a result card. Both still close on a second press, exactly as before.',
+        el: 'Η βοήθεια «?» δίπλα σε κάθε tier του Captain Ability κλείνει τώρα με Escape, όπως και η σημείωση κόστους που ανοίγει από τον αριθμό σε μια κάρτα αποτελέσματος. Και οι δύο κλείνουν ακόμη και με δεύτερο πάτημα, ακριβώς όπως πριν.',
+      },
+      {
+        en: 'A greyed-out "Add to team" now says why: the same character is already in the team, no free slot fits it within the cost budget, or all four sub slots are taken. It used to just go grey for all three.',
+        el: 'Το ανενεργό «Προσθήκη στο team» λέει τώρα γιατί: ο ίδιος χαρακτήρας είναι ήδη στο team, καμία ελεύθερη θέση δεν τον χωράει μέσα στο όριο κόστους, ή είναι πιασμένες και οι τέσσερις θέσεις sub. Πριν απλώς γκριζάριζε και για τους τρεις λόγους.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'The team slot under your Captain reads "Friend Captain" in full again instead of "Friend ...", and the cost under a slot is no longer clipped either. This was never only a phone problem - the slots hit the same narrow width on an 820px or 1024px screen, so it is fixed at every width.',
+        el: 'Το team slot κάτω από τον Captain γράφει ξανά ολόκληρο «Friend Captain» αντί για «Friend ...», και ούτε το cost κάτω από ένα slot κόβεται πια. Δεν ήταν ποτέ μόνο θέμα κινητού - τα slots φτάνουν στο ίδιο στενό πλάτος και σε οθόνη 820px ή 1024px, οπότε διορθώθηκε σε κάθε πλάτος.',
+      },
+      {
+        en: 'The max total cost you set is kept when you open a character and come back. Before, the team returned without it, and slots then turned characters away with nothing on screen explaining the limit they were failing.',
+        el: 'Το μέγιστο συνολικό κόστος που ορίζεις κρατιέται όταν ανοίγεις έναν χαρακτήρα και επιστρέφεις. Πριν, η ομάδα γύριζε χωρίς αυτό, και μετά τα slots απέρριπταν χαρακτήρες χωρίς τίποτα στην οθόνη να εξηγεί το όριο που δεν περνούσαν.',
+      },
+      {
+        en: 'Tapping a team slot to jump to the results now stops with the results heading in view, instead of scrolling it up behind the top bar.',
+        el: 'Το πάτημα ενός team slot για μετάβαση στα αποτελέσματα σταματά τώρα με τον τίτλο των αποτελεσμάτων ορατό, αντί να τον στέλνει πίσω από την πάνω μπάρα.',
+      },
+      {
+        en: 'The seat name in a team slot is no longer printed larger than the character name underneath it.',
+        el: 'Το όνομα της θέσης σε ένα team slot δεν τυπώνεται πια μεγαλύτερο από το όνομα του χαρακτήρα από κάτω.',
+      },
+    ],
+  },
+  {
+    version: '0.2.2',
+    date: '2026-09-04',
+    userVisible: true,
+    headline: {
+      en: 'Devil Oars joins the roster',
+      el: 'Ο Devil Oars μπαίνει στη λίστα',
+    },
+    summaryEn:
+      "The nightly check of the game's data found one new character and brought it in: Devil Oars, Legend Revived After 500 Years - an INT Powerhouse/Striker at 6 stars, cost 55, out of Thriller Bark. It is already everywhere the app lists characters: search, Characters, Captain Coverage, both team builders and the ability filters, with its Captain Ability, its special and its potentials read and sorted like every other card. Nothing else in the app changed in this release.",
+    summaryEl:
+      'Ο νυχτερινός έλεγχος των δεδομένων του παιχνιδιού βρήκε έναν καινούριο χαρακτήρα και τον έφερε: τον Devil Oars, Legend Revived After 500 Years - INT Powerhouse/Striker, 6 αστέρια, cost 55, από το Thriller Bark. Βρίσκεται ήδη παντού όπου η εφαρμογή δείχνει χαρακτήρες: στην αναζήτηση, στα Characters, στο Captain Coverage, και στους δύο team builders και στα φίλτρα ικανοτήτων, με το Captain Ability, το special και τα potentials του διαβασμένα και ταξινομημένα όπως κάθε άλλης κάρτας. Τίποτε άλλο δεν άλλαξε σε αυτή την έκδοση.',
+    added: [
+      {
+        en: 'Devil Oars - Legend Revived After 500 Years, a 6-star INT Powerhouse/Striker at cost 55, with its Captain Ability, special, sailor ability, potentials and support all read in - so he turns up in the ability filters and in Captain Coverage the same way every other character does.',
+        el: 'Ο Devil Oars - Legend Revived After 500 Years, 6άστερος INT Powerhouse/Striker με cost 55, με το Captain Ability, το special, το sailor ability, τα potentials και το support του διαβασμένα - οπότε εμφανίζεται στα φίλτρα ικανοτήτων και στο Captain Coverage όπως κάθε άλλος χαρακτήρας.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.2.1',
     date: '2026-09-03',
     userVisible: true,
