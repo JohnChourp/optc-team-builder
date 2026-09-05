@@ -80,11 +80,23 @@ jobs:
           cache: npm
 
       - name: Setup Java
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: temurin
           java-version: 21
           cache: gradle
+          # Both pins hold v6 to v5.7.0's behaviour. v6 dropped `default: false`
+          # from verify-signature, so an unset input now falls back to the
+          # distribution, and Temurin reports that it supports verification -
+          # silently turning on a GPG check that throws if the Adoptium API
+          # returns no signature. It stays invisible while Temurin 21 is in the
+          # runner tool cache and would first fire on a cold download, which is
+          # the worst moment for the job that signs the release APK.
+          verify-signature: false
+          # cache-jdk has no static default; unset it resolves to Boolean(cache),
+          # which is true here, so the post step would upload the ~300MB JDK as a
+          # second cache entry competing with the Gradle cache for the repo budget.
+          cache-jdk: false
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
