@@ -466,6 +466,20 @@ export function formatBranchCleanupMarkdown(report) {
   return `${lines.join('\n')}\n`;
 }
 
+/**
+ * Parses `git for-each-ref refs/remotes/<remote>` output into branch records.
+ *
+ * Accepts either `%(refname)` or the short form, because `normalizeBranchName`
+ * strips both. Both callers in this file ask git for the FULL refname on purpose:
+ * git shortens `refs/remotes/origin/HEAD` to bare `origin` - not `origin/HEAD` -
+ * so under the short form the remote's own symbolic ref arrives here named
+ * `origin`, sails past the `!== 'HEAD'` filter below, and gets reported as a
+ * branch. Measured 2026-09-05: the report listed a phantom `origin` under
+ * "investigate" that no cleanup could resolve, and the GitHub API 404s on it.
+ *
+ * Filtering out a name equal to the remote would be the wrong fix: a real branch
+ * called `origin` is `refs/remotes/origin/origin`, and it deserves to be listed.
+ */
 export function parseRemoteBranches(output, { remote = DEFAULT_REMOTE, gitMergedBranches = new Set() } = {}) {
   return String(output ?? '')
     .split(/\r?\n/u)
@@ -591,7 +605,7 @@ async function inferRepoFromRemote(remote, warnings) {
 async function loadRemoteBranches({ remote, defaultBranch, warnings }) {
   let gitMergedBranches = new Set();
   try {
-    const mergedOutput = await run('git', ['branch', '-r', '--merged', `${remote}/${defaultBranch}`, '--format=%(refname:short)']);
+    const mergedOutput = await run('git', ['branch', '-r', '--merged', `${remote}/${defaultBranch}`, '--format=%(refname)']);
     gitMergedBranches = parseMergedBranches(mergedOutput, { remote });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -601,7 +615,7 @@ async function loadRemoteBranches({ remote, defaultBranch, warnings }) {
   const output = await run('git', [
     'for-each-ref',
     `refs/remotes/${remote}`,
-    '--format=%(refname:short)\t%(objectname)\t%(committerdate:iso8601)',
+    '--format=%(refname)\t%(objectname)\t%(committerdate:iso8601)',
   ]);
   return parseRemoteBranches(output, { remote, gitMergedBranches });
 }
