@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.2.6',
+    date: '2026-09-05',
+    userVisible: true,
+    headline: {
+      en: 'The stray "null" tooltip is gone',
+      el: 'Έφυγε το άσχετο tooltip που έγραφε «null»',
+    },
+    summaryEn:
+      'If you hovered an "Add to team" button on Captain Coverage that was perfectly usable, a little box popped up saying the word "null". That was our mistake, introduced two releases ago while fixing the opposite problem - making the greyed-out version of that button explain itself. The explanation still appears when the button is refusing a character; a button that is not refusing anything now stays quiet, as it always should have. Nothing else you can see has changed.',
+    summaryEl:
+      'Αν περνούσες το ποντίκι πάνω από ένα «Προσθήκη στο team» στο Captain Coverage που δούλευε κανονικά, εμφανιζόταν ένα κουτάκι που έγραφε τη λέξη «null». Δικό μας λάθος, μπήκε δύο εκδόσεις πριν ενώ διορθώναμε το αντίθετο - να εξηγεί ο εαυτός του το γκριζαρισμένο κουμπί. Η εξήγηση εμφανίζεται ακόμη όταν το κουμπί αρνείται χαρακτήρα· ένα κουμπί που δεν αρνείται τίποτα μένει τώρα σιωπηλό, όπως έπρεπε από την αρχή. Τίποτε άλλο ορατό δεν άλλαξε.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: 'An "Add to team" button that is not refusing anything no longer shows a tooltip reading "null" when you hover it.',
+        el: 'Ένα «Προσθήκη στο team» που δεν αρνείται τίποτα δεν δείχνει πια tooltip με τη λέξη «null» όταν περνάς το ποντίκι.',
+      },
+    ],
+  },
+  {
     version: '0.2.5',
     date: '2026-09-04',
     userVisible: true,
