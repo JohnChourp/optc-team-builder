@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.2.7',
+    date: '2026-09-05',
+    userVisible: false,
+    headline: {
+      en: 'Housekeeping only, nothing to see',
+      el: 'Μόνο συμμάζεμα, τίποτα να δεις',
+    },
+    summaryEn:
+      'Nothing in this release changed anything you can see or do. Two repairs went in behind the scenes: the step that publishes the website now waits its turn instead of racing another one, which is why a recent update briefly showed you the previous version number even though it had all the newer fixes in it; and a shared part of the filter screens can now be styled per screen, which is groundwork for tidying the filter pop-up on a few pages that still need it. It is listed here so the version numbers do not skip.',
+    summaryEl:
+      "Τίποτα σε αυτή την έκδοση δεν άλλαξε κάτι που να το βλέπεις ή να το κάνεις. Δύο επιδιορθώσεις έγιναν στο παρασκήνιο: το βήμα που δημοσιεύει τον ιστότοπο περιμένει πλέον τη σειρά του αντί να τρέχει κόντρα σε ένα άλλο - γι' αυτό μια πρόσφατη ενημέρωση σού έδειχνε για λίγο τον προηγούμενο αριθμό έκδοσης παρότι είχε μέσα όλες τις νεότερες διορθώσεις· και ένα κοινό κομμάτι των οθονών με φίλτρα μπορεί τώρα να πάρει στυλ ανά οθόνη, που είναι προεργασία για το συμμάζεμα του παραθύρου φίλτρων σε λίγες σελίδες που το χρειάζονται ακόμη. Μπαίνει στη λίστα μόνο για να μη λείπει αριθμός έκδοσης.",
+    added: [],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.2.6',
     date: '2026-09-05',
     userVisible: true,
