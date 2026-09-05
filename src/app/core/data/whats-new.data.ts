@@ -31,6 +31,40 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.2.10',
+    date: '2026-09-05',
+    userVisible: true,
+    headline: {
+      en: 'Tier conditions mostly in Greek, and shorter crew lines',
+      el: 'Οι προϋποθέσεις tier κυρίως στα ελληνικά, και πιο σύντομες γραμμές crew',
+    },
+    summaryEn:
+      'Open a Captain Ability tier and the small lines under it - the ones telling you what your crew, the battlefield or the turn has to look like before that tier fires - are shorter and worded the same way every time. A crew requirement used to repeat the game\'s own sentence, so you read "Team: you have 5 or more Slashers characters in your crew"; it now reads "Team: crew has 5+ Slasher". Where the game wants one character of each of the things it lists, that line says "crew has one of each" and names them, instead of a number, because a number there would ask for something else entirely. And three lines in the whole app spelled a low-HP trigger as "HP is 50% or below" where every other character already said "HP is below 50%"; they all read the same way now. If you play in Greek, those lines are no longer stranded in English under a Greek heading: every one of them now opens in Greek, and 960 of the 1172 lines in the app read as Greek from start to finish. The remaining 212 - nearly all of them short orb conditions like "if they have a [WANO] orb" - keep the game\'s own English after the Greek opening. [DEX], Fighter, [Straw Hat Pirates], Captain and Action Special stay in English wherever they appear, on purpose, because that is what players call them. All of this shows up in the tier help pop-up on Captain Coverage, on a character\'s own page, and in the team coverage box on Manual Team Builder, Auto Team Builder and Saved Teams. The character list is unchanged.',
+    summaryEl:
+      'Άνοιξε ένα tier του Captain Ability και θα δεις τις μικρές γραμμές από κάτω - αυτές που λένε πώς πρέπει να είναι η ομάδα σου, το πεδίο μάχης ή ο γύρος για να ενεργοποιηθεί το tier - πιο σύντομες και με την ίδια διατύπωση κάθε φορά. Η προϋπόθεση για το crew επαναλάμβανε την ίδια την πρόταση του παιχνιδιού: εκεί που έγραφε «Team: you have 5 or more Slashers characters in your crew», τώρα διαβάζεις «Ομάδα: περιλαμβάνει 5+ Slasher». Όταν το παιχνίδι θέλει έναν χαρακτήρα από κάθε κατηγορία που απαριθμεί, η γραμμή γράφει «περιλαμβάνει έναν χαρακτήρα από κάθε» και τις ονομάζει, αντί για αριθμό - ένας αριθμός εκεί θα ζητούσε κάτι εντελώς άλλο. Και τρεις γραμμές σε όλη την εφαρμογή έγραφαν το χαμηλό HP ως «HP is 50% or below» ενώ όλοι οι υπόλοιποι χαρακτήρες έλεγαν ήδη «HP is below 50%»· τώρα γράφονται όλες ίδια. Αν παίζεις στα ελληνικά, αυτές οι γραμμές δεν μένουν πια στα αγγλικά κάτω από ελληνική επικεφαλίδα: όλες ξεκινούν πλέον στα ελληνικά - Ομάδα, Ενεργοποίηση, Πεδίο μάχης, Μορφή - και οι 960 από τις 1172 γραμμές της εφαρμογής διαβάζονται ελληνικά από την αρχή ως το τέλος. Οι υπόλοιπες 212, σχεδόν όλες σύντομες συνθήκες για orbs όπως «if they have a [WANO] orb», κρατούν το αγγλικό κείμενο του παιχνιδιού μετά την ελληνική αρχή. Τα [DEX], Fighter, [Straw Hat Pirates], Captain και Action Special μένουν αγγλικά όπου κι αν εμφανίζονται, σκόπιμα, γιατί έτσι τα λένε οι παίκτες. Όλα αυτά φαίνονται στο αναδυόμενο παράθυρο βοήθειας του tier στο Captain Coverage, στη σελίδα του ίδιου του χαρακτήρα και στο πλαίσιο κάλυψης team σε Manual Team Builder, Auto Team Builder και Saved Teams. Η λίστα των χαρακτήρων δεν άλλαξε.',
+    added: [],
+    improved: [
+      {
+        en: "In Greek, the condition lines under a Captain Ability tier now read in Greek. Every one of the 1172 lines opens in Greek and 960 read in Greek all the way through; the remaining 212 keep the game's own English after the Greek opening. Type, class and tag names, along with Captain and Action Special, stay in English on purpose.",
+        el: 'Στα ελληνικά, οι γραμμές με τις προϋποθέσεις κάτω από ένα tier του Captain Ability διαβάζονται πλέον στα ελληνικά. Και οι 1172 γραμμές ξεκινούν ελληνικά και οι 960 διαβάζονται ελληνικά ως το τέλος· οι υπόλοιπες 212 κρατούν το αγγλικό κείμενο του παιχνιδιού μετά την ελληνική αρχή. Τα ονόματα type, class και tags, όπως και τα Captain και Action Special, μένουν σκόπιμα στα αγγλικά.',
+      },
+      {
+        en: 'A tier\'s crew requirement is now written the same short way everywhere, in both languages: "you have 5 or more Slashers characters in your crew" now reads "crew has 5+ Slasher".',
+        el: 'Η προϋπόθεση για το crew ενός tier γράφεται πλέον με τον ίδιο σύντομο τρόπο παντού, και στις δύο γλώσσες: εκεί που έγραφε «you have 5 or more Slashers characters in your crew», τώρα διαβάζεις «Ομάδα: περιλαμβάνει 5+ Slasher».',
+      },
+      {
+        en: 'When a tier asks for one character of each of the types or classes it lists, it now says so and names them, instead of giving a number - because a number there would describe a different requirement.',
+        el: 'Όταν ένα tier ζητά έναν χαρακτήρα από κάθε type ή class που απαριθμεί, το γράφει πλέον ρητά και τα ονομάζει, αντί να δίνει αριθμό - γιατί ένας αριθμός εκεί θα περιέγραφε άλλη απαίτηση.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'Three lines in the whole app spelled a low-HP trigger as "HP is 50% or below" where every other character already said "HP is below 50%". They all read the same way now, in both languages.',
+        el: 'Τρεις γραμμές σε όλη την εφαρμογή έγραφαν το χαμηλό HP ως «HP is 50% or below», ενώ όλοι οι υπόλοιποι χαρακτήρες έλεγαν ήδη «HP is below 50%». Τώρα γράφονται όλες ίδια, και στις δύο γλώσσες.',
+      },
+    ],
+  },
+  {
     version: '0.2.9',
     date: '2026-09-05',
     userVisible: false,
@@ -39,7 +73,7 @@ export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
       el: 'Τίποτα καινούριο σε καμία οθόνη',
     },
     summaryEn:
-      "Nothing changed for you in this release. The one fix in it went into a report only we look at when we tidy up our own work - it was listing something that was not there - and that report never runs on your phone or in your browser. Every screen, every filter, your teams and your saved data behave exactly as they did before, and the character list is unchanged. We are writing it down anyway: a version number missing from this list would look like a release we decided not to explain.",
+      'Nothing changed for you in this release. The one fix in it went into a report only we look at when we tidy up our own work - it was listing something that was not there - and that report never runs on your phone or in your browser. Every screen, every filter, your teams and your saved data behave exactly as they did before, and the character list is unchanged. We are writing it down anyway: a version number missing from this list would look like a release we decided not to explain.',
     summaryEl:
       "Τίποτα δεν άλλαξε για σένα σε αυτή την έκδοση. Η μοναδική διόρθωση αφορά μια αναφορά που κοιτάμε μόνο εμείς όταν συμμαζεύουμε τη δουλειά μας - εμφάνιζε κάτι που δεν υπήρχε - και αυτή η αναφορά δεν τρέχει ποτέ στο κινητό σου ούτε στον browser σου. Κάθε οθόνη, κάθε φίλτρο, τα teams σου και τα αποθηκευμένα σου δουλεύουν ακριβώς όπως πριν, και η λίστα των χαρακτήρων είναι ίδια. Το γράφουμε παρ' όλα αυτά: ένας αριθμός έκδοσης που θα έλειπε από τη λίστα θα έμοιαζε με έκδοση που επιλέξαμε να μην εξηγήσουμε.",
     added: [],

@@ -304,9 +304,15 @@ function conditionKey(key: string, params?: Record<string, string | number>) {
  * a Greek prefix, because inventing a translation for text the dataset spells in
  * English would be worse than showing what the game says.
  *
- * Measured over the shipped roster: 1172 condition lines, of which 46 are fully
- * structural today and a further 440 are fixed clauses handled above. The rest
- * carry a translated prefix and their own English clause.
+ * Measured over the shipped roster, after the crew and HP branches started using
+ * the structured fields they already had: 1172 condition lines, of which **960**
+ * render fully through the catalogue and 212 keep an English tail. Those 212 are
+ * all `triggerRaw`, and nearly all of them short orb conditions such as
+ * `if they have a [WANO] orb`.
+ *
+ * The figure was 486 before that change, and this comment said so until the
+ * number was re-measured rather than carried forward. If you touch which
+ * branches read structured data, re-measure it here too.
  */
 export function buildCaptainCoverageTierConditionLineTokens(
   tier: CharacterCaptainAbilityCoverageTier,
