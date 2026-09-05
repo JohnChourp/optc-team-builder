@@ -109,6 +109,7 @@
       "teamExcludes": "Team excludes: {{detail}}",
       "teamRaw": "Team: {{clause}}",
       "teamCrewHas": "Team: crew has {{parts}}",
+      "teamCrewHasOneOfEach": "Team: crew has one of each of {{targets}}",
       "teamCrewHasSameType": "Team: crew has {{count}} same Type",
       "teamRequiresCaptain": "Team: this character is your Captain",
       "fieldTerritory": "Field: Territory {{territories}}",
@@ -116,6 +117,8 @@
       "triggerConsecutivePerfects": "Trigger: after {{count}} consecutive PERFECTs",
       "triggerRaw": "Trigger: {{clause}}",
       "triggerActionSpecialExcellent": "Trigger: performs EXCELLENT with their Action Special",
+      "triggerHpAbove": "Trigger: HP is above {{percent}}%",
+      "triggerHpBelow": "Trigger: HP is below {{percent}}%",
       "triggerBeneficialOrb": "Trigger: if they have a beneficial orb",
       "triggerApplicableTag": "Trigger: if they have the applicable tag"
     }

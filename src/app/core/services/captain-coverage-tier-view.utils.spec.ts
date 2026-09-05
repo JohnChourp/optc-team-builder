@@ -235,6 +235,72 @@ describe('captain coverage tier scope tokens', () => {
       }),
     ],
     [
+      'crew composition whose raw clause no longer shadows its structured fields',
+      tier({
+        teamConditions: [
+          {
+            kind: 'crew-composition',
+            rawClause: 'you have 6 or more Powerhouse characters in your crew',
+            minCount: 6,
+            classes: ['Powerhouse'],
+          },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    ],
+    [
+      'crew composition, one of each listed target',
+      tier({
+        teamConditions: [
+          {
+            kind: 'crew-composition',
+            rawClause: 'there is a [STR], [DEX] and [QCK] character in your crew',
+            minCount: 3,
+            types: ['STR', 'DEX', 'QCK'],
+          },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    ],
+    [
+      'a single target whose minCount equals it, which is NOT one of each',
+      tier({
+        teamConditions: [
+          {
+            kind: 'crew-composition',
+            rawClause: 'there is a [PSY] character in your crew',
+            minCount: 1,
+            types: ['PSY'],
+          },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    ],
+    [
+      'an HP-above trigger whose raw phrasing differs from the rebuilt one',
+      tier({
+        triggerConditions: [
+          { kind: 'hp-above', rawClause: 'HP is 99% or above', hpPercent: 99 },
+        ] as CharacterCaptainAbilityCoverageTier['triggerConditions'],
+      }),
+    ],
+    [
+      'an HP-below trigger whose raw phrasing differs from the rebuilt one',
+      tier({
+        triggerConditions: [
+          { kind: 'hp-below', rawClause: 'HP is 50% or below', hpPercent: 50 },
+        ] as CharacterCaptainAbilityCoverageTier['triggerConditions'],
+      }),
+    ],
+    [
+      'an action-special trigger keyed by kind, not by its clause',
+      tier({
+        triggerConditions: [
+          {
+            kind: 'action-special-excellent',
+            rawClause: 'performs EXCELLENT with their Action Special',
+          },
+        ] as CharacterCaptainAbilityCoverageTier['triggerConditions'],
+      }),
+    ],
+    [
       'a field territory',
       tier({
         fieldConditions: [
@@ -344,6 +410,92 @@ describe('captain coverage tier scope tokens', () => {
         expect(catalogue[key], `${locale} is missing captainTiers.condition.${key}`).toBeTruthy();
       }
     }
+  });
+
+  /*
+   * Follow-up 1: the structured crew branch was dead code, shadowed by a
+   * rawClause check that fired for all 240 crew conditions in the dataset. It
+   * now wins, and the "one of each" family keeps its own meaning instead of
+   * collapsing into "N of any".
+   */
+  it('prefers structured crew fields over the raw clause, and distinguishes one-of-each', () => {
+    const shadowed = buildCaptainCoverageTierView(
+      tier({
+        teamConditions: [
+          {
+            kind: 'crew-composition',
+            rawClause: 'you have 6 or more Powerhouse characters in your crew',
+            minCount: 6,
+            classes: ['Powerhouse'],
+          },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    );
+
+    expect(shadowed.conditionLines).toEqual(['Team: crew has 6+ Powerhouse']);
+
+    const oneOfEach = buildCaptainCoverageTierView(
+      tier({
+        teamConditions: [
+          {
+            kind: 'crew-composition',
+            rawClause: 'there is a [STR], [DEX] and [QCK] character in your crew',
+            minCount: 3,
+            types: ['STR', 'DEX', 'QCK'],
+          },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    );
+
+    expect(oneOfEach.conditionLines).toEqual([
+      'Team: crew has one of each of [STR] / [DEX] / [QCK]',
+    ]);
+
+    // A single target trivially satisfies minCount === targets.length, and must not
+    // become "one of each of [PSY]".
+    const single = buildCaptainCoverageTierView(
+      tier({
+        teamConditions: [
+          {
+            kind: 'crew-composition',
+            rawClause: 'there is a [PSY] character in your crew',
+            minCount: 1,
+            types: ['PSY'],
+          },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    );
+
+    expect(single.conditionLines).toEqual(['Team: crew has 1+ [PSY]']);
+
+    // A crew condition with no structured fields still falls back to its prose.
+    const proseOnly = buildCaptainCoverageTierView(
+      tier({
+        teamConditions: [
+          { kind: 'crew-composition', rawClause: 'your crew is unusual somehow' },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    );
+
+    expect(proseOnly.conditionLines).toEqual(['Team: your crew is unusual somehow']);
+  });
+
+  /*
+   * Follow-up 2: the HP triggers carried hpPercent on every one of the 234
+   * instances and printed the raw clause anyway. Rebuilding from the field also
+   * normalises the dataset's minority phrasings onto one form.
+   */
+  it('rebuilds HP triggers from hpPercent, normalising the phrasing', () => {
+    const view = buildCaptainCoverageTierView(
+      tier({
+        triggerConditions: [
+          { kind: 'hp-above', rawClause: 'HP is 99% or above', hpPercent: 99 },
+          { kind: 'hp-below', rawClause: 'HP is 50% or below', hpPercent: 50 },
+        ] as CharacterCaptainAbilityCoverageTier['triggerConditions'],
+      }),
+    );
+
+    expect(view.conditionLines).toEqual(['Trigger: HP is above 99%', 'Trigger: HP is below 50%']);
   });
 
   /*
