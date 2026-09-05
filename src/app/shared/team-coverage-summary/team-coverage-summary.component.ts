@@ -1,10 +1,7 @@
 import { Component, Input, computed, signal } from '@angular/core';
-import { TranslocoDirective } from '@jsverse/transloco';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 
-import {
-  type CharacterDetailRecord,
-  type CharacterListItem,
-} from '../../core/models/optc.models';
+import { type CharacterDetailRecord, type CharacterListItem } from '../../core/models/optc.models';
 import {
   type TeamCoverageSummary,
   resolveTeamCoverageSummary,
@@ -13,7 +10,7 @@ import {
 @Component({
   selector: 'app-team-coverage-summary',
   standalone: true,
-  imports: [TranslocoDirective],
+  imports: [TranslocoDirective, TranslocoPipe],
   templateUrl: './team-coverage-summary.component.html',
   styleUrl: './team-coverage-summary.component.scss',
 })

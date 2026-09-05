@@ -94,6 +94,18 @@
       "rushSugoSpecialData": "Rush Sugo"
     }
   },
+  "captainTiers": {
+    "scope": {
+      "allOtherCharacters": "όλοι οι άλλοι χαρακτήρες",
+      "allCharacters": "όλοι οι χαρακτήρες",
+      "dominantType": "χαρακτήρες Dominant Type",
+      "costMin": "Κόστος {{min}}+",
+      "costMax": "Κόστος ≤ {{max}}",
+      "rarityMin": "Σπανιότητα {{min}}+",
+      "rarityMax": "Σπανιότητα ≤ {{max}}",
+      "tierFallback": "Tier {{tier}}"
+    }
+  },
   "coverage": {
     "copy": "Missing value for 'coverage.copy'",
     "empty": {

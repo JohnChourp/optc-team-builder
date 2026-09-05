@@ -13,7 +13,10 @@ import {
   matchesCaptainCoverageTier,
   teamSatisfiesCaptainCoverageTeamConditions,
 } from './captain-coverage-filter.utils';
-import { buildCaptainCoverageTierView } from './captain-coverage-tier-view.utils';
+import {
+  buildCaptainCoverageTierView,
+  type CaptainCoverageTierScopeToken,
+} from './captain-coverage-tier-view.utils';
 
 type TeamCoverageCaptureSource = 'both' | 'captain-only' | 'friend-only' | 'none';
 
@@ -21,6 +24,7 @@ interface TeamTierCoverageStatus {
   tier: number;
   kind: CaptainCoverageTierKind | null;
   scopeLabel: string;
+  scopeLabelTokens: CaptainCoverageTierScopeToken[];
   conditionLines: string[];
   effectsSummary: string[];
   capturedByCaptain: boolean;
@@ -73,6 +77,10 @@ export function resolveTeamCoverageSummary(input: TeamCoverageInput): TeamCovera
       tier: tierNumber,
       kind: referenceTierView?.kind ?? null,
       scopeLabel: referenceTierView?.scopeLabel ?? `Tier ${tierNumber}`,
+      // Same fallback as the label above, in the shape a template can translate.
+      scopeLabelTokens: referenceTierView?.scopeLabelTokens ?? [
+        { key: 'captainTiers.scope.tierFallback', params: { tier: tierNumber } },
+      ],
       conditionLines: referenceTierView?.conditionLines ?? [],
       effectsSummary: referenceTierView?.effectClauses ?? [],
       capturedByCaptain,
@@ -82,9 +90,8 @@ export function resolveTeamCoverageSummary(input: TeamCoverageInput): TeamCovera
         referenceTier?.fieldConditions.map((condition) => condition.rawClause).filter(Boolean) ??
         [],
       pendingTriggerConditions:
-        referenceTier?.triggerConditions
-          .map((condition) => condition.rawClause)
-          .filter(Boolean) ?? [],
+        referenceTier?.triggerConditions.map((condition) => condition.rawClause).filter(Boolean) ??
+        [],
       pendingTeamConditions:
         referenceTier?.teamConditions.map((condition) => condition.rawClause).filter(Boolean) ?? [],
     };

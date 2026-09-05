@@ -3,7 +3,10 @@ import {
   type CaptainCoverageTierKind,
   type CharacterDetailRecord,
 } from '../../core/models/optc.models';
-import { buildCaptainCoverageTierView } from '../../core/services/captain-coverage-tier-view.utils';
+import {
+  buildCaptainCoverageTierView,
+  type CaptainCoverageTierScopeToken,
+} from '../../core/services/captain-coverage-tier-view.utils';
 
 type DisplayLabel = {
   label?: string;
@@ -64,6 +67,7 @@ interface CharacterDetailCaptainCoverageTier {
   tier: number;
   kind: CaptainCoverageTierKind;
   scopeLabel: string;
+  scopeLabelTokens: CaptainCoverageTierScopeToken[];
   conditionLines: string[];
   effectClauses: string[];
   baselineEffectClauses?: string[];
@@ -297,7 +301,6 @@ function buildCaptainAbilitySummary(
       }
     : null;
 }
-
 
 function buildAbilitiesGroup(character: CharacterDetailRecord): DetailDisplayGroup | null {
   const { detail } = character;
