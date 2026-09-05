@@ -118,6 +118,9 @@ export class CharacterImagePickerComponent implements OnChanges {
   @Input() public characterTagPickerSupportText = '';
 
   @Input() public showFacetSelectedChips = true;
+
+  /** Pass-through so a host can scope rules to its own character-tag modal. */
+  @Input() public characterTagPickerModalScopeClass = '';
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<CharacterListItem>();
 

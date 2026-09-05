@@ -94,6 +94,9 @@ export class CharacterTagFilterComponent implements OnChanges, OnInit {
    */
   @Input() public pickerSupportText = '';
 
+  /** Pass-through to the picker's modal scope class. Empty leaves it unscoped. */
+  @Input() public pickerModalScopeClass = '';
+
   @Output() public readonly filterChange = new EventEmitter<CharacterTagFilterChange>();
 
   public readonly pickerOpen = signal(false);

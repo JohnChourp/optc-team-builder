@@ -2,7 +2,7 @@
   <ion-modal
     #characterTagSetPickerModal
     [isOpen]="isOpen"
-    cssClass="character-tag-set-picker-modal"
+    [cssClass]="modalCssClass()"
     [attr.aria-label]="title || t('title')"
     (didPresent)="labelModalDialog($event, title || t('title'))"
     (didDismiss)="onModalDidDismiss()"

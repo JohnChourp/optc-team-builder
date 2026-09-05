@@ -914,6 +914,7 @@ describe('CharacterImagePickerComponent picker pass-throughs', () => {
 
     expect(template).toContain('[supportText]="abilityPickerSupportText"');
     expect(template).toContain('[pickerSupportText]="characterTagPickerSupportText"');
+    expect(template).toContain('[pickerModalScopeClass]="characterTagPickerModalScopeClass"');
     // Both facet filters inside the modal, not just the first.
     expect(template.match(/\[showSelectedChips\]="showFacetSelectedChips"/gu)).toHaveLength(2);
   });
@@ -925,6 +926,8 @@ describe('CharacterImagePickerComponent picker pass-throughs', () => {
     expect(component.characterTagPickerSupportText).toBe('');
     // The facet filter's own default is true; opting out stays the host's call.
     expect(component.showFacetSelectedChips).toBe(true);
+    // Empty scope class = the picker keeps exactly the modal class it always had.
+    expect(component.characterTagPickerModalScopeClass).toBe('');
   });
 });
 
