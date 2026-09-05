@@ -316,8 +316,18 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Same group as deploy-pages.yml, on purpose. A release is always preceded by
+    # a What's New commit pushed to main, and that push starts its own Pages
+    # deploy from the PRE-release tree. With separate groups the two raced: on
+    # v0.2.5 this job finished 32 seconds later and still lost, so production
+    # served the pre-release build - every fix present, the version label a
+    # release behind, and every check green.
+    #
+    # `cancel-in-progress: false` rather than true: this job must never kill a
+    # deploy that is already publishing, and it becomes eligible after that push
+    # deploy, so queueing puts it LAST - which is exactly what it needs to be.
     concurrency:
-      group: release-android-pages
+      group: github-pages
       cancel-in-progress: false
     environment:
       name: github-pages

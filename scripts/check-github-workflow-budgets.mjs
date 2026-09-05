@@ -108,8 +108,16 @@ export const APP_WORKFLOW_BUDGET_CONTRACT = [
       'release-provenance': { timeoutMinutes: 20 },
       'deploy-pages': {
         timeoutMinutes: 25,
+        /*
+         * Same group as deploy-pages.yml, deliberately. It used to be
+         * `release-android-pages`, which meant the release's own Pages deploy
+         * and the one triggered by the What's New push that always precedes a
+         * release sat in different groups and raced. On v0.2.5 this job finished
+         * 32 seconds later and still lost, so production served the pre-release
+         * build with every check green.
+         */
         concurrency: {
-          group: 'release-android-pages',
+          group: 'github-pages',
           cancelInProgress: false,
         },
       },
