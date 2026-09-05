@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -324,5 +327,71 @@ describe('branch cleanup report', () => {
     expect(isCliEntrypoint({ argv1: '/tmp/branch-cleanup-report.mjs', moduleUrl })).toBe(true);
     expect(isCliEntrypoint({ argv1: '/tmp/vitest.mjs', moduleUrl })).toBe(false);
     expect(isCliEntrypoint({ argv1: null, moduleUrl })).toBe(false);
+  });
+});
+
+describe('the remote symbolic ref is not a branch', () => {
+  /*
+   * Git shortens `refs/remotes/origin/HEAD` to bare `origin` - NOT `origin/HEAD`.
+   * The parsers have always filtered `!== 'HEAD'`, but under `%(refname:short)`
+   * that guard never fired, so the report listed a branch named `origin` that
+   * does not exist - the GitHub API 404s on it - and parked it under
+   * "investigate", where no cleanup could ever resolve it. The fixtures below
+   * are the bytes git actually emits, which is what the old ones were not.
+   */
+  it('drops origin/HEAD from for-each-ref output', () => {
+    const branches = parseRemoteBranches(
+      [
+        'refs/remotes/origin/HEAD\t1111111\t2026-09-05 00:00:00 +0000',
+        'refs/remotes/origin/main\t2222222\t2026-09-05 00:00:00 +0000',
+        'refs/remotes/origin/dependabot/npm_and_yarn/hono-4.13.5\t3333333\t2026-09-05 00:00:00 +0000',
+      ].join('\n'),
+    );
+
+    expect(branches.map((branch) => branch.name)).toEqual([
+      'main',
+      'dependabot/npm_and_yarn/hono-4.13.5',
+    ]);
+  });
+
+  it('drops origin/HEAD from --merged output', () => {
+    const merged = parseMergedBranches(
+      ['refs/remotes/origin/HEAD', 'refs/remotes/origin/main'].join('\n'),
+    );
+
+    expect([...merged]).toEqual(['main']);
+  });
+
+  /*
+   * A branch genuinely named `origin` is `refs/remotes/origin/origin`, and it is
+   * a real branch. Filtering on "name equals the remote" would have silenced the
+   * phantom by hiding this too - which is why the fix is the full refname.
+   */
+  it('keeps a real branch that happens to be named origin', () => {
+    const branches = parseRemoteBranches('refs/remotes/origin/origin\t4444444\t2026-09-05 00:00:00 +0000');
+
+    expect(branches.map((branch) => branch.name)).toEqual(['origin']);
+  });
+
+  /*
+   * The parsers are only correct because both callers hand them the full refname.
+   * Pin that, or a later "simplification" back to the short form reintroduces the
+   * phantom silently - the report still renders, just with a branch nobody can
+   * delete. Asserted against the arguments handed to git, not the file text: the
+   * source explains the short form in a comment, and a file-wide search matches
+   * the prose.
+   */
+  it('asks git for the full refname, in both places', () => {
+    const source = readFileSync(resolve(process.cwd(), 'scripts/branch-cleanup-report.mjs'), 'utf8');
+    const formats = [...source.matchAll(/'--format=([^']*)'/gu)].map((match) => match[1]);
+
+    expect(formats).toHaveLength(2);
+
+    for (const format of formats) {
+      expect(format, `${format} asks git to shorten the ref`).not.toContain(':short');
+    }
+
+    expect(formats).toContain('%(refname)');
+    expect(formats).toContain('%(refname)\\t%(objectname)\\t%(committerdate:iso8601)');
   });
 });
