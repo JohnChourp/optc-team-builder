@@ -1,6 +1,10 @@
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
+
+import YAML from 'yaml';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -9,6 +13,9 @@ import {
   BRAIN_CI_TRIGGER_ALLOWLIST,
   formatCiTriggerResult,
   inspectCiTriggers,
+  inspectPagesDeployConcurrency,
+  PAGES_DEPLOY_CONCURRENCY_GROUP,
+  PAGES_DEPLOY_SURFACES,
   readTriggerEvents,
 } from './check-github-ci-triggers.mjs';
 
@@ -33,7 +40,15 @@ async function makeRoot(files: Record<string, string>) {
 }
 
 function workflow(onBlock: string[]) {
-  return ['name: Example', 'on:', ...onBlock, 'jobs:', '  build:', '    runs-on: ubuntu-latest', ''].join('\n');
+  return [
+    'name: Example',
+    'on:',
+    ...onBlock,
+    'jobs:',
+    '  build:',
+    '    runs-on: ubuntu-latest',
+    '',
+  ].join('\n');
 }
 
 describe('check-github-ci-triggers', () => {
@@ -79,7 +94,11 @@ describe('check-github-ci-triggers', () => {
 
   it('rejects pull_request_target and other automatic events by default', async () => {
     const appRoot = await makeRoot({
-      '.github/workflows/target.yml': workflow(['  pull_request_target:', '    types:', '      - opened']),
+      '.github/workflows/target.yml': workflow([
+        '  pull_request_target:',
+        '    types:',
+        '      - opened',
+      ]),
       '.github/workflows/chained.yml': workflow([
         '  workflow_run:',
         '    workflows:',
@@ -92,7 +111,10 @@ describe('check-github-ci-triggers', () => {
     const result = inspectCiTriggers({ appRoot, appAllowlist: [] });
 
     expect(result.ok).toBe(false);
-    expect(result.findings.map((finding) => finding.event).sort()).toEqual(['pull_request_target', 'workflow_run']);
+    expect(result.findings.map((finding) => finding.event).sort()).toEqual([
+      'pull_request_target',
+      'workflow_run',
+    ]);
   });
 
   it('accepts an allowlisted event only for the allowlisted workflow', async () => {
@@ -141,9 +163,13 @@ describe('check-github-ci-triggers', () => {
 
   it('reports a workflow with no triggers', async () => {
     const appRoot = await makeRoot({
-      '.github/workflows/broken.yml': ['name: Broken', 'jobs:', '  build:', '    runs-on: ubuntu-latest', ''].join(
-        '\n',
-      ),
+      '.github/workflows/broken.yml': [
+        'name: Broken',
+        'jobs:',
+        '  build:',
+        '    runs-on: ubuntu-latest',
+        '',
+      ].join('\n'),
     });
 
     const result = inspectCiTriggers({ appRoot, appAllowlist: [] });
@@ -212,12 +238,19 @@ describe('check-github-ci-triggers', () => {
   });
 
   it('formats passing and failing results', () => {
-    expect(formatCiTriggerResult({ ok: true, findings: [], checkedWorkflows: [{}] })).toContain('Status: passed');
+    expect(formatCiTriggerResult({ ok: true, findings: [], checkedWorkflows: [{}] })).toContain(
+      'Status: passed',
+    );
     expect(
       formatCiTriggerResult({
         ok: false,
         findings: [
-          { repo: 'app', workflowPath: '.github/workflows/test.yml', event: 'pull_request', message: 'nope' },
+          {
+            repo: 'app',
+            workflowPath: '.github/workflows/test.yml',
+            event: 'pull_request',
+            message: 'nope',
+          },
         ],
         checkedWorkflows: [],
       }),
@@ -240,6 +273,68 @@ describe('check-github-ci-triggers', () => {
       .filter((event) => event.startsWith('pull_request'));
 
     expect(pullRequestEvents).toEqual([]);
+  });
+
+  /*
+   * A release is always preceded by a What's New commit pushed to main, and that
+   * push starts deploy-pages.yml from the PRE-release tree. On v0.2.5 the two
+   * deploys were in different concurrency groups, the release's finished 32
+   * seconds later and still lost, and production served the pre-release build
+   * with every check green - the release job reports success whether or not its
+   * deployment is the one that ends up live.
+   */
+  it('keeps every Pages deploy surface in one concurrency group', () => {
+    const appRoot = path.resolve(import.meta.dirname, '..');
+
+    for (const surface of PAGES_DEPLOY_SURFACES) {
+      const workflow = YAML.parse(
+        readFileSync(path.join(appRoot, '.github/workflows', surface.workflow), 'utf8'),
+      );
+      const scope = surface.job ? workflow.jobs[surface.job] : workflow;
+
+      expect(scope.concurrency.group).toBe(PAGES_DEPLOY_CONCURRENCY_GROUP);
+    }
+
+    // Both surfaces, not one: a single-entry list would pass vacuously.
+    expect(PAGES_DEPLOY_SURFACES).toHaveLength(2);
+  });
+
+  it('fails when a Pages deploy surface leaves the shared group', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'pages-concurrency-'));
+
+    try {
+      const appRoot = path.resolve(import.meta.dirname, '..');
+      mkdirSync(path.join(root, '.github/workflows'), { recursive: true });
+
+      for (const name of ['deploy-pages.yml', 'release-android.yml']) {
+        writeFileSync(
+          path.join(root, '.github/workflows', name),
+          readFileSync(path.join(appRoot, '.github/workflows', name), 'utf8'),
+          'utf8',
+        );
+      }
+
+      const drifted = path.join(root, '.github/workflows/release-android.yml');
+      const before = readFileSync(drifted, 'utf8');
+      const after = before.replace(
+        'group: github-pages\n      cancel-in-progress: false',
+        'group: release-android-pages\n      cancel-in-progress: false',
+      );
+
+      // The fixture must actually differ, or the test passes vacuously.
+      expect(after).not.toBe(before);
+      writeFileSync(drifted, after, 'utf8');
+
+      const findings: Array<{ message: string }> = [];
+
+      inspectPagesDeployConcurrency({ appRoot: root, findings });
+
+      expect(findings).toHaveLength(1);
+      expect(findings[0].message).toContain('release-android-pages');
+      expect(findings[0].message).toContain('github-pages');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('passes for the real repository workflows', () => {

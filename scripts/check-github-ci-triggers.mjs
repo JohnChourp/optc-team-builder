@@ -19,7 +19,12 @@ import YAML from 'yaml';
  */
 
 /** Events a workflow may always declare: they never fire on a PR or a main push. */
-export const ALWAYS_ALLOWED_EVENTS = ['workflow_dispatch', 'schedule', 'workflow_call', 'repository_dispatch'];
+export const ALWAYS_ALLOWED_EVENTS = [
+  'workflow_dispatch',
+  'schedule',
+  'workflow_call',
+  'repository_dispatch',
+];
 
 export const APP_CI_TRIGGER_ALLOWLIST = [
   {
@@ -84,8 +89,18 @@ export function readTriggerEvents(workflow) {
   return [];
 }
 
-function inspectRepository({ findings, checkedWorkflows, repo, root, allowlist, alwaysAllowed, localCommand }) {
-  const allowlistByPath = new Map(allowlist.map((entry) => [normalizePath(entry.workflowPath), entry]));
+function inspectRepository({
+  findings,
+  checkedWorkflows,
+  repo,
+  root,
+  allowlist,
+  alwaysAllowed,
+  localCommand,
+}) {
+  const allowlistByPath = new Map(
+    allowlist.map((entry) => [normalizePath(entry.workflowPath), entry]),
+  );
   const workflowFiles = listWorkflowFiles(root);
   const knownWorkflowPaths = new Set(workflowFiles);
 
@@ -142,6 +157,90 @@ function inspectRepository({ findings, checkedWorkflows, repo, root, allowlist, 
   }
 }
 
+/**
+ * Every job that publishes GitHub Pages has to sit in one concurrency group, or
+ * two of them race and the loser's build is what the world sees.
+ *
+ * A release is always preceded by a What's New commit pushed to `main`, and that
+ * push starts `deploy-pages.yml` from the PRE-release tree. On v0.2.5 the
+ * release's own deploy finished 32 seconds later and STILL lost: production
+ * served the pre-release build, with every fix present, the version label a
+ * release behind, and every check green - the release job reports success
+ * whether or not its deployment is the one that ends up live.
+ */
+export const PAGES_DEPLOY_CONCURRENCY_GROUP = 'github-pages';
+
+export const PAGES_DEPLOY_SURFACES = [
+  { workflow: 'deploy-pages.yml', job: null },
+  { workflow: 'release-android.yml', job: 'deploy-pages' },
+];
+
+function readConcurrencyGroup(workflow, jobName) {
+  const scope = jobName ? workflow?.jobs?.[jobName] : workflow;
+
+  if (!scope) {
+    return { missing: true };
+  }
+
+  const concurrency = scope.concurrency;
+  const group = typeof concurrency === 'string' ? concurrency : concurrency?.group;
+
+  return { group: typeof group === 'string' ? group : null };
+}
+
+export function inspectPagesDeployConcurrency({ appRoot = process.cwd(), findings }) {
+  // Two Pages deploys are what race. A tree carrying fewer than all of these
+  // surfaces has nothing to serialise - which covers every fixture root the
+  // other tests build, and a repository that has not adopted both workflows.
+  const present = PAGES_DEPLOY_SURFACES.every((surface) =>
+    existsSync(path.join(appRoot, '.github/workflows', surface.workflow)),
+  );
+
+  if (!present) {
+    return;
+  }
+
+  for (const surface of PAGES_DEPLOY_SURFACES) {
+    const workflowPath = path.join('.github/workflows', surface.workflow);
+    const { workflow, error } = readWorkflow(appRoot, workflowPath);
+
+    if (error) {
+      findings.push({
+        repo: 'app',
+        workflowPath: path.join('.github/workflows', surface.workflow),
+        event: 'concurrency',
+        message: error,
+      });
+      continue;
+    }
+
+    const where = surface.job ? `${surface.workflow} job ${surface.job}` : surface.workflow;
+    const { missing, group } = readConcurrencyGroup(workflow, surface.job);
+
+    if (missing) {
+      findings.push({
+        repo: 'app',
+        workflowPath: path.join('.github/workflows', surface.workflow),
+        event: 'concurrency',
+        message: `${where} no longer exists; the Pages deploy surfaces changed and this check needs updating.`,
+      });
+      continue;
+    }
+
+    if (group !== PAGES_DEPLOY_CONCURRENCY_GROUP) {
+      findings.push({
+        repo: 'app',
+        workflowPath: path.join('.github/workflows', surface.workflow),
+        event: 'concurrency',
+        message:
+          `${where} publishes GitHub Pages with concurrency group ${group ?? '(none)'}, not ` +
+          `${PAGES_DEPLOY_CONCURRENCY_GROUP}. Two Pages deploys in different groups race, and the ` +
+          'release has already lost that race once - production served the pre-release build while every check stayed green.',
+      });
+    }
+  }
+}
+
 export function inspectCiTriggers({
   appRoot = process.cwd(),
   brainRoot,
@@ -183,6 +282,8 @@ export function inspectCiTriggers({
       localCommand: target.localCommand,
     });
   }
+
+  inspectPagesDeployConcurrency({ appRoot, findings });
 
   return {
     ok: findings.length === 0,
