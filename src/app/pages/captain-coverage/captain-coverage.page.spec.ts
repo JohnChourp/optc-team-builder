@@ -2978,7 +2978,11 @@ describe('CaptainCoveragePage', () => {
     const template = readCaptainCoverageTemplate();
 
     expect(template).toContain('class="captain-result__add-wrap"');
-    expect(template).toContain('[title]="addToTeamBlockedTitle(card)"');
+    // ATTRIBUTE binding, not property: `[title]` sets el.title, and el.title =
+    // null renders the literal string "null", so every ENABLED button was
+    // tooltipping the word null. `[attr.title]` removes the attribute instead.
+    expect(template).toContain('[attr.title]="addToTeamBlockedTitle(card)"');
+    expect(template).not.toContain('[title]="addToTeamBlockedTitle(card)"');
     expect(template).toContain('[attr.aria-label]="addToTeamAccessibleLabel(card)"');
     expect(template).not.toContain('[title]="addToTeamBlockedLabel(card)"');
   });
@@ -3065,12 +3069,26 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('[attr.aria-label]="t(\'team.pickFromResults\')"');
   });
 
-  it('drops the untranslated aria-label ARIA would never announce', () => {
+  it('drops every accessible name ARIA would never announce from a generic div', () => {
     const template = readCaptainCoverageTemplate();
 
     // role=generic forbids an accessible name, so this was untranslated AND unread.
     expect(template).not.toContain('aria-label="Captain boosts"');
     expect(template).toContain('class="captain-result__boosts"');
+    // The tier popover was the same construct and was missed the first time: a
+    // plain div, named. tabindex does not give it a role that permits a name.
+    // The help string now appears ONCE - on the "?" button, which is a real
+    // widget and may carry a name - and no longer on the panel it opens, whose
+    // relationship is already carried by aria-expanded/aria-controls.
+    const helpLabels =
+      template.match(/\[attr\.aria-label\]="t\('filters\.tierCoverage\.help'/gu) ?? [];
+
+    expect(helpLabels).toHaveLength(1);
+    expect(template).toContain('[attr.aria-controls]="\'tier-coverage-popover-\' + tier"');
+    // The panel keeps its id and tabindex, but carries no name of its own.
+    expect(template).toContain(
+      'class="tier-chip__popover"\n                          tabindex="-1"',
+    );
   });
 
   it('puts the crown first in the DOM, where it is painted', () => {

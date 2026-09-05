@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
@@ -271,6 +272,87 @@ describe('generate-whats-new-entry', () => {
 
     expect(result.findings).toEqual([]);
     expect(readData(root)).toContain("O\\'Hara\\'s Scholar");
+  });
+
+  /*
+   * The generator's only notion of "what changed" is the character roster, so on
+   * a code release it would publish "nothing changed on any screen" in both
+   * languages - and turn the loud red lane that catches a forgotten entry into a
+   * green one telling players a falsehood. The nightly chain releases off an
+   * unchanged main; anything with commits behind it is somebody shipping code.
+   */
+  it('refuses to write for a release that follows commits', () => {
+    const root = makeRepo({ previousCharacters: [], nextCharacters: [{ id: 5, name: 'Solo' }] });
+    const git = (...args: string[]) => execFileSync('git', args, { cwd: root, stdio: 'ignore' });
+
+    git('tag', 'v0.1.0');
+    writeFileSync(path.join(root, 'CODE.md'), 'a code change', 'utf8');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'feat: something a player would notice');
+
+    const result = generateWhatsNewEntry({
+      appRoot: root,
+      version: '0.2.0',
+      date: '2026-09-04',
+      previousTag: 'v0.1.0',
+    });
+
+    expect(result.written).toBe(false);
+    expect(result.reason).toBe('code-release');
+    expect(result.commitsSince).toBe(1);
+    expect(readData(root)).not.toContain("version: '0.2.0'");
+  });
+
+  it('still writes when the release follows no commits at all', () => {
+    const root = makeRepo({
+      previousCharacters: [{ id: 1, name: 'Luffy' }],
+      nextCharacters: [
+        { id: 1, name: 'Luffy' },
+        { id: 2, name: 'Newcomer' },
+      ],
+    });
+
+    execFileSync('git', ['tag', 'v0.1.0'], { cwd: root, stdio: 'ignore' });
+
+    const result = generateWhatsNewEntry({
+      appRoot: root,
+      version: '0.2.0',
+      date: '2026-09-04',
+      previousTag: 'v0.1.0',
+    });
+
+    expect(result.written).toBe(true);
+    expect(result.added).toEqual(['Newcomer']);
+  });
+
+  it('writes when no previous tag is known rather than refusing', () => {
+    const root = makeRepo({ previousCharacters: [], nextCharacters: [{ id: 5, name: 'Solo' }] });
+
+    const result = generateWhatsNewEntry({
+      appRoot: root,
+      version: '0.2.0',
+      date: '2026-09-04',
+      previousTag: '',
+    });
+
+    expect(result.written).toBe(true);
+  });
+
+  /*
+   * release-and-tag.sh runs under `set -euo pipefail`. An unguarded generator
+   * that threw would abort an otherwise-good release, unattended, mid-bump.
+   */
+  it('is invoked non-fatally from the release script', () => {
+    // Anchored to this spec, not to cwd: the scripts specs run under a vitest
+    // config whose root is not the app root.
+    const script = readFileSync(
+      fileURLToPath(new URL('./release-and-tag.sh', import.meta.url)),
+      'utf8',
+    ).replace(/\r\n/g, '\n');
+
+    expect(script).toContain('if ! node "${PROJECT_ROOT}/scripts/generate-whats-new-entry.mjs"');
+    expect(script).toContain('--previous-tag "${PREVIOUS_TAG}"');
+    expect(script).toContain("WARNING: could not write a What's New entry");
   });
 
   it('rejects a version that is not X.Y.Z', () => {
