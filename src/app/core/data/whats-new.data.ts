@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.2.9',
+    date: '2026-09-05',
+    userVisible: false,
+    headline: {
+      en: 'Nothing new on any screen',
+      el: 'Τίποτα καινούριο σε καμία οθόνη',
+    },
+    summaryEn:
+      "Nothing changed for you in this release. The one fix in it went into a report only we look at when we tidy up our own work - it was listing something that was not there - and that report never runs on your phone or in your browser. Every screen, every filter, your teams and your saved data behave exactly as they did before, and the character list is unchanged. We are writing it down anyway: a version number missing from this list would look like a release we decided not to explain.",
+    summaryEl:
+      "Τίποτα δεν άλλαξε για σένα σε αυτή την έκδοση. Η μοναδική διόρθωση αφορά μια αναφορά που κοιτάμε μόνο εμείς όταν συμμαζεύουμε τη δουλειά μας - εμφάνιζε κάτι που δεν υπήρχε - και αυτή η αναφορά δεν τρέχει ποτέ στο κινητό σου ούτε στον browser σου. Κάθε οθόνη, κάθε φίλτρο, τα teams σου και τα αποθηκευμένα σου δουλεύουν ακριβώς όπως πριν, και η λίστα των χαρακτήρων είναι ίδια. Το γράφουμε παρ' όλα αυτά: ένας αριθμός έκδοσης που θα έλειπε από τη λίστα θα έμοιαζε με έκδοση που επιλέξαμε να μην εξηγήσουμε.",
+    added: [],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.2.8',
     date: '2026-09-05',
     userVisible: true,
