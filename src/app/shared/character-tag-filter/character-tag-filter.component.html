@@ -60,7 +60,7 @@
       <app-character-tag-set-picker
         [isOpen]="pickerOpen()"
         [title]="titleOverride || t('title')"
-        [supportText]="pickerSupportText"
+        [supportText]="pickerSupportText || supportText()"
         [modalScopeClass]="pickerModalScopeClass"
         [availableTags]="availableTags()"
         [selection]="workingSelection()"

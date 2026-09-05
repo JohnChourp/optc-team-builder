@@ -86,11 +86,15 @@ export class CharacterTagFilterComponent implements OnChanges, OnInit {
   @Input() public titleOverride = '';
 
   /**
-   * Pass-through to the picker's support paragraph. Six of the twelve
-   * tag-picker call sites in the app sit inside this wrapper or the character
-   * image picker, and neither exposed a way to reach the picker's own inputs -
-   * so those hosts could not be fixed "per page" at all. Default empty, so
-   * every existing host renders exactly as before.
+   * Overrides the sentence the picker shows above its tag list. Left empty, the
+   * picker inherits this wrapper's own `supportText()` - the same sentence
+   * already rendered beside the trigger - so the modal explains AND/OR at the
+   * moment the reader is actually choosing tags.
+   *
+   * That is what Captain Coverage has always done: it hosts this picker
+   * directly and passes its own sentence in (captain-coverage.page.html:300).
+   * Every host reached through this wrapper had a silent modal instead, purely
+   * because the wrapper exposed no route to the picker's inputs.
    */
   @Input() public pickerSupportText = '';
 
