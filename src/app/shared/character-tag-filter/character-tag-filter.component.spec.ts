@@ -302,9 +302,7 @@ describe('CharacterTagFilterComponent', () => {
       sets: [createCharacterTagSet(['Straw Hat Pirates', 'Heart Pirates'], 'any', 'set-1')],
     });
 
-    expect(component.announcement()).toBe(
-      'Character tag filter applied: 2 tag(s) in 1 group(s).',
-    );
+    expect(component.announcement()).toBe('Character tag filter applied: 2 tag(s) in 1 group(s).');
 
     component.clear();
 
@@ -403,6 +401,42 @@ interface CreateComponentResult {
   i18n: { preloadScope: ReturnType<typeof vi.fn>; translate: ReturnType<typeof vi.fn> };
   emitted: CharacterTagFilterChange[];
 }
+
+/*
+ * 869evz13a. Captain Coverage hosts this picker directly and has always passed
+ * its own sentence in (captain-coverage.page.html:300); every host reached
+ * through this wrapper got a silent modal instead, purely because the wrapper
+ * exposed no route to the picker's inputs. The sentence is not new copy - it is
+ * the same one already rendered beside the trigger.
+ */
+describe('CharacterTagFilterComponent modal support text', () => {
+  function readTemplate(): string {
+    return readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/shared/character-tag-filter/character-tag-filter.component.html',
+      ),
+      'utf8',
+    ).replace(/\r\n/g, '\n');
+  }
+
+  it('lets the picker inherit the wrapper sentence, and lets a host override it', () => {
+    const template = readTemplate();
+
+    expect(template).toContain('[supportText]="pickerSupportText || supportText()"');
+    // Still rendered beside the trigger too - the modal echoes it, not replaces it.
+    expect(template).toContain('class="character-tag-filter__support">{{ supportText() }}');
+  });
+
+  it('defaults the override to empty so the inherited sentence wins', () => {
+    const { component } = createComponent();
+
+    expect(component.pickerSupportText).toBe('');
+    expect(component.pickerModalScopeClass).toBe('');
+    // The inherited value is a real sentence, not a blank.
+    expect(component.supportText().length).toBeGreaterThan(0);
+  });
+});
 
 function createComponent(
   options: { availableTags?: string[]; matchIndex?: CharacterTagMatchIndex } = {},
