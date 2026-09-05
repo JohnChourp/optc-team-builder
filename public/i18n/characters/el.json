@@ -146,6 +146,7 @@
   },
   "stats": {
     "atk": "ATK",
+    "cost": "Κόστος",
     "hp": "HP",
     "rcv": "RCV"
   },

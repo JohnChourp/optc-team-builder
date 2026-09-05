@@ -108,6 +108,42 @@ describe('CharactersPage favorites tools', () => {
     expect(page.importResult()?.matchedIds).toEqual([1001, 1002]);
   });
 
+  /*
+   * 869euu47u. Captain Coverage shows cost as a bare number with a press that
+   * explains it; this card has a labelled metric row to join and is itself one
+   * routerLink, so a button here would nest an interactive element inside
+   * another - the defect the Captain Coverage team slots were just fixed for.
+   */
+  it('shows cost as a labelled metric, with no control nested inside the card link', () => {
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/characters/characters.page.html'),
+      'utf8',
+    );
+    const metricsRow = template.slice(
+      template.indexOf('<div class="metrics-row">'),
+      template.indexOf('</a>', template.indexOf('<div class="metrics-row">')),
+    );
+
+    // No `?? '?'`: cost is a plain number on the model, unlike the hp/atk/rcv
+    // maxima above it, and Angular's NG8102 rejects a redundant fallback.
+    expect(metricsRow).toContain('{{ card.character.cost }}');
+    expect(metricsRow).toContain("t('stats.cost')");
+    // Four metrics now, and still nothing pressable inside the link.
+    expect(metricsRow.match(/<strong>/gu)).toHaveLength(4);
+    expect(metricsRow).not.toContain('<button');
+  });
+
+  it('ships the cost label in both languages', () => {
+    for (const locale of ['en', 'el']) {
+      const catalogue = JSON.parse(
+        readFileSync(resolve(process.cwd(), `public/i18n/characters/${locale}.json`), 'utf8'),
+      );
+      const stats = (catalogue.characters ?? catalogue).stats;
+
+      expect(stats.cost, `${locale} is missing stats.cost`).toBeTruthy();
+    }
+  });
+
   it('keeps both favorites filter controls in the template without bulk favorite action buttons', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/characters/characters.page.html'),
