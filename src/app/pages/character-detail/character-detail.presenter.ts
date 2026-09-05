@@ -69,6 +69,8 @@ interface CharacterDetailCaptainCoverageTier {
   scopeLabel: string;
   scopeLabelTokens: CaptainCoverageTierScopeToken[];
   conditionLines: string[];
+  /** The same lines, in pieces, so a template can translate the structural parts. */
+  conditionLineTokens: CaptainCoverageTierScopeToken[][];
   effectClauses: string[];
   baselineEffectClauses?: string[];
   conditionalEffectClauses?: string[];

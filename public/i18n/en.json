@@ -104,6 +104,20 @@
       "rarityMin": "Rarity {{min}}+",
       "rarityMax": "Rarity ≤ {{max}}",
       "tierFallback": "Tier {{tier}}"
+    },
+    "condition": {
+      "teamExcludes": "Team excludes: {{detail}}",
+      "teamRaw": "Team: {{clause}}",
+      "teamCrewHas": "Team: crew has {{parts}}",
+      "teamCrewHasSameType": "Team: crew has {{count}} same Type",
+      "teamRequiresCaptain": "Team: this character is your Captain",
+      "fieldTerritory": "Field: Territory {{territories}}",
+      "branchState": "Branch state: {{label}}",
+      "triggerConsecutivePerfects": "Trigger: after {{count}} consecutive PERFECTs",
+      "triggerRaw": "Trigger: {{clause}}",
+      "triggerActionSpecialExcellent": "Trigger: performs EXCELLENT with their Action Special",
+      "triggerBeneficialOrb": "Trigger: if they have a beneficial orb",
+      "triggerApplicableTag": "Trigger: if they have the applicable tag"
     }
   },
   "coverage": {

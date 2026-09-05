@@ -26,6 +26,8 @@ interface TeamTierCoverageStatus {
   scopeLabel: string;
   scopeLabelTokens: CaptainCoverageTierScopeToken[];
   conditionLines: string[];
+  /** The same lines, in pieces, so a template can translate the structural parts. */
+  conditionLineTokens: CaptainCoverageTierScopeToken[][];
   effectsSummary: string[];
   capturedByCaptain: boolean;
   capturedByFriendCaptain: boolean;
@@ -82,6 +84,7 @@ export function resolveTeamCoverageSummary(input: TeamCoverageInput): TeamCovera
         { key: 'captainTiers.scope.tierFallback', params: { tier: tierNumber } },
       ],
       conditionLines: referenceTierView?.conditionLines ?? [],
+      conditionLineTokens: referenceTierView?.conditionLineTokens ?? [],
       effectsSummary: referenceTierView?.effectClauses ?? [],
       capturedByCaptain,
       capturedByFriendCaptain,
