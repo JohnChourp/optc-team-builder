@@ -160,6 +160,53 @@ function buildCaptainCoverageTierScopeLabel(tier: CharacterCaptainAbilityCoverag
   return fragments.length > 0 ? fragments.join(' · ') : `Tier ${tier.tier}`;
 }
 
+/**
+ * The structured shape of a crew condition, or null when the dataset gave us
+ * nothing but prose.
+ *
+ * Extracted because the English collector and the token builder must agree
+ * exactly - a test renders the tokens through the English catalogue and demands
+ * the old string back - and the cheapest way to guarantee that is to make both
+ * ask the same question.
+ */
+function describeCrewComposition(condition: {
+  minCount?: number;
+  exactCount?: number;
+  types?: string[];
+  classes?: string[];
+  characterTags?: string[];
+  sameType?: boolean;
+}): { count: string; targets: string[]; sameType: boolean; oneOfEach: boolean } | null {
+  const targets = [
+    ...(condition.types ?? []).map((type) => `[${type}]`),
+    ...(condition.classes ?? []),
+    ...(condition.characterTags ?? []).map((tag) => `[${tag}]`),
+  ];
+
+  if (!condition.minCount && !condition.exactCount && !condition.sameType && targets.length === 0) {
+    return null;
+  }
+
+  const count = condition.minCount
+    ? `${condition.minCount}+`
+    : condition.exactCount
+      ? `${condition.exactCount}`
+      : '';
+
+  /*
+   * "one of each", not "N of any". The parser sets `minCount` to the number of
+   * listed targets for the `there is a [STR], [DEX] and [QCK] character in your
+   * crew` family - 125 of the 240 crew conditions in the shipped dataset - so
+   * rendering those as `crew has 3+ [DEX] [STR] [QCK]` would state a different
+   * requirement. Two or more targets, because with a single target the equality
+   * is true by construction and means nothing.
+   */
+  const oneOfEach =
+    Boolean(condition.minCount) && condition.minCount === targets.length && targets.length > 1;
+
+  return { count, targets, sameType: Boolean(condition.sameType), oneOfEach };
+}
+
 function collectCaptainCoverageTierConditionLines(
   tier: CharacterCaptainAbilityCoverageTier,
 ): string[] {
@@ -175,22 +222,26 @@ function collectCaptainCoverageTierConditionLines(
       lines.push(`Team excludes: ${detail}`);
       continue;
     }
-    if (condition.rawClause.trim().length) {
-      lines.push(`Team: ${condition.rawClause}`);
-    } else if (condition.kind === 'crew-composition' || condition.kind === 'crew-count') {
-      const labelParts: string[] = [];
-      if (condition.minCount) {
-        labelParts.push(`${condition.minCount}+`);
-      } else if (condition.exactCount) {
-        labelParts.push(`${condition.exactCount}`);
+    if (condition.kind === 'requires-captain') {
+      lines.push('Team: this character is your Captain');
+      continue;
+    }
+    const crew =
+      condition.kind === 'crew-composition' || condition.kind === 'crew-count'
+        ? describeCrewComposition(condition)
+        : null;
+    if (crew) {
+      if (crew.oneOfEach) {
+        lines.push(`Team: crew has one of each of ${crew.targets.join(' / ')}`);
+      } else if (crew.sameType && crew.targets.length === 0) {
+        lines.push(`Team: crew has ${crew.count} same Type`.replace('  ', ' ').trim());
+      } else {
+        lines.push(
+          `Team: crew has ${[crew.count, ...crew.targets].filter(Boolean).join(' ')}`.trim(),
+        );
       }
-      const targetParts = [
-        condition.sameType ? 'same Type' : null,
-        ...(condition.types ?? []).map((type) => `[${type}]`),
-        ...(condition.classes ?? []),
-        ...(condition.characterTags ?? []).map((tag) => `[${tag}]`),
-      ].filter((part): part is string => Boolean(part));
-      lines.push(`Team: crew has ${[...labelParts, ...targetParts].join(' ')}`.trim());
+    } else if (condition.rawClause.trim().length) {
+      lines.push(`Team: ${condition.rawClause}`);
     }
   }
   for (const condition of tier.fieldConditions) {
@@ -203,6 +254,18 @@ function collectCaptainCoverageTierConditionLines(
     }
     if (condition.kind === 'consecutive-perfects' && condition.perfectStreak) {
       lines.push(`Trigger: after ${condition.perfectStreak} consecutive PERFECTs`);
+      continue;
+    }
+    if (condition.kind === 'action-special-excellent') {
+      lines.push('Trigger: performs EXCELLENT with their Action Special');
+      continue;
+    }
+    if (condition.kind === 'hp-above' && condition.hpPercent !== undefined) {
+      lines.push(`Trigger: HP is above ${condition.hpPercent}%`);
+      continue;
+    }
+    if (condition.kind === 'hp-below' && condition.hpPercent !== undefined) {
+      lines.push(`Trigger: HP is below ${condition.hpPercent}%`);
       continue;
     }
     lines.push(`Trigger: ${condition.rawClause || condition.kind}`);
@@ -221,12 +284,7 @@ function collectCaptainCoverageTierConditionLines(
  * deliberate: anything else falls through to the raw clause unchanged, so an
  * upstream rewording degrades to today's English instead of breaking.
  */
-const CAPTAIN_TIER_FIXED_TEAM_CLAUSES: Readonly<Record<string, string>> = {
-  'this character is your Captain': 'teamRequiresCaptain',
-};
-
 const CAPTAIN_TIER_FIXED_TRIGGER_CLAUSES: Readonly<Record<string, string>> = {
-  'performs EXCELLENT with their Action Special': 'triggerActionSpecialExcellent',
   'if they have a beneficial orb': 'triggerBeneficialOrb',
   'if they have the applicable tag': 'triggerApplicableTag',
 };
@@ -266,35 +324,30 @@ export function buildCaptainCoverageTierConditionLineTokens(
       lines.push([conditionKey('teamExcludes', { detail })]);
       continue;
     }
-    const clause = condition.rawClause.trim();
-    if (clause.length) {
-      const fixed = CAPTAIN_TIER_FIXED_TEAM_CLAUSES[clause];
-      lines.push([
-        fixed ? conditionKey(fixed) : conditionKey('teamRaw', { clause: condition.rawClause }),
-      ]);
-    } else if (condition.kind === 'crew-composition' || condition.kind === 'crew-count') {
-      const labelParts: string[] = [];
-      if (condition.minCount) {
-        labelParts.push(`${condition.minCount}+`);
-      } else if (condition.exactCount) {
-        labelParts.push(`${condition.exactCount}`);
+    if (condition.kind === 'requires-captain') {
+      lines.push([conditionKey('teamRequiresCaptain')]);
+      continue;
+    }
+    const crew =
+      condition.kind === 'crew-composition' || condition.kind === 'crew-count'
+        ? describeCrewComposition(condition)
+        : null;
+    if (crew) {
+      if (crew.oneOfEach) {
+        lines.push([conditionKey('teamCrewHasOneOfEach', { targets: crew.targets.join(' / ') })]);
+      } else if (crew.sameType && crew.targets.length === 0) {
+        lines.push([conditionKey('teamCrewHasSameType', { count: crew.count })]);
+      } else {
+        lines.push([
+          conditionKey('teamCrewHas', {
+            parts: [crew.count, ...crew.targets].filter(Boolean).join(' '),
+          }),
+        ]);
       }
-      const targetParts = [
-        ...(condition.types ?? []).map((type) => `[${type}]`),
-        ...(condition.classes ?? []),
-        ...(condition.characterTags ?? []).map((tag) => `[${tag}]`),
-      ];
-      /*
-       * `same Type` is structural - it describes the shape of the crew, not a
-       * name the game spells - so it is a phrase rather than a token. It never
-       * co-occurs with a named target in the dataset, hence its own key.
-       */
-      if (condition.sameType && targetParts.length === 0) {
-        lines.push([conditionKey('teamCrewHasSameType', { count: labelParts.join(' ') })]);
-        continue;
-      }
-      const parts = [...labelParts, ...targetParts].join(' ').trim();
-      lines.push([conditionKey('teamCrewHas', { parts })]);
+      continue;
+    }
+    if (condition.rawClause.trim().length) {
+      lines.push([conditionKey('teamRaw', { clause: condition.rawClause })]);
     }
   }
 
@@ -312,6 +365,18 @@ export function buildCaptainCoverageTierConditionLineTokens(
     }
     if (condition.kind === 'consecutive-perfects' && condition.perfectStreak) {
       lines.push([conditionKey('triggerConsecutivePerfects', { count: condition.perfectStreak })]);
+      continue;
+    }
+    if (condition.kind === 'action-special-excellent') {
+      lines.push([conditionKey('triggerActionSpecialExcellent')]);
+      continue;
+    }
+    if (condition.kind === 'hp-above' && condition.hpPercent !== undefined) {
+      lines.push([conditionKey('triggerHpAbove', { percent: condition.hpPercent })]);
+      continue;
+    }
+    if (condition.kind === 'hp-below' && condition.hpPercent !== undefined) {
+      lines.push([conditionKey('triggerHpBelow', { percent: condition.hpPercent })]);
       continue;
     }
     const clause = (condition.rawClause || condition.kind).trim();

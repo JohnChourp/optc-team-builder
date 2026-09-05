@@ -190,7 +190,13 @@ describe('resolveTeamCoverageSummary', () => {
     expect(coveredTier).toMatchObject({
       kind: 'conditional',
       scopeLabel: 'Tier 2',
-      conditionLines: ['Team: crew has 4+ Free Spirit characters'],
+      /*
+       * Structured, not the raw clause. The crew branch used to be dead code -
+       * a rawClause check ran first and fired for all 240 crew conditions in the
+       * dataset - so this line used to echo the parser's prose. It now renders
+       * from minCount and classes, which is what the fixture actually carries.
+       */
+      conditionLines: ['Team: crew has 4+ Free Spirit'],
       effectsSummary: ['reduces Special Use Limit duration by 10 turns'],
       captureSource: 'both',
     });
@@ -278,7 +284,10 @@ describe('resolveTeamCoverageSummary', () => {
 
   it('renders tier kind and tier condition lines in the shared summary panel', () => {
     const template = readFileSync(
-      resolve(process.cwd(), 'src/app/shared/team-coverage-summary/team-coverage-summary.component.html'),
+      resolve(
+        process.cwd(),
+        'src/app/shared/team-coverage-summary/team-coverage-summary.component.html',
+      ),
       'utf8',
     );
     const englishTranslations = JSON.parse(
@@ -333,7 +342,10 @@ function buildImuCoverage(): CharacterCaptainAbilityCoverage {
       teamConditions: [],
       fieldConditions: [],
       triggerConditions: [],
-      clauses: ['Boosts ATK of Cost 70 or more characters by 6x', 'boosts HP of all characters by 1.5x'],
+      clauses: [
+        'Boosts ATK of Cost 70 or more characters by 6x',
+        'boosts HP of all characters by 1.5x',
+      ],
       atkBoost: 6,
       hpBoost: 1.5,
     },

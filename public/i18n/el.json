@@ -109,6 +109,7 @@
       "teamExcludes": "Ομάδα: χωρίς {{detail}}",
       "teamRaw": "Ομάδα: {{clause}}",
       "teamCrewHas": "Ομάδα: περιλαμβάνει {{parts}}",
+      "teamCrewHasOneOfEach": "Ομάδα: περιλαμβάνει έναν χαρακτήρα από κάθε {{targets}}",
       "teamCrewHasSameType": "Ομάδα: περιλαμβάνει {{count}} χαρακτήρες ίδιου Type",
       "teamRequiresCaptain": "Ομάδα: αυτός ο χαρακτήρας είναι ο Captain σου",
       "fieldTerritory": "Πεδίο μάχης: Territory {{territories}}",
@@ -116,6 +117,8 @@
       "triggerConsecutivePerfects": "Ενεργοποίηση: μετά από {{count}} συνεχόμενα PERFECT",
       "triggerRaw": "Ενεργοποίηση: {{clause}}",
       "triggerActionSpecialExcellent": "Ενεργοποίηση: πετυχαίνουν EXCELLENT στο Action Special",
+      "triggerHpAbove": "Ενεργοποίηση: HP πάνω από {{percent}}%",
+      "triggerHpBelow": "Ενεργοποίηση: HP κάτω από {{percent}}%",
       "triggerBeneficialOrb": "Ενεργοποίηση: αν έχουν beneficial orb",
       "triggerApplicableTag": "Ενεργοποίηση: αν έχουν το αντίστοιχο tag"
     }
