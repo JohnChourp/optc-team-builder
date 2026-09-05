@@ -471,6 +471,11 @@
                     [sections]="abilityTagSetSections()"
                     [selection]="tagSetSelection()"
                     [title]="t('picker.filters.tagSets.title')"
+                    modalScopeClass="manual-team-builder-ability-modal"
+                    [collapsibleTileCounts]="true"
+                    [captainScopedTileCounts]="true"
+                    [showHelp]="true"
+                    [scopeMarkers]="true"
                     (dismiss)="closeAbilityTagSetPicker()"
                     (saveSelection)="saveAbilityTagSetPicker($event)"
                   ></app-ability-tag-set-picker>

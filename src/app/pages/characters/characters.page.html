@@ -46,11 +46,23 @@
               (clearCategory)="clearAbilityFilterCategory($event)"
             ></app-ability-filter-rail>
 
+            <!--
+              The same five opt-ins Captain Coverage turned on in 869etpmp3.
+              They defaulted closed so that page could ship alone; this is that
+              page's turn. Measured here at 375px before the change: 25 of 320
+              tile labels clipped, no count toggle, no help block, no scope
+              markers, and no host class to scope a rule to.
+            -->
             <app-ability-tag-set-picker
               [isOpen]="tagSetPickerOpen()"
               [sections]="tagSetPickerSections()"
               [selection]="tagSetSelection()"
               [title]="t('filters.abilityTagSets.title')"
+              modalScopeClass="characters-ability-modal"
+              [collapsibleTileCounts]="true"
+              [captainScopedTileCounts]="true"
+              [showHelp]="true"
+              [scopeMarkers]="true"
               (dismiss)="closeAbilityTagSetPicker()"
               (saveSelection)="saveAbilityTagSetPicker($event)"
             ></app-ability-tag-set-picker>
