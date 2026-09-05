@@ -123,8 +123,25 @@ export class CharacterTagSetPickerComponent implements OnChanges, OnDestroy {
    */
   @Input() public supportText = '';
 
+  /**
+   * Extra class beside the picker's own modal class, so a host can scope rules
+   * to its own instance. The sibling ability picker has had this since
+   * 869etpmp3; this one hardcoded its class, which is why the short-viewport
+   * rule that keeps a support paragraph from eating the catalog could be
+   * written for Captain Coverage's ability modal and for no host of this one.
+   * Empty by default, so every existing host renders the same markup as before.
+   */
+  @Input() public modalScopeClass = '';
+
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<CharacterTagSetSelection>();
+
+  /** Extra class the host asked for, kept beside the picker's own modal class. */
+  public modalCssClass(): string {
+    return this.modalScopeClass
+      ? `character-tag-set-picker-modal ${this.modalScopeClass}`
+      : 'character-tag-set-picker-modal';
+  }
 
   public readonly closeIcon = closeOutline;
   public readonly pickerIcon = funnelOutline;

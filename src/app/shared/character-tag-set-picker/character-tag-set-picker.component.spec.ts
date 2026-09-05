@@ -389,7 +389,10 @@ describe('CharacterTagSetPickerComponent', () => {
       'utf8',
     );
 
-    expect(template).toContain('cssClass="character-tag-set-picker-modal"');
+    // Bound, not hardcoded: modalCssClass() always emits the picker's own class
+    // and appends the host's scope only when one is given.
+    expect(template).toContain('[cssClass]="modalCssClass()"');
+    expect(createComponent().modalCssClass()).toBe('character-tag-set-picker-modal');
     expect(template).toContain('<app-ability-tag-set-picker-style-panels>');
     expect(template).toContain('(didPresent)="labelModalDialog($event, title || t(\'title\'))"');
     expect(template).toContain('role="status" aria-live="polite"');
@@ -425,6 +428,42 @@ describe('CharacterTagSetPickerComponent', () => {
     expect(reducedMotionBlock).toContain('.character-tag-set-picker-modal *::before,');
     expect(reducedMotionBlock).toContain('.character-tag-set-picker-modal *::after');
     expect(reducedMotionBlock).toContain('.ability-tag-set-picker-modal *,');
+  });
+});
+
+/*
+ * 869evz13a. The sibling ability picker has had modalScopeClass since 869etpmp3;
+ * this one hardcoded its class, which is why the short-viewport rule that stops
+ * a support paragraph eating the catalog could be written for Captain
+ * Coverage's ability modal and for no host of this picker at all. Without a
+ * scope hook, "fix it per page" had nothing to hold on to.
+ */
+describe('CharacterTagSetPickerComponent modal scoping', () => {
+  it('keeps its own modal class and appends the host scope when asked', () => {
+    const component = createComponent();
+
+    // Default: byte-identical to what every existing host renders today.
+    expect(component.modalScopeClass).toBe('');
+    expect(component.modalCssClass()).toBe('character-tag-set-picker-modal');
+
+    component.modalScopeClass = 'rumble-characters-tag-modal';
+
+    expect(component.modalCssClass()).toBe(
+      'character-tag-set-picker-modal rumble-characters-tag-modal',
+    );
+  });
+
+  it('binds the modal class rather than hardcoding it', () => {
+    const template = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/shared/character-tag-set-picker/character-tag-set-picker.component.html',
+      ),
+      'utf8',
+    );
+
+    expect(template).toContain('[cssClass]="modalCssClass()"');
+    expect(template).not.toContain('cssClass="character-tag-set-picker-modal"');
   });
 });
 

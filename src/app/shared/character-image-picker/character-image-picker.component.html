@@ -213,6 +213,7 @@
               [disabled]="applyingSelection"
               (filterChange)="onCharacterTagFilterChange($event)"
               [pickerSupportText]="characterTagPickerSupportText"
+              [pickerModalScopeClass]="characterTagPickerModalScopeClass"
             ></app-character-tag-filter>
 
             @if (loading()) {
