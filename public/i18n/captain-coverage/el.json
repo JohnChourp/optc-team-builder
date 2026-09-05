@@ -112,7 +112,6 @@
   "loading": "Φόρτωση captain δεδομένων...",
   "results": {
     "eyebrow": "Character results",
-    "openCharacterDetails": "Άνοιγμα character details",
     "title": "Character αποτελέσματα",
     "titleWithCount": "{{count}} matching characters",
     "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που ταιριάζουν",
@@ -188,7 +187,6 @@
       "sub": "Sub {{index}}"
     },
     "title": "Χτίσιμο από Captain",
-    "pickFromResults": "Διάλεξε χαρακτήρα από τα αποτελέσματα πιο κάτω",
     "viewSlotDetails": "Άνοιξε τον χαρακτήρα {{name}}",
     "showResultsForSlot": "Δείξε τα αποτελέσματα για {{slot}}",
     "pickForSlot": "Διάλεξε {{slot}} από τα αποτελέσματα πιο κάτω"

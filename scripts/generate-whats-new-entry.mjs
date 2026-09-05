@@ -304,7 +304,37 @@ export function readPreviousCharacters({ appRoot, ref = 'HEAD' }) {
   }
 }
 
-export function generateWhatsNewEntry({ appRoot = process.cwd(), version, date, ref = 'HEAD' }) {
+/**
+ * How many commits landed since the previous release tag. The nightly data
+ * chain releases straight off an unchanged `main`, so this is 0 for it and
+ * non-zero for any release that follows merged work.
+ */
+export function countCommitsSince({ appRoot, previousTag }) {
+  if (!previousTag) {
+    return null;
+  }
+
+  try {
+    return Number.parseInt(
+      execFileSync('git', ['rev-list', '--count', `${previousTag}..HEAD`], {
+        cwd: appRoot,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }).trim(),
+      10,
+    );
+  } catch {
+    return null;
+  }
+}
+
+export function generateWhatsNewEntry({
+  appRoot = process.cwd(),
+  version,
+  date,
+  ref = 'HEAD',
+  previousTag = null,
+}) {
   if (!/^\d+\.\d+\.\d+$/u.test(String(version ?? ''))) {
     throw new Error(`--version must be X.Y.Z, got ${version}`);
   }
@@ -319,6 +349,19 @@ export function generateWhatsNewEntry({ appRoot = process.cwd(), version, date, 
 
   if (hasEntryFor(source, version)) {
     return { written: false, reason: 'already-described', version, added: [] };
+  }
+
+  // Only the unattended data chain gets an auto-written entry. A release that
+  // follows merged commits is somebody shipping code, and the only thing this
+  // script can describe is which characters appeared - so for a code release it
+  // would publish "nothing changed on any screen", in both languages, in the
+  // app's own release history, and turn the loud red lane that catches a
+  // forgotten entry into a green one telling players a falsehood. Refusing here
+  // keeps that failure honest.
+  const commitsSince = countCommitsSince({ appRoot, previousTag });
+
+  if (commitsSince !== null && commitsSince > 0) {
+    return { written: false, reason: 'code-release', version, added: [], commitsSince };
   }
 
   const seedFile = path.join(appRoot, SEED_DATA_PATH);
@@ -360,6 +403,9 @@ function parseArgs(argv) {
     } else if (flag === '--ref') {
       args.ref = value;
       index += 1;
+    } else if (flag === '--previous-tag') {
+      args.previousTag = value;
+      index += 1;
     }
   }
 
@@ -375,7 +421,11 @@ if (invokedDirectly) {
   try {
     const result = generateWhatsNewEntry({ ...args, date });
 
-    if (!result.written) {
+    if (!result.written && result.reason === 'code-release') {
+      console.log(
+        `[whats-new] ${result.version} follows ${result.commitsSince} commit(s); a code release describes itself. Not writing one.`,
+      );
+    } else if (!result.written) {
       console.log(`[whats-new] ${result.version} is already described; leaving it alone.`);
     } else if (result.added.length > 0) {
       console.log(

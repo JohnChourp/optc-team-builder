@@ -402,7 +402,6 @@
                           class="tier-chip__popover"
                           tabindex="-1"
                           [attr.id]="'tier-coverage-popover-' + tier"
-                          [attr.aria-label]="t('filters.tierCoverage.help', { tier })"
                           [attr.data-test]="'tier-coverage-popover-' + tier"
                         >
                           <header class="captain-tier-breakdown__header">
@@ -663,7 +662,7 @@
                     -->
                     <span
                       class="captain-result__add-wrap"
-                      [title]="addToTeamBlockedTitle(card)"
+                      [attr.title]="addToTeamBlockedTitle(card)"
                     >
                       <ion-button
                         size="small"

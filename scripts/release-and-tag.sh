@@ -286,10 +286,20 @@ fi
 # check-whats-new.mjs fails the moment package.json moves ahead of the list -
 # so an unattended data release used to leave main red until someone noticed.
 # This never overwrites an entry a person already wrote for this version.
+#
+# Deliberately non-fatal: this script runs under `set -e`, so without the guard
+# a generator that threw - on a refactor of one declaration line, say - would
+# abort an otherwise-good release, unattended, mid-bump. A missing entry is a
+# red lane someone fixes; a dead release at 12:21 UTC is worse than the problem
+# this automation exists to solve.
 echo "[release] Ensuring ${RELEASE_TAG} has a What's New entry." >&2
-node "${PROJECT_ROOT}/scripts/generate-whats-new-entry.mjs" \
+if ! node "${PROJECT_ROOT}/scripts/generate-whats-new-entry.mjs" \
     --app-root "${PROJECT_ROOT}" \
-    --version "${RELEASE_VERSION}"
+    --version "${RELEASE_VERSION}" \
+    --previous-tag "${PREVIOUS_TAG}"; then
+    echo "[release] WARNING: could not write a What's New entry for ${RELEASE_TAG}." >&2
+    echo "[release] The release continues; write the entry by hand." >&2
+fi
 
 mkdir -p "${BUILD_ARTIFACTS_DIR}/${RELEASE_TAG}"
 

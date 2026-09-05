@@ -112,7 +112,6 @@
   "loading": "Loading captain data...",
   "results": {
     "eyebrow": "Character results",
-    "openCharacterDetails": "Open character details",
     "title": "Character results",
     "titleWithCount": "{{count}} matching characters",
     "titleWithCoverage": "{{boosted}} boosted of {{count}} matching",
@@ -188,7 +187,6 @@
       "sub": "Sub {{index}}"
     },
     "title": "Build from a Captain",
-    "pickFromResults": "Pick a character from the results below",
     "viewSlotDetails": "Open {{name}}",
     "showResultsForSlot": "Show the results for {{slot}}",
     "pickForSlot": "Pick {{slot}} from the results below"
