@@ -31,6 +31,65 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.2.8',
+    date: '2026-09-05',
+    userVisible: true,
+    headline: {
+      en: 'Filter pop-ups you can actually read',
+      el: 'Παράθυρα φίλτρων που διαβάζονται',
+    },
+    summaryEn:
+      "Most of this release is about the two pop-ups you open to build a filter, and the screens that were still showing them badly. In the ability filter pop-up on Characters, Character Boxes, Manual Team Builder, Crew Forge and Saved Enemies, long ability names now wrap onto as many lines as they need instead of being cut off mid-word, and the same is now true of long tag names in the character tag pop-up everywhere. Hold a phone sideways, or use a short browser window, and both now fill the screen and drop the text at the top, so the list you came to scroll finally has room. Two of the small controls that were under the minimum tap size are not any more. On Characters, a character's Cost is now printed on the card itself in List view. And if you play in Greek, the short line saying who a Captain Ability tier applies to reads in Greek at last. One thing to know before you open the ability filter on those five screens: the count under each ability now starts hidden behind a button at the top of the pop-up, every time you open it, and in the Captain section it now counts only the characters who have that ability on their Captain - so it will read lower than it used to. The old number was the wrong one. Which characters a filter returns has not changed anywhere.",
+    summaryEl:
+      'Το μεγαλύτερο μέρος αυτής της έκδοσης αφορά τα δύο παράθυρα που ανοίγεις για να φτιάξεις φίλτρο, και τις οθόνες που τα έδειχναν ακόμη άσχημα. Στο παράθυρο φίλτρου ικανοτήτων σε Characters, Character Boxes, Manual Team Builder, Crew Forge και Saved Enemies, τα μεγάλα ονόματα ικανοτήτων αναδιπλώνονται πλέον σε όσες γραμμές χρειάζονται αντί να κόβονται στη μέση της λέξης - και το ίδιο ισχύει τώρα για τα μεγάλα ονόματα tags στο παράθυρο των character tags, παντού. Με το κινητό στο πλάι, ή σε κοντό παράθυρο browser, και τα δύο πιάνουν πλέον όλη την οθόνη και αφήνουν έξω το κείμενο στην κορυφή, ώστε η λίστα που ήρθες να κυλήσεις να έχει επιτέλους χώρο. Δύο από τα μικρά κουμπάκια που ήταν κάτω από το ελάχιστο μέγεθος πατήματος δεν είναι πια. Στα Characters, το Κόστος ενός χαρακτήρα τυπώνεται πλέον πάνω στην ίδια την κάρτα, στην προβολή λίστας. Και αν παίζεις στα ελληνικά, η σύντομη γραμμή που λέει σε ποιους ισχύει ένα tier του Captain Ability διαβάζεται επιτέλους στα ελληνικά. Ένα που αξίζει να ξέρεις πριν ανοίξεις το φίλτρο ικανοτήτων σε εκείνες τις πέντε οθόνες: ο αριθμός κάτω από κάθε ικανότητα ξεκινά τώρα κρυμμένος πίσω από ένα κουμπί στην κορυφή του παραθύρου, κάθε φορά που το ανοίγεις, και στην ενότητα Captain μετράει πλέον μόνο τους χαρακτήρες που την έχουν ως Captain Ability - οπότε θα δείχνει μικρότερος από πριν. Ο παλιός αριθμός ήταν ο λάθος. Το ποιους χαρακτήρες επιστρέφει ένα φίλτρο δεν άλλαξε πουθενά.',
+    added: [
+      {
+        en: "Characters: a character's Cost is now printed on the card itself, after HP, ATK and RCV. Those numbers only show in List view, so switch out of the compact portrait view the screen opens in to see it.",
+        el: 'Characters: το Κόστος ενός χαρακτήρα τυπώνεται πλέον πάνω στην ίδια την κάρτα, μετά τα HP, ATK και RCV. Αυτοί οι αριθμοί φαίνονται μόνο στην προβολή λίστας, οπότε γύρνα από τη συμπαγή προβολή με τις εικόνες που ανοίγει η οθόνη για να το δεις.',
+      },
+    ],
+    improved: [
+      {
+        en: 'The one-line reminder of how tag groups combine - tags inside one group match with OR, separate groups match with AND - is now repeated inside the tag-picking pop-up, under the description it already had. It used to sit only on the page behind the pop-up, hidden at the moment you were choosing. It shows the state your groups were in when you opened the pop-up, and with the phone sideways it makes way for the tag list. You get it on Characters, Character Boxes, Rumble Characters and Auto Team Rumble Builder, and in the character-picking pop-ups inside Auto Team Builder, Crew Forge and Saved Enemies. Captain Coverage already had it.',
+        el: 'Η μονή γραμμή που θυμίζει πώς συνδυάζονται τα groups από tags - τα tags μέσα στο ίδιο group ταιριάζουν με OR, τα διαφορετικά groups με AND - επαναλαμβάνεται τώρα και μέσα στο παράθυρο επιλογής tags, κάτω από την περιγραφή που είχε ήδη. Πριν βρισκόταν μόνο στη σελίδα από πίσω, κρυμμένη τη στιγμή ακριβώς που διάλεγες. Δείχνει την κατάσταση που είχαν τα groups σου όταν άνοιξες το παράθυρο, και με το κινητό στο πλάι κάνει χώρο στη λίστα με τα tags. Τη βλέπεις σε Characters, Character Boxes, Rumble Characters και Auto Team Rumble Builder, και στα παράθυρα επιλογής χαρακτήρα μέσα σε Auto Team Builder, Crew Forge και Saved Enemies. Το Captain Coverage την είχε ήδη.',
+      },
+      {
+        en: 'Characters, Character Boxes, Manual Team Builder, Crew Forge and Saved Enemies: the ability filter pop-up gained the collapsible "How this filter works" explainer that Captain Coverage already had, at the top of the pop-up.',
+        el: 'Characters, Character Boxes, Manual Team Builder, Crew Forge και Saved Enemies: το παράθυρο φίλτρου ικανοτήτων απέκτησε την πτυσσόμενη επεξήγηση «Πώς δουλεύει αυτό το φίλτρο» που είχε ήδη το Captain Coverage, στην κορυφή του παραθύρου.',
+      },
+      {
+        en: 'Characters, Character Boxes and Manual Team Builder: in that pop-up, an ability that only counts on your Captain now says so above its name in the list, and in front of it once you add it to a group - so it no longer looks identical to the same ability listed under another section.',
+        el: 'Characters, Character Boxes και Manual Team Builder: σε αυτό το παράθυρο, μια ικανότητα που μετράει μόνο στον Captain σου το γράφει πλέον πάνω από το όνομά της στη λίστα, και μπροστά της μόλις τη βάλεις σε group - οπότε δεν μπερδεύεται πια με την ίδια ικανότητα σε άλλη ενότητα.',
+      },
+      {
+        en: 'In the same pop-up, the count of how many characters have each ability now starts hidden behind a show/hide button at the top, where it used to always be on screen. One press brings the numbers back, and it starts hidden again the next time you open the pop-up.',
+        el: 'Στο ίδιο παράθυρο, ο αριθμός των χαρακτήρων που έχουν κάθε ικανότητα ξεκινά πλέον κρυμμένος πίσω από ένα κουμπί εμφάνισης στην κορυφή, ενώ πριν ήταν πάντα ορατός. Ένα πάτημα και οι αριθμοί επιστρέφουν, και την επόμενη φορά που θα ανοίξεις το παράθυρο ξεκινούν πάλι κρυμμένοι.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'Characters, Character Boxes, Manual Team Builder, Crew Forge and Saved Enemies: in the ability filter pop-up, long ability names were cut off mid-word - on a 375px-wide phone, 25 of the 320 names on Characters. They now wrap onto as many lines as they need, and each one lines up from the top of its row. Captain Coverage already looked like this and is unchanged.',
+        el: 'Characters, Character Boxes, Manual Team Builder, Crew Forge και Saved Enemies: στο παράθυρο φίλτρου ικανοτήτων, τα μεγάλα ονόματα ικανοτήτων κόβονταν στη μέση της λέξης - σε κινητό πλάτους 375px, 25 από τα 320 ονόματα στα Characters. Τώρα αναδιπλώνονται σε όσες γραμμές χρειάζονται, και το καθένα ευθυγραμμίζεται από την κορυφή της σειράς του. Το Captain Coverage έδειχνε ήδη έτσι και δεν άλλαξε.',
+      },
+      {
+        en: 'The pop-up behind the character tag filter no longer trims long tag names with "..." - they wrap so the whole name is readable. On a phone in landscape it was worse than that: the tag list was squeezed into a strip too thin to use. This covers every screen with that filter.',
+        el: 'Το παράθυρο πίσω από το φίλτρο character tags δεν κόβει πια τα μεγάλα ονόματα tags με «...» - αναδιπλώνονται ώστε να διαβάζεται ολόκληρο το όνομα. Με το κινητό στο πλάι ήταν και χειρότερα: η λίστα με τα tags στριμωχνόταν σε μια λωρίδα πολύ λεπτή για να τη χρησιμοποιήσεις. Ισχύει σε κάθε οθόνη που έχει αυτό το φίλτρο.',
+      },
+      {
+        en: 'Some controls inside both pop-ups were under the minimum tap size: the group title, the little x that takes a tag out of a group, the clear button in the search box, and - in the ability pop-up only - the minimum-turns picker beside a chip. They are not any more.',
+        el: 'Κάποια κουμπιά μέσα και στα δύο παράθυρα ήταν κάτω από το ελάχιστο μέγεθος πατήματος: ο τίτλος του group, το μικρό x που βγάζει ένα tag από ένα group, το κουμπί καθαρισμού στο πεδίο αναζήτησης, και - μόνο στο παράθυρο ικανοτήτων - ο επιλογέας ελάχιστων γύρων δίπλα σε ένα chip. Δεν είναι πια.',
+      },
+      {
+        en: 'In the ability filter pop-up on those five screens, the count under an ability in the Captain section counted every character who had that ability anywhere, not just the ones who have it on their Captain - which is what the filter was actually matching. It now counts the right ones, so the number will look smaller than you remember.',
+        el: 'Στο παράθυρο φίλτρου ικανοτήτων σε εκείνες τις πέντε οθόνες, ο αριθμός κάτω από μια ικανότητα στην ενότητα Captain μετρούσε κάθε χαρακτήρα που την είχε οπουδήποτε, όχι μόνο όσους την έχουν στον Captain τους - που είναι αυτό που στην πραγματικότητα έψαχνε το φίλτρο. Τώρα μετράει τους σωστούς, οπότε ο αριθμός θα φαίνεται μικρότερος από ό,τι τον θυμάσαι.',
+      },
+      {
+        en: 'In Greek, the short line saying who a Captain Ability tier applies to had shipped in English. It now reads in Greek - "όλοι οι χαρακτήρες", "Κόστος 20+" and the rest - on Captain Coverage, on a character\'s own page, and in the team coverage box on Manual Team Builder, Auto Team Builder and Saved Teams. The condition lines under it, and type, class and tag names, stay in English on purpose, because that is how the game itself writes them.',
+        el: 'Στα ελληνικά, η σύντομη γραμμή που λέει σε ποιους ισχύει ένα tier του Captain Ability είχε βγει στα αγγλικά. Τώρα διαβάζεται στα ελληνικά - «όλοι οι χαρακτήρες», «Κόστος 20+» και τα λοιπά - στο Captain Coverage, στη σελίδα του ίδιου του χαρακτήρα, και στο πλαίσιο κάλυψης team σε Manual Team Builder, Auto Team Builder και Saved Teams. Οι γραμμές με τις προϋποθέσεις από κάτω, όπως και τα ονόματα type, class και tags, μένουν σκόπιμα στα αγγλικά, γιατί έτσι τα γράφει το ίδιο το παιχνίδι.',
+      },
+    ],
+  },
+  {
     version: '0.2.7',
     date: '2026-09-05',
     userVisible: false,
