@@ -62,6 +62,8 @@
     "test:e2e-triage": "vitest run scripts/lib/playwright-quarantine.spec.ts scripts/lib/playwright-e2e-runner.spec.ts scripts/summarize-playwright-failures.spec.ts && node ./scripts/validate-playwright-quarantine.mjs",
     "test:pwa-shell": "node ./scripts/pwa-shell-check.mjs",
     "test:overlay-contrast": "vitest run scripts/check-ionic-overlay-contrast.spec.ts && npm run theme:overlay-contrast",
+    "test:tag-picker-scoping": "vitest run scripts/check-tag-picker-panel-scoping.spec.ts && npm run styles:tag-picker-scoping",
+    "styles:tag-picker-scoping": "node ./scripts/check-tag-picker-panel-scoping.mjs",
     "theme:overlay-contrast": "node ./scripts/check-ionic-overlay-contrast.mjs",
     "test:whats-new": "vitest run scripts/check-whats-new.spec.ts scripts/generate-whats-new-entry.spec.ts && npm run whats-new:check",
     "whats-new:check": "node ./scripts/check-whats-new.mjs",

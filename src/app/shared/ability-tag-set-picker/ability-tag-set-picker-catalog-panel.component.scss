@@ -148,7 +148,7 @@
 }
 
 /*
- * Modal rendering, for every host of this picker.
+ * Modal rendering, for every host of BOTH pickers that render these panels.
  *
  * These rules were written for Captain Coverage in 869etpmp3 and scoped to its
  * own modal class, because the owner asked the other pages not to move yet. They
@@ -156,9 +156,22 @@
  * like anywhere. With the remaining hosts now brought over deliberately, they
  * live with the component instead of being copied per page.
  *
+ * Every selector here is paired, because `character-tag-set-picker` renders
+ * `<app-ability-tag-set-picker-style-panels>` too - the same markup inside a
+ * modal classed `character-tag-set-picker-modal`. A single-class selector
+ * therefore reaches the ability picker's hosts and silently skips every
+ * instance of the character picker: four hosted directly (Captain Coverage,
+ * Auto Team Builder, Manual Team Builder, Saved Teams) and eight more through
+ * `character-tag-filter`. Measured at 844x390 on Rumble Characters, 16 of 128
+ * tile titles were still clipped there and the catalog scrollport was 26 px.
+ * `styles.scss` and the motion panel already pair both names; these two files
+ * were the outliers. `check-tag-picker-panel-scoping.mjs` fails the build if a
+ * new rule here names only one of the two.
+ *
  * `modalScopeClass` stays for genuinely per-host tweaks.
  */
-.ability-tag-set-picker-modal .ability-tag-set-tile__copy strong {
+.ability-tag-set-picker-modal .ability-tag-set-tile__copy strong,
+.character-tag-set-picker-modal .ability-tag-set-tile__copy strong {
   /*
    * 61 of the 263 ability labels are longer than the ~28 characters a tile can
    * show on one line (the longest is 67), and the grid keeps columns at roughly
@@ -176,16 +189,17 @@
   white-space: normal;
 }
 
-.ability-tag-set-picker-modal .ability-tag-set-tile {
+.ability-tag-set-picker-modal .ability-tag-set-tile,
+.character-tag-set-picker-modal .ability-tag-set-tile {
   align-items: start;
 }
 
 /*
  * Group-card title and the page trigger both sat under the tap-target floor
- * this task set (24 px inside the modal, 44 px on the page). Scoped, so the
- * five deferred hosts keep the geometry they ship today.
+ * this task set (24 px inside the modal, 44 px on the page).
  */
-.ability-tag-set-picker-modal .ability-tag-set-card__title {
+.ability-tag-set-picker-modal .ability-tag-set-card__title,
+.character-tag-set-picker-modal .ability-tag-set-card__title {
   /* 24 px is the floor; 28 keeps it clear of sub-pixel layout rounding. */
   min-height: 28px;
 }
@@ -196,7 +210,8 @@
  * sit inside the modal, so both are bound by the same 24 px floor - and both
  * were missed by the first sweep, which never added a tag to a group.
  */
-.ability-tag-set-picker-modal .ability-tag-set-chip__remove {
+.ability-tag-set-picker-modal .ability-tag-set-chip__remove,
+.character-tag-set-picker-modal .ability-tag-set-chip__remove {
   /* `flex: none` matters: the chip row shrinks its children, so a bare width
      was measured at 15 px even after it was set to 26. */
   flex: 0 0 auto;
@@ -206,18 +221,12 @@
 }
 
 /* Ionic's own clear button inside the catalog search is 22 px wide by default. */
-.ability-tag-set-picker-modal .ability-tag-set-catalog__search .searchbar-clear-button {
+.ability-tag-set-picker-modal .ability-tag-set-catalog__search .searchbar-clear-button,
+.character-tag-set-picker-modal .ability-tag-set-catalog__search .searchbar-clear-button {
   min-width: 28px;
 }
 
-.ability-tag-set-picker-modal .ability-tag-set-chip__turns {
+.ability-tag-set-picker-modal .ability-tag-set-chip__turns,
+.character-tag-set-picker-modal .ability-tag-set-chip__turns {
   min-height: 26px;
 }
-
-/*
- * Short viewports. The shared 80vh rule leaves this modal 675x312 at 844x390
- * (phone in landscape): about 290 px of that is fixed header and footer chrome,
- * so the catalog gets a strip too small to tap a tile in - the sticky search
- * field and the footer both sit over the first row. Scoped to the Captain
- * Coverage instance, so the five deferred hosts keep the shared sizing.
- */
