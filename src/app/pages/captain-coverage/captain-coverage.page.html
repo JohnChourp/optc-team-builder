@@ -408,7 +408,7 @@
                             <span class="captain-tier-breakdown__label">
                               {{ t('filters.tierCoverage.chip', { tier: help.tier }) }}
                             </span>
-                            <span class="captain-tier-breakdown__scope">{{ help.scopeLabel }}</span>
+                            <span class="captain-tier-breakdown__scope">@for (token of help.scopeLabelTokens; track $index) {@if (!$first) {<span aria-hidden="true"> · </span>}@if (token.key) {{{ token.key | transloco: token.params }}} @else {{{ token.text }}}}</span>
                             <span class="captain-tier-breakdown__kind">
                               {{ t('filters.tierCoverage.kinds.' + help.kind) }}
                             </span>

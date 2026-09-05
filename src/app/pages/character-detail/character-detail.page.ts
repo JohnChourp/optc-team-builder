@@ -10,7 +10,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
-import { TranslocoDirective } from '@jsverse/transloco';
+import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import { heart, heartOutline } from 'ionicons/icons';
 
 import {
@@ -53,6 +53,7 @@ import { CharacterDetailStylePanelsComponent } from './character-detail-style-pa
     CharacterDetailStylePanelsComponent,
     ToolbarBackButtonComponent,
     TranslocoDirective,
+    TranslocoPipe,
   ],
   templateUrl: './character-detail.page.html',
   styleUrl: './character-detail.page.scss',

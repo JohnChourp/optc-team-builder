@@ -198,9 +198,7 @@
                                       <span class="captain-tier-breakdown__label">
                                         {{ t('captainTierLabel', { tier: tier.tier }) }}
                                       </span>
-                                      <span class="captain-tier-breakdown__scope">
-                                        {{ tier.scopeLabel }}
-                                      </span>
+                                      <span class="captain-tier-breakdown__scope">@for (token of tier.scopeLabelTokens; track $index) {@if (!$first) {<span aria-hidden="true"> · </span>}@if (token.key) {{{ token.key | transloco: token.params }}} @else {{{ token.text }}}}</span>
                                       <span class="captain-tier-breakdown__kind">
                                         {{ t('captainTierKinds.' + tier.kind) }}
                                       </span>

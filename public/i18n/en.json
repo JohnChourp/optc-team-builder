@@ -94,6 +94,18 @@
       "rushSugoSpecialData": "Rush Sugo"
     }
   },
+  "captainTiers": {
+    "scope": {
+      "allOtherCharacters": "all other characters",
+      "allCharacters": "all characters",
+      "dominantType": "Dominant Type characters",
+      "costMin": "Cost {{min}}+",
+      "costMax": "Cost ≤ {{max}}",
+      "rarityMin": "Rarity {{min}}+",
+      "rarityMax": "Rarity ≤ {{max}}",
+      "tierFallback": "Tier {{tier}}"
+    }
+  },
   "coverage": {
     "copy": "Missing value for 'coverage.copy'",
     "empty": {

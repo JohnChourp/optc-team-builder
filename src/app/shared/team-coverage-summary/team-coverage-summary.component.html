@@ -19,7 +19,7 @@
               <span class="team-coverage-summary__tier-label"
                 >{{ t('tierLabel', { tier: tier.tier }) }}</span
               >
-              <span class="team-coverage-summary__tier-scope">{{ tier.scopeLabel }}</span>
+              <span class="team-coverage-summary__tier-scope">@for (token of tier.scopeLabelTokens; track $index) {@if (!$first) {<span aria-hidden="true"> · </span>}@if (token.key) {{{ token.key | transloco: token.params }}} @else {{{ token.text }}}}</span>
               @if (tier.kind; as kind) {
                 <span class="team-coverage-summary__tier-kind">
                   {{ t('tierKinds.' + kind) }}
