@@ -104,6 +104,10 @@ export const SCRIPT_SUITES = {
     label: 'Ionic overlay contrast tests',
     command: 'npm run test:overlay-contrast',
   },
+  'tag-picker-scoping': {
+    label: 'Tag-set picker panel scoping tests',
+    command: 'npm run test:tag-picker-scoping',
+  },
   'whats-new': {
     label: "What's New changelog tests",
     command: 'npm run test:whats-new',
@@ -337,6 +341,20 @@ function isOverlayContrastPath(filePath) {
     filePath === 'src/styles.scss' ||
     filePath === 'scripts/check-ionic-overlay-contrast.mjs' ||
     filePath === 'scripts/check-ionic-overlay-contrast.spec.ts'
+  );
+}
+
+/*
+ * Both pickers render the shared style panels, so a rule in them that names one
+ * modal class skips every host of the other. Their stylesheets, the guard and
+ * either picker's modal-class builder all route here.
+ */
+function isTagPickerScopingPath(filePath) {
+  return (
+    filePath.startsWith('src/app/shared/ability-tag-set-picker/') ||
+    filePath.startsWith('src/app/shared/character-tag-set-picker/') ||
+    filePath === 'scripts/check-tag-picker-panel-scoping.mjs' ||
+    filePath === 'scripts/check-tag-picker-panel-scoping.spec.ts'
   );
 }
 
@@ -587,6 +605,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isOverlayContrastPath(filePath)) {
       categories.add('overlay-contrast');
       addScriptSuite(scriptSuites, 'overlay-contrast');
+    }
+
+    if (isTagPickerScopingPath(filePath)) {
+      categories.add('tag-picker-scoping');
+      addScriptSuite(scriptSuites, 'tag-picker-scoping');
     }
 
     if (isPwaShellPath(filePath)) {
