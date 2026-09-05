@@ -146,3 +146,78 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
+/*
+ * Modal rendering, for every host of this picker.
+ *
+ * These rules were written for Captain Coverage in 869etpmp3 and scoped to its
+ * own modal class, because the owner asked the other pages not to move yet. They
+ * were never Captain-Coverage-specific: they are what this modal should render
+ * like anywhere. With the remaining hosts now brought over deliberately, they
+ * live with the component instead of being copied per page.
+ *
+ * `modalScopeClass` stays for genuinely per-host tweaks.
+ */
+.ability-tag-set-picker-modal .ability-tag-set-tile__copy strong {
+  /*
+   * 61 of the 263 ability labels are longer than the ~28 characters a tile can
+   * show on one line (the longest is 67), and the grid keeps columns at roughly
+   * 150-228px at every width - so a wider screen adds columns, not room.
+   *
+   * A two-line clamp was tried first and measured on 2026-09-02: it still cut
+   * "Chain Coefficient Reduction (Decrease Chain Multiplier)" at 1366x900 and
+   * every long label at 844x390, because those columns are 150-166px wide. The
+   * acceptance criterion is that every letter is readable, so the label wraps
+   * as far as it needs to and the grid row grows with it.
+   */
+  overflow: visible;
+  line-height: 1.3;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.ability-tag-set-picker-modal .ability-tag-set-tile {
+  align-items: start;
+}
+
+/*
+ * Group-card title and the page trigger both sat under the tap-target floor
+ * this task set (24 px inside the modal, 44 px on the page). Scoped, so the
+ * five deferred hosts keep the geometry they ship today.
+ */
+.ability-tag-set-picker-modal .ability-tag-set-card__title {
+  /* 24 px is the floor; 28 keeps it clear of sub-pixel layout rounding. */
+  min-height: 28px;
+}
+
+/*
+ * The two controls that only exist once a group holds a tag: the per-tag remove
+ * button (20x20 by default) and the inline minimum-turns select (22 px). Both
+ * sit inside the modal, so both are bound by the same 24 px floor - and both
+ * were missed by the first sweep, which never added a tag to a group.
+ */
+.ability-tag-set-picker-modal .ability-tag-set-chip__remove {
+  /* `flex: none` matters: the chip row shrinks its children, so a bare width
+     was measured at 15 px even after it was set to 26. */
+  flex: 0 0 auto;
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+}
+
+/* Ionic's own clear button inside the catalog search is 22 px wide by default. */
+.ability-tag-set-picker-modal .ability-tag-set-catalog__search .searchbar-clear-button {
+  min-width: 28px;
+}
+
+.ability-tag-set-picker-modal .ability-tag-set-chip__turns {
+  min-height: 26px;
+}
+
+/*
+ * Short viewports. The shared 80vh rule leaves this modal 675x312 at 844x390
+ * (phone in landscape): about 290 px of that is fixed header and footer chrome,
+ * so the catalog gets a strip too small to tap a tile in - the sticky search
+ * field and the footer both sit over the first row. Scoped to the Captain
+ * Coverage instance, so the five deferred hosts keep the shared sizing.
+ */

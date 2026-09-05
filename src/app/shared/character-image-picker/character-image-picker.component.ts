@@ -121,6 +121,9 @@ export class CharacterImagePickerComponent implements OnChanges {
 
   /** Pass-through so a host can scope rules to its own character-tag modal. */
   @Input() public characterTagPickerModalScopeClass = '';
+
+  /** Scope class for the ability picker's modal, same mechanism. */
+  @Input() public abilityPickerModalScopeClass = '';
   @Output() public readonly dismiss = new EventEmitter<void>();
   @Output() public readonly saveSelection = new EventEmitter<CharacterListItem>();
 
@@ -133,9 +136,7 @@ export class CharacterImagePickerComponent implements OnChanges {
    * Vocabulary C: one flat value list plus one match mode per facet. An empty
    * selection is NO filter — never "nothing matches".
    */
-  public readonly typeFacet = signal<CharacterFacetSelection>(
-    createEmptyCharacterFacetSelection(),
-  );
+  public readonly typeFacet = signal<CharacterFacetSelection>(createEmptyCharacterFacetSelection());
   public readonly classFacet = signal<CharacterFacetSelection>(
     createEmptyCharacterFacetSelection(),
   );

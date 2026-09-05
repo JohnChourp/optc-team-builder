@@ -200,6 +200,11 @@
               (dismiss)="closeTagSetPicker()"
               (saveSelection)="saveTagSetSelection($event)"
               [supportText]="abilityPickerSupportText"
+              [modalScopeClass]="abilityPickerModalScopeClass"
+              [collapsibleTileCounts]="true"
+              [captainScopedTileCounts]="true"
+              [showHelp]="true"
+              [scopeMarkers]="true"
             ></app-ability-tag-set-picker>
 
             <!--

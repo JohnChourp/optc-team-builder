@@ -11,1245 +11,1245 @@
   <ion-content [fullscreen]="true">
     <app-saved-enemies-style-panels>
       <div class="page-shell saved-enemies-shell">
-      <section class="glass-card hero-card">
-        <div class="section-label">{{ t('hero.eyebrow') }}</div>
-        <h1 class="section-title">{{ t('hero.title') }}</h1>
-        <p class="section-copy">{{ t('hero.copy') }}</p>
+        <section class="glass-card hero-card">
+          <div class="section-label">{{ t('hero.eyebrow') }}</div>
+          <h1 class="section-title">{{ t('hero.title') }}</h1>
+          <p class="section-copy">{{ t('hero.copy') }}</p>
 
-        <div class="hero-actions">
-          <ion-button
-            color="warning"
-            data-testid="saved-enemies-create-open"
-            (click)="openCreateModal()"
-          >
-            <ion-icon slot="start" [icon]="addIcon" aria-hidden="true"></ion-icon>
-            {{ t('hero.createCta') }}
-          </ion-button>
-        </div>
-      </section>
-
-      @if (loading()) {
-        <section class="glass-card loading-card">
-          <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
-          <span>{{ t('loading') }}</span>
-        </section>
-      }
-
-      @if (!loading() && !hasSavedEnemies()) {
-        <section class="glass-card empty-card">
-          <h2>{{ t('empty.title') }}</h2>
-          <p>{{ t('empty.copy') }}</p>
-          <ion-button
-            color="warning"
-            data-testid="saved-enemies-create-open"
-            (click)="openCreateModal()"
-          >
-            {{ t('empty.cta') }}
-          </ion-button>
-        </section>
-      }
-
-      @if (!loading() && hasSavedEnemies()) {
-        <section class="glass-card section-card">
-          <div class="section-head">
-            <div>
-              <h2>{{ t('list.title') }}</h2>
-              <span>{{ savedEnemyTotalLabel() }}</span>
-            </div>
-          </div>
-          @if (hasAbilityFiltersAvailable()) {
-            <div
-              class="saved-enemies-ability-filter-panel"
-              data-testid="saved-enemies-ability-filter-panel"
+          <div class="hero-actions">
+            <ion-button
+              color="warning"
+              data-testid="saved-enemies-create-open"
+              (click)="openCreateModal()"
             >
-              <div class="saved-enemies-ability-filter-panel__head">
-                <div>
-                  <span>{{ t('abilityFilters.eyebrow') }}</span>
-                  <h3>{{ t('abilityFilters.title') }}</h3>
-                  <p>{{ t('abilityFilters.copy') }}</p>
-                </div>
-                <ion-button
-                  fill="clear"
-                  color="light"
-                  [disabled]="!hasAbilityFilters()"
-                  (click)="clearAllAbilityFilters()"
-                >
-                  {{ t('abilityFilters.clearAll') }}
-                </ion-button>
-              </div>
+              <ion-icon slot="start" [icon]="addIcon" aria-hidden="true"></ion-icon>
+              {{ t('hero.createCta') }}
+            </ion-button>
+          </div>
+        </section>
 
-              <div class="saved-enemies-ability-filter-panel__sections">
-                @for (group of savedEnemyAbilityFilterGroups(); track group.category) {
-                  @if (group.abilities.length) {
-                    <section class="saved-enemy-ability-section">
-                      <div class="saved-enemy-ability-section__head">
-                        <div>
-                          <h4>{{ group.label }}</h4>
-                          <p>
-                            {{
-                              t('abilityFilters.categoryCount', {
-                                count: group.abilityCount,
-                              })
-                            }}
-                          </p>
+        @if (loading()) {
+          <section class="glass-card loading-card">
+            <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+            <span>{{ t('loading') }}</span>
+          </section>
+        }
+
+        @if (!loading() && !hasSavedEnemies()) {
+          <section class="glass-card empty-card">
+            <h2>{{ t('empty.title') }}</h2>
+            <p>{{ t('empty.copy') }}</p>
+            <ion-button
+              color="warning"
+              data-testid="saved-enemies-create-open"
+              (click)="openCreateModal()"
+            >
+              {{ t('empty.cta') }}
+            </ion-button>
+          </section>
+        }
+
+        @if (!loading() && hasSavedEnemies()) {
+          <section class="glass-card section-card">
+            <div class="section-head">
+              <div>
+                <h2>{{ t('list.title') }}</h2>
+                <span>{{ savedEnemyTotalLabel() }}</span>
+              </div>
+            </div>
+            @if (hasAbilityFiltersAvailable()) {
+              <div
+                class="saved-enemies-ability-filter-panel"
+                data-testid="saved-enemies-ability-filter-panel"
+              >
+                <div class="saved-enemies-ability-filter-panel__head">
+                  <div>
+                    <span>{{ t('abilityFilters.eyebrow') }}</span>
+                    <h3>{{ t('abilityFilters.title') }}</h3>
+                    <p>{{ t('abilityFilters.copy') }}</p>
+                  </div>
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    [disabled]="!hasAbilityFilters()"
+                    (click)="clearAllAbilityFilters()"
+                  >
+                    {{ t('abilityFilters.clearAll') }}
+                  </ion-button>
+                </div>
+
+                <div class="saved-enemies-ability-filter-panel__sections">
+                  @for (group of savedEnemyAbilityFilterGroups(); track group.category) {
+                    @if (group.abilities.length) {
+                      <section class="saved-enemy-ability-section">
+                        <div class="saved-enemy-ability-section__head">
+                          <div>
+                            <h4>{{ group.label }}</h4>
+                            <p>
+                              {{
+                                t('abilityFilters.categoryCount', {
+                                  count: group.abilityCount,
+                                })
+                              }}
+                            </p>
+                          </div>
+                          <div class="saved-enemy-ability-section__meta">
+                            <strong>{{ group.selectedCount }}</strong>
+                            <span>{{ t('abilityFilters.selected') }}</span>
+                            @if (group.hasSelection) {
+                              <button
+                                type="button"
+                                (click)="clearAbilityFilterCategory(group.category)"
+                              >
+                                {{ t('abilityFilters.clearSection') }}
+                              </button>
+                            }
+                          </div>
                         </div>
-                        <div class="saved-enemy-ability-section__meta">
-                          <strong>{{ group.selectedCount }}</strong>
-                          <span>{{ t('abilityFilters.selected') }}</span>
-                          @if (group.hasSelection) {
+
+                        <div class="saved-enemy-ability-chip-row">
+                          @for (ability of group.abilities; track ability.identity) {
                             <button
                               type="button"
-                              (click)="clearAbilityFilterCategory(group.category)"
+                              class="saved-enemy-ability-chip"
+                              [attr.data-testid]="'saved-enemy-ability-chip-' + ability.identity"
+                              [class.saved-enemy-ability-chip--selected]="ability.selected"
+                              [attr.aria-pressed]="ability.selected"
+                              (click)="toggleAbilityFilter(ability.identity)"
                             >
-                              {{ t('abilityFilters.clearSection') }}
+                              <span>{{ ability.label }}</span>
+                              <strong>
+                                {{ t('abilityFilters.enemyCount', { count: ability.enemyCount }) }}
+                              </strong>
                             </button>
                           }
                         </div>
-                      </div>
-
-                      <div class="saved-enemy-ability-chip-row">
-                        @for (ability of group.abilities; track ability.identity) {
-                          <button
-                            type="button"
-                            class="saved-enemy-ability-chip"
-                            [attr.data-testid]="'saved-enemy-ability-chip-' + ability.identity"
-                            [class.saved-enemy-ability-chip--selected]="ability.selected"
-                            [attr.aria-pressed]="ability.selected"
-                            (click)="toggleAbilityFilter(ability.identity)"
-                          >
-                            <span>{{ ability.label }}</span>
-                            <strong>
-                              {{ t('abilityFilters.enemyCount', { count: ability.enemyCount }) }}
-                            </strong>
-                          </button>
-                        }
-                      </div>
-                    </section>
+                      </section>
+                    }
                   }
-                }
+                </div>
+              </div>
+            }
+            <div class="saved-enemies-tools">
+              <div class="saved-enemies-selection">
+                <label class="saved-enemies-select-all">
+                  <ion-checkbox
+                    [checked]="allSelected()"
+                    [attr.aria-label]="t('selection.selectAllAria')"
+                    (ionChange)="onSelectAllChange($event)"
+                  ></ion-checkbox>
+                  <span>{{ t('selection.selectAll') }}</span>
+                </label>
+                <span class="saved-enemies-selection-count">{{
+                  t('selection.selected', { count: selectedCount() })
+                }}</span>
+              </div>
+              <div class="saved-enemies-tool-actions">
+                <ion-button fill="outline" color="light" (click)="resetSelection()">
+                  {{ 'common.actions.reset' | transloco }}
+                </ion-button>
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  [disabled]="!hasSelection()"
+                  (click)="exportSelectedEnemies()"
+                >
+                  {{ t('tools.export') }}
+                </ion-button>
+                <ion-button
+                  fill="outline"
+                  color="danger"
+                  [disabled]="!hasSelection()"
+                  (click)="confirmAndDeleteSelectedEnemies()"
+                >
+                  {{ t('tools.delete') }}
+                </ion-button>
               </div>
             </div>
-          }
-          <div class="saved-enemies-tools">
-            <div class="saved-enemies-selection">
-              <label class="saved-enemies-select-all">
-                <ion-checkbox
-                  [checked]="allSelected()"
-                  [attr.aria-label]="t('selection.selectAllAria')"
-                  (ionChange)="onSelectAllChange($event)"
-                ></ion-checkbox>
-                <span>{{ t('selection.selectAll') }}</span>
-              </label>
-              <span class="saved-enemies-selection-count">{{
-                t('selection.selected', { count: selectedCount() })
-              }}</span>
-            </div>
-            <div class="saved-enemies-tool-actions">
-              <ion-button fill="outline" color="light" (click)="resetSelection()">
-                {{ 'common.actions.reset' | transloco }}
-              </ion-button>
-              <ion-button
-                fill="outline"
-                color="light"
-                [disabled]="!hasSelection()"
-                (click)="exportSelectedEnemies()"
-              >
-                {{ t('tools.export') }}
-              </ion-button>
-              <ion-button
-                fill="outline"
-                color="danger"
-                [disabled]="!hasSelection()"
-                (click)="confirmAndDeleteSelectedEnemies()"
-              >
-                {{ t('tools.delete') }}
-              </ion-button>
-            </div>
-          </div>
-          @if (hasAbilityFilters() && !filteredSavedEnemies().length) {
-            <div class="saved-enemies-filter-empty">
-              <strong>{{ t('abilityFilters.empty.title') }}</strong>
-              <span>{{ t('abilityFilters.empty.copy') }}</span>
-            </div>
-          }
-          <div class="saved-enemy-list">
-            @for (enemy of filteredSavedEnemies(); track enemy.id) {
-              <article>
-                <div class="saved-enemy-head">
-                  <label class="saved-enemy-check">
-                    <ion-checkbox
-                      [checked]="isSelected(enemy.id)"
-                      [attr.aria-label]="t('selection.enemyAria', { name: enemy.name })"
-                      (ionChange)="onEnemySelectionChange(enemy.id, $event)"
-                    ></ion-checkbox>
-                  </label>
-                  <div class="saved-enemy-main">
-                    @if (enemy.imageDataUrl) {
-                      <div class="saved-enemy-thumb">
-                        <img [src]="enemy.imageDataUrl" [alt]="enemy.name" loading="lazy" />
+            @if (hasAbilityFilters() && !filteredSavedEnemies().length) {
+              <div class="saved-enemies-filter-empty">
+                <strong>{{ t('abilityFilters.empty.title') }}</strong>
+                <span>{{ t('abilityFilters.empty.copy') }}</span>
+              </div>
+            }
+            <div class="saved-enemy-list">
+              @for (enemy of filteredSavedEnemies(); track enemy.id) {
+                <article>
+                  <div class="saved-enemy-head">
+                    <label class="saved-enemy-check">
+                      <ion-checkbox
+                        [checked]="isSelected(enemy.id)"
+                        [attr.aria-label]="t('selection.enemyAria', { name: enemy.name })"
+                        (ionChange)="onEnemySelectionChange(enemy.id, $event)"
+                      ></ion-checkbox>
+                    </label>
+                    <div class="saved-enemy-main">
+                      @if (enemy.imageDataUrl) {
+                        <div class="saved-enemy-thumb">
+                          <img [src]="enemy.imageDataUrl" [alt]="enemy.name" loading="lazy" />
+                        </div>
+                      }
+                      <div class="saved-enemy-copy">
+                        <strong>{{ enemy.name }}</strong>
+                        <p>{{ enemy.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
                       </div>
-                    }
-                    <div class="saved-enemy-copy">
-                      <strong>{{ enemy.name }}</strong>
-                      <p>{{ enemy.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
+                    </div>
+                    <div class="saved-enemy-actions">
+                      <ion-button
+                        fill="outline"
+                        color="warning"
+                        [routerLink]="['/tabs/auto-team-builder']"
+                        [queryParams]="getEnemyBuilderQueryParams(enemy)"
+                      >
+                        {{ t('actions.openBuilder') }}
+                      </ion-button>
+                      <ion-button fill="clear" color="light" (click)="exportEnemy(enemy)">
+                        {{ t('actions.exportSingle') }}
+                      </ion-button>
+                      <ion-button fill="clear" color="light" (click)="openEditModal(enemy)">
+                        {{ t('actions.edit') }}
+                      </ion-button>
+                      <ion-button
+                        fill="clear"
+                        color="danger"
+                        (click)="confirmAndDeleteEnemy(enemy.id)"
+                      >
+                        {{ 'common.actions.delete' | transloco }}
+                      </ion-button>
                     </div>
                   </div>
-                  <div class="saved-enemy-actions">
+                  <div class="enemy-chip-groups">
+                    <div class="enemy-chip-group">
+                      <span>{{ t('summary.types') }}</span>
+                      <div class="chip-row">
+                        @for (item of enemy.selectedTypes; track item) {
+                          <small class="enemy-chip">{{ item }}</small>
+                        }
+                      </div>
+                    </div>
+                    <div class="enemy-chip-group">
+                      <span>{{ t('summary.classes') }}</span>
+                      <div class="chip-row">
+                        @for (item of enemy.selectedClasses; track item) {
+                          <small class="enemy-chip enemy-chip--secondary">
+                            {{ item }}
+                          </small>
+                        }
+                      </div>
+                    </div>
+                    @if (enemy.enemyMechanics.length) {
+                      <div class="enemy-chip-group">
+                        <span>{{ t('summary.mechanics') }}</span>
+                        <div class="chip-row">
+                          @for (mechanic of enemy.enemyMechanics; track $index) {
+                            <small class="enemy-chip enemy-chip--mechanic">
+                              {{ formatEnemyMechanic(mechanic) }}
+                            </small>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (enemy.requiredAbilities.length) {
+                      <div class="enemy-chip-group">
+                        <span>{{ t('summary.counters') }}</span>
+                        <div class="chip-row">
+                          @for (requirement of enemy.requiredAbilities; track $index) {
+                            <small class="enemy-chip enemy-chip--ability">
+                              {{ formatAbilityRequirement(requirement) }}
+                            </small>
+                          }
+                        </div>
+                      </div>
+                    }
+                    <div class="enemy-chip-group">
+                      <span>{{ t('summary.rules') }}</span>
+                      <div class="chip-row">
+                        @if (enemy.requireAllSelectedTypesInTeam) {
+                          <small class="enemy-chip enemy-chip--rule">
+                            {{ t('summary.ruleLabels.types') }}
+                          </small>
+                        }
+                        @if (enemy.requireAllSelectedClassesPerCharacter) {
+                          <small class="enemy-chip enemy-chip--rule">
+                            {{ t('summary.ruleLabels.classes') }}
+                          </small>
+                        }
+                        @if (
+                          !enemy.requireAllSelectedTypesInTeam &&
+                          !enemy.requireAllSelectedClassesPerCharacter
+                        ) {
+                          <small class="enemy-chip enemy-chip--secondary">
+                            {{ t('summary.noRules') }}
+                          </small>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+      </div>
+
+      <ion-modal
+        #savedEnemyEditorModal
+        [isOpen]="editorOpen()"
+        cssClass="saved-enemies-editor-modal"
+        [attr.aria-label]="editingEnemy() ? t('editor.editTitle') : t('editor.createTitle')"
+        (didPresent)="
+          labelModalDialog($event, editingEnemy() ? t('editor.editTitle') : t('editor.createTitle'))
+        "
+        (didDismiss)="closeEditor()"
+      >
+        <ng-template>
+          <ion-header
+            class="editor-modal-header ion-no-border"
+            role="group"
+            [attr.aria-label]="editingEnemy() ? t('editor.editTitle') : t('editor.createTitle')"
+          >
+            <ion-toolbar>
+              <div class="editor-modal-head">
+                <div>
+                  <div class="section-label">
+                    {{ editingEnemy() ? t('editor.editEyebrow') : t('editor.createEyebrow') }}
+                  </div>
+                  <h2>{{ editingEnemy() ? t('editor.editTitle') : t('editor.createTitle') }}</h2>
+                  <p>{{ t('editor.copy') }}</p>
+                </div>
+              </div>
+
+              <ion-buttons slot="end">
+                <ion-button
+                  fill="clear"
+                  color="light"
+                  [attr.aria-label]="'common.actions.close' | transloco"
+                  (click)="closeEditor(); savedEnemyEditorModal.dismiss(null, 'cancel')"
+                >
+                  <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
+                </ion-button>
+              </ion-buttons>
+            </ion-toolbar>
+          </ion-header>
+
+          <ion-content class="editor-modal-content">
+            <div class="editor-modal-shell">
+              <ion-input
+                [label]="t('editor.nameLabel')"
+                labelPlacement="stacked"
+                fill="outline"
+                [value]="enemyName()"
+                [disabled]="savingEnemy()"
+                (ionInput)="onEnemyNameChange($event)"
+              ></ion-input>
+
+              <ion-textarea
+                [label]="t('editor.notesLabel')"
+                labelPlacement="stacked"
+                fill="outline"
+                autoGrow="true"
+                [value]="enemyNotes()"
+                [disabled]="savingEnemy()"
+                (ionInput)="onEnemyNotesChange($event)"
+              ></ion-textarea>
+
+              <section class="enemy-associated-teams-card">
+                <div class="section-head section-head--editor">
+                  <div>
+                    <h3>{{ t('editor.associatedTeams.title') }}</h3>
+                    <span>{{ t('editor.associatedTeams.copy') }}</span>
+                  </div>
+                  @if (savedTeamCards().length) {
+                    <small class="enemy-associated-teams-count">
+                      {{
+                        t('editor.associatedTeams.count', {
+                          selected: associatedTeamIds().length,
+                          total: savedTeamCards().length,
+                        })
+                      }}
+                    </small>
+                  }
+                </div>
+
+                @if (!savedTeamCards().length) {
+                  <p class="editor-empty-copy">
+                    {{ t('editor.associatedTeams.empty') }}
+                  </p>
+                } @else {
+                  <div class="associated-teams-summary">
+                    @if (associatedTeamSummaryCards().length) {
+                      <div class="associated-teams-summary__list">
+                        @for (teamCard of associatedTeamSummaryCards(); track teamCard.team.id) {
+                          <div
+                            class="associated-team-pill"
+                            [attr.aria-label]="teamCard.team.name"
+                            [title]="teamCard.team.name"
+                          >
+                            <span class="associated-team-pill__name">
+                              {{ teamCard.team.name }}
+                            </span>
+                            <span class="associated-team-pill__icons">
+                              @if (teamCard.shipThumbUrl) {
+                                <img
+                                  class="associated-team-pill__ship"
+                                  [src]="teamCard.shipThumbUrl"
+                                  alt=""
+                                  aria-hidden="true"
+                                  loading="lazy"
+                                />
+                              }
+                              @for (slot of teamCard.slots; track $index) {
+                                @if (slot; as filledSlot) {
+                                  <img
+                                    class="associated-team-pill__slot"
+                                    [src]="filledSlot.imageUrl"
+                                    [alt]="filledSlot.name"
+                                    loading="lazy"
+                                  />
+                                } @else {
+                                  <span
+                                    class="associated-team-pill__slot associated-team-pill__slot--empty"
+                                    aria-hidden="true"
+                                  ></span>
+                                }
+                              }
+                            </span>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="associated-teams-summary__empty">
+                        {{ t('editor.associatedTeams.summaryEmpty') }}
+                      </p>
+                    }
+
+                    <ion-button
+                      class="associated-teams-summary__cta"
+                      fill="outline"
+                      color="warning"
+                      [disabled]="savingEnemy()"
+                      (click)="openTeamAssociationPicker()"
+                      (keydown.enter)="openTeamAssociationPicker()"
+                      (keydown.space)="openTeamAssociationPicker(); $event.preventDefault()"
+                    >
+                      <ion-icon slot="start" [icon]="addIcon" aria-hidden="true"></ion-icon>
+                      {{
+                        associatedTeamIds().length
+                          ? t('editor.associatedTeams.manage')
+                          : t('editor.associatedTeams.add')
+                      }}
+                    </ion-button>
+                  </div>
+                }
+              </section>
+
+              <input
+                #enemyImageInput
+                type="file"
+                accept="image/*"
+                hidden
+                (change)="onEnemyImageSelected($event, enemyImageInput)"
+              />
+
+              <section class="enemy-import-card">
+                <div class="section-head section-head--editor">
+                  <div>
+                    <h3>{{ t('editor.paste.title') }}</h3>
+                    <span>{{ t('editor.paste.copy') }}</span>
+                  </div>
+
+                  <div class="card-actions">
+                    <ion-button
+                      fill="outline"
+                      color="light"
+                      size="small"
+                      [disabled]="savingEnemy()"
+                      (click)="parseEnemyText()"
+                    >
+                      {{ t('editor.paste.actions.parse') }}
+                    </ion-button>
+                  </div>
+                </div>
+
+                <div class="paste-autocomplete-host">
+                  <ion-textarea
+                    #enemyPasteTextarea
+                    [label]="t('editor.paste.label')"
+                    labelPlacement="stacked"
+                    fill="outline"
+                    autoGrow="true"
+                    rows="8"
+                    [value]="enemyTextPasteValue()"
+                    [disabled]="savingEnemy()"
+                    [placeholder]="t('editor.paste.placeholder')"
+                    (ionInput)="onEnemyPasteTextChange($event)"
+                    (click)="onEnemyPasteSelect($event)"
+                    (keyup)="onEnemyPasteSelect($event)"
+                    (keydown)="onEnemyPasteKeyDown($event)"
+                    (ionBlur)="closeEnemyTextAutocomplete()"
+                  ></ion-textarea>
+
+                  @if (enemyTextAutocompleteVisible()) {
+                    <div
+                      class="paste-autocomplete"
+                      role="listbox"
+                      [attr.aria-label]="t('editor.paste.autocomplete.ariaLabel')"
+                    >
+                      @for (
+                        suggestion of enemyTextAutocompleteSuggestions();
+                        track suggestion.id;
+                        let i = $index
+                      ) {
+                        <button
+                          type="button"
+                          class="paste-autocomplete__option"
+                          [class.paste-autocomplete__option--active]="
+                            i === enemyTextAutocompleteActiveIndex()
+                          "
+                          role="option"
+                          [attr.aria-selected]="i === enemyTextAutocompleteActiveIndex()"
+                          (mousedown)="$event.preventDefault()"
+                          (mouseenter)="setEnemyTextAutocompleteActiveIndex(i)"
+                          (click)="selectEnemyTextAutocompleteSuggestion(suggestion)"
+                        >
+                          <span
+                            class="paste-autocomplete__source paste-autocomplete__source--{{
+                              suggestion.source
+                            }}"
+                          >
+                            {{ t('editor.paste.autocomplete.source.' + suggestion.source) }}
+                          </span>
+                          <span class="paste-autocomplete__label">{{ suggestion.label }}</span>
+                          @if (suggestion.matchedKeyword) {
+                            <span class="paste-autocomplete__hint">
+                              {{ suggestion.matchedKeyword }}
+                            </span>
+                          } @else if (suggestion.hint) {
+                            <span class="paste-autocomplete__hint">{{ suggestion.hint }}</span>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+
+                @if (enemyTextParseFeedback(); as feedback) {
+                  <div
+                    class="import-feedback"
+                    [class.import-feedback--warning]="feedback.tone === 'warning'"
+                    [class.import-feedback--success]="feedback.tone === 'success'"
+                  >
+                    <div>
+                      <strong>{{ feedback.title }}</strong>
+                      @for (detail of feedback.details; track $index) {
+                        <span>{{ detail }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (enemyTextParseErrorMessage()) {
+                  <div class="import-feedback import-feedback--error">
+                    <span>{{ enemyTextParseErrorMessage() }}</span>
+                  </div>
+                }
+
+                @if (enemyTextParseWarningMessages().length) {
+                  <div class="enemy-text-warning-list">
+                    <strong>{{ t('editor.paste.warnings.title') }}</strong>
+                    <ul>
+                      @for (warningMessage of enemyTextParseWarningMessages(); track $index) {
+                        <li>{{ warningMessage }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </section>
+
+              <section class="enemy-image-card">
+                <div class="section-head section-head--editor">
+                  <div>
+                    <h3>{{ t('editor.image.title') }}</h3>
+                    <span>{{ t('editor.image.copy') }}</span>
+                  </div>
+                  <div class="enemy-image-actions">
+                    <ion-button
+                      fill="outline"
+                      color="light"
+                      size="small"
+                      data-testid="saved-enemies-character-image-picker-open"
+                      [disabled]="savingEnemy() || processingEnemyImage()"
+                      (click)="openCharacterImagePicker()"
+                    >
+                      {{ t('editor.image.chooseCharacter') }}
+                    </ion-button>
                     <ion-button
                       fill="outline"
                       color="warning"
-                      [routerLink]="['/tabs/auto-team-builder']"
-                      [queryParams]="getEnemyBuilderQueryParams(enemy)"
+                      size="small"
+                      [disabled]="savingEnemy() || processingEnemyImage()"
+                      (click)="openEnemyImagePicker(enemyImageInput)"
                     >
-                      {{ t('actions.openBuilder') }}
-                    </ion-button>
-                    <ion-button fill="clear" color="light" (click)="exportEnemy(enemy)">
-                      {{ t('actions.exportSingle') }}
-                    </ion-button>
-                    <ion-button fill="clear" color="light" (click)="openEditModal(enemy)">
-                      {{ t('actions.edit') }}
+                      {{
+                        enemyImageDataUrl() ? t('editor.image.replace') : t('editor.image.upload')
+                      }}
                     </ion-button>
                     <ion-button
                       fill="clear"
-                      color="danger"
-                      (click)="confirmAndDeleteEnemy(enemy.id)"
+                      color="light"
+                      size="small"
+                      [disabled]="savingEnemy() || processingEnemyImage() || !enemyImageDataUrl()"
+                      (click)="removeEnemyImage()"
                     >
-                      {{ 'common.actions.delete' | transloco }}
+                      {{ t('editor.image.remove') }}
                     </ion-button>
                   </div>
                 </div>
-                <div class="enemy-chip-groups">
-                  <div class="enemy-chip-group">
-                    <span>{{ t('summary.types') }}</span>
-                    <div class="chip-row">
-                      @for (item of enemy.selectedTypes; track item) {
-                        <small class="enemy-chip">{{ item }}</small>
-                      }
-                    </div>
+
+                @if (enemyImageDataUrl()) {
+                  <div class="enemy-image-preview">
+                    <img
+                      [src]="enemyImageDataUrl()!"
+                      [alt]="enemyName() || t('editor.image.previewAlt')"
+                    />
                   </div>
-                  <div class="enemy-chip-group">
-                    <span>{{ t('summary.classes') }}</span>
-                    <div class="chip-row">
-                      @for (item of enemy.selectedClasses; track item) {
-                        <small class="enemy-chip enemy-chip--secondary">
-                          {{ item }}
-                        </small>
-                      }
-                    </div>
-                  </div>
-                  @if (enemy.enemyMechanics.length) {
-                    <div class="enemy-chip-group">
-                      <span>{{ t('summary.mechanics') }}</span>
-                      <div class="chip-row">
-                        @for (mechanic of enemy.enemyMechanics; track $index) {
-                          <small class="enemy-chip enemy-chip--mechanic">
-                            {{ formatEnemyMechanic(mechanic) }}
-                          </small>
-                        }
-                      </div>
-                    </div>
-                  }
-                  @if (enemy.requiredAbilities.length) {
-                    <div class="enemy-chip-group">
-                      <span>{{ t('summary.counters') }}</span>
-                      <div class="chip-row">
-                        @for (requirement of enemy.requiredAbilities; track $index) {
-                          <small class="enemy-chip enemy-chip--ability">
-                            {{ formatAbilityRequirement(requirement) }}
-                          </small>
-                        }
-                      </div>
-                    </div>
-                  }
-                  <div class="enemy-chip-group">
-                    <span>{{ t('summary.rules') }}</span>
-                    <div class="chip-row">
-                      @if (enemy.requireAllSelectedTypesInTeam) {
-                        <small class="enemy-chip enemy-chip--rule">
-                          {{ t('summary.ruleLabels.types') }}
-                        </small>
-                      }
-                      @if (enemy.requireAllSelectedClassesPerCharacter) {
-                        <small class="enemy-chip enemy-chip--rule">
-                          {{ t('summary.ruleLabels.classes') }}
-                        </small>
-                      }
-                      @if (
-                        !enemy.requireAllSelectedTypesInTeam &&
-                        !enemy.requireAllSelectedClassesPerCharacter
-                      ) {
-                        <small class="enemy-chip enemy-chip--secondary">
-                          {{ t('summary.noRules') }}
-                        </small>
-                      }
-                    </div>
-                  </div>
-                </div>
-              </article>
-            }
-          </div>
-        </section>
-      }
-    </div>
-
-    <ion-modal
-      #savedEnemyEditorModal
-      [isOpen]="editorOpen()"
-      cssClass="saved-enemies-editor-modal"
-      [attr.aria-label]="editingEnemy() ? t('editor.editTitle') : t('editor.createTitle')"
-      (didPresent)="
-        labelModalDialog($event, editingEnemy() ? t('editor.editTitle') : t('editor.createTitle'))
-      "
-      (didDismiss)="closeEditor()"
-    >
-      <ng-template>
-        <ion-header
-          class="editor-modal-header ion-no-border"
-          role="group"
-          [attr.aria-label]="editingEnemy() ? t('editor.editTitle') : t('editor.createTitle')"
-        >
-          <ion-toolbar>
-            <div class="editor-modal-head">
-              <div>
-                <div class="section-label">
-                  {{ editingEnemy() ? t('editor.editEyebrow') : t('editor.createEyebrow') }}
-                </div>
-                <h2>{{ editingEnemy() ? t('editor.editTitle') : t('editor.createTitle') }}</h2>
-                <p>{{ t('editor.copy') }}</p>
-              </div>
-            </div>
-
-            <ion-buttons slot="end">
-              <ion-button
-                fill="clear"
-                color="light"
-                [attr.aria-label]="'common.actions.close' | transloco"
-                (click)="closeEditor(); savedEnemyEditorModal.dismiss(null, 'cancel')"
-              >
-                <ion-icon slot="icon-only" [icon]="closeIcon" aria-hidden="true"></ion-icon>
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-
-        <ion-content class="editor-modal-content">
-          <div class="editor-modal-shell">
-            <ion-input
-              [label]="t('editor.nameLabel')"
-              labelPlacement="stacked"
-              fill="outline"
-              [value]="enemyName()"
-              [disabled]="savingEnemy()"
-              (ionInput)="onEnemyNameChange($event)"
-            ></ion-input>
-
-            <ion-textarea
-              [label]="t('editor.notesLabel')"
-              labelPlacement="stacked"
-              fill="outline"
-              autoGrow="true"
-              [value]="enemyNotes()"
-              [disabled]="savingEnemy()"
-              (ionInput)="onEnemyNotesChange($event)"
-            ></ion-textarea>
-
-            <section class="enemy-associated-teams-card">
-              <div class="section-head section-head--editor">
-                <div>
-                  <h3>{{ t('editor.associatedTeams.title') }}</h3>
-                  <span>{{ t('editor.associatedTeams.copy') }}</span>
-                </div>
-                @if (savedTeamCards().length) {
-                  <small class="enemy-associated-teams-count">
-                    {{
-                      t('editor.associatedTeams.count', {
-                        selected: associatedTeamIds().length,
-                        total: savedTeamCards().length
-                      })
-                    }}
-                  </small>
+                } @else {
+                  <p class="editor-empty-copy">{{ t('editor.image.empty') }}</p>
                 }
-              </div>
 
-              @if (!savedTeamCards().length) {
-                <p class="editor-empty-copy">
-                  {{ t('editor.associatedTeams.empty') }}
-                </p>
-              } @else {
-                <div class="associated-teams-summary">
-                  @if (associatedTeamSummaryCards().length) {
-                    <div class="associated-teams-summary__list">
-                      @for (
-                        teamCard of associatedTeamSummaryCards();
-                        track teamCard.team.id
-                      ) {
-                        <div
-                          class="associated-team-pill"
-                          [attr.aria-label]="teamCard.team.name"
-                          [title]="teamCard.team.name"
-                        >
-                          <span class="associated-team-pill__name">
-                            {{ teamCard.team.name }}
-                          </span>
-                          <span class="associated-team-pill__icons">
-                            @if (teamCard.shipThumbUrl) {
-                              <img
-                                class="associated-team-pill__ship"
-                                [src]="teamCard.shipThumbUrl"
-                                alt=""
-                                aria-hidden="true"
-                                loading="lazy"
-                              />
-                            }
-                            @for (slot of teamCard.slots; track $index) {
-                              @if (slot; as filledSlot) {
-                                <img
-                                  class="associated-team-pill__slot"
-                                  [src]="filledSlot.imageUrl"
-                                  [alt]="filledSlot.name"
-                                  loading="lazy"
-                                />
-                              } @else {
-                                <span
-                                  class="associated-team-pill__slot associated-team-pill__slot--empty"
-                                  aria-hidden="true"
-                                ></span>
-                              }
-                            }
-                          </span>
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    <p class="associated-teams-summary__empty">
-                      {{ t('editor.associatedTeams.summaryEmpty') }}
-                    </p>
-                  }
+                @if (processingEnemyImage()) {
+                  <p class="enemy-image-status">
+                    {{ t('editor.image.processing') }}
+                  </p>
+                }
 
-                  <ion-button
-                    class="associated-teams-summary__cta"
+                @if (enemyImageErrorMessage()) {
+                  <p class="enemy-image-error">
+                    {{ enemyImageErrorMessage() }}
+                  </p>
+                }
+              </section>
+
+              <app-character-image-picker
+                abilityPickerModalScopeClass="saved-enemies-ability-modal"
+                [isOpen]="characterImagePickerOpen()"
+                [title]="t('editor.image.picker.title')"
+                [copy]="t('editor.image.picker.copy')"
+                [applyingSelection]="processingEnemyImage()"
+                (dismiss)="closeCharacterImagePicker()"
+                (saveSelection)="applyCharacterImageSelection($event)"
+              ></app-character-image-picker>
+
+              <div class="editor-grid">
+                <div class="editor-field">
+                  <span>{{ t('editor.typesLabel') }}</span>
+                  <ion-select
+                    interface="popover"
+                    [multiple]="true"
                     fill="outline"
-                    color="warning"
-                    [disabled]="savingEnemy()"
-                    (click)="openTeamAssociationPicker()"
-                    (keydown.enter)="openTeamAssociationPicker()"
-                    (keydown.space)="openTeamAssociationPicker(); $event.preventDefault()"
+                    [placeholder]="t('editor.typesPlaceholder')"
+                    [value]="selectedTypes()"
+                    (ionChange)="onTypeChange($event)"
                   >
-                    <ion-icon slot="start" [icon]="addIcon" aria-hidden="true"></ion-icon>
-                    {{
-                      associatedTeamIds().length
-                        ? t('editor.associatedTeams.manage')
-                        : t('editor.associatedTeams.add')
-                    }}
-                  </ion-button>
-                </div>
-              }
-            </section>
-
-            <input
-              #enemyImageInput
-              type="file"
-              accept="image/*"
-              hidden
-              (change)="onEnemyImageSelected($event, enemyImageInput)"
-            />
-
-            <section class="enemy-import-card">
-              <div class="section-head section-head--editor">
-                <div>
-                  <h3>{{ t('editor.paste.title') }}</h3>
-                  <span>{{ t('editor.paste.copy') }}</span>
-                </div>
-
-                <div class="card-actions">
-                  <ion-button
-                    fill="outline"
-                    color="light"
-                    size="small"
-                    [disabled]="savingEnemy()"
-                    (click)="parseEnemyText()"
-                  >
-                    {{ t('editor.paste.actions.parse') }}
-                  </ion-button>
-                </div>
-              </div>
-
-              <div class="paste-autocomplete-host">
-                <ion-textarea
-                  #enemyPasteTextarea
-                  [label]="t('editor.paste.label')"
-                  labelPlacement="stacked"
-                  fill="outline"
-                  autoGrow="true"
-                  rows="8"
-                  [value]="enemyTextPasteValue()"
-                  [disabled]="savingEnemy()"
-                  [placeholder]="t('editor.paste.placeholder')"
-                  (ionInput)="onEnemyPasteTextChange($event)"
-                  (click)="onEnemyPasteSelect($event)"
-                  (keyup)="onEnemyPasteSelect($event)"
-                  (keydown)="onEnemyPasteKeyDown($event)"
-                  (ionBlur)="closeEnemyTextAutocomplete()"
-                ></ion-textarea>
-
-                @if (enemyTextAutocompleteVisible()) {
-                  <div
-                    class="paste-autocomplete"
-                    role="listbox"
-                    [attr.aria-label]="t('editor.paste.autocomplete.ariaLabel')"
-                  >
-                    @for (
-                      suggestion of enemyTextAutocompleteSuggestions();
-                      track suggestion.id;
-                      let i = $index
-                    ) {
-                      <button
-                        type="button"
-                        class="paste-autocomplete__option"
-                        [class.paste-autocomplete__option--active]="
-                          i === enemyTextAutocompleteActiveIndex()
-                        "
-                        role="option"
-                        [attr.aria-selected]="i === enemyTextAutocompleteActiveIndex()"
-                        (mousedown)="$event.preventDefault()"
-                        (mouseenter)="setEnemyTextAutocompleteActiveIndex(i)"
-                        (click)="selectEnemyTextAutocompleteSuggestion(suggestion)"
-                      >
-                        <span
-                          class="paste-autocomplete__source paste-autocomplete__source--{{
-                            suggestion.source
-                          }}"
-                        >
-                          {{ t('editor.paste.autocomplete.source.' + suggestion.source) }}
-                        </span>
-                        <span class="paste-autocomplete__label">{{ suggestion.label }}</span>
-                        @if (suggestion.matchedKeyword) {
-                          <span class="paste-autocomplete__hint">
-                            {{ suggestion.matchedKeyword }}
-                          </span>
-                        } @else if (suggestion.hint) {
-                          <span class="paste-autocomplete__hint">{{ suggestion.hint }}</span>
-                        }
-                      </button>
+                    @for (item of availableTypes; track item) {
+                      <ion-select-option [value]="item">
+                        {{ item }}
+                      </ion-select-option>
                     }
+                  </ion-select>
+                  <div class="editor-field-actions">
+                    <ion-button
+                      fill="clear"
+                      color="warning"
+                      size="small"
+                      [disabled]="savingEnemy()"
+                      (click)="selectAllTypes()"
+                    >
+                      {{ selectAllTypesButtonLabel() }}
+                    </ion-button>
                   </div>
-                }
+                </div>
+
+                <div class="editor-field">
+                  <span>{{ t('editor.classesLabel') }}</span>
+                  <ion-select
+                    interface="popover"
+                    [multiple]="true"
+                    fill="outline"
+                    [placeholder]="t('editor.classesPlaceholder')"
+                    [value]="selectedClasses()"
+                    (ionChange)="onClassChange($event)"
+                  >
+                    @for (item of availableClasses(); track item) {
+                      <ion-select-option [value]="item">
+                        {{ item }}
+                      </ion-select-option>
+                    }
+                  </ion-select>
+                  <div class="editor-field-actions">
+                    <ion-button
+                      fill="clear"
+                      color="warning"
+                      size="small"
+                      [disabled]="savingEnemy() || availableClasses().length === 0"
+                      (click)="selectAllClasses()"
+                    >
+                      {{ selectAllClassesButtonLabel() }}
+                    </ion-button>
+                  </div>
+                </div>
               </div>
 
-              @if (enemyTextParseFeedback(); as feedback) {
-                <div
-                  class="import-feedback"
-                  [class.import-feedback--warning]="feedback.tone === 'warning'"
-                  [class.import-feedback--success]="feedback.tone === 'success'"
-                >
+              <section class="ability-card">
+                <!-- editor.specialFilters.title -->
+                <div class="section-head section-head--editor">
                   <div>
-                    <strong>{{ feedback.title }}</strong>
-                    @for (detail of feedback.details; track $index) {
-                      <span>{{ detail }}</span>
-                    }
+                    <h3>{{ t('editor.requiredCharacters.title') }}</h3>
+                    <span>{{ t('editor.requiredCharacters.copy') }}</span>
+                  </div>
+
+                  <div class="card-actions">
+                    <ion-button
+                      fill="outline"
+                      color="warning"
+                      size="small"
+                      [disabled]="!canAddBattleRequirement()"
+                      (click)="addBattleRequirement()"
+                    >
+                      {{ t('editor.requiredCharacters.actions.addBattle') }}
+                    </ion-button>
                   </div>
                 </div>
-              }
 
-              @if (enemyTextParseErrorMessage()) {
-                <div class="import-feedback import-feedback--error">
-                  <span>{{ enemyTextParseErrorMessage() }}</span>
-                </div>
-              }
+                @if (!battleRequirementViews().length) {
+                  <p class="editor-empty-copy">
+                    {{ t('editor.requiredCharacters.empty') }}
+                  </p>
+                }
 
-              @if (enemyTextParseWarningMessages().length) {
-                <div class="enemy-text-warning-list">
-                  <strong>{{ t('editor.paste.warnings.title') }}</strong>
-                  <ul>
-                    @for (warningMessage of enemyTextParseWarningMessages(); track $index) {
-                      <li>{{ warningMessage }}</li>
-                    }
-                  </ul>
-                </div>
-              }
-            </section>
-
-            <section class="enemy-image-card">
-              <div class="section-head section-head--editor">
-                <div>
-                  <h3>{{ t('editor.image.title') }}</h3>
-                  <span>{{ t('editor.image.copy') }}</span>
-                </div>
-                <div class="enemy-image-actions">
-                  <ion-button
-                    fill="outline"
-                    color="light"
-                    size="small"
-                    data-testid="saved-enemies-character-image-picker-open"
-                    [disabled]="savingEnemy() || processingEnemyImage()"
-                    (click)="openCharacterImagePicker()"
-                  >
-                    {{ t('editor.image.chooseCharacter') }}
-                  </ion-button>
-                  <ion-button
-                    fill="outline"
-                    color="warning"
-                    size="small"
-                    [disabled]="savingEnemy() || processingEnemyImage()"
-                    (click)="openEnemyImagePicker(enemyImageInput)"
-                  >
-                    {{ enemyImageDataUrl() ? t('editor.image.replace') : t('editor.image.upload') }}
-                  </ion-button>
-                  <ion-button
-                    fill="clear"
-                    color="light"
-                    size="small"
-                    [disabled]="savingEnemy() || processingEnemyImage() || !enemyImageDataUrl()"
-                    (click)="removeEnemyImage()"
-                  >
-                    {{ t('editor.image.remove') }}
-                  </ion-button>
-                </div>
-              </div>
-
-              @if (enemyImageDataUrl()) {
-                <div class="enemy-image-preview">
-                  <img
-                    [src]="enemyImageDataUrl()!"
-                    [alt]="enemyName() || t('editor.image.previewAlt')"
-                  />
-                </div>
-              } @else {
-                <p class="editor-empty-copy">{{ t('editor.image.empty') }}</p>
-              }
-
-              @if (processingEnemyImage()) {
-                <p class="enemy-image-status">
-                  {{ t('editor.image.processing') }}
-                </p>
-              }
-
-              @if (enemyImageErrorMessage()) {
-                <p class="enemy-image-error">
-                  {{ enemyImageErrorMessage() }}
-                </p>
-              }
-            </section>
-
-            <app-character-image-picker
-              [isOpen]="characterImagePickerOpen()"
-              [title]="t('editor.image.picker.title')"
-              [copy]="t('editor.image.picker.copy')"
-              [applyingSelection]="processingEnemyImage()"
-              (dismiss)="closeCharacterImagePicker()"
-              (saveSelection)="applyCharacterImageSelection($event)"
-            ></app-character-image-picker>
-
-            <div class="editor-grid">
-              <div class="editor-field">
-                <span>{{ t('editor.typesLabel') }}</span>
-                <ion-select
-                  interface="popover"
-                  [multiple]="true"
-                  fill="outline"
-                  [placeholder]="t('editor.typesPlaceholder')"
-                  [value]="selectedTypes()"
-                  (ionChange)="onTypeChange($event)"
-                >
-                  @for (item of availableTypes; track item) {
-                    <ion-select-option [value]="item">
-                      {{ item }}
-                    </ion-select-option>
-                  }
-                </ion-select>
-                <div class="editor-field-actions">
-                  <ion-button
-                    fill="clear"
-                    color="warning"
-                    size="small"
-                    [disabled]="savingEnemy()"
-                    (click)="selectAllTypes()"
-                  >
-                    {{ selectAllTypesButtonLabel() }}
-                  </ion-button>
-                </div>
-              </div>
-
-              <div class="editor-field">
-                <span>{{ t('editor.classesLabel') }}</span>
-                <ion-select
-                  interface="popover"
-                  [multiple]="true"
-                  fill="outline"
-                  [placeholder]="t('editor.classesPlaceholder')"
-                  [value]="selectedClasses()"
-                  (ionChange)="onClassChange($event)"
-                >
-                  @for (item of availableClasses(); track item) {
-                    <ion-select-option [value]="item">
-                      {{ item }}
-                    </ion-select-option>
-                  }
-                </ion-select>
-                <div class="editor-field-actions">
-                  <ion-button
-                    fill="clear"
-                    color="warning"
-                    size="small"
-                    [disabled]="savingEnemy() || availableClasses().length === 0"
-                    (click)="selectAllClasses()"
-                  >
-                    {{ selectAllClassesButtonLabel() }}
-                  </ion-button>
-                </div>
-              </div>
-            </div>
-
-            <section class="ability-card">
-              <!-- editor.specialFilters.title -->
-              <div class="section-head section-head--editor">
-                <div>
-                  <h3>{{ t('editor.requiredCharacters.title') }}</h3>
-                  <span>{{ t('editor.requiredCharacters.copy') }}</span>
-                </div>
-
-                <div class="card-actions">
-                  <ion-button
-                    fill="outline"
-                    color="warning"
-                    size="small"
-                    [disabled]="!canAddBattleRequirement()"
-                    (click)="addBattleRequirement()"
-                  >
-                    {{ t('editor.requiredCharacters.actions.addBattle') }}
-                  </ion-button>
-                </div>
-              </div>
-
-              @if (!battleRequirementViews().length) {
-                <p class="editor-empty-copy">
-                  {{ t('editor.requiredCharacters.empty') }}
-                </p>
-              }
-
-              @if (battleRequirementViews().length) {
-                <div class="saved-battle-grid">
-                  @for (battleView of battleRequirementViews(); track battleView.battle.id) {
-                    <article class="saved-battle-card">
-                      <div class="saved-required-character-card__head">
-                        <div>
-                          <h4>{{ battleView.title }}</h4>
-                          <small>
-                            {{
-                              t('editor.requiredCharacters.configured', {
-                                count: battleView.requiredCharacterCount,
-                              })
-                            }}
-                          </small>
-                        </div>
-                        <div class="card-actions">
-                          <ion-button
-                            fill="clear"
-                            color="warning"
-                            size="small"
-                            [disabled]="!canAddRequiredCharacterGroup(battleView.battle.id)"
-                            (click)="addRequiredCharacterGroup(battleView.battle.id)"
-                          >
-                            {{ t('editor.requiredCharacters.actions.add') }}
-                          </ion-button>
-                          <ion-button
-                            fill="clear"
-                            color="danger"
-                            size="small"
-                            [disabled]="savingEnemy() || battleRequirementViews().length <= 1"
-                            (click)="removeBattleRequirement(battleView.battle.id)"
-                          >
-                            {{ 'common.actions.remove' | transloco }}
-                          </ion-button>
-                        </div>
-                      </div>
-
-                      @if (!battleView.groupViews.length) {
-                        <p class="editor-empty-copy">
-                          {{ t('editor.requiredCharacters.empty') }}
-                        </p>
-                      }
-
-                      @if (battleView.groupViews.length) {
-                        <div class="saved-required-character-grid">
-                          @for (view of battleView.groupViews; track view.group.id) {
-                            <article class="saved-required-character-card">
-                              <div class="saved-required-character-card__head">
-                                <div>
-                                  <h4>{{ view.title }}</h4>
-                                  <small>
-                                    {{
-                                      t('editor.requiredCharacters.abilityCount', {
-                                        count: view.abilityCount,
-                                      })
-                                    }}
-                                  </small>
-                                </div>
-                                <ion-button
-                                  fill="clear"
-                                  color="danger"
-                                  size="small"
-                                  [disabled]="savingEnemy()"
-                                  (click)="
-                                    removeRequiredCharacterGroup(view.battleId, view.group.id)
-                                  "
-                                >
-                                  {{ 'common.actions.remove' | transloco }}
-                                </ion-button>
-                              </div>
-
-                              <app-ability-filter-rail
-                                [items]="requiredCharacterAbilityRailItems(view)"
-                                [disabled]="savingEnemy()"
-                                (selectCategory)="
-                                  openRequiredCharacterAbilityPicker(
-                                    view.battleId,
-                                    view.group.id,
-                                    $event
-                                  )
-                                "
-                                (clearCategory)="
-                                  clearRequiredCharacterAbilityCategory(
-                                    view.battleId,
-                                    view.group.id,
-                                    $event
-                                  )
-                                "
-                              ></app-ability-filter-rail>
-
-                              @if (!view.chips.length) {
-                                <p class="editor-empty-copy">
-                                  {{ t('editor.requiredCharacters.cardEmpty') }}
-                                </p>
-                              }
-                            </article>
-                          }
-                        </div>
-                      }
-                    </article>
-                  }
-                </div>
-              }
-            </section>
-
-            <app-ability-requirement-picker
-              [isOpen]="requiredCharacterAbilityPickerOpen()"
-              [title]="activeRequiredCharacterPickerTitle()"
-              [copy]="t('editor.requiredCharacters.pickerCopy')"
-              [drafts]="activeRequiredCharacterAbilityDrafts()"
-              [catalogItems]="activeRequiredCharacterCatalogItems()"
-              [showCharacterCount]="false"
-              (dismiss)="closeRequiredCharacterAbilityPicker()"
-              (saveDrafts)="saveRequiredCharacterAbilityPicker($event)"
-            ></app-ability-requirement-picker>
-
-            <ion-modal
-              #parsedAbilitySelectionModal
-              [isOpen]="parsedAbilitySelectionOpen()"
-              cssClass="saved-enemies-editor-modal"
-              [attr.aria-label]="t('editor.paste.selection.title')"
-              (didPresent)="labelModalDialog($event, t('editor.paste.selection.title'))"
-              (didDismiss)="closeParsedAbilitySelection()"
-            >
-              <ng-template>
-                <ion-header
-                  class="editor-modal-header ion-no-border"
-                  role="group"
-                  [attr.aria-label]="t('editor.paste.selection.title')"
-                >
-                  <ion-toolbar>
-                    <div class="editor-modal-head">
-                      <div>
-                        <div class="section-label">
-                          {{ t('editor.paste.selection.eyebrow') }}
-                        </div>
-                        <h2>{{ t('editor.paste.selection.title') }}</h2>
-                        <p>{{ t('editor.paste.selection.copy') }}</p>
-                      </div>
-                    </div>
-
-                    <ion-buttons slot="end">
-                      <ion-button
-                        fill="clear"
-                        color="light"
-                        [attr.aria-label]="'common.actions.close' | transloco"
-                        (click)="
-                          closeParsedAbilitySelection();
-                          parsedAbilitySelectionModal.dismiss(null, 'cancel')
-                        "
-                      >
-                        <ion-icon
-                          slot="icon-only"
-                          [icon]="closeIcon"
-                          aria-hidden="true"
-                        ></ion-icon>
-                      </ion-button>
-                    </ion-buttons>
-                  </ion-toolbar>
-                </ion-header>
-
-                <ion-content class="editor-modal-content">
-                  <div class="editor-modal-shell">
-                    @for (section of parsedAbilitySelectionSections(); track section.category) {
-                      <section class="ability-card">
-                        <div class="section-head section-head--editor">
+                @if (battleRequirementViews().length) {
+                  <div class="saved-battle-grid">
+                    @for (battleView of battleRequirementViews(); track battleView.battle.id) {
+                      <article class="saved-battle-card">
+                        <div class="saved-required-character-card__head">
                           <div>
-                            <h3>{{ formatParsedAbilityCategoryLabel(section.category) }}</h3>
-                            <span>{{
-                              t('editor.paste.selection.count', {
-                                count: section.candidates.length,
-                              })
-                            }}</span>
+                            <h4>{{ battleView.title }}</h4>
+                            <small>
+                              {{
+                                t('editor.requiredCharacters.configured', {
+                                  count: battleView.requiredCharacterCount,
+                                })
+                              }}
+                            </small>
                           </div>
-
                           <div class="card-actions">
                             <ion-button
                               fill="clear"
                               color="warning"
                               size="small"
-                              [disabled]="!section.candidates.length"
-                              (click)="selectAllParsedAbilityCandidates(section.category)"
+                              [disabled]="!canAddRequiredCharacterGroup(battleView.battle.id)"
+                              (click)="addRequiredCharacterGroup(battleView.battle.id)"
                             >
-                              {{ t('editor.paste.selection.actions.selectAll') }}
+                              {{ t('editor.requiredCharacters.actions.add') }}
                             </ion-button>
                             <ion-button
                               fill="clear"
-                              color="light"
+                              color="danger"
                               size="small"
-                              [disabled]="!section.candidates.length"
-                              (click)="clearParsedAbilityCandidates(section.category)"
+                              [disabled]="savingEnemy() || battleRequirementViews().length <= 1"
+                              (click)="removeBattleRequirement(battleView.battle.id)"
                             >
-                              {{ t('editor.paste.selection.actions.clear') }}
+                              {{ 'common.actions.remove' | transloco }}
                             </ion-button>
                           </div>
                         </div>
 
-                        @if (!section.candidates.length) {
+                        @if (!battleView.groupViews.length) {
                           <p class="editor-empty-copy">
-                            {{ t('editor.paste.selection.emptyCategory') }}
+                            {{ t('editor.requiredCharacters.empty') }}
                           </p>
-                        } @else {
-                          <div class="parsed-ability-selection-list">
-                            @for (candidate of section.candidates; track candidate.identity) {
-                              <label class="parsed-ability-selection-item">
-                                <ion-checkbox
-                                  [checked]="isParsedAbilityCandidateSelected(candidate.identity)"
-                                  [attr.aria-label]="candidate.label"
-                                  (ionChange)="
-                                    toggleParsedAbilityCandidate(candidate.identity, $event)
+                        }
+
+                        @if (battleView.groupViews.length) {
+                          <div class="saved-required-character-grid">
+                            @for (view of battleView.groupViews; track view.group.id) {
+                              <article class="saved-required-character-card">
+                                <div class="saved-required-character-card__head">
+                                  <div>
+                                    <h4>{{ view.title }}</h4>
+                                    <small>
+                                      {{
+                                        t('editor.requiredCharacters.abilityCount', {
+                                          count: view.abilityCount,
+                                        })
+                                      }}
+                                    </small>
+                                  </div>
+                                  <ion-button
+                                    fill="clear"
+                                    color="danger"
+                                    size="small"
+                                    [disabled]="savingEnemy()"
+                                    (click)="
+                                      removeRequiredCharacterGroup(view.battleId, view.group.id)
+                                    "
+                                  >
+                                    {{ 'common.actions.remove' | transloco }}
+                                  </ion-button>
+                                </div>
+
+                                <app-ability-filter-rail
+                                  [items]="requiredCharacterAbilityRailItems(view)"
+                                  [disabled]="savingEnemy()"
+                                  (selectCategory)="
+                                    openRequiredCharacterAbilityPicker(
+                                      view.battleId,
+                                      view.group.id,
+                                      $event
+                                    )
                                   "
-                                ></ion-checkbox>
-                                <span
-                                  class="editor-ability-chip__icon"
-                                  [attr.data-tone]="candidate.visual.tone"
-                                >
-                                  <ion-icon [icon]="candidate.visual.icon"></ion-icon>
-                                  <small>{{ candidate.visual.badge }}</small>
-                                </span>
-                                <span class="parsed-ability-selection-copy">
-                                  <strong>{{ candidate.label }}</strong>
-                                  <small>{{ candidate.sourceLine }}</small>
-                                </span>
-                              </label>
+                                  (clearCategory)="
+                                    clearRequiredCharacterAbilityCategory(
+                                      view.battleId,
+                                      view.group.id,
+                                      $event
+                                    )
+                                  "
+                                ></app-ability-filter-rail>
+
+                                @if (!view.chips.length) {
+                                  <p class="editor-empty-copy">
+                                    {{ t('editor.requiredCharacters.cardEmpty') }}
+                                  </p>
+                                }
+                              </article>
                             }
                           </div>
                         }
-                      </section>
+                      </article>
                     }
                   </div>
-                </ion-content>
+                }
+              </section>
 
-                <ion-footer
-                  class="editor-modal-footer"
-                  role="group"
-                  [attr.aria-label]="t('editor.paste.selection.title')"
-                >
-                  <ion-toolbar>
-                    <div class="editor-modal-actions">
-                      <ion-button
-                        fill="outline"
-                        color="light"
-                        (click)="
-                          closeParsedAbilitySelection();
-                          parsedAbilitySelectionModal.dismiss(null, 'cancel')
-                        "
-                      >
-                        {{ 'common.actions.cancel' | transloco }}
-                      </ion-button>
-                      <ion-button
-                        color="warning"
-                        [disabled]="savingEnemy()"
-                        (click)="applyParsedEnemyText()"
-                      >
-                        {{ t('editor.paste.selection.actions.parse') }}
-                      </ion-button>
-                    </div>
-                  </ion-toolbar>
-                </ion-footer>
-              </ng-template>
-            </ion-modal>
+              <app-ability-requirement-picker
+                [isOpen]="requiredCharacterAbilityPickerOpen()"
+                [title]="activeRequiredCharacterPickerTitle()"
+                [copy]="t('editor.requiredCharacters.pickerCopy')"
+                [drafts]="activeRequiredCharacterAbilityDrafts()"
+                [catalogItems]="activeRequiredCharacterCatalogItems()"
+                [showCharacterCount]="false"
+                (dismiss)="closeRequiredCharacterAbilityPicker()"
+                (saveDrafts)="saveRequiredCharacterAbilityPicker($event)"
+              ></app-ability-requirement-picker>
 
-            <ion-modal
-              #teamAssociationPickerModal
-              [isOpen]="teamAssociationPickerOpen()"
-              cssClass="enemy-team-association-modal"
-              [attr.aria-label]="t('teamAssociation.title')"
-              (didPresent)="labelModalDialog($event, t('teamAssociation.title'))"
-              (didDismiss)="closeTeamAssociationPicker()"
-            >
-              <ng-template>
-                <ion-header
-                  class="team-association-modal__header ion-no-border"
-                  role="group"
-                  [attr.aria-label]="t('teamAssociation.title')"
-                >
-                  <ion-toolbar>
-                    <div class="team-association-modal__head">
-                      <div>
-                        <div class="section-label">
-                          {{ t('teamAssociation.eyebrow') }}
+              <ion-modal
+                #parsedAbilitySelectionModal
+                [isOpen]="parsedAbilitySelectionOpen()"
+                cssClass="saved-enemies-editor-modal"
+                [attr.aria-label]="t('editor.paste.selection.title')"
+                (didPresent)="labelModalDialog($event, t('editor.paste.selection.title'))"
+                (didDismiss)="closeParsedAbilitySelection()"
+              >
+                <ng-template>
+                  <ion-header
+                    class="editor-modal-header ion-no-border"
+                    role="group"
+                    [attr.aria-label]="t('editor.paste.selection.title')"
+                  >
+                    <ion-toolbar>
+                      <div class="editor-modal-head">
+                        <div>
+                          <div class="section-label">
+                            {{ t('editor.paste.selection.eyebrow') }}
+                          </div>
+                          <h2>{{ t('editor.paste.selection.title') }}</h2>
+                          <p>{{ t('editor.paste.selection.copy') }}</p>
                         </div>
-                        <h2>{{ t('teamAssociation.title') }}</h2>
-                        <p>{{ t('teamAssociation.copy') }}</p>
                       </div>
-                      <span class="team-association-modal__counter">
-                        {{
-                          t('teamAssociation.counter', {
-                            selected: teamAssociationDraftIds().length,
-                            total: filteredTeamAssociationCards().length
-                          })
-                        }}
-                      </span>
-                    </div>
 
-                    <ion-buttons slot="end">
-                      <ion-button
-                        fill="clear"
-                        color="light"
-                        [attr.aria-label]="'common.actions.close' | transloco"
-                        (click)="
-                          closeTeamAssociationPicker();
-                          teamAssociationPickerModal.dismiss(null, 'cancel')
-                        "
-                      >
-                        <ion-icon
-                          slot="icon-only"
-                          [icon]="closeIcon"
-                          aria-hidden="true"
-                        ></ion-icon>
-                      </ion-button>
-                    </ion-buttons>
-                  </ion-toolbar>
-                </ion-header>
-
-                <ion-content class="team-association-modal__content">
-                  <div class="team-association-modal__shell">
-                    <div class="team-association-modal__toolbar">
-                      <ion-input
-                        class="team-association-modal__search"
-                        [label]="t('teamAssociation.searchLabel')"
-                        labelPlacement="stacked"
-                        fill="outline"
-                        type="search"
-                        clearInput="true"
-                        [value]="teamAssociationSearchQuery()"
-                        [placeholder]="t('teamAssociation.searchPlaceholder')"
-                        (ionInput)="onTeamAssociationSearchChange($event)"
-                      ></ion-input>
-                      <div class="team-association-modal__quick-actions">
-                        <ion-button
-                          fill="clear"
-                          color="warning"
-                          size="small"
-                          [disabled]="!filteredTeamAssociationCards().length"
-                          (click)="selectAllVisibleTeams()"
-                        >
-                          {{ t('teamAssociation.actions.selectAll') }}
-                        </ion-button>
+                      <ion-buttons slot="end">
                         <ion-button
                           fill="clear"
                           color="light"
-                          size="small"
-                          [disabled]="!teamAssociationDraftIds().length"
-                          (click)="clearTeamAssociationSelection()"
+                          [attr.aria-label]="'common.actions.close' | transloco"
+                          (click)="
+                            closeParsedAbilitySelection();
+                            parsedAbilitySelectionModal.dismiss(null, 'cancel')
+                          "
                         >
-                          {{ t('teamAssociation.actions.clear') }}
+                          <ion-icon
+                            slot="icon-only"
+                            [icon]="closeIcon"
+                            aria-hidden="true"
+                          ></ion-icon>
                         </ion-button>
-                      </div>
-                    </div>
+                      </ion-buttons>
+                    </ion-toolbar>
+                  </ion-header>
 
-                    @if (!savedTeamCards().length) {
-                      <div class="team-association-modal__empty">
-                        <ion-icon
-                          [icon]="addIcon"
-                          aria-hidden="true"
-                          class="team-association-modal__empty-icon"
-                        ></ion-icon>
-                        <h3>{{ t('teamAssociation.empty.title') }}</h3>
-                        <p>{{ t('teamAssociation.empty.copy') }}</p>
-                      </div>
-                    } @else if (!filteredTeamAssociationCards().length) {
-                      <div class="team-association-modal__empty">
-                        <h3>{{ t('teamAssociation.noMatches.title') }}</h3>
-                        <p>{{ t('teamAssociation.noMatches.copy') }}</p>
-                      </div>
-                    } @else {
-                      <div class="team-association-grid">
-                        @for (
-                          teamCard of filteredTeamAssociationCards();
-                          track teamCard.team.id;
-                          let cardIndex = $index
-                        ) {
-                          <button
-                            type="button"
-                            class="team-association-card"
-                            [class.team-association-card--selected]="
-                              isTeamAssociationDraft(teamCard.team.id)
-                            "
-                            [attr.aria-pressed]="isTeamAssociationDraft(teamCard.team.id)"
-                            [attr.aria-label]="
-                              t('teamAssociation.toggleAria', { name: teamCard.team.name })
-                            "
-                            [style.--card-index]="cardIndex"
-                            (click)="toggleTeamAssociationDraft(teamCard.team.id)"
-                          >
-                            <span class="team-association-card__check" aria-hidden="true">
-                              <svg viewBox="0 0 24 24">
-                                <path
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="3"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M5 12.5l4.5 4.5L19 7"
-                                />
-                              </svg>
-                            </span>
+                  <ion-content class="editor-modal-content">
+                    <div class="editor-modal-shell">
+                      @for (section of parsedAbilitySelectionSections(); track section.category) {
+                        <section class="ability-card">
+                          <div class="section-head section-head--editor">
+                            <div>
+                              <h3>{{ formatParsedAbilityCategoryLabel(section.category) }}</h3>
+                              <span>{{
+                                t('editor.paste.selection.count', {
+                                  count: section.candidates.length,
+                                })
+                              }}</span>
+                            </div>
 
-                            <div class="team-association-card__head">
-                              <strong class="team-association-card__name">
-                                {{ teamCard.team.name }}
-                              </strong>
-                              @if (teamCard.team.notes) {
-                                <small class="team-association-card__notes">
-                                  {{ teamCard.team.notes }}
-                                </small>
+                            <div class="card-actions">
+                              <ion-button
+                                fill="clear"
+                                color="warning"
+                                size="small"
+                                [disabled]="!section.candidates.length"
+                                (click)="selectAllParsedAbilityCandidates(section.category)"
+                              >
+                                {{ t('editor.paste.selection.actions.selectAll') }}
+                              </ion-button>
+                              <ion-button
+                                fill="clear"
+                                color="light"
+                                size="small"
+                                [disabled]="!section.candidates.length"
+                                (click)="clearParsedAbilityCandidates(section.category)"
+                              >
+                                {{ t('editor.paste.selection.actions.clear') }}
+                              </ion-button>
+                            </div>
+                          </div>
+
+                          @if (!section.candidates.length) {
+                            <p class="editor-empty-copy">
+                              {{ t('editor.paste.selection.emptyCategory') }}
+                            </p>
+                          } @else {
+                            <div class="parsed-ability-selection-list">
+                              @for (candidate of section.candidates; track candidate.identity) {
+                                <label class="parsed-ability-selection-item">
+                                  <ion-checkbox
+                                    [checked]="isParsedAbilityCandidateSelected(candidate.identity)"
+                                    [attr.aria-label]="candidate.label"
+                                    (ionChange)="
+                                      toggleParsedAbilityCandidate(candidate.identity, $event)
+                                    "
+                                  ></ion-checkbox>
+                                  <span
+                                    class="editor-ability-chip__icon"
+                                    [attr.data-tone]="candidate.visual.tone"
+                                  >
+                                    <ion-icon [icon]="candidate.visual.icon"></ion-icon>
+                                    <small>{{ candidate.visual.badge }}</small>
+                                  </span>
+                                  <span class="parsed-ability-selection-copy">
+                                    <strong>{{ candidate.label }}</strong>
+                                    <small>{{ candidate.sourceLine }}</small>
+                                  </span>
+                                </label>
                               }
                             </div>
+                          }
+                        </section>
+                      }
+                    </div>
+                  </ion-content>
 
-                            <div class="team-association-card__body">
-                              <div class="team-association-card__ship">
-                                @if (teamCard.shipThumbUrl) {
-                                  <img
-                                    [src]="teamCard.shipThumbUrl"
-                                    alt=""
-                                    aria-hidden="true"
-                                    loading="lazy"
-                                  />
-                                } @else {
-                                  <span class="team-association-card__ship-fallback">
-                                    {{ t('teamAssociation.noShipLabel') }}
-                                  </span>
-                                }
-                              </div>
-                              <div class="team-association-card__slots">
-                                @for (slot of teamCard.slots; track $index) {
-                                  @if (slot; as filledSlot) {
-                                    <span class="team-association-card__slot">
-                                      <img
-                                        [src]="filledSlot.imageUrl"
-                                        [alt]="filledSlot.name"
-                                        loading="lazy"
-                                      />
-                                    </span>
-                                  } @else {
-                                    <span
-                                      class="team-association-card__slot team-association-card__slot--empty"
-                                      aria-hidden="true"
-                                    ></span>
-                                  }
-                                }
-                              </div>
-                            </div>
-                          </button>
-                        }
-                      </div>
-                    }
-                  </div>
-                </ion-content>
-
-                <ion-footer
-                  class="team-association-modal__footer"
-                  role="group"
-                  [attr.aria-label]="t('teamAssociation.title')"
-                >
-                  <ion-toolbar>
-                    <div class="team-association-modal__footer-row">
-                      <div class="team-association-modal__footer-summary">
-                        <strong>
-                          {{
-                            t('teamAssociation.footer.selected', {
-                              count: teamAssociationDraftIds().length
-                            })
-                          }}
-                        </strong>
-                        <small>{{ t('teamAssociation.footer.hint') }}</small>
-                      </div>
-                      <div class="team-association-modal__footer-actions">
+                  <ion-footer
+                    class="editor-modal-footer"
+                    role="group"
+                    [attr.aria-label]="t('editor.paste.selection.title')"
+                  >
+                    <ion-toolbar>
+                      <div class="editor-modal-actions">
                         <ion-button
                           fill="outline"
                           color="light"
                           (click)="
-                            closeTeamAssociationPicker();
-                            teamAssociationPickerModal.dismiss(null, 'cancel')
+                            closeParsedAbilitySelection();
+                            parsedAbilitySelectionModal.dismiss(null, 'cancel')
                           "
                         >
                           {{ 'common.actions.cancel' | transloco }}
                         </ion-button>
                         <ion-button
                           color="warning"
-                          (click)="
-                            applyTeamAssociationSelection();
-                            teamAssociationPickerModal.dismiss(null, 'confirm')
-                          "
+                          [disabled]="savingEnemy()"
+                          (click)="applyParsedEnemyText()"
                         >
-                          {{ t('teamAssociation.actions.apply') }}
+                          {{ t('editor.paste.selection.actions.parse') }}
                         </ion-button>
                       </div>
-                    </div>
-                  </ion-toolbar>
-                </ion-footer>
-              </ng-template>
-            </ion-modal>
-          </div>
-        </ion-content>
+                    </ion-toolbar>
+                  </ion-footer>
+                </ng-template>
+              </ion-modal>
 
-        <ion-footer
-          class="editor-modal-footer"
-          role="group"
-          [attr.aria-label]="editingEnemy() ? t('editor.editTitle') : t('editor.createTitle')"
-        >
-          <ion-toolbar>
-            <div class="editor-modal-actions">
-              <ion-button
-                fill="outline"
-                color="light"
-                (click)="closeEditor(); savedEnemyEditorModal.dismiss(null, 'cancel')"
+              <ion-modal
+                #teamAssociationPickerModal
+                [isOpen]="teamAssociationPickerOpen()"
+                cssClass="enemy-team-association-modal"
+                [attr.aria-label]="t('teamAssociation.title')"
+                (didPresent)="labelModalDialog($event, t('teamAssociation.title'))"
+                (didDismiss)="closeTeamAssociationPicker()"
               >
-                {{ 'common.actions.cancel' | transloco }}
-              </ion-button>
-              <ion-button
-                color="warning"
-                [disabled]="savingEnemy() || processingEnemyImage() || !canSaveEnemy()"
-                (click)="saveEnemy()"
-              >
-                {{ editingEnemy() ? t('actions.saveChanges') : t('actions.saveEnemy') }}
-              </ion-button>
+                <ng-template>
+                  <ion-header
+                    class="team-association-modal__header ion-no-border"
+                    role="group"
+                    [attr.aria-label]="t('teamAssociation.title')"
+                  >
+                    <ion-toolbar>
+                      <div class="team-association-modal__head">
+                        <div>
+                          <div class="section-label">
+                            {{ t('teamAssociation.eyebrow') }}
+                          </div>
+                          <h2>{{ t('teamAssociation.title') }}</h2>
+                          <p>{{ t('teamAssociation.copy') }}</p>
+                        </div>
+                        <span class="team-association-modal__counter">
+                          {{
+                            t('teamAssociation.counter', {
+                              selected: teamAssociationDraftIds().length,
+                              total: filteredTeamAssociationCards().length,
+                            })
+                          }}
+                        </span>
+                      </div>
+
+                      <ion-buttons slot="end">
+                        <ion-button
+                          fill="clear"
+                          color="light"
+                          [attr.aria-label]="'common.actions.close' | transloco"
+                          (click)="
+                            closeTeamAssociationPicker();
+                            teamAssociationPickerModal.dismiss(null, 'cancel')
+                          "
+                        >
+                          <ion-icon
+                            slot="icon-only"
+                            [icon]="closeIcon"
+                            aria-hidden="true"
+                          ></ion-icon>
+                        </ion-button>
+                      </ion-buttons>
+                    </ion-toolbar>
+                  </ion-header>
+
+                  <ion-content class="team-association-modal__content">
+                    <div class="team-association-modal__shell">
+                      <div class="team-association-modal__toolbar">
+                        <ion-input
+                          class="team-association-modal__search"
+                          [label]="t('teamAssociation.searchLabel')"
+                          labelPlacement="stacked"
+                          fill="outline"
+                          type="search"
+                          clearInput="true"
+                          [value]="teamAssociationSearchQuery()"
+                          [placeholder]="t('teamAssociation.searchPlaceholder')"
+                          (ionInput)="onTeamAssociationSearchChange($event)"
+                        ></ion-input>
+                        <div class="team-association-modal__quick-actions">
+                          <ion-button
+                            fill="clear"
+                            color="warning"
+                            size="small"
+                            [disabled]="!filteredTeamAssociationCards().length"
+                            (click)="selectAllVisibleTeams()"
+                          >
+                            {{ t('teamAssociation.actions.selectAll') }}
+                          </ion-button>
+                          <ion-button
+                            fill="clear"
+                            color="light"
+                            size="small"
+                            [disabled]="!teamAssociationDraftIds().length"
+                            (click)="clearTeamAssociationSelection()"
+                          >
+                            {{ t('teamAssociation.actions.clear') }}
+                          </ion-button>
+                        </div>
+                      </div>
+
+                      @if (!savedTeamCards().length) {
+                        <div class="team-association-modal__empty">
+                          <ion-icon
+                            [icon]="addIcon"
+                            aria-hidden="true"
+                            class="team-association-modal__empty-icon"
+                          ></ion-icon>
+                          <h3>{{ t('teamAssociation.empty.title') }}</h3>
+                          <p>{{ t('teamAssociation.empty.copy') }}</p>
+                        </div>
+                      } @else if (!filteredTeamAssociationCards().length) {
+                        <div class="team-association-modal__empty">
+                          <h3>{{ t('teamAssociation.noMatches.title') }}</h3>
+                          <p>{{ t('teamAssociation.noMatches.copy') }}</p>
+                        </div>
+                      } @else {
+                        <div class="team-association-grid">
+                          @for (
+                            teamCard of filteredTeamAssociationCards();
+                            track teamCard.team.id;
+                            let cardIndex = $index
+                          ) {
+                            <button
+                              type="button"
+                              class="team-association-card"
+                              [class.team-association-card--selected]="
+                                isTeamAssociationDraft(teamCard.team.id)
+                              "
+                              [attr.aria-pressed]="isTeamAssociationDraft(teamCard.team.id)"
+                              [attr.aria-label]="
+                                t('teamAssociation.toggleAria', { name: teamCard.team.name })
+                              "
+                              [style.--card-index]="cardIndex"
+                              (click)="toggleTeamAssociationDraft(teamCard.team.id)"
+                            >
+                              <span class="team-association-card__check" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                  <path
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M5 12.5l4.5 4.5L19 7"
+                                  />
+                                </svg>
+                              </span>
+
+                              <div class="team-association-card__head">
+                                <strong class="team-association-card__name">
+                                  {{ teamCard.team.name }}
+                                </strong>
+                                @if (teamCard.team.notes) {
+                                  <small class="team-association-card__notes">
+                                    {{ teamCard.team.notes }}
+                                  </small>
+                                }
+                              </div>
+
+                              <div class="team-association-card__body">
+                                <div class="team-association-card__ship">
+                                  @if (teamCard.shipThumbUrl) {
+                                    <img
+                                      [src]="teamCard.shipThumbUrl"
+                                      alt=""
+                                      aria-hidden="true"
+                                      loading="lazy"
+                                    />
+                                  } @else {
+                                    <span class="team-association-card__ship-fallback">
+                                      {{ t('teamAssociation.noShipLabel') }}
+                                    </span>
+                                  }
+                                </div>
+                                <div class="team-association-card__slots">
+                                  @for (slot of teamCard.slots; track $index) {
+                                    @if (slot; as filledSlot) {
+                                      <span class="team-association-card__slot">
+                                        <img
+                                          [src]="filledSlot.imageUrl"
+                                          [alt]="filledSlot.name"
+                                          loading="lazy"
+                                        />
+                                      </span>
+                                    } @else {
+                                      <span
+                                        class="team-association-card__slot team-association-card__slot--empty"
+                                        aria-hidden="true"
+                                      ></span>
+                                    }
+                                  }
+                                </div>
+                              </div>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </ion-content>
+
+                  <ion-footer
+                    class="team-association-modal__footer"
+                    role="group"
+                    [attr.aria-label]="t('teamAssociation.title')"
+                  >
+                    <ion-toolbar>
+                      <div class="team-association-modal__footer-row">
+                        <div class="team-association-modal__footer-summary">
+                          <strong>
+                            {{
+                              t('teamAssociation.footer.selected', {
+                                count: teamAssociationDraftIds().length,
+                              })
+                            }}
+                          </strong>
+                          <small>{{ t('teamAssociation.footer.hint') }}</small>
+                        </div>
+                        <div class="team-association-modal__footer-actions">
+                          <ion-button
+                            fill="outline"
+                            color="light"
+                            (click)="
+                              closeTeamAssociationPicker();
+                              teamAssociationPickerModal.dismiss(null, 'cancel')
+                            "
+                          >
+                            {{ 'common.actions.cancel' | transloco }}
+                          </ion-button>
+                          <ion-button
+                            color="warning"
+                            (click)="
+                              applyTeamAssociationSelection();
+                              teamAssociationPickerModal.dismiss(null, 'confirm')
+                            "
+                          >
+                            {{ t('teamAssociation.actions.apply') }}
+                          </ion-button>
+                        </div>
+                      </div>
+                    </ion-toolbar>
+                  </ion-footer>
+                </ng-template>
+              </ion-modal>
             </div>
-          </ion-toolbar>
-        </ion-footer>
-      </ng-template>
-    </ion-modal>
+          </ion-content>
+
+          <ion-footer
+            class="editor-modal-footer"
+            role="group"
+            [attr.aria-label]="editingEnemy() ? t('editor.editTitle') : t('editor.createTitle')"
+          >
+            <ion-toolbar>
+              <div class="editor-modal-actions">
+                <ion-button
+                  fill="outline"
+                  color="light"
+                  (click)="closeEditor(); savedEnemyEditorModal.dismiss(null, 'cancel')"
+                >
+                  {{ 'common.actions.cancel' | transloco }}
+                </ion-button>
+                <ion-button
+                  color="warning"
+                  [disabled]="savingEnemy() || processingEnemyImage() || !canSaveEnemy()"
+                  (click)="saveEnemy()"
+                >
+                  {{ editingEnemy() ? t('actions.saveChanges') : t('actions.saveEnemy') }}
+                </ion-button>
+              </div>
+            </ion-toolbar>
+          </ion-footer>
+        </ng-template>
+      </ion-modal>
     </app-saved-enemies-style-panels>
   </ion-content>
 </ng-container>

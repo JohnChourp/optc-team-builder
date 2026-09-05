@@ -169,6 +169,11 @@
                   [sections]="abilityTagSetSections()"
                   [selection]="tagSetSelection()"
                   [title]="t('filters.abilityTagSets.title')"
+                  modalScopeClass="character-boxes-ability-modal"
+                  [collapsibleTileCounts]="true"
+                  [captainScopedTileCounts]="true"
+                  [showHelp]="true"
+                  [scopeMarkers]="true"
                   (dismiss)="closeAbilityTagSetPicker()"
                   (saveSelection)="saveAbilityTagSetPicker($event)"
                 ></app-ability-tag-set-picker>
