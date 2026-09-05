@@ -439,8 +439,8 @@
                               </span>
                               @if (help.conditionLines.length) {
                                 <ul class="captain-tier-breakdown__conditions">
-                                  @for (line of help.conditionLines; track $index) {
-                                    <li>{{ line }}</li>
+                                  @for (tokens of help.conditionLineTokens; track $index) {
+                                    <li>@for (token of tokens; track $index) {@if (token.key) {{{ token.key | transloco: token.params }}} @else {{{ token.text }}}}</li>
                                   }
                                 </ul>
                               }
@@ -453,8 +453,8 @@
                           } @else {
                             @if (help.conditionLines.length) {
                               <ul class="captain-tier-breakdown__conditions">
-                                @for (line of help.conditionLines; track $index) {
-                                  <li>{{ line }}</li>
+                                @for (tokens of help.conditionLineTokens; track $index) {
+                                  <li>@for (token of tokens; track $index) {@if (token.key) {{{ token.key | transloco: token.params }}} @else {{{ token.text }}}}</li>
                                 }
                               </ul>
                             }

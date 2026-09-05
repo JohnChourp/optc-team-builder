@@ -104,6 +104,20 @@
       "rarityMin": "Σπανιότητα {{min}}+",
       "rarityMax": "Σπανιότητα ≤ {{max}}",
       "tierFallback": "Tier {{tier}}"
+    },
+    "condition": {
+      "teamExcludes": "Ομάδα: χωρίς {{detail}}",
+      "teamRaw": "Ομάδα: {{clause}}",
+      "teamCrewHas": "Ομάδα: περιλαμβάνει {{parts}}",
+      "teamCrewHasSameType": "Ομάδα: περιλαμβάνει {{count}} χαρακτήρες ίδιου Type",
+      "teamRequiresCaptain": "Ομάδα: αυτός ο χαρακτήρας είναι ο Captain σου",
+      "fieldTerritory": "Πεδίο μάχης: Territory {{territories}}",
+      "branchState": "Μορφή: {{label}}",
+      "triggerConsecutivePerfects": "Ενεργοποίηση: μετά από {{count}} συνεχόμενα PERFECT",
+      "triggerRaw": "Ενεργοποίηση: {{clause}}",
+      "triggerActionSpecialExcellent": "Ενεργοποίηση: πετυχαίνουν EXCELLENT στο Action Special",
+      "triggerBeneficialOrb": "Ενεργοποίηση: αν έχουν beneficial orb",
+      "triggerApplicableTag": "Ενεργοποίηση: αν έχουν το αντίστοιχο tag"
     }
   },
   "coverage": {

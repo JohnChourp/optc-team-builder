@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { type CharacterCaptainAbilityCoverageTier } from '../models/optc.models';
 import {
   CAPTAIN_TIER_SCOPE_SEPARATOR,
+  buildCaptainCoverageTierConditionLineTokens,
   buildCaptainCoverageTierScopeTokens,
   buildCaptainCoverageTierView,
   type CaptainCoverageTierScopeToken,
@@ -169,20 +170,198 @@ describe('captain coverage tier scope tokens', () => {
   });
 
   /*
-   * Deliberately NOT translated. Measured across the shipped dataset: of ~1172
-   * condition lines in 6310 tiers, ~1126 end in raw parser output that is
-   * English game text. Translating only the prefix would glue a Greek label to
-   * an English sentence, which reads worse than leaving it consistent.
+   * The condition lines ARE translated now, structurally: every line carries a
+   * translated prefix, and a line whose tail is game data - types, classes,
+   * tags, territories, a branch label - or one of the four fixed clauses the
+   * parser emits verbatim becomes fully translatable. A line whose tail is raw
+   * parser English keeps that English, because inventing a translation for text
+   * the dataset spells in English would be worse than showing what the game says.
+   *
+   * The English is the contract: these keys replaced hardcoded literals, so
+   * rendering the tokens through the shipped English catalogue must reproduce
+   * `conditionLines` character for character. That is what the first test below
+   * pins, and it is the check that catches a well-meaning reword of a key.
    */
-  it('leaves the condition lines in English, prefix included', () => {
-    const view = buildCaptainCoverageTierView(
+  const CONDITION_CASES: Array<[string, CharacterCaptainAbilityCoverageTier]> = [
+    [
+      'crew exclusion, game tokens',
       tier({
         teamConditions: [
-          { kind: 'crew-exclusion', rawClause: '', types: ['PSY'] },
+          { kind: 'crew-exclusion', rawClause: '', types: ['PSY'], classes: ['Fighter'] },
         ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
       }),
-    );
+    ],
+    [
+      'crew exclusion falling back to its raw clause',
+      tier({
+        teamConditions: [
+          { kind: 'crew-exclusion', rawClause: 'no Slashers at all' },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    ],
+    [
+      'a raw team clause',
+      tier({
+        teamConditions: [
+          {
+            kind: 'crew-composition',
+            rawClause: 'you have 5 or more Slashers characters in your crew',
+          },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    ],
+    [
+      'the fixed requires-captain clause',
+      tier({
+        teamConditions: [
+          { kind: 'requires-captain', rawClause: 'this character is your Captain' },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    ],
+    [
+      'crew composition with a count and targets',
+      tier({
+        teamConditions: [
+          { kind: 'crew-composition', rawClause: '', minCount: 3, classes: ['Powerhouse'] },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    ],
+    [
+      'crew composition, same Type only',
+      tier({
+        teamConditions: [
+          { kind: 'crew-composition', rawClause: '', minCount: 4, sameType: true },
+        ] as CharacterCaptainAbilityCoverageTier['teamConditions'],
+      }),
+    ],
+    [
+      'a field territory',
+      tier({
+        fieldConditions: [
+          { territories: ['Wano', 'Dressrosa'] },
+        ] as CharacterCaptainAbilityCoverageTier['fieldConditions'],
+      }),
+    ],
+    [
+      'a captain branch state',
+      tier({
+        triggerConditions: [
+          { kind: 'captain-branch-state', rawClause: '', branchLabel: 'Gear 4 - Boundman Captain' },
+        ] as CharacterCaptainAbilityCoverageTier['triggerConditions'],
+      }),
+    ],
+    [
+      'consecutive PERFECTs',
+      tier({
+        triggerConditions: [
+          { kind: 'consecutive-perfects', rawClause: '', perfectStreak: 2 },
+        ] as CharacterCaptainAbilityCoverageTier['triggerConditions'],
+      }),
+    ],
+    [
+      'the fixed beneficial-orb trigger',
+      tier({
+        triggerConditions: [
+          { kind: 'other', rawClause: 'if they have a beneficial orb' },
+        ] as CharacterCaptainAbilityCoverageTier['triggerConditions'],
+      }),
+    ],
+    [
+      'a raw trigger clause',
+      tier({
+        triggerConditions: [
+          { kind: 'other', rawClause: 'if total Damage Taken is 20,000 or more' },
+        ] as CharacterCaptainAbilityCoverageTier['triggerConditions'],
+      }),
+    ],
+  ];
 
-    expect(view.conditionLines).toEqual(['Team excludes: [PSY]']);
+  function conditionCatalogue(locale = 'en'): Record<string, string> {
+    const global = JSON.parse(
+      readFileSync(resolve(process.cwd(), `public/i18n/${locale}.json`), 'utf8'),
+    ) as { captainTiers?: { condition?: Record<string, string> } };
+
+    return global.captainTiers?.condition ?? {};
+  }
+
+  it.each(CONDITION_CASES)(
+    'renders the same English condition line as the hardcoded output: %s',
+    (_name, input) => {
+      const catalogue = conditionCatalogue();
+      const view = buildCaptainCoverageTierView(input);
+
+      expect(view.conditionLineTokens).toHaveLength(view.conditionLines.length);
+
+      view.conditionLineTokens.forEach((tokens, index) => {
+        const rendered = tokens
+          .map((token) => {
+            if (token.text !== undefined) {
+              return token.text;
+            }
+
+            const short = token.key.replace('captainTiers.condition.', '');
+            const template = catalogue[short];
+
+            expect(template, `missing English string for ${token.key}`).toBeTruthy();
+
+            return Object.entries(token.params ?? {}).reduce(
+              (text, [name, value]) => text.replace(`{{${name}}}`, String(value)),
+              template,
+            );
+          })
+          .join('');
+
+        expect(rendered).toBe(view.conditionLines[index]);
+      });
+    },
+  );
+
+  it('ships every condition key it emits, in both languages', () => {
+    const emitted = new Set<string>();
+
+    for (const [, input] of CONDITION_CASES) {
+      for (const tokens of buildCaptainCoverageTierConditionLineTokens(input)) {
+        for (const token of tokens) {
+          if (token.key !== undefined) {
+            emitted.add(token.key.replace('captainTiers.condition.', ''));
+          }
+        }
+      }
+    }
+    // The two high-volume fixed clauses the cases above do not reach.
+    emitted.add('triggerActionSpecialExcellent');
+    emitted.add('triggerApplicableTag');
+
+    for (const locale of ['en', 'el']) {
+      const catalogue = conditionCatalogue(locale);
+
+      expect(
+        Object.keys(catalogue).length,
+        `${locale}.json has no captainTiers.condition`,
+      ).toBeGreaterThan(0);
+
+      for (const key of emitted) {
+        expect(catalogue[key], `${locale} is missing captainTiers.condition.${key}`).toBeTruthy();
+      }
+    }
+  });
+
+  /*
+   * The Greek must differ from the English, or a forgotten translation would
+   * pass every other test here by quietly reading as the English string.
+   */
+  it('actually translates every condition key into Greek, interpolation intact', () => {
+    const en = conditionCatalogue('en');
+    const el = conditionCatalogue('el');
+
+    expect(Object.keys(el).sort()).toEqual(Object.keys(en).sort());
+
+    for (const key of Object.keys(en)) {
+      expect(el[key], `${key} is untranslated`).not.toBe(en[key]);
+
+      for (const param of en[key].matchAll(/\{\{(\w+)\}\}/gu)) {
+        expect(el[key], `${key} drops ${param[0]}`).toContain(param[0]);
+      }
+    }
   });
 });

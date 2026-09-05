@@ -31,8 +31,8 @@
             </div>
             @if (tier.conditionLines.length > 0) {
               <ul class="team-coverage-summary__conditions">
-                @for (condition of tier.conditionLines; track condition) {
-                  <li>{{ condition }}</li>
+                @for (tokens of tier.conditionLineTokens; track $index) {
+                  <li>@for (token of tokens; track $index) {@if (token.key) {{{ token.key | transloco: token.params }}} @else {{{ token.text }}}}</li>
                 }
               </ul>
             }
