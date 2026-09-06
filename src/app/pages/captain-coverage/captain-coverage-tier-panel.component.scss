@@ -9,8 +9,8 @@
  *
  * (This rule is the page's only `.results-panel`-exclusive one. The rule in
  * captain-coverage-layout-panel.component.scss looks like the natural home but
- * is a three-selector group that also covers .coverage-summary and
- * .team-budget-panel, neither of which is ever a scroll target.)
+ * is a group that also covers .team-budget-panel, which is never a scroll
+ * target.)
  */
 .results-panel {
   display: grid;

@@ -3,9 +3,19 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/*
+ * Centred, not flush-right. The footer holds exactly one button now - Cancel
+ * was deleted because the header's own X already closes the modal - and a lone
+ * confirm hugging the right edge reads as the smaller half of a pair that is
+ * no longer there.
+ *
+ * This file is rendered by BOTH pickers, so the rule is written once and
+ * unscoped. Scoping it to one modal class is the shape check-tag-picker-panel-
+ * scoping.mjs exists to reject.
+ */
 .ability-tag-set-footer__actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 8px;
 }

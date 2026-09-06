@@ -429,21 +429,22 @@
           </div>
         </ion-content>
 
+        <!--
+          One button, centred - the same shape as the ability picker, because
+          the two share this footer's stylesheet. Cancel is gone: the header's
+          X already runs the identical `cancel(); dismiss(null, 'cancel')` pair.
+
+          The testid still says `-save` on purpose: it names the confirm ROLE,
+          not the word printed on it.
+        -->
         <footer class="ability-tag-set-footer">
           <div class="ability-tag-set-footer__actions">
-            <ion-button
-              fill="clear"
-              color="light"
-              (click)="cancel(); characterTagSetPickerModal.dismiss(null, 'cancel')"
-            >
-              {{ 'common.actions.cancel' | transloco }}
-            </ion-button>
             <ion-button
               color="warning"
               data-testid="character-tag-set-picker-save"
               (click)="save()"
             >
-              {{ 'common.actions.save' | transloco }}
+              {{ 'common.actions.filter' | transloco }}
             </ion-button>
           </div>
         </footer>

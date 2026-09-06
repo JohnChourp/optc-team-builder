@@ -62,6 +62,11 @@ let alertControllerStub: {
 let i18nStub: {
   translate: ReturnType<typeof vi.fn>;
 };
+let preferencesStub: {
+  get: ReturnType<typeof vi.fn>;
+  set: ReturnType<typeof vi.fn>;
+};
+let storedPreferences: Map<string, string>;
 
 // `@capacitor/app` is mocked once globally in src/test-setup.ts (shared `App`
 // singleton). AppComponent.loadAppVersion() calls App.getInfo() but tolerates any
@@ -117,6 +122,8 @@ vi.mock('@angular/core', async () => {
           return alertControllerStub;
         case 'AppI18nService':
           return i18nStub;
+        case 'PreferencesAdapterService':
+          return preferencesStub;
         default:
           throw new Error(`Unexpected inject token: ${token.name ?? 'unknown'}`);
       }
@@ -177,6 +184,17 @@ describe('AppComponent', () => {
     i18nStub = {
       translate: vi.fn((key: string) => key),
     };
+    storedPreferences = new Map<string, string>();
+    preferencesStub = {
+      get: vi.fn(({ key }: { key: string }) =>
+        Promise.resolve({ value: storedPreferences.get(key) ?? null }),
+      ),
+      set: vi.fn(({ key, value }: { key: string; value: string }) => {
+        storedPreferences.set(key, value);
+
+        return Promise.resolve();
+      }),
+    };
   });
 
   afterEach(() => {
@@ -232,6 +250,66 @@ describe('AppComponent', () => {
     component.dismissInstallBanner();
 
     expect(component.showInstallBanner()).toBe(false);
+  });
+
+  it('never shows the install banner again once it has been dismissed with the X', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+    const promptEvent = new Event('beforeinstallprompt');
+
+    globalThis.dispatchEvent(promptEvent);
+    expect(component.showInstallBanner()).toBe(true);
+
+    component.dismissInstallBanner();
+    await Promise.resolve();
+
+    expect(preferencesStub.set).toHaveBeenCalledWith({
+      key: 'installPromptDismissed',
+      value: 'true',
+    });
+
+    /*
+     * The defect this pins: `beforeinstallprompt` fires on every page load and
+     * its handler resets the session flag, so before the persisted one existed
+     * the banner came back on every route the reader visited - even though they
+     * had closed it, and even though they never installed the app.
+     */
+    globalThis.dispatchEvent(new Event('beforeinstallprompt'));
+
+    expect(component.showInstallBanner()).toBe(false);
+  });
+
+  it('restores the forever dismissal on a later visit', async () => {
+    storedPreferences.set('installPromptDismissed', 'true');
+
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    await Promise.resolve();
+    await Promise.resolve();
+    globalThis.dispatchEvent(new Event('beforeinstallprompt'));
+
+    expect(preferencesStub.get).toHaveBeenCalledWith({ key: 'installPromptDismissed' });
+    expect(component.showInstallBanner()).toBe(false);
+  });
+
+  it('keeps a declined native install dialog a session-level hide, not a forever one', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+    const promptEvent = new Event('beforeinstallprompt') as Event & {
+      prompt: ReturnType<typeof vi.fn>;
+      userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+    };
+    promptEvent.prompt = vi.fn().mockResolvedValue(undefined);
+    promptEvent.userChoice = Promise.resolve({ outcome: 'dismissed' });
+
+    globalThis.dispatchEvent(promptEvent);
+    await component.installApp();
+
+    // Cancelling a system dialog is not the same as saying "never again".
+    expect(component.installBannerDismissed()).toBe(true);
+    expect(component.installBannerDismissedForever()).toBe(false);
+    expect(preferencesStub.set).not.toHaveBeenCalled();
   });
 
   it('consumes the install prompt event when installing the app', async () => {

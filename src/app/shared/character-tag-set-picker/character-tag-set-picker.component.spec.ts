@@ -429,6 +429,36 @@ describe('CharacterTagSetPickerComponent', () => {
     expect(reducedMotionBlock).toContain('.character-tag-set-picker-modal *::after');
     expect(reducedMotionBlock).toContain('.ability-tag-set-picker-modal *,');
   });
+
+  it('confirms with one centred Filter button and no Cancel beside it', () => {
+    const template = readFileSync(resolve(process.cwd(), 'src/app/shared/character-tag-set-picker/character-tag-set-picker.component.html'), 'utf8');
+    const footer = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/shared/ability-tag-set-picker/ability-tag-set-picker-footer-panel.component.scss',
+      ),
+      'utf8',
+    );
+
+    // "Save" implied the selection was stored somewhere; it applies a filter.
+    expect(template).toContain("{{ 'common.actions.filter' | transloco }}");
+    expect(template).not.toContain("{{ 'common.actions.save' | transloco }}");
+    /*
+     * Cancel is gone because the header X already runs the identical
+     * `cancel(); dismiss(null, 'cancel')` pair - two controls for one escape.
+     * That X is what makes the removal safe, so it is asserted here rather
+     * than left implied.
+     */
+    expect(template).not.toContain("{{ 'common.actions.cancel' | transloco }}");
+    expect(template).toContain('[attr.aria-label]="\'common.actions.close\' | transloco"');
+    expect(template).toContain("(click)=\"cancel(); characterTagSetPickerModal.dismiss(null, 'cancel')\"");
+    // The confirm keeps its testid: it names the role, not the printed word.
+    expect(template).toContain('data-testid="character-tag-set-picker-save"');
+    // A lone confirm hugging the right edge reads as half of a missing pair.
+    expect(footer).toContain('.ability-tag-set-footer__actions {');
+    expect(footer).toContain('justify-content: center;');
+    expect(footer).not.toContain('justify-content: flex-end;');
+  });
 });
 
 /*

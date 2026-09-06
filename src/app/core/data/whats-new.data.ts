@@ -31,6 +31,65 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.3.0',
+    date: '2026-09-06',
+    userVisible: true,
+    headline: {
+      en: 'Captain Coverage stops freezing, and the character card gets its corners back',
+      el: 'Το Captain Coverage δεν παγώνει πια, και η κάρτα χαρακτήρα παίρνει πίσω τις γωνίες της',
+    },
+    summaryEn:
+      "Captain Coverage used to lock up for several seconds the moment you touched the favorites switch with a big favorites list - no spinner, nothing moving, just a page that looked broken. It does not do that any more. The results now clear straight away and you get a spinner, a progress bar and a line telling you what is being applied, and underneath it the page does far less work than it used to: the Captain's ability was being re-read from scratch once for every character in the list, thousands of times over, and it is now read once. The same loading line appears when you press Filter in the ability and character tag pop-ups, which now close the moment you press it. Those pop-ups also lost their Cancel button - the X at the top already did the same thing - and the button that used to say Save now says Filter and sits in the middle. On the cards themselves, the HP and ATK numbers finally count your Friend Captain: if both leaders boost HP by 1.5x you now read 2.25x, which is what the game actually gives you, instead of only your own Captain's 1.5x. Add to team is now a round button in the bottom-right corner of the portrait, matching the crown in the top-right, and the cost sits in the bottom-left - press it and it still tells you it is the cost. The long intro block at the top of the page is gone; the number of Captains among your results moved down next to the result count, where it now follows your filters instead of always saying the same thing. Clear no longer shoves the filter button down the page when it appears. And if you close the install banner with its X, it stays closed - on every page, on every visit, whether or not you ever install the app.",
+    summaryEl:
+      'Το Captain Coverage κόλλαγε για αρκετά δευτερόλεπτα μόλις άγγιζες τον διακόπτη των favorites με μεγάλη λίστα favorites - χωρίς spinner, χωρίς τίποτα να κινείται, μια σελίδα που έμοιαζε χαλασμένη. Δεν το κάνει πια. Τα αποτελέσματα αδειάζουν αμέσως και βλέπεις spinner, μπάρα προόδου και μια γραμμή που λέει τι εφαρμόζεται· από κάτω η σελίδα κάνει πολύ λιγότερη δουλειά από πριν, αφού το Captain Ability ξαναδιαβαζόταν από την αρχή για κάθε χαρακτήρα της λίστας, χιλιάδες φορές, ενώ τώρα διαβάζεται μία. Η ίδια γραμμή φόρτωσης εμφανίζεται όταν πατάς Filter στα pop-up για ability και character tags, τα οποία πλέον κλείνουν αμέσως μόλις το πατήσεις. Αυτά τα pop-up έχασαν και το κουμπί Cancel - το X πάνω δεξιά έκανε ήδη το ίδιο - ενώ το κουμπί που έγραφε Save τώρα γράφει Filter και κάθεται στο κέντρο. Στις ίδιες τις κάρτες, τα νούμερα HP και ATK μετράνε επιτέλους και τον Friend Captain: αν και οι δύο leaders ανεβάζουν το HP κατά 1.5x, τώρα διαβάζεις 2.25x, δηλαδή αυτό που σου δίνει πραγματικά το παιχνίδι, αντί μόνο για το 1.5x του δικού σου Captain. Το Add to team έγινε στρογγυλό κουμπί κάτω δεξιά στην εικόνα του χαρακτήρα, ίδιο με το crown πάνω δεξιά, και το cost κάθεται κάτω αριστερά - πάτα το και σου λέει ακόμη ότι είναι το cost. Το μεγάλο εισαγωγικό μπλοκ στην κορυφή της σελίδας έφυγε· ο αριθμός των Captains μέσα στα αποτελέσματά σου μετακόμισε δίπλα στον αριθμό των αποτελεσμάτων, όπου πλέον ακολουθεί τα φίλτρα σου αντί να λέει πάντα το ίδιο. Το Clear δεν σπρώχνει πια το κουμπί του φίλτρου προς τα κάτω όταν εμφανίζεται. Και αν κλείσεις το banner εγκατάστασης με το X του, μένει κλειστό - σε κάθε σελίδα, σε κάθε επίσκεψη, είτε εγκαταστήσεις την εφαρμογή είτε όχι.',
+    added: [
+      {
+        en: 'Captain Coverage now shows a spinner, a progress bar and a line saying what is being applied while it rebuilds the character results, instead of leaving you with a page that will not respond.',
+        el: 'Το Captain Coverage δείχνει πλέον spinner, μπάρα προόδου και μια γραμμή που λέει τι εφαρμόζεται όσο ξαναχτίζει τα αποτελέσματα, αντί να σε αφήνει με μια σελίδα που δεν αποκρίνεται.',
+      },
+      {
+        en: 'The results header now tells you how many of the matching characters can be a Captain, and that count follows your filters.',
+        el: 'Η επικεφαλίδα των αποτελεσμάτων λέει πλέον πόσοι από τους χαρακτήρες που ταιριάζουν μπορούν να μπουν Captain, και ο αριθμός ακολουθεί τα φίλτρα σου.',
+      },
+      {
+        en: 'Add to team is now a round button in the bottom-right corner of the portrait, matching the crown, and it still drops the character straight into the first free sub slot.',
+        el: 'Το Add to team είναι πλέον στρογγυλό κουμπί κάτω δεξιά στην εικόνα του χαρακτήρα, ίδιο με το crown, και εξακολουθεί να βάζει τον χαρακτήρα κατευθείαν στην πρώτη ελεύθερη θέση sub.',
+      },
+    ],
+    improved: [
+      {
+        en: 'The ability and character tag pop-ups now close the moment you press Filter. That button was called Save, it sits in the middle now, and Cancel is gone because the X at the top always did the same thing.',
+        el: 'Τα pop-up για ability και character tags κλείνουν πλέον μόλις πατήσεις Filter. Το κουμπί λεγόταν Save, τώρα κάθεται στο κέντρο, και το Cancel έφυγε γιατί το X στην κορυφή έκανε ανέκαθεν το ίδιο.',
+      },
+      {
+        en: "The intro block at the top of Captain Coverage is gone, along with a line under the character box filter that only repeated the option's own name. Both took up space without answering anything.",
+        el: 'Το εισαγωγικό μπλοκ στην κορυφή του Captain Coverage έφυγε, μαζί με μια γραμμή κάτω από το φίλτρο character box που απλώς επαναλάμβανε το όνομα της επιλογής. Και τα δύο έπιαναν χώρο χωρίς να απαντούν σε τίποτα.',
+      },
+      {
+        en: 'The cost moved onto the character portrait, bottom-left. Pressing the number still tells you it is the cost.',
+        el: 'Το cost μετακόμισε πάνω στην εικόνα του χαρακτήρα, κάτω αριστερά. Πατώντας τον αριθμό σου λέει ακόμη ότι είναι το cost.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'Turning the favorites filter on or off no longer freezes Captain Coverage for seconds with a large favorites list.',
+        el: 'Το άνοιγμα ή κλείσιμο του φίλτρου favorites δεν παγώνει πια το Captain Coverage για δευτερόλεπτα με μεγάλη λίστα favorites.',
+      },
+      {
+        en: 'The HP and ATK numbers on each card now count your Friend Captain as well as your Captain. Two leaders that each boost HP by 1.5x read 2.25x, the way the game combines them, instead of showing only one leader.',
+        el: 'Τα νούμερα HP και ATK σε κάθε κάρτα μετράνε πλέον και τον Friend Captain μαζί με τον Captain. Δύο leaders που ανεβάζουν ο καθένας το HP κατά 1.5x δίνουν 2.25x, όπως τα συνδυάζει το παιχνίδι, αντί να φαίνεται μόνο ο ένας.',
+      },
+      {
+        en: 'The Clear link no longer pushes the filter button down the page when it appears, on Captain Coverage and on every other screen that shows one.',
+        el: 'Ο σύνδεσμος Clear δεν σπρώχνει πια το κουμπί του φίλτρου προς τα κάτω όταν εμφανίζεται, στο Captain Coverage και σε κάθε άλλη οθόνη που το δείχνει.',
+      },
+      {
+        en: 'Closing the install banner with its X now keeps it closed for good, on every page and every visit, even if you never install the app.',
+        el: 'Κλείνοντας το banner εγκατάστασης με το X του, μένει πλέον κλειστό οριστικά, σε κάθε σελίδα και κάθε επίσκεψη, ακόμη κι αν δεν εγκαταστήσεις ποτέ την εφαρμογή.',
+      },
+    ],
+  },
+  {
     version: '0.2.10',
     date: '2026-09-05',
     userVisible: true,

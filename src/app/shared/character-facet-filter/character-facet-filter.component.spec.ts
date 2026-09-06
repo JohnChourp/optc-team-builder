@@ -401,6 +401,21 @@ describe('CharacterFacetFilterComponent', () => {
     expect(template).toContain("facetTestId('zero-' + zeroReason())");
     expect(template).toContain('role="status" aria-live="polite"');
   });
+
+  it('reserves the label row height the Clear button will need', () => {
+    const shell = readFileSync(resolve(process.cwd(), 'src/app/shared/character-facet-filter/character-facet-filter-shell-panel.component.scss'), 'utf8');
+
+    /*
+     * Ionic sizes a small button from `:host(.button-small) { min-height: 2.1em }`
+     * at `font-size: 0.8125rem` = 1.70625rem, which overshot the old 24px floor
+     * by ~3px. The row reserves the taller value whether or not Clear is
+     * rendered, so the control below it no longer jumps down the page the
+     * moment a filter is set.
+     */
+    expect(shell).toContain('.character-facet-filter__header {');
+    expect(shell).toContain('min-height: 1.75rem;');
+    expect(shell).not.toContain('min-height: 24px;');
+  });
 });
 
 interface CreateComponentResult {

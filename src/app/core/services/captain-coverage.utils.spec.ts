@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import captainContractCases from './fixtures/captain-contract-cases.json';
 import {
+  combineLeaderCaptainCoverageBoosts,
   resolveCaptainBoostScope,
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverage,
@@ -1115,3 +1116,89 @@ function createCharacter(
     },
   } satisfies CharacterDetailRecord;
 }
+
+describe('combineLeaderCaptainCoverageBoosts', () => {
+  /*
+   * In One Piece Treasure Cruise the Captain's and the Friend Captain's stat
+   * multipliers MULTIPLY. Owner-confirmed on 2026-09-06 (ClickUp 869exeh57)
+   * after the rule was researched: the wiki's damage formula is multiplicative
+   * end to end, and the community calculators state a 3.0x + 2.5x tandem as
+   * 7.5x. Additive would print the right answer for two 2x Captains by
+   * coincidence and be wrong everywhere else.
+   */
+  it('multiplies the two leaders rather than adding them', () => {
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 1.5, atk: 2 }, { hp: 1.5, atk: 2 }])).toEqual({
+      hp: 2.25,
+      atk: 4,
+    });
+    expect(
+      combineLeaderCaptainCoverageBoosts([
+        { hp: 1, atk: 2.5 },
+        { hp: 1, atk: 2.5 },
+      ]).atk,
+    ).toBe(6.25);
+  });
+
+  it('treats a leader that does not boost as the identity, never as a zero', () => {
+    // A character in the Captain's scope but outside the Friend's keeps the
+    // Captain's own number. Folding the 0 in would erase it.
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 1.5, atk: 3 }, { hp: 0, atk: 0 }])).toEqual({
+      hp: 1.5,
+      atk: 3,
+    });
+    // And the mirror: boosted by the Friend only, which used to print a dash.
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 0, atk: 0 }, { hp: 2, atk: 0 }])).toEqual({
+      hp: 2,
+      atk: 0,
+    });
+  });
+
+  it('keeps zero when no leader boosts the stat, so the card still prints a dash', () => {
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 0, atk: 0 }, { hp: 0, atk: 0 }])).toEqual({
+      hp: 0,
+      atk: 0,
+    });
+    expect(combineLeaderCaptainCoverageBoosts([])).toEqual({ hp: 0, atk: 0 });
+  });
+
+  it('combines a single leader to itself', () => {
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 1.5, atk: 2 }])).toEqual({ hp: 1.5, atk: 2 });
+  });
+
+  it('folds the same character in twice when it holds both leader seats', () => {
+    // Legal in this game and supported by this app: the two seats are never
+    // deduplicated by id.
+    const self = { hp: 1.5, atk: 1.5 };
+
+    expect(combineLeaderCaptainCoverageBoosts([self, self])).toEqual({ hp: 2.25, atk: 2.25 });
+  });
+});
+
+describe('resolveCaptainBoostScope memoization', () => {
+  const captainAbility =
+    'Boosts ATK of Striker characters by 2.5x and their HP by 1.5x, and reduces damage received by 10%.';
+
+  it('returns an identical result for repeated identical input', () => {
+    const first = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope');
+    const second = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope');
+
+    expect(second).toEqual(first);
+    // Same object: the parse is the 73-89% of the Captain Coverage result pass
+    // that used to be repeated once per catalog character.
+    expect(second).toBe(first);
+  });
+
+  it('keys the cache on the coverage mode as well as the text', () => {
+    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope')).not.toBe(
+      resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage'),
+    );
+  });
+
+  it('hands back a frozen result so one caller cannot poison every later reader', () => {
+    const scope = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope');
+
+    expect(Object.isFrozen(scope)).toBe(true);
+    expect(Object.isFrozen(scope.allowedClasses)).toBe(true);
+    expect(Object.isFrozen(scope.clauses)).toBe(true);
+  });
+});

@@ -10,12 +10,21 @@
   min-width: 0;
 }
 
+/*
+ * The row reserves the height it will have ONCE the Clear button appears, not
+ * the height of the bare label. Ionic sizes a small button from
+ * `:host(.button-small) { min-height: 2.1em }` at `font-size: 0.8125rem`, i.e.
+ * 1.70625rem, which overshot the old 24px floor by ~3px - so the moment a
+ * filter was set, Clear appeared and shoved the modal trigger under it down
+ * the page. Reserving the taller value means the button arrives into space
+ * that was already there and nothing moves.
+ */
 .character-facet-filter__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-height: 24px;
+  min-height: 1.75rem;
 }
 
 .character-facet-filter__label {

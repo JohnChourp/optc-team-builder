@@ -11,13 +11,6 @@
       "title": "No matching characters"
     }
   },
-  "hero": {
-    "captainsCount": "{{count}} captains",
-    "charactersCount": "{{count}} characters",
-    "copy": "Every character stays in the list. Pick a Captain to see which of them that Captain Ability boosts - marked on each card - and narrow the results only with the filters you choose.",
-    "eyebrow": "Every character, your filters",
-    "title": "Browse Captain Coverage characters"
-  },
   "filters": {
     "abilityTagSetsTitle": "Ability tag filter",
     "captainAbilityEyebrow": "Required",
@@ -45,7 +38,6 @@
         "all": "All characters"
       },
       "support": {
-        "all": "Use every character in the local dataset.",
         "noBoxes": "Create a character box to limit Captain Coverage results to that box.",
         "withCount": "Limit results to {{count}} character(s) in this box.",
         "withFavorites": "{{count}} of {{total}} character(s) in this box are currently favorites."
@@ -73,7 +65,7 @@
       "to": "Cost to"
     },
     "crewmateEyebrow": "Crewmate Ability",
-    "favoritesOnly": "Show favorites only",
+    "favoritesOnly": "Show favorites",
     "hideFavorites": "Hide favorites",
     "potentialEyebrow": "Potential Ability",
     "specialEyebrow": "Special",
@@ -111,13 +103,20 @@
   },
   "loading": "Loading captain data...",
   "results": {
+    "captainCount": "{{count}} of them are Captains",
+    "cost": "Cost: {{cost}}",
     "eyebrow": "Character results",
+    "loadMore": "Show more ({{count}} left)",
+    "openCharacterDetailsFor": "Open {{name}}",
+    "pending": {
+      "abilityTags": "Applying the ability filters to the character list...",
+      "characterTags": "Applying the character tags to the character list...",
+      "favorites": "Applying the favorites filter to the character list...",
+      "progressLabel": "Loading character results"
+    },
     "title": "Character results",
     "titleWithCount": "{{count}} matching characters",
-    "titleWithCoverage": "{{boosted}} boosted of {{count}} matching",
-    "loadMore": "Show more ({{count}} left)",
-    "cost": "Cost: {{cost}}",
-    "openCharacterDetailsFor": "Open {{name}}"
+    "titleWithCoverage": "{{boosted}} boosted of {{count}} matching"
   },
   "search": {
     "placeholder": "Search character results..."

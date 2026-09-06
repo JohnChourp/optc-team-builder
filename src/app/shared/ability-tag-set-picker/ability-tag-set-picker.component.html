@@ -516,17 +516,19 @@
           </div>
         </ion-content>
 
+        <!--
+          One button, centred. There is no Cancel here: the header carries an X
+          that runs the identical `cancel(); dismiss(null, 'cancel')` pair, so a
+          second control for the same escape was two ways to say nothing.
+
+          The testid still says `-save` on purpose. It names the ROLE - the
+          confirm action - not the word printed on it, and both picker specs
+          reach for it.
+        -->
         <footer class="ability-tag-set-footer">
           <div class="ability-tag-set-footer__actions">
-            <ion-button
-              fill="clear"
-              color="light"
-              (click)="cancel(); tagSetPickerModal.dismiss(null, 'cancel')"
-            >
-              {{ 'common.actions.cancel' | transloco }}
-            </ion-button>
             <ion-button color="warning" data-testid="ability-tag-set-picker-save" (click)="save()">
-              {{ 'common.actions.save' | transloco }}
+              {{ 'common.actions.filter' | transloco }}
             </ion-button>
           </div>
         </footer>

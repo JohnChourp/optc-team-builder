@@ -17,6 +17,7 @@ import {
   IonIcon,
   IonInput,
   IonMenuButton,
+  IonProgressBar,
   IonSearchbar,
   IonSpinner,
   IonTitle,
@@ -27,11 +28,10 @@ import {
   alertCircleOutline,
   checkmarkCircleOutline,
   funnelOutline,
-  peopleOutline,
+  personAdd,
   ribbon,
   saveOutline,
   searchOutline,
-  shieldCheckmarkOutline,
 } from 'ionicons/icons';
 
 import {
@@ -42,7 +42,11 @@ import {
   type AutoBuildAbilitySource,
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
-import { type CaptainCoverageResult } from '../../core/services/captain-coverage.utils';
+import {
+  type CaptainCoverageBoosts,
+  type CaptainCoverageResult,
+  combineLeaderCaptainCoverageBoosts,
+} from '../../core/services/captain-coverage.utils';
 import {
   buildCaptainCoverageTierView,
   type CaptainCoverageTierViewModel,
@@ -197,6 +201,13 @@ export interface CaptainCoverageLeaderSlotOption {
 interface CaptainCoverageCardView {
   character: CharacterListItem;
   coverage: CaptainCoverageResult | null;
+  /**
+   * What the card prints: the Captain's and the Friend Captain's own stat
+   * multipliers folded together. Kept beside `coverage` rather than written
+   * back into `coverage.boosts`, because that field is a single-captain result
+   * with contract fixtures asserting it.
+   */
+  leaderBoosts: CaptainCoverageBoosts | null;
   detailLink: string[];
   assignableSlotIndex: number | null;
   abilityMatchCount: number;
@@ -216,6 +227,13 @@ interface CaptainCoverageCardView {
 
 /** The three distinct reasons a character cannot take a sub slot. */
 type CaptainCoverageSubSlotBlockedReason = 'conflict' | 'budget' | 'full';
+
+/**
+ * The filter changes that empty the result list and put a loader in its place,
+ * one per sentence the loader can show. Each value is an i18n leaf under
+ * `captain-coverage.results.pending`.
+ */
+type CaptainCoveragePendingReason = 'favorites' | 'abilityTags' | 'characterTags';
 
 interface CaptainCoverageAbilityBadgeView {
   key: string;
@@ -243,6 +261,7 @@ interface CaptainCoverageAbilityTagSetSection extends AbilityTagSetPickerSection
     IonIcon,
     IonInput,
     IonMenuButton,
+    IonProgressBar,
     IonSearchbar,
     IonSpinner,
     IonTitle,
@@ -305,6 +324,26 @@ export class CaptainCoveragePage implements OnInit {
   public readonly tierCoverageMaxRender = 5;
   public readonly favoritesOnly = signal(false);
   public readonly hideFavorites = signal(false);
+  /**
+   * Which filter the reader just changed, or null when the list is settled.
+   *
+   * Deliberately NOT `loading()`: that signal is bound to `[disabled]` on
+   * eleven filter controls because during the initial load there is genuinely
+   * no data to filter. Here the data is all present, and greying the whole
+   * panel out for a moment is the "page is stuck" feeling this state exists to
+   * remove.
+   */
+  public readonly resultsPendingReason = signal<CaptainCoveragePendingReason | null>(null);
+  public readonly resultsPending = computed(() => this.resultsPendingReason() !== null);
+  /**
+   * A determinate 0..1, moved only at real milestones - never interpolated.
+   * `0.35` means "the loader is on screen and the filter has been applied";
+   * `1` means "the new result set exists". Indeterminate is not an option
+   * here: Ionic 8 animates its indeterminate bar on inner elements that expose
+   * no `::part()`, so it cannot be gated behind prefers-reduced-motion, which
+   * is why `app.component.ts` hardcodes determinate too.
+   */
+  public readonly resultsPendingProgress = signal(0);
   public readonly availableCharacterTags = signal<string[]>([]);
   /**
    * Flat mirror of the tag-set selection, kept only as the legacy surface other
@@ -624,10 +663,13 @@ export class CaptainCoveragePage implements OnInit {
   ]);
   public readonly resultCards = computed<CaptainCoverageCardView[]>(() => {
     const captain = this.selectedCaptainDetail();
+    const friendCaptain = this.selectedFriendCaptainDetail();
     const normalizedSearchTerm = this.searchTerm().trim().toLowerCase();
     const typeFacet = this.typeFacet();
     const classFacet = this.classFacet();
     const coverageCostRange = this.coverageCostRange();
+    const favoritesOnly = this.favoritesOnly();
+    const hideFavorites = this.hideFavorites();
     const favoriteIdSet = new Set(this.favoriteIds());
     const selectedCharacterBoxIdSet = this.selectedCharacterBox()
       ? new Set(this.selectedCharacterBoxIds())
@@ -650,23 +692,70 @@ export class CaptainCoveragePage implements OnInit {
       .filter((character) =>
         requiredAbilityCharacterIds ? requiredAbilityCharacterIds.has(character.id) : true,
       )
+      /*
+       * Type, class, cost and favorites read nothing but `character`, so they
+       * are hoisted ABOVE the coverage map below. They used to sit after it,
+       * which meant every character the user had just filtered away still paid
+       * for a full captain-ability parse first - with 1400 favorites and
+       * "Show favorites" on, 70% of the catalog was parsed and then discarded.
+       * The order is unobservable (none of the four looks at `coverage`); only
+       * the search filter genuinely needs the coverage result, because
+       * `matchesSearchTerm` reads `coverage.chips`, so it stays below.
+       *
+       * `matchesCharacterFacet` is one shared predicate: it splits the
+       * comma-joined `type` column so a dual-type character is found under
+       * either of its types regardless of stored order, and reads the full
+       * `classes` array.
+       */
+      .filter((character) => matchesCharacterFacet('type', character, typeFacet))
+      .filter((character) => matchesCharacterFacet('class', character, classFacet))
+      .filter((character) => this.matchesCoverageCostRange(character, coverageCostRange))
+      .filter((character) => {
+        if (favoritesOnly) {
+          return favoriteIdSet.has(character.id);
+        }
+
+        if (hideFavorites) {
+          return !favoriteIdSet.has(character.id);
+        }
+
+        return true;
+      })
       .map((character) => {
         const characterDetail = characterDetailsById.get(character.id);
+        const target = { character, detail: characterDetail };
         const filterResult = captain
-          ? resolveCaptainCoverageFilterResult(
-              captain,
-              {
-                character,
-                detail: characterDetail,
-              },
-              captainCoverageFilterState,
-            )
+          ? resolveCaptainCoverageFilterResult(captain, target, captainCoverageFilterState)
           : null;
+        /*
+         * The Friend Captain feeds the printed multiplier and nothing else.
+         * `matchesCaptainCoverageFilters` below stays Captain-driven on purpose,
+         * so picking a Friend Captain never makes a character appear in or
+         * vanish from the list - it only changes the number on the cards.
+         *
+         * When both seats hold the same character - legal in this game, and
+         * recorded as such in the brain - the coverage result is identical, so
+         * it is computed once and folded in twice rather than parsed twice.
+         */
+        const friendCoverage = !friendCaptain
+          ? null
+          : friendCaptain.id === captain?.id
+            ? (filterResult?.coverage ?? null)
+            : resolveCaptainCoverageFilterResult(friendCaptain, target, captainCoverageFilterState)
+                .coverage;
+        const leaderCoverages = [filterResult?.coverage ?? null, friendCoverage].filter(
+          (coverage): coverage is CaptainCoverageResult => coverage !== null,
+        );
 
         return {
           character,
           characterDetail,
           coverage: filterResult?.coverage ?? null,
+          leaderBoosts: leaderCoverages.length
+            ? combineLeaderCaptainCoverageBoosts(
+                leaderCoverages.map((coverage) => coverage.boosts),
+              )
+            : null,
           matchesCaptainCoverageFilters: filterResult?.matches ?? true,
         };
       })
@@ -678,7 +767,7 @@ export class CaptainCoveragePage implements OnInit {
           characterTagSetSelection,
         ),
       )
-      .map(({ character, characterDetail, coverage }) => {
+      .map(({ character, characterDetail, coverage, leaderBoosts }) => {
         const detailAbilities = characterDetail?.detail.builderAbilities ?? [];
         const abilities = detailAbilities.filter((ability) => ability.source !== 'captainAbility');
         const captainAbilities = detailAbilities.filter(
@@ -696,6 +785,7 @@ export class CaptainCoveragePage implements OnInit {
         return {
           character,
           coverage,
+          leaderBoosts,
           // Raw verdict, not the filter's `matches`: coverage no longer gates
           // the list, so the only honest source for the badge is the coverage
           // result itself.
@@ -711,23 +801,6 @@ export class CaptainCoveragePage implements OnInit {
           ],
         };
       })
-      // One shared predicate: splits the comma-joined `type` column so a
-      // dual-type character is found under either of its types regardless of
-      // stored order, and reads the full `classes` array.
-      .filter(({ character }) => matchesCharacterFacet('type', character, typeFacet))
-      .filter(({ character }) => matchesCharacterFacet('class', character, classFacet))
-      .filter(({ character }) => this.matchesCoverageCostRange(character, coverageCostRange))
-      .filter(({ character }) => {
-        if (this.favoritesOnly()) {
-          return favoriteIdSet.has(character.id);
-        }
-
-        if (this.hideFavorites()) {
-          return !favoriteIdSet.has(character.id);
-        }
-
-        return true;
-      })
       .filter(({ character, coverage }) =>
         normalizedSearchTerm.length
           ? this.matchesSearchTerm(character, coverage, normalizedSearchTerm)
@@ -739,6 +812,7 @@ export class CaptainCoveragePage implements OnInit {
         ({
           character,
           coverage,
+          leaderBoosts,
           captainBoosted,
           canBeLeader,
           subSlotAssignment,
@@ -749,6 +823,7 @@ export class CaptainCoveragePage implements OnInit {
         }) => ({
           character,
           coverage,
+          leaderBoosts,
           captainBoosted,
           canBeLeader,
           assignableSlotIndex: subSlotAssignment.index,
@@ -763,6 +838,15 @@ export class CaptainCoveragePage implements OnInit {
   });
 
   public readonly totalMatchingCharacters = computed(() => this.resultCards().length);
+  /*
+   * How many of the MATCHING characters can lead, not how many the catalog
+   * holds. The deleted intro card printed the catalog-wide figure next to a
+   * catalog-wide character count, which never moved as the reader filtered;
+   * this one answers "and how many of these could be my Captain?".
+   */
+  public readonly matchingCaptainCount = computed(
+    () => this.resultCards().filter((card) => card.canBeLeader).length,
+  );
   private readonly resultCardIds = computed<readonly number[]>(() =>
     this.resultCards().map((card) => card.character.id),
   );
@@ -865,8 +949,6 @@ export class CaptainCoveragePage implements OnInit {
   @ViewChild('resultsPanel')
   private readonly resultsPanel?: ElementRef<HTMLElement>;
 
-  public readonly coverageIcon = shieldCheckmarkOutline;
-  public readonly targetIcon = peopleOutline;
   public readonly checkIcon = checkmarkCircleOutline;
   public readonly errorIcon = alertCircleOutline;
   public readonly saveIcon = saveOutline;
@@ -874,6 +956,12 @@ export class CaptainCoveragePage implements OnInit {
   public readonly characterTagFilterIcon = funnelOutline;
   /** The crown on a result card: "make this one a leader".  */
   public readonly leaderIcon = ribbon;
+  /*
+   * The second overlay on a result card: "put this one in a free sub slot".
+   * A person-with-a-plus rather than a bare plus, so the two circles read as
+   * two different actions at a glance and not as one control repeated.
+   */
+  public readonly addToTeamIcon = personAdd;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -1157,6 +1245,49 @@ export class CaptainCoveragePage implements OnInit {
     }
   }
 
+  /**
+   * Empties the result list, paints a loader, and only then applies the filter.
+   *
+   * `resultCards` is one computed over the whole catalog, so writing a filter
+   * signal used to run the entire pass inside the click handler - the browser
+   * had no chance to paint between the toggle flipping and the new list being
+   * ready, which is why the page appeared frozen for seconds with a large
+   * favorites list. Yielding a frame first costs one frame and buys the reader
+   * the difference between "loading" and "broken".
+   *
+   * `resultCards()` is read here rather than left to the template on purpose:
+   * a computed is lazy, so without this read the expensive pass would happen
+   * AFTER the loader is torn down, putting the freeze back exactly where it
+   * was and leaving the loader to flash over nothing.
+   */
+  private async applyPendingFilterChange(
+    reason: CaptainCoveragePendingReason,
+    write: () => void,
+  ): Promise<void> {
+    this.resultsPendingReason.set(reason);
+    this.resultsPendingProgress.set(0);
+
+    await this.yieldToPaint();
+    this.resultsPendingProgress.set(0.35);
+
+    write();
+    this.resultCards();
+
+    this.resultsPendingProgress.set(1);
+    this.resultsPendingReason.set(null);
+  }
+
+  private async yieldToPaint(): Promise<void> {
+    await new Promise<void>((resolve) => {
+      if (typeof globalThis.requestAnimationFrame === 'function') {
+        globalThis.requestAnimationFrame(() => globalThis.setTimeout(resolve, 0));
+        return;
+      }
+
+      globalThis.setTimeout(resolve, 0);
+    });
+  }
+
   public onSearchChange(event: CustomEvent<{ value?: string | null }>): void {
     this.searchTerm.set((event.detail.value ?? '').trimStart());
   }
@@ -1187,9 +1318,16 @@ export class CaptainCoveragePage implements OnInit {
     this.characterTagSetPickerOpen.set(false);
   }
 
-  public saveCharacterTagSetSelection(selection: CharacterTagSetSelection): void {
-    this.applyCharacterTagSetSelection(cloneCharacterTagSetSelection(selection));
+  /**
+   * The modal closes FIRST, then the loader takes the results' place while the
+   * selection is applied. Closing after the recompute meant the modal sat there
+   * frozen with the reader's press unacknowledged.
+   */
+  public async saveCharacterTagSetSelection(selection: CharacterTagSetSelection): Promise<void> {
     this.characterTagSetPickerOpen.set(false);
+    await this.applyPendingFilterChange('characterTags', () => {
+      this.applyCharacterTagSetSelection(cloneCharacterTagSetSelection(selection));
+    });
   }
 
   public clearSelectedCharacterTags(): void {
@@ -1206,20 +1344,24 @@ export class CaptainCoveragePage implements OnInit {
     }));
   }
 
-  public onFavoritesOnlyFilterChange(checked: boolean): void {
-    this.favoritesOnly.set(checked);
+  public async onFavoritesOnlyFilterChange(checked: boolean): Promise<void> {
+    await this.applyPendingFilterChange('favorites', () => {
+      this.favoritesOnly.set(checked);
 
-    if (checked) {
-      this.hideFavorites.set(false);
-    }
+      if (checked) {
+        this.hideFavorites.set(false);
+      }
+    });
   }
 
-  public onHideFavoritesFilterChange(checked: boolean): void {
-    this.hideFavorites.set(checked);
+  public async onHideFavoritesFilterChange(checked: boolean): Promise<void> {
+    await this.applyPendingFilterChange('favorites', () => {
+      this.hideFavorites.set(checked);
 
-    if (checked) {
-      this.favoritesOnly.set(false);
-    }
+      if (checked) {
+        this.favoritesOnly.set(false);
+      }
+    });
   }
 
   public onSortModeChange(input: string | CustomEvent<{ value?: string | null }>): void {
@@ -1322,9 +1464,12 @@ export class CaptainCoveragePage implements OnInit {
     this.abilityTagSetPickerOpen.set(false);
   }
 
-  public saveAbilityTagSetSelection(selection: AbilityFilterTagSetSelection): void {
-    this.tagSetSelection.set(cloneAbilityFilterTagSetSelection(selection));
+  /** Same shape as `saveCharacterTagSetSelection`: close, then load. */
+  public async saveAbilityTagSetSelection(selection: AbilityFilterTagSetSelection): Promise<void> {
     this.abilityTagSetPickerOpen.set(false);
+    await this.applyPendingFilterChange('abilityTags', () => {
+      this.tagSetSelection.set(cloneAbilityFilterTagSetSelection(selection));
+    });
   }
 
   public clearSelectedAbilityTags(): void {
@@ -1356,6 +1501,13 @@ export class CaptainCoveragePage implements OnInit {
       sourceIds: this.resultCardIds(),
       count: this.visibleResultCount() + RESULT_PAGE_SIZE,
     });
+  }
+
+  /** The one-line "what is loading" sentence, or '' when nothing is pending. */
+  public resultsPendingLabel(): string {
+    const reason = this.resultsPendingReason();
+
+    return reason ? this.t(`results.pending.${reason}`) : '';
   }
 
   public formatBoost(value: number): string {
@@ -1616,8 +1768,15 @@ export class CaptainCoveragePage implements OnInit {
       return this.t('filters.characterBox.support.noBoxes');
     }
 
+    /*
+     * "All characters" carries no support line. It used to read "Use every
+     * character in the local dataset.", which restated the option's own label
+     * and cost a row of the filter panel to do it - reported by the owner as
+     * meaningless (ClickUp 869exeh57). The other three branches stay: they each
+     * say something the label does not.
+     */
     if (!box) {
-      return this.t('filters.characterBox.support.all');
+      return '';
     }
 
     if (this.favoritesOnly()) {
