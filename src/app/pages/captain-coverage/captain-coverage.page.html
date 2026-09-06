@@ -578,7 +578,7 @@
               [attr.aria-label]="t('results.pending.progressLabel')"
             ></ion-progress-bar>
           </div>
-        } @else if (!resultCards().length) {
+        } @else if (!totalMatchingCharacters()) {
           <div class="panel-empty panel-empty--large">
             <strong>{{ t('empty.noResults.title') }}</strong>
             <span>{{ t('empty.noResults.copy') }}</span>

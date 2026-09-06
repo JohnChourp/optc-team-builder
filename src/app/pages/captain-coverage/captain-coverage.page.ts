@@ -48,6 +48,13 @@ import {
   combineLeaderCaptainCoverageBoosts,
   createCaptainBoostScopeCache,
 } from '../../core/services/captain-coverage.utils';
+import { CaptainCoverageFilterRunnerService } from '../../core/services/captain-coverage-filter-runner.service';
+import {
+  buildCaptainCoverageResultPassDataset,
+  type CaptainCoverageResultPassOutcome,
+  type CaptainCoverageResultPassParams,
+  type CaptainCoverageSortMode,
+} from '../../core/services/captain-coverage-result-pass.utils';
 import {
   buildCaptainCoverageTierView,
   type CaptainCoverageTierViewModel,
@@ -71,7 +78,6 @@ import {
   type CharacterFacetSelection,
   type CharacterIdOrder,
   type CharacterListItem,
-  type CharacterSortMode,
   type CharacterTagSetSelection,
   type DatasetManifest,
   type SavedTeam,
@@ -183,12 +189,6 @@ function isSameResultSequence(left: readonly number[], right: readonly number[])
   return true;
 }
 
-type CaptainCoverageSortMode =
-  | Extract<
-      CharacterSortMode,
-      'catalog' | 'captainAtkBoost' | 'captainAverageBoost' | 'captainHpBoost' | 'nameAsc'
-    >
-  | 'nameDesc';
 /** One seat in the crown alert: which leader slot, and why it might refuse. */
 export interface CaptainCoverageLeaderSlotOption {
   index: 0 | 1;
@@ -662,212 +662,51 @@ export class CaptainCoveragePage implements OnInit {
     { value: 'newest', label: this.t('idOrder.options.newest') },
     { value: 'oldest', label: this.t('idOrder.options.oldest') },
   ]);
-  public readonly resultCards = computed<CaptainCoverageCardView[]>(() => {
-    const captain = this.selectedCaptainDetail();
-    const friendCaptain = this.selectedFriendCaptainDetail();
-    const normalizedSearchTerm = this.searchTerm().trim().toLowerCase();
-    const typeFacet = this.typeFacet();
-    const classFacet = this.classFacet();
-    const coverageCostRange = this.coverageCostRange();
-    const favoritesOnly = this.favoritesOnly();
-    const hideFavorites = this.hideFavorites();
-    const favoriteIdSet = new Set(this.favoriteIds());
-    const selectedCharacterBoxIdSet = this.selectedCharacterBox()
-      ? new Set(this.selectedCharacterBoxIds())
-      : null;
-    const selectedAbilityRequirements = this.selectedAbilityRequirements();
-    const captainAbilityRequirements = this.captainAbilityRequirements();
-    const captainCoverageFilterState = this.captainCoverageFilterState();
-    const requiredAbilityCharacterIds = captainCoverageFilterState.requiredAbilityCharacterIds;
-    const selectedAbilityRequirementCount = this.selectedAbilityRequirementCount();
-    const characterDetailsById = this.allCharacterDetailsById();
-    const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
-    const characterTagSetSelection = this.characterTagSetSelection();
-    const allowedCaptainIdSet = this.allowedCaptainIdSet();
-    /*
-     * One memo per evaluation of this computed. The captain's ability text is
-     * the same for all 4614 targets below, and parsing it is 73-89% of this
-     * pass; sharing the memo ACROSS passes would keep stale work alive for a
-     * captain nobody has selected any more, and a module-level one measurably
-     * slowed the auto builder down, so it lives and dies with one pass.
-     */
-    const scopeCache = createCaptainBoostScopeCache();
-    const matchingCharacters = this.allCharacters()
-      .filter((character) =>
-        selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
-      )
-      // Ability tag sets resolve to character ids once, so the whole AND/OR
-      // formula costs one membership test per character here.
-      .filter((character) =>
-        requiredAbilityCharacterIds ? requiredAbilityCharacterIds.has(character.id) : true,
-      )
-      /*
-       * Type, class, cost and favorites read nothing but `character`, so they
-       * are hoisted ABOVE the coverage map below. They used to sit after it,
-       * which meant every character the user had just filtered away still paid
-       * for a full captain-ability parse first - with 1400 favorites and
-       * "Show favorites" on, 70% of the catalog was parsed and then discarded.
-       * The order is unobservable (none of the four looks at `coverage`); only
-       * the search filter genuinely needs the coverage result, because
-       * `matchesSearchTerm` reads `coverage.chips`, so it stays below.
-       *
-       * `matchesCharacterFacet` is one shared predicate: it splits the
-       * comma-joined `type` column so a dual-type character is found under
-       * either of its types regardless of stored order, and reads the full
-       * `classes` array.
-       */
-      .filter((character) => matchesCharacterFacet('type', character, typeFacet))
-      .filter((character) => matchesCharacterFacet('class', character, classFacet))
-      .filter((character) => this.matchesCoverageCostRange(character, coverageCostRange))
-      .filter((character) => {
-        if (favoritesOnly) {
-          return favoriteIdSet.has(character.id);
-        }
-
-        if (hideFavorites) {
-          return !favoriteIdSet.has(character.id);
-        }
-
-        return true;
-      })
-      .map((character) => {
-        const characterDetail = characterDetailsById.get(character.id);
-        const target = { character, detail: characterDetail };
-        const filterResult = captain
-          ? resolveCaptainCoverageFilterResult(
-              captain,
-              target,
-              captainCoverageFilterState,
-              scopeCache,
-            )
-          : null;
-        /*
-         * The Friend Captain feeds the printed multiplier and nothing else.
-         * `matchesCaptainCoverageFilters` below stays Captain-driven on purpose,
-         * so picking a Friend Captain never makes a character appear in or
-         * vanish from the list - it only changes the number on the cards.
-         *
-         * When both seats hold the same character - legal in this game, and
-         * recorded as such in the brain - the coverage result is identical, so
-         * it is computed once and folded in twice rather than parsed twice.
-         */
-        const friendCoverage = !friendCaptain
-          ? null
-          : friendCaptain.id === captain?.id
-            ? (filterResult?.coverage ?? null)
-            : resolveCaptainCoverageFilterResult(
-                friendCaptain,
-                target,
-                captainCoverageFilterState,
-                scopeCache,
-              ).coverage;
-        const leaderCoverages = [filterResult?.coverage ?? null, friendCoverage].filter(
-          (coverage): coverage is CaptainCoverageResult => coverage !== null,
-        );
-
-        return {
-          character,
-          characterDetail,
-          coverage: filterResult?.coverage ?? null,
-          leaderBoosts: leaderCoverages.length
-            ? combineLeaderCaptainCoverageBoosts(
-                leaderCoverages.map((coverage) => coverage.boosts),
-              )
-            : null,
-          matchesCaptainCoverageFilters: filterResult?.matches ?? true,
-        };
-      })
-      .filter(({ matchesCaptainCoverageFilters }) => matchesCaptainCoverageFilters)
-      .filter(({ characterDetail }) => this.matchesSuperPresenceFilters(characterDetail))
-      .filter(({ characterDetail }) =>
-        matchesCharacterTagSets(
-          characterDetail?.detail.characterTags ?? [],
-          characterTagSetSelection,
-        ),
-      )
-      .map(({ character, characterDetail, coverage, leaderBoosts }) => {
-        const detailAbilities = characterDetail?.detail.builderAbilities ?? [];
-        const abilities = detailAbilities.filter((ability) => ability.source !== 'captainAbility');
-        const captainAbilities = detailAbilities.filter(
-          (ability) => ability.source === 'captainAbility',
-        );
-        const abilityMatchCount = this.countMatchedAbilityRequirements(
-          abilities,
-          selectedAbilityRequirements,
-        );
-        const captainAbilityMatchCount = this.countMatchedAbilityRequirements(
-          captainAbilities,
-          captainAbilityRequirements,
-        );
-
-        return {
-          character,
-          coverage,
-          leaderBoosts,
-          // Raw verdict, not the filter's `matches`: coverage no longer gates
-          // the list, so the only honest source for the badge is the coverage
-          // result itself.
-          captainBoosted: captain ? (coverage?.matches ?? false) : null,
-          canBeLeader: allowedCaptainIdSet.has(character.id),
-          subSlotAssignment: this.resolveSubSlotAssignment(character, selectedConflictKeys),
-          abilityMatchCount,
-          captainAbilityMatchCount,
-          selectedAbilityCount: selectedAbilityRequirementCount,
-          matchedAbilityBadges: [
-            ...this.buildMatchedAbilityBadges(abilities, selectedAbilityRequirements),
-            ...this.buildMatchedAbilityBadges(captainAbilities, captainAbilityRequirements),
-          ],
-        };
-      })
-      .filter(({ character, coverage }) =>
-        normalizedSearchTerm.length
-          ? this.matchesSearchTerm(character, coverage, normalizedSearchTerm)
-          : true,
-      );
-
-    return this.sortResultCards(
-      matchingCharacters.map(
-        ({
-          character,
-          coverage,
-          leaderBoosts,
-          captainBoosted,
-          canBeLeader,
-          subSlotAssignment,
-          abilityMatchCount,
-          captainAbilityMatchCount,
-          selectedAbilityCount,
-          matchedAbilityBadges,
-        }) => ({
-          character,
-          coverage,
-          leaderBoosts,
-          captainBoosted,
-          canBeLeader,
-          assignableSlotIndex: subSlotAssignment.index,
-          subSlotBlockedReason: subSlotAssignment.blockedReason,
-          abilityMatchCount: abilityMatchCount + captainAbilityMatchCount,
-          selectedAbilityCount,
-          matchedAbilityBadges,
-          detailLink: ['/characters', String(character.id)],
-        }),
-      ),
-    );
+  /**
+   * The catalog as the filter pass needs it: list items plus the three-field
+   * projection of each detail record.
+   *
+   * A `computed`, so it is rebuilt only when the catalog itself changes - which
+   * is also what lets the runner use reference equality to decide whether the
+   * worker already holds this dataset.
+   */
+  private readonly resultPassDataset = computed(() =>
+    buildCaptainCoverageResultPassDataset(this.allCharacters(), this.allCharacterDetailsById()),
+  );
+  private readonly allCharactersById = computed<ReadonlyMap<number, CharacterListItem>>(
+    () => new Map(this.allCharacters().map((character) => [character.id, character])),
+  );
+  /**
+   * What the last completed pass returned: every matching id in final order,
+   * and how many of them the Captain boosts.
+   *
+   * This is STATE now rather than a derived value. The pass may run in a Worker,
+   * so it cannot be a `computed` - and making it state is what lets a team write
+   * read the current ids without triggering a recomputation.
+   */
+  private readonly resultPassOutcome = signal<CaptainCoverageResultPassOutcome>({
+    ids: [],
+    boostedCount: 0,
   });
+  /**
+   * Guards against a stale reply landing after a newer one. Every pass takes the
+   * next number and discards its own result if the number has moved on.
+   */
+  private resultPassGeneration = 0;
 
-  public readonly totalMatchingCharacters = computed(() => this.resultCards().length);
+  public readonly resultCardIds = computed<readonly number[]>(() => this.resultPassOutcome().ids);
+  public readonly totalMatchingCharacters = computed(() => this.resultCardIds().length);
   /*
    * How many of the MATCHING characters can lead, not how many the catalog
    * holds. The deleted intro card printed the catalog-wide figure next to a
    * catalog-wide character count, which never moved as the reader filtered;
    * this one answers "and how many of these could be my Captain?".
    */
-  public readonly matchingCaptainCount = computed(
-    () => this.resultCards().filter((card) => card.canBeLeader).length,
-  );
-  private readonly resultCardIds = computed<readonly number[]>(() =>
-    this.resultCards().map((card) => card.character.id),
-  );
+  public readonly matchingCaptainCount = computed(() => {
+    const allowedCaptainIdSet = this.allowedCaptainIdSet();
+
+    return this.resultCardIds().filter((id) => allowedCaptainIdSet.has(id)).length;
+  });
   private readonly visibleResultCount = computed(() => {
     const state = this.loadMoreState();
 
@@ -875,19 +714,26 @@ export class CaptainCoveragePage implements OnInit {
       ? state.count
       : RESULT_PAGE_SIZE;
   });
-  /** The painted slice; `totalMatchingCharacters` stays the real total. */
+  /**
+   * The painted slice, and the ONLY place a card view model is built.
+   *
+   * Hydrating just this slice is why the pass can return ids: a card carries
+   * badge labels that need the i18n service and a sub-slot assignment that
+   * depends on the current team, so building all 4614 of them would cost more
+   * than the filtering did - and none of them would be looked at.
+   */
   public readonly visibleResultCards = computed<CaptainCoverageCardView[]>(() =>
-    this.resultCards().slice(0, this.visibleResultCount()),
+    this.hydrateResultCards(this.resultCardIds().slice(0, this.visibleResultCount())),
   );
   public readonly hasMoreResults = computed(
-    () => this.resultCards().length > this.visibleResultCount(),
+    () => this.resultCardIds().length > this.visibleResultCount(),
   );
   public readonly remainingResultCount = computed(() =>
-    Math.max(0, this.resultCards().length - this.visibleResultCount()),
+    Math.max(0, this.resultCardIds().length - this.visibleResultCount()),
   );
-  /** How many of the shown characters the selected Captain actually boosts. */
+  /** How many of the matching characters the selected Captain actually boosts. */
   public readonly boostedMatchingCharacters = computed(
-    () => this.resultCards().filter((card) => card.captainBoosted === true).length,
+    () => this.resultPassOutcome().boostedCount,
   );
   /** The coverage count only means something once a Captain is in slot 1. */
   public readonly showsCoverageCount = computed(() => Boolean(this.selectedCaptainDetail()));
@@ -989,6 +835,7 @@ export class CaptainCoveragePage implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly alertController: AlertController,
+    private readonly filterRunner: CaptainCoverageFilterRunnerService,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
     this.characterBoxes = this.userState.characterBoxes;
@@ -1037,11 +884,20 @@ export class CaptainCoveragePage implements OnInit {
       this.clearMissingSelectedCharacterBox();
       await this.applySavedTeamFromRoute();
       this.restoreTeamDraft();
+      await this.runResultPass(null);
     } finally {
       this.loading.set(false);
     }
   }
 
+  /**
+   * Re-runs the pass on every entry, not only when something here changed.
+   *
+   * Favorites and character boxes are edited on OTHER screens, so when the pass
+   * was a `computed` it picked those up by itself. It cannot now, and a stale
+   * list after favouriting a character elsewhere is exactly the kind of bug an
+   * explicit-trigger design invites.
+   */
   public async ionViewWillEnter(): Promise<void> {
     if (this.loading()) {
       return;
@@ -1049,6 +905,7 @@ export class CaptainCoveragePage implements OnInit {
 
     this.clearMissingSelectedCharacterBox();
     await this.applySavedTeamFromRoute();
+    await this.runResultPass(null);
   }
 
   /**
@@ -1165,6 +1022,10 @@ export class CaptainCoveragePage implements OnInit {
       // search result must not wipe what they typed (issue #268).
       this.selectedCaptainDetail.set(null);
       this.selectedCaptainDetail.set(await this.repository.getCharacterById(character.id));
+      // The Captain is a pass input; the other five seats are not, so only this
+      // one re-filters. The Friend Captain changes the printed multiplier and
+      // the subs change their own buttons, and both are hydration-side.
+      await this.runResultPass(null);
     }
 
     this.keepPagePositionAfterTeamChange(pagedCount);
@@ -1187,7 +1048,7 @@ export class CaptainCoveragePage implements OnInit {
     this.keepPagePositionAfterTeamChange(pagedCount);
   }
 
-  public clearTeamSlot(index: number, event?: Event): void {
+  public async clearTeamSlot(index: number, event?: Event): Promise<void> {
     event?.stopPropagation();
 
     if (index < 0 || index >= CAPTAIN_COVERAGE_TEAM_SLOT_COUNT) {
@@ -1204,6 +1065,7 @@ export class CaptainCoveragePage implements OnInit {
 
     if (index === 0) {
       this.selectedCaptainDetail.set(null);
+      await this.runResultPass(null);
     }
 
     this.keepPagePositionAfterTeamChange(pagedCount);
@@ -1245,54 +1107,216 @@ export class CaptainCoveragePage implements OnInit {
     this.persistTeamDraft();
   }
 
-  public toggleFavoritesOnly(): void {
-    const nextValue = !this.favoritesOnly();
-    this.favoritesOnly.set(nextValue);
+  public async toggleFavoritesOnly(): Promise<void> {
+    await this.applyPendingFilterChange('favorites', () => {
+      const nextValue = !this.favoritesOnly();
 
-    if (nextValue) {
-      this.hideFavorites.set(false);
-    }
+      this.favoritesOnly.set(nextValue);
+
+      if (nextValue) {
+        this.hideFavorites.set(false);
+      }
+    });
   }
 
-  public toggleHideFavorites(): void {
-    const nextValue = !this.hideFavorites();
-    this.hideFavorites.set(nextValue);
+  public async toggleHideFavorites(): Promise<void> {
+    await this.applyPendingFilterChange('favorites', () => {
+      const nextValue = !this.hideFavorites();
 
-    if (nextValue) {
-      this.favoritesOnly.set(false);
+      this.hideFavorites.set(nextValue);
+
+      if (nextValue) {
+        this.favoritesOnly.set(false);
+      }
+    });
+  }
+
+  /**
+   * Builds card view models for the given ids, in the given order.
+   *
+   * It does NOT filter and does NOT sort - the pass already did both. Its only
+   * job is to turn ids into what the template renders, and it reads the team
+   * slots and the i18n service to do it, which is exactly why this work stayed
+   * on the main thread while the filtering left it.
+   */
+  private hydrateResultCards(ids: readonly number[]): CaptainCoverageCardView[] {
+    if (!ids.length) {
+      return [];
+    }
+
+    const captain = this.selectedCaptainDetail();
+    const friendCaptain = this.selectedFriendCaptainDetail();
+    const charactersById = this.allCharactersById();
+    const characterDetailsById = this.allCharacterDetailsById();
+    const captainCoverageFilterState = this.captainCoverageFilterState();
+    const selectedAbilityRequirements = this.selectedAbilityRequirements();
+    const captainAbilityRequirements = this.captainAbilityRequirements();
+    const selectedAbilityRequirementCount = this.selectedAbilityRequirementCount();
+    const allowedCaptainIdSet = this.allowedCaptainIdSet();
+    const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
+    const scopeCache = createCaptainBoostScopeCache();
+    const cards: CaptainCoverageCardView[] = [];
+
+    for (const id of ids) {
+      const character = charactersById.get(id);
+
+      /*
+       * An id the catalog no longer has. Only reachable if the dataset is
+       * replaced between a pass and its hydration; skipping is right, because
+       * the next pass will drop it anyway.
+       */
+      if (!character) {
+        continue;
+      }
+
+      const characterDetail = characterDetailsById.get(id);
+      const target = { character, detail: characterDetail };
+      const filterResult = captain
+        ? resolveCaptainCoverageFilterResult(
+            captain,
+            target,
+            captainCoverageFilterState,
+            scopeCache,
+          )
+        : null;
+      /*
+       * The Friend Captain contributes its own multiplier to the printed number
+       * and nothing to list membership - which is why it is absent from the
+       * pass entirely and appears only here.
+       *
+       * When both seats hold the same character - legal in this game - the
+       * coverage result is identical, so it is computed once and folded twice.
+       */
+      const friendCoverage = !friendCaptain
+        ? null
+        : friendCaptain.id === captain?.id
+          ? (filterResult?.coverage ?? null)
+          : resolveCaptainCoverageFilterResult(
+              friendCaptain,
+              target,
+              captainCoverageFilterState,
+              scopeCache,
+            ).coverage;
+      const leaderCoverages = [filterResult?.coverage ?? null, friendCoverage].filter(
+        (coverage): coverage is CaptainCoverageResult => coverage !== null,
+      );
+      const detailAbilities = characterDetail?.detail.builderAbilities ?? [];
+      const abilities = detailAbilities.filter((ability) => ability.source !== 'captainAbility');
+      const captainAbilities = detailAbilities.filter(
+        (ability) => ability.source === 'captainAbility',
+      );
+      const subSlotAssignment = this.resolveSubSlotAssignment(character, selectedConflictKeys);
+
+      cards.push({
+        character,
+        coverage: filterResult?.coverage ?? null,
+        leaderBoosts: leaderCoverages.length
+          ? combineLeaderCaptainCoverageBoosts(
+              leaderCoverages.map((coverage) => coverage.boosts),
+            )
+          : null,
+        // Raw verdict, not the filter's `matches`: coverage no longer gates the
+        // list, so the only honest source for the badge is the coverage result.
+        captainBoosted: captain ? (filterResult?.coverage.matches ?? false) : null,
+        canBeLeader: allowedCaptainIdSet.has(character.id),
+        assignableSlotIndex: subSlotAssignment.index,
+        subSlotBlockedReason: subSlotAssignment.blockedReason,
+        abilityMatchCount:
+          this.countMatchedAbilityRequirements(abilities, selectedAbilityRequirements) +
+          this.countMatchedAbilityRequirements(captainAbilities, captainAbilityRequirements),
+        selectedAbilityCount: selectedAbilityRequirementCount,
+        matchedAbilityBadges: [
+          ...this.buildMatchedAbilityBadges(abilities, selectedAbilityRequirements),
+          ...this.buildMatchedAbilityBadges(captainAbilities, captainAbilityRequirements),
+        ],
+        detailLink: ['/characters', String(character.id)],
+      });
+    }
+
+    return cards;
+  }
+
+  /** Everything the pass reads, snapshotted so it can cross a postMessage. */
+  private buildResultPassParams(): CaptainCoverageResultPassParams {
+    return {
+      captain: this.selectedCaptainDetail(),
+      filterState: this.captainCoverageFilterState(),
+      characterBoxIds: this.selectedCharacterBox() ? this.selectedCharacterBoxIds() : null,
+      typeFacet: this.typeFacet(),
+      classFacet: this.classFacet(),
+      costRange: this.coverageCostRange(),
+      favoritesOnly: this.favoritesOnly(),
+      hideFavorites: this.hideFavorites(),
+      favoriteIds: this.favoriteIds(),
+      characterTagSetSelection: this.characterTagSetSelection(),
+      requireSuperTandemPresence: this.requireSuperTandemPresence(),
+      requireSuperTypesClassesPresence: this.requireSuperTypesClassesPresence(),
+      searchTerm: this.searchTerm().trim().toLowerCase(),
+      sortMode: this.selectedSortMode(),
+      idOrder: this.selectedIdOrder(),
+    };
+  }
+
+  /**
+   * Re-runs the filter pass and publishes its result.
+   *
+   * The pass used to be a lazy `computed`, so it re-ran by itself whenever any
+   * of its ~15 inputs changed. It cannot be one any more - it may be answered by
+   * a Worker - so every writer that changes one of those inputs calls this, and
+   * `ionViewWillEnter` calls it too, to catch inputs that changed while the
+   * reader was on another page (favorites are the real case: they are toggled
+   * from the character screens, never from this one).
+   *
+   * `reason` drives the loader. When it is null the pass runs quietly, which is
+   * what the initial load and the tab-entry refresh want.
+   */
+  private async runResultPass(reason: CaptainCoveragePendingReason | null): Promise<void> {
+    this.resultPassGeneration += 1;
+
+    const generation = this.resultPassGeneration;
+
+    if (reason) {
+      this.resultsPendingReason.set(reason);
+      this.resultsPendingProgress.set(0);
+      // One frame, so the loader is on screen before the work starts. Without
+      // it the reader sees the old list until the new one replaces it, which is
+      // indistinguishable from a page that ignored the press.
+      await this.yieldToPaint();
+      this.resultsPendingProgress.set(0.35);
+    }
+
+    const outcome = await this.filterRunner.run(
+      this.resultPassDataset(),
+      this.buildResultPassParams(),
+    );
+
+    // A newer press has already started; its answer is the current one.
+    if (generation !== this.resultPassGeneration) {
+      return;
+    }
+
+    this.resultPassOutcome.set(outcome);
+
+    if (reason) {
+      this.resultsPendingProgress.set(1);
+      this.resultsPendingReason.set(null);
     }
   }
 
   /**
    * Empties the result list, paints a loader, and only then applies the filter.
    *
-   * `resultCards` is one computed over the whole catalog, so writing a filter
-   * signal used to run the entire pass inside the click handler - the browser
-   * had no chance to paint between the toggle flipping and the new list being
-   * ready, which is why the page appeared frozen for seconds with a large
-   * favorites list. Yielding a frame first costs one frame and buys the reader
-   * the difference between "loading" and "broken".
-   *
-   * `resultCards()` is read here rather than left to the template on purpose:
-   * a computed is lazy, so without this read the expensive pass would happen
-   * AFTER the loader is torn down, putting the freeze back exactly where it
-   * was and leaving the loader to flash over nothing.
+   * Writing a filter signal used to run the entire pass inside the click
+   * handler, with no chance for the browser to paint between the toggle
+   * flipping and the new list being ready - which is why the page appeared
+   * frozen for seconds with a large favorites list.
    */
   private async applyPendingFilterChange(
     reason: CaptainCoveragePendingReason,
     write: () => void,
   ): Promise<void> {
-    this.resultsPendingReason.set(reason);
-    this.resultsPendingProgress.set(0);
-
-    await this.yieldToPaint();
-    this.resultsPendingProgress.set(0.35);
-
     write();
-    this.resultCards();
-
-    this.resultsPendingProgress.set(1);
-    this.resultsPendingReason.set(null);
+    await this.runResultPass(reason);
   }
 
   private async yieldToPaint(): Promise<void> {
@@ -1306,8 +1330,14 @@ export class CaptainCoveragePage implements OnInit {
     });
   }
 
-  public onSearchChange(event: CustomEvent<{ value?: string | null }>): void {
+  /*
+   * No loader on search. The searchbar is already debounced 500 ms, and a
+   * loader that appears between two keystrokes reads as a stutter rather than
+   * as progress.
+   */
+  public async onSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {
     this.searchTerm.set((event.detail.value ?? '').trimStart());
+    await this.runResultPass(null);
   }
 
   /**
@@ -1316,12 +1346,14 @@ export class CaptainCoveragePage implements OnInit {
    * as an empty selection. This page has no clear-all button, which was already
    * true before the multi-select control landed.
    */
-  public onTypeFacetChange(selection: CharacterFacetSelection): void {
+  public async onTypeFacetChange(selection: CharacterFacetSelection): Promise<void> {
     this.typeFacet.set(selection);
+    await this.runResultPass(null);
   }
 
-  public onClassFacetChange(selection: CharacterFacetSelection): void {
+  public async onClassFacetChange(selection: CharacterFacetSelection): Promise<void> {
     this.classFacet.set(selection);
+    await this.runResultPass(null);
   }
 
   public openCharacterTagSetPicker(): void {
@@ -1348,18 +1380,20 @@ export class CaptainCoveragePage implements OnInit {
     });
   }
 
-  public clearSelectedCharacterTags(): void {
+  public async clearSelectedCharacterTags(): Promise<void> {
     this.applyCharacterTagSetSelection(createEmptyCharacterTagSetSelection());
+    await this.runResultPass(null);
   }
 
-  public onCoverageCostRangeChange(
+  public async onCoverageCostRangeChange(
     bound: CharacterFilterCostBound,
     input: string | number | null | CustomEvent<{ value?: string | number | null }>,
-  ): void {
+  ): Promise<void> {
     this.coverageCostRange.update((currentRange) => ({
       ...currentRange,
       [bound]: normalizeCostValue(this.resolveCostInput(input)),
     }));
+    await this.runResultPass(null);
   }
 
   public async onFavoritesOnlyFilterChange(checked: boolean): Promise<void> {
@@ -1382,22 +1416,30 @@ export class CaptainCoveragePage implements OnInit {
     });
   }
 
-  public onSortModeChange(input: string | CustomEvent<{ value?: string | null }>): void {
+  public async onSortModeChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
     const value = this.resolveStringInput(input);
 
     if (isCaptainCoverageSortMode(value)) {
       this.selectedSortMode.set(value);
     }
+
+    await this.runResultPass(null);
   }
 
-  public onIdOrderChange(input: string | CustomEvent<{ value?: string | null }>): void {
+  public async onIdOrderChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
     this.selectedIdOrder.set(normalizeCharacterIdOrder(this.resolveStringInput(input)));
+    await this.runResultPass(null);
   }
 
-  public onRequireSuperTandemPresenceChange(
+  public async onRequireSuperTandemPresenceChange(
     event: CustomEvent<{ checked?: boolean | null }>,
-  ): void {
+  ): Promise<void> {
     this.requireSuperTandemPresence.set(Boolean(event.detail.checked));
+    await this.runResultPass(null);
   }
 
   public isTierCoverageAvailable(tier: number): boolean {
@@ -1449,7 +1491,7 @@ export class CaptainCoveragePage implements OnInit {
     return this.isTierCoverageAvailable(tier) && this.requiredTierNumbers().includes(tier);
   }
 
-  public onTierCoverageToggle(tier: number, checked: boolean): void {
+  public async onTierCoverageToggle(tier: number, checked: boolean): Promise<void> {
     const current = new Set(this.requiredTierNumbers());
     if (checked) {
       current.add(tier);
@@ -1457,16 +1499,21 @@ export class CaptainCoveragePage implements OnInit {
       current.delete(tier);
     }
     this.requiredTierNumbers.set([...current].sort((a, b) => a - b));
+    await this.runResultPass(null);
   }
 
-  public onRequireSuperTypesClassesPresenceChange(
+  public async onRequireSuperTypesClassesPresenceChange(
     event: CustomEvent<{ checked?: boolean | null }>,
-  ): void {
+  ): Promise<void> {
     this.requireSuperTypesClassesPresence.set(Boolean(event.detail.checked));
+    await this.runResultPass(null);
   }
 
-  public onCharacterBoxChange(input: string | CustomEvent<{ value?: string | null }>): void {
+  public async onCharacterBoxChange(
+    input: string | CustomEvent<{ value?: string | null }>,
+  ): Promise<void> {
     this.selectedCharacterBoxId.set(this.normalizeCharacterBoxId(this.resolveStringInput(input)));
+    await this.runResultPass(null);
   }
 
   /** One trigger, one modal: every ability kind is a section inside it. */
@@ -1490,8 +1537,9 @@ export class CaptainCoveragePage implements OnInit {
     });
   }
 
-  public clearSelectedAbilityTags(): void {
+  public async clearSelectedAbilityTags(): Promise<void> {
     this.tagSetSelection.update((selection) => ({ ...selection, sets: [] }));
+    await this.runResultPass(null);
   }
 
   /**

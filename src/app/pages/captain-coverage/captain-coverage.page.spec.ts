@@ -4,7 +4,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { runCaptainCoverageResultPassWithDetails } from '../../core/services/captain-coverage-result-pass.utils';
+import { CaptainCoverageFilterRunnerService } from '../../core/services/captain-coverage-filter-runner.service';
+import {
+  buildCaptainCoverageResultPassDataset,
+  type CaptainCoverageResultPassOutcome,
+  runCaptainCoverageResultPass,
+} from '../../core/services/captain-coverage-result-pass.utils';
 
 import {
   type AbilityFilterTagSetSelection,
@@ -105,20 +110,20 @@ describe('CaptainCoveragePage', () => {
     expect(page.selectedCaptainDetail()?.id).toBe(1001);
     // The Captain no longer hides anybody: the uncovered character stays in the
     // list and is told apart by `captainBoosted` rather than by disappearing.
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Rejected Dex Shooter',
       'Covered Dex Fighter',
       'Leader Alpha',
       // The Captain now stays in its own result list: the same character may
       // hold both leader seats, so removing it would make that unreachable.
     ]);
-    expect(page.resultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
+    expect(page.visibleResultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
       ['Rejected Dex Shooter', false],
       ['Covered Dex Fighter', true],
       ['Leader Alpha', true],
     ]);
     expect(page.captainCoverageFilterState().requireCaptainCoverage).toBe(false);
-    expect(page.resultCards().find((card) => card.character.id === 2001)?.coverage?.boosts).toEqual(
+    expect(page.visibleResultCards().find((card) => card.character.id === 2001)?.coverage?.boosts).toEqual(
       {
         hp: 1.3,
         atk: 5,
@@ -188,7 +193,7 @@ describe('CaptainCoveragePage', () => {
     await page.setTeamSlotCharacter(0, kid);
 
     // Every candidate stays listed; only `captainBoosted` separates them now.
-    expect(page.resultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
+    expect(page.visibleResultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
       ['Rejected Tagged Unboosted Candidate', false],
       ['Rejected Untagged STR Candidate', true],
       ['Rejected Candidate', false],
@@ -226,7 +231,7 @@ describe('CaptainCoveragePage', () => {
     await page.setTeamSlotCharacter(0, leader);
 
     expect(page.captainCoverageFilterState().requireCaptainCoverage).toBe(false);
-    expect(page.resultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
+    expect(page.visibleResultCards().map((card) => [card.character.name, card.captainBoosted])).toEqual([
       ['Uncovered QCK Candidate', false],
       ['Covered DEX Candidate', true],
       ['Leader Captain Coverage Scope', false],
@@ -266,13 +271,13 @@ describe('CaptainCoveragePage', () => {
       [1, null],
     ]);
 
-    const first = page.resultCards().find((card) => card.character.id === 1001);
+    const first = page.visibleResultCards().find((card) => card.character.id === 1001);
     await page.assignLeaderFromResult(first!, 0);
 
     expect(page.selectedTeamSlots()[0]?.id).toBe(1001);
     expect(page.selectedCaptainDetail()?.id).toBe(1001);
 
-    const second = page.resultCards().find((card) => card.character.id === 1002);
+    const second = page.visibleResultCards().find((card) => card.character.id === 1002);
     await page.assignLeaderFromResult(second!, 1);
 
     expect(page.selectedTeamSlots()[1]?.id).toBe(1002);
@@ -286,7 +291,7 @@ describe('CaptainCoveragePage', () => {
       [1, 'Leader Two'],
     ]);
 
-    const third = page.resultCards().find((card) => card.character.id === 1003);
+    const third = page.visibleResultCards().find((card) => card.character.id === 1003);
     await page.assignLeaderFromResult(third!, 0);
 
     expect(page.selectedTeamSlots()[0]?.id).toBe(1003);
@@ -304,15 +309,15 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
 
-    const card = page.resultCards().find((entry) => entry.character.id === 1001);
+    const card = page.visibleResultCards().find((entry) => entry.character.id === 1001);
     await page.assignLeaderFromResult(card!, 0);
 
     // The Captain is still on screen: in the game the Friend Captain is
     // borrowed from another crew, so the same unit may hold both seats.
-    expect(page.resultCards().map((entry) => entry.character.id)).toEqual([1001]);
+    expect(page.visibleResultCards().map((entry) => entry.character.id)).toEqual([1001]);
     expect(page.leaderSlotOptions(leader)[0]?.isSameCharacter).toBe(true);
 
-    const again = page.resultCards().find((entry) => entry.character.id === 1001);
+    const again = page.visibleResultCards().find((entry) => entry.character.id === 1001);
     await page.assignLeaderFromResult(again!, 1);
 
     expect(page.selectedTeamSlots()[0]?.id).toBe(1001);
@@ -342,14 +347,14 @@ describe('CaptainCoveragePage', () => {
     // so an unaffordable leader is actually on screen and its button must say
     // why it is dead instead of silently doing nothing.
     for (const sub of subs) {
-      const card = page.resultCards().find((entry) => entry.character.id === sub.id);
+      const card = page.visibleResultCards().find((entry) => entry.character.id === sub.id);
       page.assignCharacterFromResult(card!);
     }
 
     expect(page.hasFreeSubSlot()).toBe(false);
 
-    const plainCard = page.resultCards().find((card) => card.character.id === 2001);
-    const expensiveCard = page.resultCards().find((card) => card.character.id === 2002);
+    const plainCard = page.visibleResultCards().find((card) => card.character.id === 2001);
+    const expensiveCard = page.visibleResultCards().find((card) => card.character.id === 2002);
 
     expect(plainCard?.canBeLeader).toBe(false);
     expect(expensiveCard?.canBeLeader).toBe(true);
@@ -385,12 +390,12 @@ describe('CaptainCoveragePage', () => {
     await page.setTeamSlotCharacter(0, leader);
 
     for (const sub of subs) {
-      const card = page.resultCards().find((entry) => entry.character.id === sub.id);
+      const card = page.visibleResultCards().find((entry) => entry.character.id === sub.id);
       page.assignCharacterFromResult(card!);
     }
 
     expect(page.hasFreeSubSlot()).toBe(false);
-    const spareCard = page.resultCards().find((card) => card.character.id === 2005);
+    const spareCard = page.visibleResultCards().find((card) => card.character.id === 2005);
     expect(spareCard).toBeDefined();
     expect(spareCard?.assignableSlotIndex).toBeNull();
     expect(spareCard?.canBeLeader).toBe(false);
@@ -424,7 +429,7 @@ describe('CaptainCoveragePage', () => {
     // Nobody is removed any more. The game's rules still apply, but they apply
     // to the buttons: a conflicting or unaffordable character keeps its card so
     // it stays reachable for the two leader seats.
-    const byName = new Map(page.resultCards().map((card) => [card.character.name, card]));
+    const byName = new Map(page.visibleResultCards().map((card) => [card.character.name, card]));
 
     expect([...byName.keys()].sort()).toEqual([
       'Another Luffy',
@@ -454,10 +459,10 @@ describe('CaptainCoveragePage', () => {
 
     // No Captain yet, so `coverage` is null on every card - which is exactly
     // the state the cost has to survive.
-    expect(page.resultCards().every((card) => card.coverage === null)).toBe(true);
+    expect(page.visibleResultCards().every((card) => card.coverage === null)).toBe(true);
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.cost)
         .sort(),
     ).toEqual([0, 55]);
@@ -478,7 +483,7 @@ describe('CaptainCoveragePage', () => {
     // A Captain alone says nothing yet: every card looks the same.
     expect(page.showCaptainBoosts()).toBe(false);
 
-    page.onTierCoverageToggle(1, true);
+    await page.onTierCoverageToggle(1, true);
 
     // Only a tier this Captain actually has counts, so an unavailable one
     // leaves the cards exactly as they were.
@@ -564,7 +569,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.clearTeamSlot(0);
+    await page.clearTeamSlot(0);
 
     const { page: returned } = createPage({ captains: [leader], characters: [leader] });
 
@@ -586,12 +591,12 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    page.onSearchChange({ detail: { value: 'Search' } } as CustomEvent<{ value: string }>);
+    await page.onSearchChange({ detail: { value: 'Search' } } as CustomEvent<{ value: string }>);
 
     await page.setTeamSlotCharacter(0, leader);
     expect(page.searchTerm()).toBe('Search');
 
-    page.clearTeamSlot(0);
+    await page.clearTeamSlot(0);
     expect(page.searchTerm()).toBe('Search');
   });
 
@@ -611,17 +616,17 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.onSearchChange({ detail: { value: 'luffy' } } as CustomEvent<{ value?: string | null }>);
+    await page.onSearchChange({ detail: { value: 'luffy' } } as CustomEvent<{ value?: string | null }>);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Luffy Candidate']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Luffy Candidate']);
 
-    page.onSearchChange({ detail: { value: '' } } as CustomEvent<{ value?: string | null }>);
-    page.toggleFavoritesOnly();
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Ace Candidate']);
+    await page.onSearchChange({ detail: { value: '' } } as CustomEvent<{ value?: string | null }>);
+    await page.toggleFavoritesOnly();
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Ace Candidate']);
 
-    page.toggleHideFavorites();
+    await page.toggleHideFavorites();
     expect(page.favoritesOnly()).toBe(false);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Luffy Candidate',
       'Leader Beta',
     ]);
@@ -668,26 +673,26 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
-    page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
-    page.onCoverageCostRangeChange('min', '10');
-    page.onCoverageCostRangeChange('max', '30');
+    await page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
+    await page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
+    await page.onCoverageCostRangeChange('min', '10');
+    await page.onCoverageCostRangeChange('max', '30');
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'DEX Fighter Candidate',
     ]);
 
     // The facet control's own Clear button emits an empty selection: that is
     // this page's only clear path for type/class.
-    page.onTypeFacetChange({ values: [], matchMode: 'any' });
-    page.onClassFacetChange({ values: [], matchMode: 'any' });
-    page.onCoverageCostRangeChange('min', null);
-    page.onCoverageCostRangeChange('max', null);
+    await page.onTypeFacetChange({ values: [], matchMode: 'any' });
+    await page.onClassFacetChange({ values: [], matchMode: 'any' });
+    await page.onCoverageCostRangeChange('min', null);
+    await page.onCoverageCostRangeChange('max', null);
 
     expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
     expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
     expect(page.coverageCostRange()).toEqual({ min: null, max: null });
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(
       expect.arrayContaining([
         'DEX Fighter Candidate',
         'STR Fighter Candidate',
@@ -726,16 +731,16 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'any' });
+    await page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'any' });
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['Fighter Shooter', 'Fighter Slasher', 'Leader Class Facet', 'Slasher Striker']);
 
-    page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    await page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Fighter Slasher',
       'Leader Class Facet',
     ]);
@@ -760,28 +765,28 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    page.onTypeFacetChange({ values: ['PSY'], matchMode: 'any' });
+    await page.onTypeFacetChange({ values: ['PSY'], matchMode: 'any' });
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['INT PSY Candidate', 'PSY INT Candidate']);
 
-    page.onTypeFacetChange({ values: ['INT'], matchMode: 'any' });
+    await page.onTypeFacetChange({ values: ['INT'], matchMode: 'any' });
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['INT PSY Candidate', 'PSY INT Candidate']);
 
     // A dual-type character really does hold both, so `all` over the pair is a
     // satisfiable query on this facet — not a degenerate one.
-    page.onTypeFacetChange({ values: ['INT', 'PSY'], matchMode: 'all' });
+    await page.onTypeFacetChange({ values: ['INT', 'PSY'], matchMode: 'all' });
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['INT PSY Candidate', 'PSY INT Candidate']);
@@ -809,16 +814,16 @@ describe('CaptainCoveragePage', () => {
     expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['DEX Candidate', 'Leader Empty Facets', 'QCK Candidate']);
 
     // An empty selection whose mode happens to be `all` is still no filter.
-    page.onTypeFacetChange({ values: [], matchMode: 'all' });
+    await page.onTypeFacetChange({ values: [], matchMode: 'all' });
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['DEX Candidate', 'Leader Empty Facets', 'QCK Candidate']);
@@ -856,15 +861,15 @@ describe('CaptainCoveragePage', () => {
     expect(page.typeFacetMatchCount()).toBe(3);
     expect(page.classFacetMatchCount()).toBe(3);
 
-    page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
+    await page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
     expect(page.typeFacetMatchCount()).toBe(2);
 
-    page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
+    await page.onClassFacetChange({ values: ['Fighter', 'Slasher'], matchMode: 'all' });
     expect(page.classFacetMatchCount()).toBe(1);
 
     // A satisfiable `all` pair that simply matches nothing: a real query, and
     // the evidence the control needs before it may claim disjointness.
-    page.onClassFacetChange({ values: ['Fighter', 'Striker'], matchMode: 'all' });
+    await page.onClassFacetChange({ values: ['Fighter', 'Striker'], matchMode: 'all' });
     expect(page.classFacetMatchCount()).toBe(0);
   });
 
@@ -894,23 +899,23 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
-    page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    await page.onTypeFacetChange({ values: ['DEX'], matchMode: 'any' });
+    await page.onClassFacetChange({ values: ['Fighter'], matchMode: 'any' });
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'DEX Fighter Clearable',
       'Leader Facet Clear',
     ]);
 
     // This page has no clear-all button; `clear()` inside each control is the
     // only reset path, and it arrives here as an empty selection.
-    page.onTypeFacetChange({ values: [], matchMode: 'any' });
-    page.onClassFacetChange({ values: [], matchMode: 'any' });
+    await page.onTypeFacetChange({ values: [], matchMode: 'any' });
+    await page.onClassFacetChange({ values: [], matchMode: 'any' });
 
     expect(page.typeFacet()).toEqual({ values: [], matchMode: 'any' });
     expect(page.classFacet()).toEqual({ values: [], matchMode: 'any' });
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['DEX Fighter Clearable', 'Leader Facet Clear', 'QCK Shooter Clearable']);
@@ -951,7 +956,7 @@ describe('CaptainCoveragePage', () => {
       createSelection([createCharacterTagSet(['Straw Hat Pirates'], 'any', 'set-1')]),
     );
     expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
 
     await page.saveCharacterTagSetSelection(
       createSelection([
@@ -960,7 +965,7 @@ describe('CaptainCoveragePage', () => {
     );
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['Straw Hat Candidate', 'Worst Generation Candidate']);
@@ -968,15 +973,15 @@ describe('CaptainCoveragePage', () => {
     await page.saveCharacterTagSetSelection(
       createSelection([createCharacterTagSet(['Worst Generation'], 'any', 'set-1')]),
     );
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Worst Generation Candidate',
     ]);
 
-    page.clearSelectedCharacterTags();
+    await page.clearSelectedCharacterTags();
     expect(page.selectedCharacterTags()).toEqual([]);
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual([
@@ -1026,7 +1031,7 @@ describe('CaptainCoveragePage', () => {
 
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['Heart Pirate In Dressrosa', 'Straw Hat In Dressrosa']);
@@ -1044,7 +1049,7 @@ describe('CaptainCoveragePage', () => {
 
     expect(
       page
-        .resultCards()
+        .visibleResultCards()
         .map((card) => card.character.name)
         .sort(),
     ).toEqual(['Heart Pirate In Dressrosa', 'Straw Hat Elsewhere', 'Straw Hat In Dressrosa']);
@@ -1080,7 +1085,7 @@ describe('CaptainCoveragePage', () => {
       ]),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Tags Candidate']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Both Tags Candidate']);
   });
 
   it('matches character tags case-insensitively without rewriting the stored casing', async () => {
@@ -1106,7 +1111,7 @@ describe('CaptainCoveragePage', () => {
       createSelection([createCharacterTagSet(['  straw hat pirates '], 'any', 'set-1')]),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
     // Trimmed, but never case-folded: persisted user tags must not shift.
     expect(page.selectedCharacterTags()).toEqual(['straw hat pirates']);
     expect(page.characterTagSetSelection().sets[0]?.tags).toEqual(['straw hat pirates']);
@@ -1157,7 +1162,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.characterTagSetSelection().sets.map((set) => set.id)).toEqual(['arc']);
     expect(page.characterTagFilterTriggerLabel()).toBe('1 tag(s) in 1 group(s)');
     expect(page.selectedCharacterTags()).toEqual(['Dressrosa']);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
   });
 
   it('opens the tag-set picker only once the dataset actually has tags', async () => {
@@ -1285,19 +1290,19 @@ describe('CaptainCoveragePage', () => {
     await page.setTeamSlotCharacter(0, leader);
 
     expect(userState.readyCharacterBoxes).toHaveBeenCalledOnce();
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Outside Box Candidate',
       'In Box Candidate',
       'Leader Box Scope',
     ]);
 
-    page.onCharacterBoxChange({
+    await page.onCharacterBoxChange({
       detail: { value: 'box-1' },
     } as CustomEvent<{ value?: string | null }>);
 
     expect(page.selectedCharacterBox()?.name).toBe('Coverage Box');
     expect(page.selectedCharacterBoxIds()).toEqual([2001]);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['In Box Candidate']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['In Box Candidate']);
     expect(page.characterBoxSupportLabel()).toBe(
       'captain-coverage.filters.characterBox.support.withCount',
     );
@@ -1321,13 +1326,13 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.onCharacterBoxChange({
+    await page.onCharacterBoxChange({
       detail: { value: 'box-1' },
     } as CustomEvent<{ value?: string | null }>);
-    page.toggleFavoritesOnly();
+    await page.toggleFavoritesOnly();
 
     expect(page.selectedCharacterBoxFavoriteCount()).toBe(1);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Favorite Candidate']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Favorite Candidate']);
     expect(page.characterBoxSupportLabel()).toBe(
       'captain-coverage.filters.characterBox.support.withFavorites',
     );
@@ -1349,14 +1354,14 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    expect(page.resultCards()).toHaveLength(2);
+    expect(page.visibleResultCards()).toHaveLength(2);
 
-    page.onCharacterBoxChange({
+    await page.onCharacterBoxChange({
       detail: { value: 'empty-box' },
     } as CustomEvent<{ value?: string | null }>);
 
     expect(page.selectedCharacterBox()?.name).toBe('Empty Box');
-    expect(page.resultCards()).toEqual([]);
+    expect(page.visibleResultCards()).toEqual([]);
     expect(page.totalMatchingCharacters()).toBe(0);
   });
 
@@ -1402,7 +1407,7 @@ describe('CaptainCoveragePage', () => {
     page.onMaxTotalCostChange({ detail: { value: '100' } } as CustomEvent<{ value: string }>);
     await page.setTeamSlotCharacter(0, leader);
 
-    const byName = new Map(page.resultCards().map((card) => [card.character.name, card]));
+    const byName = new Map(page.visibleResultCards().map((card) => [card.character.name, card]));
 
     expect([...byName.keys()].sort()).toEqual([
       'Conflict Candidate',
@@ -1444,7 +1449,7 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'No Utility',
       'Orb Booster',
       'Bind Reducer',
@@ -1455,11 +1460,11 @@ describe('CaptainCoveragePage', () => {
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'] }]),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Orb Booster',
       'Bind Reducer',
     ]);
-    expect(page.resultCards().map((card) => card.abilityMatchCount)).toEqual([1, 1]);
+    expect(page.visibleResultCards().map((card) => card.abilityMatchCount)).toEqual([1, 1]);
     expect(page.hasSelectedAbilityTags()).toBe(true);
     expect(page.tagSetSelection().sets).toHaveLength(1);
   });
@@ -1489,7 +1494,7 @@ describe('CaptainCoveragePage', () => {
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'] }]),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Orb Only',
       'Bind Only',
       'Both Matcher',
@@ -1499,7 +1504,7 @@ describe('CaptainCoveragePage', () => {
       createTagSetSelection([{ abilityKeys: ['remove_bind'] }, { abilityKeys: ['boost_orb'] }]),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
 
     await page.saveAbilityTagSetSelection(
       createTagSetSelection(
@@ -1508,7 +1513,7 @@ describe('CaptainCoveragePage', () => {
       ),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Orb Only',
       'Bind Only',
       'Both Matcher',
@@ -1538,7 +1543,7 @@ describe('CaptainCoveragePage', () => {
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'], operator: 'all' }]),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
   });
 
   it('filters covered results to characters with Super Tandem data when enabled', async () => {
@@ -1568,17 +1573,17 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'No Super Tandem',
       'Structured Super Tandem',
       'Leader Super Tandem Filter',
     ]);
 
-    page.onRequireSuperTandemPresenceChange({
+    await page.onRequireSuperTandemPresenceChange({
       detail: { checked: true },
     } as CustomEvent<{ checked: boolean }>);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Structured Super Tandem',
     ]);
   });
@@ -1611,18 +1616,18 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'No Super Types Classes',
       'Structured Super Class',
       'Structured Super Type',
       'Leader Super Types Classes Filter',
     ]);
 
-    page.onRequireSuperTypesClassesPresenceChange({
+    await page.onRequireSuperTypesClassesPresenceChange({
       detail: { checked: true },
     } as CustomEvent<{ checked: boolean }>);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Structured Super Class',
       'Structured Super Type',
     ]);
@@ -1644,11 +1649,11 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
 
     expect(page.selectedCaptainDetail()).toBeNull();
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Second Browse Candidate',
       'First Browse Candidate',
     ]);
-    expect(page.resultCards().map((card) => card.coverage)).toEqual([null, null]);
+    expect(page.visibleResultCards().map((card) => card.coverage)).toEqual([null, null]);
     expect(page.totalMatchingCharacters()).toBe(2);
   });
 
@@ -1665,7 +1670,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    page.assignCharacterFromResult(page.resultCards()[0]!);
+    page.assignCharacterFromResult(page.visibleResultCards()[0]!);
 
     expect(page.selectedCaptainDetail()).toBeNull();
     expect(page.selectedCaptain()).toBeNull();
@@ -1713,28 +1718,28 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
 
-    page.onRequireSuperTandemPresenceChange({
+    await page.onRequireSuperTandemPresenceChange({
       detail: { checked: true },
     } as CustomEvent<{ checked: boolean }>);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Both Super Capabilities',
       'Tandem Only',
     ]);
 
-    page.onRequireSuperTypesClassesPresenceChange({
+    await page.onRequireSuperTypesClassesPresenceChange({
       detail: { checked: true },
     } as CustomEvent<{ checked: boolean }>);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Both Super Capabilities',
     ]);
 
-    page.onRequireSuperTandemPresenceChange({
+    await page.onRequireSuperTandemPresenceChange({
       detail: { checked: false },
     } as CustomEvent<{ checked: boolean }>);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Both Super Capabilities',
       'Super Type Only',
     ]);
@@ -1786,7 +1791,7 @@ describe('CaptainCoveragePage', () => {
       'captain-coverage.filters.abilityTagSets.trigger.active',
     );
 
-    page.clearSelectedAbilityTags();
+    await page.clearSelectedAbilityTags();
     expect(page.tagSetSelection().sets).toEqual([]);
     expect(page.tagSetSelection().sets).toEqual([]);
     expect(page.hasSelectedAbilityTags()).toBe(false);
@@ -1859,8 +1864,8 @@ describe('CaptainCoveragePage', () => {
       createTagSetSelection([{ abilityKeys: ['remove_bind'], captainAbility: true }]),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Captain Bind Reducer']);
-    expect(page.resultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Captain Bind Reducer']);
+    expect(page.visibleResultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
       'Captain: Remove Bind',
     ]);
   });
@@ -1919,7 +1924,7 @@ describe('CaptainCoveragePage', () => {
       ]),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Captain Despair Reducer',
       'Captain Bind Reducer',
     ]);
@@ -1982,10 +1987,10 @@ describe('CaptainCoveragePage', () => {
       ]),
     );
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
-    expect(page.resultCards()[0]?.abilityMatchCount).toBe(2);
-    expect(page.resultCards()[0]?.selectedAbilityCount).toBe(2);
-    expect(page.resultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
+    expect(page.visibleResultCards()[0]?.abilityMatchCount).toBe(2);
+    expect(page.visibleResultCards()[0]?.selectedAbilityCount).toBe(2);
+    expect(page.visibleResultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
       'Special: Remove Bind',
       'Captain: Remove Despair',
     ]);
@@ -2033,12 +2038,12 @@ describe('CaptainCoveragePage', () => {
     );
     await page.setTeamSlotCharacter(0, leader);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Support Matcher',
       'Potential Matcher',
       'Special Matcher',
     ]);
-    expect(page.resultCards().map((card) => card.selectedAbilityCount)).toEqual([3, 3, 3]);
+    expect(page.visibleResultCards().map((card) => card.selectedAbilityCount)).toEqual([3, 3, 3]);
   });
 
   it('counts selected ability matches per card, without reordering the list', async () => {
@@ -2085,7 +2090,7 @@ describe('CaptainCoveragePage', () => {
     );
     await page.setTeamSlotCharacter(0, leader);
 
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Single Match',
       'Partial Match',
       'Full Match',
@@ -2093,7 +2098,7 @@ describe('CaptainCoveragePage', () => {
 
     // The ability-match ranking toggle is gone, so the order is the catalogue's
     // own and the per-card match counts are what carry the ranking information.
-    expect(page.resultCards().map((card) => card.abilityMatchCount)).toEqual([1, 2, 3]);
+    expect(page.visibleResultCards().map((card) => card.abilityMatchCount)).toEqual([1, 2, 3]);
   });
 
   it('allows ability filters before selecting a Captain and keeps them for later results', async () => {
@@ -2118,7 +2123,7 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
 
     expect(page.selectedCaptainDetail()).toBeNull();
-    expect(page.resultCards().map((card) => card.character.name)).toEqual([
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Early Bind Reducer',
       'Leader Before Filters',
     ]);
@@ -2129,12 +2134,12 @@ describe('CaptainCoveragePage', () => {
 
     await page.saveAbilityTagSetSelection(createTagSetSelection([{ abilityKeys: ['remove_bind'] }]));
     expect(page.selectedAbilityRequirementCount()).toBe(1);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
 
     await page.setTeamSlotCharacter(0, leader);
 
     expect(page.selectedAbilityRequirementCount()).toBe(1);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
   });
 
   it('shows compact badges only for selected abilities matched by each result', async () => {
@@ -2168,7 +2173,7 @@ describe('CaptainCoveragePage', () => {
     );
     await page.setTeamSlotCharacter(0, leader);
 
-    expect(page.resultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
+    expect(page.visibleResultCards()[0]?.matchedAbilityBadges.map((badge) => badge.label)).toEqual([
       'Special: Remove Bind',
       'Potential: Reduce Bind',
     ]);
@@ -2188,7 +2193,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.assignCharacterFromResult(page.resultCards()[0]);
+    page.assignCharacterFromResult(page.visibleResultCards()[0]);
 
     expect(page.selectedTeamSlots()[2]?.id).toBe(2001);
   });
@@ -2211,14 +2216,14 @@ describe('CaptainCoveragePage', () => {
 
     expect(page.selectedSortMode()).toBe('catalog');
     expect(page.selectedIdOrder()).toBe('newest');
-    expect(page.resultCards().map((card) => card.character.id)).toEqual([2003, 2001, 1001]);
+    expect(page.visibleResultCards().map((card) => card.character.id)).toEqual([2003, 2001, 1001]);
 
-    page.onIdOrderChange({ detail: { value: 'oldest' } } as CustomEvent<{
+    await page.onIdOrderChange({ detail: { value: 'oldest' } } as CustomEvent<{
       value?: string | null;
     }>);
 
     expect(page.selectedIdOrder()).toBe('oldest');
-    expect(page.resultCards().map((card) => card.character.id)).toEqual([1001, 2001, 2003]);
+    expect(page.visibleResultCards().map((card) => card.character.id)).toEqual([1001, 2001, 2003]);
   });
 
   it('limits captain and sub selections by the max total team cost', async () => {
@@ -2354,7 +2359,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.saveUiLocked()).toBe(false);
     expect(page.saveFeedbackError()).toBe('');
 
-    page.clearTeamSlot(4);
+    await page.clearTeamSlot(4);
     expect(page.currentTeamId()).toBeNull();
   });
 
@@ -2539,7 +2544,13 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('crewmateAbilityDrafts()');
     expect(template).not.toContain('potentialAbilityDrafts()');
     expect(template).not.toContain('supportAbilityDrafts()');
-    expect(template).toContain('resultCards()');
+    /*
+     * Named explicitly, not as the substring 'resultCards()' this used to
+     * assert - that string is also inside 'visibleResultCards()', so it passed
+     * whether or not the empty state existed at all.
+     */
+    expect(template).toContain('@for (card of visibleResultCards(); track');
+    expect(template).toContain('@else if (!totalMatchingCharacters()) {');
     expect(template).toContain('<app-character-filter-row');
     expect(template).toContain('<app-character-facet-filter');
     expect(template).toContain('kind="type"');
@@ -3235,13 +3246,13 @@ describe('CaptainCoveragePage', () => {
     expect(page.remainingResultCount()).toBe(0);
 
     // A narrower list starts at page one again.
-    page.onSearchChange({ detail: { value: 'Crew 1' } } as CustomEvent<{ value?: string | null }>);
+    await page.onSearchChange({ detail: { value: 'Crew 1' } } as CustomEvent<{ value?: string | null }>);
     expect(page.totalMatchingCharacters()).toBeLessThan(250);
     expect(page.visibleResultCards().length).toBeLessThanOrEqual(100);
 
     // Coming back to the identical list restores where the user was, because
     // the page is keyed on which characters matched, not on when they matched.
-    page.onSearchChange({ detail: { value: '' } } as CustomEvent<{ value?: string | null }>);
+    await page.onSearchChange({ detail: { value: '' } } as CustomEvent<{ value?: string | null }>);
     expect(page.totalMatchingCharacters()).toBe(250);
     expect(page.visibleResultCards()).toHaveLength(250);
   });
@@ -3276,28 +3287,30 @@ describe('CaptainCoveragePage', () => {
     expect(page.visibleResultCards().length).toBe(paged);
 
     const filledSlot = page.selectedTeamSlots().findIndex((slot) => slot !== null);
-    page.clearTeamSlot(filledSlot);
+    await page.clearTeamSlot(filledSlot);
 
     expect(page.selectedTeamSlots().every((slot) => slot === null)).toBe(true);
     expect(page.visibleResultCards().length).toBe(paged);
 
     // A real filter change still starts over.
-    page.onSearchChange({ detail: { value: 'Crew 1' } } as CustomEvent<{ value?: string | null }>);
+    await page.onSearchChange({ detail: { value: 'Crew 1' } } as CustomEvent<{ value?: string | null }>);
     expect(page.visibleResultCards().length).toBeLessThanOrEqual(100);
   });
 
 
   /*
-   * The pass is about to run inside a Web Worker, with an in-thread copy as the
-   * fallback for browsers without one - and for every test in this file, which
-   * builds the page class directly in an environment that has no `Worker` at
-   * all. Two implementations would drift on the first fix that landed in only
-   * one, so there is exactly one: `runCaptainCoverageResultPass`.
+   * The page no longer computes results itself: it asks
+   * `CaptainCoverageFilterRunnerService`, which answers from a Worker where the
+   * browser has one and from `runCaptainCoverageResultPass` where it does not -
+   * including here, since this file builds the page class directly in an
+   * environment with no `Worker` at all.
    *
-   * These tests prove the extracted function reproduces the page's own result
-   * order and boosted count, BEFORE the page starts depending on it. They are
-   * differential, not example-based, on purpose: they assert equality with the
-   * shipped behaviour rather than restating what that behaviour should be.
+   * These four tests pin the WIRING rather than the algorithm: that the page
+   * hands the pass exactly the parameters its own signals say it should, and
+   * publishes exactly what came back. They were written before the page
+   * depended on the extracted function, when they proved the extraction was
+   * faithful; they earn their place now by failing if a filter input is ever
+   * added to the page and forgotten in `buildResultPassParams`.
    */
   it('reproduces the page result order exactly, with no captain selected', async () => {
     const leader = createCharacter({
@@ -3314,7 +3327,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
 
-    expect(runExtractedPass(page).ids).toEqual(page.resultCards().map((card) => card.character.id));
+    expect(runExtractedPass(page).ids).toEqual([...page.resultCardIds()]);
   });
 
   it('reproduces the page result order and boosted count with a captain selected', async () => {
@@ -3335,7 +3348,7 @@ describe('CaptainCoveragePage', () => {
 
     const extracted = runExtractedPass(page);
 
-    expect(extracted.ids).toEqual(page.resultCards().map((card) => card.character.id));
+    expect(extracted.ids).toEqual([...page.resultCardIds()]);
     expect(extracted.boostedCount).toBe(page.boostedMatchingCharacters());
   });
 
@@ -3365,13 +3378,12 @@ describe('CaptainCoveragePage', () => {
       'nameDesc',
     ]) {
       for (const idOrder of ['newest', 'oldest']) {
-        page.onSortModeChange(sortMode);
-        page.onIdOrderChange(idOrder);
+        await page.onSortModeChange(sortMode);
+        await page.onIdOrderChange(idOrder);
 
-        expect(
-          runExtractedPass(page).ids,
-          `sortMode=${sortMode} idOrder=${idOrder}`,
-        ).toEqual(page.resultCards().map((card) => card.character.id));
+        expect(runExtractedPass(page).ids, `sortMode=${sortMode} idOrder=${idOrder}`).toEqual([
+          ...page.resultCardIds(),
+        ]);
       }
     }
   });
@@ -3396,9 +3408,7 @@ describe('CaptainCoveragePage', () => {
     await page.setTeamSlotCharacter(0, leader);
 
     const expectMatch = (label: string): void => {
-      expect(runExtractedPass(page).ids, label).toEqual(
-        page.resultCards().map((card) => card.character.id),
-      );
+      expect(runExtractedPass(page).ids, label).toEqual([...page.resultCardIds()]);
     };
 
     expectMatch('unfiltered');
@@ -3410,18 +3420,92 @@ describe('CaptainCoveragePage', () => {
     expectMatch('hide favorites');
 
     await page.onHideFavoritesFilterChange(false);
-    page.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
+    await page.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
     expectMatch('type facet');
 
-    page.onTypeFacetChange({ values: [], matchMode: 'any' });
-    page.onCoverageCostRangeChange('min', 20);
-    page.onCoverageCostRangeChange('max', 45);
+    await page.onTypeFacetChange({ values: [], matchMode: 'any' });
+    await page.onCoverageCostRangeChange('min', 20);
+    await page.onCoverageCostRangeChange('max', 45);
     expectMatch('cost range');
 
-    page.onCoverageCostRangeChange('min', null);
-    page.onCoverageCostRangeChange('max', null);
-    page.onSearchChange({ detail: { value: 'three' } } as CustomEvent<{ value?: string | null }>);
+    await page.onCoverageCostRangeChange('min', null);
+    await page.onCoverageCostRangeChange('max', null);
+    await page.onSearchChange({ detail: { value: 'three' } } as CustomEvent<{ value?: string | null }>);
     expectMatch('search term');
+  });
+
+
+  /*
+   * The pass may be answered by a Worker, so two presses in quick succession
+   * can come back out of order. Whichever press was LAST is the one the reader
+   * is waiting on, and an older reply landing afterwards must not overwrite it.
+   *
+   * This is the failure mode a synchronous computed made impossible and an
+   * async pass reintroduces, so it is pinned here rather than left to review.
+   */
+  it('discards a pass reply that a newer press has already superseded', async () => {
+    const first = createDeferred<CaptainCoverageResultPassOutcome>();
+    const second = createDeferred<CaptainCoverageResultPassOutcome>();
+    const answers = [first, second];
+    const filterRunnerOverride = {
+      run: vi.fn(() => answers.shift()!.promise),
+      reset: vi.fn(),
+    } as unknown as CaptainCoverageFilterRunnerService;
+    const leader = createCharacter({ id: 1001, name: 'Race Leader' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, createCharacter({ id: 2001, name: 'Race Candidate' })],
+      filterRunnerOverride,
+    });
+
+    // ngOnInit takes the first deferred; settle it so the page starts clean.
+    const initialised = page.ngOnInit();
+
+    first.resolve({ ids: [1001], boostedCount: 0 });
+    await initialised;
+    expect([...page.resultCardIds()]).toEqual([1001]);
+
+    // Two presses, answered out of order.
+    const third = createDeferred<CaptainCoverageResultPassOutcome>();
+
+    answers.push(third);
+
+    const stale = page.onSearchChange({ detail: { value: 'a' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    const current = page.onSearchChange({ detail: { value: 'ab' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    third.resolve({ ids: [2001], boostedCount: 0 });
+    await current;
+    second.resolve({ ids: [9999], boostedCount: 7 });
+    await stale;
+
+    // The newer press wins, and the older reply is dropped entirely - including
+    // its boosted count, which is published from the same outcome.
+    expect([...page.resultCardIds()]).toEqual([2001]);
+    expect(page.boostedMatchingCharacters()).toBe(0);
+  });
+
+  it('re-runs the pass on tab entry, because favorites change on other screens', async () => {
+    const leader = createCharacter({ id: 1001, name: 'Entry Leader' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, createCharacter({ id: 2001, name: 'Entry Candidate' })],
+    });
+
+    await page.ngOnInit();
+
+    const before = [...page.resultCardIds()];
+
+    // Favorites are owned by UserStateService and toggled from the character
+    // screens; when the pass was a computed it picked that up by itself.
+    page.favoritesOnly.set(true);
+    await page.ionViewWillEnter();
+
+    expect([...page.resultCardIds()]).not.toEqual(before);
+    expect([...page.resultCardIds()]).toEqual([]);
   });
 
   it('folds the Friend Captain into the printed HP and ATK, multiplicatively', async () => {
@@ -3443,15 +3527,15 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.onTierCoverageToggle(1, true);
+    await page.onTierCoverageToggle(1, true);
 
-    const captainOnly = page.resultCards().find((card) => card.character.id === 2001);
+    const captainOnly = page.visibleResultCards().find((card) => card.character.id === 2001);
 
     expect(captainOnly?.leaderBoosts).toEqual({ hp: 1.5, atk: 2 });
 
     await page.setTeamSlotCharacter(1, friend);
 
-    const bothLeaders = page.resultCards().find((card) => card.character.id === 2001);
+    const bothLeaders = page.visibleResultCards().find((card) => card.character.id === 2001);
 
     /*
      * 1.5 x 1.5 and 2 x 2, not 1.5 + 1.5 and 2 + 2: OPTC combines the two
@@ -3471,13 +3555,13 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.onTierCoverageToggle(1, true);
+    await page.onTierCoverageToggle(1, true);
     // The same character in both seats is legal in this game, so the two seats
     // are never deduplicated by id.
     await page.setTeamSlotCharacter(1, leader);
 
     expect(
-      page.resultCards().find((card) => card.character.id === 2001)?.leaderBoosts,
+      page.visibleResultCards().find((card) => card.character.id === 2001)?.leaderBoosts,
     ).toEqual({ hp: 2.25, atk: 4 });
   });
 
@@ -3501,13 +3585,13 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    const before = page.resultCards().map((card) => card.character.id);
+    const before = page.visibleResultCards().map((card) => card.character.id);
 
     await page.setTeamSlotCharacter(1, friend);
 
     // Picking a Friend Captain changes the numbers on the cards and nothing
     // else - no character appears or disappears because of it.
-    expect(page.resultCards().map((card) => card.character.id)).toEqual(before);
+    expect(page.visibleResultCards().map((card) => card.character.id)).toEqual(before);
   });
 
   it('empties the results and shows the loader before applying a favorites filter', async () => {
@@ -3528,22 +3612,30 @@ describe('CaptainCoveragePage', () => {
     await page.setTeamSlotCharacter(0, leader);
     expect(page.resultsPending()).toBe(false);
 
+    const settledIds = [...page.resultCardIds()];
     const applied = page.onFavoritesOnlyFilterChange(true);
 
-    // Synchronously, before the filter is even written: the cards are gone and
-    // the loader is up. This is the whole point - the owner reported the page
-    // looking frozen, not slow.
+    /*
+     * Synchronously, before the pass has answered: the loader is up and the
+     * published result list has not moved yet. That is the whole point - the
+     * owner reported the page looking frozen, not slow.
+     *
+     * The filter signal itself IS already written; it is the pass input, and
+     * writing it changes nothing a reader can see until the pass publishes new
+     * ids. An earlier version of this test asserted the write was deferred,
+     * which pinned an implementation detail rather than the behaviour.
+     */
     expect(page.resultsPending()).toBe(true);
     expect(page.resultsPendingReason()).toBe('favorites');
     expect(page.resultsPendingLabel()).toBe('captain-coverage.results.pending.favorites');
-    expect(page.favoritesOnly()).toBe(false);
+    expect([...page.resultCardIds()]).toEqual(settledIds);
 
     await applied;
 
     expect(page.resultsPending()).toBe(false);
     expect(page.resultsPendingProgress()).toBe(1);
     expect(page.favoritesOnly()).toBe(true);
-    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Favorite Candidate']);
+    expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Favorite Candidate']);
   });
 
   it('closes a tag-set modal first, then loads, so the press is acknowledged', async () => {
@@ -3662,9 +3754,8 @@ function readCaptainCoverageStyles(panel: string): string {
  * `resultCards` computed reads, so the two can be compared directly.
  */
 function runExtractedPass(page: CaptainCoveragePage): { ids: number[]; boostedCount: number } {
-  return runCaptainCoverageResultPassWithDetails(
-    page.allCharacters(),
-    page.allCharacterDetailsById(),
+  return runCaptainCoverageResultPass(
+    buildCaptainCoverageResultPassDataset(page.allCharacters(), page.allCharacterDetailsById()),
     {
       captain: page.selectedCaptainDetail(),
       filterState: page.captainCoverageFilterState(),
@@ -3685,6 +3776,17 @@ function runExtractedPass(page: CaptainCoveragePage): { ids: number[]; boostedCo
   );
 }
 
+
+/** A promise whose settlement the test controls, for out-of-order pass replies. */
+function createDeferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolveFn) => {
+    resolve = resolveFn;
+  });
+
+  return { promise, resolve };
+}
+
 function createPage({
   captains = [],
   characters = [],
@@ -3693,6 +3795,7 @@ function createPage({
   routeTeamId = null,
   savedTeams = [],
   characterBoxes = [],
+  filterRunnerOverride,
 }: {
   captains?: CharacterDetailRecord[];
   characters?: Array<CharacterDetailRecord & CharacterListItem>;
@@ -3701,6 +3804,7 @@ function createPage({
   routeTeamId?: string | null;
   savedTeams?: Array<ReturnType<typeof createSavedTeam>>;
   characterBoxes?: CharacterBox[];
+  filterRunnerOverride?: CaptainCoverageFilterRunnerService;
 } = {}): {
   page: CaptainCoveragePage;
   repository: {
@@ -3793,6 +3897,11 @@ function createPage({
     navigate: vi.fn().mockResolvedValue(true),
   };
 
+  // No Worker exists in this environment, so the real runner answers every call
+  // in-thread with the very same function the worker would have run. A test can
+  // pass its own to control when a pass resolves.
+  const filterRunner = filterRunnerOverride ?? new CaptainCoverageFilterRunnerService();
+
   return {
     page: new CaptainCoveragePage(
       repository as never,
@@ -3802,6 +3911,7 @@ function createPage({
       route as never,
       router as never,
       alertController as never,
+      filterRunner as never,
     ),
     repository,
     characterCatalogCache,

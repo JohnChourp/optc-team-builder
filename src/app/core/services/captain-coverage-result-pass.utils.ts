@@ -12,9 +12,9 @@ import {
 } from './captain-coverage.utils';
 import {
   type CaptainCoverageFilterState,
-  hasCaptainCoverageSuperTandemData,
-  hasCaptainCoverageSuperTypesClassesData,
+  type CaptainCoverageTargetSummary,
   resolveCaptainCoverageFilterResult,
+  summarizeCaptainCoverageTarget,
 } from './captain-coverage-filter.utils';
 import { matchesCharacterFacet } from './character-facet-filter.utils';
 import { matchesCharacterTagSets } from './character-tag-set.utils';
@@ -49,12 +49,38 @@ export interface CaptainCoverageCostRange {
 }
 
 /**
+ * One catalog entry as the pass needs it: the list item the reader sees, plus
+ * the three-field projection of its detail record.
+ *
+ * The projection is the reason a worker is affordable here. A
+ * `CharacterDetailRecord` carries every ability text the app knows; the pass
+ * reads three fields out of it, so shipping the records themselves would clone
+ * the whole catalog into a second heap to answer questions about tags and two
+ * booleans.
+ */
+export interface CaptainCoverageResultPassEntry {
+  character: CharacterListItem;
+  summary: CaptainCoverageTargetSummary;
+}
+
+/**
  * Everything the pass reads that does not change between filter presses.
  * Shipped to the worker once, when the catalog loads.
  */
 export interface CaptainCoverageResultPassDataset {
-  characters: readonly CharacterListItem[];
-  characterDetails: readonly CharacterDetailRecord[];
+  entries: readonly CaptainCoverageResultPassEntry[];
+}
+
+export function buildCaptainCoverageResultPassDataset(
+  characters: readonly CharacterListItem[],
+  characterDetailsById: ReadonlyMap<number, CharacterDetailRecord>,
+): CaptainCoverageResultPassDataset {
+  return {
+    entries: characters.map((character) => ({
+      character,
+      summary: summarizeCaptainCoverageTarget(characterDetailsById.get(character.id)),
+    })),
+  };
 }
 
 /** Everything that changes when the reader touches a filter. */
@@ -104,23 +130,6 @@ export function runCaptainCoverageResultPass(
   dataset: CaptainCoverageResultPassDataset,
   params: CaptainCoverageResultPassParams,
 ): CaptainCoverageResultPassOutcome {
-  const detailsById = new Map(dataset.characterDetails.map((detail) => [detail.id, detail]));
-
-  return runCaptainCoverageResultPassWithDetails(dataset.characters, detailsById, params);
-}
-
-/**
- * The same pass against a details map the caller already holds.
- *
- * The page keeps `allCharacterDetailsById` as a live `Map` and would otherwise
- * pay to rebuild it on every fallback pass; the worker receives an array over
- * `postMessage` and builds the map once at init.
- */
-export function runCaptainCoverageResultPassWithDetails(
-  characters: readonly CharacterListItem[],
-  characterDetailsById: ReadonlyMap<number, CharacterDetailRecord>,
-  params: CaptainCoverageResultPassParams,
-): CaptainCoverageResultPassOutcome {
   const {
     captain,
     filterState,
@@ -146,7 +155,7 @@ export function runCaptainCoverageResultPassWithDetails(
 
   const candidates: CaptainCoverageResultPassCandidate[] = [];
 
-  for (const character of characters) {
+  for (const { character, summary } of dataset.entries) {
     if (characterBoxIdSet && !characterBoxIdSet.has(character.id)) {
       continue;
     }
@@ -187,37 +196,23 @@ export function runCaptainCoverageResultPassWithDetails(
       continue;
     }
 
-    const characterDetail = characterDetailsById.get(character.id);
     const filterResult = captain
-      ? resolveCaptainCoverageFilterResult(
-          captain,
-          { character, detail: characterDetail },
-          filterState,
-          scopeCache,
-        )
+      ? resolveCaptainCoverageFilterResult(captain, { character, summary }, filterState, scopeCache)
       : null;
 
     if (filterResult && !filterResult.matches) {
       continue;
     }
 
-    if (requireSuperTandemPresence && !hasCaptainCoverageSuperTandemData(characterDetail)) {
+    if (requireSuperTandemPresence && !summary.hasSuperTandemData) {
       continue;
     }
 
-    if (
-      requireSuperTypesClassesPresence &&
-      !hasCaptainCoverageSuperTypesClassesData(characterDetail)
-    ) {
+    if (requireSuperTypesClassesPresence && !summary.hasSuperTypesClassesData) {
       continue;
     }
 
-    if (
-      !matchesCharacterTagSets(
-        characterDetail?.detail.characterTags ?? [],
-        characterTagSetSelection,
-      )
-    ) {
+    if (!matchesCharacterTagSets(summary.characterTags, characterTagSetSelection)) {
       continue;
     }
 
