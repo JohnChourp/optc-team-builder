@@ -122,11 +122,6 @@
     "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
     "npm": ">=8.0.0"
   },
-  "overrides": {
-    "@babel/core": "7.29.6",
-    "piscina": "5.2.0",
-    "esbuild": "0.28.1"
-  },
   "dependencies": {
     "@angular/animations": "^22.1.5",
     "@angular/common": "^22.1.5",
