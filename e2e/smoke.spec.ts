@@ -118,6 +118,36 @@ test.describe('cross-browser smoke', () => {
       await expect(getPageContent(page)).toBeVisible({ timeout: NETWORK_IDLE_TIMEOUT });
     }
   });
+
+  /*
+   * The Captain Coverage filter pass runs in a Web Worker, and the unit suite
+   * cannot see that: it builds the page class in an environment with no
+   * `Worker` at all, so every one of those tests exercises the in-thread
+   * fallback. This is the only place the real worker executes, so it is the
+   * only place that can catch the worker failing to build, failing to receive
+   * its dataset, or answering with nothing.
+   *
+   * It asserts a NON-ZERO count rather than merely that the page rendered: a
+   * broken worker whose replies never arrive leaves the heading reading
+   * "0 matching characters", which looks like a rendered page.
+   */
+  test('captain coverage fills its results from the filter worker @post-merge-smoke', async ({
+    page,
+  }) => {
+    await page.goto('/tabs/captain-coverage', { waitUntil: 'domcontentloaded' });
+    await waitForAppReady(page);
+
+    const heading = page.locator('.results-toolbar__heading h2');
+
+    await expect(heading).toBeVisible({ timeout: NETWORK_IDLE_TIMEOUT });
+    await expect(heading).toHaveText(/[1-9][0-9]* matching characters/, {
+      timeout: NETWORK_IDLE_TIMEOUT,
+    });
+    // And the cards the count promises are actually painted.
+    await expect(page.locator('.captain-result').first()).toBeVisible({
+      timeout: NETWORK_IDLE_TIMEOUT,
+    });
+  });
 });
 
 function isIgnorableConsoleError(text: string): boolean {

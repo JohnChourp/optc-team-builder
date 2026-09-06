@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.0',
+    date: '2026-09-06',
+    userVisible: true,
+    headline: {
+      en: 'Captain Coverage keeps moving while it filters',
+      el: 'Το Captain Coverage δεν σταματάει πια όσο φιλτράρει',
+    },
+    summaryEn:
+      "The last release stopped Captain Coverage from looking frozen: press a filter and the results clear, a spinner and a progress bar appear, and the new list arrives. What it could not do was keep the page alive while that was happening - the work still ran on the same thread that draws the screen, so for that moment the spinner did not actually spin and anything you tapped waited its turn. That work has now moved off the screen's thread entirely. The page stays responsive from the moment you press a filter until the results come back: the spinner turns, the progress bar moves, and you can scroll or open the menu while it finishes. Building the cards themselves also got cheaper, because only the ones you can actually see are built now instead of all 4,614 - so adding a character to your crew no longer rebuilds the whole list, and paging through results stays where you left it. If your browser is an old one that cannot do this, nothing breaks: the same work simply runs the way it did before. Nothing you see on the page has changed - the same characters, the same order, the same numbers on every card.",
+    summaryEl:
+      'Η προηγούμενη έκδοση σταμάτησε το Captain Coverage να δείχνει παγωμένο: πατάς φίλτρο, τα αποτελέσματα αδειάζουν, εμφανίζεται spinner και μπάρα προόδου, και έρχεται η νέα λίστα. Αυτό που δεν μπορούσε να κάνει ήταν να κρατήσει τη σελίδα ζωντανή όσο γινόταν αυτό - η δουλειά έτρεχε στο ίδιο νήμα που ζωγραφίζει την οθόνη, οπότε εκείνη τη στιγμή το spinner δεν γύριζε στην πραγματικότητα και ό,τι πατούσες περίμενε τη σειρά του. Αυτή η δουλειά έφυγε πλέον εντελώς από το νήμα της οθόνης. Η σελίδα παραμένει ζωντανή από τη στιγμή που πατάς το φίλτρο μέχρι να γυρίσουν τα αποτελέσματα: το spinner γυρίζει, η μπάρα κινείται, και μπορείς να κάνεις scroll ή να ανοίξεις το μενού όσο τελειώνει. Έγινε φθηνότερο και το χτίσιμο των ίδιων των καρτών, γιατί πλέον φτιάχνονται μόνο όσες βλέπεις αντί και για τους 4.614 - οπότε το να βάλεις έναν χαρακτήρα στο crew δεν ξαναχτίζει όλη τη λίστα, και η θέση σου στα αποτελέσματα μένει εκεί που την άφησες. Αν ο browser σου είναι παλιός και δεν το υποστηρίζει, δεν χαλάει τίποτα: η ίδια δουλειά απλώς τρέχει όπως πριν. Τίποτα από όσα βλέπεις δεν άλλαξε - ίδιοι χαρακτήρες, ίδια σειρά, ίδια νούμερα σε κάθε κάρτα.',
+    added: [],
+    improved: [
+      {
+        en: 'Captain Coverage now filters without holding up the screen. The spinner turns, the progress bar moves, and scrolling or opening the menu still works while the new list is being worked out.',
+        el: 'Το Captain Coverage φιλτράρει πλέον χωρίς να κρατά την οθόνη. Το spinner γυρίζει, η μπάρα προόδου κινείται, και το scroll ή το άνοιγμα του μενού δουλεύουν όσο ετοιμάζεται η νέα λίστα.',
+      },
+      {
+        en: 'Only the character cards you can actually see are built, instead of all of them. Adding a character to your crew no longer rebuilds the entire list, and your place in a long list of results is kept.',
+        el: 'Φτιάχνονται μόνο οι κάρτες χαρακτήρων που βλέπεις, αντί για όλες. Το να βάλεις έναν χαρακτήρα στο crew δεν ξαναχτίζει πια ολόκληρη τη λίστα, και η θέση σου σε μια μεγάλη λίστα αποτελεσμάτων διατηρείται.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.3.0',
     date: '2026-09-06',
     userVisible: true,

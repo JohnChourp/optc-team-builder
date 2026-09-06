@@ -30,9 +30,50 @@ export interface CaptainCoverageFilterState {
   requiredTiers: number[];
 }
 
+/**
+ * The ONLY three things this module reads out of a target's full detail record.
+ *
+ * It exists so a caller that cannot hold 4614 `CharacterDetailRecord`s can
+ * still be filtered: the Captain Coverage worker receives this projection at
+ * init instead of the records themselves, which is the difference between
+ * structured-cloning a few hundred kilobytes and cloning the whole catalog into
+ * a second heap.
+ */
+export interface CaptainCoverageTargetSummary {
+  characterTags: readonly string[];
+  hasSuperTandemData: boolean;
+  hasSuperTypesClassesData: boolean;
+}
+
 export interface CaptainCoverageFilterTarget {
   character: CharacterListItem;
   detail?: CharacterDetailRecord | null;
+  /**
+   * Supplied INSTEAD of `detail` by callers that only have the projection.
+   * When both are absent the target simply has no tags and no super data,
+   * which is what an unknown character has always meant here.
+   */
+  summary?: CaptainCoverageTargetSummary;
+}
+
+export function summarizeCaptainCoverageTarget(
+  detail: CharacterDetailRecord | null | undefined,
+): CaptainCoverageTargetSummary {
+  return {
+    characterTags: detail?.detail.characterTags ?? [],
+    hasSuperTandemData: hasCaptainCoverageSuperTandemData(detail),
+    hasSuperTypesClassesData: hasCaptainCoverageSuperTypesClassesData(detail),
+  };
+}
+
+/*
+ * One resolution point, so `detail` and `summary` can never disagree about the
+ * same character.
+ */
+function resolveCaptainCoverageTargetSummary(
+  target: CaptainCoverageFilterTarget,
+): CaptainCoverageTargetSummary {
+  return target.summary ?? summarizeCaptainCoverageTarget(target.detail);
 }
 
 export interface CaptainCoverageFilterResult {
@@ -94,10 +135,11 @@ export function resolveCaptainCoverageFilterResult(
 ): CaptainCoverageFilterResult {
   const filterState = createCaptainCoverageFilterState(state);
   const coverageMode = resolveCaptainCoverageFilterCoverageMode(filterState);
+  const targetSummary = resolveCaptainCoverageTargetSummary(target);
   const coverage = resolveCaptainCoverage(captain, target.character, {
     coverageMode,
     includeTeamTagClauses: filterState.requireFullCoverage,
-    targetCharacterTags: target.detail?.detail.characterTags ?? [],
+    targetCharacterTags: targetSummary.characterTags,
     scopeCache,
   });
   const matchesCaptainCoverage = filterState.requireCaptainCoverage ? coverage.matches : true;
@@ -105,10 +147,9 @@ export function resolveCaptainCoverageFilterResult(
     target.character.id,
     filterState.requiredAbilityCharacterIds,
   );
-  const matchesSuperTandem =
-    !filterState.requireSuperTandem || hasCaptainCoverageSuperTandemData(target.detail);
+  const matchesSuperTandem = !filterState.requireSuperTandem || targetSummary.hasSuperTandemData;
   const matchesSuperTypesClasses =
-    !filterState.requireSuperTypesClasses || hasCaptainCoverageSuperTypesClassesData(target.detail);
+    !filterState.requireSuperTypesClasses || targetSummary.hasSuperTypesClassesData;
   const matchesRequiredTiers = matchesCaptainCoverageRequiredTiers(
     captain,
     target.character,
