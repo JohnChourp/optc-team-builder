@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { runCaptainCoverageResultPassWithDetails } from '../../core/services/captain-coverage-result-pass.utils';
+
 import {
   type AbilityFilterTagSetSelection,
   type AbilityTagSetOperator,
@@ -3284,6 +3286,144 @@ describe('CaptainCoveragePage', () => {
     expect(page.visibleResultCards().length).toBeLessThanOrEqual(100);
   });
 
+
+  /*
+   * The pass is about to run inside a Web Worker, with an in-thread copy as the
+   * fallback for browsers without one - and for every test in this file, which
+   * builds the page class directly in an environment that has no `Worker` at
+   * all. Two implementations would drift on the first fix that landed in only
+   * one, so there is exactly one: `runCaptainCoverageResultPass`.
+   *
+   * These tests prove the extracted function reproduces the page's own result
+   * order and boosted count, BEFORE the page starts depending on it. They are
+   * differential, not example-based, on purpose: they assert equality with the
+   * shipped behaviour rather than restating what that behaviour should be.
+   */
+  it('reproduces the page result order exactly, with no captain selected', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Extraction Leader',
+      captainAbility: 'Boosts ATK of all characters by 2x.',
+    });
+    const alpha = createCharacter({ id: 2001, name: 'Alpha Candidate' });
+    const beta = createCharacter({ id: 2002, name: 'Beta Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, alpha, beta],
+    });
+
+    await page.ngOnInit();
+
+    expect(runExtractedPass(page).ids).toEqual(page.resultCards().map((card) => card.character.id));
+  });
+
+  it('reproduces the page result order and boosted count with a captain selected', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Extraction Leader',
+      captainAbility: 'Boosts ATK of STR characters by 2x.',
+    });
+    const inScope = createCharacter({ id: 2001, name: 'In Scope', type: 'STR' });
+    const outOfScope = createCharacter({ id: 2002, name: 'Out Of Scope', type: 'QCK' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, inScope, outOfScope],
+    });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+
+    const extracted = runExtractedPass(page);
+
+    expect(extracted.ids).toEqual(page.resultCards().map((card) => card.character.id));
+    expect(extracted.boostedCount).toBe(page.boostedMatchingCharacters());
+  });
+
+  it('reproduces the page result order under every sort mode and id order', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Zeta Leader',
+      captainAbility: 'Boosts ATK of all characters by 2x.',
+    });
+    const alpha = createCharacter({ id: 2001, name: 'alpha lowercase' });
+    const beta = createCharacter({ id: 2002, name: 'Beta Uppercase' });
+    const gamma = createCharacter({ id: 3001, name: 'Gamma Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, alpha, beta, gamma],
+    });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+
+    for (const sortMode of [
+      'catalog',
+      'captainAtkBoost',
+      'captainAverageBoost',
+      'captainHpBoost',
+      'nameAsc',
+      'nameDesc',
+    ]) {
+      for (const idOrder of ['newest', 'oldest']) {
+        page.onSortModeChange(sortMode);
+        page.onIdOrderChange(idOrder);
+
+        expect(
+          runExtractedPass(page).ids,
+          `sortMode=${sortMode} idOrder=${idOrder}`,
+        ).toEqual(page.resultCards().map((card) => card.character.id));
+      }
+    }
+  });
+
+  it('reproduces the page result order under each filter the pass owns', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Filtered Leader',
+      captainAbility: 'Boosts ATK of all characters by 2x.',
+      cost: 30,
+    });
+    const favorite = createCharacter({ id: 2001, name: 'Favorite One', type: 'STR', cost: 10 });
+    const plain = createCharacter({ id: 2002, name: 'Plain Two', type: 'QCK', cost: 55 });
+    const third = createCharacter({ id: 2003, name: 'Third Three', type: 'STR', cost: 40 });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, favorite, plain, third],
+      favoriteIds: [2001],
+    });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+
+    const expectMatch = (label: string): void => {
+      expect(runExtractedPass(page).ids, label).toEqual(
+        page.resultCards().map((card) => card.character.id),
+      );
+    };
+
+    expectMatch('unfiltered');
+
+    await page.onFavoritesOnlyFilterChange(true);
+    expectMatch('favorites only');
+
+    await page.onHideFavoritesFilterChange(true);
+    expectMatch('hide favorites');
+
+    await page.onHideFavoritesFilterChange(false);
+    page.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
+    expectMatch('type facet');
+
+    page.onTypeFacetChange({ values: [], matchMode: 'any' });
+    page.onCoverageCostRangeChange('min', 20);
+    page.onCoverageCostRangeChange('max', 45);
+    expectMatch('cost range');
+
+    page.onCoverageCostRangeChange('min', null);
+    page.onCoverageCostRangeChange('max', null);
+    page.onSearchChange({ detail: { value: 'three' } } as CustomEvent<{ value?: string | null }>);
+    expectMatch('search term');
+  });
+
   it('folds the Friend Captain into the printed HP and ATK, multiplicatively', async () => {
     const leader = createCharacter({
       id: 1001,
@@ -3514,6 +3654,35 @@ function readCaptainCoverageStyles(panel: string): string {
     resolve(process.cwd(), `src/app/pages/captain-coverage/${panel}.component.scss`),
     'utf8',
   ).replace(/\r\n/g, '\n');
+}
+
+
+/**
+ * Runs the extracted pure pass against exactly the inputs the page's own
+ * `resultCards` computed reads, so the two can be compared directly.
+ */
+function runExtractedPass(page: CaptainCoveragePage): { ids: number[]; boostedCount: number } {
+  return runCaptainCoverageResultPassWithDetails(
+    page.allCharacters(),
+    page.allCharacterDetailsById(),
+    {
+      captain: page.selectedCaptainDetail(),
+      filterState: page.captainCoverageFilterState(),
+      characterBoxIds: page.selectedCharacterBox() ? page.selectedCharacterBoxIds() : null,
+      typeFacet: page.typeFacet(),
+      classFacet: page.classFacet(),
+      costRange: page.coverageCostRange(),
+      favoritesOnly: page.favoritesOnly(),
+      hideFavorites: page.hideFavorites(),
+      favoriteIds: page.favoriteIds(),
+      characterTagSetSelection: page.characterTagSetSelection(),
+      requireSuperTandemPresence: page.requireSuperTandemPresence(),
+      requireSuperTypesClassesPresence: page.requireSuperTypesClassesPresence(),
+      searchTerm: page.searchTerm().trim().toLowerCase(),
+      sortMode: page.selectedSortMode(),
+      idOrder: page.selectedIdOrder(),
+    },
+  );
 }
 
 function createPage({
