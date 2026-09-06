@@ -9,7 +9,11 @@ import {
   type CharacterDetailRecord,
   type CharacterListItem,
 } from '../models/optc.models';
-import { type CaptainCoverageResult, resolveCaptainCoverage } from './captain-coverage.utils';
+import {
+  type CaptainBoostScopeCache,
+  type CaptainCoverageResult,
+  resolveCaptainCoverage,
+} from './captain-coverage.utils';
 
 export interface CaptainCoverageFilterState {
   /**
@@ -81,6 +85,12 @@ export function resolveCaptainCoverageFilterResult(
   captain: CharacterDetailRecord,
   target: CaptainCoverageFilterTarget,
   state: CaptainCoverageFilterState = DEFAULT_CAPTAIN_COVERAGE_FILTER_STATE,
+  /**
+   * Optional per-pass memo. Callers resolving ONE captain against many targets
+   * pass one and skip re-parsing that captain's ability text per target; the
+   * auto builder, which sees a different text every call, passes nothing.
+   */
+  scopeCache?: CaptainBoostScopeCache,
 ): CaptainCoverageFilterResult {
   const filterState = createCaptainCoverageFilterState(state);
   const coverageMode = resolveCaptainCoverageFilterCoverageMode(filterState);
@@ -88,6 +98,7 @@ export function resolveCaptainCoverageFilterResult(
     coverageMode,
     includeTeamTagClauses: filterState.requireFullCoverage,
     targetCharacterTags: target.detail?.detail.characterTags ?? [],
+    scopeCache,
   });
   const matchesCaptainCoverage = filterState.requireCaptainCoverage ? coverage.matches : true;
   const matchesRequiredAbilityFilters = matchesCaptainCoverageRequiredAbilityCharacterIds(

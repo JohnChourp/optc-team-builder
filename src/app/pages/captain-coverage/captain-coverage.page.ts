@@ -46,6 +46,7 @@ import {
   type CaptainCoverageBoosts,
   type CaptainCoverageResult,
   combineLeaderCaptainCoverageBoosts,
+  createCaptainBoostScopeCache,
 } from '../../core/services/captain-coverage.utils';
 import {
   buildCaptainCoverageTierView,
@@ -683,6 +684,14 @@ export class CaptainCoveragePage implements OnInit {
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
     const characterTagSetSelection = this.characterTagSetSelection();
     const allowedCaptainIdSet = this.allowedCaptainIdSet();
+    /*
+     * One memo per evaluation of this computed. The captain's ability text is
+     * the same for all 4614 targets below, and parsing it is 73-89% of this
+     * pass; sharing the memo ACROSS passes would keep stale work alive for a
+     * captain nobody has selected any more, and a module-level one measurably
+     * slowed the auto builder down, so it lives and dies with one pass.
+     */
+    const scopeCache = createCaptainBoostScopeCache();
     const matchingCharacters = this.allCharacters()
       .filter((character) =>
         selectedCharacterBoxIdSet ? selectedCharacterBoxIdSet.has(character.id) : true,
@@ -725,7 +734,12 @@ export class CaptainCoveragePage implements OnInit {
         const characterDetail = characterDetailsById.get(character.id);
         const target = { character, detail: characterDetail };
         const filterResult = captain
-          ? resolveCaptainCoverageFilterResult(captain, target, captainCoverageFilterState)
+          ? resolveCaptainCoverageFilterResult(
+              captain,
+              target,
+              captainCoverageFilterState,
+              scopeCache,
+            )
           : null;
         /*
          * The Friend Captain feeds the printed multiplier and nothing else.
@@ -741,8 +755,12 @@ export class CaptainCoveragePage implements OnInit {
           ? null
           : friendCaptain.id === captain?.id
             ? (filterResult?.coverage ?? null)
-            : resolveCaptainCoverageFilterResult(friendCaptain, target, captainCoverageFilterState)
-                .coverage;
+            : resolveCaptainCoverageFilterResult(
+                friendCaptain,
+                target,
+                captainCoverageFilterState,
+                scopeCache,
+              ).coverage;
         const leaderCoverages = [filterResult?.coverage ?? null, friendCoverage].filter(
           (coverage): coverage is CaptainCoverageResult => coverage !== null,
         );

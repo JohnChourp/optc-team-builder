@@ -4,6 +4,7 @@ import { type CharacterDetailRecord } from '../models/optc.models';
 import captainContractCases from './fixtures/captain-contract-cases.json';
 import {
   combineLeaderCaptainCoverageBoosts,
+  createCaptainBoostScopeCache,
   resolveCaptainBoostScope,
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverage,
@@ -1178,27 +1179,51 @@ describe('resolveCaptainBoostScope memoization', () => {
   const captainAbility =
     'Boosts ATK of Striker characters by 2.5x and their HP by 1.5x, and reduces damage received by 10%.';
 
-  it('returns an identical result for repeated identical input', () => {
-    const first = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope');
-    const second = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope');
+  it('returns the same object for repeated identical input through one cache', () => {
+    const cache = createCaptainBoostScopeCache();
+    const first = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', cache);
+    const second = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', cache);
 
     expect(second).toEqual(first);
-    // Same object: the parse is the 73-89% of the Captain Coverage result pass
-    // that used to be repeated once per catalog character.
     expect(second).toBe(first);
+    expect(cache.size).toBe(1);
   });
 
   it('keys the cache on the coverage mode as well as the text', () => {
-    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope')).not.toBe(
-      resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage'),
+    const cache = createCaptainBoostScopeCache();
+
+    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', cache)).not.toBe(
+      resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage', cache),
+    );
+    expect(cache.size).toBe(2);
+  });
+
+  it('produces the same result cached and uncached', () => {
+    const cache = createCaptainBoostScopeCache();
+
+    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', cache)).toEqual(
+      resolveCaptainBoostScope(captainAbility, 'simpleBoostScope'),
     );
   });
 
-  it('hands back a frozen result so one caller cannot poison every later reader', () => {
-    const scope = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope');
+  /*
+   * The cache is caller-owned and never a module singleton: a caller that sees
+   * a different captain text on every call, as the auto team builder does,
+   * would pay for a multi-kilobyte key and a Map insert per call and never read
+   * one back.
+   */
+  it('leaves callers that pass no cache completely uncached', () => {
+    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope')).not.toBe(
+      resolveCaptainBoostScope(captainAbility, 'simpleBoostScope'),
+    );
+  });
 
-    expect(Object.isFrozen(scope)).toBe(true);
-    expect(Object.isFrozen(scope.allowedClasses)).toBe(true);
-    expect(Object.isFrozen(scope.clauses)).toBe(true);
+  it('does not leak entries between two separate caches', () => {
+    const first = createCaptainBoostScopeCache();
+    const second = createCaptainBoostScopeCache();
+
+    resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', first);
+
+    expect(second.size).toBe(0);
   });
 });
