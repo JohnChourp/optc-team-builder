@@ -35,18 +35,27 @@
 }
 
 /*
- * Cost sits with HP and ATK because that is where the eye already is, and it is
- * the bare number on purpose - a reader who plays the game reads "55" without
- * a label. Pressing it says what the number is, for a reader who does not.
+ * Cost sits in the portrait's bottom-left corner, opposite the add button and
+ * under the crown, and it is the bare number on purpose - a reader who plays
+ * the game reads "55" without a label. Pressing it says what the number is,
+ * for a reader who does not.
+ *
+ * The background is opaque rather than the old 12% wash: it used to sit on the
+ * card's flat dark body, and it now sits on arbitrary character artwork, where
+ * a translucent fill leaves the digits unreadable over a bright portrait.
+ * 28px rather than the old 24px floor for the same reason - it is not an
+ * action, so it does not owe the 44px the two buttons do, but it has to win
+ * against whatever is painted behind it.
  */
 .captain-result__cost {
   appearance: none;
-  min-width: 24px;
-  min-height: 24px;
+  min-width: 28px;
+  min-height: 28px;
   padding: 2px 8px;
-  border: 1px solid rgba(245, 200, 76, 0.34);
+  border: 1px solid rgba(245, 200, 76, 0.5);
   border-radius: 999px;
-  background: rgba(245, 200, 76, 0.12);
+  background: rgba(12, 18, 30, 0.92);
+  box-shadow: 0 4px 12px rgba(3, 7, 18, 0.5);
   color: #f8d36b;
   cursor: pointer;
   font: inherit;
@@ -57,12 +66,15 @@
 
 .captain-result__cost:hover,
 .captain-result__cost:focus-visible {
-  border-color: rgba(245, 200, 76, 0.6);
-  background: rgba(245, 200, 76, 0.2);
+  border-color: rgba(245, 200, 76, 0.8);
+  background: rgba(30, 40, 58, 0.95);
 }
 
 .captain-result__cost-wrap {
-  position: relative;
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
 }
@@ -75,8 +87,14 @@
 .captain-result__cost-hint {
   position: absolute;
   bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+  /*
+   * Anchored to the chip's own left edge, not centred on it. Centred, a 220px
+   * hint on a chip 8px from the left of a 130px card track hung ~90px past the
+   * card - the same defect already fixed on the tier popover, fixed the same
+   * way.
+   */
+  left: 0;
+  transform: none;
   z-index: 3;
   width: max-content;
   max-width: min(220px, calc(100vw - 48px));
@@ -96,16 +114,17 @@
   content: '';
   position: absolute;
   top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Follows the chip, which the hint is now left-aligned to rather than centred on. */
+  left: 14px;
+  transform: none;
   border: 5px solid transparent;
   border-top-color: rgba(245, 200, 76, 0.32);
 }
 
 /*
- * The crown sits in the card's own top-right corner rather than in the action
- * row: it belongs to the character, not to the row of things you do next, and
- * overlaying it gives the row back its line. It is the only control on the card
+ * The crown sits in the portrait's own top-right corner rather than in an
+ * action row: it belongs to the character, not to a row of things you do next,
+ * and overlaying it gives the card's body back its line. It is the only control on the card
  * with no text, so it carries the 44px tap floor this page was signed off
  * against on its own - and Ionic sizes a small button from its own padding, so
  * width and height are set explicitly rather than left to min-*.
@@ -185,4 +204,87 @@
   font-size: 1.25rem;
   /* A second, tighter shadow keeps the crown legible over the bright end. */
   filter: drop-shadow(0 1px 2px rgba(3, 7, 18, 0.6));
+}
+
+/*
+ * The add button is the crown's twin at the opposite corner: same 44px circle,
+ * same insets, same no-outline treatment - the owner asked for "ιδιο μεγεθος".
+ * What separates them is the fill. The crown keeps the page's navy-to-cyan; the
+ * add button takes the warm amber the card already uses for cost and for its
+ * ability badges, so the two overlays read as two different actions rather than
+ * as one control repeated.
+ *
+ * It is icon-only now, so `aria-label` on the button is its ONLY accessible
+ * name - see the template, where the label still carries the words "Add to
+ * team" plus the refusal sentence when it is disabled.
+ */
+.captain-result__add {
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  --border-width: 0;
+  --border-style: none;
+  --background: linear-gradient(140deg, #3a2a06 0%, #a87a12 48%, #f8d36b 100%);
+  --background-hover: linear-gradient(140deg, #4c3708 0%, #c9931b 48%, #ffe294 100%);
+  --background-activated: linear-gradient(140deg, #4c3708 0%, #c9931b 48%, #ffe294 100%);
+  --color: #1a1206;
+  /*
+   * BOTH are needed, for the reason recorded on the crown above: Ionic's
+   * `--border-radius` only ever reaches the inner `.button-native`, so the host
+   * element's own `border-radius` stays 0 and the gloss `::after` below - which
+   * takes `border-radius: inherit` from this host - would paint a square whose
+   * corners hang outside the circle.
+   */
+  --border-radius: 999px;
+  border-radius: 999px;
+  --box-shadow: 0 6px 16px rgba(3, 7, 18, 0.55), 0 0 0 1px rgba(248, 211, 107, 0.32);
+  margin: 0;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  transition:
+    transform 150ms ease,
+    filter 150ms ease;
+}
+
+/* The same gloss the crown carries, so the pair reads as one family. */
+.captain-result__add::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.1) 38%,
+    rgba(255, 255, 255, 0) 62%
+  );
+  pointer-events: none;
+}
+
+.captain-result__add:hover,
+.captain-result__add:focus-visible {
+  transform: scale(1.12);
+  filter: brightness(1.12);
+}
+
+/*
+ * Ionic's default disabled treatment is opacity alone, which on a gradient over
+ * artwork still reads as "pressable". The refusal has to be visible without the
+ * word that used to carry it, so the fill goes flat and grey while the wrapper
+ * keeps the sentence that says which refusal it is.
+ */
+.captain-result__add.button-disabled {
+  --background: rgba(26, 34, 51, 0.92);
+  --color: rgba(248, 251, 255, 0.42);
+  --box-shadow: none;
+  filter: none;
+}
+
+.captain-result__add ion-icon {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 1px 2px rgba(3, 7, 18, 0.45));
 }

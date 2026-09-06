@@ -3,22 +3,17 @@
   gap: 16px;
 }
 
-.coverage-summary,
 .team-budget-panel,
 .results-panel {
   padding: 18px;
 }
 
-.coverage-summary {
-  display: grid;
-  gap: 16px;
-  background:
-    linear-gradient(135deg, rgba(245, 200, 76, 0.13), rgba(76, 201, 240, 0.1)),
-    var(--app-surface-card);
-}
-
-.coverage-summary__copy h1,
-.target-panel__copy h2,
+/*
+ * `.target-panel__copy h1` and not `h2`: the intro card that used to carry the
+ * page's only h1 was deleted, so the Team panel's heading is the h1 now. The
+ * selector follows the element rather than pinning a level that moved.
+ */
+.target-panel__copy h1,
 .results-toolbar h2 {
   margin: 10px 0 0;
   color: #f8fbff;
@@ -26,11 +21,6 @@
   line-height: 1.08;
 }
 
-.coverage-summary__copy h1 {
-  font-size: clamp(1.7rem, 4vw, 2.55rem);
-}
-
-.coverage-summary__copy p,
 .target-panel__copy p {
   max-width: 860px;
   margin: 10px 0 0;
@@ -38,9 +28,20 @@
   line-height: 1.6;
 }
 
-.coverage-summary__meta,
 .results-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+/*
+ * The captain count sits directly under the results heading, quieter than the
+ * heading it qualifies. It replaces one of the two chips the deleted intro
+ * card carried.
+ */
+.results-toolbar__captains {
+  margin: 6px 0 0;
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.82rem;
+  font-weight: 600;
 }

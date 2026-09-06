@@ -29,7 +29,7 @@ interface CaptainCoverageClauseResult {
   chips: CaptainCoverageChip[];
 }
 
-interface CaptainCoverageBoosts {
+export interface CaptainCoverageBoosts {
   hp: number;
   atk: number;
 }
@@ -60,6 +60,12 @@ export interface CaptainCoverageOptions {
   branchMode?: AutoBuildCaptainBranchMode | null;
   targetCharacterTags?: readonly string[];
   includeTeamTagClauses?: boolean;
+  /**
+   * Optional per-pass memo for the captain-text parse. Pass one when the SAME
+   * captain is resolved against many targets in a row - see
+   * {@link CaptainBoostScopeCache} for why it is caller-owned.
+   */
+  scopeCache?: CaptainBoostScopeCache;
 }
 
 export interface CaptainCoverageBranchText {
@@ -130,15 +136,64 @@ const TEAM_TAG_CONDITION_TARGET_FRAGMENT_PATTERNS = [
   /\bcrew tag condition:\s+(.{1,240}?)\s+(?:characters|units)\b/gi,
 ] as const;
 
+/**
+ * A per-pass memo for {@link resolveCaptainBoostScope}, created by the caller.
+ *
+ * The parse is pure in `(captainText, coverageMode)` but costs a full regex
+ * sweep of the ability text, and Captain Coverage runs it TWICE for every one
+ * of the 4614 catalog characters against the SAME captain string - once from
+ * `resolveCaptainCoverageForText` and once from `resolveCaptainCoverageBoosts`.
+ * Measured on the shipped dataset that redundant re-parse was 73-89% of the
+ * whole result pass, which is the multi-second freeze this cache removes.
+ *
+ * Caller-owned and NOT a module-level singleton, deliberately. The auto team
+ * builder calls this once per character with 4614 DIFFERENT texts: a cache can
+ * never hit there, so every call would pay for a multi-kilobyte key string and
+ * a Map insert to store something nothing will ever read back, and a shared
+ * cache would also keep one feature's parses alive inside another's. Making it
+ * opt-in means the builder passes nothing and its behaviour is unchanged, while
+ * the one caller that resolves a single captain against thousands of targets
+ * gets the whole saving.
+ */
+export type CaptainBoostScopeCache = Map<string, CaptainBoostScopeSummary>;
+
+export function createCaptainBoostScopeCache(): CaptainBoostScopeCache {
+  return new Map();
+}
+
 export function resolveCaptainBoostScope(
   captainText: string | null | undefined,
   coverageMode: AutoBuildCaptainAbilityCoverageMode = 'fullAbilityCoverage',
+  scopeCache?: CaptainBoostScopeCache,
 ): CaptainBoostScopeSummary {
   const normalizedCaptainText = normalizeHtmlToText(captainText);
 
   if (!normalizedCaptainText) {
     return createEmptyCaptainBoostScope();
   }
+
+  if (!scopeCache) {
+    return resolveCaptainBoostScopeUncached(normalizedCaptainText, coverageMode);
+  }
+
+  const cacheKey = `${coverageMode} ${normalizedCaptainText}`;
+  const cached = scopeCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const resolved = resolveCaptainBoostScopeUncached(normalizedCaptainText, coverageMode);
+
+  scopeCache.set(cacheKey, resolved);
+
+  return resolved;
+}
+
+function resolveCaptainBoostScopeUncached(
+  normalizedCaptainText: string,
+  coverageMode: AutoBuildCaptainAbilityCoverageMode,
+): CaptainBoostScopeSummary {
 
   const defaultCaptainText = extractDefaultCaptainBoostText(normalizedCaptainText);
   const defaultBoostClauses = extractDefaultCaptainBoostClauses(defaultCaptainText);
@@ -222,7 +277,7 @@ function resolveCaptainCoverageForText(
 ): CaptainCoverageResult {
   const coverageMode = options.coverageMode ?? 'fullAbilityCoverage';
   const coverageClauses = [
-    ...resolveCaptainBoostScope(captainText, coverageMode).clauses,
+    ...resolveCaptainBoostScope(captainText, coverageMode, options.scopeCache).clauses,
     ...(coverageMode === 'fullAbilityCoverage' && options.includeTeamTagClauses
       ? extractCaptainTeamTagConditionClauses(captainText)
       : []),
@@ -691,12 +746,49 @@ function resolveLowestPositiveBranchBoost(values: readonly number[]): number {
   return values.length > 0 && values.every((value) => value > 0) ? Math.min(...values) : 0;
 }
 
+/**
+ * Folds the Captain's and the Friend Captain's own stat multipliers into the
+ * single number a result card prints.
+ *
+ * In One Piece Treasure Cruise the two leader abilities MULTIPLY: two 2x
+ * Captains give 4x, two 2.5x Captains give 6.25x, and two 1.5x Captains give
+ * 2.25x - not 3. Verified against the OPTC wiki's battle-mechanics formula
+ * (`Base ATK x Captain Ability x Chain x Special x Type x Orb - DEF`, every
+ * factor multiplicative) and against the community damage calculators, which
+ * state a 3.0x + 2.5x tandem as 7.5x. HP works the same way: 1000 base HP under
+ * two 1.5x Captains is 1000 x 1.5 x 1.5 = 2250.
+ *
+ * Owner-confirmed on 2026-09-06 (ClickUp 869exeh57) after the research was put
+ * to them. The formula lives here, alone, so reversing that call is one line.
+ *
+ * A `0` means "this leader does not boost this character at all" rather than
+ * "boosts it to zero", so it folds in as the multiplicative identity `1`. When
+ * NO leader boosts the stat the result stays `0`, which is what makes
+ * `formatBoost` keep printing a dash.
+ */
+export function combineLeaderCaptainCoverageBoosts(
+  leaderBoosts: readonly CaptainCoverageBoosts[],
+): CaptainCoverageBoosts {
+  return {
+    hp: combineLeaderBoostStat(leaderBoosts.map((boosts) => boosts.hp)),
+    atk: combineLeaderBoostStat(leaderBoosts.map((boosts) => boosts.atk)),
+  };
+}
+
+function combineLeaderBoostStat(values: readonly number[]): number {
+  const boostingValues = values.filter((value) => value > 0);
+
+  return boostingValues.length
+    ? boostingValues.reduce((product, value) => product * value, 1)
+    : 0;
+}
+
 function resolveCaptainCoverageBoosts(
   target: CharacterListItem,
   captainText: string,
   options: CaptainCoverageOptions = {},
 ): CaptainCoverageBoosts {
-  return resolveCaptainBoostScope(captainText, 'simpleBoostScope').clauses.reduce(
+  return resolveCaptainBoostScope(captainText, 'simpleBoostScope', options.scopeCache).clauses.reduce(
     (boosts, clause) => {
       const coverage = resolveCaptainCoverageClause(target, clause, options);
 

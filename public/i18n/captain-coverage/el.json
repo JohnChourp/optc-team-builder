@@ -11,13 +11,6 @@
       "title": "Δεν βρέθηκαν χαρακτήρες"
     }
   },
-  "hero": {
-    "captainsCount": "{{count}} captains",
-    "charactersCount": "{{count}} χαρακτήρες",
-    "copy": "Όλοι οι χαρακτήρες μένουν στη λίστα. Διάλεξε Captain για να δεις ποιους ενισχύει το Captain Ability του - σημειώνονται στην κάρτα - και περιόρισε τα results μόνο με τα φίλτρα που επιλέγεις.",
-    "eyebrow": "Όλοι οι χαρακτήρες, τα φίλτρα σου",
-    "title": "Browse χαρακτήρες για Captain Coverage"
-  },
   "filters": {
     "abilityTagSetsTitle": "Φίλτρο ability tags",
     "captainAbilityEyebrow": "Required",
@@ -45,7 +38,6 @@
         "all": "Όλοι οι χαρακτήρες"
       },
       "support": {
-        "all": "Χρησιμοποίησε όλους τους χαρακτήρες του local dataset.",
         "noBoxes": "Δημιούργησε character box για να περιορίσεις τα Captain Coverage αποτελέσματα σε αυτό το box.",
         "withCount": "Περιόρισε τα αποτελέσματα σε {{count}} χαρακτήρα/ες αυτού του box.",
         "withFavorites": "{{count}} από {{total}} χαρακτήρα/ες αυτού του box είναι favorites."
@@ -73,7 +65,7 @@
       "to": "Κόστος έως"
     },
     "crewmateEyebrow": "Crewmate Ability",
-    "favoritesOnly": "Μόνο favorites",
+    "favoritesOnly": "Δείξε favorites",
     "hideFavorites": "Κρύψε favorites",
     "potentialEyebrow": "Potential Ability",
     "specialEyebrow": "Special",
@@ -111,13 +103,20 @@
   },
   "loading": "Φόρτωση captain δεδομένων...",
   "results": {
-    "eyebrow": "Character results",
-    "title": "Character αποτελέσματα",
-    "titleWithCount": "{{count}} matching characters",
-    "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που ταιριάζουν",
-    "loadMore": "Δείξε περισσότερα (απομένουν {{count}})",
+    "captainCount": "{{count}} από αυτούς είναι Captains",
     "cost": "Κόστος: {{cost}}",
-    "openCharacterDetailsFor": "Άνοιξε τον χαρακτήρα {{name}}"
+    "eyebrow": "Character results",
+    "loadMore": "Δείξε περισσότερα (απομένουν {{count}})",
+    "openCharacterDetailsFor": "Άνοιξε τον χαρακτήρα {{name}}",
+    "pending": {
+      "abilityTags": "Εφαρμογή των ability filters στη λίστα χαρακτήρων...",
+      "characterTags": "Εφαρμογή των character tags στη λίστα χαρακτήρων...",
+      "favorites": "Εφαρμογή του φίλτρου favorites στη λίστα χαρακτήρων...",
+      "progressLabel": "Φόρτωση αποτελεσμάτων χαρακτήρων"
+    },
+    "title": "Character αποτελέσματα",
+    "titleWithCount": "{{count}} χαρακτήρες που ταιριάζουν",
+    "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που ταιριάζουν"
   },
   "search": {
     "placeholder": "Αναζήτηση στα character results..."

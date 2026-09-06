@@ -36,6 +36,7 @@ vi.mock('@ionic/angular/standalone', () => ({
   IonInput: class {},
   IonMenuButton: class {},
   IonModal: class {},
+  IonProgressBar: class {},
   IonSearchbar: class {},
   IonSelect: class {},
   IonSelectOption: class {},
@@ -944,13 +945,13 @@ describe('CaptainCoveragePage', () => {
 
     expect(page.availableCharacterTags()).toEqual(['Straw Hat Pirates', 'Worst Generation']);
 
-    page.saveCharacterTagSetSelection(
+    await page.saveCharacterTagSetSelection(
       createSelection([createCharacterTagSet(['Straw Hat Pirates'], 'any', 'set-1')]),
     );
     expect(page.selectedCharacterTags()).toEqual(['Straw Hat Pirates']);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Straw Hat Candidate']);
 
-    page.saveCharacterTagSetSelection(
+    await page.saveCharacterTagSetSelection(
       createSelection([
         createCharacterTagSet(['Straw Hat Pirates', 'Worst Generation'], 'any', 'set-1'),
       ]),
@@ -962,7 +963,7 @@ describe('CaptainCoveragePage', () => {
         .sort(),
     ).toEqual(['Straw Hat Candidate', 'Worst Generation Candidate']);
 
-    page.saveCharacterTagSetSelection(
+    await page.saveCharacterTagSetSelection(
       createSelection([createCharacterTagSet(['Worst Generation'], 'any', 'set-1')]),
     );
     expect(page.resultCards().map((card) => card.character.name)).toEqual([
@@ -1014,7 +1015,7 @@ describe('CaptainCoveragePage', () => {
     await page.setTeamSlotCharacter(0, leader);
 
     // (Straw Hat Pirates OR Heart Pirates) AND (Dressrosa)
-    page.saveCharacterTagSetSelection(
+    await page.saveCharacterTagSetSelection(
       createSelection([
         createCharacterTagSet(['Straw Hat Pirates', 'Heart Pirates'], 'any', 'crew'),
         createCharacterTagSet(['Dressrosa'], 'any', 'arc'),
@@ -1029,7 +1030,7 @@ describe('CaptainCoveragePage', () => {
     ).toEqual(['Heart Pirate In Dressrosa', 'Straw Hat In Dressrosa']);
 
     // Loosening the cross-group join to OR re-admits the Wano Straw Hat.
-    page.saveCharacterTagSetSelection(
+    await page.saveCharacterTagSetSelection(
       createSelection(
         [
           createCharacterTagSet(['Straw Hat Pirates', 'Heart Pirates'], 'any', 'crew'),
@@ -1071,7 +1072,7 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    page.saveCharacterTagSetSelection(
+    await page.saveCharacterTagSetSelection(
       createSelection([
         createCharacterTagSet(['Straw Hat Pirates', 'Worst Generation'], 'all', 'set-1'),
       ]),
@@ -1099,7 +1100,7 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    page.saveCharacterTagSetSelection(
+    await page.saveCharacterTagSetSelection(
       createSelection([createCharacterTagSet(['  straw hat pirates '], 'any', 'set-1')]),
     );
 
@@ -1132,7 +1133,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.characterTagFilterTriggerLabel()).toBe('Choose character tags');
     expect(page.characterTagFilterSupportText()).toBe('Group tags with OR inside a group.');
 
-    page.saveCharacterTagSetSelection(
+    await page.saveCharacterTagSetSelection(
       createSelection([
         createCharacterTagSet(['Straw Hat Pirates', 'Heart Pirates'], 'any', 'crew'),
         createCharacterTagSet(['Dressrosa'], 'all', 'arc'),
@@ -1147,7 +1148,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.characterTagSetSelection().sets.map((set) => set.id)).toEqual(['crew', 'arc']);
 
     // Dropping one group is now a save from the modal, not a chip press.
-    page.saveCharacterTagSetSelection(
+    await page.saveCharacterTagSetSelection(
       createSelection([createCharacterTagSet(['Dressrosa'], 'all', 'arc')]),
     );
 
@@ -1448,7 +1449,7 @@ describe('CaptainCoveragePage', () => {
       'Leader Delta',
     ]);
 
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'] }]),
     );
 
@@ -1482,7 +1483,7 @@ describe('CaptainCoveragePage', () => {
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
 
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'] }]),
     );
 
@@ -1492,13 +1493,13 @@ describe('CaptainCoveragePage', () => {
       'Both Matcher',
     ]);
 
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind'] }, { abilityKeys: ['boost_orb'] }]),
     );
 
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Both Matcher']);
 
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection(
         [{ abilityKeys: ['remove_bind'] }, { abilityKeys: ['boost_orb'] }],
         'any',
@@ -1531,7 +1532,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb'], operator: 'all' }]),
     );
 
@@ -1773,7 +1774,7 @@ describe('CaptainCoveragePage', () => {
     page.openAbilityTagSetPicker();
     expect(page.abilityTagSetPickerOpen()).toBe(true);
 
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_despair'], captainAbility: true }]),
     );
     expect(page.abilityTagSetPickerOpen()).toBe(false);
@@ -1798,7 +1799,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([
         { abilityKeys: ['remove_bind', 'reduce_bind'] },
         { abilityKeys: ['reduce_bind'] },
@@ -1807,7 +1808,7 @@ describe('CaptainCoveragePage', () => {
 
     expect(page.tagSetSelection().sets.map((set) => set.id)).toEqual(['set-1', 'set-2']);
 
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'reduce_bind'] }]),
     );
 
@@ -1852,7 +1853,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind'], captainAbility: true }]),
     );
 
@@ -1910,7 +1911,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([
         { abilityKeys: ['remove_bind', 'remove_despair'], captainAbility: true },
       ]),
@@ -1972,7 +1973,7 @@ describe('CaptainCoveragePage', () => {
 
     await page.ngOnInit();
     await page.setTeamSlotCharacter(0, leader);
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([
         { abilityKeys: ['remove_bind'] },
         { abilityKeys: ['remove_despair'], captainAbility: true },
@@ -2023,7 +2024,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([
         { abilityKeys: ['remove_bind', 'reduce_bind', 'support_remove_bind'] },
       ]),
@@ -2077,7 +2078,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'boost_orb', 'reduce_bind'] }]),
     );
     await page.setTeamSlotCharacter(0, leader);
@@ -2124,7 +2125,7 @@ describe('CaptainCoveragePage', () => {
     page.openAbilityTagSetPicker();
     expect(page.abilityTagSetPickerOpen()).toBe(true);
 
-    page.saveAbilityTagSetSelection(createTagSetSelection([{ abilityKeys: ['remove_bind'] }]));
+    await page.saveAbilityTagSetSelection(createTagSetSelection([{ abilityKeys: ['remove_bind'] }]));
     expect(page.selectedAbilityRequirementCount()).toBe(1);
     expect(page.resultCards().map((card) => card.character.name)).toEqual(['Early Bind Reducer']);
 
@@ -2160,7 +2161,7 @@ describe('CaptainCoveragePage', () => {
     });
 
     await page.ngOnInit();
-    page.saveAbilityTagSetSelection(
+    await page.saveAbilityTagSetSelection(
       createTagSetSelection([{ abilityKeys: ['remove_bind', 'reduce_bind'] }]),
     );
     await page.setTeamSlotCharacter(0, leader);
@@ -2497,7 +2498,7 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain("t('results.notBoostedBadge')");
     expect(template).not.toContain('card.captainBoosted');
     // HP and ATK follow the same rule: they appear once a tier is pressed.
-    expect(template).toContain('@if (showCaptainBoosts() && card.coverage) {');
+    expect(template).toContain('@if (showCaptainBoosts() && card.leaderBoosts) {');
     expect(template).toContain("t('results.titleWithCoverage'");
     expect(template).toContain('showsCoverageCount()');
     expect(template).toContain('[debounce]="500"');
@@ -2590,9 +2591,12 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('class="selected-target"');
     expect(template).toContain('[routerLink]="[\'/characters\', slot.id]"');
     expect(template).toContain('class="captain-result__boosts"');
-    expect(template).toContain('@if (showCaptainBoosts() && card.coverage)');
-    expect(template).toContain('HP:{{ formatBoost(card.coverage.boosts.hp) }}');
-    expect(template).toContain('ATK:{{ formatBoost(card.coverage.boosts.atk) }}');
+    // `leaderBoosts`, not `coverage.boosts`: the printed number folds the
+    // Captain's multiplier together with the Friend Captain's.
+    expect(template).toContain('@if (showCaptainBoosts() && card.leaderBoosts)');
+    expect(template).toContain('HP:{{ formatBoost(card.leaderBoosts.hp) }}');
+    expect(template).toContain('ATK:{{ formatBoost(card.leaderBoosts.atk) }}');
+    expect(template).not.toContain('card.coverage.boosts');
     expect(template).toContain('card.matchedAbilityBadges.length');
     expect(template).toContain('class="captain-result__ability-badge"');
     expect(template).toContain('selectedIdOrder()');
@@ -2772,8 +2776,10 @@ describe('CaptainCoveragePage', () => {
     expect(readCaptainCoverageStyles('captain-coverage-result-badges-panel')).toContain(
       '.captain-result__leader {\n  position: absolute;\n  top: 8px;\n  right: 8px;',
     );
+    // The crown is no longer positioned against the CARD: it shares one origin
+    // with the add button and the cost chip, all three anchored to the portrait.
     expect(readCaptainCoverageStyles('captain-coverage-result-list-panel')).toContain(
-      '.captain-result {\n  /* Positioning context for the crown, which overlays the card',
+      '.captain-result__portrait {\n  position: relative;',
     );
     // No outline, the page's own navy-to-cyan fill, a gloss pass, and a hover
     // that grows it. Measured live: 44x44 at rest, 49.28x49.28 on hover.
@@ -3115,12 +3121,39 @@ describe('CaptainCoveragePage', () => {
     expect(help).not.toContain('width: max-content;');
   });
 
-  it('keeps one crown shadow, not two that disagree', () => {
+  it('gives each overlay button exactly one shadow, never two that disagree', () => {
     const badges = readCaptainCoverageStyles('captain-coverage-result-badges-panel');
     const declarations = badges.match(/--box-shadow:/gu) ?? [];
 
-    expect(declarations).toHaveLength(1);
-    expect(badges).toContain('--box-shadow: 0 6px 16px');
+    /*
+     * Three, and each in its own selector: the crown's resting shadow, the add
+     * button's, and the add button's disabled state clearing its own. The rule
+     * this pins is one declaration PER selector - the original defect was two
+     * inside `.captain-result__leader` describing opposite intents.
+     */
+    expect(declarations).toHaveLength(3);
+    expect(badges).toContain('--box-shadow: 0 6px 16px rgba(3, 7, 18, 0.55), 0 0 0 1px rgba(76, 201, 240, 0.28);');
+    expect(badges).toContain('--box-shadow: 0 6px 16px rgba(3, 7, 18, 0.55), 0 0 0 1px rgba(248, 211, 107, 0.32);');
+    expect(badges).toContain('.captain-result__add.button-disabled {');
+  });
+
+  it('gives the add button the crown\'s circle contract, host radius included', () => {
+    const badges = readCaptainCoverageStyles('captain-coverage-result-badges-panel');
+    const addBlock = badges.slice(badges.indexOf('.captain-result__add {'));
+
+    // Same size as the crown - the owner asked for the two to match.
+    expect(addBlock).toContain('  width: 44px;\n  height: 44px;');
+    /*
+     * The guard that stops the square-corner regression recurring: an Ionic
+     * custom property never reaches the host, so a gloss `::after` inheriting
+     * `border-radius` from this host would paint a square over a round button.
+     */
+    expect(addBlock).toContain('--border-radius: 999px;\n  border-radius: 999px;');
+    expect(badges).toContain('.captain-result__add::after {');
+    // A different fill from the crown, so the two circles read as two actions.
+    expect(badges).not.toContain(
+      '.captain-result__add {\n  --background: linear-gradient(140deg, #0d1324',
+    );
   });
 
   it('leaves no styling hook on the leader alert for a contrast patch to land on', () => {
@@ -3249,6 +3282,223 @@ describe('CaptainCoveragePage', () => {
     // A real filter change still starts over.
     page.onSearchChange({ detail: { value: 'Crew 1' } } as CustomEvent<{ value?: string | null }>);
     expect(page.visibleResultCards().length).toBeLessThanOrEqual(100);
+  });
+
+  it('folds the Friend Captain into the printed HP and ATK, multiplicatively', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Multiplier',
+      captainAbility: 'Boosts ATK of all characters by 2x and their HP by 1.5x.',
+    });
+    const friend = createCharacter({
+      id: 1002,
+      name: 'Friend Multiplier',
+      captainAbility: 'Boosts ATK of all characters by 2x and their HP by 1.5x.',
+    });
+    const candidate = createCharacter({ id: 2001, name: 'Crew Candidate' });
+    const { page } = createPage({
+      captains: [leader, friend],
+      characters: [leader, friend, candidate],
+    });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+    page.onTierCoverageToggle(1, true);
+
+    const captainOnly = page.resultCards().find((card) => card.character.id === 2001);
+
+    expect(captainOnly?.leaderBoosts).toEqual({ hp: 1.5, atk: 2 });
+
+    await page.setTeamSlotCharacter(1, friend);
+
+    const bothLeaders = page.resultCards().find((card) => card.character.id === 2001);
+
+    /*
+     * 1.5 x 1.5 and 2 x 2, not 1.5 + 1.5 and 2 + 2: OPTC combines the two
+     * leader abilities multiplicatively. Owner-confirmed for ClickUp 869exeh57.
+     */
+    expect(bothLeaders?.leaderBoosts).toEqual({ hp: 2.25, atk: 4 });
+  });
+
+  it('doubles the boost when the same character holds both leader seats', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Solo Leader',
+      captainAbility: 'Boosts ATK of all characters by 2x and their HP by 1.5x.',
+    });
+    const candidate = createCharacter({ id: 2001, name: 'Crew Candidate' });
+    const { page } = createPage({ captains: [leader], characters: [leader, candidate] });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+    page.onTierCoverageToggle(1, true);
+    // The same character in both seats is legal in this game, so the two seats
+    // are never deduplicated by id.
+    await page.setTeamSlotCharacter(1, leader);
+
+    expect(
+      page.resultCards().find((card) => card.character.id === 2001)?.leaderBoosts,
+    ).toEqual({ hp: 2.25, atk: 4 });
+  });
+
+  it('leaves list membership to the Captain alone when a Friend Captain is picked', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Scoped Leader',
+      captainAbility: 'Boosts ATK of STR characters by 2x.',
+    });
+    const friend = createCharacter({
+      id: 1002,
+      name: 'Other Scoped Leader',
+      captainAbility: 'Boosts ATK of QCK characters by 2x.',
+    });
+    const candidate = createCharacter({ id: 2001, name: 'Crew Candidate' });
+    const { page } = createPage({
+      captains: [leader, friend],
+      characters: [leader, friend, candidate],
+    });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+
+    const before = page.resultCards().map((card) => card.character.id);
+
+    await page.setTeamSlotCharacter(1, friend);
+
+    // Picking a Friend Captain changes the numbers on the cards and nothing
+    // else - no character appears or disappears because of it.
+    expect(page.resultCards().map((card) => card.character.id)).toEqual(before);
+  });
+
+  it('empties the results and shows the loader before applying a favorites filter', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Pending Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const favorite = createCharacter({ id: 2001, name: 'Favorite Candidate' });
+    const plain = createCharacter({ id: 2002, name: 'Plain Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, favorite, plain],
+      favoriteIds: [2001],
+    });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+    expect(page.resultsPending()).toBe(false);
+
+    const applied = page.onFavoritesOnlyFilterChange(true);
+
+    // Synchronously, before the filter is even written: the cards are gone and
+    // the loader is up. This is the whole point - the owner reported the page
+    // looking frozen, not slow.
+    expect(page.resultsPending()).toBe(true);
+    expect(page.resultsPendingReason()).toBe('favorites');
+    expect(page.resultsPendingLabel()).toBe('captain-coverage.results.pending.favorites');
+    expect(page.favoritesOnly()).toBe(false);
+
+    await applied;
+
+    expect(page.resultsPending()).toBe(false);
+    expect(page.resultsPendingProgress()).toBe(1);
+    expect(page.favoritesOnly()).toBe(true);
+    expect(page.resultCards().map((card) => card.character.name)).toEqual(['Favorite Candidate']);
+  });
+
+  it('closes a tag-set modal first, then loads, so the press is acknowledged', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Modal Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const { page } = createPage({ captains: [leader], characters: [leader] });
+
+    await page.ngOnInit();
+    page.openAbilityTagSetPicker();
+
+    const applied = page.saveAbilityTagSetSelection(
+      createTagSetSelection([{ abilityKeys: ['remove_bind'] }]),
+    );
+
+    expect(page.abilityTagSetPickerOpen()).toBe(false);
+    expect(page.resultsPendingReason()).toBe('abilityTags');
+
+    await applied;
+
+    expect(page.resultsPending()).toBe(false);
+  });
+
+  it('reserves the clear button row height so nothing shifts when Clear appears', () => {
+    /*
+     * Ionic sizes a small button from `:host(.button-small) { min-height: 2.1em }`
+     * at `font-size: 0.8125rem` = 1.70625rem, which overshot the old 24px floor.
+     * The row now reserves the taller value whether or not Clear is rendered.
+     */
+    expect(readCaptainCoverageStyles('captain-coverage-filter-panel')).toContain(
+      '.coverage-tag-filter__header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 8px;\n  min-height: 1.75rem;\n}',
+    );
+    expect(readCaptainCoverageStyles('captain-coverage-filter-panel')).not.toContain(
+      'min-height: 24px;',
+    );
+  });
+
+  it('carries the captain count on the results header and no intro card', () => {
+    const template = readCaptainCoverageTemplate();
+
+    // The intro card and both of its catalog-wide chips are gone.
+    expect(template).not.toContain('class="coverage-summary glass-card"');
+    expect(template).not.toContain("t('hero.title')");
+    expect(template).not.toContain("t('hero.captainsCount'");
+    // Its <h1> was the page's only one, so the Team panel heading carries it now.
+    expect(template).toContain("<h1>{{ t('team.title') }}</h1>");
+    expect(template.match(/<h1>/gu) ?? []).toHaveLength(1);
+    // And the count that replaced the chip is over the FILTERED results.
+    expect(template).toContain("t('results.captainCount', { count: matchingCaptainCount() })");
+  });
+
+  it('counts only the matching characters that can actually lead', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Counting Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const otherLeader = createCharacter({
+      id: 1002,
+      name: 'Second Leader',
+      captainAbility: 'Boosts HP of all characters by 2x.',
+    });
+    const plain = createCharacter({ id: 2001, name: 'Plain Candidate' });
+    const { page } = createPage({
+      captains: [leader, otherLeader],
+      characters: [leader, otherLeader, plain],
+    });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+
+    expect(page.totalMatchingCharacters()).toBe(3);
+    expect(page.matchingCaptainCount()).toBe(2);
+  });
+
+  it('shows a determinate progress bar in the pending block, never an indeterminate one', () => {
+    const template = readCaptainCoverageTemplate();
+
+    expect(template).toContain('@else if (resultsPending()) {');
+    expect(template).toContain('<ion-progress-bar');
+    expect(template).toContain('type="determinate"');
+    expect(template).not.toContain('type="indeterminate"');
+    // ion-progress-bar renders role and aria-valuenow but no accessible name.
+    expect(template).toContain("[attr.aria-label]=\"t('results.pending.progressLabel')\"");
+    expect(template).toContain('{{ resultsPendingLabel() }}');
+  });
+
+  it('drops the helper line that only restated the All characters option', () => {
+    const { page } = createPage();
+
+    expect(page.characterBoxSupportLabel()).toBe(
+      'captain-coverage.filters.characterBox.support.noBoxes',
+    );
   });
 });
 

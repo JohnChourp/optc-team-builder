@@ -22,6 +22,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { closeOutline, cloudDownloadOutline, refreshOutline } from 'ionicons/icons';
 import packageJson from '../../package.json';
+import { PreferencesAdapterService } from './core/services/preferences-adapter.service';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
 import { AppI18nService } from './core/services/app-i18n.service';
 import { AppUpdateService } from './core/services/app-update.service';
@@ -45,6 +46,11 @@ interface RouteSeoData {
   indexable: boolean;
 }
 
+/*
+ * Web builds land this in localStorage as `CapacitorStorage.installPromptDismissed`,
+ * matching `analyticsConsent` and the other preference keys in this app.
+ */
+const INSTALL_BANNER_DISMISSED_PREFERENCE_KEY = 'installPromptDismissed';
 const appSiteBaseUrl = 'https://optcteambuilder.com';
 const appHomeTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const defaultSeo: RouteSeoData = {
@@ -226,6 +232,7 @@ export class AppComponent {
   private readonly nativeUpdateService = inject(NativeUpdateService);
   private readonly alertController = inject(AlertController);
   private readonly i18n = inject(AppI18nService);
+  private readonly preferences = inject(PreferencesAdapterService);
   private lastTrackedUrl: string | null = null;
 
   public readonly appVersion = signal(packageJson.version);
@@ -310,6 +317,15 @@ export class AppComponent {
   });
   public readonly installPromptEvent = signal<BeforeInstallPromptEvent | null>(null);
   public readonly installBannerDismissed = signal(false);
+  /**
+   * Set once the reader has closed the banner with its X, and then persisted,
+   * so the banner never comes back on that browser profile - installed or not.
+   *
+   * `installBannerDismissed` above could not do this job: `beforeinstallprompt`
+   * fires on every page load and its handler resets that flag to false, which
+   * is exactly why the banner reappeared on every route the owner visited.
+   */
+  public readonly installBannerDismissedForever = signal(false);
   public readonly appInstalled = signal(false);
   public readonly standaloneMode = signal(false);
   public readonly showAnalyticsConsentBanner = computed(
@@ -319,11 +335,13 @@ export class AppComponent {
     () =>
       this.installPromptEvent() !== null &&
       !this.installBannerDismissed() &&
+      !this.installBannerDismissedForever() &&
       !this.appInstalled() &&
       !this.standaloneMode(),
   );
 
   public constructor() {
+    void this.restoreInstallBannerDismissal();
     this.initializeInstallPrompt();
     void this.loadAppVersion();
     afterNextRender(() => {
@@ -370,8 +388,40 @@ export class AppComponent {
     this.lastTrackedUrl = null;
   }
 
+  /**
+   * The X, and only the X, is a permanent answer. Declining Chrome's own
+   * install dialog stays a session-level hide (see `installApp`): the reader
+   * cancelled a system prompt, which is not the same as saying "never show me
+   * this banner again".
+   */
   public dismissInstallBanner(): void {
     this.installBannerDismissed.set(true);
+    this.installBannerDismissedForever.set(true);
+    void this.persistInstallBannerDismissal();
+  }
+
+  private async persistInstallBannerDismissal(): Promise<void> {
+    try {
+      await this.preferences.set({ key: INSTALL_BANNER_DISMISSED_PREFERENCE_KEY, value: 'true' });
+    } catch {
+      /*
+       * Private mode, a storage quota, a browser blocking site data: the
+       * banner is already hidden for this session either way, and a failed
+       * write is not worth breaking the app over.
+       */
+    }
+  }
+
+  private async restoreInstallBannerDismissal(): Promise<void> {
+    try {
+      const stored = await this.preferences.get({ key: INSTALL_BANNER_DISMISSED_PREFERENCE_KEY });
+
+      if (stored.value === 'true') {
+        this.installBannerDismissedForever.set(true);
+      }
+    } catch {
+      /* Unreadable storage just means the banner may appear once more. */
+    }
   }
 
   public snoozeUpdate(): void {

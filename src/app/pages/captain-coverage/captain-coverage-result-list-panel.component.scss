@@ -5,7 +5,6 @@
 }
 
 .captain-result {
-  /* Positioning context for the crown, which overlays the card's top corner. */
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -15,6 +14,17 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.04);
+}
+
+/*
+ * The positioning context for all three overlays - crown, add, cost. They are
+ * anchored to the portrait and not to the card, so the three keep one origin
+ * and stay symmetrical no matter what the card's padding does.
+ */
+.captain-result__portrait {
+  position: relative;
+  display: block;
+  min-width: 0;
 }
 
 .captain-result__thumb {
@@ -32,27 +42,22 @@
   min-width: 0;
 }
 
-.captain-result__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
 /*
  * The refusal tooltip hangs here rather than on the button, because Ionic sets
  * `pointer-events: none` on a disabled ion-button and the browser never paints
- * a tooltip for an element it does not hit-test. Neutral box: the flex item
- * must not change the row it used to be.
+ * a tooltip for an element it does not hit-test. The wrapper carries the
+ * absolute position so the button inside it keeps its own box untouched.
+ *
+ * The 8px inset mirrors the crown's exactly, so the two circles sit on the
+ * same margin at opposite corners of the portrait instead of one hugging the
+ * edge harder than the other.
  */
 .captain-result__add-wrap {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
   display: inline-flex;
-  min-width: 0;
-}
-
-.captain-result__actions ion-button {
-  margin: 0;
   min-width: 0;
 }
 

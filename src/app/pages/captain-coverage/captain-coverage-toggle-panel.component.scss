@@ -28,3 +28,23 @@
 .panel-empty strong {
   color: #f8fbff;
 }
+
+/*
+ * The bar under the "what is loading" sentence.
+ *
+ * `--background` and `--progress-background` are the ONLY two custom properties
+ * Ionic 8's progress bar exposes, and passing a `color=` attribute silently
+ * defeats both because Ionic's own `.ion-color` rule wins - the same trap the
+ * update banner's bar documents. `height` has to be set on the host because
+ * the component ships no `--height`, and the plain `border-radius` sits beside
+ * nothing Ionic-specific here: the bar has no pseudo-element, so the host
+ * property is the only one that has to be right.
+ */
+.captain-coverage-pending__progress {
+  --background: rgba(255, 255, 255, 0.1);
+  --progress-background: linear-gradient(90deg, #f5c84c 0%, #4cc9f0 100%);
+  width: min(320px, 100%);
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+}

@@ -11,28 +11,17 @@
   <ion-content [fullscreen]="true">
     <app-captain-coverage-style-panels>
       <div class="page-shell captain-coverage-shell">
-      <section class="coverage-summary glass-card">
-        <div class="coverage-summary__copy">
-          <div class="section-label">
-            <ion-icon [icon]="coverageIcon" aria-hidden="true"></ion-icon>
-            <span>{{ t('hero.eyebrow') }}</span>
-          </div>
-          <h1>{{ t('hero.title') }}</h1>
-          <p>{{ t('hero.copy') }}</p>
-        </div>
+      <!--
+        The intro card that used to open this page is gone (ClickUp 869exeh57):
+        an eyebrow, a heading, a paragraph restating what the filters below
+        already do, and two counts that the results header now carries itself.
+        It cost a screen of height and answered nothing.
 
-        <div class="coverage-summary__meta">
-          <div class="meta-pill">
-            <ion-icon [icon]="targetIcon" aria-hidden="true"></ion-icon>
-            <span>{{ t('hero.charactersCount', { count: summary()?.characterCount ?? 0 }) }}</span>
-          </div>
-          <div class="meta-pill">
-            <ion-icon [icon]="checkIcon" aria-hidden="true"></ion-icon>
-            <span>{{ t('hero.captainsCount', { count: allCaptains().length }) }}</span>
-          </div>
-        </div>
-      </section>
-
+        Its heading was the page's only h1, so the Team panel's heading below
+        carries that level now. That keeps the document outline valid for
+        screen readers and for search without reintroducing any of the copy
+        that was cut.
+      -->
       <section
         class="team-budget-panel glass-card captain-condition-panel"
         [class.captain-condition-panel--full]="teamConditionStatus()?.state === 'full'"
@@ -41,7 +30,8 @@
       >
         <div class="target-panel__copy">
           <div class="section-label">{{ t('team.eyebrow') }}</div>
-          <h2>{{ t('team.title') }}</h2>
+          <!-- The page's h1 since the intro card was removed. -->
+          <h1>{{ t('team.title') }}</h1>
           <p>{{ t('team.copy') }}</p>
         </div>
 
@@ -204,6 +194,15 @@
                 }}
               }
             </h2>
+            <!--
+              The captain count moved here from the deleted intro card, and it
+              counts the FILTERED results rather than the whole catalog - a
+              number next to "142 matching characters" that still said 4255
+              was answering a question nobody had asked.
+            -->
+            <p class="results-toolbar__captains">
+              {{ t('results.captainCount', { count: matchingCaptainCount() }) }}
+            </p>
           </div>
 
           <div class="coverage-filter-pair">
@@ -556,6 +555,29 @@
             <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
             <span>{{ t('loading') }}</span>
           </div>
+        } @else if (resultsPending()) {
+          <!--
+            Wins over both the list and the empty state on purpose: the cards
+            have to go the instant a filter is pressed, or the reader is left
+            staring at a stale list wondering whether their press registered.
+
+            `type="determinate"` and never indeterminate - Ionic 8 animates the
+            indeterminate variant on inner elements with no `::part()`, so it
+            cannot be gated behind prefers-reduced-motion. The value moves only
+            at real milestones; it is never interpolated. ion-progress-bar
+            renders role and aria-valuenow but no accessible name, so the
+            aria-label is mandatory rather than decorative.
+          -->
+          <div class="panel-empty panel-empty--large" role="status" aria-live="polite">
+            <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+            <span>{{ resultsPendingLabel() }}</span>
+            <ion-progress-bar
+              class="captain-coverage-pending__progress"
+              type="determinate"
+              [value]="resultsPendingProgress()"
+              [attr.aria-label]="t('results.pending.progressLabel')"
+            ></ion-progress-bar>
+          </div>
         } @else if (!resultCards().length) {
           <div class="panel-empty panel-empty--large">
             <strong>{{ t('empty.noResults.title') }}</strong>
@@ -566,78 +588,126 @@
             @for (card of visibleResultCards(); track trackCharacter($index, card)) {
               <article class="captain-result">
                 <!--
-                  One crown for both leader seats. It only exists on a character
-                  that can actually lead, and pressing it asks which seat - which
-                  is also what makes replacing an occupied seat possible without
-                  clearing it first.
-
-                  First in the DOM because it is painted first: the stylesheet
-                  lifts it out of flow into the card's top-right corner, so
-                  leaving it last made focus jump backwards up the card.
+                  Every overlay the card carries - crown, add, cost - is anchored
+                  to the portrait rather than to the card, so the three keep one
+                  origin and cannot drift apart when the card's padding changes.
+                  All three are SIBLINGS of the anchor, never inside it: an
+                  interactive element nested in a link is unreachable by keyboard
+                  and ambiguous to a screen reader.
                 -->
-                @if (card.canBeLeader) {
-                  <ion-button
-                    size="small"
-                    fill="solid"
-                    class="captain-result__leader"
-                    data-test="captain-result-set-leader"
-                    [title]="t('team.actions.leaderSlotPicker.trigger')"
-                    [attr.aria-label]="t('team.actions.leaderSlotPicker.trigger')"
-                    (click)="openLeaderSlotPicker(card)"
+                <div class="captain-result__portrait">
+                  <!--
+                    One crown for both leader seats. It only exists on a character
+                    that can actually lead, and pressing it asks which seat - which
+                    is also what makes replacing an occupied seat possible without
+                    clearing it first.
+
+                    First in the DOM because it is painted first: the stylesheet
+                    lifts it out of flow into the portrait's top-right corner, so
+                    leaving it last made focus jump backwards up the card.
+                  -->
+                  @if (card.canBeLeader) {
+                    <ion-button
+                      size="small"
+                      fill="solid"
+                      class="captain-result__leader"
+                      data-test="captain-result-set-leader"
+                      [title]="t('team.actions.leaderSlotPicker.trigger')"
+                      [attr.aria-label]="t('team.actions.leaderSlotPicker.trigger')"
+                      (click)="openLeaderSlotPicker(card)"
+                    >
+                      <ion-icon [icon]="leaderIcon" aria-hidden="true"></ion-icon>
+                    </ion-button>
+                  }
+                  <a
+                    class="captain-result__thumb"
+                    [routerLink]="card.detailLink"
+                    [attr.aria-label]="t('results.openCharacterDetailsFor', { name: card.character.name })"
                   >
-                    <ion-icon [icon]="leaderIcon" aria-hidden="true"></ion-icon>
-                  </ion-button>
-                }
-                <a
-                  class="captain-result__thumb"
-                  [routerLink]="card.detailLink"
-                  [attr.aria-label]="t('results.openCharacterDetailsFor', { name: card.character.name })"
-                >
-                  <img [src]="card.character.imageUrl" alt="" loading="lazy" />
-                </a>
+                    <img [src]="card.character.imageUrl" alt="" loading="lazy" />
+                  </a>
+
+                  <!--
+                    A disabled button that never says why is the same defect
+                    the crown alert already avoids. The `title` sits on this
+                    wrapper and NOT on the button: Ionic sets
+                    `pointer-events: none` on `:host(.button-disabled)`, so a
+                    disabled ion-button is never hit-tested and the browser
+                    would never paint its own tooltip. The wrapper still is,
+                    so the sentence reaches a mouse user; aria-label carries
+                    the same sentence to assistive tech - and now that the
+                    button is icon-only, that label is its ONLY accessible
+                    name, which is why it keeps the visible words inside it.
+                  -->
+                  <span
+                    class="captain-result__add-wrap"
+                    [attr.title]="addToTeamBlockedTitle(card)"
+                  >
+                    <ion-button
+                      size="small"
+                      fill="solid"
+                      class="captain-result__add"
+                      data-test="captain-result-add-to-team"
+                      [disabled]="card.assignableSlotIndex === null"
+                      [attr.aria-label]="addToTeamAccessibleLabel(card)"
+                      (click)="assignCharacterFromResult(card)"
+                    >
+                      <ion-icon [icon]="addToTeamIcon" aria-hidden="true"></ion-icon>
+                    </ion-button>
+                  </span>
+
+                  <!--
+                    The hint floats above the number, the way the tier help
+                    does: inline it stole width from HP and ATK and shoved
+                    them sideways every time it opened.
+                  -->
+                  <span
+                    class="captain-result__cost-wrap"
+                    (keydown.escape)="closeResultCostHint()"
+                  >
+                    <button
+                      type="button"
+                      class="captain-result__cost"
+                      data-test="captain-result-cost"
+                      [attr.aria-label]="t('results.cost', { cost: card.character.cost })"
+                      [attr.aria-expanded]="openResultCostHint() === card.character.id"
+                      (click)="toggleResultCostHint(card.character.id)"
+                    >
+                      {{ card.character.cost }}
+                    </button>
+                    @if (openResultCostHint() === card.character.id) {
+                      <span
+                        class="captain-result__cost-hint"
+                        tabindex="-1"
+                        role="status"
+                        [attr.data-test]="'captain-result-cost-hint-' + card.character.id"
+                      >
+                        {{ t('results.cost', { cost: card.character.cost }) }}
+                      </span>
+                    }
+                  </span>
+                </div>
 
                 <div class="captain-result__body">
                   <!--
-                    The meta row is rendered unconditionally, unlike the boosts
-                    inside it: cost has to be readable while browsing with no
-                    Captain picked, which is exactly when `card.coverage` is null.
+                    The boosts row is conditional now that cost has moved onto
+                    the portrait. It used to render unconditionally only so the
+                    cost chip inside it stayed readable with no Captain picked;
+                    with the chip gone it would otherwise be an empty flex row
+                    eating one of the card's grid gaps.
                   -->
-                  <div class="captain-result__boosts">
-                    @if (showCaptainBoosts() && card.coverage) {
-                      <span>HP:{{ formatBoost(card.coverage.boosts.hp) }}</span>
-                      <span>ATK:{{ formatBoost(card.coverage.boosts.atk) }}</span>
-                    }
+                  @if (showCaptainBoosts() && card.leaderBoosts) {
                     <!--
-                      The hint floats above the number, the way the tier help
-                      does: inline it stole width from HP and ATK and shoved
-                      them sideways every time it opened.
+                      `leaderBoosts` and not `coverage.boosts`: the printed
+                      number folds the Captain's multiplier together with the
+                      Friend Captain's, the way the game does. `coverage` stays
+                      the single-captain result its contract fixtures assert.
                     -->
-                    <span
-                      class="captain-result__cost-wrap"
-                      (keydown.escape)="closeResultCostHint()"
-                    >
-                      <button
-                        type="button"
-                        class="captain-result__cost"
-                        data-test="captain-result-cost"
-                        [attr.aria-label]="t('results.cost', { cost: card.character.cost })"
-                        [attr.aria-expanded]="openResultCostHint() === card.character.id"
-                        (click)="toggleResultCostHint(card.character.id)"
-                      >
-                        {{ card.character.cost }}
-                      </button>
-                      @if (openResultCostHint() === card.character.id) {
-                        <span
-                          class="captain-result__cost-hint"
-                          tabindex="-1"
-                          role="status"
-                          [attr.data-test]="'captain-result-cost-hint-' + card.character.id"
-                        >
-                          {{ t('results.cost', { cost: card.character.cost }) }}
-                        </span>
-                      }
-                    </span>
-                  </div>
+                    <div class="captain-result__boosts">
+                      <span>HP:{{ formatBoost(card.leaderBoosts.hp) }}</span>
+                      <span>ATK:{{ formatBoost(card.leaderBoosts.atk) }}</span>
+                    </div>
+                  }
 
                   @if (card.matchedAbilityBadges.length) {
                     <div class="captain-result__ability-badges">
@@ -646,37 +716,6 @@
                       }
                     </div>
                   }
-
-                  <div class="captain-result__actions">
-                    <!--
-                      A disabled button that never says why is the same defect
-                      the crown alert already avoids. The `title` sits on this
-                      wrapper and NOT on the button: Ionic sets
-                      `pointer-events: none` on `:host(.button-disabled)`, so a
-                      disabled ion-button is never hit-tested and the browser
-                      would never paint its own tooltip. The wrapper still is,
-                      so the sentence reaches a mouse user; aria-label carries
-                      the same sentence to assistive tech, and keeps the visible
-                      label inside it so the accessible name still contains what
-                      the button says.
-                    -->
-                    <span
-                      class="captain-result__add-wrap"
-                      [attr.title]="addToTeamBlockedTitle(card)"
-                    >
-                      <ion-button
-                        size="small"
-                        fill="outline"
-                        color="warning"
-                        [disabled]="card.assignableSlotIndex === null"
-                        [attr.aria-label]="addToTeamAccessibleLabel(card)"
-                        (click)="assignCharacterFromResult(card)"
-                      >
-                        {{ t('team.actions.addToTeam') }}
-                      </ion-button>
-                    </span>
-
-                  </div>
                 </div>
               </article>
             }

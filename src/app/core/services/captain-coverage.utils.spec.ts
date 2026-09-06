@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import captainContractCases from './fixtures/captain-contract-cases.json';
 import {
+  combineLeaderCaptainCoverageBoosts,
+  createCaptainBoostScopeCache,
   resolveCaptainBoostScope,
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverage,
@@ -1115,3 +1117,113 @@ function createCharacter(
     },
   } satisfies CharacterDetailRecord;
 }
+
+describe('combineLeaderCaptainCoverageBoosts', () => {
+  /*
+   * In One Piece Treasure Cruise the Captain's and the Friend Captain's stat
+   * multipliers MULTIPLY. Owner-confirmed on 2026-09-06 (ClickUp 869exeh57)
+   * after the rule was researched: the wiki's damage formula is multiplicative
+   * end to end, and the community calculators state a 3.0x + 2.5x tandem as
+   * 7.5x. Additive would print the right answer for two 2x Captains by
+   * coincidence and be wrong everywhere else.
+   */
+  it('multiplies the two leaders rather than adding them', () => {
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 1.5, atk: 2 }, { hp: 1.5, atk: 2 }])).toEqual({
+      hp: 2.25,
+      atk: 4,
+    });
+    expect(
+      combineLeaderCaptainCoverageBoosts([
+        { hp: 1, atk: 2.5 },
+        { hp: 1, atk: 2.5 },
+      ]).atk,
+    ).toBe(6.25);
+  });
+
+  it('treats a leader that does not boost as the identity, never as a zero', () => {
+    // A character in the Captain's scope but outside the Friend's keeps the
+    // Captain's own number. Folding the 0 in would erase it.
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 1.5, atk: 3 }, { hp: 0, atk: 0 }])).toEqual({
+      hp: 1.5,
+      atk: 3,
+    });
+    // And the mirror: boosted by the Friend only, which used to print a dash.
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 0, atk: 0 }, { hp: 2, atk: 0 }])).toEqual({
+      hp: 2,
+      atk: 0,
+    });
+  });
+
+  it('keeps zero when no leader boosts the stat, so the card still prints a dash', () => {
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 0, atk: 0 }, { hp: 0, atk: 0 }])).toEqual({
+      hp: 0,
+      atk: 0,
+    });
+    expect(combineLeaderCaptainCoverageBoosts([])).toEqual({ hp: 0, atk: 0 });
+  });
+
+  it('combines a single leader to itself', () => {
+    expect(combineLeaderCaptainCoverageBoosts([{ hp: 1.5, atk: 2 }])).toEqual({ hp: 1.5, atk: 2 });
+  });
+
+  it('folds the same character in twice when it holds both leader seats', () => {
+    // Legal in this game and supported by this app: the two seats are never
+    // deduplicated by id.
+    const self = { hp: 1.5, atk: 1.5 };
+
+    expect(combineLeaderCaptainCoverageBoosts([self, self])).toEqual({ hp: 2.25, atk: 2.25 });
+  });
+});
+
+describe('resolveCaptainBoostScope memoization', () => {
+  const captainAbility =
+    'Boosts ATK of Striker characters by 2.5x and their HP by 1.5x, and reduces damage received by 10%.';
+
+  it('returns the same object for repeated identical input through one cache', () => {
+    const cache = createCaptainBoostScopeCache();
+    const first = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', cache);
+    const second = resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', cache);
+
+    expect(second).toEqual(first);
+    expect(second).toBe(first);
+    expect(cache.size).toBe(1);
+  });
+
+  it('keys the cache on the coverage mode as well as the text', () => {
+    const cache = createCaptainBoostScopeCache();
+
+    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', cache)).not.toBe(
+      resolveCaptainBoostScope(captainAbility, 'fullAbilityCoverage', cache),
+    );
+    expect(cache.size).toBe(2);
+  });
+
+  it('produces the same result cached and uncached', () => {
+    const cache = createCaptainBoostScopeCache();
+
+    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', cache)).toEqual(
+      resolveCaptainBoostScope(captainAbility, 'simpleBoostScope'),
+    );
+  });
+
+  /*
+   * The cache is caller-owned and never a module singleton: a caller that sees
+   * a different captain text on every call, as the auto team builder does,
+   * would pay for a multi-kilobyte key and a Map insert per call and never read
+   * one back.
+   */
+  it('leaves callers that pass no cache completely uncached', () => {
+    expect(resolveCaptainBoostScope(captainAbility, 'simpleBoostScope')).not.toBe(
+      resolveCaptainBoostScope(captainAbility, 'simpleBoostScope'),
+    );
+  });
+
+  it('does not leak entries between two separate caches', () => {
+    const first = createCaptainBoostScopeCache();
+    const second = createCaptainBoostScopeCache();
+
+    resolveCaptainBoostScope(captainAbility, 'simpleBoostScope', first);
+
+    expect(second.size).toBe(0);
+  });
+});
