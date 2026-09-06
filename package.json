@@ -122,6 +122,11 @@
     "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
     "npm": ">=8.0.0"
   },
+  "overrides": {
+    "xcode": {
+      "uuid": "^11.1.1"
+    }
+  },
   "dependencies": {
     "@angular/animations": "^22.1.5",
     "@angular/common": "^22.1.5",
