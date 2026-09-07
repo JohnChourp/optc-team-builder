@@ -568,6 +568,20 @@ export function runAutoTeamBuildAttempt(
     : [];
   const ignoredSuperTandemCriteria =
     superTandemCriteriaRelaxationPermitted && ignoredSuperTandemCriteriaCharacterNames.length > 0;
+  // Axis 7, same shape as axes 6, 9 and 10: `input.allowPartialCaptainAbilityCoverage` records
+  // that the attempt was ALLOWED to concede coverage, not that the team did. The requested
+  // constraint, in outcome terms, is exactly what `shouldEnforceCaptainAbilityCoverage` and
+  // `shouldRequireAllLeaderTiersCovered` gate on - every slot inside the leader criteria and
+  // every leader tier covered - and the finished result already carries both.
+  const captainAbilityCoverageRelaxationPermitted = Boolean(
+    (requestedInput.requireFullCaptainAbilityCoverage ||
+      requestedInput.requireBothLeadersFullCaptainAbilityCoverage) &&
+      input.allowPartialCaptainAbilityCoverage,
+  );
+  const teamMeetsRequestedCaptainCoverage =
+    attempt.coverage.leaderCriteria.allSlotsMatch &&
+    attempt.coverage.leaderCriteria.allLeaderTiersCovered;
+
   const relaxation: AutoBuildResult['relaxation'] = {
     usedFallback: !inputsMatch(requestedInput, input) || allowedLeadersWithSuperEffects,
     droppedTypes: requestedInput.types.filter((type) => !input.types.includes(type)),
@@ -582,15 +596,14 @@ export function runAutoTeamBuildAttempt(
     ),
     minimumLeaderSuperEffectMatchingSlots: input.minimumLeaderSuperEffectMatchingSlots,
     allowedLeadersWithSuperEffects,
-    ...((requestedInput.requireFullCaptainAbilityCoverage ||
-      requestedInput.requireBothLeadersFullCaptainAbilityCoverage) &&
-    input.allowPartialCaptainAbilityCoverage
+    ...(captainAbilityCoverageRelaxationPermitted && !teamMeetsRequestedCaptainCoverage
       ? { ignoredCaptainAbilityCoverage: true }
       : {}),
     ...(requestedInput.requireFullCaptainAbilityCoverage &&
     !input.requireFullCaptainAbilityCoverage &&
     !input.allowPartialCaptainAbilityCoverage &&
-    !requestedInput.requireBothLeadersFullCaptainAbilityCoverage
+    !requestedInput.requireBothLeadersFullCaptainAbilityCoverage &&
+    !teamMeetsRequestedCaptainCoverage
       ? { downgradedCaptainAbilityCoverageToSimple: true }
       : {}),
     ignoredLeaderSuperEffectScope: Boolean(
