@@ -1210,6 +1210,65 @@ describe('Lane D matrix - Tier 1 pairs', () => {
   // coverage. Reporting from that permission would claim coverage was given up on a team that
   // has it. The Tier 2 pair table cannot catch this: there axis 7 uses the uncovered-subs
   // fixture, so permission and outcome agree and the mutation is invisible.
+  // Gap G from run 2: the `sourceScope` gate in auto-team-builder-ability-match.utils.ts could
+  // be deleted without failing a single test in the repository. It stayed uncovered because the
+  // only value the normalizer accepts is `'captainAbility'` - anything else, including
+  // `'specialText'`, normalizes to null and filters nothing - and that one value ALSO makes the
+  // requirement leader-scoped via `isLeaderScopedAbilityRequirement`. So every earlier attempt
+  // was really exercising the slot-scope branch, which masked the source check entirely.
+  //
+  // The isolation is to put the ability on a LEADER but from the wrong source. Leader scoping is
+  // then satisfied either way, and the source check is the only thing left that can reject it.
+  it('rejects a captainAbility-scoped requirement met only from special text (gap G)', () => {
+    const result = runAutoTeamBuildSearch(
+      createSourceScopedAbilityRecords('specialText'),
+      createInput(['DEX'], ['Fighter'], {
+        requiredAbilities: [
+          {
+            abilityKey: GAP_G_ABILITY_KEY,
+            minTurns: null,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            sourceScope: 'captainAbility',
+          },
+        ],
+      } as never),
+    );
+
+    // The leader holds the ability, and a leader-scoped requirement may be met from a leader
+    // seat - but the ability comes from special text, so the source scope must reject it.
+    expect(result).toBeNull();
+  });
+
+  it('accepts the same requirement when the leader holds it from its captain ability (gap G control)', () => {
+    const result = runAutoTeamBuildSearch(
+      createSourceScopedAbilityRecords('captainAbility'),
+      createInput(['DEX'], ['Fighter'], {
+        requiredAbilities: [
+          {
+            abilityKey: GAP_G_ABILITY_KEY,
+            minTurns: null,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            sourceScope: 'captainAbility',
+          },
+        ],
+      } as never),
+    );
+
+    // Identical fixture and identical requirement; only the ability's `source` differs. Without
+    // this control the null above would prove only that the fixture cannot build.
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    // A leader seat carries it - which leader is not the point, and both records hold the
+    // ability, so the search is free to fill both seats from either one.
+    expect(
+      result?.slots
+        .filter((slot) => slot.role === 'captain' || slot.role === 'friendCaptain')
+        .every((slot) => [9500, 9501].includes(slot.character.id)),
+    ).toBe(true);
+  });
+
   it('does not report a captain-coverage relaxation the team did not need (Tier 2)', () => {
     const result = runAutoTeamBuildSearch(
       createTier2Records(),
@@ -1469,6 +1528,47 @@ function createSuperScopeCoverageRecords(): CharacterDetailRecord[] {
 // Every record is DEX and the leaders scope DEX, so the super-effect scope is satisfiable and
 // stays satisfied even when an unrelated filter is dropped. Two leader-eligible records because
 // one is not enough for this shape to build - see the ledger's open question.
+const GAP_G_ABILITY_KEY = 'remove_paralysis';
+
+/**
+ * A leader that carries `GAP_G_ABILITY_KEY` from the given source, plus plain subs that carry
+ * it from nowhere. Only the leader's ability `source` changes between the two variants, so a
+ * difference in outcome can only come from the source-scope check.
+ */
+function createSourceScopedAbilityRecords(
+  source: 'specialText' | 'captainAbility',
+): CharacterDetailRecord[] {
+  const leader = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 5x and HP by 1.3x.',
+        specialText: 'Reduces Paralysis duration by 5 turns.',
+        builderAbilities: [
+          {
+            key: GAP_G_ABILITY_KEY,
+            label: GAP_G_ABILITY_KEY,
+            minTurns: 5,
+            isCompleteRemoval: false,
+            slotTokens: [],
+            source,
+          },
+        ],
+      },
+    });
+  const sub = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: { specialText: 'Boosts orb effects of [DEX] characters by 2.25x for 1 turn.' },
+    });
+
+  return [leader(9500), leader(9501), sub(9502), sub(9503), sub(9504), sub(9505), sub(9506)];
+}
+
 function createInScopeSuperEffectRecords(): CharacterDetailRecord[] {
   const leader = (id: number): CharacterDetailRecord =>
     createCharacterRecord({
