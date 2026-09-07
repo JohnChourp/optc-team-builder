@@ -1110,6 +1110,194 @@ describe('runAutoTeamBuildSearch', () => {
   });
 });
 
+// Lane D filter interaction matrix, Tier 1. See
+// optc-team-builder-brain/.codex/skills/optc-auto-team-builder-audit/references/filter-interaction-matrix.md
+// and the coverage ledger at optc-team-builder-brain/audits/auto-team-builder/matrix-coverage.md.
+describe('Lane D matrix - Tier 1 pairs', () => {
+  // 5x7 - leader boost ranges (axis 5) against captain ability coverage (axis 7).
+  //
+  // These leaders must AUTO-FILL. `candidateMatchesLeaderConstraints(candidate, false)` is used
+  // for the manual candidate pool, so a manually pinned leader skips
+  // `candidateMatchesLeaderBoostRanges` entirely. Every other captain-coverage case in this file
+  // pins its leader through `createCaptainCoverageManualSlots`, which is why axis 5 has never
+  // been exercised alongside axis 7 - pinning the leader here would silently disable axis 5.
+  it('keeps the leader boost range while relaxing captain ability coverage (5x7)', () => {
+    const result = runAutoTeamBuildSearch(
+      createLeaderBoostRangeCoverageRecords(),
+      createInput(['DEX'], ['Fighter'], {
+        requireFullCaptainAbilityCoverage: true,
+        leaderBoostRanges: {
+          ATK: { min: 5, max: null },
+          HP: { min: null, max: null },
+        },
+      }),
+    );
+
+    // Invariant 3 - relaxation honesty: coverage was the constraint given up, and it is reported.
+    expect(result).not.toBeNull();
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
+
+    // Invariant 1 - soundness: axis 5 was never relaxed, so the out-of-range leader stays out
+    // even though it is the only one that would have satisfied axis 7.
+    expect(result?.slots[0].character.captainAtkBoost).toBeGreaterThanOrEqual(5);
+    expect(result?.slots[0].character.id).toBe(9030);
+    expect(result?.slots.every((slot) => slot.character.id !== 9031)).toBe(true);
+  });
+
+  it('returns the covering leader when the boost range admits it (5x7 control)', () => {
+    // The same fixtures with axis 5 opened up: the covering leader wins and nothing is relaxed.
+    // Without this control the case above proves only that 9031 is absent, not that axis 5 is
+    // what excluded it.
+    const result = runAutoTeamBuildSearch(
+      createLeaderBoostRangeCoverageRecords(),
+      createInput(['DEX'], ['Fighter'], {
+        requireFullCaptainAbilityCoverage: true,
+        leaderBoostRanges: createEmptyAutoBuildLeaderBoostRanges(),
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0].character.id).toBe(9031);
+    // `ignoredCaptainAbilityCoverage` is spread into `relaxation` only when it is true, so the
+    // not-relaxed assertion is absence plus `usedFallback`, never `toBe(false)`.
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.relaxation.usedFallback).toBe(false);
+  });
+
+  // 6x7 - leader super-effect scope (axis 6) against captain ability coverage (axis 7).
+  // Both are leader-side and both are relaxation-eligible. The pair's question is invariant 3:
+  // when neither can be satisfied, are BOTH give-ups reported, or is one relaxed and the other
+  // dropped silently?
+  //
+  // Axis 6 only binds when a leader actually carries a super effect - `resolveActiveLeaderSuperEffectScope`
+  // returns `hasSuperEffects: false` for a leader with no `superType`, and the constraint is then
+  // trivially satisfied. The fixture below scopes the two axes orthogonally: axis 6 by TYPE
+  // (superType DEX) and axis 7 by CLASS (captain ability scoped to [Fighter]), so each sub is
+  // independently in or out of each axis.
+  it('reports the super-effect-scope and captain-coverage relaxations independently (6x7)', () => {
+    const result = runAutoTeamBuildSearch(
+      createSuperScopeCoverageRecords(),
+      createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+        requireFullCaptainAbilityCoverage: true,
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        manualSlots: createCaptainCoverageManualSlots(9040),
+        lockedCharacterIds: [9040],
+        captainCharacterId: 9040,
+        friendCaptainCharacterId: 9040,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.relaxation.usedFallback).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
+    expect(result?.relaxation.ignoredLeaderSuperEffectScope).toBe(true);
+  });
+
+  it('does not report a super-effect-scope relaxation when only coverage was required (6x7 control)', () => {
+    // Differential control: same fixture, axis 6 off. Coverage is relaxed and reported while the
+    // super-effect-scope flag stays false - that is what proves the two flags in the case above
+    // are independent rather than one implying the other.
+    //
+    // The mirror control (axis 6 on, axis 7 off) is deliberately absent: on this fixture it
+    // returns null, and an unexplained null proves nothing. That null is recorded as an open
+    // question in optc-team-builder-brain/audits/auto-team-builder/matrix-coverage.md rather
+    // than asserted here as though it were intended behaviour.
+    const result = runAutoTeamBuildSearch(
+      createSuperScopeCoverageRecords(),
+      createInput(['DEX', 'PSY'], ['Fighter', 'Slasher'], {
+        requireFullCaptainAbilityCoverage: true,
+        manualSlots: createCaptainCoverageManualSlots(9040),
+        lockedCharacterIds: [9040],
+        captainCharacterId: 9040,
+        friendCaptainCharacterId: 9040,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
+    expect(result?.relaxation.ignoredLeaderSuperEffectScope).toBe(false);
+  });
+});
+
+function createSuperScopeCoverageRecords(): CharacterDetailRecord[] {
+  return [
+    // Leader: super effect scopes the team to DEX (axis 6); captain ability scopes [Fighter] (axis 7).
+    createSuperScopeCoverageLeaderRecord(9040),
+    // A second eligible leader is required, not decorative: with only one leader-eligible record
+    // in the pool this fixture returns null even with no constraints at all and with the same
+    // character pinned to both leader seats. Measured 2026-09-07 - see the open question in
+    // optc-team-builder-brain/audits/auto-team-builder/matrix-coverage.md.
+    createSuperScopeCoverageLeaderRecord(9047),
+    // Six subs, so an unconstrained search can fill the four sub slots comfortably. Only two are
+    // DEX and only two are Fighter, so axis 6 (all slots in the DEX super scope) and axis 7 (all
+    // slots covered by a [Fighter] captain) are each individually unsatisfiable - which is what
+    // forces both relaxations without either axis depending on the other.
+    createSuperScopeCoverageSubRecord(9041, 'DEX', 'Fighter'), // in scope, covered
+    createSuperScopeCoverageSubRecord(9042, 'DEX', 'Slasher'), // in scope, not covered
+    createSuperScopeCoverageSubRecord(9043, 'PSY', 'Fighter'), // out of scope, covered
+    createSuperScopeCoverageSubRecord(9044, 'PSY', 'Slasher'), // out of both
+    createSuperScopeCoverageSubRecord(9045, 'PSY', 'Slasher'), // out of both
+    createSuperScopeCoverageSubRecord(9046, 'PSY', 'Slasher'), // out of both
+  ];
+}
+
+function createSuperScopeCoverageLeaderRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    type: 'DEX',
+    primaryClass: 'Fighter',
+    detail: {
+      captainAbility: 'Boosts ATK of [Fighter] characters by 5x and HP by 1.3x.',
+      specialText: 'Boosts ATK of [Fighter] characters by 2.25x for 1 turn.',
+      superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+    },
+  });
+}
+
+function createSuperScopeCoverageSubRecord(
+  id: number,
+  type: string,
+  primaryClass: string,
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    type,
+    primaryClass,
+    detail: { specialText: 'Boosts orb effects of [DEX] characters by 2.25x for 1 turn.' },
+  });
+}
+
+function createLeaderBoostRangeCoverageRecords(): CharacterDetailRecord[] {
+  return [
+    // In the ATK range, but its captain ability scopes [PSY] so it covers none of the DEX subs.
+    createCharacterRecord({
+      id: 9030,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      captainAtkBoost: 5.5,
+      captainHpBoost: 1.3,
+      detail: {
+        captainAbility: 'Boosts ATK of [PSY] characters by 5.5x and HP of [PSY] characters by 1.3x.',
+      },
+    }),
+    // Covers every DEX sub, but its ATK boost sits below the range floor.
+    createCharacterRecord({
+      id: 9031,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      captainAtkBoost: 4.25,
+      captainHpBoost: 1.3,
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 4.25x and HP of [DEX] characters by 1.3x.',
+      },
+    }),
+    createCaptainCoverageDexSubRecord(9032),
+    createCaptainCoverageDexSubRecord(9033),
+    createCaptainCoverageDexSubRecord(9034),
+    createCaptainCoverageDexSubRecord(9035),
+  ];
+}
+
 function collectScheduledAttempts(planner: ReturnType<typeof createAutoTeamBuildFallbackPlanner>) {
   const attempts = [];
 
