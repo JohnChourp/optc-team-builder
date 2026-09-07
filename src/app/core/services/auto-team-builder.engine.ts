@@ -19,6 +19,7 @@ import {
   resolveCharacterTypeTokens,
   resolveUnsatisfiedSuperSpecialCriteriaCharacterNames,
   resolveUnsatisfiedSuperTandemCriteriaCharacterNames,
+  teamMatchesRequestedLeaderSuperEffectScope,
   type PreparedAutoTeamBuildContext,
 } from './auto-team-builder.utils';
 
@@ -546,18 +547,27 @@ export function runAutoTeamBuildAttempt(
     requestedInput,
     requireLeadersWithoutSuperEffects,
   );
-  const ignoredLeaderSuperSpecialCriteria = Boolean(
+  // A relaxation is only honest to report if the finished team actually gives the constraint
+  // up. `buildBaseSubsetInput` turns every relaxable leader constraint off on every subset
+  // attempt, so `input` records what the attempt was PERMITTED to concede, not what it did.
+  // Deriving these flags from the outcome keeps invariant 3 honest in both directions.
+  const superSpecialCriteriaRelaxationPermitted = Boolean(
     requestedInput.requireLeaderSuperSpecialCriteria && !input.requireLeaderSuperSpecialCriteria,
   );
-  const ignoredSuperSpecialCriteriaCharacterNames = ignoredLeaderSuperSpecialCriteria
+  const ignoredSuperSpecialCriteriaCharacterNames = superSpecialCriteriaRelaxationPermitted
     ? resolveUnsatisfiedSuperSpecialCriteriaCharacterNames(attempt.slots, requestedInput)
     : [];
-  const ignoredSuperTandemCriteria = Boolean(
+  const ignoredLeaderSuperSpecialCriteria =
+    superSpecialCriteriaRelaxationPermitted &&
+    ignoredSuperSpecialCriteriaCharacterNames.length > 0;
+  const superTandemCriteriaRelaxationPermitted = Boolean(
     requestedInput.requireSuperTandemCriteria && !input.requireSuperTandemCriteria,
   );
-  const ignoredSuperTandemCriteriaCharacterNames = ignoredSuperTandemCriteria
+  const ignoredSuperTandemCriteriaCharacterNames = superTandemCriteriaRelaxationPermitted
     ? resolveUnsatisfiedSuperTandemCriteriaCharacterNames(attempt.slots, requestedInput)
     : [];
+  const ignoredSuperTandemCriteria =
+    superTandemCriteriaRelaxationPermitted && ignoredSuperTandemCriteriaCharacterNames.length > 0;
   const relaxation: AutoBuildResult['relaxation'] = {
     usedFallback: !inputsMatch(requestedInput, input) || allowedLeadersWithSuperEffects,
     droppedTypes: requestedInput.types.filter((type) => !input.types.includes(type)),
@@ -585,7 +595,8 @@ export function runAutoTeamBuildAttempt(
       : {}),
     ignoredLeaderSuperEffectScope: Boolean(
       requestedInput.requireAllSlotsInLeaderSuperEffectScope &&
-      !input.requireAllSlotsInLeaderSuperEffectScope,
+      !input.requireAllSlotsInLeaderSuperEffectScope &&
+      !teamMatchesRequestedLeaderSuperEffectScope(attempt.slots, requestedInput),
     ),
     ignoredLeaderSuperSpecialCriteria,
     ...(ignoredSuperSpecialCriteriaCharacterNames.length

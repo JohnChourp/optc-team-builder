@@ -1052,6 +1052,40 @@ function areActiveActivationCriteriaSatisfied(
   );
 }
 
+/**
+ * Whether a finished team actually satisfies the leader super-effect scope the caller asked
+ * for. Needed because the fallback planner bakes `requireAllSlotsInLeaderSuperEffectScope:
+ * false` into every subset attempt whenever the constraint is relaxable, so the attempt's own
+ * input says nothing about whether the constraint was really given up. Reporting from the
+ * attempt's permission rather than its outcome told users a scope had been ignored while
+ * handing them a team that satisfied it - see the Lane D run 3 finding.
+ *
+ * Mirrors `resolveUnsatisfiedSuperSpecialCriteriaCharacterNames` in shape: it works from the
+ * finished slots, not from internal candidate state.
+ */
+export function teamMatchesRequestedLeaderSuperEffectScope(
+  slots: AutoBuildSlot[],
+  input: AutoBuildInput,
+): boolean {
+  const requiredSlots = resolveRequiredLeaderSuperEffectMatchingSlots(input);
+
+  if (requiredSlots === null) {
+    return true;
+  }
+
+  const candidates = slots.map((slot, index) =>
+    buildAutoBuildCandidate(slot.character, input, index, slots.length),
+  );
+  const leaderCandidates = candidates.filter((_, index) => slots[index]?.role !== 'sub');
+  const leaderSuperEffectScope = resolveActiveLeaderSuperEffectScope(leaderCandidates);
+
+  if (!leaderSuperEffectScope.isParseable) {
+    return false;
+  }
+
+  return countLeaderSuperEffectScopeMatches(candidates, leaderSuperEffectScope) >= requiredSlots;
+}
+
 export function resolveUnsatisfiedSuperSpecialCriteriaCharacterNames(
   slots: AutoBuildSlot[],
   input: AutoBuildInput,
