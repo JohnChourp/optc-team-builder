@@ -1198,6 +1198,30 @@ describe('Lane D matrix - Tier 1 pairs', () => {
   // so a plain filter drop used to be reported as also conceding the leader constraints - on a
   // team that satisfied them. Measured before the fix: identical team in both runs, yet
   // `ignoredLeaderSuperEffectScope` flipped to true purely because a type was dropped.
+  // The same over-reporting shape for axes 9 and 10. These need a fixture with NO criteria
+  // carriers at all: the constraint is then trivially satisfiable, the subset planner is still
+  // allowed to switch it off, and reporting from that permission would claim a Super Special or
+  // Super Tandem requirement had been given up when there was nothing to give up. Written
+  // separately from the Tier 2 pair table on purpose - in that table the criteria genuinely are
+  // violated, so permission and outcome agree there and the mutation is invisible.
+  it('does not report criteria relaxations when the fixture has no carriers (Tier 2)', () => {
+    const result = runAutoTeamBuildSearch(
+      createInScopeSuperEffectRecords(),
+      createInput(['DEX', 'INT'], ['Fighter'], {
+        requireAllSelectedTypesInTeam: true,
+        requireLeaderSuperSpecialCriteria: true,
+        requireSuperTandemCriteria: true,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.relaxation.droppedTypes).toEqual(['INT']);
+    expect(result?.relaxation.usedFallback).toBe(true);
+    // No record carries either kind of criteria, so nothing was conceded.
+    expect(result?.relaxation.ignoredLeaderSuperSpecialCriteria).toBe(false);
+    expect(result?.relaxation.ignoredSuperTandemCriteria).toBe(false);
+  });
+
   it('does not report a leader-scope relaxation when only a filter was dropped (Tier 2)', () => {
     const baseline = runAutoTeamBuildSearch(
       createInScopeSuperEffectRecords(),
@@ -1614,6 +1638,315 @@ function createVsBranchModeManualSlots(
 // prettier diff lines. The file already has 3 pre-existing prettier warnings (:145 and the two
 // `captainAbility:` lines inside `createLeaderBoostRangeCoverageRecords`, both from run 1) - do not
 // mistake those for damage from this paste.
+
+// Lane D matrix, Tier 2 - pairs that interact through relaxation.
+// Contract: one axis is relaxation-eligible, the other is not; the failure is invariant 3,
+// something given up and never reported. Run 3 established that the mirror - reported and
+// never given up - was also live, and fixed it, so these pairs are now assertable.
+//
+// The table generates the cross product instead of hand-writing dozens of near-identical
+// tests. Every relaxation-eligible axis is forced to relax against the SAME fixture, which
+// violates axes 6, 7, 9 and 10 simultaneously, so each one honestly reports when switched on.
+// Axes 1-4 need no fixture support: they are forced with a value nothing in the pool carries.
+describe('Lane D matrix - Tier 2 pairs', () => {
+  interface Tier2RelaxableAxis {
+    id: string;
+    label: string;
+    extraTypes?: AutoTeamBuilderType[];
+    extraClasses?: string[];
+    overrides: Record<string, unknown>;
+    wasReported: (relaxation: AutoBuildResult['relaxation']) => boolean;
+  }
+
+  interface Tier2HardAxis {
+    id: string;
+    label: string;
+    overrides: Record<string, unknown>;
+    stillSatisfied: (result: AutoBuildResult) => boolean;
+  }
+
+  const RELAXABLE: Tier2RelaxableAxis[] = [
+    {
+      id: 'a1',
+      label: 'types',
+      extraTypes: ['INT'],
+      overrides: { requireAllSelectedTypesInTeam: true },
+      wasReported: (r) => r.droppedTypes.includes('INT'),
+    },
+    {
+      id: 'a2',
+      label: 'classes',
+      extraClasses: ['Striker'],
+      overrides: { requireAllSelectedClassesPerCharacter: false },
+      wasReported: (r) => r.droppedClasses.includes('Striker'),
+    },
+    {
+      id: 'a3',
+      label: 'character tags',
+      overrides: {
+        selectedCharacterTags: ['Minks'],
+        requireAllSelectedCharacterTagsInTeam: true,
+      },
+      wasReported: (r) => r.droppedCharacterTags.includes('Minks'),
+    },
+    {
+      id: 'a4',
+      label: 'character names',
+      overrides: {
+        selectedCharacterNames: ['Nefertari Vivi'],
+        requireAllSelectedCharacterNamesInTeam: true,
+      },
+      wasReported: (r) => r.droppedCharacterNames.length > 0,
+    },
+    {
+      id: 'a6',
+      label: 'leader super-effect scope',
+      overrides: { requireAllSlotsInLeaderSuperEffectScope: true },
+      wasReported: (r) => r.ignoredLeaderSuperEffectScope,
+    },
+    {
+      id: 'a7',
+      label: 'captain ability coverage',
+      overrides: { requireFullCaptainAbilityCoverage: true },
+      wasReported: (r) => r.ignoredCaptainAbilityCoverage === true,
+    },
+    {
+      id: 'a9',
+      label: 'super special criteria',
+      overrides: { requireLeaderSuperSpecialCriteria: true },
+      wasReported: (r) => r.ignoredLeaderSuperSpecialCriteria,
+    },
+    {
+      id: 'a10',
+      label: 'Super Tandem criteria',
+      overrides: { requireSuperTandemCriteria: true },
+      wasReported: (r) => r.ignoredSuperTandemCriteria,
+    },
+  ];
+
+  const HARD: Tier2HardAxis[] = [
+    {
+      id: 'a12',
+      label: 'ability requirements',
+      overrides: {
+        requiredAbilities: [
+          {
+            abilityKey: TIER2_REQUIRED_ABILITY_KEY,
+            minTurns: null,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+          },
+        ],
+      },
+      stillSatisfied: (result) => result.coverage.abilityRequirements.matchesAll,
+    },
+    {
+      id: 'a13',
+      label: 'battle requirements',
+      overrides: {
+        battleRequirements: [
+          {
+            id: 'tier2-battle',
+            title: 'Tier 2 battle',
+            enemyMechanics: [],
+            requiredCharacterGroups: [
+              {
+                id: 'tier2-battle-group',
+                abilities: [
+                  {
+                    abilityKey: TIER2_REQUIRED_ABILITY_KEY,
+                    minTurns: null,
+                    slotTokens: [],
+                    requiredCharacterCount: 1,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      stillSatisfied: (result) => result.coverage.battleRequirements?.matchesAll === true,
+    },
+  ];
+
+  function runPair(axes: Tier2RelaxableAxis[], hard?: Tier2HardAxis): AutoBuildResult | null {
+    const types: AutoTeamBuilderType[] = [
+      ...TIER2_BASE_TYPES,
+      ...axes.flatMap((axis) => axis.extraTypes ?? []),
+    ];
+    const classes = [...TIER2_BASE_CLASSES, ...axes.flatMap((axis) => axis.extraClasses ?? [])];
+    const overrides = axes.reduce(
+      (acc, axis) => ({ ...acc, ...axis.overrides }),
+      { ...(hard?.overrides ?? {}) } as Record<string, unknown>,
+    );
+
+    const needsUncoveredSubs = axes.some((axis) => axis.id === 'a7');
+
+    return runAutoTeamBuildSearch(
+      createTier2Records(needsUncoveredSubs),
+      createInput(types, classes, overrides as never),
+    );
+  }
+
+  // Every unordered pair of relaxation-eligible axes: both must be reported, independently.
+  for (let left = 0; left < RELAXABLE.length; left += 1) {
+    for (let right = left + 1; right < RELAXABLE.length; right += 1) {
+      const a = RELAXABLE[left];
+      const b = RELAXABLE[right];
+
+      it(`reports both give-ups for ${a.id}x${b.id} (${a.label} vs ${b.label})`, () => {
+        const result = runPair([a, b]);
+
+        expect(result).not.toBeNull();
+        expect(result?.relaxation.usedFallback).toBe(true);
+        // Invariant 3, both directions: each axis under test is reported...
+        expect({ [a.id]: a.wasReported(result!.relaxation) }).toEqual({ [a.id]: true });
+        expect({ [b.id]: b.wasReported(result!.relaxation) }).toEqual({ [b.id]: true });
+        // ...and no axis that was never switched on is reported as given up.
+        for (const other of RELAXABLE) {
+          if (other.id === a.id || other.id === b.id) {
+            continue;
+          }
+          expect({ [other.id]: other.wasReported(result!.relaxation) }).toEqual({
+            [other.id]: false,
+          });
+        }
+      });
+    }
+  }
+
+  // Every relaxation-eligible axis against every hard axis: the soft one is reported, the hard
+  // one survives untouched. A hard axis has no relaxation flag at all - that is the point.
+  for (const soft of RELAXABLE) {
+    for (const hard of HARD) {
+      it(`relaxes ${soft.id} while ${hard.id} holds (${soft.label} vs ${hard.label})`, () => {
+        const result = runPair([soft], hard);
+
+        expect(result).not.toBeNull();
+        expect(result?.relaxation.usedFallback).toBe(true);
+        expect({ [soft.id]: soft.wasReported(result!.relaxation) }).toEqual({ [soft.id]: true });
+        // Invariant 1: the hard axis was never relaxed, so the team still satisfies it.
+        expect({ [hard.id]: hard.stillSatisfied(result!) }).toEqual({ [hard.id]: true });
+      });
+    }
+  }
+});
+
+const TIER2_BASE_TYPES: AutoTeamBuilderType[] = ['DEX', 'PSY'];
+const TIER2_BASE_CLASSES = ['Fighter'];
+const TIER2_REQUIRED_ABILITY_KEY = 'remove_paralysis';
+
+const TIER2_UNSATISFIABLE_CRITERIA = {
+  rawText: 'Your crew must consist of any 3 of the following: [Ghost Crew].',
+  requiresCaptain: false,
+  hasNonRosterBranches: false,
+  parserStatus: 'roster_only' as const,
+  rosterBranches: [
+    {
+      branchType: 'character_count_any' as const,
+      requiredCount: 3,
+      matchMode: 'any_candidate' as const,
+      options: [{ label: '[Ghost Crew]', acceptedKeys: ['ghost crew that does not exist'] }],
+    },
+  ],
+};
+
+/**
+ * One fixture that violates axes 6, 7, 9 and 10 at once, so each reports honestly when it is
+ * switched on: the leaders scope DEX and boost [Fighter] only, while every sub is PSY/Slasher -
+ * out of the super-effect scope and outside the captain's coverage - and both leaders carry
+ * criteria nothing in the pool can satisfy. Two leader-eligible records because one is not
+ * enough for this shape to build; see the ledger's open question.
+ */
+function createTier2Records(withUncoveredSubs = false): CharacterDetailRecord[] {
+  const leader = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: null,
+      detail: {
+        captainAbility: 'Boosts ATK of [Fighter] characters by 5x and HP by 1.3x.',
+        specialText: 'Boosts ATK of [Fighter] characters by 2.25x for 1 turn.',
+        superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+        superSpecialCriteria: TIER2_UNSATISFIABLE_CRITERIA,
+        superTandemData: {
+          requirement: TIER2_UNSATISFIABLE_CRITERIA.rawText,
+          levels: [{ level: 5, effect: 'Boosts Tandem ATK of crew by 3x for 1 turn.' }],
+          criteria: TIER2_UNSATISFIABLE_CRITERIA,
+        },
+      },
+    });
+  // PSY so they sit OUTSIDE the leader's DEX super-effect scope (axis 6 violated), but Fighter
+  // so the [Fighter] captain still covers them - without that the default non-partial auto-fill
+  // pool admits no subs at all and the team cannot be built, which would make every pair null.
+  const sub = (id: number, specialText: string): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: null,
+      detail: { specialText },
+    });
+  // The engine spec does not derive abilities from text - `createCharacterRecord` defaults
+  // `builderAbilities` to `[]` - so the hard axes' carrier declares its ability explicitly.
+  const abilityCarrier = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      secondaryClass: null,
+      detail: {
+        specialText: 'Reduces Paralysis duration by 5 turns.',
+        builderAbilities: [
+          {
+            key: TIER2_REQUIRED_ABILITY_KEY,
+            label: TIER2_REQUIRED_ABILITY_KEY,
+            minTurns: 5,
+            isCompleteRemoval: false,
+            slotTokens: [],
+            source: 'specialText',
+          },
+        ],
+      },
+    });
+
+  // Axis 7 needs the opposite of what every other axis needs. To violate captain coverage the
+  // team must CONTAIN an uncovered slot, but an uncovered sub is not admitted to the default
+  // non-partial auto-fill pool at all - so a fixture that violates coverage cannot be built
+  // until coverage is relaxed. That is why axis 7 gets its own record set rather than sharing.
+  const uncoveredSub = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      secondaryClass: null,
+      detail: { specialText: 'Boosts ATK by 2x for 1 turn.' },
+    });
+
+  if (withUncoveredSubs) {
+    return [
+      leader(9400),
+      leader(9401),
+      abilityCarrier(9402),
+      uncoveredSub(9407),
+      uncoveredSub(9408),
+      uncoveredSub(9409),
+      uncoveredSub(9410),
+    ];
+  }
+
+  return [
+    leader(9400),
+    leader(9401),
+    // One sub carries the ability the hard axes require, so axes 12 and 13 stay satisfiable.
+    abilityCarrier(9402),
+    sub(9403, 'Boosts ATK by 2x for 1 turn.'),
+    sub(9404, 'Boosts ATK by 2x for 1 turn.'),
+    sub(9405, 'Boosts ATK by 2x for 1 turn.'),
+    sub(9406, 'Boosts ATK by 2x for 1 turn.'),
+  ];
+}
 
 function collectScheduledAttempts(planner: ReturnType<typeof createAutoTeamBuildFallbackPlanner>) {
   const attempts = [];
