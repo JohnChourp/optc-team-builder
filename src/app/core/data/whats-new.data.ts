@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.1',
+    date: '2026-09-07',
+    userVisible: true,
+    headline: {
+      en: 'Auto Team Builder stops saying it gave up a rule it kept',
+      el: 'Το Auto Team Builder δεν λέει πια ότι άφησε έναν κανόνα που τελικά τήρησε',
+    },
+    summaryEn:
+      'You build a team in Auto Team Builder, scroll to the "Final team report", and a row is marked Relaxed: "Team does not fully pass Captain Ability tier coverage" - on a team that covers every tier you asked for. It was reporting compromises Auto Team Builder never actually made. While it searches it can set a rule aside to see more teams; if the team it found kept that rule anyway, the row still marked it Relaxed. Four rows did this: Captain Ability tier coverage, Leader Super Type/Class scope, and the Super Special criteria and Super Tandem criteria rows, which also named characters whose criteria the team had met. All four now come from the team that came out: a row is marked Relaxed only when your team really does set that rule aside. The teams are unchanged - the same Captain, Friend Captain and subs. Only what the report said about them was wrong.',
+    summaryEl:
+      'Φτιάχνεις ομάδα στο Auto Team Builder, κατεβαίνεις στο "Τελικό report ομάδας", και μια γραμμή είναι σημειωμένη ως Relaxed: "Η ομάδα δεν περνάει πλήρως το Captain Ability tier coverage" - σε ομάδα που καλύπτει κάθε tier που ζήτησες. Το report χρέωνε στο Auto Team Builder υποχωρήσεις που ποτέ δεν έγιναν. Όσο ψάχνει, μπορεί να βάλει έναν κανόνα στην άκρη για να δει περισσότερες ομάδες. Αν η ομάδα που έβγαινε τον τηρούσε έτσι κι αλλιώς, η γραμμή τον έδειχνε ως Relaxed. Τέσσερις γραμμές το έκαναν: το Captain Ability tier coverage, το Leader Super Type/Class scope, και οι γραμμές για τα Super Special criteria και τα Super Tandem criteria, που ανέφεραν και χαρακτήρες των οποίων τα criteria τελικά καλύπτονταν. Και οι τέσσερις προκύπτουν πλέον από την ομάδα που βγήκε: μια γραμμή βγαίνει Relaxed μόνο όταν η ομάδα σου αφήνει πραγματικά τον κανόνα στην άκρη. Οι ομάδες δεν άλλαξαν - ίδιος Captain, ίδιος Friend Captain, ίδια subs. Λάθος ήταν μόνο αυτό που έλεγε το report για αυτές.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: 'The "Final team report" in Auto Team Builder no longer marks Captain Ability tier coverage as Relaxed on a team that covers it. Where you used to read "Team does not fully pass Captain Ability tier coverage" with nothing missing, the row now reads "Team fully passes Captain Ability tier coverage".',
+        el: 'Το "Τελικό report ομάδας" στο Auto Team Builder δεν δείχνει πια ως Relaxed το Captain Ability tier coverage σε ομάδα που το καλύπτει. Εκεί που διάβαζες "Η ομάδα δεν περνάει πλήρως το Captain Ability tier coverage" χωρίς να λείπει τίποτα, η γραμμή γράφει πλέον "Η ομάδα περνάει πλήρως το Captain Ability tier coverage".',
+      },
+      {
+        en: 'The Super Special criteria and Super Tandem criteria rows no longer name characters whose criteria your team actually met, and Leader Super Type/Class scope is no longer marked Relaxed on a team that follows it. A character or a rule shows up there only when the finished team really does set it aside.',
+        el: 'Οι γραμμές για τα Super Special criteria και τα Super Tandem criteria δεν αναφέρουν πια χαρακτήρες των οποίων τα criteria κάλυπτε τελικά η ομάδα σου, και το Leader Super Type/Class scope δεν βγαίνει πια Relaxed σε ομάδα που το ακολουθεί. Ένας χαρακτήρας ή ένας κανόνας μπαίνει εκεί μόνο όταν η τελική ομάδα όντως τον αφήνει στην άκρη.',
+      },
+    ],
+  },
+  {
     version: '0.4.0',
     date: '2026-09-06',
     userVisible: true,
