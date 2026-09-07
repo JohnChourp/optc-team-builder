@@ -1219,24 +1219,29 @@ describe('Lane D matrix - Tier 1 pairs', () => {
   //
   // The isolation is to put the ability on a LEADER but from the wrong source. Leader scoping is
   // then satisfied either way, and the source check is the only thing left that can reject it.
-  // Characterises - deliberately not explains - the open question carried since Lane D run 1:
-  // why a fixture with one leader-eligible record returned null while a second, otherwise
-  // identical, leader flipped it to a team.
+  // The open question carried since Lane D run 1, now answered.
   //
-  // What is measured and reproducible: the discriminator is the CAPTAIN'S CLASS SCOPE, not the
-  // leader count. With a captain scoping [Fighter], a team needs four Fighter subs; three
-  // Fighter plus three Slasher returns null, while six Fighter builds. The earlier "second
-  // leader fixes it" reading was a coincidence of that leader also being Fighter.
+  // The discriminator is the CAPTAIN'S CLASS SCOPE, not the leader count. With a captain
+  // scoping [Fighter], a team needs four Fighter subs; three Fighter plus three Slasher returns
+  // null, six Fighter builds. A bisect over leader count, sub count and superType moved the
+  // boundary not at all. The old "a second leader fixes it" reading was a coincidence - that
+  // leader was also Fighter, so it was simply a fifth covered record.
   //
-  // What is NOT established is the mechanism. Two plausible gates were each disabled in turn -
-  // `matchesLeaderBuildScopeForAttempt` (which reduces to a coverage check because
-  // `allowPartialCaptainAbilityCoverage` defaults to false) and `allSubSlotsMatchLeaderBuildScope`
-  // - and NEITHER moved the boundary. So the exclusion happens somewhere else, and this test
-  // deliberately claims no more than it can show.
+  // The mechanism is captain coverage, enforced at THREE independent points, which is why it
+  // resisted three separate mutations. Disabling any one or two changes nothing, because the
+  // remaining one still excludes; only disabling all three lets Slasher subs into a team:
+  //   1. `matchesLeaderBuildScopeForAttempt` - reduces to a coverage check because
+  //      `allowPartialCaptainAbilityCoverage` defaults to false;
+  //   2. the pool-construction `leaderScope` filter, itself a five-way `||` whose other
+  //      disjuncts exclude the same candidates;
+  //   3. `allSubSlotsMatchLeaderBuildScope`, the team-level check, which calls the direct
+  //      helper rather than the wrapper and so survives mutations aimed at (1).
   //
-  // It is therefore a characterisation test, not a guard: it will not fail if a particular gate
-  // is broken, but it will fail if this boundary moves, which is what has repeatedly cost
-  // investigations while writing fixtures across runs 1, 3 and 3b.
+  // The methodological point, recorded in the ledger: a single mutation cannot falsify a
+  // redundantly-enforced rule. Failing to kill with one mutation is not evidence of absence.
+  //
+  // This stays a characterisation test rather than a guard for exactly that reason - no single
+  // gate's removal makes it fail. It fails if the boundary moves, which is the useful property.
   it('needs four captain-covered subs to fill a team (run 1 open question, characterised)', () => {
     const withCoveredSubs = (coveredSubCount: number) =>
       runAutoTeamBuildSearch(
