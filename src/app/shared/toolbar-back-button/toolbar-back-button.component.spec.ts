@@ -5,10 +5,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ToolbarBackButtonComponent } from './toolbar-back-button.component';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
-  IonButtons: class {},
+vi.mock('@ionic/angular', () => ({
   IonIcon: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-buttons', () => ({
+  IonButtons: class {},
 }));
 
 vi.mock('@jsverse/transloco', () => ({

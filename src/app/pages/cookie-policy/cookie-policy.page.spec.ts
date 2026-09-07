@@ -6,13 +6,25 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CookiePolicyPage } from "./cookie-policy.page";
 
-vi.mock("@ionic/angular/standalone", () => ({
-  IonButton: class {},
-  IonButtons: class {},
-  IonContent: class {},
-  IonHeader: class {},
+vi.mock('@ionic/angular', () => ({
   IonIcon: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-buttons', () => ({
+  IonButtons: class {},
+}));
+vi.mock('@ionic/angular/ion-content', () => ({
+  IonContent: class {},
+}));
+vi.mock('@ionic/angular/ion-header', () => ({
+  IonHeader: class {},
+}));
+vi.mock('@ionic/angular/ion-title', () => ({
   IonTitle: class {},
+}));
+vi.mock('@ionic/angular/ion-toolbar', () => ({
   IonToolbar: class {},
 }));
 

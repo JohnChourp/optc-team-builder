@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { IonIcon } from '@ionic/angular/standalone';
+import { IonIcon } from '@ionic/angular';
 import {
   alertCircleOutline,
   checkmarkCircleOutline,

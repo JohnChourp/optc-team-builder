@@ -17,10 +17,14 @@ import {
   type CharacterFacetPresentation,
 } from './character-facet-filter.component';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
+vi.mock('@ionic/angular', () => ({
   IonIcon: class {},
   IonSelect: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-select-option', () => ({
   IonSelectOption: class {},
 }));
 

@@ -18,25 +18,42 @@ import {
 } from '../../testing/download-capture';
 import { buildSavedTeamShareCode } from './saved-teams-transfer.utils';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
-  IonButtons: class {},
+vi.mock('@ionic/angular', () => ({
   IonCheckbox: class {},
-  IonContent: class {},
-  IonFooter: class {},
-  IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
-  IonMenuButton: class {},
   IonModal: class {},
   IonSearchbar: class {},
-  IonSpinner: class {},
   IonTextarea: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-buttons', () => ({
+  IonButtons: class {},
+}));
+vi.mock('@ionic/angular/ion-content', () => ({
+  IonContent: class {},
+}));
+vi.mock('@ionic/angular/ion-footer', () => ({
+  IonFooter: class {},
+}));
+vi.mock('@ionic/angular/ion-header', () => ({
+  IonHeader: class {},
+}));
+vi.mock('@ionic/angular/ion-menu-button', () => ({
+  IonMenuButton: class {},
+}));
+vi.mock('@ionic/angular/ion-spinner', () => ({
+  IonSpinner: class {},
+}));
+vi.mock('@ionic/angular/ion-title', () => ({
   IonTitle: class {},
+}));
+vi.mock('@ionic/angular/ion-toolbar', () => ({
   IonToolbar: class {},
 }));
 
-vi.mock('@ionic/angular', () => ({}));
 
 type SavedTeamsPageClass = typeof import('./saved-teams.page').SavedTeamsPage;
 type SavedTeamsPageInstance = InstanceType<SavedTeamsPageClass>;

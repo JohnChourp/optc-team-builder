@@ -1,11 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import {
-  IonButton,
-  IonInput,
-  IonSelect,
-  IonSelectOption,
-  IonToggle,
-} from '@ionic/angular/standalone';
+import { IonInput, IonSelect, IonToggle } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonSelectOption } from '@ionic/angular/ion-select-option';
 
 export interface CharacterFilterCostRange {
   min: number | null;

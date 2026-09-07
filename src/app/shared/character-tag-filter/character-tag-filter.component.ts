@@ -9,7 +9,9 @@ import {
   computed,
   signal,
 } from '@angular/core';
-import { IonButton, IonIcon, IonSpinner } from '@ionic/angular/standalone';
+import { IonIcon } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonSpinner } from '@ionic/angular/ion-spinner';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import { funnelOutline } from 'ionicons/icons';
 

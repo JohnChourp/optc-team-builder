@@ -1,19 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonLabel,
-  IonMenuButton,
-  IonSelect,
-  IonSelectOption,
-  IonSpinner,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/angular/standalone';
+import { IonSelect } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonButtons } from '@ionic/angular/ion-buttons';
+import { IonContent } from '@ionic/angular/ion-content';
+import { IonHeader } from '@ionic/angular/ion-header';
+import { IonLabel } from '@ionic/angular/ion-label';
+import { IonMenuButton } from '@ionic/angular/ion-menu-button';
+import { IonSelectOption } from '@ionic/angular/ion-select-option';
+import { IonSpinner } from '@ionic/angular/ion-spinner';
+import { IonTitle } from '@ionic/angular/ion-title';
+import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { type CharacterBox } from '../../core/models/optc.models';

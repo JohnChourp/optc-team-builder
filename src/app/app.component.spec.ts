@@ -72,13 +72,19 @@ let storedPreferences: Map<string, string>;
 // singleton). AppComponent.loadAppVersion() calls App.getInfo() but tolerates any
 // value; no per-file mock is needed here.
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonApp: class {},
-  IonButton: class {},
+vi.mock('@ionic/angular', () => ({
   IonIcon: class {},
-  IonProgressBar: class {},
   IonRouterOutlet: class {},
   AlertController: class AlertController {},
+}));
+vi.mock('@ionic/angular/ion-app', () => ({
+  IonApp: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-progress-bar', () => ({
+  IonProgressBar: class {},
 }));
 
 vi.mock('@jsverse/transloco', () => ({

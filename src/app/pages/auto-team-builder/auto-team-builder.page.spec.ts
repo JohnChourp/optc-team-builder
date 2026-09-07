@@ -29,32 +29,52 @@ import {
   type AutoTeamSelectionExportPayload,
 } from './auto-team-builder-export.utils';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
-  IonButtons: class {},
+vi.mock('@ionic/angular', () => ({
+  AlertController: class {},
   IonCheckbox: class {},
-  IonContent: class {},
-  IonFooter: class {},
-  IonHeader: class {},
   IonIcon: class {},
   IonInput: class {},
-  IonMenuButton: class {},
   IonModal: class {},
   IonSearchbar: class {},
   IonSegment: class {},
-  IonSegmentButton: class {},
   IonSelect: class {},
-  IonSelectOption: class {},
-  IonSpinner: class {},
   IonTextarea: class {},
-  IonTitle: class {},
   IonToggle: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-buttons', () => ({
+  IonButtons: class {},
+}));
+vi.mock('@ionic/angular/ion-content', () => ({
+  IonContent: class {},
+}));
+vi.mock('@ionic/angular/ion-footer', () => ({
+  IonFooter: class {},
+}));
+vi.mock('@ionic/angular/ion-header', () => ({
+  IonHeader: class {},
+}));
+vi.mock('@ionic/angular/ion-menu-button', () => ({
+  IonMenuButton: class {},
+}));
+vi.mock('@ionic/angular/ion-segment-button', () => ({
+  IonSegmentButton: class {},
+}));
+vi.mock('@ionic/angular/ion-select-option', () => ({
+  IonSelectOption: class {},
+}));
+vi.mock('@ionic/angular/ion-spinner', () => ({
+  IonSpinner: class {},
+}));
+vi.mock('@ionic/angular/ion-title', () => ({
+  IonTitle: class {},
+}));
+vi.mock('@ionic/angular/ion-toolbar', () => ({
   IonToolbar: class {},
 }));
 
-vi.mock('@ionic/angular', () => ({
-  AlertController: class {},
-}));
 
 afterEach(() => {
   vi.useRealTimers();

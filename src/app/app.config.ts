@@ -3,7 +3,7 @@ import { type ApplicationConfig, inject, isDevMode, provideAppInitializer } from
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
-import { provideIonicAngular } from '@ionic/angular/standalone';
+import { provideIonicAngular } from '@ionic/angular';
 import { provideTransloco, translocoConfig } from '@jsverse/transloco';
 import { provideLottieOptions } from 'ngx-lottie';
 

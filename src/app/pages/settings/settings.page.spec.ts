@@ -13,17 +13,37 @@ import {
 } from '../../testing/download-capture';
 import { SettingsPage } from './settings.page';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
-  IonButtons: class {},
-  IonContent: class {},
-  IonHeader: class {},
-  IonLabel: class {},
-  IonMenuButton: class {},
+vi.mock('@ionic/angular', () => ({
   IonSelect: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-buttons', () => ({
+  IonButtons: class {},
+}));
+vi.mock('@ionic/angular/ion-content', () => ({
+  IonContent: class {},
+}));
+vi.mock('@ionic/angular/ion-header', () => ({
+  IonHeader: class {},
+}));
+vi.mock('@ionic/angular/ion-label', () => ({
+  IonLabel: class {},
+}));
+vi.mock('@ionic/angular/ion-menu-button', () => ({
+  IonMenuButton: class {},
+}));
+vi.mock('@ionic/angular/ion-select-option', () => ({
   IonSelectOption: class {},
+}));
+vi.mock('@ionic/angular/ion-spinner', () => ({
   IonSpinner: class {},
+}));
+vi.mock('@ionic/angular/ion-title', () => ({
   IonTitle: class {},
+}));
+vi.mock('@ionic/angular/ion-toolbar', () => ({
   IonToolbar: class {},
 }));
 

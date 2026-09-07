@@ -1,17 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, type OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  IonButton,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonSpinner,
-  IonTextarea,
-  IonTitle,
-  IonToggle,
-  IonToolbar,
-} from '@ionic/angular/standalone';
+import { IonInput, IonTextarea, IonToggle } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonContent } from '@ionic/angular/ion-content';
+import { IonHeader } from '@ionic/angular/ion-header';
+import { IonSpinner } from '@ionic/angular/ion-spinner';
+import { IonTitle } from '@ionic/angular/ion-title';
+import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import {

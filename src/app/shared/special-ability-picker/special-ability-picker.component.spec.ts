@@ -6,15 +6,25 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { SpecialAbilityPickerComponent } from './special-ability-picker.component';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
-  IonButtons: class {},
-  IonContent: class {},
-  IonHeader: class {},
+vi.mock('@ionic/angular', () => ({
   IonIcon: class {},
   IonInput: class {},
   IonModal: class {},
   IonSearchbar: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-buttons', () => ({
+  IonButtons: class {},
+}));
+vi.mock('@ionic/angular/ion-content', () => ({
+  IonContent: class {},
+}));
+vi.mock('@ionic/angular/ion-header', () => ({
+  IonHeader: class {},
+}));
+vi.mock('@ionic/angular/ion-toolbar', () => ({
   IonToolbar: class {},
 }));
 

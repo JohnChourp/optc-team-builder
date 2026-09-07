@@ -17,22 +17,42 @@ import { type OptcbxParsedImport } from '../../core/models/optcbx-import.models'
 import { matchesCharacterFacet } from '../../core/services/character-facet-filter.utils';
 import { CharactersPage } from './characters.page';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
-  IonButtons: class {},
-  IonContent: class {},
-  IonFooter: class {},
-  IonHeader: class {},
+vi.mock('@ionic/angular', () => ({
   IonIcon: class {},
   IonInput: class {},
-  IonMenuButton: class {},
   IonModal: class {},
   IonSearchbar: class {},
   IonSelect: class {},
-  IonSelectOption: class {},
-  IonSpinner: class {},
   IonToggle: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-buttons', () => ({
+  IonButtons: class {},
+}));
+vi.mock('@ionic/angular/ion-content', () => ({
+  IonContent: class {},
+}));
+vi.mock('@ionic/angular/ion-footer', () => ({
+  IonFooter: class {},
+}));
+vi.mock('@ionic/angular/ion-header', () => ({
+  IonHeader: class {},
+}));
+vi.mock('@ionic/angular/ion-menu-button', () => ({
+  IonMenuButton: class {},
+}));
+vi.mock('@ionic/angular/ion-select-option', () => ({
+  IonSelectOption: class {},
+}));
+vi.mock('@ionic/angular/ion-spinner', () => ({
+  IonSpinner: class {},
+}));
+vi.mock('@ionic/angular/ion-title', () => ({
   IonTitle: class {},
+}));
+vi.mock('@ionic/angular/ion-toolbar', () => ({
   IonToolbar: class {},
 }));
 

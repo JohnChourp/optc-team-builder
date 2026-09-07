@@ -1,5 +1,8 @@
 import { Component, EventEmitter, Input, Output, computed } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonIcon, IonModal } from '@ionic/angular/standalone';
+import { IonIcon, IonModal } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonButtons } from '@ionic/angular/ion-buttons';
+import { IonContent } from '@ionic/angular/ion-content';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { closeOutline, sparklesOutline } from 'ionicons/icons';
 

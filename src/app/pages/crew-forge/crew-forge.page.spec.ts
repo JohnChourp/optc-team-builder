@@ -6,21 +6,41 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CrewForgePage } from './crew-forge.page';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
-  IonButtons: class {},
-  IonContent: class {},
-  IonFooter: class {},
-  IonHeader: class {},
+vi.mock('@ionic/angular', () => ({
   IonIcon: class {},
   IonInput: class {},
-  IonMenuButton: class {},
   IonModal: class {},
   IonSearchbar: class {},
   IonSelect: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-buttons', () => ({
+  IonButtons: class {},
+}));
+vi.mock('@ionic/angular/ion-content', () => ({
+  IonContent: class {},
+}));
+vi.mock('@ionic/angular/ion-footer', () => ({
+  IonFooter: class {},
+}));
+vi.mock('@ionic/angular/ion-header', () => ({
+  IonHeader: class {},
+}));
+vi.mock('@ionic/angular/ion-menu-button', () => ({
+  IonMenuButton: class {},
+}));
+vi.mock('@ionic/angular/ion-select-option', () => ({
   IonSelectOption: class {},
+}));
+vi.mock('@ionic/angular/ion-spinner', () => ({
   IonSpinner: class {},
+}));
+vi.mock('@ionic/angular/ion-title', () => ({
   IonTitle: class {},
+}));
+vi.mock('@ionic/angular/ion-toolbar', () => ({
   IonToolbar: class {},
 }));
 
