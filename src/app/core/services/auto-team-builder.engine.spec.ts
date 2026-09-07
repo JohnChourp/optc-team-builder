@@ -1204,6 +1204,32 @@ describe('Lane D matrix - Tier 1 pairs', () => {
   // Super Tandem requirement had been given up when there was nothing to give up. Written
   // separately from the Tier 2 pair table on purpose - in that table the criteria genuinely are
   // violated, so permission and outcome agree there and the mutation is invisible.
+  // Axis 7's half of the same shape. The Tier 2 fixture's subs are PSY but Fighter, so the
+  // [Fighter] captain covers all of them and full coverage genuinely holds - while dropping a
+  // type still sends the search down the subset lane, where the planner is allowed to concede
+  // coverage. Reporting from that permission would claim coverage was given up on a team that
+  // has it. The Tier 2 pair table cannot catch this: there axis 7 uses the uncovered-subs
+  // fixture, so permission and outcome agree and the mutation is invisible.
+  it('does not report a captain-coverage relaxation the team did not need (Tier 2)', () => {
+    const result = runAutoTeamBuildSearch(
+      createTier2Records(),
+      createInput(['DEX', 'PSY', 'INT'], ['Fighter'], {
+        requireFullCaptainAbilityCoverage: true,
+        requireAllSelectedTypesInTeam: true,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.relaxation.droppedTypes).toEqual(['INT']);
+    expect(result?.relaxation.usedFallback).toBe(true);
+    // The team fully satisfies the coverage that was requested...
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(result?.coverage.leaderCriteria.allLeaderTiersCovered).toBe(true);
+    // ...so neither coverage flag may appear. Optional flags are absent, never false.
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.relaxation.downgradedCaptainAbilityCoverageToSimple).toBeUndefined();
+  });
+
   it('does not report criteria relaxations when the fixture has no carriers (Tier 2)', () => {
     const result = runAutoTeamBuildSearch(
       createInScopeSuperEffectRecords(),
