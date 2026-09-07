@@ -1193,6 +1193,40 @@ describe('Lane D matrix - Tier 1 pairs', () => {
     expect(result?.relaxation.ignoredLeaderSuperEffectScope).toBe(true);
   });
 
+  // Lane D Tier 2, invariant 3 in the over-reporting direction. `buildBaseSubsetInput` turns
+  // every relaxable leader constraint off on EVERY subset attempt whenever it is allowed to,
+  // so a plain filter drop used to be reported as also conceding the leader constraints - on a
+  // team that satisfied them. Measured before the fix: identical team in both runs, yet
+  // `ignoredLeaderSuperEffectScope` flipped to true purely because a type was dropped.
+  it('does not report a leader-scope relaxation when only a filter was dropped (Tier 2)', () => {
+    const baseline = runAutoTeamBuildSearch(
+      createInScopeSuperEffectRecords(),
+      createInput(['DEX'], ['Fighter'], { requireAllSlotsInLeaderSuperEffectScope: true }),
+    );
+    const withDroppedType = runAutoTeamBuildSearch(
+      createInScopeSuperEffectRecords(),
+      createInput(['DEX', 'INT'], ['Fighter'], {
+        requireAllSlotsInLeaderSuperEffectScope: true,
+        requireAllSelectedTypesInTeam: true,
+      }),
+    );
+
+    expect(baseline).not.toBeNull();
+    expect(withDroppedType).not.toBeNull();
+
+    // The dropped type is reported, and it is the only thing given up.
+    expect(withDroppedType?.relaxation.droppedTypes).toEqual(['INT']);
+    expect(withDroppedType?.relaxation.usedFallback).toBe(true);
+
+    // Same team as the un-dropped run, and every slot is still inside the leader's DEX super
+    // scope - so claiming the scope was ignored would be a false report.
+    expect(withDroppedType?.slots.map((slot) => slot.character.id)).toEqual(
+      baseline?.slots.map((slot) => slot.character.id),
+    );
+    expect(withDroppedType?.slots.every((slot) => slot.character.type === 'DEX')).toBe(true);
+    expect(withDroppedType?.relaxation.ignoredLeaderSuperEffectScope).toBe(false);
+  });
+
   it('does not report a super-effect-scope relaxation when only coverage was required (6x7 control)', () => {
     // Differential control: same fixture, axis 6 off. Coverage is relaxed and reported while the
     // super-effect-scope flag stays false - that is what proves the two flags in the case above
@@ -1380,6 +1414,32 @@ function createSuperScopeCoverageRecords(): CharacterDetailRecord[] {
     createSuperScopeCoverageSubRecord(9045, 'PSY', 'Slasher'), // out of both
     createSuperScopeCoverageSubRecord(9046, 'PSY', 'Slasher'), // out of both
   ];
+}
+
+// Every record is DEX and the leaders scope DEX, so the super-effect scope is satisfiable and
+// stays satisfied even when an unrelated filter is dropped. Two leader-eligible records because
+// one is not enough for this shape to build - see the ledger's open question.
+function createInScopeSuperEffectRecords(): CharacterDetailRecord[] {
+  const leader = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        captainAbility: 'Boosts ATK of [DEX] characters by 5x and HP by 1.3x.',
+        specialText: 'Boosts orb effects of [DEX] characters by 2.25x for 1 turn.',
+        superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+      },
+    });
+  const sub = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: { specialText: 'Boosts orb effects of [DEX] characters by 2.25x for 1 turn.' },
+    });
+
+  return [leader(9200), leader(9201), sub(9202), sub(9203), sub(9204), sub(9205), sub(9206)];
 }
 
 function createSuperScopeCoverageLeaderRecord(id: number): CharacterDetailRecord {

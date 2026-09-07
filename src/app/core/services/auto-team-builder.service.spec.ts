@@ -35601,7 +35601,13 @@ describe('Auto team builder', () => {
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
-      ignoredLeaderSuperSpecialCriteria: true,
+      // `false`, not `true`: the fixture carries no `superSpecialCriteria` at all, so there was
+      // never anything to give up. The subset planner turns the constraint off on every attempt
+      // it is allowed to, and this assertion used to read that permission back as if it were an
+      // outcome - telling the user a Super Special requirement had been ignored while handing
+      // them a team that satisfied it. The flag is now derived from the finished team.
+      // See the Lane D run 3 finding in the brain's matrix-coverage ledger.
+      ignoredLeaderSuperSpecialCriteria: false,
       ignoredSuperTandemCriteria: false,
     });
   });
@@ -35642,7 +35648,13 @@ describe('Auto team builder', () => {
       minimumLeaderSuperEffectMatchingSlots: null,
       allowedLeadersWithSuperEffects: true,
       ignoredLeaderSuperEffectScope: false,
-      ignoredLeaderSuperSpecialCriteria: true,
+      // `false`, not `true`: the fixture carries no `superSpecialCriteria` at all, so there was
+      // never anything to give up. The subset planner turns the constraint off on every attempt
+      // it is allowed to, and this assertion used to read that permission back as if it were an
+      // outcome - telling the user a Super Special requirement had been ignored while handing
+      // them a team that satisfied it. The flag is now derived from the finished team.
+      // See the Lane D run 3 finding in the brain's matrix-coverage ledger.
+      ignoredLeaderSuperSpecialCriteria: false,
       ignoredSuperTandemCriteria: false,
     });
   });
