@@ -1219,6 +1219,35 @@ describe('Lane D matrix - Tier 1 pairs', () => {
   //
   // The isolation is to put the ability on a LEADER but from the wrong source. Leader scoping is
   // then satisfied either way, and the source check is the only thing left that can reject it.
+  // Characterises - deliberately not explains - the open question carried since Lane D run 1:
+  // why a fixture with one leader-eligible record returned null while a second, otherwise
+  // identical, leader flipped it to a team.
+  //
+  // What is measured and reproducible: the discriminator is the CAPTAIN'S CLASS SCOPE, not the
+  // leader count. With a captain scoping [Fighter], a team needs four Fighter subs; three
+  // Fighter plus three Slasher returns null, while six Fighter builds. The earlier "second
+  // leader fixes it" reading was a coincidence of that leader also being Fighter.
+  //
+  // What is NOT established is the mechanism. Two plausible gates were each disabled in turn -
+  // `matchesLeaderBuildScopeForAttempt` (which reduces to a coverage check because
+  // `allowPartialCaptainAbilityCoverage` defaults to false) and `allSubSlotsMatchLeaderBuildScope`
+  // - and NEITHER moved the boundary. So the exclusion happens somewhere else, and this test
+  // deliberately claims no more than it can show.
+  //
+  // It is therefore a characterisation test, not a guard: it will not fail if a particular gate
+  // is broken, but it will fail if this boundary moves, which is what has repeatedly cost
+  // investigations while writing fixtures across runs 1, 3 and 3b.
+  it('needs four captain-covered subs to fill a team (run 1 open question, characterised)', () => {
+    const withCoveredSubs = (coveredSubCount: number) =>
+      runAutoTeamBuildSearch(
+        createCoverageFloorRecords(coveredSubCount),
+        createInput(['DEX'], ['Fighter', 'Slasher'], {}),
+      );
+
+    expect(withCoveredSubs(4)).not.toBeNull();
+    expect(withCoveredSubs(3)).toBeNull();
+  });
+
   it('rejects a captainAbility-scoped requirement met only from special text (gap G)', () => {
     const result = runAutoTeamBuildSearch(
       createSourceScopedAbilityRecords('specialText'),
@@ -1528,6 +1557,39 @@ function createSuperScopeCoverageRecords(): CharacterDetailRecord[] {
 // Every record is DEX and the leaders scope DEX, so the super-effect scope is satisfiable and
 // stays satisfied even when an unrelated filter is dropped. Two leader-eligible records because
 // one is not enough for this shape to build - see the ledger's open question.
+/**
+ * One leader whose captain ability scopes [Fighter], `coveredSubCount` Fighter subs it covers,
+ * and Slasher subs it does not. Total record count is held constant so the only variable is how
+ * many of them the captain covers.
+ */
+function createCoverageFloorRecords(coveredSubCount: number): CharacterDetailRecord[] {
+  const plainSub = (id: number, primaryClass: string): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'DEX',
+      primaryClass,
+      secondaryClass: null,
+      detail: { specialText: 'Boosts ATK by 2x for 1 turn.' },
+    });
+
+  return [
+    createCharacterRecord({
+      id: 9900,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: null,
+      detail: {
+        captainAbility: 'Boosts ATK of [Fighter] characters by 5x and HP by 1.3x.',
+        specialText: 'Boosts ATK of [Fighter] characters by 2.25x for 1 turn.',
+      },
+    }),
+    ...Array.from({ length: coveredSubCount }, (_, index) => plainSub(9910 + index, 'Fighter')),
+    ...Array.from({ length: 6 - coveredSubCount }, (_, index) =>
+      plainSub(9950 + index, 'Slasher'),
+    ),
+  ];
+}
+
 const GAP_G_ABILITY_KEY = 'remove_paralysis';
 
 /**
