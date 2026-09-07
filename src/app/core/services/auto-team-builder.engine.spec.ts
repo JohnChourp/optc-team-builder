@@ -1217,6 +1217,147 @@ describe('Lane D matrix - Tier 1 pairs', () => {
     expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
     expect(result?.relaxation.ignoredLeaderSuperEffectScope).toBe(false);
   });
+
+  // 7x8x19 - captain ability coverage (axis 7) x captain branch mode (axis 8) x manual slots
+  // (axis 19). Trap 7 in the matrix, and the promoted triple in the coverage ledger.
+  //
+  // Branch mode lives at `manualSlots[].branchSelections[].mode`, so axis 8 is unreachable without
+  // axis 19 - that is what makes this a triple rather than a pair. `resolveManualLeaderBranchMode`
+  // reads the mode off the leader's own manual slot and `matchesActiveLeaderCriteria` hands it to
+  // `resolveCaptainCoverage`, where `'both'` suppresses the VS alternative-branch merge (the
+  // `options.branchMode !== 'both'` guard) and falls through to `mergeCaptainCoverageBranchResults`,
+  // whose `matches` is an `every`. So `'both'` means a slot must be covered by BOTH branches, while
+  // an unset mode on a VS captain means EITHER branch is enough - which is exactly the difference
+  // these cases measure.
+  //
+  // The fixture keeps the two branches orthogonal by scope: branch 1 boosts [INT], Slasher and Free
+  // Spirit; branch 2 boosts [STR], Driven and Cerebral. Every sub is therefore independently inside
+  // or outside each branch. 'Free Spirit' is deliberately NOT in the selected classes: the
+  // three-sub variant below drops the only Free Spirit record, and leaving the class selected made
+  // the search report a `droppedClasses: ['Free Spirit']` relaxation that had nothing to do with
+  // axis 8.
+  it('evaluates captain ability coverage against branch mode both (7x8x19)', () => {
+    const result = runAutoTeamBuildSearch(
+      createVsBranchModeCoverageRecords(),
+      createInput(VS_BRANCH_MODE_TYPES, VS_BRANCH_MODE_CLASSES, {
+        requireFullCaptainAbilityCoverage: true,
+        manualSlots: createVsBranchModeManualSlots(9100, 'both'),
+        lockedCharacterIds: [9100],
+        captainCharacterId: 9100,
+        friendCaptainCharacterId: 9100,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+
+    // Axis 8 actually reached the search: the branch came from the manual slot, not from
+    // `resolveAutomaticCaptainBranchMode`. Without this the rest could pass on an auto branch.
+    expect(result?.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+    expect(result?.slots[1]?.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+
+    // Invariant 1 - soundness: nothing was relaxed, so every slot has to satisfy the coverage that
+    // 'both' actually demands - covered by branch 1 AND branch 2. The branch-1-only subs (9105,
+    // 9106) and the uncovered filler (9107) must therefore be absent.
+    expect(result?.relaxation.usedFallback).toBe(false);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(
+      result?.slots
+        .slice(2)
+        .map((slot) => slot.character.id)
+        .sort((left, right) => left - right),
+    ).toEqual([9101, 9102, 9103, 9104]);
+  });
+
+  it('admits a single-branch sub once branch mode picks one branch (7x8x19 control)', () => {
+    // Same records, same coverage flag - only the branch mode changes. 9105 and 9106 are covered by
+    // branch 1 and by nothing in branch 2, so their appearance here is what proves that 'both' (and
+    // not the type/class selection, the pool, or the pin) is what excluded them above.
+    const result = runAutoTeamBuildSearch(
+      createVsBranchModeCoverageRecords(),
+      createInput(VS_BRANCH_MODE_TYPES, VS_BRANCH_MODE_CLASSES, {
+        requireFullCaptainAbilityCoverage: true,
+        manualSlots: createVsBranchModeManualSlots(9100, 'character1'),
+        lockedCharacterIds: [9100],
+        captainCharacterId: 9100,
+        friendCaptainCharacterId: 9100,
+      }),
+    );
+
+    const subIds = result?.slots.slice(2).map((slot) => slot.character.id) ?? [];
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'character1',
+      source: 'manual',
+    });
+    expect(result?.relaxation.usedFallback).toBe(false);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+    expect(subIds).toEqual(expect.arrayContaining([9105, 9106]));
+  });
+
+  it('reports the coverage relaxation when branch mode both cannot be satisfied (7x8x19)', () => {
+    // One both-branch sub short of a legal strict team. Invariant 3 - relaxation honesty: coverage
+    // is the thing given up, and it is reported rather than quietly dropped, while no unrelated
+    // axis is relaxed to get there.
+    const result = runAutoTeamBuildSearch(
+      createVsBranchModeCoverageRecords({ bothBranchSubCount: 3 }),
+      createInput(VS_BRANCH_MODE_TYPES, VS_BRANCH_MODE_CLASSES, {
+        requireFullCaptainAbilityCoverage: true,
+        manualSlots: createVsBranchModeManualSlots(9100, 'both'),
+        lockedCharacterIds: [9100],
+        captainCharacterId: 9100,
+        friendCaptainCharacterId: 9100,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+    expect(result?.relaxation.usedFallback).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBe(true);
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBe(true);
+    expect(result?.relaxation.droppedTypes).toEqual([]);
+    expect(result?.relaxation.droppedClasses).toEqual([]);
+
+    // The relaxed team really is short of coverage - 5 of 6 slots - and the slot it had to take is
+    // the one no branch covers.
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(false);
+    expect(result?.coverage.leaderCriteria.matchingSlots).toBe(5);
+    expect(result?.slots.some((slot) => slot.character.id === 9107)).toBe(true);
+  });
+
+  it('does not relax coverage on the same thin pool under branch mode character1 (7x8x19 control)', () => {
+    // The differential for the case above: identical records, identical flags, only the mode moves
+    // from 'both' to 'character1'. It builds strictly, so the relaxation above was caused by axis 8
+    // and not by the smaller pool.
+    const result = runAutoTeamBuildSearch(
+      createVsBranchModeCoverageRecords({ bothBranchSubCount: 3 }),
+      createInput(VS_BRANCH_MODE_TYPES, VS_BRANCH_MODE_CLASSES, {
+        requireFullCaptainAbilityCoverage: true,
+        manualSlots: createVsBranchModeManualSlots(9100, 'character1'),
+        lockedCharacterIds: [9100],
+        captainCharacterId: 9100,
+        friendCaptainCharacterId: 9100,
+      }),
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.relaxation.usedFallback).toBe(false);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.input.allowPartialCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.coverage.leaderCriteria.allSlotsMatch).toBe(true);
+  });
 });
 
 function createSuperScopeCoverageRecords(): CharacterDetailRecord[] {
@@ -1297,6 +1438,122 @@ function createLeaderBoostRangeCoverageRecords(): CharacterDetailRecord[] {
     createCaptainCoverageDexSubRecord(9035),
   ];
 }
+
+// 7x8x19 fixture - a VS-style dual-branch leader plus subs that sit inside branch 1 only, inside
+// both branches, or inside neither.
+//
+// The two branch texts are ported from the service spec's `createVsEitherBranchLeaderRecords`
+// (auto-team-builder.service.spec.ts:39556); spec helpers are module-local, so they cannot be
+// imported. The "VS Gauge" wording in both texts is load-bearing, not decoration:
+// `shouldUseAlternativeCaptainCoverageBranches` looks for /\bvs\b/i across the name and the branch
+// texts, and only a VS captain merges its branches as ALTERNATIVES. On a non-VS dual leader an
+// unset branch mode already behaves like 'both', so the controls below would prove nothing.
+const VS_BRANCH_MODE_CHARACTER1_TEXT =
+  'Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [TND] orbs at the start of the fight, boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [INT], Slasher and Free Spirit characters by 1.35x, and makes [INT] and [TND] orbs beneficial for all characters.';
+const VS_BRANCH_MODE_CHARACTER2_TEXT =
+  'Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [RCV] orbs at the start of the fight, boosts ATK of [STR], Driven and Cerebral characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [STR], Driven and Cerebral characters by 1.35x, and makes [STR] and [RCV] orbs beneficial for all characters.';
+
+const VS_BRANCH_MODE_TYPES: AutoTeamBuilderType[] = ['DEX', 'QCK', 'PSY', 'STR', 'INT'];
+// 'Free Spirit' is deliberately absent - see the comment on the first 7x8x19 case.
+const VS_BRANCH_MODE_CLASSES = ['Cerebral', 'Driven', 'Powerhouse', 'Shooter', 'Slasher'];
+
+function createVsBranchModeCoverageRecords(
+  options: { bothBranchSubCount?: number } = {},
+): CharacterDetailRecord[] {
+  const bothBranchSubs = [
+    createVsBranchModeSubRecord(9101, 'INT', 'Driven', 'Shooter'), // branch 1 via [INT], branch 2 via Driven
+    createVsBranchModeSubRecord(9102, 'STR', 'Slasher', 'Shooter'), // branch 1 via Slasher, branch 2 via [STR]
+    createVsBranchModeSubRecord(9103, 'INT', 'Cerebral', 'Powerhouse'), // branch 1 via [INT], branch 2 via Cerebral
+    createVsBranchModeSubRecord(9104, 'STR', 'Free Spirit', 'Shooter'), // branch 1 via Free Spirit, branch 2 via [STR]
+  ].slice(0, options.bothBranchSubCount ?? 4);
+
+  return [
+    // One leader-eligible record is enough here, unlike `createSuperScopeCoverageRecords` - measured
+    // 2026-09-07, all four cases build. The difference is that this leader is pinned into both
+    // leader seats by the manual slots, which is also the only way axis 8 can be expressed.
+    createVsBranchModeLeaderRecord(9100),
+    ...bothBranchSubs,
+    // Branch 1 only: [INT] is in branch 1's scope, and neither Shooter nor Powerhouse is in branch
+    // 2's [STR]/Driven/Cerebral. Two of them, so a 'character1' search can fill four sub slots even
+    // when only three both-branch subs exist.
+    createVsBranchModeSubRecord(9105, 'INT', 'Shooter', 'Powerhouse'),
+    createVsBranchModeSubRecord(9106, 'INT', 'Shooter', 'Powerhouse'),
+    // Covered by neither branch - the filler a relaxed team is forced to take.
+    createVsBranchModeSubRecord(9107, 'QCK', 'Shooter', 'Powerhouse'),
+  ];
+}
+
+function createVsBranchModeLeaderRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: 'Zoro VS Lucci - Battling Swords and Hand Pistols',
+    type: 'INT,STR',
+    primaryClass: 'Slasher',
+    secondaryClass: 'Driven',
+    detail: {
+      captainAbility: VS_BRANCH_MODE_CHARACTER1_TEXT,
+      captainAbilityVariants: [
+        {
+          key: 'character1',
+          label: 'Captain Ability (Character 1)',
+          text: VS_BRANCH_MODE_CHARACTER1_TEXT,
+        },
+        {
+          key: 'character2',
+          label: 'Captain Ability (Character 2)',
+          text: VS_BRANCH_MODE_CHARACTER2_TEXT,
+        },
+      ],
+      specialText: "Reduces enemies' Increased Defense and Threshold Damage Reduction by 7 turns.",
+    },
+  });
+}
+
+function createVsBranchModeSubRecord(
+  id: number,
+  type: string,
+  primaryClass: string,
+  secondaryClass: string,
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    type,
+    primaryClass,
+    secondaryClass,
+    detail: { specialText: 'Boosts orb effects of crew by 2.25x for 1 turn.' },
+  });
+}
+
+// Axis 8 is only expressible through axis 19: the mode has to ride on the leader's manual slot.
+function createVsBranchModeManualSlots(
+  captainId: number,
+  mode: 'character1' | 'character2' | 'both',
+) {
+  return createEmptyAutoBuildManualSlots().map((slot) =>
+    slot.role === 'captain' || slot.role === 'friendCaptain'
+      ? {
+          ...slot,
+          characterIds: [captainId],
+          branchSelections: [{ characterId: captainId, mode }],
+        }
+      : slot,
+  );
+}
+
+// NOTE ON IMPORTS: no import changes are needed. `createEmptyAutoBuildManualSlots`,
+// `AutoTeamBuilderType`, `CharacterDetailRecord` and `runAutoTeamBuildSearch` are all already
+// imported by the engine spec (:1-25). `createVsBranchModeManualSlots` deliberately spreads
+// `createEmptyAutoBuildManualSlots()` slots rather than rebuilding them, so its return type stays
+// assignable to `AutoBuildManualSlotSelection[]` without importing that type or
+// `AutoBuildCaptainBranchMode`; the literal-union `mode` parameter is exactly
+// `AutoBuildCaptainBranchMode`.
+//
+// NOTE ON QUOTES: the two branch-text constants must use SINGLE quotes (they contain no
+// apostrophe) or prettier rewrites them; the leader's `specialText` keeps DOUBLE quotes because of
+// "enemies'". Verified with `npx prettier --check`: with these quotes the new block adds zero
+// prettier diff lines. The file already has 3 pre-existing prettier warnings (:145 and the two
+// `captainAbility:` lines inside `createLeaderBoostRangeCoverageRecords`, both from run 1) - do not
+// mistake those for damage from this paste.
 
 function collectScheduledAttempts(planner: ReturnType<typeof createAutoTeamBuildFallbackPlanner>) {
   const attempts = [];

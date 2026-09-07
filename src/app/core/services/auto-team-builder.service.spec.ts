@@ -69,6 +69,571 @@ const BROOK_CAPTAIN_ABILITY =
   "Reduces crew's current HP by 80% at the start of the fight, reduces Special Cooldown of all characters by 3 turns at the start of the fight, reduces VS Gauge of all characters by 3 at the start of the fight, boosts ATK of Slasher and Free Spirit characters by 5.25x, boosts HP of Slasher and Free Spirit characters by 1.4x, makes [PSY] and [TND] orbs beneficial for Slasher and Free Spirit characters, and increases duration of any Color Affinity, Advantageous Class Effect and Status ATK Boosting buffs applied by Specials by 1 turn. If your crew has 4+ [Straw Hat Pirates], [Paramythia-type] or [Scientist] characters and HP is below 25% at the start of the turn, boosts ATK of Slasher and Free Spirit characters by 6.3x instead.";
 
 describe('Auto team builder', () => {
+
+  // Lane D filter interaction matrix, Tier 1 - run 2. Ledger:
+  // optc-team-builder-brain/audits/auto-team-builder/matrix-coverage.md
+
+  // ---- pair 15x20 ----
+  it('returns no team when a narrowing favorites scope is emptied by exclusions, and still builds when either axis is lifted', async () => {
+    const favoriteRecords = createStrictMixedTeamRecords();
+    const decoyRecords = createAlternateStrictMixedTeamRecords();
+    const records = [...favoriteRecords, ...decoyRecords];
+    const favoriteCharacterIds = favoriteRecords.map((record) => record.id);
+    const decoyCharacterIds = decoyRecords.map((record) => record.id);
+    const servedPoolIds: number[][] = [];
+    const createQueryHonouringRepository = () => ({
+      getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+        const allowedIds = Array.isArray(query?.allowedCharacterIds)
+          ? new Set<number>(query.allowedCharacterIds)
+          : null;
+        const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
+
+        const pool = records.filter(
+          (record) => (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
+        );
+
+        servedPoolIds.push(pool.map((record) => record.id));
+
+        return pool;
+      }),
+    });
+
+    // The favorites scope must actually remove somebody, or the pair is not exercised at all.
+    expect(favoriteCharacterIds).toEqual([5925, 5926, 5880, 5870, 5860]);
+    expect(decoyCharacterIds).toEqual([5945, 5946, 5947, 5948, 5949]);
+    expect(favoriteCharacterIds.length).toBeLessThan(records.length);
+
+    const jointRepository = createQueryHonouringRepository();
+    const jointResult = await new AutoTeamBuilderService(jointRepository as never).buildTeam(
+      ['Fighter', 'Slasher'],
+      ['DEX', 'PSY'],
+      {
+        favoritesOnly: true,
+        favoriteCharacterIds,
+        excludedCharacterIds: [...favoriteCharacterIds],
+      },
+    );
+
+    // Invariant 2: no legal team exists inside favorites-minus-exclusions, so the honest answer is
+    // null. Returning a team here would mean the decoy half of the pool was used, i.e. the
+    // favorites scope was quietly dropped.
+    expect(jointResult).toBeNull();
+
+    // Pin the mechanism: neither service early-out fires (favorites are non-empty and no explicit
+    // candidateCharacterIds scope was given), so the repository is queried once, with BOTH axes.
+    expect(jointRepository.getAutoBuilderCandidates).toHaveBeenCalledTimes(1);
+    expect(jointRepository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter', 'Slasher'],
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [],
+        excludedCharacterIds: favoriteCharacterIds,
+      },
+    );
+
+    const favoritesOnlyRepository = createQueryHonouringRepository();
+    const favoritesOnlyResult = await new AutoTeamBuilderService(
+      favoritesOnlyRepository as never,
+    ).buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+    });
+
+    // Control 1 - axis 15 alone is satisfiable, so the null above is the pair and not a dead fixture.
+    expectCompleteAutoTeam(favoritesOnlyResult);
+    expect(favoritesOnlyResult?.relaxation.usedFallback).toBe(false);
+    expect(
+      favoritesOnlyResult?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id)),
+    ).toBe(true);
+
+    const exclusionsOnlyRepository = createQueryHonouringRepository();
+    const exclusionsOnlyResult = await new AutoTeamBuilderService(
+      exclusionsOnlyRepository as never,
+    ).buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      excludedCharacterIds: [...favoriteCharacterIds],
+    });
+
+    // Control 2 - axis 20 alone is satisfiable too: the decoy half is a complete legal team.
+    expectCompleteAutoTeam(exclusionsOnlyResult);
+    expect(exclusionsOnlyResult?.relaxation.usedFallback).toBe(false);
+    expect(
+      exclusionsOnlyResult?.slots.every((slot) => decoyCharacterIds.includes(slot.character.id)),
+    ).toBe(true);
+
+    // The three pools the search was actually handed, in order.
+    expect(servedPoolIds).toEqual([[], favoriteCharacterIds, decoyCharacterIds]);
+  });
+
+  it('returns no team when exclusions leave the narrowed favorites scope too small to fill six slots', async () => {
+    const favoriteRecords = createStrictMixedTeamRecords();
+    const decoyRecords = createAlternateStrictMixedTeamRecords();
+    const records = [...favoriteRecords, ...decoyRecords];
+    const favoriteCharacterIds = favoriteRecords.map((record) => record.id);
+    const excludedCharacterIds = favoriteCharacterIds.filter((characterId) => characterId !== 5925);
+    const servedPoolIds: number[][] = [];
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+        const allowedIds = Array.isArray(query?.allowedCharacterIds)
+          ? new Set<number>(query.allowedCharacterIds)
+          : null;
+        const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
+
+        const pool = records.filter(
+          (record) => (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
+        );
+
+        servedPoolIds.push(pool.map((record) => record.id));
+
+        return pool;
+      }),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+      excludedCharacterIds,
+    });
+
+    expect(excludedCharacterIds).toEqual([5926, 5880, 5870, 5860]);
+    // The pool is non-empty, so this null comes from the search, not from the empty-pool path.
+    expect(servedPoolIds).toEqual([[5925]]);
+    expect(result).toBeNull();
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledTimes(1);
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter', 'Slasher'],
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [],
+        excludedCharacterIds,
+      },
+    );
+  });
+
+  // ---- pair 19x20 ----
+  // Matrix pair 19x20 (manual/locked slots vs exclusions), trap 3.
+  // Exclusion wins: `excludedCharacterIds` is forwarded to the repository query, so the
+  // required character never reaches `candidateById`, `resolveRequiredManualSlotCandidateMap`
+  // returns null (auto-team-builder.utils.ts:2185-2188) and every attempt returns null.
+  // Neither axis is relaxation-eligible, so the conflict can only surface as an honest null.
+  it('19x20 - excluding a required manual captain returns no team instead of swapping in the other option', async () => {
+    const repository = createPoolShapingRepositoryMock(createDualLeaderMixedTeamRecords());
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      excludedCharacterIds: [5925],
+      manualSlots: createManualSlots(
+        { captain: [5927, 5925], friendCaptain: [5927] },
+        { captain: 5925 },
+      ),
+    });
+
+    // Invariant 1 (soundness): the exclusion is never violated, and the required manual
+    // pick is never silently downgraded to the slot's other option.
+    expect(result).toBeNull();
+
+    // The conflict is forwarded, not reconciled away: 5925 goes to the pool query on both
+    // sides at once, so the emptied pool is an observable consequence of the user's input.
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter', 'Slasher'],
+        allowedCharacterIds: undefined,
+        lockedCharacterIds: [5927, 5925],
+        excludedCharacterIds: [5925],
+      },
+    );
+
+    // Invariant 2 (completeness) control: the same requirement is satisfiable once the
+    // exclusion is lifted, so the null above is caused by the pair and not by the fixture.
+    const controlRepository = createPoolShapingRepositoryMock(createDualLeaderMixedTeamRecords());
+    const controlService = new AutoTeamBuilderService(controlRepository as never);
+    const controlResult = await controlService.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots(
+        { captain: [5927, 5925], friendCaptain: [5927] },
+        { captain: 5925 },
+      ),
+    });
+
+    expectCompleteAutoTeam(controlResult);
+    expect(controlResult.slots[0]?.character.id).toBe(5925);
+  });
+
+  it('19x20 - excluding a non-required manual option keeps the team and picks the survivor', async () => {
+    const repository = createPoolShapingRepositoryMock(createDualLeaderMixedTeamRecords());
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      excludedCharacterIds: [5925],
+      manualSlots: createManualSlots({ captain: [5927, 5925], friendCaptain: [5927] }),
+    });
+
+    // Same input as the case above minus createManualSlots' second argument: without
+    // requiredCharacterId the slot is a non-binding OR-pick list, so the surviving option wins.
+    expectCompleteAutoTeam(result);
+    expect(result.slots[0]?.character.id).toBe(5927);
+    expect(result.slots[0]?.reasonChips).toContain('Manual pick');
+
+    // Invariant 1: the exclusion still holds for every seat, leaders included.
+    expect(result.slots.some((slot) => slot.character.id === 5925)).toBe(false);
+
+    // Invariant 3 (relaxation honesty): nothing was given up, so nothing is reported.
+    // The optional coverage flags are spread in only when true, so assert absence.
+    expect(result.relaxation.usedFallback).toBe(false);
+    expect(result.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result.relaxation.downgradedCaptainAbilityCoverageToSimple).toBeUndefined();
+  });
+
+  it('19x20 - excluding a required manual sub returns no team, off the leader seats too', async () => {
+    const repository = createPoolShapingRepositoryMock(createDualLeaderMixedTeamRecords());
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      excludedCharacterIds: [5860],
+      manualSlots: createManualSlots({ sub1: [5860] }, { sub1: 5860 }),
+    });
+
+    expect(result).toBeNull();
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX', 'PSY'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: ['Fighter', 'Slasher'],
+        allowedCharacterIds: undefined,
+        lockedCharacterIds: [5860],
+        excludedCharacterIds: [5860],
+      },
+    );
+
+    // Control: the same required sub builds when it is not excluded.
+    const controlRepository = createPoolShapingRepositoryMock(createDualLeaderMixedTeamRecords());
+    const controlService = new AutoTeamBuilderService(controlRepository as never);
+    const controlResult = await controlService.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], {
+      manualSlots: createManualSlots({ sub1: [5860] }, { sub1: 5860 }),
+    });
+
+    expectCompleteAutoTeam(controlResult);
+    expect(controlResult.slots[2]?.character.id).toBe(5860);
+  });
+
+  // ---- pair 12x15 ----
+  it('returns no team when favorites drop the only holder of a flattened-only ability requirement', async () => {
+    const records = createKidCaptainRequirementRecords();
+    const selectedTypes: AutoTeamBuilderType[] = ['DEX', 'STR', 'QCK', 'PSY', 'INT'];
+    const abilityKey = 'remove_enemy_increased_defense';
+    const holderIds = records
+      .filter((record) =>
+        record.detail.builderAbilities.some((ability) => ability.key === abilityKey),
+      )
+      .map((record) => record.id);
+
+    // Fixture guard: the pair only binds while exactly one record can satisfy the
+    // requirement, and the favorites scope drops precisely that record. If the
+    // fixture ever grows a second holder, this case silently stops testing 12x15.
+    expect(holderIds).toEqual([4556]);
+
+    const favoriteCharacterIds = records
+      .map((record) => record.id)
+      .filter((characterId) => characterId !== 4556);
+
+    expect(favoriteCharacterIds).not.toContain(4556);
+    expect(favoriteCharacterIds.length).toBeGreaterThanOrEqual(6);
+
+    // Axis 12 non-default: a flattened `requiredAbilities` entry with NO
+    // `battleRequirements`, so nothing shadows it and it is enforced directly
+    // (trap 2's flattened-only half). Axis 15 non-default: favoritesOnly with a
+    // genuinely narrowing scope.
+    const narrowedRepository = createPoolQueryHonouringRepository(records);
+    const narrowedService = new AutoTeamBuilderService(narrowedRepository as never);
+    const narrowedResult = await narrowedService.buildTeam([], selectedTypes, {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+      requiredAbilities: [createAbilityRequirement(abilityKey, 4)],
+    });
+
+    // Invariant 2 (completeness): an honest "no team", never a team that quietly
+    // drops the requirement because the pool could not cover it.
+    expect(narrowedResult).toBeNull();
+    expect(narrowedRepository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      selectedTypes,
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: [],
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      },
+    );
+
+    // Control 1 - axis 15 off, axis 12 unchanged. The same requirement builds as
+    // soon as the holder is back in the pool, so the null above is the pool
+    // shrinking under the requirement and not an unsatisfiable requirement.
+    const fullPoolRepository = createPoolQueryHonouringRepository(records);
+    const fullPoolService = new AutoTeamBuilderService(fullPoolRepository as never);
+    const fullPoolResult = await fullPoolService.buildTeam([], selectedTypes, {
+      requiredAbilities: [createAbilityRequirement(abilityKey, 4)],
+    });
+
+    expect(fullPoolResult).not.toBeNull();
+    expect(fullPoolResult?.slots).toHaveLength(6);
+    expect(fullPoolResult?.slots.some((slot) => slot.character.id === 4556)).toBe(true);
+    expect(fullPoolResult?.coverage.abilityRequirements.requested).toEqual([
+      {
+        abilityKey,
+        minTurns: 4,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+    expect(fullPoolResult?.coverage.abilityRequirements.matched).toEqual([
+      {
+        abilityKey,
+        minTurns: 4,
+        slotTokens: [],
+        requiredCharacterCount: 1,
+      },
+    ]);
+    expect(fullPoolResult?.coverage.abilityRequirements.missing).toEqual([]);
+    expect(fullPoolResult?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(fullPoolRepository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      selectedTypes,
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: [],
+        allowedCharacterIds: undefined,
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      },
+    );
+
+    // Control 2 - axis 15 unchanged, axis 12 swapped to an ability the narrowed
+    // pool does hold. Proves the favorites pool can still build a six-slot team,
+    // so the null is attributable to the pair rather than to a thin fixture.
+    const viableRepository = createPoolQueryHonouringRepository(records);
+    const viableService = new AutoTeamBuilderService(viableRepository as never);
+    const viableResult = await viableService.buildTeam([], selectedTypes, {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+      requiredAbilities: [createAbilityRequirement('remove_resilience', 5)],
+    });
+
+    expect(viableResult).not.toBeNull();
+    expect(viableResult?.slots).toHaveLength(6);
+    expect(viableResult?.slots.some((slot) => slot.character.id === 3431)).toBe(true);
+    // Invariant 1 (soundness): the favorites scope is still respected on the team
+    // that does build.
+    expect(
+      viableResult?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id)),
+    ).toBe(true);
+    expect(viableResult?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(viableResult?.coverage.abilityRequirements.missing).toEqual([]);
+  });
+
+  // ---- pair 13x15 ----
+  it('keeps a leader-source battle requirement satisfiable inside a narrowed favorites pool', async () => {
+    const records = createLeaderSourceBattleRequirementRecords();
+    const favoriteCharacterIds = [7620, 7630, 7612, 7613, 7614, 7615, 7616];
+    const repository = createQueryHonouringAutoBuilderRepository(records);
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam([], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+      battleRequirements: [createLeaderScopedBindBattleRequirement('battle-leader-bind')],
+    });
+
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: [],
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      },
+    );
+    expect(result).not.toBeNull();
+    expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
+    expect([result?.slots[0]?.character.id, result?.slots[1]?.character.id]).toContain(7620);
+    expect(result?.slots.every((slot) => favoriteCharacterIds.includes(slot.character.id))).toBe(
+      true,
+    );
+    expect(result?.slots.some((slot) => slot.character.id === 7611)).toBe(false);
+    expect(result?.relaxation.usedFallback).toBe(false);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.relaxation.downgradedCaptainAbilityCoverageToSimple).toBeUndefined();
+  });
+
+  it('returns no team when favorites remove the only leader that can satisfy a leader-scoped battle requirement', async () => {
+    const records = createLeaderSourceBattleRequirementRecords();
+    const battleRequirements = [createLeaderScopedBindBattleRequirement('battle-leader-bind')];
+    const favoriteCharacterIds = [7630, 7640, 7611, 7612, 7613, 7614, 7615, 7616];
+    const repository = createQueryHonouringAutoBuilderRepository(records);
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const result = await service.buildTeam([], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds,
+      battleRequirements,
+    });
+
+    expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+      ['DEX'],
+      AUTO_TEAM_CANDIDATE_LIMIT,
+      {
+        selectedClasses: [],
+        allowedCharacterIds: favoriteCharacterIds,
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      },
+    );
+    expect(result).toBeNull();
+
+    const controlRepository = createQueryHonouringAutoBuilderRepository(records);
+    const controlService = new AutoTeamBuilderService(controlRepository as never);
+    const controlResult = await controlService.buildTeam([], ['DEX'], { battleRequirements });
+
+    expect(controlResult).not.toBeNull();
+    expect(controlResult?.coverage.battleRequirements?.matchesAll).toBe(true);
+    expect([
+      controlResult?.slots[0]?.character.id,
+      controlResult?.slots[1]?.character.id,
+    ]).toContain(7620);
+    expect(
+      controlResult?.slots
+        .filter((slot) => slot.role === 'sub')
+        .some((slot) => slot.character.id === 7620),
+    ).toBe(false);
+  });
+
+  // ---- pair 12x13 ----
+  it('drops an unsatisfiable non-leader flattened requirement once battle requirements are authoritative', async () => {
+    const records = createKidCaptainRequirementRecords();
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+        const allowedIds = Array.isArray(query?.allowedCharacterIds)
+          ? new Set<number>(query.allowedCharacterIds)
+          : null;
+        const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
+
+        return records.filter(
+          (record) => (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
+        );
+      }),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const flattenedOnly = await service.buildTeam([], ['DEX', 'STR', 'QCK', 'PSY', 'INT'], {
+      requiredAbilities: [createAbilityRequirement('remove_poison', 5)],
+    });
+
+    expect(flattenedOnly).toBeNull();
+
+    const result = await service.buildTeam([], ['DEX', 'STR', 'QCK', 'PSY', 'INT'], {
+      requiredAbilities: [createAbilityRequirement('remove_poison', 5)],
+      battleRequirements: [
+        createBattleRequirement('threshold-resilience', [
+          createAbilityRequirement('remove_threshold_damage_reduction', 5),
+          createAbilityRequirement('remove_resilience', 5),
+        ]),
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.coverage.abilityRequirements.requested).toEqual([]);
+    expect(result?.coverage.abilityRequirements.matchesAll).toBe(true);
+    expect(result?.coverage.battleRequirements?.matchesAll).toBe(true);
+    expect(result?.coverage.battleRequirements?.missing).toEqual([]);
+    expect(result?.slots.some((slot) => slot.character.id === 3431)).toBe(true);
+    expect(result?.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+    expect(result?.relaxation.downgradedCaptainAbilityCoverageToSimple).toBeUndefined();
+  });
+
+  it('keeps a leader-source flattened requirement enforced when battle requirements exist', async () => {
+    const records = createKidCaptainRequirementRecords();
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+        const allowedIds = Array.isArray(query?.allowedCharacterIds)
+          ? new Set<number>(query.allowedCharacterIds)
+          : null;
+        const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
+
+        return records.filter(
+          (record) => (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
+        );
+      }),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+
+    const bySlotScope = await service.buildTeam([], ['DEX', 'STR', 'QCK', 'PSY', 'INT'], {
+      requiredAbilities: [
+        {
+          // Held ONLY by record 4556, which carries no captain text and therefore can never
+          // hold a leader seat. That is what makes the null below discriminating: with the
+          // leader carve-out disabled this entry is dropped as non-authoritative and a team
+          // comes back, so the mutation is killed. `remove_blindness` (held by nobody) would
+          // return null either way and prove nothing.
+          ...createAbilityRequirement('remove_enemy_increased_defense', 5),
+          slotScope: 'leader',
+        },
+      ],
+      battleRequirements: [
+        createBattleRequirement('threshold-resilience', [
+          createAbilityRequirement('remove_threshold_damage_reduction', 5),
+          createAbilityRequirement('remove_resilience', 5),
+        ]),
+      ],
+    });
+
+    expect(bySlotScope).toBeNull();
+
+    const bySourceScope = await service.buildTeam([], ['DEX', 'STR', 'QCK', 'PSY', 'INT'], {
+      requiredAbilities: [
+        {
+          ...createAbilityRequirement('remove_enemy_increased_defense', 5),
+          sourceScope: 'captainAbility',
+        },
+      ],
+      battleRequirements: [
+        createBattleRequirement('threshold-resilience', [
+          createAbilityRequirement('remove_threshold_damage_reduction', 5),
+          createAbilityRequirement('remove_resilience', 5),
+        ]),
+      ],
+    });
+
+    expect(bySourceScope).toBeNull();
+
+    const withoutLeaderScope = await service.buildTeam([], ['DEX', 'STR', 'QCK', 'PSY', 'INT'], {
+      requiredAbilities: [createAbilityRequirement('remove_blindness', 5)],
+      battleRequirements: [
+        createBattleRequirement('threshold-resilience', [
+          createAbilityRequirement('remove_threshold_damage_reduction', 5),
+          createAbilityRequirement('remove_resilience', 5),
+        ]),
+      ],
+    });
+
+    expect(withoutLeaderScope).not.toBeNull();
+    expect(withoutLeaderScope?.coverage.abilityRequirements.requested).toEqual([]);
+    expect(withoutLeaderScope?.coverage.battleRequirements?.matchesAll).toBe(true);
+
+    // Control: the leader-scoped ability above is genuinely satisfiable in this pool - by a sub.
+    // Requested without battle requirements and without a leader scope, it is enforced and met by
+    // 4556. So the two nulls above are the carve-out refusing a sub for a leader-scoped entry,
+    // not the ability being unobtainable.
+    const satisfiableBySub = await service.buildTeam([], ['DEX', 'STR', 'QCK', 'PSY', 'INT'], {
+      requiredAbilities: [createAbilityRequirement('remove_enemy_increased_defense', 5)],
+    });
+
+    expect(satisfiableBySub).not.toBeNull();
+    expect(satisfiableBySub?.slots.some((slot) => slot.character.id === 4556)).toBe(true);
+  });
   beforeAll(() => {
     vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
   });
@@ -40461,4 +41026,197 @@ function createShipRecord(id: number, name: string, description: string): ShipRe
     thumbUrl: null,
     description,
   };
+}
+
+// ---- Lane D run 2 fixtures for pair 15x20 ----
+function createAlternateStrictMixedTeamRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 5945,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: 'Slasher',
+      detail: {
+        captainAbility:
+          'Boosts ATK of DEX, PSY, Fighter and Slasher characters by 5.1x and HP by 1.35x, reduces Special Cooldown of crew by 1 turn.',
+        specialText:
+          'Boosts orb effects of DEX and PSY characters by 2x for 1 turn and changes orbs into Matching Orbs.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5946,
+      type: 'PSY',
+      primaryClass: 'Slasher',
+      detail: {
+        specialText: 'Boosts ATK of Slasher characters by 2.25x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5947,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Boosts color affinity of DEX characters by 2x for 1 turn.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5948,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText:
+          'Reduces Bind and Despair duration by 5 turns and reduces Threshold Damage Reduction duration by 5 turns.',
+      },
+    }),
+    createCharacterRecord({
+      id: 5949,
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+      },
+    }),
+  ];
+}
+
+// ---- Lane D run 2 fixtures for pair 19x20 ----
+function createPoolShapingRepositoryMock(records: CharacterDetailRecord[]): {
+  getAutoBuilderCandidates: ReturnType<typeof vi.fn>;
+} {
+  return {
+    getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+      const allowedIds = Array.isArray(query?.allowedCharacterIds)
+        ? new Set<number>(query.allowedCharacterIds)
+        : null;
+      const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
+
+      return records.filter(
+        (record) => (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
+      );
+    }),
+  };
+}
+
+// ---- Lane D run 2 fixtures for pair 12x15 ----
+// Place immediately AFTER the closing brace of `createAbilityRequirement`
+// (auto-team-builder.service.spec.ts:39223-39233), before `function createBattleRequirement(`
+// at :39235.
+//
+// This is the query-honouring repository mock, copied verbatim from the single
+// site that has one (auto-team-builder.service.spec.ts:6371-6381). It exists as a
+// named helper so pool-shaping cases stop reaching for
+// `vi.fn().mockResolvedValue(records)`, which ignores the query and hands the
+// search a full pool - the blocker recorded in
+// audits/auto-team-builder/matrix-coverage.md.
+function createPoolQueryHonouringRepository(records: CharacterDetailRecord[]) {
+  return {
+    getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+      const allowedIds = Array.isArray(query?.allowedCharacterIds)
+        ? new Set<number>(query.allowedCharacterIds)
+        : null;
+      const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
+
+      return records.filter(
+        (record) => (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
+      );
+    }),
+  };
+}
+
+// ---- Lane D run 2 fixtures for pair 13x15 ----
+const LEADER_SOURCE_BATTLE_UNIVERSAL_CAPTAIN_ABILITY =
+  'Boosts ATK of all characters by 5x and HP by 1.4x.';
+
+function createQueryHonouringAutoBuilderRepository(records: CharacterDetailRecord[]) {
+  return {
+    getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+      const allowedIds = Array.isArray(query?.allowedCharacterIds)
+        ? new Set<number>(query.allowedCharacterIds)
+        : null;
+      const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
+
+      return records.filter(
+        (record) => (!allowedIds || allowedIds.has(record.id)) && !excludedIds.has(record.id),
+      );
+    }),
+  };
+}
+
+function createLeaderScopedBindBattleRequirement(
+  id: string,
+): NonNullable<AutoBuildInput['battleRequirements']>[number] {
+  return {
+    id,
+    title: id,
+    enemyMechanics: [],
+    requiredCharacterGroups: [
+      {
+        id: `${id}-leader-bind`,
+        abilities: [
+          {
+            abilityKey: 'remove_bind',
+            minTurns: 5,
+            slotTokens: [],
+            requiredCharacterCount: 1,
+            slotScope: 'leader',
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function createLeaderSourceBattleRequirementRecords(): CharacterDetailRecord[] {
+  return [
+    createCharacterRecord({
+      id: 7620,
+      name: 'Bind Counter Leader',
+      type: 'DEX',
+      cost: 55,
+      captainHpBoost: 1.4,
+      captainAtkBoost: 5,
+      captainAverageBoost: 3.2,
+      primaryClass: 'Fighter',
+      secondaryClass: 'Free Spirit',
+      detail: {
+        captainAbility: LEADER_SOURCE_BATTLE_UNIVERSAL_CAPTAIN_ABILITY,
+        specialText: 'Reduces Bind duration by 6 turns.',
+        builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 6)],
+      },
+    }),
+    createLeaderPriorityCaptainRecord({
+      id: 7630,
+      name: 'Plain Leader 7630',
+      cost: 55,
+      atkMultiplier: 5,
+      hpMultiplier: 1.4,
+      universal: true,
+    }),
+    createLeaderPriorityCaptainRecord({
+      id: 7640,
+      name: 'Plain Leader 7640',
+      cost: 55,
+      atkMultiplier: 5,
+      hpMultiplier: 1.4,
+      universal: true,
+    }),
+    createCharacterRecord({
+      id: 7611,
+      name: 'Bind Counter Sub',
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Reduces Bind duration by 6 turns.',
+        builderAbilities: [createBuilderAbility('remove_bind', 'Remove Bind', 6)],
+      },
+    }),
+    ...[7612, 7613, 7614, 7615, 7616].map((id) =>
+      createCharacterRecord({
+        id,
+        name: `Filler Sub ${id}`,
+        type: 'DEX',
+        primaryClass: 'Fighter',
+        detail: {
+          specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.',
+        },
+      }),
+    ),
+  ];
 }
