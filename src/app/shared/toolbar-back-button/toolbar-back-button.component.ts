@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { IonButton, IonButtons, IonIcon } from '@ionic/angular/standalone';
+import { IonIcon } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonButtons } from '@ionic/angular/ion-buttons';
 import { chevronBackOutline } from 'ionicons/icons';
 
 import { ToolbarBackNavigationService } from '../../core/services/toolbar-back-navigation.service';

@@ -1,14 +1,10 @@
 import { App } from '@capacitor/app';
 import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  AlertController,
-  IonApp,
-  IonButton,
-  IonIcon,
-  IonProgressBar,
-  IonRouterOutlet,
-} from '@ionic/angular/standalone';
+import { AlertController, IonIcon, IonRouterOutlet } from '@ionic/angular';
+import { IonApp } from '@ionic/angular/ion-app';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonProgressBar } from '@ionic/angular/ion-progress-bar';
 import {
   NavigationCancel,
   NavigationEnd,

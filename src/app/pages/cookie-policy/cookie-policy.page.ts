@@ -1,7 +1,11 @@
 import { CommonModule } from "@angular/common";
 import { Component, computed } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { IonButton, IonContent, IonHeader, IonTitle, IonToolbar } from "@ionic/angular/standalone";
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonContent } from '@ionic/angular/ion-content';
+import { IonHeader } from '@ionic/angular/ion-header';
+import { IonTitle } from '@ionic/angular/ion-title';
+import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective } from "@jsverse/transloco";
 
 import { AnalyticsConsentService } from "../../core/services/analytics-consent.service";

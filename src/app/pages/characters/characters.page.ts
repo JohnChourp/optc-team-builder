@@ -2,19 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
-import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonMenuButton,
-  IonModal,
-  IonSearchbar,
-  IonSpinner,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/angular/standalone';
+import { IonIcon, IonModal, IonSearchbar } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonButtons } from '@ionic/angular/ion-buttons';
+import { IonContent } from '@ionic/angular/ion-content';
+import { IonHeader } from '@ionic/angular/ion-header';
+import { IonMenuButton } from '@ionic/angular/ion-menu-button';
+import { IonSpinner } from '@ionic/angular/ion-spinner';
+import { IonTitle } from '@ionic/angular/ion-title';
+import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import {
   alertCircleOutline,
   checkmarkCircleOutline,

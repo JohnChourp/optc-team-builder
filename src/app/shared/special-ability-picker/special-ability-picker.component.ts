@@ -9,17 +9,12 @@ import {
   signal,
 } from '@angular/core';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
-import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonInput,
-  IonModal,
-  IonSearchbar,
-  IonToolbar,
-} from '@ionic/angular/standalone';
+import { IonIcon, IonInput, IonModal, IonSearchbar } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonButtons } from '@ionic/angular/ion-buttons';
+import { IonContent } from '@ionic/angular/ion-content';
+import { IonHeader } from '@ionic/angular/ion-header';
+import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { closeOutline, sparklesOutline } from 'ionicons/icons';
 
 import {

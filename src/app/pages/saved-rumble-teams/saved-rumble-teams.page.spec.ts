@@ -8,19 +8,37 @@ import { DEFAULT_RUMBLE_BUFF_FOCUS } from '../../core/models/auto-team-builder-r
 import { type SavedRumbleTeam } from '../../core/models/saved-rumble-team.models';
 import { SavedRumbleTeamsPage } from './saved-rumble-teams.page';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
-  IonButtons: class {},
-  IonContent: class {},
-  IonFooter: class {},
-  IonHeader: class {},
+vi.mock('@ionic/angular', () => ({
   IonIcon: class {},
   IonInput: class {},
-  IonMenuButton: class {},
   IonModal: class {},
-  IonSpinner: class {},
   IonTextarea: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-buttons', () => ({
+  IonButtons: class {},
+}));
+vi.mock('@ionic/angular/ion-content', () => ({
+  IonContent: class {},
+}));
+vi.mock('@ionic/angular/ion-footer', () => ({
+  IonFooter: class {},
+}));
+vi.mock('@ionic/angular/ion-header', () => ({
+  IonHeader: class {},
+}));
+vi.mock('@ionic/angular/ion-menu-button', () => ({
+  IonMenuButton: class {},
+}));
+vi.mock('@ionic/angular/ion-spinner', () => ({
+  IonSpinner: class {},
+}));
+vi.mock('@ionic/angular/ion-title', () => ({
   IonTitle: class {},
+}));
+vi.mock('@ionic/angular/ion-toolbar', () => ({
   IonToolbar: class {},
 }));
 

@@ -5,12 +5,16 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CharacterFilterRowComponent } from './character-filter-row.component';
 
-vi.mock('@ionic/angular/standalone', () => ({
-  IonButton: class {},
+vi.mock('@ionic/angular', () => ({
   IonInput: class {},
   IonSelect: class {},
-  IonSelectOption: class {},
   IonToggle: class {},
+}));
+vi.mock('@ionic/angular/ion-button', () => ({
+  IonButton: class {},
+}));
+vi.mock('@ionic/angular/ion-select-option', () => ({
+  IonSelectOption: class {},
 }));
 
 describe('CharacterFilterRowComponent', () => {

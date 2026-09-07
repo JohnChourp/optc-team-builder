@@ -9,20 +9,15 @@ import {
   signal,
 } from '@angular/core';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
-import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonFooter,
-  IonHeader,
-  IonIcon,
-  IonModal,
-  IonSearchbar,
-  IonSelect,
-  IonSelectOption,
-  IonSpinner,
-  IonToolbar,
-} from '@ionic/angular/standalone';
+import { IonIcon, IonModal, IonSearchbar, IonSelect } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonButtons } from '@ionic/angular/ion-buttons';
+import { IonContent } from '@ionic/angular/ion-content';
+import { IonFooter } from '@ionic/angular/ion-footer';
+import { IonHeader } from '@ionic/angular/ion-header';
+import { IonSelectOption } from '@ionic/angular/ion-select-option';
+import { IonSpinner } from '@ionic/angular/ion-spinner';
+import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { closeOutline } from 'ionicons/icons';
 
 import {

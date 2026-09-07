@@ -1,23 +1,16 @@
 import { Component, type OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { type ViewWillEnter } from '@ionic/angular';
-import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonInput,
-  IonMenuButton,
-  IonModal,
-  IonSearchbar,
-  IonSelect,
-  IonSelectOption,
-  IonSpinner,
-  IonTextarea,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/angular/standalone';
+import { IonIcon, IonInput, IonModal, IonSearchbar, IonSelect, IonTextarea } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonButtons } from '@ionic/angular/ion-buttons';
+import { IonContent } from '@ionic/angular/ion-content';
+import { IonHeader } from '@ionic/angular/ion-header';
+import { IonMenuButton } from '@ionic/angular/ion-menu-button';
+import { IonSelectOption } from '@ionic/angular/ion-select-option';
+import { IonSpinner } from '@ionic/angular/ion-spinner';
+import { IonTitle } from '@ionic/angular/ion-title';
+import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   alertCircleOutline,

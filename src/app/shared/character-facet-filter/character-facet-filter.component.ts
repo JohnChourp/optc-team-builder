@@ -9,7 +9,9 @@ import {
   computed,
   signal,
 } from '@angular/core';
-import { IonButton, IonIcon, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { IonIcon, IonSelect } from '@ionic/angular';
+import { IonButton } from '@ionic/angular/ion-button';
+import { IonSelectOption } from '@ionic/angular/ion-select-option';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import { swapHorizontalOutline } from 'ionicons/icons';
 

@@ -1,20 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, type IsActiveMatchOptions } from '@angular/router';
-import {
-  IonAccordion,
-  IonAccordionGroup,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonMenu,
-  IonMenuToggle,
-  IonRouterOutlet,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/angular/standalone';
+import { IonIcon, IonRouterOutlet } from '@ionic/angular';
+import { IonAccordion } from '@ionic/angular/ion-accordion';
+import { IonAccordionGroup } from '@ionic/angular/ion-accordion-group';
+import { IonContent } from '@ionic/angular/ion-content';
+import { IonHeader } from '@ionic/angular/ion-header';
+import { IonItem } from '@ionic/angular/ion-item';
+import { IonLabel } from '@ionic/angular/ion-label';
+import { IonList } from '@ionic/angular/ion-list';
+import { IonMenu } from '@ionic/angular/ion-menu';
+import { IonMenuToggle } from '@ionic/angular/ion-menu-toggle';
+import { IonTitle } from '@ionic/angular/ion-title';
+import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   albumsOutline,
