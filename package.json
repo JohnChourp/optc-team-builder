@@ -142,7 +142,7 @@
     "@capacitor/ios": "^8.5.1",
     "@capacitor/preferences": "^8.0.1",
     "@capgo/capacitor-social-login": "^8.5.5",
-    "@ionic/angular": "^8.8.15",
+    "@ionic/angular": "^9.0.2",
     "@jsverse/transloco": "^8.4.0",
     "ionicons": "^8.1.0",
     "lottie-web": "^5.13.0",
