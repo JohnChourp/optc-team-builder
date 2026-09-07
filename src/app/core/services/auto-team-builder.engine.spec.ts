@@ -1817,21 +1817,6 @@ function createVsBranchModeManualSlots(
   );
 }
 
-// NOTE ON IMPORTS: no import changes are needed. `createEmptyAutoBuildManualSlots`,
-// `AutoTeamBuilderType`, `CharacterDetailRecord` and `runAutoTeamBuildSearch` are all already
-// imported by the engine spec (:1-25). `createVsBranchModeManualSlots` deliberately spreads
-// `createEmptyAutoBuildManualSlots()` slots rather than rebuilding them, so its return type stays
-// assignable to `AutoBuildManualSlotSelection[]` without importing that type or
-// `AutoBuildCaptainBranchMode`; the literal-union `mode` parameter is exactly
-// `AutoBuildCaptainBranchMode`.
-//
-// NOTE ON QUOTES: the two branch-text constants must use SINGLE quotes (they contain no
-// apostrophe) or prettier rewrites them; the leader's `specialText` keeps DOUBLE quotes because of
-// "enemies'". Verified with `npx prettier --check`: with these quotes the new block adds zero
-// prettier diff lines. The file already has 3 pre-existing prettier warnings (:145 and the two
-// `captainAbility:` lines inside `createLeaderBoostRangeCoverageRecords`, both from run 1) - do not
-// mistake those for damage from this paste.
-
 // Lane D matrix, Tier 2 - pairs that interact through relaxation.
 // Contract: one axis is relaxation-eligible, the other is not; the failure is invariant 3,
 // something given up and never reported. Run 3 established that the mirror - reported and
@@ -1841,127 +1826,146 @@ function createVsBranchModeManualSlots(
 // tests. Every relaxation-eligible axis is forced to relax against the SAME fixture, which
 // violates axes 6, 7, 9 and 10 simultaneously, so each one honestly reports when switched on.
 // Axes 1-4 need no fixture support: they are forced with a value nothing in the pool carries.
+const TIER2_BASE_TYPES: AutoTeamBuilderType[] = ['DEX', 'PSY'];
+const TIER2_BASE_CLASSES = ['Fighter'];
+const TIER2_REQUIRED_ABILITY_KEY = 'remove_paralysis';
+
+const TIER2_UNSATISFIABLE_CRITERIA = {
+  rawText: 'Your crew must consist of any 3 of the following: [Ghost Crew].',
+  requiresCaptain: false,
+  hasNonRosterBranches: false,
+  parserStatus: 'roster_only' as const,
+  rosterBranches: [
+    {
+      branchType: 'character_count_any' as const,
+      requiredCount: 3,
+      matchMode: 'any_candidate' as const,
+      options: [{ label: '[Ghost Crew]', acceptedKeys: ['ghost crew that does not exist'] }],
+    },
+  ],
+};
+
+interface Tier2RelaxableAxis {
+  id: string;
+  label: string;
+  extraTypes?: AutoTeamBuilderType[];
+  extraClasses?: string[];
+  overrides: Record<string, unknown>;
+  wasReported: (relaxation: AutoBuildResult['relaxation']) => boolean;
+}
+
+interface Tier2HardAxis {
+  id: string;
+  label: string;
+  overrides: Record<string, unknown>;
+  stillSatisfied: (result: AutoBuildResult) => boolean;
+}
+
+const RELAXABLE: Tier2RelaxableAxis[] = [
+  {
+    id: 'a1',
+    label: 'types',
+    extraTypes: ['INT'],
+    overrides: { requireAllSelectedTypesInTeam: true },
+    wasReported: (r) => r.droppedTypes.includes('INT'),
+  },
+  {
+    id: 'a2',
+    label: 'classes',
+    extraClasses: ['Striker'],
+    overrides: { requireAllSelectedClassesPerCharacter: false },
+    wasReported: (r) => r.droppedClasses.includes('Striker'),
+  },
+  {
+    id: 'a3',
+    label: 'character tags',
+    overrides: {
+      selectedCharacterTags: ['Minks'],
+      requireAllSelectedCharacterTagsInTeam: true,
+    },
+    wasReported: (r) => r.droppedCharacterTags.includes('Minks'),
+  },
+  {
+    id: 'a4',
+    label: 'character names',
+    overrides: {
+      selectedCharacterNames: ['Nefertari Vivi'],
+      requireAllSelectedCharacterNamesInTeam: true,
+    },
+    wasReported: (r) => r.droppedCharacterNames.length > 0,
+  },
+  {
+    id: 'a6',
+    label: 'leader super-effect scope',
+    overrides: { requireAllSlotsInLeaderSuperEffectScope: true },
+    wasReported: (r) => r.ignoredLeaderSuperEffectScope,
+  },
+  {
+    id: 'a7',
+    label: 'captain ability coverage',
+    overrides: { requireFullCaptainAbilityCoverage: true },
+    wasReported: (r) => r.ignoredCaptainAbilityCoverage === true,
+  },
+  {
+    id: 'a9',
+    label: 'super special criteria',
+    overrides: { requireLeaderSuperSpecialCriteria: true },
+    wasReported: (r) => r.ignoredLeaderSuperSpecialCriteria,
+  },
+  {
+    id: 'a10',
+    label: 'Super Tandem criteria',
+    overrides: { requireSuperTandemCriteria: true },
+    wasReported: (r) => r.ignoredSuperTandemCriteria,
+  },
+];
+
+const HARD: Tier2HardAxis[] = [
+  {
+    id: 'a12',
+    label: 'ability requirements',
+    overrides: {
+      requiredAbilities: [
+        {
+          abilityKey: TIER2_REQUIRED_ABILITY_KEY,
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+    },
+    stillSatisfied: (result) => result.coverage.abilityRequirements.matchesAll,
+  },
+  {
+    id: 'a13',
+    label: 'battle requirements',
+    overrides: {
+      battleRequirements: [
+        {
+          id: 'tier2-battle',
+          title: 'Tier 2 battle',
+          enemyMechanics: [],
+          requiredCharacterGroups: [
+            {
+              id: 'tier2-battle-group',
+              abilities: [
+                {
+                  abilityKey: TIER2_REQUIRED_ABILITY_KEY,
+                  minTurns: null,
+                  slotTokens: [],
+                  requiredCharacterCount: 1,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    stillSatisfied: (result) => result.coverage.battleRequirements?.matchesAll === true,
+  },
+];
+
 describe('Lane D matrix - Tier 2 pairs', () => {
-  interface Tier2RelaxableAxis {
-    id: string;
-    label: string;
-    extraTypes?: AutoTeamBuilderType[];
-    extraClasses?: string[];
-    overrides: Record<string, unknown>;
-    wasReported: (relaxation: AutoBuildResult['relaxation']) => boolean;
-  }
-
-  interface Tier2HardAxis {
-    id: string;
-    label: string;
-    overrides: Record<string, unknown>;
-    stillSatisfied: (result: AutoBuildResult) => boolean;
-  }
-
-  const RELAXABLE: Tier2RelaxableAxis[] = [
-    {
-      id: 'a1',
-      label: 'types',
-      extraTypes: ['INT'],
-      overrides: { requireAllSelectedTypesInTeam: true },
-      wasReported: (r) => r.droppedTypes.includes('INT'),
-    },
-    {
-      id: 'a2',
-      label: 'classes',
-      extraClasses: ['Striker'],
-      overrides: { requireAllSelectedClassesPerCharacter: false },
-      wasReported: (r) => r.droppedClasses.includes('Striker'),
-    },
-    {
-      id: 'a3',
-      label: 'character tags',
-      overrides: {
-        selectedCharacterTags: ['Minks'],
-        requireAllSelectedCharacterTagsInTeam: true,
-      },
-      wasReported: (r) => r.droppedCharacterTags.includes('Minks'),
-    },
-    {
-      id: 'a4',
-      label: 'character names',
-      overrides: {
-        selectedCharacterNames: ['Nefertari Vivi'],
-        requireAllSelectedCharacterNamesInTeam: true,
-      },
-      wasReported: (r) => r.droppedCharacterNames.length > 0,
-    },
-    {
-      id: 'a6',
-      label: 'leader super-effect scope',
-      overrides: { requireAllSlotsInLeaderSuperEffectScope: true },
-      wasReported: (r) => r.ignoredLeaderSuperEffectScope,
-    },
-    {
-      id: 'a7',
-      label: 'captain ability coverage',
-      overrides: { requireFullCaptainAbilityCoverage: true },
-      wasReported: (r) => r.ignoredCaptainAbilityCoverage === true,
-    },
-    {
-      id: 'a9',
-      label: 'super special criteria',
-      overrides: { requireLeaderSuperSpecialCriteria: true },
-      wasReported: (r) => r.ignoredLeaderSuperSpecialCriteria,
-    },
-    {
-      id: 'a10',
-      label: 'Super Tandem criteria',
-      overrides: { requireSuperTandemCriteria: true },
-      wasReported: (r) => r.ignoredSuperTandemCriteria,
-    },
-  ];
-
-  const HARD: Tier2HardAxis[] = [
-    {
-      id: 'a12',
-      label: 'ability requirements',
-      overrides: {
-        requiredAbilities: [
-          {
-            abilityKey: TIER2_REQUIRED_ABILITY_KEY,
-            minTurns: null,
-            slotTokens: [],
-            requiredCharacterCount: 1,
-          },
-        ],
-      },
-      stillSatisfied: (result) => result.coverage.abilityRequirements.matchesAll,
-    },
-    {
-      id: 'a13',
-      label: 'battle requirements',
-      overrides: {
-        battleRequirements: [
-          {
-            id: 'tier2-battle',
-            title: 'Tier 2 battle',
-            enemyMechanics: [],
-            requiredCharacterGroups: [
-              {
-                id: 'tier2-battle-group',
-                abilities: [
-                  {
-                    abilityKey: TIER2_REQUIRED_ABILITY_KEY,
-                    minTurns: null,
-                    slotTokens: [],
-                    requiredCharacterCount: 1,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      stillSatisfied: (result) => result.coverage.battleRequirements?.matchesAll === true,
-    },
-  ];
-
   function runPair(axes: Tier2RelaxableAxis[], hard?: Tier2HardAxis): AutoBuildResult | null {
     const types: AutoTeamBuilderType[] = [
       ...TIER2_BASE_TYPES,
@@ -1976,7 +1980,7 @@ describe('Lane D matrix - Tier 2 pairs', () => {
     const needsUncoveredSubs = axes.some((axis) => axis.id === 'a7');
 
     return runAutoTeamBuildSearch(
-      createTier2Records(needsUncoveredSubs),
+      createTier2Records({ uncoveredSubs: needsUncoveredSubs }),
       createInput(types, classes, overrides as never),
     );
   }
@@ -2025,24 +2029,491 @@ describe('Lane D matrix - Tier 2 pairs', () => {
   }
 });
 
-const TIER2_BASE_TYPES: AutoTeamBuilderType[] = ['DEX', 'PSY'];
-const TIER2_BASE_CLASSES = ['Fighter'];
-const TIER2_REQUIRED_ABILITY_KEY = 'remove_paralysis';
+// Lane D matrix, Tier 3 - the remainder, rotated.
+//
+// Tier 3 is every live pair that is neither Tier 1 nor Tier 2: 80 of them. It is defined as
+// rotated across runs, and the written cursor lives in the brain ledger - without one it never
+// rotates. This run covers the engine-expressible slice built on the three axes that belong to
+// no other tier: 5 (leader boost ranges), 11 (unique base names) and 16 (friend auto-fill),
+// plus axis 19 against the two hard axes the engine can express.
+//
+// Axes 14, 15, 18 and 20 are read ZERO times in the engine and in auto-team-builder.utils.ts,
+// so their pairs are service-side and are recorded as such rather than faked here. Writing an
+// engine case for an axis the engine never reads passes while proving nothing.
+//
+// Every row carries its own CONTROL: the same fixture with the Tier 3 axis switched off, which
+// must FAIL the same predicate. Without it the assertion is unfalsifiable - the fixture
+// factory defaults every record to a unique `Character <id>` name and to captainAtkBoost 5 /
+// captainHpBoost 1.3, so a naive axis-11 or axis-5 row passes with the enforcement deleted.
+describe('Lane D matrix - Tier 3 pairs', () => {
+  interface Tier3NeitherAxis {
+    id: string;
+    label: string;
+    overrides: Record<string, unknown>;
+    records: Tier2RecordOptions;
+    /** True only when the returned team honours this axis. */
+    holds: (result: AutoBuildResult) => boolean;
+    /** Relaxation-eligible axes this row cannot be paired with, and why. */
+    skip?: Record<string, string>;
+  }
 
-const TIER2_UNSATISFIABLE_CRITERIA = {
-  rawText: 'Your crew must consist of any 3 of the following: [Ghost Crew].',
-  requiresCaptain: false,
-  hasNonRosterBranches: false,
-  parserStatus: 'roster_only' as const,
-  rosterBranches: [
+  const NEITHER: Tier3NeitherAxis[] = [
     {
-      branchType: 'character_count_any' as const,
-      requiredCount: 3,
-      matchMode: 'any_candidate' as const,
-      options: [{ label: '[Ghost Crew]', acceptedKeys: ['ghost crew that does not exist'] }],
+      id: 'a5',
+      label: 'leader boost ranges',
+      // Both conjuncts. `candidateMatchesLeaderBoostRanges` is ATK && HP, so a range that
+      // constrains only ATK still passes with the HP conjunct deleted.
+      overrides: {
+        leaderBoostRanges: { ATK: { min: 5, max: null }, HP: { min: 1.3, max: null } },
+      },
+      records: { leaderBoostSpread: true },
+      holds: (result) =>
+        [result.slots[0], result.slots[1]].every(
+          (slot) => slot.character.captainAtkBoost >= 5 && slot.character.captainHpBoost >= 1.3,
+        ),
+      skip: {
+        // The spread leaders are `leader()` clones and therefore [Fighter]-covering, so they
+        // cannot be added to the uncovered-subs branch without satisfying the captain-coverage
+        // floor that branch exists to violate. 5x7 is a Tier 1 pair and is covered there.
+        a7: 'Tier 1 covers 5x7; the axis-5 spread cannot share the uncovered-subs fixture',
+      },
     },
-  ],
-};
+    {
+      id: 'a11',
+      label: 'unique base names',
+      overrides: { requireUniqueBaseCharacterNames: true },
+      records: { duplicateBaseNames: true },
+      // Sub slots ONLY. The Captain and the Friend Captain may legally be the same character,
+      // and every run of this fixture returns exactly that, so a predicate over all six slots
+      // would assert a bug. `leaderPartyConflictKeySet` is built from the captain alone.
+      holds: (result) => {
+        const subs = result.slots.filter((slot) => slot.role === 'sub');
+
+        return (
+          subs.length === 4 &&
+          new Set(subs.map((slot) => resolveBaseNameKeyForTest(slot.character.name))).size === 4
+        );
+      },
+    },
+  ];
+
+  function runTier3(
+    neither: Tier3NeitherAxis,
+    partners: { soft?: Tier2RelaxableAxis; hard?: Tier2HardAxis; other?: Tier3NeitherAxis },
+    enabled: boolean,
+  ): AutoBuildResult | null {
+    const { soft, hard, other } = partners;
+    const types: AutoTeamBuilderType[] = [...TIER2_BASE_TYPES, ...(soft?.extraTypes ?? [])];
+    const classes = [...TIER2_BASE_CLASSES, ...(soft?.extraClasses ?? [])];
+    const overrides: Record<string, unknown> = {
+      ...(hard?.overrides ?? {}),
+      ...(soft?.overrides ?? {}),
+      ...(other?.overrides ?? {}),
+      // The control differs in exactly one thing: this axis's own override.
+      ...(enabled ? neither.overrides : {}),
+    };
+
+    // The records never differ between control and treatment. If they did, a failing control
+    // would prove only that the two fixtures differ.
+    return runAutoTeamBuildSearch(
+      createTier2Records({
+        ...neither.records,
+        ...(other?.records ?? {}),
+        uncoveredSubs: soft?.id === 'a7',
+      }),
+      createInput(types, classes, overrides as never),
+    );
+  }
+
+  // Every Tier 3 axis against every relaxation-eligible axis: the soft one is relaxed and
+  // reported, the Tier 3 axis still holds on the finished team, and the control proves the
+  // fixture could have violated it.
+  for (const neither of NEITHER) {
+    for (const soft of RELAXABLE) {
+      if (neither.skip?.[soft.id]) {
+        continue;
+      }
+
+      it(`holds ${neither.id} while ${soft.id} relaxes (${neither.label} vs ${soft.label})`, () => {
+        const control = runTier3(neither, { soft }, false);
+        const result = runTier3(neither, { soft }, true);
+
+        expect(result).not.toBeNull();
+        expect(control).not.toBeNull();
+        // Invariant 1: the Tier 3 axis was never relaxed, so the team still satisfies it...
+        expect({ [neither.id]: neither.holds(result!) }).toEqual({ [neither.id]: true });
+        // ...and the same fixture without it does not, which is what makes that assertion mean
+        // something.
+        expect({ [`${neither.id}-control`]: neither.holds(control!) }).toEqual({
+          [`${neither.id}-control`]: false,
+        });
+        // Invariant 3: the relaxation-eligible partner is still reported...
+        expect({ [soft.id]: soft.wasReported(result!.relaxation) }).toEqual({ [soft.id]: true });
+        // ...and no axis that was never switched on is reported as given up.
+        for (const other of RELAXABLE) {
+          if (other.id === soft.id) {
+            continue;
+          }
+
+          expect({ [other.id]: other.wasReported(result!.relaxation) }).toEqual({
+            [other.id]: false,
+          });
+        }
+      });
+    }
+  }
+
+  // Every Tier 3 axis against the two hard axes the engine can express. Neither is relaxable,
+  // so both must simply hold together - and the control still has to fail.
+  for (const neither of NEITHER) {
+    for (const hard of HARD) {
+      it(`holds ${neither.id} together with ${hard.id} (${neither.label} vs ${hard.label})`, () => {
+        const control = runTier3(neither, { hard }, false);
+        const result = runTier3(neither, { hard }, true);
+
+        expect(result).not.toBeNull();
+        expect(control).not.toBeNull();
+        expect({ [neither.id]: neither.holds(result!) }).toEqual({ [neither.id]: true });
+        expect({ [`${neither.id}-control`]: neither.holds(control!) }).toEqual({
+          [`${neither.id}-control`]: false,
+        });
+        expect({ [hard.id]: hard.stillSatisfied(result!) }).toEqual({ [hard.id]: true });
+      });
+    }
+  }
+
+  // 5x11 - the two Tier 3 axes against each other. They bind on opposite ends of the team, so
+  // the interesting question is whether the leader gate and the sub gate can both hold at once
+  // on one fixture; each control is run separately so a failure names which one broke.
+  it('holds a5 and a11 together (leader boost ranges vs unique base names)', () => {
+    const [a5, a11] = NEITHER;
+    const result = runTier3(a5, { other: a11 }, true);
+    const withoutA5 = runTier3(a5, { other: a11 }, false);
+
+    expect(result).not.toBeNull();
+    expect(withoutA5).not.toBeNull();
+    expect({ a5: a5.holds(result!), a11: a11.holds(result!) }).toEqual({ a5: true, a11: true });
+    // Dropping axis 5 alone breaks axis 5 and leaves axis 11 intact: the two are independent,
+    // which is the pair's actual claim.
+    expect({ a5: a5.holds(withoutA5!), a11: a11.holds(withoutA5!) }).toEqual({
+      a5: false,
+      a11: true,
+    });
+  });
+});
+
+
+// Lane D matrix, Tier 3 - axis 16, which needs a differential rather than a predicate.
+//
+// `allowAnyFriendCaptainAutoFill` WIDENS the friend-captain pool instead of narrowing it, so
+// "the team still satisfies it" is the wrong frame: there is nothing to violate. What the pair
+// asserts is that the widening happened, that it reached only the friend seat, and that the
+// widened candidate still had to clear the gates an explicitly chosen friend captain clears.
+//
+// Three things make a naive version of this case vacuous, all of them measured:
+//
+//   - With the flag on and NO roster, the ternary that injects `leaderAutoFillCharacterIds`
+//     still fires, re-sorting the friend seat from newest-id to record order. The friend
+//     captain changes and nothing was widened. "The result changed when I toggled the axis"
+//     is not evidence for this axis.
+//   - A roster whose records are all already in the box pool adds nothing, and produces the
+//     same visible change for the same wrong reason.
+//   - A roster of records with no readable captain text is dropped before the union, and
+//     produces it again.
+//
+// So the assertion is identity-based, and BOTH runs ship: mutating the union guard to widen
+// unconditionally leaves the ON run green and is caught only by the OFF control, while the
+// other three mutations leave the OFF control green and are caught only by the ON run. Either
+// run alone is blind to half the mutation set.
+describe('Lane D matrix - Tier 3 pairs, axis 16', () => {
+  const BOX_IDS = new Set([9400, 9401, 9402, 9403, 9404, 9405, 9406, 9498, 9499, 9411, 9412]);
+  // The same range axis 5 uses. It is not decoration: it is the gate the widened friend
+  // captain has to clear, so these rows also cover the pair 5x16.
+  const LEADER_GATE = { ATK: { min: 5, max: null }, HP: { min: 1.3, max: null } };
+
+  function runAxis16(
+    partner: { soft?: Tier2RelaxableAxis; hard?: Tier2HardAxis; overrides?: Record<string, unknown> },
+    enabled: boolean,
+  ): AutoBuildResult | null {
+    const types: AutoTeamBuilderType[] = [...TIER2_BASE_TYPES, ...(partner.soft?.extraTypes ?? [])];
+    const classes = [...TIER2_BASE_CLASSES, ...(partner.soft?.extraClasses ?? [])];
+
+    return runAutoTeamBuildSearch(
+      createTier2Records({ duplicateBaseNames: Boolean(partner.overrides) }),
+      createInput(types, classes, {
+        ...(partner.hard?.overrides ?? {}),
+        ...(partner.soft?.overrides ?? {}),
+        ...(partner.overrides ?? {}),
+        leaderBoostRanges: LEADER_GATE,
+        allowAnyFriendCaptainAutoFill: enabled,
+      } as never),
+      // The roster is passed in BOTH runs. If it were passed only when the flag is on, the
+      // control would differ in two things and could not isolate the axis.
+      { friendCaptainRecords: createAxis16FriendCaptainRoster() },
+    );
+  }
+
+  function expectWidenedOnlyAtTheFriendSeat(
+    onResult: AutoBuildResult,
+    offResult: AutoBuildResult,
+  ): void {
+    // The widening happened, and it produced a character the box pool does not contain.
+    expect(onResult.slots[1]!.role).toBe('friendCaptain');
+    expect(onResult.slots[1]!.character.id).toBe(9100);
+    // It reached ONLY the friend seat.
+    expect(onResult.slots.slice(2).every((slot) => BOX_IDS.has(slot.character.id))).toBe(true);
+    expect(BOX_IDS.has(onResult.slots[0]!.character.id)).toBe(true);
+    // Trap 8: the auto-filled friend captain still had to clear the leader gate. 9199 sits
+    // first in roster order and would take the seat if the gate were dropped.
+    expect(
+      onResult.slots
+        .slice(0, 2)
+        .every(
+          (slot) => slot.character.captainAtkBoost >= 5 && slot.character.captainHpBoost >= 1.3,
+        ),
+    ).toBe(true);
+    // The control never widens - this is the only clause that fails when the guard is mutated
+    // to widen unconditionally.
+    expect(offResult.slots.every((slot) => BOX_IDS.has(slot.character.id))).toBe(true);
+  }
+
+  for (const soft of RELAXABLE) {
+    if (soft.id === 'a7') {
+      // The roster leaders are [Fighter]-covering, so on the uncovered-subs branch they would
+      // satisfy the captain-coverage floor that branch exists to violate and axis 7 would stop
+      // reporting. 16x7 is left to the service spec, where the roster is a repository result.
+      continue;
+    }
+
+    it(`widens only the friend seat for a16 while ${soft.id} relaxes (friend auto-fill vs ${soft.label})`, () => {
+      const onResult = runAxis16({ soft }, true);
+      const offResult = runAxis16({ soft }, false);
+
+      expect(onResult).not.toBeNull();
+      expect(offResult).not.toBeNull();
+      expectWidenedOnlyAtTheFriendSeat(onResult!, offResult!);
+      expect({ [soft.id]: soft.wasReported(onResult!.relaxation) }).toEqual({ [soft.id]: true });
+    });
+  }
+
+  for (const hard of HARD) {
+    it(`widens only the friend seat for a16 while ${hard.id} holds (friend auto-fill vs ${hard.label})`, () => {
+      const onResult = runAxis16({ hard }, true);
+      const offResult = runAxis16({ hard }, false);
+
+      expect(onResult).not.toBeNull();
+      expect(offResult).not.toBeNull();
+      expectWidenedOnlyAtTheFriendSeat(onResult!, offResult!);
+      expect({ [hard.id]: hard.stillSatisfied(onResult!) }).toEqual({ [hard.id]: true });
+    });
+  }
+
+  it('widens only the friend seat for a16 while a11 holds (friend auto-fill vs unique base names)', () => {
+    const overrides = { requireUniqueBaseCharacterNames: true };
+    const onResult = runAxis16({ overrides }, true);
+    const offResult = runAxis16({ overrides }, false);
+
+    expect(onResult).not.toBeNull();
+    expect(offResult).not.toBeNull();
+    expectWidenedOnlyAtTheFriendSeat(onResult!, offResult!);
+
+    const subs = onResult!.slots.filter((slot) => slot.role === 'sub');
+
+    expect(new Set(subs.map((slot) => resolveBaseNameKeyForTest(slot.character.name))).size).toBe(
+      4,
+    );
+  });
+});
+
+
+// Lane D matrix, Tier 3 - axis 19 against the hard axes the engine can express, plus the two
+// Tier 3 axes.
+//
+// Axis 19's trap is that it looks covered and is not. Eleven existing engine-spec cases pair
+// `manualSlots` with `lockedCharacterIds`, `captainCharacterId` and `friendCaptainCharacterId`,
+// and in every one of them the locked set is the same size as the manual set, so the overflow
+// branch never fires and the two legacy leader ids are inert: only `manualSlots` binds. Three
+// more ways to write a vacuous axis-19 case, all measured:
+//
+//   - pinning a character the ranking would have chosen anyway (9403-9406 here);
+//   - using `characterIds` without `requiredCharacterId`, which makes the role skippable, so
+//     the case asserts a preference rather than a pin;
+//   - asserting on the `Manual pick` chip, which is granted to every id in the list - a decoy
+//     that merely sits in `characterIds` gets it too.
+//
+// So the pin is 9390, the lowest id in the fixture, which the newest-id ranking never reaches;
+// it is required rather than listed; and the assertion is positional.
+describe('Lane D matrix - Tier 3 pairs, axis 19', () => {
+  function createPinnedSubSlots(
+    pins: { role: 'sub2' | 'sub3'; characterId: number }[],
+    captainId?: number,
+  ) {
+    return createEmptyAutoBuildManualSlots().map((slot) => {
+      const pin = pins.find((entry) => entry.role === slot.role);
+
+      if (pin) {
+        // The decoy is not decoration. `requiredCharacterId` narrows the role's pool to the
+        // one pin; `characterIds` is the wider list the role would otherwise rank over. With
+        // the pin alone in the list the two are indistinguishable, and the mutation that
+        // ignores `requiredCharacterId` entirely changes nothing - measured: it killed zero
+        // tests. 9406 is the top-ranked sub, so it wins the moment the pin stops binding.
+        return {
+          ...slot,
+          characterIds: [pin.characterId, 9406],
+          requiredCharacterId: pin.characterId,
+        };
+      }
+
+      if (captainId && slot.role === 'captain') {
+        return { ...slot, characterIds: [captainId], requiredCharacterId: captainId };
+      }
+
+      return slot;
+    });
+  }
+
+  function runAxis19(
+    overrides: Record<string, unknown>,
+    records: Tier2RecordOptions = {},
+  ): AutoBuildResult | null {
+    return runAutoTeamBuildSearch(
+      createTier2Records({ manualPinSub: true, ...records }),
+      createInput(TIER2_BASE_TYPES, TIER2_BASE_CLASSES, overrides as never),
+    );
+  }
+
+  for (const hard of HARD) {
+    it(`honours an a19 pin while ${hard.id} holds (manual slots vs ${hard.label})`, () => {
+      const control = runAxis19({ ...hard.overrides });
+      const result = runAxis19({
+        ...hard.overrides,
+        manualSlots: createPinnedSubSlots([{ role: 'sub2', characterId: 9390 }]),
+      });
+
+      expect(result).not.toBeNull();
+      expect(control).not.toBeNull();
+      // `orderSelectedSubCandidates` puts a constrained role at its own position, so a sub2
+      // pin lands at slots[3]. Positional, not "is 9390 anywhere in the team".
+      expect(result!.slots[3]!.role).toBe('sub');
+      expect(result!.slots[3]!.character.id).toBe(9390);
+      // The control proves the ranking never reaches 9390 on its own.
+      expect(control!.slots.map((slot) => slot.character.id)).not.toContain(9390);
+      expect({ [hard.id]: hard.stillSatisfied(result!) }).toEqual({ [hard.id]: true });
+      // Axis 19 has no field in the relaxation summary at all, so it can never be
+      // over-reported - there is nothing to assert, and that is the honest statement.
+    });
+  }
+
+  it('honours an a19 pin while a11 holds (manual slots vs unique base names)', () => {
+    const result = runAxis19(
+      {
+        requireUniqueBaseCharacterNames: true,
+        manualSlots: createPinnedSubSlots([{ role: 'sub2', characterId: 9390 }]),
+      },
+      { duplicateBaseNames: true },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.slots[3]!.character.id).toBe(9390);
+
+    const subs = result!.slots.filter((slot) => slot.role === 'sub');
+
+    expect(new Set(subs.map((slot) => resolveBaseNameKeyForTest(slot.character.name))).size).toBe(
+      4,
+    );
+  });
+
+  it('applies a5 to the un-pinned leader seat while a19 pins the other (manual slots vs leader boost ranges)', () => {
+    // The carve-out this pair exists for: `candidateMatchesLeaderConstraints` is called with
+    // `applyAutoFillLeaderRanges: false` for the manual pool, so a pinned leader never sees the
+    // boost range. Pin ONE seat and the axis still has to bind on the other; pin both and the
+    // axis is silently disabled, which is what makes a two-seat pin the wrong case to write.
+    const overrides = {
+      leaderBoostRanges: { ATK: { min: 5, max: null }, HP: { min: 1.3, max: null } },
+      manualSlots: createPinnedSubSlots([], 9412),
+    };
+    const result = runAxis19(overrides, { leaderBoostSpread: true });
+
+    expect(result).not.toBeNull();
+    // The pinned captain is out of range and is seated anyway - the manual pool skips the gate.
+    expect(result!.slots[0]!.character.id).toBe(9412);
+    expect(result!.slots[0]!.character.captainHpBoost).toBe(1.2);
+    // The auto-filled friend seat does NOT skip it.
+    expect(result!.slots[1]!.character.captainAtkBoost).toBeGreaterThanOrEqual(5);
+    expect(result!.slots[1]!.character.captainHpBoost).toBeGreaterThanOrEqual(1.3);
+  });
+
+  it('returns no team when two required a19 pins need the same character', () => {
+    // The companion the positive cases need. A required role is not skippable; without this
+    // case, mutating the skip guard to always skip leaves every positive case green.
+    const result = runAxis19({
+      manualSlots: createPinnedSubSlots([
+        { role: 'sub2', characterId: 9390 },
+        { role: 'sub3', characterId: 9390 },
+      ]),
+    });
+
+    expect(result).toBeNull();
+  });
+});
+
+/**
+ * A friend-captain roster that shares no id with the box pool.
+ *
+ * Order is load-bearing. `resolveFriendCaptainCandidatePool` builds the widened pool in roster
+ * order and `comparePreferredLeaderIdOrder` then prefers that order over newest-id, so 9199 is
+ * the record the search reaches first - and the only reason it does not take the seat is the
+ * leader boost gate. Drop that gate and 9199 wins, which is exactly what trap 8 warns about.
+ */
+function createAxis16FriendCaptainRoster(): CharacterDetailRecord[] {
+  const rosterLeader = (id: number, atk: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      secondaryClass: null,
+      captainAtkBoost: atk,
+      captainHpBoost: 1.3,
+      detail: {
+        // The same [Fighter] scope as the box leaders, so the intersected coverage stays
+        // [Fighter] and the PSY/Fighter subs remain admissible whichever leader is chosen.
+        captainAbility: 'Boosts ATK of [Fighter] characters by 5x and HP by 1.3x.',
+        specialText: 'Boosts ATK of [Fighter] characters by 2.25x for 1 turn.',
+      },
+    });
+
+  return [
+    // Fails the ATK floor. First in roster order on purpose.
+    rosterLeader(9199, 2),
+    // The legal roster record the widening is expected to produce.
+    rosterLeader(9100, 5),
+    // Newest id in the roster: it wins if the roster-order preference is dropped.
+    rosterLeader(9500, 5),
+  ];
+}
+
+/**
+ * The party-conflict base name, reimplemented for the assertion side only.
+ *
+ * `resolveCharacterBaseNameKey` is not exported, and asserting through the production helper
+ * would make the test agree with the code by construction: a mutation of the derivation would
+ * move both sides together and the case could not fail.
+ */
+function resolveBaseNameKeyForTest(name: string): string {
+  return name.split(' - ', 1)[0]!.trim().toLowerCase();
+}
+
+
+interface Tier2RecordOptions {
+  /** Subs the captain cannot cover, so axis 7 can be violated (see the comment below). */
+  uncoveredSubs?: boolean;
+  /** Two subs whose names collide under the party-conflict keys, so axis 11 can bind. */
+  duplicateBaseNames?: boolean;
+  /** Leader candidates the axis-5 boost range can split on BOTH its conjuncts. */
+  leaderBoostSpread?: boolean;
+  /** A [Fighter]-covered sub the ranking never reaches, so an axis-19 pin is observable. */
+  manualPinSub?: boolean;
+}
 
 /**
  * One fixture that violates axes 6, 7, 9 and 10 at once, so each reports honestly when it is
@@ -2051,13 +2522,27 @@ const TIER2_UNSATISFIABLE_CRITERIA = {
  * criteria nothing in the pool can satisfy. Two leader-eligible records because one is not
  * enough for this shape to build; see the ledger's open question.
  */
-function createTier2Records(withUncoveredSubs = false): CharacterDetailRecord[] {
-  const leader = (id: number): CharacterDetailRecord =>
+function createTier2Records(options: Tier2RecordOptions = {}): CharacterDetailRecord[] {
+  const {
+    uncoveredSubs: withUncoveredSubs = false,
+    duplicateBaseNames: withDuplicateBaseNames = false,
+    leaderBoostSpread: withLeaderBoostSpread = false,
+    manualPinSub: withManualPinSub = false,
+  } = options;
+  const leader = (
+    id: number,
+    boosts: { atk?: number; hp?: number } = {},
+  ): CharacterDetailRecord =>
     createCharacterRecord({
       id,
       type: 'DEX',
       primaryClass: 'Fighter',
       secondaryClass: null,
+      // `createCharacterRecord` already defaults these to 5 / 1.3; naming them here is what
+      // lets the axis-5 spread below move one of them without touching the captain text, so
+      // the leader's [Fighter] coverage scope stays identical across the whole fixture.
+      captainAtkBoost: boosts.atk ?? 5,
+      captainHpBoost: boosts.hp ?? 1.3,
       detail: {
         captainAbility: 'Boosts ATK of [Fighter] characters by 5x and HP by 1.3x.',
         specialText: 'Boosts ATK of [Fighter] characters by 2.25x for 1 turn.',
@@ -2117,6 +2602,68 @@ function createTier2Records(withUncoveredSubs = false): CharacterDetailRecord[] 
       detail: { specialText: 'Boosts ATK by 2x for 1 turn.' },
     });
 
+  // Axis 11 binds only when two SUB-eligible records share a party-conflict key. The keys are
+  // name-derived: `resolveCharacterBaseNameKey` splits at the first ' - ', so both of these
+  // reduce to 'monkey d. luffy' and collide. The default `Character <id>` names never collide,
+  // which is why the stock fixture makes `requireUniqueBaseCharacterNames: true` vacuous.
+  //
+  // Their ids are the HIGHEST in the set on purpose. Sub ranking ends in
+  // `compareCandidatesByNewestId` (`right.id - left.id`), so twins ranked at the tail would
+  // never both be selected even with the axis off - control and treatment would return the
+  // identical team and no mutation could fail the case. They must outrank the rest.
+  //
+  // Appended rather than substituted, so one distinct spare sub survives: with the axis on the
+  // team still has slack, and a partner axis that removes one more candidate does not turn the
+  // pair into a spurious `null`.
+  //
+  // The class mirrors the branch. Hard-coding 'Fighter' would put the twins inside the
+  // captain's [Fighter] coverage and silently defuse the axis-7 premise on the one branch that
+  // depends on it.
+  const duplicateBaseNameSub = (id: number, suffix: string): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      name: `Monkey D. Luffy - ${suffix}`,
+      type: 'PSY',
+      primaryClass: withUncoveredSubs ? 'Slasher' : 'Fighter',
+      secondaryClass: null,
+      detail: { specialText: 'Boosts ATK by 2x for 1 turn.' },
+    });
+
+  const duplicateBaseNameSubs = withDuplicateBaseNames
+    ? [duplicateBaseNameSub(9498, 'Gear Third'), duplicateBaseNameSub(9499, 'Gear Fourth')]
+    : [];
+
+  // Axis 5 binds only when the boost range can SPLIT the auto-fill leader pool, and it has to
+  // split on both conjuncts: `candidateMatchesLeaderBoostRanges` is `ATK && HP`, so a fixture
+  // that varies only ATK still passes with the HP conjunct deleted. 9411 fails the ATK floor,
+  // 9412 fails the HP floor. Both carry higher ids than the base leaders, so with the range
+  // off they take the leader seats - which is what makes the range's effect observable.
+  //
+  // Only on the covered branch. These are `leader()` clones and therefore [Fighter]-covering,
+  // so on the uncovered-subs branch they would satisfy the very captain-coverage floor that
+  // branch exists to violate, and axis 7 would stop reporting.
+  const leaderBoostSpreadLeaders =
+    withLeaderBoostSpread && !withUncoveredSubs
+      ? [leader(9411, { atk: 4.25 }), leader(9412, { hp: 1.2 })]
+      : [];
+
+  // Axis 19 is only observable on a record the search would NOT have chosen by itself. Sub
+  // ranking ends in newest-id, so the lowest id in the fixture is never reached: the stock
+  // team is 9406, 9405, 9404, 9403 and this record sits below all of them. It is [Fighter]
+  // so the captain still covers it - an uncovered pin is rejected outright and, being
+  // required and therefore non-skippable, takes the whole build to null for the wrong reason.
+  const manualPinSubs = withManualPinSub
+    ? [
+        createCharacterRecord({
+          id: 9390,
+          type: 'PSY',
+          primaryClass: 'Fighter',
+          secondaryClass: null,
+          detail: { specialText: 'Boosts ATK by 2x for 1 turn.' },
+        }),
+      ]
+    : [];
+
   if (withUncoveredSubs) {
     return [
       leader(9400),
@@ -2126,6 +2673,7 @@ function createTier2Records(withUncoveredSubs = false): CharacterDetailRecord[] 
       uncoveredSub(9408),
       uncoveredSub(9409),
       uncoveredSub(9410),
+      ...duplicateBaseNameSubs,
     ];
   }
 
@@ -2138,6 +2686,9 @@ function createTier2Records(withUncoveredSubs = false): CharacterDetailRecord[] 
     sub(9404, 'Boosts ATK by 2x for 1 turn.'),
     sub(9405, 'Boosts ATK by 2x for 1 turn.'),
     sub(9406, 'Boosts ATK by 2x for 1 turn.'),
+    ...duplicateBaseNameSubs,
+    ...leaderBoostSpreadLeaders,
+    ...manualPinSubs,
   ];
 }
 
