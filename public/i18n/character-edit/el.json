@@ -68,7 +68,7 @@
   },
   "actions": {
     "save": "Αποθήκευση local override",
-    "resetOverride": "Reset local override",
+    "resetOverride": "Επαναφορά local override",
     "upload": "Ανέβασμα εικόνας",
     "clear": "Καθαρισμός εικόνας",
     "applyJson": "Εφαρμογή JSON στο draft"

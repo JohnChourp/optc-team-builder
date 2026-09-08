@@ -6,6 +6,48 @@ const GREEK_SCRIPT_PATTERN = /\p{Script=Greek}/u;
 const PLACEHOLDER_PATTERN = /\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/gu;
 
 export const CRITICAL_TRANSLATION_CASES = [
+  /*
+   * character-detail was the worst bundle in the app: 65 of 87 leaves identical
+   * to English, 74.7%, against 20.2% for captain-coverage. Most of that is
+   * correct - OPTC players say Captain Ability, Super Tandem and Final Tap in
+   * English, and 34 of the live leaves have unanimous precedent elsewhere in
+   * this repo for staying that way.
+   *
+   * These fourteen do not. Seven were settled by precedent pointing the other
+   * way - "Notes" is «Σημειώσεις» in five other bundles with no counter-example,
+   * and the root bundle already ships «Επαναφορά» - and seven were the owner's
+   * call on 2026-09-08.
+   *
+   * They are listed here because the parity check cannot protect them: it
+   * compares key SETS and says so in its own docblock, so a value quietly
+   * reverting to English is invisible to it. This file is the only place that
+   * asserts a Greek value is actually Greek.
+   */
+  {
+    scope: 'character-detail',
+    keys: [
+      'hero.resetOverride',
+      'fields.captainNotes',
+      'fields.parsedCriteria',
+      'fields.sailorNotes',
+      'fields.specialNotes',
+      'fields.pattern',
+      'fields.requirement',
+      'fields.stars',
+      'fields.target',
+      'sections.enhancements',
+      'sections.captainCoverageTiers',
+      'superSpecial.notesLabel',
+      'support.maxLevelEffect',
+      'support.supportedCharactersLabel',
+    ],
+  },
+  {
+    // The identical omission on the sibling page: four Greek buttons in one row
+    // and the reset button English, exactly as character-detail had it.
+    scope: 'character-edit',
+    keys: ['actions.resetOverride'],
+  },
   {
     scope: 'saved-teams',
     keys: [
