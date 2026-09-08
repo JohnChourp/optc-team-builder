@@ -27,6 +27,32 @@ import ts from 'typescript';
 
 const REQUIRED_BULLET_LISTS = ['added', 'improved', 'fixed'];
 
+/**
+ * Words CLAUDE.md forbids in a What's New entry, verbatim from its list.
+ *
+ * The rule around them - "say WHERE it happened", naming the screen and the
+ * place inside it - is NOT checked here and deliberately so. Three guard
+ * variants were measured against all 110 visible entries and the best rejected
+ * 44% of the English and 65% of the Greek, on prose a human had already
+ * approved: an app-wide fix has no single screen to name, "each card" and "the
+ * character portrait" are places no closed list contains, and Greek inflects
+ * («οθόνες» is «οθόνη»). Worse, the variant permissive enough to pass those was
+ * carried by the bare word "characters" on a third of its passes, so it
+ * certified the two bullets nearest to breaking the rule. "Names a place the
+ * reader can find" is semantic, and no substring test approximates it at a
+ * usable error rate.
+ *
+ * THIS list is a different kind of claim: a closed set, written down, that must
+ * never appear. It measured 2 hits and zero false positives across all 1,124
+ * text units. "control" is excluded on the same evidence - 10 occurrences, all
+ * legitimate player prose ("the new bulk controls let you add or remove...").
+ *
+ * Scoped to the released entry only. The past never changes, so the two
+ * published v0.1.20 strings that say "dialog" stay as they were shipped.
+ */
+const FORBIDDEN_DEVELOPER_WORDS = ['modal', 'dialog', 'overlay', 'component', 'widget'];
+const SOURCE_FILENAME_PATTERN = /\b[\w.-]+\.(?:ts|js|mjs|scss|css|html|json)\b/iu;
+
 export function normalizePath(value) {
   return String(value ?? '')
     .replace(/\\/gu, '/')
@@ -247,6 +273,52 @@ export function inspectWhatsNew({ appRoot = process.cwd() } = {}) {
         version: where,
         detail: `${where} claims a visible change but lists nothing a player would notice.`,
       });
+    }
+
+    // E. the NEWEST entry speaks the reader's language, not ours.
+    //
+    // Newest, not released: the entry is written before the version bump, so
+    // keying this on `releasedVersion` would check the PREVIOUS release and let
+    // the new entry through until the release itself ran. Everything below the
+    // top is already published and never changes - which is also what keeps the
+    // two v0.1.20 strings that say "dialog" exactly as they shipped.
+    if (entry !== entries[0]) {
+      continue;
+    }
+
+    const units = [
+      ['headline.en', entry.headline?.en],
+      ['headline.el', entry.headline?.el],
+      ['summaryEn', entry.summaryEn],
+      ['summaryEl', entry.summaryEl],
+      ...bullets.flatMap((bullet, index) => [
+        [`bullet ${index + 1} (en)`, bullet?.en],
+        [`bullet ${index + 1} (el)`, bullet?.el],
+      ]),
+    ];
+
+    for (const [field, value] of units) {
+      const text = String(value ?? '');
+
+      for (const word of FORBIDDEN_DEVELOPER_WORDS) {
+        if (new RegExp(`\\b${word}s?\\b`, 'iu').test(text)) {
+          findings.push({
+            kind: 'developer-vocabulary',
+            version: where,
+            detail: `${where} ${field} says "${word}". Write what the reader calls it - a pop-up, the filter bar, the results list - never our word for it.`,
+          });
+        }
+      }
+
+      const filename = SOURCE_FILENAME_PATTERN.exec(text);
+
+      if (filename) {
+        findings.push({
+          kind: 'developer-vocabulary',
+          version: where,
+          detail: `${where} ${field} names the file "${filename[0]}". Name the screen and the place inside it instead.`,
+        });
+      }
     }
   }
 

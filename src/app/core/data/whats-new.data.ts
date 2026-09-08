@@ -31,6 +31,56 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.4',
+    date: '2026-09-08',
+    userVisible: true,
+    headline: {
+      en: 'Four things that quietly went wrong, and now do not',
+      el: 'Τέσσερα πράγματα που πήγαιναν στραβά στα κρυφά, και πλέον όχι',
+    },
+    summaryEn:
+      'Four fixes, and none of them announced itself while it was happening. On Captain Coverage the spinner could take over the results list and never leave: press a filter, then walk to another screen and come back, and the list was gone for the rest of the visit. On Auto Team Builder the Guided auto build switch turned itself back off if you flipped it while the screen was still loading - your press was accepted and then thrown away. On Saved Teams, sharing a team on an iPhone or in Safari opened the share sheet and then told you "Copied", which was not true; it now says "Shared". And on Captain Coverage, saving a team with the Friend Captain seat left empty came back with every HP and ATK number doubled, because the empty seat was being stored as a second copy of your Captain - the game does not need a Friend Captain, so an empty seat now counts for nothing. The rest is wording: the favourites switch reads the same on every screen that has one, the results header on Captain Coverage says the count is by your Captain, and six labels that had been left in English are now Greek.',
+    summaryEl:
+      'Τέσσερις διορθώσεις, και καμία τους δεν φαινόταν την ώρα που συνέβαινε. Στο Captain Coverage το spinner μπορούσε να πάρει τη θέση της λίστας αποτελεσμάτων και να μη φύγει ποτέ: πατούσες ένα φίλτρο, πήγαινες σε άλλη οθόνη και γύριζες, και η λίστα είχε χαθεί για όλη την υπόλοιπη επίσκεψη. Στο Auto Team Builder ο διακόπτης Guided auto build ξανάκλεινε μόνος του αν τον άνοιγες όσο η οθόνη φόρτωνε ακόμη - το πάτημά σου γινόταν δεκτό και μετά πεταγόταν. Στα Saved Teams, το share μιας ομάδας σε iPhone ή Safari άνοιγε το share sheet και μετά σου έλεγε "Copied", που δεν ίσχυε· τώρα λέει "Shared". Και στο Captain Coverage, αν αποθήκευες ομάδα με τη θέση Friend Captain άδεια, γύριζε με όλα τα νούμερα HP και ATK διπλασιασμένα, γιατί η άδεια θέση αποθηκευόταν σαν δεύτερο αντίγραφο του Captain σου - το παιχνίδι δεν χρειάζεται Friend Captain, οπότε μια άδεια θέση δεν μετράει πια καθόλου. Τα υπόλοιπα είναι διατύπωση: ο διακόπτης favorites γράφει το ίδιο σε κάθε οθόνη που τον έχει, η κεφαλίδα αποτελεσμάτων στο Captain Coverage λέει ότι ο αριθμός είναι από τον Captain σου, και έξι ετικέτες που είχαν μείνει στα αγγλικά είναι πλέον ελληνικά.',
+    added: [],
+    improved: [
+      {
+        en: 'The favourites switch in the filter bar now reads "Show favorites" on Characters, Rumble Characters and the character picker pop-up too, matching Captain Coverage. It is the same switch everywhere, so it now says the same thing everywhere.',
+        el: 'Ο διακόπτης favorites στη μπάρα φίλτρων γράφει πλέον «Δείξε favorites» και στα Characters, στα Rumble Characters και στο αναδυόμενο παράθυρο επιλογής χαρακτήρα, όπως στο Captain Coverage. Είναι ο ίδιος διακόπτης παντού, οπότε λέει πια το ίδιο παντού.',
+      },
+      {
+        en: 'The results header on Captain Coverage now says the boosted count is by your Captain. Each card in the results list shows your Captain and Friend Captain multiplied together, so a single number labelled only "boosted" left it unclear which of the two it meant.',
+        el: 'Η κεφαλίδα αποτελεσμάτων στο Captain Coverage λέει πλέον ότι ο αριθμός των ενισχυμένων είναι από τον Captain σου. Κάθε κάρτα στη λίστα αποτελεσμάτων δείχνει τον Captain και τον Friend Captain πολλαπλασιασμένους, οπότε ένας σκέτος αριθμός δεν έλεγε ποιο από τα δύο εννοούσε.',
+      },
+      {
+        en: 'Six labels are in Greek at last: the two headings above the results list and the team panel on Captain Coverage, and the four tier names ("Baseline", "Top tier", "Conditional", "Baseline + Conditional") in the tier filter there and on the character card of a character\'s own screen.',
+        el: 'Έξι ετικέτες είναι επιτέλους στα ελληνικά: οι δύο επικεφαλίδες πάνω από τη λίστα αποτελεσμάτων και το πάνελ ομάδας στο Captain Coverage, και τα τέσσερα ονόματα tier («Βασικό», «Κορυφαίο tier», «Υπό συνθήκη», «Βασικό + Υπό συνθήκη») στο φίλτρο tier εκεί και στην κάρτα χαρακτήρα της οθόνης του κάθε χαρακτήρα.',
+      },
+      {
+        en: 'The line under the character box picker on Auto Team Rumble Builder no longer repeats the option you already picked. Choosing "All Rumble characters" used to add "Use every Rumble-capable local character." underneath it, which said nothing the option did not.',
+        el: 'Η γραμμή κάτω από τον επιλογέα character box στο Auto Team Rumble Builder δεν επαναλαμβάνει πια την επιλογή που μόλις έκανες. Διαλέγοντας «Όλοι οι Rumble χαρακτήρες» πρόσθετε από κάτω «Χρησιμοποίησε κάθε τοπικό character με Rumble data.», που δεν έλεγε τίποτα που δεν έλεγε ήδη η επιλογή.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'The results list on Captain Coverage no longer disappears behind a spinner that never goes away. Pressing a filter and then leaving the screen and coming back could leave the loading spinner in place of your results for the rest of the visit.',
+        el: 'Η λίστα αποτελεσμάτων στο Captain Coverage δεν εξαφανίζεται πια πίσω από ένα spinner που δεν φεύγει ποτέ. Αν πατούσες ένα φίλτρο και μετά έφευγες από την οθόνη και ξαναγύριζες, το spinner μπορούσε να μείνει στη θέση των αποτελεσμάτων για όλη την υπόλοιπη επίσκεψη.',
+      },
+      {
+        en: 'The Guided auto build switch in the filter bar on Auto Team Builder no longer turns itself back off. Flipping it while the screen was still loading looked like it worked and then quietly undid itself; it now waits until the screen is ready before it can be pressed.',
+        el: 'Ο διακόπτης Guided auto build στη μπάρα φίλτρων του Auto Team Builder δεν ξανακλείνει πια μόνος του. Αν τον άνοιγες όσο η οθόνη φόρτωνε ακόμη, φαινόταν να δουλεύει και μετά αναιρούνταν σιωπηλά· τώρα περιμένει να ετοιμαστεί η οθόνη πριν μπορέσει να πατηθεί.',
+      },
+      {
+        en: 'Sharing a team from Saved Teams on an iPhone or in Safari no longer says "Copied" when nothing was copied. The banner said that every time, right above a line telling you the share sheet had opened instead; it now says "Shared".',
+        el: 'Το share μιας ομάδας από τα Saved Teams σε iPhone ή Safari δεν λέει πια «Copied» ενώ δεν αντιγράφηκε τίποτα. Το μήνυμα το έλεγε κάθε φορά, ακριβώς πάνω από μια γραμμή που σου έλεγε ότι άνοιξε το share sheet· τώρα λέει «Shared».',
+      },
+      {
+        en: 'Saving a team on Captain Coverage with the Friend Captain seat left empty no longer doubles every HP and ATK number when you load it back. The empty seat was stored as a second copy of your Captain, and the team slots came back with both leader seats filled by the same character.',
+        el: 'Η αποθήκευση ομάδας στο Captain Coverage με τη θέση Friend Captain άδεια δεν διπλασιάζει πια κάθε νούμερο HP και ATK όταν την ξαναφορτώνεις. Η άδεια θέση αποθηκευόταν σαν δεύτερο αντίγραφο του Captain σου, και οι θέσεις της ομάδας γύριζαν με τις δύο θέσεις leader γεμάτες από τον ίδιο χαρακτήρα.',
+      },
+    ],
+  },
+  {
     version: '0.4.3',
     date: '2026-09-08',
     userVisible: true,
