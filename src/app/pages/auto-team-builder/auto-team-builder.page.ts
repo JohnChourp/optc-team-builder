@@ -931,6 +931,22 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * that accepts a press and then quietly discards it is not.
    */
   public readonly pageReady = signal(false);
+  /**
+   * What every control in the filter panel binds its `disabled` state to.
+   *
+   * The guard above shipped bound to ONE control - the guided auto build toggle
+   * - while its own docstring claimed every filter control was gated on it. The
+   * three toggles beside it (favourites only, favourite ships only, allow any
+   * Friend Captain auto-fill) reset from the same four lines of
+   * `resetPageState()`, so the mechanism was byte-identical and only one of the
+   * four wore the guard. Twenty-seven controls bound `[disabled]="building()"`
+   * alone, and `building()` is false for the whole of the initial load.
+   *
+   * Binding one expression rather than repeating the pair is the point: a
+   * control added later inherits the guard instead of re-opening the hole, and
+   * `auto-team-builder.page.spec.ts` asserts the bare form is gone.
+   */
+  public readonly controlsDisabled = computed(() => this.building() || !this.pageReady());
   /** The first load, so `ionViewWillEnter` can wait for it rather than race it. */
   private initialLoad: Promise<void> | null = null;
   public readonly favoriteShipsOnly = signal(false);
@@ -1430,7 +1446,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     () =>
       !this.hasSelectedClasses() ||
       !this.hasSelectedTypes() ||
-      this.building() ||
+      this.controlsDisabled() ||
       this.buildBlockedByCharacterScope() ||
       this.buildBlockedByFavorites() ||
       this.hasInvalidLeaderBoostRanges(),
