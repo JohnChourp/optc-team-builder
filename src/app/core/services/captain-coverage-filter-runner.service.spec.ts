@@ -39,7 +39,14 @@ class FakeWorker {
     this.listeners.set(type, existing);
   }
 
+  /** Set to make `postMessage` throw, the way a structured-clone failure does. */
+  public throwOnFilterPost = false;
+
   public postMessage(request: CaptainCoverageFilterWorkerRequest): void {
+    if (this.throwOnFilterPost && request.type === 'filter') {
+      throw new DOMException('could not be cloned', 'DataCloneError');
+    }
+
     this.posted.push(request);
   }
 
@@ -240,6 +247,56 @@ describe('CaptainCoverageFilterRunnerService', () => {
     // worker that has failed once turns a slow page into one that never answers.
     await runner.run(createDataset(), createParams());
     expect(FakeWorker.instances).toHaveLength(1);
+  });
+
+  it('runs the pass once, not twice, when posting the request throws', async () => {
+    /*
+     * A structured-clone failure rejects the request promise while its entry is
+     * still in `pending`. `abandonWorker` then answers everything still waiting
+     * by running the pass in-thread - including this request, whose promise is
+     * already settled - and `run` runs it a second time for the value it
+     * returns. Two full catalog passes for one press, one of them for an answer
+     * nobody can receive.
+     *
+     * Mutation check: drop the `pending.delete(requestId)` from the catch and
+     * the spy is entered twice.
+     */
+    installFakeWorker();
+
+    const runner = new CaptainCoverageFilterRunnerService();
+    const dataset = createDataset();
+
+    // First press builds the worker and sends `init`; the second is the one
+    // whose `filter` post throws.
+    const settled = runner.run(dataset, createParams());
+
+    FakeWorker.instances[0]!.emitMessage({
+      type: 'result',
+      requestId: 1,
+      ids: [],
+      boostedCount: 0,
+    });
+    await settled;
+
+    FakeWorker.instances[0]!.throwOnFilterPost = true;
+
+    const passes: CaptainCoverageResultPassParams[] = [];
+    const trackedParams = createParams();
+    const outcome = await runner.run(
+      dataset,
+      new Proxy(trackedParams, {
+        get(target, key, receiver) {
+          if (key === 'sortMode') {
+            passes.push(target);
+          }
+
+          return Reflect.get(target, key, receiver) as unknown;
+        },
+      }) as CaptainCoverageResultPassParams,
+    );
+
+    expect(outcome.ids).toEqual([2002, 2001]);
+    expect(passes).toHaveLength(1);
   });
 
   it('rebuilds the worker after an explicit reset', async () => {

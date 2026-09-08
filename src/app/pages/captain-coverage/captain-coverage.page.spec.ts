@@ -371,7 +371,7 @@ describe('CaptainCoveragePage', () => {
       page.assignCharacterFromResult(card!);
     }
 
-    expect(page.hasFreeSubSlot()).toBe(false);
+    expect(page.selectedTeamSlots().slice(2).every(Boolean)).toBe(true);
 
     const plainCard = page.visibleResultCards().find((card) => card.character.id === 2001);
     const expensiveCard = page.visibleResultCards().find((card) => card.character.id === 2002);
@@ -414,7 +414,7 @@ describe('CaptainCoveragePage', () => {
       page.assignCharacterFromResult(card!);
     }
 
-    expect(page.hasFreeSubSlot()).toBe(false);
+    expect(page.selectedTeamSlots().slice(2).every(Boolean)).toBe(true);
     const spareCard = page.visibleResultCards().find((card) => card.character.id === 2005);
     expect(spareCard).toBeDefined();
     expect(spareCard?.assignableSlotIndex).toBeNull();
@@ -641,10 +641,10 @@ describe('CaptainCoveragePage', () => {
     expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Luffy Candidate']);
 
     await page.onSearchChange({ detail: { value: '' } } as CustomEvent<{ value?: string | null }>);
-    await page.toggleFavoritesOnly();
+    await page.onFavoritesOnlyFilterChange(true);
     expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Ace Candidate']);
 
-    await page.toggleHideFavorites();
+    await page.onHideFavoritesFilterChange(true);
     expect(page.favoritesOnly()).toBe(false);
     expect(page.visibleResultCards().map((card) => card.character.name)).toEqual([
       'Luffy Candidate',
@@ -1323,7 +1323,7 @@ describe('CaptainCoveragePage', () => {
     expect(page.selectedCharacterBox()?.name).toBe('Coverage Box');
     expect(page.selectedCharacterBoxIds()).toEqual([2001]);
     expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['In Box Candidate']);
-    expect(page.characterBoxSupportLabel()).toBe(
+    expect(selectedCharacterBoxSupportText(page)).toBe(
       'captain-coverage.filters.characterBox.support.withCount',
     );
   });
@@ -1349,11 +1349,14 @@ describe('CaptainCoveragePage', () => {
     await page.onCharacterBoxChange({
       detail: { value: 'box-1' },
     } as CustomEvent<{ value?: string | null }>);
-    await page.toggleFavoritesOnly();
+    await page.onFavoritesOnlyFilterChange(true);
 
-    expect(page.selectedCharacterBoxFavoriteCount()).toBe(1);
     expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Favorite Candidate']);
-    expect(page.characterBoxSupportLabel()).toBe(
+    // The support line under the box select is the rendered readout of the
+    // favourite count, and `characterBoxFilterOptions` is the member that
+    // reaches it - `app-character-filter-row` prints the selected option's
+    // `supportText` (character-filter-row.component.ts).
+    expect(selectedCharacterBoxSupportText(page)).toBe(
       'captain-coverage.filters.characterBox.support.withFavorites',
     );
   });
@@ -1693,7 +1696,7 @@ describe('CaptainCoveragePage', () => {
     page.assignCharacterFromResult(page.visibleResultCards()[0]!);
 
     expect(page.selectedCaptainDetail()).toBeNull();
-    expect(page.selectedCaptain()).toBeNull();
+    expect(page.selectedTeamSlots()[0] ?? null).toBeNull();
     expect(page.selectedTeamSlots()[2]?.id).toBe(2001);
   });
 
@@ -2270,10 +2273,10 @@ describe('CaptainCoveragePage', () => {
     page.onMaxTotalCostChange({ detail: { value: '100' } } as CustomEvent<{ value: string }>);
 
     await page.setTeamSlotCharacter(0, expensiveLeader);
-    expect(page.selectedCaptain()).toBeNull();
+    expect(page.selectedTeamSlots()[0] ?? null).toBeNull();
 
     await page.setTeamSlotCharacter(0, cheapLeader);
-    expect(page.selectedCaptain()?.id).toBe(1001);
+    expect(page.selectedTeamSlots()[0]?.id).toBe(1001);
 
     // Friend Captain cost is never counted, so the budget cannot block slot 1.
     await page.setTeamSlotCharacter(1, expensiveLeader);
@@ -3658,6 +3661,50 @@ describe('CaptainCoveragePage', () => {
     expect(page.visibleResultCards().map((card) => card.character.name)).toEqual(['Favorite Candidate']);
   });
 
+  it('clears the loader when a quiet pass supersedes a loud one', async () => {
+    /*
+     * The regression this guards. The loader was raised behind `if (reason)`
+     * and cleared behind the SAME `if (reason)`, while 16 of the 17
+     * `runResultPass` call sites pass null. So: press a filter (loader up),
+     * then let any quiet pass overtake it - `ionViewWillEnter` on returning to
+     * the tab, or a favourite toggled from a character screen - and the loud
+     * pass returned at the generation check without clearing, while the quiet
+     * pass never entered the branch that clears. `resultsPending()` stayed true
+     * and the spinner replaced the result list for the rest of the visit.
+     *
+     * Mutation check: revert the clear to `if (reason)` and this fails on the
+     * last assertion with `resultsPending()` still true.
+     */
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Supersede Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const candidate = createCharacter({ id: 2001, name: 'Supersede Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, candidate],
+      favoriteIds: [2001],
+    });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+
+    // Loud pass: raises the loader, then yields a frame before doing the work.
+    const loud = page.onFavoritesOnlyFilterChange(true);
+
+    expect(page.resultsPending()).toBe(true);
+
+    // A quiet pass overtakes it while it is still in flight. `ionViewWillEnter`
+    // is the real one; it passes no reason, so it used to leave the loader up.
+    const quiet = page.ionViewWillEnter();
+
+    await Promise.all([loud, quiet]);
+
+    expect(page.resultsPending()).toBe(false);
+    expect(page.resultsPendingReason()).toBeNull();
+  });
+
   it('closes a tag-set modal first, then loads, so the press is acknowledged', async () => {
     const leader = createCharacter({
       id: 1001,
@@ -3745,14 +3792,52 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('{{ resultsPendingLabel() }}');
   });
 
-  it('drops the helper line that only restated the All characters option', () => {
+  it('says nothing at all when there are no character boxes', () => {
     const { page } = createPage();
 
-    expect(page.characterBoxSupportLabel()).toBe(
+    expect(selectedCharacterBoxSupportText(page)).toBe(
       'captain-coverage.filters.characterBox.support.noBoxes',
     );
   });
+
+  it('drops the helper line that only restated the All characters option', async () => {
+    /*
+     * This used to call `createPage()` with no boxes and no `ngOnInit()`, so
+     * the helper returned at its FIRST branch (`noBoxes`) and the test asserted
+     * that instead of the branch in its own title. The `return ''` for the All
+     * option - the line the owner had removed as meaningless (869exeh57) - was
+     * reachable by no test at all, so restoring it would have gone unnoticed.
+     */
+    const { page } = createPage({
+      characterBoxes: [createCharacterBox('box-1', 'Some Box', [2001])],
+    });
+
+    await page.ngOnInit();
+
+    const allOption = page.characterBoxFilterOptions().find((option) => option.value === '');
+
+    expect(allOption?.label).toBe('captain-coverage.filters.characterBox.options.all');
+    expect(allOption?.supportText).toBe('');
+  });
 });
+
+/**
+ * The support line the box select actually shows.
+ *
+ * `app-character-filter-row` renders the SELECTED option's `supportText`
+ * (character-filter-row.component.ts), so `characterBoxFilterOptions` is the
+ * member on the page that reaches the user. The page used to carry a second,
+ * unrendered `characterBoxSupportLabel` computed that these tests probed
+ * instead; it was deleted, and they now read the live path.
+ */
+function selectedCharacterBoxSupportText(page: CaptainCoveragePage): string {
+  const selectedValue = page.selectedCharacterBoxId() ?? '';
+
+  return (
+    page.characterBoxFilterOptions().find((option) => option.value === selectedValue)
+      ?.supportText ?? ''
+  );
+}
 
 function readCaptainCoverageTemplate(): string {
   return readFileSync(
