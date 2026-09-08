@@ -1828,13 +1828,31 @@ export class CaptainCoveragePage implements OnInit {
     });
   }
 
+  /**
+   * An EMPTY Friend Captain seat is recorded as empty, not as the Captain.
+   *
+   * This used to write `slots[1]?.id ?? captainId`, and on reload that is
+   * indistinguishable from a reader who deliberately put the same character in
+   * both leader seats - which is legal, and whose boost counts twice. So
+   * `combineLeaderCaptainCoverageBoosts` folded the Captain's multiplier into
+   * itself and a card that read `ATK:2` before saving read `ATK:4` after: the
+   * same team, the same screen, a different number, with nothing on screen to
+   * explain it.
+   *
+   * The game does not require a Friend Captain, so an empty seat contributes
+   * x1. `SavedTeam.slots` is `Array<number | null>` and every reader already
+   * handles a null seat, so `null` IS the explicit record - there is nothing to
+   * infer and nothing to compare against `slots[0]`. Teams saved before this
+   * keep their literal Captain id in seat 1, which now reads as the deliberate
+   * same-character choice it is indistinguishable from; only new saves record
+   * the empty seat.
+   */
   private buildSavedTeamSlots(): Array<number | null> {
     const slots = this.selectedTeamSlots();
-    const captainId = slots[0]?.id ?? null;
 
     return [
-      captainId,
-      slots[1]?.id ?? captainId,
+      slots[0]?.id ?? null,
+      slots[1]?.id ?? null,
       slots[2]?.id ?? null,
       slots[3]?.id ?? null,
       slots[4]?.id ?? null,
