@@ -129,6 +129,47 @@
  * against on its own - and Ionic sizes a small button from its own padding, so
  * width and height are set explicitly rather than left to min-*.
  */
+/*
+ * The crown is lifted out of flow by `.captain-result__leader` itself, so when
+ * it is wrapped for its tooltip the wrapper has to take the positioning or the
+ * button falls back into the card's flow. The wrapper is what receives the
+ * pointer, because Ionic makes a disabled button untouchable.
+ */
+.captain-result__leader-wrap {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.captain-result__leader-wrap .captain-result__leader {
+  position: static;
+}
+
+/*
+ * Reads as unavailable rather than as a crown somebody forgot to style: the
+ * fill drops to the card's own surface and the icon dims, while the shape stays
+ * identical so the corner does not jump between a character who can lead and
+ * one who cannot.
+ */
+.captain-result__leader--unavailable {
+  --background: rgba(255, 255, 255, 0.06);
+  --background-activated: rgba(255, 255, 255, 0.06);
+  --background-hover: rgba(255, 255, 255, 0.06);
+  --opacity: 1;
+  box-shadow: none;
+}
+
+.captain-result__leader--unavailable ion-icon {
+  opacity: 0.45;
+}
+
+.captain-result__leader--unavailable::after {
+  display: none;
+}
+
 .captain-result__leader {
   position: absolute;
   top: 8px;

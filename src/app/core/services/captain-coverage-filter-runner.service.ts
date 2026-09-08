@@ -32,6 +32,19 @@ interface PendingCaptainCoverageFilterRequest {
  *    answered in-thread and the worker is dropped for the rest of the session.
  *    Retrying a worker that has already failed once turns a slow page into a
  *    page that never answers.
+ *
+ * There is deliberately **no `reset()`**. One existed, was born with no caller
+ * in the commit that added it, and never gained one - while its doc comment
+ * claimed it was "used when the catalog is replaced". It was not: `run()`
+ * re-sends `init` whenever the dataset identity changes, and the page rebuilds
+ * that object whenever the catalog does, so the replacement case is already
+ * handled by a cheaper path that keeps the worker instead of destroying it.
+ *
+ * It would also have hung the page. `reset()` called `terminateWorker()`, which
+ * - unlike `abandonWorker()` - leaves `pending` untouched, and the promise in
+ * `run()` has no reject path and no timeout. `nextRequestId` only ever
+ * increases, so the id in flight could never be matched again and the reader
+ * would sit under a spinner that the results pass could no longer clear.
  */
 @Injectable({ providedIn: 'root' })
 export class CaptainCoverageFilterRunnerService {
@@ -90,12 +103,6 @@ export class CaptainCoverageFilterRunnerService {
 
       return runCaptainCoverageResultPass(dataset, params);
     }
-  }
-
-  /** Drops the worker so the next run rebuilds it. Used when the catalog is replaced. */
-  public reset(): void {
-    this.terminateWorker();
-    this.workerUnavailable = false;
   }
 
   private ensureWorker(): Worker | null {

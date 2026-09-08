@@ -618,6 +618,44 @@
                     >
                       <ion-icon [icon]="leaderIcon" aria-hidden="true"></ion-icon>
                     </ion-button>
+                  } @else {
+                    <!--
+                      359 of the 4,614 characters in the catalogue have no
+                      Captain Ability, so `canBeLeader` is false and no crown was
+                      drawn - and nothing else on the card said why. The reader
+                      got an absence, which is indistinguishable from the app
+                      being broken.
+
+                      The sentence for exactly this state has existed in both
+                      languages since the leader buttons were first built. It was
+                      orphaned by the redesign that replaced two buttons with one
+                      crown: the `leaderOverBudget` branch survived into
+                      `disabledReason`, the `canBeLeader` branch did not, and the
+                      string was left behind. It is the only member of
+                      `team.actions.*` that nothing rendered.
+
+                      Same wrapper shape as the add button below, for the same
+                      reason: Ionic sets `pointer-events: none` on
+                      `:host(.button-disabled)`, so a disabled ion-button is
+                      never hit-tested and the browser never paints its own
+                      tooltip. The wrapper carries the title; the button carries
+                      the accessible name.
+                    -->
+                    <span
+                      class="captain-result__leader-wrap"
+                      [attr.title]="t('team.actions.leaderUnavailable')"
+                    >
+                      <ion-button
+                        size="small"
+                        fill="solid"
+                        class="captain-result__leader captain-result__leader--unavailable"
+                        data-test="captain-result-leader-unavailable"
+                        [disabled]="true"
+                        [attr.aria-label]="t('team.actions.leaderUnavailable')"
+                      >
+                        <ion-icon [icon]="leaderIcon" aria-hidden="true"></ion-icon>
+                      </ion-button>
+                    </span>
                   }
                   <a
                     class="captain-result__thumb"

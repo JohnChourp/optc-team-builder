@@ -299,21 +299,36 @@ describe('CaptainCoverageFilterRunnerService', () => {
     expect(passes).toHaveLength(1);
   });
 
-  it('rebuilds the worker after an explicit reset', async () => {
+  /*
+   * This replaces a test for a `reset()` that no longer exists. That method was
+   * born with no caller and never gained one, while its doc comment claimed it
+   * was "used when the catalog is replaced" - a job this path already does,
+   * without destroying the worker.
+   *
+   * The old test could not have caught what was wrong with it either: it
+   * awaited the in-flight promise BEFORE calling reset, which is the one
+   * ordering where a method that abandons `pending` without settling it does no
+   * harm.
+   */
+  it('keeps one worker across a catalog replacement and re-sends the dataset', async () => {
     installFakeWorker();
 
     const runner = new CaptainCoverageFilterRunnerService();
-    const pending = runner.run(createDataset(), createParams());
+    const first = runner.run(createDataset(), createParams());
 
     FakeWorker.instances[0]!.emitMessage({ type: 'result', requestId: 1, ids: [], boostedCount: 0 });
-    await pending;
+    await first;
 
-    runner.reset();
-
+    // A replaced catalog is a new dataset object, which is exactly what the
+    // page hands over when its `computed` recomputes.
     const next = runner.run(createDataset(), createParams());
 
-    expect(FakeWorker.instances).toHaveLength(2);
-    FakeWorker.instances[1]!.emitMessage({
+    expect(FakeWorker.instances).toHaveLength(1);
+    expect(FakeWorker.instances[0]!.posted.filter((message) => message.type === 'init')).toHaveLength(
+      2,
+    );
+
+    FakeWorker.instances[0]!.emitMessage({
       type: 'result',
       requestId: 2,
       ids: [],
