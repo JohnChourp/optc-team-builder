@@ -2566,6 +2566,19 @@ describe('CaptainCoveragePage', () => {
     expect(template).toContain('@if (card.canBeLeader) {');
     expect(template).toContain('(click)="openLeaderSlotPicker(card)"');
     expect(template).toContain('[icon]="leaderIcon"');
+    /*
+     * And a character that CANNOT lead says so, rather than showing an absence
+     * the reader cannot tell from a broken page. 359 of the catalogue's 4,614
+     * characters have no Captain Ability.
+     *
+     * The title has to sit on the wrapper, not the button: Ionic sets
+     * `pointer-events: none` on `:host(.button-disabled)`, so a disabled
+     * ion-button is never hit-tested and would never paint a tooltip.
+     */
+    expect(template).toContain('data-test="captain-result-leader-unavailable"');
+    expect(template).toContain("[attr.title]=\"t('team.actions.leaderUnavailable')\"");
+    expect(template).toContain("[attr.aria-label]=\"t('team.actions.leaderUnavailable')\"");
+    expect(template).toContain('class="captain-result__leader-wrap"');
     expect(template).not.toContain('leaderButtonLabel()');
     expect(template).not.toContain('card.leaderFitsBudget');
     // Cost on the card, and the Selected Captain row gone from the team panel.
@@ -3531,7 +3544,6 @@ describe('CaptainCoveragePage', () => {
     const answers = [first, second];
     const filterRunnerOverride = {
       run: vi.fn(() => answers.shift()!.promise),
-      reset: vi.fn(),
     } as unknown as CaptainCoverageFilterRunnerService;
     const leader = createCharacter({ id: 1001, name: 'Race Leader' });
     const { page } = createPage({
