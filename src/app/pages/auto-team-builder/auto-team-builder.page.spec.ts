@@ -209,8 +209,78 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     const toggle = template.slice(template.indexOf('data-testid="guided-auto-build-toggle"'));
 
     expect(toggle.slice(0, toggle.indexOf('</ion-toggle>'))).toContain(
-      '[disabled]="building() || !pageReady()"',
+      '[disabled]="controlsDisabled()"',
     );
+  });
+
+  /*
+   * The guard above shipped bound to ONE control while its own docstring said
+   * "Every filter control is gated on it". `pageReady` appeared exactly once in
+   * this template - the guided toggle - and twenty-seven controls bound
+   * `[disabled]="building()"` alone, `building()` being false for the whole of
+   * the initial load.
+   *
+   * The three toggles beside guided auto build are the plainest case: favourites
+   * only, favourite ships only and allow-any-Friend-Captain reset from the same
+   * four adjacent lines of `resetPageState()`, so the mechanism was identical
+   * and only one of the four wore the guard.
+   *
+   * Asserting the absence of the bare form is what makes this hold for controls
+   * nobody has written yet: a new `[disabled]="building()"` fails here rather
+   * than silently re-opening the window.
+   */
+  it('gives every control in the filter panel the same page-ready guard', async () => {
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+
+    expect(template).not.toContain('[disabled]="building()"');
+    expect(template).not.toContain('[disabled]="building() || !pageReady()"');
+
+    // The four toggles reset from the same four adjacent lines of
+    // `resetPageState()`, identified here by the handler each one calls.
+    for (const handler of [
+      'onFavoritesOnlyToggle',
+      'onFavoriteShipsOnlyToggle',
+      'onAllowAnyFriendCaptainAutoFillToggle',
+      'onGuidedAutoBuildToggle',
+    ]) {
+      const index = template.indexOf(`${handler}($event)`);
+
+      expect(index, `${handler} is no longer bound in the template`).toBeGreaterThan(-1);
+
+      const opening = template.lastIndexOf('<ion-toggle', index);
+
+      expect(
+        template.slice(opening, index),
+        `${handler}'s toggle does not wait for the page to finish loading`,
+      ).toContain('[disabled]="controlsDisabled()"');
+    }
+  });
+
+  it('holds every control disabled for exactly the window the reset owns', async () => {
+    const { page } = await createPage();
+
+    expect(page.controlsDisabled()).toBe(true);
+
+    const loading = page.ngOnInit();
+
+    expect(page.controlsDisabled()).toBe(true);
+
+    await loading;
+
+    expect(page.controlsDisabled()).toBe(false);
+
+    // And it still tracks `building()` afterwards, which is the other half of
+    // what the twenty-seven controls were binding before this existed.
+    page.building.set(true);
+
+    expect(page.controlsDisabled()).toBe(true);
+
+    page.building.set(false);
+
+    expect(page.controlsDisabled()).toBe(false);
   });
 
   it('keeps normal auto build behavior when guided mode is disabled', async () => {

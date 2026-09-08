@@ -73,7 +73,7 @@
                                             <button
                                               type="button"
                                               class="selected-value-chip"
-                                              [disabled]="building()"
+                                              [disabled]="controlsDisabled()"
                                               (click)="removeSelectedType(item)"
                                             >
                                               {{ item }}
@@ -87,7 +87,7 @@
                                           fill="clear"
                                           size="small"
                                           class="select-all-types-button"
-                                          [disabled]="building()"
+                                          [disabled]="controlsDisabled()"
                                           (click)="selectAllTypes()"
                                         >
                                           {{ selectAllTypesButtonLabel() }}
@@ -118,7 +118,7 @@
                                             <button
                                               type="button"
                                               class="selected-value-chip"
-                                              [disabled]="building()"
+                                              [disabled]="controlsDisabled()"
                                               (click)="removeSelectedClass(item)"
                                             >
                                               {{ item }}
@@ -132,7 +132,7 @@
                                           fill="clear"
                                           size="small"
                                           class="select-all-button"
-                                          [disabled]="!availableClasses().length || building()"
+                                          [disabled]="!availableClasses().length || controlsDisabled()"
                                           (click)="selectAllClasses()"
                                         >
                                           {{ selectAllClassesButtonLabel() }}
@@ -157,7 +157,7 @@
                                               type="button"
                                               class="selected-value-chip"
                                               data-testid="character-tag-set-group-chip"
-                                              [disabled]="building()"
+                                              [disabled]="controlsDisabled()"
                                               (click)="openCharacterTagSetPicker()"
                                             >
                                               {{ group.label }}
@@ -194,13 +194,13 @@
                                           fill="outline"
                                           [placeholder]="t('filters.characterNames.placeholder')"
                                           [value]="characterNameDraft()"
-                                          [disabled]="building()"
+                                          [disabled]="controlsDisabled()"
                                           (ionInput)="onCharacterNameDraftChange($event)"
                                           (keyup.enter)="addCharacterNameFilter()"
                                         ></ion-input>
                                         <ion-button
                                           color="warning"
-                                          [disabled]="building() || !characterNameDraft().trim()"
+                                          [disabled]="controlsDisabled() || !characterNameDraft().trim()"
                                           (click)="addCharacterNameFilter()"
                                         >
                                           {{ t('filters.characterNames.add') }}
@@ -212,7 +212,7 @@
                                             <button
                                               type="button"
                                               class="selected-value-chip"
-                                              [disabled]="building()"
+                                              [disabled]="controlsDisabled()"
                                               (click)="removeSelectedCharacterName(item)"
                                             >
                                               {{ item }}
@@ -226,7 +226,7 @@
                                           fill="clear"
                                           size="small"
                                           class="select-all-button"
-                                          [disabled]="building()"
+                                          [disabled]="controlsDisabled()"
                                           (click)="openRequirementSourceModal()"
                                         >
                                           {{ t('filters.characterRequirements.actions.open') }}
@@ -246,7 +246,7 @@
                                           [attr.aria-label]="favoritesOnlyToggleLabel()"
                                           color="warning"
                                           [checked]="favoritesOnly()"
-                                          [disabled]="building()"
+                                          [disabled]="controlsDisabled()"
                                           (ionChange)="onFavoritesOnlyToggle($event)"
                                         ></ion-toggle>
                                       </div>
@@ -260,7 +260,7 @@
                                           [attr.aria-label]="favoriteShipsOnlyToggleLabel()"
                                           color="warning"
                                           [checked]="favoriteShipsOnly()"
-                                          [disabled]="building()"
+                                          [disabled]="controlsDisabled()"
                                           (ionChange)="onFavoriteShipsOnlyToggle($event)"
                                         ></ion-toggle>
                                       </div>
@@ -280,7 +280,7 @@
                                           "
                                           color="warning"
                                           [checked]="allowAnyFriendCaptainAutoFill()"
-                                          [disabled]="building()"
+                                          [disabled]="controlsDisabled()"
                                           (ionChange)="
                                             onAllowAnyFriendCaptainAutoFillToggle($event)
                                           "
@@ -308,7 +308,7 @@
                                           "
                                           color="warning"
                                           [checked]="guidedAutoBuildEnabled()"
-                                          [disabled]="building() || !pageReady()"
+                                          [disabled]="controlsDisabled()"
                                           (ionChange)="onGuidedAutoBuildToggle($event)"
                                         ></ion-toggle>
                                       </div>
@@ -326,7 +326,7 @@
                                         [placeholder]="t('filters.characterBox.placeholder')"
                                         [value]="selectedCharacterBoxId() ?? ''"
                                         [selectedText]="selectedCharacterBoxLabel()"
-                                        [disabled]="building()"
+                                        [disabled]="controlsDisabled()"
                                         (ionChange)="onCharacterBoxChange($event)"
                                       >
                                         <ion-select-option value="">
@@ -505,7 +505,7 @@
                                                     <ion-button
                                                       class="manual-candidate-action-button"
                                                       color="warning"
-                                                      [disabled]="building()"
+                                                      [disabled]="controlsDisabled()"
                                                       (click)="
                                                         applyRequirementSourceCharacter(
                                                           source.character
@@ -727,7 +727,7 @@
                                                         fill="clear"
                                                         color="danger"
                                                         size="small"
-                                                        [disabled]="building()"
+                                                        [disabled]="controlsDisabled()"
                                                         (click)="
                                                           removeRequiredCharacterGroup(
                                                             view.battleId,
@@ -743,7 +743,7 @@
                                                       [items]="
                                                         requiredCharacterAbilityRailItems(view)
                                                       "
-                                                      [disabled]="building()"
+                                                      [disabled]="controlsDisabled()"
                                                       (selectCategory)="
                                                         openRequiredCharacterAbilityPicker(
                                                           view.battleId,
@@ -815,7 +815,7 @@
                                               fill="clear"
                                               size="small"
                                               class="select-all-button"
-                                              [disabled]="building()"
+                                              [disabled]="controlsDisabled()"
                                               (click)="openManualPickerModal()"
                                             >
                                               {{ t('manual.actions.editPicks') }}
@@ -824,7 +824,7 @@
                                               fill="clear"
                                               size="small"
                                               class="select-all-button"
-                                              [disabled]="building() || !hasLockedCharacters()"
+                                              [disabled]="controlsDisabled() || !hasLockedCharacters()"
                                               (click)="openManualCopyModal()"
                                             >
                                               <ion-icon slot="start" [icon]="copyIcon"></ion-icon>
@@ -861,7 +861,7 @@
                                               [class.manual-slot-card--leader]="
                                                 slotCard.isLeaderSlot
                                               "
-                                              [disabled]="building()"
+                                              [disabled]="controlsDisabled()"
                                               (click)="selectManualSlot(slotCard.role)"
                                             >
                                               <div class="manual-slot-card__header">
@@ -916,7 +916,7 @@
                                                         [class.manual-lock-chip__icon-button--active]="
                                                           character.isRequiredInManualSlot
                                                         "
-                                                        [disabled]="building()"
+                                                        [disabled]="controlsDisabled()"
                                                         [title]="
                                                           requiredManualPickButtonLabel(
                                                             slotCard.role,
@@ -949,7 +949,7 @@
                                                       <button
                                                         type="button"
                                                         class="manual-lock-chip__icon-button"
-                                                        [disabled]="building()"
+                                                        [disabled]="controlsDisabled()"
                                                         [title]="t('manual.similar.actions.add')"
                                                         [attr.aria-label]="
                                                           t('manual.similar.actions.addFor', {
@@ -1076,7 +1076,7 @@
                                                         <button
                                                           type="button"
                                                           class="selected-value-chip manual-lock-chip"
-                                                          [disabled]="building()"
+                                                          [disabled]="controlsDisabled()"
                                                           (click)="
                                                             removeCharacterFromManualSlot(
                                                               activeManualSlotRole(),
@@ -1516,7 +1516,7 @@
                                                         fill="clear"
                                                         size="small"
                                                         class="select-all-button"
-                                                        [disabled]="building()"
+                                                        [disabled]="controlsDisabled()"
                                                         (click)="clearManualShipSelection()"
                                                       >
                                                         {{ t('ships.clearSelection') }}
@@ -1541,7 +1541,7 @@
                                                         "
                                                         color="warning"
                                                         [checked]="requireManualShip()"
-                                                        [disabled]="building()"
+                                                        [disabled]="controlsDisabled()"
                                                         (ionChange)="
                                                           onRequireManualShipToggle($event)
                                                         "
@@ -1874,7 +1874,7 @@
                                               fill="clear"
                                               size="small"
                                               class="select-all-button"
-                                              [disabled]="building()"
+                                              [disabled]="controlsDisabled()"
                                               (click)="openExcludePickerModal()"
                                             >
                                               {{ t('exclude.actions.editExcludes') }}
@@ -1883,7 +1883,7 @@
                                               fill="clear"
                                               size="small"
                                               class="select-all-button"
-                                              [disabled]="building() || !hasExcludedCharacters()"
+                                              [disabled]="controlsDisabled() || !hasExcludedCharacters()"
                                               (click)="clearExcludedCharacters()"
                                             >
                                               {{ t('exclude.actions.clearCharacters') }}
@@ -1892,7 +1892,7 @@
                                               fill="clear"
                                               size="small"
                                               class="select-all-button"
-                                              [disabled]="building() || !hasExcludedShips()"
+                                              [disabled]="controlsDisabled() || !hasExcludedShips()"
                                               (click)="clearExcludedShips()"
                                             >
                                               {{ t('exclude.actions.clearShips') }}
@@ -1912,7 +1912,7 @@
                                             [placeholder]="t('exclude.characterBox.placeholder')"
                                             [value]="selectedExcludeCharacterBoxId() ?? ''"
                                             [selectedText]="selectedExcludeCharacterBoxLabel()"
-                                            [disabled]="building()"
+                                            [disabled]="controlsDisabled()"
                                             (ionChange)="onExcludeCharacterBoxChange($event)"
                                           >
                                             <ion-select-option value="">
@@ -1938,7 +1938,7 @@
                                               <button
                                                 type="button"
                                                 class="selected-value-chip manual-lock-chip"
-                                                [disabled]="building()"
+                                                [disabled]="controlsDisabled()"
                                                 (click)="removeExcludedCharacter(character.id)"
                                               >
                                                 <img
@@ -1962,7 +1962,7 @@
                                                 [class.manual-lock-chip--ship-fallback]="
                                                   !ship.thumbUrl
                                                 "
-                                                [disabled]="building()"
+                                                [disabled]="controlsDisabled()"
                                                 (click)="removeExcludedShip(ship.id)"
                                               >
                                                 @if (ship.thumbUrl; as thumbUrl) {
@@ -2482,7 +2482,7 @@
                                       fill="outline"
                                       color="light"
                                       class="download-preset-button"
-                                      [disabled]="building()"
+                                      [disabled]="controlsDisabled()"
                                       (click)="resetPage()"
                                     >
                                       {{ 'common.actions.reset' | transloco }}
@@ -2491,7 +2491,7 @@
                                       fill="outline"
                                       color="light"
                                       class="download-preset-button"
-                                      [disabled]="building()"
+                                      [disabled]="controlsDisabled()"
                                       (click)="openPresetFilePicker(presetFileInput)"
                                     >
                                       {{ t('actions.importPresetJson') }}
@@ -3638,7 +3638,7 @@
                             fill="outline"
                             color="light"
                             class="manual-candidate-action-button"
-                            [disabled]="building() || !canAddResultCharacterToManualSlot(slot)"
+                            [disabled]="controlsDisabled() || !canAddResultCharacterToManualSlot(slot)"
                             (click)="addResultCharacterToManualSlot(slot)"
                           >
                             {{ t('manual.actions.addResult') }}
