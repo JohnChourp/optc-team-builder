@@ -283,6 +283,70 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.controlsDisabled()).toBe(false);
   });
 
+  /*
+   * The owner's rule: a team does not require a Friend Captain, and an empty
+   * seat boosts nothing. The corollary is that "the reader picked nobody" is
+   * never re-derived by comparing slot 1 to slot 0 - the same character in both
+   * leader seats is a legal team somebody may have chosen on purpose, and the
+   * two cases are indistinguishable once written down that way.
+   *
+   * Two places still wrote the Captain into the Friend Captain's place.
+   *
+   * The built-team export was DEAD code - the engine fills both leader seats, so
+   * the `?? slots[0]` branch never ran. It is covered anyway, because the reason
+   * it was safe was never the reason recorded for leaving it, and the next
+   * person to allow a partially built result would have shipped a wrong label in
+   * silence.
+   */
+  it('exports a team with no Friend Captain seat as having no friend leader', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    page.result.set(
+      createAutoBuildResult([
+        { role: 'captain', character: createCharacterRecord(301), reasonChips: ['Captain slot'] },
+      ]),
+    );
+
+    const payload = page.buildTeamExportPayload('2026-09-08T00:00:00.000Z');
+
+    expect(payload?.team[0]?.leaderAssignment).toBe('captain');
+    expect(payload?.team[0]?.leaderAssignment).not.toBe('dual');
+    expect(payload?.team[0]?.isLeader).toBe(true);
+  });
+
+  /*
+   * The preset export is the REACHABLE one, and it is the ordinary state: fill
+   * the Captain slot, leave the Friend Captain slot empty for the builder to
+   * choose, export. `effectiveFriendLeaderId` falls back to the Captain - right
+   * for `selectedLeaderIds` and the coverage filter, which both dedupe - so the
+   * file recorded `friendCaptainLeaderId: <captainId>` and labelled the Captain
+   * 'dual', while `manualSlots` in the same payload correctly showed that seat
+   * empty. The file disagreed with itself.
+   */
+  it('records an unfilled Friend Captain slot as empty in the preset export', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    page.manualSlots.set(createManualSlots({ captain: [101] }));
+
+    expect(page.selectedFriendLeaderId()).toBeNull();
+    // The shared accessor keeps its fallback: its two consumers dedupe, and
+    // narrowing it would change the candidate pool rather than the record.
+    expect(page.effectiveFriendLeaderId()).toBe(101);
+
+    const payload = page.buildSelectionExportPayload('2026-09-08T00:00:00.000Z');
+
+    expect(payload?.manualSelection.friendCaptainLeaderId).toBeNull();
+    expect(payload?.manualSelection.captainLeaderId).toBe(101);
+
+    for (const character of payload?.manualSelection.characters ?? []) {
+      expect(character.leaderAssignment).not.toBe('dual');
+    }
+  });
+
   it('keeps normal auto build behavior when guided mode is disabled', async () => {
     const { page, autoTeamBuilder } = await createPage();
     const result = createAutoBuildResult();

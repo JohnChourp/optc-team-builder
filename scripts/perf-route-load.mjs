@@ -653,9 +653,8 @@ async function measureRoute(context, route, viewportLabel) {
 
   try {
     await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await route.wait(page);
-    await waitForAngular(page).catch(() => true);
 
     const readyMs = Math.round(performance.now() - startedAt);
     const screenshot = `screenshots/${runLabel}-${viewportLabel}-${route.id}.png`;
@@ -714,33 +713,20 @@ function sanitizeDiagnosticText(value) {
   return String(value ?? '').replace(/teamShare=[^&#\s'"<>)]+/gu, 'teamShare=<redacted-synthetic>');
 }
 
-async function waitForAppReady(page) {
+/*
+ * Named for what it proves. It used to end with `waitForAngular`, which polled
+ * `window.getAllAngularTestabilities` and returned true whenever that list was
+ * empty - and under `bootstrapApplication` it is ALWAYS empty, because
+ * testability ships with `BrowserModule`/`provideProtractorTestingSupport()` and
+ * this app uses neither. So it resolved on its first poll every time and this
+ * function has only ever waited for attachment.
+ *
+ * Deleting it is behaviour-neutral for exactly that reason, and it stops the
+ * next reader trusting a wait that never waited.
+ */
+async function waitForAppAttached(page) {
   await page.waitForLoadState('domcontentloaded');
   await page.locator('ion-app').first().waitFor({ state: 'attached', timeout: 45_000 });
-  await waitForAngular(page).catch(() => true);
-}
-
-async function waitForAngular(page) {
-  await page.waitForFunction(
-    () => {
-      const testabilities = window.getAllAngularTestabilities?.() ?? [];
-
-      if (!testabilities.length) {
-        return true;
-      }
-
-      return Promise.all(
-        testabilities.map(
-          (testability) =>
-            new Promise((resolve) => {
-              testability.whenStable(resolve);
-            }),
-        ),
-      ).then(() => true);
-    },
-    undefined,
-    { timeout: 60_000 },
-  );
 }
 
 async function waitForShareLinkHydration(page) {

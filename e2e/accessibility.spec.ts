@@ -11,7 +11,7 @@ import {
   seedBrowserState,
   setIonSelect,
   setIonTextarea,
-  waitForAppReady,
+  waitForAppAttached,
   waitForIonControlEnabled,
 } from './regression-fixtures';
 
@@ -24,7 +24,7 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     await seedBrowserState(page, []);
 
     await page.goto('/tabs/auto-team-builder');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
 
     const guidedToggle = page.getByTestId('guided-auto-build-toggle');
     // Wait BEFORE the keypress, not after the toggle. This is the raw-keypress
@@ -54,7 +54,7 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     await seedBrowserState(page);
 
     await page.goto('/tabs/auto-team-builder');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
 
     await page.getByTestId('compare-toggle').click();
     await expect(page.getByTestId('compare-empty-state')).toHaveAttribute('role', 'status');
@@ -92,7 +92,7 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     await seedBrowserState(page, [SEEDED_SAVED_TEAMS[0]!]);
 
     await page.goto('/tabs/saved-teams');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await expect(page.getByText('E2E Regression Crew A')).toBeVisible();
 
     const shareLinkButton = page.getByTestId('saved-team-share-link-e2e-regression-crew-a');
@@ -115,7 +115,7 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     });
 
     await page.goto(`${copiedShareUrl.pathname}${copiedShareUrl.search}`);
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await expectIonValue(page.getByTestId('manual-team-name'), 'E2E Regression Crew A');
     await expect(page.getByTestId('manual-team-slot-0')).toContainText('Sergeant Helmeppo', {
       timeout: 45_000,
@@ -123,7 +123,7 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     await expectNoAxeViolations(page, '.manual-team-builder-shell');
 
     await page.goto('/tabs/saved-teams');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     const importButton = page.getByTestId('saved-teams-import-open').first();
     await importButton.press('Enter');
 
@@ -156,7 +156,7 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     await seedBrowserState(page, SEEDED_SAVED_TEAMS, SEEDED_SAVED_ENEMIES);
 
     await page.goto('/tabs/manual-team-builder');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await expect(page.getByTestId('manual-team-name')).toBeVisible();
     await expectNoAxeViolations(page, '.manual-team-builder-shell');
 
@@ -173,12 +173,12 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     await manualPicker.getByRole('button', { name: /close character picker/i }).click();
 
     await page.goto('/tabs/saved-teams');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await expect(page.getByText('E2E Regression Crew A')).toBeVisible();
     await expectNoAxeViolations(page, '.saved-teams-shell');
 
     await page.goto('/tabs/saved-enemies');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await expect(page.getByText('Loading saved enemies...')).toBeHidden({ timeout: 45_000 });
     await expect(page.getByText('E2E Legacy A11y Boss')).toBeVisible();
     await expectNoAxeViolations(page, '.saved-enemies-shell');
@@ -200,7 +200,7 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     await expectNoAxeViolations(page, 'ion-modal.enemy-team-association-modal');
 
     await page.goto('/tabs/captain-coverage');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await expect(page.locator('.coverage-team-slot').first()).toBeVisible();
     await expectNoAxeViolations(page, '.captain-coverage-shell');
 
