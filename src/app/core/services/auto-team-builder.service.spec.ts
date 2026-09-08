@@ -1077,6 +1077,311 @@ describe('Auto team builder', () => {
     });
   }
 
+
+  // ---- Lane D matrix, Tier 3 run 6: pair 12x14 ----
+  //
+  // Axis 14 (`enemyMechanics`) never reaches the search directly - it is read zero times in the
+  // engine and in `auto-team-builder.utils.ts`. What it does is DERIVE ability requirements:
+  // `normalizeBattleRequirementsWithLegacyFallback` turns each mechanic with a non-null
+  // `derivedAbilityKey` into a battle requirement group. So a pair with axis 14 is really a
+  // question about the derivation, and 12x14 asks the sharpest version of it: what happens to
+  // the requirements the player typed in themselves when a derived one arrives alongside them.
+  //
+  // The answer was that they were silently dropped, and this row is what proves they no longer
+  // are. Setting any enemy mechanic flips `hasBattleRequirementInput`, which replaces
+  // `requiredAbilities` with `filterBattleInputRequiredAbilities` - leader-scoped and
+  // captain-ability-sourced entries only. An ordinary sub requirement survived neither that
+  // filter nor the derived battle, because the call site never passed `requiredAbilities` into
+  // the fallback that builds it. Invariant 1 and invariant 3 both failed: the returned team did
+  // not satisfy a filter that was never relaxed, and `relaxation` said nothing had been given up.
+  it('12x14 - a typed ability requirement survives alongside one derived from an enemy mechanic', async () => {
+    const records = createRun6RequirementSplitRecords();
+    const despair = {
+      abilityKey: 'remove_despair',
+      minTurns: null,
+      slotTokens: [],
+      requiredCharacterCount: 1,
+    };
+    const bindMechanic = {
+      mechanicKey: 'crew_bind',
+      minTurns: null,
+      requiredCharacterCount: 1,
+      triggerTags: [],
+    };
+    const build = async (constraints: Record<string, unknown>) =>
+      new AutoTeamBuilderService(
+        createScopedPoolRepositoryMock(records) as never,
+      ).buildTeam(['Fighter'], ['DEX'], constraints as never);
+
+    // Control 1 - axis 12 alone. The despair carrier is the lowest-ranked sub in the pool, so
+    // only the requirement can pull it in; without it the four newest subs win.
+    const only12 = await build({ requiredAbilities: [despair] });
+
+    expect(only12?.slots.map((slot) => slot.character.id)).toContain(7130);
+
+    // Control 2 - axis 14 alone. Same shape for the derived side.
+    const only14 = await build({ enemyMechanics: [bindMechanic] });
+
+    expect(only14?.slots.map((slot) => slot.character.id)).toContain(7110);
+
+    // Control 3 - neither axis. Both carriers stay out, which is what makes the two controls
+    // above evidence rather than a property of the ranking.
+    const neither = await build({});
+
+    expect(neither?.slots.map((slot) => slot.character.id)).not.toContain(7130);
+    expect(neither?.slots.map((slot) => slot.character.id)).not.toContain(7110);
+
+    // The pair. Both carriers, because neither requirement was given up.
+    const joint = await build({ requiredAbilities: [despair], enemyMechanics: [bindMechanic] });
+
+    expect(joint?.slots.map((slot) => slot.character.id)).toContain(7110);
+    expect(joint?.slots.map((slot) => slot.character.id)).toContain(7130);
+
+    // Invariant 3, in the direction that was actually broken: nothing was relaxed, so nothing
+    // may be reported - and the typed requirement must still be visible in the request the
+    // result carries, not quietly filtered out of it.
+    expect(joint?.relaxation.usedFallback).toBe(false);
+    expect(
+      joint?.coverage.battleRequirements?.matchesAll ?? joint?.coverage.abilityRequirements.matchesAll,
+    ).toBe(true);
+  });
+
+
+  // ---- pairs 14x15 and 14x20 ----
+  //
+  // The derived requirement is only as satisfiable as the pool the repository serves. Dropping
+  // its single holder must produce an honest "no team", never a team that quietly skips it -
+  // matrix trap 5, in the shape axis 14 gives it. Both controls are on the same records: the
+  // mechanic alone builds, and the pool axis alone builds, so only the combination is fatal.
+  for (const narrower of POOL_NARROWERS) {
+    it(`14x${narrower.axis.slice(1)} - ${narrower.label} removing the derived requirement's only holder returns no team`, async () => {
+      const records = createRun6RequirementSplitRecords();
+      const allIds = records.map((record) => record.id);
+      const bindMechanic = createRun6BindMechanic();
+      const build = async (constraints: Record<string, unknown>) =>
+        new AutoTeamBuilderService(
+          createScopedPoolRepositoryMock(records) as never,
+        ).buildTeam(['Fighter'], ['DEX'], constraints as never);
+
+      // Control 1 - the mechanic alone is satisfiable, because 7110 is in the pool.
+      const only14 = await build({ enemyMechanics: [bindMechanic] });
+
+      expect(only14?.slots.map((slot) => slot.character.id)).toContain(7110);
+
+      // Control 2 - the pool axis alone still builds a team; it removes a sub the ranking was
+      // not going to reach anyway.
+      const onlyPool = await build(narrower.dropping(7110, allIds));
+
+      expect(onlyPool?.slots).toHaveLength(6);
+      expect(onlyPool?.slots.map((slot) => slot.character.id)).not.toContain(7110);
+
+      // The pair. The requirement the mechanic derived cannot be met by anyone left.
+      const joint = await build({
+        enemyMechanics: [bindMechanic],
+        ...narrower.dropping(7110, allIds),
+      });
+
+      expect(joint).toBeNull();
+    });
+  }
+
+  // ---- pair 13x14 ----
+  //
+  // The two axes are not additive - they are ordered. `normalizeBattleRequirementsWithLegacyFallback`
+  // returns explicit battles untouched the moment there are any, so a mechanic set alongside a
+  // battle derives NOTHING. That is the pair's actual contract, and asserting it is what stops a
+  // future change from quietly making mechanics additive and doubling every requirement.
+  it('13x14 - an explicit battle requirement wins and the enemy mechanic derives nothing', async () => {
+    const records = createRun6RequirementSplitRecords();
+    const build = async (constraints: Record<string, unknown>) =>
+      new AutoTeamBuilderService(
+        createScopedPoolRepositoryMock(records) as never,
+      ).buildTeam(['Fighter'], ['DEX'], constraints as never);
+    const despairBattle = {
+      id: 'run6-battle',
+      title: 'Run 6 battle',
+      enemyMechanics: [],
+      requiredCharacterGroups: [
+        {
+          id: 'run6-battle-group',
+          abilities: [
+            {
+              abilityKey: 'remove_despair',
+              minTurns: null,
+              slotTokens: [],
+              requiredCharacterCount: 1,
+            },
+          ],
+        },
+      ],
+    };
+
+    // Control - the mechanic alone pulls its own carrier in.
+    const only14 = await build({ enemyMechanics: [createRun6BindMechanic()] });
+
+    expect(only14?.slots.map((slot) => slot.character.id)).toContain(7110);
+
+    // The pair: the battle is honoured, and the mechanic's carrier is NOT pulled in, because the
+    // mechanic never became a requirement at all.
+    const joint = await build({
+      battleRequirements: [despairBattle],
+      enemyMechanics: [createRun6BindMechanic()],
+    });
+
+    expect(joint?.slots.map((slot) => slot.character.id)).toContain(7130);
+    expect(joint?.slots.map((slot) => slot.character.id)).not.toContain(7110);
+    // Invariant 3: nothing was relaxed to get there. The mechanic was never a constraint, so its
+    // absence from the team is not a give-up and must not be reported as one.
+    expect(joint?.relaxation.usedFallback).toBe(false);
+  });
+
+  // ---- pair 14x19 ----
+  //
+  // A pin and a derived requirement compete for the same four sub slots. Both must be honoured,
+  // and the pin must not be what satisfies the requirement by accident - 7150 carries no
+  // abilities at all.
+  it('14x19 - a manual pin and a derived requirement both hold', async () => {
+    const records = [...createRun6RequirementSplitRecords(), createPoolAxisSubRecord(7150)];
+    const build = async (constraints: Record<string, unknown>) =>
+      new AutoTeamBuilderService(
+        createScopedPoolRepositoryMock(records) as never,
+      ).buildTeam(['Fighter'], ['DEX'], constraints as never);
+    // The decoy is load-bearing - run 4's finding. With the pin alone in `characterIds` the
+    // required pin and the listed pool are indistinguishable.
+    const pin = [{ role: 'sub2' as const, characterIds: [7140, 7143], requiredCharacterId: 7140 }];
+
+    // Control 1 - the mechanic alone. 7140 is not the newest sub, so it is not guaranteed a seat.
+    const only14 = await build({ enemyMechanics: [createRun6BindMechanic()] });
+
+    expect(only14?.slots.map((slot) => slot.character.id)).toContain(7110);
+
+    // Control 2 - the pin alone seats 7140 and leaves the carrier out.
+    const only19 = await build({ manualSlots: pin });
+
+    expect(only19?.slots.map((slot) => slot.character.id)).toContain(7140);
+    expect(only19?.slots.map((slot) => slot.character.id)).not.toContain(7110);
+
+    // The pair: both.
+    const joint = await build({ enemyMechanics: [createRun6BindMechanic()], manualSlots: pin });
+
+    expect(joint?.slots.map((slot) => slot.character.id)).toContain(7110);
+    expect(joint?.slots.map((slot) => slot.character.id)).toContain(7140);
+  });
+
+
+  // ---- pairs 12x18, 13x18, 14x18 and 18x19 ----
+  //
+  // Axis 18 has two halves and only one of them can be paired with anything. The NULL half -
+  // an empty eligible set, or a required manual ship that is not eligible - reads only
+  // `result.input.*` and never `result.slots`, so nothing another axis does can reach it. The
+  // SELECTION half reads the team's classes and costs, and that is the single causal channel
+  // from any other axis into the ship recommendation.
+  //
+  // Run 5 drove that channel with the pool axes, which seat the Slasher half by removing the
+  // Fighter half from the query. These four reach the same team through requirements and a pin
+  // instead, so the pairing is with the axis under test rather than with the pool.
+  const SHIP_TEAM_SELECTORS: Array<{ axis: string; label: string; constraints: Record<string, unknown> }> = [
+    {
+      axis: 'a12',
+      label: 'a flattened ability requirement',
+      constraints: {
+        requiredAbilities: [
+          { abilityKey: 'remove_bind', minTurns: null, slotTokens: [], requiredCharacterCount: 4 },
+        ],
+      },
+    },
+    {
+      axis: 'a13',
+      label: 'a battle requirement group',
+      constraints: {
+        battleRequirements: [
+          {
+            id: 'run6-ship-battle',
+            title: 'Run 6 ship battle',
+            enemyMechanics: [],
+            requiredCharacterGroups: [
+              {
+                id: 'run6-ship-group',
+                abilities: [
+                  {
+                    abilityKey: 'remove_bind',
+                    minTurns: null,
+                    slotTokens: [],
+                    requiredCharacterCount: 4,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      axis: 'a14',
+      label: 'a requirement derived from an enemy mechanic',
+      constraints: {
+        enemyMechanics: [
+          {
+            mechanicKey: 'crew_bind',
+            minTurns: null,
+            requiredCharacterCount: 4,
+            triggerTags: [],
+          },
+        ],
+      },
+    },
+    {
+      axis: 'a19',
+      label: 'four manual pins',
+      constraints: {
+        manualSlots: [
+          { role: 'sub1', characterIds: [9814, 9894], requiredCharacterId: 9814 },
+          { role: 'sub2', characterIds: [9813, 9893], requiredCharacterId: 9813 },
+          { role: 'sub3', characterIds: [9812, 9892], requiredCharacterId: 9812 },
+          { role: 'sub4', characterIds: [9811, 9891], requiredCharacterId: 9811 },
+        ],
+      },
+    },
+  ];
+
+  for (const selector of SHIP_TEAM_SELECTORS) {
+    it(`18x${selector.axis.slice(1)} - ${selector.label} re-ranks the recommended ship through the team it seats`, async () => {
+      const records = createShipRankingPoolRecords({ slasherAbility: true });
+      const ships = createShipRankingShips();
+      const slasherSubIds = [9814, 9813, 9812, 9811];
+      const build = async (constraints: Record<string, unknown>) =>
+        new AutoTeamBuilderService(
+          createScopedPoolRepositoryMock(records, ships) as never,
+        ).buildTeam([], ['DEX'], constraints as never);
+
+      // Control 1 - axis 18 alone. The Fighter half outranks the Slasher half, so the ship
+      // scoped to Fighters wins once the unscoped one is excluded.
+      const only18 = await build({ excludedShipIds: [8003] });
+
+      expect(only18?.shipSelection?.ship.id).toBe(8001);
+
+      // Control 2 - the partner axis alone. It seats the Slasher half, but with every ship
+      // eligible the unscoped one still outranks both scoped ships, so the recommendation does
+      // not move. Without this control the pair could be read as the partner axis alone.
+      const onlyPartner = await build({ ...selector.constraints });
+
+      // Measured: the partner axis seats the four SUB slots, not the leader seats - the Fighter
+      // leader holds both of those on id order in every row here, and it is the sub half that
+      // moves the ship analysis. Asserting all six slots would assert something the fixture
+      // never claimed.
+      expect(onlyPartner?.slots.slice(2).map((slot) => slot.character.id)).toEqual(slasherSubIds);
+      expect(onlyPartner?.shipSelection?.ship.id).toBe(8003);
+
+      // The pair: the partner seats the Slasher half AND the exclusion removes the unscoped
+      // ship, so the Slasher-scoped ship wins. Neither axis alone produces this answer.
+      const joint = await build({ ...selector.constraints, excludedShipIds: [8003] });
+
+      expect(joint?.slots.slice(2).map((slot) => slot.character.id)).toEqual(slasherSubIds);
+      expect(joint?.shipSelection?.ship.id).toBe(8002);
+      expect(joint?.shipSelection?.source).toBe('recommended');
+    });
+  }
+
   beforeAll(() => {
     vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
   });
@@ -41676,6 +41981,52 @@ function createLeaderSourceBattleRequirementRecords(): CharacterDetailRecord[] {
   ];
 }
 
+
+// The one mechanic every run-6 axis-14 row derives from. `crew_bind` carries
+// `derivedAbilityKey: 'remove_bind'`; a mechanic whose key is null derives nothing and would
+// make every row below vacuous.
+function createRun6BindMechanic() {
+  return { mechanicKey: 'crew_bind', minTurns: null, requiredCharacterCount: 1, triggerTags: [] };
+}
+
+// ---- Lane D run 6 fixture for pair 12x14 ----
+//
+// Six subs for four slots. The two ability carriers hold the LOWEST ids, and sub ranking ends
+// in newest-id, so neither is selected unless a requirement reaches for it - that is what makes
+// the two single-axis controls evidence instead of a coincidence of the ranking.
+function createRun6RequirementSplitRecords(): CharacterDetailRecord[] {
+  const carrier = (id: number, key: string, text: string): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      name: `Run6 Carrier ${id}`,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: text,
+        builderAbilities: [
+          {
+            key,
+            label: key,
+            minTurns: 5,
+            isCompleteRemoval: false,
+            slotTokens: [],
+            source: 'specialText',
+          },
+        ],
+      },
+    });
+
+  return [
+    createPoolAxisLeaderRecord(7100, 5, 1.5),
+    carrier(7110, 'remove_bind', 'Reduces Bind duration by 5 turns.'),
+    carrier(7130, 'remove_despair', 'Reduces Despair duration by 5 turns.'),
+    createPoolAxisSubRecord(7140),
+    createPoolAxisSubRecord(7141),
+    createPoolAxisSubRecord(7142),
+    createPoolAxisSubRecord(7143),
+  ];
+}
+
 // ---- Lane D run 5 fixtures for the service-only pool axes 15 and 20 ----
 //
 // The repository mock every run-5 row uses. It models the four things
@@ -41855,7 +42206,14 @@ function createFriendCaptainRosterPoolRecords(
  * changes nothing about who is admissible - it changes only which ship's `matchingSlots` the
  * finished team fills.
  */
-function createShipRankingPoolRecords(): CharacterDetailRecord[] {
+function createShipRankingPoolRecords(
+  options: { slasherAbility?: boolean } = {},
+): CharacterDetailRecord[] {
+  // Opt-in, so the run-5 pool rows keep the exact records they were measured against. When on,
+  // every Slasher carries `remove_bind` and no Fighter does, which lets a requirement for FOUR
+  // holders seat the Slasher half - the same team swap the pool axes achieve by removing the
+  // Fighter half outright, reached through a different axis so the ship rows can be paired with
+  // requirement-shaped partners as well as pool-shaped ones.
   const slasherSub = (id: number): CharacterDetailRecord =>
     createCharacterRecord({
       id,
@@ -41864,6 +42222,20 @@ function createShipRankingPoolRecords(): CharacterDetailRecord[] {
       primaryClass: 'Slasher',
       detail: {
         specialText: 'Boosts ATK of Slasher characters by 2.5x for 1 turn.',
+        ...(options.slasherAbility
+          ? {
+              builderAbilities: [
+                {
+                  key: 'remove_bind',
+                  label: 'remove_bind',
+                  minTurns: 5,
+                  isCompleteRemoval: false,
+                  slotTokens: [],
+                  source: 'specialText' as const,
+                },
+              ],
+            }
+          : {}),
       },
     });
 
