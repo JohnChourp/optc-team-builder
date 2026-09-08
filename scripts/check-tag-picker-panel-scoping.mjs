@@ -32,15 +32,48 @@ import { fileURLToPath } from 'node:url';
 export const ABILITY_MODAL_CLASS = 'ability-tag-set-picker-modal';
 export const CHARACTER_MODAL_CLASS = 'character-tag-set-picker-modal';
 
+/** The component that composes every shared panel. The list is derived from it. */
+export const STYLE_PANELS_COMPONENT =
+  'src/app/shared/ability-tag-set-picker/ability-tag-set-picker-style-panels.component.ts';
+
+/** Read by both pickers' hosts, and not owned by either picker. */
+export const EXTRA_SHARED_STYLESHEETS = ['src/styles.scss'];
+
 /**
- * Stylesheets both pickers render. Sourced from the shared style-panels
- * component, which is what makes a single-class selector asymmetric.
+ * Stylesheets both pickers render, derived from the style-panels component's
+ * own `styleUrl` declarations.
+ *
+ * This list used to be three hardcoded paths - catalog, responsive, motion -
+ * while the component composes EIGHT panels, and both pickers render the whole
+ * stack. A single-class rule added to shell, formula, set, operator or footer
+ * was never handed to the checker, even though `findUnpairedSelectors` would
+ * have flagged it correctly. The shell panel is the likeliest place for that:
+ * it already styles `.ability-tag-set-head h2` unscoped, which is one of the
+ * defects named in this file's own docstring. `src/styles.scss` was unread for
+ * the same reason, and it carries six paired modal-class selectors that could
+ * regress to one-sided without anything noticing.
+ *
+ * Deriving the list means a ninth panel is covered the day it is added, rather
+ * than the day somebody remembers this constant exists.
  */
-export const SHARED_PANEL_STYLESHEETS = [
-  'src/app/shared/ability-tag-set-picker/ability-tag-set-picker-catalog-panel.component.scss',
-  'src/app/shared/ability-tag-set-picker/ability-tag-set-picker-responsive-panel.component.scss',
-  'src/app/shared/ability-tag-set-picker/ability-tag-set-picker-motion-panel.component.scss',
-];
+export function resolveSharedPanelStylesheets(projectRoot) {
+  const componentPath = path.join(projectRoot, STYLE_PANELS_COMPONENT);
+  const source = readFileSync(componentPath, 'utf8');
+  const componentDir = path.posix.dirname(STYLE_PANELS_COMPONENT);
+  const stylesheets = [];
+
+  for (const match of source.matchAll(/styleUrl:\s*'([^']+)'/gu)) {
+    stylesheets.push(path.posix.normalize(path.posix.join(componentDir, match[1])));
+  }
+
+  if (stylesheets.length === 0) {
+    throw new Error(
+      `No styleUrl found in ${STYLE_PANELS_COMPONENT}. The derivation is broken; a guard that reads no file passes everything.`,
+    );
+  }
+
+  return [...stylesheets, ...EXTRA_SHARED_STYLESHEETS];
+}
 
 /** Strips comments so a class named in prose is never mistaken for a selector. */
 export function stripScssComments(source) {
@@ -124,9 +157,10 @@ export function findUnpairedSelectors(fileLabel, source) {
 
 function main() {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const stylesheets = resolveSharedPanelStylesheets(projectRoot);
   const findings = [];
 
-  for (const relativePath of SHARED_PANEL_STYLESHEETS) {
+  for (const relativePath of stylesheets) {
     const source = readFileSync(path.join(projectRoot, relativePath), 'utf8');
 
     findings.push(...findUnpairedSelectors(relativePath, source));
@@ -151,7 +185,7 @@ function main() {
   }
 
   console.log(
-    `Tag-set picker panel scoping OK: every modal-class selector in ${SHARED_PANEL_STYLESHEETS.length} shared panels is paired.`,
+    `Tag-set picker panel scoping OK: every modal-class selector in ${stylesheets.length} shared stylesheets is paired.`,
   );
 }
 

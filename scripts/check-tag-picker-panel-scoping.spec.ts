@@ -5,8 +5,10 @@ import { describe, expect, it } from 'vitest';
 import {
   ABILITY_MODAL_CLASS,
   CHARACTER_MODAL_CLASS,
-  SHARED_PANEL_STYLESHEETS,
+  EXTRA_SHARED_STYLESHEETS,
+  STYLE_PANELS_COMPONENT,
   findUnpairedSelectors,
+  resolveSharedPanelStylesheets,
   selectorsOf,
   stripScssComments,
   twinOf,
@@ -15,6 +17,8 @@ import {
 function read(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), 'utf8');
 }
+
+const SHARED_PANEL_STYLESHEETS = resolveSharedPanelStylesheets(process.cwd());
 
 describe('tag-set picker panel scoping guard', () => {
   it('passes on the shipped panels', () => {
@@ -110,22 +114,44 @@ describe('tag-set picker panel scoping guard', () => {
     expect(findings[0]?.missing).toBe(`.${CHARACTER_MODAL_CLASS}::part(content)`);
   });
 
-  /* Every real selector in the shipped panels sits inside a media query or not - both must be read. */
+  /*
+   * Every real selector in the shipped panels sits inside a media query or not -
+   * both must be read.
+   *
+   * The modal-class half is conditional on the file naming a modal class at
+   * all. It used to be unconditional, which held only because the list was the
+   * three panels that happen to scope everything; the shell panel styles
+   * `.ability-tag-set-head h2` with no modal class anywhere, so an
+   * unconditional assertion fails on it for a reason that has nothing to do
+   * with the reader. What must hold for every file is that the reader returns
+   * real selectors and never an at-rule prelude.
+   */
   it('finds the real selectors in each shipped panel, not just its at-rules', () => {
     for (const relativePath of SHARED_PANEL_STYLESHEETS) {
-      const selectors = selectorsOf(read(relativePath));
+      const source = read(relativePath);
+      const selectors = selectorsOf(source);
 
       expect(
         selectors.filter((selector) => selector.startsWith('@')),
         `${relativePath}: at-rule preludes must never be treated as selectors`,
       ).toEqual([]);
       expect(
-        selectors.some(
-          (selector) =>
-            selector.includes(ABILITY_MODAL_CLASS) || selector.includes(CHARACTER_MODAL_CLASS),
-        ),
-        `${relativePath}: no modal-class selector was read at all`,
-      ).toBe(true);
+        selectors.length,
+        `${relativePath}: no selector was read at all`,
+      ).toBeGreaterThan(0);
+
+      const namesAModal =
+        source.includes(ABILITY_MODAL_CLASS) || source.includes(CHARACTER_MODAL_CLASS);
+
+      if (namesAModal) {
+        expect(
+          selectors.some(
+            (selector) =>
+              selector.includes(ABILITY_MODAL_CLASS) || selector.includes(CHARACTER_MODAL_CLASS),
+          ),
+          `${relativePath}: names a modal class but the reader surfaced no selector for it`,
+        ).toBe(true);
+      }
     }
   });
 
@@ -151,6 +177,10 @@ describe('tag-set picker panel scoping guard', () => {
     );
 
     for (const relativePath of SHARED_PANEL_STYLESHEETS) {
+      if (EXTRA_SHARED_STYLESHEETS.includes(relativePath)) {
+        continue;
+      }
+
       const fileName = relativePath.split('/').pop() ?? '';
       const componentName = fileName.replace('.component.scss', '');
 
@@ -158,5 +188,38 @@ describe('tag-set picker panel scoping guard', () => {
         componentName,
       );
     }
+  });
+
+  /*
+   * The list used to be three hardcoded paths against a component that composes
+   * eight panels, so a single-class rule in shell, formula, set, operator or
+   * footer was never handed to the checker at all. Deriving it is only a fix if
+   * the derivation is itself asserted: a regex that silently stops matching
+   * would hand back an empty list, and a guard that reads no file passes
+   * everything.
+   */
+  it('derives one stylesheet per styleUrl in the style-panels component', () => {
+    const stylePanels = read(STYLE_PANELS_COMPONENT);
+    const declared = [...stylePanels.matchAll(/styleUrl:\s*'([^']+)'/gu)].map((match) => match[1]);
+
+    expect(declared.length).toBeGreaterThanOrEqual(8);
+    expect(SHARED_PANEL_STYLESHEETS).toHaveLength(declared.length + EXTRA_SHARED_STYLESHEETS.length);
+
+    for (const styleUrl of declared) {
+      const fileName = styleUrl.split('/').pop() ?? '';
+
+      expect(
+        SHARED_PANEL_STYLESHEETS.some((entry) => entry.endsWith(fileName)),
+        `${fileName} is declared by the style-panels component but never checked`,
+      ).toBe(true);
+    }
+
+    for (const extra of EXTRA_SHARED_STYLESHEETS) {
+      expect(SHARED_PANEL_STYLESHEETS).toContain(extra);
+    }
+  });
+
+  it('refuses to run when the derivation finds nothing', () => {
+    expect(() => resolveSharedPanelStylesheets('/nonexistent/project/root')).toThrow();
   });
 });
