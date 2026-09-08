@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.3',
+    date: '2026-09-08',
+    userVisible: true,
+    headline: {
+      en: 'Enemy mechanics no longer leave you with no team',
+      el: 'Τα Enemy mechanics δεν σε αφήνουν πια χωρίς ομάδα',
+    },
+    summaryEn:
+      'On Auto Team Builder you can describe what the enemy does under "Enemy mechanics". Fourteen of the things you can tick there - Immunity, Orb Boost Down, Block Orbs, Bomb Orbs, Negative Orbs, Orb Shuffle, the five Interrupt entries and the three Trigger ones - do not ask for any ability in return; they are there to describe the fight, not to demand a counter. Ticking any one of them used to return no team at all. Not a smaller team, not a warning - nothing, as though nothing in your box could be built with. Now they leave the team alone: tick one and you get exactly the team you would have got without it. The mechanics that DO ask for a counter, like Bind or Despair, keep working as before and still pull a character who removes them into the team.',
+    summaryEl:
+      'Στο Auto Team Builder μπορείς να περιγράψεις τι κάνει ο εχθρός στα "Enemy mechanics". Δεκατέσσερα από αυτά που μπορείς να τσεκάρεις εκεί - Immunity, Orb Boost Down, Block Orbs, Bomb Orbs, Negative Orbs, Orb Shuffle, τα πέντε Interrupt και τα τρία Trigger - δεν ζητούν κανένα ability· υπάρχουν για να περιγράψουν τη μάχη, όχι για να απαιτήσουν αντίμετρο. Αν τσέκαρες έστω ένα από αυτά, δεν έπαιρνες καμία ομάδα. Ούτε μικρότερη ομάδα, ούτε προειδοποίηση - τίποτα, σαν να μην μπορούσε να χτιστεί τίποτα από το box σου. Πλέον αφήνουν την ομάδα ήσυχη: τσεκάρεις ένα και παίρνεις ακριβώς την ομάδα που θα έπαιρνες και χωρίς αυτό. Όσα ζητούν όντως αντίμετρο, όπως το Bind ή το Despair, δουλεύουν όπως πριν και φέρνουν στην ομάδα χαρακτήρα που τα αφαιρεί.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: 'Ticking a mechanic under "Enemy mechanics" on Auto Team Builder that asks for no ability - Immunity, Block Orbs and Orb Shuffle among fourteen of them - no longer returns an empty result. The team you get is the one you would have got without ticking it.',
+        el: 'Αν τσεκάρεις στα "Enemy mechanics" του Auto Team Builder ένα mechanic που δεν ζητά κανένα ability - Immunity, Block Orbs και Orb Shuffle ανάμεσα σε δεκατέσσερα - δεν παίρνεις πια άδειο αποτέλεσμα. Η ομάδα που βγαίνει είναι αυτή που θα έβγαινε και χωρίς αυτό.',
+      },
+    ],
+  },
+  {
     version: '0.4.2',
     date: '2026-09-08',
     userVisible: true,
