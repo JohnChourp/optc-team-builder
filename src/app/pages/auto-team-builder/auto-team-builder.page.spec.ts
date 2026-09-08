@@ -172,6 +172,47 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.guidedAutoBuildSupportLabel()).toContain('Captain');
   });
 
+  it('keeps the guided auto build toggle unavailable until the page has finished loading', async () => {
+    /*
+     * `resetPageState()` wipes every filter signal back to its default, and
+     * `ngOnInit` runs it only once the dataset resolves - while the filter
+     * panel is rendered and interactive from the first paint. A reader who
+     * flipped Guided auto build during that window had the press silently
+     * undone a moment later, with the toggle switching itself back off.
+     *
+     * The fix is not to make the class refuse the call - it cannot tell an
+     * early press from a late one - but to keep the control unavailable for
+     * exactly that window. So this asserts both halves: the signal, and the
+     * template binding that consumes it. Without either one the reader is back
+     * to a toggle that accepts a press and discards it.
+     *
+     * Mutation check: drop `|| !pageReady()` from the template and the last
+     * assertion fails; drop the `pageReady.set(true)` from `ngOnInit` and the
+     * third fails.
+     */
+    const { page } = await createPage();
+
+    expect(page.pageReady()).toBe(false);
+
+    const loading = page.ngOnInit();
+
+    expect(page.pageReady()).toBe(false);
+
+    await loading;
+
+    expect(page.pageReady()).toBe(true);
+
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+    const toggle = template.slice(template.indexOf('data-testid="guided-auto-build-toggle"'));
+
+    expect(toggle.slice(0, toggle.indexOf('</ion-toggle>'))).toContain(
+      '[disabled]="building() || !pageReady()"',
+    );
+  });
+
   it('keeps normal auto build behavior when guided mode is disabled', async () => {
     const { page, autoTeamBuilder } = await createPage();
     const result = createAutoBuildResult();

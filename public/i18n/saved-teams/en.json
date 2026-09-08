@@ -194,6 +194,7 @@
       "unknown": "The browser could not write to the clipboard."
     },
     "sharedLink": "Opened native share for \"{{name}}\".",
+  "sharedTitle": "Shared",
     "successTitle": "Copied"
   },
   "selection": {

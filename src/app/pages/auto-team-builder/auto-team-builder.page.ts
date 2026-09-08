@@ -916,6 +916,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly favoritesOnly = signal(false);
   public readonly allowAnyFriendCaptainAutoFill = signal(false);
   public readonly guidedAutoBuildEnabled = signal(false);
+  /**
+   * False until the page has finished loading AND finished the reset that
+   * follows it. Every filter control is gated on it.
+   *
+   * `resetPageState()` wipes every filter signal back to its default, and
+   * `ngOnInit` runs it only once the dataset resolves - while the filter panel
+   * is rendered and interactive from the first paint. So a reader who pressed
+   * anything during the load had it silently undone a moment later. Guided auto
+   * build was the visible casualty: flip it while the page is still loading and
+   * it switched itself back off.
+   *
+   * A control that is briefly unavailable while the page loads is honest. One
+   * that accepts a press and then quietly discards it is not.
+   */
+  public readonly pageReady = signal(false);
+  /** The first load, so `ionViewWillEnter` can wait for it rather than race it. */
+  private initialLoad: Promise<void> | null = null;
   public readonly favoriteShipsOnly = signal(false);
   public readonly teamName = signal('');
   public readonly notes = signal('');
@@ -3038,6 +3055,22 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public async ngOnInit(): Promise<void> {
+    this.initialLoad = this.loadInitialPageState();
+
+    await this.initialLoad;
+  }
+
+  /**
+   * The first load, kept as a promise so `ionViewWillEnter` can wait for it.
+   *
+   * It ends in `resetPageState()`, and `ionViewWillEnter` calls that too. Both
+   * hooks fire on the first visit, `ngOnInit` is async, and the reset it owns
+   * lands only once the dataset resolves - so the two used to race, and the
+   * later one silently undid whatever the reader had pressed in between.
+   * `guidedAutoBuildEnabled` was the visible casualty: flip Guided auto build
+   * while the page is still loading and it switched itself back off.
+   */
+  private async loadInitialPageState(): Promise<void> {
     await Promise.all([
       this.userState.readyFavoriteCharacterIds(),
       this.userState.readyFavoriteShipIds(),
@@ -3067,6 +3100,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     void this.loadAvailableCharacterTags();
     await this.resetPageState();
     await this.refreshAllCompareSnapshots();
+
+    this.pageReady.set(true);
   }
 
   public ngOnDestroy(): void {
@@ -3083,7 +3118,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public async ionViewWillEnter(): Promise<void> {
+    // Never reset ahead of the first load: `ngOnInit` owns that one and it is
+    // the only reset that runs with the dataset in hand.
+    await this.initialLoad;
     await this.resetPageState();
+
+    this.pageReady.set(true);
+
     const appliedSavedTeamPreset = await this.applySavedTeamPresetFromRoute();
 
     if (!appliedSavedTeamPreset) {

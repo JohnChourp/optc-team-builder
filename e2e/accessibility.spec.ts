@@ -12,6 +12,7 @@ import {
   setIonSelect,
   setIonTextarea,
   waitForAppReady,
+  waitForIonControlEnabled,
 } from './regression-fixtures';
 
 test.describe('guided compare and sharing accessibility @accessibility', () => {
@@ -26,10 +27,14 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
     await waitForAppReady(page);
 
     const guidedToggle = page.getByTestId('guided-auto-build-toggle');
+    // Wait BEFORE the keypress, not after the toggle. This is the raw-keypress
+    // path with no retry loop, so a press that lands early is simply lost - and
+    // this spec runs on all three engines, unlike the two chromium-only ones.
+    await waitForIonControlEnabled(guidedToggle);
     await guidedToggle.focus();
     await page.keyboard.press('Space');
     await expect(guidedToggle).toHaveAttribute('data-guided-enabled', 'true');
-    await expect(page.getByTestId('auto-build-submit')).toBeEnabled();
+    await waitForIonControlEnabled(page.getByTestId('auto-build-submit'));
 
     const buildButton = page.getByTestId('auto-build-submit');
     await expect(buildButton).toContainText('Auto Team Build');
