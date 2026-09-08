@@ -1382,6 +1382,204 @@ describe('Auto team builder', () => {
     });
   }
 
+
+  // ---- pair 11x18 ----
+  //
+  // The run-6 ship rows drove the recommendation by changing which SUBS were seated. This one
+  // reaches it with an axis that narrows rather than selects, and it needs the CHIP rather than
+  // the ship id: the same ship wins here and in one control, and only `matchingSlots` separates
+  // them. That is the axis-18 selection half - it reads the team, so an axis that changes the
+  // team changes the analysis, and the chip is what reports the analysis.
+  it('18x11 - unique base names changes how much of the team the recommended ship covers', async () => {
+    const records = createShipRankingPoolRecords({ duplicateFighterNames: true });
+    const ships = createShipRankingShips();
+    const build = async (constraints: Record<string, unknown>) =>
+      new AutoTeamBuilderService(
+        createScopedPoolRepositoryMock(records, ships) as never,
+      ).buildTeam([], ['DEX'], constraints as never);
+
+    // Control 1 - axis 18 alone. The untouched team is entirely Fighter, so the Fighter ship
+    // covers all six slots once the unscoped ship is excluded.
+    const only18 = await build({ excludedShipIds: [8003] });
+
+    expect(only18?.shipSelection?.ship.id).toBe(8001);
+    expect(only18?.shipSelection?.reasonChips).toContain('6/6 slots');
+
+    // Control 2 - axis 11 alone. It changes the team, but with every ship eligible the unscoped
+    // one still outranks both scoped ships, so no recommendation moves.
+    const only11 = await build({ requireUniqueBaseCharacterNames: true });
+
+    expect(only11?.shipSelection?.ship.id).toBe(8003);
+
+    // The pair. Same winning ship as control 1 - which is exactly why the id cannot carry this
+    // assertion and the coverage the chip reports has to.
+    const joint = await build({
+      requireUniqueBaseCharacterNames: true,
+      excludedShipIds: [8003],
+    });
+
+    expect(joint?.shipSelection?.ship.id).toBe(8001);
+    expect(joint?.shipSelection?.reasonChips).toContain('3/6 slots');
+    expect(joint?.shipSelection?.reasonChips).not.toContain('6/6 slots');
+  });
+
+  // ---- pairs 11x14 and 14x16 ----
+  //
+  // Axis 14 derives a requirement; each partner constrains a different part of the team, so the
+  // pair asks whether the derived requirement survives that constraint and the constraint
+  // survives the requirement. Both halves are asserted and each carries its own control. Neither
+  // axis causes the other - this is conjunctive coverage, which is what the matrix defines a
+  // covered pair to be, and run 5 established that saying so plainly beats implying more.
+  const RUN7_MECHANIC_PARTNERS: Array<{
+    axis: string;
+    label: string;
+    records: Parameters<typeof createRun6RequirementSplitRecords>[0];
+    constraints: Record<string, unknown>;
+    holds: (result: {
+      slots: { role: string; character: { id: number; name: string } }[];
+    }) => boolean;
+  }> = [
+    {
+      axis: 'a11',
+      label: 'unique base names',
+      records: { duplicateBaseNames: true },
+      constraints: { requireUniqueBaseCharacterNames: true },
+      holds: (result) => {
+        const subs = result.slots.filter((slot) => slot.role === 'sub');
+
+        return (
+          new Set(subs.map((slot) => slot.character.name.split(' - ', 1)[0]!.trim())).size ===
+          subs.length
+        );
+      },
+    },
+    {
+      axis: 'a16',
+      label: 'friend auto-fill from the roster',
+      records: { rosterFriend: true },
+      constraints: { allowAnyFriendCaptainAutoFill: true },
+      holds: (result) => result.slots[1]!.character.id === 7180,
+    },
+  ];
+
+  for (const partner of RUN7_MECHANIC_PARTNERS) {
+    it(`14x${partner.axis.slice(1)} - a derived requirement holds alongside ${partner.label}`, async () => {
+      const records = createRun6RequirementSplitRecords(partner.records);
+      const build = async (constraints: Record<string, unknown>) =>
+        new AutoTeamBuilderService(
+          createScopedPoolRepositoryMock(records) as never,
+        ).buildTeam(['Fighter'], ['DEX'], constraints as never);
+
+      // Control 1 - the mechanic alone. Its carrier is the lowest-ranked sub, so only the
+      // derived requirement can seat it - and the partner axis is NOT satisfied by accident on
+      // that run, which is what makes the joint assertion evidence for the partner rather than
+      // for the fixture.
+      const only14 = await build({ enemyMechanics: [createRun6BindMechanic()] });
+
+      expect(only14?.slots.map((slot) => slot.character.id)).toContain(7110);
+      expect({ [partner.axis]: partner.holds(only14 as never) }).toEqual({
+        [partner.axis]: false,
+      });
+
+      // Control 2 - the partner alone holds, and does not drag the carrier in.
+      const onlyPartner = await build({ ...partner.constraints });
+
+      expect({ [partner.axis]: partner.holds(onlyPartner as never) }).toEqual({
+        [partner.axis]: true,
+      });
+      expect(onlyPartner?.slots.map((slot) => slot.character.id)).not.toContain(7110);
+
+      // The pair: both.
+      const joint = await build({
+        ...partner.constraints,
+        enemyMechanics: [createRun6BindMechanic()],
+      });
+
+      expect(joint?.slots.map((slot) => slot.character.id)).toContain(7110);
+      expect({ [partner.axis]: partner.holds(joint as never) }).toEqual({
+        [partner.axis]: true,
+      });
+    });
+  }
+
+  // ---- pair 16x19 ----
+  it('16x19 - a widened friend seat and a manual sub pin both hold', async () => {
+    const records = createRun6RequirementSplitRecords({ rosterFriend: true });
+    const build = async (constraints: Record<string, unknown>) =>
+      new AutoTeamBuilderService(
+        createScopedPoolRepositoryMock(records) as never,
+      ).buildTeam(['Fighter'], ['DEX'], constraints as never);
+    // The decoy is load-bearing - run 4's finding. With the pin alone in `characterIds` the
+    // required pin and the listed pool are indistinguishable.
+    const pin = [{ role: 'sub2' as const, characterIds: [7130, 7143], requiredCharacterId: 7130 }];
+
+    // Control 1 - the widening alone. The roster leader takes the friend seat; the pinned sub is
+    // the lowest-ranked record in the pool and is never reached.
+    const only16 = await build({ allowAnyFriendCaptainAutoFill: true });
+
+    expect(only16?.slots[1]?.character.id).toBe(7180);
+    expect(only16?.slots.map((slot) => slot.character.id)).not.toContain(7130);
+
+    // Control 2 - the pin alone. The box captain keeps both leader seats.
+    const only19 = await build({ manualSlots: pin });
+
+    expect(only19?.slots[1]?.character.id).toBe(7100);
+    expect(only19?.slots[3]?.character.id).toBe(7130);
+
+    // The pair. Axis 16 reaches only the friend seat, so it must not disturb a pinned sub.
+    const joint = await build({ allowAnyFriendCaptainAutoFill: true, manualSlots: pin });
+
+    expect(joint?.slots[1]?.character.id).toBe(7180);
+    expect(joint?.slots[3]?.character.id).toBe(7130);
+  });
+
+  // ---- pairs 5x14 and 5x18: attempted, MEASURED VACUOUS, withdrawn ----
+  //
+  // Both were written, both passed, and neither proved anything about axis 5. Recorded rather
+  // than deleted silently, because the mechanism is worth knowing and the next run would write
+  // them again.
+  //
+  // Each seated an in-range leader while a partner axis held, with a control showing that
+  // WITHOUT the range a different leader is seated - which looked like proof. It is not.
+  // Measured, each mutation applied alone and restored:
+  //
+  //   `candidateMatchesLeaderBoostRanges` -> `return true` (utils) ......... 0 of these rows
+  //   `characterMatchesLeaderBoostRanges` -> `return true` (service) ....... 0 of these rows
+  //   either conjunct of either gate, alone ................................ 0 of these rows
+  //
+  // With EVERY leader-boost gate disabled the rows still passed, so the gate is not what they
+  // exercised. What they exercised is that setting a range AT ALL switches on
+  // `resolvePreferredLeaderAutoFillCharacterIds`, whose ordering is by parsed boost; with no
+  // range it returns undefined and leader choice falls back to newest-id. The control's
+  // "different leader" came from that ordering being activated, not from anyone being excluded.
+  //
+  // The behaviour is real and is carried in the ledger as an open question. It is not axis-5
+  // pair coverage, and a row claiming otherwise would be the fourth instance in this matrix of a
+  // test that passes for a reason unrelated to its name.
+
+  // ---- pair 7x16: measured NOT expressible ----
+  //
+  // Run 4 deferred it; run 7 tried it service-side and it cannot be written honestly. The idea
+  // was trap 8: give the widened friend-captain roster a leader whose captain ability scopes
+  // [Slasher] while every sub is Fighter, and ask whether `requireFullCaptainAbilityCoverage` is
+  // what keeps it out of the seat.
+  //
+  // It is not. Measured: with `allowAnyFriendCaptainAutoFill: true` and NO coverage requirement
+  // at all, the uncovering roster leader is still refused - the seat goes to the box captain.
+  // `shouldEnforceCaptainAbilityCoverage` is `requireBothLeadersFullCaptainAbilityCoverage ||
+  // !allowPartialCaptainAbilityCoverage`, and the second disjunct is true by default, so coverage
+  // is enforced whether or not axis 7 was requested - the same "enforced three times over" the
+  // ledger recorded for the covered-sub floor. Any such row passes with axis 7 deleted, which by
+  // this matrix's own rule is not coverage.
+
+  // ---- pair 16x18: measured NOT expressible ----
+  //
+  // Axis 16 can only seat a friend captain whose coverage intersects the box captain's, or the
+  // subs stop being admissible and the pair is refused outright. Measured: a QCK SLASHER roster
+  // leader is never seated at all, so the ship analysis sees no change; a QCK FIGHTER one is
+  // seated but leaves every ship's `matchingSlots` exactly where it was. The channel axis 18
+  // needs - a change in which classes fill the six slots - is the one thing axis 16 cannot make.
+
   beforeAll(() => {
     vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
   });
@@ -41994,7 +42192,14 @@ function createRun6BindMechanic() {
 // Six subs for four slots. The two ability carriers hold the LOWEST ids, and sub ranking ends
 // in newest-id, so neither is selected unless a requirement reaches for it - that is what makes
 // the two single-axis controls evidence instead of a coincidence of the ranking.
-function createRun6RequirementSplitRecords(): CharacterDetailRecord[] {
+function createRun6RequirementSplitRecords(
+  options: {
+    /** Two subs sharing a party-conflict key, ranked above the plain subs. */
+    duplicateBaseNames?: boolean;
+    /** A QCK leader only the all-types friend-captain query can serve. */
+    rosterFriend?: boolean;
+  } = {},
+): CharacterDetailRecord[] {
   const carrier = (id: number, key: string, text: string): CharacterDetailRecord =>
     createCharacterRecord({
       id,
@@ -42017,9 +42222,25 @@ function createRun6RequirementSplitRecords(): CharacterDetailRecord[] {
     });
 
   return [
+    // FIRST in the array on purpose. `resolveFriendCaptainCandidatePool` builds the widened pool
+    // in record order and `comparePreferredLeaderIdOrder` then prefers that order over
+    // newest-id, so a roster leader placed after the box captain never reaches the seat -
+    // measured. QCK, so only the all-types friend-captain query serves it; Fighter like the box
+    // captain, so the intersected coverage still admits the subs.
+    ...(options.rosterFriend
+      ? [createPoolAxisLeaderRecord(7180, 6, 1.5, { type: 'QCK', name: 'Run7 Roster Friend 7180' })]
+      : []),
     createPoolAxisLeaderRecord(7100, 5, 1.5),
     carrier(7110, 'remove_bind', 'Reduces Bind duration by 5 turns.'),
     carrier(7130, 'remove_despair', 'Reduces Despair duration by 5 turns.'),
+    // Highest ids, so the newest-id ranking reaches them and BOTH land in the top four when
+    // axis 11 is off - twins at the tail would make control and treatment identical.
+    ...(options.duplicateBaseNames
+      ? [
+          createPoolAxisSubRecord(7199, 'Monkey D. Luffy - Gear Third'),
+          createPoolAxisSubRecord(7198, 'Monkey D. Luffy - Gear Fourth'),
+        ]
+      : []),
     createPoolAxisSubRecord(7140),
     createPoolAxisSubRecord(7141),
     createPoolAxisSubRecord(7142),
@@ -42207,7 +42428,7 @@ function createFriendCaptainRosterPoolRecords(
  * finished team fills.
  */
 function createShipRankingPoolRecords(
-  options: { slasherAbility?: boolean } = {},
+  options: { slasherAbility?: boolean; duplicateFighterNames?: boolean } = {},
 ): CharacterDetailRecord[] {
   // Opt-in, so the run-5 pool rows keep the exact records they were measured against. When on,
   // every Slasher carries `remove_bind` and no Fighter does, which lets a requirement for FOUR
@@ -42241,10 +42462,14 @@ function createShipRankingPoolRecords(
 
   return [
     createPoolAxisLeaderRecord(9890, 5, 1.3, { name: 'Ship Fighter Leader 9890' }),
-    createPoolAxisSubRecord(9894),
-    createPoolAxisSubRecord(9893),
-    createPoolAxisSubRecord(9892),
-    createPoolAxisSubRecord(9891),
+    // `duplicateFighterNames` collapses the Fighter sub half to ONE usable record under axis 11,
+    // because all four reduce to the same party-conflict key. The three seats it frees fall to
+    // the Slasher half - which is how an axis that NARROWS rather than selects still reaches the
+    // ship analysis, and it reaches it through `matchingSlots` rather than through the ship id.
+    createPoolAxisSubRecord(9894, options.duplicateFighterNames ? 'Nami - Milky Ball' : undefined),
+    createPoolAxisSubRecord(9893, options.duplicateFighterNames ? 'Nami - Thunderbolt' : undefined),
+    createPoolAxisSubRecord(9892, options.duplicateFighterNames ? 'Nami - Cyclone' : undefined),
+    createPoolAxisSubRecord(9891, options.duplicateFighterNames ? 'Nami - Tornado' : undefined),
     createPoolAxisLeaderRecord(9810, 5, 1.3, {
       primaryClass: 'Slasher',
       name: 'Ship Slasher Leader 9810',
