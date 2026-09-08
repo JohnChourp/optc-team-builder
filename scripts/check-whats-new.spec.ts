@@ -114,6 +114,62 @@ describe('check-whats-new', () => {
     expect(result.findings.map((f) => f.kind)).toContain('visible-release-without-bullets');
   });
 
+  it('rejects our vocabulary in the newest entry', async () => {
+    const appRoot = await makeRoot(
+      [entry({ version: '1.0.1', added: [{ en: 'The export modal is faster', el: 'Κάτι' }] })],
+      '1.0.1',
+    );
+
+    const result = inspectWhatsNew({ appRoot });
+
+    expect(result.ok).toBe(false);
+    expect(result.findings[0]?.kind).toBe('developer-vocabulary');
+  });
+
+  it('rejects a filename in the newest entry', async () => {
+    const appRoot = await makeRoot(
+      [entry({ version: '1.0.1', added: [{ en: 'Fixed captain-coverage.page.ts', el: 'Κάτι' }] })],
+      '1.0.1',
+    );
+
+    const result = inspectWhatsNew({ appRoot });
+
+    expect(result.ok).toBe(false);
+    expect(result.findings[0]?.kind).toBe('developer-vocabulary');
+  });
+
+  it('accepts the word control, which is player prose', async () => {
+    const appRoot = await makeRoot(
+      [entry({ version: '1.0.1', added: [{ en: 'New bulk controls in the filter bar', el: 'Κάτι' }] })],
+      '1.0.1',
+    );
+
+    expect(inspectWhatsNew({ appRoot }).ok).toBe(true);
+  });
+
+  /*
+   * The past never changes. An entry published before the rule existed keeps
+   * its wording, so the guard must never reach below the top of the list - and
+   * it must key on the NEWEST entry rather than the released one, because a new
+   * entry is written before the version bump.
+   */
+  it('leaves published entries alone and still guards an unreleased newest entry', async () => {
+    const appRoot = await makeRoot(
+      [
+        entry({ version: '1.0.2', added: [{ en: 'Opens the export modal', el: 'Κάτι' }] }),
+        entry({ version: '1.0.1', added: [{ en: 'Old dialog wording', el: 'Κάτι' }] }),
+      ],
+      // package.json still names the PREVIOUS release: the bump has not run yet.
+      '1.0.1',
+    );
+
+    const result = inspectWhatsNew({ appRoot });
+    const vocabulary = result.findings.filter((finding) => finding.kind === 'developer-vocabulary');
+
+    expect(vocabulary).toHaveLength(1);
+    expect(vocabulary[0]?.version).toBe('1.0.2');
+  });
+
   it('parses the array past its type annotation', () => {
     const source =
       'export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [{"version":"1.0.0"}];\n';
