@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.2',
+    date: '2026-09-08',
+    userVisible: true,
+    headline: {
+      en: 'Ability requirements stop vanishing when you set Enemy mechanics',
+      el: 'Τα Ability requirements δεν χάνονται πια όταν βάζεις Enemy mechanics',
+    },
+    summaryEn:
+      'On Auto Team Builder you can ask for specific abilities under "Ability requirements", and separately describe what the enemy does under "Enemy mechanics". Used together, the first was thrown away. The moment anything sat under Enemy mechanics, the abilities you had asked for stopped counting as requirements at all: the team came back without them, and the "Final team report" listed nothing as given up - so there was no sign on the screen that anything had been dropped. Both are honoured now. Ask for an ability and describe the enemy in the same build and the team has to satisfy both, exactly as it does when you use either one on its own. Nothing else about how teams are chosen has changed.',
+    summaryEl:
+      'Στο Auto Team Builder μπορείς να ζητήσεις συγκεκριμένα abilities στα "Ability requirements", και ξεχωριστά να περιγράψεις τι κάνει ο εχθρός στα "Enemy mechanics". Μαζί, το πρώτο πεταγόταν. Από τη στιγμή που υπήρχε οτιδήποτε στα Enemy mechanics, τα abilities που είχες ζητήσει έπαυαν να μετράνε ως απαιτήσεις: η ομάδα γύριζε χωρίς αυτά, και το "Τελικό report ομάδας" δεν ανέφερε τίποτα ως υποχώρηση - οπότε δεν φαινόταν πουθενά στην οθόνη ότι κάτι είχε πεταχτεί. Πλέον τηρούνται και τα δύο. Ζήτα ένα ability και περίγραψε τον εχθρό στο ίδιο build, και η ομάδα πρέπει να καλύψει και τα δύο, ακριβώς όπως όταν χρησιμοποιείς μόνο το ένα. Τίποτα άλλο στον τρόπο που επιλέγονται οι ομάδες δεν άλλαξε.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: 'The "Ability requirements" you set on Auto Team Builder are no longer dropped when "Enemy mechanics" are set as well. Before, adding a single enemy mechanic silently cancelled every ability you had asked for.',
+        el: 'Τα "Ability requirements" που βάζεις στο Auto Team Builder δεν πετιούνται πια όταν έχεις βάλει και "Enemy mechanics". Πριν, ένα και μόνο enemy mechanic ακύρωνε σιωπηλά κάθε ability που είχες ζητήσει.',
+      },
+      {
+        en: 'The "Final team report" on Auto Team Builder was silent about it, because as far as the builder was concerned the requirement had never been asked for. A requirement that is given up is reported there; one that is honoured is not dropped in the first place.',
+        el: 'Το "Τελικό report ομάδας" στο Auto Team Builder δεν έλεγε τίποτα γι\' αυτό, γιατί για τον builder η απαίτηση δεν είχε ζητηθεί ποτέ. Μια απαίτηση που εγκαταλείπεται αναφέρεται εκεί· μια που τηρείται δεν πετιέται εξαρχής.',
+      },
+    ],
+  },
+  {
     version: '0.4.1',
     date: '2026-09-07',
     userVisible: true,
