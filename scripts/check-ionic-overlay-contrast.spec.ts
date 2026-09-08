@@ -175,6 +175,94 @@ describe('check-ionic-overlay-contrast', () => {
     expect(finding?.selector).toContain('ion-alert.some-modal-alert');
   });
 
+  /*
+   * The three positions the previous reader could not see. It matched with a
+   * leading `(^|[};])` that CONSUMED the closing brace of the rule before it,
+   * so it read rules 1, 3, 5, 7 and skipped the even ones; its `[^{};@]+`
+   * prelude could not span an `@`, so the first rule inside any at-rule was
+   * invisible; and its `[^}]*` body swallowed nested blocks whole, so a
+   * `&`-nested patch was tested as its bare parent selector.
+   *
+   * Each fixture below carries exactly the defect this guard exists to reject.
+   * Measured against the old reader, all three produced ZERO findings.
+   */
+  it.each([
+    [
+      'an even-numbered top-level slot',
+      'src/app/even-slot.scss',
+      '.rule-1 {\n  color: #111111;\n}\n\nion-alert.optc-choice .alert-radio-label {\n  color: #262626;\n}\n',
+    ],
+    [
+      'the first rule inside @media',
+      'src/app/in-media.scss',
+      '@media (max-width: 600px) {\n  ion-alert.optc-choice .alert-radio-label {\n    color: #262626;\n  }\n}\n',
+    ],
+    [
+      'an SCSS &-nested block',
+      'src/app/amp-nested.scss',
+      'ion-alert {\n  &.optc-choice .alert-message {\n    color: #737373;\n  }\n}\n',
+    ],
+  ])('rejects a cssClass-scoped overlay patch written in %s', async (_where, file, scss) => {
+    const appRoot = await makeAppRoot(FULL_RAMP, { [file]: scss });
+    const ionicRoot = await makeIonicRoot();
+
+    const result = inspectOverlayContrast({ appRoot, ionicRoot });
+    const finding = result.findings.find(
+      (entry) => entry.kind === 'css-class-scoped-overlay-text',
+    );
+
+    expect(result.ok).toBe(false);
+    expect(finding?.file).toBe(file);
+    expect(finding?.selector).toContain('optc-choice');
+  });
+
+  /*
+   * Assertion C was dead for every class-based selector: the host was derived
+   * as `ion-${surface.split('-')[1]}`, which reads the SECOND segment, so
+   * `.alert-wrapper` became `ion-wrapper` - not a key of OVERLAY_CONTRACT - and
+   * `missing` was therefore always empty. Five of the nine surface selectors
+   * were affected, which is to say every one an app stylesheet actually writes.
+   */
+  it.each([
+    ['.alert-wrapper', '.alert-message'],
+    ['.action-sheet-wrapper', '.action-sheet-title'],
+    ['.action-sheet-group', '.action-sheet-title'],
+    ['.toast-wrapper', '.toast-message'],
+    ['.loading-wrapper', '.loading-content'],
+  ])('maps the class-based surface %s to its overlay host', async (surface, textPart) => {
+    const appRoot = await makeAppRoot(FULL_RAMP, {
+      'src/app/darkened.scss': `${surface} {\n  background: #05060a;\n}\n`,
+    });
+    const ionicRoot = await makeIonicRoot();
+
+    const result = inspectOverlayContrast({ appRoot, ionicRoot });
+    const finding = result.findings.find(
+      (entry) => entry.kind === 'darkened-surface-without-text-parts',
+    );
+
+    expect(result.ok).toBe(false);
+    expect(finding?.selector).toBe(surface);
+    expect(finding?.missing).toEqual(expect.arrayContaining([textPart]));
+  });
+
+  /*
+   * The guard used to `continue` past a missing contract file and then report
+   * `ok: true` having read nothing at all. An Ionic layout change is the
+   * concrete way that fires - v9 moved ~30 symbols across ~100 subpaths - and
+   * it would have gone green on the very defect it was written for.
+   */
+  it('fails when the Ionic component CSS cannot be found, instead of passing silently', async () => {
+    const appRoot = await makeAppRoot(FULL_RAMP);
+
+    const result = inspectOverlayContrast({ appRoot, ionicRoot: '/nonexistent/ionic/root' });
+
+    expect(result.ok).toBe(false);
+    expect(result.checkedDeclarations).toBe(0);
+    expect(result.findings.map((entry) => entry.kind)).toEqual(
+      expect.arrayContaining(['missing-overlay-stylesheet-root', 'nothing-checked']),
+    );
+  });
+
   it('reports what it checked, so a silent no-op is visible', async () => {
     const appRoot = await makeAppRoot(FULL_RAMP);
     const ionicRoot = await makeIonicRoot();

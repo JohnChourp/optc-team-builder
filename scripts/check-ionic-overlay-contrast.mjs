@@ -93,17 +93,28 @@ export const OVERLAY_CONTRACT = {
   },
 };
 
-/** Selectors that name an overlay surface an app stylesheet might darken. */
+/**
+ * Selectors that name an overlay surface an app stylesheet might darken, each
+ * paired with the overlay host it belongs to.
+ *
+ * The host is declared rather than derived. It used to be computed as
+ * `` `ion-${surface.split('-')[1]}` ``, which reads the SECOND segment: that
+ * turns `.alert-wrapper` into `ion-wrapper` and `.action-sheet-group` into
+ * `ion-sheet`, neither of which is a key of `OVERLAY_CONTRACT`. `contract` came
+ * back undefined, `missing` was always empty, and assertion C was dead for five
+ * of its nine selectors - every class-based one, which is to say every selector
+ * an app stylesheet actually writes.
+ */
 const OVERLAY_SURFACE_SELECTORS = [
-  'ion-alert',
-  '.alert-wrapper',
-  'ion-action-sheet',
-  '.action-sheet-wrapper',
-  '.action-sheet-group',
-  'ion-toast',
-  '.toast-wrapper',
-  'ion-loading',
-  '.loading-wrapper',
+  { selector: 'ion-alert', host: 'ion-alert' },
+  { selector: '.alert-wrapper', host: 'ion-alert' },
+  { selector: 'ion-action-sheet', host: 'ion-action-sheet' },
+  { selector: '.action-sheet-wrapper', host: 'ion-action-sheet' },
+  { selector: '.action-sheet-group', host: 'ion-action-sheet' },
+  { selector: 'ion-toast', host: 'ion-toast' },
+  { selector: '.toast-wrapper', host: 'ion-toast' },
+  { selector: 'ion-loading', host: 'ion-loading' },
+  { selector: '.loading-wrapper', host: 'ion-loading' },
 ];
 
 /**
@@ -321,6 +332,126 @@ function listScssFiles(root) {
   return files.sort();
 }
 
+/** Strips comments so a selector named in prose is never read as a rule. */
+export function stripScssComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/(^|[^:])\/\/.*$/gmu, '$1');
+}
+
+/**
+ * Every declaration block in a stylesheet, at every nesting depth, with its
+ * selector resolved against its ancestors.
+ *
+ * This replaces a single flat regex, `/(^|[};])\s*([^{};@]+)\{([^}]*)\}/gu`,
+ * which was wrong three ways at once and made assertions C and D bypassable by
+ * anyone who put a patch somewhere other than an odd-numbered top-level slot:
+ *
+ *   1. STRIDE 2. The leading `(^|[};])` group CONSUMED the `}` closing the
+ *      previous rule, so the next rule had no anchor left to match against.
+ *      Measured on a file of eight sibling rules: it matched 1, 3, 5, 7.
+ *   2. `@media` BLINDNESS. `[^{};@]+` cannot span an `@`, so the first rule
+ *      inside any at-rule block was never matched at all.
+ *   3. `&` NESTING. `[^}]*` swallowed a nested block whole, so a rule written
+ *      as `ion-alert { &.optc-choice .alert-message { color: ... } }` was
+ *      tested as the selector `ion-alert` - which `CSS_CLASS_SCOPED_OVERLAY`
+ *      does not match, so assertion D never fired on it.
+ *
+ * Each returned block carries only its OWN declarations: a nested child's
+ * declarations belong to the child, not to its parent, or a colour set three
+ * levels down would be attributed to the outermost selector.
+ */
+export function readCssRules(source) {
+  const css = stripScssComments(source);
+  const rules = [];
+  const stack = [];
+  let prelude = '';
+  let declarations = '';
+  let preludeStart = 0;
+
+  const lineAt = (index) => css.slice(0, index).split('\n').length;
+
+  const resolve = (selector) => {
+    const parents = stack.filter((entry) => !entry.atRule).map((entry) => entry.selector);
+    let resolved = selector.trim().replace(/\s+/gu, ' ');
+
+    for (let index = parents.length - 1; index >= 0; index -= 1) {
+      resolved = resolved.includes('&')
+        ? resolved.split('&').join(parents[index])
+        : `${parents[index]} ${resolved}`;
+    }
+
+    return resolved.trim().replace(/\s+/gu, ' ');
+  };
+
+  for (let index = 0; index < css.length; index += 1) {
+    const char = css[index];
+
+    if (char === '{') {
+      const trimmed = prelude.trim().replace(/\s+/gu, ' ');
+      const atRule = trimmed.startsWith('@');
+
+      if (atRule) {
+        stack.push({ atRule: true, selector: '' });
+      } else {
+        // A prelude may list several selectors; each is its own rule, and each
+        // has to be resolved separately so `a, b { }` nested under `c` yields
+        // `c a` and `c b` rather than one comma-joined string.
+        const selectors = trimmed
+          .split(',')
+          .map((part) => part.trim())
+          .filter(Boolean);
+
+        stack.push({
+          atRule: false,
+          selector: selectors.length === 1 ? resolve(selectors[0]) : trimmed,
+          selectors: selectors.map((part) => resolve(part)),
+          line: lineAt(preludeStart),
+          declarations: '',
+        });
+      }
+
+      prelude = '';
+      declarations = '';
+      continue;
+    }
+
+    if (char === '}') {
+      const frame = stack.pop();
+
+      if (frame && !frame.atRule) {
+        const own = `${frame.declarations}${declarations}`;
+
+        for (const selector of frame.selectors) {
+          rules.push({ selector, declarations: own, line: frame.line });
+        }
+      }
+
+      prelude = '';
+      declarations = '';
+      continue;
+    }
+
+    if (stack.length && !stack[stack.length - 1].atRule) {
+      // Text between blocks belongs to the enclosing rule. Park it on the frame
+      // so a child block opening mid-rule does not discard what came before it.
+      if (char === ';') {
+        stack[stack.length - 1].declarations += `${declarations};`;
+        declarations = '';
+        prelude = '';
+        continue;
+      }
+    }
+
+    if (prelude === '') {
+      preludeStart = index;
+    }
+
+    prelude += char;
+    declarations += char;
+  }
+
+  return rules;
+}
+
 /** Assertions C and D: what the app's own stylesheets do to overlays. */
 export function inspectAppStylesheets(appRoot) {
   const findings = [];
@@ -329,17 +460,13 @@ export function inspectAppStylesheets(appRoot) {
   for (const file of files) {
     const css = readFileSync(file, 'utf8');
     const relative = normalizePath(path.relative(appRoot, file));
-    const rulePattern = /(^|[};])\s*([^{};@]+)\{([^}]*)\}/gu;
-    let rule = rulePattern.exec(css);
 
-    while (rule) {
-      const selector = rule[2].trim().replace(/\s+/gu, ' ');
-      const declarations = rule[3];
+    for (const rule of readCssRules(css)) {
+      const { selector, declarations, line } = rule;
       const setsColor = /(?:^|[;{\s])(?:color|--color|--button-color)\s*:/u.test(declarations);
       const setsBackground = /(?:^|[;{\s])(?:background|background-color|--background)\s*:/u.test(
         declarations,
       );
-      const line = css.slice(0, rule.index).split('\n').length;
 
       if (CSS_CLASS_SCOPED_OVERLAY.test(selector) && setsColor) {
         findings.push({
@@ -352,11 +479,12 @@ export function inspectAppStylesheets(appRoot) {
         });
       }
 
-      const surface = OVERLAY_SURFACE_SELECTORS.find((entry) => selector.includes(entry));
+      const surface = OVERLAY_SURFACE_SELECTORS.find((entry) =>
+        selector.includes(entry.selector),
+      );
 
       if (surface && setsBackground && !setsColor) {
-        const host = surface.startsWith('ion-') ? surface : `ion-${surface.split('-')[1]}`;
-        const contract = OVERLAY_CONTRACT[host];
+        const contract = OVERLAY_CONTRACT[surface.host];
         const missing = (contract?.text ?? []).filter((part) => !css.includes(part));
 
         if (missing.length) {
@@ -370,8 +498,6 @@ export function inspectAppStylesheets(appRoot) {
           });
         }
       }
-
-      rule = rulePattern.exec(css);
     }
   }
 
@@ -405,6 +531,21 @@ export function inspectOverlayContrast({
   let checkedDeclarations = 0;
   const checkedComponents = [];
 
+  if (!existsSync(componentsRoot)) {
+    /*
+     * Every contract file used to be skipped with a bare `continue`, so with
+     * this directory absent the run produced zero findings and printed
+     * "passed" having read nothing at all. Ionic 9 deleting
+     * `@ionic/angular/standalone` and moving ~30 symbols across ~100 subpaths
+     * is exactly that shape of change, so this is a real path: the guard would
+     * have gone green on the defect it was written for.
+     */
+    findings.push({
+      kind: 'missing-overlay-stylesheet-root',
+      detail: `${normalizePath(componentsRoot)} does not exist, so no Ionic overlay stylesheet could be read. Install @ionic/core, or repoint this check if Ionic has moved its compiled CSS.`,
+    });
+  }
+
   if (!surface) {
     findings.push({
       kind: 'unresolvable-surface',
@@ -418,6 +559,9 @@ export function inspectOverlayContrast({
       const full = path.join(componentsRoot, relativeFile);
 
       if (!existsSync(full)) {
+        // A component may legitimately ship only one of its two platform
+        // stylesheets. What must not happen is the run ending with nothing
+        // checked at all, which the two guards below cover.
         continue;
       }
 
@@ -485,6 +629,20 @@ export function inspectOverlayContrast({
 
   const stylesheets = inspectAppStylesheets(appRoot);
   findings.push(...stylesheets.findings);
+
+  if (checkedDeclarations === 0) {
+    /*
+     * Belt to the braces above: even with every contract file present, a parser
+     * change that stops matching declarations would leave this at zero while
+     * reporting a clean run. The guard has to prove it did work, not just that
+     * it found nothing wrong.
+     */
+    findings.push({
+      kind: 'nothing-checked',
+      detail:
+        'No overlay colour declaration was read, so a clean result proves nothing. Check that the Ionic component CSS is installed and that findPartColor still matches it.',
+    });
+  }
 
   return {
     ok: findings.length === 0,
