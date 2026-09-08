@@ -1533,6 +1533,413 @@ describe('Auto team builder', () => {
     expect(joint?.slots[3]?.character.id).toBe(7130);
   });
 
+  // ---- Lane D matrix, Tier 3 run 8: pairs 8x15 and 8x18 ----
+  //
+  // Axis 8 is captain branch mode, `manualSlots[].branchSelections[].mode`. It is reachable ONLY
+  // through axis 19 - the mode has to ride on a leader's manual slot
+  // (`resolveManualLeaderBranchMode`, auto-team-builder.utils.ts:5199) - which is why the matrix
+  // promoted 7x8 to the triple 7x8x19. Run 5 exhausted the axis against everything the ENGINE can
+  // express. Axes 15 and 18 it cannot: both are read zero times in `auto-team-builder.engine.ts`
+  // and in `auto-team-builder.utils.ts`, so these two rows have to run through
+  // `service.buildTeam`, on the query-honouring repository mock.
+  //
+  // The fixture is PORTED, not imported - spec helpers are module-local, so the engine spec's
+  // `createVsBranchModeCoverageRecords` cannot be reused here. Four things about it are
+  // load-bearing:
+  //
+  //   - The captain must be a VS captain. `shouldUseAlternativeCaptainCoverageBranches`
+  //     (captain-coverage.utils.ts:712) looks for /\bvs\b/i across the name AND both branch
+  //     texts, and only a VS captain merges its branches as ALTERNATIVES. On a non-VS dual leader
+  //     an unset mode already behaves like 'both' and every control below would concede nothing.
+  //   - `resolveCaptainCoverage` suppresses that alternative merge when the mode IS 'both'
+  //     (`options.branchMode !== 'both'`, captain-coverage.utils.ts:257). So 'both' means covered
+  //     by branch 1 AND branch 2, while the default means EITHER.
+  //   - The captain carries `type: 'INT,STR'`, which no type filter matches. It reaches the pool
+  //     only as a locked id, and `createScopedPoolRepositoryMock` models the repository's
+  //     locked-id widening. That is deliberate: it leaves the pool axis free to remove SUBS
+  //     without ever removing the leader the rows are about.
+  //   - The branch-1-only records carry the HIGHEST sub ids. Sub ranking ends in newest-id, so
+  //     single-branch records at the tail would never be reached and 'both' could not be seen to
+  //     exclude anything - matrix trap 4, in the shape axis 8 gives it.
+  //
+  // The vacuity trap, from run 5 and not hypothetical: `captainBranchSelection` on the result is
+  // a LABEL that `resolveLeaderBranchSelection` copies straight out of the manual slot. It goes
+  // on reporting `{ mode: 'both', source: 'manual' }` on a team full of single-branch subs. Both
+  // rows do assert it - it is how this spec sees that the SERVICE forwarded `branchSelections` at
+  // all (auto-team-builder.service.ts:410-419), which is the whole reason these pairs moved here
+  // - but the load-bearing clause is the sub set, and for 8x18 the ship.
+
+  // ---- pair 8x15 ----
+  //
+  // The pool axis removes 9104: a record ONLY the branch-mode team was reaching for. So axis 15
+  // alone is invisible - it takes away a record the default search never seats - and the joint
+  // case is the only run that reaches 9099. Three distinct sub sets, one per run.
+  it('8x15 - a favorites scope only branch mode both can feel seats a sub neither axis reaches', async () => {
+    const records = createRun8VsBranchModePoolRecords();
+    const allIds = records.map((record) => record.id);
+    const boxCharacterIds = allIds.filter((id) => id !== 9104);
+    const subIdsOf = (result: AutoBuildResult) =>
+      result.slots.filter((slot) => slot.role === 'sub').map((slot) => slot.character.id);
+
+    // Fixture guards. FIVE records are covered by both branches and only four sub seats exist, so
+    // 9099 - the lowest-ranked of them - stays out until the pool axis takes one of the other
+    // four away. And every branch-1-only record outranks every both-branch one on id.
+    expect(RUN8_BOTH_BRANCH_SUB_IDS).toEqual([9104, 9103, 9102, 9101, 9099]);
+    expect(RUN8_BRANCH_1_ONLY_SUB_IDS).toEqual([9108, 9107, 9106, 9105]);
+    expect(Math.min(...RUN8_BRANCH_1_ONLY_SUB_IDS)).toBeGreaterThan(
+      Math.max(...RUN8_BOTH_BRANCH_SUB_IDS),
+    );
+    expect(boxCharacterIds).not.toContain(9104);
+
+    // Control 1 - axis 8 alone. 'both' confines the team to the both-branch records and takes the
+    // four newest of them, so 9099 is not seated.
+    const only8Repository = createScopedPoolRepositoryMock(records);
+    const only8 = await new AutoTeamBuilderService(only8Repository as never).buildTeam(
+      [],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      { manualSlots: createRun8VsBranchModeManualSlots('both') },
+    );
+
+    expectCompleteAutoTeam(only8);
+    expect(subIdsOf(only8)).toEqual([9104, 9103, 9102, 9101]);
+
+    // Control 2 - axis 15 alone. With the mode unset the search resolves its own branch
+    // (`source: 'auto'`; measured 'character1'), the branch-1-only records become admissible, and
+    // being newest they take all four seats. The favorites scope removes a record none of them
+    // would have used, so the pool axis on its own changes nothing whatsoever - which is exactly
+    // what makes the joint run below more than the sum of the two.
+    const only15Repository = createScopedPoolRepositoryMock(records);
+    const only15 = await new AutoTeamBuilderService(only15Repository as never).buildTeam(
+      [],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        favoritesOnly: true,
+        favoriteCharacterIds: boxCharacterIds,
+        manualSlots: createRun8VsBranchModeManualSlots(null),
+      },
+    );
+
+    expectCompleteAutoTeam(only15);
+    expect(only15.slots[0]?.captainBranchSelection?.source).toBe('auto');
+    expect(subIdsOf(only15)).toEqual([9108, 9107, 9106, 9105]);
+
+    // The pair. 9104 is gone, so the fourth seat falls to 9099 - a record neither control seats.
+    const jointRepository = createScopedPoolRepositoryMock(records);
+    const joint = await new AutoTeamBuilderService(jointRepository as never).buildTeam(
+      [],
+      [...AUTO_TEAM_BUILDER_TYPES],
+      {
+        favoritesOnly: true,
+        favoriteCharacterIds: boxCharacterIds,
+        manualSlots: createRun8VsBranchModeManualSlots('both'),
+      },
+    );
+
+    expectCompleteAutoTeam(joint);
+    expect(subIdsOf(joint)).toEqual([9103, 9102, 9101, 9099]);
+    // Invariant 1 for axis 8, on the team the pool axis reshaped: 'both' still means covered by
+    // branch 1 AND branch 2, so no branch-1-only record slipped into the seat 9104 vacated.
+    // Not `expect.not.arrayContaining` - that matcher negates the whole list and stays green on a
+    // team holding only some of the forbidden ids (run 5's finding).
+    expect(subIdsOf(joint).filter((id) => RUN8_BRANCH_1_ONLY_SUB_IDS.includes(id))).toEqual([]);
+    // Invariant 1 for axis 15: the record left out of the box never reached the search at all,
+    // and the leader did - it is locked, so the box scope cannot take it.
+    expect(jointRepository.servedPoolIds).toEqual([boxCharacterIds]);
+    expect(jointRepository.servedPoolIds[0]).toContain(RUN8_VS_CAPTAIN_ID);
+    // Axis 8 reached the search from the manual slot rather than from
+    // `resolveAutomaticCaptainBranchMode`, which is what control 2 shows it would otherwise do.
+    expect(joint.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+    expect(joint.slots[1]?.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+    // Invariant 3: neither axis is relaxation-eligible, and the narrowed box still admits a
+    // strict team, so nothing may be reported as given up. This clause is not a constant - a box
+    // scope that left the search short would flip it.
+    expect(joint.relaxation.usedFallback).toBe(false);
+  });
+
+  // ---- pair 8x18 ----
+  //
+  // Axis 18 has two halves and only one of them can pair with anything. The NULL half - an empty
+  // eligible set, or a required manual ship that is not eligible - reads only `result.input.*`,
+  // so nothing another axis does can reach it. The SELECTION half reads `result.slots` through
+  // `analyzeShipForResult`'s `matchingSlots` (auto-team-builder-ship.utils.ts:180-183), and that
+  // is the single causal channel. Run 6 drove it with requirements and pins; this row asks
+  // whether branch mode reaches it the same way, and MEASURED that it does rather than assuming
+  // it: the two sub halves are class-disjoint on exactly the two classes the scoped ships name,
+  // so changing the mode changes `matchingSlots` and nothing else.
+  //
+  // The arithmetic, from `analyzeShipForResult`'s score - it is why the unscoped ship has to be
+  // excluded before the pair is visible at all, and why THREE distinct ships come back:
+  //
+  //   'both'   team = leader x2 (Slasher/Driven) + four Driven subs
+  //            Driven 6/6 -> 1.5*6*100 + 6*6 = 936 ; Shooter 0/6 -> -120 ; unscoped 6/6 -> 1014
+  //   default  team = leader x2 + four Shooter subs
+  //            Shooter 4/6 -> 1.5*4*100 + 4*6 = 624 ; Driven 2/6 -> 312 - 120 = 192 ; unscoped 1014
+  it('8x18 - branch mode both re-ranks the recommended ship through the subs it seats', async () => {
+    const records = createRun8VsBranchModePoolRecords();
+    const ships = createRun8VsBranchModeShips();
+    const build = async (constraints: Record<string, unknown>) =>
+      new AutoTeamBuilderService(
+        createScopedPoolRepositoryMock(records, ships) as never,
+      ).buildTeam([], [...AUTO_TEAM_BUILDER_TYPES], constraints as never);
+    const subIdsOf = (result: AutoBuildResult) =>
+      result.slots.filter((slot) => slot.role === 'sub').map((slot) => slot.character.id);
+
+    // Fixture guard: the halves are class-disjoint on Driven and Shooter, so `matchingSlots` is
+    // the only term branch mode moves. The leader is Slasher/Driven and holds BOTH leader seats -
+    // legal, and the reason the Driven ship can reach 6/6 while the Shooter ship cannot.
+    expect(
+      records
+        .filter((record) => RUN8_BOTH_BRANCH_SUB_IDS.includes(record.id))
+        .every(
+          (record) => record.classes.includes('Driven') && !record.classes.includes('Shooter'),
+        ),
+    ).toBe(true);
+    expect(
+      records
+        .filter((record) => RUN8_BRANCH_1_ONLY_SUB_IDS.includes(record.id))
+        .every(
+          (record) => record.classes.includes('Shooter') && !record.classes.includes('Driven'),
+        ),
+    ).toBe(true);
+    expect(records.find((record) => record.id === RUN8_VS_CAPTAIN_ID)?.classes).toEqual([
+      'Slasher',
+      'Driven',
+    ]);
+
+    // Control 1 - axis 18 alone. With the mode unset the branch-1-only Shooter records take the
+    // four sub seats, so once the unscoped ship is excluded the Shooter-scoped one wins.
+    const only18 = await build({
+      excludedShipIds: [8103],
+      manualSlots: createRun8VsBranchModeManualSlots(null),
+    });
+
+    expectCompleteAutoTeam(only18);
+    expect(subIdsOf(only18)).toEqual(RUN8_BRANCH_1_ONLY_SUB_IDS);
+    expect(only18.shipSelection?.ship.id).toBe(8101);
+    expect(only18.shipSelection?.reasonChips).toContain('4/6 slots');
+
+    // Control 2 - axis 8 alone. It seats the Driven half, but with every ship eligible the
+    // unscoped ship still outranks both scoped ones, so the recommendation does not move.
+    // Without the ship exclusion the pair is invisible.
+    const only8 = await build({ manualSlots: createRun8VsBranchModeManualSlots('both') });
+
+    expectCompleteAutoTeam(only8);
+    expect(subIdsOf(only8)).toEqual([9104, 9103, 9102, 9101]);
+    expect(only8.shipSelection?.ship.id).toBe(8103);
+
+    // Control 3 - the OTHER branch mode, with the exclusion on. 'character1' is a non-default
+    // mode too and it returns control 1's ship, so what moves the recommendation is 'both'
+    // specifically rather than the mere presence of a manual branch selection.
+    const character1 = await build({
+      excludedShipIds: [8103],
+      manualSlots: createRun8VsBranchModeManualSlots('character1'),
+    });
+
+    expectCompleteAutoTeam(character1);
+    expect(character1.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'character1',
+      source: 'manual',
+    });
+    expect(subIdsOf(character1)).toEqual(RUN8_BRANCH_1_ONLY_SUB_IDS);
+    expect(character1.shipSelection?.ship.id).toBe(8101);
+
+    // The pair: a third answer, which no single run above reaches.
+    const joint = await build({
+      excludedShipIds: [8103],
+      manualSlots: createRun8VsBranchModeManualSlots('both'),
+    });
+
+    expectCompleteAutoTeam(joint);
+    expect(joint.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+    // Invariant 1 for axis 8: the seated subs are the both-branch records, and no branch-1-only
+    // record is among them.
+    expect(subIdsOf(joint)).toEqual([9104, 9103, 9102, 9101]);
+    expect(subIdsOf(joint).filter((id) => RUN8_BRANCH_1_ONLY_SUB_IDS.includes(id))).toEqual([]);
+    // Invariant 1 for axis 18: the excluded ship is gone, and of the two that remain the
+    // recommendation follows the team branch mode produced - reported through the chip, which is
+    // what carries the analysis.
+    expect(joint.shipSelection?.ship.id).toBe(8102);
+    expect(joint.shipSelection?.source).toBe('recommended');
+    expect(joint.shipSelection?.reasonChips).toContain('6/6 slots');
+    expect(joint.relaxation.usedFallback).toBe(false);
+  });
+
+  // ---- Lane D matrix, Tier 3 run 8: pairs 8x14 and 8x20 ----
+
+  it('8x14 - branch mode both leaves the requirement an enemy mechanic derived with no admissible holder', async () => {
+    const records = createRun8VsBranchModePoolRecords({
+      branch2OnlySub: true,
+      branch1OnlyBindHolder: true,
+    });
+    const subIdsOf = (result: AutoBuildResult) =>
+      result.slots.filter((slot) => slot.role === 'sub').map((slot) => slot.character.id);
+    const runBuild = async (
+      poolRecords: CharacterDetailRecord[],
+      constraints: Record<string, unknown>,
+    ) => {
+      const repository = createScopedPoolRepositoryMock(poolRecords);
+      const result = await new AutoTeamBuilderService(repository as never).buildTeam(
+        [],
+        [...AUTO_TEAM_BUILDER_TYPES],
+        constraints as never,
+      );
+      return { result, servedPoolIds: repository.servedPoolIds };
+    };
+
+    const holderIds = records
+      .filter((record) =>
+        (record.detail.builderAbilities ?? []).some((ability) => ability.key === 'remove_bind'),
+      )
+      .map((record) => record.id);
+
+    expect(holderIds).toEqual([RUN8_BRANCH_1_ONLY_BIND_HOLDER_ID]);
+    expect(RUN8_BRANCH_1_ONLY_SUB_IDS).not.toContain(RUN8_BRANCH_1_ONLY_BIND_HOLDER_ID);
+
+    // Control 1 - axis 14 alone (mode unset). The requirement IS satisfiable in this pool.
+    const only14 = await runBuild(records, {
+      manualSlots: createRun8VsBranchModeManualSlots(null),
+      enemyMechanics: [createRun6BindMechanic()],
+    });
+    expectCompleteAutoTeam(only14.result);
+    expect(only14.result?.slots[0]?.captainBranchSelection?.source).toBe('auto');
+    expect(subIdsOf(only14.result!)).toContain(RUN8_BRANCH_1_ONLY_BIND_HOLDER_ID);
+
+    // Control 2 - axis 8 alone. 'both' is satisfiable too, and never reaches the holder.
+    const only8 = await runBuild(records, {
+      manualSlots: createRun8VsBranchModeManualSlots('both'),
+    });
+    expectCompleteAutoTeam(only8.result);
+    expect(only8.result?.relaxation.usedFallback).toBe(false);
+    expect(subIdsOf(only8.result!)).toEqual([9104, 9103, 9102, 9101]);
+    expect(subIdsOf(only8.result!)).not.toContain(RUN8_BRANCH_1_ONLY_BIND_HOLDER_ID);
+
+    // Control 3 - the branch control. 'character1' means branch 1, not "either branch".
+    const branchControl = await runBuild(records, {
+      manualSlots: createRun8VsBranchModeManualSlots('character1'),
+      enemyMechanics: [createRun6BindMechanic()],
+    });
+    expectCompleteAutoTeam(branchControl.result);
+    expect(branchControl.result?.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'character1',
+      source: 'manual',
+    });
+    expect(subIdsOf(branchControl.result!)).toContain(RUN8_BRANCH_1_ONLY_BIND_HOLDER_ID);
+    expect(
+      subIdsOf(branchControl.result!).filter((id) => id === RUN8_BRANCH_2_ONLY_SUB_ID),
+    ).toEqual([]);
+
+    // The pair. Invariant 2: no legal team exists, so the honest answer is null.
+    const joint = await runBuild(records, {
+      manualSlots: createRun8VsBranchModeManualSlots('both'),
+      enemyMechanics: [createRun6BindMechanic()],
+    });
+    expect(joint.result).toBeNull();
+    expect(joint.servedPoolIds).toEqual([records.map((record) => record.id)]);
+
+    // Control 4 - availability. Same mode, same mechanic, one both-branch holder added.
+    const availabilityControl = await runBuild(
+      createRun8VsBranchModePoolRecords({
+        branch2OnlySub: true,
+        branch1OnlyBindHolder: true,
+        bothBranchBindHolder: true,
+      }),
+      {
+        manualSlots: createRun8VsBranchModeManualSlots('both'),
+        enemyMechanics: [createRun6BindMechanic()],
+      },
+    );
+    expectCompleteAutoTeam(availabilityControl.result);
+    expect(subIdsOf(availabilityControl.result!)).toContain(RUN8_BOTH_BRANCH_BIND_HOLDER_ID);
+    expect(
+      subIdsOf(availabilityControl.result!).filter((id) =>
+        [
+          ...RUN8_BRANCH_1_ONLY_SUB_IDS,
+          RUN8_BRANCH_1_ONLY_BIND_HOLDER_ID,
+          RUN8_BRANCH_2_ONLY_SUB_ID,
+        ].includes(id),
+      ),
+    ).toEqual([]);
+  });
+
+  it('8x20 - an exclusion only branch mode both can feel seats a sub neither axis reaches', async () => {
+    const records = createRun8VsBranchModePoolRecords({ branch2OnlySub: true });
+    const allIds = records.map((record) => record.id);
+    const subIdsOf = (result: AutoBuildResult) =>
+      result.slots.filter((slot) => slot.role === 'sub').map((slot) => slot.character.id);
+    const runBuild = async (constraints: Record<string, unknown>) => {
+      const repository = createScopedPoolRepositoryMock(records);
+      const result = await new AutoTeamBuilderService(repository as never).buildTeam(
+        [],
+        [...AUTO_TEAM_BUILDER_TYPES],
+        constraints as never,
+      );
+      return { result, servedPoolIds: repository.servedPoolIds };
+    };
+
+    expect(RUN8_BOTH_BRANCH_SUB_IDS).toEqual([9104, 9103, 9102, 9101, 9099]);
+    expect(RUN8_BRANCH_1_ONLY_SUB_IDS).toEqual([9108, 9107, 9106, 9105]);
+    expect(Math.min(...RUN8_BRANCH_1_ONLY_SUB_IDS)).toBeGreaterThan(
+      Math.max(...RUN8_BOTH_BRANCH_SUB_IDS),
+    );
+
+    // Control 1 - axis 8 alone. 9104 is seated.
+    const only8 = await runBuild({ manualSlots: createRun8VsBranchModeManualSlots('both') });
+    expectCompleteAutoTeam(only8.result);
+    expect(subIdsOf(only8.result!)).toEqual([9104, 9103, 9102, 9101]);
+
+    // Control 2 - axis 20 alone.
+    const only20 = await runBuild({
+      manualSlots: createRun8VsBranchModeManualSlots(null),
+      excludedCharacterIds: [9104],
+    });
+    expectCompleteAutoTeam(only20.result);
+    expect(only20.result?.slots[0]?.captainBranchSelection?.source).toBe('auto');
+    expect(subIdsOf(only20.result!)).not.toContain(9104);
+    expect(
+      subIdsOf(only20.result!).filter((id) => RUN8_BOTH_BRANCH_SUB_IDS.includes(id)),
+    ).toEqual([]);
+
+    // Control 3 - the branch control.
+    const branchControl = await runBuild({
+      manualSlots: createRun8VsBranchModeManualSlots('character1'),
+      excludedCharacterIds: [9104],
+    });
+    expectCompleteAutoTeam(branchControl.result);
+    expect(branchControl.result?.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'character1',
+      source: 'manual',
+    });
+    expect(subIdsOf(branchControl.result!)).toEqual(RUN8_BRANCH_1_ONLY_SUB_IDS);
+
+    // The pair. The vacated seat falls to 9099 - a record neither control seats.
+    const joint = await runBuild({
+      manualSlots: createRun8VsBranchModeManualSlots('both'),
+      excludedCharacterIds: [9104],
+    });
+    expectCompleteAutoTeam(joint.result);
+    expect(subIdsOf(joint.result!)).toEqual([9103, 9102, 9101, 9099]);
+    expect(
+      subIdsOf(joint.result!).filter((id) =>
+        [...RUN8_BRANCH_1_ONLY_SUB_IDS, RUN8_BRANCH_2_ONLY_SUB_ID].includes(id),
+      ),
+    ).toEqual([]);
+    expect(joint.servedPoolIds).toEqual([allIds.filter((id) => id !== 9104)]);
+    expect(joint.servedPoolIds[0]).toContain(RUN8_VS_CAPTAIN_ID);
+    expect(joint.result?.slots[0]?.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+  });
+
   // ---- pairs 5x14 and 5x18: attempted, MEASURED VACUOUS, withdrawn ----
   //
   // Both were written, both passed, and neither proved anything about axis 5. Recorded rather
@@ -1579,6 +1986,29 @@ describe('Auto team builder', () => {
   // leader is never seated at all, so the ship analysis sees no change; a QCK FIGHTER one is
   // seated but leaves every ship's `matchingSlots` exactly where it was. The channel axis 18
   // needs - a change in which classes fill the six slots - is the one thing axis 16 cannot make.
+
+
+  // Fixture guard for every run-8 row below. The VS identity is what makes an UNSET branch mode
+  // merge the two branches as alternatives, and therefore what makes 'both' mean something
+  // different from the default. If it is ever edited out of the name AND both branch texts, the
+  // four rows below would keep passing while proving nothing - so it is asserted here, against
+  // the same predicate the production code uses, rather than described in a comment.
+  it('keeps the run-8 fixture a VS captain, which is what makes branch mode observable', () => {
+    const captain = createRun8VsBranchModePoolRecords().find(
+      (record) => record.id === RUN8_VS_CAPTAIN_ID,
+    );
+    const identityText = [
+      captain?.name,
+      captain?.searchText,
+      RUN8_VS_CHARACTER1_TEXT,
+      RUN8_VS_CHARACTER2_TEXT,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    expect(captain).toBeDefined();
+    expect(/\bvs\b/i.test(identityText) || /\bVS Gauge\b/i.test(identityText)).toBe(true);
+  });
 
   beforeAll(() => {
     vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
@@ -42492,4 +42922,170 @@ function createShipRankingShips(): ShipRecord[] {
     createShipRecord(8002, 'Slasher Ship', 'Boosts ATK of Slasher characters by 1.5x.'),
     createShipRecord(8003, 'Unscoped Ship', 'Boosts ATK by 1.6x.'),
   ];
+}
+
+// ---- Lane D run 8 fixtures for pairs 8x14, 8x15, 8x18 and 8x20 ----
+//
+// The two branch texts are ported from `createVsEitherBranchLeaderRecords` above, trimmed of
+// their trailing "If crew uses a special..." clauses so the two branches differ only in the
+// scope that matters here.
+//
+// The VS identity is load-bearing rather than decoration, and this fixture carries it TWICE.
+// `shouldUseAlternativeCaptainCoverageBranches` joins the captain's name, its `searchText` and
+// both branch texts and tests `/\bvs\b/i || /\bVS Gauge\b/i`; only a VS captain merges its
+// branches as ALTERNATIVES, so without it an unset mode already behaves like 'both' and every
+// row below loses its control. The guard immediately after this comment fails on its own if
+// either source of the identity is removed - a comment cannot, and the same claim was written
+// wrongly in this file once already.
+//
+//   branch 1 covers [INT], Slasher, Free Spirit
+//   branch 2 covers [STR], Driven, Cerebral
+const RUN8_VS_CHARACTER1_TEXT =
+  'Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [TND] orbs at the start of the fight, boosts ATK of [INT], Slasher and Free Spirit characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [INT], Slasher and Free Spirit characters by 1.35x, and makes [INT] and [TND] orbs beneficial for all characters.';
+const RUN8_VS_CHARACTER2_TEXT =
+  'Reduces Switch Effect of all characters by 3 and reduces VS Gauge of all characters by 6 at the start of the fight, changes all orbs into [RCV] orbs at the start of the fight, boosts ATK of [STR], Driven and Cerebral characters by 5.5x, by 6x instead after the 3rd PERFECTs in a row, boosts ATK of all other characters by 3.5x, boosts HP of [STR], Driven and Cerebral characters by 1.35x, and makes [STR] and [RCV] orbs beneficial for all characters.';
+const RUN8_VS_CAPTAIN_ID = 9100;
+/**
+ * Covered by BOTH branches, and never Shooter. Five of them for four seats, newest-first: 9099 is
+ * the spare the pool axis has to make room for.
+ */
+const RUN8_BOTH_BRANCH_SUB_IDS = [9104, 9103, 9102, 9101, 9099];
+/**
+ * Covered by branch 1 only - [INT] is in branch 1's scope, and neither Shooter nor Powerhouse nor
+ * [INT] is in branch 2's [STR]/Driven/Cerebral. They hold the HIGHEST ids so the newest-id
+ * tie-break reaches them first, which is what makes 'both' visible as an exclusion.
+ */
+const RUN8_BRANCH_1_ONLY_SUB_IDS = [9108, 9107, 9106, 9105];
+
+/** Branch 2 only ([STR] + Cerebral), and the NEWEST record in the pool. Opt-in. */
+const RUN8_BRANCH_2_ONLY_SUB_ID = 9109;
+/** Holds `remove_bind`, covered by branch 1 only. Opt-in. */
+const RUN8_BRANCH_1_ONLY_BIND_HOLDER_ID = 9095;
+/** Holds `remove_bind`, covered by both branches. Opt-in. */
+const RUN8_BOTH_BRANCH_BIND_HOLDER_ID = 9094;
+
+function createRun8VsBranchModePoolRecords(
+  options: {
+    branch2OnlySub?: boolean;
+    branch1OnlyBindHolder?: boolean;
+    bothBranchBindHolder?: boolean;
+  } = {},
+): CharacterDetailRecord[] {
+  const sub = (
+    id: number,
+    type: AutoTeamBuilderType,
+    primaryClass: string,
+    secondaryClass: string,
+    abilityKey?: string,
+  ): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      type,
+      primaryClass,
+      secondaryClass,
+      detail: {
+        specialText: 'Boosts orb effects of crew by 2.25x for 1 turn.',
+        ...(abilityKey
+          ? {
+              builderAbilities: [
+                {
+                  key: abilityKey,
+                  label: abilityKey,
+                  minTurns: 5,
+                  isCompleteRemoval: false,
+                  slotTokens: [],
+                  source: 'specialText' as const,
+                },
+              ],
+            }
+          : {}),
+      },
+    });
+
+  return [
+    createCharacterRecord({
+      id: RUN8_VS_CAPTAIN_ID,
+      name: 'Zoro VS Lucci - Battling Swords and Hand Pistols',
+      // No type filter matches a combined type, so this record reaches the pool only as a locked
+      // id - which the manual leader slot makes it. That is what keeps the box scope in 8x15 free
+      // to remove subs without ever touching the leader.
+      type: 'INT,STR',
+      primaryClass: 'Slasher',
+      secondaryClass: 'Driven',
+      detail: {
+        captainAbility: RUN8_VS_CHARACTER1_TEXT,
+        captainAbilityVariants: [
+          {
+            key: 'character1',
+            label: 'Captain Ability (Character 1)',
+            text: RUN8_VS_CHARACTER1_TEXT,
+          },
+          {
+            key: 'character2',
+            label: 'Captain Ability (Character 2)',
+            text: RUN8_VS_CHARACTER2_TEXT,
+          },
+        ],
+        specialText:
+          "Reduces enemies' Increased Defense and Threshold Damage Reduction by 7 turns.",
+      },
+    }),
+    // Branch 2 only, and the NEWEST record in the pool. Branch 2 covers it via [STR] and
+    // Cerebral; branch 1's [INT]/Slasher/Free Spirit does not.
+    ...(options.branch2OnlySub
+      ? [sub(RUN8_BRANCH_2_ONLY_SUB_ID, 'STR', 'Cerebral', 'Powerhouse')]
+      : []),
+    // Both branches, and Driven rather than Shooter - the class half of the 8x18 ship split. The
+    // types alternate so the team carries both of the captain's base types either way.
+    sub(9104, 'INT', 'Driven', 'Cerebral'),
+    sub(9103, 'STR', 'Slasher', 'Driven'),
+    sub(9102, 'INT', 'Driven', 'Cerebral'),
+    sub(9101, 'STR', 'Slasher', 'Driven'),
+    sub(9099, 'INT', 'Driven', 'Cerebral'),
+    // Branch 1 only, and Shooter rather than Driven.
+    sub(9108, 'INT', 'Shooter', 'Powerhouse'),
+    sub(9107, 'INT', 'Shooter', 'Powerhouse'),
+    sub(9106, 'INT', 'Shooter', 'Powerhouse'),
+    sub(9105, 'INT', 'Shooter', 'Powerhouse'),
+    // LAST, so the newest-id tie-break never reaches either holder on its own: only a derived
+    // requirement can seat one.
+    ...(options.branch1OnlyBindHolder
+      ? [sub(RUN8_BRANCH_1_ONLY_BIND_HOLDER_ID, 'INT', 'Shooter', 'Powerhouse', 'remove_bind')]
+      : []),
+    ...(options.bothBranchBindHolder
+      ? [sub(RUN8_BOTH_BRANCH_BIND_HOLDER_ID, 'INT', 'Driven', 'Cerebral', 'remove_bind')]
+      : []),
+  ];
+}
+
+/**
+ * One ship per sub half plus an unscoped one. 8103 outscores both scoped ships on any team
+ * (`analyzeShipForResult` adds 18 for carrying no scope and counts every slot as matching), which
+ * is why the axis-18 half of 8x18 has to remove it before branch mode can be seen in the ranking.
+ */
+function createRun8VsBranchModeShips(): ShipRecord[] {
+  return [
+    createShipRecord(8101, 'Run8 Shooter Ship', 'Boosts ATK of Shooter characters by 1.5x.'),
+    createShipRecord(8102, 'Run8 Driven Ship', 'Boosts ATK of Driven characters by 1.5x.'),
+    createShipRecord(8103, 'Run8 Unscoped Ship', 'Boosts ATK by 1.6x.'),
+  ];
+}
+
+/**
+ * Axis 8 is expressible only through axis 19: the mode has to ride on a leader's manual slot.
+ * `null` is the axis-8-off control - the same pin, with no `branchSelections` at all, which is
+ * what makes the mode the ONLY difference between a control and its treatment.
+ */
+function createRun8VsBranchModeManualSlots(
+  mode: 'character1' | 'character2' | 'both' | null,
+): AutoBuildManualSlotSelection[] {
+  return createEmptyAutoBuildManualSlots().map((slot) =>
+    slot.role === 'captain' || slot.role === 'friendCaptain'
+      ? {
+          ...slot,
+          characterIds: [RUN8_VS_CAPTAIN_ID],
+          ...(mode ? { branchSelections: [{ characterId: RUN8_VS_CAPTAIN_ID, mode }] } : {}),
+        }
+      : slot,
+  );
 }
