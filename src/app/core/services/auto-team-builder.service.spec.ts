@@ -2010,6 +2010,109 @@ describe('Auto team builder', () => {
     expect(/\bvs\b/i.test(identityText) || /\bVS Gauge\b/i.test(identityText)).toBe(true);
   });
 
+
+  // ---- pairs 5x14 and 5x18, restored ----
+  //
+  // Run 7 wrote these, could not kill them with any single mutation, and withdrew them as
+  // vacuous. That was wrong, and the reason is a trap this matrix had already recorded: the
+  // leader boost gate is enforced at TWO independent sites - `candidateMatchesLeaderBoostRanges`
+  // in the utils and `characterMatchesLeaderBoostRanges` in the service - and **a single mutation
+  // cannot falsify a redundantly-enforced rule**. Disabling either alone leaves the other
+  // applying it, so the seated leader does not move and the row looks inert.
+  //
+  // Measured on this fixture, with the range on:
+  //
+  //   unmutated ................... captain 7100 (the only leader inside the range)
+  //   utils gate alone disabled ... captain 7100  - the service gate still applies it
+  //   service gate alone disabled . captain 7100  - the utils gate still applies it
+  //   BOTH gates disabled ......... captain 7191  - the newest leader, range ignored
+  //
+  // So the rows ARE guarded, by the pair of gates together. Their mutation is the pair, and it
+  // is named in the ledger as such so nobody re-derives "vacuous" from a surviving single edit.
+  //
+  // Run 7 also recorded, from the same faulty inference, that a leader boost range moves the
+  // seated leader even when it excludes nobody. It does not. Measured directly: three leaders
+  // with validly parsed boosts and a range whose bounds include all of them return the identical
+  // team as no range at all, and as a min-only range below every boost. What the run-7 fixture's
+  // range actually did was exclude two leaders BY ITS BOUNDS, which is what a range is for.
+  const RUN9_LEADER_BOOST_RANGE = {
+    ATK: { min: 5, max: null },
+    HP: { min: 1.5, max: null },
+  };
+
+  it('5x14 - a leader boost range holds while a derived requirement is satisfied', async () => {
+    const records = createRun6RequirementSplitRecords({ leaderBoostSplit: true });
+    const build = async (constraints: Record<string, unknown>) =>
+      new AutoTeamBuilderService(
+        createScopedPoolRepositoryMock(records) as never,
+      ).buildTeam(['Fighter'], ['DEX'], constraints as never);
+    const leaderIds = (r: Awaited<ReturnType<typeof build>>) =>
+      r?.slots.slice(0, 2).map((slot) => slot.character.id);
+
+    // Control 1 - the mechanic alone. Its carrier is seated, and the leader seats go to the
+    // NEWEST leader, which is one the range would reject. Without this the joint assertion could
+    // be a property of the ranking rather than of the range.
+    const only14 = await build({ enemyMechanics: [createRun6BindMechanic()] });
+
+    expect(only14?.slots.map((slot) => slot.character.id)).toContain(7110);
+    expect(leaderIds(only14)).toEqual([7191, 7191]);
+
+    // Control 2 - the range alone. The leader seats move to the only leader inside it, and the
+    // carrier stays out because nothing asks for it.
+    const only5 = await build({ leaderBoostRanges: RUN9_LEADER_BOOST_RANGE });
+
+    expect(leaderIds(only5)).toEqual([7100, 7100]);
+    expect(only5?.slots.map((slot) => slot.character.id)).not.toContain(7110);
+
+    // The pair: the range still decides the leaders, and the derived requirement is still met.
+    const joint = await build({
+      leaderBoostRanges: RUN9_LEADER_BOOST_RANGE,
+      enemyMechanics: [createRun6BindMechanic()],
+    });
+
+    expect(leaderIds(joint)).toEqual([7100, 7100]);
+    expect(joint?.slots.map((slot) => slot.character.id)).toContain(7110);
+  });
+
+  it('5x18 - a leader boost range changes how much of the team the recommended ship covers', async () => {
+    const records = createShipRankingPoolRecords({ leaderBoostSplit: true });
+    const ships = createShipRankingShips();
+    // Its own window, not the one the 5x14 row uses: the Slasher leader here sits at 5 / 1.3, so
+    // an HP floor of 1.5 would reject every leader in the pool and the control would return no
+    // team at all. The floors are placed so exactly one leader clears both - 9890 fails HP, 9895
+    // fails ATK, and the Slasher leader clears each.
+    const shipLeaderBoostRange = { ATK: { min: 5, max: null }, HP: { min: 1.3, max: null } };
+    const build = async (constraints: Record<string, unknown>) =>
+      new AutoTeamBuilderService(
+        createScopedPoolRepositoryMock(records, ships) as never,
+      ).buildTeam([], ['DEX'], constraints as never);
+
+    // Control 1 - axis 18 alone. Both leader seats are Fighters, so the Fighter ship covers all
+    // six slots once the unscoped ship is excluded.
+    const only18 = await build({ excludedShipIds: [8003] });
+
+    expect(only18?.shipSelection?.ship.id).toBe(8001);
+    expect(only18?.shipSelection?.reasonChips).toContain('6/6 slots');
+
+    // Control 2 - the range alone. It moves the leader seats to the Slasher leader, but with
+    // every ship eligible the unscoped one still outranks both scoped ships.
+    const only5 = await build({ leaderBoostRanges: shipLeaderBoostRange });
+
+    expect(only5?.slots[0]?.character.id).toBe(9810);
+    expect(only5?.shipSelection?.ship.id).toBe(8003);
+
+    // The pair. Same winning ship as control 1, so the id cannot carry the assertion - the two
+    // leader seats the range moved are exactly the two the Fighter ship no longer covers.
+    const joint = await build({
+      leaderBoostRanges: shipLeaderBoostRange,
+      excludedShipIds: [8003],
+    });
+
+    expect(joint?.shipSelection?.ship.id).toBe(8001);
+    expect(joint?.shipSelection?.reasonChips).toContain('4/6 slots');
+    expect(joint?.shipSelection?.reasonChips).not.toContain('6/6 slots');
+  });
+
   beforeAll(() => {
     vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
   });
@@ -42628,6 +42731,8 @@ function createRun6RequirementSplitRecords(
     duplicateBaseNames?: boolean;
     /** A QCK leader only the all-types friend-captain query can serve. */
     rosterFriend?: boolean;
+    /** Two leaders the axis-5 range rejects, one per conjunct. */
+    leaderBoostSplit?: boolean;
   } = {},
 ): CharacterDetailRecord[] {
   const carrier = (id: number, key: string, text: string): CharacterDetailRecord =>
@@ -42661,6 +42766,15 @@ function createRun6RequirementSplitRecords(
       ? [createPoolAxisLeaderRecord(7180, 6, 1.5, { type: 'QCK', name: 'Run7 Roster Friend 7180' })]
       : []),
     createPoolAxisLeaderRecord(7100, 5, 1.5),
+    // Higher ids than 7100, so with the range off the newest of them takes both leader seats.
+    // Each fails exactly ONE conjunct of the ATK && HP gate, so the fixture splits on each term
+    // separately - the run-4 lesson - even though only disabling BOTH gates flips the result.
+    ...(options.leaderBoostSplit
+      ? [
+          createPoolAxisLeaderRecord(7190, 5, 1.2, { name: 'Run9 Fails HP Only 7190' }),
+          createPoolAxisLeaderRecord(7191, 4, 1.5, { name: 'Run9 Fails ATK Only 7191' }),
+        ]
+      : []),
     carrier(7110, 'remove_bind', 'Reduces Bind duration by 5 turns.'),
     carrier(7130, 'remove_despair', 'Reduces Despair duration by 5 turns.'),
     // Highest ids, so the newest-id ranking reaches them and BOTH land in the top four when
@@ -42858,7 +42972,7 @@ function createFriendCaptainRosterPoolRecords(
  * finished team fills.
  */
 function createShipRankingPoolRecords(
-  options: { slasherAbility?: boolean; duplicateFighterNames?: boolean } = {},
+  options: { slasherAbility?: boolean; duplicateFighterNames?: boolean; leaderBoostSplit?: boolean } = {},
 ): CharacterDetailRecord[] {
   // Opt-in, so the run-5 pool rows keep the exact records they were measured against. When on,
   // every Slasher carries `remove_bind` and no Fighter does, which lets a requirement for FOUR
@@ -42891,7 +43005,15 @@ function createShipRankingPoolRecords(
     });
 
   return [
-    createPoolAxisLeaderRecord(9890, 5, 1.3, { name: 'Ship Fighter Leader 9890' }),
+    // With `leaderBoostSplit`, the Fighter leader fails the HP floor and a second Fighter leader
+    // fails the ATK floor, so a range the Slasher leader clears moves BOTH leader seats to the
+    // Slasher half - and the leader seats are two of the six the ship analysis counts.
+    createPoolAxisLeaderRecord(9890, 5, options.leaderBoostSplit ? 1.2 : 1.3, {
+      name: 'Ship Fighter Leader 9890',
+    }),
+    ...(options.leaderBoostSplit
+      ? [createPoolAxisLeaderRecord(9895, 4, 1.3, { name: 'Ship Fighter Leader 9895' })]
+      : []),
     // `duplicateFighterNames` collapses the Fighter sub half to ONE usable record under axis 11,
     // because all four reduce to the same party-conflict key. The three seats it frees fall to
     // the Slasher half - which is how an axis that NARROWS rather than selects still reaches the
