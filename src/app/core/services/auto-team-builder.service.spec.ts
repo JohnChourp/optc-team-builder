@@ -1964,28 +1964,138 @@ describe('Auto team builder', () => {
   // pair coverage, and a row claiming otherwise would be the fourth instance in this matrix of a
   // test that passes for a reason unrelated to its name.
 
-  // ---- pair 7x16: measured NOT expressible ----
+  // ---- pair 7x16: OVERTURNED, and now written ----
   //
-  // Run 4 deferred it; run 7 tried it service-side and it cannot be written honestly. The idea
-  // was trap 8: give the widened friend-captain roster a leader whose captain ability scopes
-  // [Slasher] while every sub is Fighter, and ask whether `requireFullCaptainAbilityCoverage` is
-  // what keeps it out of the seat.
+  // Run 7 recorded this as "measured NOT expressible" and the measurement was real, but it was
+  // taken against ONE of axis 7's two gates. Its fixture leaned on the coverage FLOOR -
+  // `shouldEnforceCaptainAbilityCoverage`, which is
+  // `requireBothLeadersFullCaptainAbilityCoverage || !allowPartialCaptainAbilityCoverage` and so
+  // true by default - and a row built there is indeed degenerate: it passes with axis 7 deleted.
   //
-  // It is not. Measured: with `allowAnyFriendCaptainAutoFill: true` and NO coverage requirement
-  // at all, the uncovering roster leader is still refused - the seat goes to the box captain.
-  // `shouldEnforceCaptainAbilityCoverage` is `requireBothLeadersFullCaptainAbilityCoverage ||
-  // !allowPartialCaptainAbilityCoverage`, and the second disjunct is true by default, so coverage
-  // is enforced whether or not axis 7 was requested - the same "enforced three times over" the
-  // ledger recorded for the covered-sub floor. Any such row passes with axis 7 deleted, which by
-  // this matrix's own rule is not coverage.
+  // Axis 7 also owns `resolveCaptainAbilityCoverageMode` (`auto-team-builder.utils.ts:426`),
+  // which returns 'simpleBoostScope' by DEFAULT and 'fullAbilityCoverage' only when axis 7 is
+  // requested. That is the channel that is off by default, and run 10 measured it as a
+  // single-site kill against exactly two rows. A row built on the MODE cannot pass with axis 7
+  // deleted, and this is that row.
+  //
+  // Measured on this fixture, all four cells:
+  //   neither          -> friend seat 9600 (the box captain mirrors itself)
+  //   axis 16 alone    -> friend seat 9030 (roster leader, seated: simpleBoostScope covers it)
+  //   axis  7 alone    -> friend seat 9600 (no roster query is issued at all)
+  //   both             -> friend seat 9020 (9030 REFUSED, seat falls to the next roster leader)
+  //
+  // The joint answer is a third id that neither axis alone produces, which is what pair coverage
+  // means here.
+  it('7x16 - full captain coverage refuses the widened friend seat its own roster would take', async () => {
+    const records = createFriendCaptainRosterPoolRecords({ partialCoverageRosterLeader: true });
+    const seatFriend = async (constraints: Record<string, unknown>): Promise<number | null> => {
+      const repository = createScopedPoolRepositoryMock(records);
+      const result = await new AutoTeamBuilderService(repository as never).buildTeam(
+        [],
+        ['DEX'],
+        constraints as never,
+      );
 
-  // ---- pair 16x18: measured NOT expressible ----
+      expectCompleteAutoTeam(result);
+
+      return result?.slots[1]?.character.id ?? null;
+    };
+
+    // Control 1 - axis 16 alone seats 9030. Its conditional [Powerhouse] clause matches nothing
+    // in this pool, but `simpleBoostScope` asks only that the [Fighter] scope admit the subs.
+    expect(await seatFriend({ allowAnyFriendCaptainAutoFill: true })).toBe(9030);
+
+    // Control 2 - axis 7 alone never reaches a roster leader: with the flag off no roster query
+    // is issued, so the friend seat is the box captain and the joint result cannot be axis 7
+    // acting alone.
+    expect(await seatFriend({ requireFullCaptainAbilityCoverage: true })).toBe(9600);
+
+    // Joint - 9030 is refused because `fullAbilityCoverage` will not accept a captain whose
+    // clause set is not fully satisfiable by the team, and the seat falls THROUGH to the next
+    // roster leader rather than back to the box. Asserting the seated id, never a label.
+    expect(
+      await seatFriend({
+        allowAnyFriendCaptainAutoFill: true,
+        requireFullCaptainAbilityCoverage: true,
+      }),
+    ).toBe(9020);
+  });
+
+  // ---- pair 16x18: OVERTURNED, and now written ----
   //
-  // Axis 16 can only seat a friend captain whose coverage intersects the box captain's, or the
-  // subs stop being admissible and the pair is refused outright. Measured: a QCK SLASHER roster
-  // leader is never seated at all, so the ship analysis sees no change; a QCK FIGHTER one is
-  // seated but leaves every ship's `matchingSlots` exactly where it was. The channel axis 18
-  // needs - a change in which classes fill the six slots - is the one thing axis 16 cannot make.
+  // Run 7 recorded this as "measured NOT expressible" on the grounds that "the channel axis 18
+  // needs - a change in which CLASSES fill the six slots - is the one thing axis 16 cannot
+  // make." Both halves of that sentence were tried against class-scoped ships only, and
+  // `doesShipMatchSlot` (`auto-team-builder-ship.utils.ts:304`) reads cost, class AND type. A
+  // QCK Fighter roster leader changes no class and no cost, so a class-scoped ship really does
+  // see nothing - and a TYPE-scoped one sees exactly one slot move.
+  //
+  // That single-slot delta is the whole row, and it is what distinguishes this pair from the
+  // pool-axis `18x` rows above, where the ship IDENTITY changes. Here the same ship wins in the
+  // joint arm and in the axis-18 control, and only `matchingSlots` separates them.
+  //
+  // Measured on this fixture, all four cells:
+  //   neither          -> 8101 at 6/6 (every seat is DEX)
+  //   axis 18 alone    -> 8101 at 6/6 (the exclusion changes the ranking, not the team)
+  //   axis 16 alone    -> 8103, the UNSCOPED ship, which outranks both scoped ones
+  //   both             -> 8101 at 5/6 (the QCK friend seat leaves the DEX ship's scope)
+  it('16x18 - the widened friend seat moves one slot out of the recommended ship scope', async () => {
+    const records = createFriendCaptainRosterPoolRecords();
+    // Type-scoped rather than class-scoped, which is the whole point: every record in this
+    // fixture is Fighter, and only the roster leaders are QCK.
+    const ships = [
+      createShipRecord(8101, 'DEX Ship', 'Boosts ATK of [DEX] characters by 1.5x.'),
+      createShipRecord(8102, 'QCK Ship', 'Boosts ATK of [QCK] characters by 1.5x.'),
+      createShipRecord(8103, 'Unscoped Ship', 'Boosts ATK by 1.6x.'),
+    ];
+
+    // Fixture guard: the box half is DEX and the roster half is QCK, so seating a roster leader
+    // is the only thing that can move a slot out of the DEX ship's scope.
+    expect(records.filter((record) => record.type === 'QCK').map((record) => record.id)).toEqual([
+      9020, 9010,
+    ]);
+    expect(records.filter((record) => record.type === 'DEX').map((record) => record.id)).toEqual([
+      9600, 9604, 9603, 9602, 9601,
+    ]);
+
+    const run = async (constraints: Record<string, unknown>): Promise<AutoBuildResult | null> => {
+      const repository = createScopedPoolRepositoryMock(records, ships);
+
+      return new AutoTeamBuilderService(repository as never).buildTeam(
+        [],
+        ['DEX'],
+        constraints as never,
+      );
+    };
+
+    const jointResult = await run({
+      allowAnyFriendCaptainAutoFill: true,
+      excludedShipIds: [8103],
+    });
+
+    expectCompleteAutoTeam(jointResult);
+    expect(jointResult?.slots[1]?.character.id).toBe(9020);
+    expect(jointResult?.shipSelection?.ship.id).toBe(8101);
+    expect(jointResult?.shipSelection?.reasonChips).toContain('5/6 slots');
+    expect(jointResult?.shipSelection?.reasonChips).not.toContain('6/6 slots');
+
+    const shipsOnlyResult = await run({ excludedShipIds: [8103] });
+
+    // Control 1 - axis 18 alone: the SAME ship wins, on a team that is DEX all the way through,
+    // so the ship id cannot carry this row and `matchingSlots` is the only thing that moves.
+    expectCompleteAutoTeam(shipsOnlyResult);
+    expect(shipsOnlyResult?.slots[1]?.character.id).toBe(9600);
+    expect(shipsOnlyResult?.shipSelection?.ship.id).toBe(8101);
+    expect(shipsOnlyResult?.shipSelection?.reasonChips).toContain('6/6 slots');
+
+    const friendOnlyResult = await run({ allowAnyFriendCaptainAutoFill: true });
+
+    // Control 2 - axis 16 alone seats the same QCK leader, but the unscoped 8103 outranks both
+    // scoped ships on any team, so without the exclusion the pair is invisible.
+    expectCompleteAutoTeam(friendOnlyResult);
+    expect(friendOnlyResult?.slots[1]?.character.id).toBe(9020);
+    expect(friendOnlyResult?.shipSelection?.ship.id).toBe(8103);
+  });
 
 
   // Fixture guard for every run-8 row below. The VS identity is what makes an UNSET branch mode
@@ -42945,10 +43055,38 @@ function createDuplicateBaseNamePoolRecords(): CharacterDetailRecord[] {
  * `allowAnyFriendCaptainAutoFill` triggers - and no other axis has to be moved to keep them
  * out of the box.
  */
+/**
+ * A roster leader whose captain ability is covered by `simpleBoostScope` and NOT by
+ * `fullAbilityCoverage` - the same mechanism as `TIER2_SERVICE_PARTIAL_COVERAGE_CAPTAIN_TEXT`,
+ * reused here because it is the ONLY axis-7 channel that is off by default.
+ *
+ * The boosts are the strongest in the fixture so that axis 16 alone seats it; the conditional
+ * [Powerhouse] clause is what axis 7 then refuses, since nothing in the pool is Powerhouse.
+ */
+function createPartialCoverageRosterLeaderRecord(): CharacterDetailRecord {
+  return createCharacterRecord({
+    id: 9030,
+    name: 'Roster Friend Captain 9030',
+    type: 'QCK',
+    primaryClass: 'Fighter',
+    captainAtkBoost: 7,
+    captainHpBoost: 1.4,
+    captainAverageBoost: (7 + 1.4) / 2,
+    detail: {
+      captainAbility:
+        'Boosts ATK of [Fighter] characters by 7x and HP of [Fighter] characters by 1.4x. If HP is below 30%, boosts ATK of [Powerhouse] characters by 2x.',
+      specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+    },
+  });
+}
+
 function createFriendCaptainRosterPoolRecords(
-  options: { nonFavoriteBoxLeader?: boolean } = {},
+  options: { nonFavoriteBoxLeader?: boolean; partialCoverageRosterLeader?: boolean } = {},
 ): CharacterDetailRecord[] {
   return [
+    // First, because `resolveFriendCaptainCandidatePool` ranks roster candidates by the order the
+    // repository returned them and `comparePreferredLeaderIdOrder` prefers that over newest-id.
+    ...(options.partialCoverageRosterLeader ? [createPartialCoverageRosterLeaderRecord()] : []),
     createPoolAxisLeaderRecord(9020, 6, 1.3, { type: 'QCK', name: 'Roster Friend Captain 9020' }),
     createPoolAxisLeaderRecord(9010, 5.5, 1.3, { type: 'QCK', name: 'Roster Friend Captain 9010' }),
     // A [DEX] leader the primary query WOULD serve, stronger than the box captain and left out
