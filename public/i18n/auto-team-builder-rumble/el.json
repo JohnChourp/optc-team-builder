@@ -80,7 +80,6 @@
         "all": "Όλοι οι Rumble χαρακτήρες"
       },
       "support": {
-        "all": "Χρησιμοποίησε κάθε τοπικό character με Rumble data.",
         "noBoxes": "Δημιούργησε character box για να περιορίσεις τα Rumble builds σε αυτό.",
         "withCount": "Περιόρισε το Rumble candidate pool στους {{count}} character(s) αυτού του box.",
         "withFavorites": "{{count}} από {{total}} character(s) σε αυτό το box είναι favorites."

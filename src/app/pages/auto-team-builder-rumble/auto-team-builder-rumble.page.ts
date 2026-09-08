@@ -377,8 +377,16 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       return this.t('filters.characterBox.support.noBoxes');
     }
 
+    /*
+     * "All Rumble characters" carries no support line. It used to read "Use
+     * every Rumble-capable local character.", which restated the option's own
+     * label and cost a row of the filter panel to do it - the same defect the
+     * owner reported as meaningless on Captain Coverage (ClickUp 869exeh57) and
+     * that was removed there. The other three branches stay: they each say
+     * something the label does not.
+     */
     if (!selectedBox) {
-      return this.t('filters.characterBox.support.all');
+      return '';
     }
 
     if (this.favoritesOnly()) {

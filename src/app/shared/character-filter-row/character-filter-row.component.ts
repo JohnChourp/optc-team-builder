@@ -38,7 +38,7 @@ export class CharacterFilterRowComponent {
   @Input() public selectedCharacterBoxValue = '';
 
   @Input() public favoriteMode: CharacterFilterFavoriteMode = 'none';
-  @Input() public favoritesOnlyLabel = 'Show favorites only';
+  @Input() public favoritesOnlyLabel = 'Show favorites';
   @Input() public favoritesOnlySupportText = '';
   @Input() public favoritesOnly = false;
   @Input() public hideFavoritesLabel = 'Hide favorites';

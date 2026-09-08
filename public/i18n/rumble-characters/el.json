@@ -32,7 +32,7 @@
     },
     "favoritesOnly": {
       "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
-      "label": "Μόνο favorites",
+      "label": "Δείξε favorites",
       "withCount": "Περιορισμός στους {{count}} favorite Rumble χαρακτήρες σου."
     },
     "hideFavorites": {

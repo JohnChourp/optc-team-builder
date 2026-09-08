@@ -19,7 +19,7 @@
     },
     "favoritesOnly": {
       "empty": "No favorites saved yet.",
-      "label": "Show favorites only",
+      "label": "Show favorites",
       "withCount": "Limit results to your {{count}} favorited characters."
     },
     "captainAbility": {
