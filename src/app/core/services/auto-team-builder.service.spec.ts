@@ -43211,3 +43211,1325 @@ function createRun8VsBranchModeManualSlots(
       : slot,
   );
 }
+
+// ---- Lane D matrix, Tier 2 service-side foundation: one fixture, eight relaxations ----
+//
+// The service-side analogue of the engine spec's `createTier2Records` + `RELAXABLE`. It exists
+// for the 40 pairs the engine table cannot hold - R x {14, 15, 18, 19, 20} - because axes 14, 15,
+// 18 and 20 are read ZERO times in `auto-team-builder.engine.ts` / `.utils.ts` and axis 19's
+// service-side normalisation never reaches them either.
+//
+// The shape, and why each part is there:
+//   - Two DEX/Fighter leaders whose super-type effect scopes DEX, so the PSY subs sit OUTSIDE the
+//     leader super-effect scope (axis 6).
+//   - Both leaders carry `superSpecialCriteria` and `superTandemData` nothing in the pool can
+//     satisfy (axes 9 and 10).
+//   - Every sub is PSY (out of the DEX super-effect scope) but Fighter, so the captain's SIMPLE
+//     boost scope still covers it. That is mandatory, not decorative:
+//     `shouldEnforceCaptainAbilityCoverage` is `!input.allowPartialCaptainAbilityCoverage`, true by
+//     DEFAULT, so a sub outside the simple boost scope is never seated no matter what axis 7 says.
+//     Measured through the service: a pool of PSY/Slasher subs under a [Fighter] captain builds
+//     NOTHING with axis 7 off and builds only with axis 7 on - which is exactly why the engine spec
+//     needed a second record set, and exactly what this fixture had to avoid.
+//   - Axis 7 is violated a different way instead: the captain text carries a CONDITIONAL clause
+//     ([Powerhouse]) that nothing in the pool matches. `simpleBoostScope` reads only the default
+//     boost clauses, so a PSY/Fighter sub is covered; `fullAbilityCoverage` reads the conditional
+//     clause too (`extractCaptainBoostScopeClauses(text, /* includeConditional */ true)`) and
+//     leaves it uncovered. So coverage holds with axis 7 off and fails with it on, on ONE record
+//     set. Measured: with axis 7 on, `coverage.leaderCriteria.matchingSlots` is 0 of 6.
+//   - Axes 1-4 need no fixture support: they are forced with a value nothing in the pool carries.
+//   - 9390 carries `remove_bind` for the axis-14 partner (`crew_bind` derives that key) and holds
+//     the LOWEST id, so sub ranking - which ends in newest-id - never reaches it on its own.
+//
+// Never seated by the zero-axis control, so all three are observable when an axis reaches for them:
+// leader 9400, sub 9403, carrier 9390. The control team is [9401, 9401, 9407, 9406, 9405, 9404] -
+// the same character in both leader seats, which is legal (Friend Captain is borrowed).
+//
+// Three service-only traps this foundation encodes, each measured:
+//
+//   1. `requireLeaderSuperSpecialCriteria` and `requireSuperTandemCriteria` default to TRUE in
+//      `AutoTeamBuilderService.buildTeam` (auto-team-builder.service.ts:347 and :349) and to FALSE
+//      in the engine spec's `createInput`. Without `TIER2_SERVICE_BASE_CONSTRAINTS` every row on
+//      this fixture reports axes 9 AND 10 whether or not it switched them on, and the "no axis that
+//      was never switched on is reported" clause fails in all 40 pairs. Spread it into every row.
+//   2. `relaxation.usedFallback` is TRUE on this fixture with no axis on at all, because
+//      `shouldReportAllowedLeadersWithSuperEffects` is true whenever axis 6 is off, and these
+//      leaders have super types. Assert the axis-specific flag, never `usedFallback`.
+//   3. The `requireAll...InTeam` / `...PerCharacter` flags in axes 1-4 are INERT on this fixture:
+//      measured, the zero-support filter value alone makes the planner drop and report it. They are
+//      kept only to mirror the engine descriptors. Do not cite them as the cause of an a1-a4 drop.
+
+const TIER2_SERVICE_BASE_TYPES: AutoTeamBuilderType[] = ['DEX', 'PSY'];
+const TIER2_SERVICE_BASE_CLASSES = ['Fighter'];
+/** `crew_bind` derives this key, so it is what an axis-14 partner reaches for. */
+const TIER2_SERVICE_ABILITY_KEY = 'remove_bind';
+
+/**
+ * Covered by `simpleBoostScope`, uncovered by `fullAbilityCoverage`. The conditional [Powerhouse]
+ * clause is the whole mechanism - dropping it (or replacing the text with one whose every clause
+ * targets [Fighter]) kills axis 7 and nothing else. Measured.
+ */
+const TIER2_SERVICE_PARTIAL_COVERAGE_CAPTAIN_TEXT =
+  'Boosts ATK of [Fighter] characters by 5x and HP of [Fighter] characters by 1.3x. If HP is below 30%, boosts ATK of [Powerhouse] characters by 2x.';
+
+const TIER2_SERVICE_UNSATISFIABLE_CRITERIA: NonNullable<
+  CharacterDetailRecord['detail']['superSpecialCriteria']
+> = {
+  rawText: 'Your crew must consist of any 3 of the following: [Ghost Crew].',
+  requiresCaptain: false,
+  hasNonRosterBranches: false,
+  parserStatus: 'roster_only',
+  rosterBranches: [
+    {
+      branchType: 'character_count_any',
+      requiredCount: 3,
+      matchMode: 'any_candidate',
+      options: [{ label: '[Ghost Crew]', acceptedKeys: ['ghost crew that does not exist'] }],
+    },
+  ],
+};
+
+/**
+ * Trap 1 above. Spread this into the constraints of EVERY row built on this fixture, including the
+ * controls - the service turns axes 9 and 10 on by itself otherwise.
+ */
+const TIER2_SERVICE_BASE_CONSTRAINTS = {
+  requireLeaderSuperSpecialCriteria: false,
+  requireSuperTandemCriteria: false,
+};
+
+/**
+ * Written in the order the real repository would return it - power-first, leaders ahead of subs -
+ * because `resolveFriendCaptainCandidatePool` rebuilds roster candidates with an index-derived
+ * rank and `comparePreferredLeaderIdOrder` prefers that order over newest-id.
+ */
+function createTier2ServicePoolRecords(): CharacterDetailRecord[] {
+  const leader = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      name: `Tier2 Service Leader ${id}`,
+      type: 'DEX',
+      primaryClass: 'Fighter',
+      // Named rather than defaulted so an axis-5 partner can move one boost without touching the
+      // captain text, keeping the [Fighter] coverage scope identical across the whole fixture.
+      captainAtkBoost: 5,
+      captainHpBoost: 1.3,
+      detail: {
+        captainAbility: TIER2_SERVICE_PARTIAL_COVERAGE_CAPTAIN_TEXT,
+        specialText: 'Boosts ATK of [Fighter] characters by 2.25x for 1 turn.',
+        superType: { specialEffect: 'Changes DEX characters to Super DEX.' },
+        superSpecialCriteriaText: TIER2_SERVICE_UNSATISFIABLE_CRITERIA.rawText,
+        superSpecialCriteria: TIER2_SERVICE_UNSATISFIABLE_CRITERIA,
+        superTandemData: {
+          requirement: TIER2_SERVICE_UNSATISFIABLE_CRITERIA.rawText,
+          levels: [{ level: 5, effect: 'Boosts Tandem ATK of crew by 3x for 1 turn.' }],
+          criteria: TIER2_SERVICE_UNSATISFIABLE_CRITERIA,
+        },
+      },
+    });
+  // PSY so they sit outside the leaders' DEX super-effect scope (axis 6), Fighter so the captain's
+  // SIMPLE boost scope still admits them - see the header: without that nothing is seated at all.
+  const sub = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      name: `Tier2 Service Sub ${id}`,
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      detail: { specialText: 'Boosts ATK by 2x for 1 turn.' },
+    });
+
+  return [
+    leader(9401),
+    // Never seated by the control - 9401 takes both leader seats - so an axis-19 leader pin on
+    // 9400 is observable as a slot-0 change rather than a no-op.
+    leader(9400),
+    sub(9407),
+    sub(9406),
+    sub(9405),
+    sub(9404),
+    // A spare sub the control never reaches, so a pool-narrowing partner (15 or 20) can remove
+    // one seated record without turning the pair into a spurious `null`.
+    sub(9403),
+    // LOWEST id in the fixture, and the only holder of the ability an axis-14 mechanic derives.
+    // Sub ranking ends in `compareCandidatesByNewestId`, so nothing but a requirement or a manual
+    // pin ever seats it - which is what makes an axis-14 or axis-19 half evidence.
+    createCharacterRecord({
+      id: 9390,
+      name: 'Tier2 Service Carrier 9390',
+      type: 'PSY',
+      primaryClass: 'Fighter',
+      detail: {
+        specialText: 'Reduces Bind duration by 5 turns.',
+        builderAbilities: [
+          {
+            key: TIER2_SERVICE_ABILITY_KEY,
+            label: TIER2_SERVICE_ABILITY_KEY,
+            minTurns: 5,
+            isCompleteRemoval: false,
+            slotTokens: [],
+            source: 'specialText',
+          },
+        ],
+      },
+    }),
+  ];
+}
+
+/**
+ * For the axis-18 half. Every member of this fixture is Fighter, so 8001 matches all six slots and
+ * 8002 matches none - the ranking cannot be moved by changing the TEAM here, only by changing which
+ * ships are offered. Measured: with 8003 present it wins on any team (`analyzeShipForResult` adds 18
+ * for carrying no scope and counts every slot as matching); with 8003 removed, 8001 wins.
+ */
+function createTier2ServiceShips(): ShipRecord[] {
+  return [
+    createShipRecord(8001, 'Tier2 Fighter Ship', 'Boosts ATK of Fighter characters by 1.5x.'),
+    createShipRecord(8002, 'Tier2 Slasher Ship', 'Boosts ATK of Slasher characters by 1.5x.'),
+    createShipRecord(8003, 'Tier2 Unscoped Ship', 'Boosts ATK by 1.6x.'),
+  ];
+}
+
+interface Tier2ServiceRelaxableAxis {
+  id: string;
+  label: string;
+  extraTypes?: AutoTeamBuilderType[];
+  extraClasses?: string[];
+  constraints: Record<string, unknown>;
+  /** Invariant 3: the axis was given up and SAID so. */
+  wasReported: (relaxation: AutoBuildResult['relaxation']) => boolean;
+  /**
+   * Invariant 3 asserted on the outcome rather than the announcement - a field copied from the
+   * input keeps reporting correctly while the behaviour it names is deleted. Every value here was
+   * measured on the fixture with that axis alone switched on.
+   */
+  gaveUp: (result: AutoBuildResult) => boolean;
+}
+
+const TIER2_SERVICE_RELAXABLE: Tier2ServiceRelaxableAxis[] = [
+  {
+    id: 'a1',
+    label: 'types',
+    extraTypes: ['INT'],
+    constraints: { requireAllSelectedTypesInTeam: true },
+    wasReported: (relaxation) => relaxation.droppedTypes.includes('INT'),
+    gaveUp: (result) =>
+      !result.coverage.coveredSelectedTypes.includes('INT') &&
+      result.slots.every((slot) => slot.character.type !== 'INT'),
+  },
+  {
+    id: 'a2',
+    label: 'classes',
+    extraClasses: ['Striker'],
+    constraints: { requireAllSelectedClassesPerCharacter: false },
+    wasReported: (relaxation) => relaxation.droppedClasses.includes('Striker'),
+    gaveUp: (result) =>
+      !result.coverage.coveredSelectedClasses.includes('Striker') &&
+      result.slots.every((slot) => !slot.character.classes.includes('Striker')),
+  },
+  {
+    id: 'a3',
+    label: 'character tags',
+    constraints: {
+      selectedCharacterTags: ['Minks'],
+      requireAllSelectedCharacterTagsInTeam: true,
+    },
+    wasReported: (relaxation) => relaxation.droppedCharacterTags.includes('Minks'),
+    gaveUp: (result) =>
+      !result.coverage.coveredSelectedCharacterTags.includes('Minks') &&
+      result.coverage.selectedCharacterTagMatches === 0,
+  },
+  {
+    id: 'a4',
+    label: 'character names',
+    constraints: {
+      selectedCharacterNames: ['Nefertari Vivi'],
+      requireAllSelectedCharacterNamesInTeam: true,
+    },
+    wasReported: (relaxation) => relaxation.droppedCharacterNames.includes('Nefertari Vivi'),
+    gaveUp: (result) =>
+      !result.coverage.coveredSelectedCharacterNames.includes('Nefertari Vivi') &&
+      result.slots.every((slot) => slot.character.name !== 'Nefertari Vivi'),
+  },
+  {
+    id: 'a6',
+    label: 'leader super-effect scope',
+    constraints: { requireAllSlotsInLeaderSuperEffectScope: true },
+    wasReported: (relaxation) => relaxation.ignoredLeaderSuperEffectScope,
+    // The leaders scope DEX; four seated subs are PSY, so four slots are outside it.
+    gaveUp: (result) => result.slots.filter((slot) => slot.character.type !== 'DEX').length === 4,
+  },
+  {
+    id: 'a7',
+    label: 'captain ability coverage',
+    constraints: { requireFullCaptainAbilityCoverage: true },
+    wasReported: (relaxation) => relaxation.ignoredCaptainAbilityCoverage === true,
+    // Measured: the summary stays in `fullAbilityCoverage` mode and reports 0 of 6 matching slots,
+    // so the team really did concede the coverage it asked for.
+    gaveUp: (result) =>
+      result.coverage.leaderCriteria.coverageMode === 'fullAbilityCoverage' &&
+      result.coverage.leaderCriteria.allSlotsMatch === false &&
+      result.coverage.leaderCriteria.matchingSlots === 0,
+  },
+  {
+    id: 'a9',
+    label: 'super special criteria',
+    constraints: { requireLeaderSuperSpecialCriteria: true },
+    wasReported: (relaxation) => relaxation.ignoredLeaderSuperSpecialCriteria,
+    // `resolveUnsatisfiedSuperSpecialCriteriaCharacterNames` is derived from the finished slots,
+    // so this names the leader actually seated rather than the one the input asked for.
+    gaveUp: (result) =>
+      (result.relaxation.ignoredSuperSpecialCriteriaCharacterNames ?? []).includes(
+        result.slots[0]!.character.name,
+      ),
+  },
+  {
+    id: 'a10',
+    label: 'Super Tandem criteria',
+    constraints: { requireSuperTandemCriteria: true },
+    wasReported: (relaxation) => relaxation.ignoredSuperTandemCriteria,
+    gaveUp: (result) =>
+      (result.relaxation.ignoredSuperTandemCriteriaCharacterNames ?? []).includes(
+        result.slots[0]!.character.name,
+      ),
+  },
+];
+
+/**
+ * The one call shape every row on this fixture uses. `hardConstraints` carries the hard axis under
+ * test (14, 15, 18, 19 or 20); `ships` is only for the axis-18 half. The repository mock is
+ * returned so a row can prove a `null` came from the search rather than from a service early-out on
+ * an empty scope - `servedPoolIds` records the pool served per call.
+ */
+async function runTier2ServiceAxes(
+  axes: Tier2ServiceRelaxableAxis[],
+  hardConstraints: Record<string, unknown> = {},
+  ships: ShipRecord[] = [],
+): Promise<{
+  result: AutoBuildResult | null;
+  repository: ReturnType<typeof createScopedPoolRepositoryMock>;
+  records: CharacterDetailRecord[];
+}> {
+  const records = createTier2ServicePoolRecords();
+  const repository = createScopedPoolRepositoryMock(records, ships);
+  const types: AutoTeamBuilderType[] = [
+    ...TIER2_SERVICE_BASE_TYPES,
+    ...axes.flatMap((axis) => axis.extraTypes ?? []),
+  ];
+  const selectedClasses = [
+    ...TIER2_SERVICE_BASE_CLASSES,
+    ...axes.flatMap((axis) => axis.extraClasses ?? []),
+  ];
+  const constraints = axes.reduce(
+    (accumulator, axis) => ({ ...accumulator, ...axis.constraints }),
+    { ...TIER2_SERVICE_BASE_CONSTRAINTS, ...hardConstraints } as Record<string, unknown>,
+  );
+  const result = await new AutoTeamBuilderService(repository as never).buildTeam(
+    selectedClasses,
+    types,
+    constraints as never,
+  );
+
+  return { result, repository, records };
+}
+
+// ---- Lane D matrix, Tier 2 service-side: R x 14 and R x 15 ----
+//
+// Sixteen of the forty pairs the engine table cannot hold, on the shared
+// `createTier2ServicePoolRecords` fixture and the shared `TIER2_SERVICE_RELAXABLE` descriptors.
+// Both hard axes here are service-only: `enemyMechanics` and
+// `candidateCharacterIds`/`favoritesOnly` are read ZERO times in `auto-team-builder.engine.ts`
+// and `auto-team-builder.utils.ts` - re-measured for this run by grepping all four identifiers
+// across both files, which returns nothing - so an engine-side row would pass while proving
+// nothing.
+//
+// Every descriptor below is declared INSIDE this describe rather than at module scope. Three
+// agents paste a block into this one file; a module-scope `TIER2_SERVICE_HARD` would collide with
+// the sibling families' equivalents, and only the foundation is meant to land exactly once.
+//
+// The two hard axes bind through completely different machinery, and each row's evidence matches:
+//
+//   - Axis 14 is a DERIVATION, not a filter. `normalizeBattleRequirementsWithLegacyFallback`
+//     (auto-team-builder-battle.utils.ts:76) calls `deriveAbilityRequirementsFromEnemyMechanics`
+//     (:97), which drops every mechanic whose `derivedAbilityKey` is null
+//     (enemy-mechanic-draft.utils.ts:629) and synthesises `battle-1` from what survives. The
+//     evidence is that 9390 - the fixture's only `remove_bind` holder, and its LOWEST id, so the
+//     newest-id sub ranking never reaches it - is SEATED, and that the synthesised battle has
+//     nothing missing.
+//   - Axis 15 narrows the pool, and it has THREE live enforcement sites for a sub seat, not one:
+//     the repository query (auto-team-builder.service.ts:478), the scoped sub auto-fill (:524)
+//     and the legacy auto-fill (:531). Measured: gutting any ONE of them, or the first two
+//     together, leaves the finished team correct, because each of the survivors filters the same
+//     record out again. So a row that asserts only the team cannot tell whether the service still
+//     forwards the axis to the repository at all - which is the exact defect the query-honouring
+//     mock exists to catch. Every a15 row therefore asserts BOTH `servedPoolIds` (killed only by
+//     the query mutation) and the finished team (killed only by gutting all three). That is matrix
+//     trap 1 in its measured form; see the mutation ledger in this run's write-up.
+//
+// Every row goes through `runTier2ServiceAxes`, hence through `createScopedPoolRepositoryMock`. A
+// `vi.fn().mockResolvedValue(records)` serves the full pool regardless of the query, so an a15 row
+// built on one passes whether or not the service forwards the axis at all.
+describe('Lane D matrix - Tier 2 service-side pairs, R x 14 and R x 15', () => {
+  /** Derives `remove_bind`, which only 9390 carries. */
+  const createTier2ServiceBindMechanic = () => ({
+    mechanicKey: 'crew_bind',
+    minTurns: null,
+    requiredCharacterCount: 1,
+    triggerTags: [] as string[],
+  });
+
+  const TIER2_SERVICE_CARRIER_ID = 9390;
+  /** Seated by the zero-axis control, and the record every a15 row removes. */
+  const TIER2_SERVICE_DROPPED_SUB_ID = 9407;
+  /** Never seated by the zero-axis control; takes 9407's seat once a15 removes it. */
+  const TIER2_SERVICE_SPARE_SUB_ID = 9403;
+
+  const slotIdsOf = (result: AutoBuildResult) => result.slots.map((slot) => slot.character.id);
+  const reportedAxisIdsOf = (result: AutoBuildResult) =>
+    TIER2_SERVICE_RELAXABLE.filter((axis) => axis.wasReported(result.relaxation)).map(
+      (axis) => axis.id,
+    );
+
+  interface Tier2ServiceHardAxis {
+    /** Which matrix pair the row covers - two entries share `a15`, one per service branch. */
+    pairId: 'a14' | 'a15';
+    id: string;
+    label: string;
+    constraints: (allIds: number[]) => Record<string, unknown>;
+    /**
+     * Invariant 1: the hard axis was never relaxed, so the finished team still honours it. Takes
+     * the repository mock because half of axis 15's evidence is the pool the service ASKED for,
+     * which no assertion over `result` can see.
+     */
+    stillSatisfied: (
+      result: AutoBuildResult,
+      repository: ReturnType<typeof createScopedPoolRepositoryMock>,
+      allIds: number[],
+    ) => void;
+    /**
+     * The soft axis alone, on the same records. It must CONTRADICT what `stillSatisfied` asserts,
+     * or the joint row is describing the fixture rather than the hard axis (matrix trap 2 and
+     * trap 8).
+     */
+    expectSoftOnlyControlContradicts: (result: AutoBuildResult) => void;
+  }
+
+  const TIER2_SERVICE_HARD: Tier2ServiceHardAxis[] = [
+    {
+      pairId: 'a14',
+      id: 'a14',
+      label: 'a requirement derived from an enemy mechanic',
+      constraints: () => ({ enemyMechanics: [createTier2ServiceBindMechanic()] }),
+      stillSatisfied: (result) => {
+        // The consequence, not the input echo: the derived requirement's only holder is seated.
+        expect(slotIdsOf(result)).toContain(TIER2_SERVICE_CARRIER_ID);
+        // ...and the battle the service synthesised from the mechanic has no misses. `missing`
+        // rather than `matchesAll`, because `matchesAll` is `true` with no battles at all.
+        expect(result.coverage.battleRequirements?.missing).toEqual([]);
+        expect(
+          (result.coverage.battleRequirements?.requested ?? []).flatMap((battle) =>
+            battle.requiredCharacterGroups.flatMap((group) =>
+              group.abilities.map((ability) => ability.abilityKey),
+            ),
+          ),
+        ).toEqual([TIER2_SERVICE_ABILITY_KEY]);
+      },
+      expectSoftOnlyControlContradicts: (result) => {
+        // 9390 holds the lowest id in the pool and sub ranking ends in newest-id, so nothing
+        // seats it. That is what makes its seat above the mechanic's doing, not the ranking's.
+        expect(slotIdsOf(result)).not.toContain(TIER2_SERVICE_CARRIER_ID);
+      },
+    },
+    // `hasExplicitCandidateScope` (auto-team-builder.service.ts:429) splits axis 15 into two
+    // branches that never share a line: an explicit `candidateCharacterIds` list is intersected
+    // with the favourites box at :431, while `favoritesOnly` alone takes :435. Both resolve into
+    // the same `allowedCharacterIds`, so both are the same pair - covered once per branch rather
+    // than once through whichever branch happened to be written first. Measured: identical teams
+    // and identical served pools, which is the claim, not an assumption.
+    {
+      pairId: 'a15',
+      id: 'a15-favorites',
+      label: 'a favorites box scope',
+      constraints: (allIds) => ({
+        favoritesOnly: true,
+        favoriteCharacterIds: allIds.filter((id) => id !== TIER2_SERVICE_DROPPED_SUB_ID),
+      }),
+      stillSatisfied: (result, repository, allIds) =>
+        expectTier2ServicePoolScopeHeld(result, repository, allIds),
+      expectSoftOnlyControlContradicts: (result) =>
+        expectTier2ServicePoolScopeAbsent(result),
+    },
+    {
+      pairId: 'a15',
+      id: 'a15-candidateIds',
+      label: 'an explicit candidate scope',
+      constraints: (allIds) => ({
+        candidateCharacterIds: allIds.filter((id) => id !== TIER2_SERVICE_DROPPED_SUB_ID),
+      }),
+      stillSatisfied: (result, repository, allIds) =>
+        expectTier2ServicePoolScopeHeld(result, repository, allIds),
+      expectSoftOnlyControlContradicts: (result) =>
+        expectTier2ServicePoolScopeAbsent(result),
+    },
+  ];
+
+  function expectTier2ServicePoolScopeHeld(
+    result: AutoBuildResult,
+    repository: ReturnType<typeof createScopedPoolRepositoryMock>,
+    allIds: number[],
+  ): void {
+    // Half one - the pool the service ASKED the repository for. Only the query at
+    // auto-team-builder.service.ts:478 can move this; measured, it is the ONLY assertion in the
+    // row that dies when that query stops forwarding `allowedCharacterIds`.
+    expect(repository.servedPoolIds).toEqual([
+      allIds.filter((id) => id !== TIER2_SERVICE_DROPPED_SUB_ID),
+    ]);
+    // Half two - the team that came back. Two further sites (:524 and :531) hold this even with
+    // the query gutted, so it is a different assertion rather than a restatement of half one.
+    // `toEqual(expect.not.arrayContaining([...]))` negates the whole matcher (matrix trap 7), so
+    // the exclusion is written as a filter that must come back empty.
+    expect(slotIdsOf(result).filter((id) => id === TIER2_SERVICE_DROPPED_SUB_ID)).toEqual([]);
+    expect(slotIdsOf(result)).toContain(TIER2_SERVICE_SPARE_SUB_ID);
+  }
+
+  function expectTier2ServicePoolScopeAbsent(result: AutoBuildResult): void {
+    // The soft axis alone leaves the pool whole: 9407 is seated and the spare 9403 is not, so
+    // BOTH halves of the swap `expectTier2ServicePoolScopeHeld` asserts are falsifiable.
+    expect(slotIdsOf(result)).toContain(TIER2_SERVICE_DROPPED_SUB_ID);
+    expect(slotIdsOf(result)).not.toContain(TIER2_SERVICE_SPARE_SUB_ID);
+  }
+
+  // Every relaxation-eligible axis against each service-only hard axis. The soft one is forced to
+  // relax and must SAY so; the hard one is never relaxed and must still hold on the finished team.
+  //
+  // Two controls per row, on the same records, because a joint assertion is evidence only if both
+  // of them contradict it: the soft axis alone must fail what the hard axis asserts, and the hard
+  // axis alone must report nothing.
+  for (const hard of TIER2_SERVICE_HARD) {
+    for (const soft of TIER2_SERVICE_RELAXABLE) {
+      it(`${soft.id}x${hard.pairId.slice(1)} - ${soft.label} relaxes while ${hard.label} still holds`, async () => {
+        const allIds = createTier2ServicePoolRecords().map((record) => record.id);
+
+        // Control 1 - the soft axis alone.
+        const { result: softOnly } = await runTier2ServiceAxes([soft]);
+
+        expect(softOnly).not.toBeNull();
+        hard.expectSoftOnlyControlContradicts(softOnly!);
+
+        // Control 2 - the hard axis alone. Nothing is relaxed, so nothing is reported, and it
+        // builds a full team - so the joint row's report is the soft axis's doing and its
+        // `null`-freedom is not luck.
+        const { result: hardOnly } = await runTier2ServiceAxes([], hard.constraints(allIds));
+
+        expect(hardOnly).not.toBeNull();
+        expect(hardOnly!.slots).toHaveLength(6);
+        expect(reportedAxisIdsOf(hardOnly!)).toEqual([]);
+
+        const { result: joint, repository } = await runTier2ServiceAxes(
+          [soft],
+          hard.constraints(allIds),
+        );
+
+        expect(joint).not.toBeNull();
+        expect(joint!.slots).toHaveLength(6);
+
+        // Invariant 3: the soft axis was given up, and it SAID so...
+        expect({ [soft.id]: soft.wasReported(joint!.relaxation) }).toEqual({ [soft.id]: true });
+        // ...asserted on the outcome too, not only on the announcement. For a7, a9 and a10 that
+        // is a second, independent fact; for a1-a4 and a6 it is conjunctive on this fixture, which
+        // the family guard at the bottom of this describe measures and pins rather than implies.
+        expect({ [soft.id]: soft.gaveUp(joint!) }).toEqual({ [soft.id]: true });
+        // ...and nothing that was never switched on is reported as given up. Run 3 found this
+        // mirror direction was also live, so it is asserted rather than assumed.
+        expect(reportedAxisIdsOf(joint!)).toEqual([soft.id]);
+
+        // Invariant 1: the hard axis was never relaxed.
+        hard.stillSatisfied(joint!, repository, allIds);
+      });
+    }
+  }
+
+  // Axis 14 derives; it does not filter. This row was written to assert that a mechanic with no
+  // `derivedAbilityKey` leaves the team exactly where the zero-axis control left it. Measured, it
+  // does not: it makes `buildTeam` return NULL, on this fixture and on
+  // `createRun6RequirementSplitRecords` alike. The row pins the real behaviour with its mechanism,
+  // because a green test asserting the intuition would have been wrong in the reader's favour.
+  //
+  // The chain, each link measured rather than read:
+  //   1. `normalizeBattleRequirementsWithLegacyFallback` (auto-team-builder-battle.utils.ts:76)
+  //      derives nothing from the mechanic (`deriveAbilityRequirementsFromEnemyMechanics` filters
+  //      out every null `derivedAbilityKey`, enemy-mechanic-draft.utils.ts:629), so
+  //      `fallbackRequiredGroups` is empty - but its bail-out at :104 is
+  //      `!legacyEnemyMechanics.length && !fallbackRequiredGroups.length`, an AND, so a battle IS
+  //      still synthesised: `battle-1` with one mechanic and ZERO required character groups.
+  //   2. `resolveBattleRequirementAssignmentModes` (auto-team-builder.utils.ts:2133) returns
+  //      `['strict']` unless some battle has MORE than one group, so a groupless battle never gets
+  //      the flexible pass.
+  //   3. In strict mode `findCounterAnchoredValidSelection` returns null for a groupless battle and
+  //      auto-team-builder.utils.ts:3432 short-circuits to an EMPTY selection instead of falling
+  //      through to the `?? selected` fallback one line below at :3436.
+  //
+  // Measured through the engine on this fixture: a groupless battle in the default strict mode
+  // returns null; the SAME battle forced to `flexible` builds [9401, 9401, 9407, 9406, 9405, 9404];
+  // a battle carrying one satisfiable group builds [9401, 9401, 9390, 9407, 9406, 9405]. So the
+  // null is the strict short-circuit, not the mechanic key and not the fixture. Deleting that
+  // short-circuit kills this row and nothing else in the family - also measured.
+  //
+  // It WAS a defect, and it is fixed. A player who ticked any of the FOURTEEN catalogue entries
+  // carrying `derivedAbilityKey: null` - Immunity, Orb Boost Down, Block Orbs, Bomb Orbs, Negative
+  // Orbs, Orb Shuffle, all five `interrupt_*` and all three `condition_*` - got NO TEAM AT ALL
+  // rather than the team they would have got without ticking it.
+  //
+  // The fix is at the third step above: strict mode now short-circuits only when some battle
+  // carries at least one required character group. A groupless battle imposes no requirement, so
+  // there is nothing for a team to ignore and nothing to be strict about. This row asserts the
+  // fixed behaviour and is what fails if the guard is reverted - measured, it is the only row in
+  // the file that does.
+  it('a14 - an enemy mechanic that derives no ability leaves the team alone', async () => {
+    /**
+     * The same shape as `crew_bind` with `derivedAbilityKey: null`
+     * (enemy-mechanic-draft.utils.ts:214-221): same `crewDebuff` category, same turn support, and
+     * it derives nothing.
+     */
+    const inertMechanic = {
+      mechanicKey: 'crew_orb_boost_down',
+      minTurns: null,
+      requiredCharacterCount: 1,
+      triggerTags: [] as string[],
+    };
+    const { result: control } = await runTier2ServiceAxes([]);
+    const { result: inert, repository: inertRepository } = await runTier2ServiceAxes([], {
+      enemyMechanics: [inertMechanic],
+    });
+    const { result: deriving } = await runTier2ServiceAxes([], {
+      enemyMechanics: [createTier2ServiceBindMechanic()],
+    });
+
+    expect(control).not.toBeNull();
+    expect(slotIdsOf(control!)).not.toContain(TIER2_SERVICE_CARRIER_ID);
+
+    // The deriving twin, on the same fixture and the same call shape, builds and seats the carrier.
+    // Without it the null below would be evidence of nothing.
+    expect(deriving).not.toBeNull();
+    expect(deriving!.input.battleRequirements).toHaveLength(1);
+    expect(slotIdsOf(deriving!)).toContain(TIER2_SERVICE_CARRIER_ID);
+
+    // The inert mechanic builds, and builds the CONTROL's team: it derived no requirement, so it
+    // must not move a single slot. Asserting the exact team rather than merely "not null" is what
+    // makes this a fix assertion instead of a smoke test.
+    expect(inert).not.toBeNull();
+    expect(slotIdsOf(inert!)).toEqual(slotIdsOf(control!));
+    expect(slotIdsOf(inert!)).not.toContain(TIER2_SERVICE_CARRIER_ID);
+    // The battle is still synthesised and still carries the mechanic - the fix is about what the
+    // search does with a groupless battle, not about suppressing the battle.
+    expect(inert!.input.battleRequirements).toHaveLength(1);
+    expect(inert!.input.battleRequirements?.[0]?.requiredCharacterGroups).toHaveLength(0);
+    // And the pool was never the reason: the repository was asked for, and served, all of it.
+    expect(inertRepository.servedPoolIds).toEqual([
+      createTier2ServicePoolRecords().map((record) => record.id),
+    ]);
+  });
+
+  // The honest limit of the shared `gaveUp` predicates, recorded as an assertion instead of a
+  // comment.
+  //
+  // `gaveUp` is meant to assert the consequence rather than the announcement (matrix trap 3).
+  // Measured on this fixture, it does that for a7, a9 and a10 only. For a1, a2, a3, a4 and a6 it is
+  // TRUE in the zero-axis control as well: the fixture contains no INT record, no Striker, no
+  // [Minks] tag and no Nefertari Vivi, and its team is always two DEX leaders plus four PSY subs,
+  // so "no INT was seated" and "four slots are outside the DEX super-effect scope" hold whether or
+  // not the axis was ever switched on. That is matrix trap 8 - a predicate nothing could have
+  // falsified - and it means those five `gaveUp` calls in the rows above are conjunctive, not
+  // causal. Their causal half is `wasReported`, which control 2 does falsify, and which a
+  // production mutation of each reporting site does kill.
+  //
+  // This is a guard, not a wish: if a later change gives one of the five a discriminating
+  // consequence, this row fails and the classification is redone rather than silently going stale.
+  it('a14/a15 family guard - five of the eight gaveUp predicates are already true in the zero-axis control', async () => {
+    const { result: control } = await runTier2ServiceAxes([]);
+
+    expect(control).not.toBeNull();
+    expect(
+      TIER2_SERVICE_RELAXABLE.filter((axis) => axis.gaveUp(control!)).map((axis) => axis.id),
+    ).toEqual(['a1', 'a2', 'a3', 'a4', 'a6']);
+    // ...and the other three are genuinely discriminating, which is what makes the list above a
+    // measurement of these five rather than of the predicate style in general.
+    expect(
+      TIER2_SERVICE_RELAXABLE.filter((axis) => !axis.gaveUp(control!)).map((axis) => axis.id),
+    ).toEqual(['a7', 'a9', 'a10']);
+  });
+});
+
+// ---- Lane D matrix, Tier 2 service-side: R x 18 (ships) and R x 20 (exclusions) ----
+//
+// 16 of the 40 pairs the engine table cannot hold. Built on the shared Tier 2 service foundation
+// above - same fixture, same `TIER2_SERVICE_RELAXABLE` descriptors, same `runTier2ServiceAxes`.
+//
+// PLACEMENT IS FREE, and this comment used to say the opposite. The reasoning that a
+// `for (const soft of TIER2_SERVICE_RELAXABLE)` inside `describe('Auto team builder')` would hit a
+// temporal dead zone - that describe callback runs at line ~71, the array is initialised near line
+// 43050 - is wrong, because vitest imports the whole module BEFORE running any suite callback.
+// Measured: eight such rows inserted inside that describe collected and passed. So this block sits
+// at module scope only because it keeps one Tier 2 service family in one contiguous piece next to
+// the shared foundation; moving it inside the main describe would work identically.
+//
+// What each row asserts:
+//
+//   - the soft axis is reported AND gave up - `gaveUp`, the consequence, never the announcement;
+//   - no axis that was never switched on is reported - invariant 3's mirror, live since run 3;
+//   - the hard axis still holds, through its own `stillSatisfied` predicate;
+//   - two controls, so neither half can be dropped without the row failing.
+//
+// COVERAGE HONESTY. Thirteen of the sixteen are CONJUNCTIVE: both axes sit at non-default values
+// and both halves of every row are load-bearing, but the hard axis's outcome does not depend on the
+// soft one. That is forced by what a Tier 2 pair IS - the soft axis is chosen so that nothing in
+// the pool can satisfy it, which is exactly what makes it contribute nothing to the seated team.
+// Measured: all eight single-axis runs seat the identical team
+// `[9401, 9401, 9407, 9406, 9405, 9404]`, so on this fixture no relaxation can move a ship ranking
+// counted over that team. Three pairs escape it and are marked CAUSAL below - a6x20, a9x20 and
+// a10x20 - because axis 20 changes the seated LEADER, and the seated leader is an input to what
+// axes 6, 9 and 10 report.
+//
+// The axis-18 half uses the SELECTION half of that axis, never the null half: `matchingSlots` is
+// counted over `result.slots` (auto-team-builder-ship.utils.ts:194-196), so both the winner and its
+// `n/6 slots` chip are functions of the built team. The null half reads only `result.input` and
+// could not couple to anything.
+
+const TIER2_SERVICE_UNSCOPED_SHIP_ID = 8003;
+const TIER2_SERVICE_DEX_SHIP_ID = 8011;
+const TIER2_SERVICE_PSY_SHIP_ID = 8012;
+/** Seated in BOTH leader seats by every run on this fixture, so excluding it is observable. */
+const TIER2_SERVICE_PRIMARY_LEADER_ID = 9401;
+/** The foundation's second leader. Seated only when 9401 cannot be. */
+const TIER2_SERVICE_SPARE_LEADER_ID = 9400;
+
+/**
+ * TYPE-scoped, deliberately, and the one place these rows depart from the foundation's own
+ * `createTier2ServiceShips()`. That helper is CLASS-scoped, and every fixture record is [Fighter],
+ * so its Fighter ship matches 6 of 6 slots. `6/6` is a number nothing could have falsified (trap 8):
+ * measured, forcing `doesShipMatchSlot` to return `true` unconditionally leaves that row's ship id
+ * AND its chip completely unchanged, so the mutation survives and the row proves nothing about the
+ * team. The last `it` in this block keeps that measurement executable.
+ *
+ * The fixture does split by TYPE - two DEX leaders, four PSY subs - so a DEX ship matches 2 of 6 and
+ * a PSY ship 4 of 6. `4/6 slots` therefore dies under exactly that mutation, which is what makes it
+ * evidence that the recommendation was computed from `result.slots`.
+ *
+ * 8003 is unscoped and outscores both (`analyzeShipForResult` adds 18 for carrying no scope and
+ * counts every slot as matching), so the axis-18 half has to remove it before the team-derived
+ * ranking is reached at all. Same idiom as the run-5 `18x15` / `18x20` rows.
+ */
+function createTier2ServiceTypeScopedShips(): ShipRecord[] {
+  return [
+    createShipRecord(
+      TIER2_SERVICE_DEX_SHIP_ID,
+      'Tier2 DEX Ship',
+      'Boosts ATK of DEX characters by 1.5x.',
+    ),
+    createShipRecord(
+      TIER2_SERVICE_PSY_SHIP_ID,
+      'Tier2 PSY Ship',
+      'Boosts ATK of PSY characters by 1.5x.',
+    ),
+    createShipRecord(TIER2_SERVICE_UNSCOPED_SHIP_ID, 'Tier2 Unscoped Ship', 'Boosts ATK by 1.6x.'),
+  ];
+}
+
+interface Tier2ServiceHardAxis {
+  id: string;
+  label: string;
+  constraints: Record<string, unknown>;
+  ships: ShipRecord[];
+  /**
+   * Invariant 1: this axis was never relaxed - a hard axis has no relaxation flag at all, so the
+   * only proof is the finished result. `repository.servedPoolIds` is part of the evidence for the
+   * pool-shaping axis: a service that never forwarded the exclusion would still return a team
+   * without the excluded id if the ranking happened not to reach it.
+   */
+  stillSatisfied: (
+    result: AutoBuildResult,
+    repository: ReturnType<typeof createScopedPoolRepositoryMock>,
+  ) => boolean;
+}
+
+const TIER2_SERVICE_HARD: Tier2ServiceHardAxis[] = [
+  {
+    id: 'a18',
+    label: 'ships',
+    constraints: { excludedShipIds: [TIER2_SERVICE_UNSCOPED_SHIP_ID] },
+    ships: createTier2ServiceTypeScopedShips(),
+    stillSatisfied: (result) =>
+      result.shipSelection?.ship.id === TIER2_SERVICE_PSY_SHIP_ID &&
+      result.shipSelection.source === 'recommended' &&
+      result.shipSelection.reasonChips.includes('4/6 slots') &&
+      !result.shipSelection.reasonChips.includes('6/6 slots'),
+  },
+  {
+    id: 'a20',
+    label: 'excluded characters',
+    constraints: { excludedCharacterIds: [TIER2_SERVICE_PRIMARY_LEADER_ID] },
+    ships: [],
+    stillSatisfied: (result, repository) =>
+      repository.servedPoolIds
+        .flat()
+        .filter((characterId) => characterId === TIER2_SERVICE_PRIMARY_LEADER_ID).length === 0 &&
+      result.slots
+        .map((slot) => slot.character.id)
+        .filter((characterId) => characterId === TIER2_SERVICE_PRIMARY_LEADER_ID).length === 0 &&
+      result.slots
+        .slice(0, 2)
+        .every((slot) => slot.character.id === TIER2_SERVICE_SPARE_LEADER_ID),
+  },
+];
+
+function tier2ServiceHardAxis(id: string): Tier2ServiceHardAxis {
+  const axis = TIER2_SERVICE_HARD.find((entry) => entry.id === id);
+
+  if (!axis) {
+    throw new Error(`unknown Tier 2 service hard axis ${id}`);
+  }
+
+  return axis;
+}
+
+function tier2ServiceRelaxableAxis(id: string): Tier2ServiceRelaxableAxis {
+  const axis = TIER2_SERVICE_RELAXABLE.find((entry) => entry.id === id);
+
+  if (!axis) {
+    throw new Error(`unknown Tier 2 service relaxable axis ${id}`);
+  }
+
+  return axis;
+}
+
+function expectOnlyTier2ServiceAxisReported(
+  result: AutoBuildResult,
+  soft: Tier2ServiceRelaxableAxis,
+): void {
+  // Invariant 3: the axis under test was given up and SAID so...
+  expect({ [soft.id]: soft.wasReported(result.relaxation) }).toEqual({ [soft.id]: true });
+  // ...and the consequence really happened, not just the announcement (trap 3).
+  expect({ [soft.id]: soft.gaveUp(result) }).toEqual({ [soft.id]: true });
+
+  // ...and the mirror run 3 found live: nothing that was never switched on is reported.
+  for (const other of TIER2_SERVICE_RELAXABLE) {
+    if (other.id === soft.id) {
+      continue;
+    }
+
+    expect({ [other.id]: other.wasReported(result.relaxation) }).toEqual({ [other.id]: false });
+  }
+}
+
+describe('Lane D matrix - Tier 2 service pairs, R x 18 and R x 20', () => {
+  beforeAll(() => {
+    vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
+  });
+
+  // ---- the eight R x 18 pairs ----
+  for (const soft of TIER2_SERVICE_RELAXABLE) {
+    it(`${soft.id}x18 - ${soft.label} relaxes while the recommended ship still follows the team`, async () => {
+      const hard = tier2ServiceHardAxis('a18');
+      const joint = await runTier2ServiceAxes([soft], hard.constraints, hard.ships);
+
+      expectCompleteAutoTeam(joint.result);
+      expectOnlyTier2ServiceAxisReported(joint.result, soft);
+
+      // Invariant 1, through the hard descriptor.
+      expect({ [hard.id]: hard.stillSatisfied(joint.result, joint.repository) }).toEqual({
+        [hard.id]: true,
+      });
+      // The same thing spelled out, so a failure names the part that moved: the excluded ship is
+      // gone, and of the two that remain the winner is the one the SEATED TEAM ranks first - four
+      // PSY subs beat two DEX leaders - with the slot count read straight off `result.slots`.
+      expect(joint.result.shipSelection?.ship.id).toBe(TIER2_SERVICE_PSY_SHIP_ID);
+      expect(joint.result.shipSelection?.reasonChips).toContain('4/6 slots');
+      // An `analyzeShipForResult` that stopped counting would call every slot a match; this is the
+      // assertion that notices.
+      expect(joint.result.shipSelection?.reasonChips).not.toContain('6/6 slots');
+
+      // Control 1 - the ship half alone. Same recommendation, so the ship assertions above cannot
+      // carry the row on their own; what changes is that NOTHING is reported as given up.
+      const shipOnly = await runTier2ServiceAxes([], hard.constraints, hard.ships);
+
+      expectCompleteAutoTeam(shipOnly.result);
+      expect(shipOnly.result.shipSelection?.ship.id).toBe(TIER2_SERVICE_PSY_SHIP_ID);
+      expect({ [soft.id]: soft.wasReported(shipOnly.result.relaxation) }).toEqual({
+        [soft.id]: false,
+      });
+
+      // Control 2 - the soft half alone, every ship eligible. The unscoped ship outranks both scoped
+      // ones and carries no scope label, so no `n/6 slots` chip is produced at all and the
+      // team-derived channel is never reached. Without the exclusion the pair is invisible.
+      const softOnly = await runTier2ServiceAxes([soft], {}, hard.ships);
+
+      expectCompleteAutoTeam(softOnly.result);
+      expect(softOnly.result.shipSelection?.ship.id).toBe(TIER2_SERVICE_UNSCOPED_SHIP_ID);
+      expect(softOnly.result.shipSelection?.reasonChips).toEqual(['ATK 1.6x']);
+    });
+  }
+
+  // ---- the eight R x 20 pairs ----
+  //
+  // The exclusion takes the leader the control seats TWICE, not a sub, and that choice is what makes
+  // three of these eight causal rather than conjunctive: the two
+  // `resolveUnsatisfied...CriteriaCharacterNames` helpers (auto-team-builder.engine.ts:558 and :567)
+  // are derived from the FINISHED SLOTS, so axis 20 decides which leader axes 9 and 10 name.
+  // `gaveUp` for those two ties the reported name to `result.slots[0]`, so on this row it passes
+  // only if the engine followed the exclusion.
+  for (const soft of TIER2_SERVICE_RELAXABLE) {
+    it(`${soft.id}x20 - ${soft.label} relaxes while an excluded leader stays out of the pool and the team`, async () => {
+      const hard = tier2ServiceHardAxis('a20');
+      const joint = await runTier2ServiceAxes([soft], hard.constraints, hard.ships);
+
+      expectCompleteAutoTeam(joint.result);
+      expectOnlyTier2ServiceAxisReported(joint.result, soft);
+
+      // Invariant 1, through the hard descriptor.
+      expect({ [hard.id]: hard.stillSatisfied(joint.result, joint.repository) }).toEqual({
+        [hard.id]: true,
+      });
+      // Spelled out. Written as a filter rather than `expect.not.arrayContaining`, which negates the
+      // whole matcher instead of each element (trap 7).
+      expect(
+        joint.repository.servedPoolIds
+          .flat()
+          .filter((characterId) => characterId === TIER2_SERVICE_PRIMARY_LEADER_ID),
+      ).toEqual([]);
+      expect(
+        joint.result.slots
+          .map((slot) => slot.character.id)
+          .filter((characterId) => characterId === TIER2_SERVICE_PRIMARY_LEADER_ID),
+      ).toEqual([]);
+      // The spare leader took both seats instead - the observable consequence, not just an absence.
+      expect(joint.result.slots.slice(0, 2).map((slot) => slot.character.id)).toEqual([
+        TIER2_SERVICE_SPARE_LEADER_ID,
+        TIER2_SERVICE_SPARE_LEADER_ID,
+      ]);
+
+      // Control 1 - the exclusion alone. Same team, so the team assertions above cannot carry the
+      // row; nothing is reported as given up.
+      const exclusionOnly = await runTier2ServiceAxes([], hard.constraints, hard.ships);
+
+      expectCompleteAutoTeam(exclusionOnly.result);
+      expect(exclusionOnly.result.slots.slice(0, 2).map((slot) => slot.character.id)).toEqual([
+        TIER2_SERVICE_SPARE_LEADER_ID,
+        TIER2_SERVICE_SPARE_LEADER_ID,
+      ]);
+      expect({ [soft.id]: soft.wasReported(exclusionOnly.result.relaxation) }).toEqual({
+        [soft.id]: false,
+      });
+
+      // Control 2 - the soft half alone. 9401 is back in both leader seats, so the exclusion really
+      // is what moved them.
+      const softOnly = await runTier2ServiceAxes([soft]);
+
+      expectCompleteAutoTeam(softOnly.result);
+      expect(softOnly.result.slots.slice(0, 2).map((slot) => slot.character.id)).toEqual([
+        TIER2_SERVICE_PRIMARY_LEADER_ID,
+        TIER2_SERVICE_PRIMARY_LEADER_ID,
+      ]);
+    });
+  }
+
+  // ---- CAUSAL: a9x20 and a10x20, spelled out ----
+  //
+  // The table rows above already depend on this through `gaveUp`, but only a reader who follows the
+  // predicate into the descriptor can see it. Stated directly: excluding the seated leader changes
+  // the NAME the relaxation report carries, so axis 20 reaches inside axis 9's and axis 10's output
+  // rather than merely coexisting with it.
+  it('a9x20 and a10x20 - excluding the seated leader changes the name the relaxation reports', async () => {
+    const a9 = tier2ServiceRelaxableAxis('a9');
+    const a10 = tier2ServiceRelaxableAxis('a10');
+    const excluded = tier2ServiceHardAxis('a20').constraints;
+
+    const a9Alone = await runTier2ServiceAxes([a9]);
+    const a9Excluded = await runTier2ServiceAxes([a9], excluded);
+    const a10Alone = await runTier2ServiceAxes([a10]);
+    const a10Excluded = await runTier2ServiceAxes([a10], excluded);
+
+    expectCompleteAutoTeam(a9Alone.result);
+    expectCompleteAutoTeam(a9Excluded.result);
+    expectCompleteAutoTeam(a10Alone.result);
+    expectCompleteAutoTeam(a10Excluded.result);
+
+    expect(a9Alone.result.relaxation.ignoredSuperSpecialCriteriaCharacterNames).toEqual([
+      `Tier2 Service Leader ${TIER2_SERVICE_PRIMARY_LEADER_ID}`,
+    ]);
+    expect(a9Excluded.result.relaxation.ignoredSuperSpecialCriteriaCharacterNames).toEqual([
+      `Tier2 Service Leader ${TIER2_SERVICE_SPARE_LEADER_ID}`,
+    ]);
+    expect(a10Alone.result.relaxation.ignoredSuperTandemCriteriaCharacterNames).toEqual([
+      `Tier2 Service Leader ${TIER2_SERVICE_PRIMARY_LEADER_ID}`,
+    ]);
+    expect(a10Excluded.result.relaxation.ignoredSuperTandemCriteriaCharacterNames).toEqual([
+      `Tier2 Service Leader ${TIER2_SERVICE_SPARE_LEADER_ID}`,
+    ]);
+  });
+
+  // ---- CAUSAL: a6x20, the SIZE of the concession ----
+  //
+  // Axis 6 gives up "every slot inside the leader super-effect scope". How much it gave up is a
+  // property of the team, so an exclusion that changes the team changes the size of the concession.
+  // Excluding the two newest subs frees a sub seat that falls to the spare LEADER 9400, which is DEX
+  // and therefore inside the scope - four conceded slots become three.
+  //
+  // The one row here that cannot use the shared `gaveUp` predicate: that predicate asserts exactly
+  // 4, which is the measurement for the unexcluded fixture and is precisely what this row moves.
+  it('a6x20 - excluding two subs shrinks the leader-super-effect concession from four slots to three', async () => {
+    const a6 = tier2ServiceRelaxableAxis('a6');
+    const excludedSubIds = [9407, 9406];
+    const outsideScope = (result: AutoBuildResult): number =>
+      result.slots.filter((slot) => slot.character.type !== 'DEX').length;
+
+    const a6Alone = await runTier2ServiceAxes([a6]);
+    const a6Excluded = await runTier2ServiceAxes([a6], {
+      excludedCharacterIds: excludedSubIds,
+    });
+
+    expectCompleteAutoTeam(a6Alone.result);
+    expectCompleteAutoTeam(a6Excluded.result);
+
+    // Both runs relax axis 6 and nothing else.
+    expectOnlyTier2ServiceAxisReported(a6Alone.result, a6);
+    expect({ a6: a6.wasReported(a6Excluded.result.relaxation) }).toEqual({ a6: true });
+
+    expect(outsideScope(a6Alone.result)).toBe(4);
+    expect(outsideScope(a6Excluded.result)).toBe(3);
+    // The seat the exclusion freed went to the spare leader, and that DEX record is what shrank the
+    // concession. Without naming it, "3" could equally have come from a shorter team.
+    expect(a6Excluded.result.slots.map((slot) => slot.character.id)).toEqual([
+      9401, 9401, 9405, 9404, 9403, TIER2_SERVICE_SPARE_LEADER_ID,
+    ]);
+  });
+
+  // ---- fixture guard: why the R x 18 rows do not use the foundation's own ship helper ----
+  //
+  // An executable record of the measurement in `createTier2ServiceTypeScopedShips`'s header. Every
+  // fixture record is [Fighter], so the class-scoped Fighter ship matches 6 of 6 - the maximum - and
+  // no mutation of the slot counting can move it. MEASURED: forcing `doesShipMatchSlot` to return
+  // `true` kills all eight R x 18 rows and leaves THIS row green. Its surviving that mutation is the
+  // point of the row, not a gap in the battery.
+  it('records that the class-scoped ship set cannot separate a counted team from an uncounted one', async () => {
+    const classScoped = await runTier2ServiceAxes(
+      [],
+      { excludedShipIds: [TIER2_SERVICE_UNSCOPED_SHIP_ID] },
+      createTier2ServiceShips(),
+    );
+
+    expectCompleteAutoTeam(classScoped.result);
+    expect(
+      classScoped.result.slots.every((slot) => slot.character.classes.includes('Fighter')),
+    ).toBe(true);
+    expect(classScoped.result.shipSelection?.ship.id).toBe(8001);
+    expect(classScoped.result.shipSelection?.reasonChips).toContain('6/6 slots');
+  });
+});
+
+// ---- Lane D matrix, Tier 2 service-side: the eight R x a19 pairs ----
+//
+// Axis 19 is `manualSlots` / `lockedCharacterIds`. It is the one member of {14, 15, 18, 19, 20}
+// that does reach `auto-team-builder.utils.ts`, so the engine spec can pair it with the axes it
+// can express - `Lane D matrix - Tier 3 pairs, axis 19` does exactly that, 19 against the HARD
+// axes. What the engine cannot reach is the layer ABOVE. Everything it sees has already been
+// through `AutoTeamBuilderService.normalizeManualSlots`, `normalizeLegacyManualSelection`,
+// `createManualSlotsFromLegacySelection` and `deriveLegacyManualSelectionFromManualSlots`:
+// `runAutoTeamBuildSearch` is handed the finished `AutoBuildInput.manualSlots` and never sees
+// `constraints.lockedCharacterIds`, `constraints.captainCharacterId` or a `requiredCharacterId`
+// the caller actually typed. That normalisation is the service-side half of axis 19, and it is
+// where these rows put it - which is what makes them service-side rather than a second copy of
+// the engine's table.
+//
+// So axis 19 appears as TWO hard descriptors, one per form the service accepts, and every
+// relaxation-eligible axis is run against both:
+//
+//   a19-manual - `manualSlots` with a required pin and a DECOY. 9390 is the lowest id in the
+//      fixture and sub ranking ends in newest-id descending, so nothing reaches it on its own;
+//      9407 is the top-ranked sub and sits in the same `characterIds` list, so it takes the role
+//      the moment the pin stops binding - measured, `[9401,9401,9406,9407,9405,9404]` with no
+//      9390 anywhere.
+//   a19-legacy - `lockedCharacterIds` + `captainCharacterId`, with NO `manualSlots` at all. This
+//      form has no engine counterpart: the service mirrors the single legacy captain id onto the
+//      friend seat (`auto-team-builder.service.ts:2617`) and hands the remaining locked ids to
+//      the sub roles positionally (`createManualSlotsFromLegacySelection`, the loop at
+//      `auto-team-builder.service.ts:2655`), and only the finished slots reach the engine. It
+//      moves the CAPTAIN seat off 9401, which the relaxable half cannot do on this fixture.
+//
+// The relaxable half never changes the team here (foundation risk 7 - all eight single-axis runs
+// seat `[9401,9401,9407,9406,9405,9404]`), so each pair is conjunctive in the team-shape sense.
+// Its force is that each half is separately falsifiable. Measured, one mutation at a time, over
+// the 22 tests in this describe:
+//
+//   `auto-team-builder.utils.ts:2467`, the required-candidate branch of
+//       `resolveConstrainedSubSelectionOptions`, neutered  -> 11 failed
+//       (all 8 a19-manual rows, plus the three companions that depend on a required pin)
+//   `auto-team-builder.service.ts:2655`, the legacy sub-assignment loop, deleted  -> 10 failed
+//       (all 8 a19-legacy rows, plus two companions)
+//   `auto-team-builder.service.ts:2617`, the captain->friend mirror, deleted      ->  8 failed
+//       (all 8 a19-legacy rows; the friend seat falls back to 9401, measured
+//       `[9400,9401,9390,9407,9406,9405]`. There IS a second mirror at `:2676`, but it only
+//       recomputes a scalar AFTER the slots are built, so it does not absorb this one.)
+//   `TIER2_SERVICE_BASE_CONSTRAINTS` dropped from the runner                      -> 16 failed
+//       (every pair row: the service defaults axes 9 and 10 ON -
+//       `auto-team-builder.service.ts:347` and `:349` - so the "no axis that was never switched
+//       on is reported" clause fires)
+//   `auto-team-builder.utils.ts:426`, `resolveCaptainAbilityCoverageMode` forced to
+//       'simpleBoostScope'                                             ->  2 failed (both a7 rows)
+//   the leaders' `superSpecialCriteria` removed from the fixture        ->  2 failed (both a9 rows)
+//   an INT sub added to the fixture                                     ->  2 failed (both a1 rows)
+//   `auto-team-builder.service.ts:2517`, the unlisted-required-id guard, removed  ->  1 failed
+//   `auto-team-builder.service.ts:305`, the invalid-legacy-leader early-out, removed -> 1 failed
+//   `auto-team-builder.service.ts:2613`, the friend->captain mirror, deleted      ->  1 failed
+//
+// Two mutations SURVIVED, and neither is a silence:
+//
+//   - `resolveRequiredManualCharacterIds` (`auto-team-builder.utils.ts:1731`) forced to return
+//     nothing. `forceIncludeRecordIds` only rescues a record whose combined text is EMPTY
+//     (`prepareAutoBuildRecordText`, `auto-team-builder.utils.ts:2610`), and 9390 carries special
+//     text. Measured directly: `prepareAutoTeamBuildContext(records)` with no force already holds
+//     all eight ids including 9390. This fixture cannot reach that site; a text-free record could.
+//   - `auto-team-builder.service.ts:312` changed to UNION the caller's `lockedCharacterIds` into
+//     the derived list - the plausible wrong implementation - and, separately, that mutation
+//     together with the overflow filter at `auto-team-builder.utils.ts:1787` removed. Both still
+//     pass, because `input.lockedCharacterIds` is read at exactly ONE place in the whole engine
+//     and utils surface (`:1788`-`:1793`) and only to EXCLUDE ids from auto-fill. It can never
+//     seat anybody. That is also why the eleven engine-spec cases that pair `manualSlots` with a
+//     same-sized `lockedCharacterIds` are vacuous on the locked half: the field has no seating
+//     power at all, and every id that looks "locked" got there through `manualSlots`. The
+//     `lockedCharacterIds: [9403]` line inside `a19-manual` is therefore DOCUMENTARY - it records
+//     the discard rather than proving it. The falsifiable version is the 'live alone and inert
+//     under manual slots' companion, whose first half moves.
+
+interface Tier2ServiceA19HardAxis {
+  id: string;
+  label: string;
+  constraints: Record<string, unknown>;
+  /** Invariant 1: the hard axis was never relaxed, so the finished team still satisfies it. */
+  stillSatisfied: (result: AutoBuildResult) => boolean;
+}
+
+/**
+ * The decoy is not decoration. With 9390 alone in `characterIds` the required pin and the listed
+ * pool are indistinguishable, and the mutation that ignores `requiredCharacterId` changes
+ * nothing. 9407 is the top-ranked sub, so it wins the role the moment the pin stops binding -
+ * which is what the 'binds on the required pin, not on the listing' companion measures.
+ */
+const TIER2_SERVICE_MANUAL_PIN_SLOTS = [
+  { role: 'sub2' as const, characterIds: [9390, 9407], requiredCharacterId: 9390 },
+];
+/**
+ * The realistic caller shape - the app sends both - and the one the service discards, because
+ * `auto-team-builder.service.ts:308` keeps the normalized manual slots whenever any of them
+ * carries an id and `:312` then DERIVES the locked list from those slots.
+ */
+const TIER2_SERVICE_DISCARDED_LOCKED_IDS = [9403];
+
+const TIER2_SERVICE_HARD_A19: Tier2ServiceA19HardAxis[] = [
+  {
+    id: 'a19-manual',
+    label: 'a required manual sub pin the service normalises',
+    constraints: {
+      manualSlots: TIER2_SERVICE_MANUAL_PIN_SLOTS,
+      lockedCharacterIds: TIER2_SERVICE_DISCARDED_LOCKED_IDS,
+    },
+    stillSatisfied: (result) =>
+      // Positional, not "9390 is somewhere in the team". `orderSelectedSubCandidates` puts a
+      // constrained role at its own position, so a sub2 pin lands at slots[3].
+      result.slots[3]!.role === 'sub' &&
+      result.slots[3]!.character.id === 9390 &&
+      // The decoy lost the pinned role. It is still on the team - it is the top-ranked sub - so
+      // this is about WHICH role it holds, not whether it was seated.
+      result.slots[2]!.character.id === 9407 &&
+      // Documentary, see the header: no mutation can make this false.
+      result.slots.every((slot) => slot.character.id !== 9403),
+  },
+  {
+    id: 'a19-legacy',
+    label: 'a legacy locked list and captain id the service turns into slots',
+    constraints: { lockedCharacterIds: [9400, 9390], captainCharacterId: 9400 },
+    stillSatisfied: (result) =>
+      // The captain seat moved off 9401, and the service mirrored the single legacy captain id
+      // onto the friend seat. The same character in both leader seats is legal - the Friend
+      // Captain is borrowed from another player.
+      result.slots[0]!.role === 'captain' &&
+      result.slots[0]!.character.id === 9400 &&
+      result.slots[1]!.role === 'friendCaptain' &&
+      result.slots[1]!.character.id === 9400 &&
+      // The remaining locked id went to the FIRST sub role, positionally.
+      result.slots[2]!.role === 'sub' &&
+      result.slots[2]!.character.id === 9390,
+  },
+];
+
+describe('Lane D matrix - Tier 2 service-side pairs, relaxable axes vs a19', () => {
+  function reportedAxisIds(result: AutoBuildResult): string[] {
+    return TIER2_SERVICE_RELAXABLE.filter((axis) => axis.wasReported(result.relaxation)).map(
+      (axis) => axis.id,
+    );
+  }
+
+  for (const soft of TIER2_SERVICE_RELAXABLE) {
+    for (const hard of TIER2_SERVICE_HARD_A19) {
+      it(`relaxes ${soft.id} while ${hard.id} holds (${soft.label} vs ${hard.label})`, async () => {
+        // Control - the relaxable axis alone. It proves the axis really relaxes here, and that
+        // neither axis-19 character is reachable without axis 19: 9390 is never ranked into the
+        // team, and 9401 keeps both leader seats.
+        const control = (await runTier2ServiceAxes([soft])).result;
+
+        expect(control).not.toBeNull();
+        expect(control!.slots.map((slot) => slot.character.id)).toEqual([
+          9401, 9401, 9407, 9406, 9405, 9404,
+        ]);
+        expect(reportedAxisIds(control!)).toEqual([soft.id]);
+
+        const result = (await runTier2ServiceAxes([soft], hard.constraints)).result;
+
+        expect(result).not.toBeNull();
+        // Invariant 1: the hard axis was never relaxed. Spelled out positionally as well as
+        // through the predicate, so a failure names the seat rather than a bare `false`.
+        expect(result!.slots.map((slot) => slot.character.id)).toEqual(
+          hard.id === 'a19-manual'
+            ? [9401, 9401, 9407, 9390, 9406, 9405]
+            : [9400, 9400, 9390, 9407, 9406, 9405],
+        );
+        expect({ [hard.id]: hard.stillSatisfied(result!) }).toEqual({ [hard.id]: true });
+        // Invariant 3, the soft half: reported...
+        expect({ [soft.id]: soft.wasReported(result!.relaxation) }).toEqual({ [soft.id]: true });
+        // ...and actually given up, asserted on the consequence rather than the announcement.
+        expect({ [soft.id]: soft.gaveUp(result!) }).toEqual({ [soft.id]: true });
+        // ...and the mirror: no axis that was never switched on is reported. Axis 19 itself has
+        // no field in the relaxation summary at all, so it can never be over-reported - there is
+        // nothing to assert on that side, and the companions below stand in its place.
+        expect(reportedAxisIds(result!)).toEqual([soft.id]);
+      });
+    }
+  }
+
+  // ---- the companions that keep the a19 half from being vacuous ----
+
+  it('a19 binds on the required pin, not on the listing', async () => {
+    // The input-level analogue of neutering the required-candidate branch of
+    // `resolveConstrainedSubSelectionOptions` (`auto-team-builder.utils.ts:2467`). Same list,
+    // same role, required flag dropped: the decoy takes the role and 9390 is not seated at all.
+    const listedOnly = (
+      await runTier2ServiceAxes([], {
+        manualSlots: [
+          { role: 'sub2' as const, characterIds: [9390, 9407], requiredCharacterId: null },
+        ],
+      })
+    ).result;
+
+    expect(listedOnly).not.toBeNull();
+    expect(listedOnly!.slots[3]!.character.id).toBe(9407);
+    // `expect.not.arrayContaining` negates the whole matcher, so filter instead.
+    expect(listedOnly!.slots.map((slot) => slot.character.id).filter((id) => id === 9390)).toEqual(
+      [],
+    );
+  });
+
+  it('the service drops a required id the slot does not list', async () => {
+    // `normalizeManualSlots` keeps `requiredCharacterId` only when the slot's own `characterIds`
+    // contains it (`auto-team-builder.service.ts:2517`). The engine never sees this - it is
+    // handed the normalized slots - and it has a guard of its own for the same shape
+    // (`auto-team-builder.utils.ts:2215`, which returns null). So removing the service guard does
+    // NOT fall through to an equivalent: measured, the build goes null instead, with the pool
+    // still served. With the guard in place the outcome is identical to the listing-only case
+    // above - the pin silently degrades to a preference rather than failing.
+    const requiredNotListed = (
+      await runTier2ServiceAxes([], {
+        manualSlots: [{ role: 'sub2' as const, characterIds: [9407], requiredCharacterId: 9390 }],
+      })
+    ).result;
+
+    expect(requiredNotListed).not.toBeNull();
+    expect(requiredNotListed!.slots.map((slot) => slot.character.id)).toEqual([
+      9401, 9401, 9406, 9407, 9405, 9404,
+    ]);
+  });
+
+  it('returns no team when two required a19 pins need the same character', async () => {
+    // A required role is not skippable. Without this case, neutering the required branch leaves
+    // the positive rows above green on their a19-legacy half alone.
+    const clash = (
+      await runTier2ServiceAxes([], {
+        manualSlots: [
+          { role: 'sub2' as const, characterIds: [9390, 9407], requiredCharacterId: 9390 },
+          { role: 'sub3' as const, characterIds: [9390, 9406], requiredCharacterId: 9390 },
+        ],
+      })
+    ).result;
+
+    expect(clash).toBeNull();
+  });
+
+  it('a caller locked id is live alone and inert under manual slots', async () => {
+    // The differential the a19-manual descriptor's 9403 line rests on, and the only half of it
+    // that can move. Alone, `createManualSlotsFromLegacySelection` turns `[9403]` into a sub-slot
+    // selection and 9403 - unseated in the zero-axis control - takes sub1. Beside manual slots
+    // the same value is discarded at `auto-team-builder.service.ts:312` and never reaches the
+    // engine.
+    const alone = (await runTier2ServiceAxes([], { lockedCharacterIds: [9403] })).result;
+
+    expect(alone).not.toBeNull();
+    expect(alone!.slots.map((slot) => slot.character.id)).toEqual([
+      9401, 9401, 9403, 9407, 9406, 9405,
+    ]);
+
+    const withManualSlots = (
+      await runTier2ServiceAxes([], {
+        manualSlots: TIER2_SERVICE_MANUAL_PIN_SLOTS,
+        lockedCharacterIds: TIER2_SERVICE_DISCARDED_LOCKED_IDS,
+      })
+    ).result;
+
+    expect(withManualSlots).not.toBeNull();
+    expect(withManualSlots!.slots.map((slot) => slot.character.id)).toEqual([
+      9401, 9401, 9407, 9390, 9406, 9405,
+    ]);
+  });
+
+  it('rejects a legacy leader id outside the locked set, but only without manual slots', async () => {
+    // `normalizeLegacyManualSelection` nulls a leader id the locked set does not contain and
+    // flags it; `auto-team-builder.service.ts:305` then returns null outright. The guard is gated
+    // on `!hasManualSlots`, so the same bad pair is simply ignored once manual slots are present,
+    // which is the second half of this case.
+    const invalid = await runTier2ServiceAxes([], {
+      lockedCharacterIds: [9390],
+      captainCharacterId: 9400,
+    });
+
+    expect(invalid.result).toBeNull();
+    // Proof the null is the service's own early-out and not an empty search: the repository was
+    // never asked for a pool at all.
+    expect(invalid.repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
+
+    const invalidWithManualSlots = (
+      await runTier2ServiceAxes([], {
+        manualSlots: TIER2_SERVICE_MANUAL_PIN_SLOTS,
+        lockedCharacterIds: [9390],
+        captainCharacterId: 9400,
+      })
+    ).result;
+
+    expect(invalidWithManualSlots).not.toBeNull();
+    expect(invalidWithManualSlots!.slots.map((slot) => slot.character.id)).toEqual([
+      9401, 9401, 9407, 9390, 9406, 9405,
+    ]);
+  });
+
+  it('mirrors a legacy friend-captain id onto the captain seat', async () => {
+    // `auto-team-builder.service.ts:2613` - a friend id with no captain id fills the captain
+    // seat. The a19-legacy rows exercise the opposite mirror (`:2617`); this one has no second
+    // site, so it needs its own case.
+    const friendOnly = (
+      await runTier2ServiceAxes([], {
+        lockedCharacterIds: [9400, 9390],
+        friendCaptainCharacterId: 9400,
+      })
+    ).result;
+
+    expect(friendOnly).not.toBeNull();
+    expect(friendOnly!.slots.map((slot) => slot.character.id)).toEqual([
+      9400, 9400, 9390, 9407, 9406, 9405,
+    ]);
+  });
+});

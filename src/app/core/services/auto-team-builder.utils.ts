@@ -3429,7 +3429,21 @@ function selectSubs(
     return buildSubSelectionResult(counterAnchoredSelection);
   }
 
-  if ((input.battleRequirements?.length ?? 0) > 0 && battleRequirementAssignmentMode === 'strict') {
+  // Strict mode means "do not fall back to a team that ignores a battle requirement". A battle
+  // that carries NO required character groups imposes no requirement, so there is nothing for a
+  // team to ignore and nothing to be strict about - but `findCounterAnchoredValidSelection`
+  // returns null for it all the same, and without this guard that null becomes an empty team.
+  //
+  // That is reachable from the UI: `normalizeBattleRequirementsWithLegacyFallback` synthesises a
+  // battle whenever any enemy mechanic is set, and fourteen of the catalogue's entries carry
+  // `derivedAbilityKey: null` - Immunity, Block Orbs, Orb Shuffle and the rest - so they produce
+  // a battle with zero groups. Ticking one used to return NO TEAM AT ALL rather than the team the
+  // player would have got without ticking it.
+  const hasEnforceableBattleRequirement = (input.battleRequirements ?? []).some(
+    (battle) => (battle.requiredCharacterGroups?.length ?? 0) > 0,
+  );
+
+  if (hasEnforceableBattleRequirement && battleRequirementAssignmentMode === 'strict') {
     return createEmptySelectionResult();
   }
 
