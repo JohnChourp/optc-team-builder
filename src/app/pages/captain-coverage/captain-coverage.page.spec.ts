@@ -2347,7 +2347,7 @@ describe('CaptainCoveragePage', () => {
     ]);
   });
 
-  it('saves the selected coverage team to shared saved teams with the Captain mirrored as friend captain', async () => {
+  it('records an empty Friend Captain seat as empty, not as the Captain', async () => {
     const leader = createCharacter({
       id: 1001,
       name: 'Coverage Leader',
@@ -2371,12 +2371,22 @@ describe('CaptainCoveragePage', () => {
 
     await page.saveTeam();
 
+    /*
+     * `null`, not `1001`. This used to write the Captain's own id into seat 1
+     * whenever the seat was empty, and on reload that is indistinguishable from
+     * a reader who deliberately put the same character in both leader seats -
+     * which is legal, and whose boost counts twice. See the round-trip test
+     * below for what that cost the reader.
+     *
+     * Owner-confirmed 2026-09-08: the game does not require a Friend Captain,
+     * so an empty seat contributes x1.
+     */
     expect(userState.saveTeam).toHaveBeenCalledWith({
       id: undefined,
       name: 'Captain Coverage Crew',
       notes: '',
       shipId: null,
-      slots: [1001, 1001, 2001, 2002, 2003, 2004],
+      slots: [1001, null, 2001, 2002, 2003, 2004],
     });
     expect(page.currentTeamId()).toBe('saved-captain-coverage-team');
     expect(page.saveUiLocked()).toBe(false);
@@ -2384,6 +2394,55 @@ describe('CaptainCoveragePage', () => {
 
     await page.clearTeamSlot(4);
     expect(page.currentTeamId()).toBeNull();
+  });
+
+  it('prints the same boost before and after a save with no Friend Captain', async () => {
+    /*
+     * The defect this guards, end to end. Save a team with an empty Friend
+     * Captain seat, reload it, and every printed multiplier was SQUARED: seat 1
+     * came back holding the Captain's own id, `combineLeaderCaptainCoverageBoosts`
+     * multiplies the two leader seats, and a card that read `ATK:5` before
+     * saving read `ATK:25` after. Same team, same screen, a different number.
+     *
+     * This test owns the FOLD half: it builds the stored shape by hand, so it
+     * proves that a null seat 1 is loaded as empty and folded once. The record
+     * half - that `buildSavedTeamSlots` actually writes null - is owned by
+     * 'records an empty Friend Captain seat as empty', which is the test the
+     * `?? captainId` mutation kills. Neither alone covers the defect.
+     */
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Solo Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const candidate = createCharacter({ id: 2001, name: 'Solo Candidate' });
+    const { page } = createPage({ captains: [leader], characters: [leader, candidate] });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+
+    const beforeSave = page.visibleResultCards()[0]?.leaderBoosts?.atk;
+
+    expect(beforeSave).toBeGreaterThan(0);
+
+    // What a save would record, then what reloading that record produces.
+    const reloaded = createPage({
+      routeTeamId: 'team-solo',
+      savedTeams: [
+        createSavedTeam({
+          id: 'team-solo',
+          name: 'Solo Crew',
+          slots: [1001, null, null, null, null, null],
+        }),
+      ],
+      captains: [leader],
+      characters: [leader, candidate],
+    });
+
+    await reloaded.page.ngOnInit();
+
+    expect(reloaded.page.selectedTeamSlots()[1] ?? null).toBeNull();
+    expect(reloaded.page.visibleResultCards()[0]?.leaderBoosts?.atk).toBe(beforeSave);
   });
 
   it('loads a saved team route as a captain coverage draft and preserves Friend Captain', async () => {
