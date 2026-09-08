@@ -64,6 +64,8 @@ const scopeTranslationTrees = new Map(
 const findings = [
   ...scanTypeScriptFiles(srcRoot, rootTranslationTree, scopeTranslationTrees),
   ...scanTemplateFiles(srcRoot, rootTranslationTree, scopeTranslationTrees),
+  ...scanLanguageParity(i18nRoot, knownScopes),
+  ...scanMissingValueStubs(i18nRoot),
 ];
 
 if (findings.length === 0) {
@@ -80,6 +82,97 @@ for (const finding of findings) {
 }
 
 process.exit(1);
+
+/**
+ * Every bundle must declare the SAME key set in both languages.
+ *
+ * `transloco-validator` does not check this - it parses each file and reports
+ * duplicate keys, nothing more - so a key added to `en.json` and forgotten in
+ * `el.json` was caught by nothing. Two component specs assert leaf parity for
+ * their own scope and their header comments claim the validator provides it
+ * generally; it does not, and 25 of the 27 scopes had no parity check at all.
+ *
+ * This compares key SETS, never values: a Greek bundle may legitimately repeat
+ * the English string, because the game's own terms (Captain, Friend Captain,
+ * Super Tandem, Rumble, sugo) are what Greek players actually say.
+ */
+function scanLanguageParity(rootDir, scopes) {
+  const findings = [];
+  const bundles = [{ label: "", dir: rootDir }, ...[...scopes].sort().map((scope) => ({ label: scope, dir: path.join(rootDir, scope) }))];
+
+  for (const bundle of bundles) {
+    const englishPath = path.join(bundle.dir, "en.json");
+    const greekPath = path.join(bundle.dir, "el.json");
+
+    if (!existsSync(englishPath) || !existsSync(greekPath)) {
+      continue;
+    }
+
+    const englishKeys = new Set(collectLeafKeys(JSON.parse(readFileSync(englishPath, "utf8"))));
+    const greekKeys = new Set(collectLeafKeys(JSON.parse(readFileSync(greekPath, "utf8"))));
+
+    for (const key of englishKeys) {
+      if (!greekKeys.has(key)) {
+        findings.push({ file: greekPath, line: 1, message: "key exists in en.json but not in el.json", key });
+      }
+    }
+
+    for (const key of greekKeys) {
+      if (!englishKeys.has(key)) {
+        findings.push({ file: englishPath, line: 1, message: "key exists in el.json but not in en.json", key });
+      }
+    }
+  }
+
+  return findings;
+}
+
+/**
+ * No bundle may ship a transloco missing-value placeholder as a real value.
+ *
+ * `transloco.config.ts` sets `addMissingKeys: true`, so a keys-manager run
+ * WRITES `"Missing value for 'x.y.z'"` into the bundles instead of reporting
+ * the gap. One such run left 169 of them in each root bundle - about half the
+ * file - and they sat there committed, as strings a reader would see rendered
+ * verbatim if any were ever reached. The two npm scripts that invoked the
+ * keys manager were deleted in the same change; this is the guard that notices
+ * if the residue ever comes back.
+ */
+function scanMissingValueStubs(rootDir) {
+  const findings = [];
+
+  for (const file of collectTranslationJsonFiles(rootDir)) {
+    const source = readFileSync(file, "utf8");
+    const tree = JSON.parse(source);
+
+    for (const [key, value] of collectLeafEntries(tree)) {
+      if (typeof value === "string" && value.startsWith("Missing value for '")) {
+        findings.push({
+          file,
+          line: resolveLineNumber(source, Math.max(source.indexOf(value), 0)),
+          message: "transloco missing-value placeholder shipped as a translation",
+          key,
+        });
+      }
+    }
+  }
+
+  return findings;
+}
+
+function collectLeafKeys(tree) {
+  return collectLeafEntries(tree).map(([key]) => key);
+}
+
+function collectLeafEntries(tree, prefix = "") {
+  if (tree === null || typeof tree !== "object" || Array.isArray(tree)) {
+    return [[prefix, tree]];
+  }
+
+  return Object.entries(tree).flatMap(([key, value]) =>
+    collectLeafEntries(value, prefix ? `${prefix}.${key}` : key),
+  );
+}
 
 function scanTypeScriptFiles(rootDir, rootTranslationTree, scopeTranslationTrees) {
   const findings = [];

@@ -250,6 +250,9 @@ function isI18nRegressionPath(filePath) {
     filePath === 'README.md' ||
     filePath === 'scripts/i18n-regression-check.mjs' ||
     filePath === 'scripts/i18n-regression-check.spec.ts' ||
+    // `test:i18n-regression` runs `i18n:validate` too, so this script is inside
+    // the lane and a change to it must route the lane that executes it.
+    filePath === 'scripts/audit-i18n.mjs' ||
     filePath.startsWith('public/i18n/') ||
     filePath === 'src/app/app.routes.ts' ||
     filePath === 'src/app/pages/auto-team-builder/auto-team-builder.page.html' ||

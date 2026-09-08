@@ -19,7 +19,7 @@
     },
     "favoritesOnly": {
       "empty": "Δεν υπάρχουν αποθηκευμένα favorites ακόμα.",
-      "label": "Μόνο favorites",
+      "label": "Δείξε favorites",
       "withCount": "Περιορισμός αποτελεσμάτων στους {{count}} favorite χαρακτήρες σου."
     },
     "captainAbility": {

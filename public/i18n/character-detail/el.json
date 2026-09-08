@@ -97,9 +97,9 @@
   },
   "captainTierLabel": "Tier {{tier}}",
   "captainTierKinds": {
-    "baseline": "Baseline",
-    "unconditional-top": "Top tier",
-    "conditional": "Conditional",
-    "baseline-and-conditional": "Baseline + Conditional"
+    "baseline": "Βασικό",
+    "unconditional-top": "Κορυφαίο tier",
+    "conditional": "Υπό συνθήκη",
+    "baseline-and-conditional": "Βασικό + Υπό συνθήκη"
   }
 }

@@ -8,7 +8,7 @@
   "filters": {
     "type": "Type",
     "class": "Class",
-    "favoritesOnly": "Μόνο favorites",
+    "favoritesOnly": "Δείξε favorites",
     "hideFavorites": "Κρύψε favorites",
     "specialEyebrow": "Special",
     "crewmateEyebrow": "Crewmate Ability",

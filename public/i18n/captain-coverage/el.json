@@ -25,10 +25,10 @@
       "panelEyebrow": "Captain Ability tiers",
       "panelTitle": "Τι ζητάει κάθε tier",
       "kinds": {
-        "baseline": "Baseline",
-        "unconditional-top": "Top tier",
-        "conditional": "Conditional",
-        "baseline-and-conditional": "Baseline + Conditional"
+        "baseline": "Βασικό",
+        "unconditional-top": "Κορυφαίο tier",
+        "conditional": "Υπό συνθήκη",
+        "baseline-and-conditional": "Βασικό + Υπό συνθήκη"
       }
     },
     "characterBox": {
@@ -105,7 +105,7 @@
   "results": {
     "captainCount": "{{count}} από αυτούς είναι Captains",
     "cost": "Κόστος: {{cost}}",
-    "eyebrow": "Character results",
+    "eyebrow": "Αποτελέσματα χαρακτήρων",
     "loadMore": "Δείξε περισσότερα (απομένουν {{count}})",
     "openCharacterDetailsFor": "Άνοιξε τον χαρακτήρα {{name}}",
     "pending": {
@@ -171,7 +171,7 @@
     },
     "empty": "Κενό slot",
     "emptyAlt": "Κενό team slot",
-    "eyebrow": "Team coverage",
+    "eyebrow": "Κάλυψη ομάδας",
     "save": {
       "action": "Αποθήκευση team",
       "error": "Η αποθήκευση της ομάδας δεν ολοκληρώθηκε. Δοκίμασε ξανά.",

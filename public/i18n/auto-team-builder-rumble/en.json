@@ -80,7 +80,6 @@
         "all": "All Rumble characters"
       },
       "support": {
-        "all": "Use every Rumble-capable local character.",
         "noBoxes": "Create a character box to limit Rumble builds to that box.",
         "withCount": "Limit the Rumble candidate pool to {{count}} character(s) in this box.",
         "withFavorites": "{{count}} of {{total}} character(s) in this box are currently favorites."
