@@ -102,9 +102,6 @@ const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
 const CONDITIONAL_CAPTAIN_BOOST_PREFIX_PATTERN =
   /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i;
 const INLINE_CAPTAIN_BOOST_CONDITION_PATTERN = /\b(?:if|when)\b/i;
-const INLINE_CAPTAIN_BOOST_CONDITION_SUFFIX_PATTERN = /\s+\b(?:if|when)\b[^.;]*$/i;
-const BENEFICIAL_ORB_INLINE_CONDITION_PATTERN =
-  /\bif\b(?:(?!\s+and\s+their\s+(?:ATK|HP|RCV)\b)[^.;,])*\bbeneficial\s+orb\b/i;
 const CAPTAIN_MULTIPLIER_PATTERN =
   /\bby\s+(?:a\s+further\s+|an?\s+additional\s+|another\s+)?\d+(?:\.\d+)?x\b/i;
 const CAPTAIN_BASE_STAT_BOOST_PATTERN =

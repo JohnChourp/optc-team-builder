@@ -5,11 +5,11 @@
     "src/test-mocks/social-login.ts",
     "src/types/*.d.ts",
     "src/app/core/services/auto-team-builder.worker.ts",
+    "src/app/core/services/captain-coverage-filter.worker.ts",
     "src/app/core/services/auto-team-builder-rumble.worker.ts",
     "scripts/*.mjs",
     "scripts/lib/*.mjs",
-    "transloco.config.ts",
-    "eslint.config.mjs"
+    "transloco.config.ts"
   ],
   "project": [
     "src/**/*.ts",

@@ -438,10 +438,6 @@ function buildAutoTeamCompareSnapshot(options: {
       missing: characterId !== null && character === null,
     };
   });
-  const characters = slots
-    .map((slot) => slot.character)
-    .filter((character): character is CharacterDetailRecord => character !== null);
-
   return {
     id: options.id,
     label: options.label,

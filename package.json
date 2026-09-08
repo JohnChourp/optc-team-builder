@@ -68,6 +68,8 @@
     "test:whats-new": "vitest run scripts/check-whats-new.spec.ts scripts/generate-whats-new-entry.spec.ts && npm run whats-new:check",
     "whats-new:check": "node ./scripts/check-whats-new.mjs",
     "audit:dead-code": "npx tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false && npx knip --include files,exports,types",
+    "dead-code:check": "tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
+    "test:dead-code": "npm run dead-code:check",
     "perf:dataset": "node ./scripts/benchmark-dataset.mjs",
     "perf:ability-filters": "node ./scripts/perf-ability-filters.mjs",
     "perf:explanation-compare": "node ./scripts/perf-explanation-compare.mjs",

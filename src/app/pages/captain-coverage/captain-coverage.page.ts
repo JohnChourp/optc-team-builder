@@ -59,8 +59,6 @@ import {
   type CaptainCoverageFilterState,
   getCaptainCoverageAvailableTierNumbers,
   getCaptainCoverageTiers,
-  hasCaptainCoverageSuperTandemData,
-  hasCaptainCoverageSuperTypesClassesData,
   resolveCaptainCoverageFilterResult,
 } from '../../core/services/captain-coverage-filter.utils';
 import {
@@ -80,7 +78,6 @@ import {
 import {
   countCharacterFacetMatches,
   createEmptyCharacterFacetSelection,
-  matchesCharacterFacet,
 } from '../../core/services/character-facet-filter.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -102,7 +99,6 @@ import {
   createEmptyCharacterTagSetSelection,
   expandCharacterTagsToSets,
   flattenCharacterTagSets,
-  matchesCharacterTagSets,
 } from '../../core/services/character-tag-set.utils';
 import {
   getAbilityCatalogItemsByCategory,
@@ -2071,74 +2067,9 @@ export class CaptainCoveragePage implements OnInit {
       : input;
   }
 
-  private sortResultCards(cards: CaptainCoverageCardView[]): CaptainCoverageCardView[] {
-    return [...cards].sort((left, right) => {
-      const sortMode = this.selectedSortMode();
-      const idOrder = this.selectedIdOrder();
-
-      if (sortMode === 'captainHpBoost') {
-        return compareBoostCards(left, right, 'captainHpBoost', idOrder);
-      }
-
-      if (sortMode === 'captainAtkBoost') {
-        return compareBoostCards(left, right, 'captainAtkBoost', idOrder);
-      }
-
-      if (sortMode === 'captainAverageBoost') {
-        return compareBoostCards(left, right, 'captainAverageBoost', idOrder);
-      }
-
-      if (sortMode === 'nameAsc') {
-        return compareNameCards(left, right, idOrder);
-      }
-
-      if (sortMode === 'nameDesc') {
-        const nameDifference = right.character.name.localeCompare(left.character.name, undefined, {
-          sensitivity: 'base',
-        });
-
-        return (
-          nameDifference || compareCharacterIds(left.character.id, right.character.id, idOrder)
-        );
-      }
-
-      return compareCharacterIds(left.character.id, right.character.id, idOrder);
-    });
-  }
-
-  private t(key: string, params?: Record<string, string | number>): string {
+    private t(key: string, params?: Record<string, string | number>): string {
     return this.i18n.translate(`captain-coverage.${key}`, params);
   }
-}
-
-function compareBoostCards(
-  left: CaptainCoverageCardView,
-  right: CaptainCoverageCardView,
-  key: 'captainAtkBoost' | 'captainAverageBoost' | 'captainHpBoost',
-  idOrder: CharacterIdOrder,
-): number {
-  const boostDifference = right.character[key] - left.character[key];
-
-  if (boostDifference !== 0) {
-    return boostDifference;
-  }
-
-  return compareCharacterIds(left.character.id, right.character.id, idOrder);
-}
-
-function compareNameCards(
-  left: CaptainCoverageCardView,
-  right: CaptainCoverageCardView,
-  idOrder: CharacterIdOrder,
-): number {
-  return (
-    left.character.name.localeCompare(right.character.name, undefined, { sensitivity: 'base' }) ||
-    compareCharacterIds(left.character.id, right.character.id, idOrder)
-  );
-}
-
-function compareCharacterIds(leftId: number, rightId: number, idOrder: CharacterIdOrder): number {
-  return idOrder === 'oldest' ? leftId - rightId : rightId - leftId;
 }
 
 function isCaptainCoverageSortMode(

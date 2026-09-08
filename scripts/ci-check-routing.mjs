@@ -112,6 +112,24 @@ export const SCRIPT_SUITES = {
     label: "What's New changelog tests",
     command: 'npm run test:whats-new',
   },
+  /*
+   * The TypeScript half of `audit:dead-code`, and deliberately only that half.
+   *
+   * `npx knip --include files,exports,types` reports 236 unused exports and 13
+   * unused types against this tree, and the ones sampled are false positives -
+   * knip counts a symbol used only inside its own file (an Angular standalone
+   * component listed in a sibling `imports:` array, a type annotating a
+   * constant beside it) as an unused export. That is a question about whether
+   * something should be exported, not about whether it is dead, and 250 of them
+   * attached to the single gate is a noise generator rather than a check.
+   *
+   * `--noUnusedLocals --noUnusedParameters` has no such ambiguity: it found ten
+   * genuinely unreachable declarations, all ten were removed, and it is clean.
+   */
+  'dead-code': {
+    label: 'Unused locals and parameters',
+    command: 'npm run test:dead-code',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
