@@ -4,7 +4,7 @@ import {
   SEEDED_SAVED_TEAMS,
   buildSavedTeamShareUrl,
   seedBrowserState,
-  waitForAppReady,
+  waitForAppAttached,
 } from './regression-fixtures';
 
 const VISUAL_VIEWPORTS = [
@@ -47,7 +47,7 @@ test.describe('public entry visual baselines @public-entry-visual', () => {
         test(`${state.id} matches the ${viewport.id} baseline`, async ({ page }) => {
           await seedBrowserState(page);
           await page.goto(state.path, { waitUntil: 'domcontentloaded' });
-          await waitForAppReady(page);
+          await waitForAppAttached(page);
           await prepareVisualSnapshot(page);
 
           await page
@@ -65,7 +65,7 @@ test.describe('public entry visual baselines @public-entry-visual', () => {
         await page.goto(buildSavedTeamShareUrl(team, baseURL), {
           waitUntil: 'domcontentloaded',
         });
-        await waitForAppReady(page);
+        await waitForAppAttached(page);
         await prepareVisualSnapshot(page);
 
         await page.getByTestId('manual-team-name').waitFor({ state: 'attached', timeout: 45_000 });

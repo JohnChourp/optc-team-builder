@@ -11,7 +11,7 @@ import {
   setIonSelect,
   setIonTextarea,
   setIonToggle,
-  waitForAppReady,
+  waitForAppAttached,
   waitForIonControlEnabled,
 } from './regression-fixtures';
 
@@ -24,7 +24,7 @@ test.describe('high-value regression flows', () => {
     await seedBrowserState(page, []);
 
     await page.goto('/tabs/auto-team-builder');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
 
     await expect(page.getByText('Guided auto build')).toBeVisible();
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
@@ -51,7 +51,7 @@ test.describe('high-value regression flows', () => {
     await seedBrowserState(page, []);
 
     await page.goto('/tabs/auto-team-builder');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
 
     await expect(page.getByText('Guided auto build')).toBeVisible();
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
@@ -75,7 +75,7 @@ test.describe('high-value regression flows', () => {
     await seedBrowserState(page);
 
     await page.goto('/tabs/auto-team-builder');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
 
     await page.getByTestId('compare-toggle').click();
     await expect(page.getByTestId('compare-empty-state')).toContainText(
@@ -107,7 +107,7 @@ test.describe('high-value regression flows', () => {
     await seedBrowserState(page, [SEEDED_SAVED_TEAMS[0]!]);
 
     await page.goto('/tabs/saved-teams');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await expect(page.getByText('E2E Regression Crew A')).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download');
@@ -148,7 +148,7 @@ test.describe('high-value regression flows', () => {
     });
 
     await page.goto(`${copiedShareUrl.pathname}${copiedShareUrl.search}`);
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await expectIonValue(page.getByTestId('manual-team-name'), 'E2E Regression Crew A');
     await expectIonValue(page.getByTestId('manual-team-notes'), 'Seeded by browser regression tests.');
     await expect(page.getByTestId('manual-team-slot-0')).toContainText('Sergeant Helmeppo', {
@@ -156,7 +156,7 @@ test.describe('high-value regression flows', () => {
     });
 
     await page.goto('/tabs/saved-teams');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
     await page.getByTestId('saved-teams-import-open').first().click();
     const importModal = page.locator('ion-modal.saved-teams-import-modal.show-modal');
     await expect(importModal).toBeVisible();

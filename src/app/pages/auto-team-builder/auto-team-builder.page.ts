@@ -1317,6 +1317,22 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return friendLeaderId ?? this.effectiveCaptainLeaderId();
   });
+  /**
+   * The Friend Captain the reader actually picked, with no fallback.
+   *
+   * `effectiveFriendLeaderId` above falls back to the Captain, which is right
+   * for the two places that consume it - `selectedLeaderIds` dedupes, and the
+   * candidate-pool coverage filter treats a duplicated leader entry as one - but
+   * wrong for anything that RECORDS the selection. With the Captain slot filled
+   * and the Friend Captain slot left empty, the exported preset said
+   * `friendCaptainLeaderId: <captainId>` and labelled the Captain `'dual'`,
+   * while `manualSlots` in the same file correctly showed that seat empty. The
+   * file disagreed with itself about a rule the owner has stated: an empty seat
+   * boosts nothing, and is never inferred by comparing the two seats.
+   */
+  public readonly selectedFriendLeaderId = computed(
+    () => this.resolveManualSlotSelection('friendCaptain').characterIds[0] ?? null,
+  );
   public readonly manualSelectionCount = computed(() =>
     this.manualSlots().reduce((count, slot) => count + slot.characterIds.length, 0),
   );
@@ -5663,7 +5679,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       current,
       this.favoriteCharacterIds(),
       current.slots[0]?.character.id ?? null,
-      current.slots[1]?.character.id ?? current.slots[0]?.character.id ?? null,
+      /*
+       * An absent Friend Captain seat is exported as NO friend leader, never as
+       * the Captain. `?? current.slots[0]?.character.id` used to sit here, which
+       * is the shape CLAUDE.md forbids - "never re-derive 'the reader picked
+       * nobody' by comparing slots[1] to slots[0]" - because the Captain in both
+       * seats is a legal team a reader may have chosen deliberately, and it is
+       * indistinguishable from this.
+       *
+       * The engine fills both leader seats today, so the branch never ran and no
+       * reader ever saw a wrong label. It is removed because the next person to
+       * allow a partially built result would have shipped one silently.
+       */
+      current.slots[1]?.character.id ?? null,
       exportedAt,
     );
   }
@@ -5743,7 +5771,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       excludedCharacters: this.excludedCharacters(),
       selectedLeaderIds: this.selectedLeaderIds(),
       captainLeaderId: this.effectiveCaptainLeaderId(),
-      friendCaptainLeaderId: this.effectiveFriendLeaderId(),
+      friendCaptainLeaderId: this.selectedFriendLeaderId(),
       manualShipId: this.selectedManualShipId(),
       manualShip: this.selectedManualShip(),
       excludedShipIds: this.excludedShipIds(),

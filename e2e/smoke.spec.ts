@@ -20,7 +20,12 @@ const ROUTES = [
 
 const NETWORK_IDLE_TIMEOUT = 45_000;
 
-async function waitForAppReady(page: Page): Promise<void> {
+/**
+ * Local twin of `regression-fixtures.ts`'s helper, kept separate because it uses
+ * Playwright's default attach timeout rather than the fixture's 45s. Named for
+ * what it proves: the shell is attached, not that the app is idle.
+ */
+async function waitForAppAttached(page: Page): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
   await page.locator('ion-app').first().waitFor({ state: 'attached' });
 }
@@ -53,7 +58,7 @@ test.describe('cross-browser smoke', () => {
       expect(response, `no response for ${route.path}`).not.toBeNull();
       expect(response?.ok(), `non-OK status for ${route.path}: ${response?.status()}`).toBeTruthy();
 
-      await waitForAppReady(page);
+      await waitForAppAttached(page);
 
       await expect(page).toHaveTitle(new RegExp(route.titleFragment, 'i'), {
         timeout: NETWORK_IDLE_TIMEOUT,
@@ -69,7 +74,7 @@ test.describe('cross-browser smoke', () => {
 
   test('home page can navigate to characters via top action', async ({ page }) => {
     await page.goto('/');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
 
     const charactersLink = page.locator('a[href*="/tabs/characters"]').first();
     await charactersLink.waitFor({ state: 'visible', timeout: NETWORK_IDLE_TIMEOUT });
@@ -81,7 +86,7 @@ test.describe('cross-browser smoke', () => {
 
   test('side menu opens and lists navigation items', async ({ page }) => {
     await page.goto('/tabs/characters');
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
 
     const menuButton = page.locator('ion-menu-button').first();
     await menuButton.waitFor({ state: 'visible', timeout: NETWORK_IDLE_TIMEOUT });
@@ -110,7 +115,7 @@ test.describe('cross-browser smoke', () => {
 
     for (const route of guideRoutes) {
       await page.goto(route.path, { waitUntil: 'domcontentloaded' });
-      await waitForAppReady(page);
+      await waitForAppAttached(page);
 
       await expect(page.getByRole('heading', { name: route.heading })).toBeVisible({
         timeout: NETWORK_IDLE_TIMEOUT,
@@ -135,7 +140,7 @@ test.describe('cross-browser smoke', () => {
     page,
   }) => {
     await page.goto('/tabs/captain-coverage', { waitUntil: 'domcontentloaded' });
-    await waitForAppReady(page);
+    await waitForAppAttached(page);
 
     const heading = page.locator('.results-toolbar__heading h2');
 

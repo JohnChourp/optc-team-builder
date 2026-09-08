@@ -210,27 +210,15 @@ async function waitForAppReady(page, entry) {
       state: 'attached',
       timeout: APP_READY_TIMEOUT_MS,
     });
-    await page
-      .waitForFunction(
-        () => {
-          const testabilityApi = window;
-          const testabilities = testabilityApi.getAllAngularTestabilities?.() ?? [];
-          if (!testabilities.length) {
-            return true;
-          }
-          return Promise.all(
-            testabilities.map(
-              (testability) =>
-                new Promise((resolve) => {
-                  testability.whenStable(resolve);
-                }),
-            ),
-          ).then(() => true);
-        },
-        undefined,
-        { timeout: APP_READY_TIMEOUT_MS },
-      )
-      .catch(() => true);
+    /*
+     * No testability poll here. It read `window.getAllAngularTestabilities` and
+     * returned true whenever that list was empty - and under
+     * `bootstrapApplication` it is ALWAYS empty, because testability ships with
+     * `BrowserModule`/`provideProtractorTestingSupport()` and this app uses
+     * neither. It resolved on its first poll every time, so removing it is
+     * behaviour-neutral. The attach wait above is what this function has
+     * actually proven all along, and the caller checks rendered content itself.
+     */
   } catch (error) {
     addFailure(entry, 'rendering', 'App shell did not become ready.', {
       text: error instanceof Error ? error.message : String(error),

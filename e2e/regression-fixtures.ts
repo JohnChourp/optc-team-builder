@@ -117,34 +117,29 @@ export async function seedBrowserState(
   );
 }
 
-export async function waitForAppReady(page: Page): Promise<void> {
+/**
+ * Waits for the Angular app shell to be attached to the document.
+ *
+ * It is named for what it proves, which is less than it used to claim. This
+ * function ended with a `page.waitForFunction` that polled
+ * `window.getAllAngularTestabilities` and returned `true` whenever the list was
+ * empty - and under `bootstrapApplication` that list is ALWAYS empty, because
+ * testability is installed by `BrowserModule`/`provideProtractorTestingSupport()`
+ * and this app uses neither. So the block resolved on its first poll in every
+ * build, and four spec files believed they were waiting for stability when they
+ * were waiting for nothing.
+ *
+ * The block is deleted rather than repaired. Adding
+ * `provideProtractorTestingSupport()` would ship Angular's testability providers
+ * into the production bundle for every real user in order to make an end-to-end
+ * helper honest, which is the wrong trade. Where a test needs more than
+ * attachment it should wait on a real DOM signal - see
+ * `waitForIonControlEnabled` below, which is what the three places that actually
+ * needed it now use.
+ */
+export async function waitForAppAttached(page: Page): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
   await page.locator('ion-app').first().waitFor({ state: 'attached', timeout: 45_000 });
-  await page.waitForFunction(
-    () => {
-      const testabilityApi = window as unknown as {
-        getAllAngularTestabilities?: () => Array<{
-          whenStable: (callback: () => void) => void;
-        }>;
-      };
-      const testabilities = testabilityApi.getAllAngularTestabilities?.() ?? [];
-
-      if (!testabilities.length) {
-        return true;
-      }
-
-      return Promise.all(
-        testabilities.map(
-          (testability) =>
-            new Promise<void>((resolve) => {
-              testability.whenStable(resolve);
-            }),
-        ),
-      ).then(() => true);
-    },
-    undefined,
-    { timeout: 45_000 },
-  );
 }
 
 /**

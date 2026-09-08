@@ -338,26 +338,16 @@ async function runSavedTeamsImportStress(page, cdp) {
 async function waitForAngular(page) {
   await page.waitForLoadState('domcontentloaded');
   await page.locator('ion-app').first().waitFor({ state: 'attached', timeout: 45_000 });
-  await page.waitForFunction(
-    () => {
-      const testabilities = window.getAllAngularTestabilities?.() ?? [];
-
-      if (!testabilities.length) {
-        return true;
-      }
-
-      return Promise.all(
-        testabilities.map(
-          (testability) =>
-            new Promise((resolve) => {
-              testability.whenStable(resolve);
-            }),
-        ),
-      ).then(() => true);
-    },
-    undefined,
-    { timeout: 60_000 },
-  );
+  /*
+   * No testability poll here. It used to read
+   * `window.getAllAngularTestabilities` and return true whenever that list was
+   * empty - and under `bootstrapApplication` it is ALWAYS empty, because
+   * testability ships with `BrowserModule`/`provideProtractorTestingSupport()`
+   * and this app uses neither. It resolved on its first poll every time, so
+   * removing it is behaviour-neutral and stops the next reader trusting a wait
+   * that never waited. Where a measurement needs more than attachment, wait on a
+   * real DOM signal instead.
+   */
 }
 
 async function waitForAutoTeamBuilderReady(page) {
