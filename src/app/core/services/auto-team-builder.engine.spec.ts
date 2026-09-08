@@ -145,9 +145,7 @@ describe('runAutoTeamBuildSearch', () => {
         .filter((slot) => slot.role === 'sub')
         .flatMap((slot) => slot.explanation?.rejectedCandidates ?? []) ?? [];
     expect(
-      result?.slots.every(
-        (slot) => (slot.explanation?.rejectedCandidates.length ?? 0) <= 3,
-      ),
+      result?.slots.every((slot) => (slot.explanation?.rejectedCandidates.length ?? 0) <= 3),
     ).toBe(true);
     expect(rejectedSubCandidates.length).toBeGreaterThan(0);
     const rejectedSubReasonCodes = rejectedSubCandidates.flatMap((candidate) =>
@@ -1589,9 +1587,7 @@ function createCoverageFloorRecords(coveredSubCount: number): CharacterDetailRec
       },
     }),
     ...Array.from({ length: coveredSubCount }, (_, index) => plainSub(9910 + index, 'Fighter')),
-    ...Array.from({ length: 6 - coveredSubCount }, (_, index) =>
-      plainSub(9950 + index, 'Slasher'),
-    ),
+    ...Array.from({ length: 6 - coveredSubCount }, (_, index) => plainSub(9950 + index, 'Slasher')),
   ];
 }
 
@@ -1695,7 +1691,8 @@ function createLeaderBoostRangeCoverageRecords(): CharacterDetailRecord[] {
       captainAtkBoost: 5.5,
       captainHpBoost: 1.3,
       detail: {
-        captainAbility: 'Boosts ATK of [PSY] characters by 5.5x and HP of [PSY] characters by 1.3x.',
+        captainAbility:
+          'Boosts ATK of [PSY] characters by 5.5x and HP of [PSY] characters by 1.3x.',
       },
     }),
     // Covers every DEX sub, but its ATK boost sits below the range floor.
@@ -1706,7 +1703,8 @@ function createLeaderBoostRangeCoverageRecords(): CharacterDetailRecord[] {
       captainAtkBoost: 4.25,
       captainHpBoost: 1.3,
       detail: {
-        captainAbility: 'Boosts ATK of [DEX] characters by 4.25x and HP of [DEX] characters by 1.3x.',
+        captainAbility:
+          'Boosts ATK of [DEX] characters by 4.25x and HP of [DEX] characters by 1.3x.',
       },
     }),
     createCaptainCoverageDexSubRecord(9032),
@@ -1735,7 +1733,7 @@ const VS_BRANCH_MODE_TYPES: AutoTeamBuilderType[] = ['DEX', 'QCK', 'PSY', 'STR',
 const VS_BRANCH_MODE_CLASSES = ['Cerebral', 'Driven', 'Powerhouse', 'Shooter', 'Slasher'];
 
 function createVsBranchModeCoverageRecords(
-  options: { bothBranchSubCount?: number } = {},
+  options: { bothBranchSubCount?: number; leaderCriteria?: boolean } = {},
 ): CharacterDetailRecord[] {
   const bothBranchSubs = [
     createVsBranchModeSubRecord(9101, 'INT', 'Driven', 'Shooter'), // branch 1 via [INT], branch 2 via Driven
@@ -1748,7 +1746,7 @@ function createVsBranchModeCoverageRecords(
     // One leader-eligible record is enough here, unlike `createSuperScopeCoverageRecords` - measured
     // 2026-09-07, all four cases build. The difference is that this leader is pinned into both
     // leader seats by the manual slots, which is also the only way axis 8 can be expressed.
-    createVsBranchModeLeaderRecord(9100),
+    createVsBranchModeLeaderRecord(9100, options.leaderCriteria ?? false),
     ...bothBranchSubs,
     // Branch 1 only: [INT] is in branch 1's scope, and neither Shooter nor Powerhouse is in branch
     // 2's [STR]/Driven/Cerebral. Two of them, so a 'character1' search can fill four sub slots even
@@ -1760,7 +1758,10 @@ function createVsBranchModeCoverageRecords(
   ];
 }
 
-function createVsBranchModeLeaderRecord(id: number): CharacterDetailRecord {
+function createVsBranchModeLeaderRecord(
+  id: number,
+  withLeaderCriteria = false,
+): CharacterDetailRecord {
   return createCharacterRecord({
     id,
     name: 'Zoro VS Lucci - Battling Swords and Hand Pistols',
@@ -1782,6 +1783,28 @@ function createVsBranchModeLeaderRecord(id: number): CharacterDetailRecord {
         },
       ],
       specialText: "Reduces enemies' Increased Defense and Threshold Damage Reduction by 7 turns.",
+      // Axes 6, 9 and 10 cannot bind on a leader that carries none of these, which is run 1
+      // finding 3: `resolveActiveLeaderSuperEffectScope` returns `hasSuperEffects: false` for a
+      // leader with no `superType`, so axis 6 is trivially satisfied, and a leader with no
+      // criteria gives axes 9 and 10 nothing to concede. Opt-in rather than always-on so the
+      // four 7x8x19 cases above keep the exact record they were measured against - verified by
+      // running them after this option was added.
+      //
+      // The super scope is INT and not STR on purpose. It then splits the four both-branch subs
+      // (9101 and 9103 in scope, 9102 and 9104 out), so axis 6 is unsatisfiable exactly when
+      // branch mode 'both' forces those two STR subs into the team - measured: the same fixture
+      // under 'character1' fills all four sub slots from INT records and relaxes nothing.
+      ...(withLeaderCriteria
+        ? {
+            superType: { specialEffect: 'Changes INT characters to Super INT.' },
+            superSpecialCriteria: TIER2_UNSATISFIABLE_CRITERIA,
+            superTandemData: {
+              requirement: TIER2_UNSATISFIABLE_CRITERIA.rawText,
+              levels: [{ level: 5, effect: 'Boosts Tandem ATK of crew by 3x for 1 turn.' }],
+              criteria: TIER2_UNSATISFIABLE_CRITERIA,
+            },
+          }
+        : {}),
     },
   });
 }
@@ -1811,6 +1834,109 @@ function createVsBranchModeManualSlots(
       ? {
           ...slot,
           characterIds: [captainId],
+          branchSelections: [{ characterId: captainId, mode }],
+        }
+      : slot,
+  );
+}
+
+/**
+ * A second VS captain carrying the same two branches, so it stays leader-eligible under a mode.
+ *
+ * `createVsBranchModeLeaderRecord` fixes the typing and the 5 / 1.3 boosts, and the pairs below
+ * need leaders that differ in exactly one of those: the boost axis 5 gates on, or the class pair
+ * that decides which branches cover the leader ITSELF. The ' VS ' token stays in the name because
+ * `shouldUseAlternativeCaptainCoverageBranches` looks for /\bvs\b/i across the name and the branch
+ * texts - a clone that lost it would merge its branches as a conjunction and stop being a VS
+ * captain. The id goes into the name so the clone does not share 9100's party-conflict key.
+ */
+function createVsBranchModeLeaderCloneRecord(
+  id: number,
+  options: {
+    captainAtkBoost?: number;
+    captainHpBoost?: number;
+    type?: string;
+    primaryClass?: string;
+    secondaryClass?: string;
+  } = {},
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: `Zoro VS Lucci ${id} - Battling Swords and Hand Pistols`,
+    type: options.type ?? 'INT,STR',
+    primaryClass: options.primaryClass ?? 'Slasher',
+    secondaryClass: options.secondaryClass ?? 'Driven',
+    captainAtkBoost: options.captainAtkBoost ?? 5,
+    captainHpBoost: options.captainHpBoost ?? 1.3,
+    detail: {
+      captainAbility: VS_BRANCH_MODE_CHARACTER1_TEXT,
+      captainAbilityVariants: [
+        {
+          key: 'character1',
+          label: 'Captain Ability (Character 1)',
+          text: VS_BRANCH_MODE_CHARACTER1_TEXT,
+        },
+        {
+          key: 'character2',
+          label: 'Captain Ability (Character 2)',
+          text: VS_BRANCH_MODE_CHARACTER2_TEXT,
+        },
+      ],
+      specialText: "Reduces enemies' Increased Defense and Threshold Damage Reduction by 7 turns.",
+    },
+  });
+}
+
+/** A both-branch sub that declares the ability the hard axes require. */
+function createVsBranchModeAbilityCarrierRecord(id: number): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    type: 'INT',
+    primaryClass: 'Driven',
+    secondaryClass: 'Shooter',
+    detail: {
+      specialText: 'Reduces Paralysis duration by 5 turns.',
+      // The engine spec does not derive abilities from text, exactly as `createTier2Records`
+      // records for its own carrier.
+      builderAbilities: [
+        {
+          key: TIER2_REQUIRED_ABILITY_KEY,
+          label: TIER2_REQUIRED_ABILITY_KEY,
+          minTurns: 5,
+          isCompleteRemoval: false,
+          slotTokens: [],
+          source: 'specialText',
+        },
+      ],
+    },
+  });
+}
+
+/**
+ * Manual slots that pin ONLY the captain, leaving the friend seat to auto-fill.
+ *
+ * `createVsBranchModeManualSlots` pins both leader seats, which is what axis 5 cannot survive:
+ * `resolveLeaderCandidateOptions` calls `candidateMatchesLeaderConstraints` with
+ * `applyAutoFillLeaderRanges: false` for the manual pool (auto-team-builder.utils.ts:2255), so a
+ * pinned leader never sees the boost range and a two-seat pin disables axis 5 on both.
+ *
+ * `decoyCharacterId` is not decoration. `requiredCharacterId` narrows the role to the one pin;
+ * `characterIds` is the wider list the role would otherwise rank over, and the branch selection is
+ * keyed to the pinned id alone. With the pin alone in the list the two are indistinguishable, and
+ * the mutation that ignores `requiredCharacterId` changes nothing.
+ */
+function createVsBranchModeCaptainOnlyManualSlots(
+  captainId: number,
+  mode: 'character1' | 'character2' | 'both',
+  decoyCharacterId?: number,
+) {
+  return createEmptyAutoBuildManualSlots().map((slot) =>
+    slot.role === 'captain'
+      ? {
+          ...slot,
+          characterIds:
+            decoyCharacterId === undefined ? [captainId] : [decoyCharacterId, captainId],
+          requiredCharacterId: captainId,
           branchSelections: [{ characterId: captainId, mode }],
         }
       : slot,
@@ -1972,10 +2098,9 @@ describe('Lane D matrix - Tier 2 pairs', () => {
       ...axes.flatMap((axis) => axis.extraTypes ?? []),
     ];
     const classes = [...TIER2_BASE_CLASSES, ...axes.flatMap((axis) => axis.extraClasses ?? [])];
-    const overrides = axes.reduce(
-      (acc, axis) => ({ ...acc, ...axis.overrides }),
-      { ...(hard?.overrides ?? {}) } as Record<string, unknown>,
-    );
+    const overrides = axes.reduce((acc, axis) => ({ ...acc, ...axis.overrides }), {
+      ...(hard?.overrides ?? {}),
+    } as Record<string, unknown>);
 
     const needsUncoveredSubs = axes.some((axis) => axis.id === 'a7');
 
@@ -2202,7 +2327,6 @@ describe('Lane D matrix - Tier 3 pairs', () => {
   });
 });
 
-
 // Lane D matrix, Tier 3 - axis 16, which needs a differential rather than a predicate.
 //
 // `allowAnyFriendCaptainAutoFill` WIDENS the friend-captain pool instead of narrowing it, so
@@ -2232,7 +2356,11 @@ describe('Lane D matrix - Tier 3 pairs, axis 16', () => {
   const LEADER_GATE = { ATK: { min: 5, max: null }, HP: { min: 1.3, max: null } };
 
   function runAxis16(
-    partner: { soft?: Tier2RelaxableAxis; hard?: Tier2HardAxis; overrides?: Record<string, unknown> },
+    partner: {
+      soft?: Tier2RelaxableAxis;
+      hard?: Tier2HardAxis;
+      overrides?: Record<string, unknown>;
+    },
     enabled: boolean,
   ): AutoBuildResult | null {
     const types: AutoTeamBuilderType[] = [...TIER2_BASE_TYPES, ...(partner.soft?.extraTypes ?? [])];
@@ -2324,7 +2452,6 @@ describe('Lane D matrix - Tier 3 pairs, axis 16', () => {
     );
   });
 });
-
 
 // Lane D matrix, Tier 3 - axis 19 against the hard axes the engine can express, plus the two
 // Tier 3 axes.
@@ -2457,6 +2584,600 @@ describe('Lane D matrix - Tier 3 pairs, axis 19', () => {
   });
 });
 
+// Lane D matrix, Tier 3 - axis 8 (captain branch mode) against the relaxation-eligible axes.
+//
+// 8x7 is the promoted triple 7x8x19 in the Tier 1 block above and is not repeated here. What is
+// left is 8x1, 8x2, 8x3, 8x4, 8x6, 8x9 and 8x10, and all seven run on ONE fixture because the
+// pair's question is the same every time: when the search has to give a filter up, does the
+// branch mode survive the fallback, and does 'both' still MEAN both on the team it returns?
+//
+// WHAT THESE ROWS DO AND DO NOT CLAIM. Six of the seven are CONJUNCTIVE coverage: both axes are
+// active and each is independently asserted, which is what the matrix defines a covered pair to
+// be. They are not evidence that the branch mode CAUSED the partner's relaxation, and they must
+// not be read that way - measured, the bare fixture at mode 'both' with no partner axis at all
+// already reports `usedFallback: true` and returns the same four subs, so a1-a4, a9 and a10
+// would report the same give-up at either mode. Exactly one row earns the causal claim, and it
+// is written as its own differential: 8x6, where the 'character1' control concedes nothing.
+//
+// The axis rides on the leader's manual slot, so every row also passes through axis 19 - that
+// is a property of axis 8, not a defect of these cases.
+//
+// Three things make these rows different from the 7x8x19 triple, and each is load-bearing:
+//
+//   - No row requests captain ability coverage, so `resolveCaptainAbilityCoverageMode` returns
+//     'simpleBoostScope' rather than 'fullAbilityCoverage'. That is a different path through
+//     `resolveCaptainCoverage`, and it has its own alternative-branch merge
+//     (`shouldUseSimpleAlternativeCaptainCoverageBranches`, captain-coverage.utils.ts:692) which,
+//     unlike the VS merge above it, is NOT gated on `branchMode`. It does not fire for this
+//     captain only because the branch texts carry an HP clause as well as ATK ones. That is the
+//     one thing here the 7x8x19 triple cannot see: forcing that helper to true reddens all seven
+//     rows below and leaves all four 7x8x19 cases green, because their `fullAbilityCoverage`
+//     mode gates the path off.
+//   - Because axis 7 is never requested, `canRelaxCaptainAbilityCoverage` is false, so
+//     `allowPartialCaptainAbilityCoverage` stays unset through every fallback attempt and
+//     `matchesLeaderBuildScopeForAttempt` (auto-team-builder.utils.ts:5756) never degrades to
+//     `true`. The branch-mode-aware coverage gate is therefore live on the relaxed team too,
+//     which is what makes the sub-set assertion below an invariant-1 claim rather than a
+//     coincidence of the exact attempt.
+//   - The leader carries a `superType` and unsatisfiable criteria (opt-in on the fixture). Run 1
+//     finding 3: without a `superType` axis 6 is trivially satisfied and its row would assert
+//     nothing.
+//
+// Every row carries the same CONTROL: the identical records and the identical input, with the
+// manual slot's mode moved from 'both' to 'character1'. It must ADMIT the branch-1-only subs
+// 9105 and 9106 - which is what proves the mode, and not the type/class selection, the pool or
+// the pin, is what excluded them.
+//
+// The vacuity trap, and it is not hypothetical: a row that asserts only the reported relaxation
+// and `captainBranchSelection` passes with the branch contract deleted. The selection is a
+// LABEL, produced by `resolveLeaderBranchSelection` from the manual slot, and it keeps saying
+// `{ mode: 'both', source: 'manual' }` on a team full of single-branch subs. Measured: under the
+// mutation that drops the `options.branchMode !== 'both'` guard, every row's branch-selection
+// clause still passes and only the sub-set clause fails.
+//
+// Mutation ledger, all measured 2026-09-07 by applying the mutation and running this file. The
+// counts are of THESE seven rows; the file total is not quoted because another session held an
+// unrelated mutation in the same checkout throughout:
+//   - `options.branchMode !== 'both'` guard dropped (captain-coverage.utils.ts:257) - 7/7, and
+//     also caught by two 7x8x19 cases.
+//   - `mergeCaptainCoverageBranchResults` `every` -> `some` (captain-coverage.utils.ts:658) -
+//     7/7, and also caught by the same two.
+//   - `resolveManualLeaderBranchMode` -> always null (auto-team-builder.utils.ts:5209) - 7/7.
+//   - `shouldUseSimpleAlternativeCaptainCoverageBranches` -> always true - 7/7, and caught by NO
+//     pre-existing case in this file.
+//   - `buildBaseSubsetInput` always allowing partial captain coverage
+//     (auto-team-builder.engine.ts:1107) - 4/7. Only the rows that win on a SUBSET attempt (a1
+//     to a4) see it; a6, a9 and a10 are satisfied by a zero-drop attempt, which never reads that
+//     input. Recorded rather than papered over: this family does not cover that mutation for the
+//     three criteria axes.
+const VS_BRANCH_MODE_BOTH_BRANCH_SUB_IDS = [9101, 9102, 9103, 9104];
+
+// `VS_BRANCH_MODE_TYPES` is not just a generous selection - it is EVERY type in
+// `AUTO_TEAM_BUILDER_TYPES`, and that is what makes it usable as a shared base here.
+// `shouldTreatSelectedTypesAsNeutral` (auto-team-builder.engine.ts:1569) treats the type
+// selection as neutral only when it equals the full list; on any strict subset,
+// `satisfiesRequestedAutoTeamBuildCoverage` rejects the exact attempt unless the team covers
+// every selected type - EVEN WITH `requireAllSelectedTypesInTeam` false. Measured on this
+// fixture with the axis off: five types -> `usedFallback: false`, four (INT/STR/QCK/PSY) ->
+// `droppedTypes: ['QCK', 'PSY']`, three (INT/STR/QCK) -> `droppedTypes: ['QCK']`. Narrowing the
+// shared selection would therefore hand every row a types relaxation that has nothing to do
+// with its own axis.
+//
+// The class selection is the opposite case and is deliberately NOT the full list: it omits
+// 'Free Spirit' (see the 7x8x19 comment) and four more, so `coversAllSelectedClasses` is live
+// on every row. The returned teams cover all five selected classes, which is why no row picks
+// up a stray `droppedClasses` - and it is also what makes the a2 row's 'Striker' a real
+// give-up rather than a bookkeeping artefact.
+interface VsBranchModeRelaxableAxis extends Tier2RelaxableAxis {
+  /**
+   * Complete type selection for this row, for the one axis that cannot use the shared list.
+   */
+  types?: AutoTeamBuilderType[];
+}
+
+// The Tier 2 descriptors, minus axis 7 (covered as the Tier 1 triple) and with axis 1 rebuilt.
+// RELAXABLE's a1 forces its drop by selecting [INT], and this fixture is full of INT records, so
+// that row would be satisfiable here and would never report.
+//
+// Axis 1 is also the row that cannot use the shared all-types selection, because switching
+// `requireAllSelectedTypesInTeam` on already makes the selection non-neutral: all three types
+// no record carries (DEX, QCK, PSY) then have to be dropped, and the planner enumerates drop
+// subsets over all of them - measured at ~6s for the one row, past the 5s default timeout. The
+// row selects the two types the pool carries plus the one it does not, so exactly one type has
+// to be given up. 9107 leaves this row's pool with QCK unselected, which costs nothing: no
+// branch covers it, so it is absent from every row's team anyway.
+const VS_BRANCH_MODE_RELAXABLE: VsBranchModeRelaxableAxis[] = RELAXABLE.filter(
+  (axis) => axis.id !== 'a7',
+).map((axis) =>
+  axis.id === 'a1'
+    ? {
+        id: axis.id,
+        label: axis.label,
+        types: ['INT', 'STR', 'PSY'] as AutoTeamBuilderType[],
+        overrides: axis.overrides,
+        wasReported: (relaxation: AutoBuildResult['relaxation']) =>
+          relaxation.droppedTypes.includes('PSY'),
+      }
+    : axis,
+);
+
+describe('Lane D matrix - Tier 3 pairs, axis 8', () => {
+  function runAxis8(
+    soft: VsBranchModeRelaxableAxis,
+    mode: 'both' | 'character1',
+  ): AutoBuildResult | null {
+    return runAutoTeamBuildSearch(
+      createVsBranchModeCoverageRecords({ leaderCriteria: true }),
+      createInput(
+        soft.types ?? [...VS_BRANCH_MODE_TYPES, ...(soft.extraTypes ?? [])],
+        // 'Free Spirit' stays out of the class selection, as the 7x8x19 comment records: with it
+        // selected the search reports a `droppedClasses: ['Free Spirit']` relaxation that has
+        // nothing to do with axis 8, and the a2 row's assertion would be reading that instead.
+        [...VS_BRANCH_MODE_CLASSES, ...(soft.extraClasses ?? [])],
+        {
+          ...soft.overrides,
+          manualSlots: createVsBranchModeManualSlots(9100, mode),
+          lockedCharacterIds: [9100],
+          captainCharacterId: 9100,
+          friendCaptainCharacterId: 9100,
+        } as never,
+      ),
+    );
+  }
+
+  function resolveSubIds(result: AutoBuildResult): number[] {
+    return result.slots
+      .slice(2)
+      .map((slot) => slot.character.id)
+      .sort((left, right) => left - right);
+  }
+
+  for (const soft of VS_BRANCH_MODE_RELAXABLE) {
+    it(`keeps branch mode both while ${soft.id} relaxes (captain branch mode vs ${soft.label})`, () => {
+      const result = runAxis8(soft, 'both');
+      const control = runAxis8(soft, 'character1');
+
+      expect(result).not.toBeNull();
+      expect(control).not.toBeNull();
+
+      // Axis 8 reached the search, on BOTH leader seats, and from the manual slot rather than
+      // from `resolveAutomaticCaptainBranchMode` - which for this VS captain would have picked a
+      // single branch and quietly satisfied the rest.
+      expect(result!.slots[0]!.captainBranchSelection).toMatchObject({
+        mode: 'both',
+        source: 'manual',
+      });
+      expect(result!.slots[1]!.captainBranchSelection).toMatchObject({
+        mode: 'both',
+        source: 'manual',
+      });
+
+      // Invariant 1 - soundness: 'both' still means covered by branch 1 AND branch 2, on the
+      // team the fallback actually returned. The branch-1-only subs (9105, 9106) and the
+      // uncovered filler (9107) are absent.
+      expect(resolveSubIds(result!)).toEqual(VS_BRANCH_MODE_BOTH_BRANCH_SUB_IDS);
+
+      // The control: same records, same input, only the mode moves. It admits the branch-1-only
+      // subs, so the clause above is falsifiable rather than a property of the pool.
+      expect(control!.slots[0]!.captainBranchSelection).toMatchObject({
+        mode: 'character1',
+        source: 'manual',
+      });
+      expect(resolveSubIds(control!)).toEqual(expect.arrayContaining([9105, 9106]));
+
+      // Invariant 3 - relaxation honesty: the partner axis was given up and is reported.
+      //
+      // `usedFallback` is deliberately NOT asserted here. Measured on this fixture: with no
+      // partner axis switched on at all, mode 'both' alone already returns
+      // `usedFallback: true` and the same four subs. So the flag is a constant across these
+      // rows and asserting it would be a clause that cannot fail - the shape run 4 had to fix
+      // twice. The one place it carries information is the 8x6 differential below, where the
+      // control genuinely returns a strict team.
+      expect({ [soft.id]: soft.wasReported(result!.relaxation) }).toEqual({ [soft.id]: true });
+
+      // ...and nothing that was never switched on is reported as given up. The leader carries
+      // the super effect and both kinds of criteria, so the axis 6, 9 and 10 clauses here are
+      // asserting on a fixture that genuinely has something to concede.
+      for (const other of VS_BRANCH_MODE_RELAXABLE) {
+        if (other.id === soft.id) {
+          continue;
+        }
+
+        expect({ [other.id]: other.wasReported(result!.relaxation) }).toEqual({
+          [other.id]: false,
+        });
+      }
+
+      // Axis 8 itself has no field in the relaxation summary and can never be reported. What CAN
+      // be conceded is the coverage gate it rides on - and it was not, because axis 7 was never
+      // requested. Optional flags are absent, never false.
+      expect(result!.relaxation.ignoredCaptainAbilityCoverage).toBeUndefined();
+      expect(result!.input.allowPartialCaptainAbilityCoverage).toBeUndefined();
+    });
+  }
+
+  it('relaxes the super-effect scope only because branch mode both forces the STR subs in (8x6)', () => {
+    // The 8x6 row above shows axis 6 conceded under 'both'. On its own that could be a property
+    // of the fixture - the leader scopes INT and two records are STR. This is the differential
+    // that says otherwise: the SAME records under 'character1' fill all four sub slots from INT
+    // records and concede nothing at all. Axis 8 is what made axis 6 unsatisfiable.
+    const a6 = VS_BRANCH_MODE_RELAXABLE.find((axis) => axis.id === 'a6')!;
+    const control = runAxis8(a6, 'character1');
+
+    expect(control).not.toBeNull();
+    expect(control!.relaxation.usedFallback).toBe(false);
+    expect(control!.relaxation.ignoredLeaderSuperEffectScope).toBe(false);
+    expect(control!.slots.every((slot) => slot.character.type.includes('INT'))).toBe(true);
+  });
+});
+
+// Lane D matrix, Tier 3 - axis 8 (captain branch mode) against the axes that cannot relax:
+// 5 (leader boost ranges), 11 (unique base names), 16 (friend auto-fill) and the two hard axes
+// the engine can express, 12 and 13.
+//
+// Axis 8 rides on the leader's manual slot (`resolveManualLeaderBranchMode`,
+// auto-team-builder.utils.ts:5199), so every row here also passes through axis 19. That is a
+// property of axis 8, not a defect of these cases.
+//
+// None of these partners has a relaxation field, so invariant 3 has nothing to say: the claim is
+// invariant 1 twice over - the partner axis holds on the returned team AND 'both' still means
+// covered by branch 1 AND branch 2. Each row therefore carries TWO controls, because one axis
+// switched off can only falsify its own clause:
+//
+//   - the partner control - the identical fixture with the partner axis off - which must break
+//     the partner's clause;
+//   - the branch control - the identical fixture with the mode moved from 'both' to 'character1'
+//     - which must ADMIT the branch-1-only subs 9105 and 9106 that 'both' excluded.
+//
+// Every run below returns a strict team (`usedFallback: false`), asserted on all three runs of
+// every row. It is not decoration: a control that reached its state through the fallback ladder
+// would differ from the treatment in the relaxation as well as in the axis, and could not isolate
+// anything. Measured 2026-09-07 - the same fixtures with 'Cerebral' unrepresentable in the
+// returned team report `droppedClasses: ['Cerebral']` instead, which is why the 8x12/8x13 fillers
+// below carry Cerebral and Powerhouse.
+describe('Lane D matrix - Tier 3 pairs, axis 8 against the axes that cannot relax', () => {
+  const BRANCH_1_ONLY_SUB_IDS = [9105, 9106];
+  const UNCOVERED_SUB_ID = 9107;
+  // The same range axis 5 uses everywhere else in this file.
+  const LEADER_GATE = { ATK: { min: 5, max: null }, HP: { min: 1.3, max: null } };
+
+  function resolveSubIds(result: AutoBuildResult): number[] {
+    return result.slots
+      .slice(2)
+      .map((slot) => slot.character.id)
+      .sort((left, right) => left - right);
+  }
+
+  /**
+   * Invariant 1 for axis 8: under 'both', no slot may be covered by only one branch.
+   *
+   * `extraSingleBranchIds` is the row's own branch-1-only records, when it added any. It is not
+   * optional decoration: with the stock fixture alone, the 8x12/8x13 rows return the SAME team
+   * whether 'both' means both branches or either of them, so dropping the `branchMode !== 'both'`
+   * guard in `resolveCaptainCoverage` leaves them green - measured 2026-09-07, and fixed by
+   * giving those rows two branch-1-only records the ranking actually reaches.
+   */
+  function expectBothBranchSubsOnly(
+    result: AutoBuildResult,
+    extraSingleBranchIds: number[] = [],
+  ): void {
+    const forbidden = [...BRANCH_1_ONLY_SUB_IDS, ...extraSingleBranchIds, UNCOVERED_SUB_ID];
+
+    // Not `expect.not.arrayContaining(forbidden)`. That matcher negates the WHOLE
+    // `arrayContaining`, so it only fails when EVERY forbidden id is present - a team carrying
+    // two of the five would pass it. Measured 2026-09-07: written that way, the mutation that
+    // drops the `branchMode !== 'both'` guard produced a team holding both extra single-branch
+    // subs and the assertion stayed green.
+    expect(resolveSubIds(result).filter((id) => forbidden.includes(id))).toEqual([]);
+  }
+
+  /**
+   * The branch control has to admit what 'both' excluded, or it proves nothing.
+   *
+   * `admitted` is per row rather than always the stock pair: the 8x12/8x13 fixture carries its
+   * own branch-1-only records, and its control admits those instead.
+   */
+  function expectBranchControlAdmitsSingleBranchSubs(
+    control: AutoBuildResult,
+    admitted: number[] = BRANCH_1_ONLY_SUB_IDS,
+  ): void {
+    expect(control.slots[0]!.captainBranchSelection).toMatchObject({
+      mode: 'character1',
+      source: 'manual',
+    });
+    expect(resolveSubIds(control)).toEqual(expect.arrayContaining(admitted));
+  }
+
+  // 8x5 - the pair run 4 left open, and it IS expressible, but only in one shape.
+  //
+  // Axis 8 needs a manual leader slot and axis 5 is skipped for the manual pool, so the two
+  // cannot bind on the same seat: pin both leader seats, as the 7x8x19 triple does, and axis 5 is
+  // silently off. Pin ONLY the captain and the friend seat still auto-fills through
+  // `candidateMatchesLeaderConstraints(candidate, true)` (auto-team-builder.utils.ts:2261), where
+  // the range is live. Measured 2026-09-07: the branch selection still reaches the search from
+  // that one-seat pin, and 9100 - the only leader in range - takes the friend seat.
+  //
+  // 9110 and 9111 split the gate on ONE conjunct each. `candidateMatchesLeaderBoostRanges` is
+  // ATK && HP, so a fixture that only varies ATK still passes with the HP conjunct deleted.
+  it('applies a5 at the auto-filled friend seat while a8 rides the pinned captain (8x5)', () => {
+    const records = [
+      ...createVsBranchModeCoverageRecords(),
+      // Fails the ATK floor, passes HP. Higher id than 9100, so it wins the seat the moment the
+      // ATK conjunct stops being checked.
+      createVsBranchModeLeaderCloneRecord(9110, { captainAtkBoost: 4.25 }),
+      // Fails the HP floor, passes ATK, and is the newest leader in the fixture - so it takes the
+      // friend seat whenever the gate is off entirely, and whenever only HP stops being checked.
+      createVsBranchModeLeaderCloneRecord(9111, { captainHpBoost: 1.2 }),
+    ];
+    const run = (mode: 'both' | 'character1', gated: boolean) =>
+      runAutoTeamBuildSearch(
+        records,
+        createInput(VS_BRANCH_MODE_TYPES, VS_BRANCH_MODE_CLASSES, {
+          // The pinned captain is itself out of range. That is the point: it proves the manual
+          // pool skips the gate, in the same run that proves the auto pool does not.
+          manualSlots: createVsBranchModeCaptainOnlyManualSlots(9111, mode, 9100),
+          ...(gated ? { leaderBoostRanges: LEADER_GATE } : {}),
+        } as never),
+      );
+
+    const result = run('both', true);
+    const rangeControl = run('both', false);
+    const branchControl = run('character1', true);
+
+    expect(result).not.toBeNull();
+    expect(rangeControl).not.toBeNull();
+    expect(branchControl).not.toBeNull();
+    expect(result!.relaxation.usedFallback).toBe(false);
+    expect(rangeControl!.relaxation.usedFallback).toBe(false);
+    expect(branchControl!.relaxation.usedFallback).toBe(false);
+
+    // Axis 8 reached the search from a ONE-seat pin, and from the manual slot rather than from
+    // `resolveAutomaticCaptainBranchMode` - which for this captain picks 'character1', as the
+    // friend seat below shows.
+    expect(result!.slots[0]!.captainBranchSelection).toMatchObject({
+      characterId: 9111,
+      mode: 'both',
+      source: 'manual',
+    });
+    expect(result!.slots[1]!.captainBranchSelection?.source).toBe('auto');
+
+    // Invariant 1 for axis 5, at the only seat that can carry it: the auto-filled friend captain
+    // cleared BOTH conjuncts, and is the one leader in the fixture that does.
+    expect(result!.slots[1]!.character.id).toBe(9100);
+    expect(result!.slots[1]!.character.captainAtkBoost).toBeGreaterThanOrEqual(5);
+    expect(result!.slots[1]!.character.captainHpBoost).toBeGreaterThanOrEqual(1.3);
+    // ...while the pinned captain sat down out of range, which is the carve-out this shape exists
+    // for rather than a defect.
+    expect(result!.slots[0]!.character.id).toBe(9111);
+    expect(result!.slots[0]!.character.captainHpBoost).toBe(1.2);
+
+    // Partner control: the same records and the same pin with no range at all. The friend seat
+    // takes the newest leader instead, and it is out of range - so the clause above is falsifiable.
+    expect(rangeControl!.slots[1]!.character.id).toBe(9111);
+    expect(rangeControl!.slots[1]!.character.captainHpBoost).toBe(1.2);
+
+    // Invariant 1 for axis 8, on the same team.
+    expectBothBranchSubsOnly(result!);
+    expectBranchControlAdmitsSingleBranchSubs(branchControl!);
+  });
+
+  // 8x11 - the leader gate and the sub gate at once. Axis 11 is SUB SLOTS ONLY: this fixture
+  // seats the same character as Captain and Friend Captain, which is legal, so a predicate over
+  // all six slots would assert a bug.
+  it('holds a11 on the subs while a8 requires both branches (8x11)', () => {
+    const records = [
+      ...createVsBranchModeCoverageRecords(),
+      // Twins, colliding on 'monkey d. luffy'. They are covered by BOTH branches - [INT] for
+      // branch 1, Driven for branch 2 - so 'both' cannot exclude them for the wrong reason, and
+      // they carry the HIGHEST ids in the fixture because sub ranking ends in
+      // `compareCandidatesByNewestId`: twins at the tail are never both selected even with the
+      // axis off, so control and treatment would return the identical team.
+      createVsBranchModeSubRecord(9498, 'INT', 'Driven', 'Shooter'),
+      createVsBranchModeSubRecord(9499, 'INT', 'Driven', 'Shooter'),
+    ].map((record) =>
+      record.id === 9498 || record.id === 9499
+        ? {
+            ...record,
+            name: `Monkey D. Luffy - ${record.id === 9498 ? 'Gear Third' : 'Gear Fourth'}`,
+          }
+        : record,
+    );
+    const run = (mode: 'both' | 'character1', unique: boolean) =>
+      runAutoTeamBuildSearch(
+        records,
+        createInput(VS_BRANCH_MODE_TYPES, VS_BRANCH_MODE_CLASSES, {
+          manualSlots: createVsBranchModeManualSlots(9100, mode),
+          lockedCharacterIds: [9100],
+          captainCharacterId: 9100,
+          friendCaptainCharacterId: 9100,
+          ...(unique ? { requireUniqueBaseCharacterNames: true } : {}),
+        } as never),
+      );
+    const distinctSubBaseNames = (result: AutoBuildResult) =>
+      new Set(
+        result.slots
+          .filter((slot) => slot.role === 'sub')
+          .map((slot) => resolveBaseNameKeyForTest(slot.character.name)),
+      ).size;
+
+    const result = run('both', true);
+    const uniqueControl = run('both', false);
+    const branchControl = run('character1', true);
+
+    expect(result).not.toBeNull();
+    expect(uniqueControl).not.toBeNull();
+    expect(branchControl).not.toBeNull();
+    expect(result!.relaxation.usedFallback).toBe(false);
+    expect(uniqueControl!.relaxation.usedFallback).toBe(false);
+    expect(branchControl!.relaxation.usedFallback).toBe(false);
+
+    expect(result!.slots[0]!.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+    expect(result!.slots[1]!.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+
+    // Invariant 1 for axis 11: four distinct base names across the four sub slots, and the
+    // ranking really did reach the twins - one of them is on the team.
+    expect(distinctSubBaseNames(result!)).toBe(4);
+    expect(resolveSubIds(result!)).toEqual(expect.arrayContaining([9499]));
+
+    // Partner control: same records, same mode, flag off. Both twins land and the count drops.
+    expect(resolveSubIds(uniqueControl!)).toEqual(expect.arrayContaining([9498, 9499]));
+    expect(distinctSubBaseNames(uniqueControl!)).toBe(3);
+
+    // Invariant 1 for axis 8, with the twins in the pool.
+    expectBothBranchSubsOnly(result!);
+    expectBranchControlAdmitsSingleBranchSubs(branchControl!);
+  });
+
+  // 8x16 - the branch mode gates the seat the friend auto-fill widened.
+  //
+  // The roster leader has to be a VS captain: the mode is read per leader SEAT, and a roster
+  // record whose captain ability has no branches has nothing for a mode to attach to. Measured
+  // 2026-09-07 with a plain [INT] roster leader: it never took the seat at all, because its own
+  // [INT] coverage scope then intersects the VS captain's and leaves only two admissible subs.
+  //
+  // What makes this row more than a re-run of the axis-16 block is 9199. It is FIRST in roster
+  // order, and `comparePreferredLeaderIdOrder` (auto-team-builder.utils.ts:2323) prefers roster
+  // order over newest-id, so it is the record the widened seat reaches first. It is covered by branch 1 only, and under 'both' it is
+  // rejected while 9200 is seated - under 'character1', on the identical fixture, 9199 takes the
+  // seat. The branch mode, not the roster, is what excluded it.
+  it('gates the a16-widened friend seat by the a8 branch mode (8x16)', () => {
+    const boxIds = new Set([9100, 9101, 9102, 9103, 9104, 9105, 9106, 9107]);
+    const roster = [
+      createVsBranchModeLeaderCloneRecord(9199, {
+        type: 'INT',
+        primaryClass: 'Shooter',
+        secondaryClass: 'Powerhouse',
+      }),
+      createVsBranchModeLeaderCloneRecord(9200),
+    ];
+    const run = (mode: 'both' | 'character1', widened: boolean) =>
+      runAutoTeamBuildSearch(
+        createVsBranchModeCoverageRecords(),
+        createInput(VS_BRANCH_MODE_TYPES, VS_BRANCH_MODE_CLASSES, {
+          // 9100 is the only leader-eligible record in the box, so this pin cannot move the
+          // captain seat - it is here to carry the branch mode and to leave the friend seat
+          // auto-filling. Axis 19's own rows are where a pin is proven to bind.
+          manualSlots: createVsBranchModeCaptainOnlyManualSlots(9100, mode),
+          allowAnyFriendCaptainAutoFill: widened,
+        } as never),
+        // The roster is passed in BOTH runs. Passing it only when the flag is on would make the
+        // control differ in two things.
+        { friendCaptainRecords: roster },
+      );
+
+    const result = run('both', true);
+    const widenControl = run('both', false);
+    const branchControl = run('character1', true);
+
+    expect(result).not.toBeNull();
+    expect(widenControl).not.toBeNull();
+    expect(branchControl).not.toBeNull();
+    expect(result!.relaxation.usedFallback).toBe(false);
+    expect(widenControl!.relaxation.usedFallback).toBe(false);
+    expect(branchControl!.relaxation.usedFallback).toBe(false);
+
+    expect(result!.slots[0]!.captainBranchSelection).toMatchObject({
+      mode: 'both',
+      source: 'manual',
+    });
+
+    // Axis 16 widened the friend seat, and only the friend seat.
+    expect(result!.slots[1]!.role).toBe('friendCaptain');
+    expect(result!.slots[1]!.character.id).toBe(9200);
+    expect(
+      result!.slots
+        .filter((_, index) => index !== 1)
+        .every((slot) => boxIds.has(slot.character.id)),
+    ).toBe(true);
+    // Partner control: identical roster, flag off, nothing widens.
+    expect(widenControl!.slots.every((slot) => boxIds.has(slot.character.id))).toBe(true);
+
+    // Invariant 1 for axis 8 at the WIDENED seat: 9199 is first in roster order and is covered by
+    // branch 1 only, so 'both' has to refuse it...
+    expect(result!.slots[1]!.character.id).not.toBe(9199);
+    // ...and the branch control proves 9199 was reachable and was refused for that reason alone.
+    expect(branchControl!.slots[1]!.character.id).toBe(9199);
+
+    // Invariant 1 for axis 8 at the sub slots, on the same team.
+    expectBothBranchSubsOnly(result!);
+    expectBranchControlAdmitsSingleBranchSubs(branchControl!);
+  });
+
+  // 8x12 and 8x13 - the branch mode decides whether the ability carrier is reachable at all.
+  //
+  // Both hard axes are satisfied from ONE record, 9090, which is covered by both branches and
+  // carries the lowest id in the fixture. The partner control is the identical fixture with the
+  // requirement removed: the ranking does not reach 9090 on its own, so its presence is the
+  // requirement's doing rather than the pool's.
+  //
+  // 9140 and 9121 are not filler for its own sake. Without a Cerebral and a Powerhouse record
+  // that both branches cover, the returned team stops carrying every selected class and the
+  // search reports `droppedClasses: ['Cerebral']` - measured, and it would put a relaxation
+  // between the treatment and its controls.
+  for (const hard of HARD) {
+    it(`satisfies ${hard.id} from a both-branch carrier under a8 (8x${hard.id.slice(1)})`, () => {
+      const records = [
+        ...createVsBranchModeCoverageRecords(),
+        createVsBranchModeAbilityCarrierRecord(9090),
+        createVsBranchModeSubRecord(9140, 'INT', 'Cerebral', 'Powerhouse'),
+        createVsBranchModeSubRecord(9121, 'STR', 'Slasher', 'Shooter'),
+        // Branch 1 only, and ranked ahead of every both-branch record except 9140. Without them
+        // this row's team is identical under 'both' and under 'either', and the mutation that
+        // drops the 'both' guard on the VS alternative-branch merge survives - measured.
+        createVsBranchModeSubRecord(9130, 'INT', 'Shooter', 'Powerhouse'),
+        createVsBranchModeSubRecord(9131, 'INT', 'Shooter', 'Powerhouse'),
+      ];
+      const run = (mode: 'both' | 'character1', required: boolean) =>
+        runAutoTeamBuildSearch(
+          records,
+          createInput(VS_BRANCH_MODE_TYPES, VS_BRANCH_MODE_CLASSES, {
+            manualSlots: createVsBranchModeManualSlots(9100, mode),
+            lockedCharacterIds: [9100],
+            captainCharacterId: 9100,
+            friendCaptainCharacterId: 9100,
+            ...(required ? hard.overrides : {}),
+          } as never),
+        );
+
+      const result = run('both', true);
+      const requirementControl = run('both', false);
+      const branchControl = run('character1', true);
+
+      expect(result).not.toBeNull();
+      expect(requirementControl).not.toBeNull();
+      expect(branchControl).not.toBeNull();
+      expect(result!.relaxation.usedFallback).toBe(false);
+      expect(requirementControl!.relaxation.usedFallback).toBe(false);
+      expect(branchControl!.relaxation.usedFallback).toBe(false);
+
+      expect(result!.slots[0]!.captainBranchSelection).toMatchObject({
+        mode: 'both',
+        source: 'manual',
+      });
+
+      // Invariant 1 for the hard axis: it was never relaxed - it has no relaxation field - so the
+      // returned team still satisfies it, out of a carrier both branches cover.
+      expect({ [hard.id]: hard.stillSatisfied(result!) }).toEqual({ [hard.id]: true });
+      expect(resolveSubIds(result!)).toEqual(expect.arrayContaining([9090]));
+      // Partner control: same records, same mode, requirement removed. The carrier drops out.
+      expect(resolveSubIds(requirementControl!)).toEqual(expect.not.arrayContaining([9090]));
+
+      // Invariant 1 for axis 8, on the team the requirement shaped.
+      expectBothBranchSubsOnly(result!, [9130, 9131]);
+      expectBranchControlAdmitsSingleBranchSubs(branchControl!, [9130, 9131]);
+      // The requirement is still satisfied when the mode admits more - the branch control is a
+      // control for axis 8, not a licence to drop the hard axis.
+      expect({ [hard.id]: hard.stillSatisfied(branchControl!) }).toEqual({ [hard.id]: true });
+    });
+  }
+});
+
 /**
  * A friend-captain roster that shares no id with the box pool.
  *
@@ -2503,7 +3224,6 @@ function resolveBaseNameKeyForTest(name: string): string {
   return name.split(' - ', 1)[0]!.trim().toLowerCase();
 }
 
-
 interface Tier2RecordOptions {
   /** Subs the captain cannot cover, so axis 7 can be violated (see the comment below). */
   uncoveredSubs?: boolean;
@@ -2529,10 +3249,7 @@ function createTier2Records(options: Tier2RecordOptions = {}): CharacterDetailRe
     leaderBoostSpread: withLeaderBoostSpread = false,
     manualPinSub: withManualPinSub = false,
   } = options;
-  const leader = (
-    id: number,
-    boosts: { atk?: number; hp?: number } = {},
-  ): CharacterDetailRecord =>
+  const leader = (id: number, boosts: { atk?: number; hp?: number } = {}): CharacterDetailRecord =>
     createCharacterRecord({
       id,
       type: 'DEX',

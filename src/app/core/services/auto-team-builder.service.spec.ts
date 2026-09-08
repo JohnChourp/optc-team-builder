@@ -634,6 +634,449 @@ describe('Auto team builder', () => {
     expect(satisfiableBySub).not.toBeNull();
     expect(satisfiableBySub?.slots.some((slot) => slot.character.id === 4556)).toBe(true);
   });
+
+  // ---- Lane D matrix, Tier 3 run 5: the service-only pool axes 15 and 20 ----
+  //
+  // Axes 15 (`candidateCharacterIds` / `favoritesOnly` / `favoriteCharacterIds`) and 20
+  // (`excludedCharacterIds`) are read ZERO times in `auto-team-builder.engine.ts` and
+  // `auto-team-builder.utils.ts`. They exist only as arguments to
+  // `OptcRepositoryService.getAutoBuilderCandidates` (auto-team-builder.service.ts:465-480 -
+  // `allowedCharacterIds` at :470, `excludedCharacterIds` at :472 and again at :478), so
+  // the ONLY thing that enforces them is the repository query itself. That is why every row
+  // below uses a query-honouring repository mock: a `vi.fn().mockResolvedValue(records)` hands
+  // the search the full pool no matter what the query said, and a case built on one passes
+  // whether or not the service forwards the axis. See the ledger's "blocker under the
+  // pool-shaping gaps" in audits/auto-team-builder/matrix-coverage.md.
+  //
+  // Both pool axes narrow, so every row runs the joint case plus TWO controls on the same
+  // records: the partner axis alone, and the pool axis alone. A joint assertion is evidence
+  // only if both controls contradict it.
+  const POOL_NARROWERS: Array<{
+    axis: 'a15' | 'a20';
+    label: string;
+    /** Removes exactly `characterId` from the pool the repository will serve. */
+    dropping: (characterId: number, allIds: number[]) => Record<string, unknown>;
+  }> = [
+    {
+      axis: 'a15',
+      label: 'favorites box scope',
+      dropping: (characterId, allIds) => ({
+        favoritesOnly: true,
+        favoriteCharacterIds: allIds.filter((id) => id !== characterId),
+      }),
+    },
+    {
+      axis: 'a20',
+      label: 'exclusions',
+      dropping: (characterId) => ({ excludedCharacterIds: [characterId] }),
+    },
+  ];
+
+  // ---- pairs 5x15 and 5x20 ----
+  //
+  // Axis 5 has a SECOND home in the service that the engine spec's run-4 rows never touch:
+  // `characterMatchesLeaderBoostRanges` (auto-team-builder.service.ts:2361-2369) gates
+  // `resolvePreferredLeaderAutoFillCharacterIds` (called at :2309). It is an `ATK && HP` conjunction, so
+  // per the run-4 finding the fixture splits on EACH conjunct separately - 9510 clears ATK and
+  // fails HP, 9500 clears HP and fails ATK - and neither may be reachable once 9520 is gone.
+  for (const narrower of POOL_NARROWERS) {
+    it(`5x${narrower.axis.slice(1)} - a leader boost range plus ${narrower.label} leaves no eligible captain`, async () => {
+      const records = createLeaderBoostSpreadPoolRecords();
+      const allIds = records.map((record) => record.id);
+
+      // Fixture guard: the gate is a conjunction, so the pool must contain a record that fails
+      // ONLY the ATK term and a record that fails ONLY the HP term. Without both, one term
+      // could be deleted from the production gate without failing this row.
+      expect(
+        records
+          .filter((record) => record.detail.captainAbility)
+          .map((record) => [record.id, record.captainAtkBoost, record.captainHpBoost]),
+      ).toEqual([
+        [9520, 5.5, 1.5],
+        [9510, 5.5, 1.2],
+        [9500, 4, 1.5],
+      ]);
+
+      const joint = createScopedPoolRepositoryMock(records);
+      const jointResult = await new AutoTeamBuilderService(joint as never).buildTeam(
+        [],
+        ['DEX'],
+        {
+          leaderBoostRanges: POOL_LEADER_BOOST_GATE,
+          ...narrower.dropping(9520, allIds),
+        },
+      );
+
+      // Invariant 2: the only leader that clears both terms was taken out of the pool, so the
+      // honest answer is null. A team here would mean the pool axis never reached the query.
+      expect(jointResult).toBeNull();
+      // ...and the null came from the search, not from a service early-out on an empty scope.
+      expect(joint.servedPoolIds).toEqual([allIds.filter((id) => id !== 9520)]);
+
+      const boostOnly = createScopedPoolRepositoryMock(records);
+      const boostOnlyResult = await new AutoTeamBuilderService(boostOnly as never).buildTeam(
+        [],
+        ['DEX'],
+        { leaderBoostRanges: POOL_LEADER_BOOST_GATE },
+      );
+
+      // Control 1 - axis 5 alone builds, on 9520, the one leader inside the range.
+      expectCompleteAutoTeam(boostOnlyResult);
+      expect(boostOnlyResult.slots[0]?.character.id).toBe(9520);
+      expect(boostOnlyResult.slots[1]?.character.id).toBe(9520);
+
+      const poolOnly = createScopedPoolRepositoryMock(records);
+      const poolOnlyResult = await new AutoTeamBuilderService(poolOnly as never).buildTeam(
+        [],
+        ['DEX'],
+        narrower.dropping(9520, allIds),
+      );
+
+      // Control 2 - the pool axis alone builds, on 9510, which the range would have refused.
+      expectCompleteAutoTeam(poolOnlyResult);
+      expect(poolOnlyResult.slots[0]?.character.id).toBe(9510);
+    });
+  }
+
+  // ---- pairs 11x15 and 11x20 ----
+  //
+  // Axis 11 is vacuous unless names collide: `createCharacterRecord` names every record
+  // `Unit <id>` and the party-conflict keys are name-derived. Three twins, and they carry the
+  // three HIGHEST sub ids, because sub ranking ends in newest-id: twins at the tail are never
+  // both selected even with the axis off, and control and treatment would return the same team.
+  for (const narrower of POOL_NARROWERS) {
+    it(`11x${narrower.axis.slice(1)} - unique base names plus ${narrower.label} pick a sub set neither axis picks alone`, async () => {
+      const records = createDuplicateBaseNamePoolRecords();
+      const allIds = records.map((record) => record.id);
+      const subIdsOf = (result: AutoBuildResult) =>
+        result.slots.filter((slot) => slot.role === 'sub').map((slot) => slot.character.id);
+
+      // Fixture guard: exactly three records share a base name, and they are the newest subs.
+      expect(records.filter((record) => record.name === 'Twin Sub').map((record) => record.id)).toEqual([
+        9712, 9711, 9710,
+      ]);
+
+      const joint = createScopedPoolRepositoryMock(records);
+      const jointResult = await new AutoTeamBuilderService(joint as never).buildTeam([], ['DEX'], {
+        requireUniqueBaseCharacterNames: true,
+        ...narrower.dropping(9712, allIds),
+      });
+
+      expectCompleteAutoTeam(jointResult);
+      // Invariant 1: the newest twin is gone because the pool axis removed it, and only ONE of
+      // the two survivors is seated because axis 11 refused the second. Neither clause on its
+      // own is coverage - the exact set is.
+      expect(subIdsOf(jointResult)).toEqual([9711, 9704, 9703, 9702]);
+
+      const uniqueOnly = createScopedPoolRepositoryMock(records);
+      const uniqueOnlyResult = await new AutoTeamBuilderService(uniqueOnly as never).buildTeam(
+        [],
+        ['DEX'],
+        { requireUniqueBaseCharacterNames: true },
+      );
+
+      // Control 1 - axis 11 alone still seats the newest twin.
+      expectCompleteAutoTeam(uniqueOnlyResult);
+      expect(subIdsOf(uniqueOnlyResult)).toEqual([9712, 9704, 9703, 9702]);
+
+      const poolOnly = createScopedPoolRepositoryMock(records);
+      const poolOnlyResult = await new AutoTeamBuilderService(poolOnly as never).buildTeam(
+        [],
+        ['DEX'],
+        narrower.dropping(9712, allIds),
+      );
+
+      // Control 2 - the pool axis alone seats BOTH remaining twins.
+      expectCompleteAutoTeam(poolOnlyResult);
+      expect(subIdsOf(poolOnlyResult)).toEqual([9711, 9710, 9704, 9703]);
+    });
+  }
+
+  // ---- pairs 12x20 and 13x20 ----
+  //
+  // `remove_enemy_increased_defense` is held by exactly one record in this fixture, 4556, and
+  // run 2 already pinned that it is reachable as a sub. Excluding it makes the requirement
+  // unsatisfiable through two different entry points - the flattened `requiredAbilities` list
+  // and an authoritative `battleRequirements` group - and neither axis is relaxation-eligible,
+  // so the only honest answer is null.
+  for (const requirement of [
+    {
+      axis: 'a12',
+      label: 'a flattened ability requirement',
+      constraints: {
+        requiredAbilities: [createAbilityRequirement('remove_enemy_increased_defense', 5)],
+      },
+    },
+    {
+      axis: 'a13',
+      label: 'a battle requirement group',
+      constraints: {
+        battleRequirements: [
+          createBattleRequirement('defense-down', [
+            createAbilityRequirement('remove_enemy_increased_defense', 5),
+          ]),
+        ],
+      },
+    },
+  ]) {
+    it(`${requirement.axis}x20 - excluding the only holder of ${requirement.label} returns no team`, async () => {
+      const records = createKidCaptainRequirementRecords();
+      const selectedTypes: AutoTeamBuilderType[] = ['DEX', 'STR', 'QCK', 'PSY', 'INT'];
+      const holderIds = records
+        .filter((record) =>
+          record.detail.builderAbilities.some(
+            (ability) => ability.key === 'remove_enemy_increased_defense',
+          ),
+        )
+        .map((record) => record.id);
+
+      // Fixture guard: one holder only. A second holder silently turns this row into a
+      // preference test and the null below would stop being caused by the exclusion.
+      expect(holderIds).toEqual([4556]);
+
+      const joint = createScopedPoolRepositoryMock(records);
+      const jointResult = await new AutoTeamBuilderService(joint as never).buildTeam(
+        [],
+        selectedTypes,
+        { ...requirement.constraints, excludedCharacterIds: [4556] },
+      );
+
+      expect(jointResult).toBeNull();
+      expect(joint.servedPoolIds[0]).not.toContain(4556);
+      expect(joint.servedPoolIds[0]?.length).toBeGreaterThan(5);
+
+      const requirementOnly = createScopedPoolRepositoryMock(records);
+      const requirementOnlyResult = await new AutoTeamBuilderService(
+        requirementOnly as never,
+      ).buildTeam([], selectedTypes, requirement.constraints);
+
+      // Control 1 - the requirement alone is satisfiable, by 4556.
+      expectCompleteAutoTeam(requirementOnlyResult);
+      expect(requirementOnlyResult.slots.some((slot) => slot.character.id === 4556)).toBe(true);
+
+      const exclusionOnly = createScopedPoolRepositoryMock(records);
+      const exclusionOnlyResult = await new AutoTeamBuilderService(
+        exclusionOnly as never,
+      ).buildTeam([], selectedTypes, { excludedCharacterIds: [4556] });
+
+      // Control 2 - the exclusion alone builds a team, without 4556 and without the ability.
+      expectCompleteAutoTeam(exclusionOnlyResult);
+      expect(exclusionOnlyResult.slots.some((slot) => slot.character.id === 4556)).toBe(false);
+    });
+  }
+
+  // ---- pair 16x20 ----
+  //
+  // `allowAnyFriendCaptainAutoFill` makes the service issue a SECOND repository query
+  // (auto-team-builder.service.ts:475-480) for the friend-captain roster. That query carries
+  // `excludedCharacterIds` but deliberately no `allowedCharacterIds`, and it is a code site of
+  // its own: dropping exclusions from the primary query at :472 leaves it untouched and vice
+  // versa. The roster leaders here are [QCK] while the search runs on the default ['DEX'] type
+  // scope, so they are reachable ONLY through that second query - no other axis is moved to
+  // make them roster-only.
+  it('16x20 - excluding the best auto-fill friend captain falls through to the next roster leader', async () => {
+    const records = createFriendCaptainRosterPoolRecords();
+    const joint = createScopedPoolRepositoryMock(records);
+    const jointResult = await new AutoTeamBuilderService(joint as never).buildTeam([], ['DEX'], {
+      allowAnyFriendCaptainAutoFill: true,
+      excludedCharacterIds: [9020],
+    });
+
+    expectCompleteAutoTeam(jointResult);
+    // Invariant 1: the widened friend seat still honours the exclusion, and takes the next
+    // roster leader rather than falling all the way back to the box.
+    expect(jointResult.slots[1]?.role).toBe('friendCaptain');
+    expect(jointResult.slots[1]?.character.id).toBe(9010);
+    expect(jointResult.slots.some((slot) => slot.character.id === 9020)).toBe(false);
+    // The exclusion reaches the roster query, not only the box query.
+    expect(joint.getAutoBuilderCandidates).toHaveBeenNthCalledWith(
+      2,
+      ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+      null,
+      { lockedCharacterIds: [], excludedCharacterIds: [9020] },
+    );
+    expect(joint.servedPoolIds[1]).not.toContain(9020);
+
+    const autoFillOnly = createScopedPoolRepositoryMock(records);
+    const autoFillOnlyResult = await new AutoTeamBuilderService(autoFillOnly as never).buildTeam(
+      [],
+      ['DEX'],
+      { allowAnyFriendCaptainAutoFill: true },
+    );
+
+    // Control 1 - axis 16 alone seats 9020, so the fall-through above is caused by the exclusion.
+    expectCompleteAutoTeam(autoFillOnlyResult);
+    expect(autoFillOnlyResult.slots[1]?.character.id).toBe(9020);
+
+    const exclusionOnly = createScopedPoolRepositoryMock(records);
+    const exclusionOnlyResult = await new AutoTeamBuilderService(exclusionOnly as never).buildTeam(
+      [],
+      ['DEX'],
+      { excludedCharacterIds: [9020] },
+    );
+
+    // Control 2 - the exclusion alone never reaches a roster leader at all: with the flag off
+    // the roster query is never issued and the friend seat is the box captain.
+    expectCompleteAutoTeam(exclusionOnlyResult);
+    expect(exclusionOnlyResult.slots[1]?.character.id).toBe(9600);
+    expect(exclusionOnly.getAutoBuilderCandidates).toHaveBeenCalledTimes(1);
+  });
+
+  // ---- pair 15x16 ----
+  //
+  // The census called 15x16 covered by 'allows a non-favorite auto-filled friend captain while
+  // keeping favorites for other slots'. That case does set both axes, but its favorites list is
+  // the ENTIRE record set (`createSingleTypeRecords()` is exactly [5900, 5890, 5880, 5870,
+  // 5860]) and its repository is a `mockResolvedValueOnce` chain that ignores the query - so
+  // the box scope removes nobody, and its team-level clauses hold whether or not the service
+  // forwards `allowedCharacterIds`. Only its `toHaveBeenNthCalledWith` clause binds axis 15,
+  // and that is an assertion about the call, not about the team. This row is the team-level
+  // version: the box scope genuinely excludes the roster leaders, and the mock honours it.
+  it('15x16 - the widened friend seat leaves the favorites box while every other seat stays inside it', async () => {
+    const records = createFriendCaptainRosterPoolRecords({ nonFavoriteBoxLeader: true });
+    const boxCharacterIds = [9600, 9604, 9603, 9602, 9601];
+
+    // Fixture guard, and the whole reason this row exists. The roster leaders are outside the
+    // favorites scope, so the friend seat cannot be satisfied from inside the box - AND 9700 is
+    // a [DEX] leader the primary query would happily serve, stronger than the box captain, that
+    // the favorites list leaves out. Without 9700 the favorites scope would coincide with what
+    // the ['DEX'] type filter already returns and the axis-15 half would be vacuous at the team
+    // level, which is exactly what the pre-existing case above does.
+    expect(records.map((record) => record.id)).toEqual([
+      9020, 9010, 9700, 9600, 9604, 9603, 9602, 9601,
+    ]);
+    expect(boxCharacterIds).not.toContain(9700);
+    expect(records.find((record) => record.id === 9700)?.captainAtkBoost).toBeGreaterThan(
+      records.find((record) => record.id === 9600)!.captainAtkBoost,
+    );
+
+    const joint = createScopedPoolRepositoryMock(records);
+    const jointResult = await new AutoTeamBuilderService(joint as never).buildTeam([], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: boxCharacterIds,
+      allowAnyFriendCaptainAutoFill: true,
+    });
+
+    expectCompleteAutoTeam(jointResult);
+    expect(jointResult.slots[1]?.role).toBe('friendCaptain');
+    expect(jointResult.slots[1]?.character.id).toBe(9020);
+    expect(boxCharacterIds).not.toContain(9020);
+    // The captain seat stayed on the weaker box leader, because 9700 is outside the box scope.
+    expect(jointResult.slots[0]?.character.id).toBe(9600);
+    // Invariant 1: the widening reached the friend seat and NOTHING else - every other slot is
+    // still inside the box scope.
+    expect(
+      jointResult.slots
+        .filter((slot) => slot.role !== 'friendCaptain')
+        .every((slot) => boxCharacterIds.includes(slot.character.id)),
+    ).toBe(true);
+    // The box scope went to the primary query and was deliberately withheld from the roster one.
+    expect(joint.servedPoolIds).toEqual([boxCharacterIds, records.map((record) => record.id)]);
+
+    const favoritesOnlyRepository = createScopedPoolRepositoryMock(records);
+    const favoritesOnlyResult = await new AutoTeamBuilderService(
+      favoritesOnlyRepository as never,
+    ).buildTeam([], ['DEX'], {
+      favoritesOnly: true,
+      favoriteCharacterIds: boxCharacterIds,
+    });
+
+    // Control 1 - axis 15 alone keeps every seat, the friend seat included, inside the box.
+    expectCompleteAutoTeam(favoritesOnlyResult);
+    expect(
+      favoritesOnlyResult.slots.every((slot) => boxCharacterIds.includes(slot.character.id)),
+    ).toBe(true);
+    expect(favoritesOnlyRepository.getAutoBuilderCandidates).toHaveBeenCalledTimes(1);
+
+    const autoFillOnly = createScopedPoolRepositoryMock(records);
+    const autoFillOnlyResult = await new AutoTeamBuilderService(autoFillOnly as never).buildTeam(
+      [],
+      ['DEX'],
+      { allowAnyFriendCaptainAutoFill: true },
+    );
+
+    // Control 2 - axis 16 alone puts 9700 in the captain seat, so the box scope really is what
+    // holds the captain at 9600 above. This is the clause that fails when the favorites scope
+    // stops being derived at all.
+    expectCompleteAutoTeam(autoFillOnlyResult);
+    expect(autoFillOnlyResult.slots[0]?.character.id).toBe(9700);
+  });
+
+  // ---- pairs 15x18 and 18x20 ----
+  //
+  // Axis 18 resolves AFTER the search, on the finished result
+  // (auto-team-builder.service.ts:551), so it can null the ship and never the team. What makes
+  // it pair with the pool axes anyway is `analyzeShipForResult`
+  // (auto-team-builder-ship.utils.ts:194-196): `matchingSlots` is counted over the team that
+  // was actually built, so a pool axis that changes WHICH characters are seated re-ranks the
+  // ships. The unscoped 8003 outscores both scoped ships on any team, so the axis-18 half is
+  // `excludedShipIds: [8003]` - without it the ranking never reaches the class-scoped pair.
+  for (const narrower of POOL_NARROWERS) {
+    it(`18x${narrower.axis.slice(1)} - ${narrower.label} re-ranks the recommended ship through the team it changes`, async () => {
+      const records = createShipRankingPoolRecords();
+      const ships = createShipRankingShips();
+      const fighterIds = [9890, 9894, 9893, 9892, 9891];
+      const slasherIds = [9810, 9814, 9813, 9812, 9811];
+      const allIds = records.map((record) => record.id);
+      const poolConstraints =
+        narrower.axis === 'a20'
+          ? { excludedCharacterIds: fighterIds }
+          : { favoritesOnly: true, favoriteCharacterIds: slasherIds };
+
+      // Fixture guard: the two halves differ only in class, and the ships are scoped to those
+      // two classes, so `matchingSlots` is the only thing that moves.
+      expect(records.filter((record) => record.primaryClass === 'Fighter').map((r) => r.id)).toEqual(
+        fighterIds,
+      );
+      expect(records.filter((record) => record.primaryClass === 'Slasher').map((r) => r.id)).toEqual(
+        slasherIds,
+      );
+      expect(allIds).toHaveLength(10);
+
+      const joint = createScopedPoolRepositoryMock(records, ships);
+      const jointResult = await new AutoTeamBuilderService(joint as never).buildTeam([], ['DEX'], {
+        ...poolConstraints,
+        excludedShipIds: [8003],
+      });
+
+      expectCompleteAutoTeam(jointResult);
+      expect(jointResult.slots.every((slot) => slasherIds.includes(slot.character.id))).toBe(true);
+      // Invariant 1: the excluded ship is gone, and of the two that remain the recommendation
+      // follows the team the pool axis produced.
+      expect(jointResult.shipSelection?.ship.id).toBe(8002);
+      expect(jointResult.shipSelection?.source).toBe('recommended');
+
+      const shipsOnly = createScopedPoolRepositoryMock(records, ships);
+      const shipsOnlyResult = await new AutoTeamBuilderService(shipsOnly as never).buildTeam(
+        [],
+        ['DEX'],
+        { excludedShipIds: [8003] },
+      );
+
+      // Control 1 - axis 18 alone leaves the Fighter half seated, so the OTHER scoped ship wins.
+      expectCompleteAutoTeam(shipsOnlyResult);
+      expect(shipsOnlyResult.slots.every((slot) => fighterIds.includes(slot.character.id))).toBe(
+        true,
+      );
+      expect(shipsOnlyResult.shipSelection?.ship.id).toBe(8001);
+
+      const poolOnly = createScopedPoolRepositoryMock(records, ships);
+      const poolOnlyResult = await new AutoTeamBuilderService(poolOnly as never).buildTeam(
+        [],
+        ['DEX'],
+        poolConstraints,
+      );
+
+      // Control 2 - the pool axis alone builds the same Slasher team, and the unscoped ship
+      // still outranks both scoped ones. Without the ship exclusion the pair is invisible.
+      expectCompleteAutoTeam(poolOnlyResult);
+      expect(poolOnlyResult.slots.every((slot) => slasherIds.includes(slot.character.id))).toBe(
+        true,
+      );
+      expect(poolOnlyResult.shipSelection?.ship.id).toBe(8003);
+    });
+  }
+
   beforeAll(() => {
     vi.stubGlobal('DOMParser', new JSDOM('').window.DOMParser);
   });
@@ -41230,5 +41673,226 @@ function createLeaderSourceBattleRequirementRecords(): CharacterDetailRecord[] {
         },
       }),
     ),
+  ];
+}
+
+// ---- Lane D run 5 fixtures for the service-only pool axes 15 and 20 ----
+//
+// The repository mock every run-5 row uses. It models the four things
+// `OptcRepositoryService.getAutoBuilderCandidates` actually does to the pool
+// (optc-repository.service.ts:1155-1310): type is OR-matched, class is OR-matched, the allowed
+// scope is intersected (widened by the locked ids), and exclusions win over all of it. It also
+// records the pool it served for each call, so a row can prove a `null` came from the search
+// rather than from a service early-out on an empty scope.
+//
+// The record ORDER matters and is deliberate: the real query returns power-first, and
+// `resolveFriendCaptainCandidatePool` (auto-team-builder.utils.ts:2148-2185) rebuilds roster
+// candidates with an index-derived rank, so a roster leader served late loses the friend seat
+// to the box captain. Every fixture below is written in the order the repository would return.
+function createScopedPoolRepositoryMock(
+  records: CharacterDetailRecord[],
+  ships: ShipRecord[] = [],
+): {
+  getAutoBuilderCandidates: ReturnType<typeof vi.fn>;
+  getShips: ReturnType<typeof vi.fn>;
+  servedPoolIds: number[][];
+} {
+  const servedPoolIds: number[][] = [];
+
+  return {
+    servedPoolIds,
+    getShips: vi.fn().mockResolvedValue(ships),
+    getAutoBuilderCandidates: vi.fn().mockImplementation(async (types, _limit, query) => {
+      const typeValues: string[] = Array.isArray(types) ? types : [];
+
+      if (!typeValues.length) {
+        servedPoolIds.push([]);
+        return [];
+      }
+
+      const typeSet = new Set<string>(typeValues);
+      const classValues: string[] = Array.isArray(query?.selectedClasses)
+        ? query.selectedClasses
+        : [];
+      const classSet = classValues.length ? new Set<string>(classValues) : null;
+      const lockedIds = new Set<number>(query?.lockedCharacterIds ?? []);
+      const allowedValues: number[] = Array.isArray(query?.allowedCharacterIds)
+        ? query.allowedCharacterIds
+        : [];
+      const allowedIds = allowedValues.length
+        ? new Set<number>([...allowedValues, ...lockedIds])
+        : null;
+      const excludedIds = new Set<number>(query?.excludedCharacterIds ?? []);
+      const pool = records.filter((record) => {
+        if (excludedIds.has(record.id)) {
+          return false;
+        }
+
+        if (allowedIds && !allowedIds.has(record.id)) {
+          return false;
+        }
+
+        if (lockedIds.has(record.id)) {
+          return true;
+        }
+
+        return (
+          typeSet.has(record.type) &&
+          (!classSet || record.classes.some((value) => classSet.has(value)))
+        );
+      });
+
+      servedPoolIds.push(pool.map((record) => record.id));
+
+      return pool;
+    }),
+  };
+}
+
+function createPoolAxisSubRecord(id: number, name = `Pool Sub ${id}`): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name,
+    type: 'DEX',
+    primaryClass: 'Fighter',
+    detail: {
+      specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.',
+    },
+  });
+}
+
+function createPoolAxisLeaderRecord(
+  id: number,
+  atkBoost: number,
+  hpBoost: number,
+  overrides: { type?: AutoTeamBuilderType; primaryClass?: string; name?: string } = {},
+): CharacterDetailRecord {
+  return createCharacterRecord({
+    id,
+    name: overrides.name ?? `Pool Leader ${id}`,
+    type: overrides.type ?? 'DEX',
+    primaryClass: overrides.primaryClass ?? 'Fighter',
+    captainAtkBoost: atkBoost,
+    captainHpBoost: hpBoost,
+    captainAverageBoost: (atkBoost + hpBoost) / 2,
+    detail: {
+      captainAbility: `Boosts ATK of all characters by ${atkBoost}x and HP by ${hpBoost}x.`,
+      specialText: 'Changes crew orbs into Matching Orbs and reduces Special Cooldown by 1 turn.',
+    },
+  });
+}
+
+/** The range pairs 5x15 and 5x20 apply. Both terms are active, and both terms bind. */
+const POOL_LEADER_BOOST_GATE = {
+  ATK: { min: 5.2, max: null },
+  HP: { min: 1.4, max: null },
+};
+
+/**
+ * Leaders the boost range splits on EACH conjunct separately: 9520 clears both, 9510 clears
+ * only ATK, 9500 clears only HP. Removing 9520 from the pool therefore leaves nobody, and a
+ * production gate that lost either term would let one of the other two through.
+ */
+function createLeaderBoostSpreadPoolRecords(): CharacterDetailRecord[] {
+  return [
+    createPoolAxisLeaderRecord(9520, 5.5, 1.5),
+    createPoolAxisLeaderRecord(9510, 5.5, 1.2),
+    createPoolAxisLeaderRecord(9500, 4, 1.5),
+    createPoolAxisSubRecord(9504),
+    createPoolAxisSubRecord(9503),
+    createPoolAxisSubRecord(9502),
+    createPoolAxisSubRecord(9501),
+  ];
+}
+
+/**
+ * Three subs sharing a base name, holding the three newest sub ids so the party-conflict rule
+ * has something to refuse. Two survive any single-id pool narrowing, which is what lets the
+ * pair produce a sub set neither axis produces alone.
+ */
+function createDuplicateBaseNamePoolRecords(): CharacterDetailRecord[] {
+  return [
+    createPoolAxisLeaderRecord(9700, 5, 1.3),
+    createPoolAxisSubRecord(9712, 'Twin Sub'),
+    createPoolAxisSubRecord(9711, 'Twin Sub'),
+    createPoolAxisSubRecord(9710, 'Twin Sub'),
+    createPoolAxisSubRecord(9704),
+    createPoolAxisSubRecord(9703),
+    createPoolAxisSubRecord(9702),
+    createPoolAxisSubRecord(9701),
+  ];
+}
+
+/**
+ * Two [QCK] roster leaders ahead of a [DEX] box team. On the default ['DEX'] type scope the
+ * primary query cannot see them, so they are reachable only through the friend-captain query
+ * `allowAnyFriendCaptainAutoFill` triggers - and no other axis has to be moved to keep them
+ * out of the box.
+ */
+function createFriendCaptainRosterPoolRecords(
+  options: { nonFavoriteBoxLeader?: boolean } = {},
+): CharacterDetailRecord[] {
+  return [
+    createPoolAxisLeaderRecord(9020, 6, 1.3, { type: 'QCK', name: 'Roster Friend Captain 9020' }),
+    createPoolAxisLeaderRecord(9010, 5.5, 1.3, { type: 'QCK', name: 'Roster Friend Captain 9010' }),
+    // A [DEX] leader the primary query WOULD serve, stronger than the box captain and left out
+    // of the favorites list. Without it the favorites scope agrees exactly with what the ['DEX']
+    // type filter already returns, so it could be dropped from the query with no visible effect
+    // on the team - measured: that is why the pre-existing 15x16 case survives mutation M2b.
+    ...(options.nonFavoriteBoxLeader
+      ? [createPoolAxisLeaderRecord(9700, 6, 1.3, { name: 'Non-Favorite Box Leader 9700' })]
+      : []),
+    createPoolAxisLeaderRecord(9600, 5.25, 1.3, { name: 'Box Captain 9600' }),
+    createPoolAxisSubRecord(9604),
+    createPoolAxisSubRecord(9603),
+    createPoolAxisSubRecord(9602),
+    createPoolAxisSubRecord(9601),
+  ];
+}
+
+/**
+ * Two class-separated halves of one [DEX] pool. Both leaders boost every character, so class
+ * changes nothing about who is admissible - it changes only which ship's `matchingSlots` the
+ * finished team fills.
+ */
+function createShipRankingPoolRecords(): CharacterDetailRecord[] {
+  const slasherSub = (id: number): CharacterDetailRecord =>
+    createCharacterRecord({
+      id,
+      name: `Ship Slasher Sub ${id}`,
+      type: 'DEX',
+      primaryClass: 'Slasher',
+      detail: {
+        specialText: 'Boosts ATK of Slasher characters by 2.5x for 1 turn.',
+      },
+    });
+
+  return [
+    createPoolAxisLeaderRecord(9890, 5, 1.3, { name: 'Ship Fighter Leader 9890' }),
+    createPoolAxisSubRecord(9894),
+    createPoolAxisSubRecord(9893),
+    createPoolAxisSubRecord(9892),
+    createPoolAxisSubRecord(9891),
+    createPoolAxisLeaderRecord(9810, 5, 1.3, {
+      primaryClass: 'Slasher',
+      name: 'Ship Slasher Leader 9810',
+    }),
+    slasherSub(9814),
+    slasherSub(9813),
+    slasherSub(9812),
+    slasherSub(9811),
+  ];
+}
+
+/**
+ * 8003 is unscoped and outscores both scoped ships on any team (`analyzeShipForResult` adds 18
+ * for carrying no scope and counts every slot as matching), which is exactly why the axis-18
+ * half of the pair has to remove it before the class-scoped pair can be told apart.
+ */
+function createShipRankingShips(): ShipRecord[] {
+  return [
+    createShipRecord(8001, 'Fighter Ship', 'Boosts ATK of Fighter characters by 1.5x.'),
+    createShipRecord(8002, 'Slasher Ship', 'Boosts ATK of Slasher characters by 1.5x.'),
+    createShipRecord(8003, 'Unscoped Ship', 'Boosts ATK by 1.6x.'),
   ];
 }
