@@ -31,6 +31,45 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.5',
+    date: '2026-09-09',
+    userVisible: true,
+    headline: {
+      en: 'Controls that told you the truth, and a crown that finally says why it is missing',
+      el: 'Χειριστήρια που λένε την αλήθεια, και ένα στέμμα που επιτέλους λέει γιατί λείπει',
+    },
+    summaryEn:
+      'On Captain Coverage, a character with no Captain Ability now says so. Roughly one character in every thirteen has none, and on those the crown in the corner of the character card simply was not there - nothing told you whether the character could not lead or the app had gone wrong. The crown is now drawn greyed out, and resting on it says "This character has no Captain Ability, so it cannot lead." On Auto Team Builder, the filter bar no longer accepts a press it is about to throw away: the last release fixed that for the Guided auto build switch, but Favorites only, Favorite ships only and Allow any Friend Captain auto-fill sat right beside it with the same problem, and so did every other control on the screen. All of them now wait for the screen to finish loading, the same way that one switch already did. On a character\'s own screen, fourteen labels are in Greek at last - among them "Cooldown", "Targeting", "Pattern", "Stars", "Notes" and "Supported characters" - and the Reset button there and on the local-edit screen finally reads in Greek too. Finally, exporting a team from Auto Team Builder with the Friend Captain seat left empty no longer writes your Captain into that seat in the saved file.',
+    summaryEl:
+      'Στο Captain Coverage, ένας χαρακτήρας χωρίς Captain Ability το λέει πλέον. Περίπου ένας στους δεκατρείς χαρακτήρες δεν έχει, και σε αυτούς το στέμμα στη γωνία της κάρτας χαρακτήρα απλώς δεν υπήρχε - τίποτα δεν σου έλεγε αν ο χαρακτήρας δεν μπορεί να γίνει leader ή αν κάτι χάλασε στην εφαρμογή. Το στέμμα ζωγραφίζεται τώρα γκριζαρισμένο, και πάνω του γράφει «Αυτός ο χαρακτήρας δεν έχει Captain Ability, οπότε δεν μπορεί να γίνει leader.» Στο Auto Team Builder, η μπάρα φίλτρων δεν δέχεται πια πάτημα που πρόκειται να πετάξει: η προηγούμενη έκδοση το διόρθωσε για τον διακόπτη Guided auto build, αλλά οι Favorites only, Favorite ships only και Allow any Friend Captain auto-fill ήταν ακριβώς δίπλα του με το ίδιο πρόβλημα, όπως και κάθε άλλο χειριστήριο της οθόνης. Όλα τους περιμένουν πλέον να φορτώσει η οθόνη, όπως έκανε ήδη εκείνος ο ένας διακόπτης. Στην οθόνη του κάθε χαρακτήρα, δεκατέσσερις ετικέτες είναι επιτέλους στα ελληνικά - ανάμεσά τους «Cooldown», «Targeting», «Pattern», «Stars», «Notes» και «Supported characters» - και το κουμπί Reset εκεί και στην οθόνη τοπικής επεξεργασίας διαβάζεται πια κι αυτό στα ελληνικά. Τέλος, η εξαγωγή ομάδας από το Auto Team Builder με τη θέση Friend Captain άδεια δεν γράφει πια τον Captain σου σε εκείνη τη θέση μέσα στο αρχείο.',
+    added: [
+      {
+        en: 'The character card on Captain Coverage now shows a greyed-out crown for a character that has no Captain Ability, and resting on it says "This character has no Captain Ability, so it cannot lead." About one character in thirteen is in that state, and until now the corner was simply empty.',
+        el: 'Η κάρτα χαρακτήρα στο Captain Coverage δείχνει πλέον γκριζαρισμένο στέμμα για χαρακτήρα που δεν έχει Captain Ability, και πάνω του γράφει «Αυτός ο χαρακτήρας δεν έχει Captain Ability, οπότε δεν μπορεί να γίνει leader.» Περίπου ένας στους δεκατρείς χαρακτήρες είναι σε αυτή την κατάσταση, και μέχρι τώρα η γωνία ήταν απλώς άδεια.',
+      },
+    ],
+    improved: [
+      {
+        en: 'Fourteen labels on a character\'s own screen are in Greek at last, across the character card and its Support and Super Special sections: "Cooldown", "Targeting", "Pattern", "Stars", "Requirement", "Enhancements", "Notes", "Supported characters", the three Notes labels for Captain, Sailor and Special, and the Reset button at the top.',
+        el: 'Δεκατέσσερις ετικέτες στην οθόνη του κάθε χαρακτήρα είναι επιτέλους στα ελληνικά, στην κάρτα χαρακτήρα και στις ενότητες Support και Super Special: «Cooldown», «Targeting», «Pattern», «Stars», «Requirement», «Enhancements», «Notes», «Supported characters», οι τρεις ετικέτες Notes για Captain, Sailor και Special, και το κουμπί Reset στην κορυφή.',
+      },
+      {
+        en: 'The Reset button on the local-edit screen for a character now reads in Greek too, so it matches the other four buttons in the same row instead of being the only English one.',
+        el: 'Το κουμπί Reset στην οθόνη τοπικής επεξεργασίας ενός χαρακτήρα διαβάζεται πλέον κι αυτό στα ελληνικά, ώστε να ταιριάζει με τα άλλα τέσσερα κουμπιά της ίδιας σειράς αντί να είναι το μόνο αγγλικό.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'Every control in the filter bar on Auto Team Builder now waits for the screen to finish loading before it can be pressed. Favorites only, Favorite ships only and Allow any Friend Captain auto-fill sat next to the Guided auto build switch with exactly the problem that switch had fixed - a press during loading was accepted and then quietly thrown away - and so did every other control on the screen.',
+        el: 'Κάθε χειριστήριο στη μπάρα φίλτρων του Auto Team Builder περιμένει πλέον να φορτώσει η οθόνη πριν μπορέσει να πατηθεί. Τα Favorites only, Favorite ships only και Allow any Friend Captain auto-fill ήταν δίπλα στον διακόπτη Guided auto build με ακριβώς το πρόβλημα που εκείνος είχε ήδη διορθώσει - ένα πάτημα κατά τη φόρτωση γινόταν δεκτό και μετά πεταγόταν σιωπηλά - όπως και κάθε άλλο χειριστήριο της οθόνης.',
+      },
+      {
+        en: 'Exporting a team from Auto Team Builder with the Friend Captain seat left empty no longer records your Captain in that seat. The downloaded file said the same character held both leader seats while the team slots in it correctly showed the seat empty.',
+        el: 'Η εξαγωγή ομάδας από το Auto Team Builder με τη θέση Friend Captain άδεια δεν καταγράφει πια τον Captain σου σε εκείνη τη θέση. Το αρχείο που κατέβαινε έλεγε ότι ο ίδιος χαρακτήρας κρατούσε και τις δύο θέσεις leader, ενώ οι θέσεις της ομάδας μέσα του έδειχναν σωστά τη θέση άδεια.',
+      },
+    ],
+  },
+  {
     version: '0.4.4',
     date: '2026-09-08',
     userVisible: true,
