@@ -116,7 +116,7 @@
     },
     "title": "Character αποτελέσματα",
     "titleWithCount": "{{count}} χαρακτήρες που ταιριάζουν",
-    "titleWithCoverage": "{{boosted}} ενισχύονται από {{count}} που ταιριάζουν"
+    "titleWithCoverage": "{{boosted}} ενισχύονται από τον Captain σου, από {{count}} που ταιριάζουν"
   },
   "search": {
     "placeholder": "Αναζήτηση στα character results..."

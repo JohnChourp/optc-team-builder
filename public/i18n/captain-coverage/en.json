@@ -116,7 +116,7 @@
     },
     "title": "Character results",
     "titleWithCount": "{{count}} matching characters",
-    "titleWithCoverage": "{{boosted}} boosted of {{count}} matching"
+    "titleWithCoverage": "{{boosted}} boosted by your Captain, of {{count}} matching"
   },
   "search": {
     "placeholder": "Search character results..."

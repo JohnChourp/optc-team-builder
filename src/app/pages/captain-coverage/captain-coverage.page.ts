@@ -359,24 +359,12 @@ export class CaptainCoveragePage implements OnInit {
   public readonly characterBoxes;
   public readonly selectedCharacterBoxId = signal<string | null>(null);
 
-  public readonly selectedCaptain = computed(() => this.selectedTeamSlots()[0] ?? null);
   public readonly selectedCharacterBox = computed<CharacterBox | null>(() =>
     this.resolveCharacterBoxById(this.selectedCharacterBoxId()),
   );
   public readonly selectedCharacterBoxIds = computed(
     () => this.selectedCharacterBox()?.characterIds ?? [],
   );
-  public readonly selectedCharacterBoxFavoriteCount = computed(() => {
-    const selectedBox = this.selectedCharacterBox();
-
-    if (!selectedBox) {
-      return 0;
-    }
-
-    const favoriteIdSet = new Set(this.favoriteIds());
-
-    return selectedBox.characterIds.filter((characterId) => favoriteIdSet.has(characterId)).length;
-  });
   public readonly availableTypes = computed(() =>
     this.normalizeOptions(this.summary()?.availableTypes ?? []),
   );
@@ -432,12 +420,6 @@ export class CaptainCoveragePage implements OnInit {
    * so an array scan here would turn one render into millions of comparisons.
    */
   private readonly allowedCaptainIdSet = computed(() => new Set(this.allowedCaptainIds()));
-  /** True while at least one sub slot (index 2..5) is still empty. */
-  public readonly hasFreeSubSlot = computed(() =>
-    this.selectedTeamSlots()
-      .slice(2)
-      .some((slot) => !slot),
-  );
   /**
    * The two leader seats, as the crown alert offers them.
    *
@@ -572,9 +554,6 @@ export class CaptainCoveragePage implements OnInit {
   public readonly captainTierBreakdown = computed(() =>
     getCaptainCoverageTiers(this.selectedCaptainDetail()).map(buildCaptainCoverageTierView),
   );
-  public readonly hasTierCoverageData = computed<boolean>(
-    () => this.availableTierNumbers().length > 0,
-  );
   /**
    * Tier number of the chip whose help popover is open, or null. Only one is
    * ever open: the popover is absolutely positioned above its chip, so two of
@@ -630,9 +609,6 @@ export class CaptainCoveragePage implements OnInit {
   public readonly showCaptainBoosts = computed(
     () => this.captainCoverageFilterState().requiredTiers.length > 0,
   );
-  public readonly characterBoxSupportLabel = computed(() => {
-    return this.buildCharacterBoxSupportText(this.selectedCharacterBox());
-  });
   public readonly characterBoxFilterOptions = computed<CharacterFilterOption[]>(() => [
     {
       value: '',
@@ -1102,30 +1078,6 @@ export class CaptainCoveragePage implements OnInit {
     this.persistTeamDraft();
   }
 
-  public async toggleFavoritesOnly(): Promise<void> {
-    await this.applyPendingFilterChange('favorites', () => {
-      const nextValue = !this.favoritesOnly();
-
-      this.favoritesOnly.set(nextValue);
-
-      if (nextValue) {
-        this.hideFavorites.set(false);
-      }
-    });
-  }
-
-  public async toggleHideFavorites(): Promise<void> {
-    await this.applyPendingFilterChange('favorites', () => {
-      const nextValue = !this.hideFavorites();
-
-      this.hideFavorites.set(nextValue);
-
-      if (nextValue) {
-        this.favoritesOnly.set(false);
-      }
-    });
-  }
-
   /**
    * Builds card view models for the given ids, in the given order.
    *
@@ -1264,6 +1216,17 @@ export class CaptainCoveragePage implements OnInit {
    *
    * `reason` drives the loader. When it is null the pass runs quietly, which is
    * what the initial load and the tab-entry refresh want.
+   *
+   * The loader belongs to the NEWEST pass, not to the pass that raised it. It
+   * used to be cleared behind the same `if (reason)` that raised it, and 16 of
+   * the 17 call sites pass null: press a filter (loader on), then let any quiet
+   * pass supersede it - `ionViewWillEnter`, or a favorite toggled on another
+   * screen - and the loud pass returned at the generation check without
+   * clearing, while the quiet one never entered the branch that clears. The
+   * spinner then replaced the result list for the rest of the visit. So the
+   * clear is unconditional and in a `finally`: whichever pass is still current
+   * when the work ends owns the loader, and a throw out of `run()` puts the
+   * list back instead of stranding the reader on a spinner.
    */
   private async runResultPass(reason: CaptainCoveragePendingReason | null): Promise<void> {
     this.resultPassGeneration += 1;
@@ -1277,24 +1240,32 @@ export class CaptainCoveragePage implements OnInit {
       // it the reader sees the old list until the new one replaces it, which is
       // indistinguishable from a page that ignored the press.
       await this.yieldToPaint();
+
+      // A newer pass started while we yielded; it owns the loader now.
+      if (generation !== this.resultPassGeneration) {
+        return;
+      }
+
       this.resultsPendingProgress.set(0.35);
     }
 
-    const outcome = await this.filterRunner.run(
-      this.resultPassDataset(),
-      this.buildResultPassParams(),
-    );
+    try {
+      const outcome = await this.filterRunner.run(
+        this.resultPassDataset(),
+        this.buildResultPassParams(),
+      );
 
-    // A newer press has already started; its answer is the current one.
-    if (generation !== this.resultPassGeneration) {
-      return;
-    }
+      // A newer press has already started; its answer is the current one.
+      if (generation !== this.resultPassGeneration) {
+        return;
+      }
 
-    this.resultPassOutcome.set(outcome);
-
-    if (reason) {
-      this.resultsPendingProgress.set(1);
-      this.resultsPendingReason.set(null);
+      this.resultPassOutcome.set(outcome);
+    } finally {
+      if (generation === this.resultPassGeneration) {
+        this.resultsPendingProgress.set(1);
+        this.resultsPendingReason.set(null);
+      }
     }
   }
 
@@ -1646,42 +1617,6 @@ export class CaptainCoveragePage implements OnInit {
     return this.teamBudgetCost() - currentSlotCost + character.cost <= maxTotalCost;
   }
 
-  private matchesSearchTerm(
-    character: CharacterListItem,
-    coverage: CaptainCoverageResult | null,
-    searchTerm: string,
-  ): boolean {
-    return [
-      character.id,
-      character.name,
-      character.type,
-      character.primaryClass,
-      character.secondaryClass ?? '',
-      ...character.classes,
-      ...(coverage?.chips.map((chip) => chip.label) ?? []),
-    ]
-      .join(' ')
-      .toLowerCase()
-      .includes(searchTerm);
-  }
-
-  private matchesSuperPresenceFilters(
-    characterDetail: CharacterDetailRecord | null | undefined,
-  ): boolean {
-    if (this.requireSuperTandemPresence() && !hasCaptainCoverageSuperTandemData(characterDetail)) {
-      return false;
-    }
-
-    if (
-      this.requireSuperTypesClassesPresence() &&
-      !hasCaptainCoverageSuperTypesClassesData(characterDetail)
-    ) {
-      return false;
-    }
-
-    return true;
-  }
-
   /** Single write path, so the legacy flat mirror can never drift. */
   private applyCharacterTagSetSelection(selection: CharacterTagSetSelection): void {
     this.characterTagSetSelection.set(selection);
@@ -1703,21 +1638,6 @@ export class CaptainCoveragePage implements OnInit {
     this.applyCharacterTagSetSelection(
       expandCharacterTagsToSets(this.selectedCharacterTags(), false),
     );
-  }
-
-  private matchesCoverageCostRange(
-    character: CharacterListItem,
-    range: CharacterFilterCostRange,
-  ): boolean {
-    if (range.min !== null && character.cost < range.min) {
-      return false;
-    }
-
-    if (range.max !== null && character.cost > range.max) {
-      return false;
-    }
-
-    return true;
   }
 
   private hasPartyConflict(

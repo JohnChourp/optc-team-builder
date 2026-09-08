@@ -56,23 +56,36 @@ export class CaptainCoverageFilterRunnerService {
       return runCaptainCoverageResultPass(dataset, params);
     }
 
+    let requestId: number | null = null;
+
     try {
       if (this.initializedDataset !== dataset) {
         this.post(worker, { type: 'init', dataset });
         this.initializedDataset = dataset;
       }
 
-      const requestId = this.nextRequestId;
+      requestId = this.nextRequestId;
 
       this.nextRequestId += 1;
 
+      const pendingRequestId = requestId;
+
       return await new Promise<CaptainCoverageResultPassOutcome>((resolve) => {
-        this.pending.set(requestId, { resolve, dataset, params });
-        this.post(worker, { type: 'filter', requestId, params });
+        this.pending.set(pendingRequestId, { resolve, dataset, params });
+        this.post(worker, { type: 'filter', requestId: pendingRequestId, params });
       });
     } catch {
       // A clone failure or a dead worker: answer this request in-thread and
       // stop using the worker rather than failing every later press too.
+      //
+      // Drop our own entry first. `abandonWorker` answers everything still
+      // waiting by running the pass in-thread, and this request is already
+      // settled - leaving it in would run the whole catalog a second time for
+      // an answer nobody can receive.
+      if (requestId !== null) {
+        this.pending.delete(requestId);
+      }
+
       this.abandonWorker();
 
       return runCaptainCoverageResultPass(dataset, params);
