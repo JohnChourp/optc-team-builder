@@ -128,13 +128,22 @@ test.describe('cross-browser smoke', () => {
    * The Captain Coverage filter pass runs in a Web Worker, and the unit suite
    * cannot see that: it builds the page class in an environment with no
    * `Worker` at all, so every one of those tests exercises the in-thread
-   * fallback. This is the only place the real worker executes, so it is the
-   * only place that can catch the worker failing to build, failing to receive
-   * its dataset, or answering with nothing.
+   * fallback. This is the only place the real worker executes.
+   *
+   * Be careful what that buys, though. The fallback runs the SAME function the
+   * worker runs, deliberately, so these assertions pass IDENTICALLY whether the
+   * worker ran or the page quietly answered in-thread. This test cannot tell
+   * the difference and never could - the comment here used to claim it was "the
+   * only place that can catch the worker failing to build", which is not true.
+   *
+   * What catches that is `npm run test:worker-bundling`, which asserts the
+   * bundler still emits a chunk per call site. Measured: hoist one worker URL
+   * to a const and `ng build` succeeds with no error and no warning while
+   * emitting one chunk fewer.
    *
    * It asserts a NON-ZERO count rather than merely that the page rendered: a
-   * broken worker whose replies never arrive leaves the heading reading
-   * "0 matching characters", which looks like a rendered page.
+   * pass whose replies never arrive leaves the heading reading "0 matching
+   * characters", which looks like a rendered page.
    */
   test('captain coverage fills its results from the filter worker @post-merge-smoke', async ({
     page,
