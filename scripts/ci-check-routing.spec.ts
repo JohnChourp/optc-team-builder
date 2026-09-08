@@ -240,6 +240,7 @@ describe('ci-check-routing', () => {
       'tag-picker-scoping',
       'whats-new',
       'dead-code',
+      'worker-bundling',
     ]);
   });
 

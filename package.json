@@ -69,6 +69,8 @@
     "whats-new:check": "node ./scripts/check-whats-new.mjs",
     "audit:dead-code": "npx tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false && npx knip --include files,exports,types",
     "dead-code:check": "tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false",
+    "worker-bundling:check": "node ./scripts/check-worker-bundling.mjs",
+    "test:worker-bundling": "vitest run scripts/check-worker-bundling.spec.ts && npm run build && npm run worker-bundling:check",
     "test:dead-code": "npm run dead-code:check",
     "perf:dataset": "node ./scripts/benchmark-dataset.mjs",
     "perf:ability-filters": "node ./scripts/perf-ability-filters.mjs",

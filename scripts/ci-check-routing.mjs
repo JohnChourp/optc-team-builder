@@ -130,6 +130,21 @@ export const SCRIPT_SUITES = {
     label: 'Unused locals and parameters',
     command: 'npm run test:dead-code',
   },
+  /*
+   * Proves the three Web Workers are still EMITTED, which nothing else does.
+   *
+   * Angular's worker transformer requires literally
+   * `new Worker(new URL(<string literal>, import.meta.url))` and leaves any
+   * other expression untouched with no error and no warning. Measured: hoisting
+   * one URL to a const made `ng build` succeed cleanly while dropping the
+   * emitted worker chunks from 3 to 2 - and every service falls back in-thread
+   * silently and permanently when its worker will not construct, so nothing
+   * downstream would have noticed.
+   */
+  'worker-bundling': {
+    label: 'Web Worker bundling tests',
+    command: 'npm run test:worker-bundling',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
