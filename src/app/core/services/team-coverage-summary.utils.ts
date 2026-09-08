@@ -217,43 +217,6 @@ function resolveConditionTypes(types: readonly string[]): AutoTeamBuilderType[] 
   return normalizedTypes.length ? normalizedTypes : [...AUTO_TEAM_BUILDER_TYPES];
 }
 
-function memberSatisfiesCompositionCondition(
-  member: CharacterListItem,
-  requiredTypes: readonly string[],
-  requiredClasses: readonly string[],
-  requiredTags: readonly string[],
-): boolean {
-  const memberTypes = resolveMemberTypes(member);
-  const normalizedRequiredTypes = requiredTypes.length ? resolveConditionTypes(requiredTypes) : [];
-  const typeMatch =
-    normalizedRequiredTypes.length === 0
-      ? false
-      : normalizedRequiredTypes.some((type) => memberTypes.includes(type));
-  const classMatch =
-    requiredClasses.length === 0
-      ? false
-      : requiredClasses.some((characterClass) =>
-          member.classes.some(
-            (memberClass) => memberClass.toLowerCase() === characterClass.toLowerCase(),
-          ),
-        );
-  const detailTags = (member as CharacterListItem & { detail?: { characterTags?: string[] } })
-    .detail?.characterTags;
-  const tagMatch =
-    requiredTags.length === 0
-      ? false
-      : Array.isArray(detailTags)
-        ? requiredTags.some((tag) =>
-            detailTags.some((memberTag) => memberTag.toLowerCase() === tag.toLowerCase()),
-          )
-        : false;
-
-  if (requiredTypes.length + requiredClasses.length + requiredTags.length === 0) {
-    return false;
-  }
-  return typeMatch || classMatch || tagMatch;
-}
-
 function resolveMemberTypes(member: CharacterListItem): AutoTeamBuilderType[] {
   return member.type
     .split(',')

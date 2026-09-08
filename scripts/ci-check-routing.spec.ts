@@ -239,6 +239,7 @@ describe('ci-check-routing', () => {
       'overlay-contrast',
       'tag-picker-scoping',
       'whats-new',
+      'dead-code',
     ]);
   });
 

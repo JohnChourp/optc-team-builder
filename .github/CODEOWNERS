@@ -18,7 +18,6 @@
 /vitest.config.mjs @JohnChourp
 /transloco.config.ts @JohnChourp
 /tsconfig*.json @JohnChourp
-/eslint.config.mjs @JohnChourp
 
 /scripts/ @JohnChourp
 /android/ @JohnChourp

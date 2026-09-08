@@ -4,7 +4,6 @@ import {
   type AbilityTagSetOperator,
 } from '../models/auto-team-builder-ability.models';
 import {
-  type CharacterDetailRecord,
   type CharacterTagSet,
   type CharacterTagSetSelection,
 } from '../models/optc.models';
