@@ -279,6 +279,14 @@ export class AutoTeamBuilderService {
     const enemyMechanics = normalizeEnemyMechanicRequirements(constraints.enemyMechanics ?? []);
     const battleRequirements = normalizeBattleRequirementsWithLegacyFallback({
       battles: constraints.battleRequirements,
+      // Only when a battle is going to be synthesised from the mechanics anyway. The fallback
+      // folds typed requirements into the battle it builds, and passing them unconditionally
+      // would synthesise a battle out of `requiredAbilities` ALONE - moving every flattened
+      // requirement out of `coverage.abilityRequirements.requested` and into a battle group for
+      // every caller that never asked for one. The defect being fixed is narrower: when a
+      // mechanic IS present, `hasBattleRequirementInput` flips and the leader-only filter below
+      // drops the player's own sub requirements, and nothing reports it.
+      requiredAbilities: enemyMechanics.length > 0 ? normalizedRequiredAbilities : [],
       requiredCharacterGroups,
       enemyMechanics,
     });
@@ -567,6 +575,14 @@ export class AutoTeamBuilderService {
     const enemyMechanics = normalizeEnemyMechanicRequirements(rosterInput.enemyMechanics ?? []);
     const battleRequirements = normalizeBattleRequirementsWithLegacyFallback({
       battles: rosterInput.battleRequirements,
+      // Only when a battle is going to be synthesised from the mechanics anyway. The fallback
+      // folds typed requirements into the battle it builds, and passing them unconditionally
+      // would synthesise a battle out of `requiredAbilities` ALONE - moving every flattened
+      // requirement out of `coverage.abilityRequirements.requested` and into a battle group for
+      // every caller that never asked for one. The defect being fixed is narrower: when a
+      // mechanic IS present, `hasBattleRequirementInput` flips and the leader-only filter below
+      // drops the player's own sub requirements, and nothing reports it.
+      requiredAbilities: enemyMechanics.length > 0 ? normalizedRequiredAbilities : [],
       requiredCharacterGroups,
       enemyMechanics,
     });
