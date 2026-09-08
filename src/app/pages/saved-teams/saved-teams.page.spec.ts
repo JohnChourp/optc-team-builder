@@ -731,9 +731,20 @@ describe('SavedTeamsPage', () => {
     });
     expect(String(share.mock.calls[0]?.[0]?.url)).toContain('/tabs/manual-team-builder?teamShare=');
     expect(writeText).not.toHaveBeenCalled();
+    /*
+     * 'Shared', not 'Copied'. This branch deliberately does not touch the
+     * clipboard - `writeText` is asserted not to have been called two lines up
+     * - and it reused `share.successTitle` anyway, so the banner read "Copied"
+     * over "Opened native share for ...". Web Share is present on every iOS and
+     * Safari build, so that was their default path, not an edge case. This
+     * assertion previously said 'Copied' and locked the defect in.
+     *
+     * Mutation check: point the native branch back at `share.successTitle` and
+     * this fails.
+     */
     expect(page.actionFeedback()).toMatchObject({
       details: ['Opened native share for "Slashers".'],
-      title: 'Copied',
+      title: 'Shared',
       tone: 'success',
     });
   });
@@ -1330,6 +1341,10 @@ function createPage(
 
       if (key === 'share.successTitle') {
         return 'Copied';
+      }
+
+      if (key === 'share.sharedTitle') {
+        return 'Shared';
       }
 
       if (key === 'share.errorTitle') {

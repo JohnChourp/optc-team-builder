@@ -12,6 +12,7 @@ import {
   setIonTextarea,
   setIonToggle,
   waitForAppReady,
+  waitForIonControlEnabled,
 } from './regression-fixtures';
 
 test.describe('high-value regression flows', () => {
@@ -29,10 +30,13 @@ test.describe('high-value regression flows', () => {
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
 
     const guidedToggle = page.getByTestId('guided-auto-build-toggle');
+    // The toggle is disabled until the dataset has loaded and the page reset
+    // that follows it has run. Pressing before that used to be silently undone.
+    await waitForIonControlEnabled(guidedToggle);
     await setIonToggle(guidedToggle, true);
     await expect(guidedToggle).toHaveAttribute('data-guided-enabled', 'true');
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
-    await expect(page.getByTestId('auto-build-submit')).toBeEnabled();
+    await waitForIonControlEnabled(page.getByTestId('auto-build-submit'));
   });
 
   test('guided auto build locks only the next empty slot @guided-auto-build @quarantined:guided-auto-build-toggle', async ({
@@ -53,9 +57,12 @@ test.describe('high-value regression flows', () => {
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
 
     const guidedToggle = page.getByTestId('guided-auto-build-toggle');
+    // The toggle is disabled until the dataset has loaded and the page reset
+    // that follows it has run. Pressing before that used to be silently undone.
+    await waitForIonControlEnabled(guidedToggle);
     await setIonToggle(guidedToggle, true);
     await expect(guidedToggle).toHaveAttribute('data-guided-enabled', 'true');
-    await expect(page.getByTestId('auto-build-submit')).toBeEnabled();
+    await waitForIonControlEnabled(page.getByTestId('auto-build-submit'));
     await page.getByTestId('auto-build-submit').click();
 
     await expect(page.getByText(/Build and lock only the next empty slot: Sub 1/)).toBeVisible({

@@ -3,13 +3,15 @@
   "entries": [
     {
       "tag": "@quarantined:guided-auto-build-toggle",
-      "browsers": ["chromium"],
-      "reason": "Repeated Chromium guided Auto Team Builder failures around the Ionic guided-mode toggle and next-slot state transition while the same path can pass on a clean rerun.",
-      "trackingUrl": "https://app.clickup.com/t/90121749478/869dwc3za",
+      "browsers": [
+        "chromium"
+      ],
+      "reason": "Root cause found and fixed on 2026-09-08: ngOnInit's resetPageState() lands only after the dataset resolves, while the guided toggle was rendered and enabled from the first paint, so a press made during the load was silently undone. The toggle is now gated on pageReady() and the three specs wait for it. Kept until the unquarantined Chromium guided run has the consecutive passes its restoration criteria require - the fix is proven by unit test and mutation, not yet by repeated browser runs.",
+      "trackingUrl": "https://app.clickup.com/t/90121749478/869exm63x",
       "firstSeenAt": "2026-06-29",
       "firstSeenEvidence": "https://github.com/JohnChourp/optc-team-builder/actions/runs/28385874618",
       "owner": "Browser regression maintainers",
-      "restorationCriteria": "Remove this quarantine after the guided-toggle interaction is stabilized and the unquarantined Chromium guided run passes three consecutive CI/default-branch runs."
+      "restorationCriteria": "Remove this entry once the unquarantined Chromium guided run passes three consecutive CI/default-branch runs after the 2026-09-08 pageReady() gate. The previous tracking URL pointed at 869dwc3za, which is the completed task that BUILT the quarantine tooling rather than a fix task, so nobody owned it."
     }
   ]
 }

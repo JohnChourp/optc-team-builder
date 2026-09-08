@@ -308,7 +308,7 @@
                                           "
                                           color="warning"
                                           [checked]="guidedAutoBuildEnabled()"
-                                          [disabled]="building()"
+                                          [disabled]="building() || !pageReady()"
                                           (ionChange)="onGuidedAutoBuildToggle($event)"
                                         ></ion-toggle>
                                       </div>

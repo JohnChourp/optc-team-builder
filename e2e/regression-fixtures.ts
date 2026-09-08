@@ -86,6 +86,21 @@ export async function seedBrowserState(
       localStorage.setItem('CapacitorStorage.savedTeams', JSON.stringify(seededState.teams));
       localStorage.setItem('CapacitorStorage.savedEnemies', JSON.stringify(seededState.enemies));
 
+      /*
+       * Take Web Share off the table so every engine follows the clipboard
+       * path these specs assert.
+       *
+       * `SavedTeamsPage.shareTextWithNativeShare` prefers `navigator.share`
+       * whenever it exists and returns BEFORE writing to the clipboard, so a
+       * share-link spec that asserts the clipboard fails on any engine that
+       * ships Web Share. Of the three Playwright engines only WebKit exposes it
+       * on macOS, which is why this read as "webkit is broken" rather than as
+       * the fixture gap it is - desktop Chrome on Windows would fail the same
+       * way. Deleting the property is not enough: it lives on Navigator.prototype.
+       */
+      Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+      Object.defineProperty(navigator, 'canShare', { configurable: true, value: undefined });
+
       Object.defineProperty(navigator, 'clipboard', {
         configurable: true,
         value: {
@@ -130,6 +145,25 @@ export async function waitForAppReady(page: Page): Promise<void> {
     undefined,
     { timeout: 45_000 },
   );
+}
+
+/**
+ * Waits until an Ionic control will actually accept input.
+ *
+ * `expect(locator).toBeEnabled()` is VACUOUS on an Ionic host: Playwright only
+ * consults `aria-disabled` when the element carries an explicit ARIA role, and
+ * `ion-button`/`ion-toggle` render neither a role nor the native `disabled`
+ * attribute on the host. So `toBeEnabled()` passed instantly against a control
+ * that was still greyed out, which is how three specs came to press one before
+ * it was ready.
+ *
+ * The Auto Team Builder filters are gated on `pageReady()`, which is false
+ * until the dataset has resolved AND the reset that follows it has run - so
+ * this wait is what stands between the specs and the race that made the guided
+ * spec flaky.
+ */
+export async function waitForIonControlEnabled(locator: Locator): Promise<void> {
+  await expect(locator).not.toHaveAttribute('aria-disabled', 'true', { timeout: 60_000 });
 }
 
 export async function setIonToggle(locator: Locator, checked: boolean): Promise<void> {

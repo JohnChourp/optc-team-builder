@@ -962,7 +962,11 @@ export class SavedTeamsPage implements OnInit {
       await nativeShare.call(globalThis.navigator, shareData);
       this.actionFeedback.set({
         tone: 'success',
-        title: this.i18n.translate('share.successTitle', undefined, 'saved-teams'),
+        // NOT `share.successTitle` - that one says "Copied", and this branch
+        // deliberately did not copy anything. Web Share is present on every
+        // iOS and Safari build, so this is their default path, and the banner
+        // read "Copied" over "Opened native share for ..." for all of them.
+        title: this.i18n.translate('share.sharedTitle', undefined, 'saved-teams'),
         details: [successMessage],
       });
 
