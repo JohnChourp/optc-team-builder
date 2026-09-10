@@ -62,7 +62,11 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Regenerate the visual baselines
-        run: node ./scripts/run-playwright-e2e.mjs --e2e-project=chromium --update-snapshots e2e/public-entry-visual.spec.ts
+        # `=changed`, not a bare `--update-snapshots`: the flag takes an optional
+        # mode, so a bare one swallows the next argument and Playwright rejects
+        # the spec path as an invalid mode. `changed` also rewrites only the
+        # baselines that actually differ, keeping the diff to what drifted.
+        run: node ./scripts/run-playwright-e2e.mjs --e2e-project=chromium --update-snapshots=changed e2e/public-entry-visual.spec.ts
         env:
           CI: 'true'
 
