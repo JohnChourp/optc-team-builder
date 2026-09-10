@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.6',
+    date: '2026-09-10',
+    userVisible: true,
+    added: [],
+    improved: [],
+    headline: {
+      en: 'Cancelling a share now really does cancel it',
+      el: 'Το cancel σε ένα share ακυρώνει πια όντως',
+    },
+    summaryEn:
+      'On Saved Teams, tapping Cancel on the share sheet now does nothing at all. Until this release it put the link on your clipboard anyway and told you "Copied" - the one thing you had just declined to do. This is what happened on every iPhone and in Safari, where the share sheet is the normal way sharing works, so it was not a rare case. Nothing else changes: sharing still works the same way when you go through with it, and if sharing genuinely fails rather than being cancelled, the link still goes to your clipboard as before.',
+    summaryEl:
+      'Στα Saved Teams, το Cancel στο share sheet δεν κάνει πια απολύτως τίποτα. Μέχρι αυτή την έκδοση έβαζε το link στο clipboard σου έτσι κι αλλιώς και σου έλεγε «Copied» - το ένα πράγμα που μόλις είχες αρνηθεί. Αυτό συνέβαινε σε κάθε iPhone και στον Safari, όπου το share sheet είναι ο κανονικός τρόπος που δουλεύει το share, οπότε δεν ήταν σπάνια περίπτωση. Τίποτε άλλο δεν αλλάζει: το share δουλεύει το ίδιο όταν το ολοκληρώνεις, και αν το share αποτύχει πραγματικά αντί να ακυρωθεί, το link πάει στο clipboard όπως πριν.',
+    fixed: [
+      {
+        en: 'Cancelling the share sheet from a team on the Saved Teams screen no longer copies the link and shows a "Copied" message. On an iPhone or in Safari, tapping Cancel used to do exactly the thing you had just declined; now it does nothing.',
+        el: 'Το cancel του share sheet από μια ομάδα στην οθόνη Saved Teams δεν αντιγράφει πια το link και δεν δείχνει μήνυμα «Copied». Σε iPhone ή στον Safari, το Cancel έκανε ακριβώς αυτό που μόλις είχες αρνηθεί· τώρα δεν κάνει τίποτα.',
+      },
+    ],
+  },
+  {
     version: '0.4.5',
     date: '2026-09-09',
     userVisible: true,
