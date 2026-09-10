@@ -15,6 +15,8 @@ reason.
 
 This is enforced mechanically, not by convention:
 
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
 ```bash
 npm run actions:ci-triggers -- --brain-root ../optc-team-builder-brain
 ```
@@ -77,6 +79,8 @@ the Angular unit tests, every script suite defined in
 `scripts/ci-check-routing.mjs`, and the dataset performance guard, then prints a
 single pass/fail summary.
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run verify:local
 ```
@@ -85,6 +89,8 @@ Command status: manual/illustrative.
 
 Add browser e2e across chromium, firefox, and webkit with the full variant:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run verify:local:full
 ```
@@ -105,6 +111,8 @@ The `pwa-shell` lane and every `--with-e2e` lane drive a real browser, so run
 For the brain repo, run `../optc-team-builder-brain/scripts/verify-local.sh`
 from the brain checkout:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 cd ../optc-team-builder-brain && ./scripts/verify-local.sh
 ```
@@ -122,6 +130,8 @@ GitHub-backed closeout-drift report, and `--list` prints the lanes.
 Nothing was deleted, so any suite can still be run on GitHub when a clean-room
 result is wanted:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 gh workflow run test.yml --repo JohnChourp/optc-team-builder
 ```
@@ -138,6 +148,8 @@ The PR template fields (`ClickUp task:`, `Evidence:`, `Verification:`) are still
 required, but nothing checks them automatically any more. Run the same gate
 against an open PR before review or merge:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 npm run pr:traceability -- --pr 123
 ```

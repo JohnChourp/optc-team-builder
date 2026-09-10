@@ -1,10 +1,14 @@
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { checkDocsCommands, extractShellCommands } from './check-docs-commands.mjs';
+import { checkDocsCommands, extractShellCommands,
+  APP_DOCS,
+  APP_DOCS_OPT_OUT,
+} from './check-docs-commands.mjs';
 
 let tempDirs: string[] = [];
 
@@ -240,5 +244,65 @@ describe('check-docs-commands', () => {
     expect(result.failures).toEqual([]);
     expect(seen).toEqual(['npm run docs:integrity -- --app-only']);
     expect(result.skippedExecutions).toHaveLength(2);
+  });
+});
+
+describe('APP_DOCS covers every app doc with shell fences', () => {
+  /*
+   * The list is hardcoded, which is fine. What was not fine is that nothing
+   * checked it: three runbook docs sat outside the Command-status contract by
+   * default, and `docs/dependency-maintenance-policy.md` had already drifted
+   * that way with two shell fences and no status line on either.
+   *
+   * Discovery was tried instead and rejected: walking every tracked `.md`
+   * pulls in the brain's audit narratives and CLAUDE.md, whose fences are prose
+   * rather than instructions - 30 failures across seven files that were never
+   * meant to be runbooks. So the list stays, and this makes forgetting it fail.
+   */
+  it('lists every doc under the app roots that carries a shell fence', () => {
+    const roots = ['.', 'docs', 'e2e', 'server'];
+    const withFences: string[] = [];
+
+    for (const dir of roots) {
+      if (!existsSync(dir)) {
+        continue;
+      }
+
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (!entry.isFile() || !entry.name.endsWith('.md')) {
+          continue;
+        }
+
+        const relativePath = dir === '.' ? entry.name : `${dir}/${entry.name}`;
+
+        if (/^```(?:bash|sh|console)\b/mu.test(readFileSync(relativePath, 'utf8'))) {
+          withFences.push(relativePath);
+        }
+      }
+    }
+
+    expect(withFences.length).toBeGreaterThan(5);
+
+    const uncovered = withFences.filter(
+      (doc) => !APP_DOCS.includes(doc) && !APP_DOCS_OPT_OUT.has(doc),
+    );
+
+    expect(
+      uncovered,
+      'these docs carry shell fences but are neither in APP_DOCS nor opted out with a reason',
+    ).toEqual([]);
+  });
+
+  it('points at docs that exist', () => {
+    for (const doc of APP_DOCS) {
+      expect(existsSync(doc), `${doc} is listed in APP_DOCS but is not on disk`).toBe(true);
+    }
+  });
+
+  it('gives every opt-out a reason', () => {
+    for (const [doc, reason] of APP_DOCS_OPT_OUT) {
+      expect(existsSync(doc), `${doc} is opted out but does not exist`).toBe(true);
+      expect(reason.length, `${doc} is opted out with no reason`).toBeGreaterThan(20);
+    }
   });
 });

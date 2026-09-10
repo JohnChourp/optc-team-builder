@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -5,7 +6,9 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  PIN_EXEMPT_WORKFLOWS,
   collectWorkflowUses,
+  inspectStrictListCoverage,
   formatGitHubActionPinResult,
   inspectGitHubActionPins,
 } from './check-github-actions-pins.mjs';
@@ -250,5 +253,59 @@ describe('check-github-actions-pins', () => {
         value: `actions/setup-java@${pinnedSha}`,
       }),
     ]);
+  });
+});
+
+describe('strict-pin list coverage', () => {
+  /*
+   * The strict list is a scope decision and stays one. What was missing is the
+   * assertion the sibling budget guard already had: a workflow in neither the
+   * strict list nor an exemption was silently unchecked, so a NEW workflow
+   * defaulted to unpinned rather than to a decision.
+   *
+   * It found one the first time it ran - `dataset-change-digest.yml`, which
+   * uploads an artifact while every other artifact-uploading workflow in this
+   * repo was already strict. It is strict now, and its three action refs are
+   * pinned to the same SHAs its siblings use.
+   */
+  it('places every workflow in the strict list or an exemption', () => {
+    const findings: Array<{ workflowPath: string }> = [];
+
+    inspectStrictListCoverage({ root: process.cwd(), findings });
+
+    expect(
+      findings.map((finding) => finding.workflowPath),
+      'these workflows are checked by neither list, so their action refs are never verified',
+    ).toEqual([]);
+  });
+
+  it('gives every exemption a reason, and points it at a real file', () => {
+    expect(PIN_EXEMPT_WORKFLOWS.size).toBeGreaterThan(0);
+
+    for (const [workflowPath, reason] of PIN_EXEMPT_WORKFLOWS) {
+      expect(existsSync(workflowPath), `${workflowPath} is exempt but does not exist`).toBe(true);
+      expect(reason.length, `${workflowPath} is exempt with no reason`).toBeGreaterThan(20);
+    }
+  });
+
+  it('reports an unlisted workflow rather than ignoring it', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'optc-pin-coverage-'));
+
+    try {
+      await mkdir(path.join(root, '.github/workflows'), { recursive: true });
+      await writeFile(
+        path.join(root, '.github/workflows/newcomer.yml'),
+        'name: Newcomer\non:\n  workflow_dispatch:\n',
+      );
+
+      const findings: Array<{ workflowPath: string }> = [];
+      inspectStrictListCoverage({ root, findings });
+
+      expect(findings.map((finding) => finding.workflowPath)).toEqual([
+        '.github/workflows/newcomer.yml',
+      ]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
