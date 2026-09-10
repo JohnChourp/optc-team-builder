@@ -684,8 +684,18 @@ export class CharacterBoxesPage implements OnInit {
     }
 
     this.loadingMore.set(true);
-    await this.loadCharacters(false);
-    this.loadingMore.set(false);
+
+    try {
+      await this.loadCharacters(false);
+    } finally {
+      /*
+       * `finally`, because the guard above is `if (this.loadingMore()) return;`.
+       * A rejected query left this flag true, and from that moment "Load more"
+       * was both disabled in the template and refused by its own guard - dead
+       * for the rest of the visit, with no way back short of reloading.
+       */
+      this.loadingMore.set(false);
+    }
   }
 
   public async toggleCharacterMembership(characterId: number): Promise<void> {
