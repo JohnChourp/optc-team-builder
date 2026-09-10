@@ -39513,8 +39513,29 @@ async function expectManualCaptainLockedFriendUnlockedSweepCase(
     requiredCharacterId: null,
   });
   expect(result.slots[0]?.character.id).toBe(requiredCaptain.id);
-  expect(result.slots[1]?.character).toBeTruthy();
   expect(result.slots[0]?.reasonChips).toContain('Manual pick');
+  /*
+   * `expect(result.slots[1]?.character).toBeTruthy()` used to sit here and could
+   * not fail: `expectCompleteAutoTeam` above already asserts
+   * `slots.every((slot) => slot.character)`, so forty-six tests took their
+   * titled behaviour from an assertion that was already guaranteed.
+   *
+   * It is deleted rather than replaced, and the two candidates were both
+   * MEASURED before being rejected rather than reasoned about:
+   *
+   *   - `slots[1].character.id === requiredCaptain.id` fails for #660, #661,
+   *     #705, #891 and others - the builder picks a different friend captain,
+   *     which is exactly what "unlocked" means in these titles.
+   *   - `slots[1].reasonChips` not containing 'Manual pick' fails for every
+   *     case; the seat carries the chip because the id was supplied manually,
+   *     even though it was not required.
+   *
+   * What the friend seat being unlocked actually means is asserted on the INPUT
+   * five lines up (`requiredCharacterId: null`). There is no stronger claim to
+   * make about the output without over-constraining a builder that is free to
+   * choose here - and an assertion that pins today's choice would fail the next
+   * time the ranking changes, for no defect.
+   */
 }
 
 interface ManualLeaderSweepFixtureScope {

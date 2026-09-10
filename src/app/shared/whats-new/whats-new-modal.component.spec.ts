@@ -81,7 +81,13 @@ describe('whats-new', () => {
   });
 
   it('never leaves a visible release with nothing to show', () => {
-    for (const entry of WHATS_NEW_ENTRIES.filter((item) => item.userVisible)) {
+    const visible = WHATS_NEW_ENTRIES.filter((item) => item.userVisible);
+
+    // Same floor as the sibling test above: an empty list would pass silently,
+    // and "no release is user-visible" is exactly the state worth catching.
+    expect(visible.length).toBeGreaterThan(0);
+
+    for (const entry of visible) {
       const bullets = entry.added.length + entry.improved.length + entry.fixed.length;
 
       expect(bullets, `bullets for ${entry.version}`).toBeGreaterThan(0);
