@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
@@ -393,6 +393,64 @@ describe('ci-check-routing', () => {
 
     expect(pkg.scripts['test:docs-drift']).not.toContain('npm run docs:drift');
     expect(SCRIPT_SUITES['docs-drift'].label).toContain('GitHub context');
+  });
+
+  /*
+   * Two spec files - rumble-data-normalizer and super-special-criteria - were in
+   * no lane at all, so ten tests could never fail the gate. Adding them is half
+   * a fix; the other half is making the enumeration self-checking, or the next
+   * spec added to `scripts/` is orphaned the same way and nobody finds out.
+   *
+   * Resolving `npm run X` transitively is the load-bearing part. Most suites
+   * reach their specs through a package script rather than naming the file, so
+   * a naive substring check over the raw commands reports 37 false orphans and
+   * is useless.
+   */
+  it('reaches every scripts/ spec file from some lane', () => {
+    const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+
+    const expand = (command: string, seen = new Set<string>()): string => {
+      let out = command;
+
+      for (const [, name] of command.matchAll(/npm run ([\w:-]+)/gu)) {
+        if (!name || seen.has(name)) {
+          continue;
+        }
+
+        seen.add(name);
+        const body = pkg.scripts[name];
+
+        if (body) {
+          out += ` ${expand(body, seen)}`;
+        }
+      }
+
+      return out;
+    };
+
+    const specs: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = `${dir}/${entry.name}`;
+
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (entry.name.endsWith('.spec.ts')) {
+          specs.push(full);
+        }
+      }
+    };
+    walk('scripts');
+
+    const commands = Object.values(SCRIPT_SUITES).map((suite) => expand(suite.command));
+    const orphans = specs.filter((spec) => !commands.some((command) => command.includes(spec)));
+
+    expect(specs.length).toBeGreaterThan(40);
+    expect(orphans, `these spec files are in no lane, so their tests cannot fail the gate`).toEqual(
+      [],
+    );
   });
 
   it('renders GitHub outputs and Markdown summaries', () => {
