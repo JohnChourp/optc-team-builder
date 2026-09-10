@@ -743,12 +743,29 @@ export class SavedTeamsPage implements OnInit {
 
   private async refreshSavedTeamCards(): Promise<void> {
     this.loading.set(true);
+
+    /*
+     * One clear, in a `finally`, for all four exits. It used to be set in three
+     * places along the happy path and nowhere else, so a rejected
+     * `getDetailedCharactersByIds` or `getShips` left the spinner up for the
+     * rest of the visit. That the gap was known is visible in what it forced:
+     * the import path hand-rolled `.catch(() => this.loading.set(false))`
+     * around this very call rather than the source being fixed. That workaround
+     * is gone with this.
+     */
+    try {
+      await this.buildSavedTeamCards();
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  private async buildSavedTeamCards(): Promise<void> {
     const teams = this.savedTeams();
 
     if (!teams.length) {
       this.savedTeamCards.set([]);
       this.pruneSelection();
-      this.loading.set(false);
       return;
     }
 
@@ -765,7 +782,6 @@ export class SavedTeamsPage implements OnInit {
     ]);
 
     if (this.savedTeams() !== teams) {
-      this.loading.set(false);
       return;
     }
 
@@ -797,7 +813,6 @@ export class SavedTeamsPage implements OnInit {
     );
     this.pruneAbilitySelections();
     this.pruneSelection();
-    this.loading.set(false);
   }
 
   private resolveSavedTeamConditionStatus(
@@ -1329,9 +1344,9 @@ export class SavedTeamsPage implements OnInit {
       this.importFeedback.set(this.buildImportFeedback(feedbackStats));
       setTimeout(() => {
         setTimeout(() => {
-          void this.refreshSavedTeamCards().catch(() => {
-            this.loading.set(false);
-          });
+          // No `.catch` needed: `refreshSavedTeamCards` clears its own loader in
+          // a `finally` now, which is what this workaround was standing in for.
+          void this.refreshSavedTeamCards();
         }, 0);
       }, 0);
     } catch (error) {

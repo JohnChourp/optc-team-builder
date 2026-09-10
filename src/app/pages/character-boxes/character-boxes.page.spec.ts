@@ -345,6 +345,40 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain('[disabled]="loadingMore()"');
   });
 
+  /*
+   * The guard on this method is `if (this.loadingMore()) return;`, so a stuck flag
+   * does not merely grey the button - it makes the method refuse every retry.
+   * One rejected query used to kill "Load more" for the rest of the visit, with
+   * no way back short of reloading the page.
+   *
+   * Mutation check: move the clear out of the `finally` and this fails.
+   */
+  it('lets the reader try again after a failed load more', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+
+    repository.searchDetailedCharacters.mockResolvedValueOnce(
+      Array.from({ length: 48 }, (_, index) => ({ id: 5000 + index, name: `Row ${index}` })) as never[],
+    );
+    await page.onFavoriteFilterChange({ detail: { value: 'favorites' } } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.hasMore()).toBe(true);
+
+    repository.searchDetailedCharacters.mockRejectedValueOnce(new Error('network down'));
+
+    await expect(page.loadMore()).rejects.toThrow('network down');
+    expect(page.loadingMore()).toBe(false);
+
+    // And the retry actually reaches the repository rather than being refused.
+    repository.searchDetailedCharacters.mockClear();
+    repository.searchDetailedCharacters.mockResolvedValueOnce([{ id: 6001, name: 'Later' }] as never[]);
+
+    await page.loadMore();
+
+    expect(repository.searchDetailedCharacters).toHaveBeenCalledOnce();
+  });
+
   it('refreshes the current list after adding a favorite while hide favorites is active', async () => {
     const { page, repository } = createPage();
 
