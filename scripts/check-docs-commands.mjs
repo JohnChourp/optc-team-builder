@@ -1,18 +1,39 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const APP_DOCS = [
+/*
+ * Every app doc whose fences are instructions rather than prose.
+ *
+ * This list is hardcoded, which is fine - what was NOT fine is that nothing
+ * checked it. Three runbook docs sat outside the Command-status contract by
+ * default, and `docs/dependency-maintenance-policy.md` had already drifted that
+ * way with two fences and no status line on either.
+ *
+ * `check-docs-commands.spec.ts` now fails when a tracked doc under the roots
+ * below carries a shell fence and is neither listed here nor opted out with a
+ * reason, so a new runbook cannot drift in silently.
+ */
+export const APP_DOCS = [
   'README.md',
   'docs/branch-lifecycle-policy.md',
+  'docs/ci-trigger-policy.md',
+  'docs/dependency-maintenance-policy.md',
   'docs/post-merge-smoke-pack.md',
+  'docs/post-dispatch-production-smoke.md',
   'docs/maintainer-validation-guide.md',
   'docs/fixture-ownership-guide.md',
   'e2e/README.md',
   'server/README.md',
 ];
+
+/** Docs with shell fences that are deliberately outside the contract. */
+export const APP_DOCS_OPT_OUT = new Map([
+  ['.github/pull_request_template.md', 'A GitHub template: its fences are placeholders to fill in.'],
+]);
 
 const BRAIN_DOCS = ['README.md', 'OPTC_DB_AUTO_RELEASE_RUNBOOK.md'];
 
@@ -49,6 +70,11 @@ const ALLOWED_COMMANDS = new Map(
     [
       'node scripts/check-optc-release-needed.mjs --fixture=source-contract-broken --json',
       { cwd: 'app', expected: 'nonzero' },
+    ],
+    ['npm run actions:pins', { cwd: 'app', expected: 'zero' }],
+    [
+      'npm run actions:ci-triggers -- --brain-root ../optc-team-builder-brain',
+      { cwd: 'app', expected: 'zero', requiresBrain: true },
     ],
     ['npm run test:docs-integrity', { cwd: 'app', expected: 'zero' }],
     ['npm run test:docs-drift', { cwd: 'app', expected: 'zero' }],
@@ -180,6 +206,17 @@ export async function checkDocsCommands(options = {}, runner = runAllowedCommand
 
 async function collectCommandBlocks(doc, failures) {
   const absolutePath = path.join(doc.root, doc.relativePath);
+
+  /*
+   * A listed doc that is not on disk is skipped rather than failed, because the
+   * fixture roots in `check-docs-commands.spec.ts` create only the docs each
+   * test needs. That the real list points at real files is asserted there
+   * instead, where the repository is the subject rather than a temp directory.
+   */
+  if (!existsSync(absolutePath)) {
+    return [];
+  }
+
   const text = await readFile(absolutePath, 'utf8');
   const lines = text.split(/\r?\n/u);
   const blocks = [];

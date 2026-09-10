@@ -33,6 +33,8 @@ full SHAs, use `owner/repository` external action refs, keep a source-tag
 comment, and prove that the source tag resolves to the pinned SHA inside the
 referenced action repository:
 
+Command status: CI-executable.
+<!-- docs-command: ci-executable -->
 ```bash
 npm run actions:pins
 ```
@@ -69,6 +71,8 @@ To refresh a strict action pin, resolve the intended tag from the upstream
 action repository, update every strict workflow reference to the new SHA, and
 keep the source tag as a trailing comment:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 git ls-remote --tags https://github.com/actions/checkout.git v7
 npm run actions:pins

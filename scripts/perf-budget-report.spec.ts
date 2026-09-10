@@ -8,6 +8,7 @@ import {
   buildPerformanceBudgetReport,
   formatPerformanceBudgetSummary,
   runCli,
+  resolveReportStatus,
 } from './perf-budget-report.mjs';
 
 let tempDirs: string[] = [];
@@ -632,5 +633,39 @@ describe('perf-budget-report', () => {
     await expect(readFile(outputPath, 'utf8')).resolves.toContain('"invalidMetricFailureCount": 1');
     await expect(readFile(summaryPath, 'utf8')).resolves.toContain('missing or non-finite');
     expect(process.exitCode).toBe(1);
+  });
+});
+
+describe('resolveReportStatus', () => {
+  const row = (metricId: string) => ({ metricId, message: `${metricId}: n/a` });
+
+  /*
+   * The rule used to be an inline ternary that omitted `invalidMetricFailures`,
+   * so the report JSON said "passed" on a run whose exit code was 1. The only
+   * test that produced an invalid metric also produced a hard budget failure,
+   * which made the two indistinguishable - a mutation dropping the invalid
+   * clause passed every test in this file.
+   */
+  it('fails on an invalid metric even when every budget was met', () => {
+    expect(resolveReportStatus({ invalidMetricFailures: [row('route-load.desktop.x')] })).toBe(
+      'failed',
+    );
+  });
+
+  it('fails on an invalid metric even when the only other signal is a warning', () => {
+    expect(
+      resolveReportStatus({
+        invalidMetricFailures: [row('a')],
+        baselineDeltaWarnings: [row('b')],
+      }),
+    ).toBe('failed');
+  });
+
+  it.each([
+    ['passed', {}],
+    ['warning', { baselineDeltaWarnings: [row('a')] }],
+    ['failed', { hardBudgetFailures: [row('a')] }],
+  ])('returns %s for the other cases', (expected, input) => {
+    expect(resolveReportStatus(input)).toBe(expected);
   });
 });

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +13,54 @@ export const STRICT_GITHUB_ACTION_WORKFLOWS = [
   '.github/workflows/public-entry-synthetics.yml',
   '.github/workflows/performance-budgets.yml',
   '.github/workflows/guide-discoverability.yml',
+  /*
+   * Uploads an artifact, and every other artifact-uploading workflow in this
+   * repo is strict. It was the lone exception, which the coverage assertion
+   * below found the first time it ran.
+   */
+  '.github/workflows/dataset-change-digest.yml',
 ];
+
+/**
+ * Workflows deliberately outside the strict-pin contract, with the reason.
+ *
+ * The strict list above is a scope decision the owner made, and it stays one.
+ * What was missing is the assertion the sibling budget guard already has
+ * (`inspectWorkflowFileCoverage`): a workflow in neither list was silently
+ * unchecked, so a NEW workflow defaulted to unpinned rather than to a decision.
+ */
+export const PIN_EXEMPT_WORKFLOWS = new Map([
+  ['.github/workflows/codeql.yml', 'GitHub-managed analysis workflow; its actions track the CodeQL bundle.'],
+  ['.github/workflows/docs-integrity.yml', 'Dispatch-only docs lane; runs no release, deploy or publish step.'],
+  ['.github/workflows/pr-traceability.yml', 'Dispatch-only PR metadata check; runs no release, deploy or publish step.'],
+]);
+
+/** Every workflow must be in the strict list or exempt with a reason. */
+export function inspectStrictListCoverage({ root, findings }) {
+  const workflowsDir = path.join(root, '.github/workflows');
+
+  if (!existsSync(workflowsDir)) {
+    return;
+  }
+
+  const strict = new Set(STRICT_GITHUB_ACTION_WORKFLOWS);
+
+  for (const entry of readdirSync(workflowsDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !/\.ya?ml$/u.test(entry.name)) {
+      continue;
+    }
+
+    const workflowPath = `.github/workflows/${entry.name}`;
+
+    if (!strict.has(workflowPath) && !PIN_EXEMPT_WORKFLOWS.has(workflowPath)) {
+      findings.push({
+        workflowPath,
+        message:
+          'Workflow is in neither STRICT_GITHUB_ACTION_WORKFLOWS nor PIN_EXEMPT_WORKFLOWS, so its action refs are never checked for full-SHA pins.',
+      });
+    }
+  }
+}
 
 const FULL_LENGTH_SHA_PATTERN = /^[0-9a-f]{40}$/iu;
 const SOURCE_TAG_COMMENT_PATTERN = /^v\d+(?:[.\w-]*)?$/iu;
@@ -121,6 +168,10 @@ export function inspectGitHubActionPins({
   const findings = [];
   const errors = [];
   const remoteRefsCache = new Map();
+
+  // A workflow in neither list was silently unchecked, so a NEW workflow
+  // defaulted to unpinned instead of to a decision.
+  inspectStrictListCoverage({ root, findings: errors });
 
   for (const workflowPath of strictWorkflows.map(normalizePath)) {
     const absolutePath = path.join(root, workflowPath);

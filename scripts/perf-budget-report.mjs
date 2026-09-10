@@ -669,7 +669,11 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
         row.unit,
       )} vs baseline ${formatMetricValue(row.baselineMs, row.unit)} (${formatPercent(row.deltaPercent)} increase)`,
     }));
-  const status = hardBudgetFailures.length ? 'failed' : baselineDeltaWarnings.length ? 'warning' : 'passed';
+  const status = resolveReportStatus({
+    hardBudgetFailures,
+    invalidMetricFailures,
+    baselineDeltaWarnings,
+  });
 
   return {
     schemaVersion: PERFORMANCE_REPORT_SCHEMA_VERSION,
@@ -742,6 +746,32 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
     invalidMetricFailures,
     baselineDeltaWarnings,
   };
+}
+
+/**
+ * The report's own verdict.
+ *
+ * Extracted so it can be tested: it used to be one inline ternary inside a
+ * hundred-line builder, and the only test that produced an invalid metric also
+ * produced a hard budget failure - so the two were indistinguishable and a
+ * mutation dropping `invalidMetricFailures` from the rule passed every test.
+ *
+ * `invalidMetricFailures` counts. `main` already exits 1 on them, but `status`
+ * was computed without them, so the report JSON said "passed" on a run that
+ * failed - and anything reading the artifact rather than the exit code believed
+ * it. A metric that is missing or non-finite is not a pass; it is a measurement
+ * that did not happen.
+ */
+export function resolveReportStatus({
+  hardBudgetFailures = [],
+  invalidMetricFailures = [],
+  baselineDeltaWarnings = [],
+} = {}) {
+  if (hardBudgetFailures.length || invalidMetricFailures.length) {
+    return 'failed';
+  }
+
+  return baselineDeltaWarnings.length ? 'warning' : 'passed';
 }
 
 export function formatPerformanceBudgetSummary(report) {
