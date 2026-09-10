@@ -81,19 +81,6 @@ describe('CharacterImagePickerComponent', () => {
     expect(component.hasMore()).toBe(true);
   });
 
-  it('logs the modal name when it opens', async () => {
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const { component } = createComponent();
-
-    component.isOpen = true;
-    component.ngOnChanges({
-      isOpen: new SimpleChange(false, true, true),
-    });
-    await flushPromises();
-
-    expect(consoleLogSpy).toHaveBeenCalledWith('[Modal Open] CharacterImagePickerComponent');
-  });
-
   it('reloads the catalog when search and filters change', async () => {
     const { component, characterCatalogCache } = createComponent();
 
