@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-import { buildCheckPlan, formatGitHubOutput, getChangedFiles, parseNameStatusOutput, renderMarkdown } from './ci-check-routing.mjs';
+import { SCRIPT_SUITES, buildCheckPlan, formatGitHubOutput, getChangedFiles, parseNameStatusOutput, renderMarkdown } from './ci-check-routing.mjs';
 
 describe('ci-check-routing', () => {
   it('routes docs-only changes to docs script suites only', () => {
@@ -352,6 +352,47 @@ describe('ci-check-routing', () => {
     expect(output).toContain('fatal: bad revision usage: git diff');
     expect(output).not.toContain('fatal: bad revision\nusage: git diff');
     expect(output.split('\n')).not.toContain('usage: git diff');
+  });
+
+  /*
+   * These lanes ran their own unit specs and nothing else, so `verify:local` -
+   * the command CLAUDE.md names as validation for an app change - never opened
+   * a link, an anchor or a command block in the app's own docs. A spec that
+   * only proves the checker's helper functions work is not the checker running.
+   *
+   * `actions-pins` was always wired the other way (`test:` && the real check),
+   * which is what makes this an inconsistency rather than a stated policy.
+   */
+  it('runs the real docs checkers, not only their unit specs', () => {
+    const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+
+    for (const [suite, script, checker] of [
+      ['docs-integrity', 'test:docs-integrity', 'docs:integrity'],
+      ['docs-commands', 'test:docs-commands', 'docs:commands'],
+    ] as const) {
+      expect(SCRIPT_SUITES[suite].command).toBe(`npm run ${script}`);
+      expect(pkg.scripts[script], `${script} must chain ${checker}`).toContain(
+        `npm run ${checker}`,
+      );
+    }
+  });
+
+  /*
+   * And `docs-drift` deliberately does NOT chain its checker: that one reads the
+   * PR body from GitHub and returns an empty acknowledgement whenever
+   * GITHUB_REPOSITORY / GITHUB_SHA are unset, which is always outside Actions.
+   * Chaining it would fail every local run whose diff touches a mapped feature.
+   * The label has to say so, or `pass docs-drift` reads as "the drift check ran".
+   */
+  it('keeps docs-drift spec-only, and says so in its label', () => {
+    const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+
+    expect(pkg.scripts['test:docs-drift']).not.toContain('npm run docs:drift');
+    expect(SCRIPT_SUITES['docs-drift'].label).toContain('GitHub context');
   });
 
   it('renders GitHub outputs and Markdown summaries', () => {
