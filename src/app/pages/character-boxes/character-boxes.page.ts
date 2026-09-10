@@ -719,21 +719,75 @@ export class CharacterBoxesPage implements OnInit {
     return character.id;
   }
 
+  /**
+   * Loads a page of characters for the current filters, and publishes it only
+   * if it is still the answer to the newest question.
+   *
+   * Fourteen call sites reach this with `reset: true`, one per filter control,
+   * and every one of them used to publish unconditionally. Two things went
+   * wrong with that:
+   *
+   * 1. **The slowest query won.** Press two filters quickly and whichever
+   *    `searchDetailedCharacters` resolved LAST wrote `characters`, regardless
+   *    of which filter the reader is actually looking at. The filter bar showed
+   *    one thing and the list showed another, and nothing recovered it short of
+   *    pressing again.
+   * 2. **A stale page was stapled onto a fresh list.** `offset` was computed
+   *    from `this.characters().length` before the await, but the append re-read
+   *    `this.characters()` AFTER it. So a `loadMore` overlapping a filter reset
+   *    appended rows counted against the old list to the new one - duplicates,
+   *    or characters the current filter excludes.
+   *
+   * The generation counter fixes both - the same one the Captain Coverage result
+   * pass uses: take a ticket, and publish only while it is still the newest. It
+   * is what makes (2) safe as well, because a superseded pass returns before it
+   * ever reaches the append.
+   *
+   * `previousCharacters` is captured before the await anyway, so `offset` and
+   * the list it is counted against are visibly the same list. Be honest about
+   * what that buys: `loadCharacters` is the ONLY writer of `characters`, so
+   * given the guard above the capture cannot change any outcome today, and a
+   * mutation that re-reads the signal after the await passes every test. It is
+   * kept because it makes the pairing local instead of something the reader has
+   * to re-derive from the guard - not because it is independently load-bearing.
+   */
+  /** Ticket for the newest character load; only that pass may publish. */
+  private charactersGeneration = 0;
+
   private async loadCharacters(reset: boolean): Promise<void> {
+    this.charactersGeneration += 1;
+
+    const generation = this.charactersGeneration;
+    const previousCharacters = reset ? [] : this.characters();
+
     if (reset) {
       this.loading.set(true);
     }
 
-    const nextCharacters = await this.repository.searchDetailedCharacters(
-      this.buildFilteredCharacterSearchQuery({
-        limit: PAGE_SIZE,
-        offset: reset ? 0 : this.characters().length,
-      }),
-    );
+    try {
+      const nextCharacters = await this.repository.searchDetailedCharacters(
+        this.buildFilteredCharacterSearchQuery({
+          limit: PAGE_SIZE,
+          offset: previousCharacters.length,
+        }),
+      );
 
-    this.characters.set(reset ? nextCharacters : [...this.characters(), ...nextCharacters]);
-    this.hasMore.set(nextCharacters.length === PAGE_SIZE);
-    this.loading.set(false);
+      // A newer filter press has already started; its answer is the current one.
+      if (generation !== this.charactersGeneration) {
+        return;
+      }
+
+      this.characters.set(reset ? nextCharacters : [...previousCharacters, ...nextCharacters]);
+      this.hasMore.set(nextCharacters.length === PAGE_SIZE);
+    } finally {
+      // Only the newest pass owns the loader. A superseded pass clearing it
+      // would hand the reader an empty list with no spinner while the real
+      // answer is still in flight - and a throw here would strand the spinner
+      // forever, which is why this is a `finally` and not a trailing statement.
+      if (generation === this.charactersGeneration) {
+        this.loading.set(false);
+      }
+    }
   }
 
   private async fetchAllFilteredCharacterIds(): Promise<number[]> {

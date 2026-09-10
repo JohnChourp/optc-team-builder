@@ -181,7 +181,6 @@
                 <app-character-tag-filter
                   testIdPrefix="character-boxes"
                   [selection]="characterTagSetSelection()"
-                  [disabled]="loading()"
                   (filterChange)="onCharacterTagFilterChange($event)"
                 ></app-character-tag-filter>
 
@@ -193,7 +192,6 @@
                   [placeholder]="t('filters.typePlaceholder')"
                   [options]="availableTypes()"
                   [selection]="typeFacet()"
-                  [disabled]="loading()"
                   (selectionChange)="onTypeFacetChange($event)"
                 ></app-character-facet-filter>
 
@@ -205,7 +203,6 @@
                   [placeholder]="t('filters.classPlaceholder')"
                   [options]="availableClasses()"
                   [selection]="classFacet()"
-                  [disabled]="loading()"
                   (selectionChange)="onClassFacetChange($event)"
                 ></app-character-facet-filter>
 
