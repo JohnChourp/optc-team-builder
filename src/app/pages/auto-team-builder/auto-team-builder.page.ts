@@ -3111,7 +3111,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.userState.readyAutoTeamBuilderWorkerPreference(),
       this.i18n.preloadScope('auto-team-builder'),
       this.i18n.preloadScope('ability-picker'),
-      this.i18n.preloadScope('enemy-mechanics-picker'),
       this.i18n.preloadScope('character-tag-filter'),
       this.i18n.preloadScope('character-tag-sets'),
       this.i18n.preloadScope('saved-teams'),
