@@ -103,6 +103,17 @@ const [major, minor, patch] = parts;
 
 switch (bumpType) {
   case 'major':
+    /*
+     * The cap does not apply here, and cannot: there is no segment above the
+     * major to roll into. A patch at 99 rolls into the minor and a minor at 99
+     * rolls into the major precisely because somewhere higher exists to absorb
+     * it, and above the major nothing does.
+     *
+     * So the rule "no segment ever reaches three digits" is enforced below by
+     * refusing rather than by rolling. At 99 a major bump needs a human
+     * decision about the version scheme, not a silent violation of the shape
+     * every released version has had.
+     */
     parts[0] = major + 1;
     parts[1] = 0;
     parts[2] = 0;
@@ -132,6 +143,13 @@ switch (bumpType) {
   default:
     console.error(`ERROR: Unsupported bump type: ${bumpType}`);
     process.exit(1);
+}
+
+if (parts.some((segment) => segment > MAX_SEGMENT)) {
+  console.error(
+    `ERROR: ${parts.join('.')} has a segment above ${MAX_SEGMENT}. OPTC versions keep two-digit segments; decide the version scheme by hand rather than shipping a three-digit one.`,
+  );
+  process.exit(1);
 }
 
 console.log(parts.join('.'));

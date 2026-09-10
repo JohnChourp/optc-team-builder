@@ -750,9 +750,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.savedTeamShipMap.set(new Map(ships.map((ship) => [ship.id, ship] as const)));
   }
 
-  public ionViewDidEnter(): void {
-    console.log('SavedEnemiesPage component');
-  }
 
   public getEnemyBuilderQueryParams(enemy: SavedEnemy): { enemyId: string } {
     return { enemyId: enemy.id };

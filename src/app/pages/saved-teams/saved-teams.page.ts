@@ -365,9 +365,6 @@ export class SavedTeamsPage implements OnInit {
     await this.refreshSavedTeamCards();
   }
 
-  public ionViewDidEnter(): void {
-    console.log('SavedTeamsPage component');
-  }
 
   public getTeamBuilderQueryParams(team: Pick<SavedTeam, 'id'>): { teamId: string } {
     return { teamId: team.id };

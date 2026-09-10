@@ -64,7 +64,6 @@ import {
 } from '../character-tag-filter/character-tag-filter.component';
 
 const PAGE_SIZE = 48;
-const CHARACTER_IMAGE_PICKER_MODAL_NAME = 'CharacterImagePickerComponent';
 
 @Component({
   selector: 'app-character-image-picker',
@@ -250,7 +249,6 @@ export class CharacterImagePickerComponent implements OnChanges {
 
   public ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
-      console.log(`[Modal Open] ${CHARACTER_IMAGE_PICKER_MODAL_NAME}`);
       this.dismissReason = null;
       this.resetState();
       void this.initializePicker();

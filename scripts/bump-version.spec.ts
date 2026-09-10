@@ -79,6 +79,35 @@ describe('bump-version.sh', () => {
     await expect(nextVersion('0.99.99', 'patch')).resolves.toBe('1.0.0');
   });
 
+  /*
+   * The cap was enforced on patch and minor and not on major, which is not an
+   * oversight - there is no segment above the major to roll INTO. A patch at 99
+   * rolls into the minor and a minor at 99 rolls into the major precisely
+   * because somewhere higher exists to absorb it, and above the major nothing
+   * does.
+   *
+   * So the rule "no segment ever reaches three digits" is enforced by refusing.
+   * At 99 a major bump needs a decision about the version scheme, not a silent
+   * three-digit version - and refusing is what makes the rule true at EVERY
+   * segment rather than at two of the three.
+   */
+  it('refuses a major bump that would produce a three-digit segment', async () => {
+    const root = await makeWorkspace('99.4.6');
+
+    await expect(
+      execFileAsync(
+        'bash',
+        [path.join(root, 'scripts/bump-version.sh'), '--bump', 'major', '--print-only'],
+        { cwd: root },
+      ),
+    ).rejects.toThrow(/two-digit segments/u);
+  });
+
+  it('still allows a major bump below the cap', async () => {
+    await expect(nextVersion('0.4.6', 'major')).resolves.toBe('1.0.0');
+    await expect(nextVersion('98.4.6', 'major')).resolves.toBe('99.0.0');
+  });
+
   it('rolls a minor bump at 99 into the major', async () => {
     await expect(nextVersion('0.99.5', 'minor')).resolves.toBe('1.0.0');
     await expect(nextVersion('0.99.99', 'minor')).resolves.toBe('1.0.0');
