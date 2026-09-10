@@ -20,6 +20,16 @@ export const BRAIN_WORKFLOW_BUDGET_EXEMPTIONS = ['.github/workflows/pr-traceabil
 
 export const APP_WORKFLOW_BUDGET_CONTRACT = [
   {
+    workflowPath: '.github/workflows/refresh-visual-baselines.yml',
+    concurrency: {
+      group: MANUAL_RUN_GROUP,
+      cancelInProgress: false,
+    },
+    jobs: {
+      refresh: { timeoutMinutes: 30 },
+    },
+  },
+  {
     workflowPath: '.github/workflows/test.yml',
     concurrency: {
       group: MANUAL_RUN_GROUP,

@@ -1,0 +1,93 @@
+name: Refresh Visual Baselines
+
+# Manual only by policy, and deliberately does not commit anything.
+#
+# The six visual baselines under `e2e/public-entry-visual.spec.ts-snapshots/`
+# are compared on Linux only, to match CI rendering - `public-entry-visual.spec.ts`
+# skips itself on any other platform. So they cannot be regenerated on a
+# maintainer's Mac: a macOS capture would differ from what CI compares against
+# and every run would fail.
+#
+# This job regenerates them on the same Linux image CI compares on, and uploads
+# them as an artifact for a human to inspect and commit. It does not push,
+# because a baseline is an assertion about what the app should look like, and
+# nothing should update that assertion without someone looking at it.
+#
+# See docs/ci-trigger-policy.md and `npm run actions:ci-triggers`.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 30 minutes"
+            echo "- Concurrency policy: manual baseline refreshes are isolated per run and are never cancelled."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright browser (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Regenerate the visual baselines
+        run: node ./scripts/run-playwright-e2e.mjs --e2e-project=chromium --update-snapshots e2e/public-entry-visual.spec.ts
+        env:
+          CI: 'true'
+
+      - name: Report what changed
+        if: always()
+        run: |
+          {
+            echo "### Baselines after the refresh"
+            echo ''
+            echo '```'
+            git status --porcelain e2e/public-entry-visual.spec.ts-snapshots/ || true
+            echo '```'
+            echo ''
+            echo 'Download the artifact below, replace the files in'
+            echo '`e2e/public-entry-visual.spec.ts-snapshots/`, and open a PR.'
+            echo 'Look at them first: a refreshed baseline is an assertion about'
+            echo 'what the app should look like, and this job cannot tell drift'
+            echo 'from a regression.'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload the regenerated baselines
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: refreshed-visual-baselines
+          path: e2e/public-entry-visual.spec.ts-snapshots/
+          if-no-files-found: error
+          retention-days: 7
