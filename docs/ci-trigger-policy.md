@@ -164,3 +164,27 @@ check as a manual dispatch with a `pr_number` input.
 The brain repo carries its own copy of the script with the same flags, run as
 `node .github/scripts/check-pr-traceability.mjs --pr <number>` from the brain
 checkout.
+
+## Refreshing the visual baselines
+
+The six baselines under `e2e/public-entry-visual.spec.ts-snapshots/` are compared
+on Linux only, so `public-entry-visual.spec.ts` skips itself everywhere else.
+That means they cannot be regenerated on a maintainer's Mac: a macOS capture
+differs from what CI compares against, and every run would then fail.
+
+`Refresh Visual Baselines` regenerates them on the same Linux image CI uses and
+uploads them as an artifact. It is `workflow_dispatch` only and **does not
+commit anything** - a baseline is an assertion about what the app should look
+like, and this job cannot tell drift from a regression. Download the artifact,
+look at the images, then open a PR with them.
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+
+```bash
+gh workflow run refresh-visual-baselines.yml --repo JohnChourp/optc-team-builder
+```
+
+Expect drift after any release: the footer carries the app version, so a
+baseline captured at one version differs from every later one until the mask
+over `.app-footer-meta` is doing its job.

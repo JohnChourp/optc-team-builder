@@ -19,6 +19,7 @@ export const STRICT_GITHUB_ACTION_WORKFLOWS = [
    * below found the first time it ran.
    */
   '.github/workflows/dataset-change-digest.yml',
+  '.github/workflows/refresh-visual-baselines.yml',
 ];
 
 /**
