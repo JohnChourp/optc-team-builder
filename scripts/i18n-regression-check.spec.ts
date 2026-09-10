@@ -250,113 +250,32 @@ describe('orphaned translation keys', () => {
   /*
    * Keys that exist in a bundle and are referenced by no production code.
    *
-   * These SHIP: every scope is fetched whole, so an orphan is bytes the reader
-   * downloads and copy that looks live to anyone reading the bundle. The set
-   * below is the state on 2026-09-10 and is a BACKLOG, not an approval - each
-   * needs its own read before deletion, because the traps are real. Measured
-   * while writing this guard: `settings:sections.analytics` looks used if you
-   * grep for it (six hits) and every one is `cookie-policy` scope.
+   * EMPTY, and it must stay that way. These SHIP - every scope is fetched
+   * whole, so an orphan is bytes the reader downloads and copy that looks live
+   * to anyone reading the bundle. A new orphan fails the scan above.
    *
-   * Twenty-one keys in wholly-dead subtrees were deleted rather than listed:
-   * where every leaf under a parent is unreferenced, the group went with the
-   * control it labelled.
+   * The backlog it used to hold was cleared on 2026-09-10: 82 entries, of which
+   * 80 were deleted from `en.json` and `el.json` together, and 2 were not
+   * orphans at all. Both traps the old comment warned about were checked
+   * mechanically for all 82 rather than by sampling - none sat under a dynamic
+   * prefix (61 exist), and no nested `read:` exists in this codebase to make a
+   * short path resolve to one.
    *
-   * The point of the list is that it must not GROW. A new orphan fails here.
+   * The two survivors are the reason a list like this is dangerous.
+   * `chips.addedNoCount` and `chips.removedNoCount` are built at runtime by
+   * `announceWithCount` as `${key}NoCount`, so their names appear nowhere and
+   * the prefix scan could not see them. They had been sitting in this backlog
+   * as deletion candidates; deleting them would have silently removed the
+   * screen-reader announcement for the case where no count is available.
+   * `isReachable` above now knows about suffix composition, and that is what
+   * took them off this list rather than a human noticing.
+   *
+   * Two more that looked used and were not, both scope collisions rather than
+   * references: `settings:sections.analytics` has six grep hits and every one
+   * is `cookie-policy` scope, and `characters:favorites.clearAll` is a prefix
+   * of the live `favorites.clearAllConfirm`.
    */
-  const KNOWN_ORPHANS = new Set([
-  // auto-team-builder
-  'auto-team-builder:abilityRequirements.configuredRows',
-  'auto-team-builder:abilityRequirements.emptyCatalog',
-  'auto-team-builder:abilityRequirements.emptyCatalogSuffix',
-  'auto-team-builder:abilityRequirements.placeholders.selectSlotTokens',
-  'auto-team-builder:actions.build.favoriteFlexible',
-  'auto-team-builder:actions.build.favoriteStrict',
-  'auto-team-builder:actions.build.selectTypes',
-  'auto-team-builder:compare.shipPresence.present',
-  'auto-team-builder:crewmateFilters.configuredRows',
-  'auto-team-builder:crewmateFilters.emptyCatalog',
-  'auto-team-builder:crewmateFilters.emptyCatalogSuffix',
-  'auto-team-builder:enemyMechanics.configuredRows',
-  'auto-team-builder:errors.requirements.characterNameCoverage',
-  'auto-team-builder:errors.requirements.characterTagCoverage',
-  'auto-team-builder:errors.requirements.superTandemCriteria',
-  'auto-team-builder:fallback.ignoredLeaderSuperSpecialCriteria',
-  'auto-team-builder:filters.captainAbilityCoverage.support.simple',
-  'auto-team-builder:filters.leaderBoost.placeholder',
-  'auto-team-builder:filters.leaderBoost.range.atkMax',
-  'auto-team-builder:filters.leaderBoost.range.atkMin',
-  'auto-team-builder:filters.leaderBoost.range.hpMax',
-  'auto-team-builder:filters.leaderBoost.range.hpMin',
-  'auto-team-builder:hero.strictModes.bothLeadersCaptainCoverage',
-  'auto-team-builder:hero.strictModes.perCharacterClasses',
-  'auto-team-builder:hero.strictModes.superSpecialCriteriaCoverage',
-  'auto-team-builder:hero.strictModes.superTandemCriteriaCoverage',
-  'auto-team-builder:manualCounters.configuredRows',
-  'auto-team-builder:manualCounters.emptyCatalog',
-  'auto-team-builder:manualCounters.emptyCatalogSuffix',
-  'auto-team-builder:potentialFilters.configuredRows',
-  'auto-team-builder:potentialFilters.emptyCatalog',
-  'auto-team-builder:potentialFilters.emptyCatalogSuffix',
-  'auto-team-builder:progress.allowingLeadersWithSuperEffects',
-  'auto-team-builder:progress.ignoringLeaderSuperSpecialCriteria',
-  'auto-team-builder:progress.ignoringTypes',
-  'auto-team-builder:save.savingCopy',
-  'auto-team-builder:ships.changeAction',
-  'auto-team-builder:ships.emptySelectionLabel',
-  'auto-team-builder:ships.openAction',
-  'auto-team-builder:ships.pickerCopy',
-  'auto-team-builder:ships.pickerTitle',
-  'auto-team-builder:specialFilters.configuredRows',
-  'auto-team-builder:specialFilters.emptyCatalog',
-  'auto-team-builder:specialFilters.emptyCatalogSuffix',
-  'auto-team-builder:supportFilters.configuredRows',
-  'auto-team-builder:supportFilters.emptyCatalog',
-  'auto-team-builder:supportFilters.emptyCatalogSuffix',
-  // auto-team-builder-rumble
-  'auto-team-builder-rumble:summary.totalScore',
-  // captain-coverage
-  'captain-coverage:boosts.ariaLabel',
-  'captain-coverage:boosts.avg',
-  // character-tag-sets
-  'character-tag-sets:chips.removedNoCount',
-  // crew-forge
-  'crew-forge:imageImport.errors.invalidProfile',
-  // saved-enemies
-  'saved-enemies:bulkImport.chooseAnotherFile',
-  'saved-enemies:bulkImport.dropzone.subtitle',
-  'saved-enemies:bulkImport.processing',
-  'saved-enemies:editor.addAbility',
-  'saved-enemies:editor.associatedTeams.toggleAria',
-  'saved-enemies:editor.crewmateFilters.actions.openPicker',
-  'saved-enemies:editor.editAbilities',
-  'saved-enemies:editor.enemyMechanics.actions.openPicker',
-  'saved-enemies:editor.manualCounters.actions.openPicker',
-  'saved-enemies:editor.noAbilityCatalog',
-  'saved-enemies:editor.potentialFilters.actions.openPicker',
-  'saved-enemies:editor.removeAbility',
-  'saved-enemies:editor.specialFilters.actions.openPicker',
-  'saved-enemies:editor.supportFilters.actions.openPicker',
-  'saved-enemies:editor.toggles.classesCopy',
-  'saved-enemies:editor.toggles.typesCopy',
-  // settings
-  'settings:driveSync.account.signedOut',
-  'settings:sections.analytics',
-    // Referenced only by specs, never by production code. Some are deliberate
-    // negative guards (a spec asserting the key is NOT rendered); each needs
-    // reading before deletion, exactly like the rest of this backlog.
-    'auto-team-builder:filters.captainAbilityCoverage.toggle',
-    'auto-team-builder:abilityRequirements.placeholders.selectAbility',
-    'captain-coverage:filters.tierCoverage.panelEyebrow',
-    'captain-coverage:filters.tierCoverage.panelTitle',
-    'character-tag-sets:chips.addedNoCount',
-    'characters:favorites.clearAll',
-    'manual-team-builder:captainHelper.scopeChip',
-    'saved-enemies:hero.savedTeamsCta',
-    'saved-teams:hero.savedEnemiesCta',
-    'settings:language.helper',
-    'settings:driveSync.localOnly',
-    'settings:driveSync.actions.openPage',
-  ]);
+  const KNOWN_ORPHANS = new Set<string>([]);
 
   const flatten = (node: unknown, prefix = '', out: string[] = []): string[] => {
     for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
@@ -372,7 +291,44 @@ describe('orphaned translation keys', () => {
     return out;
   };
 
-  function readSources(): { prod: string; dynamicPrefixes: string[] } {
+  /**
+   * One definition of "reachable", shared by both halves of this guard.
+   *
+   * They used to carry the same four lines twice, and the suffix rule was
+   * added to one of them first - which would have let the backlog half call a
+   * key an orphan while the scan half called it reachable, the two disagreeing
+   * about the same key with nothing failing.
+   */
+  function isReachable(
+    key: string,
+    {
+      prod,
+      dynamicPrefixes,
+      dynamicSuffixes,
+    }: { prod: string; dynamicPrefixes: string[]; dynamicSuffixes: string[] },
+  ): boolean {
+    const quoted = (needle: string): boolean =>
+      [`'${needle}'`, `"${needle}"`, `\`${needle}\``].some((form) => prod.includes(form));
+
+    const leaf = key.split('.').pop()!;
+
+    if (quoted(key) || quoted(leaf)) {
+      return true;
+    }
+
+    if (dynamicPrefixes.some((prefix) => key.startsWith(prefix))) {
+      return true;
+    }
+
+    // Composed by suffix: `${stem}NoCount`. The stem must itself be a key the
+    // code names, or any key merely ENDING in a common fragment would be
+    // excused - which would turn this rule into a hole rather than a fix.
+    return dynamicSuffixes.some(
+      (suffix) => key.endsWith(suffix) && key.length > suffix.length && quoted(key.slice(0, -suffix.length)),
+    );
+  }
+
+  function readSources(): { prod: string; dynamicPrefixes: string[]; dynamicSuffixes: string[] } {
     const prod: string[] = [];
     const walk = (dir: string): void => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -401,13 +357,32 @@ describe('orphaned translation keys', () => {
       if (prefix) dynamicPrefixes.add(prefix);
     }
 
-    return { prod: joined, dynamicPrefixes: [...dynamicPrefixes] };
+    // A key can also be composed by SUFFIX, and that blind spot cost two real
+    // false orphans. `character-tag-set-picker.component.ts` announces through
+    //
+    //   private announceWithCount(key, params) {
+    //     if (count === null) { this.announce(`${key}NoCount`, params); ... }
+    //
+    // so `chips.addedNoCount` and `chips.removedNoCount` are produced at
+    // runtime and their names never appear anywhere. The prefix scan cannot
+    // see them - the composed part is at the front - and both were sitting in
+    // the backlog below waiting to be deleted, which would have silently
+    // broken the no-count screen-reader announcement.
+    const dynamicSuffixes = new Set<string>();
+
+    for (const [, suffix] of joined.matchAll(/\$\{[^}]*\}([a-zA-Z0-9_.-]+)['"`]/gu)) {
+      if (suffix) dynamicSuffixes.add(suffix);
+    }
+
+    return { prod: joined, dynamicPrefixes: [...dynamicPrefixes], dynamicSuffixes: [...dynamicSuffixes] };
   }
 
   it('gains no new orphaned key', () => {
-    const { prod, dynamicPrefixes } = readSources();
+    const { prod, dynamicPrefixes, dynamicSuffixes } = readSources();
     const root = 'public/i18n';
     const found: string[] = [];
+    let scannedBundles = 0;
+    let scannedKeys = 0;
 
     for (const entry of readdirSync(root, { withFileTypes: true })) {
       if (!entry.isDirectory()) {
@@ -421,20 +396,25 @@ describe('orphaned translation keys', () => {
       }
 
       for (const key of flatten(JSON.parse(readFileSync(enPath, 'utf8')))) {
-        const leaf = key.split('.').pop()!;
-        const referenced = [key, leaf].some((needle) =>
-          [`'${needle}'`, `"${needle}"`, `\`${needle}\``].some((quoted) => prod.includes(quoted)),
-        );
+        scannedKeys += 1;
 
-        if (referenced || dynamicPrefixes.some((prefix) => key.startsWith(prefix))) {
+        if (isReachable(key, { prod, dynamicPrefixes, dynamicSuffixes })) {
           continue;
         }
 
         found.push(`${entry.name}:${key}`);
       }
+
+      scannedBundles += 1;
     }
 
-    expect(found.length, 'the orphan scan found nothing at all, so it has stopped working').toBeGreaterThan(0);
+    // This used to assert `found.length > 0` - "the scan found nothing at all,
+    // so it has stopped working". That was true only while orphans existed. The
+    // backlog is empty now, so the same assertion would demand the repo keep at
+    // least one orphan forever. Prove the scan RAN instead: it reads every
+    // bundle and every leaf either way, and a broken walk collapses both counts.
+    expect(scannedBundles, 'the orphan scan read no bundles, so it has stopped working').toBeGreaterThan(20);
+    expect(scannedKeys, 'the orphan scan read no keys, so it has stopped working').toBeGreaterThan(1500);
 
     const added = found.filter((key) => !KNOWN_ORPHANS.has(key));
 
@@ -442,7 +422,7 @@ describe('orphaned translation keys', () => {
   });
 
   it('keeps the backlog honest: every listed orphan still exists and is still an orphan', () => {
-    const { prod, dynamicPrefixes } = readSources();
+    const { prod, dynamicPrefixes, dynamicSuffixes } = readSources();
     const stale: string[] = [];
 
     for (const entry of KNOWN_ORPHANS) {
@@ -459,12 +439,7 @@ describe('orphaned translation keys', () => {
         continue;
       }
 
-      const leaf = key.split('.').pop()!;
-      const referenced = [key, leaf].some((needle) =>
-        [`'${needle}'`, `"${needle}"`, `\`${needle}\``].some((quoted) => prod.includes(quoted)),
-      );
-
-      if (referenced || dynamicPrefixes.some((prefix) => key.startsWith(prefix))) {
+      if (isReachable(key, { prod, dynamicPrefixes, dynamicSuffixes })) {
         stale.push(`${entry} (now referenced)`);
       }
     }

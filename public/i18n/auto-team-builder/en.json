@@ -10,14 +10,10 @@
     },
     "strictModes": {
       "typeCoverage": "team-wide type coverage",
-      "perCharacterClasses": "per-slot class matching",
       "characterTags": "team-wide character tag coverage",
       "characterNames": "required character names",
       "leaderSuperEffectScope": "leader super effect scope",
-      "captainAbilityCoverage": "Captain Ability tier coverage",
-      "bothLeadersCaptainCoverage": "Captain Ability tier coverage from both leaders",
-      "superSpecialCriteriaCoverage": "Super Special criteria coverage",
-      "superTandemCriteriaCoverage": "Super Tandem criteria coverage"
+      "captainAbilityCoverage": "Captain Ability tier coverage"
     },
     "strictMode": {
       "flexible": "flexible fallback enabled",
@@ -123,9 +119,7 @@
       }
     },
     "captainAbilityCoverage": {
-      "toggle": "Require Captain Ability tier coverage",
       "support": {
-        "simple": "Default mode filters teams by the leader's standard HP/ATK boost scope only.",
         "full": "Every final slot must match a Captain Ability tier of the leader, and every tier must be covered by at least one team slot."
       }
     },
@@ -149,7 +143,6 @@
     },
     "leaderBoost": {
       "label": "Leader boost priority",
-      "placeholder": "Select boost priority",
       "options": {
         "HP": "HP",
         "ATK": "ATK"
@@ -160,10 +153,6 @@
         "average": "Captain and Friend Captain auto-fill prefers the highest average of HP and ATK captain boosts, then newest character, then higher cost."
       },
       "range": {
-        "atkMin": "ATK from",
-        "atkMax": "ATK to",
-        "hpMin": "HP from",
-        "hpMax": "HP to",
         "invalid": "Leader boost minimum cannot be greater than maximum."
       }
     },
@@ -267,24 +256,16 @@
   "abilityRequirements": {
     "title": "Ability requirements",
     "copy": "Add extra utility requirements that the final team should cover across all six slots.",
-    "configuredRows": "{{count}} configured rows",
-    "emptyCatalog": "No ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it.",
     "fields": {
       "ability": "Ability",
       "characters": "Characters",
       "turns": "Turns",
       "slotTokens": "Slot tokens"
-    },
-    "placeholders": {
-      "selectAbility": "Select ability",
-      "selectSlotTokens": "Select slot tokens"
     }
   },
   "enemyMechanics": {
     "title": "Enemy mechanics",
     "copy": "Describe the enemy mechanics first. The builder derives direct counters from them where the mapping is explicit.",
-    "configuredRows": "{{count}} configured mechanics",
     "empty": "No enemy mechanics selected yet.",
     "tags": {
       "trigger": {
@@ -315,17 +296,11 @@
   "manualCounters": {
     "title": "Manual counter overrides",
     "copy": "Add extra direct counters only when you want filtering beyond what the structured enemy mechanics already derive.",
-    "configuredRows": "{{count}} manual overrides",
-    "empty": "No manual counter overrides selected.",
-    "emptyCatalog": "No ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it."
+    "empty": "No manual counter overrides selected."
   },
   "actions": {
     "build": {
-      "favoriteFlexible": "Build {{types}} crew with favorite auto-fill",
-      "favoriteStrict": "Build strict {{types}} crew with favorite auto-fill",
       "flexible": "Build {{types}} crew",
-      "selectTypes": "Select at least one type to build",
       "strict": "Build strict {{types}} crew"
     },
     "cancelBuild": "Cancel build",
@@ -550,11 +525,9 @@
       "selected": "Selected"
     },
     "autoRecommendation": "Let the builder recommend the best ship for the selected crew.",
-    "changeAction": "Change ship",
     "clearSelection": "Use auto recommendation",
     "confirm": "Use ship selection",
     "count": "{{count}} ships in the manual ship catalog.",
-    "emptySelectionLabel": "Auto ship recommendation",
     "emptySearch": "No ships matched the current ship search.",
     "excluded": "This ship is excluded and cannot be confirmed as the manual ship.",
     "favoriteOnly": {
@@ -565,9 +538,6 @@
     },
     "manualBadge": "Manual ship",
     "manualOverride": "Manual ship override active: {{name}}",
-    "openAction": "Choose ship",
-    "pickerCopy": "Pick any ship from the full catalog, or leave it empty so the builder can recommend one. Excluded ships stay visible but locked.",
-    "pickerTitle": "Manual ship selection",
     "requireToggle": {
       "label": "Lock this ship as required",
       "support": "When on, the builder must use this exact ship; if it is excluded or unavailable, the build fails instead of falling back to a recommendation."
@@ -593,10 +563,7 @@
     "favoriteScopePending": "Favorites scope: {{favoriteCount}} favorites active; current search pool pending.",
     "favoriteScopeWithBox": "Favorites scope: {{favoriteCount}} favorites active; {{boxCount}} also in {{boxName}}; current search pool {{candidateCount}} candidates after filters/exclusions.",
     "favoriteScopeWithBoxPending": "Favorites scope: {{favoriteCount}} favorites active; {{boxCount}} also in {{boxName}}; current search pool pending.",
-    "allowingLeadersWithSuperEffects": "Allowing leaders with super effects",
     "ignoringClasses": "Ignoring classes: {{classes}}",
-    "ignoringLeaderSuperSpecialCriteria": "Ignoring Super Special criteria",
-    "ignoringTypes": "Ignoring types: {{types}}",
     "leaderPair": "Trying leaders: Captain {{captain}} / Friend {{friendCaptain}}",
     "leaderPairPosition": "Leader pair {{current}} / {{total}} in this attempt",
     "leaderScope": "Leader scope: Captain {{captain}}; Friend {{friendCaptain}}",
@@ -627,7 +594,6 @@
     "droppedCharacterNames": "Dropped character names",
     "droppedCharacterTags": "Dropped character tags",
     "droppedTypes": "Dropped types",
-    "ignoredLeaderSuperSpecialCriteria": "Ignored Super Special criteria",
     "ignoredSuperSpecialCriteria": "Super Special will not activate for the final team.",
     "ignoredSuperSpecialCriteriaWithNames": "Super Special will not activate for: {{names}}",
     "ignoredSuperTandemCriteria": "Super Tandem will not activate for the final team.",
@@ -710,7 +676,6 @@
     "error": "The team could not be saved. Please try again.",
     "notesLabel": "Notes",
     "saveOffline": "Save team offline",
-    "savingCopy": "The team is already being saved offline. The button will unlock again in a few seconds.",
     "savingLabel": "Saving...",
     "teamNameLabel": "Crew name",
     "title": "Save generated team"
@@ -776,7 +741,6 @@
       "importPayload": "Saved-team share link, share code, preset JSON, or team JSON"
     },
     "shipPresence": {
-      "present": "Yes",
       "absent": "No"
     },
     "empty": {
@@ -1015,14 +979,11 @@
     "requirements": {
       "abilityCoverage": "ability coverage for {{abilities}}",
       "battleCoverage": "battle counter coverage for {{battles}}",
-      "characterNameCoverage": "team-wide character name coverage",
-      "characterTagCoverage": "team-wide character tag coverage",
       "classCoverage": "per-slot class coverage",
       "favoritesScope": " while keeping favorite-only auto-fill for open slots; non-favorite counters are not considered",
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "separator": " and ",
       "superSpecialCriteria": "Super Special criteria coverage",
-      "superTandemCriteria": "Super Tandem criteria coverage",
       "strict": "No strict team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "team-wide type coverage",
       "uniqueCharacterNames": "unique in-game character identities across the team except Friend Captain"
@@ -1137,36 +1098,24 @@
     "eyebrow": "Special",
     "title": "Special filters",
     "copy": "Pick Special effects. Results must cover every selected effect.",
-    "configuredRows": "{{count}} selected Special effects",
-    "empty": "No Special effects selected yet.",
-    "emptyCatalog": "No Special ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it."
+    "empty": "No Special effects selected yet."
   },
   "crewmateFilters": {
     "eyebrow": "Crewmate Ability",
     "title": "Crewmate Ability filters",
     "copy": "Pick Crewmate effects. Results must cover every selected effect.",
-    "configuredRows": "{{count}} selected Crewmate effects",
-    "empty": "No Crewmate Ability effects selected",
-    "emptyCatalog": "No Crewmate ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it."
+    "empty": "No Crewmate Ability effects selected"
   },
   "potentialFilters": {
     "eyebrow": "Potential Ability",
     "title": "Potential Ability filters",
     "copy": "Pick Potential effects. Results must cover every selected effect.",
-    "configuredRows": "{{count}} selected Potential effects",
-    "empty": "No Potential Ability effects selected",
-    "emptyCatalog": "No Potential ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it."
+    "empty": "No Potential Ability effects selected"
   },
   "supportFilters": {
     "eyebrow": "Support Ability",
     "title": "Support Ability filters",
     "copy": "Pick Support effects. Results must cover every selected effect.",
-    "configuredRows": "{{count}} selected Support effects",
-    "empty": "No Support Ability effects selected",
-    "emptyCatalog": "No Support ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it."
+    "empty": "No Support Ability effects selected"
   }
 }

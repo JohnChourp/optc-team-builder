@@ -77,7 +77,6 @@
   },
   "favorites": {
     "addAria": "Add {{name}} to favorites",
-    "clearAll": "Clear all favorites",
     "clearAllConfirm": "Delete all favorites? This does not affect your saved teams.",
     "removeAria": "Remove {{name}} from favorites"
   },

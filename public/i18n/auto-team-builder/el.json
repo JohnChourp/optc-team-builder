@@ -10,14 +10,10 @@
     },
     "strictModes": {
       "typeCoverage": "κάλυψη types στην ομάδα",
-      "perCharacterClasses": "match classes σε κάθε slot",
       "characterTags": "κάλυψη character tags στην ομάδα",
       "characterNames": "υποχρεωτικά character names",
       "leaderSuperEffectScope": "match στο leader super effect scope",
-      "captainAbilityCoverage": "Κάλυψη Captain Ability tiers",
-      "bothLeadersCaptainCoverage": "Κάλυψη Captain Ability tiers και από τους δύο leaders",
-      "superSpecialCriteriaCoverage": "κάλυψη Super Special criteria",
-      "superTandemCriteriaCoverage": "κάλυψη Super Tandem criteria"
+      "captainAbilityCoverage": "Κάλυψη Captain Ability tiers"
     },
     "strictMode": {
       "flexible": "με flexible fallback",
@@ -123,9 +119,7 @@
       }
     },
     "captainAbilityCoverage": {
-      "toggle": "Απαίτησε κάλυψη Captain Ability tiers",
       "support": {
-        "simple": "Το default mode φιλτράρει την ομάδα με το standard HP/ATK boost scope του leader.",
         "full": "Κάθε final slot πρέπει να ταιριάζει σε ένα Captain Ability tier του leader και κάθε tier πρέπει να καλύπτεται από τουλάχιστον ένα slot της ομάδας."
       }
     },
@@ -149,7 +143,6 @@
     },
     "leaderBoost": {
       "label": "Leader boost priority",
-      "placeholder": "Επίλεξε boost priority",
       "options": {
         "HP": "HP",
         "ATK": "ATK"
@@ -160,10 +153,6 @@
         "average": "Το Captain και Friend Captain auto-fill προτιμά το μεγαλύτερο average HP και ATK captain boost, μετά τον πιο πρόσφατο χαρακτήρα και μετά το μεγαλύτερο cost."
       },
       "range": {
-        "atkMin": "ATK από",
-        "atkMax": "ATK έως",
-        "hpMin": "HP από",
-        "hpMax": "HP έως",
         "invalid": "Το ελάχιστο leader boost δεν μπορεί να είναι μεγαλύτερο από το μέγιστο."
       }
     },
@@ -267,24 +256,16 @@
   "abilityRequirements": {
     "title": "Ability requirements",
     "copy": "Πρόσθεσε extra utility requirements που πρέπει να καλύπτει συνολικά η τελική ομάδα και στα έξι slots.",
-    "configuredRows": "{{count}} configured rows",
-    "emptyCatalog": "Δεν βρέθηκε ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
     "fields": {
       "ability": "Ability",
       "characters": "Χαρακτήρες",
       "turns": "Turns",
       "slotTokens": "Slot tokens"
-    },
-    "placeholders": {
-      "selectAbility": "Επίλεξε ability",
-      "selectSlotTokens": "Επίλεξε slot tokens"
     }
   },
   "enemyMechanics": {
     "title": "Enemy mechanics",
     "copy": "Περιέγραψε πρώτα τα mechanics του εχθρού. Ο builder βγάζει direct counters από αυτά όπου υπάρχει σαφές mapping.",
-    "configuredRows": "{{count}} ρυθμισμένα mechanics",
     "empty": "Δεν έχουν επιλεγεί enemy mechanics ακόμη.",
     "tags": {
       "trigger": {
@@ -315,17 +296,11 @@
   "manualCounters": {
     "title": "Manual counter overrides",
     "copy": "Πρόσθεσε extra direct counters μόνο όταν θέλεις filtering πέρα από ό,τι παράγουν ήδη τα structured enemy mechanics.",
-    "configuredRows": "{{count}} manual overrides",
-    "empty": "Δεν έχουν επιλεγεί manual counter overrides.",
-    "emptyCatalog": "Δεν βρέθηκε ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
+    "empty": "Δεν έχουν επιλεγεί manual counter overrides."
   },
   "actions": {
     "build": {
-      "favoriteFlexible": "Χτίσε ομάδα {{types}} με favorite auto-fill",
-      "favoriteStrict": "Χτίσε strict ομάδα {{types}} με favorite auto-fill",
       "flexible": "Χτίσε ομάδα {{types}}",
-      "selectTypes": "Επίλεξε τουλάχιστον ένα type για build",
       "strict": "Χτίσε strict ομάδα {{types}}"
     },
     "cancelBuild": "Ακύρωση build",
@@ -550,11 +525,9 @@
       "selected": "Επιλεγμένο"
     },
     "autoRecommendation": "Άφησε τον builder να προτείνει το καλύτερο ship για την επιλεγμένη ομάδα.",
-    "changeAction": "Αλλαγή ship",
     "clearSelection": "Χρήση auto recommendation",
     "confirm": "Χρήση επιλογής ship",
     "count": "{{count}} ships στο manual ship catalog.",
-    "emptySelectionLabel": "Auto ship recommendation",
     "emptySearch": "Δεν βρέθηκαν ships στο current ship search.",
     "excluded": "Αυτό το ship είναι excluded και δεν μπορεί να επιβεβαιωθεί ως manual ship.",
     "favoriteOnly": {
@@ -565,9 +538,6 @@
     },
     "manualBadge": "Manual ship",
     "manualOverride": "Ενεργό manual ship override: {{name}}",
-    "openAction": "Επιλογή ship",
-    "pickerCopy": "Διάλεξε οποιοδήποτε ship από όλο το catalog ή άφησέ το κενό ώστε ο builder να προτείνει ship. Τα excluded ships μένουν ορατά αλλά κλειδωμένα.",
-    "pickerTitle": "Manual ship επιλογή",
     "requireToggle": {
       "label": "Lock this ship as required",
       "support": "When on, the builder must use this exact ship; if it is excluded or unavailable, the build fails instead of falling back to a recommendation."
@@ -593,10 +563,7 @@
     "favoriteScopePending": "Favorite scope: {{favoriteCount}} favorites ενεργά, current search pool pending.",
     "favoriteScopeWithBox": "Favorite scope: {{favoriteCount}} favorites ενεργά, {{boxCount}} υπάρχουν και στο {{boxName}}, current search pool {{candidateCount}} candidates μετά τα filters/exclusions.",
     "favoriteScopeWithBoxPending": "Favorite scope: {{favoriteCount}} favorites ενεργά, {{boxCount}} υπάρχουν και στο {{boxName}}, current search pool pending.",
-    "allowingLeadersWithSuperEffects": "Επιτρέπονται leaders με super effects",
     "ignoringClasses": "Ignoring classes: {{classes}}",
-    "ignoringLeaderSuperSpecialCriteria": "Αγνόησε τα Super Special criteria",
-    "ignoringTypes": "Ignoring types: {{types}}",
     "leaderPair": "Δοκιμάζει leaders: Captain {{captain}} / Friend {{friendCaptain}}",
     "leaderPairPosition": "Leader pair {{current}} / {{total}} σε αυτό το attempt",
     "leaderScope": "Leader scope: Captain {{captain}}; Friend {{friendCaptain}}",
@@ -627,7 +594,6 @@
     "droppedCharacterNames": "Dropped character names",
     "droppedCharacterTags": "Dropped character tags",
     "droppedTypes": "Dropped types",
-    "ignoredLeaderSuperSpecialCriteria": "Αγνόησε τα Super Special criteria",
     "ignoredSuperSpecialCriteria": "Το Super Special δεν θα ενεργοποιηθεί για το final team.",
     "ignoredSuperSpecialCriteriaWithNames": "Το Super Special δεν θα ενεργοποιηθεί για: {{names}}",
     "ignoredSuperTandemCriteria": "Το Super Tandem δεν θα ενεργοποιηθεί για το final team.",
@@ -710,7 +676,6 @@
     "error": "Η αποθήκευση της ομάδας δεν ολοκληρώθηκε. Δοκίμασε ξανά.",
     "notesLabel": "Σημειώσεις",
     "saveOffline": "Αποθήκευση ομάδας offline",
-    "savingCopy": "Η ομάδα αποθηκεύεται ήδη offline. Το κουμπί θα ενεργοποιηθεί ξανά σε λίγα δευτερόλεπτα.",
     "savingLabel": "Αποθήκευση...",
     "teamNameLabel": "Όνομα πληρώματος",
     "title": "Αποθήκευση generated team"
@@ -776,7 +741,6 @@
       "importPayload": "Saved-team share link, share code, preset JSON ή team JSON"
     },
     "shipPresence": {
-      "present": "Ναι",
       "absent": "Όχι"
     },
     "empty": {
@@ -1015,14 +979,11 @@
     "requirements": {
       "abilityCoverage": "ability coverage για {{abilities}}",
       "battleCoverage": "battle counter coverage για {{battles}}",
-      "characterNameCoverage": "κάλυψη character names στην ομάδα",
-      "characterTagCoverage": "κάλυψη character tags στην ομάδα",
       "classCoverage": "class coverage σε κάθε slot",
       "favoritesScope": " κρατώντας favorite-only auto-fill για τα ανοιχτά slots· non-favorite counters δεν εξετάζονται",
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "separator": " και ",
       "superSpecialCriteria": "κάλυψη των Super Special criteria",
-      "superTandemCriteria": "κάλυψη των Super Tandem criteria",
       "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "typeCoverage": "κάλυψη types στην ομάδα",
       "uniqueCharacterNames": "μοναδικές in-game character identities σε όλη την ομάδα εκτός Friend Captain"
@@ -1137,36 +1098,24 @@
     "eyebrow": "Special",
     "title": "Special filters",
     "copy": "Επίλεξε Special effects. Τα αποτελέσματα πρέπει να έχουν όλα τα επιλεγμένα effects.",
-    "configuredRows": "{{count}} επιλεγμένα Special effects",
-    "empty": "Δεν έχουν επιλεγεί Special effects ακόμη.",
-    "emptyCatalog": "Δεν βρέθηκε Special ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
+    "empty": "Δεν έχουν επιλεγεί Special effects ακόμη."
   },
   "crewmateFilters": {
     "eyebrow": "Crewmate Ability",
     "title": "Crewmate Ability filters",
     "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
-    "configuredRows": "{{count}} επιλεγμένα Crewmate effects",
-    "empty": "Δεν έχουν επιλεγεί Crewmate Ability effects",
-    "emptyCatalog": "Δεν βρέθηκε Crewmate ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
+    "empty": "Δεν έχουν επιλεγεί Crewmate Ability effects"
   },
   "potentialFilters": {
     "eyebrow": "Potential Ability",
     "title": "Potential Ability filters",
     "copy": "Επίλεξε Potential effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
-    "configuredRows": "{{count}} επιλεγμένα Potential effects",
-    "empty": "Δεν έχουν επιλεγεί Potential Ability effects",
-    "emptyCatalog": "Δεν βρέθηκε Potential ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
+    "empty": "Δεν έχουν επιλεγεί Potential Ability effects"
   },
   "supportFilters": {
     "eyebrow": "Support Ability",
     "title": "Support Ability filters",
     "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
-    "configuredRows": "{{count}} επιλεγμένα Support effects",
-    "empty": "Δεν έχουν επιλεγεί Support Ability effects",
-    "emptyCatalog": "Δεν βρέθηκε Support ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
+    "empty": "Δεν έχουν επιλεγεί Support Ability effects"
   }
 }

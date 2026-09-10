@@ -68,7 +68,6 @@
   "hero": {
     "copy": "Αυτή η σελίδα δείχνει μόνο τις αποθηκευμένες ομάδες σου.",
     "eyebrow": "Offline μνήμη",
-    "savedEnemiesCta": "Άνοιγμα saved enemies",
     "title": "Οι αποθηκευμένες ομάδες σου μένουν στη συσκευή και είναι έτοιμες να φορτωθούν ξανά στον builder."
   },
   "guide": {
@@ -194,7 +193,7 @@
       "unknown": "Ο browser δεν μπόρεσε να γράψει στο clipboard."
     },
     "sharedLink": "Άνοιξε το native share για \"{{name}}\".",
-  "sharedTitle": "Έγινε share",
+    "sharedTitle": "Έγινε share",
     "successTitle": "Αντιγράφηκε"
   },
   "selection": {

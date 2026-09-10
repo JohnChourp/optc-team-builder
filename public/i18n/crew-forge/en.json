@@ -43,8 +43,7 @@
       "recognitionFailed": "Crew Forge could not analyze this screenshot.",
       "noProfile": "No matching profile is available for this screenshot.",
       "profileMismatch": "The selected profile does not match the screenshot aspect ratio.",
-      "noProfileForDimensions": "Screenshot size {{width}} × {{height}} is not supported yet — no profile matches this aspect ratio.",
-      "invalidProfile": "The local profile is incomplete."
+      "noProfileForDimensions": "Screenshot size {{width}} × {{height}} is not supported yet — no profile matches this aspect ratio."
     }
   },
   "results": {

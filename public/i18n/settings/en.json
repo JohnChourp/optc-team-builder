@@ -5,8 +5,7 @@
     "copy": "Use this page to change app preferences, manage device-local data, and control optional analytics."
   },
   "language": {
-    "label": "Language",
-    "helper": "Change the app language live and keep it persisted on this device."
+    "label": "Language"
   },
   "account": {
     "avatarAlt": "{{ name }} Google profile image",
@@ -39,14 +38,11 @@
     "title": "Google Drive sync",
     "copy": "Connect a Google account to keep one visible Drive backup that you can restore on another device.",
     "scope": "Google Drive sync uses the same all-data bundle as manual backups: favorites, favorite ships, character boxes, character overrides, saved teams, and saved enemies.",
-    "localOnly": "Language, analytics consent, recents, worker preference, and Crew Forge image profiles stay local on each device.",
     "account": {
-      "label": "Connected account",
-      "signedOut": "No Google account connected"
+      "label": "Connected account"
     },
     "actions": {
       "openInDrive": "Open in Drive",
-      "openPage": "Open Drive Sync",
       "refresh": "Refresh Drive",
       "reconnect": "Reconnect Google",
       "restore": "Restore from Drive",
@@ -405,7 +401,6 @@
     }
   },
   "sections": {
-    "analytics": "Analytics & cookies",
     "dataManagement": "Backups and transfers"
   },
   "title": "Settings"
