@@ -55,16 +55,37 @@ export const SCRIPT_SUITES = {
     label: 'Release readiness report tests',
     command: 'npm run test:release-readiness',
   },
+  /*
+   * These three lanes ran their own unit specs and NOTHING ELSE, so a
+   * docs-only change was routed to checks that never opened the changed file.
+   * `npm run verify:local` enumerates exactly SCRIPT_SUITE_ORDER, and
+   * `docs:integrity` / `docs:commands` were in no lane at all - the command
+   * CLAUDE.md names as validation for an app change never validated a link, an
+   * anchor or a command block in the app's own docs.
+   *
+   * Both now chain their real checker after the spec, the way `actions-pins`
+   * has always done. Measured: 0.4s and 5.2s, against a suite that already
+   * spends 2m30s in the Angular lane.
+   */
   'docs-integrity': {
-    label: 'Docs integrity script tests',
+    label: 'Docs integrity tests and check',
     command: 'npm run test:docs-integrity',
   },
   'docs-commands': {
-    label: 'Docs command script tests',
+    label: 'Docs command tests and check',
     command: 'npm run test:docs-commands',
   },
+  /*
+   * `docs-drift` deliberately stays spec-only. Its checker reads the PR body
+   * from GitHub (`GET /repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls`) and
+   * returns an empty acknowledgement whenever those variables are unset, which
+   * is always outside Actions. Chaining it would fail `verify:local` on every
+   * branch whose diff touches a mapped feature - the trap CLAUDE.md documents
+   * at length. The label says what this lane really covers so nobody reads
+   * `pass docs-drift` as "the drift check ran".
+   */
   'docs-drift': {
-    label: 'Docs drift script tests',
+    label: 'Docs drift script tests (checker needs GitHub context)',
     command: 'npm run test:docs-drift',
   },
   discoverability: {
