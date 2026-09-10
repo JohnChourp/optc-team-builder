@@ -104,6 +104,27 @@ function scanLanguageParity(rootDir, scopes) {
     const englishPath = path.join(bundle.dir, "en.json");
     const greekPath = path.join(bundle.dir, "el.json");
 
+    /*
+     * A missing language file is the loudest parity failure there is, and this
+     * used to `continue` past it. Delete a whole `el.json` and the scope simply
+     * stopped being compared - the check reported no misuse while an entire
+     * language was gone. Scopes are discovered by their `en.json`, so the Greek
+     * side is exactly the one that can vanish unnoticed.
+     */
+    for (const [label, file] of [
+      ['en.json', englishPath],
+      ['el.json', greekPath],
+    ]) {
+      if (!existsSync(file)) {
+        findings.push({
+          file,
+          line: 1,
+          message: `${bundle.label || '(root)'} has no ${label}, so this scope was never compared`,
+          key: label,
+        });
+      }
+    }
+
     if (!existsSync(englishPath) || !existsSync(greekPath)) {
       continue;
     }
