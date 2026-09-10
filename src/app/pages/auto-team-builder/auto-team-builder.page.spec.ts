@@ -9538,3 +9538,42 @@ function resolveTranslationValue(source: Record<string, unknown>, key: string): 
     return (current as Record<string, unknown>)[part];
   }, source);
 }
+
+describe('Build button glow', () => {
+  const scss = readFileSync(
+    resolve(
+      process.cwd(),
+      'src/app/pages/auto-team-builder/auto-team-builder-actions-panel.component.scss',
+    ),
+    'utf8',
+  );
+  const rule = scss.slice(
+    scss.indexOf('.build-submit-button {'),
+    scss.indexOf('}', scss.indexOf('.build-submit-button {')),
+  );
+
+  /*
+   * The glow is declared three times - base, hover, active - as `--box-shadow`,
+   * which Ionic paints on `.button-native` INSIDE the shadow root
+   * (button.md.css:205). The host carried `overflow: hidden`, so all three were
+   * clipped to the host's own box and never reached the screen.
+   *
+   * The host's overflow was redundant as well as harmful: Ionic already clips
+   * the ripple with `overflow: var(--overflow)` on `.button-native`, defaulting
+   * to `hidden` (button.md.css:88,209), rounded by `--border-radius`.
+   */
+  it('does not clip its own glow away', () => {
+    expect(rule).not.toMatch(/^\s*overflow:\s*hidden;/mu);
+    expect(rule).toContain('--box-shadow:');
+  });
+
+  /*
+   * CLAUDE.md's rule, in the one place this repo has already been bitten by it:
+   * when a rounded Ionic control carries a pseudo-element, backdrop, overflow
+   * clip or mask, set the plain CSS property on the host as well as the Ionic
+   * custom property, and keep the two adjacent so they cannot drift.
+   */
+  it('sets the real border-radius on the host, adjacent to the Ionic one', () => {
+    expect(rule).toMatch(/--border-radius:\s*18px;\s*\n\s*border-radius:\s*18px;/u);
+  });
+});

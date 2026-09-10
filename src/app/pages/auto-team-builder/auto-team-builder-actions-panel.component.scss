@@ -15,8 +15,16 @@
   width: min(100%, 340px);
   min-height: 50px;
   margin: 0;
-  overflow: hidden;
+  /*
+   * The plain property sits next to the Ionic one on purpose, and they must
+   * stay adjacent so they cannot drift. `--border-radius` is consumed INSIDE
+   * the shadow root, on `.button-native`; it never sets `border-radius` on this
+   * host. So anything here that reads the real property - `overflow`, a
+   * pseudo-element with `border-radius: inherit`, a mask, a `clip-path` - saw a
+   * SQUARE while the button looked round.
+   */
   --border-radius: 18px;
+  border-radius: 18px;
   --box-shadow: 0 14px 32px rgba(245, 200, 76, 0.22);
   font-weight: 800;
   letter-spacing: 0;
