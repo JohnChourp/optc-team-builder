@@ -16,7 +16,9 @@ import {
   inspectPagesDeployConcurrency,
   PAGES_DEPLOY_CONCURRENCY_GROUP,
   PAGES_DEPLOY_SURFACES,
+  inspectAllowedEventRefs,
   readTriggerEvents,
+  readTriggerFilter,
 } from './check-github-ci-triggers.mjs';
 
 let tempDirs: string[] = [];
@@ -52,6 +54,136 @@ function workflow(onBlock: string[]) {
 }
 
 describe('check-github-ci-triggers', () => {
+
+  /*
+   * The allowlist granted an EVENT, not the refs it was granted for. So the one
+   * automatic trigger this repo allows - publishing production Pages from a
+   * push to main - would have kept passing if it were widened to every branch,
+   * or gained a `tags:` filter that publishes from every tag.
+   */
+  describe('allowlisted events are pinned to the refs they were granted for', () => {
+    const allowed = { reason: 'the deploy itself', branches: ['main'] };
+    const base = { repo: 'app', workflowPath: '.github/workflows/deploy-pages.yml', event: 'push' };
+
+    it('accepts exactly the granted branches', () => {
+      expect(inspectAllowedEventRefs({ ...base, allowed, declared: { branches: ['main'] } })).toEqual(
+        [],
+      );
+    });
+
+    it.each([
+      ['no branch filter at all', null, /every branch/u],
+      ['a widened branch list', { branches: ['main', 'develop'] }, /allowlisted for main but declares/u],
+      ['an empty branch list', { branches: [] }, /every branch/u],
+      ['a tags filter', { branches: ['main'], tags: ['v*'] }, /declares "tags"/u],
+      ['a branches-ignore filter', { branches: ['main'], 'branches-ignore': ['x'] }, /branches-ignore/u],
+    ])('rejects %s', (_label, declared, pattern) => {
+      const findings = inspectAllowedEventRefs({ ...base, allowed, declared });
+
+      expect(findings.length).toBeGreaterThan(0);
+      expect(findings.map((finding) => finding.message).join(' ')).toMatch(pattern);
+    });
+
+    it('still grants the event outright when the entry is a bare reason string', () => {
+      expect(
+        inspectAllowedEventRefs({ ...base, allowed: 'just a reason', declared: { branches: ['x'] } }),
+      ).toEqual([]);
+    });
+
+    /*
+     * The guard is only worth having if the repo's OWN entry uses it. Measured:
+     * revert the shipped entry to a bare reason string and every other test
+     * here still passes, because they all construct their own `allowed`. This
+     * is the one that pins the real allowlist to the narrow form.
+     */
+    it('pins the shipped allowlist entry to a branch list, not a bare grant', () => {
+      expect(APP_CI_TRIGGER_ALLOWLIST).toHaveLength(1);
+
+      const entry = APP_CI_TRIGGER_ALLOWLIST[0]!;
+
+      expect(entry.workflowPath).toBe('.github/workflows/deploy-pages.yml');
+      expect(Object.keys(entry.events)).toEqual(['push']);
+      expect(
+        entry.events.push,
+        'a bare string grants push on every branch and every tag',
+      ).not.toBeTypeOf('string');
+      expect(entry.events.push).toMatchObject({ branches: ['main'] });
+      expect(entry.events.push.reason).toBeTypeOf('string');
+    });
+
+    it('reads the filter the shipped deploy-pages workflow actually declares', () => {
+      const parsed = YAML.parse(readFileSync('.github/workflows/deploy-pages.yml', 'utf8'));
+
+      expect(readTriggerFilter(parsed, 'push')).toMatchObject({ branches: ['main'] });
+      expect(
+        inspectAllowedEventRefs({
+          ...base,
+          allowed: APP_CI_TRIGGER_ALLOWLIST[0]!.events.push,
+          declared: readTriggerFilter(parsed, 'push'),
+        }),
+      ).toEqual([]);
+    });
+  });
+
+  /*
+   * The concurrency check used to `return` when ANY ONE Pages surface was
+   * missing, which disabled it exactly when the deploy topology changed and it
+   * mattered most. Nothing present is still a genuine no-op.
+   */
+  it('reports a vanished Pages deploy surface instead of disabling itself', async () => {
+    const root = await makeRoot({
+      '.github/workflows/deploy-pages.yml': workflow(['  push:', '    branches:', '      - main']),
+    });
+    const findings: Array<{ message: string }> = [];
+
+    inspectPagesDeployConcurrency({ appRoot: root, findings });
+
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings.map((finding) => finding.message).join(' ')).toMatch(
+      /release-android\.yml is missing while another Pages deploy surface is present/u,
+    );
+  });
+
+  it('stays a no-op when no Pages deploy surface exists at all', async () => {
+    const root = await makeRoot({
+      '.github/workflows/unrelated.yml': workflow(['  workflow_dispatch:']),
+    });
+    const findings: unknown[] = [];
+
+    inspectPagesDeployConcurrency({ appRoot: root, findings });
+
+    expect(findings).toEqual([]);
+  });
+
+  /*
+   * The app's own lane runs this without `--brain-root`, so it inspects the app
+   * alone. "11 workflow(s) keep pull requests off Actions" read as a two-repo
+   * pass while the brain's workflows had not been opened.
+   */
+  it('names the repos it actually inspected in the pass line', () => {
+    expect(
+      formatCiTriggerResult({
+        ok: true,
+        findings: [],
+        checkedWorkflows: [
+          { repo: 'app', workflowPath: 'a.yml', events: ['workflow_dispatch'] },
+          { repo: 'app', workflowPath: 'b.yml', events: ['workflow_dispatch'] },
+        ],
+      }),
+    ).toContain('2 workflow(s) in app keep');
+
+    expect(
+      formatCiTriggerResult({
+        ok: true,
+        findings: [],
+        checkedWorkflows: [
+          { repo: 'app', workflowPath: 'a.yml', events: ['workflow_dispatch'] },
+          { repo: 'brain', workflowPath: 'b.yml', events: ['workflow_dispatch'] },
+        ],
+      }),
+    ).toContain('2 workflow(s) in app + brain keep');
+  });
+
   it('accepts manual and scheduled workflows', async () => {
     const appRoot = await makeRoot({
       '.github/workflows/manual.yml': workflow(['  workflow_dispatch:']),
@@ -131,6 +263,10 @@ describe('check-github-ci-triggers', () => {
           events: { push: 'Production deploy.' },
         },
       ],
+      // This fixture carries deploy-pages.yml to exercise the ALLOWLIST, not the
+      // Pages deploy topology; scoping the surfaces keeps it from also being
+      // told that release-android.yml went missing.
+      pagesDeploySurfaces: [],
     });
 
     expect(result.ok).toBe(false);

@@ -26,11 +26,25 @@ export const ALWAYS_ALLOWED_EVENTS = [
   'repository_dispatch',
 ];
 
+/*
+ * An entry allows an event on the REFS it names, not the event outright.
+ *
+ * `push: '<reason>'` used to allow `push` however it was declared, so widening
+ * `deploy-pages.yml` to every branch - or adding `tags:` - would have kept
+ * passing while publishing production from anywhere. The one allowlisted
+ * automatic trigger in this repo is worth pinning to the ref it was allowed for.
+ *
+ * A bare string is still accepted and means "any ref", so an entry has to opt
+ * IN to being checked; `branches` is what turns the grant into a narrow one.
+ */
 export const APP_CI_TRIGGER_ALLOWLIST = [
   {
     workflowPath: '.github/workflows/deploy-pages.yml',
     events: {
-      push: 'Publishing the production web app on main is the deploy itself, not a test lane.',
+      push: {
+        reason: 'Publishing the production web app on main is the deploy itself, not a test lane.',
+        branches: ['main'],
+      },
     },
   },
 ];
@@ -89,6 +103,75 @@ export function readTriggerEvents(workflow) {
   return [];
 }
 
+/** The ref filter a workflow declares for one event, or null when it declares none. */
+export function readTriggerFilter(workflow, event) {
+  const on = workflow?.on ?? workflow?.true;
+
+  if (!on || typeof on !== 'object' || Array.isArray(on)) {
+    return null;
+  }
+
+  const declared = on[event];
+
+  return declared && typeof declared === 'object' && !Array.isArray(declared) ? declared : null;
+}
+
+/**
+ * Whether a workflow's declared refs stay inside what the allowlist granted.
+ *
+ * Widening is the failure this exists for: an entry that allows `push` on
+ * `main` must not silently keep passing when the workflow starts pushing from
+ * every branch, or gains a `tags:` filter that publishes from every tag.
+ */
+export function inspectAllowedEventRefs({ repo, workflowPath, event, allowed, declared }) {
+  // A bare string reason grants the event outright, as before.
+  if (typeof allowed === 'string' || !allowed?.branches) {
+    return [];
+  }
+
+  const findings = [];
+  const expected = [...allowed.branches].sort();
+  const actual = [...(declared?.branches ?? [])].map(String).sort();
+
+  if (!declared || actual.length === 0) {
+    findings.push({
+      repo,
+      workflowPath,
+      event,
+      message:
+        `Trigger "${event}" is allowlisted only for ${expected.join(', ')}, but the workflow ` +
+        `declares no branch filter, so it runs on every branch.`,
+    });
+
+    return findings;
+  }
+
+  if (actual.join('\u0000') !== expected.join('\u0000')) {
+    findings.push({
+      repo,
+      workflowPath,
+      event,
+      message:
+        `Trigger "${event}" is allowlisted for ${expected.join(', ')} but declares ` +
+        `${actual.join(', ')}. Update the allowlist deliberately, with a reason, or narrow the workflow.`,
+    });
+  }
+
+  for (const widening of ['tags', 'tags-ignore', 'branches-ignore']) {
+    if (declared[widening]) {
+      findings.push({
+        repo,
+        workflowPath,
+        event,
+        message:
+          `Trigger "${event}" declares "${widening}", which reaches refs the allowlist never granted.`,
+      });
+    }
+  }
+
+  return findings;
+}
+
 function inspectRepository({
   findings,
   checkedWorkflows,
@@ -138,7 +221,20 @@ function inspectRepository({
     const allowedEvents = allowlistByPath.get(workflowPath)?.events ?? {};
 
     for (const event of events) {
-      if (alwaysAllowed.has(event) || Object.hasOwn(allowedEvents, event)) {
+      if (alwaysAllowed.has(event)) {
+        continue;
+      }
+
+      if (Object.hasOwn(allowedEvents, event)) {
+        findings.push(
+          ...inspectAllowedEventRefs({
+            repo,
+            workflowPath,
+            event,
+            allowed: allowedEvents[event],
+            declared: readTriggerFilter(workflow, event),
+          }),
+        );
         continue;
       }
 
@@ -188,20 +284,44 @@ function readConcurrencyGroup(workflow, jobName) {
   return { group: typeof group === 'string' ? group : null };
 }
 
-export function inspectPagesDeployConcurrency({ appRoot = process.cwd(), findings }) {
-  // Two Pages deploys are what race. A tree carrying fewer than all of these
-  // surfaces has nothing to serialise - which covers every fixture root the
-  // other tests build, and a repository that has not adopted both workflows.
-  const present = PAGES_DEPLOY_SURFACES.every((surface) =>
+export function inspectPagesDeployConcurrency({
+  appRoot = process.cwd(),
+  findings,
+  surfaces = PAGES_DEPLOY_SURFACES,
+}) {
+  /*
+   * Two Pages deploys are what race, so a tree carrying neither has nothing to
+   * serialise. But this used to `return` when ANY ONE of them was missing,
+   * which disabled the whole check the moment a surface was renamed or removed
+   * - exactly when the deploy topology changed and the check mattered most.
+   *
+   * So: nothing present is a genuine no-op, and SOME present is a finding
+   * naming what went missing. The fixture roots the other tests build carry
+   * neither, so they still no-op.
+   */
+  const existing = surfaces.filter((surface) =>
     existsSync(path.join(appRoot, '.github/workflows', surface.workflow)),
   );
 
-  if (!present) {
+  if (existing.length === 0) {
     return;
   }
 
-  for (const surface of PAGES_DEPLOY_SURFACES) {
+  for (const surface of surfaces) {
     const workflowPath = path.join('.github/workflows', surface.workflow);
+
+    if (!existing.includes(surface)) {
+      findings.push({
+        repo: 'app',
+        workflowPath,
+        event: 'concurrency',
+        message:
+          `${surface.workflow} is missing while another Pages deploy surface is present. ` +
+          'The Pages deploy surfaces changed and this check needs updating - two deploys that ' +
+          'do not share a concurrency group can race.',
+      });
+      continue;
+    }
     const { workflow, error } = readWorkflow(appRoot, workflowPath);
 
     if (error) {
@@ -248,6 +368,10 @@ export function inspectCiTriggers({
   appAllowlist = APP_CI_TRIGGER_ALLOWLIST,
   brainAllowlist = BRAIN_CI_TRIGGER_ALLOWLIST,
   alwaysAllowedEvents = ALWAYS_ALLOWED_EVENTS,
+  // Scoped so a fixture root that carries one Pages workflow for an unrelated
+  // reason is not told its deploy topology changed. The real repo uses the
+  // default and gets the full pair.
+  pagesDeploySurfaces = PAGES_DEPLOY_SURFACES,
 } = {}) {
   const targets = [
     {
@@ -283,7 +407,7 @@ export function inspectCiTriggers({
     });
   }
 
-  inspectPagesDeployConcurrency({ appRoot, findings });
+  inspectPagesDeployConcurrency({ appRoot, findings, surfaces: pagesDeploySurfaces });
 
   return {
     ok: findings.length === 0,
@@ -296,8 +420,17 @@ export function formatCiTriggerResult(result) {
   const lines = ['# GitHub CI trigger policy check', ''];
 
   if (result.ok) {
+    /*
+     * Name the repos, because this runs one-repo by default. The app's own
+     * `ci-triggers` lane invokes it without `--brain-root`, so it inspects the
+     * app alone - and "11 workflow(s) keep pull requests off Actions" read as a
+     * two-repo pass while the brain's workflows had not been opened. The brain
+     * gate passes the root and sees both.
+     */
+    const repos = [...new Set(result.checkedWorkflows.map((entry) => entry.repo))].sort();
+
     lines.push(
-      `Status: passed - ${result.checkedWorkflows.length} workflow(s) keep pull requests and main pushes off GitHub Actions.`,
+      `Status: passed - ${result.checkedWorkflows.length} workflow(s) in ${repos.join(' + ')} keep pull requests and main pushes off GitHub Actions.`,
     );
     return `${lines.join('\n')}\n`;
   }
