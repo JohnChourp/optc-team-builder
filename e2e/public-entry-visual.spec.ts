@@ -32,7 +32,24 @@ const SNAPSHOT_OPTIONS = {
 
 test.describe('public entry visual baselines @public-entry-visual', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'Visual baselines are maintained for Chromium only.');
-  test.skip(process.platform !== 'linux', 'Visual baselines are compared on Linux to match CI rendering.');
+  /*
+   * Linux-only, and worth being blunt about what that costs: on macOS or
+   * Windows this suite compares NONE of the six committed baselines, so
+   * `verify:local:full` is green there without having looked at a single pixel.
+   *
+   * The alternative is per-platform baselines, which needs `{platform}` in
+   * `snapshotPathTemplate` (playwright.config.ts:25 omits it) plus a macOS set
+   * captured on a real run. That is a deliberate decision about what to
+   * maintain, not an oversight to patch here.
+   *
+   * What IS checked everywhere is that the six baselines still exist and are
+   * non-empty - see `scripts/public-entry-synthetics.spec.ts`. Without that, a
+   * deleted baseline was invisible on any non-Linux machine.
+   */
+  test.skip(
+    process.platform !== 'linux',
+    `Visual baselines are compared on Linux to match CI rendering; on ${process.platform} none of the six baselines are compared.`,
+  );
 
   for (const viewport of VISUAL_VIEWPORTS) {
     test.describe(`${viewport.id} viewport`, () => {

@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -103,6 +103,40 @@ describe('public-entry-synthetics', () => {
 
     for (const suite of SCRIPT_SUITE_ORDER) {
       expect(testWorkflow).toContain(`"suite":"${suite}"`);
+    }
+  });
+});
+
+describe('public entry visual baselines', () => {
+  const dir = 'e2e/public-entry-visual.spec.ts-snapshots';
+
+  /*
+   * The visual suite is skipped on every non-Linux host, so on macOS or Windows
+   * `verify:local:full` compares none of these and a deleted baseline is
+   * invisible. This runs everywhere and needs no browser: it cannot prove the
+   * pixels are right, but it proves the files a Linux run would compare are
+   * still here and still contain an image.
+   */
+  it('keeps all six committed baselines, non-empty and readable as PNGs', () => {
+    const files = readdirSync(dir)
+      .filter((name) => name.endsWith('.png'))
+      .sort();
+
+    expect(files).toEqual([
+      'desktop-guided-share-guide.png',
+      'desktop-manual-share-link.png',
+      'desktop-team-building-guide.png',
+      'mobile-guided-share-guide.png',
+      'mobile-manual-share-link.png',
+      'mobile-team-building-guide.png',
+    ]);
+
+    for (const file of files) {
+      const bytes = readFileSync(`${dir}/${file}`);
+
+      expect(bytes.length, `${file} is empty`).toBeGreaterThan(1024);
+      // PNG magic number, so a truncated or text-replaced file fails here.
+      expect(bytes.subarray(0, 4).toString('hex'), `${file} is not a PNG`).toBe('89504e47');
     }
   });
 });
