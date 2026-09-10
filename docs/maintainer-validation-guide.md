@@ -973,8 +973,16 @@ that as a diagnostics regression in the import surface that produced it.
 For share/copy reports where there is no saved-team diagnostic code, classify
 the browser capability state instead:
 
-- Native share unavailable or cancelled: the app should fall back to clipboard
-  copy without changing the share payload.
+- Native share unavailable, or failing for any reason other than a cancel: the
+  app should fall back to clipboard copy without changing the share payload.
+- Native share **cancelled** by the reader (`AbortError`): the app should do
+  nothing at all - no clipboard write and no banner - because falling back would
+  put the link on the clipboard the reader just declined and announce "Copied".
+  A leftover success banner is cleared; a warning or manual-copy banner is left
+  in place, because those carry information the reader still needs.
+  Note that `AbortError` also covers "no share targets available", which is
+  indistinguishable from a cancel. A reader in that state reaches the same link
+  through **Copy share code** or **Export**.
 - Clipboard API unavailable, insecure context, `NotAllowedError`, or
   `SecurityError`: share links and raw share codes should show the readonly
   manual-copy field; JSON copy actions should direct the user to Export.
