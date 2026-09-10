@@ -20,6 +20,7 @@ import {
 } from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterDetail, type CharacterDetailRecord } from '../../core/models/optc.models';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
+import { AppI18nService } from '../../core/services/app-i18n.service';
 import {
   createEditableCharacterOverridePayload,
   createLocalCharacterOverrideFromRecord,
@@ -61,6 +62,20 @@ function isBuilderAbilityFilterCategory(
 interface EditorFeedback {
   message: string;
   tone: EditorFeedbackTone;
+}
+
+/**
+ * A feedback failure the reader is allowed to see, named by translation key.
+ *
+ * See the twin in `character-detail.page.ts`: the catch used to render
+ * `error.message`, so `JSON.parse`'s own English wording reached a Greek
+ * reader's banner verbatim.
+ */
+class CharacterEditFeedbackError extends Error {
+  public constructor(public readonly key: string) {
+    super(key);
+    this.name = 'CharacterEditFeedbackError';
+  }
 }
 
 @Component({
@@ -164,7 +179,13 @@ export class CharacterEditPage implements OnInit {
     private readonly router: Router,
     private readonly repository: OptcRepositoryService,
     private readonly characterOverrides: CharacterOverridesService,
+    private readonly i18n: AppI18nService,
   ) {}
+
+  /** Translates within this page's own scope, so call sites carry only the key. */
+  private text(key: string): string {
+    return this.i18n.translate(key, undefined, 'character-edit');
+  }
 
   public async ngOnInit(): Promise<void> {
     const characterId = Number(this.route.snapshot.paramMap.get('id'));
@@ -385,7 +406,7 @@ export class CharacterEditPage implements OnInit {
     if (!normalizedOverride) {
       this.feedback.set({
         tone: 'error',
-        message: 'The current draft is missing required character fields.',
+        message: this.text('transfer.errors.missingFields'),
       });
       return;
     }
@@ -407,7 +428,7 @@ export class CharacterEditPage implements OnInit {
       !characterId ||
       !this.hasExistingOverride() ||
       (typeof globalThis.confirm === 'function' &&
-        !globalThis.confirm('Delete the current local override for this character?'))
+        !globalThis.confirm(this.text('transfer.confirmReset')))
     ) {
       return;
     }
@@ -542,18 +563,24 @@ export class CharacterEditPage implements OnInit {
       );
 
       if (!normalizedOverride) {
-        throw new Error('The advanced JSON does not match the expected override shape.');
+        throw new CharacterEditFeedbackError('transfer.errors.advancedShape');
       }
 
       this.feedback.set(null);
       return normalizedOverride;
     } catch (error) {
+      /*
+       * Translate the error's KEY, never its `message`. `JSON.parse` throws
+       * things like "Unexpected token } in JSON at position 42", and that was
+       * rendered verbatim into a Greek screen's feedback banner.
+       */
       this.feedback.set({
         tone: 'error',
-        message:
-          error instanceof Error && error.message.trim().length > 0
-            ? error.message
-            : 'The advanced JSON is not valid.',
+        message: this.text(
+          error instanceof CharacterEditFeedbackError
+            ? error.key
+            : 'transfer.errors.advancedInvalid',
+        ),
       });
       return null;
     }

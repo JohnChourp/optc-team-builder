@@ -101,5 +101,15 @@
     "unconditional-top": "Κορυφαίο tier",
     "conditional": "Υπό συνθήκη",
     "baseline-and-conditional": "Βασικό + Υπό συνθήκη"
+  },
+  "transfer": {
+    "importSuccess": "Το τοπικό override του χαρακτήρα έγινε import με επιτυχία.",
+    "removed": "Το τοπικό override του χαρακτήρα αφαιρέθηκε.",
+    "confirmReset": "Να διαγραφεί το τρέχον τοπικό override αυτού του χαρακτήρα;",
+    "errors": {
+      "invalidEntries": "Το επιλεγμένο αρχείο override περιέχει μη έγκυρες εγγραφές override χαρακτήρα.",
+      "characterMismatch": "Το επιλεγμένο αρχείο override δεν αντιστοιχεί σε αυτόν τον χαρακτήρα.",
+      "importFailed": "Το import του override χαρακτήρα απέτυχε."
+    }
   }
 }

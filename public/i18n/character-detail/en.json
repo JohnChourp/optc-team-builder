@@ -101,5 +101,15 @@
     "unconditional-top": "Top tier",
     "conditional": "Conditional",
     "baseline-and-conditional": "Baseline + Conditional"
+  },
+  "transfer": {
+    "importSuccess": "Local character override imported successfully.",
+    "removed": "Local character override removed.",
+    "confirmReset": "Delete the current local override for this character?",
+    "errors": {
+      "invalidEntries": "The selected override file contains invalid character override entries.",
+      "characterMismatch": "The selected override file does not match this character.",
+      "importFailed": "Character override import failed."
+    }
   }
 }
