@@ -39,7 +39,7 @@ test.describe('high-value regression flows', () => {
     await waitForIonControlEnabled(page.getByTestId('auto-build-submit'));
   });
 
-  test('guided auto build locks only the next empty slot @guided-auto-build @quarantined:guided-auto-build-toggle', async ({
+  test('guided auto build locks only the next empty slot @guided-auto-build', async ({
     page,
     browserName,
   }) => {
