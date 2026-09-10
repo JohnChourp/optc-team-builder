@@ -68,7 +68,6 @@
   "hero": {
     "copy": "This page only shows your saved teams.",
     "eyebrow": "Offline memory",
-    "savedEnemiesCta": "Open saved enemies",
     "title": "Your saved teams stay on-device and are ready to load back into the builder."
   },
   "guide": {
@@ -194,7 +193,7 @@
       "unknown": "The browser could not write to the clipboard."
     },
     "sharedLink": "Opened native share for \"{{name}}\".",
-  "sharedTitle": "Shared",
+    "sharedTitle": "Shared",
     "successTitle": "Copied"
   },
   "selection": {

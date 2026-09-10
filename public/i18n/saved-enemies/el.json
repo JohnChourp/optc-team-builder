@@ -37,11 +37,8 @@
     "title": "Import saved enemies backup",
     "copy": "Φόρτωσε JSON που έχει εξαχθεί από επιλεγμένα saved enemies. Τα ίδια ids ενημερώνουν υπάρχοντα saved enemies και τα νέα ids προστίθενται μπροστά από τα υπόλοιπα.",
     "dropzone": {
-      "title": "Ρίξε εδώ το saved enemies JSON",
-      "subtitle": "Ή πάτα για να διαλέξεις exported backup αρχείο."
+      "title": "Ρίξε εδώ το saved enemies JSON"
     },
-    "processing": "Γίνεται import των saved enemies...",
-    "chooseAnotherFile": "Διάλεξε άλλο αρχείο",
     "loadedFromFile": "Φορτώθηκε το {{fileName}}.",
     "successTitle": "Το import ολοκληρώθηκε",
     "warningTitle": "Το import ολοκληρώθηκε με παρατηρήσεις",
@@ -65,7 +62,6 @@
       "slotTokens": "Slot tokens",
       "turns": "Turns"
     },
-    "addAbility": "Προσθήκη ability",
     "associatedTeams": {
       "title": "Συσχετισμένες ομάδες",
       "copy": "Σύνδεσε saved teams που counter-άρουν αυτόν τον εχθρό για να επιστρέφεις σε αυτές γρήγορα.",
@@ -73,10 +69,8 @@
       "empty": "Αποθήκευσε πρώτα ομάδες για να τις συσχετίσεις με αυτόν τον εχθρό.",
       "summaryEmpty": "Καμία συνδεδεμένη ομάδα ακόμη. Πάτησε το κουμπί παρακάτω για να διαλέξεις αυτές που counter-άρουν τον εχθρό.",
       "manage": "Διαχείριση συνδεδεμένων ομάδων",
-      "add": "Σύνδεση αποθηκευμένων ομάδων",
-      "toggleAria": "Εναλλαγή συσχέτισης ομάδας για {{name}}"
+      "add": "Σύνδεση αποθηκευμένων ομάδων"
     },
-    "editAbilities": "Άνοιγμα picker",
     "classesLabel": "Classes",
     "classesPlaceholder": "Επίλεξε classes",
     "classesActions": {
@@ -150,14 +144,12 @@
       "upload": "Ανέβασμα εικόνας"
     },
     "nameLabel": "Όνομα εχθρού",
-    "noAbilityCatalog": "Το ability catalog δεν είναι ακόμα διαθέσιμο σε αυτό το dataset.",
     "notesLabel": "Σημειώσεις",
     "enemyMechanics": {
       "title": "Enemy mechanics",
       "copy": "Αποθήκευσε πρώτα όλη τη συμπεριφορά του εχθρού εδώ. Όπου γίνεται, οι direct counters θα παράγονται αυτόματα.",
       "empty": "Δεν έχουν επιλεγεί enemy mechanics ακόμη.",
       "actions": {
-        "openPicker": "Άνοιγμα mechanic picker",
         "clear": "Καθαρισμός mechanics"
       },
       "tags": {
@@ -191,7 +183,6 @@
       "copy": "Πρόσθεσε extra direct counters μόνο όταν ο εχθρός θέλει κάλυψη πέρα από το structured mechanics list.",
       "empty": "Δεν έχουν επιλεγεί manual counter overrides.",
       "actions": {
-        "openPicker": "Άνοιγμα counter picker",
         "clear": "Καθαρισμός overrides"
       }
     },
@@ -222,7 +213,6 @@
       "copy": "Επίλεξε τα Special effects που χρειάζεται ο εχθρός. Builder και character results πρέπει να έχουν όλα τα επιλεγμένα effects.",
       "empty": "Δεν έχουν επιλεγεί Special effects ακόμη.",
       "actions": {
-        "openPicker": "Άνοιγμα Special picker",
         "clear": "Καθαρισμός Special filters"
       }
     },
@@ -232,7 +222,6 @@
       "copy": "Επίλεξε Crewmate effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
       "empty": "Δεν έχουν επιλεγεί Crewmate Ability effects",
       "actions": {
-        "openPicker": "Άνοιγμα Crewmate picker",
         "clear": "Καθαρισμός Crewmate filters"
       }
     },
@@ -242,11 +231,9 @@
       "copy": "Επίλεξε Potential effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
       "empty": "Δεν έχουν επιλεγεί Potential Ability effects",
       "actions": {
-        "openPicker": "Άνοιγμα Potential picker",
         "clear": "Καθαρισμός Potential filters"
       }
     },
-    "removeAbility": "Αφαίρεση",
     "requirementSummary": {
       "characters": ">={{count}} chars",
       "turns": "{{count}} turns",
@@ -267,9 +254,7 @@
     },
     "toggles": {
       "classes": "Απαίτησε όλα τα selected classes σε κάθε slot",
-      "classesCopy": "Κράτα κάθε slot ευθυγραμμισμένο με τους αποθηκευμένους class κανόνες.",
-      "types": "Απαίτησε team-wide type coverage",
-      "typesCopy": "Κράτα κάθε selected type παρόν στο αποτέλεσμα."
+      "types": "Απαίτησε team-wide type coverage"
     },
     "typesLabel": "Types",
     "typesPlaceholder": "Επίλεξε types",
@@ -283,7 +268,6 @@
       "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
       "empty": "Δεν έχουν επιλεγεί Support Ability effects",
       "actions": {
-        "openPicker": "Άνοιγμα Support picker",
         "clear": "Καθαρισμός Support filters"
       }
     }
@@ -324,7 +308,6 @@
     "copy": "Τα saved enemies κρατούν τα boss requirements ξεχωριστά από τη δική σου manual team στρατηγική.",
     "createCta": "Δημιουργία εχθρού",
     "eyebrow": "Enemy presets",
-    "savedTeamsCta": "Επιστροφή στα saved teams",
     "title": "Φτιάξε reusable enemy presets και στείλ’ τα κατευθείαν στο Auto Team Builder."
   },
   "list": {

@@ -5,8 +5,7 @@
     "copy": "Χρησιμοποίησε αυτή τη σελίδα για να αλλάξεις προτιμήσεις της εφαρμογής, να διαχειριστείς τοπικά δεδομένα και να ελέγξεις τα optional analytics."
   },
   "language": {
-    "label": "Γλώσσα",
-    "helper": "Άλλαξε live τη γλώσσα του app και κράτησέ την αποθηκευμένη σε αυτή τη συσκευή."
+    "label": "Γλώσσα"
   },
   "account": {
     "avatarAlt": "Εικόνα Google profile για {{ name }}",
@@ -39,14 +38,11 @@
     "title": "Sync με Google Drive",
     "copy": "Σύνδεσε Google account για να κρατάς ένα ορατό Drive backup που μπορείς να επαναφέρεις και σε άλλη συσκευή.",
     "scope": "Το Google Drive sync χρησιμοποιεί το ίδιο all-data bundle με τα manual backups: favorites, favorite ships, character boxes, character overrides, saved teams και saved enemies.",
-    "localOnly": "Γλώσσα, analytics consent, recents, worker preference και Crew Forge image profiles μένουν τοπικά σε κάθε συσκευή.",
     "account": {
-      "label": "Συνδεδεμένος λογαριασμός",
-      "signedOut": "Δεν έχει συνδεθεί Google account"
+      "label": "Συνδεδεμένος λογαριασμός"
     },
     "actions": {
       "openInDrive": "Άνοιγμα στο Drive",
-      "openPage": "Άνοιγμα Drive Sync",
       "refresh": "Έλεγχος Drive",
       "reconnect": "Επανασύνδεση Google",
       "restore": "Restore από Drive",
@@ -405,7 +401,6 @@
     }
   },
   "sections": {
-    "analytics": "Analytics και cookies",
     "dataManagement": "Backups και μεταφορές"
   },
   "title": "Ρυθμίσεις"

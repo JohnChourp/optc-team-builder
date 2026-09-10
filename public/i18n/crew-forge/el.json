@@ -43,8 +43,7 @@
       "recognitionFailed": "Το Crew Forge δεν μπόρεσε να αναλύσει αυτό το screenshot.",
       "noProfile": "Δεν βρέθηκε κατάλληλο profile για αυτό το screenshot.",
       "profileMismatch": "Το επιλεγμένο profile δεν ταιριάζει με την αναλογία διαστάσεων του screenshot.",
-      "noProfileForDimensions": "Δεν υποστηρίζεται ακόμα screenshot {{width}} × {{height}} — δεν υπάρχει profile με αυτή την αναλογία.",
-      "invalidProfile": "Το local profile είναι ελλιπές."
+      "noProfileForDimensions": "Δεν υποστηρίζεται ακόμα screenshot {{width}} × {{height}} — δεν υπάρχει profile με αυτή την αναλογία."
     }
   },
   "results": {

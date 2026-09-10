@@ -37,11 +37,8 @@
     "title": "Import saved enemies backup",
     "copy": "Load a JSON file exported from selected saved enemies. Matching ids update existing saved enemies and new ids are inserted ahead of the untouched local ones.",
     "dropzone": {
-      "title": "Drop the saved enemies JSON here",
-      "subtitle": "Or click to choose an exported backup file."
+      "title": "Drop the saved enemies JSON here"
     },
-    "processing": "Importing saved enemies...",
-    "chooseAnotherFile": "Choose another file",
     "loadedFromFile": "Loaded {{fileName}}.",
     "successTitle": "Import completed",
     "warningTitle": "Import completed with warnings",
@@ -65,7 +62,6 @@
       "slotTokens": "Slot tokens",
       "turns": "Turns"
     },
-    "addAbility": "Add ability",
     "associatedTeams": {
       "title": "Associated teams",
       "copy": "Link saved teams that counter this enemy so you can jump back to them later.",
@@ -73,10 +69,8 @@
       "empty": "Save some teams first to link them to this enemy.",
       "summaryEmpty": "No teams linked yet. Tap the button below to pick the ones that counter this enemy.",
       "manage": "Manage linked teams",
-      "add": "Link saved teams",
-      "toggleAria": "Toggle team association for {{name}}"
+      "add": "Link saved teams"
     },
-    "editAbilities": "Open picker",
     "classesLabel": "Classes",
     "classesPlaceholder": "Select classes",
     "classesActions": {
@@ -150,14 +144,12 @@
       "upload": "Upload image"
     },
     "nameLabel": "Enemy name",
-    "noAbilityCatalog": "Ability catalog is not available in this dataset yet.",
     "notesLabel": "Notes",
     "enemyMechanics": {
       "title": "Enemy mechanics",
       "copy": "Store the full enemy behavior here first. Direct counters will be derived automatically where possible.",
       "empty": "No enemy mechanics selected yet.",
       "actions": {
-        "openPicker": "Open mechanic picker",
         "clear": "Clear mechanics"
       },
       "tags": {
@@ -191,7 +183,6 @@
       "copy": "Add extra direct counters only when the enemy needs coverage beyond the structured mechanics list.",
       "empty": "No manual counter overrides selected.",
       "actions": {
-        "openPicker": "Open counter picker",
         "clear": "Clear overrides"
       }
     },
@@ -222,7 +213,6 @@
       "copy": "Choose the Special effects needed for this enemy. Builder and character results must match every selected effect.",
       "empty": "No Special effects selected yet.",
       "actions": {
-        "openPicker": "Open Special picker",
         "clear": "Clear Special filters"
       }
     },
@@ -232,7 +222,6 @@
       "copy": "Pick Crewmate effects. Results must cover every selected effect.",
       "empty": "No Crewmate Ability effects selected",
       "actions": {
-        "openPicker": "Open Crewmate picker",
         "clear": "Clear Crewmate filters"
       }
     },
@@ -242,11 +231,9 @@
       "copy": "Pick Potential effects. Results must cover every selected effect.",
       "empty": "No Potential Ability effects selected",
       "actions": {
-        "openPicker": "Open Potential picker",
         "clear": "Clear Potential filters"
       }
     },
-    "removeAbility": "Remove",
     "requirementSummary": {
       "characters": ">={{count}} chars",
       "turns": "{{count}} turns",
@@ -267,9 +254,7 @@
     },
     "toggles": {
       "classes": "Require all selected classes per slot",
-      "classesCopy": "Keep every slot aligned with the saved class rules.",
-      "types": "Require team-wide type coverage",
-      "typesCopy": "Keep every selected type represented in the result."
+      "types": "Require team-wide type coverage"
     },
     "typesLabel": "Types",
     "typesPlaceholder": "Select types",
@@ -283,7 +268,6 @@
       "copy": "Pick Support effects. Results must cover every selected effect.",
       "empty": "No Support Ability effects selected",
       "actions": {
-        "openPicker": "Open Support picker",
         "clear": "Clear Support filters"
       }
     }
@@ -324,7 +308,6 @@
     "copy": "Saved enemies let you keep boss requirements separately from your manual team strategy.",
     "createCta": "Create enemy",
     "eyebrow": "Enemy presets",
-    "savedTeamsCta": "Back to saved teams",
     "title": "Build reusable enemy presets and send them straight into Auto Team Builder."
   },
   "list": {

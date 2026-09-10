@@ -77,7 +77,6 @@
   },
   "favorites": {
     "addAria": "Προσθήκη του {{name}} στα favorites",
-    "clearAll": "Διαγραφή όλων των favorites",
     "clearAllConfirm": "Να διαγραφούν όλα τα favorites; Η ενέργεια δεν επηρεάζει τις αποθηκευμένες ομάδες.",
     "removeAria": "Αφαίρεση του {{name}} από τα favorites"
   },

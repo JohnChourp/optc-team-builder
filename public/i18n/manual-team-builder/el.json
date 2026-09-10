@@ -101,7 +101,6 @@
       "side": "{{name}} branch"
     },
     "rawScope": "Υπάρχει captain ability text",
-    "scopeChip": "{{label}}: {{scope}}",
     "tierScopeChip": "{{label}} Tier {{tier}}: {{scope}}",
     "scopes": {
       "captain-only": "Μόνο captain",
