@@ -110,7 +110,6 @@
       }
     },
     "uniqueNames": {
-      "toggle": "Απόφυγε duplicate χαρακτήρες του παιχνιδιού",
       "support": {
         "strict": "Κάθε final slot εκτός από το Friend Captain πρέπει να αποφεύγει in-game duplicate-character conflicts, ώστε το Friend Captain να μπορεί ακόμη να αντιγράφει άλλη μονάδα όπως Monkey D. Luffy.",
         "flexible": "Επίτρεψε τελικές ομάδες με in-game duplicate identities ή composite units που επικαλύπτονται."
@@ -131,21 +130,18 @@
       }
     },
     "bothLeadersCaptainCoverage": {
-      "toggle": "Απαίτησε να περνούν και οι δύο leaders την κάλυψη tiers",
       "support": {
         "flexible": "Επίτρεψε ομάδες όπου περνάει την κάλυψη tiers μόνο ένας leader και δείξε warning στο αποτέλεσμα.",
         "strict": "Captain και Friend Captain πρέπει να περνούν την κάλυψη tiers για κάθε slot, κάθε Captain Ability tier και κάθε team-count Captain Ability condition."
       }
     },
     "superSpecialCriteriaCoverage": {
-      "toggle": "Απαίτησε κάλυψη Super Special Criteria",
       "support": {
         "flexible": "Ο builder προσπαθεί πρώτα να ενεργοποιεί όλα τα Super Special Criteria της ομάδας και δείχνει warning αν χρειαστεί να τα χαλαρώσει.",
         "strict": "Αν ένα final unit έχει Super Special Criteria, πρέπει να μπορεί να ενεργοποιηθεί στο battle· αυτό δεν επιβάλλει Super Special leader."
       }
     },
     "superTandemCriteriaCoverage": {
-      "toggle": "Απαίτησε κάλυψη Super Tandem",
       "support": {
         "flexible": "Ο builder προσπαθεί πρώτα να ενεργοποιεί όλα τα Super Tandem της ομάδας και δείχνει warning αν χρειαστεί να τα χαλαρώσει.",
         "strict": "Αν ένα final unit έχει Super Tandem criteria, πρέπει να μπορεί να ενεργοποιηθεί στο battle· αυτό δεν επιβάλλει Super Tandem leader."
@@ -283,12 +279,6 @@
     "placeholders": {
       "selectAbility": "Επίλεξε ability",
       "selectSlotTokens": "Επίλεξε slot tokens"
-    },
-    "actions": {
-      "addRequirement": "Προσθήκη requirement",
-      "clearRequirements": "Καθαρισμός requirements",
-      "openPicker": "Άνοιγμα picker",
-      "removeRequirement": "Αφαίρεση"
     }
   },
   "enemyMechanics": {
@@ -296,10 +286,6 @@
     "copy": "Περιέγραψε πρώτα τα mechanics του εχθρού. Ο builder βγάζει direct counters από αυτά όπου υπάρχει σαφές mapping.",
     "configuredRows": "{{count}} ρυθμισμένα mechanics",
     "empty": "Δεν έχουν επιλεγεί enemy mechanics ακόμη.",
-    "actions": {
-      "openPicker": "Άνοιγμα mechanic picker",
-      "clearMechanics": "Καθαρισμός mechanics"
-    },
     "tags": {
       "trigger": {
         "onSpecial": "Σε special",
@@ -332,11 +318,7 @@
     "configuredRows": "{{count}} manual overrides",
     "empty": "Δεν έχουν επιλεγεί manual counter overrides.",
     "emptyCatalog": "Δεν βρέθηκε ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
-    "actions": {
-      "openPicker": "Άνοιγμα counter picker",
-      "clearRequirements": "Καθαρισμός overrides"
-    }
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
   },
   "actions": {
     "build": {
@@ -989,7 +971,6 @@
       "strictResolved": "{{covered}} / {{total}} selected character names καλύπτονται από ξεχωριστά final slots."
     },
     "teamSlots": {
-      "noSnippet": "Δεν βρέθηκε readable captain ή special text.",
       "roles": {
         "captain": "Captain",
         "friendCaptain": "Friend Captain",
@@ -1159,11 +1140,7 @@
     "configuredRows": "{{count}} επιλεγμένα Special effects",
     "empty": "Δεν έχουν επιλεγεί Special effects ακόμη.",
     "emptyCatalog": "Δεν βρέθηκε Special ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
-    "actions": {
-      "openPicker": "Άνοιγμα Special picker",
-      "clearRequirements": "Καθαρισμός Special filters"
-    }
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
   },
   "crewmateFilters": {
     "eyebrow": "Crewmate Ability",
@@ -1172,11 +1149,7 @@
     "configuredRows": "{{count}} επιλεγμένα Crewmate effects",
     "empty": "Δεν έχουν επιλεγεί Crewmate Ability effects",
     "emptyCatalog": "Δεν βρέθηκε Crewmate ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
-    "actions": {
-      "openPicker": "Άνοιγμα Crewmate picker",
-      "clearRequirements": "Καθαρισμός Crewmate filters"
-    }
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
   },
   "potentialFilters": {
     "eyebrow": "Potential Ability",
@@ -1185,11 +1158,7 @@
     "configuredRows": "{{count}} επιλεγμένα Potential effects",
     "empty": "Δεν έχουν επιλεγεί Potential Ability effects",
     "emptyCatalog": "Δεν βρέθηκε Potential ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
-    "actions": {
-      "openPicker": "Άνοιγμα Potential picker",
-      "clearRequirements": "Καθαρισμός Potential filters"
-    }
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
   },
   "supportFilters": {
     "eyebrow": "Support Ability",
@@ -1198,10 +1167,6 @@
     "configuredRows": "{{count}} επιλεγμένα Support effects",
     "empty": "Δεν έχουν επιλεγεί Support Ability effects",
     "emptyCatalog": "Δεν βρέθηκε Support ability catalog. Τρέξε",
-    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά.",
-    "actions": {
-      "openPicker": "Άνοιγμα Support picker",
-      "clearRequirements": "Καθαρισμός Support filters"
-    }
+    "emptyCatalogSuffix": "για να δημιουργηθεί ξανά."
   }
 }

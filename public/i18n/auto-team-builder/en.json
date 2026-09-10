@@ -110,7 +110,6 @@
       }
     },
     "uniqueNames": {
-      "toggle": "Avoid in-game duplicate characters",
       "support": {
         "strict": "Every final slot except Friend Captain must avoid in-game duplicate-character conflicts, so the Friend Captain can still mirror another unit like Monkey D. Luffy.",
         "flexible": "Allow final teams that reuse in-game character identities or overlapping composite units."
@@ -131,21 +130,18 @@
       }
     },
     "bothLeadersCaptainCoverage": {
-      "toggle": "Require both leaders to pass tier coverage",
       "support": {
         "flexible": "Allow teams where only one leader passes tier coverage, and show the warning in the result.",
         "strict": "Captain and Friend Captain must both pass tier coverage for every slot, every Captain Ability tier, and every team-count Captain Ability condition."
       }
     },
     "superSpecialCriteriaCoverage": {
-      "toggle": "Require Super Special Criteria coverage",
       "support": {
         "flexible": "The builder tries to activate every team's Super Special Criteria first and warns if it must relax them.",
         "strict": "If a final unit has Super Special Criteria, it must be activatable in battle; this does not force a Super Special leader."
       }
     },
     "superTandemCriteriaCoverage": {
-      "toggle": "Require Super Tandem coverage",
       "support": {
         "flexible": "The builder tries to activate every team's Super Tandem first and warns if it must relax them.",
         "strict": "If a final unit has Super Tandem criteria, it must be activatable in battle; this does not force a Super Tandem leader."
@@ -283,12 +279,6 @@
     "placeholders": {
       "selectAbility": "Select ability",
       "selectSlotTokens": "Select slot tokens"
-    },
-    "actions": {
-      "addRequirement": "Add requirement",
-      "clearRequirements": "Clear requirements",
-      "openPicker": "Open picker",
-      "removeRequirement": "Remove"
     }
   },
   "enemyMechanics": {
@@ -296,10 +286,6 @@
     "copy": "Describe the enemy mechanics first. The builder derives direct counters from them where the mapping is explicit.",
     "configuredRows": "{{count}} configured mechanics",
     "empty": "No enemy mechanics selected yet.",
-    "actions": {
-      "openPicker": "Open mechanic picker",
-      "clearMechanics": "Clear mechanics"
-    },
     "tags": {
       "trigger": {
         "onSpecial": "On special",
@@ -332,11 +318,7 @@
     "configuredRows": "{{count}} manual overrides",
     "empty": "No manual counter overrides selected.",
     "emptyCatalog": "No ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it.",
-    "actions": {
-      "openPicker": "Open counter picker",
-      "clearRequirements": "Clear overrides"
-    }
+    "emptyCatalogSuffix": "to regenerate it."
   },
   "actions": {
     "build": {
@@ -989,7 +971,6 @@
       "strictResolved": "{{covered}} / {{total}} selected character names are covered by distinct final slots."
     },
     "teamSlots": {
-      "noSnippet": "No readable captain or special text was parsed.",
       "roles": {
         "captain": "Captain",
         "friendCaptain": "Friend Captain",
@@ -1159,11 +1140,7 @@
     "configuredRows": "{{count}} selected Special effects",
     "empty": "No Special effects selected yet.",
     "emptyCatalog": "No Special ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it.",
-    "actions": {
-      "openPicker": "Open Special picker",
-      "clearRequirements": "Clear Special filters"
-    }
+    "emptyCatalogSuffix": "to regenerate it."
   },
   "crewmateFilters": {
     "eyebrow": "Crewmate Ability",
@@ -1172,11 +1149,7 @@
     "configuredRows": "{{count}} selected Crewmate effects",
     "empty": "No Crewmate Ability effects selected",
     "emptyCatalog": "No Crewmate ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it.",
-    "actions": {
-      "openPicker": "Open Crewmate picker",
-      "clearRequirements": "Clear Crewmate filters"
-    }
+    "emptyCatalogSuffix": "to regenerate it."
   },
   "potentialFilters": {
     "eyebrow": "Potential Ability",
@@ -1185,11 +1158,7 @@
     "configuredRows": "{{count}} selected Potential effects",
     "empty": "No Potential Ability effects selected",
     "emptyCatalog": "No Potential ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it.",
-    "actions": {
-      "openPicker": "Open Potential picker",
-      "clearRequirements": "Clear Potential filters"
-    }
+    "emptyCatalogSuffix": "to regenerate it."
   },
   "supportFilters": {
     "eyebrow": "Support Ability",
@@ -1198,10 +1167,6 @@
     "configuredRows": "{{count}} selected Support effects",
     "empty": "No Support Ability effects selected",
     "emptyCatalog": "No Support ability catalog was found. Run",
-    "emptyCatalogSuffix": "to regenerate it.",
-    "actions": {
-      "openPicker": "Open Support picker",
-      "clearRequirements": "Clear Support filters"
-    }
+    "emptyCatalogSuffix": "to regenerate it."
   }
 }
