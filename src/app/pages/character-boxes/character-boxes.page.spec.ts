@@ -167,6 +167,184 @@ describe('CharacterBoxesPage', () => {
     );
   });
 
+  /*
+   * Fourteen filter controls reach `loadCharacters(true)`, and every one of
+   * them used to publish its result unconditionally. So the query that resolved
+   * LAST wrote the list, regardless of which filter the reader was looking at:
+   * press two filters quickly, get the answer to the first one, with the filter
+   * bar showing the second. Nothing recovered it short of pressing again.
+   *
+   * The characters here are deliberately disjoint so the assertion cannot pass
+   * by coincidence, and the FIRST query is made to resolve LAST - which is the
+   * whole point, since resolving in order would pass either way.
+   *
+   * Mutation check: drop the `generation !== this.charactersGeneration` guard
+   * and this fails with the stale list.
+   */
+  it('keeps the newest filter\'s answer when an older query resolves after it', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+
+    const stale = [{ id: 901, name: 'Stale' }] as never[];
+    const fresh = [{ id: 902, name: 'Fresh' }] as never[];
+    let releaseStale: () => void = () => undefined;
+
+    repository.searchDetailedCharacters
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseStale = () => resolve(stale);
+          }),
+      )
+      .mockImplementationOnce(async () => fresh);
+
+    const first = page.onFavoriteFilterChange({
+      detail: { value: 'favorites' },
+    } as CustomEvent<{ value?: string | null }>);
+    const second = page.onFavoriteFilterChange({
+      detail: { value: 'hideFavorites' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    await second;
+
+    // Now let the FIRST, superseded query answer.
+    releaseStale();
+    await first;
+
+    expect(page.characters().map((character) => character.id)).toEqual([902]);
+    expect(page.loading()).toBe(false);
+  });
+
+  /*
+   * The second failure mode, from the other direction: a `loadMore` in flight
+   * when a filter reset lands. `offset` was counted against the OLD list, so
+   * publishing that page appended rows the current filter excludes.
+   *
+   * Note what this does and does not pin. It kills the missing-guard mutation,
+   * because the superseded `loadMore` must not publish at all. It does NOT
+   * distinguish appending to the captured `previousCharacters` from re-reading
+   * `this.characters()` - `loadCharacters` is the only writer of that signal,
+   * so once the guard is in place the two are identical and that mutation
+   * survives every test in this file. The capture is documented at the call
+   * site as clarity rather than as a second guard, so this title claims the
+   * behaviour it really exercises: the stale page never reaches the list.
+   */
+  it('drops a page-two load that a filter reset has already superseded', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+
+    const firstPage = Array.from({ length: 48 }, (_, index) => ({
+      id: 1000 + index,
+      name: `Old ${index}`,
+    })) as never[];
+
+    repository.searchDetailedCharacters.mockResolvedValueOnce(firstPage);
+    await page.onFavoriteFilterChange({
+      detail: { value: 'favorites' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    expect(page.hasMore()).toBe(true);
+
+    const stalePage = [{ id: 2001, name: 'Stale page 2' }] as never[];
+    const freshList = [{ id: 3001, name: 'Fresh' }] as never[];
+    let releaseStalePage: () => void = () => undefined;
+
+    repository.searchDetailedCharacters
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseStalePage = () => resolve(stalePage);
+          }),
+      )
+      .mockImplementationOnce(async () => freshList);
+
+    const more = page.loadMore();
+    const reset = page.onFavoriteFilterChange({
+      detail: { value: 'hideFavorites' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    await reset;
+    releaseStalePage();
+    await more;
+
+    expect(page.characters().map((character) => character.id)).toEqual([3001]);
+  });
+
+  /*
+   * A superseded pass must not clear the loader the newest pass raised, or the
+   * reader gets an empty list with no spinner while the real answer is still in
+   * flight. Same shape as the Captain Coverage loader that stranded itself.
+   */
+  it('leaves the loader to the newest pass', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+
+    let releaseStale: () => void = () => undefined;
+    let releaseFresh: () => void = () => undefined;
+
+    repository.searchDetailedCharacters
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseStale = () => resolve([] as never[]);
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseFresh = () => resolve([] as never[]);
+          }),
+      );
+
+    const first = page.onFavoriteFilterChange({
+      detail: { value: 'favorites' },
+    } as CustomEvent<{ value?: string | null }>);
+    const second = page.onFavoriteFilterChange({
+      detail: { value: 'hideFavorites' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    releaseStale();
+    await first;
+
+    // The superseded pass has finished; the newest one has not.
+    expect(page.loading()).toBe(true);
+
+    releaseFresh();
+    await second;
+
+    expect(page.loading()).toBe(false);
+  });
+
+  /*
+   * The filter bar used to grey out three of its controls during a load - the
+   * tag filter and the two facet filters - while the searchbar and the six
+   * controls inside `app-character-filter-row` (favorites, cost, membership,
+   * sort, id order, clear) stayed live throughout. Three greyed against eight
+   * live, in one bar, for the same load.
+   *
+   * The gate is gone rather than extended. It existed to stop overlapping
+   * filter presses corrupting the list, and the generation counter now
+   * guarantees the newest press wins, so disabling buys nothing and costs the
+   * reader the ability to refine a filter while results are loading.
+   * `character-facet-filter.component.ts:98-105` also records a past bug where
+   * this very input latched disabled forever.
+   *
+   * "Load more" keeps its own `loadingMore()` gate: that one stops the same
+   * page being requested twice, which is a different question.
+   */
+  it('keeps every filter control live while the list loads', () => {
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/character-boxes/character-boxes.page.html'),
+      'utf8',
+    );
+
+    expect(template).not.toContain('[disabled]="loading()"');
+    expect(template).toContain('[disabled]="loadingMore()"');
+  });
+
   it('refreshes the current list after adding a favorite while hide favorites is active', async () => {
     const { page, repository } = createPage();
 
