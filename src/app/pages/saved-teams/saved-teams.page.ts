@@ -105,6 +105,33 @@ type ClipboardFailureKind =
   | 'unavailable'
   | 'unknown';
 
+/**
+ * What the native share sheet did.
+ *
+ * Three states rather than a boolean, because 'cancelled' and 'unavailable'
+ * demand opposite behaviour: a cancel must stop, an unavailable share must fall
+ * back to the clipboard. Collapsing them is what made every dismissed share
+ * sheet copy the link and report "Copied".
+ */
+type NativeShareOutcome = 'shared' | 'cancelled' | 'unavailable';
+
+/**
+ * Whether a Web Share rejection means the reader dismissed the sheet.
+ *
+ * `AbortError` is what the spec defines for that, and it is the ONLY rejection
+ * treated as a cancel. `NotAllowedError` in particular is not: it means the
+ * share was blocked (no transient activation, or permissions policy), which the
+ * reader did not choose and for which the clipboard is a genuine fallback.
+ */
+function isNativeShareAbort(error: unknown): boolean {
+  return (
+    Boolean(error) &&
+    typeof error === 'object' &&
+    'name' in (error as Record<string, unknown>) &&
+    (error as { name?: unknown }).name === 'AbortError'
+  );
+}
+
 interface ClipboardFallbackOptions {
   failureRecoveryKey: string;
   manualCopy?: SavedTeamsManualCopyFeedback;
@@ -432,7 +459,19 @@ export class SavedTeamsPage implements OnInit {
       'saved-teams',
     );
 
-    if (await this.shareTextWithNativeShare(shareUrl, team.name, nativeShareMessage)) {
+    const nativeShareOutcome = await this.shareTextWithNativeShare(
+      shareUrl,
+      team.name,
+      nativeShareMessage,
+    );
+
+    /*
+     * 'cancelled' returns here exactly like 'shared'. The reader dismissed the
+     * share sheet, which is a decision, not a failure - falling through to the
+     * clipboard would put the link there anyway and announce "Copied", which is
+     * the thing they just declined.
+     */
+    if (nativeShareOutcome !== 'unavailable') {
       return;
     }
 
@@ -937,15 +976,38 @@ export class SavedTeamsPage implements OnInit {
     }
   }
 
+  /**
+   * Offers the native share sheet, and says which of three things happened.
+   *
+   * A boolean could not carry this. It returned `false` for both "this browser
+   * has no Web Share" and "the reader pressed Cancel", and the caller read
+   * `false` as the former - so dismissing the sheet fell straight through to the
+   * clipboard, wrote the link, and showed a banner titled "Copied". On iOS and
+   * Safari, where Web Share is the DEFAULT path rather than an edge case, that
+   * is what every cancelled share did.
+   *
+   * `AbortError` is the standard signal for "I changed my mind" and is the only
+   * rejection treated as a cancel. A genuine share failure still falls back to
+   * the clipboard, because there the reader wanted the link and something else
+   * went wrong.
+   *
+   * Accepted tradeoff: the Web Share spec also rejects with `AbortError` when
+   * there are NO SHARE TARGETS available, which is indistinguishable from a
+   * cancel at the call site. So on a browser that has `navigator.share` and
+   * nothing to share to, this button does nothing. Falling back instead would
+   * reintroduce the reported defect for every real cancel on iOS and Safari,
+   * where Web Share is the default path - and a reader in that state still
+   * reaches the same link through Copy share code or Export.
+   */
   private async shareTextWithNativeShare(
     shareUrl: string,
     teamName: string,
     successMessage: string,
-  ): Promise<boolean> {
+  ): Promise<NativeShareOutcome> {
     const nativeShare = globalThis.navigator?.share;
 
     if (!nativeShare) {
-      return false;
+      return 'unavailable';
     }
 
     const shareData: ShareData = {
@@ -955,7 +1017,7 @@ export class SavedTeamsPage implements OnInit {
     };
 
     if (globalThis.navigator?.canShare && !globalThis.navigator.canShare(shareData)) {
-      return false;
+      return 'unavailable';
     }
 
     try {
@@ -970,9 +1032,30 @@ export class SavedTeamsPage implements OnInit {
         details: [successMessage],
       });
 
-      return true;
-    } catch {
-      return false;
+      return 'shared';
+    } catch (error) {
+      if (isNativeShareAbort(error)) {
+        /*
+         * Nothing was shared and nothing is copied.
+         *
+         * A leftover SUCCESS banner is cleared, because it is the only tone that
+         * could be misread as this share having worked. Warnings and errors are
+         * left exactly where they are: `actionFeedback` is not only a success
+         * channel. It carries the manual-copy textarea, which is the reader's
+         * only route to the link once the clipboard has refused, and the
+         * storage-recovery warning that says saved teams were repaired or
+         * DROPPED - and that one is built from
+         * `consumeSavedTeamsStorageRecovery()`, a one-shot read, so clearing it
+         * destroys a data-loss notice that can never be shown again.
+         */
+        this.actionFeedback.update((feedback) =>
+          feedback?.tone === 'success' ? null : feedback,
+        );
+
+        return 'cancelled';
+      }
+
+      return 'unavailable';
     }
   }
 

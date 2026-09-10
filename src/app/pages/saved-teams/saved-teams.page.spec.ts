@@ -749,7 +749,20 @@ describe('SavedTeamsPage', () => {
     });
   });
 
-  it('falls back to clipboard when native share cannot complete', async () => {
+  /*
+   * This test used to assert the defect. It threw `AbortError` - the standard
+   * signal that the reader DISMISSED the share sheet - and then asserted the
+   * link was written to the clipboard and a success banner shown. So the
+   * behaviour the owner reported as wrong was pinned here as intended.
+   *
+   * Cancelling now does nothing at all: no clipboard write, no banner. Web
+   * Share is the default path on iOS and Safari rather than an edge case, so
+   * "I changed my mind" was being answered with the very thing declined.
+   *
+   * Mutation check: treat `AbortError` as a plain failure and both assertions
+   * below flip.
+   */
+  it('does nothing at all when the reader dismisses the native share sheet', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     const share = vi.fn().mockRejectedValue(new DOMException('cancelled', 'AbortError'));
     const { page } = createPage();
@@ -763,8 +776,111 @@ describe('SavedTeamsPage', () => {
     await page.copyTeamShareLink(page.savedTeams()[0]!);
 
     expect(share).toHaveBeenCalledOnce();
+    expect(writeText).not.toHaveBeenCalled();
+    expect(page.actionFeedback()).toBeNull();
+  });
+
+  /*
+   * A cancel clears a leftover SUCCESS banner, rather than leaving it on screen
+   * still claiming a success. "Nothing happened" has to look like nothing
+   * happened.
+   */
+  it('clears a stale success banner when the share sheet is dismissed', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const share = vi.fn().mockRejectedValue(new DOMException('cancelled', 'AbortError'));
+    const { page } = createPage();
+
+    vi.stubGlobal('navigator', {
+      clipboard: { writeText },
+      share,
+    });
+    await page.ngOnInit();
+
+    page.actionFeedback.set({ tone: 'success', title: 'Shared', details: ['from earlier'] });
+
+    await page.copyTeamShareLink(page.savedTeams()[0]!);
+
+    expect(page.actionFeedback()).toBeNull();
+  });
+
+  /*
+   * But it clears ONLY a success banner. `actionFeedback` is not a success
+   * channel - it also carries the manual-copy textarea, which is the reader's
+   * only route to the link once the clipboard has refused, and the
+   * storage-recovery warning saying saved teams were repaired or DROPPED.
+   *
+   * That warning is built from `consumeSavedTeamsStorageRecovery()`, a one-shot
+   * read, so wiping it destroys a data-loss notice that can never be shown
+   * again. An unconditional clear did exactly that, and this is what caught it.
+   */
+  it.each([
+    ['a storage-recovery warning', 'warning' as const, undefined],
+    ['a manual-copy recovery banner', 'error' as const, {
+      label: 'Copy manually',
+      testId: 'saved-teams-manual-copy-share-link',
+      text: 'https://example.test/link',
+    }],
+  ])('leaves %s alone when the share sheet is dismissed', async (_label, tone, manualCopy) => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const share = vi.fn().mockRejectedValue(new DOMException('cancelled', 'AbortError'));
+    const { page } = createPage();
+
+    vi.stubGlobal('navigator', {
+      clipboard: { writeText },
+      share,
+    });
+    await page.ngOnInit();
+
+    const banner = {
+      tone,
+      title: 'Some teams could not be restored',
+      details: ['1 saved team was dropped.'],
+      ...(manualCopy ? { manualCopy } : {}),
+    };
+
+    page.actionFeedback.set(banner);
+
+    await page.copyTeamShareLink(page.savedTeams()[0]!);
+
+    expect(page.actionFeedback()).toEqual(banner);
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  /*
+   * A GENUINE share failure still falls back, because there the reader wanted
+   * the link and something else went wrong. `NotAllowedError` is the realistic
+   * case: the share was blocked for missing transient activation or by
+   * permissions policy - not a choice the reader made.
+   */
+  it('falls back to clipboard when native share fails for a reason other than a cancel', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const share = vi.fn().mockRejectedValue(new DOMException('blocked', 'NotAllowedError'));
+    const { page } = createPage();
+
+    vi.stubGlobal('navigator', {
+      clipboard: { writeText },
+      share,
+    });
+    await page.ngOnInit();
+
+    await page.copyTeamShareLink(page.savedTeams()[0]!);
+
+    expect(share).toHaveBeenCalledOnce();
     expect(writeText).toHaveBeenCalledOnce();
     expect(String(writeText.mock.calls[0]?.[0])).toContain('/tabs/manual-team-builder?teamShare=');
+    expect(page.actionFeedback()).toMatchObject({ tone: 'success' });
+  });
+
+  it('falls back to clipboard when the browser has no native share at all', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const { page } = createPage();
+
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    await page.ngOnInit();
+
+    await page.copyTeamShareLink(page.savedTeams()[0]!);
+
+    expect(writeText).toHaveBeenCalledOnce();
     expect(page.actionFeedback()).toMatchObject({ tone: 'success' });
   });
 
