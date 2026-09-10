@@ -43,6 +43,38 @@ import {
 } from './auto-team-builder.utils';
 import { type AutoTeamBuilderWorkerRequest } from './auto-team-builder.worker.models';
 
+/**
+ * The solver specs run the real search to exhaustion, so their slowest rows are
+ * seconds long by construction - and vitest's default `testTimeout` is 5000ms.
+ *
+ * That default was never a statement about this file. It went unnoticed because
+ * `Test` was broken from 2026-08-17 to 2026-09-10 (a bash apostrophe in
+ * `full_script_matrix`), so nothing here had run on a runner in three weeks.
+ * When it ran again, four rows timed out - measured on run 34493411372, against
+ * this machine on the same commit:
+ *
+ * | row                                                   | local | runner |
+ * | ----------------------------------------------------- | ----- | ------ |
+ * | drops an unsatisfiable non-leader flattened requirement | 3304  | 10402  |
+ * | keeps a leader-source flattened requirement enforced    | 2870  |  7940  |
+ * | returns no team when favorites drop the only holder     | 1943  |  7307  |
+ * | a12x20 - excluding the only holder                      | 1865  |  5118  |
+ * | reports bounded pooled fallback progress                | 1082  |  3434  |
+ *
+ * The runner is 2.6x slower over the whole file (355s vs 138s for the same 9467
+ * rows) and up to 3.8x on an individual one, so raising the ceiling is the fix:
+ * nothing here hangs, it is arithmetic that legitimately takes seconds.
+ *
+ * 30s is 2.9x the worst duration ever observed here, and still bounded - the
+ * pooled-worker rows in this file are exactly the shape that CAN hang, and a
+ * hang must still fail rather than run to the job's 20-minute budget.
+ *
+ * Whole-file rather than per-row on purpose: three of the four failures are
+ * generated inside `for` loops, so a new axis pair inherits the ceiling instead
+ * of being the next row to discover it the hard way.
+ */
+vi.setConfig({ testTimeout: 30_000 });
+
 const INPUT = createInput();
 type AutoTeamBuilderServiceWithWorkerFactory = {
   createWorker: () => Worker | null;
