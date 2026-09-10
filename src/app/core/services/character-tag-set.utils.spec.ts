@@ -465,6 +465,10 @@ describe('buildCharacterTagMatchIndex', () => {
   it('skips characters with no tags and tolerates an absent tag field', () => {
     const index = buildCharacterTagMatchIndex(CORPUS);
 
+    // Without a floor this passes on an empty index, which is the one result
+    // that would mean the indexer had stopped working entirely.
+    expect(index.size).toBeGreaterThan(0);
+
     for (const ids of index.values()) {
       expect(ids).not.toContain(4);
       expect(ids).not.toContain(5);

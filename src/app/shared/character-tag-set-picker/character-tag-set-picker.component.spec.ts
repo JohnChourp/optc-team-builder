@@ -47,6 +47,31 @@ const MATCH_INDEX: CharacterTagMatchIndex = new Map([
   ['worst generation', [2, 4]],
 ]);
 
+/** The body of the first block opened by `marker`, ending at its matching brace. */
+function sliceBalancedBlock(source: string, marker: string): string {
+  const start = source.indexOf(marker);
+
+  if (start === -1) {
+    return '';
+  }
+
+  let depth = 0;
+
+  for (let index = source.indexOf('{', start); index < source.length; index += 1) {
+    if (source[index] === '{') {
+      depth += 1;
+    } else if (source[index] === '}') {
+      depth -= 1;
+
+      if (depth === 0) {
+        return source.slice(start, index + 1);
+      }
+    }
+  }
+
+  return '';
+}
+
 describe('CharacterTagSetPickerComponent', () => {
   it('edits a cloned draft and leaves the host selection untouched until save', () => {
     const component = createComponent();
@@ -430,9 +455,19 @@ describe('CharacterTagSetPickerComponent', () => {
       ),
       'utf8',
     );
-    const reducedMotionBlock = stylesheet.slice(
-      stylesheet.indexOf('@media (prefers-reduced-motion: reduce)'),
+    /*
+     * Bounded at the block's own closing brace. Slicing to end-of-file proved
+     * placement only by accident of ordering: any selector appearing ANYWHERE
+     * below the media query satisfied it, so a rule moved out of the block kept
+     * passing as long as nothing was reordered above it.
+     */
+    const reducedMotionBlock = sliceBalancedBlock(
+      stylesheet,
+      '@media (prefers-reduced-motion: reduce)',
     );
+
+    expect(reducedMotionBlock).not.toBe('');
+    expect(reducedMotionBlock.length).toBeLessThan(stylesheet.length);
 
     expect(reducedMotionBlock).toContain('.character-tag-set-picker-modal *,');
     expect(reducedMotionBlock).toContain('.character-tag-set-picker-modal *::before,');
