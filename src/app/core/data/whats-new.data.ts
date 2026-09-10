@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.8',
+    date: '2026-09-10',
+    userVisible: false,
+    added: [],
+    improved: [],
+    fixed: [],
+    headline: {
+      en: 'Nothing changed on any screen',
+      el: 'Δεν άλλαξε τίποτα σε καμία οθόνη',
+    },
+    summaryEn:
+      'Nothing in this release changes anything you can see or do. It is entirely work on the checks that catch mistakes before they reach you: several of them were quietly not checking what they claimed to, and one of the automated test runs had been failing to start since August. Some unused text was also removed from the app, none of which was ever shown on a screen. Your saved teams, boxes, favourites and settings are untouched.',
+    summaryEl:
+      'Τίποτα σε αυτή την έκδοση δεν αλλάζει κάτι που βλέπεις ή κάνεις. Είναι εξ ολοκλήρου δουλειά στους ελέγχους που πιάνουν τα λάθη πριν φτάσουν σε σένα: αρκετοί από αυτούς σιωπηλά δεν έλεγχαν αυτό που δήλωναν, και ένα από τα αυτοματοποιημένα test runs δεν ξεκινούσε καν από τον Αύγουστο. Αφαιρέθηκε επίσης αχρησιμοποίητο κείμενο από την εφαρμογή, τίποτα από το οποίο δεν εμφανιζόταν ποτέ σε οθόνη. Οι αποθηκευμένες ομάδες, τα boxes, τα favorites και οι ρυθμίσεις σου μένουν ανέπαφα.',
+  },
+  {
     version: '0.4.7',
     date: '2026-09-10',
     userVisible: true,
