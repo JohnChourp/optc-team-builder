@@ -3152,6 +3152,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     // Never reset ahead of the first load: `ngOnInit` owns that one and it is
     // the only reset that runs with the dataset in hand.
     await this.initialLoad;
+
+    /*
+     * `pageReady` is deliberately NOT lowered around this second reset.
+     *
+     * The same shape that made the initial load dishonest survives here in a
+     * much narrower form: this `resetPageState()` wipes the filter signals
+     * again, so a press landing inside it is discarded. Lowering `pageReady`
+     * would close that - and would also grey out all twenty-eight controls on
+     * EVERY return to the tab, because they all bind `controlsDisabled()` now.
+     *
+     * The trade is not close. The initial-load window spans a dataset
+     * resolution; this one spans a synchronous signal reset with `initialLoad`
+     * already settled, so there is no fetch inside it. Flickering the whole
+     * filter bar on every tab entry to close a window that narrow would cost
+     * the reader more than it returns.
+     *
+     * If `resetPageState()` ever grows an await, this reasoning expires.
+     */
     await this.resetPageState();
 
     this.pageReady.set(true);

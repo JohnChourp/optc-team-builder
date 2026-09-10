@@ -453,6 +453,59 @@ describe('ci-check-routing', () => {
     );
   });
 
+  /*
+   * `.github/workflows/test.yml` duplicates SCRIPT_SUITES as two shell literals
+   * so the dispatch path can run the full set. A duplicated list rots, and this
+   * one had - three labels and one command were stale within a day of being
+   * changed here.
+   *
+   * Worse, the literal is BASH SINGLE-QUOTED, and the What's New label contains
+   * an apostrophe. That closed the string early and made the whole `Select
+   * checks` step a syntax error - `line 42: syntax error near unexpected token
+   * )`. Every `Test` dispatch failed before running anything, which is why the
+   * newest run of any kind was 2026-08-17 and why the e2e quarantine could
+   * never collect its restoration evidence.
+   */
+  it('keeps the workflow matrix identical to SCRIPT_SUITES', () => {
+    const yml = readFileSync('.github/workflows/test.yml', 'utf8');
+    const line = yml.split('\n').find((entry) => entry.includes('full_script_matrix='));
+
+    expect(line, 'test.yml no longer defines full_script_matrix').toBeDefined();
+
+    const literal = line!.slice(line!.indexOf("'") + 1, line!.lastIndexOf("'"));
+    // Undo the shell close/escape/reopen dance before parsing.
+    const matrix = JSON.parse(literal.split(`'"'"'`).join("'")) as {
+      include: Array<{ suite: string; label: string; command: string }>;
+    };
+
+    expect(matrix.include).toEqual(
+      Object.entries(SCRIPT_SUITES).map(([suite, config]) => ({
+        suite,
+        label: config.label,
+        command: config.command,
+      })),
+    );
+
+    const suitesLine = yml.split('\n').find((entry) => entry.includes('full_script_suites='));
+
+    expect(suitesLine).toContain(Object.keys(SCRIPT_SUITES).join(','));
+  });
+
+  /*
+   * And the literal has to survive bash. A label with an apostrophe is the case
+   * that broke it, so assert the escape rather than assuming nobody adds
+   * another one.
+   */
+  it('escapes every apostrophe so the shell step still parses', () => {
+    const yml = readFileSync('.github/workflows/test.yml', 'utf8');
+    const line = yml.split('\n').find((entry) => entry.includes('full_script_matrix='))!;
+    const literal = line.slice(line.indexOf("'") + 1, line.lastIndexOf("'"));
+
+    // Inside a bash single-quoted string, the only legal apostrophe is the
+    // close/escape/reopen sequence.
+    expect(literal.split(`'"'"'`).join('')).not.toContain("'");
+  });
+
   it('renders GitHub outputs and Markdown summaries', () => {
     const plan = buildCheckPlan(['docs/maintainer-validation-guide.md']);
 

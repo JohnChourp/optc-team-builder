@@ -229,6 +229,53 @@ describe('AutoTeamBuilderPage builder interactions', () => {
    * nobody has written yet: a new `[disabled]="building()"` fails here rather
    * than silently re-opening the window.
    */
+  /*
+   * `ionViewWillEnter` runs a SECOND `resetPageState()` while `pageReady` is
+   * already true, so the initial-load defect survives there in a narrower form.
+   * It is deliberately left: lowering `pageReady` around it would grey out all
+   * twenty-eight controls on every return to the tab.
+   *
+   * That trade only holds while the reset is synchronous. If it grows an
+   * `await`, the window stops being a signal write and starts spanning real
+   * time, and the reasoning at the call site expires - so this fails and makes
+   * someone re-read it, rather than the comment quietly becoming untrue.
+   */
+  it('keeps the re-entry reset synchronous, which is what makes leaving it safe', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.ts'),
+      'utf8',
+    );
+    const start = source.indexOf('private async resetPageState()');
+
+    expect(start).toBeGreaterThan(-1);
+
+    let depth = 0;
+    let end = -1;
+
+    for (let index = source.indexOf('{', start); index < source.length; index += 1) {
+      if (source[index] === '{') {
+        depth += 1;
+      } else if (source[index] === '}') {
+        depth -= 1;
+
+        if (depth === 0) {
+          end = index;
+          break;
+        }
+      }
+    }
+
+    expect(end).toBeGreaterThan(start);
+
+    const body = source.slice(start, end + 1);
+
+    expect(body.split('\n').length).toBeGreaterThan(50);
+    expect(
+      body.match(/\bawait\b/gu) ?? [],
+      'resetPageState gained an await, so the re-entry window now spans real time - re-read the note in ionViewWillEnter',
+    ).toEqual([]);
+  });
+
   it('gives every control in the filter panel the same page-ready guard', async () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
