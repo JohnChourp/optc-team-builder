@@ -1,17 +1,4 @@
 {
   "schemaVersion": 1,
-  "entries": [
-    {
-      "tag": "@quarantined:guided-auto-build-toggle",
-      "browsers": [
-        "chromium"
-      ],
-      "reason": "Root cause found and fixed on 2026-09-08: ngOnInit's resetPageState() lands only after the dataset resolves, while the guided toggle was rendered and enabled from the first paint, so a press made during the load was silently undone. The toggle is now gated on pageReady() and the three specs wait for it. Kept until the guided Chromium run has the consecutive passes its restoration criteria require - the fix is proven by unit test and mutation, not yet by repeated browser runs. Note the 2026-09-08 follow-up: pageReady() gated only the guided toggle, while the three toggles beside it and every other filter control were still undone by the same reset. All of them now share one guard, so a restoration run exercises a materially different page from the one that was quarantined.",
-      "trackingUrl": "https://app.clickup.com/t/90121749478/869exm63x",
-      "firstSeenAt": "2026-06-29",
-      "firstSeenEvidence": "https://github.com/JohnChourp/optc-team-builder/actions/runs/28385874618",
-      "owner": "Browser regression maintainers",
-      "restorationCriteria": "Remove this entry once the guided Chromium run passes three consecutive times after the 2026-09-08 pageReady() gate. The runs that count are the e2e-quarantine chromium leg of a manual `Test` workflow_dispatch on main (which resolves to --quarantine-mode=only and so runs exactly this tag), or three local `npm run test:e2e:chromium` guided legs recorded in a brain audit. Prefer the dispatch: its result is inspectable by someone other than the machine that ran it, whereas live-artifacts/ is gitignored. The criteria previously said \"CI/default-branch runs\", which reads as unsatisfiable now that no workflow runs on a pull request or a push to main - it is not. The e2e-quarantine job is still there and a dispatch still reaches it; nobody has ever dispatched it. As of 2026-09-08 the newest Test run of any kind is 2026-08-17, from before the PR trigger was removed."
-    }
-  ]
+  "entries": []
 }
