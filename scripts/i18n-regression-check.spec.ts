@@ -1,3 +1,4 @@
+import { readFileSync, readdirSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -184,5 +185,63 @@ describe('i18n regression check', () => {
     expect(result.errors).toContain(
       'example-guide: src/app/app.routes.ts must include "path: \'guides/example\'".',
     );
+  });
+});
+
+describe('i18n scopes are reachable', () => {
+  const i18nRoot = path.resolve(process.cwd(), 'public/i18n');
+  const srcRoot = path.resolve(process.cwd(), 'src');
+
+  function readSource(): string {
+    const parts: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (/\.(?:ts|html)$/u.test(entry.name) && !entry.name.endsWith('.spec.ts')) {
+          parts.push(readFileSync(full, 'utf8'));
+        }
+      }
+    };
+    walk(srcRoot);
+
+    return parts.join('\n');
+  }
+
+  /*
+   * `enemy-mechanics-picker` was a 38-key bundle in two languages that nothing
+   * read. Commit 61c49a90 ("remove unused enemy mechanic functions and
+   * components") deleted the component and its `read:`/`scope:` usage, and left
+   * the bundle behind - along with two `preloadScope` calls that went on
+   * DOWNLOADING it on every visit to Auto Team Builder and Saved Enemies.
+   *
+   * A preload is not a use. Scopes are discovered from the directory listing,
+   * so a bundle nobody reads is invisible to every other i18n check: parity
+   * passes (both languages are there), and the regression check only looks at
+   * its own allowlist.
+   */
+  it('has no bundle that only a preloadScope call keeps alive', () => {
+    const source = readSource();
+    const scopes = readdirSync(i18nRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+
+    expect(scopes.length).toBeGreaterThan(20);
+
+    const unreadable = scopes.filter((scope) => {
+      const read = source.includes(`read: '${scope}'`) || source.includes(`read: "${scope}"`);
+      const scoped = source.includes(`scope: '${scope}'`) || source.includes(`scope: "${scope}"`);
+      const translated =
+        source.includes(`, '${scope}')`) || source.includes(`, "${scope}")`);
+
+      return !read && !scoped && !translated;
+    });
+
+    expect(
+      unreadable,
+      'these bundles ship and are never read - delete them, or wire up whatever was meant to read them',
+    ).toEqual([]);
   });
 });

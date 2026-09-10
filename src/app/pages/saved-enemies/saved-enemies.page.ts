@@ -703,7 +703,6 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     await Promise.all([
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('character-image-picker'),
-      this.i18n.preloadScope('enemy-mechanics-picker'),
       this.i18n.preloadScope('saved-teams'),
     ]);
     const [summary, abilityCatalog] = await Promise.all([
