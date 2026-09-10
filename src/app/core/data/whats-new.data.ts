@@ -31,6 +31,48 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.7',
+    date: '2026-09-10',
+    userVisible: true,
+    added: [],
+    improved: [
+      {
+        en: 'The filter bar on Character Boxes stays usable while the list is loading. Three of its filters used to grey out and the rest stayed live, so half the bar worked and half did not.',
+        el: 'Η μπάρα φίλτρων στα Character Boxes μένει χρησιμοποιήσιμη όσο φορτώνει η λίστα. Τρία φίλτρα γκρίζαραν και τα υπόλοιπα έμεναν ζωντανά, οπότε το μισό της μπάρας δούλευε και το άλλο μισό όχι.',
+      },
+    ],
+    headline: {
+      en: 'Filters that answer the question you actually asked',
+      el: 'Φίλτρα που απαντούν στην ερώτηση που όντως έκανες',
+    },
+    summaryEn:
+      'On Character Boxes, pressing two filters quickly could leave you looking at the results of the first one while the filter bar showed the second - whichever search finished last won, and the only way out was to press again. The newest filter now always wins. On the same screen, if a search failed, "Load more" stopped working for the rest of your visit and would not even try again; now it will. On a character\'s own screen and the local-edit screen, fourteen more labels are in Greek, and the messages you get after importing or resetting a local override are in Greek too - including the confirmation question, which was in English. The Build button on Auto Team Builder gets its glow back; it had been drawn and then cut off every time. Nothing was lost or changed in your saved teams, boxes or favourites.',
+    summaryEl:
+      'Στα Character Boxes, πατώντας δύο φίλτρα γρήγορα μπορούσες να βλέπεις τα αποτελέσματα του πρώτου ενώ η μπάρα φίλτρων έδειχνε το δεύτερο - κέρδιζε όποια αναζήτηση τελείωνε τελευταία, και ο μόνος τρόπος να ξεμπλοκάρεις ήταν να ξαναπατήσεις. Τώρα κερδίζει πάντα το πιο πρόσφατο φίλτρο. Στην ίδια οθόνη, αν αποτύγχανε μια αναζήτηση, το «Load more» σταματούσε να δουλεύει για την υπόλοιπη επίσκεψη και ούτε καν ξαναπροσπαθούσε· τώρα ξαναπροσπαθεί. Στην οθόνη του χαρακτήρα και στην οθόνη τοπικής επεξεργασίας, άλλα δεκατέσσερα labels είναι στα ελληνικά, και τα μηνύματα μετά από import ή επαναφορά τοπικού override είναι κι αυτά ελληνικά - μαζί με την ερώτηση επιβεβαίωσης, που ήταν αγγλική. Το κουμπί Build στο Auto Team Builder ξαναπαίρνει τη λάμψη του· ζωγραφιζόταν και μετά κοβόταν κάθε φορά. Τίποτα δεν χάθηκε και δεν άλλαξε στις αποθηκευμένες ομάδες, τα boxes ή τα favorites σου.',
+    fixed: [
+      {
+        en: 'The results list on Character Boxes now always matches the filters shown in the filter bar. Pressing two filters quickly used to leave whichever search finished last on screen, even if it was not the one you last pressed.',
+        el: 'Η λίστα αποτελεσμάτων στα Character Boxes ταιριάζει πάντα πια με τα φίλτρα που δείχνει η μπάρα φίλτρων. Πατώντας δύο φίλτρα γρήγορα, έμενε στην οθόνη όποια αναζήτηση τελείωνε τελευταία, ακόμη κι αν δεν ήταν αυτή που πάτησες τελευταία.',
+      },
+      {
+        en: '"Load more" on Character Boxes and Characters works again after a failed search. It used to stop responding for the rest of your visit, with no way back except reloading.',
+        el: 'Το «Load more» στα Character Boxes και στην οθόνη Characters ξαναδουλεύει μετά από αποτυχημένη αναζήτηση. Σταματούσε να ανταποκρίνεται για την υπόλοιπη επίσκεψη, χωρίς άλλη λύση από επαναφόρτωση.',
+      },
+      {
+        en: 'Fourteen labels on the character screen, and the messages and confirmation question on the local-edit screen, are now in Greek instead of English.',
+        el: 'Δεκατέσσερα labels στην οθόνη χαρακτήρα, και τα μηνύματα και η ερώτηση επιβεβαίωσης στην οθόνη τοπικής επεξεργασίας, είναι πλέον στα ελληνικά αντί για αγγλικά.',
+      },
+      {
+        en: 'When something goes wrong importing or editing a local override, the message explains it in your language instead of showing the raw technical error.',
+        el: 'Όταν κάτι πάει στραβά στο import ή στην επεξεργασία τοπικού override, το μήνυμα το εξηγεί στη γλώσσα σου αντί να δείχνει το ωμό τεχνικό σφάλμα.',
+      },
+      {
+        en: 'The Build button on Auto Team Builder shows its glow again - it was being drawn and then cut off.',
+        el: 'Το κουμπί Build στο Auto Team Builder δείχνει ξανά τη λάμψη του - ζωγραφιζόταν και μετά κοβόταν.',
+      },
+    ],
+  },
+  {
     version: '0.4.6',
     date: '2026-09-10',
     userVisible: true,
