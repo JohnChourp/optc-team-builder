@@ -72,5 +72,13 @@
     "upload": "Ανέβασμα εικόνας",
     "clear": "Καθαρισμός εικόνας",
     "applyJson": "Εφαρμογή JSON στο draft"
+  },
+  "transfer": {
+    "confirmReset": "Να διαγραφεί το τρέχον τοπικό override αυτού του χαρακτήρα;",
+    "errors": {
+      "missingFields": "Από το τρέχον draft λείπουν υποχρεωτικά πεδία χαρακτήρα.",
+      "advancedShape": "Το advanced JSON δεν έχει τη μορφή override που αναμένεται.",
+      "advancedInvalid": "Το advanced JSON δεν είναι έγκυρο."
+    }
   }
 }

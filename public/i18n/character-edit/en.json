@@ -72,5 +72,13 @@
     "upload": "Upload image",
     "clear": "Clear image",
     "applyJson": "Apply JSON to draft"
+  },
+  "transfer": {
+    "confirmReset": "Delete the current local override for this character?",
+    "errors": {
+      "missingFields": "The current draft is missing required character fields.",
+      "advancedShape": "The advanced JSON does not match the expected override shape.",
+      "advancedInvalid": "The advanced JSON is not valid."
+    }
   }
 }

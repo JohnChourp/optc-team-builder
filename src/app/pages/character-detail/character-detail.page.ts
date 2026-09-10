@@ -17,6 +17,7 @@ import {
 } from '../../core/models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../../core/models/optc.models';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
+import { AppI18nService } from '../../core/services/app-i18n.service';
 import { createLocalCharacterOverrideFromRecord } from '../../core/services/character-overrides.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -33,6 +34,22 @@ import {
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 import { CharacterDetailStylePanelsComponent } from './character-detail-style-panels.component';
+
+/**
+ * A transfer failure the reader is allowed to see, named by translation key.
+ *
+ * The catch used to render `error.message`, so whatever a parser or the
+ * platform threw reached the reader verbatim - always English, on a screen that
+ * is otherwise fully bilingual. Carrying a key instead means the message is
+ * translated at the point it is shown, and an unexpected error falls back to a
+ * translated generic rather than leaking its internals.
+ */
+class CharacterOverrideTransferError extends Error {
+  public constructor(public readonly key: string) {
+    super(key);
+    this.name = 'CharacterOverrideTransferError';
+  }
+}
 
 @Component({
   selector: 'app-character-detail-page',
@@ -91,8 +108,14 @@ export class CharacterDetailPage implements OnInit {
     private readonly repository: OptcRepositoryService,
     private readonly userState: UserStateService,
     private readonly characterOverrides: CharacterOverridesService,
+    private readonly i18n: AppI18nService,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
+  }
+
+  /** Translates within this page's own scope, so call sites carry only the key. */
+  private text(key: string): string {
+    return this.i18n.translate(key, undefined, 'character-detail');
   }
 
   public async ngOnInit(): Promise<void> {
@@ -154,29 +177,36 @@ export class CharacterDetailPage implements OnInit {
       const sanitizedImport = sanitizeCharacterOverridesImportPayload(payload);
 
       if (sanitizedImport.invalidOverrideCount > 0) {
-        throw new Error('The selected override file contains invalid character override entries.');
+        throw new CharacterOverrideTransferError('transfer.errors.invalidEntries');
       }
 
       if (
         sanitizedImport.overrides.length !== 1 ||
         sanitizedImport.overrides[0]?.characterId !== character.id
       ) {
-        throw new Error('The selected override file does not match this character.');
+        throw new CharacterOverrideTransferError('transfer.errors.characterMismatch');
       }
 
       await this.characterOverrides.saveOverride(sanitizedImport.overrides[0]!);
       await this.loadCharacter(character.id, false);
       this.transferFeedback.set({
         tone: 'success',
-        message: 'Local character override imported successfully.',
+        message: this.text('transfer.importSuccess'),
       });
     } catch (error) {
+      /*
+       * Translate the error's KEY, never its `message`. Surfacing
+       * `error.message` put whatever a parser or the platform happened to throw
+       * in front of the reader - always English, sometimes a stack-shaped
+       * internal string - on a screen that is otherwise fully bilingual.
+       */
       this.transferFeedback.set({
         tone: 'error',
-        message:
-          error instanceof Error && error.message.trim().length > 0
-            ? error.message
-            : 'Character override import failed.',
+        message: this.text(
+          error instanceof CharacterOverrideTransferError
+            ? error.key
+            : 'transfer.errors.importFailed',
+        ),
       });
     }
   }
@@ -185,7 +215,7 @@ export class CharacterDetailPage implements OnInit {
     if (
       !this.hasLocalOverride() ||
       (typeof globalThis.confirm === 'function' &&
-        !globalThis.confirm('Delete the current local override for this character?'))
+        !globalThis.confirm(this.text('transfer.confirmReset')))
     ) {
       return;
     }
@@ -194,7 +224,7 @@ export class CharacterDetailPage implements OnInit {
     await this.loadCharacter(characterId, false);
     this.transferFeedback.set({
       tone: 'success',
-      message: 'Local character override removed.',
+      message: this.text('transfer.removed'),
     });
   }
 
