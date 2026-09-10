@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -221,5 +221,80 @@ describe('tag-set picker panel scoping guard', () => {
 
   it('refuses to run when the derivation finds nothing', () => {
     expect(() => resolveSharedPanelStylesheets('/nonexistent/project/root')).toThrow();
+  });
+});
+
+describe('shared panel class names stay unique to the pickers', () => {
+  /*
+   * The audit flagged `.ability-tag-set-head h2` in the shell panel as an
+   * unscoped rule. Measured, that is NOT the defect the scoping guard exists
+   * for: the shell panel has 23 selectors and NONE names a modal class, which
+   * makes it symmetric by construction - both pickers render the panel, so an
+   * unscoped rule reaching both is the intent, not an asymmetry.
+   *
+   * The real risk with `ViewEncapsulation.None` is different: these rules are
+   * global, so a class name reused anywhere else in the app is restyled
+   * silently. Today the panel's class names appear only in the two picker
+   * templates. This is what keeps that true.
+   */
+  it('uses class names that no other template borrows', () => {
+    const panelDir = 'src/app/shared/ability-tag-set-picker';
+    const owners = [
+      'src/app/shared/ability-tag-set-picker/ability-tag-set-picker.component.html',
+      'src/app/shared/character-tag-set-picker/character-tag-set-picker.component.html',
+    ];
+
+    const classNames = new Set<string>();
+
+    for (const file of readdirSync(panelDir)) {
+      if (!file.endsWith('.component.scss')) {
+        continue;
+      }
+
+      for (const [, name] of readFileSync(`${panelDir}/${file}`, 'utf8').matchAll(
+        /\.(ability-tag-set[a-z0-9-]*)/gu,
+      )) {
+        if (name) {
+          classNames.add(name);
+        }
+      }
+    }
+
+    expect(classNames.size).toBeGreaterThan(5);
+
+    const templates: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = `${dir}/${entry.name}`;
+
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (entry.name.endsWith('.html')) {
+          templates.push(full);
+        }
+      }
+    };
+    walk('src/app');
+
+    const strangers: string[] = [];
+
+    for (const template of templates) {
+      if (owners.includes(template)) {
+        continue;
+      }
+
+      const markup = readFileSync(template, 'utf8');
+
+      for (const name of classNames) {
+        if (new RegExp(`class="[^"]*\\b${name}\\b`, 'u').test(markup)) {
+          strangers.push(`${template} uses .${name}`);
+        }
+      }
+    }
+
+    expect(
+      strangers,
+      'these templates borrow a shared-panel class, so unscoped ViewEncapsulation.None rules reach them too',
+    ).toEqual([]);
   });
 });
