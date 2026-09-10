@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.9',
+    date: '2026-09-10',
+    userVisible: false,
+    added: [],
+    improved: [],
+    fixed: [],
+    headline: {
+      en: 'Nothing changed on any screen',
+      el: 'Δεν άλλαξε τίποτα σε καμία οθόνη',
+    },
+    summaryEn:
+      'Nothing in this release changes anything you can see or do. It is work on the tests behind the app: the full automated test run is completely green for the first time since August, after fixing four tests that were running out of time on the test machines and refreshing two reference screenshots that had gone stale. Around eighty pieces of unused text were removed from the app, none of which was ever shown on a screen - and two that looked unused turned out to be wording a screen reader speaks aloud, so they stayed. Your saved teams, boxes, favourites and settings are untouched.',
+    summaryEl:
+      'Τίποτα σε αυτή την έκδοση δεν αλλάζει κάτι που βλέπεις ή κάνεις. Είναι δουλειά στα tests πίσω από την εφαρμογή: το πλήρες αυτοματοποιημένο test run είναι εντελώς πράσινο για πρώτη φορά από τον Αύγουστο, αφού διορθώθηκαν τέσσερα tests που ξέμεναν από χρόνο στα μηχανήματα των tests και ανανεώθηκαν δύο screenshots αναφοράς που είχαν παλιώσει. Αφαιρέθηκαν περίπου ογδόντα κομμάτια αχρησιμοποίητου κειμένου από την εφαρμογή, κανένα από τα οποία δεν εμφανιζόταν ποτέ σε οθόνη - και δύο που έμοιαζαν αχρησιμοποίητα αποδείχθηκε ότι είναι διατύπωση που εκφωνεί ο screen reader, οπότε έμειναν. Οι αποθηκευμένες ομάδες, τα boxes, τα favorites και οι ρυθμίσεις σου μένουν ανέπαφα.',
+  },
+  {
     version: '0.4.8',
     date: '2026-09-10',
     userVisible: false,
