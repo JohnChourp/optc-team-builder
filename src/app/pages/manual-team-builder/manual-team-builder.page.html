@@ -429,9 +429,14 @@
           #characterPickerModal
           [isOpen]="pickerModalOpen()"
           cssClass="pick-editor-modal"
-          [attr.aria-label]="t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })"
+          [attr.aria-label]="
+            t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })
+          "
           (didPresent)="
-            labelModalDialog($event, t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) }))
+            labelModalDialog(
+              $event,
+              t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })
+            )
           "
           (didDismiss)="closeCharacterPicker()"
         >
@@ -439,7 +444,9 @@
             <ion-header
               class="pick-editor-modal__header ion-no-border"
               role="group"
-              [attr.aria-label]="t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })"
+              [attr.aria-label]="
+                t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })
+              "
             >
               <ion-toolbar>
                 <div class="pick-editor-modal__head">
@@ -448,7 +455,9 @@
                       <ion-icon [icon]="editIcon" aria-hidden="true"></ion-icon>
                       <span>{{ t('picker.eyebrow') }}</span>
                     </div>
-                    <h2>{{ t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) }) }}</h2>
+                    <h2>
+                      {{ t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) }) }}
+                    </h2>
                     <p>{{ t('picker.copy') }}</p>
                   </div>
                 </div>
@@ -470,7 +479,9 @@
               <div class="pick-editor-modal__shell">
                 <div class="manual-team-picker pick-editor-modal__panel">
                   <div class="manual-team-picker__meta">
-                    <strong>{{ t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) }) }}</strong>
+                    <strong>{{
+                      t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })
+                    }}</strong>
                     <small>{{ t('picker.copy') }}</small>
                   </div>
                   <div class="manual-team-picker-slot-rail">
