@@ -6249,9 +6249,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         executionOptions?: {
           signal?: AbortSignal;
           onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
+          onExecutionPath?: (path: string) => void;
         },
       ) =>
         new Promise<null>((resolve, reject) => {
+          executionOptions?.onExecutionPath?.('pool');
           executionOptions?.onProgress?.({
             stage: 'exactAttempt',
             candidateCount: 64,
@@ -6295,6 +6297,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.result()).toEqual(previousResult);
     expect(page.errorMessage()).toBe('');
     expect(page.building()).toBe(false);
+    // The restored result is the earlier build's, so nothing of the cancelled run describes it.
+    expect(page.buildDebugReport().dataQuality).not.toHaveProperty('executionPath');
+    expect(page.buildDebugReport()).not.toHaveProperty('performance');
   });
 
   it('pauses the active build and resumes by starting a fresh run with the same inputs', async () => {
@@ -8150,40 +8155,47 @@ describe('AutoTeamBuilder preset import helpers', () => {
     ]);
   });
 
-  // 869exmmh1: a negative or non-numeric Captain boost bound used to vanish without a word.
+  /*
+   * 869exmmh1: a negative Captain boost bound used to vanish without a word. Read through the real
+   * path - the import parses first, and the schema turns a bound that is not a number at all into
+   * a rejected file, so the warning is about the ones that do get through.
+   */
   it('says how many invalid Captain boost bounds a preset import ignored', () => {
-    const payload = buildAutoTeamSelectionExportPayload({
-      selectedTypes: ['DEX'],
-      selectedClasses: ['Fighter'],
-      requiredAbilities: [],
-      enemyMechanics: [],
-      requireAllSelectedTypesInTeam: false,
-      requireAllSelectedClassesPerCharacter: false,
-      requireAllSlotsInLeaderSuperEffectScope: false,
-      requireUniqueBaseCharacterNames: false,
-      favoritesOnly: false,
-      favoriteCount: 0,
-      manualSlots: createManualSlots({}),
-      lockedCharacterIds: [],
-      lockedCharacters: [],
-      selectedLeaderIds: [],
-      captainLeaderId: null,
-      friendCaptainLeaderId: null,
-      exportedAt: '2026-03-25T10:00:00.000Z',
-    });
-    const sanitize = () =>
-      sanitizeAutoTeamSelectionImportPayload(payload, {
+    const createPayload = (leaderBoostRanges: unknown) => {
+      const payload = buildAutoTeamSelectionExportPayload({
+        selectedTypes: ['DEX'],
+        selectedClasses: ['Fighter'],
+        requiredAbilities: [],
+        enemyMechanics: [],
+        requireAllSelectedTypesInTeam: false,
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSlotsInLeaderSuperEffectScope: false,
+        requireUniqueBaseCharacterNames: false,
+        favoritesOnly: false,
+        favoriteCount: 0,
+        manualSlots: createManualSlots({}),
+        lockedCharacterIds: [],
+        lockedCharacters: [],
+        selectedLeaderIds: [],
+        captainLeaderId: null,
+        friendCaptainLeaderId: null,
+        exportedAt: '2026-03-25T10:00:00.000Z',
+      });
+
+      (payload.filters as { leaderBoostRanges: unknown }).leaderBoostRanges = leaderBoostRanges;
+
+      return JSON.stringify(payload);
+    };
+    const importPreset = (json: string) =>
+      sanitizeAutoTeamSelectionImportPayload(parseAutoTeamSelectionImportPayload(json), {
         availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
         availableClasses: ['Fighter', 'Slasher'],
         abilityCatalogItems: [],
         availableLockedCharacters: [],
       });
-
-    (payload.filters as { leaderBoostRanges: unknown }).leaderBoostRanges = {
-      ATK: { min: -2, max: 'lots' },
-      HP: { min: 1.5, max: null },
-    };
-    const result = sanitize();
+    const result = importPreset(
+      createPayload({ ATK: { min: -2, max: null }, HP: { min: 1.5, max: null } }),
+    );
 
     expect(result.state.leaderBoostRanges).toEqual({
       ATK: { min: null, max: null },
@@ -8191,17 +8203,22 @@ describe('AutoTeamBuilder preset import helpers', () => {
     });
     expect(result.warnings).toContainEqual({
       key: 'preset.warnings.invalidLeaderBoostBounds',
-      params: { count: 2 },
+      params: { count: 1 },
     });
 
-    // Empty and valid bounds are not invalid ones.
-    (payload.filters as { leaderBoostRanges: unknown }).leaderBoostRanges = {
-      ATK: { min: '', max: 4 },
-      HP: { min: 0, max: undefined },
-    };
+    // Zero, a plain number and an absent bound are not invalid ones.
     expect(
-      sanitize().warnings.some((warning) => warning.key === 'preset.warnings.invalidLeaderBoostBounds'),
+      importPreset(
+        createPayload({ ATK: { min: 0, max: 4 }, HP: { min: null, max: null } }),
+      ).warnings.some((warning) => warning.key === 'preset.warnings.invalidLeaderBoostBounds'),
     ).toBe(false);
+
+    // A bound that is not a number at all never reaches the sanitiser.
+    expect(() =>
+      parseAutoTeamSelectionImportPayload(
+        createPayload({ ATK: { min: 'lots', max: null }, HP: { min: null, max: null } }),
+      ),
+    ).toThrow('preset.errors.schemaMismatch');
   });
 
   it('keeps cross-slot manual OR picks when sanitizing imported presets', () => {

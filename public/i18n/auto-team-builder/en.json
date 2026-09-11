@@ -943,6 +943,7 @@
         "lowerSelectedFilterScore": "Matches fewer selected filters.",
         "lowerLeaderCoverageScore": "Covers less leader-scope demand.",
         "rankingTieBreak": "Lost the current ranking tie-break.",
+        "searchRejectedTeam": "Ranked higher, but the search could not build the team around it.",
         "unknown": "Rejected for an unrecognized recorded reason."
       }
     },

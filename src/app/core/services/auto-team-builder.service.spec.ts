@@ -37495,6 +37495,69 @@ describe('Auto team builder', () => {
     );
   });
 
+  /*
+   * 869exmmh5 review: a pooled build that cannot get two workers quietly becomes a single-worker
+   * or main-thread build. Both paths are reported, and a main-thread build that never had a worker
+   * is not blamed on one.
+   */
+  it('reports the single worker a pool fell back to', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const worker = new FakeWorker((request) => {
+      if (request.type !== 'run') {
+        throw new Error(`Unexpected request type: ${request.type}`);
+      }
+
+      worker.emitMessage({ type: 'result', runId: request.runId, result: null });
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    // The pool asks for two and gets one, so it drops back to a single worker.
+    createWorkerSpy
+      .mockReturnValueOnce(new FakeWorker(() => undefined) as never)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce(worker as never);
+    const onExecutionPath = vi.fn();
+
+    await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      { requireFullCaptainAbilityCoverage: false, requireSuperTandemCriteria: false },
+      { workerCount: 2, onExecutionPath },
+    );
+
+    expect(onExecutionPath.mock.calls).toEqual([['worker']]);
+  });
+
+  it('reports a pooled build that had no worker at all as a main-thread build', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const createWorkerSpy = vi.spyOn(
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValue(null);
+    const onExecutionPath = vi.fn();
+
+    const result = await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      { requireFullCaptainAbilityCoverage: false, requireSuperTandemCriteria: false },
+      { workerCount: 2, onExecutionPath },
+    );
+
+    expect(onExecutionPath.mock.calls).toEqual([['mainThread']]);
+    expect(result).not.toBeNull();
+  });
+
   // 869exmmh5: a worker that fails is retried on the main thread; the path says both.
   it('reports a single worker that failed and the main-thread rerun that followed', async () => {
     const repository = {
@@ -39349,6 +39412,35 @@ describe('Auto team builder', () => {
     expect(result?.input.types).toEqual(['DEX']);
     expect(workerA.terminated).toBe(true);
     expect(workerB.terminated).toBe(true);
+  });
+
+  it('says a pool that never got a worker ran on the main thread, and only that', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const createWorkerSpy = vi.spyOn(
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValue(null);
+    const onExecutionPath = vi.fn();
+
+    const result = await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      {
+        requireFullCaptainAbilityCoverage: false,
+        requireSuperTandemCriteria: false,
+      },
+      { workerCount: 2, onExecutionPath },
+    );
+
+    // The pool runs the search itself when it has no worker, so nothing failed and nothing is
+    // rerun: the report says main thread once, never "after a worker failed".
+    expect(onExecutionPath.mock.calls).toEqual([['mainThread']]);
+    expect(result).not.toBeNull();
   });
 
   it('fails strict class mode when a forced leader does not match all selected classes', () => {

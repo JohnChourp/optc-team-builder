@@ -836,6 +836,8 @@ export class AutoTeamBuilderService {
           throw new AutoTeamBuildSearchTooLargeError();
         }
 
+        // Every way into this catch had a worker: a pool that never got one runs the search
+        // itself and returns, so it never fails here.
         executionOptions.onExecutionPath?.('mainThreadAfterWorkerFailure');
 
         return runAutoTeamBuildSearch(records, requestedInput, {
@@ -870,9 +872,9 @@ export class AutoTeamBuilderService {
       });
     }
 
-    try {
-      executionOptions.onExecutionPath?.('worker');
+    executionOptions.onExecutionPath?.('worker');
 
+    try {
       const result = await this.runSearchInWorker(
         worker,
         records,

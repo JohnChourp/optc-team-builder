@@ -264,8 +264,12 @@ The example shortens `request`, `outcome.slots`, `relaxation` and `coverage`; th
   `mainThreadAfterWorkerFailure`, which is otherwise silent. It is present when the service
   reported a path.
 - **Close alternatives** in `outcome.slots[].rejected` carry any hard-constraint codes first, then
-  the one ranking dimension that decided, or `rankingTieBreak` when only the newest id did. A
-  dimension the ranking never compared for this request is never listed.
+  the one ranking dimension that decided. A dimension the ranking never compared for this request is
+  never listed. `rankingTieBreak` means the newest id decided and nothing else;
+  `searchRejectedTeam` means the alternative ranked ahead and the search still could not build the
+  team around it, which is the only thing known about it.
+- **`requiredAbilityMatch`** on a slot counts only what that seat can cover: a requirement scoped to
+  the subs is never credited to a leader, and a leader-scoped one is never credited to a sub.
 - **`teamKey`** is the leaders' ids then the subs' ids, each sorted, so the same team reads the
   same whatever its slot order.
 - **Redaction.** No team name, notes, box names or ids, battle titles, file names, share codes or

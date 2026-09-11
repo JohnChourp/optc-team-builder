@@ -576,12 +576,11 @@ function countInvalidLeaderBoostRangeBounds(value: unknown): number {
 
     return (
       count +
+      // The schema check already rejected anything but a number, null or an absent bound, so a
+      // bound that is present and still normalizes away is one the reader wrote and we dropped.
       [range['min'], range['max']].filter(
         (bound) =>
-          bound !== null &&
-          bound !== undefined &&
-          bound !== '' &&
-          normalizeLeaderBoostRangeBound(bound) === null,
+          bound !== null && bound !== undefined && normalizeLeaderBoostRangeBound(bound) === null,
       ).length
     );
   }, 0);

@@ -943,6 +943,7 @@
         "lowerSelectedFilterScore": "Ταιριάζει σε λιγότερα selected filters.",
         "lowerLeaderCoverageScore": "Καλύπτει λιγότερο leader-scope demand.",
         "rankingTieBreak": "Έχασε στο current ranking tie-break.",
+        "searchRejectedTeam": "Ήταν ψηλότερα στην κατάταξη, αλλά η αναζήτηση δεν μπόρεσε να χτίσει την ομάδα γύρω του.",
         "unknown": "Απορρίφθηκε για άγνωστο recorded reason."
       }
     },

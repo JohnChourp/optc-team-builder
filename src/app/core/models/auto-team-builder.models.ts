@@ -345,7 +345,9 @@ export type AutoBuildRejectedCandidateReasonCode =
   | 'lowerCoverageContribution'
   | 'lowerSelectedFilterScore'
   | 'lowerLeaderCoverageScore'
-  | 'rankingTieBreak';
+  | 'rankingTieBreak'
+  /** It ranked ahead, and the search still could not build the team around it. */
+  | 'searchRejectedTeam';
 
 export interface AutoBuildRejectedCandidateReason {
   code: AutoBuildRejectedCandidateReasonCode;

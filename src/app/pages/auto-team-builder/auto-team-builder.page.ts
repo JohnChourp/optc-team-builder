@@ -5928,6 +5928,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           return;
         }
 
+        // The restored result is the earlier build's; what this cancelled one was asked, how long
+        // it ran and where, describes nothing on screen.
+        this.forgetCapturedBuildState();
+
         if (this.pauseAfterBuildCancellation) {
           this.result.set(previousResult);
           this.currentTeamId.set(previousTeamId);
@@ -6503,6 +6507,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     globalThis.setTimeout(focus, 0);
   }
 
+  /** What the last build was asked, how long it took and where it ran: all of one build. */
+  private forgetCapturedBuildState(): void {
+    this.lastBuildRequest = null;
+    this.lastBuildContext = null;
+    this.unappliedGuidedResult = null;
+    this.lastExecutionPath = null;
+    this.lastBuildStats.set(null);
+  }
+
   private failBuild(
     code: AutoTeamBuildFailureCode,
     message: string,
@@ -6559,10 +6572,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.lastBuildFailure.set(null);
     this.lastBuildStats.set(null);
     this.debugReportFeedback.set(null);
-    this.lastBuildRequest = null;
-    this.lastBuildContext = null;
-    this.unappliedGuidedResult = null;
-    this.lastExecutionPath = null;
+    this.forgetCapturedBuildState();
     this.manualSimilarPickFeedback.set('');
     this.currentTeamId.set(null);
     this.resetSaveFeedbackState();
