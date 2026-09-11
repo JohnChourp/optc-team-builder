@@ -31,6 +31,60 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.12',
+    date: '2026-09-11',
+    userVisible: true,
+    added: [],
+    improved: [
+      {
+        en: 'When Auto Team Builder finds no team, the message at the bottom of the screen now names the rule that stopped it - the classes you picked, or a Captain boost range - instead of always blaming unique in-game characters.',
+        el: 'Όταν το Auto Team Builder δεν βρίσκει ομάδα, το μήνυμα στο κάτω μέρος της οθόνης ονομάζει πλέον τον κανόνα που τη σταμάτησε - τα classes που διάλεξες ή ένα όριο Captain boost - αντί να κατηγορεί πάντα τους μοναδικούς in-game χαρακτήρες.',
+      },
+      {
+        en: 'Guided auto build on Auto Team Builder now says which filters it would have to relax when the only team it finds is a relaxed one.',
+        el: 'Το Καθοδηγούμενο auto build στο Auto Team Builder λέει πλέον ποια φίλτρα θα έπρεπε να χαλαρώσει όταν η μόνη ομάδα που βρίσκει είναι χαλαρωμένη.',
+      },
+      {
+        en: 'When the Build button on Auto Team Builder is greyed out, a line under it now says why: no type, no class, or a Captain boost range whose minimum is above its maximum.',
+        el: 'Όταν το κουμπί Build στο Auto Team Builder είναι γκριζαρισμένο, μια γραμμή από κάτω λέει πλέον γιατί: κανένα type, κανένα class, ή όριο Captain boost με ελάχιστο πάνω από το μέγιστο.',
+      },
+      {
+        en: 'An empty results list on Captain Coverage now names the filters that emptied it and offers "Clear all filters" right there.',
+        el: 'Όταν η λίστα αποτελεσμάτων στο Captain Coverage είναι άδεια, ονομάζει πλέον τα φίλτρα που την άδειασαν και δίνει «Καθαρισμός όλων των φίλτρων» ακριβώς εκεί.',
+      },
+      {
+        en: 'An empty character list on Character Boxes now says when "Already in box" or "Favorites only" is the reason, with a Clear filters button in the list itself.',
+        el: 'Η άδεια λίστα χαρακτήρων στα Character Boxes λέει πλέον πότε φταίει το «Ήδη μέσα στο box» ή το «Μόνο favorites», με κουμπί «Καθαρισμός φίλτρων» μέσα στη λίστα.',
+      },
+      {
+        en: '"Clear filters" in the "Assign slot" pop-up on Manual Team Builder now clears the search too, and a search alone no longer leaves it greyed out.',
+        el: 'Το «Καθαρισμός filters» στο αναδυόμενο παράθυρο «Ανάθεση slot» του Manual Team Builder καθαρίζει πλέον και την αναζήτηση, και μια αναζήτηση μόνη της δεν το αφήνει πια γκριζαρισμένο.',
+      },
+    ],
+    headline: {
+      en: 'The same filters build the same team',
+      el: 'Ίδια φίλτρα, ίδια ομάδα',
+    },
+    summaryEn:
+      'On Auto Team Builder, the same filters now always build the same team: a phone and a computer, two presses of Build, or two Web workers settings no longer end up with different teams. Picking classes now always means "characters of these classes", two included - Fighter and Slasher builds from units of either class, the way a Fighter-and-Slasher Captain boosts them - and the Final team report says whether every unit is one of them. Most of these builds are quick; a few narrow ones, such as Fighter and Slasher with a single type, can run for a long time - if one does, cancel it and try adding a second type. When no team is found, the message now names the rule that stopped it, Guided auto build says what it would have to relax, and a greyed-out Build button says why. Empty lists on Captain Coverage, Character Boxes and the Manual Team Builder "Assign slot" pop-up now say what emptied them and offer a way back. Your saved teams, boxes and favourites are untouched.',
+    summaryEl:
+      'Στο Auto Team Builder, τα ίδια φίλτρα χτίζουν πλέον πάντα την ίδια ομάδα: ένα κινητό και ένας υπολογιστής, δύο πατήματα του Build ή δύο ρυθμίσεις Web workers δεν καταλήγουν πια σε διαφορετικές ομάδες. Η επιλογή classes σημαίνει πλέον πάντα «χαρακτήρες από αυτά τα classes», και με δύο - το Fighter και Slasher χτίζει από χαρακτήρες είτε του ενός είτε του άλλου class, όπως τους ενισχύει ένας Fighter-and-Slasher Captain - και το Τελικό report ομάδας λέει αν κάθε χαρακτήρας είναι ένας από αυτούς. Τα περισσότερα τέτοια builds είναι γρήγορα· μερικές στενές αναζητήσεις, όπως Fighter και Slasher με ένα μόνο type, μπορεί να κρατήσουν πολύ - αν συμβεί, ακύρωσέ το και δοκίμασε να προσθέσεις δεύτερο type. Όταν δεν βρίσκεται ομάδα, το μήνυμα ονομάζει πλέον τον κανόνα που τη σταμάτησε, το Καθοδηγούμενο auto build λέει τι θα έπρεπε να χαλαρώσει, και ένα γκριζαρισμένο κουμπί Build λέει γιατί. Οι άδειες λίστες στο Captain Coverage, στα Character Boxes και στο αναδυόμενο παράθυρο «Ανάθεση slot» του Manual Team Builder λένε πλέον τι τις άδειασε και δίνουν τρόπο επιστροφής. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.',
+    fixed: [
+      {
+        en: 'The same filters on Auto Team Builder always build the same team, on every device and with any Web workers setting in Settings. A faster device could finish a looser search first, and two or more workers left out Captains with super effects that a single worker included - either way, a different team.',
+        el: 'Τα ίδια φίλτρα στο Auto Team Builder χτίζουν πάντα την ίδια ομάδα, σε κάθε συσκευή και με οποιαδήποτε ρύθμιση Web workers στις Ρυθμίσεις. Μια πιο γρήγορη συσκευή μπορούσε να τελειώσει πρώτη μια πιο χαλαρή αναζήτηση, και με δύο ή περισσότερους workers έμεναν έξω Captains με super effects που ένας worker περιλάμβανε - και στις δύο περιπτώσεις, άλλη ομάδα.',
+      },
+      {
+        en: 'Picking two classes on Auto Team Builder builds from characters of either class. It used to demand that every character have both, which left out most units - Fighter and Slasher over every type could search for minutes without a result.',
+        el: 'Η επιλογή δύο classes στο Auto Team Builder χτίζει από χαρακτήρες είτε του ενός είτε του άλλου. Ζητούσε από κάθε χαρακτήρα να έχει και τα δύο, κάτι που άφηνε έξω τους περισσότερους χαρακτήρες - το Fighter και Slasher με όλα τα types μπορούσε να ψάχνει για λεπτά χωρίς αποτέλεσμα.',
+      },
+      {
+        en: 'The Final team report on Auto Team Builder no longer says "No selected class coverage was requested" when you picked classes; it says whether every unit is one of them.',
+        el: 'Το Τελικό report ομάδας στο Auto Team Builder δεν γράφει πια «Δεν ζητήθηκε selected class coverage» όταν έχεις διαλέξει classes· λέει αν κάθε χαρακτήρας είναι ένας από αυτούς.',
+      },
+    ],
+  },
+  {
     version: '0.4.11',
     date: '2026-09-11',
     userVisible: true,
