@@ -37,6 +37,15 @@
   text-transform: uppercase;
 }
 
+// Not a <span>: every span in these cards is styled as the uppercase card label above.
+.fixed-type-card .filter-rule-copy,
+.class-select-card .filter-rule-copy {
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .fixed-type-card strong,
 .character-filter-card strong,
 .summary-card strong {

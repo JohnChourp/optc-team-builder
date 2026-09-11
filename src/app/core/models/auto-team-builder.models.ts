@@ -23,6 +23,42 @@ export const AUTO_TEAM_BUILDER_CLASSES = [
   'Slasher',
   'Striker',
 ] as const;
+/** No character holds more than two classes, so "every unit holds every selected class" can only mean one or two. */
+export const AUTO_BUILD_MAX_CLASSES_PER_CHARACTER = 2;
+
+/**
+ * Whether the selected classes are no team requirement - they only narrow the candidate pool,
+ * which the repository already limits to units holding ANY selected class. True when all ten are
+ * selected (no restriction at all), or when the caller asks for exactly that with
+ * `requireAllSelectedClassesInTeam: false`.
+ *
+ * The Auto Team Builder page asks for it with three or more classes, which it used to send as
+ * "every unit holds every selected class" - impossible past two, so the fallback silently dropped
+ * classes and nine of ten found no team. Reading them as "the team covers each class" still found
+ * no team for nine of ten with [STR]. Read as "these classes only" (shipped dataset, the page's
+ * default coverage flags, single-threaded) nine of ten builds an exact team with [STR] in 0.35 s,
+ * and three with [STR] builds one with none dropped in 88 s - a genuinely hard search that the old
+ * rule only looked fast at by dropping a class. Every other caller keeps the old reading.
+ */
+export function shouldTreatSelectedClassesAsNeutral(
+  input: Pick<
+    AutoBuildInput,
+    'requireAllSelectedClassesPerCharacter' | 'requireAllSelectedClassesInTeam' | 'selectedClasses'
+  >,
+): boolean {
+  if (input.requireAllSelectedClassesPerCharacter) {
+    return false;
+  }
+
+  return (
+    input.requireAllSelectedClassesInTeam === false ||
+    (input.selectedClasses.length === AUTO_TEAM_BUILDER_CLASSES.length &&
+      AUTO_TEAM_BUILDER_CLASSES.every((characterClass) =>
+        input.selectedClasses.includes(characterClass),
+      ))
+  );
+}
+
 export const AUTO_TEAM_BUILDER_DEFAULT_TYPE = 'DEX';
 export const AUTO_TEAM_CANDIDATE_LIMIT = null;
 export const DEFAULT_AUTO_TEAM_CANDIDATE_LIMIT = 1200;
@@ -123,6 +159,14 @@ export interface AutoBuildConstraints {
   selectedCharacterNames?: string[];
   requireAllSelectedTypesInTeam?: boolean;
   requireAllSelectedClassesPerCharacter?: boolean;
+  /**
+   * False: outside the per-unit rule, the selected classes only narrow the candidate pool (the
+   * repository keeps units holding ANY of them) and the team need not include each one. True or
+   * absent keeps the long-standing reading of a subset, where the team must cover every class.
+   * The Auto Team Builder page sends false for three or more classes; see
+   * shouldTreatSelectedClassesAsNeutral().
+   */
+  requireAllSelectedClassesInTeam?: boolean;
   requireAllSelectedCharacterTagsInTeam?: boolean;
   requireAllSelectedCharacterNamesInTeam?: boolean;
   requireAllSlotsInLeaderSuperEffectScope?: boolean;

@@ -318,6 +318,230 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     }
   });
 
+  /*
+   * 869exmmf0 / 869exmktu. The guard spec above names four toggles, so a control it did not
+   * name could go unguarded - and the Types and Classes selects did, the only two build inputs
+   * still live during a build. This derives the list instead: every control whose handler resets
+   * the build must wait for it, whatever it is called.
+   */
+  it('binds the page-ready guard on every form control whose change handler resets the build', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.ts'),
+      'utf8',
+    );
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+    const resettingHandlers = new Set<string>();
+
+    for (const match of source.matchAll(
+      /\n {2}(?:public |private |protected )?(?:async )?([A-Za-z0-9_]+)\([^)]*\)[^{]*\{/gu,
+    )) {
+      const bodyStart = match.index + match[0].length;
+      let depth = 1;
+      let index = bodyStart;
+
+      while (depth > 0 && index < source.length) {
+        if (source[index] === '{') {
+          depth += 1;
+        } else if (source[index] === '}') {
+          depth -= 1;
+        }
+
+        index += 1;
+      }
+
+      const body = source.slice(bodyStart, index);
+
+      if (body.includes('this.resetBuildState()') || body.includes('this.resetPageState()')) {
+        resettingHandlers.add(match[1]);
+      }
+    }
+
+    const guarded: string[] = [];
+    const unguarded: string[] = [];
+
+    for (const match of template.matchAll(
+      /<(ion-select|ion-toggle|ion-input|ion-checkbox|ion-searchbar|ion-textarea|input|select|textarea)\b[^>]*>/gsu,
+    )) {
+      const handler = /\((?:ionChange|ionInput|change|input)\)="\s*([A-Za-z0-9_]+)/u.exec(
+        match[0],
+      )?.[1];
+
+      if (!handler || !resettingHandlers.has(handler)) {
+        continue;
+      }
+
+      (match[0].includes('[disabled]="controlsDisabled()"') ? guarded : unguarded).push(handler);
+    }
+
+    expect(guarded).toEqual(expect.arrayContaining(['onTypeChange', 'onClassChange']));
+    expect(unguarded, 'these reset the build but stay usable while it runs').toEqual([]);
+  });
+
+  /*
+   * 869exmmfq. No character holds more than two classes, so "every unit holds every selected
+   * class" asked of three or more could never be met: the fallback had to drop all but two, and
+   * with nine of ten selected its attempt cap ran out first and no team was built at all.
+   */
+  it('asks every unit for all selected classes only while one unit could hold them', async () => {
+    const { page, repository, autoTeamBuilder } = await createPage();
+    const allClasses = [
+      'Fighter',
+      'Slasher',
+      'Striker',
+      'Shooter',
+      'Free Spirit',
+      'Cerebral',
+      'Powerhouse',
+      'Driven',
+      'Booster',
+      'Evolver',
+    ];
+
+    repository.getDatasetManifest.mockResolvedValue({
+      ...createManifest(),
+      availableClasses: allClasses,
+    });
+    await page.ngOnInit();
+
+    page.selectedClasses.set(['Fighter']);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
+    page.selectedClasses.set(['Fighter', 'Slasher']);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
+    expect(page.classSupportLabel()).toContain('asked to have all selected classes');
+
+    page.selectedClasses.set(['Fighter', 'Slasher', 'Striker']);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
+    expect(page.classSupportLabel()).toContain('Only characters of the selected classes');
+
+    page.selectedClasses.set(allClasses.filter((characterClass) => characterClass !== 'Booster'));
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
+
+    page.selectedTypes.set(['DEX']);
+    await page.buildTeam();
+    expect(autoTeamBuilder.buildTeam).toHaveBeenLastCalledWith(
+      expect.any(Array),
+      ['DEX'],
+      expect.objectContaining({
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSelectedClassesInTeam: false,
+      }),
+      expect.anything(),
+    );
+
+    page.selectedClasses.set(allClasses);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
+    expect(page.classSupportLabel()).toBe('');
+  });
+
+  it('says the rule each type and class selection applies, under its select', async () => {
+    const { page } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    expect(page.typeSupportLabel()).toContain('every selected type');
+    page.selectedTypes.set([...page.availableTypes]);
+    expect(page.typeSupportLabel()).toBe('');
+
+    expect(template).toContain(
+      '<small class="filter-rule-copy">{{ typeSupportLabel() }}</small>',
+    );
+    expect(template).toContain(
+      '<small class="filter-rule-copy">{{ classSupportLabel() }}</small>',
+    );
+  });
+
+  it('ignores a Types or Classes change that arrives while a build runs', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+    page.building.set(true);
+
+    await page.onTypeChange({ detail: { value: ['PSY'] } } as CustomEvent<{
+      value?: AutoTeamBuilderType[];
+    }>);
+    await page.onClassChange({ detail: { value: ['Slasher'] } } as CustomEvent<{
+      value?: string[];
+    }>);
+
+    expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.selectedClasses()).toEqual(['Fighter']);
+  });
+
+  it('publishes nothing from a build whose inputs changed while it ran', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const pendingBuild = createDeferred<AutoBuildResult | null>();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX', 'PSY']);
+    page.selectedClasses.set(['Fighter']);
+    autoTeamBuilder.buildTeam.mockReturnValueOnce(pendingBuild.promise);
+
+    const build = page.buildTeam();
+
+    // The type chips' handler has no guard of its own - it stands in for a control that misses one.
+    await page.removeSelectedType('DEX');
+    pendingBuild.resolve(createAutoBuildResult());
+    await build;
+
+    expect(page.selectedTypes()).toEqual(['PSY']);
+    expect(page.result()).toBeNull();
+  });
+
+  it('stops a build the moment its inputs change, and shows nothing from it', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const pendingBuild = createDeferred<AutoBuildResult | null>();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX', 'PSY']);
+    page.selectedClasses.set(['Fighter']);
+    autoTeamBuilder.buildTeam.mockReturnValueOnce(pendingBuild.promise);
+
+    const build = page.buildTeam();
+    const { signal } = autoTeamBuilder.buildTeam.mock.calls.at(-1)![3] as { signal: AbortSignal };
+
+    expect(signal.aborted).toBe(false);
+
+    await page.removeSelectedType('DEX');
+
+    expect(signal.aborted).toBe(true);
+
+    pendingBuild.reject(new Error('the stale search failed'));
+    await build;
+
+    expect(page.errorMessage()).toBe('');
+    expect(page.result()).toBeNull();
+    expect(page.building()).toBe(false);
+  });
+
+  it('does not restore the team from before the build on cancel once an input changed', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const pendingBuild = createDeferred<AutoBuildResult | null>();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX', 'PSY']);
+    page.selectedClasses.set(['Fighter']);
+    page.result.set(createAutoBuildResult());
+    autoTeamBuilder.buildTeam.mockReturnValueOnce(pendingBuild.promise);
+
+    const build = page.buildTeam();
+
+    await page.removeSelectedType('DEX');
+    page.cancelBuild();
+    pendingBuild.reject(new AutoTeamBuildCancelledError());
+    await build;
+
+    expect(page.result()).toBeNull();
+  });
+
   it('holds every control disabled for exactly the window the reset owns', async () => {
     const { page } = await createPage();
 
@@ -931,17 +1155,23 @@ describe('AutoTeamBuilderPage builder interactions', () => {
   it('gates requirement source candidates on its own tag filter and clears it on close', async () => {
     const { page, repository } = await createPage();
     const source = createRequirementSourceCharacter();
+    const otherSource = { ...createRequirementSourceCharacter(), id: 992, name: 'Other Source' };
 
-    repository.searchDetailedCharacters.mockResolvedValue([source]);
+    repository.searchDetailedCharacters.mockResolvedValue([source, otherSource]);
 
     await page.ngOnInit();
     await page.openRequirementSourceModal();
 
-    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toBeUndefined();
+    // The query is always limited to the characters that can be a source; the tag filter
+    // narrows that set further, and until it is used it adds nothing.
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([
+      source.id,
+      otherSource.id,
+    ]);
 
     await page.onRequirementSourceTagFilterChange({
       selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Minks'] }] },
-      matchingCharacterIds: [source.id],
+      matchingCharacterIds: [source.id, 424242],
     });
 
     expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([source.id]);
@@ -955,8 +1185,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
   it('keeps an empty requirement source tag selection inert and gates an empty match set to nothing', async () => {
     const { page, repository } = await createPage();
+    const source = createRequirementSourceCharacter();
 
-    repository.searchDetailedCharacters.mockResolvedValue([]);
+    repository.searchDetailedCharacters.mockResolvedValue([source]);
 
     await page.ngOnInit();
     await page.openRequirementSourceModal();
@@ -966,8 +1197,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       matchingCharacterIds: undefined,
     });
 
-    // An empty selection must apply no gate at all.
-    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toBeUndefined();
+    // An empty selection must apply no gate beyond the source set itself.
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([source.id]);
+    expect(page.requirementSourceCandidates().map((character) => character.id)).toEqual([
+      source.id,
+    ]);
 
     await page.onRequirementSourceTagFilterChange({
       selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Nobody'] }] },
@@ -975,7 +1209,128 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     });
 
     // `[]` is "nothing matches" and must never collapse back into "no filter".
-    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([]);
+    expect(page.requirementSourceCandidates()).toEqual([]);
+  });
+
+  /*
+   * 869exmktj (a). The repository yields every 250 rows while decorating, so a slow, broad query
+   * started first could land after a narrow one typed later and overwrite it: the list showed
+   * every source while the box said "zoro".
+   */
+  it('ignores a requirement source response that a newer search has replaced', async () => {
+    const { page, repository } = await createPage();
+    const zoroSource = createRequirementSourceCharacter();
+    const otherSource = { ...createRequirementSourceCharacter(), id: 992, name: 'Other Source' };
+    const broadResponse = createDeferred<CharacterDetailRecord[]>();
+
+    repository.searchDetailedCharacters.mockResolvedValue([zoroSource, otherSource]);
+
+    await page.ngOnInit();
+    await page.openRequirementSourceModal();
+
+    repository.searchDetailedCharacters
+      .mockImplementationOnce(() => broadResponse.promise)
+      .mockImplementationOnce(() => Promise.resolve([zoroSource]));
+
+    const broad = page.onRequirementSourceSearchChange({ detail: { value: '' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    const narrow = page.onRequirementSourceSearchChange({
+      detail: { value: 'zoro' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    await narrow;
+    broadResponse.resolve([zoroSource, otherSource]);
+    await broad;
+
+    expect(page.requirementSourceSearchTerm()).toBe('zoro');
+    expect(page.requirementSourceCandidates().map((character) => character.id)).toEqual([
+      zoroSource.id,
+    ]);
+    expect(page.requirementSourceCandidatesLoading()).toBe(false);
+  });
+
+  /*
+   * 869exmmfb. Finding the characters that can be a source parses every Captain Ability - about
+   * 300 ms on a fast desktop for the whole catalogue - and it ran on every keystroke.
+   */
+  it('reads the whole catalogue for requirement sources once per opening, not per keystroke', async () => {
+    const { page, repository } = await createPage();
+    const source = createRequirementSourceCharacter();
+    const plainCharacter = createCharacterRecord(993, 'No Requirements');
+
+    repository.searchDetailedCharacters.mockResolvedValue([source, plainCharacter]);
+
+    await page.ngOnInit();
+    await page.openRequirementSourceModal();
+    await page.onRequirementSourceSearchChange({ detail: { value: 'req' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    await page.onRequirementSourceSearchChange({ detail: { value: 'requ' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    const fullReads = repository.searchDetailedCharacters.mock.calls.filter(
+      ([query]) => query.allowedCharacterIds === undefined,
+    );
+
+    expect(fullReads).toHaveLength(1);
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([source.id]);
+
+    page.closeRequirementSourceModal();
+    await page.openRequirementSourceModal();
+
+    expect(
+      repository.searchDetailedCharacters.mock.calls.filter(
+        ([query]) => query.allowedCharacterIds === undefined,
+      ),
+    ).toHaveLength(2);
+  });
+
+  it('does not keep a failed requirement source pass, so the next search tries again', async () => {
+    const { page, repository } = await createPage();
+    const source = createRequirementSourceCharacter();
+
+    await page.ngOnInit();
+    repository.searchDetailedCharacters.mockReset();
+    repository.searchDetailedCharacters
+      .mockRejectedValueOnce(new Error('dataset read failed'))
+      .mockResolvedValue([source]);
+
+    await expect(page.openRequirementSourceModal()).rejects.toThrow('dataset read failed');
+    expect(page.requirementSourceCandidatesLoading()).toBe(false);
+
+    await page.onRequirementSourceSearchChange({ detail: { value: '' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    expect(page.requirementSourceCandidates().map((character) => character.id)).toEqual([
+      source.id,
+    ]);
+  });
+
+  it('renders requirement sources a page at a time', async () => {
+    const { page, repository } = await createPage();
+    const sources = Array.from({ length: 150 }, (_unused, index) => ({
+      ...createRequirementSourceCharacter(),
+      id: 5000 + index,
+      name: `Source ${index}`,
+    }));
+
+    repository.searchDetailedCharacters.mockResolvedValue(sources);
+
+    await page.ngOnInit();
+    await page.openRequirementSourceModal();
+
+    expect(page.requirementSourceCandidates()).toHaveLength(150);
+    expect(page.requirementSourceCandidateCards()).toHaveLength(100);
+    expect(page.requirementSourceCandidatesHasMore()).toBe(true);
+    expect(page.requirementSourceCandidatesSummaryLabel()).toContain('150');
+
+    page.loadMoreRequirementSourceCandidates();
+
+    expect(page.requirementSourceCandidateCards()).toHaveLength(150);
+    expect(page.requirementSourceCandidatesHasMore()).toBe(false);
   });
 
   it('gates the manual lock picker on its own tag filter, including load more', async () => {
@@ -1486,6 +1841,33 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(byKey.get('superTandem')).toMatchObject({ state: 'passed' });
     expect(byKey.get('characterTags')).toMatchObject({ state: 'notApplicable' });
     expect(byKey.get('characterNames')).toMatchObject({ state: 'notApplicable' });
+  });
+
+  it('does not report class coverage for a "these classes only" team', async () => {
+    const { page } = await createPage();
+    const result = createAutoBuildResult();
+    const threeClasses = ['Fighter', 'Slasher', 'Striker'];
+    const buildWith = (requireAllSelectedClassesInTeam: boolean | undefined) => ({
+      ...result,
+      input: { ...result.input, selectedClasses: threeClasses, requireAllSelectedClassesInTeam },
+      requestedInput: {
+        ...result.requestedInput,
+        selectedClasses: threeClasses,
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSelectedClassesInTeam,
+      },
+    });
+
+    page.result.set(buildWith(false));
+    expect(page.finalReportRows().find((row) => row.key === 'classes')).toMatchObject({
+      state: 'notApplicable',
+    });
+
+    // A result saved before the flag existed keeps the reading it was built under.
+    page.result.set(buildWith(undefined));
+    expect(page.finalReportRows().find((row) => row.key === 'classes')?.state).not.toBe(
+      'notApplicable',
+    );
   });
 
   it('shows relaxed rows in the final team report when fallback ignores synergy rules', async () => {

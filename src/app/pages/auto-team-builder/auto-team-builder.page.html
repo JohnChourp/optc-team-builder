@@ -59,6 +59,7 @@
                                         [placeholder]="t('filters.types.placeholder')"
                                         [value]="selectedTypes()"
                                         [selectedText]="selectedTypesLabel()"
+                                        [disabled]="controlsDisabled()"
                                         (ionChange)="onTypeChange($event)"
                                       >
                                         @for (item of availableTypes; track item) {
@@ -93,6 +94,9 @@
                                           {{ selectAllTypesButtonLabel() }}
                                         </ion-button>
                                       </div>
+                                      @if (typeSupportLabel()) {
+                                        <small class="filter-rule-copy">{{ typeSupportLabel() }}</small>
+                                      }
                                     </div>
 
                                     <div class="class-select-card">
@@ -104,6 +108,7 @@
                                         [placeholder]="t('filters.classes.placeholder')"
                                         [value]="selectedClasses()"
                                         [selectedText]="selectedClassesLabel()"
+                                        [disabled]="controlsDisabled()"
                                         (ionChange)="onClassChange($event)"
                                       >
                                         @for (item of availableClasses(); track item) {
@@ -138,6 +143,9 @@
                                           {{ selectAllClassesButtonLabel() }}
                                         </ion-button>
                                       </div>
+                                      @if (classSupportLabel()) {
+                                        <small class="filter-rule-copy">{{ classSupportLabel() }}</small>
+                                      }
                                     </div>
 
                                     <div class="character-filter-card">
@@ -521,6 +529,19 @@
                                                   </article>
                                                 }
                                               </div>
+                                              @if (requirementSourceCandidatesHasMore()) {
+                                                <div class="manual-candidate-loading-more">
+                                                  <ion-button
+                                                    type="button"
+                                                    fill="outline"
+                                                    color="light"
+                                                    class="manual-candidate-load-more-button"
+                                                    (click)="loadMoreRequirementSourceCandidates()"
+                                                  >
+                                                    <span>{{ t('manual.actions.loadMoreCharacters') }}</span>
+                                                  </ion-button>
+                                                </div>
+                                              }
                                             } @else {
                                               <div class="manual-candidate-empty-state">
                                                 {{ t('filters.characterRequirements.modal.empty') }}

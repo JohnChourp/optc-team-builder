@@ -1,6 +1,5 @@
 import {
   AUTO_BUILD_TOTAL_SLOT_COUNT,
-  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildAttemptProgressSnapshot,
   type AutoBuildInput,
@@ -8,6 +7,7 @@ import {
   type AutoBuildResult,
   type AutoBuildSlotExplanationReason,
   type AutoTeamBuilderType,
+  shouldTreatSelectedClassesAsNeutral,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
@@ -1570,13 +1570,6 @@ function shouldTreatSelectedTypesAsNeutral(input: AutoBuildInput): boolean {
   return (
     !input.requireAllSelectedTypesInTeam &&
     sameUnorderedValues(input.types, AUTO_TEAM_BUILDER_TYPES)
-  );
-}
-
-function shouldTreatSelectedClassesAsNeutral(input: AutoBuildInput): boolean {
-  return (
-    !input.requireAllSelectedClassesPerCharacter &&
-    sameUnorderedValues(input.selectedClasses, AUTO_TEAM_BUILDER_CLASSES)
   );
 }
 

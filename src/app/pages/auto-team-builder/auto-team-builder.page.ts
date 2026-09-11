@@ -46,7 +46,6 @@ import {
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_TEAM_CANDIDATE_LIMIT,
-  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildLeaderBoostFilter,
   type AutoBuildLeaderBoostRange,
@@ -64,6 +63,8 @@ import {
   createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
+  AUTO_BUILD_MAX_CLASSES_PER_CHARACTER,
+  shouldTreatSelectedClassesAsNeutral,
 } from '../../core/models/auto-team-builder.models';
 import {
   normalizeAbilityEffectTargetScope,
@@ -209,8 +210,8 @@ import {
   normalizeBattleRequirementsWithLegacyFallback,
 } from '../../core/services/auto-team-builder-battle.utils';
 import {
+  type AutoBuildCharacterRequirementFilters,
   extractAutoBuildCharacterRequirementFilters,
-  hasAutoBuildCharacterRequirementFilters,
 } from '../../core/services/auto-team-builder-character-filter.utils';
 import { MAX_REQUIRED_CHARACTER_GROUPS } from '../../core/services/required-character-groups.utils';
 import {
@@ -840,6 +841,25 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly requirementSourceCandidates = signal<CharacterDetailRecord[]>([]);
   public readonly requirementSourceCandidatesLoading = signal(false);
+  /** How many of the matching sources the pop-up renders; "Load more" raises it a page at a time. */
+  public readonly requirementSourceVisibleCount = signal(CHARACTER_PICKER_PAGE_SIZE);
+  /**
+   * Every character that can be a requirement source, with the filters it carries - read once per
+   * opening of the pop-up. Finding them parses each character's Captain Ability, about 300 ms on a
+   * fast desktop for the whole catalogue, and that pass used to run on every keystroke and tag
+   * change, as did the same parse again for each of ~350 rendered cards. Local character edits
+   * cannot change while the pop-up is open, so one pass per opening stays correct.
+   */
+  private requirementSourceFilters: Promise<Map<number, AutoBuildCharacterRequirementFilters>> | null =
+    null;
+  private requirementSourceFiltersById: Map<number, AutoBuildCharacterRequirementFilters> | null =
+    null;
+  /**
+   * Monotonic, and deliberately not reset with the page: a response is only applied if it belongs
+   * to the latest request. The repository yields every 250 rows while decorating, so the pop-up's
+   * first, unfiltered query used to land after a narrower one typed later and overwrite it.
+   */
+  private requirementSourceRequestId = 0;
   /*
    * Per-picker candidate tag filters. These only narrow the CANDIDATE LIST the
    * picker in question shows and are deliberately separate from
@@ -947,6 +967,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * `auto-team-builder.page.spec.ts` asserts the bare form is gone.
    */
   public readonly controlsDisabled = computed(() => this.building() || !this.pageReady());
+  /**
+   * Bumped by every resetBuildState(), which is what every build-input mutator calls. A build
+   * reads it once it has started and publishes nothing if it moved: the Types and Classes
+   * selects were the two filter controls without the guard above, and a change made mid-build
+   * put a team built for the old filters under the new ones. Disabling them closes that door;
+   * this makes sure the next control that misses the guard cannot reopen it.
+   */
+  private buildInputRevision = 0;
+  /** The revision the running build started from; null when no build is running. */
+  private activeBuildInputRevision: number | null = null;
   /** The first load, so `ionViewWillEnter` can wait for it rather than race it. */
   private initialLoad: Promise<void> | null = null;
   public readonly favoriteShipsOnly = signal(false);
@@ -1611,8 +1641,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly subCostRangeErrorLabel = computed(() =>
     this.hasInvalidSubCostRange() ? this.t('filters.cost.subs.range.invalid') : '',
   );
-  public readonly typeSupportLabel = computed(() => this.t('filters.types.support.flexible'));
-  public readonly classSupportLabel = computed(() => this.t('filters.classes.support.flexible'));
+  /**
+   * The rule each selection applies, said under its select. It used to be a visible toggle; once
+   * the strictness was derived from the selection it was said nowhere, and a player picking three
+   * classes could not know every unit had to hold all three.
+   */
+  public readonly typeSupportLabel = computed(() =>
+    this.derivedRequireAllSelectedTypesInTeam() ? this.t('filters.types.support.strict') : '',
+  );
+  public readonly classSupportLabel = computed(() => {
+    if (this.derivedRequireAllSelectedClassesPerCharacter()) {
+      return this.t('filters.classes.support.strict');
+    }
+
+    return this.hasSelectedClasses() && !this.allClassesSelected()
+      ? this.t('filters.classes.support.flexible')
+      : '';
+  });
   public readonly characterTagSupportLabel = computed(() =>
     this.derivedRequireAllSelectedCharacterTagsInTeam()
       ? this.t('filters.characterTags.support.strict')
@@ -1805,21 +1850,29 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly requirementSourceCandidateCards = computed<RequirementSourceCharacterCardView[]>(
     () =>
-      this.requirementSourceCandidates().map((character) => {
-        const requirements = extractAutoBuildCharacterRequirementFilters(character);
+      this.requirementSourceCandidates()
+        .slice(0, this.requirementSourceVisibleCount())
+        .map((character) => {
+          // Read by the pass that found the sources, which always lands before the candidates.
+          const requirements =
+            this.requirementSourceFiltersById?.get(character.id) ??
+            extractAutoBuildCharacterRequirementFilters(character);
 
-        return {
-          character,
-          subtitle: this.buildCharacterSubtitle(character),
-          characterTags: requirements.characterTags,
-          characterNames: requirements.characterNames,
-        };
-      }),
+          return {
+            character,
+            subtitle: this.buildCharacterSubtitle(character),
+            characterTags: requirements.characterTags,
+            characterNames: requirements.characterNames,
+          };
+        }),
   );
   public readonly requirementSourceCandidatesSummaryLabel = computed(() =>
     this.t('filters.characterRequirements.modal.count', {
-      count: this.requirementSourceCandidateCards().length,
+      count: this.requirementSourceCandidates().length,
     }),
+  );
+  public readonly requirementSourceCandidatesHasMore = computed(
+    () => this.requirementSourceCandidates().length > this.requirementSourceVisibleCount(),
   );
   public readonly excludedCharacterCards = computed<ExcludedCharacterCardView[]>(() =>
     this.buildExcludedCharacterCards(
@@ -2493,8 +2546,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const current = this.result();
 
     if (!current) {
-      return this.derivedRequireAllSelectedClassesPerCharacter()
-        ? this.t('results.selectedClassSummary.strictPending')
+      if (this.derivedRequireAllSelectedClassesPerCharacter()) {
+        return this.t('results.selectedClassSummary.strictPending');
+      }
+
+      return this.hasSelectedClasses() && !this.allClassesSelected()
+        ? this.t('results.selectedClassSummary.poolOnlyPending')
         : this.t('results.selectedClassSummary.flexiblePending');
     }
 
@@ -3216,6 +3273,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public async onClassChange(
     event: CustomEvent<{ value?: string[] | string | null }>,
   ): Promise<void> {
+    // The select is disabled for the same window; this covers an event that arrives anyway.
+    if (this.controlsDisabled()) {
+      return;
+    }
+
     this.selectedClasses.set(this.resolveSelectedClasses(event.detail.value));
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
@@ -3224,6 +3286,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public async onTypeChange(
     event: CustomEvent<{ value?: AutoTeamBuilderType[] | AutoTeamBuilderType | null }>,
   ): Promise<void> {
+    // The select is disabled for the same window; this covers an event that arrives anyway.
+    if (this.controlsDisabled()) {
+      return;
+    }
+
     this.selectedTypes.set(this.resolveSelectedTypes(event.detail.value));
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
@@ -3432,10 +3499,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     this.requirementSourceModalOpen.set(true);
+    this.requirementSourceFilters = null;
+    this.requirementSourceFiltersById = null;
     await this.refreshRequirementSourceCandidates();
   }
 
+  public loadMoreRequirementSourceCandidates(): void {
+    this.requirementSourceVisibleCount.update((count) => count + CHARACTER_PICKER_PAGE_SIZE);
+  }
+
   public closeRequirementSourceModal(): void {
+    // A response still in flight belongs to a list nobody is looking at.
+    this.requirementSourceRequestId += 1;
     this.requirementSourceModalOpen.set(false);
     this.requirementSourceTagSelection.set(createEmptyCharacterTagSetSelection());
     this.requirementSourceTagCharacterIds.set(undefined);
@@ -5455,6 +5530,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.pauseAfterBuildCancellation = false;
     this.building.set(true);
     this.resetBuildState();
+    const buildInputRevision = this.buildInputRevision;
+    this.activeBuildInputRevision = buildInputRevision;
     this.startBuildProgressTicker();
     void this.scrollToBottom();
 
@@ -5470,6 +5547,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         ? this.resolveNextGuidedAutoBuildSlotRole()
         : null;
       const nextResult = await this.runCurrentAutoTeamBuild(executionOptions);
+
+      if (buildInputRevision !== this.buildInputRevision) {
+        // The inputs changed while the search ran; the change already cleared the result.
+        return;
+      }
 
       if (nextResult) {
         if (guidedAutoBuildActive && nextResult.relaxation.usedFallback) {
@@ -5489,6 +5571,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
       void this.scrollToBottom();
     } catch (error) {
+      // A build whose inputs changed answers nothing: no restore, no "search too large", no error.
+      if (buildInputRevision !== this.buildInputRevision) {
+        return;
+      }
+
       if (isAutoTeamBuildCancelledError(error)) {
         if (this.resetAfterBuildCancellation) {
           return;
@@ -5520,6 +5607,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       void this.scrollToBottom();
     } finally {
       this.buildAbortController = null;
+      this.activeBuildInputRevision = null;
       this.buildProgress.set(null);
       this.stopBuildProgressTicker();
       this.building.set(false);
@@ -5539,6 +5627,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         selectedCharacterNames: this.selectedCharacterNames(),
         requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
         requireAllSelectedClassesPerCharacter: this.derivedRequireAllSelectedClassesPerCharacter(),
+        // One or two classes are the per-unit rule; three or more only narrow the pool.
+        requireAllSelectedClassesInTeam: this.derivedRequireAllSelectedClassesPerCharacter(),
         requireAllSelectedCharacterTagsInTeam: this.derivedRequireAllSelectedCharacterTagsInTeam(),
         requireAllSelectedCharacterNamesInTeam: this.derivedRequireAllSelectedCharacterNamesInTeam(),
         requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
@@ -5973,6 +6063,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private resetBuildState(): void {
+    this.buildInputRevision += 1;
+
+    // An input changed under a running build - a page re-entry reset, a preset import. Stop the
+    // search now rather than let it run on unseen with every control still locked. A build's own
+    // reset runs before it records its revision, so it never stops itself.
+    if (
+      this.activeBuildInputRevision !== null &&
+      this.activeBuildInputRevision !== this.buildInputRevision
+    ) {
+      this.buildAbortController?.abort();
+    }
+
     this.buildPaused.set(false);
     this.buildProgress.set(null);
     this.buildProgressFloorPercent.set(0);
@@ -6084,6 +6186,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.excludedCandidatePanelState.set(createCharacterPickerPanelState());
     this.requirementSourceCandidates.set([]);
     this.requirementSourceCandidatesLoading.set(false);
+    this.requirementSourceVisibleCount.set(CHARACTER_PICKER_PAGE_SIZE);
+    this.requirementSourceFilters = null;
+    this.requirementSourceFiltersById = null;
+    this.requirementSourceRequestId += 1;
     this.clearCharacterPickerTagFilter('manual');
     this.clearCharacterPickerTagFilter('excluded');
     this.requirementSourceTagSelection.set(createEmptyCharacterTagSetSelection());
@@ -6647,28 +6753,92 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private async refreshRequirementSourceCandidates(): Promise<void> {
+    const requestId = ++this.requirementSourceRequestId;
+
     this.requirementSourceCandidatesLoading.set(true);
+    this.requirementSourceVisibleCount.set(CHARACTER_PICKER_PAGE_SIZE);
 
     try {
-      const candidates = await this.repository.searchDetailedCharacters({
-        searchTerm: this.requirementSourceSearchTerm().trim(),
-        selectedTypes: [],
-        selectedClasses: [],
-        // Applied by the query itself, so the tag gate runs before the limit.
-        allowedCharacterIds: this.requirementSourceTagCharacterIds(),
-        sortMode: 'powerFirst',
-        limit: 10_000,
-        offset: 0,
-      });
-      const sourceCandidates = this.dedupeCharacterRecords(candidates).filter((character) =>
-        hasAutoBuildCharacterRequirementFilters(character),
+      const sourceFilters = await this.resolveRequirementSourceFilters();
+      const tagCharacterIds = this.requirementSourceTagCharacterIds();
+      const tagCharacterIdSet = tagCharacterIds ? new Set(tagCharacterIds) : null;
+      // The tag gate and the source set both apply in the query, before its limit.
+      const allowedCharacterIds = [...sourceFilters.keys()].filter(
+        (characterId) => !tagCharacterIdSet || tagCharacterIdSet.has(characterId),
       );
+      const candidates = allowedCharacterIds.length
+        ? await this.repository.searchDetailedCharacters({
+            searchTerm: this.requirementSourceSearchTerm().trim(),
+            selectedTypes: [],
+            selectedClasses: [],
+            allowedCharacterIds,
+            sortMode: 'powerFirst',
+            limit: allowedCharacterIds.length,
+            offset: 0,
+          })
+        : [];
+
+      if (requestId !== this.requirementSourceRequestId) {
+        return;
+      }
+
+      const sourceCandidates = this.dedupeCharacterRecords(candidates);
 
       this.requirementSourceCandidates.set(sourceCandidates);
       this.cacheCharacterRecords(sourceCandidates);
     } finally {
-      this.requirementSourceCandidatesLoading.set(false);
+      if (requestId === this.requirementSourceRequestId) {
+        this.requirementSourceCandidatesLoading.set(false);
+      }
     }
+  }
+
+  /** One Captain Ability pass per opening of the pop-up; see requirementSourceFilters. */
+  private resolveRequirementSourceFilters(): Promise<
+    Map<number, AutoBuildCharacterRequirementFilters>
+  > {
+    if (this.requirementSourceFilters) {
+      return this.requirementSourceFilters;
+    }
+
+    const pass = this.repository
+      .searchDetailedCharacters({
+        searchTerm: '',
+        selectedTypes: [],
+        selectedClasses: [],
+        sortMode: 'powerFirst',
+        limit: 10_000,
+        offset: 0,
+      })
+      .then((characters) => {
+        const filtersById = new Map<number, AutoBuildCharacterRequirementFilters>();
+
+        for (const character of this.dedupeCharacterRecords(characters)) {
+          const filters = extractAutoBuildCharacterRequirementFilters(character);
+
+          if (filters.characterNames.length > 0 || filters.characterTags.length > 0) {
+            filtersById.set(character.id, filters);
+          }
+        }
+
+        // A pass that a reopening or a reset has replaced must not refill the cards' lookup.
+        if (this.requirementSourceFilters === pass) {
+          this.requirementSourceFiltersById = filtersById;
+        }
+
+        return filtersById;
+      });
+
+    // A failed pass is not cached, so the next keystroke tries again instead of failing forever.
+    pass.catch(() => {
+      if (this.requirementSourceFilters === pass) {
+        this.requirementSourceFilters = null;
+      }
+    });
+
+    this.requirementSourceFilters = pass;
+
+    return pass;
   }
 
   private async refreshCharacterPickerPanel(panel: CharacterPickerPanelKey): Promise<void> {
@@ -8168,12 +8338,21 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     );
   }
 
+  /**
+   * "Every unit holds every selected class" only while one unit can: no character has more than
+   * two classes. Asked of three or more it could never be met - the fallback then had to drop all
+   * but two, and with nine of ten selected its attempt cap ran out first and no team was built,
+   * under a message that blamed the types. Three or more now mean "these classes only": any
+   * selected class per unit, with no requirement that the team include each one - the build sends
+   * requireAllSelectedClassesInTeam: false for them (see shouldTreatSelectedClassesAsNeutral).
+   */
   private shouldRequireExactSelectedClassCoverage(): boolean {
     const availableClasses = this.availableClasses();
 
     return (
       this.hasSelectedClasses() &&
       availableClasses.length > 0 &&
+      this.selectedClasses().length <= AUTO_BUILD_MAX_CLASSES_PER_CHARACTER &&
       !this.sameUnorderedValues(this.selectedClasses(), availableClasses)
     );
   }
@@ -8195,10 +8374,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         result.requestedInput.selectedClasses,
         result.input.selectedClasses,
         result.relaxation.droppedClasses,
-        !(
-          !result.requestedInput.requireAllSelectedClassesPerCharacter &&
-          this.sameUnorderedValues(result.requestedInput.selectedClasses, AUTO_TEAM_BUILDER_CLASSES)
-        ),
+        !shouldTreatSelectedClassesAsNeutral(result.requestedInput),
       ),
       this.buildSelectedFilterReportRow(
         'characterTags',
