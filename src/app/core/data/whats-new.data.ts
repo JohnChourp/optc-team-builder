@@ -34,7 +34,24 @@ export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
     version: '0.4.10',
     date: '2026-09-11',
     userVisible: true,
-    added: [],
+    added: [
+      {
+        en: 'Monkey D. Luffy - Countering the Ambush (5-star INT Powerhouse/Striker), with its Captain Ability, special, sailor ability and potentials read in - so it turns up in the ability filters and in Captain Coverage the same way every other character does.',
+        el: 'Monkey D. Luffy - Countering the Ambush (5 αστέρων INT Powerhouse/Striker), με το Captain Ability, το special, το sailor ability και τα potentials του διαβασμένα - οπότε εμφανίζεται στα φίλτρα ικανοτήτων και στο Captain Coverage όπως κάθε άλλος χαρακτήρας.',
+      },
+      {
+        en: "Saul - Student-Protecting Giant's Fist (6-star DEX Cerebral/Striker), with its Captain Ability, special, sailor ability and potentials read in - so it turns up in the ability filters and in Captain Coverage the same way every other character does.",
+        el: "Saul - Student-Protecting Giant's Fist (6 αστέρων DEX Cerebral/Striker), με το Captain Ability, το special, το sailor ability και τα potentials του διαβασμένα - οπότε εμφανίζεται στα φίλτρα ικανοτήτων και στο Captain Coverage όπως κάθε άλλος χαρακτήρας.",
+      },
+      {
+        en: 'Tusk (5-star PSY Cerebral/Striker), with its Captain Ability, special, sailor ability and potentials read in - so it turns up in the ability filters and in Captain Coverage the same way every other character does.',
+        el: 'Tusk (5 αστέρων PSY Cerebral/Striker), με το Captain Ability, το special, το sailor ability και τα potentials του διαβασμένα - οπότε εμφανίζεται στα φίλτρα ικανοτήτων και στο Captain Coverage όπως κάθε άλλος χαρακτήρας.',
+      },
+      {
+        en: 'Blade (5-star DEX Cerebral/Powerhouse), with its Captain Ability, special, sailor ability and potentials read in - so it turns up in the ability filters and in Captain Coverage the same way every other character does.',
+        el: 'Blade (5 αστέρων DEX Cerebral/Powerhouse), με το Captain Ability, το special, το sailor ability και τα potentials του διαβασμένα - οπότε εμφανίζεται στα φίλτρα ικανοτήτων και στο Captain Coverage όπως κάθε άλλος χαρακτήρας.',
+      },
+    ],
     improved: [
       {
         en: 'On narrow phones the Characters screen fits again. At the smallest widths in Greek, the right edge of every character card was cut off, along with the Reset button and each favourite star.',
@@ -50,9 +67,9 @@ export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
       el: 'Φίλτρα Tier που δείχνουν τους σωστούς χαρακτήρες, και πλήρωμα που δεν επαναλαμβάνεται',
     },
     summaryEn:
-      "The Tier Coverage filter on Captain Coverage now lists the characters each tier really boosts. Tiers that name a character group - St. Jaygarcia Saturn's Five Elders tier, for one - listed nobody, and Buggy & Crocodile & Mihawk's Tier 2 listed thousands of characters it does not boost. The Team Coverage panel on the same screen now counts those group tiers as covered when your team belongs to the group. On Manual Team Builder, a sub can no longer repeat your Captain or another sub, the same rule the other builders already follow; the character card in the pick pop-up says why, and your Friend Captain can still be anyone. Saving a character on the local-edit screen no longer erases a negative RCV, which 59 characters have. Reset on Auto Team Builder now also switches off the ship lock, and on narrow phones the Characters screen fits again. Your saved teams, boxes and favourites are untouched.",
+      "The Tier Coverage filter on Captain Coverage now lists the characters each tier really boosts. Tiers that name a character group - St. Jaygarcia Saturn's Five Elders tier, for one - listed nobody, and Buggy & Crocodile & Mihawk's Tier 2 listed thousands of characters it does not boost. The Team Coverage panel on the same screen now counts those group tiers as covered when your team belongs to the group. On Manual Team Builder, a sub can no longer repeat your Captain or another sub, the same rule the other builders already follow; the character card in the pick pop-up says why, and your Friend Captain can still be anyone. Saving a character on the local-edit screen no longer erases a negative RCV, which 59 characters have. Reset on Auto Team Builder now also switches off the ship lock, and on narrow phones the Characters screen fits again. The release also brought in four new characters from the game's latest data: Monkey D. Luffy - Countering the Ambush, Saul - Student-Protecting Giant's Fist, Tusk and Blade. Your saved teams, boxes and favourites are untouched.",
     summaryEl:
-      'Το φίλτρο Tier Coverage στο Captain Coverage δείχνει πλέον τους χαρακτήρες που ενισχύει πραγματικά κάθε tier. Τα tiers που ονομάζουν ομάδα χαρακτήρων - όπως το tier των Five Elders του St. Jaygarcia Saturn - δεν έδειχναν κανέναν, και το Tier 2 των Buggy & Crocodile & Mihawk έδειχνε χιλιάδες χαρακτήρες που δεν ενισχύει. Το πάνελ Κάλυψη ομάδας στην ίδια οθόνη μετράει πλέον αυτά τα tiers ως καλυμμένα όταν η ομάδα σου ανήκει στην ομάδα που ονομάζουν. Στο Manual Team Builder ένα sub δεν μπορεί πια να επαναλαμβάνει τον Captain ή άλλο sub, όπως ήδη ισχύει στους άλλους builders· η κάρτα χαρακτήρα στο αναδυόμενο παράθυρο επιλογής λέει γιατί, και ο Friend Captain μπορεί ακόμη να είναι οποιοσδήποτε. Η αποθήκευση χαρακτήρα στην οθόνη τοπικής επεξεργασίας δεν σβήνει πια αρνητικό RCV, που έχουν 59 χαρακτήρες. Το Reset στο Auto Team Builder κλείνει πλέον και το κλείδωμα του ship, και στα στενά κινητά η οθόνη Characters χωράει ξανά. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.',
+      "Το φίλτρο Tier Coverage στο Captain Coverage δείχνει πλέον τους χαρακτήρες που ενισχύει πραγματικά κάθε tier. Τα tiers που ονομάζουν ομάδα χαρακτήρων - όπως το tier των Five Elders του St. Jaygarcia Saturn - δεν έδειχναν κανέναν, και το Tier 2 των Buggy & Crocodile & Mihawk έδειχνε χιλιάδες χαρακτήρες που δεν ενισχύει. Το πάνελ Κάλυψη ομάδας στην ίδια οθόνη μετράει πλέον αυτά τα tiers ως καλυμμένα όταν η ομάδα σου ανήκει στην ομάδα που ονομάζουν. Στο Manual Team Builder ένα sub δεν μπορεί πια να επαναλαμβάνει τον Captain ή άλλο sub, όπως ήδη ισχύει στους άλλους builders· η κάρτα χαρακτήρα στο αναδυόμενο παράθυρο επιλογής λέει γιατί, και ο Friend Captain μπορεί ακόμη να είναι οποιοσδήποτε. Η αποθήκευση χαρακτήρα στην οθόνη τοπικής επεξεργασίας δεν σβήνει πια αρνητικό RCV, που έχουν 59 χαρακτήρες. Το Reset στο Auto Team Builder κλείνει πλέον και το κλείδωμα του ship, και στα στενά κινητά η οθόνη Characters χωράει ξανά. Η έκδοση έφερε επίσης τέσσερις νέους χαρακτήρες από τα τελευταία δεδομένα του παιχνιδιού: Monkey D. Luffy - Countering the Ambush, Saul - Student-Protecting Giant's Fist, Tusk και Blade. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.",
     fixed: [
       {
         en: "Pressing a Tier chip in the Tier Coverage filter on Captain Coverage lists the characters that tier boosts. Tiers that name a character group, such as St. Jaygarcia Saturn's Five Elders tier, listed nobody at all.",
