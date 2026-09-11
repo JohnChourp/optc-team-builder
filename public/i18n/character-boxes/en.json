@@ -127,8 +127,11 @@
       "copy": "Pick a box from the list to rename it and manage its character roster."
     },
     "noCharacters": {
+      "clearFilters": "Clear filters",
+      "emptyBox": "{{name}} has no characters yet, so \"Already in box\" shows nothing. Set Membership back to \"All membership states\", or add characters to the box.",
+      "noFavorites": "You have no favorites yet, so \"Favorites only\" shows nothing. Set Favorites back to \"All characters\".",
       "title": "No characters found",
-      "copy": "Try a different search, type, or class filter."
+      "copy": "No character matches the current search and filters."
     }
   },
   "loading": "Loading character catalog...",

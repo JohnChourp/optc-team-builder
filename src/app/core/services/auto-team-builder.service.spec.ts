@@ -38199,7 +38199,12 @@ describe('Auto team builder', () => {
     expect(resizedSnapshot!.estimatedRemainingMs).not.toBe(twoWorkerEstimate);
   });
 
-  it('resolves a later valid pooled fallback result without waiting for earlier in-flight attempts', async () => {
+  /*
+   * Owner decision 2026-09-11 (869exmkt4): the same filters always give the same team. The pooled
+   * path used to resolve a later fallback the moment it finished while an earlier, stricter one was
+   * still running, so the team depended on core count and timing. Planned order decides now.
+   */
+  async function startPooledOrderScenario() {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
       getShips: vi.fn().mockResolvedValue([]),
@@ -38318,27 +38323,215 @@ describe('Auto team builder', () => {
 
     await flushMicrotasks();
     await flushMicrotasks();
-    expect(deferredFallbacks).toHaveLength(1);
-    expect(deferredValidFallback).not.toBeNull();
-    expect(settled).toBe(false);
 
-    deferredValidFallback!.worker.emitMessage({
+    return {
+      buildPromise,
+      deferredFallbacks,
+      deferredValidFallback: () => deferredValidFallback,
+      isSettled: () => settled,
+      workerA,
+      workerB,
+    };
+  }
+
+  it('waits for an earlier in-flight fallback and prefers it when it succeeds', async () => {
+    const scenario = await startPooledOrderScenario();
+
+    expect(scenario.deferredFallbacks).toHaveLength(1);
+    expect(scenario.deferredValidFallback()).not.toBeNull();
+
+    // A later attempt (INT dropped) finishes first - it must not win while attempt #0 is running.
+    scenario.deferredValidFallback()!.worker.emitMessage({
       type: 'result',
-      runId: deferredValidFallback!.runId,
+      runId: scenario.deferredValidFallback()!.runId,
       result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
     });
+    await flushMicrotasks();
+    await flushMicrotasks();
 
+    expect(scenario.isSettled()).toBe(false);
+
+    scenario.deferredFallbacks[0]!.worker.emitMessage({
+      type: 'result',
+      runId: scenario.deferredFallbacks[0]!.runId,
+      result: buildWorkerResult(createInput(['DEX', 'INT'], ['Fighter'])),
+    });
     await flushMicrotasks();
     await flushMicrotasks();
-    expect(settled).toBe(true);
+
+    const result = await scenario.buildPromise;
+
+    expect(scenario.isSettled()).toBe(true);
+    expect(result?.input.types).toEqual(['DEX', 'INT']);
+    expect(scenario.workerA.terminated).toBe(true);
+    expect(scenario.workerB.terminated).toBe(true);
+  });
+
+  it('falls through to the later valid fallback once every earlier one has failed', async () => {
+    const scenario = await startPooledOrderScenario();
+
+    scenario.deferredValidFallback()!.worker.emitMessage({
+      type: 'result',
+      runId: scenario.deferredValidFallback()!.runId,
+      result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+    });
+    await flushMicrotasks();
+
+    expect(scenario.isSettled()).toBe(false);
+
+    scenario.deferredFallbacks[0]!.worker.emitMessage({
+      type: 'result',
+      runId: scenario.deferredFallbacks[0]!.runId,
+      result: null,
+    });
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    const result = await scenario.buildPromise;
+
+    expect(result?.input.types).toEqual(['DEX']);
+    expect(result?.input.selectedClasses).toEqual(['Fighter']);
+  });
+
+  it('starts no further fallback once a later one has satisfied while an earlier one still runs', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const runRequests: Array<{ worker: PooledFakeWorker; runId: string }> = [];
+    const createScriptedWorker = (): PooledFakeWorker => {
+      const worker: PooledFakeWorker = new PooledFakeWorker((request) => {
+        if (request.type === 'init') {
+          worker.emitMessage({ type: 'ready' });
+          return;
+        }
+
+        if (request.type !== 'runAttempt') {
+          return;
+        }
+
+        // 0: the exact attempt fails. 1: fallback #0 keeps running. 2: fallback #1 satisfies.
+        const index = runRequests.push({ worker, runId: request.runId }) - 1;
+
+        if (index === 1) {
+          return;
+        }
+
+        worker.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: index === 2 ? buildWorkerResult(createInput(['DEX'], ['Fighter'])) : null,
+        });
+      });
+
+      return worker;
+    };
+    const createWorkerSpy = vi.spyOn(
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy
+      .mockReturnValueOnce(createScriptedWorker() as never)
+      .mockReturnValueOnce(createScriptedWorker() as never);
+
+    let settled = false;
+    const buildPromise = service
+      .buildTeam(
+        ['Fighter'],
+        ['DEX', 'INT'],
+        {
+          requireFullCaptainAbilityCoverage: false,
+          requireLeaderSuperSpecialCriteria: false,
+          requireSuperTandemCriteria: false,
+        },
+        { workerCount: 2 },
+      )
+      .then((result) => {
+        settled = true;
+        return result;
+      });
+
+    for (let flush = 0; flush < 6; flush += 1) {
+      await flushMicrotasks();
+    }
+
+    // Everything after fallback #1 comes later in the plan and cannot win, so nothing starts.
+    expect(runRequests).toHaveLength(3);
+    expect(settled).toBe(false);
+
+    runRequests[1]!.worker.emitMessage({
+      type: 'result',
+      runId: runRequests[1]!.runId,
+      result: null,
+    });
 
     const result = await buildPromise;
 
     expect(result?.input.types).toEqual(['DEX']);
-    expect(result?.input.selectedClasses).toEqual(['Fighter']);
-    expect(workerA.terminated).toBe(true);
-    expect(workerB.terminated).toBe(true);
+    expect(runRequests).toHaveLength(3);
   });
+
+  /*
+   * 869exmkt4 across worker settings. 6a05d813 let strict Super Special / Super Tandem coverage admit
+   * super-effect leaders into the engine's exact attempt, and the pooled exact attempt kept the old
+   * rule: on the page's defaults two or more workers searched without those leaders while one
+   * worker searched with them.
+   */
+  it.each([
+    ['strict Super Special coverage', { strictSuperSpecialCriteriaCoverage: true }, false],
+    ['strict Super Tandem coverage', { strictSuperTandemCriteriaCoverage: true }, false],
+    ['no strict coverage', {}, true],
+  ])(
+    'runs the engine\'s exact attempt on the pool too (%s)',
+    async (_label, strictness, expectedRequireLeadersWithoutSuperEffects) => {
+      const repository = {
+        getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+        getShips: vi.fn().mockResolvedValue([]),
+      };
+      const service = new AutoTeamBuilderService(repository as never);
+      const exactAttemptFlags: boolean[] = [];
+      const createNullWorker = (): PooledFakeWorker => {
+        const worker: PooledFakeWorker = new PooledFakeWorker((request) => {
+          if (request.type === 'init') {
+            worker.emitMessage({ type: 'ready' });
+            return;
+          }
+
+          if (request.type !== 'runAttempt') {
+            return;
+          }
+
+          exactAttemptFlags.push(request.requireLeadersWithoutSuperEffects);
+          worker.emitMessage({ type: 'result', runId: request.runId, result: null });
+        });
+
+        return worker;
+      };
+      const createWorkerSpy = vi.spyOn(
+        service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+        'createWorker',
+      );
+      createWorkerSpy
+        .mockReturnValueOnce(createNullWorker() as never)
+        .mockReturnValueOnce(createNullWorker() as never);
+
+      await service.buildTeam(
+        ['Fighter'],
+        ['DEX', 'INT'],
+        {
+          requireFullCaptainAbilityCoverage: false,
+          requireLeaderSuperSpecialCriteria: false,
+          requireSuperTandemCriteria: false,
+          ...strictness,
+        },
+        { workerCount: 2 },
+      );
+
+      // The exact attempt is the first one the pool starts.
+      expect(exactAttemptFlags[0]).toBe(expectedRequireLeadersWithoutSuperEffects);
+    },
+  );
 
   it('redispatches pooled fallback work on the next microtask without a timer-based pause', async () => {
     const repository = {

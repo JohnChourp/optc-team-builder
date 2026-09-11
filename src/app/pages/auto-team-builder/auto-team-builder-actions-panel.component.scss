@@ -11,6 +11,19 @@
   margin-top: 6px;
 }
 
+.build-submit-reason {
+  max-width: 340px;
+  margin: 8px auto 0;
+  color: #f5c84c;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.build-submit-reason--empty {
+  margin: 0;
+}
+
 .build-submit-button {
   width: min(100%, 340px);
   min-height: 50px;

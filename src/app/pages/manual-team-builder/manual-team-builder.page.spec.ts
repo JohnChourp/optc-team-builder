@@ -647,6 +647,23 @@ describe('ManualTeamBuilderPage', () => {
     ]);
   });
 
+  it('clears the search along with the filters, and counts it as one', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.onSearchChange({ detail: { value: 'zoro' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    expect(page.hasActiveCandidateFilters()).toBe(true);
+
+    await page.clearCandidateFilters();
+
+    expect(page.searchTerm()).toBe('');
+    expect(page.hasActiveCandidateFilters()).toBe(false);
+  });
+
   it('clears both facets from every candidate filter reset path', async () => {
     const { page } = createPage();
 

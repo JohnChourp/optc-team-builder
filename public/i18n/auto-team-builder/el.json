@@ -40,6 +40,7 @@
     "types": {
       "label": "Types",
       "placeholder": "Επίλεξε types",
+      "required": "Διάλεξε τουλάχιστον ένα type για να χτιστεί ομάδα.",
       "toggle": "Απαίτησε πλήρη κάλυψη types",
       "selectAll": "Επίλεξε όλα τα types",
       "unselectAll": "Καθάρισε τα types",
@@ -51,12 +52,12 @@
     "classes": {
       "label": "Classes",
       "placeholder": "Επίλεξε classes",
+      "required": "Διάλεξε τουλάχιστον ένα class για να χτιστεί ομάδα.",
       "toggle": "Απαίτησε όλα τα slots να ταιριάζουν στα selected classes",
       "selectAll": "Επίλεξε όλα τα classes",
       "unselectAll": "Καθάρισε τα classes",
       "support": {
-        "strict": "Ο builder ζητά από κάθε χαρακτήρα να έχει όλα τα selected classes. Αν δεν χωράει καμία ομάδα, τα αποτελέσματα λένε ποιο class άφησε έξω.",
-        "flexible": "Μόνο χαρακτήρες από τα selected classes: κάθε χαρακτήρας έχει τουλάχιστον ένα από αυτά. Με τρία ή περισσότερα κανένας χαρακτήρας δεν θα μπορούσε να τα έχει όλα, οπότε δεν χρειάζεται."
+        "flexible": "Μόνο χαρακτήρες από τα selected classes: κάθε χαρακτήρας έχει τουλάχιστον ένα από αυτά, και η ομάδα δεν χρειάζεται να περιέχει κάθε class."
       }
     },
     "characterTags": {
@@ -625,6 +626,8 @@
       "classes": {
         "notApplicable": "Δεν ζητήθηκε selected class coverage.",
         "passed": "Η ομάδα ακολουθεί το selected class coverage: {{value}}.",
+        "poolPartial": "{{matching}} από {{total}} χαρακτήρες έχουν ένα από τα selected classes: {{value}}. Οι υπόλοιποι είναι δικές σου επιλογές ή Friend Captain από το «Επίτρεψε οποιονδήποτε Friend Captain».",
+        "poolPassed": "Κάθε χαρακτήρας έχει ένα από τα selected classes: {{value}}.",
         "relaxed": "Η ομάδα δεν ακολουθεί πλήρως το selected class coverage. Ζητήθηκε: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
         "title": "Selected class coverage"
       },
@@ -911,8 +914,7 @@
       "flexiblePending": "Το class coverage θα αξιολογηθεί μετά το build.",
       "noRequirement": "Δεν υπάρχει class requirement.",
       "poolOnlyPending": "Χρησιμοποιούνται μόνο χαρακτήρες από τα selected classes· η ομάδα δεν χρειάζεται να περιέχει το καθένα.",
-      "strictPending": "Το strict class coverage είναι ενεργό και θα ελεγχθεί μετά το build.",
-      "strictResolved": "Και τα {{matching}} / {{total}} slots ικανοποιούν τον strict class κανόνα."
+      "poolResolved": "{{matching}} / {{total}} χαρακτήρες έχουν ένα από τα selected classes."
     },
     "selectedTypeSummary": {
       "coverage": "{{covered}} / {{total}} selected types καλύφθηκαν σε {{matchingSlots}} matching slots.",
@@ -955,6 +957,10 @@
   },
   "errors": {
     "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
+    "guided": {
+      "fallbackOnly": "Το Καθοδηγούμενο auto build κλειδώνει slot μόνο από ομάδα που βρέθηκε στην πρώτη, ακριβή αναζήτηση, και αυτή η ομάδα βρέθηκε σε επόμενη. Κλείσε το Καθοδηγούμενο auto build για να τη δεις.",
+      "relaxedOnly": "Το Καθοδηγούμενο auto build κλειδώνει slot μόνο από ομάδα που κρατά όλα τα φίλτρα. Η πιο κοντινή ομάδα που βρήκε χαλαρώνει: {{relaxed}}. Χαλάρωσέ τα ή κλείσε το Καθοδηγούμενο auto build για να δεις αυτή την ομάδα."
+    },
     "searchTooLarge": "Η αναζήτηση είναι πολύ μεγάλη για αυτό το browser session. Δοκίμασε λιγότερα types/classes ή βάλε manual slots και τρέξ' το ξανά.",
     "uniqueNames": {
       "manualConflict": "Τα current manual slot choices δημιουργούν ήδη το ίδιο in-game character conflict εκτός του Friend Captain slot: {{names}}."
@@ -980,14 +986,13 @@
     "requirements": {
       "abilityCoverage": "ability coverage για {{abilities}}",
       "battleCoverage": "battle counter coverage για {{battles}}",
-      "classCoverage": "class coverage σε κάθε slot",
+      "classPool": "selected classes ({{classes}})",
       "favoritesScope": " κρατώντας favorite-only auto-fill για τα ανοιχτά slots· non-favorite counters δεν εξετάζονται",
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
+      "leaderBoostRange": "όρια Captain boost {{range}}",
       "separator": " και ",
       "superSpecialCriteria": "κάλυψη των Super Special criteria",
-      "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
-      "typeCoverage": "κάλυψη types στην ομάδα",
-      "uniqueCharacterNames": "μοναδικές in-game character identities σε όλη την ομάδα εκτός Friend Captain"
+      "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}."
     }
   },
   "abilities": {

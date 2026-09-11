@@ -1388,6 +1388,62 @@ describe('CaptainCoveragePage', () => {
     expect(page.totalMatchingCharacters()).toBe(0);
   });
 
+  /*
+   * 869exmktc. The empty state blamed "team slots, cost budget, search, favorites, and ability
+   * filters" whatever emptied the list, and offered no way back.
+   */
+  it('names the filters that emptied the list, and clears them all from there', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader Empty Box',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const coveredCharacter = createCharacter({ id: 2001, name: 'Covered Candidate' });
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, coveredCharacter],
+      characterBoxes: [createCharacterBox('empty-box', 'Empty Box', [])],
+    });
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage.page.html'),
+      'utf8',
+    );
+    const emptyState = template.indexOf("t('empty.noResults.title')");
+    const resultList = template.indexOf('class="captain-result-list"');
+
+    // One clear-all, and it lives in the empty state only.
+    expect(template.split('clearAllFilters()')).toHaveLength(2);
+    expect(template.indexOf('clearAllFilters()')).toBeGreaterThan(emptyState);
+    expect(template.indexOf('clearAllFilters()')).toBeLessThan(resultList);
+
+    await page.ngOnInit();
+    expect(page.activeFilterLabels()).toEqual([]);
+    expect(page.emptyResultsCopy()).toBe('captain-coverage.empty.noResults.noFilters');
+
+    await page.onCharacterBoxChange({
+      detail: { value: 'empty-box' },
+    } as CustomEvent<{ value?: string | null }>);
+    await page.onRequireSuperTandemPresenceChange({
+      detail: { checked: true },
+    } as CustomEvent<{ checked: boolean }>);
+
+    expect(page.totalMatchingCharacters()).toBe(0);
+    expect(page.activeFilterLabels()).toEqual([
+      'captain-coverage.filters.characterBox.label',
+      'Super Tandem',
+    ]);
+    expect(page.emptyResultsCopy()).toBe(
+      'No character matches these filters: captain-coverage.filters.characterBox.label, Super Tandem.',
+    );
+
+    await page.clearAllFilters();
+
+    expect(page.selectedCharacterBox()).toBeNull();
+    expect(page.requireSuperTandemPresence()).toBe(false);
+    expect(page.activeFilterLabels()).toEqual([]);
+    expect(page.totalMatchingCharacters()).toBe(2);
+  });
+
   it('clears missing selected character box ids when character boxes are loaded', async () => {
     const { page } = createPage({
       characterBoxes: [createCharacterBox('box-1', 'Available Box', [2001])],
@@ -4178,6 +4234,7 @@ function formatTranslation(key: string, params?: Record<string, string | number>
     'characterAbilityGroups.sources.finalTapData': 'Final Tap',
     'characterAbilityGroups.sources.rushSugoSpecialData': 'Rush Sugo',
     'captain-coverage.filters.captainAbilityEyebrow': 'Required',
+    'captain-coverage.empty.noResults.copy': 'No character matches these filters: {{filters}}.',
     'captain-coverage.filters.superTandemPresence.toggle': 'Super Tandem',
     'captain-coverage.filters.superTypesClassesPresence.toggle': 'Super Types/Classes',
     'captain-coverage.filters.characterTags.joiners.any': 'or',

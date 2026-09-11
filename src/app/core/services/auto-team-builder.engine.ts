@@ -1473,7 +1473,14 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
   ].join('::');
 }
 
-function resolveExactAttemptRequiresNoSuperLeaders(input: AutoBuildInput): boolean {
+/**
+ * Whether the exact attempt keeps leaders with super effects out. Exported because the pooled
+ * service path runs the exact attempt itself and must ask for the same leaders as this engine:
+ * 6a05d813 added the strict-criteria half here and not there, so on the page's defaults a device
+ * using two or more workers searched without super-effect leaders and one using a single worker
+ * searched with them - the same filters, two different teams (869exmkt4).
+ */
+export function resolveExactAttemptRequiresNoSuperLeaders(input: AutoBuildInput): boolean {
   return !input.requireAllSlotsInLeaderSuperEffectScope && !hasStrictSuperCriteriaCoverage(input);
 }
 

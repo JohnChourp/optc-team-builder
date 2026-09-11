@@ -395,6 +395,74 @@ export class CaptainCoveragePage implements OnInit {
   public readonly hasSelectedCharacterTags = computed(
     () => countPopulatedCharacterTagSets(this.characterTagSetSelection()) > 0,
   );
+  /**
+   * The filters narrowing the list right now, by the names their controls carry (869exmktc). The
+   * empty state used to blame "team slots, cost budget, search, favorites, and ability filters" -
+   * the first two stopped filtering in f4a446c4 - and never named the box, type, class, tags,
+   * Super Tandem, Super Types/Classes or the Tier chips, which do.
+   */
+  public readonly activeFilterLabels = computed<string[]>(() => {
+    const labels: string[] = [];
+    const searchTerm = this.searchTerm().trim();
+    const costRange = this.coverageCostRange();
+
+    if (searchTerm) {
+      labels.push(this.t('empty.noResults.filters.search', { term: searchTerm }));
+    }
+
+    if (this.selectedCharacterBox()) {
+      labels.push(this.t('filters.characterBox.label'));
+    }
+
+    if (this.typeFacet().values.length > 0) {
+      labels.push(this.t('filters.type.label'));
+    }
+
+    if (this.classFacet().values.length > 0) {
+      labels.push(this.t('filters.class.label'));
+    }
+
+    if (costRange.min !== null || costRange.max !== null) {
+      labels.push(this.t('empty.noResults.filters.cost'));
+    }
+
+    if (this.favoritesOnly()) {
+      labels.push(this.t('filters.favoritesOnly'));
+    }
+
+    if (this.hideFavorites()) {
+      labels.push(this.t('filters.hideFavorites'));
+    }
+
+    if (this.hasSelectedCharacterTags()) {
+      labels.push(this.t('filters.characterTags.label'));
+    }
+
+    if (this.tagSetMatchingCharacterIds() !== undefined) {
+      labels.push(this.t('filters.abilityTagSets.label'));
+    }
+
+    if (this.requireSuperTandemPresence()) {
+      labels.push(this.t('filters.superTandemPresence.toggle'));
+    }
+
+    if (this.requireSuperTypesClassesPresence()) {
+      labels.push(this.t('filters.superTypesClassesPresence.toggle'));
+    }
+
+    if (this.captainCoverageFilterState().requiredTiers.length > 0) {
+      labels.push(this.t('filters.tierCoverage.toggle'));
+    }
+
+    return labels;
+  });
+  public readonly emptyResultsCopy = computed(() => {
+    const labels = this.activeFilterLabels();
+
+    return labels.length > 0
+      ? this.t('empty.noResults.copy', { filters: labels.join(', ') })
+      : this.t('empty.noResults.noFilters');
+  });
   public readonly characterTagFilterTriggerLabel = computed(() => {
     const selection = this.characterTagSetSelection();
     const groups = countPopulatedCharacterTagSets(selection);
@@ -1317,9 +1385,10 @@ export class CaptainCoveragePage implements OnInit {
 
   /**
    * The facet control owns its own Clear button, so these two handlers are the
-   * page's ONLY write path for type/class — including the reset, which arrives
-   * as an empty selection. This page has no clear-all button, which was already
-   * true before the multi-select control landed.
+   * page's write path for type/class — including the reset, which arrives as an
+   * empty selection. The filter panel has no clear-all button, which was already
+   * true before the multi-select control landed; the one clear-all is the empty
+   * state's, `clearAllFilters()`.
    */
   public async onTypeFacetChange(selection: CharacterFacetSelection): Promise<void> {
     this.typeFacet.set(selection);
@@ -1328,6 +1397,28 @@ export class CaptainCoveragePage implements OnInit {
 
   public async onClassFacetChange(selection: CharacterFacetSelection): Promise<void> {
     this.classFacet.set(selection);
+    await this.runResultPass(null);
+  }
+
+  /**
+   * The way back from an empty list, offered only there (869exmktc). The filter panel deliberately
+   * has no clear-all - each control owns its own Clear - but a reader looking at zero results should
+   * not have to find and undo up to a dozen controls one by one to see anything again. Sort, id
+   * order and the team are not filters and stay as they are.
+   */
+  public async clearAllFilters(): Promise<void> {
+    this.searchTerm.set('');
+    this.selectedCharacterBoxId.set(null);
+    this.typeFacet.set(createEmptyCharacterFacetSelection());
+    this.classFacet.set(createEmptyCharacterFacetSelection());
+    this.coverageCostRange.set({ min: null, max: null });
+    this.favoritesOnly.set(false);
+    this.hideFavorites.set(false);
+    this.applyCharacterTagSetSelection(createEmptyCharacterTagSetSelection());
+    this.tagSetSelection.update((selection) => ({ ...selection, sets: [] }));
+    this.requireSuperTandemPresence.set(false);
+    this.requireSuperTypesClassesPresence.set(false);
+    this.requiredTierNumbers.set([]);
     await this.runResultPass(null);
   }
 
