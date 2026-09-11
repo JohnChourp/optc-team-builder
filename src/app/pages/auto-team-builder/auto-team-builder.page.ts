@@ -210,8 +210,8 @@ import {
   normalizeBattleRequirementsWithLegacyFallback,
 } from '../../core/services/auto-team-builder-battle.utils';
 import {
+  type AutoBuildCharacterRequirementFilters,
   extractAutoBuildCharacterRequirementFilters,
-  hasAutoBuildCharacterRequirementFilters,
 } from '../../core/services/auto-team-builder-character-filter.utils';
 import { MAX_REQUIRED_CHARACTER_GROUPS } from '../../core/services/required-character-groups.utils';
 import {
@@ -841,6 +841,25 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly requirementSourceCandidates = signal<CharacterDetailRecord[]>([]);
   public readonly requirementSourceCandidatesLoading = signal(false);
+  /** How many of the matching sources the pop-up renders; "Load more" raises it a page at a time. */
+  public readonly requirementSourceVisibleCount = signal(CHARACTER_PICKER_PAGE_SIZE);
+  /**
+   * Every character that can be a requirement source, with the filters it carries - read once per
+   * opening of the pop-up. Finding them parses each character's Captain Ability, about 300 ms on a
+   * fast desktop for the whole catalogue, and that pass used to run on every keystroke and tag
+   * change, as did the same parse again for each of ~350 rendered cards. Local character edits
+   * cannot change while the pop-up is open, so one pass per opening stays correct.
+   */
+  private requirementSourceFilters: Promise<Map<number, AutoBuildCharacterRequirementFilters>> | null =
+    null;
+  private requirementSourceFiltersById: Map<number, AutoBuildCharacterRequirementFilters> | null =
+    null;
+  /**
+   * Monotonic, and deliberately not reset with the page: a response is only applied if it belongs
+   * to the latest request. The repository yields every 250 rows while decorating, so the pop-up's
+   * first, unfiltered query used to land after a narrower one typed later and overwrite it.
+   */
+  private requirementSourceRequestId = 0;
   /*
    * Per-picker candidate tag filters. These only narrow the CANDIDATE LIST the
    * picker in question shows and are deliberately separate from
@@ -1829,21 +1848,29 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly requirementSourceCandidateCards = computed<RequirementSourceCharacterCardView[]>(
     () =>
-      this.requirementSourceCandidates().map((character) => {
-        const requirements = extractAutoBuildCharacterRequirementFilters(character);
+      this.requirementSourceCandidates()
+        .slice(0, this.requirementSourceVisibleCount())
+        .map((character) => {
+          // Read by the pass that found the sources, which always lands before the candidates.
+          const requirements =
+            this.requirementSourceFiltersById?.get(character.id) ??
+            extractAutoBuildCharacterRequirementFilters(character);
 
-        return {
-          character,
-          subtitle: this.buildCharacterSubtitle(character),
-          characterTags: requirements.characterTags,
-          characterNames: requirements.characterNames,
-        };
-      }),
+          return {
+            character,
+            subtitle: this.buildCharacterSubtitle(character),
+            characterTags: requirements.characterTags,
+            characterNames: requirements.characterNames,
+          };
+        }),
   );
   public readonly requirementSourceCandidatesSummaryLabel = computed(() =>
     this.t('filters.characterRequirements.modal.count', {
-      count: this.requirementSourceCandidateCards().length,
+      count: this.requirementSourceCandidates().length,
     }),
+  );
+  public readonly requirementSourceCandidatesHasMore = computed(
+    () => this.requirementSourceCandidates().length > this.requirementSourceVisibleCount(),
   );
   public readonly excludedCharacterCards = computed<ExcludedCharacterCardView[]>(() =>
     this.buildExcludedCharacterCards(
@@ -3466,7 +3493,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     this.requirementSourceModalOpen.set(true);
+    this.requirementSourceFilters = null;
+    this.requirementSourceFiltersById = null;
     await this.refreshRequirementSourceCandidates();
+  }
+
+  public loadMoreRequirementSourceCandidates(): void {
+    this.requirementSourceVisibleCount.update((count) => count + CHARACTER_PICKER_PAGE_SIZE);
   }
 
   public closeRequirementSourceModal(): void {
@@ -6128,6 +6161,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.excludedCandidatePanelState.set(createCharacterPickerPanelState());
     this.requirementSourceCandidates.set([]);
     this.requirementSourceCandidatesLoading.set(false);
+    this.requirementSourceVisibleCount.set(CHARACTER_PICKER_PAGE_SIZE);
+    this.requirementSourceFilters = null;
+    this.requirementSourceFiltersById = null;
     this.clearCharacterPickerTagFilter('manual');
     this.clearCharacterPickerTagFilter('excluded');
     this.requirementSourceTagSelection.set(createEmptyCharacterTagSetSelection());
@@ -6691,28 +6727,76 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private async refreshRequirementSourceCandidates(): Promise<void> {
+    const requestId = ++this.requirementSourceRequestId;
+
     this.requirementSourceCandidatesLoading.set(true);
+    this.requirementSourceVisibleCount.set(CHARACTER_PICKER_PAGE_SIZE);
 
     try {
-      const candidates = await this.repository.searchDetailedCharacters({
-        searchTerm: this.requirementSourceSearchTerm().trim(),
-        selectedTypes: [],
-        selectedClasses: [],
-        // Applied by the query itself, so the tag gate runs before the limit.
-        allowedCharacterIds: this.requirementSourceTagCharacterIds(),
-        sortMode: 'powerFirst',
-        limit: 10_000,
-        offset: 0,
-      });
-      const sourceCandidates = this.dedupeCharacterRecords(candidates).filter((character) =>
-        hasAutoBuildCharacterRequirementFilters(character),
+      const sourceFilters = await this.resolveRequirementSourceFilters();
+      const tagCharacterIds = this.requirementSourceTagCharacterIds();
+      const tagCharacterIdSet = tagCharacterIds ? new Set(tagCharacterIds) : null;
+      // The tag gate and the source set both apply in the query, before its limit.
+      const allowedCharacterIds = [...sourceFilters.keys()].filter(
+        (characterId) => !tagCharacterIdSet || tagCharacterIdSet.has(characterId),
       );
+      const candidates = allowedCharacterIds.length
+        ? await this.repository.searchDetailedCharacters({
+            searchTerm: this.requirementSourceSearchTerm().trim(),
+            selectedTypes: [],
+            selectedClasses: [],
+            allowedCharacterIds,
+            sortMode: 'powerFirst',
+            limit: allowedCharacterIds.length,
+            offset: 0,
+          })
+        : [];
+
+      if (requestId !== this.requirementSourceRequestId) {
+        return;
+      }
+
+      const sourceCandidates = this.dedupeCharacterRecords(candidates);
 
       this.requirementSourceCandidates.set(sourceCandidates);
       this.cacheCharacterRecords(sourceCandidates);
     } finally {
-      this.requirementSourceCandidatesLoading.set(false);
+      if (requestId === this.requirementSourceRequestId) {
+        this.requirementSourceCandidatesLoading.set(false);
+      }
     }
+  }
+
+  /** One Captain Ability pass per opening of the pop-up; see requirementSourceFilters. */
+  private resolveRequirementSourceFilters(): Promise<
+    Map<number, AutoBuildCharacterRequirementFilters>
+  > {
+    this.requirementSourceFilters ??= this.repository
+      .searchDetailedCharacters({
+        searchTerm: '',
+        selectedTypes: [],
+        selectedClasses: [],
+        sortMode: 'powerFirst',
+        limit: 10_000,
+        offset: 0,
+      })
+      .then((characters) => {
+        const filtersById = new Map<number, AutoBuildCharacterRequirementFilters>();
+
+        for (const character of this.dedupeCharacterRecords(characters)) {
+          const filters = extractAutoBuildCharacterRequirementFilters(character);
+
+          if (filters.characterNames.length > 0 || filters.characterTags.length > 0) {
+            filtersById.set(character.id, filters);
+          }
+        }
+
+        this.requirementSourceFiltersById = filtersById;
+
+        return filtersById;
+      });
+
+    return this.requirementSourceFilters;
   }
 
   private async refreshCharacterPickerPanel(panel: CharacterPickerPanelKey): Promise<void> {

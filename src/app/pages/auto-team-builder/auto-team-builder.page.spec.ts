@@ -1135,11 +1135,13 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.ngOnInit();
     await page.openRequirementSourceModal();
 
-    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toBeUndefined();
+    // The query is always limited to the characters that can be a source; the tag filter
+    // narrows that set further, and until it is used it adds nothing.
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([source.id]);
 
     await page.onRequirementSourceTagFilterChange({
       selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Minks'] }] },
-      matchingCharacterIds: [source.id],
+      matchingCharacterIds: [source.id, 424242],
     });
 
     expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([source.id]);
@@ -1153,8 +1155,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
   it('keeps an empty requirement source tag selection inert and gates an empty match set to nothing', async () => {
     const { page, repository } = await createPage();
+    const source = createRequirementSourceCharacter();
 
-    repository.searchDetailedCharacters.mockResolvedValue([]);
+    repository.searchDetailedCharacters.mockResolvedValue([source]);
 
     await page.ngOnInit();
     await page.openRequirementSourceModal();
@@ -1164,8 +1167,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       matchingCharacterIds: undefined,
     });
 
-    // An empty selection must apply no gate at all.
-    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toBeUndefined();
+    // An empty selection must apply no gate beyond the source set itself.
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([source.id]);
+    expect(page.requirementSourceCandidates().map((character) => character.id)).toEqual([
+      source.id,
+    ]);
 
     await page.onRequirementSourceTagFilterChange({
       selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Nobody'] }] },
@@ -1173,7 +1179,106 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     });
 
     // `[]` is "nothing matches" and must never collapse back into "no filter".
-    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([]);
+    expect(page.requirementSourceCandidates()).toEqual([]);
+  });
+
+  /*
+   * 869exmktj (a). The repository yields every 250 rows while decorating, so a slow, broad query
+   * started first could land after a narrow one typed later and overwrite it: the list showed
+   * every source while the box said "zoro".
+   */
+  it('ignores a requirement source response that a newer search has replaced', async () => {
+    const { page, repository } = await createPage();
+    const zoroSource = createRequirementSourceCharacter();
+    const otherSource = { ...createRequirementSourceCharacter(), id: 992, name: 'Other Source' };
+    const broadResponse = createDeferred<CharacterDetailRecord[]>();
+
+    repository.searchDetailedCharacters.mockResolvedValue([zoroSource, otherSource]);
+
+    await page.ngOnInit();
+    await page.openRequirementSourceModal();
+
+    repository.searchDetailedCharacters
+      .mockImplementationOnce(() => broadResponse.promise)
+      .mockImplementationOnce(() => Promise.resolve([zoroSource]));
+
+    const broad = page.onRequirementSourceSearchChange({ detail: { value: '' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    const narrow = page.onRequirementSourceSearchChange({
+      detail: { value: 'zoro' },
+    } as CustomEvent<{ value?: string | null }>);
+
+    await narrow;
+    broadResponse.resolve([zoroSource, otherSource]);
+    await broad;
+
+    expect(page.requirementSourceSearchTerm()).toBe('zoro');
+    expect(page.requirementSourceCandidates().map((character) => character.id)).toEqual([
+      zoroSource.id,
+    ]);
+    expect(page.requirementSourceCandidatesLoading()).toBe(false);
+  });
+
+  /*
+   * 869exmmfb. Finding the characters that can be a source parses every Captain Ability - about
+   * 300 ms on a fast desktop for the whole catalogue - and it ran on every keystroke.
+   */
+  it('reads the whole catalogue for requirement sources once per opening, not per keystroke', async () => {
+    const { page, repository } = await createPage();
+    const source = createRequirementSourceCharacter();
+    const plainCharacter = createCharacterRecord(993, 'No Requirements');
+
+    repository.searchDetailedCharacters.mockResolvedValue([source, plainCharacter]);
+
+    await page.ngOnInit();
+    await page.openRequirementSourceModal();
+    await page.onRequirementSourceSearchChange({ detail: { value: 'req' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+    await page.onRequirementSourceSearchChange({ detail: { value: 'requ' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    const fullReads = repository.searchDetailedCharacters.mock.calls.filter(
+      ([query]) => query.allowedCharacterIds === undefined,
+    );
+
+    expect(fullReads).toHaveLength(1);
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([source.id]);
+
+    page.closeRequirementSourceModal();
+    await page.openRequirementSourceModal();
+
+    expect(
+      repository.searchDetailedCharacters.mock.calls.filter(
+        ([query]) => query.allowedCharacterIds === undefined,
+      ),
+    ).toHaveLength(2);
+  });
+
+  it('renders requirement sources a page at a time', async () => {
+    const { page, repository } = await createPage();
+    const sources = Array.from({ length: 150 }, (_unused, index) => ({
+      ...createRequirementSourceCharacter(),
+      id: 5000 + index,
+      name: `Source ${index}`,
+    }));
+
+    repository.searchDetailedCharacters.mockResolvedValue(sources);
+
+    await page.ngOnInit();
+    await page.openRequirementSourceModal();
+
+    expect(page.requirementSourceCandidates()).toHaveLength(150);
+    expect(page.requirementSourceCandidateCards()).toHaveLength(100);
+    expect(page.requirementSourceCandidatesHasMore()).toBe(true);
+    expect(page.requirementSourceCandidatesSummaryLabel()).toContain('150');
+
+    page.loadMoreRequirementSourceCandidates();
+
+    expect(page.requirementSourceCandidateCards()).toHaveLength(150);
+    expect(page.requirementSourceCandidatesHasMore()).toBe(false);
   });
 
   it('gates the manual lock picker on its own tag filter, including load more', async () => {
