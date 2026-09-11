@@ -31,6 +31,40 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.16',
+    date: '2026-09-12',
+    userVisible: true,
+    added: [],
+    improved: [
+      {
+        en: 'In the Auto Team Builder results, "Close alternatives not picked" now gives only the reason that actually decided, instead of every way an alternative scored lower - including things the builder never compared for your search.',
+        el: 'Στα αποτελέσματα του Auto Team Builder, οι «Κοντινές εναλλακτικές που δεν μπήκαν» δίνουν πλέον μόνο τον λόγο που πραγματικά αποφάσισε, αντί για κάθε τρόπο που μια εναλλακτική βαθμολογήθηκε χαμηλότερα - ακόμη και όσα ο builder δεν σύγκρινε καθόλου για την αναζήτησή σου.',
+      },
+      {
+        en: 'The "Why picked?" summary of a sub in the Auto Team Builder results no longer shows its own Captain Ability, which plays no part in choosing subs; a requirement the character covers now comes first.',
+        el: 'Η σύνοψη «Why picked?» ενός sub στα αποτελέσματα του Auto Team Builder δεν δείχνει πια το δικό του Captain Ability, που δεν παίζει ρόλο στην επιλογή των subs· μια απαίτηση που καλύπτει ο χαρακτήρας έρχεται πλέον πρώτη.',
+      },
+      {
+        en: 'Importing a preset JSON on Auto Team Builder now says how many Captain boost limits it ignored because they were negative or not a number, instead of dropping them without a word.',
+        el: 'Η «Εισαγωγή preset JSON» στο Auto Team Builder λέει πλέον πόσα όρια Captain boost αγνόησε επειδή ήταν αρνητικά ή δεν ήταν αριθμοί, αντί να τα πετάει χωρίς εξήγηση.',
+      },
+    ],
+    headline: {
+      en: 'Truer reasons in the Auto Team Builder results',
+      el: 'Πιο ακριβείς λόγοι στα αποτελέσματα του Auto Team Builder',
+    },
+    summaryEn:
+      'In the Auto Team Builder results, "Close alternatives not picked" now gives only the reason that actually decided, instead of every way an alternative scored lower, including things the builder never compared for your search. The "Why picked?" summary of a sub no longer shows its own Captain Ability, which plays no part in choosing subs; a requirement the character covers now comes first. Importing a preset JSON also says how many Captain boost limits it ignored because they were negative or not a number. Your saved teams, boxes and favourites are untouched.',
+    summaryEl:
+      'Στα αποτελέσματα του Auto Team Builder, οι «Κοντινές εναλλακτικές που δεν μπήκαν» δίνουν πλέον μόνο τον λόγο που πραγματικά αποφάσισε, αντί για κάθε τρόπο που μια εναλλακτική βαθμολογήθηκε χαμηλότερα, ακόμη και όσα ο builder δεν σύγκρινε καθόλου για την αναζήτησή σου. Η σύνοψη «Why picked?» ενός sub δεν δείχνει πια το δικό του Captain Ability, που δεν παίζει ρόλο στην επιλογή των subs· μια απαίτηση που καλύπτει ο χαρακτήρας έρχεται πλέον πρώτη. Η «Εισαγωγή preset JSON» λέει επίσης πόσα όρια Captain boost αγνόησε επειδή ήταν αρνητικά ή δεν ήταν αριθμοί. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.',
+    fixed: [
+      {
+        en: 'In the Auto Team Builder results, the "Why picked?" summary of a character no longer credits it with a requirement its seat cannot cover - a Captain-only requirement on a sub, or a sub-only one on a leader.',
+        el: 'Στα αποτελέσματα του Auto Team Builder, η σύνοψη «Why picked?» ενός χαρακτήρα δεν του πιστώνει πια μια απαίτηση που η θέση του δεν μπορεί να καλύψει - μια απαίτηση μόνο για Captain σε sub, ή μόνο για sub σε leader.',
+      },
+    ],
+  },
+  {
     version: '0.4.15',
     date: '2026-09-11',
     userVisible: true,
