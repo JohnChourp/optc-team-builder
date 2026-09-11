@@ -20,6 +20,10 @@
   text-align: center;
 }
 
+.build-submit-reason--empty {
+  margin: 0;
+}
+
 .build-submit-button {
   width: min(100%, 340px);
   min-height: 50px;

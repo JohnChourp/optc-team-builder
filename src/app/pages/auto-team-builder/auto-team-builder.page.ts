@@ -2572,6 +2572,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return this.t('results.selectedClassSummary.noRequirement');
     }
 
+    // Under "characters of these classes", "1 / 2 selected classes covered" read as a shortfall.
+    if (
+      shouldTreatSelectedClassesAsNeutral(current.requestedInput) &&
+      !this.sameUnorderedValues(current.requestedInput.selectedClasses, this.availableClasses())
+    ) {
+      return this.t('results.selectedClassSummary.poolResolved', {
+        matching: current.coverage.selectedClassMatches,
+        total: current.slots.length,
+      });
+    }
+
     return this.t('results.selectedClassSummary.coverage', {
       covered: current.coverage.coveredSelectedClasses.length,
       total: current.input.selectedClasses.length,
@@ -6755,7 +6766,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   /**
    * Guided auto build locks a slot only from a team that keeps every filter, so it refuses a relaxed
    * one - and used to say so with the generic "no team matched" text, although the result names
-   * exactly what would have to give. The final report's own rule names say it here.
+   * exactly what would have to give. The final report's own rule names say it here, plus the one
+   * relaxation the report has no row for. A team whose fallback relaxed nothing visible still
+   * gets a message that admits a team was found.
    */
   private resolveGuidedRelaxedOnlyMessage(result: AutoBuildResult): string {
     const droppedByRule: Record<string, readonly string[]> = {
@@ -6774,9 +6787,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           : row.title;
       });
 
+    if (result.relaxation.allowedLeadersWithSuperEffects) {
+      relaxed.push(this.t('fallback.allowedLeadersWithSuperEffects'));
+    }
+
     return relaxed.length > 0
       ? this.t('errors.guided.relaxedOnly', { relaxed: relaxed.join(' • ') })
-      : this.resolveBuildFailureMessage();
+      : this.t('errors.guided.fallbackOnly');
   }
 
   private activeLeaderBoostRangeLabels(): string[] {
@@ -8476,7 +8493,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * "Characters of these classes" asks nothing of the team as a whole, so the generic coverage
    * row said "No selected class coverage was requested" - under a class the player had picked.
    * The row reports what the rule does ask: that every unit hold one of the selected classes.
-   * A manual pick or an any-class Friend Captain can fall outside them, and then it says how many.
+   * The builder cannot break that rule: its pool only holds those classes and no fallback drops
+   * one. So the row always reads Passed, and when a unit falls outside them it says whose choice
+   * that was - a manual pick, or a Friend Captain from "Allow any Friend Captain".
    */
   private buildSelectedClassReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
     const requestedClasses = result.requestedInput.selectedClasses;
@@ -8506,17 +8525,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const matching = result.coverage.selectedClassMatches;
     const total = result.slots.length;
 
-    return matching >= total
-      ? this.buildFinalReportRow(
-          'classes',
-          'passed',
-          this.t('report.rules.classes.poolPassed', { value }),
-        )
-      : this.buildFinalReportRow(
-          'classes',
-          'relaxed',
-          this.t('report.rules.classes.poolPartial', { matching, total, value }),
-        );
+    return this.buildFinalReportRow(
+      'classes',
+      'passed',
+      matching >= total
+        ? this.t('report.rules.classes.poolPassed', { value })
+        : this.t('report.rules.classes.poolPartial', { matching, total, value }),
+    );
   }
 
   private buildLeaderSuperScopeReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {

@@ -626,7 +626,7 @@
       "classes": {
         "notApplicable": "Δεν ζητήθηκε selected class coverage.",
         "passed": "Η ομάδα ακολουθεί το selected class coverage: {{value}}.",
-        "poolPartial": "{{matching}} από {{total}} χαρακτήρες έχουν ένα από τα selected classes: {{value}}.",
+        "poolPartial": "{{matching}} από {{total}} χαρακτήρες έχουν ένα από τα selected classes: {{value}}. Οι υπόλοιποι είναι δικές σου επιλογές ή Friend Captain από το «Επίτρεψε οποιονδήποτε Friend Captain».",
         "poolPassed": "Κάθε χαρακτήρας έχει ένα από τα selected classes: {{value}}.",
         "relaxed": "Η ομάδα δεν ακολουθεί πλήρως το selected class coverage. Ζητήθηκε: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
         "title": "Selected class coverage"
@@ -913,7 +913,8 @@
       "coverage": "{{covered}} / {{total}} selected classes καλύφθηκαν σε {{matchingSlots}} matching slots.",
       "flexiblePending": "Το class coverage θα αξιολογηθεί μετά το build.",
       "noRequirement": "Δεν υπάρχει class requirement.",
-      "poolOnlyPending": "Χρησιμοποιούνται μόνο χαρακτήρες από τα selected classes· η ομάδα δεν χρειάζεται να περιέχει το καθένα."
+      "poolOnlyPending": "Χρησιμοποιούνται μόνο χαρακτήρες από τα selected classes· η ομάδα δεν χρειάζεται να περιέχει το καθένα.",
+      "poolResolved": "{{matching}} / {{total}} χαρακτήρες έχουν ένα από τα selected classes."
     },
     "selectedTypeSummary": {
       "coverage": "{{covered}} / {{total}} selected types καλύφθηκαν σε {{matchingSlots}} matching slots.",
@@ -957,7 +958,8 @@
   "errors": {
     "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
     "guided": {
-      "relaxedOnly": "Το Καθοδηγούμενο auto build κλειδώνει slot μόνο από ομάδα που κρατά όλα τα φίλτρα. Ομάδα υπάρχει μόνο αν χαλαρώσουν αυτά: {{relaxed}}. Χαλάρωσέ τα ή κλείσε το Καθοδηγούμενο auto build για να δεις αυτή την ομάδα."
+      "fallbackOnly": "Το Καθοδηγούμενο auto build κλειδώνει slot μόνο από ομάδα που βρέθηκε στην πρώτη, ακριβή αναζήτηση, και αυτή η ομάδα βρέθηκε σε επόμενη. Κλείσε το Καθοδηγούμενο auto build για να τη δεις.",
+      "relaxedOnly": "Το Καθοδηγούμενο auto build κλειδώνει slot μόνο από ομάδα που κρατά όλα τα φίλτρα. Η πιο κοντινή ομάδα που βρήκε χαλαρώνει: {{relaxed}}. Χαλάρωσέ τα ή κλείσε το Καθοδηγούμενο auto build για να δεις αυτή την ομάδα."
     },
     "searchTooLarge": "Η αναζήτηση είναι πολύ μεγάλη για αυτό το browser session. Δοκίμασε λιγότερα types/classes ή βάλε manual slots και τρέξ' το ξανά.",
     "uniqueNames": {

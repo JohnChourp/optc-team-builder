@@ -49,6 +49,7 @@ import {
   isAutoTeamBuildCancelledError,
   normalizeSelectedTypes,
   recordAutoTeamBuildFallbackTiming,
+  resolveExactAttemptRequiresNoSuperLeaders,
   runAutoTeamBuildSearch,
   satisfiesRequestedAutoTeamBuildCoverage,
   type AutoTeamBuildFallbackAttemptCategory,
@@ -1290,6 +1291,10 @@ export class AutoTeamBuilderService {
       let pendingWorkerInitializations = 0;
       let growthDisabled = false;
       let speculativeFallbackError: unknown = null;
+      // Set once any fallback satisfies. Dispatch is strictly in plan order, so every attempt not yet
+      // started comes after that one and can never win; starting them only takes cores from the
+      // earlier attempts the build is now waiting for.
+      let satisfyingFallbackFound = false;
 
       workers.forEach((worker) => {
         const state: PooledWorkerState = {
@@ -1612,7 +1617,7 @@ export class AutoTeamBuilderService {
 
         reconcilePoolSize();
 
-        while (availableWorkers.length > 0) {
+        while (availableWorkers.length > 0 && !satisfyingFallbackFound) {
           const nextAttempt = fallbackPlanner.takeNextScheduledAttempt();
 
           if (!nextAttempt) {
@@ -1696,6 +1701,10 @@ export class AutoTeamBuilderService {
               const attemptSatisfiesRequestedCoverage =
                 satisfiesRequestedAutoTeamBuildCoverage(result);
 
+              if (attemptSatisfiesRequestedCoverage) {
+                satisfyingFallbackFound = true;
+              }
+
               // Planned order decides, never finishing order (owner, 2026-09-11: the same filters
               // always give the same team). A later attempt that finished first used to win as long
               // as it kept captain coverage, so the team depended on core count, the live worker
@@ -1750,7 +1759,8 @@ export class AutoTeamBuilderService {
         exactWorkerState.worker,
         requestedInput,
         requestedInput,
-        !requestedInput.requireAllSlotsInLeaderSuperEffectScope,
+        // The engine's own rule, so the pool and a single worker run the same exact attempt.
+        resolveExactAttemptRequiresNoSuperLeaders(requestedInput),
         executionOptions.signal,
         friendCaptainRecords,
         scopedAutoFillCharacterIds,

@@ -1872,12 +1872,17 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       detail: 'Every unit holds one of the selected classes: Fighter / Slasher.',
     });
 
-    // A manual pick or an any-class Friend Captain can sit outside the selected classes.
+    expect(page.selectedClassSummaryLabel()).toBe('6 / 6 units hold one of the selected classes.');
+
+    // A manual pick or an "Allow any Friend Captain" pick can sit outside the selected classes. That
+    // is the player's choice, not a relaxation - the builder's pool only holds those classes.
     page.result.set(buildWith(false, 5));
     expect(classRow()).toMatchObject({
-      state: 'relaxed',
-      detail: '5 of 6 units hold one of the selected classes: Fighter / Slasher.',
+      state: 'passed',
+      detail:
+        '5 of 6 units hold one of the selected classes: Fighter / Slasher. The rest are your own picks or a Friend Captain from "Allow any Friend Captain".',
     });
+    expect(page.selectedClassSummaryLabel()).toBe('5 / 6 units hold one of the selected classes.');
 
     // A result saved before the flag existed keeps the reading it was built under.
     page.result.set(buildWith(undefined, 5));
@@ -4668,8 +4673,30 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     await page.buildTeam();
 
     expect(page.errorMessage()).toContain('Guided auto build only locks a slot');
-    expect(page.errorMessage()).toContain('these are relaxed: Selected type coverage (PSY).');
+    expect(page.errorMessage()).toContain(
+      'The closest team it found relaxes: Selected type coverage (PSY).',
+    );
     expect(page.result()).toBeNull();
+    expect(page.manualSlots().every((slot) => slot.characterIds.length === 0)).toBe(true);
+
+    // The one relaxation the final report has no row for.
+    autoTeamBuilder.buildTeam.mockResolvedValue({
+      ...result,
+      relaxation: { ...result.relaxation, usedFallback: true, allowedLeadersWithSuperEffects: true },
+    });
+    await page.buildTeam();
+    expect(page.errorMessage()).toContain(
+      'The closest team it found relaxes: Allowed leaders with super effects.',
+    );
+
+    // A fallback that relaxed nothing visible found a team: never say that no team matched.
+    autoTeamBuilder.buildTeam.mockResolvedValue({
+      ...result,
+      relaxation: { ...result.relaxation, usedFallback: true },
+    });
+    await page.buildTeam();
+    expect(page.errorMessage()).toContain('this team came from a later one');
+    expect(page.errorMessage()).not.toContain('No team matched');
     expect(page.manualSlots().every((slot) => slot.characterIds.length === 0)).toBe(true);
   });
 
@@ -4682,9 +4709,15 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     const submit = template.indexOf('data-testid="auto-build-submit"');
 
     expect(submit).toBeGreaterThan(-1);
-    // Right under the button, and rendered whenever there is a reason.
-    expect(template.slice(submit, submit + 1200)).toMatch(
-      /@if \(buildDisabledReason\(\)\) \{\s*<p class="build-submit-reason" role="status">\s*\{\{ buildDisabledReason\(\) \}\}/u,
+    // Right under the button, and always mounted: a live region created together with its text
+    // is not announced, so only the text changes.
+    const reasonMarkup = template.slice(submit, submit + 1200);
+
+    expect(reasonMarkup).toMatch(
+      /<p\s+class="build-submit-reason"\s+role="status"\s+\[class\.build-submit-reason--empty\]="!buildDisabledReason\(\)"\s*>\{\{ buildDisabledReason\(\) \}\}<\/p>/u,
+    );
+    expect(reasonMarkup.slice(0, reasonMarkup.indexOf('build-submit-reason'))).not.toContain(
+      '@if (buildDisabledReason())',
     );
 
     await page.ngOnInit();

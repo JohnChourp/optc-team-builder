@@ -626,7 +626,7 @@
       "classes": {
         "notApplicable": "No selected class coverage was requested.",
         "passed": "Team follows selected class coverage: {{value}}.",
-        "poolPartial": "{{matching}} of {{total}} units hold one of the selected classes: {{value}}.",
+        "poolPartial": "{{matching}} of {{total}} units hold one of the selected classes: {{value}}. The rest are your own picks or a Friend Captain from \"Allow any Friend Captain\".",
         "poolPassed": "Every unit holds one of the selected classes: {{value}}.",
         "relaxed": "Team does not fully follow selected class coverage. Requested: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
         "title": "Selected class coverage"
@@ -913,7 +913,8 @@
       "coverage": "{{covered}} / {{total}} selected classes covered across {{matchingSlots}} matching slots.",
       "flexiblePending": "Class coverage will be evaluated after the build.",
       "noRequirement": "No class requirement selected.",
-      "poolOnlyPending": "Only characters of the selected classes are used; the team need not include each one."
+      "poolOnlyPending": "Only characters of the selected classes are used; the team need not include each one.",
+      "poolResolved": "{{matching}} / {{total}} units hold one of the selected classes."
     },
     "selectedTypeSummary": {
       "coverage": "{{covered}} / {{total}} selected types covered across {{matchingSlots}} matching slots.",
@@ -957,7 +958,8 @@
   "errors": {
     "buildFailed": "The auto build failed unexpectedly. Please try again.",
     "guided": {
-      "relaxedOnly": "Guided auto build only locks a slot from a team that keeps every filter. A team exists only if these are relaxed: {{relaxed}}. Loosen them, or turn off Guided auto build to see that team."
+      "fallbackOnly": "Guided auto build only locks a slot from a team found by its first, exact search, and this team came from a later one. Turn off Guided auto build to see it.",
+      "relaxedOnly": "Guided auto build only locks a slot from a team that keeps every filter. The closest team it found relaxes: {{relaxed}}. Loosen those, or turn off Guided auto build to see that team."
     },
     "searchTooLarge": "This search is too large for this browser session. Try narrowing types/classes or adding manual slots, then run it again.",
     "uniqueNames": {

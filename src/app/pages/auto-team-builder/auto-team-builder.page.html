@@ -2628,11 +2628,12 @@
                                       {{ buildButtonLabel() }}
                                     </ion-button>
                                   </div>
-                                  @if (buildDisabledReason()) {
-                                    <p class="build-submit-reason" role="status">
-                                      {{ buildDisabledReason() }}
-                                    </p>
-                                  }
+                                  <!-- Always mounted: a live region created with its text is not announced. -->
+                                  <p
+                                    class="build-submit-reason"
+                                    role="status"
+                                    [class.build-submit-reason--empty]="!buildDisabledReason()"
+                                  >{{ buildDisabledReason() }}</p>
                                 </section>
                               </app-auto-team-builder-actions-panel>
                             </app-auto-team-builder-picker-panel>
