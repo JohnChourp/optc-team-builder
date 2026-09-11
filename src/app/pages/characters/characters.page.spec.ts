@@ -164,6 +164,31 @@ describe('CharactersPage favorites tools', () => {
     }
   });
 
+  /*
+   * 869exmkdh. At 320px in Greek the summary card's rows did not wrap, the grid's implicit auto
+   * track grew to that min-content, and ion-content clipped 28-49px off the right of every card
+   * below it. The earlier "no horizontal overflow" check read document.scrollWidth, which cannot
+   * fail in this app: the body is position:fixed with overflow:hidden.
+   */
+  it('keeps every card inside the column on a 320px phone, and lets rail labels wrap', () => {
+    const readStyles = (name: string) =>
+      readFileSync(
+        resolve(process.cwd(), `src/app/pages/characters/${name}.component.scss`),
+        'utf8',
+      );
+    const shell = readStyles('characters-catalog-panel');
+    const mobile = readStyles('characters-import-responsive-mobile-panel');
+    const rail = readStyles('characters-catalog-ability-rail-panel');
+
+    expect(shell).toMatch(/\.characters-shell \{[^}]*grid-template-columns: minmax\(0, 1fr\);/u);
+    expect(mobile).toMatch(
+      /\.catalog-summary__title,\s*\.catalog-summary__meta \{[^}]*flex-wrap: wrap;/u,
+    );
+    // ViewEncapsulation.None: a truncation rule here reaches every <app-ability-filter-rail>.
+    expect(rail).not.toContain('text-overflow: ellipsis;');
+    expect(rail).not.toContain('white-space: nowrap;');
+  });
+
   it('keeps both favorites filter controls in the template without bulk favorite action buttons', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/characters/characters.page.html'),

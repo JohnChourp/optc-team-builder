@@ -6099,6 +6099,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.activeManualSlotRole.set('captain');
     this.excludedCharacterIds.set([]);
     this.selectedManualShipId.set(null);
+    // The lock belongs to the ship it was set on, exactly as clearManualShipSelection() pairs
+    // them. Left behind, it silently locks whichever ship is picked next - and, because every
+    // preset import runs this reset first, the imported ship too.
+    this.requireManualShip.set(false);
     this.excludedShipIds.set([]);
     this.requireAllSelectedTypesInTeam.set(defaultFilters.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(

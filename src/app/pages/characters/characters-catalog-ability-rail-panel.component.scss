@@ -36,15 +36,15 @@
   opacity: 0.48;
 }
 
+// No nowrap/ellipsis here: this panel is ViewEncapsulation.None, so the rule reached the
+// shared <app-ability-filter-rail> - which sets neither property itself - and cut "CAPTAIN
+// ABILITY" to "CAPTAIN A..." at every phone width. The label wraps instead.
 .ability-filter-chip span {
   min-width: 0;
-  overflow: hidden;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  text-overflow: ellipsis;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
 .ability-filter-chip strong {

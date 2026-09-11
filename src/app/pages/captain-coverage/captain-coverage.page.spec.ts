@@ -2488,6 +2488,40 @@ describe('CaptainCoveragePage', () => {
     });
   });
 
+  /*
+   * 869exmkcm. The team slots are list items, which carry no character tags, so the Team
+   * coverage summary read every tag-scoped tier as uncovered. It gets detail records now, and a
+   * slot whose detail is not loaded yet falls back to its list item instead of reading empty.
+   */
+  it('feeds the team coverage summary detail records, falling back to a list item until its detail loads', () => {
+    const tagged = createCharacter({ id: 1001, name: 'Tagged Member' });
+    const notLoaded = createCharacter({ id: 1002, name: 'Detail Not Loaded' });
+    const { page } = createPage({ characters: [tagged, notLoaded] });
+    const { detail: _detail, ...taggedListItem } = tagged;
+
+    page.allCharacterDetailsById.set(new Map([[tagged.id, tagged]]));
+    page.selectedTeamSlots.set([
+      taggedListItem as CharacterListItem,
+      null,
+      notLoaded,
+      null,
+      null,
+      null,
+    ]);
+
+    const [first, second, third] = page.teamCoverageMembers();
+
+    expect(first).toBe(tagged);
+    expect(second).toBeNull();
+    expect(third).toBe(notLoaded);
+    expect(
+      readFileSync(
+        resolve(process.cwd(), 'src/app/pages/captain-coverage/captain-coverage.page.html'),
+        'utf8',
+      ),
+    ).toContain('[members]="teamCoverageMembers()"');
+  });
+
   it('clears an unknown saved team route id without replacing the captain coverage draft', async () => {
     const leader = createCharacter({
       id: 1001,

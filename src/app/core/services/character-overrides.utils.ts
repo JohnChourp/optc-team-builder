@@ -83,14 +83,25 @@ function normalizeNonNegativeInteger(value: unknown): number | null {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
 }
 
+/**
+ * Any finite number, the same rule the repository applies when it reads the dataset
+ * (`parseNullableNumber`). Stats can be negative - 59 characters ship a negative RCV, down to
+ * #894's -999 - and the old `>= 0` turned each of them into "unknown" on every save of the
+ * editor, even one that changed nothing. A blank or whitespace-only field is "unknown", not the
+ * zero `Number('  ')` would make of it.
+ */
 function normalizeNullableNumber(value: unknown): number | null {
-  if (value === null || value === undefined || value === '') {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'string' && value.trim() === '') {
     return null;
   }
 
   const parsed = Number(value);
 
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function normalizeOverrideImageDataUrl(value: unknown): string | null {

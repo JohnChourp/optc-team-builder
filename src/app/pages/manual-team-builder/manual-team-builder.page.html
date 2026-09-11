@@ -617,7 +617,10 @@
                               {{ candidateCard.character.name }}
                             </a>
                             <span>{{ candidateCard.subtitle }}</span>
-                            @if (candidateCard.isAssignedToAnotherSlot) {
+                            @if (
+                              candidateCard.isAssignedToAnotherSlot &&
+                              !candidateCard.repeatsCrewMember
+                            ) {
                               <small>{{ t('picker.assignedElsewhere') }}</small>
                             }
                             @if (candidateCard.supportLabel) {

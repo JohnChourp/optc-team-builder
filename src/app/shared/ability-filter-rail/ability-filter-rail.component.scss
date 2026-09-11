@@ -1,6 +1,10 @@
+// min(100%, 140px) lets a rail narrower than one chip still fit a single column. It also
+// replaces the old "two columns below 640px" rule, which halved rails that were already narrow
+// - the Auto Team Builder required-character card left each label 15px at 320px, one or two
+// letters per line - while a wide phone rail fits two chips of 140px on its own.
 .ability-filter-rail {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
   gap: 8px;
 }
 
@@ -86,10 +90,4 @@
 .ability-filter-chip__clear:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-}
-
-@media (max-width: 640px) {
-  .ability-filter-rail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }

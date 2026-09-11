@@ -283,6 +283,19 @@ export class CaptainCoveragePage implements OnInit {
 
     return friendCaptain ? (this.allCharacterDetailsById().get(friendCaptain.id) ?? null) : null;
   });
+  /**
+   * The team as the coverage summary needs it. The slots are list items, which carry no
+   * character tags, so every tag-scoped tier read as uncovered - Saturn plus four Five Elders
+   * "missed" Saturn's Five Elders tier. A slot falls back to its list item until its detail is
+   * loaded, so it never reads as empty.
+   */
+  public readonly teamCoverageMembers = computed<Array<CharacterListItem | null>>(() => {
+    const characterDetailsById = this.allCharacterDetailsById();
+
+    return this.selectedTeamSlots().map((slot) =>
+      slot ? (characterDetailsById.get(slot.id) ?? slot) : null,
+    );
+  });
   public readonly teamName = signal('');
   public readonly currentTeamId = signal<string | null>(null);
   public readonly saveUiLocked = signal(false);

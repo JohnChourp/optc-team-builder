@@ -92,6 +92,7 @@
     },
     "loading": "Loading matching characters...",
     "searchPlaceholder": "Search characters for the fixed team",
+    "subConflict": "Already in your crew. A sub can't repeat the Captain or another sub.",
     "title": "Assign slot {{slot}}"
   },
   "captainHelper": {
@@ -111,6 +112,7 @@
   },
   "drag": {
     "clearZone": "Drop a filled slot here to clear it",
+    "invalidConflict": "Drop blocked because {{name}} is already in your crew. A sub can't repeat the Captain or another sub.",
     "invalidCost": "Drop blocked because the team would exceed max cost {{max}}."
   },
   "save": {
@@ -190,6 +192,10 @@
     },
     "cost": {
       "title": "Cost budget exceeded"
+    },
+    "subConflict": {
+      "copy": "Repeated in {{slots}}. The Captain and the four subs must all be different characters; only the Friend Captain may match another slot.",
+      "title": "Repeated character in your crew"
     }
   },
   "title": "Manual Team Builder"

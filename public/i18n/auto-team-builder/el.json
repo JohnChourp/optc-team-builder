@@ -539,8 +539,8 @@
     "manualBadge": "Manual ship",
     "manualOverride": "Ενεργό manual ship override: {{name}}",
     "requireToggle": {
-      "label": "Lock this ship as required",
-      "support": "When on, the builder must use this exact ship; if it is excluded or unavailable, the build fails instead of falling back to a recommendation."
+      "label": "Κλείδωμα αυτού του ship ως υποχρεωτικού",
+      "support": "Όταν είναι ενεργό, ο builder χρησιμοποιεί μόνο αυτό το ship. Αν είναι excluded ή δεν επιτρέπεται πια, η ομάδα χτίζεται χωρίς ship αντί να μπει ένα προτεινόμενο."
     },
     "favoriteActions": {
       "add": "Προσθήκη ship στα favorites",

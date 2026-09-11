@@ -1,5 +1,9 @@
+// minmax(0, 1fr), not the implicit auto track: an auto track grows to its widest child's
+// min-content, so one unwrapped row widened the whole column and ion-content clipped every
+// card on the right at 320px in Greek. Each card now has to fit the column instead.
 .characters-shell {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
