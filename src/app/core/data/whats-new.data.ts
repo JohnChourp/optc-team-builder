@@ -31,6 +31,44 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.11',
+    date: '2026-09-11',
+    userVisible: true,
+    added: [],
+    improved: [
+      {
+        en: 'The "Choose a requirement source" pop-up on Auto Team Builder searches much faster. It used to re-read every character\'s Captain Ability on each letter you typed; it now reads them once when it opens, and shows its list 100 at a time with "Load more".',
+        el: 'Το αναδυόμενο παράθυρο «Επίλεξε requirement source» στο Auto Team Builder ψάχνει πολύ πιο γρήγορα. Ξαναδιάβαζε το Captain Ability κάθε χαρακτήρα σε κάθε γράμμα που πληκτρολογούσες· τώρα τα διαβάζει μία φορά όταν ανοίγει, και δείχνει τη λίστα του ανά 100 με «Load more».',
+      },
+      {
+        en: 'Under the Types and Classes filters on Auto Team Builder, a line now says what your choice asks of the team.',
+        el: 'Κάτω από τα φίλτρα Types και Classes στο Auto Team Builder, μια γραμμή λέει πλέον τι ζητά η επιλογή σου από την ομάδα.',
+      },
+    ],
+    headline: {
+      en: 'Class filters that mean what you picked',
+      el: 'Φίλτρα classes που σημαίνουν αυτό που διάλεξες',
+    },
+    summaryEn:
+      'On Auto Team Builder, picking three or more classes now means "only characters of these classes". Before, the builder asked every character to have all of them - and no character has more than two - so it quietly dropped the classes it could not fit, and with nine of the ten classes picked it found no team at all. One or two classes still ask every character to have all of them. A line under the Types and Classes filters now says what your choice asks of the team, and those two filters can no longer be changed while a team is being built, which used to leave a team built for your previous choice on screen. The "Choose a requirement source" pop-up searches much faster, and its list no longer jumps back to an older search while you type. Your saved teams, boxes and favourites are untouched.',
+    summaryEl:
+      'Στο Auto Team Builder, η επιλογή τριών ή περισσότερων classes σημαίνει πλέον «μόνο χαρακτήρες από αυτά τα classes». Πριν, ο builder ζητούσε από κάθε χαρακτήρα να τα έχει όλα - και κανένας χαρακτήρας δεν έχει πάνω από δύο - οπότε έριχνε σιωπηλά όσα classes δεν χωρούσαν, και με εννέα από τα δέκα classes δεν έβρισκε καμία ομάδα. Με ένα ή δύο classes κάθε χαρακτήρας πρέπει ακόμη να τα έχει όλα. Μια γραμμή κάτω από τα φίλτρα Types και Classes λέει πλέον τι ζητά η επιλογή σου από την ομάδα, και αυτά τα δύο φίλτρα δεν αλλάζουν πια όσο χτίζεται ομάδα, κάτι που άφηνε στην οθόνη ομάδα χτισμένη για την προηγούμενη επιλογή σου. Το αναδυόμενο παράθυρο «Επίλεξε requirement source» ψάχνει πολύ πιο γρήγορα, και η λίστα του δεν γυρίζει πια σε παλαιότερη αναζήτηση όσο πληκτρολογείς. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.',
+    fixed: [
+      {
+        en: 'Picking three or more classes on Auto Team Builder builds a team from characters of those classes. It used to demand that every character have all of them, drop the ones it could not fit without saying so until the report, and find no team at all with nine of the ten classes picked.',
+        el: 'Η επιλογή τριών ή περισσότερων classes στο Auto Team Builder χτίζει ομάδα από χαρακτήρες αυτών των classes. Ζητούσε από κάθε χαρακτήρα να τα έχει όλα, έριχνε όσα δεν χωρούσαν χωρίς να το πει μέχρι το report, και δεν έβρισκε καμία ομάδα με εννέα από τα δέκα classes.',
+      },
+      {
+        en: 'The Types and Classes filters on Auto Team Builder can no longer be changed while a team is being built. Changing them mid-build used to show a team built for your previous choice, and Cancel brought back the team from before the build.',
+        el: 'Τα φίλτρα Types και Classes στο Auto Team Builder δεν αλλάζουν πια όσο χτίζεται ομάδα. Η αλλαγή τους στη μέση έδειχνε ομάδα χτισμένη για την προηγούμενη επιλογή σου, και το Cancel επανέφερε την ομάδα από πριν το build.',
+      },
+      {
+        en: 'The list in the "Choose a requirement source" pop-up on Auto Team Builder no longer jumps back to the results of an older search while you type.',
+        el: 'Η λίστα στο αναδυόμενο παράθυρο «Επίλεξε requirement source» στο Auto Team Builder δεν γυρίζει πια στα αποτελέσματα παλαιότερης αναζήτησης όσο πληκτρολογείς.',
+      },
+    ],
+  },
+  {
     version: '0.4.10',
     date: '2026-09-11',
     userVisible: true,
