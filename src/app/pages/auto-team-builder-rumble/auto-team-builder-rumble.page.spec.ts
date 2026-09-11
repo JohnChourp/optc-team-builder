@@ -143,6 +143,25 @@ describe('AutoTeamBuilderRumblePage', () => {
     );
   });
 
+  // 869exmkbe: "will counter 0 filled opponent slot(s)" read as a working goal.
+  it('says a counter build without an opponent will counter nothing', async () => {
+    const result = createResult();
+    const { page } = createPage(result);
+
+    await page.ngOnInit();
+    page.opponentAwarenessEnabled.set(true);
+
+    expect(page.opponentAwarenessSupportLabel()).toBe('opponent.awarenessSupport.enabledEmpty');
+
+    page.opponentActiveSlots.set([result.activeSlots[0]!, null, null, null, null]);
+    expect(page.opponentAwarenessSupportLabel()).toBe(
+      'opponent.awarenessSupport.enabled:{"count":1}',
+    );
+
+    page.opponentAwarenessEnabled.set(false);
+    expect(page.opponentAwarenessSupportLabel()).toBe('opponent.awarenessSupport.disabled');
+  });
+
   it('builds a team on demand and exposes summary state', async () => {
     const result = createResult();
     const { page, rumbleBuilder } = createPage(result);

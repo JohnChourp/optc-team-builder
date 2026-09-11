@@ -198,7 +198,8 @@
     "awarenessToggle": "Χρήση αντίπαλης ομάδας στο build",
     "awarenessSupport": {
       "disabled": "Οι αντίπαλοι εμφανίζονται μόνο οπτικά και δεν επηρεάζουν το επόμενο build.",
-      "enabled": "Το επόμενο build θα κάνει counter σε {{count}} συμπληρωμένο(α) opponent slot(s)."
+      "enabled": "Το επόμενο build θα κάνει counter σε {{count}} συμπληρωμένο(α) opponent slot(s).",
+      "enabledEmpty": "Πρόσθεσε τουλάχιστον έναν αντίπαλο χαρακτήρα, αλλιώς αυτό το build δεν θα κάνει counter σε τίποτα."
     },
     "debuffRule": {
       "disabled": "Τα enemy debuffs δεν επηρεάζουν το scoring εκτός αν το toggle είναι ενεργό και υπάρχει συμπληρωμένο opponent slot.",

@@ -2760,6 +2760,24 @@
                                     role="status"
                                     [class.build-submit-reason--empty]="!buildDisabledReason()"
                                   >{{ buildDisabledReason() }}</p>
+                                  @if (buildDisabledFix(); as fix) {
+                                    <div class="build-submit-fix">
+                                      <ion-button
+                                        fill="clear"
+                                        size="small"
+                                        class="select-all-button"
+                                        data-testid="auto-build-fix"
+                                        [disabled]="controlsDisabled()"
+                                        (click)="fix === 'types' ? selectAllTypes() : selectAllClasses()"
+                                      >
+                                        {{
+                                          fix === 'types'
+                                            ? t('filters.types.selectAll')
+                                            : t('filters.classes.selectAll')
+                                        }}
+                                      </ion-button>
+                                    </div>
+                                  }
                                 </section>
                               </app-auto-team-builder-actions-panel>
                             </app-auto-team-builder-picker-panel>

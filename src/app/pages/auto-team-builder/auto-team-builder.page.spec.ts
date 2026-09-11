@@ -435,7 +435,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       );
     }
 
+    // 869exmkb4: all ten selected is no filter at all, and the line says so.
     page.selectedClasses.set(allClasses);
+    expect(page.classSupportLabel()).toBe('All classes are selected, so any character can join.');
+    page.selectedClasses.set([]);
     expect(page.classSupportLabel()).toBe('');
   });
 
@@ -450,6 +453,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.selectedTypes.set(['DEX']);
     expect(page.typeSupportLabel()).toContain('every selected type');
     page.selectedTypes.set([...page.availableTypes]);
+    expect(page.typeSupportLabel()).toBe('All types are selected, so the team can be any type.');
+    // None selected is not a rule: the reason under Build says what to do instead.
+    page.selectedTypes.set([]);
     expect(page.typeSupportLabel()).toBe('');
 
     expect(template).toContain(
@@ -4896,6 +4902,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     const submit = template.indexOf('data-testid="auto-build-submit"');
 
     expect(submit).toBeGreaterThan(-1);
+    expect(template.slice(submit, submit + 2400)).toMatch(
+      /@if \(buildDisabledFix\(\); as fix\)[\s\S]*?\(click\)="fix === 'types' \? selectAllTypes\(\) : selectAllClasses\(\)"/u,
+    );
     // Right under the button, and always mounted: a live region created together with its text
     // is not announced, so only the text changes.
     const reasonMarkup = template.slice(submit, submit + 1200);
@@ -4913,10 +4922,20 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.selectedTypes.set([]);
     expect(page.buildDisabled()).toBe(true);
     expect(page.buildDisabledReason()).toBe('Select at least one type to build a team.');
+    expect(page.buildDisabledFix()).toBe('types');
+
+    // The one tap beside the reason fixes it.
+    await page.selectAllTypes();
+    expect(page.buildDisabled()).toBe(false);
+    expect(page.buildDisabledFix()).toBeNull();
 
     page.selectedTypes.set(['DEX']);
     page.selectedClasses.set([]);
     expect(page.buildDisabledReason()).toBe('Select at least one class to build a team.');
+    expect(page.buildDisabledFix()).toBe('classes');
+    await page.selectAllClasses();
+    expect(page.buildDisabledFix()).toBeNull();
+    page.selectedClasses.set([]);
 
     page.selectedClasses.set(['Fighter']);
     page.leaderBoostRanges.set({
@@ -9240,8 +9259,11 @@ describe('AutoTeamBuilder saved team preset handoff', () => {
 
     await page.ionViewWillEnter();
 
-    expect(page.selectedTypes()).toEqual([]);
-    expect(page.selectedClasses()).toEqual([]);
+    // 869exmkbe: a saved team carries no filter, so it lands on the neutral ones - every type and
+    // class - with Build ready, instead of on a grey Build with nothing selected.
+    expect(page.selectedTypes()).toEqual(['DEX', 'STR', 'QCK', 'PSY', 'INT']);
+    expect(page.selectedClasses()).toEqual(['Fighter', 'Slasher']);
+    expect(page.buildDisabled()).toBe(false);
     expect(page.manualSlots()).toEqual(
       createManualSlots({
         captain: [101],

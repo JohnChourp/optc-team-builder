@@ -315,13 +315,18 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       .filter((character): character is CharacterDetailRecord => Boolean(character));
   });
   public readonly hasExcludedCharacters = computed(() => this.excludedCharacterIds().length > 0);
-  public readonly opponentAwarenessSupportLabel = computed(() =>
-    this.opponentAwarenessEnabled()
-      ? this.t('opponent.awarenessSupport.enabled', {
-          count: this.collectOpponentTeamSlots().length,
-        })
-      : this.t('opponent.awarenessSupport.disabled'),
-  );
+  public readonly opponentAwarenessSupportLabel = computed(() => {
+    if (!this.opponentAwarenessEnabled()) {
+      return this.t('opponent.awarenessSupport.disabled');
+    }
+
+    const opponentSlotCount = this.collectOpponentTeamSlots().length;
+
+    // "Will counter 0 filled opponent slot(s)" read as a working goal (869exmkbe).
+    return opponentSlotCount > 0
+      ? this.t('opponent.awarenessSupport.enabled', { count: opponentSlotCount })
+      : this.t('opponent.awarenessSupport.enabledEmpty');
+  });
   public readonly opponentDebuffRuleLabel = computed(() =>
     this.opponentAwarenessEnabled() && this.collectOpponentTeamSlots().length > 0
       ? this.t('opponent.debuffRule.enabled')

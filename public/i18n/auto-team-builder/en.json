@@ -68,6 +68,7 @@
       "selectAll": "Select all types",
       "unselectAll": "Clear type selection",
       "support": {
+        "all": "All types are selected, so the team can be any type.",
         "strict": "The builder looks for a team with every selected type. If none fits, the results say which type it left out.",
         "flexible": "The builder tries to cover every selected type first and only relaxes that in the result panel if needed."
       }
@@ -80,6 +81,7 @@
       "selectAll": "Select all classes",
       "unselectAll": "Clear class selection",
       "support": {
+        "all": "All classes are selected, so any character can join.",
         "flexible": "Only characters of the selected classes: each unit holds at least one of them, and the team need not include every class."
       }
     },

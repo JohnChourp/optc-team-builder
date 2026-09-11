@@ -24,6 +24,11 @@
   margin: 0;
 }
 
+.build-submit-fix {
+  display: flex;
+  justify-content: center;
+}
+
 .build-submit-button {
   width: min(100%, 340px);
   min-height: 50px;
