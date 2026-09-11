@@ -31,6 +31,45 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.13',
+    date: '2026-09-11',
+    userVisible: true,
+    added: [
+      {
+        en: 'Auto Team Builder and Manual Team Builder greet a first visit with a "How this page works" card under the top section: three short steps. Hide it once and this device remembers; Show brings it back. It stays out of the way when you open a shared or saved team.',
+        el: "Το Auto Team Builder και το Manual Team Builder καλωσορίζουν την πρώτη επίσκεψη με μια κάρτα «Πώς δουλεύει αυτή η σελίδα» κάτω από το πάνω μέρος: τρία σύντομα βήματα. Κρύψ'την μία φορά και η συσκευή το θυμάται· το «Εμφάνιση» τη φέρνει πίσω. Δεν εμφανίζεται όταν ανοίγεις κοινοποιημένη ή αποθηκευμένη ομάδα.",
+      },
+      {
+        en: 'A line under the header of Manual Team Builder now says where your team stands: seats filled, whether you have a Captain, subs still to add, the Friend Captain (optional) and the cost.',
+        el: 'Μια γραμμή κάτω από την κεφαλίδα του Manual Team Builder λέει πλέον πού βρίσκεται η ομάδα σου: γεμάτα slots, αν υπάρχει Captain, subs που λείπουν, ο Friend Captain (προαιρετικός) και το κόστος.',
+      },
+      {
+        en: 'The top section of Auto Team Builder now says whether Build is ready - or the one thing it still needs - and how many slots you have locked.',
+        el: 'Το πάνω μέρος του Auto Team Builder λέει πλέον αν το Build είναι έτοιμο - ή το ένα πράγμα που ακόμα χρειάζεται - και πόσα slots έχεις κλειδώσει.',
+      },
+    ],
+    improved: [
+      {
+        en: 'On Auto Team Builder, Captain ability requirements, Required characters and Exclude picks stay compact while nothing is set in them; "Show details" opens them. A section with rules in it is always open.',
+        el: 'Στο Auto Team Builder, τα Captain ability requirements, Required characters και Exclude picks μένουν συμπτυγμένα όσο δεν έχουν τίποτα· το «Εμφάνιση λεπτομερειών» τα ανοίγει. Μια ενότητα με κανόνες είναι πάντα ανοιχτή.',
+      },
+    ],
+    headline: {
+      en: 'A friendlier start on both builders',
+      el: 'Πιο φιλικό ξεκίνημα και στους δύο builders',
+    },
+    summaryEn:
+      'Auto Team Builder and Manual Team Builder now greet a first visit with a short "How this page works" card: three steps, hidden with one press and remembered on this device, and never shown when you open a shared or saved team. A line at the top of each builder says where you stand - on Manual Team Builder the seats filled, your Captain, the subs still to add and the cost; on Auto Team Builder whether Build is ready and how many slots are locked. On Auto Team Builder, Captain ability requirements, Required characters and Exclude picks stay compact until you put something in them. A team with no Friend Captain now counts as complete on Manual Team Builder, Captain Coverage and Saved Teams, and no longer warns that the Friend Captain is missing. Your saved teams, boxes and favourites are untouched.',
+    summaryEl:
+      'Το Auto Team Builder και το Manual Team Builder καλωσορίζουν πλέον την πρώτη επίσκεψη με μια σύντομη κάρτα «Πώς δουλεύει αυτή η σελίδα»: τρία βήματα, που κρύβονται με ένα πάτημα και η συσκευή το θυμάται, και δεν εμφανίζονται όταν ανοίγεις κοινοποιημένη ή αποθηκευμένη ομάδα. Μια γραμμή στο πάνω μέρος κάθε builder λέει πού βρίσκεσαι - στο Manual Team Builder τα γεμάτα slots, τον Captain σου, τα subs που λείπουν και το κόστος· στο Auto Team Builder αν το Build είναι έτοιμο και πόσα slots είναι κλειδωμένα. Στο Auto Team Builder, τα Captain ability requirements, Required characters και Exclude picks μένουν συμπτυγμένα μέχρι να βάλεις κάτι μέσα. Μια ομάδα χωρίς Friend Captain μετράει πλέον ως πλήρης στο Manual Team Builder, στο Captain Coverage και στα Saved Teams, και δεν προειδοποιεί πια ότι λείπει ο Friend Captain. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.',
+    fixed: [
+      {
+        en: 'A team with a Captain and four subs but no Friend Captain now counts as complete on Manual Team Builder, Captain Coverage and Saved Teams. It used to read "5 / 6 slots filled. Complete the team to verify captain conditions." forever, and Manual Team Builder warned that the Friend Captain was missing, although a team needs none. When your Captain leaves a sub uncovered, Manual Team Builder now names and outlines that sub\'s slot instead of an earlier one.',
+        el: 'Μια ομάδα με Captain και τέσσερα subs αλλά χωρίς Friend Captain μετράει πλέον ως πλήρης στο Manual Team Builder, στο Captain Coverage και στα Saved Teams. Έγραφε για πάντα «5 / 6 slots γεμάτα. Ολοκλήρωσε την ομάδα για να ελεγχθούν τα captain conditions.», και το Manual Team Builder προειδοποιούσε ότι λείπει ο Friend Captain, ενώ μια ομάδα δεν χρειάζεται κανέναν. Όταν ο Captain σου δεν καλύπτει κάποιο sub, το Manual Team Builder δείχνει και σημειώνει πλέον το slot αυτού του sub αντί για κάποιο προηγούμενο.',
+      },
+    ],
+  },
+  {
     version: '0.4.12',
     date: '2026-09-11',
     userVisible: true,
