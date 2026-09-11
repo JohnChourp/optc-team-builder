@@ -513,7 +513,17 @@ describe('ManualTeamBuilderPage', () => {
             : null,
       ),
     };
-    const afterRender = (): Promise<void> => new Promise((done) => setTimeout(done, 0));
+    // A frame and then a task: past whatever the page deferred until the title re-rendered, in
+    // the jsdom runner (which has requestAnimationFrame) and in plain Node (which does not).
+    const afterRender = (): Promise<void> =>
+      new Promise((done) => {
+        if (typeof globalThis.requestAnimationFrame === 'function') {
+          globalThis.requestAnimationFrame(() => setTimeout(done, 0));
+          return;
+        }
+
+        setTimeout(done, 0);
+      });
 
     expect(template).toContain('(didPresent)="onCharacterPickerDidPresent($event)"');
     expect(template).toContain('<h2 id="manual-team-picker-title" tabindex="-1">');
