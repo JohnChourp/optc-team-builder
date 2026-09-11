@@ -374,6 +374,32 @@ describe('captain coverage filter model', () => {
     ).toBe(true);
   });
 
+  /*
+   * The same restriction reaches Auto Team Builder's full captain-ability coverage, which counts
+   * a tier as covered only when some member of the team qualifies. #4111 costs 55, so it no
+   * longer covers its own Tier 2 - it does not get that boost - and the team needs a Driven or
+   * Slasher member of Cost 40 or less, which is what the ability says.
+   */
+  it('counts a class-and-cost tier as covered only by a member inside both limits', () => {
+    const captain = createCharacter({
+      id: 4111,
+      classes: ['Driven', 'Slasher'],
+      cost: 55,
+      captainAbilityCoverage: buildClassCostTierCoverage(),
+    });
+    const cheapFighter = createCharacter({ id: 9200, classes: ['Fighter'], cost: 30 });
+    const cheapSlasher = createCharacter({ id: 9201, classes: ['Slasher'], cost: 30 });
+
+    expect(
+      resolveCaptainAllTierCoverage(captain, [{ character: captain }, { character: cheapFighter }])
+        .matches,
+    ).toBe(false);
+    expect(
+      resolveCaptainAllTierCoverage(captain, [{ character: captain }, { character: cheapSlasher }])
+        .matches,
+    ).toBe(true);
+  });
+
   it('uses parsed tier metadata when text coverage has no targetable cost clauses', () => {
     const captain = createCharacter({
       id: 4572,

@@ -2493,7 +2493,7 @@ describe('CaptainCoveragePage', () => {
    * coverage summary read every tag-scoped tier as uncovered. It gets detail records now, and a
    * slot whose detail is not loaded yet falls back to its list item instead of reading empty.
    */
-  it('feeds the team coverage summary detail records, so tag-scoped tiers can be covered', () => {
+  it('feeds the team coverage summary detail records, falling back to a list item until its detail loads', () => {
     const tagged = createCharacter({ id: 1001, name: 'Tagged Member' });
     const notLoaded = createCharacter({ id: 1002, name: 'Detail Not Loaded' });
     const { page } = createPage({ characters: [tagged, notLoaded] });

@@ -1289,6 +1289,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       typeof team.shipId === 'number' && availableShipIds.has(team.shipId) ? team.shipId : null,
     );
     this.maxTotalCost.set(null);
+    // Same reason as resetPage(): the message describes the team and budget being replaced.
+    this.dragFeedbackMessage.set('');
     this.teamName.set(team.name);
     this.notes.set(team.notes);
     this.currentTeamId.set(options.currentTeamId === undefined ? team.id : options.currentTeamId);
@@ -1479,10 +1481,12 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   /**
-   * The character a drop would bring into the crew as a repeat, or null. A copy from the
-   * candidate list joins the crew only through a sub slot. A swap between two slots only
-   * reorders the crew, so it can add a repeat only when the Friend Captain - the one seat
-   * outside the crew - trades places with a sub.
+   * The character a drop would bring into a sub slot as a repeat, or null. A copy from the
+   * candidate list joins the crew only through a sub slot. Among the crew seats a swap only
+   * reorders the same characters, so the one sub-slot check that remains is the Friend Captain
+   * - the seat outside the crew - trading places with a sub. A Captain/Friend Captain swap does
+   * change the crew too, but it only fills leader seats, which are never refused; a repeat it
+   * leaves behind is named by the validation panel instead.
    */
   private resolveDropCrewRepeat(
     targetIndex: number,

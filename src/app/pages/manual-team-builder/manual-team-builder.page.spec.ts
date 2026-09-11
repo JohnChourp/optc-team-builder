@@ -171,6 +171,22 @@ describe('ManualTeamBuilderPage', () => {
     });
   });
 
+  it('clears a leftover drop message when a saved team replaces the one it described', async () => {
+    const team = createSavedTeam({ id: 'team-1', slots: [701, null, null, null, null, null] });
+    const { page } = createPage({
+      routeTeamId: 'team-1',
+      savedTeams: [team],
+      characters: [createCharacterRecord(701)],
+    });
+
+    await page.ngOnInit();
+    page.dragFeedbackMessage.set('Cannot drop with max cost 40.');
+    await page.ionViewWillEnter();
+
+    expect(page.slots()[0]?.id).toBe(701);
+    expect(page.dragFeedbackMessage()).toBe('');
+  });
+
   it('clears missing saved team characters and unavailable ships during route load', async () => {
     const team = createSavedTeam({
       id: 'team-with-missing-data',
@@ -1220,6 +1236,48 @@ describe('ManualTeamBuilderPage', () => {
       page.onSlotDrop(createDragEvent(), 3);
       expect(page.slots()[2]?.id).toBe(705);
       expect(page.slots()[3]?.id).toBe(702);
+    });
+
+    it('refuses a sub dragged onto the Friend Captain seat when that swap brings a repeat into the crew', async () => {
+      const { page } = createPage();
+      const captain = createCharacterRecord(701, 'Monkey D. Luffy');
+      const luffyFriend = createCharacterRecord(703, 'Monkey D. Luffy - Gear 5');
+      const sub = createCharacterRecord(702, 'Roronoa Zoro');
+
+      await page.ngOnInit();
+      page.slots.set([captain, luffyFriend, sub, null, null, null]);
+
+      page.onSlotDragStart(createDragEvent(), 2);
+      page.onSlotDrop(createDragEvent(), 1);
+
+      expect(page.slots().map((slot) => slot?.id ?? null)).toEqual([701, 703, 702, null, null, null]);
+      expect(page.dragFeedbackMessage()).toBe('Monkey D. Luffy - Gear 5 is already in your crew.');
+    });
+
+    it('lets the two leader seats swap, and a drop back onto the same slot, without refusing', async () => {
+      const { page } = createPage();
+      const law = createCharacterRecord(704, 'Trafalgar Law');
+      const luffyFriend = createCharacterRecord(703, 'Monkey D. Luffy - Gear 5');
+      const luffySub = createCharacterRecord(701, 'Monkey D. Luffy');
+
+      await page.ngOnInit();
+      page.slots.set([law, luffyFriend, luffySub, null, null, null]);
+
+      page.onSlotDragStart(createDragEvent(), 2);
+      page.onSlotDrop(createDragEvent(), 2);
+      expect(page.slots()[2]?.id).toBe(701);
+      expect(page.dragFeedbackMessage()).toBe('');
+
+      page.onSlotDragStart(createDragEvent(), 0);
+      page.onSlotDrop(createDragEvent(), 1);
+
+      expect(page.slots().map((slot) => slot?.id ?? null)).toEqual([703, 704, 701, null, null, null]);
+      expect(page.dragFeedbackMessage()).toBe('');
+      // The swap is allowed because leader seats are never refused; the repeat it leaves in
+      // Slot 3 is named instead.
+      expect(page.validationMessages().find((message) => message.key === 'subConflict')?.copy).toBe(
+        'Repeated in Slot 3.',
+      );
     });
 
     it('names every repeated sub of a team that arrived that way', async () => {
