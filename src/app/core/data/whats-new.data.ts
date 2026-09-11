@@ -31,6 +31,53 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.14',
+    date: '2026-09-11',
+    userVisible: true,
+    added: [
+      {
+        en: 'Auto Team Builder and Manual Team Builder offer a Quick start while the page is still empty: start from your Captain, go to a saved enemy or a saved team, turn on Guided auto build, or check a Captain in Captain Coverage first.',
+        el: 'Το Auto Team Builder και το Manual Team Builder προσφέρουν Γρήγορο ξεκίνημα όσο η σελίδα είναι ακόμα άδεια: ξεκίνα από τον Captain σου, πήγαινε σε αποθηκευμένο εχθρό ή αποθηκευμένη ομάδα, ενεργοποίησε το Καθοδηγούμενο auto build ή δες πρώτα έναν Captain στο Captain Coverage.',
+      },
+      {
+        en: 'After you assign a character to an empty slot on Manual Team Builder, the "Assign" pop-up stays open and moves on to the next empty slot - Captain, Sub 1 to 4, then the optional Friend Captain - keeping your search and filters.',
+        el: 'Αφού βάλεις χαρακτήρα σε κενό slot στο Manual Team Builder, το αναδυόμενο παράθυρο «Ανάθεση» μένει ανοιχτό και πάει στο επόμενο κενό slot - Captain, Sub 1 έως 4, και μετά ο προαιρετικός Friend Captain - κρατώντας την αναζήτηση και τα φίλτρα σου.',
+      },
+      {
+        en: 'Every slot on Manual Team Builder now says its role, such as "Slot 1 · Captain" or "Slot 2 · Friend Captain (optional)".',
+        el: 'Κάθε slot στο Manual Team Builder λέει πλέον τον ρόλο του, όπως «Slot 1 · Captain» ή «Slot 2 · Friend Captain (προαιρετικός)».',
+      },
+    ],
+    improved: [
+      {
+        en: 'When the Build button on Auto Team Builder is greyed out because no type or no class is selected, a "Select all" button now sits right under the reason.',
+        el: 'Όταν το κουμπί Build στο Auto Team Builder είναι γκριζαρισμένο επειδή δεν έχει επιλεγεί κανένα type ή class, ένα κουμπί «Επίλεξε όλα» βρίσκεται πλέον ακριβώς κάτω από τον λόγο.',
+      },
+      {
+        en: 'The line under the Types and Classes filters on Auto Team Builder now says when everything is selected, which means no filter at all.',
+        el: 'Η γραμμή κάτω από τα φίλτρα Types και Classes στο Auto Team Builder λέει πλέον πότε είναι όλα επιλεγμένα, που σημαίνει κανένα φίλτρο.',
+      },
+    ],
+    headline: {
+      en: 'A quicker start on both builders',
+      el: 'Πιο γρήγορο ξεκίνημα και στους δύο builders',
+    },
+    summaryEn:
+      'Auto Team Builder and Manual Team Builder now offer a Quick start while the page is empty: start from your Captain, go to a saved enemy or a saved team, turn on Guided auto build, or check a Captain in Captain Coverage first. On Manual Team Builder the "Assign" pop-up stays open after each pick and moves on to the next empty slot - Captain, Sub 1 to 4, then the optional Friend Captain - and every slot says its role. A team opened from Saved Teams on Auto Team Builder now arrives ready to build, with every type and class selected, instead of a greyed-out Build button; and when Build is greyed out for no type or class, a "Select all" button sits right under the reason. On the Rumble builder, switching on "Use opponent team for build" in the Opponent team section with no opponent set now asks you to add one. Your saved teams, boxes and favourites are untouched.',
+    summaryEl:
+      'Το Auto Team Builder και το Manual Team Builder προσφέρουν πλέον Γρήγορο ξεκίνημα όσο η σελίδα είναι άδεια: ξεκίνα από τον Captain σου, πήγαινε σε αποθηκευμένο εχθρό ή αποθηκευμένη ομάδα, ενεργοποίησε το Καθοδηγούμενο auto build ή δες πρώτα έναν Captain στο Captain Coverage. Στο Manual Team Builder το αναδυόμενο παράθυρο «Ανάθεση» μένει ανοιχτό μετά από κάθε επιλογή και πάει στο επόμενο κενό slot - Captain, Sub 1 έως 4, και μετά ο προαιρετικός Friend Captain - και κάθε slot λέει τον ρόλο του. Μια ομάδα που ανοίγεις από τα Saved Teams στο Auto Team Builder φτάνει πλέον έτοιμη για build, με όλα τα types και classes επιλεγμένα, αντί για γκριζαρισμένο κουμπί Build· και όταν το Build είναι γκριζαρισμένο επειδή δεν έχει επιλεγεί type ή class, ένα κουμπί «Επίλεξε όλα» βρίσκεται ακριβώς κάτω από τον λόγο. Στον Rumble builder, όταν ενεργοποιείς το «Χρήση αντίπαλης ομάδας στο build» στην ενότητα Αντίπαλη ομάδα χωρίς αντίπαλο, σου ζητά πλέον να προσθέσεις έναν. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.',
+    fixed: [
+      {
+        en: 'A team opened from Saved Teams on Auto Team Builder arrived with no type and no class selected, so Build stayed greyed out with your team already locked. It now arrives with every type and class selected, ready to build.',
+        el: 'Μια ομάδα που άνοιγες από τα Saved Teams στο Auto Team Builder έφτανε χωρίς κανένα type και κανένα class, οπότε το Build έμενε γκριζαρισμένο με την ομάδα σου ήδη κλειδωμένη. Τώρα φτάνει με όλα τα types και classes επιλεγμένα, έτοιμη για build.',
+      },
+      {
+        en: 'The Opponent team section of the Rumble builder no longer promises to "counter 0 filled opponent slot(s)" when "Use opponent team for build" is on and no opponent is set; it asks you to add one.',
+        el: 'Η ενότητα Αντίπαλη ομάδα στον Rumble builder δεν υπόσχεται πια counter σε «0 συμπληρωμένα opponent slots» όταν το «Χρήση αντίπαλης ομάδας στο build» είναι ενεργό χωρίς αντίπαλο· σου ζητά να προσθέσεις έναν.',
+      },
+    ],
+  },
+  {
     version: '0.4.13',
     date: '2026-09-11',
     userVisible: true,
