@@ -975,6 +975,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * this makes sure the next control that misses the guard cannot reopen it.
    */
   private buildInputRevision = 0;
+  /** The revision the running build started from; null when no build is running. */
+  private activeBuildInputRevision: number | null = null;
   /** The first load, so `ionViewWillEnter` can wait for it rather than race it. */
   private initialLoad: Promise<void> | null = null;
   public readonly favoriteShipsOnly = signal(false);
@@ -2544,8 +2546,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const current = this.result();
 
     if (!current) {
-      return this.derivedRequireAllSelectedClassesPerCharacter()
-        ? this.t('results.selectedClassSummary.strictPending')
+      if (this.derivedRequireAllSelectedClassesPerCharacter()) {
+        return this.t('results.selectedClassSummary.strictPending');
+      }
+
+      return this.hasSelectedClasses() && !this.allClassesSelected()
+        ? this.t('results.selectedClassSummary.poolOnlyPending')
         : this.t('results.selectedClassSummary.flexiblePending');
     }
 
@@ -3503,6 +3509,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public closeRequirementSourceModal(): void {
+    // A response still in flight belongs to a list nobody is looking at.
+    this.requirementSourceRequestId += 1;
     this.requirementSourceModalOpen.set(false);
     this.requirementSourceTagSelection.set(createEmptyCharacterTagSetSelection());
     this.requirementSourceTagCharacterIds.set(undefined);
@@ -5523,6 +5531,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.building.set(true);
     this.resetBuildState();
     const buildInputRevision = this.buildInputRevision;
+    this.activeBuildInputRevision = buildInputRevision;
     this.startBuildProgressTicker();
     void this.scrollToBottom();
 
@@ -5562,9 +5571,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
       void this.scrollToBottom();
     } catch (error) {
+      // A build whose inputs changed answers nothing: no restore, no "search too large", no error.
+      if (buildInputRevision !== this.buildInputRevision) {
+        return;
+      }
+
       if (isAutoTeamBuildCancelledError(error)) {
-        if (this.resetAfterBuildCancellation || buildInputRevision !== this.buildInputRevision) {
-          // Restoring the team from before the build would pin it under filters it never saw.
+        if (this.resetAfterBuildCancellation) {
           return;
         }
 
@@ -5594,6 +5607,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       void this.scrollToBottom();
     } finally {
       this.buildAbortController = null;
+      this.activeBuildInputRevision = null;
       this.buildProgress.set(null);
       this.stopBuildProgressTicker();
       this.building.set(false);
@@ -6050,6 +6064,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private resetBuildState(): void {
     this.buildInputRevision += 1;
+
+    // An input changed under a running build - a page re-entry reset, a preset import. Stop the
+    // search now rather than let it run on unseen with every control still locked. A build's own
+    // reset runs before it records its revision, so it never stops itself.
+    if (
+      this.activeBuildInputRevision !== null &&
+      this.activeBuildInputRevision !== this.buildInputRevision
+    ) {
+      this.buildAbortController?.abort();
+    }
+
     this.buildPaused.set(false);
     this.buildProgress.set(null);
     this.buildProgressFloorPercent.set(0);
@@ -6164,6 +6189,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.requirementSourceVisibleCount.set(CHARACTER_PICKER_PAGE_SIZE);
     this.requirementSourceFilters = null;
     this.requirementSourceFiltersById = null;
+    this.requirementSourceRequestId += 1;
     this.clearCharacterPickerTagFilter('manual');
     this.clearCharacterPickerTagFilter('excluded');
     this.requirementSourceTagSelection.set(createEmptyCharacterTagSetSelection());
@@ -6771,7 +6797,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private resolveRequirementSourceFilters(): Promise<
     Map<number, AutoBuildCharacterRequirementFilters>
   > {
-    this.requirementSourceFilters ??= this.repository
+    if (this.requirementSourceFilters) {
+      return this.requirementSourceFilters;
+    }
+
+    const pass = this.repository
       .searchDetailedCharacters({
         searchTerm: '',
         selectedTypes: [],
@@ -6791,12 +6821,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           }
         }
 
-        this.requirementSourceFiltersById = filtersById;
+        // A pass that a reopening or a reset has replaced must not refill the cards' lookup.
+        if (this.requirementSourceFilters === pass) {
+          this.requirementSourceFiltersById = filtersById;
+        }
 
         return filtersById;
       });
 
-    return this.requirementSourceFilters;
+    // A failed pass is not cached, so the next keystroke tries again instead of failing forever.
+    pass.catch(() => {
+      if (this.requirementSourceFilters === pass) {
+        this.requirementSourceFilters = null;
+      }
+    });
+
+    this.requirementSourceFilters = pass;
+
+    return pass;
   }
 
   private async refreshCharacterPickerPanel(panel: CharacterPickerPanelKey): Promise<void> {
@@ -8300,8 +8342,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * "Every unit holds every selected class" only while one unit can: no character has more than
    * two classes. Asked of three or more it could never be met - the fallback then had to drop all
    * but two, and with nine of ten selected its attempt cap ran out first and no team was built,
-   * under a message that blamed the types. Three or more read the way types always have: any
-   * selected class per unit, and the team covers each one.
+   * under a message that blamed the types. Three or more now mean "these classes only": any
+   * selected class per unit, with no requirement that the team include each one - the build sends
+   * requireAllSelectedClassesInTeam: false for them (see shouldTreatSelectedClassesAsNeutral).
    */
   private shouldRequireExactSelectedClassCoverage(): boolean {
     const availableClasses = this.availableClasses();

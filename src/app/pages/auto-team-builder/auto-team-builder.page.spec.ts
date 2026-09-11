@@ -324,7 +324,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
    * still live during a build. This derives the list instead: every control whose handler resets
    * the build must wait for it, whatever it is called.
    */
-  it('binds the page-ready guard on every control whose handler resets the build', () => {
+  it('binds the page-ready guard on every form control whose change handler resets the build', () => {
     const source = readFileSync(
       resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.ts'),
       'utf8',
@@ -410,7 +410,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
     page.selectedClasses.set(['Fighter', 'Slasher']);
     expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
-    expect(page.classSupportLabel()).toContain('must match all selected classes');
+    expect(page.classSupportLabel()).toContain('asked to have all selected classes');
 
     page.selectedClasses.set(['Fighter', 'Slasher', 'Striker']);
     expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
@@ -445,7 +445,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     await page.ngOnInit();
     page.selectedTypes.set(['DEX']);
-    expect(page.typeSupportLabel()).toContain('must appear at least once');
+    expect(page.typeSupportLabel()).toContain('every selected type');
     page.selectedTypes.set([...page.availableTypes]);
     expect(page.typeSupportLabel()).toBe('');
 
@@ -494,6 +494,32 @@ describe('AutoTeamBuilderPage builder interactions', () => {
 
     expect(page.selectedTypes()).toEqual(['PSY']);
     expect(page.result()).toBeNull();
+  });
+
+  it('stops a build the moment its inputs change, and shows nothing from it', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const pendingBuild = createDeferred<AutoBuildResult | null>();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX', 'PSY']);
+    page.selectedClasses.set(['Fighter']);
+    autoTeamBuilder.buildTeam.mockReturnValueOnce(pendingBuild.promise);
+
+    const build = page.buildTeam();
+    const { signal } = autoTeamBuilder.buildTeam.mock.calls.at(-1)![3] as { signal: AbortSignal };
+
+    expect(signal.aborted).toBe(false);
+
+    await page.removeSelectedType('DEX');
+
+    expect(signal.aborted).toBe(true);
+
+    pendingBuild.reject(new Error('the stale search failed'));
+    await build;
+
+    expect(page.errorMessage()).toBe('');
+    expect(page.result()).toBeNull();
+    expect(page.building()).toBe(false);
   });
 
   it('does not restore the team from before the build on cancel once an input changed', async () => {
@@ -1129,15 +1155,19 @@ describe('AutoTeamBuilderPage builder interactions', () => {
   it('gates requirement source candidates on its own tag filter and clears it on close', async () => {
     const { page, repository } = await createPage();
     const source = createRequirementSourceCharacter();
+    const otherSource = { ...createRequirementSourceCharacter(), id: 992, name: 'Other Source' };
 
-    repository.searchDetailedCharacters.mockResolvedValue([source]);
+    repository.searchDetailedCharacters.mockResolvedValue([source, otherSource]);
 
     await page.ngOnInit();
     await page.openRequirementSourceModal();
 
     // The query is always limited to the characters that can be a source; the tag filter
     // narrows that set further, and until it is used it adds nothing.
-    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([source.id]);
+    expect(lastDetailedSearchQuery(repository)?.allowedCharacterIds).toEqual([
+      source.id,
+      otherSource.id,
+    ]);
 
     await page.onRequirementSourceTagFilterChange({
       selection: { operator: 'any', sets: [{ id: 'set-1', operator: 'any', tags: ['Minks'] }] },
@@ -1255,6 +1285,28 @@ describe('AutoTeamBuilderPage builder interactions', () => {
         ([query]) => query.allowedCharacterIds === undefined,
       ),
     ).toHaveLength(2);
+  });
+
+  it('does not keep a failed requirement source pass, so the next search tries again', async () => {
+    const { page, repository } = await createPage();
+    const source = createRequirementSourceCharacter();
+
+    await page.ngOnInit();
+    repository.searchDetailedCharacters.mockReset();
+    repository.searchDetailedCharacters
+      .mockRejectedValueOnce(new Error('dataset read failed'))
+      .mockResolvedValue([source]);
+
+    await expect(page.openRequirementSourceModal()).rejects.toThrow('dataset read failed');
+    expect(page.requirementSourceCandidatesLoading()).toBe(false);
+
+    await page.onRequirementSourceSearchChange({ detail: { value: '' } } as CustomEvent<{
+      value?: string | null;
+    }>);
+
+    expect(page.requirementSourceCandidates().map((character) => character.id)).toEqual([
+      source.id,
+    ]);
   });
 
   it('renders requirement sources a page at a time', async () => {

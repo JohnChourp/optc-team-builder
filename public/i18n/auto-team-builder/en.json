@@ -44,7 +44,7 @@
       "selectAll": "Select all types",
       "unselectAll": "Clear type selection",
       "support": {
-        "strict": "Every selected type must appear at least once in the final team.",
+        "strict": "The builder looks for a team with every selected type. If none fits, the results say which type it left out.",
         "flexible": "The builder tries to cover every selected type first and only relaxes that in the result panel if needed."
       }
     },
@@ -55,7 +55,7 @@
       "selectAll": "Select all classes",
       "unselectAll": "Clear class selection",
       "support": {
-        "strict": "Every selected unit in the final team must match all selected classes.",
+        "strict": "Every unit is asked to have all selected classes. If no team fits, the results say which class was left out.",
         "flexible": "Only characters of the selected classes: each unit holds at least one of them. With three or more picked, no unit could hold them all, so none has to."
       }
     },
@@ -910,6 +910,7 @@
       "coverage": "{{covered}} / {{total}} selected classes covered across {{matchingSlots}} matching slots.",
       "flexiblePending": "Class coverage will be evaluated after the build.",
       "noRequirement": "No class requirement selected.",
+      "poolOnlyPending": "Only characters of the selected classes are used; the team need not include each one.",
       "strictPending": "Strict class coverage is enabled and will be validated after the build.",
       "strictResolved": "All {{matching}} / {{total}} slots satisfy the strict class rule."
     },

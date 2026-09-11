@@ -32,11 +32,13 @@ export const AUTO_BUILD_MAX_CLASSES_PER_CHARACTER = 2;
  * selected (no restriction at all), or when the caller asks for exactly that with
  * `requireAllSelectedClassesInTeam: false`.
  *
- * The Auto Team Builder page asks for it with three or more classes. Before, a subset also meant
- * "the team covers each selected class": on the shipped dataset with the page's default coverage
- * flags, single-threaded, three classes with [STR] took 87 s instead of well under a second, and
- * nine of ten with [STR] found no team at all. Picking the classes a captain boosts, or unticking
- * one class, means "these classes only". Every other caller keeps the old reading by default.
+ * The Auto Team Builder page asks for it with three or more classes, which it used to send as
+ * "every unit holds every selected class" - impossible past two, so the fallback silently dropped
+ * classes and nine of ten found no team. Reading them as "the team covers each class" still found
+ * no team for nine of ten with [STR]. Read as "these classes only" (shipped dataset, the page's
+ * default coverage flags, single-threaded) nine of ten builds an exact team with [STR] in 0.35 s,
+ * and three with [STR] builds one with none dropped in 88 s - a genuinely hard search that the old
+ * rule only looked fast at by dropping a class. Every other caller keeps the old reading.
  */
 export function shouldTreatSelectedClassesAsNeutral(
   input: Pick<

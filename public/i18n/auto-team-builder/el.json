@@ -44,7 +44,7 @@
       "selectAll": "Επίλεξε όλα τα types",
       "unselectAll": "Καθάρισε τα types",
       "support": {
-        "strict": "Κάθε selected type πρέπει να εμφανιστεί τουλάχιστον μία φορά στο final team.",
+        "strict": "Ο builder ψάχνει ομάδα με κάθε selected type. Αν δεν χωράει καμία, τα αποτελέσματα λένε ποιο type άφησε έξω.",
         "flexible": "Το auto-build προσπαθεί πρώτα να καλύψει όλα τα selected types και μετά κάνει fallback μόνο στο result panel αν χρειαστεί."
       }
     },
@@ -55,7 +55,7 @@
       "selectAll": "Επίλεξε όλα τα classes",
       "unselectAll": "Καθάρισε τα classes",
       "support": {
-        "strict": "Κάθε χαρακτήρας της τελικής ομάδας πρέπει να ταιριάζει σε όλα τα selected classes.",
+        "strict": "Ο builder ζητά από κάθε χαρακτήρα να έχει όλα τα selected classes. Αν δεν χωράει καμία ομάδα, τα αποτελέσματα λένε ποιο class άφησε έξω.",
         "flexible": "Μόνο χαρακτήρες από τα selected classes: κάθε χαρακτήρας έχει τουλάχιστον ένα από αυτά. Με τρία ή περισσότερα κανένας χαρακτήρας δεν θα μπορούσε να τα έχει όλα, οπότε δεν χρειάζεται."
       }
     },
@@ -910,6 +910,7 @@
       "coverage": "{{covered}} / {{total}} selected classes καλύφθηκαν σε {{matchingSlots}} matching slots.",
       "flexiblePending": "Το class coverage θα αξιολογηθεί μετά το build.",
       "noRequirement": "Δεν υπάρχει class requirement.",
+      "poolOnlyPending": "Χρησιμοποιούνται μόνο χαρακτήρες από τα selected classes· η ομάδα δεν χρειάζεται να περιέχει το καθένα.",
       "strictPending": "Το strict class coverage είναι ενεργό και θα ελεγχθεί μετά το build.",
       "strictResolved": "Και τα {{matching}} / {{total}} slots ικανοποιούν τον strict class κανόνα."
     },
