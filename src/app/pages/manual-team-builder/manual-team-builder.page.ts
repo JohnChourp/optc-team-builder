@@ -113,6 +113,15 @@ import {
 const MANUAL_TEAM_SLOT_COUNT = 6;
 const MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX = 1;
 const MANUAL_TEAM_FIRST_SUB_SLOT_INDEX = 2;
+/** Captain, Sub 1-4, then the Friend Captain - optional, so last - the guided build's own order. */
+const MANUAL_TEAM_NEXT_SLOT_ORDER: readonly number[] = [0, 2, 3, 4, 5, 1];
+
+/** The first empty seat in fill order, or null when the team is full (869exmkad). */
+export function resolveNextManualTeamSlotIndex(
+  slots: readonly (CharacterDetailRecord | null)[],
+): number | null {
+  return MANUAL_TEAM_NEXT_SLOT_ORDER.find((index) => !slots[index]) ?? null;
+}
 
 /*
  * The candidate list is served by two interchangeable paths: the repository
@@ -929,12 +938,39 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     await this.router.navigate(detailLink);
   }
 
+  /**
+   * Owner, 2026-09-11 (869exmkad): a pick into an empty slot keeps the picker open on the next empty
+   * one - six open-and-close round trips become one, and the search and filters carry over. A pick
+   * that replaced a filled slot, or filled the last empty one, closes it as before.
+   */
   public assignCharacter(character: CharacterDetailRecord): void {
-    if (!this.assignCharacterToSlot(this.selectedSlotIndex(), character)) {
+    const index = this.selectedSlotIndex();
+    const slotWasEmpty = !this.slots()[index];
+
+    if (!this.assignCharacterToSlot(index, character)) {
       return;
     }
 
-    this.closeCharacterPicker();
+    const nextIndex = slotWasEmpty ? resolveNextManualTeamSlotIndex(this.slots()) : null;
+
+    if (nextIndex === null) {
+      this.closeCharacterPicker();
+      return;
+    }
+
+    this.selectedSlotIndex.set(nextIndex);
+  }
+
+  /** "Slot 3 · Sub 1": each seat's number with its role, the Friend Captain marked optional. */
+  public slotRoleLabel(index: number): string {
+    const role =
+      index === 0
+        ? this.t('condition.roles.captain')
+        : index === MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX
+          ? this.t('slots.roles.friendCaptainOptional')
+          : this.t('slots.roles.sub', { index: index - MANUAL_TEAM_FIRST_SUB_SLOT_INDEX + 1 });
+
+    return this.t('slots.roleLabel', { slot: index + 1, role });
   }
 
   public clearSlot(index: number, event?: Event): void {

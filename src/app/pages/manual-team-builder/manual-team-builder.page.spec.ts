@@ -60,7 +60,7 @@ vi.mock('@ionic/angular/ion-toolbar', () => ({
 }));
 
 
-import { ManualTeamBuilderPage } from './manual-team-builder.page';
+import { ManualTeamBuilderPage, resolveNextManualTeamSlotIndex } from './manual-team-builder.page';
 
 describe('ManualTeamBuilderPage', () => {
   afterEach(() => {
@@ -382,13 +382,74 @@ describe('ManualTeamBuilderPage', () => {
 
     page.assignCharacter(matchingCharacter);
 
+    // Owner, 2026-09-11 (869exmkad): a pick into an empty slot keeps the picker open on the next
+    // empty one - here the Captain seat, first in fill order.
     expect(page.slots()[3]).toBe(matchingCharacter);
-    expect(page.pickerModalOpen()).toBe(false);
+    expect(page.pickerModalOpen()).toBe(true);
+    expect(page.selectedSlotIndex()).toBe(0);
 
     page.clearSlot(3, { stopPropagation } as unknown as Event);
 
     expect(stopPropagation).toHaveBeenCalledOnce();
     expect(page.slots()[3]).toBeNull();
+  });
+
+  it('keeps the picker open on the next empty slot after each pick, Friend Captain last', async () => {
+    const { page } = createPage();
+    const [captain, sub1, sub2, sub3, sub4, friendCaptain] = [801, 802, 803, 804, 805, 806].map(
+      (id) => createCharacterRecord(id, `Character ${id}`),
+    );
+
+    expect(resolveNextManualTeamSlotIndex([null, null, null, null, null, null])).toBe(0);
+    expect(resolveNextManualTeamSlotIndex([captain!, null, sub1!, sub2!, sub3!, sub4!])).toBe(1);
+    expect(
+      resolveNextManualTeamSlotIndex([captain!, friendCaptain!, sub1!, sub2!, sub3!, sub4!]),
+    ).toBeNull();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+
+    const visited: number[] = [];
+
+    for (const character of [captain, sub1, sub2, sub3, sub4]) {
+      page.assignCharacter(character!);
+      visited.push(page.selectedSlotIndex());
+      expect(page.pickerModalOpen()).toBe(true);
+    }
+
+    expect(visited).toEqual([2, 3, 4, 5, 1]);
+
+    // The last empty seat filled: the team is complete and the picker closes.
+    page.assignCharacter(friendCaptain!);
+    expect(page.pickerModalOpen()).toBe(false);
+    expect(page.slots().every(Boolean)).toBe(true);
+
+    // Replacing a filled slot closes the picker and stays on that slot - even with empty seats
+    // left, since a swap is not the next step of filling the team.
+    page.slots.set([captain!, null, sub1!, null, null, null]);
+    await page.openCharacterPicker(2);
+    page.assignCharacter(createCharacterRecord(807, 'Replacement'));
+    expect(page.slots()[2]?.id).toBe(807);
+    expect(page.pickerModalOpen()).toBe(false);
+    expect(page.selectedSlotIndex()).toBe(2);
+  });
+
+  it('labels each slot with its role, the Friend Captain as optional', async () => {
+    const { page } = createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/manual-team-builder/manual-team-builder.page.html'),
+      'utf8',
+    );
+
+    expect(page.slotRoleLabel(0)).toBe('Slot 1 · Captain');
+    expect(page.slotRoleLabel(1)).toBe('Slot 2 · Friend Captain (optional)');
+    expect(page.slotRoleLabel(2)).toBe('Slot 3 · Sub 1');
+    expect(page.slotRoleLabel(5)).toBe('Slot 6 · Sub 4');
+    // Both slot-card variants (filled and empty) and the picker title name the role.
+    expect(template.split('{{ slotRoleLabel(index) }}')).toHaveLength(3);
+    expect(template).toContain(
+      "t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })",
+    );
   });
 
   it('navigates from filled slots and ignores empty slots', async () => {
@@ -1611,8 +1672,12 @@ function createPage(
         params?: Record<string, string | number | boolean | null | undefined>,
         _scope?: string,
       ) => {
-        // The status line reads from the shipped English copy, so the test sees what players see.
-        if (key.startsWith('statusLine.')) {
+        // These read from the shipped English copy, so the test sees what players see.
+        if (
+          key.startsWith('statusLine.') ||
+          key.startsWith('slots.role') ||
+          key === 'picker.titleWithRole'
+        ) {
           return translateFromShippedEnglish(key, params);
         }
 

@@ -105,7 +105,7 @@
     "loading": "Loading matching characters...",
     "searchPlaceholder": "Search characters for the fixed team",
     "subConflict": "Already in your crew. A sub can't repeat the Captain or another sub.",
-    "title": "Assign slot {{slot}}"
+    "titleWithRole": "Assign {{label}}"
   },
   "captainHelper": {
     "branchLabel": "Captain branch",
@@ -153,7 +153,12 @@
     "empty": "Empty slot",
     "emptyAlt": "Empty character slot",
     "label": "Slot {{slot}}",
-    "noAbilityPreview": "No captain or special text available."
+    "noAbilityPreview": "No captain or special text available.",
+    "roleLabel": "Slot {{slot}} · {{role}}",
+    "roles": {
+      "friendCaptainOptional": "Friend Captain (optional)",
+      "sub": "Sub {{index}}"
+    }
   },
   "statusLine": {
     "captainMissing": "No Captain yet",

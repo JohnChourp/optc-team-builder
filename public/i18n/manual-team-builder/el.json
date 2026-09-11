@@ -105,7 +105,7 @@
     "loading": "Φόρτωση matching χαρακτήρων...",
     "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
     "subConflict": "Υπάρχει ήδη στο πλήρωμά σου. Ένα sub δεν μπορεί να επαναλαμβάνει τον Captain ή άλλο sub.",
-    "title": "Ανάθεση slot {{slot}}"
+    "titleWithRole": "Ανάθεση {{label}}"
   },
   "captainHelper": {
     "branchLabel": "Captain branch",
@@ -153,7 +153,12 @@
     "empty": "Κενό slot",
     "emptyAlt": "Κενό character slot",
     "label": "Slot {{slot}}",
-    "noAbilityPreview": "Δεν υπάρχει captain ή special text."
+    "noAbilityPreview": "Δεν υπάρχει captain ή special text.",
+    "roleLabel": "Slot {{slot}} · {{role}}",
+    "roles": {
+      "friendCaptainOptional": "Friend Captain (προαιρετικός)",
+      "sub": "Sub {{index}}"
+    }
   },
   "statusLine": {
     "captainMissing": "Χωρίς Captain ακόμα",
