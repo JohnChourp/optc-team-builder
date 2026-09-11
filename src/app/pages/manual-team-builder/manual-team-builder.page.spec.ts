@@ -1122,6 +1122,109 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.dragFeedbackMessage()).toBe('Cannot drop with max cost 50.');
   });
 
+  describe('the four sub slots never repeat the Captain or each other', () => {
+    it('refuses a repeated character in a sub slot, with the reason on its card', async () => {
+      const { page } = createPage();
+      const captain = createCharacterRecord(701, 'Monkey D. Luffy');
+      const sub = createCharacterRecord(702, 'Roronoa Zoro');
+      const luffyVariant = createCharacterRecord(703, 'Monkey D. Luffy - Gear 5');
+
+      await page.ngOnInit();
+      page.slots.set([captain, null, sub, null, null, null]);
+      page.candidates.set([sub, luffyVariant]);
+      page.selectSlot(3);
+
+      const [subCard, variantCard] = page.candidateCards();
+
+      expect(subCard?.isAssignableToActiveSlot).toBe(false);
+      expect(subCard?.repeatsCrewMember).toBe(true);
+      expect(subCard?.supportLabel).toBe('picker.subConflict');
+      expect(variantCard?.isAssignableToActiveSlot).toBe(false);
+      expect(variantCard?.supportLabel).toBe('picker.subConflict');
+
+      page.assignCharacter(sub);
+      page.assignCharacter(luffyVariant);
+
+      expect(page.slots()[3]).toBeNull();
+      expect(page.dragFeedbackMessage()).toBe(
+        'Monkey D. Luffy - Gear 5 is already in your crew.',
+      );
+    });
+
+    it('never refuses a leader seat, and lets the Friend Captain match anyone', async () => {
+      const { page } = createPage();
+      const captain = createCharacterRecord(701, 'Monkey D. Luffy');
+      const friendCaptain = createCharacterRecord(704, 'Trafalgar Law');
+
+      await page.ngOnInit();
+      page.slots.set([captain, null, null, null, null, null]);
+
+      page.selectSlot(1);
+      page.assignCharacter(captain);
+      expect(page.slots()[1]?.id).toBe(701);
+
+      page.slots.set([captain, friendCaptain, null, null, null, null]);
+      page.selectSlot(2);
+      page.assignCharacter(friendCaptain);
+      expect(page.slots()[2]?.id).toBe(704);
+
+      page.selectSlot(0);
+      page.assignCharacter(friendCaptain);
+      expect(page.slots()[0]?.id).toBe(704);
+    });
+
+    it('refuses a repeat dragged in from the list, and a Friend Captain swapped into a sub', async () => {
+      const { page } = createPage();
+      const captain = createCharacterRecord(701, 'Monkey D. Luffy');
+      const luffyFriend = createCharacterRecord(703, 'Monkey D. Luffy - Gear 5');
+      const sub = createCharacterRecord(702, 'Roronoa Zoro');
+      const otherSub = createCharacterRecord(705, 'Nami');
+
+      await page.ngOnInit();
+      page.slots.set([captain, luffyFriend, sub, otherSub, null, null]);
+      page.candidates.set([sub]);
+
+      page.onCandidateDragStart(createDragEvent(), sub);
+      page.onSlotDrop(createDragEvent(), 4);
+      expect(page.slots()[4]).toBeNull();
+      expect(page.dragFeedbackMessage()).toBe('Roronoa Zoro is already in your crew.');
+
+      page.onSlotDragStart(createDragEvent(), 1);
+      page.onSlotDrop(createDragEvent(), 4);
+      expect(page.slots()[1]?.id).toBe(703);
+      expect(page.slots()[4]).toBeNull();
+      expect(page.dragFeedbackMessage()).toBe('Monkey D. Luffy - Gear 5 is already in your crew.');
+
+      page.onSlotDragStart(createDragEvent(), 2);
+      page.onSlotDrop(createDragEvent(), 3);
+      expect(page.slots()[2]?.id).toBe(705);
+      expect(page.slots()[3]?.id).toBe(702);
+    });
+
+    it('names every repeated sub of a team that arrived that way', async () => {
+      const { page } = createPage();
+      const captain = createCharacterRecord(701, 'Monkey D. Luffy');
+      const luffyVariant = createCharacterRecord(703, 'Monkey D. Luffy - Gear 5');
+      const sub = createCharacterRecord(702, 'Roronoa Zoro');
+
+      await page.ngOnInit();
+      page.slots.set([captain, captain, luffyVariant, sub, sub, null]);
+
+      const subConflict = page
+        .validationMessages()
+        .find((message) => message.key === 'subConflict');
+
+      expect(subConflict?.tone).toBe('error');
+      expect(subConflict?.copy).toBe('Repeated in Slot 3, Slot 4, Slot 5.');
+
+      page.slots.set([captain, captain, sub, null, null, null]);
+
+      expect(page.validationMessages().some((message) => message.key === 'subConflict')).toBe(
+        false,
+      );
+    });
+  });
+
   it('clears the budget warning on Reset, since the budget it names is gone', async () => {
     const { page } = createPage();
     const candidate = createCharacterRecord(901, 'Dragged Candidate');
@@ -1377,6 +1480,14 @@ function createPage(
 
         if (key === 'drag.invalidCost') {
           return `Cannot drop with max cost ${params?.['max'] ?? 0}.`;
+        }
+
+        if (key === 'drag.invalidConflict') {
+          return `${params?.['name'] ?? ''} is already in your crew.`;
+        }
+
+        if (key === 'validation.subConflict.copy') {
+          return `Repeated in ${params?.['slots'] ?? ''}.`;
         }
 
         if (key === 'captainHelper.branches.both') {

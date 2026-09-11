@@ -43,13 +43,16 @@ import {
   type AutoBuildBattleRequirement,
   type AutoBuildRequiredCharacterGroup,
 } from '../models/auto-team-builder-ability.models';
-import conflictOverrideCatalog from '../data/auto-team-builder-party-conflict-overrides.json';
 import {
   type CharacterDetailRecord,
   type CharacterListItem,
   type NormalizedSuperSpecialCriteria,
   type SuperCriteriaBranch,
 } from '../models/optc.models';
+import {
+  normalizePartyConflictKey,
+  resolveCharacterPartyConflictKeys,
+} from './character-party-conflict-keys.utils';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import {
   captainTagBranchesSatisfied,
@@ -118,43 +121,6 @@ const AUTO_FILL_LEADER_OPTION_LIMIT = 8;
 const AUTO_BUILD_ATTEMPT_PROGRESS_EMIT_INTERVAL = 64;
 const MANUAL_PICK_REASON_CHIP = 'Manual pick';
 const EXTRA_DROP_LEADER_ABILITY_KEY_SET = new Set(['extra_drop_any', 'extra_drop_guaranteed']);
-const CHARACTER_NAME_KEY_ALIASES: Record<string, string[]> = {
-  aokiji: ['kuzan'],
-  akainu: ['sakazuki'],
-  'big mom': ['charlotte linlin'],
-  blackbeard: ['marshall d teach'],
-  'bon clay': ['bentham'],
-  cora: ['corazon', 'donquixote rosinante'],
-  corazon: ['donquixote rosinante'],
-  'cat viper': ['nekomamushi'],
-  dogstorm: ['inuarashi'],
-  fujitora: ['issho'],
-  kizaru: ['borsalino'],
-  komurasaki: ['kozuki hiyori'],
-  'mr 1': ['daz bones'],
-  'mr 2 bon clay': ['bentham'],
-  'mr 3': ['galdino'],
-  'mr 4': ['babe'],
-  'mr 5': ['gem'],
-  'miss doublefinger': ['zala'],
-  'miss goldenweek': ['marianne'],
-  'miss merry christmas': ['drophy'],
-  'miss valentine': ['mikita'],
-  franosuke: ['franky'],
-  luffytaro: ['luffy', 'monkey d luffy'],
-  olin: ['big mom', 'charlotte linlin'],
-  'olin the oiran': ['big mom', 'charlotte linlin'],
-  onami: ['nami'],
-  orobi: ['robin'],
-  'soba mask': ['sanji'],
-  'tenguyama hitetsu': ['kozuki sukiyaki'],
-  usohachi: ['usopp'],
-  whitebeard: ['edward newgate'],
-  violet: ['viola'],
-  z: ['zephyr'],
-  zorojuro: ['zoro', 'roronoa zoro'],
-};
-
 interface TeamCoverageState {
   burst: Set<AutoBuildBurstRole>;
   consistency: Set<AutoBuildConsistencyRole>;
@@ -308,9 +274,6 @@ interface BuildSlotExplanationOptions {
   rejectedCandidates?: AutoBuildRejectedCandidateExplanation[];
 }
 
-type PartyConflictCharacter = Pick<CharacterListItem, 'id' | 'name'> &
-  Partial<Pick<CharacterDetailRecord, 'detail'>>;
-
 const PREPARED_RECORD_BY_CANDIDATE = new WeakMap<AutoBuildCandidate, PreparedAutoBuildRecord>();
 
 function createProgressExclusionCounts(): AutoBuildProgressExclusionCounts {
@@ -387,13 +350,6 @@ function emitAttemptProgress(
     onProgress(normalizedProgress);
   }
 }
-
-const PARTY_CONFLICT_KEY_OVERRIDES = new Map<number, string[]>(
-  Object.entries(conflictOverrideCatalog).map(([characterId, keys]) => [
-    Number(characterId),
-    Array.isArray(keys) ? keys.map((value) => String(value)) : [],
-  ]),
-);
 
 function resolvePowerScoreCostBucket(cost: number): number {
   return cost >= 1 && cost <= 65 ? 0 : 1;
@@ -552,105 +508,7 @@ export function buildAutoBuildAbilityCoverageBreakdown(
   };
 }
 
-function normalizePartyConflictKey(name: string): string {
-  const trimmedName = name
-    .replace(/^[^A-Za-z0-9]+/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  return trimmedName.toLowerCase();
-}
-
-function resolveCharacterBaseNameKey(name: string): string {
-  const trimmedName = name
-    .replace(/^[^A-Za-z0-9]+/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  const [baseName = trimmedName] = trimmedName.split(' - ', 1);
-
-  return normalizePartyConflictKey(baseName);
-}
-
-function resolveNameDerivedPartyConflictKeys(name: string): string[] {
-  const primaryKey = resolveCharacterBaseNameKey(name);
-
-  if (!primaryKey.length) {
-    return [];
-  }
-
-  const keys = new Set<string>([primaryKey]);
-  const baseNameWithoutParentheses = normalizePartyConflictKey(
-    name.split(' - ', 1)[0]?.replace(/\([^)]*\)/g, ' ') ?? '',
-  );
-
-  if (baseNameWithoutParentheses.length > 0) {
-    keys.add(baseNameWithoutParentheses);
-  }
-
-  const parentheticalKeys = [...name.matchAll(/\(([^)]+)\)/g)]
-    .map((match) => normalizePartyConflictKey(match[1]))
-    .filter((value) => value.length > 0);
-
-  parentheticalKeys.forEach((value) => keys.add(value));
-
-  if (primaryKey.includes('&')) {
-    primaryKey
-      .split('&')
-      .map((value) => normalizePartyConflictKey(value))
-      .filter((value) => value.length > 0)
-      .forEach((value) => keys.add(value));
-  }
-
-  const titledNameParts = [primaryKey, ...primaryKey.split('&')]
-    .map((value) => value.split(':', 1)[0] ?? '')
-    .map((value) => normalizePartyConflictKey(value))
-    .filter((value) => value.length > 0 && value !== primaryKey);
-
-  for (const titledNamePart of titledNameParts) {
-    keys.add(titledNamePart);
-
-    const titledNameTokens = titledNamePart
-      .split(' ')
-      .map((value) => normalizePartyConflictKey(value))
-      .filter((value) => value.length > 1);
-    const [lastTitledNameToken = ''] = titledNameTokens.slice(-1);
-
-    if (titledNameTokens.length >= 2 && lastTitledNameToken.length > 1) {
-      keys.add(lastTitledNameToken);
-    }
-  }
-
-  const baseNameParts = baseNameWithoutParentheses
-    .split(' ')
-    .map((value) => normalizePartyConflictKey(value))
-    .filter((value) => value.length > 0);
-  const [lastBaseNamePart = ''] = baseNameParts.slice(-1);
-
-  if (baseNameParts.length >= 2 && lastBaseNamePart.length > 1) {
-    keys.add(lastBaseNamePart);
-  }
-
-  for (const key of [...keys]) {
-    (CHARACTER_NAME_KEY_ALIASES[key] ?? []).forEach((alias) => keys.add(alias));
-  }
-
-  return [...keys];
-}
-
-export function resolveCharacterPartyConflictKeys(character: PartyConflictCharacter): string[] {
-  const explicitKeys = Array.isArray(character.detail?.partyConflictKeys)
-    ? character.detail.partyConflictKeys
-    : [];
-  const overrideKeys = PARTY_CONFLICT_KEY_OVERRIDES.get(character.id) ?? [];
-
-  return [
-    ...new Set(
-      [...resolveNameDerivedPartyConflictKeys(character.name), ...explicitKeys, ...overrideKeys]
-        .map((value) => normalizePartyConflictKey(String(value ?? '')))
-        .filter((value) => value.length > 0),
-    ),
-  ];
-}
+export { resolveCharacterPartyConflictKeys };
 
 function resolveCandidatePartyConflictKeys(candidate: AutoBuildCandidate): string[] {
   return (

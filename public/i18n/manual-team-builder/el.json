@@ -92,6 +92,7 @@
     },
     "loading": "Φόρτωση matching χαρακτήρων...",
     "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
+    "subConflict": "Υπάρχει ήδη στο πλήρωμά σου. Ένα sub δεν μπορεί να επαναλαμβάνει τον Captain ή άλλο sub.",
     "title": "Ανάθεση slot {{slot}}"
   },
   "captainHelper": {
@@ -111,6 +112,7 @@
   },
   "drag": {
     "clearZone": "Σύρε filled slot εδώ για να καθαριστεί",
+    "invalidConflict": "Το drop μπλοκαρίστηκε γιατί ο χαρακτήρας {{name}} υπάρχει ήδη στο πλήρωμά σου. Ένα sub δεν μπορεί να επαναλαμβάνει τον Captain ή άλλο sub.",
     "invalidCost": "Το drop μπλοκαρίστηκε γιατί η ομάδα θα ξεπεράσει max cost {{max}}."
   },
   "save": {
@@ -190,6 +192,10 @@
     },
     "cost": {
       "title": "Ξεπεράστηκε το cost budget"
+    },
+    "subConflict": {
+      "copy": "Επαναλαμβάνεται σε: {{slots}}. Ο Captain και τα τέσσερα subs πρέπει να είναι διαφορετικοί χαρακτήρες· μόνο ο Friend Captain μπορεί να ταιριάζει με άλλο slot.",
+      "title": "Επαναλαμβανόμενος χαρακτήρας στο πλήρωμα"
     }
   },
   "title": "Manual Team Builder"

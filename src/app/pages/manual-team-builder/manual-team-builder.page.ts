@@ -55,6 +55,7 @@ import {
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverageBranchOptions,
 } from '../../core/services/captain-coverage.utils';
+import { resolveCharacterPartyConflictKeys } from '../../core/services/character-party-conflict-keys.utils';
 import {
   compareCharactersByPowerFirst,
   OptcRepositoryService,
@@ -111,6 +112,7 @@ import {
 
 const MANUAL_TEAM_SLOT_COUNT = 6;
 const MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX = 1;
+const MANUAL_TEAM_FIRST_SUB_SLOT_INDEX = 2;
 
 /*
  * The candidate list is served by two interchangeable paths: the repository
@@ -135,6 +137,8 @@ interface ManualTeamCandidateCardView {
   isAssignedToActiveSlot: boolean;
   isAssignedToAnotherSlot: boolean;
   isAssignableToActiveSlot: boolean;
+  /** Already in the crew, so the active sub slot refuses it; supportLabel says so. */
+  repeatsCrewMember: boolean;
   actionLabel: string;
   supportLabel: string | null;
 }
@@ -513,19 +517,23 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
     return this.candidates().map((character) => {
       const assignedSlotIndex = slots.findIndex((slot) => slot?.id === character.id);
-      const isAssignableToActiveSlot = this.canAssignCharacterToSlot(activeIndex, character);
+      const repeatsCrewMember = this.repeatsCrewMember(activeIndex, character, slots);
+      const withinBudget = this.canAssignCharacterToSlot(activeIndex, character);
 
       return {
         character,
         subtitle: this.buildCharacterSubtitle(character),
         isAssignedToActiveSlot: assignedSlotIndex === activeIndex,
         isAssignedToAnotherSlot: assignedSlotIndex !== -1 && assignedSlotIndex !== activeIndex,
-        isAssignableToActiveSlot,
+        isAssignableToActiveSlot: withinBudget && !repeatsCrewMember,
+        repeatsCrewMember,
         actionLabel:
           assignedSlotIndex === activeIndex ? this.t('actions.assigned') : this.t('actions.assign'),
-        supportLabel: isAssignableToActiveSlot
-          ? null
-          : this.t('picker.costBlocked', { max: this.maxTotalCost() ?? 0 }),
+        supportLabel: repeatsCrewMember
+          ? this.t('picker.subConflict')
+          : withinBudget
+            ? null
+            : this.t('picker.costBlocked', { max: this.maxTotalCost() ?? 0 }),
       };
     });
   });
@@ -561,6 +569,24 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
         key: 'cost',
         title: this.t('validation.cost.title'),
         copy: costError,
+        tone: 'error',
+      });
+    }
+
+    // Assignment refuses a repeat, but a team can still arrive with one: a saved or shared team
+    // from before this rule, or a Captain picked after a sub of the same character (a leader seat
+    // is never refused). Name the sub instead of silently keeping an illegal crew.
+    const repeatedSubLabels = this.slots().flatMap((slot, index) =>
+      slot && this.repeatsCrewMember(index, slot)
+        ? [this.t('condition.slotLabel', { slot: index + 1 })]
+        : [],
+    );
+
+    if (repeatedSubLabels.length) {
+      messages.push({
+        key: 'subConflict',
+        title: this.t('validation.subConflict.title'),
+        copy: this.t('validation.subConflict.copy', { slots: repeatedSubLabels.join(', ') }),
         tone: 'error',
       });
     }
@@ -951,7 +977,16 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     }
 
     if (!this.canDropCharacterToSlot(index, character, dragState.sourceSlotIndex)) {
-      this.dragFeedbackMessage.set(this.t('drag.invalidCost', { max: this.maxTotalCost() ?? 0 }));
+      const repeatedCharacter = this.resolveDropCrewRepeat(
+        index,
+        character,
+        dragState.sourceSlotIndex,
+      );
+      this.dragFeedbackMessage.set(
+        repeatedCharacter
+          ? this.t('drag.invalidConflict', { name: repeatedCharacter.name })
+          : this.t('drag.invalidCost', { max: this.maxTotalCost() ?? 0 }),
+      );
       this.onDragEnd();
       return;
     }
@@ -1333,6 +1368,11 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       return false;
     }
 
+    if (this.repeatsCrewMember(index, character)) {
+      this.dragFeedbackMessage.set(this.t('drag.invalidConflict', { name: character.name }));
+      return false;
+    }
+
     if (!this.canAssignCharacterToSlot(index, character)) {
       this.dragFeedbackMessage.set(this.t('drag.invalidCost', { max: this.maxTotalCost() ?? 0 }));
       return false;
@@ -1379,6 +1419,10 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       return false;
     }
 
+    if (this.resolveDropCrewRepeat(targetIndex, character, sourceSlotIndex)) {
+      return false;
+    }
+
     const maxTotalCost = this.maxTotalCost();
 
     if (maxTotalCost === null) {
@@ -1399,6 +1443,75 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     nextSlots[targetIndex] = character;
 
     return this.resolveBudgetCost(nextSlots) <= maxTotalCost;
+  }
+
+  /**
+   * Whether `character` would repeat someone already in the crew if it took sub slot
+   * `slotIndex`. The crew is the Captain and the four subs. The Friend Captain is borrowed from
+   * another player, so it constrains nothing on your side, and a leader seat is never refused -
+   * the rule Captain Coverage and the Auto Team Builder engine already apply. The slot's own
+   * occupant is left out, so swapping a character for another version of itself stays allowed.
+   */
+  private repeatsCrewMember(
+    slotIndex: number,
+    character: CharacterDetailRecord,
+    slots: ReadonlyArray<CharacterDetailRecord | null> = this.slots(),
+  ): boolean {
+    if (slotIndex < MANUAL_TEAM_FIRST_SUB_SLOT_INDEX) {
+      return false;
+    }
+
+    const crewConflictKeys = new Set(
+      slots.flatMap((slot, index) =>
+        slot && index !== slotIndex && index !== MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX
+          ? resolveCharacterPartyConflictKeys(slot)
+          : [],
+      ),
+    );
+
+    return resolveCharacterPartyConflictKeys(character).some((conflictKey) =>
+      crewConflictKeys.has(conflictKey),
+    );
+  }
+
+  /**
+   * The character a drop would bring into the crew as a repeat, or null. A copy from the
+   * candidate list joins the crew only through a sub slot. A swap between two slots only
+   * reorders the crew, so it can add a repeat only when the Friend Captain - the one seat
+   * outside the crew - trades places with a sub.
+   */
+  private resolveDropCrewRepeat(
+    targetIndex: number,
+    character: CharacterDetailRecord,
+    sourceSlotIndex: number | null | undefined,
+  ): CharacterDetailRecord | null {
+    const slots = this.slots();
+
+    if (
+      sourceSlotIndex === null ||
+      sourceSlotIndex === undefined ||
+      !this.isValidSlotIndex(sourceSlotIndex)
+    ) {
+      return this.repeatsCrewMember(targetIndex, character, slots) ? character : null;
+    }
+
+    const nextSlots = [...slots];
+    nextSlots[sourceSlotIndex] = slots[targetIndex] ?? null;
+    nextSlots[targetIndex] = character;
+
+    if (sourceSlotIndex === MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX) {
+      return this.repeatsCrewMember(targetIndex, character, nextSlots) ? character : null;
+    }
+
+    const enteringCharacter = nextSlots[sourceSlotIndex];
+
+    if (targetIndex === MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX && enteringCharacter) {
+      return this.repeatsCrewMember(sourceSlotIndex, enteringCharacter, nextSlots)
+        ? enteringCharacter
+        : null;
+    }
+
+    return null;
   }
 
   private resolveDraggedCharacter(): CharacterDetailRecord | null {
