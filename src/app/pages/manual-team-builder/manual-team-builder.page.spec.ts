@@ -518,6 +518,10 @@ describe('ManualTeamBuilderPage', () => {
     page.showIntro();
     expect(page.introExpanded()).toBe(true);
 
+    // Show lasts one visit: the page stays alive between visits, the card does not stay open.
+    await page.ionViewWillEnter();
+    expect(page.introExpanded()).toBe(false);
+
     for (const handoff of [{ routeTeamId: 'team-1' }, { routeTeamShare: 'not-a-share-code' }]) {
       const { page: handoffPage } = createPage(handoff);
 
@@ -557,6 +561,21 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.validationMessages().map((message) => message.key)).not.toContain(
       'friendCaptain:missing',
     );
+
+    // An uncovered sub in Slot 3 is outlined there - not on the empty Friend Captain seat.
+    const fighterCaptain = createCharacterRecord(611);
+    const shooter = createCharacterRecord(613);
+
+    fighterCaptain.detail.captainAbility = 'Boosts ATK of Fighter characters by 2.5x.';
+    fighterCaptain.classes = ['Fighter'];
+    shooter.classes = ['Shooter'];
+    shooter.primaryClass = 'Shooter';
+    shooter.secondaryClass = null;
+    page.slots.set([fighterCaptain, null, shooter, slots[3]!, slots[4]!, slots[5]!]);
+
+    expect(page.conditionStatus().leaderStatuses[0]?.missingSlotLabels).toEqual(['Slot 3']);
+    expect(page.slotHasValidation(1)).toBe(false);
+    expect(page.slotHasValidation(2)).toBe(true);
   });
 
   it('shows an unknown stat as ? and marks the team total that left it out', async () => {
@@ -1749,23 +1768,37 @@ function createPage(
       },
     ),
   };
+  // Query params the page clears through router.navigate disappear, as they do in the app, so a
+  // test reading a handoff after the page cleared it sees nothing.
+  const queryParams = new Map<string, string>();
+
+  if (options.routeTeamId) {
+    queryParams.set('teamId', options.routeTeamId);
+  }
+
+  if (options.routeTeamShare) {
+    queryParams.set('teamShare', options.routeTeamShare);
+  }
+
   const router = {
-    navigate: vi.fn().mockResolvedValue(true),
+    navigate: vi.fn(
+      async (_commands: unknown[], extras?: { queryParams?: Record<string, string | null> }) => {
+        for (const [key, value] of Object.entries(extras?.queryParams ?? {})) {
+          if (value === null) {
+            queryParams.delete(key);
+          } else {
+            queryParams.set(key, value);
+          }
+        }
+
+        return true;
+      },
+    ),
   };
   const route = {
     snapshot: {
       queryParamMap: {
-        get: vi.fn((key: string) => {
-          if (key === 'teamId') {
-            return options.routeTeamId ?? null;
-          }
-
-          if (key === 'teamShare') {
-            return options.routeTeamShare ?? null;
-          }
-
-          return null;
-        }),
+        get: vi.fn((key: string) => queryParams.get(key) ?? null),
       },
     },
   };

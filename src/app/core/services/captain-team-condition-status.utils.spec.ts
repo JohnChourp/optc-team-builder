@@ -425,8 +425,40 @@ describe('resolveCaptainTeamConditionStatus', () => {
         slots: slots.map((slot, index) => (index === 5 ? null : slot)),
       }).state,
     ).toBe('pending');
-    // A caller that names no optional seat keeps the old reading.
+    // A caller that names no optional seat keeps the old completeness reading.
     expect(resolveCaptainTeamConditionStatus(options).state).toBe('pending');
+  });
+
+  it('names the seat that is not covered, not its place among the filled seats', () => {
+    const captain = createCharacter({
+      id: 1001,
+      classes: ['Fighter'],
+      captainAbility: 'Boosts ATK of Fighter characters by 2.5x.',
+    });
+    const fighter = (id: number) => createCharacter({ id, classes: ['Fighter'] });
+    const shooter = createCharacter({ id: 1099, classes: ['Shooter'] });
+    const labels = ['Slot 1', 'Slot 2', 'Slot 3', 'Slot 4', 'Slot 5', 'Slot 6'];
+    const statusWith = (slots: (CharacterDetailRecord | null)[]) =>
+      resolveCaptainTeamConditionStatus({
+        expectedSlotCount: 6,
+        optionalSlotIndexes: [1],
+        leaders: [
+          { role: 'captain', label: 'Captain', character: captain },
+          { role: 'friendCaptain', label: 'Friend Captain', character: slots[1] ?? null },
+        ],
+        slotLabels: labels,
+        slots,
+      });
+
+    // No Friend Captain: the uncovered sub sits in Slot 3, and only Slot 3 is named.
+    expect(
+      statusWith([captain, null, shooter, fighter(1004), fighter(1005), fighter(1006)])
+        .leaderStatuses[0]?.missingSlotLabels,
+    ).toEqual(['Slot 3']);
+    expect(
+      statusWith([captain, null, fighter(1003), fighter(1004), fighter(1005), shooter])
+        .leaderStatuses[0]?.missingSlotLabels,
+    ).toEqual(['Slot 6']);
   });
 
   it('keeps incomplete teams pending even when the filled slots are covered', () => {

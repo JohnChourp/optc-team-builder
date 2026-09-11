@@ -4664,10 +4664,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(userState.setBuilderIntroDismissed).toHaveBeenCalledWith('autoTeamBuilder', true);
     expect(page.introExpanded()).toBe(false);
 
-    // Show opens it for this visit without forgetting the dismissal.
+    // Show opens it for this visit without forgetting the dismissal - and only for this visit.
     page.showIntro();
     expect(page.introExpanded()).toBe(true);
     expect(userState.builderIntroDismissed().autoTeamBuilder).toBe(true);
+    await page.ionViewWillEnter();
+    expect(page.introExpanded()).toBe(false);
 
     for (const handoff of [{ routeTeamId: 'team-1' }, { routeEnemyId: 'enemy-1' }]) {
       const { page: handoffPage } = await createPage(handoff);
@@ -4715,6 +4717,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.selectedCharacterBoxId.set('box-empty');
     expect(page.buildDisabled()).toBe(true);
     expect(page.buildReadinessLabel()).toBe('Not ready: see the warning above Manual picks');
+
+    // Said, not hidden, while a team is being built.
+    page.selectedCharacterBoxId.set(null);
+    page.building.set(true);
+    expect(page.buildReadinessLabel()).toBe('Building a team...');
   });
 
   /*
@@ -4735,6 +4742,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(template).toContain('@if (captainFiltersSectionEmpty())');
     expect(template).toContain('@if (requiredCharactersSectionEmpty())');
     expect(template).toContain('@if (excludeSectionEmpty())');
+    expect(template).toMatch(
+      /@if \(!requiredCharactersSectionExpanded\(\)\) \{\s*<ion-button[^>]*data-testid="required-characters-add-first"[^>]*\(click\)="addFirstRequiredCharacter\(\)"/u,
+    );
 
     await page.ngOnInit();
 
@@ -4775,6 +4785,42 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     // A battle that holds a character is an active rule: open, with nothing to collapse.
     await page.addRequiredCharacterGroup(page.battleRequirements()[0]!.id);
     expect(page.requiredCharactersSectionEmpty()).toBe(false);
+    expect(page.requiredCharactersSectionExpanded()).toBe(true);
+
+    // Emptied by the player, a section stays open instead of closing under the pointer.
+    const [battle] = page.battleRequirements();
+
+    await page.removeRequiredCharacterGroup(battle!.id, battle!.requiredCharacterGroups[0]!.id);
+    expect(page.requiredCharactersSectionEmpty()).toBe(true);
+    expect(page.requiredCharactersSectionExpanded()).toBe(true);
+
+    page.excludedCharacterIds.set([101]);
+    page.removeExcludedCharacter(101);
+    expect(page.excludeSectionEmpty()).toBe(true);
+    expect(page.excludeSectionExpanded()).toBe(true);
+
+    page.leaderBoostRanges.set({
+      ...createEmptyAutoBuildLeaderBoostRanges(),
+      ATK: { min: 5, max: null },
+    });
+    await page.clearCaptainAbilityFilters();
+    expect(page.captainFiltersSectionEmpty()).toBe(true);
+    expect(page.captainFiltersSectionExpanded()).toBe(true);
+
+    // Compact Required characters hides the placeholder battle and its + Character, so the
+    // summary row offers the same first step - or a first battle when a handoff left none.
+    await page.ionViewWillEnter();
+    expect(page.requiredCharactersSectionExpanded()).toBe(false);
+    expect(page.canAddFirstRequiredCharacter()).toBe(true);
+    await page.addFirstRequiredCharacter();
+    expect(page.battleRequirements()[0]!.requiredCharacterGroups).toHaveLength(1);
+    expect(page.requiredCharactersSectionExpanded()).toBe(true);
+
+    await page.ionViewWillEnter();
+    page.battleRequirements.set([]);
+    expect(page.canAddFirstRequiredCharacter()).toBe(true);
+    await page.addFirstRequiredCharacter();
+    expect(page.battleRequirements()).toHaveLength(1);
     expect(page.requiredCharactersSectionExpanded()).toBe(true);
   });
 
@@ -10126,25 +10172,39 @@ async function createPage(
     toggleShipFavorite: vi.fn().mockResolvedValue(undefined),
   };
   const i18n = createI18nStub('auto-team-builder');
+  // Query params the page clears through router.navigate disappear, as they do in the app, so a
+  // test reading a handoff after the page cleared it sees nothing.
+  const queryParams = new Map<string, string>();
+
+  if (options.routeTeamId) {
+    queryParams.set('teamId', options.routeTeamId);
+  }
+
+  if (options.routeEnemyId) {
+    queryParams.set('enemyId', options.routeEnemyId);
+  }
+
   const route = {
     snapshot: {
       queryParamMap: {
-        get: vi.fn((key: string) => {
-          if (key === 'teamId') {
-            return options.routeTeamId ?? null;
-          }
-
-          if (key === 'enemyId') {
-            return options.routeEnemyId ?? null;
-          }
-
-          return null;
-        }),
+        get: vi.fn((key: string) => queryParams.get(key) ?? null),
       },
     },
   };
   const router = {
-    navigate: vi.fn().mockResolvedValue(true),
+    navigate: vi.fn(
+      async (_commands: unknown[], extras?: { queryParams?: Record<string, string | null> }) => {
+        for (const [key, value] of Object.entries(extras?.queryParams ?? {})) {
+          if (value === null) {
+            queryParams.delete(key);
+          } else {
+            queryParams.set(key, value);
+          }
+        }
+
+        return true;
+      },
+    ),
   };
   const alertController = {
     create: vi.fn().mockResolvedValue({ present: vi.fn().mockResolvedValue(undefined) }),

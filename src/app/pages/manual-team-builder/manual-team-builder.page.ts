@@ -437,9 +437,14 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     const maxTotalCost = this.maxTotalCost();
 
     return [
-      this.t('statusLine.filled', { filled: this.filledSlotCount(), total: MANUAL_TEAM_SLOT_COUNT }),
+      this.t('statusLine.filled', {
+        filled: this.filledSlotCount(),
+        total: MANUAL_TEAM_SLOT_COUNT,
+      }),
       slots[0] ? this.t('statusLine.captainSet') : this.t('statusLine.captainMissing'),
-      ...(missingSubCount > 0 ? [this.t('statusLine.subsMissing', { count: missingSubCount })] : []),
+      ...(missingSubCount > 0
+        ? [this.t('statusLine.subsMissing', { count: missingSubCount })]
+        : []),
       slots[MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX]
         ? this.t('statusLine.friendCaptainSet')
         : this.t('statusLine.friendCaptainOptional'),
@@ -727,10 +732,11 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
     this.introOpenedFromHandoff.set(
       Boolean(
-        routeParams.get('teamId')?.trim() ||
-          routeParams.get(SAVED_TEAM_SHARE_QUERY_PARAM)?.trim(),
+        routeParams.get('teamId')?.trim() || routeParams.get(SAVED_TEAM_SHARE_QUERY_PARAM)?.trim(),
       ),
     );
+    // Ionic keeps the page alive between visits; Show reopens the card for one visit only.
+    this.introShownOnRequest.set(false);
 
     await this.userState.readyFavoriteShipIds();
 

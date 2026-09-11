@@ -7,7 +7,7 @@
     "steps": {
       "one": "Κλείδωσε στα Manual picks τους χαρακτήρες που θέλεις ήδη. Ο builder γεμίζει τα κενά slots.",
       "three": "Πάτα Auto Team Build και διάβασε το Τελικό report ομάδας για να δεις ποιους κανόνες κράτησε η ομάδα σου και ποιους χαλάρωσε.",
-      "two": "Πρόσθεσε ό,τι χρειάζεται το stage: Captain ability requirements, Required characters για κάθε μάχη, ή έναν εχθρό από τα Saved Enemies."
+      "two": "Πρόσθεσε ό,τι χρειάζεται το stage: Captain ability requirements και Required characters για κάθε μάχη. Αν ανοίξεις έναν αποθηκευμένο εχθρό από τα Saved Enemies, τα συμπληρώνει για σένα."
     },
     "title": "Πώς δουλεύει αυτή η σελίδα"
   },
@@ -19,7 +19,8 @@
   "hero": {
     "meta": {
       "availableClasses": "{{count}} διαθέσιμα classes",
-      "blocked": "Όχι έτοιμο: δες την προειδοποίηση πάνω από τα Manual picks",
+      "blocked": "Δεν είναι έτοιμο: δες την προειδοποίηση πάνω από τα Manual picks",
+      "building": "Χτίζεται ομάδα...",
       "lockedSlots": "{{count}} / {{total}} κλειδωμένα slots",
       "needsBoostRange": "Διόρθωσε τα όρια Captain boost",
       "needsClass": "Διάλεξε class για build",

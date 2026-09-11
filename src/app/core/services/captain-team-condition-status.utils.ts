@@ -65,17 +65,22 @@ export function resolveCaptainTeamConditionStatus(
   options: CaptainTeamConditionStatusOptions,
 ): CaptainTeamConditionStatus {
   const slots = options.slots.slice(0, options.expectedSlotCount);
-  const filledSlots = slots.filter((slot): slot is CharacterDetailRecord => slot !== null);
+  // Each filled seat keeps its own index, so a label names the seat it belongs to. Labelling by the
+  // position in the filled list put "Slot 2" on an uncovered sub in Slot 3 whenever the Friend
+  // Captain seat was empty - and an empty Friend Captain is a complete team now.
+  const filledSeats = slots.flatMap((slot, seatIndex) => (slot ? [{ slot, seatIndex }] : []));
+  const filledSlots = filledSeats.map((seat) => seat.slot);
   const optionalSlotIndexes = new Set(options.optionalSlotIndexes ?? []);
   const isComplete =
     slots.length === options.expectedSlotCount &&
     slots.every((slot, index) => slot !== null || optionalSlotIndexes.has(index));
   const coverageMode = options.coverageMode ?? 'fullAbilityCoverage';
-  // An empty Friend Captain seat is no leader to evaluate - it boosts nothing and fails nothing.
+  // An empty Friend Captain seat is no leader to evaluate - it boosts nothing and fails nothing. This
+  // holds for every caller, optional seats or not: the owner rule (2026-09-08) is not per screen.
   const leaderStatuses = options.leaders
     .filter((leader) => leader.role !== 'friendCaptain' || leader.character !== null)
     .map((leader) =>
-      resolveLeaderTeamConditionStatus(leader, filledSlots, options.slotLabels, coverageMode),
+      resolveLeaderTeamConditionStatus(leader, filledSeats, options.slotLabels, coverageMode),
     );
   const passedLeaderLabels = leaderStatuses
     .filter((status) => status.passed)
@@ -97,10 +102,11 @@ export function resolveCaptainTeamConditionStatus(
 
 function resolveLeaderTeamConditionStatus(
   leader: CaptainTeamConditionLeaderInput,
-  slots: readonly CharacterDetailRecord[],
+  seats: readonly { slot: CharacterDetailRecord; seatIndex: number }[],
   slotLabels: readonly string[],
   coverageMode: AutoBuildCaptainAbilityCoverageMode,
 ): CaptainTeamConditionLeaderStatus {
+  const slots = seats.map((seat) => seat.slot);
   const captainBranches = leader.character
     ? resolveRequiredCaptainCoverageBranchTextsForMode(leader.character, leader.branchMode ?? null)
     : [];
@@ -119,9 +125,11 @@ function resolveLeaderTeamConditionStatus(
       )
     : [];
   const missingSlotLabels = slotCoverage
-    .map((coverage, index) =>
-      coverage.matches ? null : (slotLabels[index] ?? `Slot ${index + 1}`),
-    )
+    .map((coverage, index) => {
+      const seatIndex = seats[index]!.seatIndex;
+
+      return coverage.matches ? null : (slotLabels[seatIndex] ?? `Slot ${seatIndex + 1}`);
+    })
     .filter((label): label is string => label !== null);
   const tagConditionsSatisfied =
     tagConditionBranches.length === 0 || captainTagBranchesSatisfied(slots, tagConditionBranches);

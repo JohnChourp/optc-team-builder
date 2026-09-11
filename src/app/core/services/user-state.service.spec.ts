@@ -201,7 +201,12 @@ describe('UserStateService saved teams', () => {
 
     preferences.get.mockImplementation(async ({ key }) => ({ value: store.get(key) ?? null }));
 
-    const service = new UserStateService(i18n as never, preferences as unknown as PreferencesAdapterService);
+    const driveSyncState = { markLocalChange: vi.fn().mockResolvedValue(undefined) };
+    const service = new UserStateService(
+      i18n as never,
+      preferences as unknown as PreferencesAdapterService,
+      driveSyncState as never,
+    );
 
     await service.readyBuilderIntroDismissed();
     expect(service.builderIntroDismissed()).toEqual({
@@ -219,6 +224,12 @@ describe('UserStateService saved teams', () => {
       key: 'builderIntroDismissed',
       value: JSON.stringify({ autoTeamBuilder: true, manualTeamBuilder: true }),
     });
+    // Device-only: the dismissal never reaches Drive sync...
+    expect(driveSyncState.markLocalChange).not.toHaveBeenCalled();
+
+    // ...while a synced key does, through the same persistence path.
+    await service.toggleShipFavorite(9001);
+    expect(driveSyncState.markLocalChange).toHaveBeenCalledOnce();
   });
 
   it('persists normalized auto team builder worker preferences', async () => {

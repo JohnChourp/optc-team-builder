@@ -36,9 +36,12 @@
               <div
                 class="meta-pill"
                 data-testid="auto-build-readiness"
-                [class.meta-pill--not-ready]="buildDisabled()"
+                [class.meta-pill--not-ready]="buildDisabled() && !building()"
               >
-                <ion-icon [icon]="buildDisabled() ? notReadyIcon : readyIcon" aria-hidden="true"></ion-icon>
+                <ion-icon
+                  [icon]="buildDisabled() && !building() ? notReadyIcon : readyIcon"
+                  aria-hidden="true"
+                ></ion-icon>
                 <span>{{ buildReadinessLabel() }} · {{ lockedSlotsLabel() }}</span>
               </div>
             }
@@ -729,6 +732,18 @@
                                             }}
                                           </button>
                                         }
+                                        @if (!requiredCharactersSectionExpanded()) {
+                                          <ion-button
+                                            fill="clear"
+                                            size="small"
+                                            class="select-all-button"
+                                            data-testid="required-characters-add-first"
+                                            [disabled]="!canAddFirstRequiredCharacter()"
+                                            (click)="addFirstRequiredCharacter()"
+                                          >
+                                            {{ t('requiredCharacters.actions.add') }}
+                                          </ion-button>
+                                        }
                                         <ion-button
                                           fill="clear"
                                           size="small"
@@ -750,8 +765,11 @@
                                       </div>
                                     </div>
 
-                                    @if (!requiredBattleViews().length) {
-                                      <p class="favorites-only-warning">
+                                    @if (!requiredBattleViews().length && requiredCharactersSectionExpanded()) {
+                                      <p
+                                        id="auto-build-required-characters-battles"
+                                        class="favorites-only-warning"
+                                      >
                                         {{ t('requiredCharacters.empty') }}
                                       </p>
                                     }
