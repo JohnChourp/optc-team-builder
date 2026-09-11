@@ -60,7 +60,7 @@ vi.mock('@ionic/angular/ion-toolbar', () => ({
 }));
 
 
-import { ManualTeamBuilderPage } from './manual-team-builder.page';
+import { ManualTeamBuilderPage, resolveNextManualTeamSlotIndex } from './manual-team-builder.page';
 
 describe('ManualTeamBuilderPage', () => {
   afterEach(() => {
@@ -382,13 +382,237 @@ describe('ManualTeamBuilderPage', () => {
 
     page.assignCharacter(matchingCharacter);
 
+    // Owner, 2026-09-11 (869exmkad): a pick into an empty slot keeps the picker open on the next
+    // empty one - here the Captain seat, first in fill order.
     expect(page.slots()[3]).toBe(matchingCharacter);
-    expect(page.pickerModalOpen()).toBe(false);
+    expect(page.pickerModalOpen()).toBe(true);
+    expect(page.selectedSlotIndex()).toBe(0);
 
     page.clearSlot(3, { stopPropagation } as unknown as Event);
 
     expect(stopPropagation).toHaveBeenCalledOnce();
     expect(page.slots()[3]).toBeNull();
+  });
+
+  it('keeps the picker open on the next empty slot after each pick, Friend Captain last', async () => {
+    const { page } = createPage();
+    const [captain, sub1, sub2, sub3, sub4, friendCaptain] = [801, 802, 803, 804, 805, 806].map(
+      (id) => createCharacterRecord(id, `Character ${id}`),
+    );
+
+    expect(resolveNextManualTeamSlotIndex([null, null, null, null, null, null])).toBe(0);
+    expect(resolveNextManualTeamSlotIndex([captain!, null, sub1!, sub2!, sub3!, sub4!])).toBe(1);
+    expect(
+      resolveNextManualTeamSlotIndex([captain!, friendCaptain!, sub1!, sub2!, sub3!, sub4!]),
+    ).toBeNull();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+
+    const visited: number[] = [];
+
+    for (const character of [captain, sub1, sub2, sub3, sub4]) {
+      page.assignCharacter(character!);
+      visited.push(page.selectedSlotIndex());
+      expect(page.pickerModalOpen()).toBe(true);
+    }
+
+    expect(visited).toEqual([2, 3, 4, 5, 1]);
+
+    // The last empty seat filled: the team is complete and the picker closes.
+    page.assignCharacter(friendCaptain!);
+    expect(page.pickerModalOpen()).toBe(false);
+    expect(page.slots().every(Boolean)).toBe(true);
+
+    // Replacing a filled slot closes the picker and stays on that slot - even with empty seats
+    // left, since a swap is not the next step of filling the team.
+    page.slots.set([captain!, null, sub1!, null, null, null]);
+    await page.openCharacterPicker(2);
+    page.assignCharacter(createCharacterRecord(807, 'Replacement'));
+    expect(page.slots()[2]?.id).toBe(807);
+    expect(page.pickerModalOpen()).toBe(false);
+    expect(page.selectedSlotIndex()).toBe(2);
+  });
+
+  // 869exmkam (owner, 2026-09-11): shortcuts into flows that already exist, on an empty team only.
+  it('offers quick-start shortcuts on an empty team only', async () => {
+    const { page } = createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/manual-team-builder/manual-team-builder.page.html'),
+      'utf8',
+    );
+    const quickStart = template.slice(template.indexOf('@if (quickStartVisible())'));
+
+    expect(quickStart.slice(0, 1800)).toContain('(click)="quickStartFromCaptain()"');
+    expect(quickStart.slice(0, 1800)).toContain('routerLink="/tabs/saved-teams"');
+    expect(quickStart.slice(0, 1800)).toContain('routerLink="/tabs/captain-coverage"');
+    expect(page.quickStartVisible()).toBe(false);
+
+    await page.ngOnInit();
+    expect(page.quickStartVisible()).toBe(true);
+
+    await page.quickStartFromCaptain();
+    expect(page.pickerModalOpen()).toBe(true);
+    expect(page.selectedSlotIndex()).toBe(0);
+
+    page.slots.set([createCharacterRecord(901), null, null, null, null, null]);
+    expect(page.quickStartVisible()).toBe(false);
+
+    const { page: handoffPage } = createPage({ routeTeamShare: 'not-a-share-code' });
+
+    await handoffPage.ngOnInit();
+    await handoffPage.ionViewWillEnter();
+    expect(handoffPage.quickStartVisible()).toBe(false);
+  });
+
+  it('labels each slot with its role, the Friend Captain as optional', async () => {
+    const { page } = createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/manual-team-builder/manual-team-builder.page.html'),
+      'utf8',
+    );
+
+    expect(page.slotRoleLabel(0)).toBe('Slot 1 · Captain');
+    expect(page.slotRoleLabel(1)).toBe('Slot 2 · Friend Captain (optional)');
+    expect(page.slotRoleLabel(2)).toBe('Slot 3 · Sub 1');
+    expect(page.slotRoleLabel(5)).toBe('Slot 6 · Sub 4');
+    // Both slot-card variants (filled and empty) and both picker-rail variants name the role -
+    // the rail is where the player watches the picker move on - and so does the picker title.
+    expect(template.split('{{ slotRoleLabel(index) }}')).toHaveLength(5);
+    expect(template).not.toContain("t('slots.label'");
+    expect(template).toContain(
+      `[attr.aria-current]="selectedSlotIndex() === index ? 'true' : null"`,
+    );
+    expect(template.split('characterPickerTitle()')).toHaveLength(5);
+    expect(page.characterPickerTitle()).toBe('Assign Slot 1 · Captain');
+    page.selectSlot(1);
+    expect(page.characterPickerTitle()).toBe('Assign Slot 2 · Friend Captain (optional)');
+  });
+
+  /*
+   * 869exmkad review: Ionic names the dialog once, when it presents, and the Assign button that had
+   * focus is usually disabled by the pick. So the picker renames itself as it moves on, and focus
+   * moves to its title once that has re-rendered.
+   */
+  it('renames the picker dialog and focuses its title as it moves on', async () => {
+    const { page } = createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/manual-team-builder/manual-team-builder.page.html'),
+      'utf8',
+    );
+    const dialog = { setAttribute: vi.fn() };
+    const title = { focus: vi.fn() };
+    const picker = {
+      setAttribute: vi.fn(),
+      shadowRoot: null,
+      querySelector: vi.fn((selector: string) =>
+        selector === '[role="dialog"]'
+          ? dialog
+          : selector === '#manual-team-picker-title'
+            ? title
+            : null,
+      ),
+    };
+    // A frame and then a task: past whatever the page deferred until the title re-rendered, in
+    // the jsdom runner (which has requestAnimationFrame) and in plain Node (which does not).
+    const afterRender = (): Promise<void> =>
+      new Promise((done) => {
+        if (typeof globalThis.requestAnimationFrame === 'function') {
+          globalThis.requestAnimationFrame(() => setTimeout(done, 0));
+          return;
+        }
+
+        setTimeout(done, 0);
+      });
+
+    expect(template).toContain('(didPresent)="onCharacterPickerDidPresent($event)"');
+    expect(template).toContain('<h2 id="manual-team-picker-title" tabindex="-1">');
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    page.onCharacterPickerDidPresent({ target: picker } as unknown as Event);
+    expect(dialog.setAttribute).toHaveBeenLastCalledWith('aria-label', 'Assign Slot 1 · Captain');
+
+    page.assignCharacter(createCharacterRecord(821, 'First Pick'));
+    expect(page.selectedSlotIndex()).toBe(2);
+    expect(dialog.setAttribute).toHaveBeenLastCalledWith('aria-label', 'Assign Slot 3 · Sub 1');
+    expect(picker.setAttribute).toHaveBeenLastCalledWith('aria-label', 'Assign Slot 3 · Sub 1');
+    // Not before the title has re-rendered, or a screen reader reads the old one.
+    expect(title.focus).not.toHaveBeenCalled();
+    await afterRender();
+    expect(title.focus).toHaveBeenCalledTimes(1);
+    expect(title.focus).toHaveBeenCalledWith({ preventScroll: true });
+
+    // The rail inside the picker renames it too, and leaves focus on the rail button pressed.
+    page.selectSlot(5);
+    expect(dialog.setAttribute).toHaveBeenLastCalledWith('aria-label', 'Assign Slot 6 · Sub 4');
+    await afterRender();
+    expect(title.focus).toHaveBeenCalledTimes(1);
+
+    // Closed, the picker is forgotten: nothing renames a dialog that is gone.
+    page.closeCharacterPicker();
+    dialog.setAttribute.mockClear();
+    page.selectSlot(2);
+    expect(dialog.setAttribute).not.toHaveBeenCalled();
+  });
+
+  it('stays on the slot a refused pick was aimed at, even with an earlier seat empty', async () => {
+    const { page } = createPage();
+    const sub = createCharacterRecord(702, 'Roronoa Zoro');
+
+    await page.ngOnInit();
+    page.slots.set([null, null, sub, null, null, null]);
+    await page.openCharacterPicker(4);
+    // Zoro is already Sub 1, so Sub 3 refuses him.
+    page.assignCharacter(sub);
+
+    expect(page.slots()[4]).toBeNull();
+    // Not the empty Captain seat, first in fill order: the refused slot still needs its pick.
+    expect(page.selectedSlotIndex()).toBe(4);
+    expect(page.pickerModalOpen()).toBe(true);
+  });
+
+  it('moves the open picker on when a character is dropped onto its empty slot', async () => {
+    const { page } = createPage();
+    const [captain, sub, replacement, friendCaptain] = [831, 832, 833, 834].map((id) =>
+      createCharacterRecord(id, `Dropped ${id}`),
+    );
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    page.candidates.set([captain!, sub!, replacement!, friendCaptain!]);
+
+    // Onto the empty slot the picker is on: the same pick as Assign, so it moves on.
+    page.onCandidateDragStart(createDragEvent(), captain!);
+    page.onSlotDrop(createDragEvent(), 0);
+    expect(page.slots()[0]?.id).toBe(831);
+    expect(page.selectedSlotIndex()).toBe(2);
+    expect(page.pickerModalOpen()).toBe(true);
+
+    // Onto another empty slot: the picker's own slot - here Sub 2, with Sub 1 still empty ahead of
+    // it in fill order - still needs its pick, so the picker stays there.
+    page.selectSlot(3);
+    page.onCandidateDragStart(createDragEvent(), sub!);
+    page.onSlotDrop(createDragEvent(), 5);
+    expect(page.slots()[5]?.id).toBe(832);
+    expect(page.selectedSlotIndex()).toBe(3);
+
+    // Onto the filled slot the picker is on: a replacement, which never moves it.
+    page.selectSlot(0);
+    page.onCandidateDragStart(createDragEvent(), replacement!);
+    page.onSlotDrop(createDragEvent(), 0);
+    expect(page.slots()[0]?.id).toBe(833);
+    expect(page.selectedSlotIndex()).toBe(0);
+    expect(page.pickerModalOpen()).toBe(true);
+
+    // With the picker closed, a drop moves nothing.
+    page.closeCharacterPicker();
+    page.selectSlot(1);
+    page.onCandidateDragStart(createDragEvent(), friendCaptain!);
+    page.onSlotDrop(createDragEvent(), 1);
+    expect(page.slots()[1]?.id).toBe(834);
+    expect(page.selectedSlotIndex()).toBe(1);
+    expect(page.pickerModalOpen()).toBe(false);
   });
 
   it('navigates from filled slots and ignores empty slots', async () => {
@@ -1611,8 +1835,12 @@ function createPage(
         params?: Record<string, string | number | boolean | null | undefined>,
         _scope?: string,
       ) => {
-        // The status line reads from the shipped English copy, so the test sees what players see.
-        if (key.startsWith('statusLine.')) {
+        // These read from the shipped English copy, so the test sees what players see.
+        if (
+          key.startsWith('statusLine.') ||
+          key.startsWith('slots.role') ||
+          key === 'picker.titleWithRole'
+        ) {
           return translateFromShippedEnglish(key, params);
         }
 

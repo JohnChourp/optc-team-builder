@@ -198,7 +198,8 @@
     "awarenessToggle": "Use opponent team for build",
     "awarenessSupport": {
       "disabled": "Opponent picks are shown only and will not affect the next build.",
-      "enabled": "The next build will counter {{count}} filled opponent slot(s)."
+      "enabled": "The next build will counter {{count}} filled opponent slot(s).",
+      "enabledEmpty": "Add at least one opponent character, or this build will not counter anything."
     },
     "debuffRule": {
       "disabled": "Enemy debuffs do not influence scoring unless this toggle is on and an opponent slot is filled.",

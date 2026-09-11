@@ -1,5 +1,6 @@
 import {
   Component,
+  ElementRef,
   type OnDestroy,
   type OnInit,
   ViewChild,
@@ -752,6 +753,8 @@ function resolveManualSlotRequiredAbilities(
 })
 export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   @ViewChild(IonContent) private content?: IonContent;
+  @ViewChild('buildSubmitButton', { read: ElementRef })
+  private readonly buildSubmitButton?: ElementRef<HTMLElement>;
 
   private buildAbortController: AbortController | null = null;
   private resetAfterBuildCancellation = false;
@@ -1523,6 +1526,22 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return this.leaderBoostRangeErrorLabel();
   });
+  /** The one tap that fixes the reason under Build, when there is one (869exmkbe). */
+  public readonly buildDisabledFix = computed<'types' | 'classes' | null>(() => {
+    if (
+      this.controlsDisabled() ||
+      this.buildBlockedByCharacterScope() ||
+      this.buildBlockedByFavorites()
+    ) {
+      return null;
+    }
+
+    if (!this.hasSelectedTypes()) {
+      return 'types';
+    }
+
+    return this.hasSelectedClasses() ? null : 'classes';
+  });
   /**
    * The hero's status line (869exmkr2): ready to build, or the one thing missing, plus how many
    * slots are locked - said at the top instead of only under Build, far down the page.
@@ -1574,6 +1593,22 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly introExpanded = computed(
     () => !this.userState.builderIntroDismissed().autoTeamBuilder || this.introShownOnRequest(),
+  );
+  /**
+   * True until the player changes a build input on this visit, and again after a page reset.
+   * Every such change - a pick, a filter, a rule, an exclude, a toggle, a box, an import, a build
+   * itself - goes through `resetBuildState()`, which clears it. Searching and opening pickers
+   * change no input, so they leave it alone.
+   */
+  private readonly buildInputsUntouched = signal(false);
+  /**
+   * Quick start (869exmkam; owner, 2026-09-11): shortcuts into flows that already exist - never
+   * shipped preset teams, which go stale with every nightly data release and cannot know the
+   * player's box. Offered only on a fresh page: gone with the first change the player makes, a
+   * build started, paused or failed included, and never offered on a handoff.
+   */
+  public readonly quickStartVisible = computed(
+    () => this.pageReady() && !this.introOpenedFromHandoff() && this.buildInputsUntouched(),
   );
   /**
    * Compact by default (869exmkqr; owner, 2026-09-11): these three sections start collapsed only
@@ -1755,14 +1790,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * the strictness was derived from the selection it was said nowhere, and a player picking three
    * classes could not know every unit had to hold all three.
    */
-  public readonly typeSupportLabel = computed(() =>
-    this.derivedRequireAllSelectedTypesInTeam() ? this.t('filters.types.support.strict') : '',
-  );
-  public readonly classSupportLabel = computed(() =>
-    this.hasSelectedClasses() && !this.allClassesSelected()
-      ? this.t('filters.classes.support.flexible')
-      : '',
-  );
+  public readonly typeSupportLabel = computed(() => {
+    if (this.derivedRequireAllSelectedTypesInTeam()) {
+      return this.t('filters.types.support.strict');
+    }
+
+    // "All selected" is no filter at all - said, so deselecting one reads as the change it is.
+    return this.allTypesSelected() ? this.t('filters.types.support.all') : '';
+  });
+  public readonly classSupportLabel = computed(() => {
+    if (!this.hasSelectedClasses()) {
+      return '';
+    }
+
+    return this.allClassesSelected()
+      ? this.t('filters.classes.support.all')
+      : this.t('filters.classes.support.flexible');
+  });
   public readonly characterTagSupportLabel = computed(() =>
     this.derivedRequireAllSelectedCharacterTagsInTeam()
       ? this.t('filters.characterTags.support.strict')
@@ -3960,6 +4004,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.userState.setBuilderIntroDismissed('autoTeamBuilder', true);
   }
 
+  public async quickStartFromCaptain(): Promise<void> {
+    this.selectManualSlot('captain');
+    // The picker keeps its Characters/Ships tab between openings, and a Captain is a character.
+    this.shipPickerMode.set('characters');
+    await this.openManualPickerModal();
+  }
+
+  public async quickStartGuided(): Promise<void> {
+    this.setGuidedAutoBuildEnabled(true);
+    await this.revealBuildButton();
+  }
+
   public showIntro(): void {
     this.introShownOnRequest.set(true);
   }
@@ -4776,7 +4832,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public onGuidedAutoBuildToggle(event: CustomEvent<{ checked: boolean }>): void {
-    this.guidedAutoBuildEnabled.set(event.detail.checked);
+    this.setGuidedAutoBuildEnabled(event.detail.checked);
+  }
+
+  public setGuidedAutoBuildEnabled(enabled: boolean): void {
+    this.guidedAutoBuildEnabled.set(enabled);
     this.resetBuildState();
   }
 
@@ -5661,6 +5721,26 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.refreshCharacterPickPanels();
   }
 
+  /**
+   * The button beside Build's reason (869exmkbe). It only ever selects: `selectAllTypes()` toggles
+   * back to none when everything is already selected, which a second tap before the button leaves
+   * would do.
+   */
+  public async applyBuildDisabledFix(): Promise<void> {
+    const fix = this.buildDisabledFix();
+
+    if (fix === 'types') {
+      this.selectedTypes.set([...this.availableTypes]);
+    } else if (fix === 'classes') {
+      this.selectedClasses.set([...this.availableClasses()]);
+    } else {
+      return;
+    }
+
+    this.resetBuildState();
+    await this.refreshCharacterPickPanels();
+  }
+
   public async removeSelectedType(type: AutoTeamBuilderType): Promise<void> {
     this.selectedTypes.set(this.selectedTypes().filter((selectedType) => selectedType !== type));
     this.resetBuildState();
@@ -6249,6 +6329,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private resetBuildState(): void {
     this.buildInputRevision += 1;
+    this.buildInputsUntouched.set(false);
 
     // An input changed under a running build - a page re-entry reset, a preset import. Stop the
     // search now rather than let it run on unseen with every control still locked. A build's own
@@ -6430,6 +6511,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.candidatePoolBoxFeedback.set(null);
     this.loadedEnemyPresetName.set(null);
     this.resetBuildState();
+    this.buildInputsUntouched.set(true);
     this.syncShipPickerPanelStates();
   }
 
@@ -6749,7 +6831,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         : [];
 
     await this.applySelectionPresetState(
-      buildAutoTeamBuilderStateFromSavedTeam(team, availableLockedCharacters, this.ships()),
+      buildAutoTeamBuilderStateFromSavedTeam(
+        team,
+        availableLockedCharacters,
+        this.ships(),
+        buildDefaultAutoTeamBuilderFilterState(this.availableClasses()),
+      ),
       availableLockedCharacters,
     );
     await this.clearSavedTeamPresetQueryParam();
@@ -9090,6 +9177,30 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private resetSaveFeedbackState(): void {
     this.saveUiLocked.set(false);
     this.saveFeedbackError.set('');
+  }
+
+  /**
+   * After Quick start turns guided build on (869exmkam): Build is the next step. The page bottom
+   * can be the Compare panel rather than Build, and the button that was tapped unmounts with the
+   * card, so bring Build itself into view and give it focus. ion-button does not delegate focus to
+   * its native button, so that one is focused.
+   */
+  private async revealBuildButton(): Promise<void> {
+    await new Promise<void>((resolve) => {
+      if (typeof globalThis.requestAnimationFrame === 'function') {
+        globalThis.requestAnimationFrame(() => resolve());
+        return;
+      }
+
+      globalThis.setTimeout(resolve, 0);
+    });
+
+    const button = this.buildSubmitButton?.nativeElement;
+
+    button?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+    (button?.shadowRoot?.querySelector<HTMLElement>('button') ?? button)?.focus?.({
+      preventScroll: true,
+    });
   }
 
   private async scrollToBottom(): Promise<void> {

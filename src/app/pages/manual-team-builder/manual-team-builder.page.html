@@ -50,6 +50,34 @@
             </section>
           }
 
+          @if (quickStartVisible()) {
+            <section
+              class="glass-card builder-quick-start"
+              data-testid="manual-build-quick-start"
+              aria-labelledby="manual-build-quick-start-title"
+            >
+              <h2 id="manual-build-quick-start-title">{{ t('quickStart.title') }}</h2>
+              <div class="builder-quick-start__actions">
+                <button
+                  type="button"
+                  class="builder-quick-start__action"
+                  (click)="quickStartFromCaptain()"
+                >
+                  <strong>{{ t('quickStart.captain.title') }}</strong>
+                  <small>{{ t('quickStart.captain.copy') }}</small>
+                </button>
+                <a class="builder-quick-start__action" routerLink="/tabs/saved-teams">
+                  <strong>{{ t('quickStart.savedTeam.title') }}</strong>
+                  <small>{{ t('quickStart.savedTeam.copy') }}</small>
+                </a>
+                <a class="builder-quick-start__action" routerLink="/tabs/captain-coverage">
+                  <strong>{{ t('quickStart.coverage.title') }}</strong>
+                  <small>{{ t('quickStart.coverage.copy') }}</small>
+                </a>
+              </div>
+            </section>
+          }
+
           @if (loading()) {
             <section class="glass-card loading-card">
               <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
@@ -162,7 +190,7 @@
                         <div class="manual-team-slot__body">
                           <div class="manual-team-slot__head">
                             <span>
-                              <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                              <strong>{{ slotRoleLabel(index) }}</strong>
                               <a
                                 class="manual-team-slot__name-link"
                                 [routerLink]="getCharacterDetailLink(slot)"
@@ -261,7 +289,7 @@
                           loading="lazy"
                         />
                         <span>
-                          <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                          <strong>{{ slotRoleLabel(index) }}</strong>
                           <small>{{ t('slots.empty') }}</small>
                         </span>
                         <button
@@ -401,17 +429,15 @@
           #characterPickerModal
           [isOpen]="pickerModalOpen()"
           cssClass="pick-editor-modal"
-          [attr.aria-label]="t('picker.title', { slot: selectedSlotIndex() + 1 })"
-          (didPresent)="
-            labelModalDialog($event, t('picker.title', { slot: selectedSlotIndex() + 1 }))
-          "
+          [attr.aria-label]="characterPickerTitle()"
+          (didPresent)="onCharacterPickerDidPresent($event)"
           (didDismiss)="closeCharacterPicker()"
         >
           <ng-template>
             <ion-header
               class="pick-editor-modal__header ion-no-border"
               role="group"
-              [attr.aria-label]="t('picker.title', { slot: selectedSlotIndex() + 1 })"
+              [attr.aria-label]="characterPickerTitle()"
             >
               <ion-toolbar>
                 <div class="pick-editor-modal__head">
@@ -420,7 +446,10 @@
                       <ion-icon [icon]="editIcon" aria-hidden="true"></ion-icon>
                       <span>{{ t('picker.eyebrow') }}</span>
                     </div>
-                    <h2>{{ t('picker.title', { slot: selectedSlotIndex() + 1 }) }}</h2>
+                    <!-- Focused when the picker moves on to the next slot (869exmkad). -->
+                    <h2 id="manual-team-picker-title" tabindex="-1">
+                      {{ characterPickerTitle() }}
+                    </h2>
                     <p>{{ t('picker.copy') }}</p>
                   </div>
                 </div>
@@ -442,7 +471,7 @@
               <div class="pick-editor-modal__shell">
                 <div class="manual-team-picker pick-editor-modal__panel">
                   <div class="manual-team-picker__meta">
-                    <strong>{{ t('picker.title', { slot: selectedSlotIndex() + 1 }) }}</strong>
+                    <strong>{{ characterPickerTitle() }}</strong>
                     <small>{{ t('picker.copy') }}</small>
                   </div>
                   <div class="manual-team-picker-slot-rail">
@@ -456,6 +485,7 @@
                         [class.manual-team-picker-slot-drop--invalid]="
                           slotIsInvalidDropTarget(index)
                         "
+                        [attr.aria-current]="selectedSlotIndex() === index ? 'true' : null"
                         [attr.draggable]="slot ? 'true' : null"
                         (click)="selectSlot(index)"
                         (dragstart)="onSlotDragStart($event, index)"
@@ -467,7 +497,7 @@
                         @if (slot) {
                           <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
                           <span>
-                            <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                            <strong>{{ slotRoleLabel(index) }}</strong>
                             <small>{{ slot.name }}</small>
                           </span>
                         } @else {
@@ -477,7 +507,7 @@
                             loading="lazy"
                           />
                           <span>
-                            <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                            <strong>{{ slotRoleLabel(index) }}</strong>
                             <small>{{ t('slots.empty') }}</small>
                           </span>
                         }

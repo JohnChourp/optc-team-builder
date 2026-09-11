@@ -136,6 +136,58 @@ ion-content {
   outline-offset: 2px;
 }
 
+/* Quick start on both builders (869exmkam): three shortcuts into flows that already exist. */
+.builder-quick-start {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.builder-quick-start h2 {
+  margin: 0;
+  color: var(--app-ink);
+  font-size: 1.05rem;
+}
+
+.builder-quick-start__actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.builder-quick-start__action {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(var(--ion-color-secondary-rgb), 0.35);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--app-ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.builder-quick-start__action strong {
+  color: var(--ion-color-secondary);
+  font-size: 0.95rem;
+}
+
+.builder-quick-start__action small {
+  color: var(--app-muted);
+  line-height: 1.45;
+}
+
+.builder-quick-start__action:hover {
+  border-color: rgba(var(--ion-color-secondary-rgb), 0.7);
+}
+
+.builder-quick-start__action:focus-visible {
+  outline: 2px solid var(--ion-color-secondary);
+  outline-offset: 2px;
+}
+
 img {
   display: block;
 }

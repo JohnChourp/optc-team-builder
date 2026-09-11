@@ -105,7 +105,7 @@
     "loading": "Φόρτωση matching χαρακτήρων...",
     "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
     "subConflict": "Υπάρχει ήδη στο πλήρωμά σου. Ένα sub δεν μπορεί να επαναλαμβάνει τον Captain ή άλλο sub.",
-    "title": "Ανάθεση slot {{slot}}"
+    "titleWithRole": "Ανάθεση {{label}}"
   },
   "captainHelper": {
     "branchLabel": "Captain branch",
@@ -126,6 +126,21 @@
     "clearZone": "Σύρε filled slot εδώ για να καθαριστεί",
     "invalidConflict": "Το drop μπλοκαρίστηκε γιατί ο χαρακτήρας {{name}} υπάρχει ήδη στο πλήρωμά σου. Ένα sub δεν μπορεί να επαναλαμβάνει τον Captain ή άλλο sub.",
     "invalidCost": "Το drop μπλοκαρίστηκε γιατί η ομάδα θα ξεπεράσει max cost {{max}}."
+  },
+  "quickStart": {
+    "captain": {
+      "copy": "Ανοίγει τον επιλογέα στο Slot 1· κάθε επιλογή πάει στο επόμενο κενό slot.",
+      "title": "Ξεκίνα από τον Captain σου"
+    },
+    "coverage": {
+      "copy": "Το Captain Coverage δείχνει ποιους ενισχύει ο Captain σου πριν χτίσεις.",
+      "title": "Δες πρώτα την κάλυψη ενός Captain"
+    },
+    "savedTeam": {
+      "copy": "Πάρε μια ομάδα από τα Saved Teams και συνέχισε να την επεξεργάζεσαι εδώ.",
+      "title": "Άνοιξε μια αποθηκευμένη ομάδα"
+    },
+    "title": "Γρήγορο ξεκίνημα"
   },
   "save": {
     "error": "Δεν ήταν δυνατή η αποθήκευση του manual team.",
@@ -152,8 +167,12 @@
     "cost": "Cost {{cost}}",
     "empty": "Κενό slot",
     "emptyAlt": "Κενό character slot",
-    "label": "Slot {{slot}}",
-    "noAbilityPreview": "Δεν υπάρχει captain ή special text."
+    "noAbilityPreview": "Δεν υπάρχει captain ή special text.",
+    "roleLabel": "Slot {{slot}} · {{role}}",
+    "roles": {
+      "friendCaptainOptional": "Friend Captain (προαιρετικός)",
+      "sub": "Sub {{index}}"
+    }
   },
   "statusLine": {
     "captainMissing": "Χωρίς Captain ακόμα",

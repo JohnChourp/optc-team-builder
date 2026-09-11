@@ -104,7 +104,10 @@ import {
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
-import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
+import {
+  applyIonicModalDialogLabel,
+  applyIonicModalDialogLabelToElement,
+} from '../../shared/a11y/ionic-modal-dialog-label.utils';
 import {
   ManualTeamBuilderPickerPanelComponent,
   ManualTeamBuilderWorkbenchPanelComponent,
@@ -113,6 +116,15 @@ import {
 const MANUAL_TEAM_SLOT_COUNT = 6;
 const MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX = 1;
 const MANUAL_TEAM_FIRST_SUB_SLOT_INDEX = 2;
+/** Captain, Sub 1-4, then the Friend Captain - optional, so last - the guided build's own order. */
+const MANUAL_TEAM_NEXT_SLOT_ORDER: readonly number[] = [0, 2, 3, 4, 5, 1];
+
+/** The first empty seat in fill order, or null when the team is full (869exmkad). */
+export function resolveNextManualTeamSlotIndex(
+  slots: readonly (CharacterDetailRecord | null)[],
+): number | null {
+  return MANUAL_TEAM_NEXT_SLOT_ORDER.find((index) => !slots[index]) ?? null;
+}
 
 /*
  * The candidate list is served by two interchangeable paths: the repository
@@ -220,6 +232,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly searchTerm = signal('');
   public readonly candidates = signal<CharacterDetailRecord[]>([]);
   public readonly pickerModalOpen = signal(false);
+  /** The presented picker, so its dialog name can follow the slot it moves to (869exmkad). */
+  private characterPickerElement: HTMLElement | null = null;
   public readonly shipPickerOpen = signal(false);
   public readonly teamName = signal('');
   public readonly notes = signal('');
@@ -461,6 +475,13 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly introOpenedFromHandoff = signal(false);
   private readonly introShownOnRequest = signal(false);
   public readonly introVisible = computed(() => !this.loading() && !this.introOpenedFromHandoff());
+  /**
+   * Quick start (869exmkam; owner, 2026-09-11): shortcuts into flows that already exist, offered
+   * only on an empty team that no handoff brought in.
+   */
+  public readonly quickStartVisible = computed(
+    () => !this.loading() && !this.introOpenedFromHandoff() && this.filledSlotCount() === 0,
+  );
   public readonly introExpanded = computed(
     () => !this.userState.builderIntroDismissed().manualTeamBuilder || this.introShownOnRequest(),
   );
@@ -760,6 +781,10 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.introShownOnRequest.set(true);
   }
 
+  public async quickStartFromCaptain(): Promise<void> {
+    await this.openCharacterPicker(0);
+  }
+
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
     this.teamName.set((event.detail.value ?? '').trimStart());
   }
@@ -829,8 +854,14 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     await this.refreshCandidates();
   }
 
-  public labelModalDialog(event: Event, label: string): void {
-    applyIonicModalDialogLabel(event, label);
+  /** "Assign Slot 3 · Sub 1": the picker's title, which is also its dialog name. */
+  public characterPickerTitle(): string {
+    return this.t('picker.titleWithRole', { label: this.slotRoleLabel(this.selectedSlotIndex()) });
+  }
+
+  public onCharacterPickerDidPresent(event: Event): void {
+    this.characterPickerElement = event.target as HTMLElement | null;
+    applyIonicModalDialogLabel(event, this.characterPickerTitle());
   }
 
   public async openCharacterPicker(index: number): Promise<void> {
@@ -845,6 +876,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
   public closeCharacterPicker(): void {
     this.pickerModalOpen.set(false);
+    this.characterPickerElement = null;
   }
 
   /** Every rail chip opens the same modal; the category only gates an empty catalog. */
@@ -895,6 +927,9 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     }
 
     this.selectedSlotIndex.set(index);
+    // Picked from the rail inside the open picker: the dialog is now about another slot. Focus
+    // stays on the rail button the player pressed.
+    this.renameCharacterPickerDialog();
   }
 
   public openShipPicker(): void {
@@ -929,12 +964,32 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     await this.router.navigate(detailLink);
   }
 
+  /**
+   * Owner, 2026-09-11 (869exmkad): a pick into an empty slot keeps the picker open on the next empty
+   * one - six open-and-close round trips become one, and the search and filters carry over. A pick
+   * that replaced a filled slot, or filled the last empty one, closes it as before.
+   */
   public assignCharacter(character: CharacterDetailRecord): void {
-    if (!this.assignCharacterToSlot(this.selectedSlotIndex(), character)) {
+    const index = this.selectedSlotIndex();
+    const slotWasEmpty = !this.slots()[index];
+
+    if (!this.assignCharacterToSlot(index, character)) {
       return;
     }
 
-    this.closeCharacterPicker();
+    this.continueCharacterPickerAfterPick(slotWasEmpty);
+  }
+
+  /** "Slot 3 · Sub 1": each seat's number with its role, the Friend Captain marked optional. */
+  public slotRoleLabel(index: number): string {
+    const role =
+      index === 0
+        ? this.t('condition.roles.captain')
+        : index === MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX
+          ? this.t('slots.roles.friendCaptainOptional')
+          : this.t('slots.roles.sub', { index: index - MANUAL_TEAM_FIRST_SUB_SLOT_INDEX + 1 });
+
+    return this.t('slots.roleLabel', { slot: index + 1, role });
   }
 
   public clearSlot(index: number, event?: Event): void {
@@ -1060,7 +1115,14 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     }
 
     if (dragState.sourceSlotIndex === null) {
-      this.assignCharacterToSlot(index, character);
+      // Dropped onto the empty slot the open picker is on: the same pick as Assign, so the picker
+      // moves on too rather than leave the next Assign to replace it.
+      const fillsPickerSlot =
+        this.pickerModalOpen() && index === this.selectedSlotIndex() && !this.slots()[index];
+
+      if (this.assignCharacterToSlot(index, character) && fillsPickerSlot) {
+        this.continueCharacterPickerAfterPick(true);
+      }
     } else {
       this.swapSlotCharacters(dragState.sourceSlotIndex, index);
     }
@@ -1823,6 +1885,57 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     const nextValue = Number(value);
 
     return Number.isInteger(nextValue) && nextValue >= 0 ? nextValue : null;
+  }
+
+  /**
+   * After a pick into the picker's own slot (869exmkad): a pick into an empty slot moves on to the
+   * next empty one; a pick that replaced a filled slot, or filled the last empty one, closes it.
+   */
+  private continueCharacterPickerAfterPick(slotWasEmpty: boolean): void {
+    const nextIndex = slotWasEmpty ? resolveNextManualTeamSlotIndex(this.slots()) : null;
+
+    if (nextIndex === null) {
+      this.closeCharacterPicker();
+      return;
+    }
+
+    this.moveCharacterPickerTo(nextIndex);
+  }
+
+  /**
+   * The open picker moves on to another slot. Its dialog keeps the name it opened with unless it is
+   * renamed, and the Assign button that had focus is usually disabled now - the pick repeats the
+   * crew for the next sub - so focus would drop out of the dialog. Once the title has re-rendered,
+   * focus moves to it, and a screen reader says which slot the picker is on.
+   */
+  private moveCharacterPickerTo(index: number): void {
+    this.selectedSlotIndex.set(index);
+    this.renameCharacterPickerDialog();
+
+    const picker = this.characterPickerElement;
+
+    if (!picker) {
+      return;
+    }
+
+    const focusTitle = (): void => {
+      picker
+        .querySelector<HTMLElement>('#manual-team-picker-title')
+        ?.focus({ preventScroll: true });
+    };
+
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      globalThis.requestAnimationFrame(focusTitle);
+      return;
+    }
+
+    globalThis.setTimeout(focusTitle, 0);
+  }
+
+  private renameCharacterPickerDialog(): void {
+    if (this.characterPickerElement) {
+      applyIonicModalDialogLabelToElement(this.characterPickerElement, this.characterPickerTitle());
+    }
   }
 
   private isValidSlotIndex(index: number): boolean {

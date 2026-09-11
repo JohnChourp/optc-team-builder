@@ -11,6 +11,21 @@
     },
     "title": "How this page works"
   },
+  "quickStart": {
+    "captain": {
+      "copy": "Pick the Captain you have in mind; the builder fills the rest.",
+      "title": "Start from my Captain"
+    },
+    "enemy": {
+      "copy": "Open an enemy from Saved Enemies to bring its stage requirements here.",
+      "title": "Build for a saved enemy"
+    },
+    "guided": {
+      "copy": "Turns on Guided auto build: each build locks the next slot.",
+      "title": "Fill it one slot at a time"
+    },
+    "title": "Quick start"
+  },
   "sections": {
     "hideDetails": "Hide details",
     "showDetails": "Show details"
@@ -68,6 +83,7 @@
       "selectAll": "Select all types",
       "unselectAll": "Clear type selection",
       "support": {
+        "all": "All types are selected, so the team can be any type.",
         "strict": "The builder looks for a team with every selected type. If none fits, the results say which type it left out.",
         "flexible": "The builder tries to cover every selected type first and only relaxes that in the result panel if needed."
       }
@@ -80,6 +96,7 @@
       "selectAll": "Select all classes",
       "unselectAll": "Clear class selection",
       "support": {
+        "all": "All classes are selected, so any character can join.",
         "flexible": "Only characters of the selected classes: each unit holds at least one of them, and the team need not include every class."
       }
     },

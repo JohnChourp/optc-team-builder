@@ -77,6 +77,30 @@
           </section>
         }
 
+        @if (quickStartVisible()) {
+          <section
+            class="glass-card builder-quick-start"
+            data-testid="auto-build-quick-start"
+            aria-labelledby="auto-build-quick-start-title"
+          >
+            <h2 id="auto-build-quick-start-title">{{ t('quickStart.title') }}</h2>
+            <div class="builder-quick-start__actions">
+              <button type="button" class="builder-quick-start__action" (click)="quickStartFromCaptain()">
+                <strong>{{ t('quickStart.captain.title') }}</strong>
+                <small>{{ t('quickStart.captain.copy') }}</small>
+              </button>
+              <a class="builder-quick-start__action" routerLink="/tabs/saved-enemies">
+                <strong>{{ t('quickStart.enemy.title') }}</strong>
+                <small>{{ t('quickStart.enemy.copy') }}</small>
+              </a>
+              <button type="button" class="builder-quick-start__action" (click)="quickStartGuided()">
+                <strong>{{ t('quickStart.guided.title') }}</strong>
+                <small>{{ t('quickStart.guided.copy') }}</small>
+              </button>
+            </div>
+          </section>
+        }
+
         <app-auto-team-builder-controls-panel>
           <app-auto-team-builder-requirements-panel>
             <app-auto-team-builder-manual-panel>
@@ -2745,6 +2769,7 @@
 
                                   <div class="build-submit-row">
                                     <ion-button
+                                      #buildSubmitButton
                                       data-testid="auto-build-submit"
                                       color="warning"
                                       class="build-submit-button"
@@ -2760,6 +2785,24 @@
                                     role="status"
                                     [class.build-submit-reason--empty]="!buildDisabledReason()"
                                   >{{ buildDisabledReason() }}</p>
+                                  @if (buildDisabledFix(); as fix) {
+                                    <div class="build-submit-fix">
+                                      <ion-button
+                                        fill="clear"
+                                        size="small"
+                                        class="select-all-button"
+                                        data-testid="auto-build-fix"
+                                        [disabled]="controlsDisabled()"
+                                        (click)="applyBuildDisabledFix()"
+                                      >
+                                        {{
+                                          fix === 'types'
+                                            ? t('filters.types.selectAll')
+                                            : t('filters.classes.selectAll')
+                                        }}
+                                      </ion-button>
+                                    </div>
+                                  }
                                 </section>
                               </app-auto-team-builder-actions-panel>
                             </app-auto-team-builder-picker-panel>

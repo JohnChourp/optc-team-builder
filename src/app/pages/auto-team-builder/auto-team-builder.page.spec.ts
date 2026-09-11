@@ -435,7 +435,10 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       );
     }
 
+    // 869exmkb4: all ten selected is no filter at all, and the line says so.
     page.selectedClasses.set(allClasses);
+    expect(page.classSupportLabel()).toBe('All classes are selected, so any character can join.');
+    page.selectedClasses.set([]);
     expect(page.classSupportLabel()).toBe('');
   });
 
@@ -450,6 +453,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.selectedTypes.set(['DEX']);
     expect(page.typeSupportLabel()).toContain('every selected type');
     page.selectedTypes.set([...page.availableTypes]);
+    expect(page.typeSupportLabel()).toBe('All types are selected, so the team can be any type.');
+    // None selected is not a rule: the reason under Build says what to do instead.
+    page.selectedTypes.set([]);
     expect(page.typeSupportLabel()).toBe('');
 
     expect(template).toContain(
@@ -4681,6 +4687,130 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     }
   });
 
+  // 869exmkam (owner, 2026-09-11): shortcuts into flows that already exist, on a fresh page only.
+  it('offers quick-start shortcuts on a fresh page only', async () => {
+    const { page } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+    const quickStart = template.slice(template.indexOf('@if (quickStartVisible())'));
+
+    expect(quickStart.slice(0, 1600)).toContain('(click)="quickStartFromCaptain()"');
+    expect(quickStart.slice(0, 1600)).toContain('routerLink="/tabs/saved-enemies"');
+    expect(quickStart.slice(0, 1600)).toContain('(click)="quickStartGuided()"');
+    expect(page.quickStartVisible()).toBe(false);
+
+    await page.ngOnInit();
+    expect(page.quickStartVisible()).toBe(true);
+    // Not while the page is still loading, when every control is disabled.
+    page.pageReady.set(false);
+    expect(page.quickStartVisible()).toBe(false);
+    page.pageReady.set(true);
+
+    // The Captain shortcut opens the Characters list on the Captain slot, whichever slot and tab
+    // the player last left the picker on. Choosing a slot and opening a picker change nothing.
+    page.selectManualSlot('sub2');
+    page.setShipPickerMode('ships');
+    await page.quickStartFromCaptain();
+    expect(page.activeManualSlotRole()).toBe('captain');
+    expect(page.shipPickerMode()).toBe('characters');
+    expect(page.manualPickerModalOpen()).toBe(true);
+    expect(page.quickStartVisible()).toBe(true);
+    page.closeManualPickerModal();
+
+    await page.quickStartGuided();
+    expect(page.guidedAutoBuildEnabled()).toBe(true);
+    expect(page.quickStartVisible()).toBe(false);
+
+    // Gone with the first change of any kind - not only a pick or a rule - and back after Reset.
+    const changes: Array<[string, () => unknown]> = [
+      ['a type narrowed', () => page.removeSelectedType('DEX')],
+      [
+        'a character box',
+        () =>
+          page.onCharacterBoxChange({ detail: { value: 'box-1' } } as CustomEvent<{
+            value?: string | null;
+          }>),
+      ],
+      [
+        'favourites only',
+        () =>
+          page.onFavoritesOnlyToggle({ detail: { checked: true } } as CustomEvent<{
+            checked: boolean;
+          }>),
+      ],
+      [
+        'a cost cap',
+        () =>
+          page.onMaxTotalCostChange({ detail: { value: 40 } } as CustomEvent<{
+            value?: string | number | null;
+          }>),
+      ],
+      ['guided build', () => page.setGuidedAutoBuildEnabled(true)],
+      ['a build started', () => page.buildTeam()],
+    ];
+
+    for (const [label, change] of changes) {
+      await page.resetPage();
+      expect(page.quickStartVisible(), label).toBe(true);
+      await change();
+      expect(page.quickStartVisible(), label).toBe(false);
+    }
+
+    // A first build that was paused - or failed - leaves no result behind, and still no card.
+    page.building.set(false);
+    page.result.set(null);
+    page.buildPaused.set(true);
+    expect(page.quickStartVisible()).toBe(false);
+    await page.resetPage();
+    expect(page.quickStartVisible()).toBe(true);
+
+    // A handoff arrives with intent: even one that leaves the page fresh (an unknown enemy) hides it.
+    const { page: handoffPage } = await createPage({ routeEnemyId: 'missing-enemy' });
+
+    await handoffPage.ngOnInit();
+    await handoffPage.ionViewWillEnter();
+    expect(handoffPage.manualSelectionCount()).toBe(0);
+    expect(handoffPage.requiredCharactersSectionEmpty()).toBe(true);
+    expect(handoffPage.quickStartVisible()).toBe(false);
+  });
+
+  /*
+   * The guided quick start leads to Build (869exmkam review): the page bottom can be the Compare
+   * panel, and the tapped button unmounts with the card, so Build is scrolled to and focused.
+   */
+  it('brings Build into view and focuses it after the guided quick start', async () => {
+    const { page } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+    const nativeButton = { focus: vi.fn() };
+    const buildButton = {
+      focus: vi.fn(),
+      scrollIntoView: vi.fn(),
+      shadowRoot: { querySelector: vi.fn(() => nativeButton) },
+    };
+
+    expect(template).toMatch(/<ion-button\s+#buildSubmitButton\s+data-testid="auto-build-submit"/u);
+
+    await page.ngOnInit();
+    (page as unknown as { buildSubmitButton: { nativeElement: unknown } }).buildSubmitButton = {
+      nativeElement: buildButton,
+    };
+    await page.quickStartGuided();
+
+    expect(buildButton.scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'center',
+    });
+    // ion-button does not delegate focus, so its native button takes it.
+    expect(buildButton.shadowRoot.querySelector).toHaveBeenCalledWith('button');
+    expect(nativeButton.focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(buildButton.focus).not.toHaveBeenCalled();
+  });
+
   // 869exmkr2: ready to build, or the one thing missing, plus the locks - at the top of the page.
   it('says at the top whether Build is ready, and how many slots are locked', async () => {
     const { page } = await createPage();
@@ -4888,7 +5018,7 @@ describe('AutoTeamBuilderPage builder interactions', () => {
   });
 
   it('says why Build is off, under the button', async () => {
-    const { page } = await createPage();
+    const { page, userState } = await createPage();
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
       'utf8',
@@ -4896,6 +5026,9 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     const submit = template.indexOf('data-testid="auto-build-submit"');
 
     expect(submit).toBeGreaterThan(-1);
+    expect(template.slice(submit, submit + 2400)).toMatch(
+      /@if \(buildDisabledFix\(\); as fix\)[\s\S]*?\(click\)="applyBuildDisabledFix\(\)"/u,
+    );
     // Right under the button, and always mounted: a live region created together with its text
     // is not announced, so only the text changes.
     const reasonMarkup = template.slice(submit, submit + 1200);
@@ -4913,10 +5046,38 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     page.selectedTypes.set([]);
     expect(page.buildDisabled()).toBe(true);
     expect(page.buildDisabledReason()).toBe('Select at least one type to build a team.');
+    expect(page.buildDisabledFix()).toBe('types');
+
+    // The one tap beside the reason fixes it, and a second tap before the button goes cannot undo
+    // it: the fix only ever selects, where Select all would toggle back to none.
+    await page.applyBuildDisabledFix();
+    expect(page.buildDisabled()).toBe(false);
+    expect(page.buildDisabledFix()).toBeNull();
+    await page.applyBuildDisabledFix();
+    expect(page.selectedTypes()).toEqual(['DEX', 'STR', 'QCK', 'PSY', 'INT']);
 
     page.selectedTypes.set(['DEX']);
     page.selectedClasses.set([]);
     expect(page.buildDisabledReason()).toBe('Select at least one class to build a team.');
+    expect(page.buildDisabledFix()).toBe('classes');
+    await page.applyBuildDisabledFix();
+    expect(page.buildDisabledFix()).toBeNull();
+    await page.applyBuildDisabledFix();
+    expect(page.selectedClasses()).toEqual(page.availableClasses());
+    expect(page.selectedClasses().length).toBeGreaterThan(0);
+
+    // No fix where selecting would not make Build ready: a character box that leaves nobody, or
+    // favourites-only with no favourites.
+    page.selectedTypes.set([]);
+    page.selectedCharacterBoxId.set('box-empty');
+    expect(page.buildDisabledFix()).toBeNull();
+    page.selectedCharacterBoxId.set(null);
+    userState.favoriteCharacterIds.set([]);
+    page.favoritesOnly.set(true);
+    expect(page.buildDisabledFix()).toBeNull();
+    page.favoritesOnly.set(false);
+    expect(page.buildDisabledFix()).toBe('types');
+    page.selectedTypes.set(['DEX']);
 
     page.selectedClasses.set(['Fighter']);
     page.leaderBoostRanges.set({
@@ -4928,11 +5089,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       'Leader boost minimum cannot be greater than maximum.',
     );
 
-    // A running build needs no reason, even with the inputs still incomplete.
+    // A running build needs no reason, even with the inputs still incomplete - and no fix.
     page.selectedTypes.set([]);
     page.building.set(true);
     expect(page.buildDisabled()).toBe(true);
     expect(page.buildDisabledReason()).toBe('');
+    expect(page.buildDisabledFix()).toBeNull();
   });
 
   it('shows a dedicated manual conflict message for duplicate in-game characters', async () => {
@@ -9240,8 +9402,11 @@ describe('AutoTeamBuilder saved team preset handoff', () => {
 
     await page.ionViewWillEnter();
 
-    expect(page.selectedTypes()).toEqual([]);
-    expect(page.selectedClasses()).toEqual([]);
+    // 869exmkbe: a saved team carries no filter, so it lands on the neutral ones - every type and
+    // class - with Build ready, instead of on a grey Build with nothing selected.
+    expect(page.selectedTypes()).toEqual(['DEX', 'STR', 'QCK', 'PSY', 'INT']);
+    expect(page.selectedClasses()).toEqual(['Fighter', 'Slasher']);
+    expect(page.buildDisabled()).toBe(false);
     expect(page.manualSlots()).toEqual(
       createManualSlots({
         captain: [101],
