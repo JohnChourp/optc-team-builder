@@ -189,7 +189,9 @@ For the user-facing flow across guided builds, compare mode, saved-team JSON, sh
 "Copy debug report" on Auto Team Builder copies the last build as text for a bug report. The
 button sits under a result, next to the preset download, and in the card of a build that found no
 team. The text is a few plain summary lines followed by one fenced JSON block, built by
-`src/app/pages/auto-team-builder/auto-team-builder-debug-report.utils.ts`:
+`src/app/pages/auto-team-builder/auto-team-builder-debug-report.utils.ts`. The block prints one line
+per section and one line per slot: fully indented, a real team ran past 16 KB. It is shown
+indented here for reading:
 
 ```json
 {
@@ -246,15 +248,23 @@ The example shortens `request`, `outcome.slots`, `relaxation` and `coverage`; th
 - **Codes and ids, never translated text.** Slot reasons, rejected alternatives and rule states
   carry the engine's own codes and parameters, so a report reads the same in either language.
   The summary lines are English on purpose: they are read by whoever fixes the problem.
-- **`outcome.status`** is `exact`, `fallback`, `noTeam`, `searchTooLarge`, `buildFailed` or
-  `guidedRelaxedOnly`. A build without a team has no `rules`, `relaxation`, `coverage` or slots,
-  and its `request` comes from the page's inputs, which are the ones the build used because any
-  change since would have cleared the failure. `performance` is present when the build reported a
-  completed stage.
+- **`outcome.status`** is `exact` (no rule relaxed, though the summary still names any ability
+  requirement or battle the team leaves uncovered), `fallback`, `noTeam`, `searchTooLarge`,
+  `buildFailed`, `guidedRelaxedOnly` or `guidedSlotRejected`. The two guided codes still carry the
+  team the build found, which the page did not use. A build without a team has no `rules`,
+  `relaxation`, `coverage` or slots. `performance` is present when the build reported a completed
+  stage.
+- **`request`** is the result's `requestedInput`: what was asked, not what a fallback settled for.
+  With no team it is what the page sent when Build was pressed, before the service normalizes it.
+  `context` is also read when Build is pressed, so starring a favourite afterwards changes nothing.
+- **`outcome.fallbackReasons`** appears once, when the engine relaxed something: the engine gives
+  every slot the same fallback reasons, derived from `relaxation`.
 - **`teamKey`** is the leaders' ids then the subs' ids, each sorted, so the same team reads the
   same whatever its slot order.
 - **Redaction.** No team name, notes, box names or ids, battle titles, file names, share codes or
-  user agent. Character ids and names are game data and are the point of the report.
+  user agent. Character ids and names are game data and are the point of the report. Two kinds of
+  player text stay on purpose, because they are the problem being reported: character-name filters
+  as typed, and a slot's name as shown, including a name changed by a local edit.
 - **Nothing is sent.** The report goes to the clipboard only. When the clipboard refuses it, the
   same text is shown read-only to copy by hand. The "Report a problem on GitHub" link opens
   `https://github.com/JohnChourp/optc-team-builder/issues/new` and never carries the report.
