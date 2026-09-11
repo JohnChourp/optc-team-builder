@@ -2403,6 +2403,30 @@ describe('CaptainCoveragePage', () => {
     ]);
   });
 
+  // A team needs no Friend Captain (owner, 2026-09-08).
+  it('reads a Captain plus four subs with no Friend Captain as complete', async () => {
+    const leader = createCharacter({
+      id: 1001,
+      name: 'Leader',
+      captainAbility: 'Boosts ATK of all characters by 5x.',
+    });
+    const subs = [2001, 2002, 2003, 2004].map((id) => createCharacter({ id }));
+    const { page } = createPage({
+      captains: [leader],
+      characters: [leader, ...subs],
+    });
+
+    await page.ngOnInit();
+    await page.setTeamSlotCharacter(0, leader);
+
+    for (const [index, sub] of subs.entries()) {
+      await page.setTeamSlotCharacter(index + 2, sub);
+    }
+
+    expect(page.teamConditionStatus()?.isComplete).toBe(true);
+    expect(page.teamConditionStatus()?.state).toBe('full');
+  });
+
   it('records an empty Friend Captain seat as empty, not as the Captain', async () => {
     const leader = createCharacter({
       id: 1001,

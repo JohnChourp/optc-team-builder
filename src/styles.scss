@@ -82,6 +82,60 @@ ion-content {
   backdrop-filter: blur(22px);
 }
 
+/*
+ * The first-visit "How this page works" card on both builders (869exmkpw), and the Show/Hide
+ * details toggle of an empty Auto Team Builder section (869exmkqr). The card is inline on purpose:
+ * it never covers a control, and it stays outside the Ionic overlay colour ramp altogether.
+ */
+.builder-intro-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.builder-intro-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.builder-intro-card__head h2 {
+  margin: 0;
+  color: var(--app-ink);
+  font-size: 1.05rem;
+}
+
+.builder-intro-card__steps {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 1.4rem;
+  color: var(--app-muted);
+  line-height: 1.55;
+}
+
+.builder-intro-card__toggle,
+.section-details-toggle {
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid rgba(var(--ion-color-secondary-rgb), 0.4);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ion-color-secondary);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.builder-intro-card__toggle:focus-visible,
+.section-details-toggle:focus-visible {
+  outline: 2px solid var(--ion-color-secondary);
+  outline-offset: 2px;
+}
+
 img {
   display: block;
 }

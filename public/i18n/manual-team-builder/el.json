@@ -37,6 +37,18 @@
     "eyebrow": "Στήσιμο fixed team",
     "title": "Manual Team Builder"
   },
+  "intro": {
+    "actions": {
+      "dismiss": "Απόκρυψη",
+      "show": "Εμφάνιση"
+    },
+    "steps": {
+      "one": "Το slot 1 είναι ο Captain σου. Το slot 2 είναι ο Friend Captain, που είναι προαιρετικός.",
+      "three": "Πάτα «Αποθήκευση manual team» για να κρατήσεις την ομάδα στα Saved Teams και μοιράσου την από εκεί.",
+      "two": "Γέμισε τα τέσσερα subs. Η σύνοψη της ομάδας ελέγχει τις συνθήκες του Captain σου και το κόστος."
+    },
+    "title": "Πώς δουλεύει αυτή η σελίδα"
+  },
   "loading": "Φόρτωση manual team builder...",
   "picker": {
     "assignedElsewhere": "Χρησιμοποιείται ήδη σε άλλο fixed slot.",
@@ -142,6 +154,16 @@
     "emptyAlt": "Κενό character slot",
     "label": "Slot {{slot}}",
     "noAbilityPreview": "Δεν υπάρχει captain ή special text."
+  },
+  "statusLine": {
+    "captainMissing": "Χωρίς Captain ακόμα",
+    "captainSet": "Υπάρχει Captain",
+    "cost": "Κόστος {{used}}",
+    "costWithMax": "Κόστος {{used}} / {{max}}",
+    "filled": "{{filled}} / {{total}} γεμάτα",
+    "friendCaptainOptional": "Friend Captain προαιρετικός",
+    "friendCaptainSet": "Υπάρχει Friend Captain",
+    "subsMissing": "Subs που λείπουν: {{count}}"
   },
   "summary": {
     "copy": "Live totals για τα visible fixed slots και το τρέχον cost budget.",

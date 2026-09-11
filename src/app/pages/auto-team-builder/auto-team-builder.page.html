@@ -32,8 +32,50 @@
               <ion-icon [icon]="coverageIcon" aria-hidden="true"></ion-icon>
               <span>{{ teamStructureLabel() }}</span>
             </div>
+            @if (buildReadinessLabel()) {
+              <div
+                class="meta-pill"
+                data-testid="auto-build-readiness"
+                [class.meta-pill--not-ready]="buildDisabled() && !building()"
+              >
+                <ion-icon
+                  [icon]="buildDisabled() && !building() ? notReadyIcon : readyIcon"
+                  aria-hidden="true"
+                ></ion-icon>
+                <span>{{ buildReadinessLabel() }} · {{ lockedSlotsLabel() }}</span>
+              </div>
+            }
           </div>
         </section>
+
+        @if (introVisible()) {
+          <section
+            class="glass-card builder-intro-card"
+            data-testid="auto-build-intro"
+            aria-labelledby="auto-build-intro-title"
+          >
+            <div class="builder-intro-card__head">
+              <h2 id="auto-build-intro-title">{{ t('intro.title') }}</h2>
+              <button
+                type="button"
+                class="builder-intro-card__toggle"
+                data-testid="auto-build-intro-toggle"
+                aria-controls="auto-build-intro-steps"
+                [attr.aria-expanded]="introExpanded() ? 'true' : 'false'"
+                (click)="introExpanded() ? dismissIntro() : showIntro()"
+              >
+                {{ introExpanded() ? t('intro.actions.dismiss') : t('intro.actions.show') }}
+              </button>
+            </div>
+            @if (introExpanded()) {
+              <ol id="auto-build-intro-steps" class="builder-intro-card__steps">
+                <li>{{ t('intro.steps.one') }}</li>
+                <li>{{ t('intro.steps.two') }}</li>
+                <li>{{ t('intro.steps.three') }}</li>
+              </ol>
+            }
+          </section>
+        }
 
         <app-auto-team-builder-controls-panel>
           <app-auto-team-builder-requirements-panel>
@@ -556,7 +598,11 @@
                                   <section class="ability-requirements-card">
                                     <div class="slot-grid__header">
                                       <h2>{{ t('captainAbilityFilters.title') }}</h2>
-                                      <p>{{ t('captainAbilityFilters.copy') }}</p>
+                                      @if (captainFiltersSectionExpanded()) {
+                                        <p id="auto-build-captain-filters-copy">
+                                          {{ t('captainAbilityFilters.copy') }}
+                                        </p>
+                                      }
                                     </div>
 
                                     <div class="manual-locks-meta ability-requirements-meta">
@@ -568,6 +614,24 @@
                                         }}
                                       </strong>
                                       <div class="ability-requirements-actions">
+                                        @if (captainFiltersSectionEmpty()) {
+                                          <button
+                                            type="button"
+                                            class="section-details-toggle"
+                                            data-testid="captain-filters-details-toggle"
+                                            aria-controls="auto-build-captain-filters-copy auto-build-captain-filters-empty"
+                                            [attr.aria-expanded]="
+                                              captainFiltersSectionExpanded() ? 'true' : 'false'
+                                            "
+                                            (click)="toggleEmptySection('captainFilters')"
+                                          >
+                                            {{
+                                              captainFiltersSectionExpanded()
+                                                ? t('sections.hideDetails')
+                                                : t('sections.showDetails')
+                                            }}
+                                          </button>
+                                        }
                                         <ion-button
                                           fill="clear"
                                           size="small"
@@ -603,8 +667,11 @@
                                           <span class="selected-value-chip">{{ chip.label }}</span>
                                         }
                                       </div>
-                                    } @else {
-                                      <p class="favorites-only-warning">
+                                    } @else if (captainFiltersSectionExpanded()) {
+                                      <p
+                                        id="auto-build-captain-filters-empty"
+                                        class="favorites-only-warning"
+                                      >
                                         {{ t('captainAbilityFilters.empty') }}
                                       </p>
                                     }
@@ -631,7 +698,11 @@
                                   <section class="ability-requirements-card">
                                     <div class="slot-grid__header">
                                       <h2>{{ t('requiredCharacters.title') }}</h2>
-                                      <p>{{ t('requiredCharacters.copy') }}</p>
+                                      @if (requiredCharactersSectionExpanded()) {
+                                        <p id="auto-build-required-characters-copy">
+                                          {{ t('requiredCharacters.copy') }}
+                                        </p>
+                                      }
                                     </div>
 
                                     <div class="manual-locks-meta ability-requirements-meta">
@@ -643,6 +714,36 @@
                                         }}
                                       </strong>
                                       <div class="ability-requirements-actions">
+                                        @if (requiredCharactersSectionEmpty()) {
+                                          <button
+                                            type="button"
+                                            class="section-details-toggle"
+                                            data-testid="required-characters-details-toggle"
+                                            aria-controls="auto-build-required-characters-copy auto-build-required-characters-battles"
+                                            [attr.aria-expanded]="
+                                              requiredCharactersSectionExpanded() ? 'true' : 'false'
+                                            "
+                                            (click)="toggleEmptySection('requiredCharacters')"
+                                          >
+                                            {{
+                                              requiredCharactersSectionExpanded()
+                                                ? t('sections.hideDetails')
+                                                : t('sections.showDetails')
+                                            }}
+                                          </button>
+                                        }
+                                        @if (!requiredCharactersSectionExpanded()) {
+                                          <ion-button
+                                            fill="clear"
+                                            size="small"
+                                            class="select-all-button"
+                                            data-testid="required-characters-add-first"
+                                            [disabled]="!canAddFirstRequiredCharacter()"
+                                            (click)="addFirstRequiredCharacter()"
+                                          >
+                                            {{ t('requiredCharacters.actions.add') }}
+                                          </ion-button>
+                                        }
                                         <ion-button
                                           fill="clear"
                                           size="small"
@@ -664,14 +765,17 @@
                                       </div>
                                     </div>
 
-                                    @if (!requiredBattleViews().length) {
-                                      <p class="favorites-only-warning">
+                                    @if (!requiredBattleViews().length && requiredCharactersSectionExpanded()) {
+                                      <p
+                                        id="auto-build-required-characters-battles"
+                                        class="favorites-only-warning"
+                                      >
                                         {{ t('requiredCharacters.empty') }}
                                       </p>
                                     }
 
-                                    @if (requiredBattleViews().length) {
-                                      <div class="required-battle-grid">
+                                    @if (requiredBattleViews().length && requiredCharactersSectionExpanded()) {
+                                      <div id="auto-build-required-characters-battles" class="required-battle-grid">
                                         @for (
                                           battleView of requiredBattleViews();
                                           track battleView.battle.id
@@ -1885,12 +1989,32 @@
                                           class="slot-grid__header manual-locks-overview__header"
                                         >
                                           <h2>{{ t('exclude.title') }}</h2>
-                                          <p>{{ t('exclude.copy') }}</p>
+                                          @if (excludeSectionExpanded()) {
+                                            <p id="auto-build-exclude-copy">{{ t('exclude.copy') }}</p>
+                                          }
                                         </div>
 
                                         <div class="manual-locks-meta">
                                           <strong>{{ excludedSelectionSummaryLabel() }}</strong>
                                           <div class="ability-requirements-actions">
+                                            @if (excludeSectionEmpty()) {
+                                              <button
+                                                type="button"
+                                                class="section-details-toggle"
+                                                data-testid="exclude-details-toggle"
+                                                aria-controls="auto-build-exclude-copy auto-build-exclude-box"
+                                                [attr.aria-expanded]="
+                                                  excludeSectionExpanded() ? 'true' : 'false'
+                                                "
+                                                (click)="toggleEmptySection('exclude')"
+                                              >
+                                                {{
+                                                  excludeSectionExpanded()
+                                                    ? t('sections.hideDetails')
+                                                    : t('sections.showDetails')
+                                                }}
+                                              </button>
+                                            }
                                             <ion-button
                                               fill="clear"
                                               size="small"
@@ -1921,7 +2045,8 @@
                                           </div>
                                         </div>
 
-                                        <div class="exclude-box-select-row">
+                                        @if (excludeSectionExpanded()) {
+                                        <div id="auto-build-exclude-box" class="exclude-box-select-row">
                                           <div class="strict-toggle-copy">
                                             <strong>{{ t('exclude.characterBox.label') }}</strong>
                                             <small>{{ excludeCharacterBoxSupportLabel() }}</small>
@@ -1949,6 +2074,7 @@
                                             }
                                           </ion-select>
                                         </div>
+                                        }
 
                                         @if (hasExcludedCharacters()) {
                                           <div class="selected-values-row manual-selected-row">

@@ -59,6 +59,9 @@ const SAVED_RUMBLE_TEAMS_KEY = 'savedRumbleTeams';
 const CREW_FORGE_IMAGE_PROFILES_KEY = 'crewForgeImageProfiles';
 const CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY = 'crewForgeLastImageProfileId';
 const AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY = 'autoTeamBuilderWorkerPreference';
+// Device-local on purpose: not in the Drive sync scope or the all-data transfer, so a hint the
+// player dismissed on one device still greets them once on a new one.
+const BUILDER_INTRO_DISMISSED_KEY = 'builderIntroDismissed';
 const AUTO_TEAM_BUILDER_MANUAL_WORKER_MAX_RATIO = 0.65;
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
   remove_defense_up: 'remove_enemy_increased_defense',
@@ -69,6 +72,10 @@ const AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE: AutoTeamBuilderWorkerPreferen
 };
 
 export type AutoTeamBuilderWorkerMode = 'auto' | 'manual';
+
+/** The two builders with a first-visit "How this page works" card (869exmkpw). */
+export type BuilderIntroPage = 'autoTeamBuilder' | 'manualTeamBuilder';
+export type BuilderIntroDismissedState = Record<BuilderIntroPage, boolean>;
 
 export interface AutoTeamBuilderWorkerPreference {
   mode: AutoTeamBuilderWorkerMode;
@@ -97,7 +104,8 @@ type UserStateHydrationDomain =
   | 'savedEnemies'
   | 'savedRumbleTeams'
   | 'crewForgeImageProfiles'
-  | 'autoTeamBuilderWorkerPreference';
+  | 'autoTeamBuilderWorkerPreference'
+  | 'builderIntroDismissed';
 
 @Injectable({ providedIn: 'root' })
 export class UserStateService {
@@ -119,6 +127,10 @@ export class UserStateService {
   public readonly autoTeamBuilderWorkerPreference = signal<AutoTeamBuilderWorkerPreference>(
     AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE,
   );
+  public readonly builderIntroDismissed = signal<BuilderIntroDismissedState>({
+    autoTeamBuilder: false,
+    manualTeamBuilder: false,
+  });
 
   private readonly hydratedDomains = new Set<UserStateHydrationDomain>();
   private readonly hydrationPromises = new Map<UserStateHydrationDomain, Promise<void>>();
@@ -142,6 +154,7 @@ export class UserStateService {
       this.readySavedRumbleTeams(),
       this.readyCrewForgeImageProfiles(),
       this.readyAutoTeamBuilderWorkerPreference(),
+      this.readyBuilderIntroDismissed(),
     ]);
   }
 
@@ -247,6 +260,28 @@ export class UserStateService {
         this.normalizeAutoTeamBuilderWorkerPreference(autoTeamBuilderWorkerPreference),
       );
     });
+  }
+
+  public async readyBuilderIntroDismissed(): Promise<void> {
+    await this.ensureHydrated('builderIntroDismissed', async () => {
+      const stored = await this.readJson<Partial<BuilderIntroDismissedState> | null>(
+        BUILDER_INTRO_DISMISSED_KEY,
+        null,
+      );
+
+      this.builderIntroDismissed.set({
+        autoTeamBuilder: stored?.autoTeamBuilder === true,
+        manualTeamBuilder: stored?.manualTeamBuilder === true,
+      });
+    });
+  }
+
+  public async setBuilderIntroDismissed(page: BuilderIntroPage, dismissed: boolean): Promise<void> {
+    await this.readyBuilderIntroDismissed();
+    const next: BuilderIntroDismissedState = { ...this.builderIntroDismissed(), [page]: dismissed };
+
+    this.builderIntroDismissed.set(next);
+    await this.persistJson(BUILDER_INTRO_DISMISSED_KEY, next);
   }
 
   public async toggleFavorite(characterId: number): Promise<void> {

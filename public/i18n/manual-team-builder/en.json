@@ -37,6 +37,18 @@
     "eyebrow": "Fixed crew builder",
     "title": "Manual Team Builder"
   },
+  "intro": {
+    "actions": {
+      "dismiss": "Hide",
+      "show": "Show"
+    },
+    "steps": {
+      "one": "Slot 1 is your Captain. Slot 2 is the Friend Captain, which is optional.",
+      "three": "Press Save manual team to keep the team in Saved Teams, and share it from there.",
+      "two": "Fill the four subs. The team summary checks your Captain's conditions and the cost."
+    },
+    "title": "How this page works"
+  },
   "loading": "Loading manual team builder...",
   "picker": {
     "assignedElsewhere": "Already used in another fixed slot.",
@@ -142,6 +154,16 @@
     "emptyAlt": "Empty character slot",
     "label": "Slot {{slot}}",
     "noAbilityPreview": "No captain or special text available."
+  },
+  "statusLine": {
+    "captainMissing": "No Captain yet",
+    "captainSet": "Captain set",
+    "cost": "Cost {{used}}",
+    "costWithMax": "Cost {{used}} / {{max}}",
+    "filled": "{{filled}} / {{total}} filled",
+    "friendCaptainOptional": "Friend Captain optional",
+    "friendCaptainSet": "Friend Captain set",
+    "subsMissing": "Subs to add: {{count}}"
   },
   "summary": {
     "copy": "Live totals for the visible fixed slots and current cost budget.",

@@ -270,6 +270,8 @@ interface AutoBuildFinalReportRow {
 }
 
 const AUTO_TEAM_COMPARE_SESSION_KEY = 'autoTeamBuilder.compareState.v1';
+
+export type AutoTeamBuilderCollapsibleSection = 'captainFilters' | 'requiredCharacters' | 'exclude';
 const AUTO_TEAM_COMPARE_SIDES: AutoTeamCompareSide[] = ['a', 'b'];
 
 function createAutoTeamCompareSideState(
@@ -1521,6 +1523,92 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return this.leaderBoostRangeErrorLabel();
   });
+  /**
+   * The hero's status line (869exmkr2): ready to build, or the one thing missing, plus how many
+   * slots are locked - said at the top instead of only under Build, far down the page.
+   */
+  public readonly buildReadinessLabel = computed(() => {
+    if (!this.pageReady()) {
+      return '';
+    }
+
+    // Said, not hidden, while a team is being built: the hero row does not reflow at start and end.
+    if (this.building()) {
+      return this.t('hero.meta.building');
+    }
+
+    if (!this.buildDisabled()) {
+      return this.t('hero.meta.ready');
+    }
+
+    if (!this.hasSelectedTypes()) {
+      return this.t('hero.meta.needsType');
+    }
+
+    if (!this.hasSelectedClasses()) {
+      return this.t('hero.meta.needsClass');
+    }
+
+    if (this.hasInvalidLeaderBoostRanges()) {
+      return this.t('hero.meta.needsBoostRange');
+    }
+
+    // Favourites-only or a character box that leaves nobody: the warning sits above the slots.
+    return this.t('hero.meta.blocked');
+  });
+  public readonly lockedSlotsLabel = computed(() =>
+    this.t('hero.meta.lockedSlots', {
+      count: this.manualSlots().filter((slot) => slot.characterIds.length > 0).length,
+      total: this.manualSlots().length,
+    }),
+  );
+  /**
+   * The first-visit "How this page works" card (869exmkpw; owner, 2026-09-11: on both builders,
+   * inline, shown until dismissed). A handoff - a saved team or enemy opened here - already knows
+   * what it wants, so the card stays out of its way for that visit.
+   */
+  public readonly introOpenedFromHandoff = signal(false);
+  private readonly introShownOnRequest = signal(false);
+  public readonly introVisible = computed(
+    () => this.pageReady() && !this.introOpenedFromHandoff(),
+  );
+  public readonly introExpanded = computed(
+    () => !this.userState.builderIntroDismissed().autoTeamBuilder || this.introShownOnRequest(),
+  );
+  /**
+   * Compact by default (869exmkqr; owner, 2026-09-11): these three sections start collapsed only
+   * while they hold nothing, and a section with active rules is never hidden - it has no toggle.
+   * Collapsing hides the explanation and the empty note; the summary and every button stay. A
+   * section the player has worked in this visit stays open when they empty it, rather than
+   * closing under the pointer.
+   */
+  private readonly expandedEmptySections = signal<ReadonlySet<AutoTeamBuilderCollapsibleSection>>(
+    new Set(),
+  );
+  public readonly captainFiltersSectionEmpty = computed(
+    () => this.captainFilterSummaryChips().length === 0,
+  );
+  // Every visit starts with one placeholder battle, so "empty" means no battle holds a character.
+  public readonly requiredCharactersSectionEmpty = computed(() =>
+    this.battleRequirements().every((battle) => battle.requiredCharacterGroups.length === 0),
+  );
+  public readonly excludeSectionEmpty = computed(
+    () =>
+      !this.hasExcludedCharacters() &&
+      !this.hasExcludedShips() &&
+      this.selectedExcludeCharacterBoxId() === null,
+  );
+  public readonly captainFiltersSectionExpanded = computed(
+    () => !this.captainFiltersSectionEmpty() || this.expandedEmptySections().has('captainFilters'),
+  );
+  public readonly requiredCharactersSectionExpanded = computed(
+    () =>
+      !this.requiredCharactersSectionEmpty() ||
+      this.expandedEmptySections().has('requiredCharacters'),
+  );
+  public readonly excludeSectionExpanded = computed(
+    () => !this.excludeSectionEmpty() || this.expandedEmptySections().has('exclude'),
+  );
   public readonly hasStrictFilters = computed(() => this.requireAllSlotsInLeaderSuperEffectScope());
   public readonly allClassesSelected = computed(
     () =>
@@ -3133,6 +3221,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly optionalManualPickIcon = lockOpenOutline;
   public readonly presetImportSuccessIcon = checkmarkCircleOutline;
   public readonly presetImportErrorIcon = alertCircleOutline;
+  public readonly readyIcon = checkmarkCircleOutline;
+  public readonly notReadyIcon = alertCircleOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -3183,6 +3273,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.userState.readyCharacterBoxes(),
       this.userState.readySavedTeams(),
       this.userState.readyAutoTeamBuilderWorkerPreference(),
+      this.userState.readyBuilderIntroDismissed(),
       this.i18n.preloadScope('auto-team-builder'),
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('character-tag-filter'),
@@ -3223,6 +3314,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public async ionViewWillEnter(): Promise<void> {
+    // A handoff clears its query parameter once applied, so read it before anything awaits.
+    const routeParams = this.route.snapshot.queryParamMap;
+
+    this.introOpenedFromHandoff.set(
+      Boolean(routeParams.get('teamId')?.trim() || routeParams.get('enemyId')?.trim()),
+    );
+    // Ionic keeps the page alive between visits; Show reopens the card for one visit only.
+    this.introShownOnRequest.set(false);
+
     // Never reset ahead of the first load: `ngOnInit` owns that one and it is
     // the only reset that runs with the dataset in hand.
     await this.initialLoad;
@@ -3372,6 +3472,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     bound: keyof AutoBuildLeaderBoostRange,
     event: CustomEvent<{ value?: string | number | null }>,
   ): void {
+    this.keepSectionOpen('captainFilters');
     const nextBound = this.resolveLeaderBoostRangeBound(event.detail.value);
     const currentRanges = this.leaderBoostRanges();
 
@@ -3628,6 +3729,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public removeExcludedCharacter(characterId: number, event?: Event): void {
     event?.stopPropagation();
+    this.keepSectionOpen('exclude');
     this.excludedCharacterIds.update((currentIds) =>
       currentIds.filter((currentCharacterId) => currentCharacterId !== characterId),
     );
@@ -3635,6 +3737,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public clearExcludedCharacters(): void {
+    this.keepSectionOpen('exclude');
     this.excludedCharacterIds.set([]);
     this.resetBuildState();
   }
@@ -3662,6 +3765,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public removeExcludedShip(shipId: number, event?: Event): void {
     event?.stopPropagation();
+    this.keepSectionOpen('exclude');
     this.excludedShipIds.update((currentIds) =>
       currentIds.filter((currentId) => currentId !== shipId),
     );
@@ -3676,6 +3780,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public clearExcludedShips(): void {
+    this.keepSectionOpen('exclude');
     this.excludedShipIds.set([]);
 
     if (this.result()) {
@@ -3805,6 +3910,58 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     return this.t('compare.empty.imported');
+  }
+
+  /**
+   * While Required characters is compact, its placeholder battle - and that battle's own Add - is
+   * hidden, so the summary row offers the same first step: a required character in the first
+   * battle, or a first battle when a handoff left none.
+   */
+  public canAddFirstRequiredCharacter(): boolean {
+    const firstBattle = this.battleRequirements()[0];
+
+    return firstBattle
+      ? this.canAddRequiredCharacterGroup(firstBattle.id)
+      : this.canAddBattleRequirement();
+  }
+
+  public async addFirstRequiredCharacter(): Promise<void> {
+    const firstBattle = this.battleRequirements()[0];
+
+    this.keepSectionOpen('requiredCharacters');
+
+    if (firstBattle) {
+      await this.addRequiredCharacterGroup(firstBattle.id);
+    } else {
+      await this.addBattleRequirement();
+    }
+  }
+
+  private keepSectionOpen(section: AutoTeamBuilderCollapsibleSection): void {
+    if (!this.expandedEmptySections().has(section)) {
+      this.expandedEmptySections.set(new Set([...this.expandedEmptySections(), section]));
+    }
+  }
+
+  public toggleEmptySection(section: AutoTeamBuilderCollapsibleSection): void {
+    const next = new Set(this.expandedEmptySections());
+
+    if (next.has(section)) {
+      next.delete(section);
+    } else {
+      next.add(section);
+    }
+
+    this.expandedEmptySections.set(next);
+  }
+
+  public async dismissIntro(): Promise<void> {
+    this.introShownOnRequest.set(false);
+    await this.userState.setBuilderIntroDismissed('autoTeamBuilder', true);
+  }
+
+  public showIntro(): void {
+    this.introShownOnRequest.set(true);
   }
 
   public toggleCompareMode(): void {
@@ -4633,6 +4790,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public onExcludeCharacterBoxChange(event: CustomEvent<{ value?: string | null }>): void {
     const nextValue = typeof event.detail.value === 'string' ? event.detail.value.trim() : '';
 
+    this.keepSectionOpen('exclude');
     this.selectedExcludeCharacterBoxId.set(nextValue.length > 0 ? nextValue : null);
     this.removeCharactersFromAllManualSlots(this.selectedExcludeCharacterBoxIds());
     this.resetBuildState();
@@ -4681,6 +4839,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public async saveCaptainAbilityPicker(drafts: AbilityRequirementDraft[]): Promise<void> {
+    this.keepSectionOpen('captainFilters');
     const requirements = serializeCaptainAbilityDrafts(
       drafts,
       this.availableCaptainAbilityCatalogItems(),
@@ -4698,6 +4857,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public saveCaptainLeaderBoostSettings(
     settings: AbilityRequirementPickerLeaderBoostSettings,
   ): void {
+    this.keepSectionOpen('captainFilters');
     this.leaderBoostFilters.set(
       settings.filters.length ? [...settings.filters] : [...AUTO_BUILD_LEADER_BOOST_FILTERS],
     );
@@ -4705,6 +4865,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public async clearCaptainAbilityFilters(): Promise<void> {
+    this.keepSectionOpen('captainFilters');
     this.captainAbilityDrafts.set([]);
     this.leaderBoostFilters.set([...AUTO_BUILD_LEADER_BOOST_FILTERS]);
     this.leaderBoostRanges.set(createEmptyAutoBuildLeaderBoostRanges());
@@ -4858,6 +5019,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       ...battles,
       createEmptyBattleRequirement(battles.length),
     ]);
+    // A battle added to a compact section must not appear hidden.
+    this.keepSectionOpen('requiredCharacters');
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
   }
@@ -4877,6 +5040,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
+    this.keepSectionOpen('requiredCharacters');
     this.battleRequirements.update((battles) => battles.filter((battle) => battle.id !== battleId));
 
     if (this.activeRequiredCharacterBattleId() === battleId) {
@@ -4890,6 +5054,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public async removeRequiredCharacterGroup(battleId: string, groupId: string): Promise<void> {
+    this.keepSectionOpen('requiredCharacters');
     this.battleRequirements.update((battles) =>
       battles.map((battle) =>
         battle.id === battleId
@@ -6168,6 +6333,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private async resetPageState(): Promise<void> {
     const defaultFilters = buildDefaultAutoTeamBuilderFilterState(this.availableClasses());
 
+    this.expandedEmptySections.set(new Set());
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.crewmateAbilityPickerOpen.set(false);

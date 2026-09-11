@@ -21,6 +21,35 @@
             <p class="section-copy">{{ t('hero.copy') }}</p>
           </section>
 
+          @if (introVisible()) {
+            <section
+              class="glass-card builder-intro-card"
+              data-testid="manual-build-intro"
+              aria-labelledby="manual-build-intro-title"
+            >
+              <div class="builder-intro-card__head">
+                <h2 id="manual-build-intro-title">{{ t('intro.title') }}</h2>
+                <button
+                  type="button"
+                  class="builder-intro-card__toggle"
+                  data-testid="manual-build-intro-toggle"
+                  aria-controls="manual-build-intro-steps"
+                  [attr.aria-expanded]="introExpanded() ? 'true' : 'false'"
+                  (click)="introExpanded() ? dismissIntro() : showIntro()"
+                >
+                  {{ introExpanded() ? t('intro.actions.dismiss') : t('intro.actions.show') }}
+                </button>
+              </div>
+              @if (introExpanded()) {
+                <ol id="manual-build-intro-steps" class="builder-intro-card__steps">
+                  <li>{{ t('intro.steps.one') }}</li>
+                  <li>{{ t('intro.steps.two') }}</li>
+                  <li>{{ t('intro.steps.three') }}</li>
+                </ol>
+              }
+            </section>
+          }
+
           @if (loading()) {
             <section class="glass-card loading-card">
               <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
@@ -38,6 +67,9 @@
                   <div>
                     <h2>{{ t('builder.title') }}</h2>
                     <span>{{ t('builder.copy') }}</span>
+                    <p class="manual-team-status-line" data-testid="manual-team-status-line">
+                      {{ teamStatusLine() }}
+                    </p>
                   </div>
                 </div>
 
