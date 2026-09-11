@@ -270,6 +270,8 @@ interface AutoBuildFinalReportRow {
 }
 
 const AUTO_TEAM_COMPARE_SESSION_KEY = 'autoTeamBuilder.compareState.v1';
+
+export type AutoTeamBuilderCollapsibleSection = 'captainFilters' | 'requiredCharacters' | 'exclude';
 const AUTO_TEAM_COMPARE_SIDES: AutoTeamCompareSide[] = ['a', 'b'];
 
 function createAutoTeamCompareSideState(
@@ -1521,6 +1523,85 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return this.leaderBoostRangeErrorLabel();
   });
+  /**
+   * The hero's status line (869exmkr2): ready to build, or the one thing missing, plus how many
+   * slots are locked - said at the top instead of only under Build, far down the page.
+   */
+  public readonly buildReadinessLabel = computed(() => {
+    if (this.controlsDisabled()) {
+      return '';
+    }
+
+    if (!this.buildDisabled()) {
+      return this.t('hero.meta.ready');
+    }
+
+    if (!this.hasSelectedTypes()) {
+      return this.t('hero.meta.needsType');
+    }
+
+    if (!this.hasSelectedClasses()) {
+      return this.t('hero.meta.needsClass');
+    }
+
+    if (this.hasInvalidLeaderBoostRanges()) {
+      return this.t('hero.meta.needsBoostRange');
+    }
+
+    // Favourites-only or a character box that leaves nobody: the warning sits above the slots.
+    return this.t('hero.meta.blocked');
+  });
+  public readonly lockedSlotsLabel = computed(() =>
+    this.t('hero.meta.lockedSlots', {
+      count: this.manualSlots().filter((slot) => slot.characterIds.length > 0).length,
+      total: this.manualSlots().length,
+    }),
+  );
+  /**
+   * The first-visit "How this page works" card (869exmkpw; owner, 2026-09-11: on both builders,
+   * inline, shown until dismissed). A handoff - a saved team or enemy opened here - already knows
+   * what it wants, so the card stays out of its way for that visit.
+   */
+  public readonly introOpenedFromHandoff = signal(false);
+  private readonly introShownOnRequest = signal(false);
+  public readonly introVisible = computed(
+    () => this.pageReady() && !this.introOpenedFromHandoff(),
+  );
+  public readonly introExpanded = computed(
+    () => !this.userState.builderIntroDismissed().autoTeamBuilder || this.introShownOnRequest(),
+  );
+  /**
+   * Compact by default (869exmkqr; owner, 2026-09-11): these three sections start collapsed only
+   * while they hold nothing, and a section with active rules is never hidden - it has no toggle.
+   * Collapsing hides the explanation and the empty note; the summary and every button stay.
+   */
+  private readonly expandedEmptySections = signal<ReadonlySet<AutoTeamBuilderCollapsibleSection>>(
+    new Set(),
+  );
+  public readonly captainFiltersSectionEmpty = computed(
+    () => this.captainFilterSummaryChips().length === 0,
+  );
+  // Every visit starts with one placeholder battle, so "empty" means no battle holds a character.
+  public readonly requiredCharactersSectionEmpty = computed(() =>
+    this.battleRequirements().every((battle) => battle.requiredCharacterGroups.length === 0),
+  );
+  public readonly excludeSectionEmpty = computed(
+    () =>
+      !this.hasExcludedCharacters() &&
+      !this.hasExcludedShips() &&
+      this.selectedExcludeCharacterBoxId() === null,
+  );
+  public readonly captainFiltersSectionExpanded = computed(
+    () => !this.captainFiltersSectionEmpty() || this.expandedEmptySections().has('captainFilters'),
+  );
+  public readonly requiredCharactersSectionExpanded = computed(
+    () =>
+      !this.requiredCharactersSectionEmpty() ||
+      this.expandedEmptySections().has('requiredCharacters'),
+  );
+  public readonly excludeSectionExpanded = computed(
+    () => !this.excludeSectionEmpty() || this.expandedEmptySections().has('exclude'),
+  );
   public readonly hasStrictFilters = computed(() => this.requireAllSlotsInLeaderSuperEffectScope());
   public readonly allClassesSelected = computed(
     () =>
@@ -3133,6 +3214,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly optionalManualPickIcon = lockOpenOutline;
   public readonly presetImportSuccessIcon = checkmarkCircleOutline;
   public readonly presetImportErrorIcon = alertCircleOutline;
+  public readonly readyIcon = checkmarkCircleOutline;
+  public readonly notReadyIcon = alertCircleOutline;
 
   public constructor(
     private readonly repository: OptcRepositoryService,
@@ -3183,6 +3266,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.userState.readyCharacterBoxes(),
       this.userState.readySavedTeams(),
       this.userState.readyAutoTeamBuilderWorkerPreference(),
+      this.userState.readyBuilderIntroDismissed(),
       this.i18n.preloadScope('auto-team-builder'),
       this.i18n.preloadScope('ability-picker'),
       this.i18n.preloadScope('character-tag-filter'),
@@ -3223,6 +3307,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   public async ionViewWillEnter(): Promise<void> {
+    // A handoff clears its query parameter once applied, so read it before anything awaits.
+    const routeParams = this.route.snapshot.queryParamMap;
+
+    this.introOpenedFromHandoff.set(
+      Boolean(routeParams.get('teamId')?.trim() || routeParams.get('enemyId')?.trim()),
+    );
+
     // Never reset ahead of the first load: `ngOnInit` owns that one and it is
     // the only reset that runs with the dataset in hand.
     await this.initialLoad;
@@ -3805,6 +3896,27 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     return this.t('compare.empty.imported');
+  }
+
+  public toggleEmptySection(section: AutoTeamBuilderCollapsibleSection): void {
+    const next = new Set(this.expandedEmptySections());
+
+    if (next.has(section)) {
+      next.delete(section);
+    } else {
+      next.add(section);
+    }
+
+    this.expandedEmptySections.set(next);
+  }
+
+  public async dismissIntro(): Promise<void> {
+    this.introShownOnRequest.set(false);
+    await this.userState.setBuilderIntroDismissed('autoTeamBuilder', true);
+  }
+
+  public showIntro(): void {
+    this.introShownOnRequest.set(true);
   }
 
   public toggleCompareMode(): void {
@@ -4858,6 +4970,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       ...battles,
       createEmptyBattleRequirement(battles.length),
     ]);
+    // A battle added to a compact section must not appear hidden.
+    this.expandedEmptySections.set(
+      new Set([...this.expandedEmptySections(), 'requiredCharacters']),
+    );
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
   }
@@ -6168,6 +6284,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private async resetPageState(): Promise<void> {
     const defaultFilters = buildDefaultAutoTeamBuilderFilterState(this.availableClasses());
 
+    this.expandedEmptySections.set(new Set());
     this.enemyMechanicPickerOpen.set(false);
     this.abilityPickerOpen.set(false);
     this.crewmateAbilityPickerOpen.set(false);

@@ -4637,6 +4637,147 @@ describe('AutoTeamBuilderPage builder interactions', () => {
    * the plain messages unreachable, and never named the Captain boost range or the class pool -
    * the two rules no fallback relaxes.
    */
+  /*
+   * 869exmkpw (owner, 2026-09-11): a "How this page works" card on both builders, inline, shown
+   * until dismissed - and out of the way when a saved team or enemy is opened here.
+   */
+  it('shows the intro card until it is dismissed, and not on a handoff', async () => {
+    const { page, userState } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+
+    expect(template).toContain('@if (introVisible())');
+    expect(template).toContain('aria-controls="auto-build-intro-steps"');
+    expect(template).toContain("{{ t('intro.steps.three') }}");
+    expect(page.introVisible()).toBe(false);
+
+    await page.ngOnInit();
+
+    expect(userState.readyBuilderIntroDismissed).toHaveBeenCalled();
+    expect(page.introVisible()).toBe(true);
+    expect(page.introExpanded()).toBe(true);
+
+    await page.dismissIntro();
+
+    expect(userState.setBuilderIntroDismissed).toHaveBeenCalledWith('autoTeamBuilder', true);
+    expect(page.introExpanded()).toBe(false);
+
+    // Show opens it for this visit without forgetting the dismissal.
+    page.showIntro();
+    expect(page.introExpanded()).toBe(true);
+    expect(userState.builderIntroDismissed().autoTeamBuilder).toBe(true);
+
+    for (const handoff of [{ routeTeamId: 'team-1' }, { routeEnemyId: 'enemy-1' }]) {
+      const { page: handoffPage } = await createPage(handoff);
+
+      await handoffPage.ngOnInit();
+      await handoffPage.ionViewWillEnter();
+
+      expect(handoffPage.introVisible(), JSON.stringify(handoff)).toBe(false);
+    }
+  });
+
+  // 869exmkr2: ready to build, or the one thing missing, plus the locks - at the top of the page.
+  it('says at the top whether Build is ready, and how many slots are locked', async () => {
+    const { page } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+
+    expect(template).toContain('{{ buildReadinessLabel() }} · {{ lockedSlotsLabel() }}');
+    expect(page.buildReadinessLabel()).toBe('');
+
+    await page.ngOnInit();
+    expect(page.buildReadinessLabel()).toBe('Ready to build');
+    expect(page.lockedSlotsLabel()).toBe('0 / 6 slots locked');
+
+    page.manualSlots.set(createManualSlots({ captain: [101] }));
+    expect(page.lockedSlotsLabel()).toBe('1 / 6 slots locked');
+
+    page.selectedTypes.set([]);
+    expect(page.buildReadinessLabel()).toBe('Pick a type to build');
+
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set([]);
+    expect(page.buildReadinessLabel()).toBe('Pick a class to build');
+
+    page.selectedClasses.set(['Fighter']);
+    page.leaderBoostRanges.set({
+      ...createEmptyAutoBuildLeaderBoostRanges(),
+      ATK: { min: 5, max: 2 },
+    });
+    expect(page.buildReadinessLabel()).toBe('Fix the Captain boost range');
+
+    page.leaderBoostRanges.set(createEmptyAutoBuildLeaderBoostRanges());
+    page.selectedCharacterBoxId.set('box-empty');
+    expect(page.buildDisabled()).toBe(true);
+    expect(page.buildReadinessLabel()).toBe('Not ready: see the warning above Manual picks');
+  });
+
+  /*
+   * 869exmkqr (owner, 2026-09-11): the three sections start collapsed only while empty. A section
+   * with active rules is never hidden, so it has no toggle at all.
+   */
+  it('keeps the three sections compact while empty, and never hides active rules', async () => {
+    const { page } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+
+    for (const section of ['captain-filters', 'required-characters', 'exclude']) {
+      expect(template, section).toContain(`data-testid="${section}-details-toggle"`);
+    }
+
+    expect(template).toContain('@if (captainFiltersSectionEmpty())');
+    expect(template).toContain('@if (requiredCharactersSectionEmpty())');
+    expect(template).toContain('@if (excludeSectionEmpty())');
+
+    await page.ngOnInit();
+
+    expect(page.captainFiltersSectionExpanded()).toBe(false);
+    expect(page.requiredCharactersSectionExpanded()).toBe(false);
+    expect(page.excludeSectionExpanded()).toBe(false);
+
+    page.toggleEmptySection('captainFilters');
+    expect(page.captainFiltersSectionExpanded()).toBe(true);
+    page.toggleEmptySection('captainFilters');
+    expect(page.captainFiltersSectionExpanded()).toBe(false);
+
+    // Active rules: expanded, with nothing to collapse.
+    page.leaderBoostRanges.set({
+      ...createEmptyAutoBuildLeaderBoostRanges(),
+      ATK: { min: 5, max: null },
+    });
+    expect(page.captainFiltersSectionEmpty()).toBe(false);
+    expect(page.captainFiltersSectionExpanded()).toBe(true);
+
+    // Adding a battle opens the section, so the new battle is never added out of sight.
+    await page.addBattleRequirement();
+    expect(page.requiredCharactersSectionEmpty()).toBe(true);
+    expect(page.requiredCharactersSectionExpanded()).toBe(true);
+
+    page.excludedCharacterIds.set([101]);
+    expect(page.excludeSectionExpanded()).toBe(true);
+
+    page.excludedCharacterIds.set([]);
+    page.toggleEmptySection('exclude');
+    expect(page.excludeSectionExpanded()).toBe(true);
+
+    // Every visit starts from the default again.
+    await page.ionViewWillEnter();
+    expect(page.excludeSectionExpanded()).toBe(false);
+    expect(page.requiredCharactersSectionExpanded()).toBe(false);
+
+    // A battle that holds a character is an active rule: open, with nothing to collapse.
+    await page.addRequiredCharacterGroup(page.battleRequirements()[0]!.id);
+    expect(page.requiredCharactersSectionEmpty()).toBe(false);
+    expect(page.requiredCharactersSectionExpanded()).toBe(true);
+  });
+
   it('names only the rules a failed build could not relax', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -9749,6 +9890,12 @@ async function createPage(
     resolveAutoTeamBuilderWorkerCount: ReturnType<typeof vi.fn>;
     resolveAutoTeamBuilderWorkerPreference: ReturnType<typeof vi.fn>;
     setAutoTeamBuilderWorkerPreference: ReturnType<typeof vi.fn>;
+    builderIntroDismissed: {
+      (): { autoTeamBuilder: boolean; manualTeamBuilder: boolean };
+      set(value: { autoTeamBuilder: boolean; manualTeamBuilder: boolean }): void;
+    };
+    readyBuilderIntroDismissed: ReturnType<typeof vi.fn>;
+    setBuilderIntroDismissed: ReturnType<typeof vi.fn>;
     saveCharacterBox: ReturnType<typeof vi.fn>;
     saveTeam: ReturnType<typeof vi.fn>;
     toggleFavorite: ReturnType<typeof vi.fn>;
@@ -9923,6 +10070,7 @@ async function createPage(
     manualMaxCount: 7,
     manualMaxPercent: 58,
   });
+  const builderIntroDismissed = signal({ autoTeamBuilder: false, manualTeamBuilder: false });
   const userState = {
     favoriteCharacterIds: signal<number[]>([101, 102, 103]),
     favoriteShipIds: signal<number[]>([9001]),
@@ -9945,6 +10093,13 @@ async function createPage(
     readyAutoTeamBuilderWorkerPreference: vi.fn().mockResolvedValue(undefined),
     readySavedTeams: vi.fn().mockResolvedValue(undefined),
     readySavedEnemies: vi.fn().mockResolvedValue(undefined),
+    builderIntroDismissed,
+    readyBuilderIntroDismissed: vi.fn().mockResolvedValue(undefined),
+    setBuilderIntroDismissed: vi
+      .fn()
+      .mockImplementation(async (introPage: 'autoTeamBuilder' | 'manualTeamBuilder', dismissed: boolean) => {
+        builderIntroDismissed.set({ ...builderIntroDismissed(), [introPage]: dismissed });
+      }),
     autoTeamBuilderWorkerPreference,
     resolveAutoTeamBuilderWorkerCount: vi.fn().mockReturnValue(7),
     resolveAutoTeamBuilderWorkerPreference: vi.fn(resolveWorkerRuntime),

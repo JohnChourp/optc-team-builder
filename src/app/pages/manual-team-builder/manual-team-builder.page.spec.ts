@@ -459,6 +459,75 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.favoriteShipIds()).toEqual([9001, 9002]);
   });
 
+  // 869exmkr2: what is filled and what is missing, in one line under the builder header.
+  it('says in one line under the header what is filled and what is missing', async () => {
+    const { page } = createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/manual-team-builder/manual-team-builder.page.html'),
+      'utf8',
+    );
+    const header = template.indexOf("t('builder.title')");
+
+    expect(template.indexOf('{{ teamStatusLine() }}')).toBeGreaterThan(header);
+    expect(template.indexOf('{{ teamStatusLine() }}')).toBeLessThan(
+      template.indexOf('data-testid="manual-team-name"'),
+    );
+
+    await page.ngOnInit();
+    expect(page.teamStatusLine()).toBe(
+      '0 / 6 filled · No Captain yet · Subs to add: 4 · Friend Captain optional · Cost 0',
+    );
+
+    const slots = [601, 602, 603, 604, 605, 606].map((id) => createCharacterRecord(id));
+
+    page.slots.set(slots.map((slot, index) => (index === 1 ? null : slot)));
+    page.maxTotalCost.set(300);
+
+    const cost = slots[0]!.cost + slots.slice(2).reduce((total, slot) => total + slot.cost, 0);
+
+    expect(page.teamStatusLine()).toBe(
+      `5 / 6 filled · Captain set · Friend Captain optional · Cost ${cost} / 300`,
+    );
+
+    page.slots.set(slots);
+    expect(page.teamStatusLine()).toContain('6 / 6 filled · Captain set · Friend Captain set');
+  });
+
+  // 869exmkpw (owner, 2026-09-11): the same intro card as Auto Team Builder, kept out of handoffs.
+  it('shows the intro card until it is dismissed, and not for a shared or saved team', async () => {
+    const { page, userState } = createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/manual-team-builder/manual-team-builder.page.html'),
+      'utf8',
+    );
+
+    expect(template).toContain('@if (introVisible())');
+    expect(template).toContain('aria-controls="manual-build-intro-steps"');
+    expect(page.introVisible()).toBe(false);
+
+    await page.ngOnInit();
+
+    expect(userState.readyBuilderIntroDismissed).toHaveBeenCalled();
+    expect(page.introVisible()).toBe(true);
+    expect(page.introExpanded()).toBe(true);
+
+    await page.dismissIntro();
+    expect(userState.setBuilderIntroDismissed).toHaveBeenCalledWith('manualTeamBuilder', true);
+    expect(page.introExpanded()).toBe(false);
+
+    page.showIntro();
+    expect(page.introExpanded()).toBe(true);
+
+    for (const handoff of [{ routeTeamId: 'team-1' }, { routeTeamShare: 'not-a-share-code' }]) {
+      const { page: handoffPage } = createPage(handoff);
+
+      await handoffPage.ngOnInit();
+      await handoffPage.ionViewWillEnter();
+
+      expect(handoffPage.introVisible(), JSON.stringify(handoff)).toBe(false);
+    }
+  });
+
   it('computes captain condition status for fixed manual slots', async () => {
     const { page } = createPage();
     const slots = [601, 602, 603, 604, 605, 606].map((id) => createCharacterRecord(id));
@@ -1419,6 +1488,12 @@ function createPage(
     readySavedTeams: ReturnType<typeof vi.fn>;
     saveTeam: ReturnType<typeof vi.fn>;
     toggleShipFavorite: ReturnType<typeof vi.fn>;
+    builderIntroDismissed: {
+      (): { autoTeamBuilder: boolean; manualTeamBuilder: boolean };
+      set(value: { autoTeamBuilder: boolean; manualTeamBuilder: boolean }): void;
+    };
+    readyBuilderIntroDismissed: ReturnType<typeof vi.fn>;
+    setBuilderIntroDismissed: ReturnType<typeof vi.fn>;
   };
   i18n: {
     preloadScope: ReturnType<typeof vi.fn>;
@@ -1432,8 +1507,16 @@ function createPage(
   const ships = options.ships ?? [createShipRecord(9001), createShipRecord(9002)];
   const savedTeams = signal(options.savedTeams ?? []);
   const favoriteShipIds = signal<number[]>([9001]);
+  const builderIntroDismissed = signal({ autoTeamBuilder: false, manualTeamBuilder: false });
   const userState = {
     favoriteShipIds,
+    builderIntroDismissed,
+    readyBuilderIntroDismissed: vi.fn().mockResolvedValue(undefined),
+    setBuilderIntroDismissed: vi
+      .fn()
+      .mockImplementation(async (introPage: 'autoTeamBuilder' | 'manualTeamBuilder', dismissed: boolean) => {
+        builderIntroDismissed.set({ ...builderIntroDismissed(), [introPage]: dismissed });
+      }),
     ready: vi.fn().mockResolvedValue(undefined),
     readyFavoriteShipIds: vi.fn().mockResolvedValue(undefined),
     readySavedTeams: vi.fn().mockResolvedValue(undefined),
@@ -1509,6 +1592,11 @@ function createPage(
         params?: Record<string, string | number | boolean | null | undefined>,
         _scope?: string,
       ) => {
+        // The status line reads from the shipped English copy, so the test sees what players see.
+        if (key.startsWith('statusLine.')) {
+          return translateFromShippedEnglish(key, params);
+        }
+
         if (key === 'common.defaults.newCrew') {
           return 'New Crew';
         }
@@ -2072,4 +2160,28 @@ function createDragEvent(): DragEvent {
       setDragImage: vi.fn(),
     },
   } as unknown as DragEvent;
+}
+
+function translateFromShippedEnglish(
+  key: string,
+  params?: Record<string, string | number | boolean | null | undefined>,
+): string {
+  const english = JSON.parse(
+    readFileSync(resolve(process.cwd(), 'public/i18n/manual-team-builder/en.json'), 'utf8'),
+  ) as Record<string, unknown>;
+  const template = key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) => (node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined),
+      english,
+    );
+
+  if (typeof template !== 'string') {
+    return key;
+  }
+
+  return Object.entries(params ?? {}).reduce(
+    (text, [name, value]) => text.replaceAll(`{{${name}}}`, String(value)),
+    template,
+  );
 }

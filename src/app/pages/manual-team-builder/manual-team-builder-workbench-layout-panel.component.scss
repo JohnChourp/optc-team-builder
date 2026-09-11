@@ -81,6 +81,15 @@
   min-width: 0;
 }
 
+/* One line of what is filled and what is missing, under the builder header (869exmkr2). */
+.manual-team-status-line {
+  margin: 8px 0 0;
+  color: #f8fbff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
 .manual-team-fields,
 .manual-team-controls,
 .manual-team-picker,

@@ -1,8 +1,30 @@
 {
+  "intro": {
+    "actions": {
+      "dismiss": "Hide",
+      "show": "Show"
+    },
+    "steps": {
+      "one": "Lock the characters you already want in Manual picks. The builder fills the empty slots.",
+      "three": "Press Auto Team Build, then read the Final team report to see which rules your team kept and which it relaxed.",
+      "two": "Add what the stage needs: Captain ability requirements, Required characters for each battle, or an enemy from Saved Enemies."
+    },
+    "title": "How this page works"
+  },
+  "sections": {
+    "hideDetails": "Hide details",
+    "showDetails": "Show details"
+  },
   "title": "Auto Team Builder",
   "hero": {
     "meta": {
-      "availableClasses": "{{count}} classes available"
+      "availableClasses": "{{count}} classes available",
+      "blocked": "Not ready: see the warning above Manual picks",
+      "lockedSlots": "{{count}} / {{total}} slots locked",
+      "needsBoostRange": "Fix the Captain boost range",
+      "needsClass": "Pick a class to build",
+      "needsType": "Pick a type to build",
+      "ready": "Ready to build"
     },
     "teamStructure": {
       "dual": "Dual leader build",

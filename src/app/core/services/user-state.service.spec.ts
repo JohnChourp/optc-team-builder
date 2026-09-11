@@ -193,6 +193,34 @@ describe('UserStateService saved teams', () => {
     expect(service.resolveAutoTeamBuilderWorkerCount()).toBe(4);
   });
 
+  it('remembers each builder intro card as dismissed on this device only', async () => {
+    const store = new Map<string, string>([
+      ['builderIntroDismissed', JSON.stringify({ autoTeamBuilder: true, stray: true })],
+    ]);
+    const i18n = { translate: vi.fn((key: string) => key) };
+
+    preferences.get.mockImplementation(async ({ key }) => ({ value: store.get(key) ?? null }));
+
+    const service = new UserStateService(i18n as never, preferences as unknown as PreferencesAdapterService);
+
+    await service.readyBuilderIntroDismissed();
+    expect(service.builderIntroDismissed()).toEqual({
+      autoTeamBuilder: true,
+      manualTeamBuilder: false,
+    });
+
+    await service.setBuilderIntroDismissed('manualTeamBuilder', true);
+
+    expect(service.builderIntroDismissed()).toEqual({
+      autoTeamBuilder: true,
+      manualTeamBuilder: true,
+    });
+    expect(preferences.set).toHaveBeenLastCalledWith({
+      key: 'builderIntroDismissed',
+      value: JSON.stringify({ autoTeamBuilder: true, manualTeamBuilder: true }),
+    });
+  });
+
   it('persists normalized auto team builder worker preferences', async () => {
     vi.stubGlobal('navigator', { hardwareConcurrency: 10 });
     const { service, setCalls } = await createService();

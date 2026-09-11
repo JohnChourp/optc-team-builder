@@ -424,6 +424,41 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       : '';
   });
   public readonly filledSlotCount = computed(() => this.slots().filter(Boolean).length);
+  /**
+   * One line under the builder header (869exmkr2): what is filled and what is missing, at the top.
+   * The same facts sat only in the side panel, which drops below all six slots on narrower
+   * screens. The Friend Captain reads "optional" - a team needs none (owner, 2026-09-08).
+   */
+  public readonly teamStatusLine = computed(() => {
+    const slots = this.slots();
+    const missingSubCount = slots
+      .slice(MANUAL_TEAM_FIRST_SUB_SLOT_INDEX, MANUAL_TEAM_SLOT_COUNT)
+      .filter((slot) => !slot).length;
+    const maxTotalCost = this.maxTotalCost();
+
+    return [
+      this.t('statusLine.filled', { filled: this.filledSlotCount(), total: MANUAL_TEAM_SLOT_COUNT }),
+      slots[0] ? this.t('statusLine.captainSet') : this.t('statusLine.captainMissing'),
+      ...(missingSubCount > 0 ? [this.t('statusLine.subsMissing', { count: missingSubCount })] : []),
+      slots[MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX]
+        ? this.t('statusLine.friendCaptainSet')
+        : this.t('statusLine.friendCaptainOptional'),
+      maxTotalCost === null
+        ? this.t('statusLine.cost', { used: this.budgetCost() })
+        : this.t('statusLine.costWithMax', { used: this.budgetCost(), max: maxTotalCost }),
+    ].join(' · ');
+  });
+  /**
+   * The first-visit "How this page works" card (869exmkpw; owner, 2026-09-11: on both builders,
+   * inline, shown until dismissed). A shared link or a saved team opened here already says what it
+   * wants, so the card stays out of its way for that visit.
+   */
+  public readonly introOpenedFromHandoff = signal(false);
+  private readonly introShownOnRequest = signal(false);
+  public readonly introVisible = computed(() => !this.loading() && !this.introOpenedFromHandoff());
+  public readonly introExpanded = computed(
+    () => !this.userState.builderIntroDismissed().manualTeamBuilder || this.introShownOnRequest(),
+  );
   public readonly saveDisabled = computed(
     () => this.saveUiLocked() || this.filledSlotCount() === 0,
   );
@@ -665,6 +700,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public async ngOnInit(): Promise<void> {
     await Promise.all([
       this.userState.readyFavoriteShipIds(),
+      this.userState.readyBuilderIntroDismissed(),
       this.i18n.preloadScope('manual-team-builder'),
       this.i18n.preloadScope('saved-teams'),
       this.i18n.preloadScope('ship-picker'),
@@ -686,6 +722,16 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   public async ionViewWillEnter(): Promise<void> {
+    // Both handoffs clear their query parameter once applied, so read them before anything awaits.
+    const routeParams = this.route.snapshot.queryParamMap;
+
+    this.introOpenedFromHandoff.set(
+      Boolean(
+        routeParams.get('teamId')?.trim() ||
+          routeParams.get(SAVED_TEAM_SHARE_QUERY_PARAM)?.trim(),
+      ),
+    );
+
     await this.userState.readyFavoriteShipIds();
 
     if (!this.ships().length) {
@@ -697,6 +743,15 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     if (!appliedSharedTeam) {
       await this.applySavedTeamFromRoute();
     }
+  }
+
+  public async dismissIntro(): Promise<void> {
+    this.introShownOnRequest.set(false);
+    await this.userState.setBuilderIntroDismissed('manualTeamBuilder', true);
+  }
+
+  public showIntro(): void {
+    this.introShownOnRequest.set(true);
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {
