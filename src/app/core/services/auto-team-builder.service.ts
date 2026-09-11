@@ -1695,15 +1695,17 @@ export class AutoTeamBuilderService {
 
               const attemptSatisfiesRequestedCoverage =
                 satisfiesRequestedAutoTeamBuildCoverage(result);
-              const hasRelaxedCaptainCoverage =
-                result?.relaxation.ignoredCaptainAbilityCoverage ||
-                result?.relaxation.downgradedCaptainAbilityCoverageToSimple;
 
+              // Planned order decides, never finishing order (owner, 2026-09-11: the same filters
+              // always give the same team). A later attempt that finished first used to win as long
+              // as it kept captain coverage, so the team depended on core count, the live worker
+              // count and timing. It resolves here only once every earlier attempt has finished -
+              // and since any earlier success would already have resolved, that makes it the first
+              // satisfying attempt in the plan. Otherwise tryResolveOrderedResult() waits.
               if (
                 exactAttemptCompleted &&
                 attemptSatisfiesRequestedCoverage &&
-                (!hasRelaxedCaptainCoverage ||
-                  haveAllEarlierAttemptsCompleted(nextAttempt.sequence))
+                haveAllEarlierAttemptsCompleted(nextAttempt.sequence)
               ) {
                 resolveOnce(result, 1 + timingState.completedFallbackAttempts);
                 return;

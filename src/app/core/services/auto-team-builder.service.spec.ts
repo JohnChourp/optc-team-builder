@@ -38199,145 +38199,198 @@ describe('Auto team builder', () => {
     expect(resizedSnapshot!.estimatedRemainingMs).not.toBe(twoWorkerEstimate);
   });
 
-  it('resolves a later valid pooled fallback result without waiting for earlier in-flight attempts', async () => {
-    const repository = {
-      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
-      getShips: vi.fn().mockResolvedValue([]),
-    };
-    const service = new AutoTeamBuilderService(repository as never);
-    const deferredFallbacks: Array<{ worker: PooledFakeWorker; runId: string }> = [];
-    let deferredValidFallback: { worker: PooledFakeWorker; runId: string } | null = null;
-    const workerA = new PooledFakeWorker((request) => {
-      if (request.type === 'init') {
-        workerA.emitMessage({ type: 'ready' });
-        return;
-      }
+  /*
+   * Owner decision 2026-09-11 (869exmkt4): the same filters always give the same team. The pooled
+   * path used to resolve a later fallback the moment it finished while an earlier, stricter one was
+   * still running, so the team depended on core count and timing. Planned order decides now.
+   */
+  async function startPooledOrderScenario() {
+      const repository = {
+        getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+        getShips: vi.fn().mockResolvedValue([]),
+      };
+      const service = new AutoTeamBuilderService(repository as never);
+      const deferredFallbacks: Array<{ worker: PooledFakeWorker; runId: string }> = [];
+      let deferredValidFallback: { worker: PooledFakeWorker; runId: string } | null = null;
+      const workerA = new PooledFakeWorker((request) => {
+        if (request.type === 'init') {
+          workerA.emitMessage({ type: 'ready' });
+          return;
+        }
 
-      if (request.type !== 'runAttempt') {
-        return;
-      }
+        if (request.type !== 'runAttempt') {
+          return;
+        }
 
-      if (
-        request.input.types.length === 2 &&
-        request.input.selectedClasses.length === 1 &&
-        request.requireLeadersWithoutSuperEffects
-      ) {
-        workerA.emitMessage({
-          type: 'result',
-          runId: request.runId,
-          result: null,
-        });
-        return;
-      }
+        if (
+          request.input.types.length === 2 &&
+          request.input.selectedClasses.length === 1 &&
+          request.requireLeadersWithoutSuperEffects
+        ) {
+          workerA.emitMessage({
+            type: 'result',
+            runId: request.runId,
+            result: null,
+          });
+          return;
+        }
 
-      if (
-        request.input.types.length === 2 &&
-        request.input.selectedClasses.length === 1 &&
-        !request.requireLeadersWithoutSuperEffects
-      ) {
-        deferredFallbacks.push({ worker: workerA, runId: request.runId });
-        return;
-      }
+        if (
+          request.input.types.length === 2 &&
+          request.input.selectedClasses.length === 1 &&
+          !request.requireLeadersWithoutSuperEffects
+        ) {
+          deferredFallbacks.push({ worker: workerA, runId: request.runId });
+          return;
+        }
 
-      if (request.input.types.length === 2 && request.input.selectedClasses.length === 0) {
-        workerA.emitMessage({
-          type: 'result',
-          runId: request.runId,
-          result: null,
-        });
-        return;
-      }
+        if (request.input.types.length === 2 && request.input.selectedClasses.length === 0) {
+          workerA.emitMessage({
+            type: 'result',
+            runId: request.runId,
+            result: null,
+          });
+          return;
+        }
 
-      if (request.input.types.length === 1 && request.input.selectedClasses.length === 1) {
-        deferredValidFallback = { worker: workerA, runId: request.runId };
-      }
-    });
-    const workerB = new PooledFakeWorker((request) => {
-      if (request.type === 'init') {
-        workerB.emitMessage({ type: 'ready' });
-        return;
-      }
-
-      if (
-        request.type === 'runAttempt' &&
-        request.input.types.length === 2 &&
-        request.input.selectedClasses.length === 1 &&
-        !request.requireLeadersWithoutSuperEffects
-      ) {
-        deferredFallbacks.push({ worker: workerB, runId: request.runId });
-        return;
-      }
-
-      if (
-        request.type === 'runAttempt' &&
-        request.input.types.length === 2 &&
-        request.input.selectedClasses.length === 0
-      ) {
-        workerB.emitMessage({
-          type: 'result',
-          runId: request.runId,
-          result: null,
-        });
-        return;
-      }
-
-      if (
-        request.type === 'runAttempt' &&
-        request.input.types.length === 1 &&
-        request.input.selectedClasses.length === 1
-      ) {
-        workerB.emitMessage({
-          type: 'result',
-          runId: request.runId,
-          result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
-        });
-      }
-    });
-    const createWorkerSpy = vi.spyOn(
-      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
-      'createWorker',
-    );
-    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
-
-    let settled = false;
-    const buildPromise = service
-      .buildTeam(
-        ['Fighter'],
-        ['DEX', 'INT'],
-        {
-          requireFullCaptainAbilityCoverage: false,
-          requireLeaderSuperSpecialCriteria: false,
-          requireSuperTandemCriteria: false,
-        },
-        { workerCount: 2 },
-      )
-      .then((result) => {
-        settled = true;
-        return result;
+        if (request.input.types.length === 1 && request.input.selectedClasses.length === 1) {
+          deferredValidFallback = { worker: workerA, runId: request.runId };
+        }
       });
+      const workerB = new PooledFakeWorker((request) => {
+        if (request.type === 'init') {
+          workerB.emitMessage({ type: 'ready' });
+          return;
+        }
+
+        if (
+          request.type === 'runAttempt' &&
+          request.input.types.length === 2 &&
+          request.input.selectedClasses.length === 1 &&
+          !request.requireLeadersWithoutSuperEffects
+        ) {
+          deferredFallbacks.push({ worker: workerB, runId: request.runId });
+          return;
+        }
+
+        if (
+          request.type === 'runAttempt' &&
+          request.input.types.length === 2 &&
+          request.input.selectedClasses.length === 0
+        ) {
+          workerB.emitMessage({
+            type: 'result',
+            runId: request.runId,
+            result: null,
+          });
+          return;
+        }
+
+        if (
+          request.type === 'runAttempt' &&
+          request.input.types.length === 1 &&
+          request.input.selectedClasses.length === 1
+        ) {
+          workerB.emitMessage({
+            type: 'result',
+            runId: request.runId,
+            result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+          });
+        }
+      });
+      const createWorkerSpy = vi.spyOn(
+        service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+        'createWorker',
+      );
+      createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+
+      let settled = false;
+      const buildPromise = service
+        .buildTeam(
+          ['Fighter'],
+          ['DEX', 'INT'],
+          {
+            requireFullCaptainAbilityCoverage: false,
+            requireLeaderSuperSpecialCriteria: false,
+            requireSuperTandemCriteria: false,
+          },
+          { workerCount: 2 },
+        )
+        .then((result) => {
+          settled = true;
+          return result;
+        });
 
     await flushMicrotasks();
     await flushMicrotasks();
-    expect(deferredFallbacks).toHaveLength(1);
-    expect(deferredValidFallback).not.toBeNull();
-    expect(settled).toBe(false);
 
-    deferredValidFallback!.worker.emitMessage({
+    return {
+      buildPromise,
+      deferredFallbacks,
+      deferredValidFallback: () => deferredValidFallback,
+      isSettled: () => settled,
+      workerA,
+      workerB,
+    };
+  }
+
+  it('waits for an earlier in-flight fallback and prefers it when it succeeds', async () => {
+    const scenario = await startPooledOrderScenario();
+
+    expect(scenario.deferredFallbacks).toHaveLength(1);
+    expect(scenario.deferredValidFallback()).not.toBeNull();
+
+    // A later attempt (INT dropped) finishes first - it must not win while attempt #0 is running.
+    scenario.deferredValidFallback()!.worker.emitMessage({
       type: 'result',
-      runId: deferredValidFallback!.runId,
+      runId: scenario.deferredValidFallback()!.runId,
       result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
     });
-
     await flushMicrotasks();
     await flushMicrotasks();
-    expect(settled).toBe(true);
 
-    const result = await buildPromise;
+    expect(scenario.isSettled()).toBe(false);
+
+    scenario.deferredFallbacks[0]!.worker.emitMessage({
+      type: 'result',
+      runId: scenario.deferredFallbacks[0]!.runId,
+      result: buildWorkerResult(createInput(['DEX', 'INT'], ['Fighter'])),
+    });
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    const result = await scenario.buildPromise;
+
+    expect(scenario.isSettled()).toBe(true);
+    expect(result?.input.types).toEqual(['DEX', 'INT']);
+    expect(scenario.workerA.terminated).toBe(true);
+    expect(scenario.workerB.terminated).toBe(true);
+  });
+
+  it('falls through to the later valid fallback once every earlier one has failed', async () => {
+    const scenario = await startPooledOrderScenario();
+
+    scenario.deferredValidFallback()!.worker.emitMessage({
+      type: 'result',
+      runId: scenario.deferredValidFallback()!.runId,
+      result: buildWorkerResult(createInput(['DEX'], ['Fighter'])),
+    });
+    await flushMicrotasks();
+
+    expect(scenario.isSettled()).toBe(false);
+
+    scenario.deferredFallbacks[0]!.worker.emitMessage({
+      type: 'result',
+      runId: scenario.deferredFallbacks[0]!.runId,
+      result: null,
+    });
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    const result = await scenario.buildPromise;
 
     expect(result?.input.types).toEqual(['DEX']);
     expect(result?.input.selectedClasses).toEqual(['Fighter']);
-    expect(workerA.terminated).toBe(true);
-    expect(workerB.terminated).toBe(true);
   });
 
   it('redispatches pooled fallback work on the next microtask without a timer-based pause', async () => {
