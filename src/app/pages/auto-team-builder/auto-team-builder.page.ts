@@ -8,6 +8,7 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import { AlertController, type ViewWillEnter } from '@ionic/angular';
@@ -52,6 +53,7 @@ import {
   type AutoBuildLeaderBoostRange,
   type AutoBuildLeaderBoostRanges,
   type AutoBuildCaptainBranchMode,
+  type AutoBuildConstraints,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressExclusionCounts,
@@ -105,6 +107,7 @@ import {
   type AutoTeamBuildExecutionOptions,
 } from '../../core/services/auto-team-builder.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import { matchesAnyAbilityRequirement } from '../../core/services/auto-team-builder-ability-match.utils';
 import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import { resolveAutoBuildShipSelection } from '../../core/services/auto-team-builder-ship.utils';
@@ -140,6 +143,19 @@ import {
 } from './auto-team-builder-export.utils';
 import { buildAutoTeamBuilderStateFromSavedEnemy } from './auto-team-builder-enemy-preset.utils';
 import { buildAutoTeamBuilderStateFromSavedTeam } from './auto-team-builder-saved-team-preset.utils';
+import {
+  AUTO_TEAM_DEBUG_REPORT_ISSUE_URL,
+  type AutoTeamBuildFailureCode,
+  type AutoTeamBuildStats,
+  type AutoTeamDebugReport,
+  type AutoTeamDebugReportContext,
+  type AutoTeamDebugReportRequestSource,
+  buildAutoTeamDebugReport,
+  formatAutoTeamDebugReportMarkdown,
+} from './auto-team-builder-debug-report.utils';
+import { copyTextToClipboard } from '../../shared/clipboard/clipboard-copy.utils';
+import { Capacitor } from '@capacitor/core';
+import packageJson from '../../../../package.json';
 import {
   buildSavedTeamsTransferPayload,
   downloadSavedTeamsExport,
@@ -525,7 +541,17 @@ type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   explanationDetailLabels: string[];
   rejectedCandidateLabels: RejectedCandidateExplanationView[];
   hasStructuredExplanation: boolean;
+  /** The character carries a local edit on this device, which changes what the builder sees. */
+  hasLocalOverride: boolean;
 };
+
+interface AutoTeamDebugReportFeedback {
+  tone: 'success' | 'warning';
+  title: string;
+  details: string[];
+  /** The report itself when the clipboard refused it, shown to copy by hand. */
+  manualCopyText: string | null;
+}
 
 interface RejectedCandidateExplanationView {
   title: string;
@@ -744,6 +770,7 @@ function resolveManualSlotRequiredAbilities(
     AutoTeamBuilderPickerPanelComponent,
     AutoTeamBuilderRequirementsPanelComponent,
     AutoTeamBuilderResultsPanelComponent,
+    NgTemplateOutlet,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -755,6 +782,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   @ViewChild(IonContent) private content?: IonContent;
   @ViewChild('buildSubmitButton', { read: ElementRef })
   private readonly buildSubmitButton?: ElementRef<HTMLElement>;
+  @ViewChild('debugReportManualCopy')
+  private readonly debugReportManualCopy?: ElementRef<HTMLTextAreaElement>;
 
   private buildAbortController: AbortController | null = null;
   private resetAfterBuildCancellation = false;
@@ -765,6 +794,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private readonly currentBuildStepStartedAtMs = signal<number | null>(null);
   private readonly buildProgressFloorPercent = signal(0);
   private progressTicker: ReturnType<typeof globalThis.setInterval> | null = null;
+  private buildStartedAtMs: number | null = null;
+  /*
+   * What the last build was asked, as it was asked (869exmkdp): a report copied later must not pick
+   * up a favourite starred since, and with no team there is no requested input on a result.
+   */
+  private lastBuildRequest: AutoTeamDebugReportRequestSource | null = null;
+  private lastBuildContext: AutoTeamDebugReportContext | null = null;
+  /** The team a guided build found but could not use - relaxed, or not lockable into its slot. */
+  private unappliedGuidedResult: AutoBuildResult | null = null;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
@@ -991,6 +1029,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly buildProgress = signal<AutoBuildProgressSnapshot | null>(null);
   public readonly result = signal<AutoBuildResult | null>(null);
   public readonly errorMessage = signal('');
+  /** Why the last build shows no team, as a code the debug report can carry (869exmkf4). */
+  public readonly lastBuildFailure = signal<AutoTeamBuildFailureCode | null>(null);
+  /** The last build's timings, kept once it ends rather than dropped with the progress (869exmkep). */
+  public readonly lastBuildStats = signal<AutoTeamBuildStats | null>(null);
+  public readonly debugReportFeedback = signal<AutoTeamDebugReportFeedback | null>(null);
+  public readonly debugReportIssueUrl = AUTO_TEAM_DEBUG_REPORT_ISSUE_URL;
   public readonly currentTeamId = signal<string | null>(null);
   public readonly saveUiLocked = signal(false);
   public readonly saveFeedbackError = signal('');
@@ -2691,6 +2735,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return this.buildFinalReportRows(current);
   });
+  /** A report exists to copy once a build has answered: with a team, or with why there is none. */
+  public readonly canCopyDebugReport = computed(
+    () => !this.building() && (this.result() !== null || this.lastBuildFailure() !== null),
+  );
+  /**
+   * Owner, 2026-09-11 (D7): a local character edit changes what the builder sees, so the result
+   * says so - a chip on each edited slot and this one line in the Final team report.
+   */
+  public readonly localOverrideNotice = computed(() => {
+    const count = this.teamSlots().filter((slot) => slot.hasLocalOverride).length;
+
+    return count ? this.t('results.localOverride.notice', { count }) : '';
+  });
+  /** The ability catalog failed to load, which leaves every ability filter empty (owner, D7). */
+  public readonly abilityCatalogUnavailable = computed(
+    () => this.pageReady() && this.abilityCatalog() === null,
+  );
   public readonly selectedClassSummaryLabel = computed(() => {
     const current = this.result();
 
@@ -3031,6 +3092,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           explanationDetailLabels: explanationView.detailLabels,
           rejectedCandidateLabels: explanationView.rejectedCandidateLabels,
           hasStructuredExplanation: explanationView.hasStructuredExplanation,
+          hasLocalOverride: this.characterOverrides.overridesByCharacterId().has(slot.character.id),
         };
       }) ?? []
     );
@@ -3276,6 +3338,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly alertController: AlertController,
+    private readonly characterOverrides: CharacterOverridesService,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
@@ -5792,6 +5855,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.pauseAfterBuildCancellation = false;
     this.building.set(true);
     this.resetBuildState();
+    this.buildStartedAtMs = Date.now();
+    const constraints = this.buildCurrentAutoTeamBuildConstraints();
+
+    this.lastBuildRequest = {
+      types: this.selectedTypes(),
+      selectedClasses: this.selectedClasses(),
+      ...constraints,
+    };
+    this.lastBuildContext = this.buildDebugReportContext();
     const buildInputRevision = this.buildInputRevision;
     this.activeBuildInputRevision = buildInputRevision;
     this.startBuildProgressTicker();
@@ -5808,7 +5880,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       const guidedSlotRole = guidedAutoBuildActive
         ? this.resolveNextGuidedAutoBuildSlotRole()
         : null;
-      const nextResult = await this.runCurrentAutoTeamBuild(executionOptions);
+      const nextResult = await this.runCurrentAutoTeamBuild(constraints, executionOptions);
 
       if (buildInputRevision !== this.buildInputRevision) {
         // The inputs changed while the search ran; the change already cleared the result.
@@ -5817,10 +5889,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
       if (nextResult) {
         if (guidedAutoBuildActive && nextResult.relaxation.usedFallback) {
-          this.errorMessage.set(this.resolveGuidedRelaxedOnlyMessage(nextResult));
+          this.failBuild(
+            'guidedRelaxedOnly',
+            this.resolveGuidedRelaxedOnlyMessage(nextResult),
+            nextResult,
+          );
         } else if (guidedSlotRole) {
           if (!this.applyGuidedAutoBuildSlot(nextResult, guidedSlotRole)) {
-            this.errorMessage.set(this.resolveBuildFailureMessage());
+            // A team came back, but not one this slot can take: say that, not "no team".
+            this.failBuild('guidedSlotRejected', this.resolveBuildFailureMessage(), nextResult);
           }
         } else {
           for (const slot of nextResult.slots) this.cacheCharacterRecord(slot.character);
@@ -5828,7 +5905,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           this.result.set(nextResult);
         }
       } else {
-        this.errorMessage.set(this.resolveBuildFailureMessage());
+        this.failBuild('noTeam', this.resolveBuildFailureMessage());
       }
 
       void this.scrollToBottom();
@@ -5859,13 +5936,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       }
 
       if (isAutoTeamBuildSearchTooLargeError(error)) {
-        this.errorMessage.set(this.t('errors.searchTooLarge'));
+        this.failBuild('searchTooLarge', this.t('errors.searchTooLarge'));
         void this.scrollToBottom();
         return;
       }
 
       console.error(error);
-      this.errorMessage.set(this.t('errors.buildFailed'));
+      this.failBuild('buildFailed', this.t('errors.buildFailed'));
       void this.scrollToBottom();
     } finally {
       this.buildAbortController = null;
@@ -5877,54 +5954,60 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private runCurrentAutoTeamBuild(
+    constraints: AutoBuildConstraints,
     executionOptions: AutoTeamBuildExecutionOptions,
   ): Promise<AutoBuildResult | null> {
     return this.autoTeamBuilder.buildTeam(
       this.selectedClasses(),
       this.selectedTypes(),
-      {
-        candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
-        selectedCharacterTags: this.selectedCharacterTags(),
-        characterTagSets: this.characterTagSets(),
-        selectedCharacterNames: this.selectedCharacterNames(),
-        requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
-        // Any class selection means "characters of these classes": each unit holds at least one,
-        // and the team need not include every class (owner, 2026-09-11, 869exmmfq). Two classes
-        // used to mean "every unit holds both", which is not how a Fighter-and-Slasher captain
-        // reads in-game - it boosts units of either class.
-        requireAllSelectedClassesPerCharacter: false,
-        requireAllSelectedClassesInTeam: false,
-        requireAllSelectedCharacterTagsInTeam: this.derivedRequireAllSelectedCharacterTagsInTeam(),
-        requireAllSelectedCharacterNamesInTeam: this.derivedRequireAllSelectedCharacterNamesInTeam(),
-        requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
-        requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
-        requireBothLeadersFullCaptainAbilityCoverage:
-          this.requireBothLeadersFullCaptainAbilityCoverage(),
-        strictSuperSpecialCriteriaCoverage: this.requireSuperSpecialCriteriaCoverage(),
-        strictSuperTandemCriteriaCoverage: this.requireSuperTandemCriteriaCoverage(),
-        requireUniqueBaseCharacterNames: true,
-        requiredAbilities: this.pageRequiredAbilities(),
-        requiredCharacterGroups: [],
-        battleRequirements: this.pageBattleRequirements(),
-        enemyMechanics: this.pageEnemyMechanics(),
-        favoritesOnly: this.favoritesOnly(),
-        allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
-        favoriteCharacterIds: this.favoriteCharacterIds(),
-        favoriteShipsOnly: this.favoriteShipsOnly(),
-        favoriteShipIds: this.favoriteShipIds(),
-        leaderBoostFilters: this.leaderBoostFilters(),
-        leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
-        leaderCostRange: createEmptyAutoBuildCostRange(),
-        subCostRange: createEmptyAutoBuildCostRange(),
-        maxTotalCost: null,
-        manualSlots: this.serializeManualSlots(),
-        excludedCharacterIds: this.effectiveExcludedCharacterIds(),
-        manualShipId: this.selectedManualShipId(),
-        requireManualShip: this.requireManualShip(),
-        excludedShipIds: this.excludedShipIds(),
-      },
+      constraints,
       executionOptions,
     );
+  }
+
+  /** Everything a build sends besides the types and classes; the debug report reads it too. */
+  private buildCurrentAutoTeamBuildConstraints(): AutoBuildConstraints {
+    return {
+      candidateCharacterIds: this.effectiveAutoBuildCandidateIds(),
+      selectedCharacterTags: this.selectedCharacterTags(),
+      characterTagSets: this.characterTagSets(),
+      selectedCharacterNames: this.selectedCharacterNames(),
+      requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
+      // Any class selection means "characters of these classes": each unit holds at least one,
+      // and the team need not include every class (owner, 2026-09-11, 869exmmfq). Two classes
+      // used to mean "every unit holds both", which is not how a Fighter-and-Slasher captain
+      // reads in-game - it boosts units of either class.
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSelectedClassesInTeam: false,
+      requireAllSelectedCharacterTagsInTeam: this.derivedRequireAllSelectedCharacterTagsInTeam(),
+      requireAllSelectedCharacterNamesInTeam: this.derivedRequireAllSelectedCharacterNamesInTeam(),
+      requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
+      requireFullCaptainAbilityCoverage: this.requireFullCaptainAbilityCoverage(),
+      requireBothLeadersFullCaptainAbilityCoverage:
+        this.requireBothLeadersFullCaptainAbilityCoverage(),
+      strictSuperSpecialCriteriaCoverage: this.requireSuperSpecialCriteriaCoverage(),
+      strictSuperTandemCriteriaCoverage: this.requireSuperTandemCriteriaCoverage(),
+      requireUniqueBaseCharacterNames: true,
+      requiredAbilities: this.pageRequiredAbilities(),
+      requiredCharacterGroups: [],
+      battleRequirements: this.pageBattleRequirements(),
+      enemyMechanics: this.pageEnemyMechanics(),
+      favoritesOnly: this.favoritesOnly(),
+      allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
+      favoriteCharacterIds: this.favoriteCharacterIds(),
+      favoriteShipsOnly: this.favoriteShipsOnly(),
+      favoriteShipIds: this.favoriteShipIds(),
+      leaderBoostFilters: this.leaderBoostFilters(),
+      leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
+      leaderCostRange: createEmptyAutoBuildCostRange(),
+      subCostRange: createEmptyAutoBuildCostRange(),
+      maxTotalCost: null,
+      manualSlots: this.serializeManualSlots(),
+      excludedCharacterIds: this.effectiveExcludedCharacterIds(),
+      manualShipId: this.selectedManualShipId(),
+      requireManualShip: this.requireManualShip(),
+      excludedShipIds: this.excludedShipIds(),
+    };
   }
 
   private resolveNextGuidedAutoBuildSlotRole(): AutoBuildManualSlotRole | null {
@@ -6154,6 +6237,78 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     });
   }
 
+  /**
+   * "Copy debug report" (869exmkf4; owner, 2026-09-11): the last build as text for a bug report.
+   * When the clipboard refuses, the same text is shown to copy by hand. Nothing is sent anywhere:
+   * the player pastes it where they choose, and the link beside it only opens a new GitHub issue.
+   */
+  public async copyDebugReport(): Promise<void> {
+    if (!this.canCopyDebugReport()) {
+      return;
+    }
+
+    const text = formatAutoTeamDebugReportMarkdown(this.buildDebugReport());
+    const buildInputRevision = this.buildInputRevision;
+    const failureKind = await copyTextToClipboard(text);
+
+    // A change during the copy retired this report; its feedback would land on the next one.
+    if (buildInputRevision !== this.buildInputRevision) {
+      return;
+    }
+
+    this.debugReportFeedback.set(
+      failureKind === null
+        ? {
+            tone: 'success',
+            title: this.t('debugReport.copiedTitle'),
+            details: [this.t('debugReport.copiedDescription')],
+            manualCopyText: null,
+          }
+        : {
+            tone: 'warning',
+            title: this.t('debugReport.copyFailedTitle'),
+            details: [this.t('debugReport.manualCopy')],
+            manualCopyText: text,
+          },
+    );
+
+    if (failureKind !== null) {
+      this.focusDebugReportManualCopy();
+    }
+  }
+
+  public buildDebugReport(createdAt = new Date().toISOString()): AutoTeamDebugReport {
+    const result = this.result() ?? this.unappliedGuidedResult;
+
+    return buildAutoTeamDebugReport({
+      createdAt,
+      app: {
+        version: packageJson.version,
+        platform: Capacitor.getPlatform(),
+        language: this.i18n.activeLanguage(),
+      },
+      dataset: this.summary(),
+      abilityCatalogGeneratedAt: this.abilityCatalog()?.generatedAt ?? null,
+      localOverrideCharacterIds: [...this.characterOverrides.overridesByCharacterId().keys()],
+      context: this.lastBuildContext ?? this.buildDebugReportContext(),
+      // With no team there is no requested input on a result: report what the page sent.
+      request: result?.requestedInput ??
+        this.lastBuildRequest ?? {
+          types: this.selectedTypes(),
+          selectedClasses: this.selectedClasses(),
+          ...this.buildCurrentAutoTeamBuildConstraints(),
+        },
+      result,
+      failure: this.lastBuildFailure(),
+      rules: result ? this.buildFinalReportRows(result) : [],
+      performance: this.lastBuildStats(),
+    });
+  }
+
+  public selectDebugReportText(event: Event): void {
+    (event.target as HTMLTextAreaElement | null)?.select?.();
+  }
+
   public downloadSelectionJson(): void {
     downloadAutoTeamSelectionExport(this.buildSelectionExportPayload());
   }
@@ -6327,6 +6482,52 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
+  /** A refused copy leaves the report in a textarea: focus it, which also selects the text. */
+  private focusDebugReportManualCopy(): void {
+    const focus = (): void => this.debugReportManualCopy?.nativeElement.focus?.();
+
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      globalThis.requestAnimationFrame(focus);
+      return;
+    }
+
+    globalThis.setTimeout(focus, 0);
+  }
+
+  private failBuild(
+    code: AutoTeamBuildFailureCode,
+    message: string,
+    unappliedResult: AutoBuildResult | null = null,
+  ): void {
+    this.unappliedGuidedResult = unappliedResult;
+    this.lastBuildFailure.set(code);
+    this.errorMessage.set(message);
+  }
+
+  private buildDebugReportContext(): AutoTeamDebugReportContext {
+    const hasBox = this.selectedCharacterBox() !== null;
+    const favoritesOnly = this.favoritesOnly();
+
+    return {
+      candidateSource: hasBox
+        ? favoritesOnly
+          ? 'boxFavorites'
+          : 'box'
+        : favoritesOnly
+          ? 'favorites'
+          : 'all',
+      candidatePoolSize: this.effectiveAutoBuildCandidateIds()?.length ?? null,
+      boxCharacterCount: hasBox ? this.selectedCharacterBoxIds().length : null,
+      excludeBoxCharacterCount:
+        this.selectedExcludeCharacterBox() === null
+          ? null
+          : this.selectedExcludeCharacterBoxIds().length,
+      favoriteCharacterCount: this.favoriteCharacterIds().length,
+      guidedAutoBuild: this.guidedAutoBuildEnabled(),
+      workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
+    };
+  }
+
   private resetBuildState(): void {
     this.buildInputRevision += 1;
     this.buildInputsUntouched.set(false);
@@ -6346,6 +6547,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.buildProgressFloorPercent.set(0);
     this.result.set(null);
     this.errorMessage.set('');
+    this.lastBuildFailure.set(null);
+    this.lastBuildStats.set(null);
+    this.debugReportFeedback.set(null);
+    this.lastBuildRequest = null;
+    this.lastBuildContext = null;
+    this.unappliedGuidedResult = null;
     this.manualSimilarPickFeedback.set('');
     this.currentTeamId.set(null);
     this.resetSaveFeedbackState();
@@ -6369,6 +6576,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     );
     this.buildProgressSnapshotReceivedAtMs.set(receivedAt);
     this.buildProgress.set(snapshot);
+
+    // The progress is dropped when the build ends; its last reading is what a report needs.
+    if (snapshot.stage === 'completed' && this.buildStartedAtMs !== null) {
+      this.lastBuildStats.set({
+        wallMs: Math.max(0, receivedAt - this.buildStartedAtMs),
+        searchMs: snapshot.elapsedMs,
+        attemptsCompleted: snapshot.completedAttempts,
+        totalAttempts: snapshot.totalAttempts,
+        activeWorkers: snapshot.activeWorkerCount ?? null,
+      });
+    }
   }
 
   private resolveBuildProgressStepKey(snapshot: AutoBuildProgressSnapshot): string {

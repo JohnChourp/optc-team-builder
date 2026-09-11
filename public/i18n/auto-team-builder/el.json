@@ -1,4 +1,13 @@
 {
+  "debugReport": {
+    "copiedDescription": "Κάνε επικόλληση στην αναφορά ή στο μήνυμά σου. Περιέχει τα φίλτρα σου, την ομάδα και το πώς χτίστηκε, αλλά όχι ονόματα ομάδων, σημειώσεις ή ονόματα box.",
+    "copiedTitle": "Το debug report αντιγράφηκε",
+    "copyAction": "Αντιγραφή debug report",
+    "copyFailedTitle": "Δεν έγινε αντιγραφή του debug report",
+    "manualCopy": "Επίλεξε το κείμενο παρακάτω και αντέγραψέ το χειροκίνητα.",
+    "manualCopyLabel": "Debug report",
+    "reportLink": "Αναφορά προβλήματος στο GitHub"
+  },
   "intro": {
     "actions": {
       "dismiss": "Απόκρυψη",
@@ -943,6 +952,10 @@
       "partial": "{{matched}} / {{total}} tier coverage slot checks καλύπτονται.",
       "pending": "Η κάλυψη tiers θα υπολογιστεί μετά από επιτυχημένο build."
     },
+    "localOverride": {
+      "chip": "Τοπική αλλαγή",
+      "notice": "Χαρακτήρες της ομάδας με τοπικές σου αλλαγές: {{count}}."
+    },
     "none": "Κανένα",
     "requiredAbilities": {
       "coverage": "{{matched}} / {{total}} requested abilities καλύφθηκαν.",
@@ -996,6 +1009,10 @@
     }
   },
   "errors": {
+    "abilityCatalogUnavailable": {
+      "copy": "Δεν φορτώθηκε το ability catalog, οπότε δεν υπάρχουν ικανότητες για να διαλέξεις στις απαιτήσεις. Ανανέωσε τη σελίδα ή κάνε επανεκκίνηση της εφαρμογής για να ξαναδοκιμάσεις.",
+      "title": "Τα φίλτρα ικανοτήτων δεν είναι διαθέσιμα"
+    },
     "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
     "guided": {
       "fallbackOnly": "Το Καθοδηγούμενο auto build κλειδώνει slot μόνο από ομάδα που βρέθηκε στην πρώτη, ακριβή αναζήτηση, και αυτή η ομάδα βρέθηκε σε επόμενη. Κλείσε το Καθοδηγούμενο auto build για να τη δεις.",

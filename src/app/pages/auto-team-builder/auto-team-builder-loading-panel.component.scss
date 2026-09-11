@@ -179,3 +179,19 @@
 .empty-card {
   justify-content: center;
 }
+
+/*
+ * A build that found no team (869exmkdp): the message, its Copy debug report action, and the
+ * report feedback on a full row below. The building card's three columns sized the button and the
+ * status line before the message, which squeezed both.
+ */
+@media (min-width: 680px) {
+  .build-failure-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.build-failure-card__report {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
