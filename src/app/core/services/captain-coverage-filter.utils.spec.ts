@@ -5,6 +5,7 @@ import {
   type CharacterCaptainAbilityCoverage,
   type CharacterCaptainAbilityCoverageTier,
   type CharacterDetailRecord,
+  type CharacterListItem,
 } from '../models/optc.models';
 import {
   createCaptainCoverageFilterState,
@@ -15,6 +16,7 @@ import {
   matchesCaptainCoverageRequiredTiers,
   resolveCaptainAllTierCoverage,
   resolveCaptainCoverageFilterResult,
+  summarizeCaptainCoverageTarget,
   targetMatchesAnyApplicableCaptainCoverageTier,
 } from './captain-coverage-filter.utils';
 
@@ -306,6 +308,70 @@ describe('captain coverage filter model', () => {
     // Selecting both tiers passes both targets
     expect(matchesCaptainCoverageRequiredTiers(captain, cost70Target, [1, 2])).toBe(true);
     expect(matchesCaptainCoverageRequiredTiers(captain, cost30Target, [1, 2])).toBe(true);
+  });
+
+  /*
+   * 869exmkcm. Captain Coverage's result pass hands the matcher a list item plus a summary, and a
+   * list item has no `detail` - where the tier matcher used to read tags. 77 tag-scoped tiers in
+   * the shipped data listed nobody, e.g. #4379 Saturn's [Five Elders] tier.
+   */
+  it('matches a tag-scoped tier from the summary when the target is a list item', () => {
+    const captain = createCharacter({ id: 4379, captainAbilityCoverage: buildTagTierCoverage() });
+    const fiveElder = createCharacter({ id: 4410, characterTags: ['Five Elders'] });
+    const { detail: _detail, ...fiveElderListItem } = fiveElder;
+    const outsider = createCharacter({ id: 4411, characterTags: ['Navy'] });
+    const state = createCaptainCoverageFilterState({
+      requireCaptainCoverage: false,
+      requiredTiers: [1],
+    });
+
+    const resolveTier = (target: CharacterDetailRecord, character: CharacterListItem) =>
+      resolveCaptainCoverageFilterResult(
+        captain,
+        { character, summary: summarizeCaptainCoverageTarget(target) },
+        state,
+      ).matchesRequiredTiers;
+
+    expect(resolveTier(fiveElder, fiveElderListItem as CharacterListItem)).toBe(true);
+    expect(resolveTier(outsider, outsider)).toBe(false);
+    // A detail-bearing target still reads its own tags when no list is given.
+    expect(matchesCaptainCoverageRequiredTiers(captain, fiveElder, [1])).toBe(true);
+  });
+
+  /*
+   * 869exmkcm. #4110/#4111 Tier 2: "boosts ATK of Driven and Slasher characters by 6x if they
+   * are a Cost 40 or less character". The cost narrows the classes; OR-ing it listed every
+   * cost <= 40 character, 2,714 of whom get no boost.
+   */
+  it('reads a cost range on a class-scoped tier as a restriction, not an alternative', () => {
+    const captain = createCharacter({
+      id: 4110,
+      captainAbilityCoverage: buildClassCostTierCoverage(),
+    });
+
+    const qualifies = (classes: string[], cost: number) =>
+      matchesCaptainCoverageRequiredTiers(
+        captain,
+        createCharacter({ id: 9100, classes, cost }),
+        [2],
+      );
+
+    expect(qualifies(['Slasher', 'Fighter'], 30)).toBe(true);
+    expect(qualifies(['Driven'], 40)).toBe(true);
+    expect(qualifies(['Fighter'], 1)).toBe(false);
+    expect(qualifies(['Driven'], 50)).toBe(false);
+    // A cost-only tier keeps treating the cost as the whole condition.
+    const costOnlyCaptain = createCharacter({
+      id: 4572,
+      captainAbilityCoverage: buildCostOnlyCoverage(),
+    });
+    expect(
+      matchesCaptainCoverageRequiredTiers(
+        costOnlyCaptain,
+        createCharacter({ id: 9101, cost: 20 }),
+        [1],
+      ),
+    ).toBe(true);
   });
 
   it('uses parsed tier metadata when text coverage has no targetable cost clauses', () => {
@@ -874,6 +940,71 @@ function buildNoScopeDamageReductionCoverage(): CharacterCaptainAbilityCoverage 
         key: 'captain',
         label: 'Captain Ability',
         tiers,
+      },
+    ],
+  };
+}
+
+function buildTagTierCoverage(): CharacterCaptainAbilityCoverage {
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers: [
+          {
+            tier: 1,
+            kind: 'conditional',
+            scope: 'subset',
+            characterConditions: {
+              universal: false,
+              fallbackOther: false,
+              selfOnly: false,
+              types: [],
+              classes: [],
+              characterTags: ['Five Elders'],
+            },
+            teamConditions: [],
+            fieldConditions: [],
+            triggerConditions: [],
+            clauses: ['Boosts ATK of [Five Elders] characters by 5x'],
+            atkBoost: 5,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function buildClassCostTierCoverage(): CharacterCaptainAbilityCoverage {
+  return {
+    entries: [
+      {
+        key: 'captain',
+        label: 'Captain Ability',
+        tiers: [
+          {
+            tier: 2,
+            kind: 'conditional',
+            scope: 'subset',
+            characterConditions: {
+              universal: false,
+              fallbackOther: false,
+              selfOnly: false,
+              types: [],
+              classes: ['Driven', 'Slasher'],
+              characterTags: [],
+              costRange: { max: 40 },
+            },
+            teamConditions: [],
+            fieldConditions: [],
+            triggerConditions: [],
+            clauses: [
+              'Boosts ATK of Driven and Slasher characters by 6x if they are a Cost 40 or less character',
+            ],
+            atkBoost: 6,
+          },
+        ],
       },
     ],
   };

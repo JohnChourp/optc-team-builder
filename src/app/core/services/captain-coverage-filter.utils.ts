@@ -154,6 +154,7 @@ export function resolveCaptainCoverageFilterResult(
     captain,
     target.character,
     filterState.requiredTiers,
+    targetSummary.characterTags,
   );
 
   return {
@@ -198,6 +199,7 @@ export function matchesCaptainCoverageRequiredTiers(
   captain: CharacterDetailRecord,
   target: CharacterListItem,
   requiredTiers: readonly number[],
+  targetCharacterTags?: readonly string[],
 ): boolean {
   if (!requiredTiers.length) {
     return true;
@@ -213,7 +215,7 @@ export function matchesCaptainCoverageRequiredTiers(
     if (!tier) {
       return false;
     }
-    return matchesCaptainCoverageTier(tier, target, subsetTiers);
+    return matchesCaptainCoverageTier(tier, target, subsetTiers, targetCharacterTags);
   });
 }
 
@@ -369,17 +371,25 @@ function isCaptainCoverageTierNotApplicableForTeamCoverage(
   );
 }
 
+/**
+ * `targetCharacterTags` exists because the target is often a CharacterListItem, which carries no
+ * `detail` - and the tags used to be read from `detail` only. Captain Coverage's result pass
+ * works on list items, so every tag-scoped tier listed nobody (77 tiers, e.g. #4379 Saturn's
+ * Five Elders tier) until the pass handed its summary's tags in. Callers holding a detail record
+ * can leave it out.
+ */
 export function matchesCaptainCoverageTier(
   tier: CharacterCaptainAbilityCoverageTier,
   target: CharacterListItem,
   subsetTiersInEntry: readonly CharacterCaptainAbilityCoverageTier[],
+  targetCharacterTags: readonly string[] = resolveTargetDetailCharacterTags(target),
 ): boolean {
   const conditions = tier.characterConditions;
 
   // Negative team conditions ("there are no [PSY] or [INT] characters on your crew") narrow
   // which targets can appear in a team that satisfies this tier — a PSY character cannot share
   // the team with a tier that demands no PSY, so we exclude them up front.
-  if (targetMatchesTeamExclusion(tier, target)) {
+  if (targetMatchesTeamExclusion(tier, target, targetCharacterTags)) {
     return false;
   }
 
@@ -387,11 +397,18 @@ export function matchesCaptainCoverageTier(
   // same entry. This is the natural complement reading of "all other characters".
   if (conditions.fallbackOther) {
     return !subsetTiersInEntry.some((subset) =>
-      matchesTierCharacterConditionsInner(subset, target),
+      matchesTierCharacterConditionsInner(subset, target, targetCharacterTags),
     );
   }
 
-  return matchesTierCharacterConditionsInner(tier, target);
+  return matchesTierCharacterConditionsInner(tier, target, targetCharacterTags);
+}
+
+function resolveTargetDetailCharacterTags(target: CharacterListItem): readonly string[] {
+  return (
+    (target as CharacterListItem & { detail?: { characterTags?: string[] } }).detail
+      ?.characterTags ?? []
+  );
 }
 
 export function teamSatisfiesCaptainCoverageTeamConditions(
@@ -579,6 +596,7 @@ function resolveMemberTypes(member: CharacterListItem): AutoTeamBuilderType[] {
 function targetMatchesTeamExclusion(
   tier: CharacterCaptainAbilityCoverageTier,
   target: CharacterListItem,
+  targetTags: readonly string[],
 ): boolean {
   const exclusionConditions = tier.teamConditions.filter(
     (condition) => condition.kind === 'crew-exclusion',
@@ -587,9 +605,6 @@ function targetMatchesTeamExclusion(
     return false;
   }
   const targetTypes = target.type.split(',').map((entry) => entry.trim().toUpperCase());
-  const targetTags =
-    (target as CharacterListItem & { detail?: { characterTags?: string[] } }).detail
-      ?.characterTags ?? [];
   return exclusionConditions.some((condition) => {
     const excludedTypes = condition.types ?? [];
     const excludedClasses = condition.classes ?? [];
@@ -620,6 +635,7 @@ function targetMatchesTeamExclusion(
 function matchesTierCharacterConditionsInner(
   tier: CharacterCaptainAbilityCoverageTier,
   target: CharacterListItem,
+  targetTags: readonly string[],
 ): boolean {
   const conditions = tier.characterConditions;
   const hasSubsetCondition =
@@ -641,6 +657,24 @@ function matchesTierCharacterConditionsInner(
     if (conditions.selfOnly) {
       return false;
     }
+    return false;
+  }
+
+  const meetsCostRange = targetMeetsRange(target.cost, conditions.costRange);
+  const meetsRarityRange = targetMeetsRange(target.stars, conditions.rarityRange);
+
+  // Cost and rarity narrow the characters a tier names; they are never an alternative to them.
+  // #4110/#4111 Tier 2 boosts "Driven and Slasher characters ... if they are a Cost 40 or less
+  // character", and reading the cost as one more OR'd option listed every character with cost
+  // <= 40 - 2,714 of them get no boost from it. These are the only two tiers in the data that
+  // pair a category with cost or rarity; cost-only and rarity-only tiers fall through below.
+  const hasCategoryCondition =
+    conditions.dominantType === true ||
+    conditions.types.length > 0 ||
+    conditions.classes.length > 0 ||
+    conditions.characterTags.length > 0;
+
+  if (hasCategoryCondition && (!meetsCostRange || !meetsRarityRange)) {
     return false;
   }
 
@@ -667,38 +701,34 @@ function matchesTierCharacterConditionsInner(
     return true;
   }
 
-  if (conditions.characterTags.length > 0) {
-    const targetTags = (target as CharacterListItem & { detail?: { characterTags?: string[] } })
-      .detail?.characterTags;
-    if (
-      Array.isArray(targetTags) &&
-      conditions.characterTags.some((tag) =>
-        targetTags.some((targetTag) => targetTag.toLowerCase() === tag.toLowerCase()),
-      )
-    ) {
-      return true;
-    }
+  if (
+    conditions.characterTags.length > 0 &&
+    conditions.characterTags.some((tag) =>
+      targetTags.some((targetTag) => targetTag.toLowerCase() === tag.toLowerCase()),
+    )
+  ) {
+    return true;
   }
 
-  if (conditions.costRange) {
-    const { min, max } = conditions.costRange;
-    const meetsMin = min === undefined || target.cost >= min;
-    const meetsMax = max === undefined || target.cost <= max;
-    if (meetsMin && meetsMax) {
-      return true;
-    }
+  if (hasCategoryCondition) {
+    return false;
   }
 
-  if (conditions.rarityRange) {
-    const { min, max } = conditions.rarityRange;
-    const meetsMin = min === undefined || target.stars >= min;
-    const meetsMax = max === undefined || target.stars <= max;
-    if (meetsMin && meetsMax) {
-      return true;
-    }
-  }
+  return (
+    (conditions.costRange !== undefined && meetsCostRange) ||
+    (conditions.rarityRange !== undefined && meetsRarityRange)
+  );
+}
 
-  return false;
+function targetMeetsRange(
+  value: number,
+  range: { min?: number; max?: number } | undefined,
+): boolean {
+  return (
+    range === undefined ||
+    ((range.min === undefined || value >= range.min) &&
+      (range.max === undefined || value <= range.max))
+  );
 }
 
 function resolveCaptainCoverageFilterCoverageMode(
