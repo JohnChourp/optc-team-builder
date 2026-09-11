@@ -1346,6 +1346,47 @@ describe('CharacterBoxesPage', () => {
     expect(i18n.preloadScope).toHaveBeenCalledWith('character-tag-filter');
   });
 
+  /*
+   * 869exmktc. "Try a different search, type, or class filter." showed even when none of those
+   * was set, and the only Clear sat up in the filter row.
+   */
+  it('says why the character list is empty, and clears the filters from there', async () => {
+    const { page } = createPage([
+      {
+        id: 'box-1',
+        name: 'Empty Box',
+        characterIds: [],
+        createdAt: '2026-04-14T10:00:00.000Z',
+        updatedAt: '2026-04-14T10:05:00.000Z',
+      },
+    ]);
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/character-boxes/character-boxes.page.html'),
+      'utf8',
+    );
+    const emptyState = template.indexOf("t('empty.noCharacters.title')");
+    const clearButton = template.indexOf('data-test="character-boxes-empty-clear"');
+
+    expect(clearButton).toBeGreaterThan(emptyState);
+    expect(clearButton).toBeLessThan(template.indexOf('} @else {', emptyState));
+    expect(template.slice(clearButton, clearButton + 200)).toContain('(click)="clearFilters()"');
+
+    page.selectBox('box-1');
+    expect(page.hasActiveCharacterFilters()).toBe(false);
+    expect(page.emptyCharactersCopy()).toBe('empty.noCharacters.copy');
+
+    await page.onMembershipFilterChange('inBox');
+    expect(page.hasActiveCharacterFilters()).toBe(true);
+    expect(page.emptyCharactersCopy()).toBe('empty.noCharacters.emptyBox');
+
+    await page.clearFilters();
+    expect(page.selectedMembershipFilter()).toBe('all');
+    expect(page.hasActiveCharacterFilters()).toBe(false);
+
+    await page.onFavoriteFilterChange('favorites');
+    expect(page.emptyCharactersCopy()).toBe('empty.noCharacters.noFavorites');
+  });
+
   it('keeps the expected empty-state copy and editor actions in the template', () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/character-boxes/character-boxes.page.html'),

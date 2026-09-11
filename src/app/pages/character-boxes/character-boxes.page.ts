@@ -221,6 +221,35 @@ export class CharacterBoxesPage implements OnInit {
   public readonly abilityFilterCharacterIds = computed(() =>
     resolveTagSetSelectionMatchingCharacterIds(this.tagSetSelection(), this.allCatalogItems()),
   );
+  public readonly hasActiveCharacterFilters = computed(
+    () =>
+      this.searchTerm().trim().length > 0 ||
+      this.typeFacet().values.length > 0 ||
+      this.classFacet().values.length > 0 ||
+      this.selectedFavoriteFilter() !== 'all' ||
+      this.selectedMembershipFilter() !== 'all' ||
+      this.hasActiveCostRange(this.costRange()) ||
+      this.abilityFilterCharacterIds() !== undefined ||
+      this.characterTagCharacterIds() !== undefined,
+  );
+  /**
+   * Why the character list is empty, chosen by cause (869exmktc). Its one sentence - "Try a
+   * different search, type, or class filter." - showed even when none of those was set: "Already
+   * in box" on an empty box, or "Favorites only" with no favourites, allows no character at all.
+   */
+  public readonly emptyCharactersCopy = computed(() => {
+    const box = this.selectedBox();
+
+    if (this.selectedMembershipFilter() === 'inBox' && box && box.characterIds.length === 0) {
+      return this.t('empty.noCharacters.emptyBox', { name: box.name });
+    }
+
+    if (this.selectedFavoriteFilter() === 'favorites' && this.favoriteCharacterIds().length === 0) {
+      return this.t('empty.noCharacters.noFavorites');
+    }
+
+    return this.t('empty.noCharacters.copy');
+  });
   public readonly abilityTagSetSections = computed<AbilityTagSetPickerSection[]>(() =>
     [
       {

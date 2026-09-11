@@ -299,8 +299,10 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
         })
       : this.t('picker.filters.characterTags.summary', { count: tagCount });
   });
+  /** The search counts: a picker emptied by a search alone used to leave "Clear filters" disabled. */
   public readonly hasActiveCandidateFilters = computed(
     () =>
+      this.searchTerm().length > 0 ||
       !isCharacterFacetSelectionEmpty(this.typeFacet()) ||
       !isCharacterFacetSelectionEmpty(this.classFacet()) ||
       this.characterTagFilterCount() > 0 ||
@@ -752,6 +754,9 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   public async clearCandidateFilters(): Promise<void> {
+    // The search too (869exmktc): "Clear filters" used to leave it, so a list emptied by a search
+    // plus a filter stayed empty after the one button that promised to bring it back.
+    this.searchTerm.set('');
     this.typeFacet.set(createEmptyCharacterFacetSelection());
     this.classFacet.set(createEmptyCharacterFacetSelection());
     this.candidateMinCost.set(null);

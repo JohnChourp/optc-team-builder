@@ -282,7 +282,17 @@
               } @else if (!characters().length) {
                 <div class="panel-empty panel-empty--large">
                   <strong>{{ t('empty.noCharacters.title') }}</strong>
-                  <span>{{ t('empty.noCharacters.copy') }}</span>
+                  <span>{{ emptyCharactersCopy() }}</span>
+                  @if (hasActiveCharacterFilters()) {
+                    <ion-button
+                      fill="outline"
+                      size="small"
+                      data-test="character-boxes-empty-clear"
+                      (click)="clearFilters()"
+                    >
+                      {{ t('empty.noCharacters.clearFilters') }}
+                    </ion-button>
+                  }
                 </div>
               } @else {
                 @if (isCompactDisplayMode()) {

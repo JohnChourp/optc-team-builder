@@ -5,7 +5,13 @@
   },
   "empty": {
     "noResults": {
-      "copy": "No character fits the current team slots, cost budget, search, favorites, and ability filters.",
+      "clearAll": "Clear all filters",
+      "copy": "No character matches these filters: {{filters}}. Clear one to see more characters.",
+      "filters": {
+        "cost": "Cost range",
+        "search": "Search \"{{term}}\""
+      },
+      "noFilters": "There are no characters to show.",
       "title": "No matching characters"
     }
   },
