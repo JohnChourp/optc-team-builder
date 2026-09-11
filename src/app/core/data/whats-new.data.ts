@@ -31,6 +31,36 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.15',
+    date: '2026-09-11',
+    userVisible: true,
+    added: [
+      {
+        en: 'Auto Team Builder has a "Copy debug report" button under the results, and in the card of a build that found no team. It copies your filters, the team and why each character was picked, ready to paste into a bug report, with a link to report a problem on GitHub. It never includes team names, notes or box names.',
+        el: 'Το Auto Team Builder έχει κουμπί «Αντιγραφή debug report» κάτω από τα αποτελέσματα, και στην κάρτα ενός build που δεν βρήκε ομάδα. Αντιγράφει τα φίλτρα σου, την ομάδα και γιατί επιλέχθηκε κάθε χαρακτήρας, έτοιμα για επικόλληση σε αναφορά προβλήματος, μαζί με link για αναφορά στο GitHub. Δεν περιέχει ποτέ ονόματα ομάδων, σημειώσεις ή ονόματα box.',
+      },
+      {
+        en: 'Characters you edited on this device now show an "Edited locally" chip in the team slots of the Auto Team Builder results, and the Final team report says how many are in the team.',
+        el: 'Οι χαρακτήρες που άλλαξες σε αυτή τη συσκευή δείχνουν πλέον chip «Τοπική αλλαγή» στις θέσεις της ομάδας στα αποτελέσματα του Auto Team Builder, και το Τελικό report ομάδας λέει πόσοι είναι στην ομάδα.',
+      },
+    ],
+    improved: [
+      {
+        en: 'When the ability list cannot be loaded, Auto Team Builder now says so above the filters, instead of leaving the ability requirements empty without a word.',
+        el: 'Όταν δεν φορτώνεται η λίστα ικανοτήτων, το Auto Team Builder το λέει πλέον πάνω από τα φίλτρα, αντί να αφήνει άδειες τις απαιτήσεις ικανοτήτων χωρίς εξήγηση.',
+      },
+    ],
+    headline: {
+      en: 'A debug report to copy, and a word when your own edits changed a result',
+      el: 'Debug report για αντιγραφή, και ειδοποίηση όταν οι δικές σου αλλαγές άλλαξαν ένα αποτέλεσμα',
+    },
+    summaryEn:
+      'Auto Team Builder can now copy a debug report of your last build: under the results, or in the card of a build that found no team, "Copy debug report" puts your filters, the team and why each character was picked on the clipboard, ready to paste into a bug report, with a link to report a problem on GitHub. It stays on your device until you paste it, and never includes team names, notes or box names. Characters you edited on this device now show an "Edited locally" chip in the team slots of the results, and the Final team report says how many are in the team. When the ability list cannot be loaded, a notice above the filters now says so. Your saved teams, boxes and favourites are untouched.',
+    summaryEl:
+      'Το Auto Team Builder μπορεί πλέον να αντιγράψει ένα debug report του τελευταίου σου build: κάτω από τα αποτελέσματα, ή στην κάρτα ενός build που δεν βρήκε ομάδα, το «Αντιγραφή debug report» βάζει στο πρόχειρο τα φίλτρα σου, την ομάδα και γιατί επιλέχθηκε κάθε χαρακτήρας, έτοιμα για επικόλληση σε αναφορά προβλήματος, μαζί με link για αναφορά στο GitHub. Μένει στη συσκευή σου μέχρι να το επικολλήσεις, και δεν περιέχει ποτέ ονόματα ομάδων, σημειώσεις ή ονόματα box. Οι χαρακτήρες που άλλαξες σε αυτή τη συσκευή δείχνουν πλέον chip «Τοπική αλλαγή» στις θέσεις της ομάδας στα αποτελέσματα, και το Τελικό report ομάδας λέει πόσοι είναι στην ομάδα. Όταν δεν φορτώνεται η λίστα ικανοτήτων, μια ειδοποίηση πάνω από τα φίλτρα το λέει πλέον. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.',
+    fixed: [],
+  },
+  {
     version: '0.4.14',
     date: '2026-09-11',
     userVisible: true,
