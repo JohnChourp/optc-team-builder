@@ -276,6 +276,18 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     ).toEqual([]);
   });
 
+  it('lets the manual slot grid fit a phone narrower than one 230px slot card', () => {
+    const styles = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/pages/auto-team-builder/auto-team-builder-manual-panel.component.scss',
+      ),
+      'utf8',
+    );
+
+    expect(styles).toContain('grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));');
+  });
+
   it('gives every control in the filter panel the same page-ready guard', async () => {
     const template = readFileSync(
       resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),

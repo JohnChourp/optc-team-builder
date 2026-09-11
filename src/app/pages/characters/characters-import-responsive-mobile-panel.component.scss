@@ -6,6 +6,7 @@
 
   .catalog-summary__title,
   .catalog-summary__meta {
+    flex-wrap: wrap;
     justify-content: space-between;
   }
 

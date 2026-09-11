@@ -148,6 +148,39 @@ describe('import-optc-data ship thumbnail pack', () => {
     ]);
   });
 
+  it('turns an in-game glyph tag in a name into its text instead of shipping the markup', () => {
+    const unit = (name: string) => [
+      name,
+      'STR',
+      ['Fighter', 'Driven'],
+      5,
+      30,
+      4,
+      5,
+      99,
+      3_000_000,
+      1000,
+      400,
+      100,
+      2000,
+      800,
+      200,
+      1,
+    ];
+    const [crewsPromise, otherTag] = normalizeCharacters(
+      [
+        unit("Monkey D. Luffy - Crew's Promise: <icon=common_font_3D2Y.png>"),
+        unit('Test Unit <icon=battle_icon_x.png> Name'),
+      ],
+      {},
+      [],
+      new Map(),
+    );
+
+    expect(crewsPromise?.name).toBe("Monkey D. Luffy - Crew's Promise: 3D2Y");
+    expect(otherTag?.name).toBe('Test Unit Name');
+  });
+
   it('maps upstream unit tuple stats without shifting max RCV into growth', () => {
     const [character] = normalizeCharacters(
       [

@@ -892,6 +892,19 @@ function isPlaceholderCharacterEntry(entry) {
   return name.length === 0 && type === 'Type' && classes.length === 0 && !hasAnyNumericValue;
 }
 
+// Upstream spells an in-game glyph as markup in one name today: #937 "Monkey D. Luffy - Crew's
+// Promise: <icon=common_font_3D2Y.png>", the 3D2Y mark. Shipped as-is it printed the tag, one
+// unbreakable ~499px word the detail hero clipped on every phone. A common_font_ icon draws its
+// own text, so it becomes that text; any other tag has nothing to show and is dropped. Runs of
+// whitespace collapse too - eight names ship a double space, e.g. "Sanji  - Voyage Log".
+function normalizeCharacterName(value) {
+  return String(value ?? '')
+    .replace(/<icon=common_font_([A-Za-z0-9]+)\.png>/gu, '$1')
+    .replace(/<[^>]*>/gu, '')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
 function toFiniteNumber(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -958,7 +971,7 @@ function normalizeUnitMapEntry(
     entry: unitEntry,
     classes,
     type: explicitType || variantType,
-    name: String(unitEntry.name ?? '').trim(),
+    name: normalizeCharacterName(unitEntry.name),
     stars: normalizedStars.stars,
     starsLabel: normalizedStars.starsLabel,
     cost: toFiniteNumber(unitEntry.cost),
@@ -1001,7 +1014,7 @@ function buildNormalizedUnitEntries(units) {
           entry,
           classes,
           type: entry[1],
-          name: entry[0],
+          name: normalizeCharacterName(entry[0]),
           stars: normalizedStars.stars,
           starsLabel: normalizedStars.starsLabel,
           cost: toFiniteNumber(entry[4]),
