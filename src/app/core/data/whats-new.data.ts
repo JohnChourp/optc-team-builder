@@ -31,6 +31,64 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.10',
+    date: '2026-09-11',
+    userVisible: true,
+    added: [],
+    improved: [
+      {
+        en: 'On narrow phones the Characters screen fits again. At the smallest widths in Greek, the right edge of every character card was cut off, along with the Reset button and each favourite star.',
+        el: 'Στα στενά κινητά η οθόνη Characters χωράει ξανά. Στα μικρότερα πλάτη στα ελληνικά κοβόταν η δεξιά άκρη κάθε κάρτας χαρακτήρα, μαζί με το κουμπί Reset και το αστεράκι των favorites.',
+      },
+      {
+        en: 'The ability filter buttons on the Characters screen - Captain Ability, Crewmate, Potential and the rest - show their full names on phones instead of "CAPTAIN A...". So do the same buttons in every pick pop-up that has them.',
+        el: 'Τα κουμπιά φίλτρων ability στην οθόνη Characters - Captain Ability, Crewmate, Potential και τα υπόλοιπα - δείχνουν ολόκληρο το όνομά τους στα κινητά αντί για «CAPTAIN A...». Το ίδιο και τα ίδια κουμπιά σε κάθε αναδυόμενο παράθυρο επιλογής που τα έχει.',
+      },
+    ],
+    headline: {
+      en: 'Tier filters that list the right characters, and a crew that cannot repeat itself',
+      el: 'Φίλτρα Tier που δείχνουν τους σωστούς χαρακτήρες, και πλήρωμα που δεν επαναλαμβάνεται',
+    },
+    summaryEn:
+      "The Tier Coverage filter on Captain Coverage now lists the characters each tier really boosts. Tiers that name a character group - St. Jaygarcia Saturn's Five Elders tier, for one - listed nobody, and Buggy & Crocodile & Mihawk's Tier 2 listed thousands of characters it does not boost. The Team Coverage panel on the same screen now counts those group tiers as covered when your team belongs to the group. On Manual Team Builder, a sub can no longer repeat your Captain or another sub, the same rule the other builders already follow; the character card in the pick pop-up says why, and your Friend Captain can still be anyone. Saving a character on the local-edit screen no longer erases a negative RCV, which 59 characters have. Reset on Auto Team Builder now also switches off the ship lock, and on narrow phones the Characters screen fits again. Your saved teams, boxes and favourites are untouched.",
+    summaryEl:
+      'Το φίλτρο Tier Coverage στο Captain Coverage δείχνει πλέον τους χαρακτήρες που ενισχύει πραγματικά κάθε tier. Τα tiers που ονομάζουν ομάδα χαρακτήρων - όπως το tier των Five Elders του St. Jaygarcia Saturn - δεν έδειχναν κανέναν, και το Tier 2 των Buggy & Crocodile & Mihawk έδειχνε χιλιάδες χαρακτήρες που δεν ενισχύει. Το πάνελ Κάλυψη ομάδας στην ίδια οθόνη μετράει πλέον αυτά τα tiers ως καλυμμένα όταν η ομάδα σου ανήκει στην ομάδα που ονομάζουν. Στο Manual Team Builder ένα sub δεν μπορεί πια να επαναλαμβάνει τον Captain ή άλλο sub, όπως ήδη ισχύει στους άλλους builders· η κάρτα χαρακτήρα στο αναδυόμενο παράθυρο επιλογής λέει γιατί, και ο Friend Captain μπορεί ακόμη να είναι οποιοσδήποτε. Η αποθήκευση χαρακτήρα στην οθόνη τοπικής επεξεργασίας δεν σβήνει πια αρνητικό RCV, που έχουν 59 χαρακτήρες. Το Reset στο Auto Team Builder κλείνει πλέον και το κλείδωμα του ship, και στα στενά κινητά η οθόνη Characters χωράει ξανά. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.',
+    fixed: [
+      {
+        en: "Pressing a Tier chip in the Tier Coverage filter on Captain Coverage lists the characters that tier boosts. Tiers that name a character group, such as St. Jaygarcia Saturn's Five Elders tier, listed nobody at all.",
+        el: 'Πατώντας ένα Tier στο φίλτρο Tier Coverage του Captain Coverage εμφανίζονται οι χαρακτήρες που ενισχύει αυτό το tier. Τα tiers που ονομάζουν ομάδα χαρακτήρων, όπως το tier των Five Elders του St. Jaygarcia Saturn, δεν έδειχναν κανέναν.',
+      },
+      {
+        en: "Buggy & Crocodile & Mihawk's Tier 2 on Captain Coverage lists only Driven and Slasher characters of Cost 40 or less. It also listed every other character of Cost 40 or less, and every Driven or Slasher character above that cost - thousands it does not boost.",
+        el: 'Το Tier 2 των Buggy & Crocodile & Mihawk στο Captain Coverage δείχνει μόνο Driven και Slasher χαρακτήρες με Cost 40 ή λιγότερο. Έδειχνε επιπλέον κάθε άλλο χαρακτήρα με Cost 40 ή λιγότερο, και κάθε Driven ή Slasher χαρακτήρα πάνω από αυτό το cost - χιλιάδες που δεν ενισχύει.',
+      },
+      {
+        en: 'The Team Coverage panel on Captain Coverage counts a tier that names a character group as covered when your team belongs to that group.',
+        el: 'Το πάνελ Κάλυψη ομάδας στο Captain Coverage μετράει ως καλυμμένο ένα tier που ονομάζει ομάδα χαρακτήρων, όταν η ομάδα σου ανήκει σε αυτή.',
+      },
+      {
+        en: 'In the team slots on Manual Team Builder, a sub can no longer repeat your Captain or another sub, and the character card in the pick pop-up says why. Your Friend Captain can still be anyone. A team that already has a repeat still opens, and the Team summary names the repeated slot.',
+        el: 'Στις θέσεις της ομάδας στο Manual Team Builder ένα sub δεν μπορεί πια να επαναλαμβάνει τον Captain ή άλλο sub, και η κάρτα χαρακτήρα στο αναδυόμενο παράθυρο επιλογής λέει γιατί. Ο Friend Captain μπορεί ακόμη να είναι οποιοσδήποτε. Μια ομάδα που έχει ήδη επανάληψη ανοίγει κανονικά, και η Σύνοψη team ονομάζει τη θέση που επαναλαμβάνεται.',
+      },
+      {
+        en: 'Saving a character on the local-edit screen no longer erases a negative RCV. Even a save without changes turned it into "unknown", which also raised that team\'s RCV total on Manual Team Builder.',
+        el: 'Η αποθήκευση χαρακτήρα στην οθόνη τοπικής επεξεργασίας δεν σβήνει πια αρνητικό RCV. Ακόμη και μια αποθήκευση χωρίς αλλαγές το έκανε «άγνωστο», κάτι που ανέβαζε και το σύνολο RCV της ομάδας στο Manual Team Builder.',
+      },
+      {
+        en: 'The Team summary on Manual Team Builder shows "?" for a stat the data does not have, instead of 0, and marks a total that had to leave one out.',
+        el: 'Η Σύνοψη team στο Manual Team Builder δείχνει «?» για stat που δεν υπάρχει στα δεδομένα, αντί για 0, και σημειώνει ένα σύνολο που αναγκάστηκε να το αφήσει έξω.',
+      },
+      {
+        en: 'Reset on Auto Team Builder also switches off "Lock this ship as required", so the next ship you pick is not locked by a choice made for the last one. The lock\'s description now says what it does: without the locked ship, the team is built with no ship. Reset on Manual Team Builder clears the budget warning too.',
+        el: 'Το Reset στο Auto Team Builder κλείνει πλέον και το «Κλείδωμα αυτού του ship ως υποχρεωτικού», οπότε το επόμενο ship που διαλέγεις δεν κλειδώνεται από επιλογή που έγινε για το προηγούμενο. Η περιγραφή του κλειδώματος λέει πλέον τι κάνει: χωρίς το κλειδωμένο ship, η ομάδα χτίζεται χωρίς ship. Το Reset στο Manual Team Builder καθαρίζει και την προειδοποίηση του budget.',
+      },
+      {
+        en: "Monkey D. Luffy - Crew's Promise: 3D2Y shows its full name on its character screen instead of a code tag, and eight other names lost a stray double space.",
+        el: "Ο Monkey D. Luffy - Crew's Promise: 3D2Y δείχνει ολόκληρο το όνομά του στην οθόνη του χαρακτήρα αντί για κωδικό, και άλλα οκτώ ονόματα έχασαν ένα περιττό διπλό κενό.",
+      },
+    ],
+  },
+  {
     version: '0.4.9',
     date: '2026-09-10',
     userVisible: false,
