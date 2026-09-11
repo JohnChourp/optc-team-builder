@@ -57,6 +57,7 @@ import {
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
+import { copyTextToClipboard } from '../../shared/clipboard/clipboard-copy.utils';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { CharacterTagSetPickerComponent } from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
@@ -98,12 +99,6 @@ interface SavedTeamsManualCopyFeedback {
   testId: string;
   text: string;
 }
-
-type ClipboardFailureKind =
-  | 'insecureContext'
-  | 'permissionDenied'
-  | 'unavailable'
-  | 'unknown';
 
 /**
  * What the native share sheet did.
@@ -953,21 +948,15 @@ export class SavedTeamsPage implements OnInit {
   ): Promise<void> {
     this.actionFeedback.set(null);
 
-    try {
-      const clipboard = globalThis.navigator?.clipboard;
+    const failureKind = await copyTextToClipboard(text);
 
-      if (!clipboard?.writeText) {
-        throw new Error('Clipboard API unavailable');
-      }
-
-      await clipboard.writeText(text);
+    if (failureKind === null) {
       this.actionFeedback.set({
         tone: 'success',
         title: this.i18n.translate('share.successTitle', undefined, 'saved-teams'),
         details: [successMessage],
       });
-    } catch (error) {
-      const failureKind = this.resolveClipboardFailureKind(error);
+    } else {
       const details = [
         this.i18n.translate(`share.errors.${failureKind}`, undefined, 'saved-teams'),
         this.i18n.translate(options.failureRecoveryKey, undefined, 'saved-teams'),
@@ -1071,26 +1060,6 @@ export class SavedTeamsPage implements OnInit {
 
       return 'unavailable';
     }
-  }
-
-  private resolveClipboardFailureKind(error: Error | unknown): ClipboardFailureKind {
-    if (globalThis.isSecureContext === false) {
-      return 'insecureContext';
-    }
-
-    const errorName = error && typeof error === 'object' && 'name' in error ? error.name : null;
-
-    if (errorName === 'NotAllowedError' || errorName === 'SecurityError') {
-      return 'permissionDenied';
-    }
-
-    const clipboard = globalThis.navigator?.clipboard;
-
-    if (!clipboard?.writeText) {
-      return 'unavailable';
-    }
-
-    return 'unknown';
   }
 
   private buildAbilityFilterSection(origin: SavedTeamAbilityOrigin): SavedTeamAbilityFilterSection {
