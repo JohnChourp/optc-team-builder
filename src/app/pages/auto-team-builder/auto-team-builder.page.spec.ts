@@ -318,6 +318,127 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     }
   });
 
+  /*
+   * 869exmmf0 / 869exmktu. The guard spec above names four toggles, so a control it did not
+   * name could go unguarded - and the Types and Classes selects did, the only two build inputs
+   * still live during a build. This derives the list instead: every control whose handler resets
+   * the build must wait for it, whatever it is called.
+   */
+  it('binds the page-ready guard on every control whose handler resets the build', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.ts'),
+      'utf8',
+    );
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+    const resettingHandlers = new Set<string>();
+
+    for (const match of source.matchAll(
+      /\n {2}(?:public |private |protected )?(?:async )?([A-Za-z0-9_]+)\([^)]*\)[^{]*\{/gu,
+    )) {
+      const bodyStart = match.index + match[0].length;
+      let depth = 1;
+      let index = bodyStart;
+
+      while (depth > 0 && index < source.length) {
+        if (source[index] === '{') {
+          depth += 1;
+        } else if (source[index] === '}') {
+          depth -= 1;
+        }
+
+        index += 1;
+      }
+
+      const body = source.slice(bodyStart, index);
+
+      if (body.includes('this.resetBuildState()') || body.includes('this.resetPageState()')) {
+        resettingHandlers.add(match[1]);
+      }
+    }
+
+    const guarded: string[] = [];
+    const unguarded: string[] = [];
+
+    for (const match of template.matchAll(
+      /<(ion-select|ion-toggle|ion-input|ion-checkbox|ion-searchbar|ion-textarea|input|select|textarea)\b[^>]*>/gsu,
+    )) {
+      const handler = /\((?:ionChange|ionInput|change|input)\)="\s*([A-Za-z0-9_]+)/u.exec(
+        match[0],
+      )?.[1];
+
+      if (!handler || !resettingHandlers.has(handler)) {
+        continue;
+      }
+
+      (match[0].includes('[disabled]="controlsDisabled()"') ? guarded : unguarded).push(handler);
+    }
+
+    expect(guarded).toEqual(expect.arrayContaining(['onTypeChange', 'onClassChange']));
+    expect(unguarded, 'these reset the build but stay usable while it runs').toEqual([]);
+  });
+
+  it('ignores a Types or Classes change that arrives while a build runs', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set(['Fighter']);
+    page.building.set(true);
+
+    await page.onTypeChange({ detail: { value: ['PSY'] } } as CustomEvent<{
+      value?: AutoTeamBuilderType[];
+    }>);
+    await page.onClassChange({ detail: { value: ['Slasher'] } } as CustomEvent<{
+      value?: string[];
+    }>);
+
+    expect(page.selectedTypes()).toEqual(['DEX']);
+    expect(page.selectedClasses()).toEqual(['Fighter']);
+  });
+
+  it('publishes nothing from a build whose inputs changed while it ran', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const pendingBuild = createDeferred<AutoBuildResult | null>();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX', 'PSY']);
+    page.selectedClasses.set(['Fighter']);
+    autoTeamBuilder.buildTeam.mockReturnValueOnce(pendingBuild.promise);
+
+    const build = page.buildTeam();
+
+    // The type chips' handler has no guard of its own - it stands in for a control that misses one.
+    await page.removeSelectedType('DEX');
+    pendingBuild.resolve(createAutoBuildResult());
+    await build;
+
+    expect(page.selectedTypes()).toEqual(['PSY']);
+    expect(page.result()).toBeNull();
+  });
+
+  it('does not restore the team from before the build on cancel once an input changed', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const pendingBuild = createDeferred<AutoBuildResult | null>();
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX', 'PSY']);
+    page.selectedClasses.set(['Fighter']);
+    page.result.set(createAutoBuildResult());
+    autoTeamBuilder.buildTeam.mockReturnValueOnce(pendingBuild.promise);
+
+    const build = page.buildTeam();
+
+    await page.removeSelectedType('DEX');
+    page.cancelBuild();
+    pendingBuild.reject(new AutoTeamBuildCancelledError());
+    await build;
+
+    expect(page.result()).toBeNull();
+  });
+
   it('holds every control disabled for exactly the window the reset owns', async () => {
     const { page } = await createPage();
 

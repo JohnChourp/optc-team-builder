@@ -59,6 +59,7 @@
                                         [placeholder]="t('filters.types.placeholder')"
                                         [value]="selectedTypes()"
                                         [selectedText]="selectedTypesLabel()"
+                                        [disabled]="controlsDisabled()"
                                         (ionChange)="onTypeChange($event)"
                                       >
                                         @for (item of availableTypes; track item) {
@@ -104,6 +105,7 @@
                                         [placeholder]="t('filters.classes.placeholder')"
                                         [value]="selectedClasses()"
                                         [selectedText]="selectedClassesLabel()"
+                                        [disabled]="controlsDisabled()"
                                         (ionChange)="onClassChange($event)"
                                       >
                                         @for (item of availableClasses(); track item) {

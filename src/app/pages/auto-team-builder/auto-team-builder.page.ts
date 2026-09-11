@@ -947,6 +947,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * `auto-team-builder.page.spec.ts` asserts the bare form is gone.
    */
   public readonly controlsDisabled = computed(() => this.building() || !this.pageReady());
+  /**
+   * Bumped by every resetBuildState(), which is what every build-input mutator calls. A build
+   * reads it once it has started and publishes nothing if it moved: the Types and Classes
+   * selects were the two filter controls without the guard above, and a change made mid-build
+   * put a team built for the old filters under the new ones. Disabling them closes that door;
+   * this makes sure the next control that misses the guard cannot reopen it.
+   */
+  private buildInputRevision = 0;
   /** The first load, so `ionViewWillEnter` can wait for it rather than race it. */
   private initialLoad: Promise<void> | null = null;
   public readonly favoriteShipsOnly = signal(false);
@@ -3216,6 +3224,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public async onClassChange(
     event: CustomEvent<{ value?: string[] | string | null }>,
   ): Promise<void> {
+    // The select is disabled for the same window; this covers an event that arrives anyway.
+    if (this.controlsDisabled()) {
+      return;
+    }
+
     this.selectedClasses.set(this.resolveSelectedClasses(event.detail.value));
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
@@ -3224,6 +3237,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public async onTypeChange(
     event: CustomEvent<{ value?: AutoTeamBuilderType[] | AutoTeamBuilderType | null }>,
   ): Promise<void> {
+    // The select is disabled for the same window; this covers an event that arrives anyway.
+    if (this.controlsDisabled()) {
+      return;
+    }
+
     this.selectedTypes.set(this.resolveSelectedTypes(event.detail.value));
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
@@ -5455,6 +5473,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.pauseAfterBuildCancellation = false;
     this.building.set(true);
     this.resetBuildState();
+    const buildInputRevision = this.buildInputRevision;
     this.startBuildProgressTicker();
     void this.scrollToBottom();
 
@@ -5470,6 +5489,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         ? this.resolveNextGuidedAutoBuildSlotRole()
         : null;
       const nextResult = await this.runCurrentAutoTeamBuild(executionOptions);
+
+      if (buildInputRevision !== this.buildInputRevision) {
+        // The inputs changed while the search ran; the change already cleared the result.
+        return;
+      }
 
       if (nextResult) {
         if (guidedAutoBuildActive && nextResult.relaxation.usedFallback) {
@@ -5490,7 +5514,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       void this.scrollToBottom();
     } catch (error) {
       if (isAutoTeamBuildCancelledError(error)) {
-        if (this.resetAfterBuildCancellation) {
+        if (this.resetAfterBuildCancellation || buildInputRevision !== this.buildInputRevision) {
+          // Restoring the team from before the build would pin it under filters it never saw.
           return;
         }
 
@@ -5973,6 +5998,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private resetBuildState(): void {
+    this.buildInputRevision += 1;
     this.buildPaused.set(false);
     this.buildProgress.set(null);
     this.buildProgressFloorPercent.set(0);
