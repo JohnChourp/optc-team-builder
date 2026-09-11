@@ -15,6 +15,12 @@
   color: #f7a7ce;
 }
 
+/* A character with a local edit on this device (869exmke6, owner D7). */
+.local-override-chip {
+  background: rgba(76, 201, 240, 0.16);
+  color: #7dd8f5;
+}
+
 .summary-status-chip {
   justify-content: flex-start;
   text-transform: none;

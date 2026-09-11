@@ -101,6 +101,19 @@
           </section>
         }
 
+        @if (abilityCatalogUnavailable()) {
+          <section
+            class="preset-import-feedback preset-import-feedback--warning ability-catalog-notice"
+            data-testid="auto-build-ability-catalog-unavailable"
+          >
+            <ion-icon [icon]="presetImportErrorIcon" aria-hidden="true"></ion-icon>
+            <div>
+              <strong>{{ t('errors.abilityCatalogUnavailable.title') }}</strong>
+              <small>{{ t('errors.abilityCatalogUnavailable.copy') }}</small>
+            </div>
+          </section>
+        }
+
         <app-auto-team-builder-controls-panel>
           <app-auto-team-builder-requirements-panel>
             <app-auto-team-builder-manual-panel>
@@ -2958,6 +2971,20 @@
           @if (!building() && errorMessage()) {
             <section class="loading-card glass-card empty-card">
               <span>{{ errorMessage() }}</span>
+              @if (canCopyDebugReport()) {
+                <div class="loading-card__actions">
+                  <ion-button
+                    fill="outline"
+                    color="light"
+                    class="loading-card__action"
+                    data-testid="auto-build-copy-debug-report"
+                    (click)="copyDebugReport()"
+                  >
+                    {{ t('debugReport.copyAction') }}
+                  </ion-button>
+                </div>
+                <ng-container *ngTemplateOutlet="debugReportFeedbackBlock"></ng-container>
+              }
             </section>
           }
 
@@ -3347,6 +3374,11 @@
                     </div>
                   }
                 </div>
+                @if (localOverrideNotice()) {
+                  <p class="report-local-override" data-testid="auto-build-local-override-notice">
+                    {{ localOverrideNotice() }}
+                  </p>
+                }
               </section>
               <section class="summary-grid">
                 <article class="glass-card summary-card">
@@ -3611,6 +3643,15 @@
                 <div class="coverage-actions">
                   <ion-button
                     fill="outline"
+                    color="light"
+                    class="debug-report-button"
+                    data-testid="auto-build-copy-debug-report"
+                    (click)="copyDebugReport()"
+                  >
+                    {{ t('debugReport.copyAction') }}
+                  </ion-button>
+                  <ion-button
+                    fill="outline"
                     color="warning"
                     class="download-team-button"
                     [disabled]="!canDownloadSelectionJson()"
@@ -3619,6 +3660,7 @@
                     {{ downloadSelectionJsonLabel() }}
                   </ion-button>
                 </div>
+                <ng-container *ngTemplateOutlet="debugReportFeedbackBlock"></ng-container>
               </section>
               @if (current.shipSelection; as shipSelection) {
                 <section class="glass-card result-ship-card">
@@ -3764,6 +3806,11 @@
                           </div>
                         }
                         <div class="chip-row">
+                          @if (slot.hasLocalOverride) {
+                            <small class="coverage-chip local-override-chip">{{
+                              t('results.localOverride.chip')
+                            }}</small>
+                          }
                           @for (chip of slot.reasonChips; track $index) {
                             <small class="reason-chip">{{ chip }}</small>
                           }
@@ -3866,4 +3913,47 @@
       </div>
     </app-auto-team-builder-page-style-panels>
   </ion-content>
+
+  <!--
+    Copy debug report (869exmkf4): one feedback block, shown under whichever Copy button was used.
+    The status line is mounted with its card, so the text that lands in it is announced.
+  -->
+  <ng-template #debugReportFeedbackBlock>
+    <div
+      class="debug-report-feedback"
+      role="status"
+      data-testid="auto-build-debug-report-status"
+      [class.debug-report-feedback--success]="debugReportFeedback()?.tone === 'success'"
+      [class.debug-report-feedback--warning]="debugReportFeedback()?.tone === 'warning'"
+    >
+      @if (debugReportFeedback(); as reportFeedback) {
+        <strong>{{ reportFeedback.title }}</strong>
+        @for (detail of reportFeedback.details; track $index) {
+          <small>{{ detail }}</small>
+        }
+      }
+    </div>
+    @if (debugReportFeedback(); as reportFeedback) {
+      @if (reportFeedback.manualCopyText; as manualCopyText) {
+        <label class="debug-report-manual-copy">
+          <span>{{ t('debugReport.manualCopyLabel') }}</span>
+          <textarea
+            readonly
+            rows="6"
+            data-testid="auto-build-debug-report-manual-copy"
+            [value]="manualCopyText"
+            (focus)="selectDebugReportText($event)"
+          ></textarea>
+        </label>
+      }
+      <a
+        class="debug-report-link"
+        data-testid="auto-build-debug-report-link"
+        [href]="debugReportIssueUrl"
+        target="_blank"
+        rel="noreferrer noopener"
+        >{{ t('debugReport.reportLink') }}</a
+      >
+    }
+  </ng-template>
 </ng-container>

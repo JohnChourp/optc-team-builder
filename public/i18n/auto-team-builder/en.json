@@ -1,4 +1,13 @@
 {
+  "debugReport": {
+    "copiedDescription": "Paste it into your bug report or message. It has your filters, the team and how it was built, but no team names, notes or box names.",
+    "copiedTitle": "Debug report copied",
+    "copyAction": "Copy debug report",
+    "copyFailedTitle": "Could not copy the debug report",
+    "manualCopy": "Select the text below and copy it yourself.",
+    "manualCopyLabel": "Debug report",
+    "reportLink": "Report a problem on GitHub"
+  },
   "intro": {
     "actions": {
       "dismiss": "Hide",
@@ -943,6 +952,10 @@
       "partial": "{{matched}} / {{total}} tier coverage slot checks covered.",
       "pending": "Tier coverage will be calculated after a successful build."
     },
+    "localOverride": {
+      "chip": "Edited locally",
+      "notice": "Characters in this team with your local edits: {{count}}."
+    },
     "none": "None",
     "requiredAbilities": {
       "coverage": "{{matched}} / {{total}} requested abilities covered.",
@@ -996,6 +1009,10 @@
     }
   },
   "errors": {
+    "abilityCatalogUnavailable": {
+      "copy": "The ability catalog could not be loaded, so ability requirements have nothing to choose from. Reload the page to try again.",
+      "title": "Ability filters are unavailable"
+    },
     "buildFailed": "The auto build failed unexpectedly. Please try again.",
     "guided": {
       "fallbackOnly": "Guided auto build only locks a slot from a team found by its first, exact search, and this team came from a later one. Turn off Guided auto build to see it.",

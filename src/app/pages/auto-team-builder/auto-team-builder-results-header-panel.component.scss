@@ -38,6 +38,82 @@
 
 .coverage-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 10px;
   margin-top: 18px;
+}
+
+/*
+ * Copy debug report (869exmkf4). The status line stays mounted, so its text is announced when it
+ * lands; it only takes the look of a notice once there is something in it.
+ */
+.debug-report-feedback {
+  display: grid;
+  gap: 4px;
+}
+
+.debug-report-feedback--success,
+.debug-report-feedback--warning {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+}
+
+.debug-report-feedback--success {
+  background: rgba(76, 201, 240, 0.1);
+  border: 1px solid rgba(76, 201, 240, 0.22);
+}
+
+.debug-report-feedback--warning {
+  background: rgba(245, 200, 76, 0.12);
+  border: 1px solid rgba(245, 200, 76, 0.24);
+}
+
+.debug-report-feedback strong {
+  color: #ffffff;
+}
+
+.debug-report-feedback small {
+  color: rgba(248, 251, 255, 0.7);
+  line-height: 1.45;
+}
+
+.debug-report-manual-copy {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  color: rgba(248, 251, 255, 0.7);
+  font-size: 0.86rem;
+}
+
+.debug-report-manual-copy textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  border: 1px solid rgba(245, 200, 76, 0.28);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(16, 24, 32, 0.72);
+  color: #f8fbff;
+  font:
+    0.8rem/1.45 ui-monospace,
+    'SFMono-Regular',
+    Consolas,
+    'Liberation Mono',
+    monospace;
+}
+
+.debug-report-manual-copy textarea:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.7);
+  outline-offset: 2px;
+}
+
+.debug-report-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #4cc9f0;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
