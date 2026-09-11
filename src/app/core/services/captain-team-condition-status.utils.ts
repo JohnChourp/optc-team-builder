@@ -25,6 +25,12 @@ interface CaptainTeamConditionLeaderInput {
 
 export interface CaptainTeamConditionStatusOptions {
   expectedSlotCount: number;
+  /**
+   * Seats that may stay empty without leaving the team incomplete: the Friend Captain's. A team
+   * needs no Friend Captain (owner, 2026-09-08), yet Captain + four subs used to read "5 / 6 slots
+   * filled - complete the team" forever on Manual Team Builder, Captain Coverage and Saved Teams.
+   */
+  optionalSlotIndexes?: readonly number[];
   coverageMode?: AutoBuildCaptainAbilityCoverageMode;
   leaders: readonly CaptainTeamConditionLeaderInput[];
   slotLabels: readonly string[];
@@ -60,12 +66,17 @@ export function resolveCaptainTeamConditionStatus(
 ): CaptainTeamConditionStatus {
   const slots = options.slots.slice(0, options.expectedSlotCount);
   const filledSlots = slots.filter((slot): slot is CharacterDetailRecord => slot !== null);
+  const optionalSlotIndexes = new Set(options.optionalSlotIndexes ?? []);
   const isComplete =
-    slots.length === options.expectedSlotCount && filledSlots.length === options.expectedSlotCount;
+    slots.length === options.expectedSlotCount &&
+    slots.every((slot, index) => slot !== null || optionalSlotIndexes.has(index));
   const coverageMode = options.coverageMode ?? 'fullAbilityCoverage';
-  const leaderStatuses = options.leaders.map((leader) =>
-    resolveLeaderTeamConditionStatus(leader, filledSlots, options.slotLabels, coverageMode),
-  );
+  // An empty Friend Captain seat is no leader to evaluate - it boosts nothing and fails nothing.
+  const leaderStatuses = options.leaders
+    .filter((leader) => leader.role !== 'friendCaptain' || leader.character !== null)
+    .map((leader) =>
+      resolveLeaderTeamConditionStatus(leader, filledSlots, options.slotLabels, coverageMode),
+    );
   const passedLeaderLabels = leaderStatuses
     .filter((status) => status.passed)
     .map((status) => status.label);

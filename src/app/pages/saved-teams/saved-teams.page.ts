@@ -817,6 +817,8 @@ export class SavedTeamsPage implements OnInit {
   ): CaptainTeamConditionStatus {
     return resolveCaptainTeamConditionStatus({
       expectedSlotCount: 6,
+      // Seat 2 is the Friend Captain: a team needs none (owner, 2026-09-08).
+      optionalSlotIndexes: [1],
       leaders: [
         {
           role: 'captain',

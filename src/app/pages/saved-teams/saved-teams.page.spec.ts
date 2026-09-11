@@ -186,6 +186,31 @@ describe('SavedTeamsPage', () => {
     ]);
   });
 
+  // A team needs no Friend Captain (owner, 2026-09-08): an empty seat is saved as null.
+  it('reads a saved team with no Friend Captain as complete', async () => {
+    const { page } = createPage({
+      savedTeams: [
+        {
+          id: 'no-friend-captain',
+          name: 'No Friend Captain',
+          notes: '',
+          shipId: null,
+          slots: [101, null, 103, 104, 105, 106],
+          createdAt: '2026-03-29T10:00:00.000Z',
+          updatedAt: '2026-03-29T10:00:00.000Z',
+        },
+      ],
+    });
+
+    await page.ngOnInit();
+
+    const status = page.savedTeamCards()[0]?.conditionStatus;
+
+    expect(status?.isComplete).toBe(true);
+    expect(status?.state).not.toBe('pending');
+    expect(status?.leaderStatuses.map((leader) => leader.role)).toEqual(['captain']);
+  });
+
   it('builds a deduped, readable ability catalog split by leader and crew slots', async () => {
     const { page } = createPage({
       characterAbilities: {

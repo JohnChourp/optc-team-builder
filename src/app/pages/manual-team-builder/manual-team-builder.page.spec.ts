@@ -473,6 +473,23 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.conditionStatus().passedLeaderLabels).toEqual(['Captain', 'Friend Captain']);
   });
 
+  // A team needs no Friend Captain (owner, 2026-09-08).
+  it('reads a team with no Friend Captain as complete, with no missing-leader warning', async () => {
+    const { page } = createPage();
+    const slots = [601, 602, 603, 604, 605, 606].map((id) => createCharacterRecord(id));
+
+    slots[0]!.detail.captainAbility = 'Boosts ATK of all characters by 5x.';
+
+    await page.ngOnInit();
+    page.slots.set(slots.map((slot, index) => (index === 1 ? null : slot)));
+
+    expect(page.conditionStatus().isComplete).toBe(true);
+    expect(page.conditionStatus().state).toBe('full');
+    expect(page.validationMessages().map((message) => message.key)).not.toContain(
+      'friendCaptain:missing',
+    );
+  });
+
   it('shows an unknown stat as ? and marks the team total that left it out', async () => {
     const { page } = createPage();
     const captain = createCharacterRecord(701, 'Known Stats Captain');

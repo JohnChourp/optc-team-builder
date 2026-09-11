@@ -542,6 +542,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly conditionStatus = computed<CaptainTeamConditionStatus>(() =>
     resolveCaptainTeamConditionStatus({
       expectedSlotCount: MANUAL_TEAM_SLOT_COUNT,
+      // Seat 2 is the Friend Captain: a team needs none (owner, 2026-09-08).
+      optionalSlotIndexes: [1],
       leaders: [
         {
           role: 'captain',

@@ -834,6 +834,8 @@ export class CaptainCoveragePage implements OnInit {
 
     return resolveCaptainTeamConditionStatus({
       expectedSlotCount: CAPTAIN_COVERAGE_TEAM_SLOT_COUNT,
+      // Seat 2 is the Friend Captain: a team needs none (owner, 2026-09-08).
+      optionalSlotIndexes: [1],
       coverageMode: 'simpleBoostScope',
       leaders: [
         {
