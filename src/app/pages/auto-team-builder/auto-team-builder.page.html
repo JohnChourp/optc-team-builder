@@ -94,6 +94,9 @@
                                           {{ selectAllTypesButtonLabel() }}
                                         </ion-button>
                                       </div>
+                                      @if (typeSupportLabel()) {
+                                        <small class="filter-rule-copy">{{ typeSupportLabel() }}</small>
+                                      }
                                     </div>
 
                                     <div class="class-select-card">
@@ -140,6 +143,9 @@
                                           {{ selectAllClassesButtonLabel() }}
                                         </ion-button>
                                       </div>
+                                      @if (classSupportLabel()) {
+                                        <small class="filter-rule-copy">{{ classSupportLabel() }}</small>
+                                      }
                                     </div>
 
                                     <div class="character-filter-card">

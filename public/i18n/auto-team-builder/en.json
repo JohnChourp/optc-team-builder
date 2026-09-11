@@ -56,7 +56,7 @@
       "unselectAll": "Clear class selection",
       "support": {
         "strict": "Every selected unit in the final team must match all selected classes.",
-        "flexible": "Selected classes guide captain scope and candidate weighting without blocking fallback."
+        "flexible": "Only characters of the selected classes: each unit holds at least one of them. With three or more picked, no unit could hold them all, so none has to."
       }
     },
     "characterTags": {

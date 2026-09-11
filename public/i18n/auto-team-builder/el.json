@@ -56,7 +56,7 @@
       "unselectAll": "Καθάρισε τα classes",
       "support": {
         "strict": "Κάθε χαρακτήρας της τελικής ομάδας πρέπει να ταιριάζει σε όλα τα selected classes.",
-        "flexible": "Τα selected classes καθοδηγούν το captain scope και το weighting χωρίς να μπλοκάρουν το fallback."
+        "flexible": "Μόνο χαρακτήρες από τα selected classes: κάθε χαρακτήρας έχει τουλάχιστον ένα από αυτά. Με τρία ή περισσότερα κανένας χαρακτήρας δεν θα μπορούσε να τα έχει όλα, οπότε δεν χρειάζεται."
       }
     },
     "characterTags": {

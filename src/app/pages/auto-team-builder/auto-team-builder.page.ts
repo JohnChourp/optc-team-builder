@@ -46,7 +46,6 @@ import {
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
   AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_TEAM_CANDIDATE_LIMIT,
-  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   type AutoBuildLeaderBoostFilter,
   type AutoBuildLeaderBoostRange,
@@ -64,6 +63,8 @@ import {
   createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
+  AUTO_BUILD_MAX_CLASSES_PER_CHARACTER,
+  shouldTreatSelectedClassesAsNeutral,
 } from '../../core/models/auto-team-builder.models';
 import {
   normalizeAbilityEffectTargetScope,
@@ -1619,8 +1620,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly subCostRangeErrorLabel = computed(() =>
     this.hasInvalidSubCostRange() ? this.t('filters.cost.subs.range.invalid') : '',
   );
-  public readonly typeSupportLabel = computed(() => this.t('filters.types.support.flexible'));
-  public readonly classSupportLabel = computed(() => this.t('filters.classes.support.flexible'));
+  /**
+   * The rule each selection applies, said under its select. It used to be a visible toggle; once
+   * the strictness was derived from the selection it was said nowhere, and a player picking three
+   * classes could not know every unit had to hold all three.
+   */
+  public readonly typeSupportLabel = computed(() =>
+    this.derivedRequireAllSelectedTypesInTeam() ? this.t('filters.types.support.strict') : '',
+  );
+  public readonly classSupportLabel = computed(() => {
+    if (this.derivedRequireAllSelectedClassesPerCharacter()) {
+      return this.t('filters.classes.support.strict');
+    }
+
+    return this.hasSelectedClasses() && !this.allClassesSelected()
+      ? this.t('filters.classes.support.flexible')
+      : '';
+  });
   public readonly characterTagSupportLabel = computed(() =>
     this.derivedRequireAllSelectedCharacterTagsInTeam()
       ? this.t('filters.characterTags.support.strict')
@@ -5564,6 +5580,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         selectedCharacterNames: this.selectedCharacterNames(),
         requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
         requireAllSelectedClassesPerCharacter: this.derivedRequireAllSelectedClassesPerCharacter(),
+        // One or two classes are the per-unit rule; three or more only narrow the pool.
+        requireAllSelectedClassesInTeam: this.derivedRequireAllSelectedClassesPerCharacter(),
         requireAllSelectedCharacterTagsInTeam: this.derivedRequireAllSelectedCharacterTagsInTeam(),
         requireAllSelectedCharacterNamesInTeam: this.derivedRequireAllSelectedCharacterNamesInTeam(),
         requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
@@ -8194,12 +8212,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     );
   }
 
+  /**
+   * "Every unit holds every selected class" only while one unit can: no character has more than
+   * two classes. Asked of three or more it could never be met - the fallback then had to drop all
+   * but two, and with nine of ten selected its attempt cap ran out first and no team was built,
+   * under a message that blamed the types. Three or more read the way types always have: any
+   * selected class per unit, and the team covers each one.
+   */
   private shouldRequireExactSelectedClassCoverage(): boolean {
     const availableClasses = this.availableClasses();
 
     return (
       this.hasSelectedClasses() &&
       availableClasses.length > 0 &&
+      this.selectedClasses().length <= AUTO_BUILD_MAX_CLASSES_PER_CHARACTER &&
       !this.sameUnorderedValues(this.selectedClasses(), availableClasses)
     );
   }
@@ -8221,10 +8247,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         result.requestedInput.selectedClasses,
         result.input.selectedClasses,
         result.relaxation.droppedClasses,
-        !(
-          !result.requestedInput.requireAllSelectedClassesPerCharacter &&
-          this.sameUnorderedValues(result.requestedInput.selectedClasses, AUTO_TEAM_BUILDER_CLASSES)
-        ),
+        !shouldTreatSelectedClassesAsNeutral(result.requestedInput),
       ),
       this.buildSelectedFilterReportRow(
         'characterTags',

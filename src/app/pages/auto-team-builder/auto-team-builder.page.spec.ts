@@ -380,6 +380,83 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(unguarded, 'these reset the build but stay usable while it runs').toEqual([]);
   });
 
+  /*
+   * 869exmmfq. No character holds more than two classes, so "every unit holds every selected
+   * class" asked of three or more could never be met: the fallback had to drop all but two, and
+   * with nine of ten selected its attempt cap ran out first and no team was built at all.
+   */
+  it('asks every unit for all selected classes only while one unit could hold them', async () => {
+    const { page, repository, autoTeamBuilder } = await createPage();
+    const allClasses = [
+      'Fighter',
+      'Slasher',
+      'Striker',
+      'Shooter',
+      'Free Spirit',
+      'Cerebral',
+      'Powerhouse',
+      'Driven',
+      'Booster',
+      'Evolver',
+    ];
+
+    repository.getDatasetManifest.mockResolvedValue({
+      ...createManifest(),
+      availableClasses: allClasses,
+    });
+    await page.ngOnInit();
+
+    page.selectedClasses.set(['Fighter']);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
+    page.selectedClasses.set(['Fighter', 'Slasher']);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
+    expect(page.classSupportLabel()).toContain('must match all selected classes');
+
+    page.selectedClasses.set(['Fighter', 'Slasher', 'Striker']);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
+    expect(page.classSupportLabel()).toContain('Only characters of the selected classes');
+
+    page.selectedClasses.set(allClasses.filter((characterClass) => characterClass !== 'Booster'));
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
+
+    page.selectedTypes.set(['DEX']);
+    await page.buildTeam();
+    expect(autoTeamBuilder.buildTeam).toHaveBeenLastCalledWith(
+      expect.any(Array),
+      ['DEX'],
+      expect.objectContaining({
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSelectedClassesInTeam: false,
+      }),
+      expect.anything(),
+    );
+
+    page.selectedClasses.set(allClasses);
+    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
+    expect(page.classSupportLabel()).toBe('');
+  });
+
+  it('says the rule each type and class selection applies, under its select', async () => {
+    const { page } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+    expect(page.typeSupportLabel()).toContain('must appear at least once');
+    page.selectedTypes.set([...page.availableTypes]);
+    expect(page.typeSupportLabel()).toBe('');
+
+    expect(template).toContain(
+      '<small class="filter-rule-copy">{{ typeSupportLabel() }}</small>',
+    );
+    expect(template).toContain(
+      '<small class="filter-rule-copy">{{ classSupportLabel() }}</small>',
+    );
+  });
+
   it('ignores a Types or Classes change that arrives while a build runs', async () => {
     const { page } = await createPage();
 
@@ -1607,6 +1684,33 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(byKey.get('superTandem')).toMatchObject({ state: 'passed' });
     expect(byKey.get('characterTags')).toMatchObject({ state: 'notApplicable' });
     expect(byKey.get('characterNames')).toMatchObject({ state: 'notApplicable' });
+  });
+
+  it('does not report class coverage for a "these classes only" team', async () => {
+    const { page } = await createPage();
+    const result = createAutoBuildResult();
+    const threeClasses = ['Fighter', 'Slasher', 'Striker'];
+    const buildWith = (requireAllSelectedClassesInTeam: boolean | undefined) => ({
+      ...result,
+      input: { ...result.input, selectedClasses: threeClasses, requireAllSelectedClassesInTeam },
+      requestedInput: {
+        ...result.requestedInput,
+        selectedClasses: threeClasses,
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSelectedClassesInTeam,
+      },
+    });
+
+    page.result.set(buildWith(false));
+    expect(page.finalReportRows().find((row) => row.key === 'classes')).toMatchObject({
+      state: 'notApplicable',
+    });
+
+    // A result saved before the flag existed keeps the reading it was built under.
+    page.result.set(buildWith(undefined));
+    expect(page.finalReportRows().find((row) => row.key === 'classes')?.state).not.toBe(
+      'notApplicable',
+    );
   });
 
   it('shows relaxed rows in the final team report when fallback ignores synergy rules', async () => {

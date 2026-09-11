@@ -12,6 +12,7 @@ import {
   type AutoBuildProgressSnapshot,
   type AutoBuildResult,
   type AutoTeamBuilderType,
+  shouldTreatSelectedClassesAsNeutral,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
@@ -661,6 +662,50 @@ describe('runAutoTeamBuildSearch', () => {
     } satisfies AutoBuildResult;
 
     expect(satisfiesRequestedAutoTeamBuildCoverage(result)).toBe(false);
+  });
+
+  /*
+   * 869exmmfq. Three or more classes from the Auto Team Builder page mean "these classes only":
+   * the repository keeps units holding any of them, and the team need not include each one. The
+   * page opts in with `requireAllSelectedClassesInTeam: false`; every other caller keeps the old
+   * reading, where a subset also has to be covered.
+   */
+  it('treats selected classes as a team requirement only where the caller asks for one', () => {
+    expect(
+      shouldTreatSelectedClassesAsNeutral({ selectedClasses: [...AUTO_TEAM_BUILDER_CLASSES] }),
+    ).toBe(true);
+    expect(
+      shouldTreatSelectedClassesAsNeutral({ selectedClasses: ['Fighter', 'Slasher', 'Striker'] }),
+    ).toBe(false);
+    expect(
+      shouldTreatSelectedClassesAsNeutral({
+        selectedClasses: ['Fighter', 'Slasher', 'Striker'],
+        requireAllSelectedClassesInTeam: false,
+      }),
+    ).toBe(true);
+    expect(
+      shouldTreatSelectedClassesAsNeutral({
+        selectedClasses: ['Fighter'],
+        requireAllSelectedClassesPerCharacter: true,
+        requireAllSelectedClassesInTeam: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('builds from "these classes only" without relaxing the classes the pool cannot cover', () => {
+    const records = createSingleTypeRecords();
+    const selectedClasses = ['Fighter', 'Slasher', 'Striker'];
+    const coverEach = runAutoTeamBuildSearch(records, createInput(['DEX'], selectedClasses));
+    const poolOnly = runAutoTeamBuildSearch(records, {
+      ...createInput(['DEX'], selectedClasses),
+      requireAllSelectedClassesInTeam: false,
+    });
+
+    // No record in this pool is a Striker, so covering each class has to give Striker up.
+    expect(coverEach?.relaxation.droppedClasses).toEqual(['Striker']);
+    expect(poolOnly).not.toBeNull();
+    expect(poolOnly?.relaxation.droppedClasses).toEqual([]);
+    expect(satisfiesRequestedAutoTeamBuildCoverage(poolOnly)).toBe(true);
   });
 
   it('relaxes strict selected type coverage after exact search fails', () => {

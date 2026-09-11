@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 
 import {
   AUTO_TEAM_CANDIDATE_LIMIT,
-  AUTO_TEAM_BUILDER_CLASSES,
   AUTO_TEAM_BUILDER_TYPES,
   AUTO_TEAM_BUILDER_DEFAULT_TYPE,
   AUTO_BUILD_TOTAL_SLOT_COUNT,
@@ -30,6 +29,7 @@ import {
   createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
+  shouldTreatSelectedClassesAsNeutral,
 } from '../models/auto-team-builder.models';
 import {
   normalizeAbilityEffectTargetScope,
@@ -334,6 +334,7 @@ export class AutoTeamBuilderService {
       requireAllSelectedTypesInTeam: constraints.requireAllSelectedTypesInTeam ?? false,
       requireAllSelectedClassesPerCharacter:
         constraints.requireAllSelectedClassesPerCharacter ?? false,
+      requireAllSelectedClassesInTeam: constraints.requireAllSelectedClassesInTeam ?? true,
       requireAllSelectedCharacterTagsInTeam:
         constraints.requireAllSelectedCharacterTagsInTeam ?? false,
       requireAllSelectedCharacterNamesInTeam:
@@ -1871,7 +1872,7 @@ export class AutoTeamBuilderService {
     const typeSubsetCount = this.shouldTreatSelectedTypesAsNeutral(input)
       ? 1
       : this.resolveBoundedSubsetCount(input.types.length, true);
-    const classSubsetCount = this.shouldTreatSelectedClassesAsNeutral(input)
+    const classSubsetCount = shouldTreatSelectedClassesAsNeutral(input)
       ? 1
       : this.resolveBoundedSubsetCount(input.selectedClasses.length, false);
     const characterTagCount = (input.selectedCharacterTags ?? []).length;
@@ -1898,13 +1899,6 @@ export class AutoTeamBuilderService {
     return (
       !input.requireAllSelectedTypesInTeam &&
       this.sameUnorderedValues(input.types, AUTO_TEAM_BUILDER_TYPES)
-    );
-  }
-
-  private shouldTreatSelectedClassesAsNeutral(input: AutoBuildInput): boolean {
-    return (
-      !input.requireAllSelectedClassesPerCharacter &&
-      this.sameUnorderedValues(input.selectedClasses, AUTO_TEAM_BUILDER_CLASSES)
     );
   }
 
