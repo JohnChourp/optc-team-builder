@@ -54,6 +54,7 @@ import {
   type AutoBuildLeaderBoostRanges,
   type AutoBuildCaptainBranchMode,
   type AutoBuildConstraints,
+  type AutoTeamBuildExecutionPath,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressExclusionCounts,
@@ -803,6 +804,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private lastBuildContext: AutoTeamDebugReportContext | null = null;
   /** The team a guided build found but could not use - relaxed, or not lockable into its slot. */
   private unappliedGuidedResult: AutoBuildResult | null = null;
+  /** Where the last build ran, as the service reported it (869exmmh5). */
+  private lastExecutionPath: AutoTeamBuildExecutionPath | null = null;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
@@ -5873,6 +5876,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       const executionOptions: AutoTeamBuildExecutionOptions = {
         signal: abortController.signal,
         onProgress: (snapshot) => this.handleBuildProgressSnapshot(snapshot),
+        onExecutionPath: (path) => {
+          if (buildInputRevision === this.buildInputRevision) {
+            this.lastExecutionPath = path;
+          }
+        },
         workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
         getWorkerCount: () => this.userState.resolveAutoTeamBuilderWorkerCount(),
       };
@@ -6290,6 +6298,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       dataset: this.summary(),
       abilityCatalogGeneratedAt: this.abilityCatalog()?.generatedAt ?? null,
       localOverrideCharacterIds: [...this.characterOverrides.overridesByCharacterId().keys()],
+      executionPath: this.lastExecutionPath,
       context: this.lastBuildContext ?? this.buildDebugReportContext(),
       // With no team there is no requested input on a result: report what the page sent.
       request: result?.requestedInput ??
@@ -6553,6 +6562,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.lastBuildRequest = null;
     this.lastBuildContext = null;
     this.unappliedGuidedResult = null;
+    this.lastExecutionPath = null;
     this.manualSimilarPickFeedback.set('');
     this.currentTeamId.set(null);
     this.resetSaveFeedbackState();

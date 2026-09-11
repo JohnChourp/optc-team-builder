@@ -562,6 +562,16 @@ export interface AutoBuildProgressExclusionCounts {
   missingRequiredGroup: number;
 }
 
+/**
+ * Where a build ran (869exmmh5). A worker that fails is retried on the main thread without a word,
+ * so a slow or odd build can only be told apart in a debug report.
+ */
+export type AutoTeamBuildExecutionPath =
+  | 'pool'
+  | 'worker'
+  | 'mainThread'
+  | 'mainThreadAfterWorkerFailure';
+
 export interface AutoBuildProgressSnapshot {
   stage: AutoBuildProgressStage;
   candidateCount: number;

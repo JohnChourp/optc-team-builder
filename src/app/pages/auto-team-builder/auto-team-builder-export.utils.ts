@@ -564,6 +564,29 @@ function normalizeLeaderBoostRange(value: unknown): AutoBuildLeaderBoostRange {
   };
 }
 
+/**
+ * Bounds a preset set that normalizing drops: present, but negative or not a number. They used to
+ * vanish without a word (869exmmh1); the import now says how many it ignored.
+ */
+function countInvalidLeaderBoostRangeBounds(value: unknown): number {
+  const source = isRecord(value) ? value : {};
+
+  return AUTO_BUILD_LEADER_BOOST_FILTERS.reduce((count, filter) => {
+    const range = isRecord(source[filter]) ? source[filter] : {};
+
+    return (
+      count +
+      [range['min'], range['max']].filter(
+        (bound) =>
+          bound !== null &&
+          bound !== undefined &&
+          bound !== '' &&
+          normalizeLeaderBoostRangeBound(bound) === null,
+      ).length
+    );
+  }, 0);
+}
+
 function normalizeLeaderBoostRangeBound(value: unknown): number | null {
   if (value === null || value === undefined || value === '') {
     return null;
@@ -1488,6 +1511,14 @@ export function sanitizeAutoTeamSelectionImportPayload(
   );
   const leaderBoostFilters = normalizeLeaderBoostFilters(payload.filters.leaderBoostFilters);
   const leaderBoostRanges = normalizeLeaderBoostRanges(payload.filters.leaderBoostRanges);
+  const invalidLeaderBoostBoundWarning = buildWarning(
+    'preset.warnings.invalidLeaderBoostBounds',
+    countInvalidLeaderBoostRangeBounds(payload.filters.leaderBoostRanges),
+  );
+
+  if (invalidLeaderBoostBoundWarning) {
+    warnings.push(invalidLeaderBoostBoundWarning);
+  }
 
   return {
     state: {

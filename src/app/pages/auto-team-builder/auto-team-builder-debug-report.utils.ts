@@ -3,6 +3,7 @@ import {
   type AutoBuildEnemyMechanicRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
 import {
+  type AutoTeamBuildExecutionPath,
   type AutoBuildConstraints,
   type AutoBuildInput,
   type AutoBuildLeaderBoostRange,
@@ -76,6 +77,8 @@ export interface AutoTeamDebugReportInput {
   abilityCatalogGeneratedAt: string | null;
   /** Every character with a local edit on this device: ids only. */
   localOverrideCharacterIds: readonly number[];
+  /** Where the last build ran, when it reported one (869exmmh5). */
+  executionPath: AutoTeamBuildExecutionPath | null;
   context: AutoTeamDebugReportContext;
   /** The request as sent: `result.requestedInput`, or what the page sent when no team came back. */
   request: AutoTeamDebugReportRequestSource;
@@ -127,6 +130,8 @@ export interface AutoTeamDebugReport {
     localOverrideCount: number;
     overriddenTeamCharacterIds: number[];
     incompleteTeamCharacterIds: number[];
+    /** A failed worker reruns the build on the main thread without a word: this says so. */
+    executionPath?: AutoTeamBuildExecutionPath;
   };
   context: AutoTeamDebugReportContext;
   request: {
@@ -229,6 +234,7 @@ export function buildAutoTeamDebugReport(input: AutoTeamDebugReportInput): AutoT
           .filter((slot) => slot.character.isIncomplete)
           .map((slot) => slot.character.id) ?? [],
       ),
+      ...(input.executionPath ? { executionPath: input.executionPath } : {}),
     },
     context: { ...input.context },
     request: compactRequest(input.request),

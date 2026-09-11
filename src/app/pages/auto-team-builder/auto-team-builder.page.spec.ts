@@ -8150,6 +8150,60 @@ describe('AutoTeamBuilder preset import helpers', () => {
     ]);
   });
 
+  // 869exmmh1: a negative or non-numeric Captain boost bound used to vanish without a word.
+  it('says how many invalid Captain boost bounds a preset import ignored', () => {
+    const payload = buildAutoTeamSelectionExportPayload({
+      selectedTypes: ['DEX'],
+      selectedClasses: ['Fighter'],
+      requiredAbilities: [],
+      enemyMechanics: [],
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+      requireAllSlotsInLeaderSuperEffectScope: false,
+      requireUniqueBaseCharacterNames: false,
+      favoritesOnly: false,
+      favoriteCount: 0,
+      manualSlots: createManualSlots({}),
+      lockedCharacterIds: [],
+      lockedCharacters: [],
+      selectedLeaderIds: [],
+      captainLeaderId: null,
+      friendCaptainLeaderId: null,
+      exportedAt: '2026-03-25T10:00:00.000Z',
+    });
+    const sanitize = () =>
+      sanitizeAutoTeamSelectionImportPayload(payload, {
+        availableTypes: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+        availableClasses: ['Fighter', 'Slasher'],
+        abilityCatalogItems: [],
+        availableLockedCharacters: [],
+      });
+
+    (payload.filters as { leaderBoostRanges: unknown }).leaderBoostRanges = {
+      ATK: { min: -2, max: 'lots' },
+      HP: { min: 1.5, max: null },
+    };
+    const result = sanitize();
+
+    expect(result.state.leaderBoostRanges).toEqual({
+      ATK: { min: null, max: null },
+      HP: { min: 1.5, max: null },
+    });
+    expect(result.warnings).toContainEqual({
+      key: 'preset.warnings.invalidLeaderBoostBounds',
+      params: { count: 2 },
+    });
+
+    // Empty and valid bounds are not invalid ones.
+    (payload.filters as { leaderBoostRanges: unknown }).leaderBoostRanges = {
+      ATK: { min: '', max: 4 },
+      HP: { min: 0, max: undefined },
+    };
+    expect(
+      sanitize().warnings.some((warning) => warning.key === 'preset.warnings.invalidLeaderBoostBounds'),
+    ).toBe(false);
+  });
+
   it('keeps cross-slot manual OR picks when sanitizing imported presets', () => {
     const payload = buildAutoTeamSelectionExportPayload({
       selectedTypes: ['DEX'],
@@ -10868,6 +10922,35 @@ describe('AutoTeamBuilderPage debug report', () => {
       );
       expect(report.context.guidedAutoBuild, code).toBe(code.startsWith('guided'));
     }
+  });
+
+  // 869exmmh5: a failed worker reruns the build on the main thread silently; the report says so.
+  it('reports where the build ran, and forgets it with the build', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    let reportPath: ((path: string) => void) | undefined;
+
+    autoTeamBuilder.buildTeam.mockImplementation(
+      async (
+        _classes: string[],
+        _types: string[],
+        _constraints: unknown,
+        executionOptions?: { onExecutionPath?: (path: string) => void },
+      ) => {
+        reportPath = executionOptions?.onExecutionPath;
+        reportPath?.('pool');
+        reportPath?.('mainThreadAfterWorkerFailure');
+
+        return createAutoBuildResult();
+      },
+    );
+    await page.ngOnInit();
+    await page.buildTeam();
+    expect(page.buildDebugReport().dataQuality.executionPath).toBe('mainThreadAfterWorkerFailure');
+
+    // A change retires the build; a path its search reports late belongs to no build.
+    await page.removeSelectedType('DEX');
+    reportPath?.('worker');
+    expect(page.buildDebugReport().dataQuality).not.toHaveProperty('executionPath');
   });
 
   it('marks result slots whose character has a local edit, and says so in the report', async () => {
