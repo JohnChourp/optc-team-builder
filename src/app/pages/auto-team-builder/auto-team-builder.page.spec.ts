@@ -4687,6 +4687,46 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     }
   });
 
+  // 869exmkam (owner, 2026-09-11): shortcuts into flows that already exist, on a fresh page only.
+  it('offers quick-start shortcuts on a fresh page only', async () => {
+    const { page } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+    const quickStart = template.slice(template.indexOf('@if (quickStartVisible())'));
+
+    expect(quickStart.slice(0, 1600)).toContain('(click)="quickStartFromCaptain()"');
+    expect(quickStart.slice(0, 1600)).toContain('routerLink="/tabs/saved-enemies"');
+    expect(quickStart.slice(0, 1600)).toContain('(click)="quickStartGuided()"');
+    expect(page.quickStartVisible()).toBe(false);
+
+    await page.ngOnInit();
+    expect(page.quickStartVisible()).toBe(true);
+
+    await page.quickStartFromCaptain();
+    expect(page.activeManualSlotRole()).toBe('captain');
+    expect(page.manualPickerModalOpen()).toBe(true);
+
+    await page.quickStartGuided();
+    expect(page.guidedAutoBuildEnabled()).toBe(true);
+    expect(page.quickStartVisible()).toBe(false);
+
+    page.guidedAutoBuildEnabled.set(false);
+    expect(page.quickStartVisible()).toBe(true);
+    page.manualSlots.set(createManualSlots({ captain: [101] }));
+    expect(page.quickStartVisible()).toBe(false);
+
+    // A handoff arrives with intent: even one that leaves the page fresh (an unknown enemy) hides it.
+    const { page: handoffPage } = await createPage({ routeEnemyId: 'missing-enemy' });
+
+    await handoffPage.ngOnInit();
+    await handoffPage.ionViewWillEnter();
+    expect(handoffPage.manualSelectionCount()).toBe(0);
+    expect(handoffPage.requiredCharactersSectionEmpty()).toBe(true);
+    expect(handoffPage.quickStartVisible()).toBe(false);
+  });
+
   // 869exmkr2: ready to build, or the one thing missing, plus the locks - at the top of the page.
   it('says at the top whether Build is ready, and how many slots are locked', async () => {
     const { page } = await createPage();

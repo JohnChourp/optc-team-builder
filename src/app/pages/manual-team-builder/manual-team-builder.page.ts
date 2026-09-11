@@ -470,6 +470,13 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly introOpenedFromHandoff = signal(false);
   private readonly introShownOnRequest = signal(false);
   public readonly introVisible = computed(() => !this.loading() && !this.introOpenedFromHandoff());
+  /**
+   * Quick start (869exmkam; owner, 2026-09-11): shortcuts into flows that already exist, offered
+   * only on an empty team that no handoff brought in.
+   */
+  public readonly quickStartVisible = computed(
+    () => !this.loading() && !this.introOpenedFromHandoff() && this.filledSlotCount() === 0,
+  );
   public readonly introExpanded = computed(
     () => !this.userState.builderIntroDismissed().manualTeamBuilder || this.introShownOnRequest(),
   );
@@ -767,6 +774,10 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
   public showIntro(): void {
     this.introShownOnRequest.set(true);
+  }
+
+  public async quickStartFromCaptain(): Promise<void> {
+    await this.openCharacterPicker(0);
   }
 
   public onTeamNameChange(event: CustomEvent<{ value?: string | null }>): void {

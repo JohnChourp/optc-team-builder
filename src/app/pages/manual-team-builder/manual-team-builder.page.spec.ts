@@ -434,6 +434,37 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.selectedSlotIndex()).toBe(2);
   });
 
+  // 869exmkam (owner, 2026-09-11): shortcuts into flows that already exist, on an empty team only.
+  it('offers quick-start shortcuts on an empty team only', async () => {
+    const { page } = createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/manual-team-builder/manual-team-builder.page.html'),
+      'utf8',
+    );
+    const quickStart = template.slice(template.indexOf('@if (quickStartVisible())'));
+
+    expect(quickStart.slice(0, 1800)).toContain('(click)="quickStartFromCaptain()"');
+    expect(quickStart.slice(0, 1800)).toContain('routerLink="/tabs/saved-teams"');
+    expect(quickStart.slice(0, 1800)).toContain('routerLink="/tabs/captain-coverage"');
+    expect(page.quickStartVisible()).toBe(false);
+
+    await page.ngOnInit();
+    expect(page.quickStartVisible()).toBe(true);
+
+    await page.quickStartFromCaptain();
+    expect(page.pickerModalOpen()).toBe(true);
+    expect(page.selectedSlotIndex()).toBe(0);
+
+    page.slots.set([createCharacterRecord(901), null, null, null, null, null]);
+    expect(page.quickStartVisible()).toBe(false);
+
+    const { page: handoffPage } = createPage({ routeTeamShare: 'not-a-share-code' });
+
+    await handoffPage.ngOnInit();
+    await handoffPage.ionViewWillEnter();
+    expect(handoffPage.quickStartVisible()).toBe(false);
+  });
+
   it('labels each slot with its role, the Friend Captain as optional', async () => {
     const { page } = createPage();
     const template = readFileSync(

@@ -1592,6 +1592,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     () => !this.userState.builderIntroDismissed().autoTeamBuilder || this.introShownOnRequest(),
   );
   /**
+   * Quick start (869exmkam; owner, 2026-09-11): shortcuts into flows that already exist - never
+   * shipped preset teams, which go stale with every nightly data release and cannot know the
+   * player's box. Offered only on a fresh page: no pick, rule, exclude, result or handoff yet.
+   */
+  public readonly quickStartVisible = computed(
+    () =>
+      this.pageReady() &&
+      !this.introOpenedFromHandoff() &&
+      !this.building() &&
+      !this.result() &&
+      !this.guidedAutoBuildEnabled() &&
+      this.manualSelectionCount() === 0 &&
+      this.captainFiltersSectionEmpty() &&
+      this.requiredCharactersSectionEmpty() &&
+      this.excludeSectionEmpty(),
+  );
+  /**
    * Compact by default (869exmkqr; owner, 2026-09-11): these three sections start collapsed only
    * while they hold nothing, and a section with active rules is never hidden - it has no toggle.
    * Collapsing hides the explanation and the empty note; the summary and every button stay. A
@@ -3983,6 +4000,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public async dismissIntro(): Promise<void> {
     this.introShownOnRequest.set(false);
     await this.userState.setBuilderIntroDismissed('autoTeamBuilder', true);
+  }
+
+  public async quickStartFromCaptain(): Promise<void> {
+    this.selectManualSlot('captain');
+    await this.openManualPickerModal();
+  }
+
+  public async quickStartGuided(): Promise<void> {
+    this.onGuidedAutoBuildToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
+    await this.scrollToBottom();
   }
 
   public showIntro(): void {

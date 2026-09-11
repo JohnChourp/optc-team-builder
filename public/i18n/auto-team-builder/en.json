@@ -11,6 +11,21 @@
     },
     "title": "How this page works"
   },
+  "quickStart": {
+    "captain": {
+      "copy": "Pick the Captain you have in mind; the builder fills the rest.",
+      "title": "Start from my Captain"
+    },
+    "enemy": {
+      "copy": "Open an enemy from Saved Enemies to bring its stage requirements here.",
+      "title": "Build for a saved enemy"
+    },
+    "guided": {
+      "copy": "Turns on Guided auto build: each build locks the next slot.",
+      "title": "Fill it one slot at a time"
+    },
+    "title": "Quick start"
+  },
   "sections": {
     "hideDetails": "Hide details",
     "showDetails": "Show details"

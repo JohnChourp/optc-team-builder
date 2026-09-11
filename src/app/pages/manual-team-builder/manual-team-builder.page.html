@@ -50,6 +50,34 @@
             </section>
           }
 
+          @if (quickStartVisible()) {
+            <section
+              class="glass-card builder-quick-start"
+              data-testid="manual-build-quick-start"
+              aria-labelledby="manual-build-quick-start-title"
+            >
+              <h2 id="manual-build-quick-start-title">{{ t('quickStart.title') }}</h2>
+              <div class="builder-quick-start__actions">
+                <button
+                  type="button"
+                  class="builder-quick-start__action"
+                  (click)="quickStartFromCaptain()"
+                >
+                  <strong>{{ t('quickStart.captain.title') }}</strong>
+                  <small>{{ t('quickStart.captain.copy') }}</small>
+                </button>
+                <a class="builder-quick-start__action" routerLink="/tabs/saved-teams">
+                  <strong>{{ t('quickStart.savedTeam.title') }}</strong>
+                  <small>{{ t('quickStart.savedTeam.copy') }}</small>
+                </a>
+                <a class="builder-quick-start__action" routerLink="/tabs/captain-coverage">
+                  <strong>{{ t('quickStart.coverage.title') }}</strong>
+                  <small>{{ t('quickStart.coverage.copy') }}</small>
+                </a>
+              </div>
+            </section>
+          }
+
           @if (loading()) {
             <section class="glass-card loading-card">
               <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>

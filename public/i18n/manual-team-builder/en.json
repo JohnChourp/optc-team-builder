@@ -127,6 +127,21 @@
     "invalidConflict": "Drop blocked because {{name}} is already in your crew. A sub can't repeat the Captain or another sub.",
     "invalidCost": "Drop blocked because the team would exceed max cost {{max}}."
   },
+  "quickStart": {
+    "captain": {
+      "copy": "Opens the picker on Slot 1; each pick moves on to the next empty slot.",
+      "title": "Start from my Captain"
+    },
+    "coverage": {
+      "copy": "Captain Coverage shows who your Captain boosts before you build.",
+      "title": "Check a Captain's coverage first"
+    },
+    "savedTeam": {
+      "copy": "Pick up a team from Saved Teams and keep editing it here.",
+      "title": "Open a saved team"
+    },
+    "title": "Quick start"
+  },
   "save": {
     "error": "Manual team could not be saved.",
     "savingLabel": "Saving...",
