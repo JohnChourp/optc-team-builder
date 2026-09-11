@@ -2769,6 +2769,7 @@
 
                                   <div class="build-submit-row">
                                     <ion-button
+                                      #buildSubmitButton
                                       data-testid="auto-build-submit"
                                       color="warning"
                                       class="build-submit-button"
@@ -2792,7 +2793,7 @@
                                         class="select-all-button"
                                         data-testid="auto-build-fix"
                                         [disabled]="controlsDisabled()"
-                                        (click)="fix === 'types' ? selectAllTypes() : selectAllClasses()"
+                                        (click)="applyBuildDisabledFix()"
                                       >
                                         {{
                                           fix === 'types'

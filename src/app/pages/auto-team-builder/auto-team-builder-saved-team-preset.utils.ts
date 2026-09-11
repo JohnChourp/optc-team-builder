@@ -12,10 +12,17 @@ import {
 } from '../../core/models/optc.models';
 import { type AutoTeamSelectionImportState } from './auto-team-builder-export.utils';
 
+/**
+ * A saved team carries slots and a ship, nothing else. It carries no type or class filter either,
+ * so it opens on the page's neutral selection - every type and class, which the engine treats as no
+ * filter. Landing with none selected left Build grey on arrival with the team already locked
+ * (869exmkbe).
+ */
 export function buildAutoTeamBuilderStateFromSavedTeam(
   team: SavedTeam,
   availableCharacters: CharacterListItem[],
   availableShips: ShipRecord[],
+  neutralSelection: Pick<AutoTeamSelectionImportState, 'selectedTypes' | 'selectedClasses'>,
 ): AutoTeamSelectionImportState {
   const availableCharacterIdSet = new Set(availableCharacters.map((character) => character.id));
   const availableShipIdSet = new Set(availableShips.map((ship) => ship.id));
@@ -36,8 +43,8 @@ export function buildAutoTeamBuilderStateFromSavedTeam(
   });
 
   return {
-    selectedTypes: [],
-    selectedClasses: [],
+    selectedTypes: [...neutralSelection.selectedTypes],
+    selectedClasses: [...neutralSelection.selectedClasses],
     selectedCharacterTags: [],
     selectedCharacterNames: [],
     requiredAbilities: [],
