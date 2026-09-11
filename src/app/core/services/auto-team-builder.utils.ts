@@ -187,7 +187,7 @@ type AutoBuildLeaderPairProgress = Pick<
   | 'totalLeaderPairs'
 >;
 
-interface SubAbilityDemandContext {
+export interface SubAbilityDemandContext {
   requirements: AutoBuildAbilityRequirement[];
   battleRequirements: AutoBuildBattleRequirement[];
   leaderTagConditionSets: ActiveLeaderCriteria['tagConditionSets'];
@@ -243,7 +243,11 @@ export interface PreparedAutoTeamBuildContext {
   recordById: Map<number, PreparedAutoBuildRecord>;
 }
 
-interface AutoBuildSubCandidateRank {
+/*
+ * Exported with the two functions below for the parity spec: a rejected sub's preference reason is
+ * only honest while it walks the comparator's own order, and nothing else can hold them together.
+ */
+export interface AutoBuildSubCandidateRank {
   strictBattleGroupPreferenceScore: number;
   demandScore: number;
   leaderTagConditionScore: number;
@@ -253,7 +257,7 @@ interface AutoBuildSubCandidateRank {
   selectedFilterScore: number;
 }
 
-interface RankedAutoBuildSubCandidate {
+export interface RankedAutoBuildSubCandidate {
   candidate: AutoBuildCandidate;
   rank: AutoBuildSubCandidateRank;
 }
@@ -3336,7 +3340,6 @@ function buildLeaderRejectedCandidateExplanations(
 ): AutoBuildRejectedCandidateExplanation[] {
   const teamCharacterIds = new Set(teamCandidates.map((candidate) => candidate.character.id));
   const selectedRequirementScore = resolveLeaderRequirementPriorityScore(selectedCandidate, input);
-  const selectedFilterScore = resolveSubSelectedFilterScore(selectedCandidate, input);
   const rejectedCandidates: AutoBuildRejectedCandidateExplanation[] = [];
 
   for (const candidate of leaderOptions) {
@@ -3354,15 +3357,13 @@ function buildLeaderRejectedCandidateExplanations(
       pushRejectedCandidateReason(reasons, 'alreadySelected');
     }
 
+    // Only reasons that hold (869exmmgk). The leader order weighs requirements, then the newest
+    // id; it never looks at selected filters, so "matches fewer filters" was never true. Covering
+    // fewer leader-scoped requirements is a reason whichever way the order came out - the search
+    // does try higher-ranked leaders first and move past the ones whose team does not work.
     if (selectedRequirementScore > resolveLeaderRequirementPriorityScore(candidate, input)) {
       pushRejectedCandidateReason(reasons, 'lowerRequirementDemand');
-    }
-
-    if (selectedFilterScore > resolveSubSelectedFilterScore(candidate, input)) {
-      pushRejectedCandidateReason(reasons, 'lowerSelectedFilterScore');
-    }
-
-    if (compareAutoFillLeaderCandidates(selectedCandidate, candidate, input, options) <= 0) {
+    } else if (compareAutoFillLeaderCandidates(selectedCandidate, candidate, input, options) < 0) {
       pushRejectedCandidateReason(reasons, 'rankingTieBreak');
     }
 
@@ -3491,38 +3492,99 @@ function resolveRejectedSubCandidateReasons(
     );
   }
 
-  if (selectedEntry.rank.demandScore > rejectedEntry.rank.demandScore) {
-    pushRejectedCandidateReason(reasons, 'lowerRequirementDemand');
+  // After the hard constraints, the one preference that decided (869exmmgk): a score where the
+  // picked sub was merely higher, on a dimension the ranking never compared, is not a reason.
+  const decisiveReason = resolveDecisiveSubRankReason(
+    selectedEntry,
+    rejectedEntry,
+    input,
+    subAbilityDemandContext,
+  );
+
+  if (decisiveReason) {
+    pushRejectedCandidateReason(reasons, decisiveReason);
   }
 
-  if (selectedEntry.rank.coverageRoleScore > rejectedEntry.rank.coverageRoleScore) {
-    pushRejectedCandidateReason(reasons, 'lowerCoverageContribution');
-  }
-
-  if (selectedEntry.rank.selectedFilterScore > rejectedEntry.rank.selectedFilterScore) {
-    pushRejectedCandidateReason(reasons, 'lowerSelectedFilterScore');
-  }
-
-  if (
-    selectedEntry.rank.leaderCriteriaCoveragePreferenceScore >
-    rejectedEntry.rank.leaderCriteriaCoveragePreferenceScore
-  ) {
-    pushRejectedCandidateReason(reasons, 'lowerLeaderCoverageScore');
-  }
-
-  if (
-    !reasons.length ||
-    compareAutoFillSubCandidateRanks(
-      selectedEntry,
-      rejectedEntry,
-      input,
-      subAbilityDemandContext,
-    ) <= 0
-  ) {
+  if (!reasons.length) {
     pushRejectedCandidateReason(reasons, 'rankingTieBreak');
   }
 
   return reasons;
+}
+
+/**
+ * The rank dimension that put the picked sub ahead of an alternative, walked in exactly the order
+ * compareAutoFillSubCandidateRanks() applies them - or null when the alternative ranks ahead, so
+ * the ranking did not decide against it. Keep the two in step.
+ */
+export function resolveDecisiveSubRankReason(
+  selected: RankedAutoBuildSubCandidate,
+  rejected: RankedAutoBuildSubCandidate,
+  input: AutoBuildInput,
+  subAbilityDemandContext: SubAbilityDemandContext,
+): AutoBuildRejectedCandidateReason['code'] | null {
+  const strictBattleAssignment = subAbilityDemandContext.battleAssignmentMode === 'strict';
+  const steps: Array<[number, AutoBuildRejectedCandidateReason['code']]> = [];
+
+  if (
+    subAbilityDemandContext.requirements.length > 0 ||
+    subAbilityDemandContext.battleRequirements.length > 0 ||
+    subAbilityDemandContext.leaderTagConditionSets.length > 0
+  ) {
+    if (strictBattleAssignment) {
+      steps.push([
+        selected.rank.strictBattleGroupPreferenceScore -
+          rejected.rank.strictBattleGroupPreferenceScore,
+        'lowerRequirementDemand',
+      ]);
+    }
+
+    steps.push([selected.rank.demandScore - rejected.rank.demandScore, 'lowerRequirementDemand']);
+    steps.push([
+      selected.rank.leaderTagConditionScore - rejected.rank.leaderTagConditionScore,
+      'lowerLeaderCoverageScore',
+    ]);
+
+    if (strictBattleAssignment) {
+      // Lower spread ranks first, so the picked sub wins this one by having less.
+      steps.push([
+        rejected.rank.strictBattleGroupSpreadScore - selected.rank.strictBattleGroupSpreadScore,
+        'lowerRequirementDemand',
+      ]);
+    }
+
+    steps.push([
+      selected.rank.coverageRoleScore - rejected.rank.coverageRoleScore,
+      'lowerCoverageContribution',
+    ]);
+  }
+
+  if (input.allowPartialCaptainAbilityCoverage) {
+    steps.push([
+      selected.rank.leaderCriteriaCoveragePreferenceScore -
+        rejected.rank.leaderCriteriaCoveragePreferenceScore,
+      'lowerLeaderCoverageScore',
+    ]);
+  }
+
+  steps.push([
+    selected.rank.selectedFilterScore - rejected.rank.selectedFilterScore,
+    'lowerSelectedFilterScore',
+  ]);
+
+  for (const [difference, code] of steps) {
+    if (difference > 0) {
+      return code;
+    }
+
+    if (difference < 0) {
+      return null;
+    }
+  }
+
+  return compareCandidatesByNewestId(selected.candidate, rejected.candidate) < 0
+    ? 'rankingTieBreak'
+    : null;
 }
 
 function pushRejectedSubConstraintReasons(
@@ -3685,7 +3747,9 @@ function dedupeRejectedCandidateReasons(
     dedupedReasons.push(reason);
   }
 
-  return dedupedReasons.length ? dedupedReasons : [{ code: 'rankingTieBreak' }];
+  // Nothing was recorded against it: it ranked ahead and the search still moved past it. Saying
+  // "lost the tie-break" there would name a tie-break it won (review, 869exmmgk).
+  return dedupedReasons.length ? dedupedReasons : [{ code: 'searchRejectedTeam' }];
 }
 
 function resolveAutoFillSubCandidateRank(
@@ -3719,7 +3783,7 @@ function resolveAutoFillSubCandidateRank(
   };
 }
 
-function compareAutoFillSubCandidateRanks(
+export function compareAutoFillSubCandidateRanks(
   left: RankedAutoBuildSubCandidate,
   right: RankedAutoBuildSubCandidate,
   input: AutoBuildInput,
@@ -4007,7 +4071,13 @@ function buildSlotExplanation(
   );
 
   pushMatchedFilterReasons(reasons, candidate);
-  pushCaptainScopeReasons(reasons, candidate);
+
+  // A sub's own Captain Ability plays no part in how subs are ranked, so it is no reason a sub was
+  // picked - and it used to become the summary, ahead of the requirement it did cover (869exmmgr).
+  if (options.role !== 'sub') {
+    pushCaptainScopeReasons(reasons, candidate);
+  }
+
   pushLeaderScopeReason(reasons, candidate, options);
   pushRequirementReasons(reasons, candidate, options);
   pushCoverageRoleReasons(reasons, candidate);
@@ -4016,19 +4086,6 @@ function buildSlotExplanation(
     pushRankingReasons(reasons, candidate, options);
   }
 
-  const primaryReasonCodes = new Set<AutoBuildSlotExplanationReason['code']>([
-    'manualPick',
-    'requiredAbilityMatch',
-    'battleRequirementMatch',
-    'captainUniversalScope',
-    'captainTypeScope',
-    'captainClassScope',
-    'leaderScopeMatch',
-    'burstRole',
-    'utilityRole',
-    'consistencyRole',
-    'rankingDemand',
-  ]);
   const hasLowerSelectedFilterAlternative =
     options.role === 'sub' &&
     options.rejectedCandidates?.some((candidate) =>
@@ -4039,16 +4096,30 @@ function buildSlotExplanation(
       candidate.reasons.length === 1 && candidate.reasons[0]?.code === 'rankingTieBreak',
   );
 
-  if (hasLowerSelectedFilterAlternative) {
-    primaryReasonCodes.add('rankingSelectedFilters');
-  }
-
-  if (hasPureRankingTieBreakAlternative) {
-    primaryReasonCodes.add('rankingNewestId');
-  }
-
+  // The summary is the strongest reason, not the first one pushed (869exmmgr). A covered
+  // requirement outranks fitting a scope, which every eligible character shares; the rest keep
+  // the order they are pushed in.
+  const primaryReasonPriority: AutoBuildSlotExplanationReason['code'][] = [
+    'manualPick',
+    'requiredAbilityMatch',
+    'battleRequirementMatch',
+    'captainUniversalScope',
+    'captainTypeScope',
+    'captainClassScope',
+    'burstRole',
+    'consistencyRole',
+    'utilityRole',
+    // Last of the real reasons: every eligible character fits the leader's scope, so it says the
+    // least about why this one was picked.
+    'leaderScopeMatch',
+    'rankingDemand',
+    ...(hasLowerSelectedFilterAlternative ? (['rankingSelectedFilters'] as const) : []),
+    ...(hasPureRankingTieBreakAlternative ? (['rankingNewestId'] as const) : []),
+  ];
   const primaryReason =
-    reasons.find((reason) => primaryReasonCodes.has(reason.code)) ?? reasons[0]!;
+    primaryReasonPriority
+      .map((code) => reasons.find((reason) => reason.code === code))
+      .find((reason) => reason !== undefined) ?? reasons[0]!;
 
   return {
     primaryReason,
@@ -4147,7 +4218,11 @@ function pushRequirementReasons(
   candidate: AutoBuildCandidate,
   options: BuildSlotExplanationOptions,
 ): void {
-  const matchedAbilityKeys = collectMatchedRequiredAbilityKeys(candidate, options.input);
+  const matchedAbilityKeys = collectMatchedRequiredAbilityKeys(
+    candidate,
+    options.input,
+    options.role,
+  );
 
   if (matchedAbilityKeys.length) {
     pushExplanationReason(reasons, 'requiredAbilityMatch', {
@@ -4171,9 +4246,15 @@ function pushRequirementReasons(
   }
 }
 
+/**
+ * What this character actually covers in the seat it took. A requirement scoped to the subs cannot
+ * be covered by a leader, and a leader-scoped one cannot be covered by a sub - the coverage summary
+ * and the sub demand already read it that way, and the "Why picked?" line must not claim otherwise.
+ */
 function collectMatchedRequiredAbilityKeys(
   candidate: AutoBuildCandidate,
   input: AutoBuildInput,
+  role: AutoBuildSlot['role'],
 ): string[] {
   const abilityKeys = [
     ...filterIgnoredCaptainAbilityRequirements(input.requiredAbilities),
@@ -4181,6 +4262,11 @@ function collectMatchedRequiredAbilityKeys(
       (group) => group.abilities,
     ),
   ]
+    .filter((requirement) =>
+      role === 'sub'
+        ? !isLeaderScopedAbilityRequirement(requirement)
+        : normalizeAbilityRequirementSlotScope(requirement.slotScope) !== 'sub',
+    )
     .filter((requirement) => candidateMatchesAbilityRequirement(candidate, requirement))
     .map((requirement) => requirement.abilityKey);
 

@@ -37437,10 +37437,15 @@ describe('Auto team builder', () => {
       'createWorker',
     );
     createWorkerSpy.mockReturnValue(null);
+    const onExecutionPath = vi.fn();
 
-    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY']);
+    const result = await service.buildTeam(['Fighter', 'Slasher'], ['DEX', 'PSY'], undefined, {
+      onExecutionPath,
+    });
 
     expect(createWorkerSpy).toHaveBeenCalledOnce();
+    // Said, for the debug report (869exmmh5).
+    expect(onExecutionPath.mock.calls).toEqual([['mainThread']]);
     expect(result).not.toBeNull();
     expect(result?.relaxation.usedFallback).toBe(false);
     expect(result?.coverage.coversAllSelectedClasses).toBe(true);
@@ -37468,15 +37473,19 @@ describe('Auto team builder', () => {
     );
     createWorkerSpy.mockReturnValue(worker as never);
 
+    const onExecutionPath = vi.fn();
+
     await service.buildTeam(
       ['Fighter', 'Slasher'],
       ['DEX', 'PSY'],
       {},
       {
         workerCount: 1,
+        onExecutionPath,
       },
     );
 
+    expect(onExecutionPath.mock.calls).toEqual([['worker']]);
     expect(worker.requests).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -37484,6 +37493,105 @@ describe('Auto team builder', () => {
         }),
       ]),
     );
+  });
+
+  /*
+   * 869exmmh5 review: a pooled build that cannot get two workers quietly becomes a single-worker
+   * or main-thread build. Both paths are reported, and a main-thread build that never had a worker
+   * is not blamed on one.
+   */
+  it('reports the single worker a pool fell back to', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const worker = new FakeWorker((request) => {
+      if (request.type !== 'run') {
+        throw new Error(`Unexpected request type: ${request.type}`);
+      }
+
+      worker.emitMessage({ type: 'result', runId: request.runId, result: null });
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    // The pool asks for two and gets one, so it drops back to a single worker.
+    createWorkerSpy
+      .mockReturnValueOnce(new FakeWorker(() => undefined) as never)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce(worker as never);
+    const onExecutionPath = vi.fn();
+
+    await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      { requireFullCaptainAbilityCoverage: false, requireSuperTandemCriteria: false },
+      { workerCount: 2, onExecutionPath },
+    );
+
+    expect(onExecutionPath.mock.calls).toEqual([['worker']]);
+  });
+
+  it('reports a pooled build that had no worker at all as a main-thread build', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const createWorkerSpy = vi.spyOn(
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValue(null);
+    const onExecutionPath = vi.fn();
+
+    const result = await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      { requireFullCaptainAbilityCoverage: false, requireSuperTandemCriteria: false },
+      { workerCount: 2, onExecutionPath },
+    );
+
+    expect(onExecutionPath.mock.calls).toEqual([['mainThread']]);
+    expect(result).not.toBeNull();
+  });
+
+  // 869exmmh5: a worker that fails is retried on the main thread; the path says both.
+  it('reports a single worker that failed and the main-thread rerun that followed', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const worker = new FakeWorker((request) => {
+      if (request.type !== 'run') {
+        throw new Error(`Unexpected request type: ${request.type}`);
+      }
+
+      worker.emitMessage({
+        type: 'error',
+        runId: request.runId,
+        errorMessage: 'worker crashed',
+      });
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValue(worker as never);
+    const onExecutionPath = vi.fn();
+
+    const result = await service.buildTeam(
+      ['Fighter', 'Slasher'],
+      ['DEX', 'PSY'],
+      {},
+      { workerCount: 1, onExecutionPath },
+    );
+
+    expect(onExecutionPath.mock.calls).toEqual([['worker'], ['mainThreadAfterWorkerFailure']]);
+    expect(worker.terminated).toBe(true);
+    expect(result).not.toBeNull();
   });
 
   it('grows the pooled worker count for later fallback attempts when getWorkerCount increases', async () => {
@@ -37660,6 +37768,7 @@ describe('Auto team builder', () => {
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
 
     let settled = false;
+    const onExecutionPath = vi.fn();
     const buildPromise = service
       .buildTeam(
         ['Fighter'],
@@ -37669,7 +37778,7 @@ describe('Auto team builder', () => {
           requireLeaderSuperSpecialCriteria: false,
           requireSuperTandemCriteria: false,
         },
-        { workerCount: 2 },
+        { workerCount: 2, onExecutionPath },
       )
       .then((result) => {
         settled = true;
@@ -37689,6 +37798,7 @@ describe('Auto team builder', () => {
 
     const result = await buildPromise;
 
+    expect(onExecutionPath.mock.calls).toEqual([['pool']]);
     expect(result?.input).toEqual(exactResult.input);
     expect(result?.input).not.toEqual(fallbackResult.input);
   });
@@ -39284,6 +39394,7 @@ describe('Auto team builder', () => {
       'createWorker',
     );
     createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+    const onExecutionPath = vi.fn();
 
     const result = await service.buildTeam(
       ['Fighter'],
@@ -39292,13 +39403,44 @@ describe('Auto team builder', () => {
         requireFullCaptainAbilityCoverage: false,
         requireSuperTandemCriteria: false,
       },
-      { workerCount: 2 },
+      { workerCount: 2, onExecutionPath },
     );
 
+    // The rerun on the main thread is otherwise silent; the debug report now says it happened.
+    expect(onExecutionPath.mock.calls).toEqual([['pool'], ['mainThreadAfterWorkerFailure']]);
     expect(result).not.toBeNull();
     expect(result?.input.types).toEqual(['DEX']);
     expect(workerA.terminated).toBe(true);
     expect(workerB.terminated).toBe(true);
+  });
+
+  it('says a pool that never got a worker ran on the main thread, and only that', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    const createWorkerSpy = vi.spyOn(
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValue(null);
+    const onExecutionPath = vi.fn();
+
+    const result = await service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      {
+        requireFullCaptainAbilityCoverage: false,
+        requireSuperTandemCriteria: false,
+      },
+      { workerCount: 2, onExecutionPath },
+    );
+
+    // The pool runs the search itself when it has no worker, so nothing failed and nothing is
+    // rerun: the report says main thread once, never "after a worker failed".
+    expect(onExecutionPath.mock.calls).toEqual([['mainThread']]);
+    expect(result).not.toBeNull();
   });
 
   it('fails strict class mode when a forced leader does not match all selected classes', () => {

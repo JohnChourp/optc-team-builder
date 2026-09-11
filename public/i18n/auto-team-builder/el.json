@@ -943,6 +943,7 @@
         "lowerSelectedFilterScore": "Ταιριάζει σε λιγότερα selected filters.",
         "lowerLeaderCoverageScore": "Καλύπτει λιγότερο leader-scope demand.",
         "rankingTieBreak": "Έχασε στο current ranking tie-break.",
+        "searchRejectedTeam": "Ήταν ψηλότερα στην κατάταξη, αλλά η αναζήτηση δεν μπόρεσε να χτίσει την ομάδα γύρω του.",
         "unknown": "Απορρίφθηκε για άγνωστο recorded reason."
       }
     },
@@ -1099,6 +1100,7 @@
       "conflictingExcludedShips": "Αγνοήθηκαν {{count}} excluded ships επειδή ήταν ακόμη διαλεγμένα ως manual ship.",
       "favoriteCountMismatch": "Το preset αποθηκεύτηκε με {{imported}} favorite characters, αλλά αυτή η συσκευή έχει τώρα {{current}}. Τα favorites δεν εισάγονται από preset, το favorite-only auto-fill χρησιμοποιεί τα current local favorites.",
       "favoriteShipCountMismatch": "Το preset αποθηκεύτηκε με {{imported}} favorite ships, αλλά αυτή η συσκευή έχει τώρα {{current}}. Τα favorite ships δεν εισάγονται από preset, το favorite ship mode χρησιμοποιεί τα current local favorite ships.",
+      "invalidLeaderBoostBounds": "Αγνοήθηκαν {{count}} όρια Captain boost από το preset που ήταν αρνητικά ή δεν ήταν αριθμοί.",
       "invalidLeaders": "Αγνοήθηκαν {{count}} imported leader επιλογές που δεν ταιριάζουν με το current slot setup.",
       "lockedLimitExceeded": "Αγνοήθηκαν {{count}} legacy locked characters επειδή δεν μπορούν να χαρτογραφηθούν στα σημερινά slots.",
       "missingExcludedCharacters": "Αγνοήθηκαν {{count}} excluded characters που λείπουν από το current dataset.",

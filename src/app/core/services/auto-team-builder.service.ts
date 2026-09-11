@@ -23,6 +23,7 @@ import {
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressSnapshot,
+  type AutoTeamBuildExecutionPath,
   type AutoBuildResult,
   MAX_AUTO_BUILD_RANKED_RESULT_COUNT,
   type AutoTeamBuilderType,
@@ -81,6 +82,8 @@ import {
 
 export interface AutoTeamBuildExecutionOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
+  /** Called as the build picks a path, and again if a failed worker sends it to the main thread. */
+  onExecutionPath?: (path: AutoTeamBuildExecutionPath) => void;
   signal?: AbortSignal;
   workerCount?: number;
   getWorkerCount?: () => number;
@@ -833,6 +836,10 @@ export class AutoTeamBuilderService {
           throw new AutoTeamBuildSearchTooLargeError();
         }
 
+        // Every way into this catch had a worker: a pool that never got one runs the search
+        // itself and returns, so it never fails here.
+        executionOptions.onExecutionPath?.('mainThreadAfterWorkerFailure');
+
         return runAutoTeamBuildSearch(records, requestedInput, {
           onProgress: executionOptions.onProgress,
           isCancelled: () => executionOptions.signal?.aborted ?? false,
@@ -852,6 +859,8 @@ export class AutoTeamBuilderService {
         throw new AutoTeamBuildSearchTooLargeError();
       }
 
+      executionOptions.onExecutionPath?.('mainThread');
+
       return runAutoTeamBuildSearch(records, requestedInput, {
         onProgress: executionOptions.onProgress,
         isCancelled: () => executionOptions.signal?.aborted ?? false,
@@ -862,6 +871,8 @@ export class AutoTeamBuilderService {
         maxScheduledFallbackAttempts,
       });
     }
+
+    executionOptions.onExecutionPath?.('worker');
 
     try {
       const result = await this.runSearchInWorker(
@@ -890,6 +901,8 @@ export class AutoTeamBuilderService {
       if (isDeepFallbackSearch) {
         throw new AutoTeamBuildSearchTooLargeError();
       }
+
+      executionOptions.onExecutionPath?.('mainThreadAfterWorkerFailure');
 
       return runAutoTeamBuildSearch(records, requestedInput, {
         onProgress: executionOptions.onProgress,
@@ -922,6 +935,8 @@ export class AutoTeamBuilderService {
       const singleWorker = this.createWorker();
 
       if (!singleWorker) {
+        executionOptions.onExecutionPath?.('mainThread');
+
         return runAutoTeamBuildSearch(records, requestedInput, {
           onProgress: executionOptions.onProgress,
           isCancelled: () => executionOptions.signal?.aborted ?? false,
@@ -932,6 +947,8 @@ export class AutoTeamBuilderService {
           maxScheduledFallbackAttempts,
         });
       }
+
+      executionOptions.onExecutionPath?.('worker');
 
       return this.runSearchInWorker(
         singleWorker,
@@ -944,6 +961,8 @@ export class AutoTeamBuilderService {
         maxScheduledFallbackAttempts,
       );
     }
+
+    executionOptions.onExecutionPath?.('pool');
 
     try {
       await Promise.all(

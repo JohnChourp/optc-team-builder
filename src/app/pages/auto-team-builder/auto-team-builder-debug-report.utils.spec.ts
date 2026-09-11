@@ -125,6 +125,14 @@ describe('Auto Team Builder debug report (869exmkdp)', () => {
     );
   });
 
+  it('says where the build ran only when the build reported it', () => {
+    expect(buildAutoTeamDebugReport(createInput()).dataQuality).not.toHaveProperty('executionPath');
+    expect(
+      buildAutoTeamDebugReport({ ...createInput(), executionPath: 'mainThreadAfterWorkerFailure' })
+        .dataQuality.executionPath,
+    ).toBe('mainThreadAfterWorkerFailure');
+  });
+
   it('keeps battle titles out, and compacts the request to codes and counts', () => {
     const report = buildAutoTeamDebugReport(createInput());
     const text = formatAutoTeamDebugReportMarkdown(report);
@@ -476,6 +484,7 @@ function createInput(): AutoTeamDebugReportInput {
     },
     abilityCatalogGeneratedAt: '2026-09-11T18:00:01.000Z',
     localOverrideCharacterIds: [],
+    executionPath: null,
     context: {
       candidateSource: 'all',
       candidatePoolSize: null,

@@ -345,7 +345,9 @@ export type AutoBuildRejectedCandidateReasonCode =
   | 'lowerCoverageContribution'
   | 'lowerSelectedFilterScore'
   | 'lowerLeaderCoverageScore'
-  | 'rankingTieBreak';
+  | 'rankingTieBreak'
+  /** It ranked ahead, and the search still could not build the team around it. */
+  | 'searchRejectedTeam';
 
 export interface AutoBuildRejectedCandidateReason {
   code: AutoBuildRejectedCandidateReasonCode;
@@ -561,6 +563,16 @@ export interface AutoBuildProgressExclusionCounts {
   costBudget: number;
   missingRequiredGroup: number;
 }
+
+/**
+ * Where a build ran (869exmmh5). A worker that fails is retried on the main thread without a word,
+ * so a slow or odd build can only be told apart in a debug report.
+ */
+export type AutoTeamBuildExecutionPath =
+  | 'pool'
+  | 'worker'
+  | 'mainThread'
+  | 'mainThreadAfterWorkerFailure';
 
 export interface AutoBuildProgressSnapshot {
   stage: AutoBuildProgressStage;

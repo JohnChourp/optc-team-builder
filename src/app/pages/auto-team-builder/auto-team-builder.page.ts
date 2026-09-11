@@ -54,6 +54,7 @@ import {
   type AutoBuildLeaderBoostRanges,
   type AutoBuildCaptainBranchMode,
   type AutoBuildConstraints,
+  type AutoTeamBuildExecutionPath,
   type AutoBuildManualSlotRole,
   type AutoBuildManualSlotSelection,
   type AutoBuildProgressExclusionCounts,
@@ -803,6 +804,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private lastBuildContext: AutoTeamDebugReportContext | null = null;
   /** The team a guided build found but could not use - relaxed, or not lockable into its slot. */
   private unappliedGuidedResult: AutoBuildResult | null = null;
+  /** Where the last build ran, as the service reported it (869exmmh5). */
+  private lastExecutionPath: AutoTeamBuildExecutionPath | null = null;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
@@ -5873,6 +5876,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       const executionOptions: AutoTeamBuildExecutionOptions = {
         signal: abortController.signal,
         onProgress: (snapshot) => this.handleBuildProgressSnapshot(snapshot),
+        onExecutionPath: (path) => {
+          if (buildInputRevision === this.buildInputRevision) {
+            this.lastExecutionPath = path;
+          }
+        },
         workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
         getWorkerCount: () => this.userState.resolveAutoTeamBuilderWorkerCount(),
       };
@@ -5919,6 +5927,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         if (this.resetAfterBuildCancellation) {
           return;
         }
+
+        // The restored result is the earlier build's; what this cancelled one was asked, how long
+        // it ran and where, describes nothing on screen.
+        this.forgetCapturedBuildState();
 
         if (this.pauseAfterBuildCancellation) {
           this.result.set(previousResult);
@@ -6290,6 +6302,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       dataset: this.summary(),
       abilityCatalogGeneratedAt: this.abilityCatalog()?.generatedAt ?? null,
       localOverrideCharacterIds: [...this.characterOverrides.overridesByCharacterId().keys()],
+      executionPath: this.lastExecutionPath,
       context: this.lastBuildContext ?? this.buildDebugReportContext(),
       // With no team there is no requested input on a result: report what the page sent.
       request: result?.requestedInput ??
@@ -6494,6 +6507,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     globalThis.setTimeout(focus, 0);
   }
 
+  /** What the last build was asked, how long it took and where it ran: all of one build. */
+  private forgetCapturedBuildState(): void {
+    this.lastBuildRequest = null;
+    this.lastBuildContext = null;
+    this.unappliedGuidedResult = null;
+    this.lastExecutionPath = null;
+    this.lastBuildStats.set(null);
+  }
+
   private failBuild(
     code: AutoTeamBuildFailureCode,
     message: string,
@@ -6550,9 +6572,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.lastBuildFailure.set(null);
     this.lastBuildStats.set(null);
     this.debugReportFeedback.set(null);
-    this.lastBuildRequest = null;
-    this.lastBuildContext = null;
-    this.unappliedGuidedResult = null;
+    this.forgetCapturedBuildState();
     this.manualSimilarPickFeedback.set('');
     this.currentTeamId.set(null);
     this.resetSaveFeedbackState();

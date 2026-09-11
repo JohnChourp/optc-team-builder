@@ -943,6 +943,7 @@
         "lowerSelectedFilterScore": "Matches fewer selected filters.",
         "lowerLeaderCoverageScore": "Covers less leader-scope demand.",
         "rankingTieBreak": "Lost the current ranking tie-break.",
+        "searchRejectedTeam": "Ranked higher, but the search could not build the team around it.",
         "unknown": "Rejected for an unrecognized recorded reason."
       }
     },
@@ -1099,6 +1100,7 @@
       "conflictingExcludedShips": "Ignored {{count}} excluded ships because they were still selected as the manual ship.",
       "favoriteCountMismatch": "Preset was saved with {{imported}} favorite characters, but this device currently has {{current}}. Favorites were not imported; favorite-only auto-fill uses the current local favorites.",
       "favoriteShipCountMismatch": "Preset was saved with {{imported}} favorite ships, but this device currently has {{current}}. Favorite ships were not imported; favorite ship mode uses the current local favorite ships.",
+      "invalidLeaderBoostBounds": "Ignored {{count}} Captain boost bounds from the preset that were negative or not a number.",
       "invalidLeaders": "Ignored {{count}} imported leader choices that do not fit the current slot setup.",
       "lockedLimitExceeded": "Ignored {{count}} legacy locked characters because they cannot be mapped into the current slot model.",
       "missingExcludedCharacters": "Ignored {{count}} excluded characters that are missing from the current dataset.",
