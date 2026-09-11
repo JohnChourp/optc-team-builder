@@ -210,7 +210,8 @@ indented here for reading:
     "abilityCatalogLoaded": true,
     "localOverrideCount": 0,
     "overriddenTeamCharacterIds": [],
-    "incompleteTeamCharacterIds": []
+    "incompleteTeamCharacterIds": [],
+    "executionPath": "pool"
   },
   "context": {
     "candidateSource": "all",
@@ -259,6 +260,12 @@ The example shortens `request`, `outcome.slots`, `relaxation` and `coverage`; th
   `context` is also read when Build is pressed, so starring a favourite afterwards changes nothing.
 - **`outcome.fallbackReasons`** appears once, when the engine relaxed something: the engine gives
   every slot the same fallback reasons, derived from `relaxation`.
+- **`dataQuality.executionPath`** says where the build ran: `pool`, `worker`, `mainThread`, or
+  `mainThreadAfterWorkerFailure`, which is otherwise silent. It is present when the service
+  reported a path.
+- **Close alternatives** in `outcome.slots[].rejected` carry any hard-constraint codes first, then
+  the one ranking dimension that decided, or `rankingTieBreak` when only the newest id did. A
+  dimension the ranking never compared for this request is never listed.
 - **`teamKey`** is the leaders' ids then the subs' ids, each sorted, so the same team reads the
   same whatever its slot order.
 - **Redaction.** No team name, notes, box names or ids, battle titles, file names, share codes or
