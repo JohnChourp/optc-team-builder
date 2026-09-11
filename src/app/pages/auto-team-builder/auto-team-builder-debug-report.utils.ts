@@ -31,7 +31,7 @@ export const AUTO_TEAM_DEBUG_REPORT_ISSUE_URL =
 
 /** Why the last build shows no team. Kept beside the translated message, which a report cannot use. */
 export type AutoTeamBuildFailureCode =
-  'noTeam' | 'searchTooLarge' | 'buildFailed' | 'guidedRelaxedOnly';
+  'noTeam' | 'searchTooLarge' | 'buildFailed' | 'guidedRelaxedOnly' | 'guidedSlotRejected';
 
 export type AutoTeamDebugReportStatus = 'exact' | 'fallback' | AutoTeamBuildFailureCode;
 
@@ -77,8 +77,9 @@ export interface AutoTeamDebugReportInput {
   /** Every character with a local edit on this device: ids only. */
   localOverrideCharacterIds: readonly number[];
   context: AutoTeamDebugReportContext;
-  /** The request as sent: `result.requestedInput`, or the page's inputs when no team came back. */
+  /** The request as sent: `result.requestedInput`, or what the page sent when no team came back. */
   request: AutoTeamDebugReportRequestSource;
+  /** The team the build found, even when a guided build could not use it. */
   result: AutoBuildResult | null;
   failure: AutoTeamBuildFailureCode | null;
   rules: readonly AutoTeamDebugReportRuleState[];
@@ -158,13 +159,14 @@ export interface AutoTeamDebugReport {
     candidateCount?: number;
     teamKey?: string;
     ship?: { id: number; source: 'manual' | 'recommended' } | null;
+    /** The engine gives every slot the same fallback reasons, from `relaxation`: listed once. */
+    fallbackReasons?: AutoTeamDebugReportReason[];
     slots?: Array<{
       role: 'captain' | 'friendCaptain' | 'sub';
       characterId: number;
       name: string;
       primaryReason: AutoTeamDebugReportReason | null;
       reasons: AutoTeamDebugReportReason[];
-      fallbackReasons: AutoTeamDebugReportReason[];
       rejected: Array<{ characterId: number; reasons: AutoTeamDebugReportReason[] }>;
     }>;
   };
@@ -234,6 +236,10 @@ export function buildAutoTeamDebugReport(input: AutoTeamDebugReportInput): AutoT
   };
 
   if (result) {
+    const fallbackReasons =
+      result.slots.find((slot) => slot.explanation?.fallbackReasons.length)?.explanation
+        ?.fallbackReasons ?? [];
+
     report.outcome = {
       ...report.outcome,
       candidateCount: result.candidateCount,
@@ -241,13 +247,13 @@ export function buildAutoTeamDebugReport(input: AutoTeamDebugReportInput): AutoT
       ship: result.shipSelection
         ? { id: result.shipSelection.ship.id, source: result.shipSelection.source }
         : null,
+      ...(fallbackReasons.length ? { fallbackReasons: fallbackReasons.map(compactReason) } : {}),
       slots: result.slots.map((slot) => ({
         role: slot.role,
         characterId: slot.character.id,
         name: slot.character.name,
         primaryReason: slot.explanation ? compactReason(slot.explanation.primaryReason) : null,
         reasons: slot.explanation?.reasons.map(compactReason) ?? [],
-        fallbackReasons: slot.explanation?.fallbackReasons.map(compactReason) ?? [],
         rejected:
           slot.explanation?.rejectedCandidates.map((candidate) => ({
             characterId: candidate.characterId,
@@ -303,9 +309,30 @@ export function formatAutoTeamDebugReportMarkdown(report: AutoTeamDebugReport): 
     );
   }
 
-  lines.push('', '```json', JSON.stringify(report, null, 2), '```', '');
+  lines.push('', '```json', formatAutoTeamDebugReportJson(report), '```', '');
 
   return lines.join('\n');
+}
+
+/**
+ * One line per section and one line per slot. Fully indented JSON of a real team ran past 16 KB
+ * across a few hundred lines; this reads as well in an issue and parses back to the same report.
+ */
+export function formatAutoTeamDebugReportJson(report: AutoTeamDebugReport): string {
+  const sections = Object.entries(report).map(([key, value]) => {
+    const name = JSON.stringify(key);
+
+    if (key !== 'outcome' || !report.outcome.slots?.length) {
+      return `  ${name}: ${JSON.stringify(value)}`;
+    }
+
+    const { slots, ...outcome } = report.outcome;
+    const slotLines = slots.map((slot) => `      ${JSON.stringify(slot)}`).join(',\n');
+
+    return `  ${name}: ${JSON.stringify(outcome).slice(0, -1)},"slots": [\n${slotLines}\n    ]}`;
+  });
+
+  return `{\n${sections.join(',\n')}\n}`;
 }
 
 /** Leaders, then subs, each sorted: the same team reads the same whatever the slot order. */
@@ -336,15 +363,26 @@ function describeOutcome(report: AutoTeamDebugReport): string {
       ? ''
       : ` from ${report.outcome.candidateCount} candidates`;
   const labels: Record<AutoTeamDebugReportStatus, string> = {
-    exact: 'team found with every rule kept',
+    exact: 'team found with no rule relaxed',
     fallback: 'team found with some rules relaxed',
     noTeam: 'no team found',
     searchTooLarge: 'search too large',
     buildFailed: 'build failed',
     guidedRelaxedOnly: 'guided build found only a relaxed team',
+    guidedSlotRejected: 'guided build found a team it could not lock into the next slot',
   };
+  // "No rule relaxed" is not "every requirement met": a team can still leave some uncovered.
+  const missing = [
+    countLabel(report.coverage?.missingAbilityKeys.length ?? 0, 'ability requirement'),
+    countLabel(report.coverage?.missingBattles ?? 0, 'battle'),
+  ].filter(Boolean);
+  const uncovered = missing.length ? ` (${missing.join(' and ')} not covered)` : '';
 
-  return `${labels[report.outcome.status]}${candidates}${seconds}`;
+  return `${labels[report.outcome.status]}${candidates}${seconds}${uncovered}`;
+}
+
+function countLabel(count: number, noun: string): string {
+  return count ? `${count} ${noun}${count === 1 ? '' : 's'}` : '';
 }
 
 function compactRequest(source: AutoTeamDebugReportRequestSource): AutoTeamDebugReport['request'] {

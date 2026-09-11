@@ -10596,17 +10596,6 @@ describe('AutoTeamBuilderPage debug report', () => {
       workerCount: 5,
     });
     expect(report['dataset']['abilityCatalogGeneratedAt']).toBe('2026-03-25T10:00:00.000Z');
-    // Favourites-only reads as its own source, with or without a box.
-    page.favoritesOnly.set(true);
-    expect(page.buildDebugReport().context.candidateSource).toBe('boxFavorites');
-    page.selectedCharacterBoxId.set(null);
-    expect(page.buildDebugReport().context.candidateSource).toBe('favorites');
-    page.favoritesOnly.set(false);
-    expect(page.buildDebugReport().context).toMatchObject({
-      candidateSource: 'all',
-      candidatePoolSize: null,
-      boxCharacterCount: null,
-    });
     expect(report['rules'].map((rule: { key: string }) => rule.key)).toContain('types');
     expect(page.debugReportFeedback()).toEqual({
       tone: 'success',
@@ -10617,21 +10606,55 @@ describe('AutoTeamBuilderPage debug report', () => {
       manualCopyText: null,
     });
 
+    // The source is read as a build starts: favourites-only is its own, with or without a box.
+    userState.favoriteCharacterIds.set([201, 101]);
+    page.favoritesOnly.set(true);
+    await page.buildTeam();
+    expect(page.buildDebugReport().context).toMatchObject({
+      candidateSource: 'boxFavorites',
+      candidatePoolSize: 1,
+    });
+    page.selectedCharacterBoxId.set(null);
+    await page.buildTeam();
+    expect(page.buildDebugReport().context).toMatchObject({
+      candidateSource: 'favorites',
+      candidatePoolSize: null,
+      boxCharacterCount: null,
+    });
+    page.favoritesOnly.set(false);
+    await page.buildTeam();
+    expect(page.buildDebugReport().context.candidateSource).toBe('all');
+
     // Any change to the build's inputs retires the report with the result.
     await page.removeSelectedType('DEX');
     expect(page.canCopyDebugReport()).toBe(false);
     expect(page.debugReportFeedback()).toBeNull();
   });
 
-  it('shows the report to copy by hand when the clipboard refuses it', async () => {
+  it('shows the report to copy by hand when the clipboard refuses it, and focuses it', async () => {
     const { page, autoTeamBuilder } = await createPage();
     const writeText = vi
       .fn()
       .mockRejectedValue(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));
+    const textarea = { focus: vi.fn() };
+    // A frame and then a task: past the page's deferred focus under jsdom (with
+    // requestAnimationFrame) and under plain Node (without it).
+    const afterRender = (): Promise<void> =>
+      new Promise((done) => {
+        if (typeof globalThis.requestAnimationFrame === 'function') {
+          globalThis.requestAnimationFrame(() => setTimeout(done, 0));
+          return;
+        }
+
+        setTimeout(done, 0);
+      });
 
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
     await page.ngOnInit();
+    (page as unknown as { debugReportManualCopy: unknown }).debugReportManualCopy = {
+      nativeElement: textarea,
+    };
     await page.buildTeam();
     await page.copyDebugReport();
 
@@ -10641,6 +10664,72 @@ describe('AutoTeamBuilderPage debug report', () => {
     expect(feedback?.title).toBe('Could not copy the debug report');
     expect(feedback?.manualCopyText).toBe(writeText.mock.calls[0]![0]);
     expect(feedback?.manualCopyText?.startsWith('### Auto Team Builder debug report')).toBe(true);
+    // Focus lands once the textarea has rendered; its focus handler selects the text.
+    expect(textarea.focus).not.toHaveBeenCalled();
+    await afterRender();
+    expect(textarea.focus).toHaveBeenCalledTimes(1);
+
+    // A copy that worked leaves focus where it was.
+    writeText.mockResolvedValue(undefined);
+    await page.copyDebugReport();
+    await afterRender();
+    expect(textarea.focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops the feedback of a copy the player retired by changing the build meanwhile', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    let finishWrite: () => void = () => undefined;
+    const writeText = vi.fn(
+      () =>
+        new Promise<void>((done) => {
+          finishWrite = done;
+        }),
+    );
+
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    const copying = page.copyDebugReport();
+
+    await page.removeSelectedType('DEX');
+    finishWrite();
+    await copying;
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(page.debugReportFeedback()).toBeNull();
+  });
+
+  it('reports what the player asked for, as the build was started', async () => {
+    const { page, autoTeamBuilder, userState } = await createPage();
+    const result = createAutoBuildResult();
+
+    // The engine relaxed the types: the report keeps the request, not what the engine settled for.
+    autoTeamBuilder.buildTeam.mockResolvedValue({
+      ...result,
+      input: { ...result.input, types: ['DEX'] },
+      requestedInput: { ...result.requestedInput, types: ['DEX', 'PSY', 'STR'] },
+    });
+    await page.ngOnInit();
+    page.selectedExcludeCharacterBoxId.set('box-1');
+    (page['i18n'].activeLanguage as unknown as { set(language: 'en' | 'el'): void }).set('el');
+    await page.buildTeam();
+    page.selectedTypes.set(['QCK']);
+
+    const report = page.buildDebugReport();
+
+    expect(report.request.types).toEqual(['DEX', 'PSY', 'STR']);
+    expect(report.app.language).toBe('el');
+    expect(report.context).toMatchObject({
+      excludeBoxCharacterCount: 3,
+      favoriteCharacterCount: 3,
+      guidedAutoBuild: false,
+    });
+
+    // Starring a character after the build does not reset it, and does not rewrite its report.
+    userState.favoriteCharacterIds.set([101, 102, 103, 104, 105]);
+    expect(page.buildDebugReport().context.favoriteCharacterCount).toBe(3);
   });
 
   it('keeps why a build found no team, and its timings, for the report', async () => {
@@ -10712,6 +10801,8 @@ describe('AutoTeamBuilderPage debug report', () => {
     });
     expect(page.canCopyDebugReport()).toBe(true);
 
+    // Read back later, after the page's inputs moved without a reset: still what was sent.
+    page.selectedTypes.set(['QCK']);
     const report = page.buildDebugReport('2026-09-11T19:00:00.000Z');
 
     expect(report.outcome).toEqual({ status: 'noTeam' });
@@ -10745,6 +10836,16 @@ describe('AutoTeamBuilderPage debug report', () => {
           });
         },
       ],
+      [
+        'guidedSlotRejected',
+        (page) => {
+          // The Captain slot only takes 998 or 999; the team that comes back leads with 101.
+          page.setGuidedAutoBuildEnabled(true);
+          page.manualSlots.set(createManualSlots({ captain: [998, 999] }));
+
+          return Promise.resolve(createAutoBuildResult());
+        },
+      ],
     ];
 
     for (const [code, respond] of outcomes) {
@@ -10756,9 +10857,16 @@ describe('AutoTeamBuilderPage debug report', () => {
       autoTeamBuilder.buildTeam.mockImplementation(() => response);
       await page.buildTeam();
 
+      const report = page.buildDebugReport();
+
       expect(page.lastBuildFailure(), code).toBe(code);
-      expect(page.buildDebugReport().outcome.status, code).toBe(code);
+      expect(report.outcome.status, code).toBe(code);
       expect(page.result(), code).toBeNull();
+      // A guided build that found a team it could not use still reports that team.
+      expect(report.outcome.teamKey, code).toBe(
+        code.startsWith('guided') ? '101,102|103,104,105,106' : undefined,
+      );
+      expect(report.context.guidedAutoBuild, code).toBe(code.startsWith('guided'));
     }
   });
 
@@ -10820,9 +10928,30 @@ describe('AutoTeamBuilderPage debug report', () => {
     expect(coverageActions.slice(0, 1400)).toContain(
       '<ng-container *ngTemplateOutlet="debugReportFeedbackBlock"></ng-container>',
     );
-    expect(errorCard.slice(0, 1200)).toContain('@if (canCopyDebugReport())');
-    expect(errorCard.slice(0, 1200)).toContain('(click)="copyDebugReport()"');
-    expect(errorCard.slice(0, 1200)).toContain('*ngTemplateOutlet="debugReportFeedbackBlock"');
+    expect(errorCard.slice(0, 1600)).toContain('@if (canCopyDebugReport())');
+    expect(errorCard.slice(0, 1600)).toContain('(click)="copyDebugReport()"');
+    // The report gets a full row of its own in the failed-build card, so the card's columns
+    // cannot squeeze the button, the status line or the textarea (review, 869exmkdp).
+    expect(errorCard.slice(0, 1600)).toMatch(
+      /<div class="build-failure-card__report">\s*<ng-container \*ngTemplateOutlet="debugReportFeedbackBlock"><\/ng-container>\s*<\/div>/u,
+    );
+    expect(errorCard.slice(0, 400)).toContain(
+      'class="loading-card glass-card empty-card build-failure-card"',
+    );
+    const loadingStyles = readFileSync(
+      resolve(
+        process.cwd(),
+        'src/app/pages/auto-team-builder/auto-team-builder-loading-panel.component.scss',
+      ),
+      'utf8',
+    );
+
+    expect(loadingStyles).toMatch(
+      /@media \(min-width: 680px\) \{\s*\.build-failure-card \{\s*grid-template-columns: minmax\(0, 1fr\) auto;/u,
+    );
+    expect(loadingStyles).toMatch(/\.build-failure-card__report \{\s*grid-column: 1 \/ -1;/u);
+    expect(feedback).toMatch(/<textarea\s+#debugReportManualCopy\s+readonly/u);
+    expect(feedback).toContain("{{ t('debugReport.manualCopyLabel') }}");
     // The status line is mounted with its card, so the text that lands in it is announced.
     expect(feedback).toMatch(/<div\s+class="debug-report-feedback"\s+role="status"/u);
     expect(feedback.slice(0, feedback.indexOf('role="status"'))).not.toContain('@if');

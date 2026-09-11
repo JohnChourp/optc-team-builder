@@ -2969,8 +2969,11 @@
           }
 
           @if (!building() && errorMessage()) {
-            <section class="loading-card glass-card empty-card">
-              <span>{{ errorMessage() }}</span>
+            <section
+              class="loading-card glass-card empty-card build-failure-card"
+              data-testid="auto-build-failure-card"
+            >
+              <span class="build-failure-card__message">{{ errorMessage() }}</span>
               @if (canCopyDebugReport()) {
                 <div class="loading-card__actions">
                   <ion-button
@@ -2983,7 +2986,10 @@
                     {{ t('debugReport.copyAction') }}
                   </ion-button>
                 </div>
-                <ng-container *ngTemplateOutlet="debugReportFeedbackBlock"></ng-container>
+                <!-- Its own row: the building card's columns would squeeze the report. -->
+                <div class="build-failure-card__report">
+                  <ng-container *ngTemplateOutlet="debugReportFeedbackBlock"></ng-container>
+                </div>
               }
             </section>
           }
@@ -3938,6 +3944,7 @@
         <label class="debug-report-manual-copy">
           <span>{{ t('debugReport.manualCopyLabel') }}</span>
           <textarea
+            #debugReportManualCopy
             readonly
             rows="6"
             data-testid="auto-build-debug-report-manual-copy"

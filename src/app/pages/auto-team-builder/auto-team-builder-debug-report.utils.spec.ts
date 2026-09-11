@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  type AutoBuildRejectedCandidateReason,
   type AutoBuildResult,
   type AutoBuildSlotExplanation,
 } from '../../core/models/auto-team-builder.models';
@@ -12,6 +13,7 @@ import {
   type AutoTeamDebugReportRequestSource,
   buildAutoTeamDebugReport,
   buildAutoTeamDebugReportTeamKey,
+  formatAutoTeamDebugReportJson,
   formatAutoTeamDebugReportMarkdown,
 } from './auto-team-builder-debug-report.utils';
 
@@ -30,7 +32,6 @@ describe('Auto Team Builder debug report (869exmkdp)', () => {
       name: 'Character 101',
       primaryReason: { code: 'manualPick' },
       reasons: [{ code: 'manualPick' }, { code: 'leaderScopeMatch', params: { slotCount: 6 } }],
-      fallbackReasons: [],
       rejected: [
         {
           characterId: 901,
@@ -176,37 +177,158 @@ describe('Auto Team Builder debug report (869exmkdp)', () => {
     const json = text.slice(text.indexOf('```json\n') + 8, text.lastIndexOf('\n```'));
 
     expect(text.startsWith('### Auto Team Builder debug report\n')).toBe(true);
+    // "No rule relaxed" still names what the team leaves uncovered.
     expect(text).toContain(
-      '- Result: team found with every rule kept from 412 candidates in 3.2 s\n',
+      '- Result: team found with no rule relaxed from 412 candidates in 3.2 s (1 ability requirement and 1 battle not covered)\n',
     );
     expect(JSON.parse(json)).toEqual(report);
   });
 
-  it('stays small for a full team with three close alternatives on every slot', () => {
+  it('prints one line per section and one per slot', () => {
+    const report = buildAutoTeamDebugReport(createInput());
+    const lines = formatAutoTeamDebugReportJson(report).split('\n');
+
+    expect(lines[0]).toBe('{');
+    expect(lines.at(-1)).toBe('}');
+    expect(lines.filter((line) => line.startsWith('      {"role":'))).toHaveLength(6);
+    expect(lines.filter((line) => /^  "[a-zA-Z]+": /u.test(line))).toHaveLength(
+      Object.keys(report).length,
+    );
+    expect(JSON.parse(lines.join('\n'))).toEqual(report);
+    // A failed build has no slots and prints its outcome on one line.
+    const failed = buildAutoTeamDebugReport({ ...createInput(), result: null, failure: 'noTeam' });
+
+    expect(formatAutoTeamDebugReportJson(failed)).toContain('  "outcome": {"status":"noTeam"}');
+  });
+
+  it('lists the fallback reasons once, since the engine gives every slot the same ones', () => {
     const input = createInput();
-    const rejected = [901, 902, 903].map((characterId) => ({
-      characterId,
-      characterName: `Alternative ${characterId}`,
-      reasons: [
-        { code: 'lowerCoverageContribution' as const, params: { coverageGap: 2 } },
-        { code: 'lowerRequirementDemand' as const },
-        { code: 'rankingTieBreak' as const },
-      ],
-    }));
-    const heavy = {
+    const fallbackReasons = [
+      { code: 'fallbackUsed' as const },
+      { code: 'fallbackDroppedTypes' as const, params: { types: ['QCK'], count: 1 } },
+    ];
+    const relaxation = {
+      ...input.result!.relaxation,
+      usedFallback: true,
+      droppedTypes: ['QCK' as const],
+    };
+    const report = buildAutoTeamDebugReport({
       ...input,
       result: {
         ...input.result!,
+        relaxation,
         slots: input.result!.slots.map((slot) => ({
           ...slot,
-          explanation: { ...slot.explanation!, rejectedCandidates: rejected },
+          explanation: { ...slot.explanation!, fallbackReasons },
+        })),
+      },
+    });
+
+    expect(report.outcome.status).toBe('fallback');
+    expect(report.outcome.fallbackReasons).toEqual(fallbackReasons);
+    expect(report.outcome.slots?.every((slot) => !('fallbackReasons' in slot))).toBe(true);
+    expect(report.relaxation).toEqual(relaxation);
+    expect(formatAutoTeamDebugReportMarkdown(report)).toContain(
+      '- Result: team found with some rules relaxed from 412',
+    );
+    // Without fallback there is nothing to list.
+    expect(buildAutoTeamDebugReport(input).outcome).not.toHaveProperty('fallbackReasons');
+  });
+
+  it('keeps the team a guided build found but could not lock, and the ship it chose', () => {
+    const input = createInput();
+    const report = buildAutoTeamDebugReport({
+      ...input,
+      failure: 'guidedSlotRejected',
+      result: {
+        ...input.result!,
+        shipSelection: { ship: { id: 9001 }, source: 'recommended', reasonChips: [] },
+      } as unknown as AutoBuildResult,
+    });
+
+    expect(report.outcome.status).toBe('guidedSlotRejected');
+    expect(report.outcome.teamKey).toBe('101,102|103,104,105,106');
+    expect(report.outcome.slots).toHaveLength(6);
+    expect(report.outcome.ship).toEqual({ id: 9001, source: 'recommended' });
+    expect(formatAutoTeamDebugReportMarkdown(report)).toContain(
+      '- Result: guided build found a team it could not lock into the next slot from 412',
+    );
+  });
+
+  it('stays under 16 KB for an engine-shaped fallback team, where indented JSON would not', () => {
+    const input = createInput();
+    // The engine's own reason shapes (auto-team-builder.utils.ts), leader scope repeated per slot.
+    const reasons: AutoBuildSlotExplanation['reasons'] = [
+      { code: 'manualPick' },
+      {
+        code: 'leaderScopeMatch',
+        params: {
+          classes: ['Fighter', 'Slasher', 'Striker', 'Shooter', 'Free Spirit', 'Cerebral'],
+          types: ['DEX', 'STR', 'QCK', 'PSY', 'INT'],
+          tags: ['Straw Hat Crew'],
+        },
+      },
+      { code: 'requiredAbilityMatch', params: { count: 2, abilityKeys: ['atkUp', 'orbBoost'] } },
+      {
+        code: 'battleRequirementMatch',
+        params: { battleCount: 1, groupCount: 1, abilityKeys: ['despairReduction'] },
+      },
+      { code: 'burstRole', params: { roles: ['atkUp', 'colorAffinity'], count: 2 } },
+      { code: 'consistencyRole', params: { roles: ['matchingOrbs'], count: 1 } },
+      { code: 'utilityRole', params: { roles: ['delay', 'despairReduction'], count: 2 } },
+      { code: 'rankingDemand', params: { demandScore: 12, leaderTagConditionScore: 3 } },
+      { code: 'rankingSelectedFilters', params: { score: 4 } },
+      { code: 'rankingNewestId', params: { characterId: 4567, recencyScore: 0.9876 } },
+    ];
+    const rejectedReasons = (characterId: number): AutoBuildRejectedCandidateReason[] => [
+      { code: 'lowerCoverageContribution', params: { coverageGap: 2, count: 3 } },
+      { code: 'lowerRequirementDemand', params: { abilityKeys: ['atkUp'], count: 1 } },
+      { code: 'rankingTieBreak', params: { characterId } },
+    ];
+    const rejected = [901, 902, 903].map((characterId) => ({
+      characterId,
+      characterName: `Alternative ${characterId}`,
+      reasons: rejectedReasons(characterId),
+    }));
+    const fallbackReasons: AutoBuildSlotExplanation['fallbackReasons'] = [
+      { code: 'fallbackUsed' as const },
+      { code: 'fallbackDroppedTypes' as const, params: { types: ['QCK', 'PSY'], count: 2 } },
+      { code: 'fallbackDroppedClasses' as const, params: { classes: ['Driven'], count: 1 } },
+      { code: 'fallbackAllowedSuperEffectLeaders' as const },
+      { code: 'fallbackIgnoredLeaderSuperScope' as const },
+      { code: 'fallbackIgnoredSuperSpecialCriteria' as const, params: { names: ['Luffy'] } },
+    ];
+    const heavy: AutoTeamDebugReportInput = {
+      ...input,
+      request: {
+        ...input.request,
+        requiredAbilities: ['atkUp', 'orbBoost', 'despairReduction', 'delay'].map((key) => ({
+          abilityKey: key,
+          minTurns: 2,
+          slotTokens: ['captain', 'sub'],
+          requiredCharacterCount: 2,
+        })),
+      },
+      result: {
+        ...input.result!,
+        relaxation: { ...input.result!.relaxation, usedFallback: true },
+        slots: input.result!.slots.map((slot) => ({
+          ...slot,
+          explanation: {
+            primaryReason: reasons[0]!,
+            reasons,
+            fallbackReasons,
+            rejectedCandidates: rejected,
+          },
         })),
       },
     };
+    const report = buildAutoTeamDebugReport(heavy);
 
-    expect(formatAutoTeamDebugReportMarkdown(buildAutoTeamDebugReport(heavy)).length).toBeLessThan(
-      16 * 1024,
-    );
+    const text = formatAutoTeamDebugReportMarkdown(report);
+
+    expect(JSON.stringify(report, null, 2).length).toBeGreaterThan(16 * 1024);
+    expect(text.length).toBeLessThan(16 * 1024);
   });
 });
 

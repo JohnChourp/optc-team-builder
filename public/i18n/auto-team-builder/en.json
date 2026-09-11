@@ -1010,7 +1010,7 @@
   },
   "errors": {
     "abilityCatalogUnavailable": {
-      "copy": "The ability catalog could not be loaded, so ability requirements have nothing to choose from. Reload the page to try again.",
+      "copy": "The ability catalog could not be loaded, so there are no abilities to choose from in the requirements. Reload the page, or restart the app, to try again.",
       "title": "Ability filters are unavailable"
     },
     "buildFailed": "The auto build failed unexpectedly. Please try again.",

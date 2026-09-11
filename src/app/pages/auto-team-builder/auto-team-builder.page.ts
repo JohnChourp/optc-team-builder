@@ -149,6 +149,7 @@ import {
   type AutoTeamBuildStats,
   type AutoTeamDebugReport,
   type AutoTeamDebugReportContext,
+  type AutoTeamDebugReportRequestSource,
   buildAutoTeamDebugReport,
   formatAutoTeamDebugReportMarkdown,
 } from './auto-team-builder-debug-report.utils';
@@ -781,6 +782,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   @ViewChild(IonContent) private content?: IonContent;
   @ViewChild('buildSubmitButton', { read: ElementRef })
   private readonly buildSubmitButton?: ElementRef<HTMLElement>;
+  @ViewChild('debugReportManualCopy')
+  private readonly debugReportManualCopy?: ElementRef<HTMLTextAreaElement>;
 
   private buildAbortController: AbortController | null = null;
   private resetAfterBuildCancellation = false;
@@ -792,6 +795,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private readonly buildProgressFloorPercent = signal(0);
   private progressTicker: ReturnType<typeof globalThis.setInterval> | null = null;
   private buildStartedAtMs: number | null = null;
+  /*
+   * What the last build was asked, as it was asked (869exmkdp): a report copied later must not pick
+   * up a favourite starred since, and with no team there is no requested input on a result.
+   */
+  private lastBuildRequest: AutoTeamDebugReportRequestSource | null = null;
+  private lastBuildContext: AutoTeamDebugReportContext | null = null;
+  /** The team a guided build found but could not use - relaxed, or not lockable into its slot. */
+  private unappliedGuidedResult: AutoBuildResult | null = null;
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);
@@ -5845,6 +5856,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.building.set(true);
     this.resetBuildState();
     this.buildStartedAtMs = Date.now();
+    const constraints = this.buildCurrentAutoTeamBuildConstraints();
+
+    this.lastBuildRequest = {
+      types: this.selectedTypes(),
+      selectedClasses: this.selectedClasses(),
+      ...constraints,
+    };
+    this.lastBuildContext = this.buildDebugReportContext();
     const buildInputRevision = this.buildInputRevision;
     this.activeBuildInputRevision = buildInputRevision;
     this.startBuildProgressTicker();
@@ -5861,7 +5880,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       const guidedSlotRole = guidedAutoBuildActive
         ? this.resolveNextGuidedAutoBuildSlotRole()
         : null;
-      const nextResult = await this.runCurrentAutoTeamBuild(executionOptions);
+      const nextResult = await this.runCurrentAutoTeamBuild(constraints, executionOptions);
 
       if (buildInputRevision !== this.buildInputRevision) {
         // The inputs changed while the search ran; the change already cleared the result.
@@ -5870,10 +5889,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
       if (nextResult) {
         if (guidedAutoBuildActive && nextResult.relaxation.usedFallback) {
-          this.failBuild('guidedRelaxedOnly', this.resolveGuidedRelaxedOnlyMessage(nextResult));
+          this.failBuild(
+            'guidedRelaxedOnly',
+            this.resolveGuidedRelaxedOnlyMessage(nextResult),
+            nextResult,
+          );
         } else if (guidedSlotRole) {
           if (!this.applyGuidedAutoBuildSlot(nextResult, guidedSlotRole)) {
-            this.failBuild('noTeam', this.resolveBuildFailureMessage());
+            // A team came back, but not one this slot can take: say that, not "no team".
+            this.failBuild('guidedSlotRejected', this.resolveBuildFailureMessage(), nextResult);
           }
         } else {
           for (const slot of nextResult.slots) this.cacheCharacterRecord(slot.character);
@@ -5930,12 +5954,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private runCurrentAutoTeamBuild(
+    constraints: AutoBuildConstraints,
     executionOptions: AutoTeamBuildExecutionOptions,
   ): Promise<AutoBuildResult | null> {
     return this.autoTeamBuilder.buildTeam(
       this.selectedClasses(),
       this.selectedTypes(),
-      this.buildCurrentAutoTeamBuildConstraints(),
+      constraints,
       executionOptions,
     );
   }
@@ -6223,7 +6248,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     const text = formatAutoTeamDebugReportMarkdown(this.buildDebugReport());
+    const buildInputRevision = this.buildInputRevision;
     const failureKind = await copyTextToClipboard(text);
+
+    // A change during the copy retired this report; its feedback would land on the next one.
+    if (buildInputRevision !== this.buildInputRevision) {
+      return;
+    }
 
     this.debugReportFeedback.set(
       failureKind === null
@@ -6240,10 +6271,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
             manualCopyText: text,
           },
     );
+
+    if (failureKind !== null) {
+      this.focusDebugReportManualCopy();
+    }
   }
 
   public buildDebugReport(createdAt = new Date().toISOString()): AutoTeamDebugReport {
-    const result = this.result();
+    const result = this.result() ?? this.unappliedGuidedResult;
 
     return buildAutoTeamDebugReport({
       createdAt,
@@ -6255,17 +6290,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       dataset: this.summary(),
       abilityCatalogGeneratedAt: this.abilityCatalog()?.generatedAt ?? null,
       localOverrideCharacterIds: [...this.characterOverrides.overridesByCharacterId().keys()],
-      context: this.buildDebugReportContext(),
-      // With no team there is no requested input on a result; the page's inputs are the same ones
-      // the build used, since any change since then would have cleared the failure.
-      request: result?.requestedInput ?? {
-        types: this.selectedTypes(),
-        selectedClasses: this.selectedClasses(),
-        ...this.buildCurrentAutoTeamBuildConstraints(),
-      },
+      context: this.lastBuildContext ?? this.buildDebugReportContext(),
+      // With no team there is no requested input on a result: report what the page sent.
+      request: result?.requestedInput ??
+        this.lastBuildRequest ?? {
+          types: this.selectedTypes(),
+          selectedClasses: this.selectedClasses(),
+          ...this.buildCurrentAutoTeamBuildConstraints(),
+        },
       result,
       failure: this.lastBuildFailure(),
-      rules: this.finalReportRows(),
+      rules: result ? this.buildFinalReportRows(result) : [],
       performance: this.lastBuildStats(),
     });
   }
@@ -6447,7 +6482,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
-  private failBuild(code: AutoTeamBuildFailureCode, message: string): void {
+  /** A refused copy leaves the report in a textarea: focus it, which also selects the text. */
+  private focusDebugReportManualCopy(): void {
+    const focus = (): void => this.debugReportManualCopy?.nativeElement.focus?.();
+
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      globalThis.requestAnimationFrame(focus);
+      return;
+    }
+
+    globalThis.setTimeout(focus, 0);
+  }
+
+  private failBuild(
+    code: AutoTeamBuildFailureCode,
+    message: string,
+    unappliedResult: AutoBuildResult | null = null,
+  ): void {
+    this.unappliedGuidedResult = unappliedResult;
     this.lastBuildFailure.set(code);
     this.errorMessage.set(message);
   }
@@ -6498,6 +6550,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.lastBuildFailure.set(null);
     this.lastBuildStats.set(null);
     this.debugReportFeedback.set(null);
+    this.lastBuildRequest = null;
+    this.lastBuildContext = null;
+    this.unappliedGuidedResult = null;
     this.manualSimilarPickFeedback.set('');
     this.currentTeamId.set(null);
     this.resetSaveFeedbackState();
