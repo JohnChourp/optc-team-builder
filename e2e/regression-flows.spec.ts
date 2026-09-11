@@ -26,7 +26,8 @@ test.describe('high-value regression flows', () => {
     await page.goto('/tabs/auto-team-builder');
     await waitForAppAttached(page);
 
-    await expect(page.getByText('Guided auto build')).toBeVisible();
+    // Exact: the Quick start card also says "Turns on Guided auto build: ..." on a fresh page.
+    await expect(page.getByText('Guided auto build', { exact: true })).toBeVisible();
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
 
     const guidedToggle = page.getByTestId('guided-auto-build-toggle');
@@ -53,7 +54,8 @@ test.describe('high-value regression flows', () => {
     await page.goto('/tabs/auto-team-builder');
     await waitForAppAttached(page);
 
-    await expect(page.getByText('Guided auto build')).toBeVisible();
+    // Exact: the Quick start card also says "Turns on Guided auto build: ..." on a fresh page.
+    await expect(page.getByText('Guided auto build', { exact: true })).toBeVisible();
     await expect(page.getByText(/Build and lock only the next empty slot: Captain/)).toBeVisible();
 
     const guidedToggle = page.getByTestId('guided-auto-build-toggle');
