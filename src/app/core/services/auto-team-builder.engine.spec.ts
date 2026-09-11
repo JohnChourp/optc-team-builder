@@ -170,7 +170,161 @@ describe('runAutoTeamBuildSearch', () => {
     );
 
     expect(rejectedSubReasonCodes).toContain('alreadySelected');
-    expect(rejectedSubReasonCodes).toContain('lowerCoverageContribution');
+    // With no requirement the sub ranking never compares coverage (869exmmgk): these alternatives
+    // tie on selected filters and lose on the newest-id tie-break, and nothing claims they added
+    // less coverage or met fewer requirements.
+    expect(rejectedSubReasonCodes).toContain('rankingTieBreak');
+    expect(rejectedSubReasonCodes).not.toContain('lowerCoverageContribution');
+    expect(rejectedSubReasonCodes).not.toContain('lowerRequirementDemand');
+    // Already in another seat and older: both are true. The Captain ranks ahead of the picked sub,
+    // so it lost only to being used already, never to a tie-break it would have won.
+    expect(rejectedSubCandidates).toContainEqual(
+      expect.objectContaining({
+        characterId: 5890,
+        reasons: [{ code: 'alreadySelected' }, { code: 'rankingTieBreak' }],
+      }),
+    );
+    expect(rejectedSubCandidates).toContainEqual(
+      expect.objectContaining({ characterId: 5900, reasons: [{ code: 'alreadySelected' }] }),
+    );
+  });
+
+  /*
+   * 869exmmgk: a close alternative names the one ranking dimension that decided, after any hard
+   * constraint. Here the picked subs also out-cover the alternative, but with no requirement the
+   * ranking compares selected filters before the newest id, and never coverage - and the
+   * alternative's higher id would have won the tie-break, so filters alone decided.
+   */
+  it('names only the ranking dimension that decided against a close alternative', () => {
+    const pickedSubs = [5701, 5702, 5703, 5704].map((id) =>
+      createCharacterRecord({
+        id,
+        primaryClass: 'Fighter',
+        secondaryClass: 'Slasher',
+        detail: { specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.' },
+      }),
+    );
+    const alternative = createCharacterRecord({
+      id: 5799,
+      primaryClass: 'Fighter',
+      secondaryClass: '',
+      classes: ['Fighter'],
+      detail: { specialText: 'Deals 50x character ATK in typeless damage to one enemy.' },
+    });
+    const result = runAutoTeamBuildSearch(
+      [createCaptainRecord(), ...pickedSubs, alternative],
+      createInput(['DEX'], ['Fighter', 'Slasher']),
+    );
+    const subSlots = result?.slots.filter((slot) => slot.role === 'sub') ?? [];
+
+    expect(subSlots.map((slot) => slot.character.id).sort()).toEqual([5701, 5702, 5703, 5704]);
+
+    for (const slot of subSlots) {
+      const alternativeEntry = slot.explanation?.rejectedCandidates.find(
+        (candidate) => candidate.characterId === 5799,
+      );
+
+      expect(alternativeEntry?.reasons, String(slot.character.id)).toEqual([
+        { code: 'lowerSelectedFilterScore' },
+      ]);
+    }
+  });
+
+  /*
+   * 869exmmgk: leaders are ranked on requirements and then the newest id - never on selected
+   * filters - so "matches fewer selected filters" was never why a leader lost. And a leader that
+   * ranks ahead but lost to a manual Captain lost to the lock alone.
+   */
+  it('gives leader alternatives only the reason that decided', () => {
+    const captain = (id: number, secondaryClass: string) =>
+      createCharacterRecord({
+        id,
+        primaryClass: 'Fighter',
+        secondaryClass,
+        classes: secondaryClass ? ['Fighter', secondaryClass] : ['Fighter'],
+        detail: {
+          captainAbility: 'Boosts ATK of DEX and Fighter characters by 4x.',
+          specialText: 'Deals 50x character ATK in typeless damage to one enemy.',
+        },
+      });
+    const subs = [5701, 5702, 5703, 5704].map((id) =>
+      createCharacterRecord({
+        id,
+        primaryClass: 'Fighter',
+        secondaryClass: 'Slasher',
+        detail: { specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.' },
+      }),
+    );
+    const records = [captain(5990, 'Slasher'), captain(5970, ''), captain(5960, ''), ...subs];
+    const rejectedFor = (result: ReturnType<typeof runAutoTeamBuildSearch>, characterId: number) =>
+      result?.slots
+        .find((slot) => slot.role === 'captain')
+        ?.explanation?.rejectedCandidates.find((candidate) => candidate.characterId === characterId)
+        ?.reasons;
+
+    // The two Fighter-only captains match fewer selected classes, but lost on the newest id.
+    const auto = runAutoTeamBuildSearch(records, createInput(['DEX'], ['Fighter', 'Slasher']));
+
+    expect(auto?.slots.find((slot) => slot.role === 'captain')?.character.id).toBe(5990);
+    expect(rejectedFor(auto, 5970)).toEqual([{ code: 'rankingTieBreak' }]);
+    expect(rejectedFor(auto, 5960)).toEqual([{ code: 'rankingTieBreak' }]);
+
+    // Locked to the oldest captain: 5990 ranks ahead, so it lost to the lock (and sits in the
+    // Friend Captain seat) - not to a tie-break it would have won.
+    const locked = runAutoTeamBuildSearch(
+      records,
+      createInput(['DEX'], ['Fighter', 'Slasher'], {
+        manualSlots: createEmptyAutoBuildManualSlots().map((slot) =>
+          slot.role === 'captain' ? { ...slot, characterIds: [5960] } : slot,
+        ),
+      }),
+    );
+
+    expect(locked?.slots.find((slot) => slot.role === 'captain')?.character.id).toBe(5960);
+    expect(rejectedFor(locked, 5990)).toEqual([
+      { code: 'manualSlotLocked' },
+      { code: 'alreadySelected' },
+    ]);
+  });
+
+  /*
+   * 869exmmgr: a sub's own Captain Ability plays no part in how subs are ranked, so it is no reason
+   * a sub was picked. It used to be pushed ahead of the requirement the sub covered, and become its
+   * "Why picked?" summary. Leaders keep their scope reasons.
+   */
+  it('summarises a sub by what it covers, never by its own Captain Ability', () => {
+    const utilitySub = createUtilitySubRecord();
+    const universalUtilitySub: CharacterDetailRecord = {
+      ...utilitySub,
+      detail: { ...utilitySub.detail, captainAbility: 'Boosts ATK of all characters by 2x.' },
+    };
+    const result = runAutoTeamBuildSearch(
+      [
+        createCaptainRecord(),
+        universalUtilitySub,
+        createAtkSubRecord(),
+        createAffinitySubRecord(),
+        createConsistencySubRecord(),
+        createLowCoverageSubRecord(5850),
+      ],
+      createInput(['DEX'], ['Fighter'], {
+        requiredAbilities: [
+          { abilityKey: 'remove_bind', minTurns: 5, slotTokens: [], requiredCharacterCount: 1 },
+        ],
+      }),
+    );
+    const captainScopeCodes = ['captainUniversalScope', 'captainTypeScope', 'captainClassScope'];
+    const utilitySlot = result?.slots.find((slot) => slot.character.id === 5870);
+    const captainSlot = result?.slots.find((slot) => slot.role === 'captain');
+
+    expect(utilitySlot?.role).toBe('sub');
+    expect(utilitySlot?.explanation?.primaryReason.code).toBe('requiredAbilityMatch');
+    expect(
+      utilitySlot?.explanation?.reasons.some((reason) => captainScopeCodes.includes(reason.code)),
+    ).toBe(false);
+    expect(
+      captainSlot?.explanation?.reasons.some((reason) => captainScopeCodes.includes(reason.code)),
+    ).toBe(true);
   });
 
   it('records required-constraint tradeoffs for rejected sub candidates', () => {
