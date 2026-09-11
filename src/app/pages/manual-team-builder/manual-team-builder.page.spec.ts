@@ -457,6 +457,27 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.conditionStatus().passedLeaderLabels).toEqual(['Captain', 'Friend Captain']);
   });
 
+  it('shows an unknown stat as ? and marks the team total that left it out', async () => {
+    const { page } = createPage();
+    const captain = createCharacterRecord(701, 'Known Stats Captain');
+    const sub = createCharacterRecord(703, 'Unknown RCV Sub');
+
+    captain.stats.max = { hp: 100, atk: 40, rcv: 10 };
+    sub.stats.max = { hp: 300, atk: 60, rcv: null };
+
+    await page.ngOnInit();
+    page.slots.set([captain, null, sub, null, null, null]);
+
+    expect(page.slotStatLabel(sub, 'rcv')).toBe('?');
+    expect(page.slotStatLabel(sub, 'hp')).toBe((300).toLocaleString());
+    expect(page.teamSummaryMetrics().find((metric) => metric.key === 'rcv')?.value).toBe(
+      `${(10).toLocaleString()} + ?`,
+    );
+    expect(page.teamSummaryMetrics().find((metric) => metric.key === 'hp')?.value).toBe(
+      (400).toLocaleString(),
+    );
+  });
+
   it('computes live summary totals and cost validation messages', async () => {
     const { page } = createPage();
     const captain = createCharacterRecord(701, 'Budget Captain');

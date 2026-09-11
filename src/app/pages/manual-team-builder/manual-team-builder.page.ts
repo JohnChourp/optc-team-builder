@@ -463,19 +463,19 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     {
       key: 'hp',
       label: this.t('summary.metrics.hp.label'),
-      value: this.formatNumber(this.totalHp()),
+      value: this.formatStatTotal('hp', this.totalHp()),
       support: this.t('summary.metrics.hp.support'),
     },
     {
       key: 'atk',
       label: this.t('summary.metrics.atk.label'),
-      value: this.formatNumber(this.totalAtk()),
+      value: this.formatStatTotal('atk', this.totalAtk()),
       support: this.t('summary.metrics.atk.support'),
     },
     {
       key: 'rcv',
       label: this.t('summary.metrics.rcv.label'),
-      value: this.formatNumber(this.totalRcv()),
+      value: this.formatStatTotal('rcv', this.totalRcv()),
       support: this.t('summary.metrics.rcv.support'),
     },
     {
@@ -1107,7 +1107,11 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   public slotStatLabel(character: CharacterDetailRecord, stat: 'hp' | 'atk' | 'rcv'): string {
-    return this.formatNumber(character.stats.max[stat] ?? 0);
+    const value = character.stats.max[stat];
+
+    // "?" is what the Characters page shows for a stat the data does not have. "0" reads as a
+    // real value, and the team total would then quietly agree with it.
+    return value === null ? '?' : this.formatNumber(value);
   }
 
   public slotAbilityPreview(character: CharacterDetailRecord): string {
@@ -1647,6 +1651,15 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
   private sumSlotStat(stat: 'hp' | 'atk' | 'rcv'): number {
     return this.slots().reduce((total, character) => total + (character?.stats.max[stat] ?? 0), 0);
+  }
+
+  /** A total that left out an unknown stat says so, rather than passing for the whole team's. */
+  private formatStatTotal(stat: 'hp' | 'atk' | 'rcv', total: number): string {
+    const hasUnknownStat = this.slots().some(
+      (character) => character !== null && character.stats.max[stat] === null,
+    );
+
+    return hasUnknownStat ? `${this.formatNumber(total)} + ?` : this.formatNumber(total);
   }
 
   private formatNumber(value: number): string {
