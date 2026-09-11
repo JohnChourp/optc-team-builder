@@ -383,9 +383,11 @@ describe('AutoTeamBuilderPage builder interactions', () => {
   /*
    * 869exmmfq. No character holds more than two classes, so "every unit holds every selected
    * class" asked of three or more could never be met: the fallback had to drop all but two, and
-   * with nine of ten selected its attempt cap ran out first and no team was built at all.
+   * with nine of ten selected its attempt cap ran out first and no team was built at all. The
+   * owner then settled one or two classes the same way (2026-09-11): a Fighter-and-Slasher
+   * captain boosts units of either class, so any selection means "characters of these classes".
    */
-  it('asks every unit for all selected classes only while one unit could hold them', async () => {
+  it('reads every class selection as "characters of these classes"', async () => {
     const { page, repository, autoTeamBuilder } = await createPage();
     const allClasses = [
       'Fighter',
@@ -405,34 +407,35 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       availableClasses: allClasses,
     });
     await page.ngOnInit();
-
-    page.selectedClasses.set(['Fighter']);
-    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
-    page.selectedClasses.set(['Fighter', 'Slasher']);
-    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
-    expect(page.classSupportLabel()).toContain('asked to have all selected classes');
-
-    page.selectedClasses.set(['Fighter', 'Slasher', 'Striker']);
-    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
-    expect(page.classSupportLabel()).toContain('Only characters of the selected classes');
-
-    page.selectedClasses.set(allClasses.filter((characterClass) => characterClass !== 'Booster'));
-    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
-
     page.selectedTypes.set(['DEX']);
-    await page.buildTeam();
-    expect(autoTeamBuilder.buildTeam).toHaveBeenLastCalledWith(
-      expect.any(Array),
-      ['DEX'],
-      expect.objectContaining({
-        requireAllSelectedClassesPerCharacter: false,
-        requireAllSelectedClassesInTeam: false,
-      }),
-      expect.anything(),
-    );
+
+    for (const selection of [
+      ['Fighter'],
+      ['Fighter', 'Slasher'],
+      ['Fighter', 'Slasher', 'Striker'],
+      allClasses.filter((characterClass) => characterClass !== 'Booster'),
+    ]) {
+      page.selectedClasses.set(selection);
+      expect(page.classSupportLabel(), selection.join('+')).toContain(
+        'Only characters of the selected classes',
+      );
+      expect(page.selectedClassSummaryLabel(), selection.join('+')).toContain(
+        'the team need not include each one',
+      );
+
+      await page.buildTeam();
+      expect(autoTeamBuilder.buildTeam).toHaveBeenLastCalledWith(
+        selection,
+        ['DEX'],
+        expect.objectContaining({
+          requireAllSelectedClassesPerCharacter: false,
+          requireAllSelectedClassesInTeam: false,
+        }),
+        expect.anything(),
+      );
+    }
 
     page.selectedClasses.set(allClasses);
-    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
     expect(page.classSupportLabel()).toBe('');
   });
 
@@ -1843,31 +1846,45 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(byKey.get('characterNames')).toMatchObject({ state: 'notApplicable' });
   });
 
-  it('does not report class coverage for a "these classes only" team', async () => {
+  it('reports what "characters of these classes" asked of the team', async () => {
     const { page } = await createPage();
     const result = createAutoBuildResult();
-    const threeClasses = ['Fighter', 'Slasher', 'Striker'];
-    const buildWith = (requireAllSelectedClassesInTeam: boolean | undefined) => ({
+    const twoClasses = ['Fighter', 'Slasher'];
+    const buildWith = (
+      requireAllSelectedClassesInTeam: boolean | undefined,
+      selectedClassMatches = result.slots.length,
+    ) => ({
       ...result,
-      input: { ...result.input, selectedClasses: threeClasses, requireAllSelectedClassesInTeam },
+      input: { ...result.input, selectedClasses: twoClasses, requireAllSelectedClassesInTeam },
       requestedInput: {
         ...result.requestedInput,
-        selectedClasses: threeClasses,
+        selectedClasses: twoClasses,
         requireAllSelectedClassesPerCharacter: false,
         requireAllSelectedClassesInTeam,
       },
+      coverage: { ...result.coverage, selectedClassMatches },
     });
+    const classRow = () => page.finalReportRows().find((row) => row.key === 'classes');
 
     page.result.set(buildWith(false));
-    expect(page.finalReportRows().find((row) => row.key === 'classes')).toMatchObject({
-      state: 'notApplicable',
+    expect(classRow()).toMatchObject({
+      state: 'passed',
+      detail: 'Every unit holds one of the selected classes: Fighter / Slasher.',
+    });
+
+    // A manual pick or an any-class Friend Captain can sit outside the selected classes.
+    page.result.set(buildWith(false, 5));
+    expect(classRow()).toMatchObject({
+      state: 'relaxed',
+      detail: '5 of 6 units hold one of the selected classes: Fighter / Slasher.',
     });
 
     // A result saved before the flag existed keeps the reading it was built under.
-    page.result.set(buildWith(undefined));
-    expect(page.finalReportRows().find((row) => row.key === 'classes')?.state).not.toBe(
-      'notApplicable',
-    );
+    page.result.set(buildWith(undefined, 5));
+    expect(classRow()).toMatchObject({
+      state: 'passed',
+      detail: expect.stringContaining('Team follows selected class coverage'),
+    });
   });
 
   it('shows relaxed rows in the final team report when fallback ignores synergy rules', async () => {
@@ -4608,6 +4625,94 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.errorMessage()).toContain('DEX');
     expect(page.building()).toBe(false);
     expect(page.buildProgress()).toBeNull();
+  });
+
+  /*
+   * 869exmktc. A failed build named "unique in-game character identities" every time, which left
+   * the plain messages unreachable, and never named the Captain boost range or the class pool -
+   * the two rules no fallback relaxes.
+   */
+  it('names only the rules a failed build could not relax', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(null);
+    await page.ngOnInit();
+    page.selectedTypes.set(['DEX']);
+
+    await page.buildTeam();
+    expect(page.errorMessage()).toBe('No team matched DEX even after flexible fallback.');
+
+    page.selectedClasses.set(['Fighter']);
+    page.leaderBoostRanges.set({
+      ...createEmptyAutoBuildLeaderBoostRanges(),
+      ATK: { min: 7, max: null },
+    });
+    await page.buildTeam();
+
+    expect(page.errorMessage()).toBe(
+      'No flexible team matched DEX while keeping the selected classes (Fighter) and the Captain boost range ATK from 7.',
+    );
+  });
+
+  it('says what Guided auto build would have to relax instead of the generic failure', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const result = createAutoBuildResult();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue({
+      ...result,
+      input: { ...result.input, types: ['DEX'] },
+      relaxation: { ...result.relaxation, usedFallback: true, droppedTypes: ['PSY'] },
+    });
+    await page.ngOnInit();
+    page.guidedAutoBuildEnabled.set(true);
+    await page.buildTeam();
+
+    expect(page.errorMessage()).toContain('Guided auto build only locks a slot');
+    expect(page.errorMessage()).toContain('these are relaxed: Selected type coverage (PSY).');
+    expect(page.result()).toBeNull();
+    expect(page.manualSlots().every((slot) => slot.characterIds.length === 0)).toBe(true);
+  });
+
+  it('says why Build is off, under the button', async () => {
+    const { page } = await createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/auto-team-builder/auto-team-builder.page.html'),
+      'utf8',
+    );
+    const submit = template.indexOf('data-testid="auto-build-submit"');
+
+    expect(submit).toBeGreaterThan(-1);
+    // Right under the button, and rendered whenever there is a reason.
+    expect(template.slice(submit, submit + 1200)).toMatch(
+      /@if \(buildDisabledReason\(\)\) \{\s*<p class="build-submit-reason" role="status">\s*\{\{ buildDisabledReason\(\) \}\}/u,
+    );
+
+    await page.ngOnInit();
+    expect(page.buildDisabledReason()).toBe('');
+
+    page.selectedTypes.set([]);
+    expect(page.buildDisabled()).toBe(true);
+    expect(page.buildDisabledReason()).toBe('Select at least one type to build a team.');
+
+    page.selectedTypes.set(['DEX']);
+    page.selectedClasses.set([]);
+    expect(page.buildDisabledReason()).toBe('Select at least one class to build a team.');
+
+    page.selectedClasses.set(['Fighter']);
+    page.leaderBoostRanges.set({
+      ...createEmptyAutoBuildLeaderBoostRanges(),
+      ATK: { min: 5, max: 2 },
+    });
+    expect(page.buildDisabled()).toBe(true);
+    expect(page.buildDisabledReason()).toBe(
+      'Leader boost minimum cannot be greater than maximum.',
+    );
+
+    // A running build needs no reason, even with the inputs still incomplete.
+    page.selectedTypes.set([]);
+    page.building.set(true);
+    expect(page.buildDisabled()).toBe(true);
+    expect(page.buildDisabledReason()).toBe('');
   });
 
   it('shows a dedicated manual conflict message for duplicate in-game characters', async () => {
@@ -8653,7 +8758,6 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.requireAllSelectedTypesInTeam()).toBe(false);
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(false);
     expect(page.derivedRequireAllSelectedTypesInTeam()).toBe(true);
-    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(false);
     expect(page.requireAllSlotsInLeaderSuperEffectScope()).toBe(true);
     expect(page.requireFullCaptainAbilityCoverage()).toBe(true);
     expect(page.requireBothLeadersFullCaptainAbilityCoverage()).toBe(true);
@@ -9022,7 +9126,6 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
     expect(page.requireAllSelectedTypesInTeam()).toBe(false);
     expect(page.derivedRequireAllSelectedTypesInTeam()).toBe(true);
     expect(page.requireAllSelectedClassesPerCharacter()).toBe(false);
-    expect(page.derivedRequireAllSelectedClassesPerCharacter()).toBe(true);
     expect(page.requireBothLeadersFullCaptainAbilityCoverage()).toBe(true);
     expect(page.requireSuperSpecialCriteriaCoverage()).toBe(true);
     expect(page.requireSuperTandemCriteriaCoverage()).toBe(true);
@@ -9076,7 +9179,8 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
           },
         ],
         requireAllSelectedTypesInTeam: true,
-        requireAllSelectedClassesPerCharacter: true,
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSelectedClassesInTeam: false,
         requireBothLeadersFullCaptainAbilityCoverage: true,
         strictSuperSpecialCriteriaCoverage: true,
         strictSuperTandemCriteriaCoverage: true,

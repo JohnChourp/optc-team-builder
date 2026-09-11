@@ -2628,6 +2628,11 @@
                                       {{ buildButtonLabel() }}
                                     </ion-button>
                                   </div>
+                                  @if (buildDisabledReason()) {
+                                    <p class="build-submit-reason" role="status">
+                                      {{ buildDisabledReason() }}
+                                    </p>
+                                  }
                                 </section>
                               </app-auto-team-builder-actions-panel>
                             </app-auto-team-builder-picker-panel>

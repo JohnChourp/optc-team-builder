@@ -63,7 +63,6 @@ import {
   createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
-  AUTO_BUILD_MAX_CLASSES_PER_CHARACTER,
   shouldTreatSelectedClassesAsNeutral,
 } from '../../core/models/auto-team-builder.models';
 import {
@@ -1497,6 +1496,31 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.buildBlockedByFavorites() ||
       this.hasInvalidLeaderBoostRanges(),
   );
+  /**
+   * Why Build is off, said under it (869exmktc). The button used to grey out without a word for no
+   * types, no classes or an inverted Captain boost range - that range's own error line was computed
+   * and never rendered. The favourites and box blocks already have a warning above the manual
+   * slots, and a running or loading page needs none.
+   */
+  public readonly buildDisabledReason = computed(() => {
+    if (
+      this.controlsDisabled() ||
+      this.buildBlockedByCharacterScope() ||
+      this.buildBlockedByFavorites()
+    ) {
+      return '';
+    }
+
+    if (!this.hasSelectedTypes()) {
+      return this.t('filters.types.required');
+    }
+
+    if (!this.hasSelectedClasses()) {
+      return this.t('filters.classes.required');
+    }
+
+    return this.leaderBoostRangeErrorLabel();
+  });
   public readonly hasStrictFilters = computed(() => this.requireAllSlotsInLeaderSuperEffectScope());
   public readonly allClassesSelected = computed(
     () =>
@@ -1508,9 +1532,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
   public readonly derivedRequireAllSelectedTypesInTeam = computed(() =>
     this.shouldRequireExactSelectedTypeCoverage(),
-  );
-  public readonly derivedRequireAllSelectedClassesPerCharacter = computed(() =>
-    this.shouldRequireExactSelectedClassCoverage(),
   );
   /**
    * Team-level coverage stays the semantic (a tag counts as satisfied when ANY
@@ -1649,15 +1670,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly typeSupportLabel = computed(() =>
     this.derivedRequireAllSelectedTypesInTeam() ? this.t('filters.types.support.strict') : '',
   );
-  public readonly classSupportLabel = computed(() => {
-    if (this.derivedRequireAllSelectedClassesPerCharacter()) {
-      return this.t('filters.classes.support.strict');
-    }
-
-    return this.hasSelectedClasses() && !this.allClassesSelected()
+  public readonly classSupportLabel = computed(() =>
+    this.hasSelectedClasses() && !this.allClassesSelected()
       ? this.t('filters.classes.support.flexible')
-      : '';
-  });
+      : '',
+  );
   public readonly characterTagSupportLabel = computed(() =>
     this.derivedRequireAllSelectedCharacterTagsInTeam()
       ? this.t('filters.characterTags.support.strict')
@@ -2546,20 +2563,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const current = this.result();
 
     if (!current) {
-      if (this.derivedRequireAllSelectedClassesPerCharacter()) {
-        return this.t('results.selectedClassSummary.strictPending');
-      }
-
       return this.hasSelectedClasses() && !this.allClassesSelected()
         ? this.t('results.selectedClassSummary.poolOnlyPending')
         : this.t('results.selectedClassSummary.flexiblePending');
-    }
-
-    if (current.input.requireAllSelectedClassesPerCharacter) {
-      return this.t('results.selectedClassSummary.strictResolved', {
-        matching: current.slots.length,
-        total: current.slots.length,
-      });
     }
 
     if (current.input.selectedClasses.length === 0) {
@@ -5555,7 +5561,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
       if (nextResult) {
         if (guidedAutoBuildActive && nextResult.relaxation.usedFallback) {
-          this.errorMessage.set(this.resolveBuildFailureMessage());
+          this.errorMessage.set(this.resolveGuidedRelaxedOnlyMessage(nextResult));
         } else if (guidedSlotRole) {
           if (!this.applyGuidedAutoBuildSlot(nextResult, guidedSlotRole)) {
             this.errorMessage.set(this.resolveBuildFailureMessage());
@@ -5626,9 +5632,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         characterTagSets: this.characterTagSets(),
         selectedCharacterNames: this.selectedCharacterNames(),
         requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
-        requireAllSelectedClassesPerCharacter: this.derivedRequireAllSelectedClassesPerCharacter(),
-        // One or two classes are the per-unit rule; three or more only narrow the pool.
-        requireAllSelectedClassesInTeam: this.derivedRequireAllSelectedClassesPerCharacter(),
+        // Any class selection means "characters of these classes": each unit holds at least one,
+        // and the team need not include every class (owner, 2026-09-11, 869exmmfq). Two classes
+        // used to mean "every unit holds both", which is not how a Fighter-and-Slasher captain
+        // reads in-game - it boosts units of either class.
+        requireAllSelectedClassesPerCharacter: false,
+        requireAllSelectedClassesInTeam: false,
         requireAllSelectedCharacterTagsInTeam: this.derivedRequireAllSelectedCharacterTagsInTeam(),
         requireAllSelectedCharacterNamesInTeam: this.derivedRequireAllSelectedCharacterNamesInTeam(),
         requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
@@ -5851,7 +5860,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       battleRequirements: this.pageBattleRequirements(),
       enemyMechanics: this.pageEnemyMechanics(),
       requireAllSelectedTypesInTeam: this.derivedRequireAllSelectedTypesInTeam(),
-      requireAllSelectedClassesPerCharacter: this.derivedRequireAllSelectedClassesPerCharacter(),
+      requireAllSelectedClassesPerCharacter: false,
       requireAllSelectedCharacterTagsInTeam: this.derivedRequireAllSelectedCharacterTagsInTeam(),
       requireAllSelectedCharacterNamesInTeam: this.derivedRequireAllSelectedCharacterNamesInTeam(),
       requireAllSlotsInLeaderSuperEffectScope: this.requireAllSlotsInLeaderSuperEffectScope(),
@@ -6631,7 +6640,27 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const activeRequirements: string[] = [];
     const favoritesScope = this.favoritesOnly() ? this.t('errors.requirements.favoritesScope') : '';
 
-    activeRequirements.push(this.t('errors.requirements.uniqueCharacterNames'));
+    // Only rules no fallback relaxes are named here (869exmktc). "Unique in-game identities" used to
+    // head every failure: it applies to every team, so it blamed itself for all of them and left
+    // the plain, favourites and locked-slot messages below unreachable - a manual pick that breaks
+    // it has its own message above. The class pool and a Captain boost range were never named.
+    if (this.hasSelectedClasses() && !this.allClassesSelected()) {
+      activeRequirements.push(
+        this.t('errors.requirements.classPool', {
+          classes: this.formatSelectedValues(this.selectedClasses()),
+        }),
+      );
+    }
+
+    const leaderBoostRangeLabels = this.activeLeaderBoostRangeLabels();
+
+    if (leaderBoostRangeLabels.length > 0) {
+      activeRequirements.push(
+        this.t('errors.requirements.leaderBoostRange', {
+          range: leaderBoostRangeLabels.join(' • '),
+        }),
+      );
+    }
 
     const battleRequirements = this.pageBattleRequirements();
     const abilityRequirementsForFailure = this.pageRequiredAbilities().filter(
@@ -6721,6 +6750,41 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       favoritesScope,
       requirements: this.joinRequirementLabels(activeRequirements),
     });
+  }
+
+  /**
+   * Guided auto build locks a slot only from a team that keeps every filter, so it refuses a relaxed
+   * one - and used to say so with the generic "no team matched" text, although the result names
+   * exactly what would have to give. The final report's own rule names say it here.
+   */
+  private resolveGuidedRelaxedOnlyMessage(result: AutoBuildResult): string {
+    const droppedByRule: Record<string, readonly string[]> = {
+      types: result.relaxation.droppedTypes,
+      classes: result.relaxation.droppedClasses,
+      characterTags: result.relaxation.droppedCharacterTags,
+      characterNames: result.relaxation.droppedCharacterNames,
+    };
+    const relaxed = this.buildFinalReportRows(result)
+      .filter((row) => row.state === 'relaxed')
+      .map((row) => {
+        const dropped = droppedByRule[row.key] ?? [];
+
+        return dropped.length > 0
+          ? `${row.title} (${this.formatSelectedValues(dropped)})`
+          : row.title;
+      });
+
+    return relaxed.length > 0
+      ? this.t('errors.guided.relaxedOnly', { relaxed: relaxed.join(' • ') })
+      : this.resolveBuildFailureMessage();
+  }
+
+  private activeLeaderBoostRangeLabels(): string[] {
+    const ranges = this.leaderBoostRanges();
+
+    return AUTO_BUILD_LEADER_BOOST_FILTERS.filter((filter) =>
+      this.hasActiveLeaderBoostRange(ranges[filter]),
+    ).map((filter) => this.formatLeaderBoostRangeSummary(filter, ranges[filter]));
   }
 
   private async refreshAppliedManualCandidates(options: { force?: boolean } = {}): Promise<void> {
@@ -8338,25 +8402,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     );
   }
 
-  /**
-   * "Every unit holds every selected class" only while one unit can: no character has more than
-   * two classes. Asked of three or more it could never be met - the fallback then had to drop all
-   * but two, and with nine of ten selected its attempt cap ran out first and no team was built,
-   * under a message that blamed the types. Three or more now mean "these classes only": any
-   * selected class per unit, with no requirement that the team include each one - the build sends
-   * requireAllSelectedClassesInTeam: false for them (see shouldTreatSelectedClassesAsNeutral).
-   */
-  private shouldRequireExactSelectedClassCoverage(): boolean {
-    const availableClasses = this.availableClasses();
-
-    return (
-      this.hasSelectedClasses() &&
-      availableClasses.length > 0 &&
-      this.selectedClasses().length <= AUTO_BUILD_MAX_CLASSES_PER_CHARACTER &&
-      !this.sameUnorderedValues(this.selectedClasses(), availableClasses)
-    );
-  }
-
   private buildFinalReportRows(result: AutoBuildResult): AutoBuildFinalReportRow[] {
     return [
       this.buildSelectedFilterReportRow(
@@ -8369,13 +8414,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           this.sameUnorderedValues(result.requestedInput.types, AUTO_TEAM_BUILDER_TYPES)
         ),
       ),
-      this.buildSelectedFilterReportRow(
-        'classes',
-        result.requestedInput.selectedClasses,
-        result.input.selectedClasses,
-        result.relaxation.droppedClasses,
-        !shouldTreatSelectedClassesAsNeutral(result.requestedInput),
-      ),
+      this.buildSelectedClassReportRow(result),
       this.buildSelectedFilterReportRow(
         'characterTags',
         result.requestedInput.selectedCharacterTags ?? [],
@@ -8431,6 +8470,53 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         value: this.formatResultValues(effectiveValues),
       }),
     );
+  }
+
+  /**
+   * "Characters of these classes" asks nothing of the team as a whole, so the generic coverage
+   * row said "No selected class coverage was requested" - under a class the player had picked.
+   * The row reports what the rule does ask: that every unit hold one of the selected classes.
+   * A manual pick or an any-class Friend Captain can fall outside them, and then it says how many.
+   */
+  private buildSelectedClassReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
+    const requestedClasses = result.requestedInput.selectedClasses;
+
+    if (!shouldTreatSelectedClassesAsNeutral(result.requestedInput)) {
+      return this.buildSelectedFilterReportRow(
+        'classes',
+        requestedClasses,
+        result.input.selectedClasses,
+        result.relaxation.droppedClasses,
+        true,
+      );
+    }
+
+    if (
+      requestedClasses.length === 0 ||
+      this.sameUnorderedValues(requestedClasses, this.availableClasses())
+    ) {
+      return this.buildFinalReportRow(
+        'classes',
+        'notApplicable',
+        this.t('report.rules.classes.notApplicable'),
+      );
+    }
+
+    const value = this.formatResultValues(requestedClasses);
+    const matching = result.coverage.selectedClassMatches;
+    const total = result.slots.length;
+
+    return matching >= total
+      ? this.buildFinalReportRow(
+          'classes',
+          'passed',
+          this.t('report.rules.classes.poolPassed', { value }),
+        )
+      : this.buildFinalReportRow(
+          'classes',
+          'relaxed',
+          this.t('report.rules.classes.poolPartial', { matching, total, value }),
+        );
   }
 
   private buildLeaderSuperScopeReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
