@@ -45,7 +45,6 @@ import {
 } from '../models/auto-team-builder-ability.models';
 import {
   type CharacterDetailRecord,
-  type CharacterListItem,
   type NormalizedSuperSpecialCriteria,
   type SuperCriteriaBranch,
 } from '../models/optc.models';
