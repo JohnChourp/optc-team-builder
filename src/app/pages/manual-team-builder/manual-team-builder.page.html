@@ -429,24 +429,15 @@
           #characterPickerModal
           [isOpen]="pickerModalOpen()"
           cssClass="pick-editor-modal"
-          [attr.aria-label]="
-            t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })
-          "
-          (didPresent)="
-            labelModalDialog(
-              $event,
-              t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })
-            )
-          "
+          [attr.aria-label]="characterPickerTitle()"
+          (didPresent)="onCharacterPickerDidPresent($event)"
           (didDismiss)="closeCharacterPicker()"
         >
           <ng-template>
             <ion-header
               class="pick-editor-modal__header ion-no-border"
               role="group"
-              [attr.aria-label]="
-                t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })
-              "
+              [attr.aria-label]="characterPickerTitle()"
             >
               <ion-toolbar>
                 <div class="pick-editor-modal__head">
@@ -455,8 +446,9 @@
                       <ion-icon [icon]="editIcon" aria-hidden="true"></ion-icon>
                       <span>{{ t('picker.eyebrow') }}</span>
                     </div>
-                    <h2>
-                      {{ t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) }) }}
+                    <!-- Focused when the picker moves on to the next slot (869exmkad). -->
+                    <h2 id="manual-team-picker-title" tabindex="-1">
+                      {{ characterPickerTitle() }}
                     </h2>
                     <p>{{ t('picker.copy') }}</p>
                   </div>
@@ -479,9 +471,7 @@
               <div class="pick-editor-modal__shell">
                 <div class="manual-team-picker pick-editor-modal__panel">
                   <div class="manual-team-picker__meta">
-                    <strong>{{
-                      t('picker.titleWithRole', { label: slotRoleLabel(selectedSlotIndex()) })
-                    }}</strong>
+                    <strong>{{ characterPickerTitle() }}</strong>
                     <small>{{ t('picker.copy') }}</small>
                   </div>
                   <div class="manual-team-picker-slot-rail">
@@ -495,6 +485,7 @@
                         [class.manual-team-picker-slot-drop--invalid]="
                           slotIsInvalidDropTarget(index)
                         "
+                        [attr.aria-current]="selectedSlotIndex() === index ? 'true' : null"
                         [attr.draggable]="slot ? 'true' : null"
                         (click)="selectSlot(index)"
                         (dragstart)="onSlotDragStart($event, index)"
@@ -506,7 +497,7 @@
                         @if (slot) {
                           <img [src]="slot.imageUrl" [alt]="slot.name" loading="lazy" />
                           <span>
-                            <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                            <strong>{{ slotRoleLabel(index) }}</strong>
                             <small>{{ slot.name }}</small>
                           </span>
                         } @else {
@@ -516,7 +507,7 @@
                             loading="lazy"
                           />
                           <span>
-                            <strong>{{ t('slots.label', { slot: index + 1 }) }}</strong>
+                            <strong>{{ slotRoleLabel(index) }}</strong>
                             <small>{{ t('slots.empty') }}</small>
                           </span>
                         }

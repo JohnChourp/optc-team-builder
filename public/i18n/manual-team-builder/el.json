@@ -167,7 +167,6 @@
     "cost": "Cost {{cost}}",
     "empty": "Κενό slot",
     "emptyAlt": "Κενό character slot",
-    "label": "Slot {{slot}}",
     "noAbilityPreview": "Δεν υπάρχει captain ή special text.",
     "roleLabel": "Slot {{slot}} · {{role}}",
     "roles": {

@@ -167,7 +167,6 @@
     "cost": "Cost {{cost}}",
     "empty": "Empty slot",
     "emptyAlt": "Empty character slot",
-    "label": "Slot {{slot}}",
     "noAbilityPreview": "No captain or special text available.",
     "roleLabel": "Slot {{slot}} · {{role}}",
     "roles": {
