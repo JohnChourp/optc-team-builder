@@ -1122,6 +1122,29 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.dragFeedbackMessage()).toBe('Cannot drop with max cost 50.');
   });
 
+  it('clears the budget warning on Reset, since the budget it names is gone', async () => {
+    const { page } = createPage();
+    const candidate = createCharacterRecord(901, 'Dragged Candidate');
+    const expensiveCaptain = createCharacterRecord(903, 'Expensive Captain');
+
+    candidate.cost = 10;
+    expensiveCaptain.cost = 45;
+
+    await page.ngOnInit();
+    page.maxTotalCost.set(50);
+    page.slots.set([expensiveCaptain, null, null, null, null, null]);
+    page.candidates.set([candidate]);
+    page.onCandidateDragStart(createDragEvent(), candidate);
+    page.onSlotDrop(createDragEvent(), 2);
+
+    expect(page.dragFeedbackMessage()).toBe('Cannot drop with max cost 50.');
+
+    page.resetPage();
+
+    expect(page.maxTotalCost()).toBeNull();
+    expect(page.dragFeedbackMessage()).toBe('');
+  });
+
   it('resolves captain branch selector options and scope chips', async () => {
     const { page } = createPage();
     const captain = createDualCaptainRecord();

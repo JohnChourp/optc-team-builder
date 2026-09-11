@@ -1033,6 +1033,9 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.maxTotalCost.set(null);
     this.captainBranchModes.set({ 0: null, 1: null });
     this.onDragEnd();
+    // onDragEnd() clears the drag state only. The message names the budget that was just reset
+    // to none, so leaving it would describe a limit the page no longer has.
+    this.dragFeedbackMessage.set('');
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
     this.notes.set('');
     this.currentTeamId.set(null);

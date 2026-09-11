@@ -2462,6 +2462,32 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.selectedManualShipId()).toBeNull();
   });
 
+  it('clears the ship lock on Reset, so the next ship is not locked by a choice made for the last one', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.selectManualShip(9001);
+    page.onRequireManualShipToggle({ detail: { checked: true } } as CustomEvent<{ checked: boolean }>);
+    expect(page.requireManualShip()).toBe(true);
+
+    await page.resetPage();
+
+    expect(page.selectedManualShipId()).toBeNull();
+    expect(page.requireManualShip()).toBe(false);
+
+    page.selectedClasses.set(['Fighter']);
+    page.selectedTypes.set(['DEX']);
+    page.selectManualShip(9002);
+    await page.buildTeam();
+
+    expect(autoTeamBuilder.buildTeam).toHaveBeenLastCalledWith(
+      ['Fighter'],
+      ['DEX'],
+      expect.objectContaining({ manualShipId: 9002, requireManualShip: false }),
+      expect.anything(),
+    );
+  });
+
   it('opens and closes the compact manual picker modal without changing picker state', async () => {
     const { page } = await createPage();
 

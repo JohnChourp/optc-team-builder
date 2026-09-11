@@ -540,7 +540,7 @@
     "manualOverride": "Manual ship override active: {{name}}",
     "requireToggle": {
       "label": "Lock this ship as required",
-      "support": "When on, the builder must use this exact ship; if it is excluded or unavailable, the build fails instead of falling back to a recommendation."
+      "support": "When on, the builder uses only this ship. If it is excluded or no longer allowed, the team is built without a ship instead of switching to a recommended one."
     },
     "favoriteActions": {
       "add": "Add ship to favorites",
