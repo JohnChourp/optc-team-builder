@@ -16,4 +16,4 @@
  * ahead for the whole window in between - and merging to main publishes the
  * website, so a reader really would see the wrong number.
  */
-export const APP_VERSION = '0.4.16';
+export const APP_VERSION = '0.4.17';
