@@ -89,6 +89,22 @@
       </nav>
 
       <div class="tabs-menu__footer">
+        <ion-menu-toggle autoHide="true">
+          <ion-item
+            button
+            detail="false"
+            class="menu-item menu-item--faq"
+            data-test="menu-faq"
+            [routerLink]="[faqNavItem.route]"
+            routerLinkActive="menu-item--active"
+            [routerLinkActiveOptions]="navItemActiveMatchOptions"
+            routerDirection="root"
+          >
+            <ion-icon slot="start" [icon]="faqNavItem.icon"></ion-icon>
+            <ion-label>{{ faqNavItem.labelKey | transloco }}</ion-label>
+          </ion-item>
+        </ion-menu-toggle>
+
         <!--
           Above Settings on purpose: it is the last thing in the menu a reader
           reaches for, and it belongs next to the app's own housekeeping rather

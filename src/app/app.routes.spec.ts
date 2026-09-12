@@ -155,6 +155,21 @@ describe('app routes', () => {
     expect(privacyRoute?.loadComponent).toBeTypeOf('function');
   });
 
+  it('registers the FAQ route inside the tabs shell', () => {
+    const tabsRoute = findRouteByPath(routes, 'tabs');
+    const faqRoute = tabsRoute?.children?.find((route) => route.path === 'faq');
+
+    expect(faqRoute).toBeDefined();
+    expect(faqRoute?.loadComponent).toBeTypeOf('function');
+  });
+
+  it('redirects the short /faq link into the tabs shell', () => {
+    const faqRoute = routes.find((route) => route.path === 'faq');
+
+    expect(faqRoute?.redirectTo).toBe('tabs/faq');
+    expect(faqRoute?.pathMatch).toBe('full');
+  });
+
   it('adds SEO route data for public indexable tab routes', () => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
     const publicRoutePaths = [

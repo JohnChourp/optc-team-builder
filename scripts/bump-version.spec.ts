@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { copyFile, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -16,17 +16,25 @@ afterEach(async () => {
   tempDirs = [];
 });
 
+const APP_VERSION_TS = 'src/app/core/data/app-version.data.ts';
+
 /**
  * The script resolves its targets from its own location, so the workspace has to
- * mirror the real tree: scripts/, android/app/build.gradle, and the iOS pbxproj.
+ * mirror the real tree: scripts/, android/app/build.gradle, the iOS pbxproj, and
+ * the web app's own APP_VERSION constant.
  */
-async function makeWorkspace(version: string, versionCode = 42) {
+async function makeWorkspace(
+  version: string,
+  versionCode = 42,
+  appVersionSource = `export const APP_VERSION = '${version}';\n`,
+) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'optc-bump-version-'));
   tempDirs.push(root);
 
   await mkdir(path.join(root, 'scripts'), { recursive: true });
   await mkdir(path.join(root, 'android/app'), { recursive: true });
   await mkdir(path.join(root, 'ios/App/App.xcodeproj'), { recursive: true });
+  await mkdir(path.join(root, 'src/app/core/data'), { recursive: true });
 
   await copyFile(scriptPath, path.join(root, 'scripts/bump-version.sh'));
 
@@ -42,6 +50,7 @@ async function makeWorkspace(version: string, versionCode = 42) {
     path.join(root, 'ios/App/App.xcodeproj/project.pbxproj'),
     `CURRENT_PROJECT_VERSION = ${versionCode};\nMARKETING_VERSION = ${version};\n`,
   );
+  await writeFile(path.join(root, APP_VERSION_TS), appVersionSource);
 
   return root;
 }
@@ -122,6 +131,54 @@ describe('bump-version.sh', () => {
     await expect(nextVersion('0.0.99', 'major')).resolves.toBe('1.0.0');
     await expect(nextVersion('0.99.99', 'major')).resolves.toBe('1.0.0');
     await expect(nextVersion('1.2.3', 'major')).resolves.toBe('2.0.0');
+  });
+
+  it('rewrites the web app\'s own APP_VERSION alongside package.json and the two native projects', async () => {
+    const root = await makeWorkspace('0.4.16', 420);
+
+    await execFileAsync('bash', [path.join(root, 'scripts/bump-version.sh'), '--bump', 'patch'], {
+      cwd: root,
+    });
+
+    const read = async (file: string) => readFile(path.join(root, file), 'utf8');
+
+    expect(JSON.parse(await read('package.json')).version).toBe('0.4.17');
+    expect(await read('android/app/build.gradle')).toContain('versionName "0.4.17"');
+    expect(await read('ios/App/App.xcodeproj/project.pbxproj')).toContain(
+      'MARKETING_VERSION = 0.4.17;',
+    );
+    // Without this the Settings card would keep naming the previous release.
+    expect(await read(APP_VERSION_TS)).toContain("export const APP_VERSION = '0.4.17';");
+  });
+
+  it('keeps the rest of the APP_VERSION file intact', async () => {
+    const root = await makeWorkspace(
+      '0.4.16',
+      420,
+      `/** Doc comment worth keeping. */\nexport const APP_VERSION = '0.4.16';\nexport const OTHER = 1;\n`,
+    );
+
+    await execFileAsync('bash', [path.join(root, 'scripts/bump-version.sh'), '--bump', 'patch'], {
+      cwd: root,
+    });
+
+    const source = await readFile(path.join(root, APP_VERSION_TS), 'utf8');
+
+    expect(source).toContain('/** Doc comment worth keeping. */');
+    expect(source).toContain("export const APP_VERSION = '0.4.17';");
+    expect(source).toContain('export const OTHER = 1;');
+  });
+
+  it('fails the bump when the APP_VERSION constant cannot be found', async () => {
+    // A silent no-op here is the bad outcome: the release would ship with the
+    // previous version printed in Settings and nothing would say so.
+    const root = await makeWorkspace('0.4.16', 420, 'export const APP_VERSION = version;\n');
+
+    await expect(
+      execFileAsync('bash', [path.join(root, 'scripts/bump-version.sh'), '--bump', 'patch'], {
+        cwd: root,
+      }),
+    ).rejects.toThrow(/Failed to locate the APP_VERSION constant/u);
   });
 
   it('leaves an explicit version untouched, cap or no cap', async () => {

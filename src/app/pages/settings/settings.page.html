@@ -765,6 +765,52 @@
         </div>
       </section>
 
+      <section class="glass-card about-card" data-test="settings-about">
+        <div class="section-head">
+          <div>
+            <h2>{{ t('about.title') }}</h2>
+            <p>{{ t('about.copy') }}</p>
+          </div>
+        </div>
+
+        <dl class="about-facts">
+          <div>
+            <dt>{{ t('about.appVersion') }}</dt>
+            <dd data-test="settings-app-version">{{ appVersion }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('about.dataVersion') }}</dt>
+            <dd data-test="settings-data-version">
+              {{ datasetSummary()?.sourceVersion ?? t('about.unknown') }}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ t('about.dataGenerated') }}</dt>
+            <dd data-test="settings-data-generated">
+              {{ datasetSummary()?.generatedOn ?? t('about.unknown') }}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ t('about.characterCount') }}</dt>
+            <dd data-test="settings-character-count">
+              {{ datasetSummary()?.characterCount ?? t('about.unknown') }}
+            </dd>
+          </div>
+        </dl>
+
+        <div class="about-links">
+          <ion-button
+            size="small"
+            fill="outline"
+            color="warning"
+            [routerLink]="['/tabs/faq']"
+            routerDirection="root"
+          >
+            {{ t('about.faqLink') }}
+          </ion-button>
+        </div>
+      </section>
+
     </div>
   </ion-content>
 </ng-container>

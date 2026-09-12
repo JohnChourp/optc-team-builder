@@ -11,6 +11,7 @@ import {
   readJsonDownloadPayload,
   restoreJsonDownloadCapture,
 } from '../../testing/download-capture';
+import { APP_VERSION } from '../../core/data/app-version.data';
 import { SettingsPage } from './settings.page';
 
 vi.mock('@ionic/angular', () => ({
@@ -52,6 +53,66 @@ describe('SettingsPage', () => {
     restoreJsonDownloadCapture();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it('renders the App and data card with a way into the FAQ', () => {
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/settings/settings.page.html'),
+      'utf8',
+    );
+
+    expect(template).toContain('data-test="settings-about"');
+    expect(template).toContain("t('about.title')");
+    expect(template).toContain("t('about.appVersion')");
+    expect(template).toContain("t('about.dataVersion')");
+    expect(template).toContain("t('about.dataGenerated')");
+    expect(template).toContain("t('about.characterCount')");
+    expect(template).toContain("[routerLink]=\"['/tabs/faq']\"");
+    // Every dataset fact falls back rather than printing an empty cell.
+    expect(template.match(/t\('about\.unknown'\)/gu)).toHaveLength(3);
+  });
+
+  it('reports the version this build actually ships as', () => {
+    const { page } = createPage();
+    const packageVersion = (
+      JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')) as {
+        version: string;
+      }
+    ).version;
+
+    expect(page.appVersion).toBe(APP_VERSION);
+    expect(page.appVersion).toBe(packageVersion);
+  });
+
+  it('fills the dataset facts from the manifest on init', async () => {
+    const { page, repository } = createPage();
+
+    repository.getDatasetManifest.mockResolvedValue({
+      schemaVersion: 1,
+      generatedAt: '2026-09-11T22:49:45.997Z',
+      sourceVersion: '36',
+      characterCount: 4618,
+      packs: [],
+    });
+
+    expect(page.datasetSummary()).toBeNull();
+
+    await page.ngOnInit();
+
+    expect(page.datasetSummary()).toEqual({
+      sourceVersion: '36',
+      generatedOn: '2026-09-11',
+      characterCount: 4618,
+    });
+  });
+
+  it('survives a manifest that cannot be loaded, leaving the rest of Settings up', async () => {
+    const { page, repository } = createPage();
+
+    repository.getDatasetManifest.mockRejectedValue(new Error('offline'));
+
+    await expect(page.ngOnInit()).resolves.toBeUndefined();
+    expect(page.datasetSummary()).toBeNull();
   });
 
   it('renders settings data management actions in the template', () => {

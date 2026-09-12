@@ -28,6 +28,28 @@ describe('TabsPage', () => {
     expect(template).not.toContain('<ion-tab-bar');
   });
 
+  it('offers the FAQ in the menu footer, ahead of What\'s new and Settings', () => {
+    const template = readFileSync(resolve(process.cwd(), 'src/app/layout/tabs.page.html'), 'utf8');
+
+    expect(template).toContain('data-test="menu-faq"');
+    expect(template).toContain('[routerLink]="[faqNavItem.route]"');
+
+    const faq = template.indexOf('data-test="menu-faq"');
+    const whatsNew = template.indexOf('data-test="menu-whats-new"');
+    const settings = template.indexOf('menu-item--settings');
+
+    expect(faq).toBeGreaterThan(-1);
+    expect(faq).toBeLessThan(whatsNew);
+    expect(whatsNew).toBeLessThan(settings);
+  });
+
+  it('routes the FAQ menu entry at the page the tabs shell registers', () => {
+    const component = readFileSync(resolve(process.cwd(), 'src/app/layout/tabs.page.ts'), 'utf8');
+
+    expect(component).toContain("labelKey: 'tabs.faq'");
+    expect(component).toContain("route: '/tabs/faq'");
+  });
+
   it('uses the expected navigation and language-switcher definitions', () => {
     const component = readFileSync(resolve(process.cwd(), 'src/app/layout/tabs.page.ts'), 'utf8');
 
