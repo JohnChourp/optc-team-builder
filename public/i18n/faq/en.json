@@ -9,6 +9,9 @@
     "filters": {
       "title": "Filters and tags"
     },
+    "team": {
+      "title": "Your team"
+    },
     "results": {
       "title": "Results and suggestions"
     },
@@ -17,6 +20,21 @@
     }
   },
   "entries": {
+    "whereToStart": {
+      "question": "Where do I start, and what do I set first?",
+      "answer": "Start from what you already know, not from a fixed order of screens. Three different starting points lead to a team, and picking the right one saves most of the work.",
+      "bullets": {
+        "auto": "If you know the stage but not the crew, start on Auto Team Builder: describe what the battle needs and let it search.",
+        "manual": "If you already know the team, start on Manual Team Builder and place the characters yourself.",
+        "coverage": "If you know the Captain but not who suits them, start on Captain Coverage: it lists who that Captain Ability boosts before you build anything.",
+        "order": "Inside Auto Team Builder the order that works is: lock the characters you already want, add what the stage needs, then narrow types and classes only if the result is too broad. Opening a saved enemy fills the stage part in for you."
+      },
+      "links": {
+        "autoTeamBuilder": "Open Auto Team Builder",
+        "manualTeamBuilder": "Open Manual Team Builder",
+        "captainCoverage": "Open Captain Coverage"
+      }
+    },
     "presets": {
       "question": "Can I reuse a setup instead of filling everything in again?",
       "answer": "Yes, in three different ways, and they are not the same thing. There are no ready-made preset teams, on purpose: the character data changes with every release, and a team shipped inside the app cannot know what is in your box.",
@@ -42,6 +60,20 @@
       },
       "links": {
         "autoTeamBuilder": "Open Auto Team Builder"
+      }
+    },
+    "conflicts": {
+      "question": "Why can I not use the same character twice?",
+      "answer": "Because the game does not let one crew field the same character twice - with one exception that surprises people. The Friend Captain is borrowed from another player, so it is never bound by what is already in your own crew.",
+      "bullets": {
+        "leaders": "The Captain and the Friend Captain may be the same character. That is legal in the game, and two different cards of the same character can hold the two leader seats.",
+        "subs": "The Captain and the four subs must all be different characters. Two different cards of the same character count as the same character here - a second Luffy card cannot sit beside your Luffy Captain.",
+        "aliases": "The app knows the names the game gives the same character in different arcs, so Zorojuro counts as Zoro, Onami as Nami, Whitebeard as Edward Newgate and Aokiji as Kuzan. Thirty-four such pairs are built in.",
+        "duo": "A card with two characters in its name conflicts with each of them separately, so a Kid & Killer card blocks both a Kid and a Killer elsewhere in the crew.",
+        "whereItShows": "In Manual Team Builder a blocked character stays in the list with its reason underneath, and a repeat already placed raises \"Repeated character in your crew\". In Auto Team Builder the same rule is why a candidate can be rejected for conflicting with unique base-character rules."
+      },
+      "links": {
+        "manualTeamBuilder": "Open Manual Team Builder"
       }
     },
     "whenResultChanges": {
@@ -85,6 +117,19 @@
       "links": {
         "autoTeamBuilder": "Open Auto Team Builder",
         "savedTeams": "Open Saved Teams"
+      }
+    },
+    "firstRunProblems": {
+      "question": "My first build went wrong. What are the usual causes?",
+      "answer": "Three things account for most of it, and none of them means the app is broken.",
+      "bullets": {
+        "slow": "A build that takes a long time is searching a very large pool. Narrow types or classes, or lock a character you already know, and it shrinks fast. Settings has an \"Auto Team Builder performance\" card if you want to change how many workers it uses.",
+        "placeholder": "A plain card symbol instead of character art means that character has no artwork in the data, not that a download failed. The artwork ships inside the app; there is nothing to fetch.",
+        "crewForge": "On Crew Forge, an import that recognises nothing usually means the chosen profile does not match your screenshot's shape. The error says so; pick the profile that matches the device the screenshot came from.",
+        "emptyResults": "A build that returns no team at all is a different thing entirely, and it has its own answer above - the message names which rules it could not bend."
+      },
+      "links": {
+        "settings": "Open Settings"
       }
     },
     "wrongSuggestion": {

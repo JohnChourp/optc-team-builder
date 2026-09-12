@@ -59,6 +59,18 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
     id: 'start',
     entries: [
       {
+        // 869exmmhe. The question is real; its premise was not - the task
+        // described an order of "mode, difficulty, role", none of which exist.
+        id: 'whereToStart',
+        bullets: ['auto', 'manual', 'coverage', 'order'],
+        links: [
+          { key: 'autoTeamBuilder', route: '/tabs/auto-team-builder' },
+          { key: 'manualTeamBuilder', route: '/tabs/manual-team-builder' },
+          { key: 'captainCoverage', route: '/tabs/captain-coverage' },
+        ],
+        quotes: [],
+      },
+      {
         // 869exmkgg: asked for "quick presets per battle role". Those do not
         // exist and are not wanted - shipped teams go stale with every nightly
         // data release (owner, 869exmkam). This answers what reuse really is.
@@ -93,6 +105,25 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
           { scope: 'character-facet-filter', key: 'mode.any', in: 'bullets.typesClasses' },
           { scope: 'character-facet-filter', key: 'mode.all', in: 'bullets.typesClasses' },
           { scope: 'ability-tag-sets', key: 'formula.lead', in: 'bullets.reading' },
+        ],
+      },
+    ],
+  },
+  {
+    // 869exmmj9. The Captain / Friend Captain half of this is owner-confirmed
+    // (2026-09-03) and gets asked repeatedly, so it is stated first and plainly.
+    id: 'team',
+    entries: [
+      {
+        id: 'conflicts',
+        bullets: ['leaders', 'subs', 'aliases', 'duo', 'whereItShows'],
+        links: [{ key: 'manualTeamBuilder', route: '/tabs/manual-team-builder' }],
+        quotes: [
+          {
+            scope: 'manual-team-builder',
+            key: 'validation.subConflict.title',
+            in: 'bullets.whereItShows',
+          },
         ],
       },
     ],
@@ -159,6 +190,14 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
   {
     id: 'problems',
     entries: [
+      {
+        // 869exmmjf. Empty results are deliberately NOT re-answered here; that
+        // is fallbackAndLimits' job, and this points at it instead.
+        id: 'firstRunProblems',
+        bullets: ['slow', 'placeholder', 'crewForge', 'emptyResults'],
+        links: [{ key: 'settings', route: '/tabs/settings' }],
+        quotes: [{ scope: 'settings', key: 'performance.title', in: 'bullets.slow' }],
+      },
       {
         // 869exmkgp.
         id: 'wrongSuggestion',

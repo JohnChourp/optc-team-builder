@@ -104,4 +104,48 @@ describe('FaqPage content', () => {
       'Pressing Build again changes nothing',
     );
   });
+
+  it('states the Captain and Friend Captain rule the code actually implements', () => {
+    // Owner-confirmed 2026-09-03 and asked repeatedly, so the answer says it
+    // outright. Two guards in Manual Team Builder make it true: the leader
+    // seats never conflict at all, and the Friend Captain contributes no
+    // conflict keys to the rest of the crew. If either goes, the answer is a
+    // lie and this fails.
+    const manual = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/manual-team-builder/manual-team-builder.page.ts'),
+      'utf8',
+    );
+
+    expect(manual).toContain('if (slotIndex < MANUAL_TEAM_FIRST_SUB_SLOT_INDEX) {');
+    expect(manual).toContain('index !== MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX');
+    expect(english.entries['conflicts']?.bullets['leaders']).toContain('may be the same character');
+    expect(greek.entries['conflicts']?.bullets['leaders']).toContain(
+      'ΜΠΟΡΟΥΝ να είναι ο ίδιος χαρακτήρας',
+    );
+  });
+
+  it('counts the built-in name aliases the answer claims', () => {
+    // Spelled out in prose in two languages, so the count cannot be checked any
+    // other way. Adding a 35th alias fails here and points at both sentences.
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/app/core/services/character-party-conflict-keys.utils.ts'),
+      'utf8',
+    );
+    const table = source.slice(
+      source.indexOf('CHARACTER_NAME_KEY_ALIASES'),
+      source.indexOf('const PARTY_CONFLICT_KEY_OVERRIDES'),
+    );
+
+    expect(table.match(/^ {2}'?[a-z0-9 ]+'?:/gmu)).toHaveLength(34);
+    expect(english.entries['conflicts']?.bullets['aliases']).toContain('Thirty-four');
+    expect(greek.entries['conflicts']?.bullets['aliases']).toContain('τριάντα τέσσερα');
+  });
+
+  it('does not re-answer empty results, it points at the answer that owns them', () => {
+    const bullet = english.entries['firstRunProblems']?.bullets['emptyResults'] ?? '';
+
+    expect(bullet).toContain('its own answer above');
+    // The one that owns it.
+    expect(english.entries['fallbackAndLimits']?.bullets['whatDoesNot']).toBeTruthy();
+  });
 });

@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.19',
+    date: '2026-09-12',
+    userVisible: true,
+    added: [
+      {
+        en: 'The FAQ in the side menu now answers why you cannot use the same character twice - including the part players get wrong: the Captain and the Friend Captain may be the same character, because the Friend Captain is borrowed from another player.',
+        el: 'Οι Συχνές ερωτήσεις στο πλαϊνό μενού απαντούν πλέον γιατί δεν μπορείς να βάλεις τον ίδιο χαρακτήρα δύο φορές - μαζί με το κομμάτι που μπερδεύει: ο Captain και ο Friend Captain ΜΠΟΡΟΥΝ να είναι ο ίδιος χαρακτήρας, επειδή ο Friend Captain είναι δανεικός από άλλον παίκτη.',
+      },
+      {
+        en: 'Two more answers: where to start and what to set first, and what the usual causes are when a first build goes wrong - a slow search, a plain card symbol instead of character art, or a Crew Forge import that recognises nothing.',
+        el: 'Δύο ακόμη απαντήσεις: από πού ξεκινάς και τι ορίζεις πρώτο, και ποιες είναι οι συνηθισμένες αιτίες όταν το πρώτο build πάει στραβά - αργή αναζήτηση, απλό σύμβολο κάρτας αντί για εικόνα χαρακτήρα, ή εισαγωγή στο Crew Forge που δεν αναγνωρίζει τίποτα.',
+      },
+    ],
+    improved: [],
+    headline: {
+      en: 'The FAQ explains crew conflicts, and the Friend Captain exception',
+      el: 'Οι Συχνές ερωτήσεις εξηγούν τις συγκρούσεις του crew, και την εξαίρεση του Friend Captain',
+    },
+    summaryEn:
+      'The FAQ in the side menu gained three answers and is now complete. The first explains crew conflicts: the Captain and the four subs must all be different characters, two cards of the same character count as one, and the app knows the names the game gives a character in different arcs, so Zorojuro counts as Zoro and Onami as Nami. It also states plainly the part players get wrong - the Captain and the Friend Captain may be the same character, because the Friend Captain is borrowed from another player and is never bound by your own crew. The second answers where to start and what to set first, depending on whether you know the stage, the team or the Captain. The third lists the usual causes when a first build goes wrong.',
+    summaryEl:
+      'Οι Συχνές ερωτήσεις στο πλαϊνό μενού απέκτησαν τρεις απαντήσεις και είναι πλέον πλήρεις. Η πρώτη εξηγεί τις συγκρούσεις του crew: ο Captain και τα τέσσερα subs πρέπει να είναι όλοι διαφορετικοί χαρακτήρες, δύο κάρτες του ίδιου χαρακτήρα μετράνε ως μία, και η εφαρμογή ξέρει τα ονόματα που δίνει το παιχνίδι σε έναν χαρακτήρα σε διαφορετικά arcs, οπότε ο Zorojuro μετράει ως Zoro και η Onami ως Nami. Λέει επίσης καθαρά το κομμάτι που μπερδεύει - ο Captain και ο Friend Captain ΜΠΟΡΟΥΝ να είναι ο ίδιος χαρακτήρας, επειδή ο Friend Captain είναι δανεικός από άλλον παίκτη και δεν δεσμεύεται ποτέ από το δικό σου crew. Η δεύτερη απαντά από πού ξεκινάς και τι ορίζεις πρώτο, ανάλογα με το αν ξέρεις το stage, την ομάδα ή τον Captain. Η τρίτη απαριθμεί τις συνηθισμένες αιτίες όταν το πρώτο build πάει στραβά.',
+    fixed: [],
+  },
+  {
     version: '0.4.18',
     date: '2026-09-12',
     userVisible: true,
