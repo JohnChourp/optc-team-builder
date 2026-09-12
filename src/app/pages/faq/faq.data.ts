@@ -15,12 +15,37 @@ export interface FaqLink {
   readonly route: string;
 }
 
+/**
+ * A label this entry quotes back from the app's own interface.
+ *
+ * The FAQ tells a reader to look for something on screen, so the words it puts
+ * in quotes have to be the words the screen actually shows - in BOTH languages.
+ * The Greek app translates most of them ("Passed" is «Πέρασε», "Download preset
+ * JSON" is «Λήψη preset JSON»), so an answer written once in English and
+ * translated loosely sends a Greek reader hunting for a button that does not
+ * exist. Six such quotes shipped in v0.4.17 before this existed.
+ *
+ * `faq.data.spec.ts` resolves each reference per language and fails unless the
+ * named text contains it, so renaming a button turns the FAQ red instead of
+ * quietly making it wrong.
+ */
+export interface FaqLabelQuote {
+  /** Translation scope directory, or `root` for `public/i18n/<lang>.json`. */
+  readonly scope: string;
+  /** Dotted key inside that scope. Text after the first `{{` is ignored. */
+  readonly key: string;
+  /** Where in the entry it must appear: `answer`, or `bullets.<name>`. */
+  readonly in: string;
+}
+
 export interface FaqEntry {
   /** Stable id: the key segment under `entries`, and the accordion value. */
   readonly id: string;
   /** Key segments under `entries.<id>.bullets`, in display order. */
   readonly bullets: readonly string[];
   readonly links: readonly FaqLink[];
+  /** App labels this entry quotes; verified against both locales. */
+  readonly quotes: readonly FaqLabelQuote[];
 }
 
 export interface FaqSection {
@@ -43,6 +68,32 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
           { key: 'autoTeamBuilder', route: '/tabs/auto-team-builder' },
           { key: 'savedEnemies', route: '/tabs/saved-enemies' },
         ],
+        quotes: [
+          {
+            scope: 'auto-team-builder',
+            key: 'actions.downloadPresetJson',
+            in: 'bullets.presetJson',
+          },
+          { scope: 'auto-team-builder', key: 'actions.importPresetJson', in: 'bullets.presetJson' },
+        ],
+      },
+    ],
+  },
+  {
+    // 869exmkvu. The ability tag picker explains itself in its own help block;
+    // the crew tag picker has none, and nothing explained the three filters
+    // together.
+    id: 'filters',
+    entries: [
+      {
+        id: 'filterLabels',
+        bullets: ['typesClasses', 'abilityTags', 'crewTags', 'counts', 'reading'],
+        links: [{ key: 'autoTeamBuilder', route: '/tabs/auto-team-builder' }],
+        quotes: [
+          { scope: 'character-facet-filter', key: 'mode.any', in: 'bullets.typesClasses' },
+          { scope: 'character-facet-filter', key: 'mode.all', in: 'bullets.typesClasses' },
+          { scope: 'ability-tag-sets', key: 'formula.lead', in: 'bullets.reading' },
+        ],
       },
     ],
   },
@@ -54,6 +105,54 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
         id: 'whenResultChanges',
         bullets: ['rules', 'pool', 'leaders', 'imports', 'dataset'],
         links: [{ key: 'autoTeamBuilder', route: '/tabs/auto-team-builder' }],
+        quotes: [
+          {
+            scope: 'auto-team-builder',
+            key: 'filters.allowAnyFriendCaptainAutoFill.toggle',
+            in: 'bullets.leaders',
+          },
+        ],
+      },
+      {
+        // 869exmkw1. Distinct from wrongSuggestion: this one is what the
+        // search DOES when nothing fits, not how to read a team you dislike.
+        id: 'fallbackAndLimits',
+        bullets: ['order', 'whatBends', 'whatDoesNot', 'noTeam', 'guided'],
+        links: [{ key: 'autoTeamBuilder', route: '/tabs/auto-team-builder' }],
+        quotes: [
+          { scope: 'auto-team-builder', key: 'report.states.relaxed', in: 'answer' },
+          {
+            scope: 'auto-team-builder',
+            key: 'filters.guidedAutoBuild.toggle',
+            in: 'bullets.guided',
+          },
+        ],
+      },
+      {
+        // 869exmkvr. A checklist BEFORE saving, where wrongSuggestion is a
+        // diagnosis after the fact.
+        id: 'checkBeforeSaving',
+        bullets: ['conditions', 'coverage', 'report', 'cost', 'compare'],
+        links: [
+          { key: 'autoTeamBuilder', route: '/tabs/auto-team-builder' },
+          { key: 'savedTeams', route: '/tabs/saved-teams' },
+        ],
+        quotes: [
+          {
+            scope: 'captain-team-condition-status',
+            key: 'title.fullDual',
+            in: 'bullets.conditions',
+          },
+          {
+            scope: 'captain-team-condition-status',
+            key: 'title.partial',
+            in: 'bullets.conditions',
+          },
+          { scope: 'captain-team-condition-status', key: 'title.none', in: 'bullets.conditions' },
+          { scope: 'team-coverage-summary', key: 'title', in: 'bullets.coverage' },
+          { scope: 'auto-team-builder', key: 'report.title', in: 'bullets.report' },
+          { scope: 'auto-team-builder', key: 'compare.title', in: 'bullets.compare' },
+        ],
       },
     ],
   },
@@ -65,12 +164,31 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
         id: 'wrongSuggestion',
         bullets: ['report', 'whyPicked', 'editCharacter', 'debugReport'],
         links: [{ key: 'autoTeamBuilder', route: '/tabs/auto-team-builder' }],
+        quotes: [
+          { scope: 'auto-team-builder', key: 'report.title', in: 'answer' },
+          { scope: 'auto-team-builder', key: 'report.states.passed', in: 'answer' },
+          { scope: 'auto-team-builder', key: 'report.states.relaxed', in: 'answer' },
+          { scope: 'auto-team-builder', key: 'report.states.notApplicable', in: 'answer' },
+          {
+            scope: 'auto-team-builder',
+            key: 'results.explanations.title',
+            in: 'bullets.whyPicked',
+          },
+          { scope: 'auto-team-builder', key: 'report.title', in: 'bullets.report' },
+          {
+            scope: 'auto-team-builder',
+            key: 'results.explanations.rejectedTitle',
+            in: 'bullets.whyPicked',
+          },
+          { scope: 'auto-team-builder', key: 'debugReport.copyAction', in: 'bullets.debugReport' },
+        ],
       },
       {
         // 869exmkgy.
         id: 'dataUpdates',
         bullets: ['where', 'signal', 'reporting'],
         links: [{ key: 'settings', route: '/tabs/settings' }],
+        quotes: [{ scope: 'settings', key: 'about.title', in: 'bullets.where' }],
       },
     ],
   },

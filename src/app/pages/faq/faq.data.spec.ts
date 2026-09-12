@@ -40,6 +40,19 @@ function tabsRoutePaths(): Set<string> {
   );
 }
 
+/**
+ * A scope's translation tree. `root` is `public/i18n/<lang>.json`; everything
+ * else is `public/i18n/<scope>/<lang>.json`.
+ */
+function readScope(scope: string, locale: (typeof LOCALES)[number]): Record<string, unknown> {
+  const file = scope === 'root' ? `${locale}.json` : `${scope}/${locale}.json`;
+
+  return JSON.parse(readFileSync(resolve(process.cwd(), `public/i18n/${file}`), 'utf8')) as Record<
+    string,
+    unknown
+  >;
+}
+
 describe('FAQ data', () => {
   it('gives every entry a unique id across every section', () => {
     const ids = FAQ_SECTIONS.flatMap((section) => section.entries).map((entry) => entry.id);
@@ -111,6 +124,63 @@ describe('FAQ data', () => {
       .filter((route) => !known.has(route));
 
     expect(unknown, 'these FAQ links would land on the wildcard redirect').toEqual([]);
+  });
+
+  it.each(LOCALES)('quotes app labels exactly as %s shows them', (locale) => {
+    // The one that matters. Six quotes shipped in v0.4.17 naming the English
+    // button in Greek text - "Passed" where the app says «Πέρασε», "Download
+    // preset JSON" where it says «Λήψη preset JSON» - so a Greek reader was
+    // sent looking for controls that do not exist under those names.
+    const faq = readLocale(locale);
+    const wrong: string[] = [];
+
+    for (const entry of FAQ_SECTIONS.flatMap((section) => section.entries)) {
+      for (const quote of entry.quotes) {
+        const label = readKey(readScope(quote.scope, locale), quote.key);
+
+        if (typeof label !== 'string' || !label.trim()) {
+          wrong.push(`${quote.scope}:${quote.key} does not exist in ${locale}`);
+          continue;
+        }
+
+        // Interpolated labels are only comparable up to their first parameter.
+        const expected = label.split('{{')[0]?.trim() ?? '';
+        const text = readKey(faq, `entries.${entry.id}.${quote.in}`);
+
+        if (typeof text !== 'string') {
+          wrong.push(`entries.${entry.id}.${quote.in} is not text in ${locale}`);
+          continue;
+        }
+
+        if (!text.includes(expected)) {
+          wrong.push(
+            `entries.${entry.id}.${quote.in} (${locale}) does not quote ${quote.scope}:${quote.key} = "${expected}"`,
+          );
+        }
+      }
+    }
+
+    expect(wrong).toEqual([]);
+  });
+
+  it('points every quote at a bullet or answer the entry really has', () => {
+    const broken: string[] = [];
+
+    for (const entry of FAQ_SECTIONS.flatMap((section) => section.entries)) {
+      for (const quote of entry.quotes) {
+        const bullet = quote.in.startsWith('bullets.') ? quote.in.slice('bullets.'.length) : null;
+
+        if (quote.in === 'answer') {
+          continue;
+        }
+
+        if (!bullet || !entry.bullets.includes(bullet)) {
+          broken.push(`${entry.id}: quote points at "${quote.in}", which it does not declare`);
+        }
+      }
+    }
+
+    expect(broken).toEqual([]);
   });
 
   it('rejects a section declared with no entries', () => {

@@ -6,6 +6,9 @@
     "start": {
       "title": "Getting started"
     },
+    "filters": {
+      "title": "Filters and tags"
+    },
     "results": {
       "title": "Results and suggestions"
     },
@@ -27,6 +30,20 @@
         "savedEnemies": "Open Saved Enemies"
       }
     },
+    "filterLabels": {
+      "question": "What do the filters actually mean, and how do they combine?",
+      "answer": "The builder narrows the character pool in three separate ways, and each one combines differently. A filter you leave empty means \"no restriction\" rather than \"nothing\": it never removes a character.",
+      "bullets": {
+        "typesClasses": "Types and classes each carry an \"Any of these\" / \"All of these\" switch. A character holds at most two types and at most two classes, so \"All of these\" across three or more can never match - the filter switches itself back to \"Any\" and says why.",
+        "abilityTags": "Ability tags are built as groups. A group is a set of abilities you want together, matched with \"Has any of these\" or \"Has all of these\", and a character has to satisfy every group to appear. Abilities that last a number of turns also take a minimum-turns selector.",
+        "crewTags": "Crew tags work the same way, but for who a character is rather than what they do. Crew and family tags rarely overlap, so put alternatives in one group and add a second group when you want both to be true.",
+        "counts": "The number under an ability is how many characters carry it. In the captain section it counts only characters that carry it as a Captain Ability, which is why the same tag can show two different numbers.",
+        "reading": "Each tag picker writes your filter back as a sentence - \"Show characters that have ... and ...\" - with a running count of how many characters match. That line is the whole filter in one place; read it before you build."
+      },
+      "links": {
+        "autoTeamBuilder": "Open Auto Team Builder"
+      }
+    },
     "whenResultChanges": {
       "question": "When does the Auto Team Builder result change?",
       "answer": "Never on its own. The team on screen is the one from the last time you pressed Auto Team Build, and the moment you change anything the search uses, that team is cleared and the button is what brings a new one back. Searching the catalogue, opening a picker or scrolling the results list changes nothing, so you can look around without losing the team you have.",
@@ -39,6 +56,35 @@
       },
       "links": {
         "autoTeamBuilder": "Open Auto Team Builder"
+      }
+    },
+    "fallbackAndLimits": {
+      "question": "What happens when nothing fits everything I asked for?",
+      "answer": "The builder does not give up at the first miss. It looks for a team that keeps every rule first, and only if that finds nothing does it start conceding - as little as it can, fewest rules dropped first. Whatever it gave up is named in the Final team report as Relaxed, so a team you did not expect always arrives with its reason.",
+      "bullets": {
+        "order": "It drops the smallest number of filters that lets a team exist, and it never drops every type: at least one always survives.",
+        "whatBends": "Types, classes, crew tags and character names can be conceded, and so can the stricter leader rules - Super Special and Super Tandem activation criteria, the Leader Super Type/Class scope, and full Captain Ability tier coverage.",
+        "whatDoesNot": "Some rules never bend, which is why a build can still come back with no team at all. The message names exactly what it was still holding: the class pool, a Captain boost range, the ability and battle requirements you added, favourite-only auto-fill, and how many slots you locked yourself.",
+        "noTeam": "When you see that message, loosen one of the rules it names or clear a manual pick. Pressing Build again changes nothing - the search already tried everything it was allowed to try.",
+        "guided": "Guided auto build is stricter on purpose: it only locks a slot from a team that kept every filter, so it tells you it found a relaxed team instead of locking one."
+      },
+      "links": {
+        "autoTeamBuilder": "Open Auto Team Builder"
+      }
+    },
+    "checkBeforeSaving": {
+      "question": "How do I check a team is right before I save it?",
+      "answer": "Three things on the result answer that, and they answer different questions. Read them in this order and you will know what you are saving.",
+      "bullets": {
+        "conditions": "The Captain condition line says whether your leaders cover this team: \"Both leaders pass\", \"Only one leader passes\", or \"Captain condition not met\". A partial result names which checks failed, and those are the ones to look at.",
+        "coverage": "Team Coverage breaks the Captain Ability down by tier and marks each one Both, Captain, Friend or Not covered. A tier marked \"Pending in-fight\" depends on something that only happens during the battle, so it is not a miss.",
+        "report": "The Final team report says which of your own rules the team kept and which it relaxed. A Relaxed row is the thing to accept or fix before you save.",
+        "cost": "In the Manual Team Builder the status line under the header adds the practical check: filled slots, whether the Captain seat is taken, and the team cost against your budget.",
+        "compare": "If you already have a team for this stage, \"Compare teams\" puts the two side by side and marks the slots that changed."
+      },
+      "links": {
+        "autoTeamBuilder": "Open Auto Team Builder",
+        "savedTeams": "Open Saved Teams"
       }
     },
     "wrongSuggestion": {
