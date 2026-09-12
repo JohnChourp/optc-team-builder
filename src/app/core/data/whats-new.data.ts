@@ -31,6 +31,32 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.18',
+    date: '2026-09-12',
+    userVisible: true,
+    added: [
+      {
+        en: 'Three more answers in the FAQ in the side menu: what the filters mean and how types, ability tags and crew tags combine; what the Auto Team Builder does when nothing fits everything you asked for, and which rules it will never bend; and what to read on a result before you save it.',
+        el: 'Τρεις ακόμη απαντήσεις στις Συχνές ερωτήσεις στο πλαϊνό μενού: τι σημαίνουν τα φίλτρα και πώς συνδυάζονται types, ετικέτες ability και ετικέτες crew· τι κάνει το Auto Team Builder όταν τίποτα δεν χωράει σε όλα όσα ζήτησες, και ποιους κανόνες δεν λυγίζει ποτέ· και τι διαβάζεις σε ένα αποτέλεσμα πριν το αποθηκεύσεις.',
+      },
+    ],
+    improved: [],
+    headline: {
+      en: 'The FAQ now explains the filters, the fallback, and the pre-save check',
+      el: 'Οι Συχνές ερωτήσεις εξηγούν πλέον τα φίλτρα, το fallback και τον έλεγχο πριν την αποθήκευση',
+    },
+    summaryEn:
+      'The FAQ in the side menu gained three answers. One explains the filter bar: types and classes switch between "Any of these" and "All of these", ability tags and crew tags are built as groups, and a character has to satisfy every group. One explains what happens when nothing fits - the builder keeps every rule if it can, concedes as little as it must, names what it gave up as Relaxed, and never drops every type; it also lists the rules that never bend, which is why a build can come back with no team at all. The third is a checklist for before you save: the Captain condition line, Team Coverage, and the Final team report. The Greek FAQ also had six buttons quoted by their English names; they now read as the Greek app shows them.',
+    summaryEl:
+      'Οι Συχνές ερωτήσεις στο πλαϊνό μενού απέκτησαν τρεις απαντήσεις. Η μία εξηγεί τη μπάρα φίλτρων: τα types και τα classes εναλλάσσονται ανάμεσα σε «Οποιοδήποτε από αυτά» και «Όλα από αυτά», οι ετικέτες ability και crew χτίζονται σε ομάδες, και ο χαρακτήρας πρέπει να ικανοποιεί κάθε ομάδα. Η δεύτερη εξηγεί τι γίνεται όταν τίποτα δεν χωράει - ο builder κρατά κάθε κανόνα αν μπορεί, υποχωρεί όσο λιγότερο γίνεται, ονομάζει ό,τι παράτησε ως Relaxed, και ποτέ δεν ρίχνει όλα τα types· απαριθμεί επίσης τους κανόνες που δεν λυγίζουν ποτέ, γι\' αυτό ένα build μπορεί να γυρίσει χωρίς καμία ομάδα. Η τρίτη είναι checklist πριν την αποθήκευση: η γραμμή Captain condition, η Κάλυψη ομάδας, και το Τελικό report ομάδας. Στις ελληνικές Συχνές ερωτήσεις έξι κουμπιά αναφέρονταν με τα αγγλικά τους ονόματα· τώρα διαβάζονται όπως τα δείχνει η ελληνική εφαρμογή.',
+    fixed: [
+      {
+        en: 'In the Greek FAQ, six controls were named by their English labels - "Passed", "Not applicable", "Download preset JSON", "Import preset JSON", "Copy debug report" and "Allow any Friend Captain" - so looking for them on screen found nothing. They now read as the Greek app shows them.',
+        el: 'Στις ελληνικές Συχνές ερωτήσεις, έξι στοιχεία αναφέρονταν με τις αγγλικές τους ετικέτες - «Passed», «Not applicable», «Download preset JSON», «Import preset JSON», «Copy debug report» και «Allow any Friend Captain» - οπότε αν τα έψαχνες στην οθόνη δεν έβρισκες τίποτα. Τώρα διαβάζονται όπως τα δείχνει η ελληνική εφαρμογή.',
+      },
+    ],
+  },
+  {
     version: '0.4.17',
     date: '2026-09-12',
     userVisible: true,
