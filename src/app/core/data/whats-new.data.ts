@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.17',
+    date: '2026-09-12',
+    userVisible: true,
+    added: [
+      {
+        en: 'The side menu has a new FAQ, directly above What\'s new, answering what makes an Auto Team Builder result change, how saved enemies, saved teams and preset JSON differ, what to read first when a suggested team looks wrong, and when the character data updates.',
+        el: 'Το πλαϊνό μενού έχει νέες Συχνές ερωτήσεις, ακριβώς πάνω από το What\'s new, που απαντούν τι κάνει ένα αποτέλεσμα του Auto Team Builder να αλλάξει, σε τι διαφέρουν οι αποθηκευμένοι εχθροί, οι αποθηκευμένες ομάδες και το preset JSON, τι διαβάζεις πρώτα όταν μια προτεινόμενη ομάδα δείχνει λάθος, και πότε ενημερώνονται τα δεδομένα των χαρακτήρων.',
+      },
+      {
+        en: 'The Settings screen ends with an "App and data" card showing the app version, the data version, the date that data was generated, and how many characters it holds - the numbers to quote when you report a character that looks wrong.',
+        el: 'Η οθόνη Settings τελειώνει με μια κάρτα «Εφαρμογή και δεδομένα» που δείχνει την έκδοση της εφαρμογής, την έκδοση των δεδομένων, την ημερομηνία που φτιάχτηκαν και πόσους χαρακτήρες περιέχουν - τους αριθμούς που αναφέρεις όταν δηλώνεις χαρακτήρα που δείχνει λάθος.',
+      },
+    ],
+    improved: [],
+    headline: {
+      en: 'A FAQ in the side menu, and the numbers behind your data',
+      el: 'Συχνές ερωτήσεις στο πλαϊνό μενού, και οι αριθμοί πίσω από τα δεδομένα σου',
+    },
+    summaryEn:
+      'The side menu now has an FAQ, directly above What\'s new and in your language. It answers why the Auto Team Builder result only changes when you press the button and is cleared the moment you touch a filter, how saved enemies, saved teams and preset JSON each reuse a different part of a setup, what to read first when a suggested team looks wrong, and when the character data updates. The Settings screen ends with a new "App and data" card showing the app version, the data version, the date that data was generated and how many characters it holds, so you can say exactly what you were looking at. Your saved teams, boxes and favourites are untouched.',
+    summaryEl:
+      'Το πλαϊνό μενού έχει πλέον Συχνές ερωτήσεις, ακριβώς πάνω από το What\'s new και στη γλώσσα σου. Απαντούν γιατί το αποτέλεσμα του Auto Team Builder αλλάζει μόνο όταν πατήσεις το κουμπί και σβήνεται μόλις αγγίξεις ένα φίλτρο, πώς οι αποθηκευμένοι εχθροί, οι αποθηκευμένες ομάδες και το preset JSON ξαναχρησιμοποιούν το καθένα διαφορετικό κομμάτι μιας ρύθμισης, τι διαβάζεις πρώτα όταν μια προτεινόμενη ομάδα δείχνει λάθος, και πότε ενημερώνονται τα δεδομένα των χαρακτήρων. Η οθόνη Settings τελειώνει με νέα κάρτα «Εφαρμογή και δεδομένα» που δείχνει την έκδοση της εφαρμογής, την έκδοση των δεδομένων, την ημερομηνία που φτιάχτηκαν και πόσους χαρακτήρες περιέχουν, ώστε να μπορείς να πεις ακριβώς τι κοιτούσες. Οι αποθηκευμένες ομάδες, τα boxes και τα favorites σου μένουν ανέπαφα.',
+    fixed: [],
+  },
+  {
     version: '0.4.16',
     date: '2026-09-12',
     userVisible: true,

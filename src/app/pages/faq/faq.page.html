@@ -1,0 +1,66 @@
+<ng-container *transloco="let t; scope: 'faq'; read: 'faq'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
+      </ion-buttons>
+      <ion-title>{{ t('title') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell faq-shell">
+      <section class="glass-card faq-hero">
+        <div class="section-label">{{ t('eyebrow') }}</div>
+        <h1 class="section-title">{{ t('title') }}</h1>
+        <p class="section-copy">{{ t('summary') }}</p>
+      </section>
+
+      @for (section of sections; track section.id) {
+        <section class="glass-card faq-card">
+          <h2>{{ t('sections.' + section.id + '.title') }}</h2>
+
+          <ion-accordion-group class="faq-accordion-group" [multiple]="true">
+            @for (entry of section.entries; track entry.id) {
+              <ion-accordion class="faq-accordion" [value]="entry.id">
+                <ion-item slot="header" lines="none" class="faq-question">
+                  <ion-label class="ion-text-wrap">
+                    {{ t('entries.' + entry.id + '.question') }}
+                  </ion-label>
+                </ion-item>
+
+                <div slot="content" class="faq-answer" [attr.data-test]="'faq-answer-' + entry.id">
+                  <p>{{ t('entries.' + entry.id + '.answer') }}</p>
+
+                  @if (entry.bullets.length) {
+                    <ul class="faq-list">
+                      @for (bullet of entry.bullets; track bullet) {
+                        <li>{{ t('entries.' + entry.id + '.bullets.' + bullet) }}</li>
+                      }
+                    </ul>
+                  }
+
+                  @if (entry.links.length) {
+                    <div class="faq-links">
+                      @for (link of entry.links; track link.route) {
+                        <ion-button
+                          size="small"
+                          fill="outline"
+                          color="warning"
+                          [routerLink]="[link.route]"
+                          routerDirection="root"
+                        >
+                          {{ t('entries.' + entry.id + '.links.' + link.key) }}
+                        </ion-button>
+                      }
+                    </div>
+                  }
+                </div>
+              </ion-accordion>
+            }
+          </ion-accordion-group>
+        </section>
+      }
+    </div>
+  </ion-content>
+</ng-container>

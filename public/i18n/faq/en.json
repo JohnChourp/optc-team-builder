@@ -1,0 +1,70 @@
+{
+  "eyebrow": "Help",
+  "title": "FAQ",
+  "summary": "Answers about the two team builders: what makes a result change, how to reuse a setup, what to do when a suggested team looks wrong, and how to tell which data you are looking at.",
+  "sections": {
+    "start": {
+      "title": "Getting started"
+    },
+    "results": {
+      "title": "Results and suggestions"
+    },
+    "problems": {
+      "title": "When something looks wrong"
+    }
+  },
+  "entries": {
+    "presets": {
+      "question": "Can I reuse a setup instead of filling everything in again?",
+      "answer": "Yes, in three different ways, and they are not the same thing. There are no ready-made preset teams, on purpose: the character data changes with every release, and a team shipped inside the app cannot know what is in your box.",
+      "bullets": {
+        "presetJson": "\"Download preset JSON\" on the Auto Team Builder screen saves your whole current search as a file - every requirement, filter, manual pick and exclude. \"Import preset JSON\" brings it back, on any device.",
+        "savedEnemy": "A saved enemy is narrower: it holds one stage's requirements. Opening it from the Saved Enemies screen fills those into the Auto Team Builder for you.",
+        "savedTeam": "A saved team is the finished crew. Open it from the Saved Teams screen to keep editing it in the Manual Team Builder, or to send it to the Auto Team Builder as a starting point."
+      },
+      "links": {
+        "autoTeamBuilder": "Open Auto Team Builder",
+        "savedEnemies": "Open Saved Enemies"
+      }
+    },
+    "whenResultChanges": {
+      "question": "When does the Auto Team Builder result change?",
+      "answer": "Never on its own. The team on screen is the one from the last time you pressed Auto Team Build, and the moment you change anything the search uses, that team is cleared and the button is what brings a new one back. Searching the catalogue, opening a picker or scrolling the results list changes nothing, so you can look around without losing the team you have.",
+      "bullets": {
+        "rules": "The stage rules: Captain ability requirements, Required characters, and anything you added per battle.",
+        "pool": "What the search may pick from: types and classes, crew and ability tags, your Manual picks and your Exclude picks.",
+        "leaders": "The two leader seats: the Captain, the Friend Captain, and the \"Allow any Friend Captain\" toggle.",
+        "imports": "Anything arriving from elsewhere: importing a preset JSON, or opening a saved enemy or a saved team on the page.",
+        "dataset": "A new app version, because the character data ships inside the app."
+      },
+      "links": {
+        "autoTeamBuilder": "Open Auto Team Builder"
+      }
+    },
+    "wrongSuggestion": {
+      "question": "The suggested team looks wrong. What do I do?",
+      "answer": "Read the Final team report under the result first. It lists every rule you asked for and says whether the team kept it (Passed), had to loosen it (Relaxed), or was never asked for it (Not applicable). A Relaxed row is usually the whole answer: the search could not satisfy everything at once, so it gave up that rule rather than hand you nothing.",
+      "bullets": {
+        "report": "Final team report - one row per rule, marked Passed, Relaxed or Not applicable.",
+        "whyPicked": "\"Why picked?\" on a slot says what that character covers; \"Close alternatives not picked\" says what decided against the runner-up.",
+        "editCharacter": "If a character's own data is the thing that is wrong, open that character and edit it. The change is saved on your device only.",
+        "debugReport": "\"Copy debug report\" packs your filters and the team for a bug report. It carries no team names, notes or box names."
+      },
+      "links": {
+        "autoTeamBuilder": "Open Auto Team Builder"
+      }
+    },
+    "dataUpdates": {
+      "question": "When is the character data updated, and how do I check what I have?",
+      "answer": "The character data ships inside the app, so it updates when the app does. There is no separate data download to start and nothing to refresh by hand. When a new version is out the app tells you: on the web a banner offers to reload, and on Android it offers to download and install.",
+      "bullets": {
+        "where": "The \"App and data\" card at the bottom of the Settings screen shows the app version, the data version, the date that data was generated, and how many characters it holds.",
+        "signal": "The update banner is the signal. If it has not appeared, you are already on the newest version the app can see.",
+        "reporting": "Quote both numbers when you report a character that looks wrong - together they say exactly which data you were looking at."
+      },
+      "links": {
+        "settings": "Open Settings"
+      }
+    }
+  }
+}

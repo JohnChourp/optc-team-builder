@@ -20,6 +20,7 @@ import {
   constructOutline,
   flashOutline,
   gridOutline,
+  helpCircleOutline,
   homeOutline,
   logInOutline,
   peopleOutline,
@@ -182,7 +183,17 @@ export class TabsPage {
       ],
     },
   ];
-  /** Sits directly above Settings in the menu footer. */
+  /**
+   * First of the three footer items - FAQ, then What's new, then Settings.
+   * A reader who cannot work out what a screen is doing reaches for help
+   * before they reach for a changelog, so help is what they meet first.
+   */
+  public readonly faqNavItem: NavigationItem = {
+    icon: helpCircleOutline,
+    labelKey: 'tabs.faq',
+    route: '/tabs/faq',
+  };
+  /** Sits between the FAQ and Settings in the menu footer. */
   public readonly whatsNewNavItem: NavigationItem = {
     icon: sparklesOutline,
     labelKey: 'tabs.whatsNew',

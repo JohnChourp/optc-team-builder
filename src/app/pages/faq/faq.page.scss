@@ -1,0 +1,64 @@
+.faq-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.faq-hero,
+.faq-card {
+  padding: 18px;
+}
+
+.faq-card {
+  display: grid;
+  gap: 12px;
+}
+
+.faq-card h2 {
+  margin: 0;
+  color: #ffffff;
+}
+
+.faq-accordion-group {
+  display: grid;
+  gap: 10px;
+}
+
+.faq-accordion {
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.faq-question {
+  --background: transparent;
+  --color: #ffffff;
+  --padding-start: 14px;
+  --inner-padding-end: 14px;
+  font-weight: 600;
+}
+
+.faq-answer {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.faq-answer p,
+.faq-list li {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  line-height: 1.55;
+}
+
+.faq-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.faq-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

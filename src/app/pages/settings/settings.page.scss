@@ -190,6 +190,43 @@
   background: rgba(255, 107, 107, 0.14);
 }
 
+.about-card {
+  display: grid;
+  gap: 16px;
+}
+
+.about-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.about-facts div {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.about-facts dt {
+  color: rgba(248, 251, 255, 0.58);
+  font-size: 0.85rem;
+}
+
+.about-facts dd {
+  margin: 0;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 @media (max-width: 720px) {
   .transfer-card__head > div {
     flex-direction: column;

@@ -4,6 +4,16 @@
     "title": "Manage language, backups, and offline data from one place.",
     "copy": "Use this page to change app preferences, manage device-local data, and control optional analytics."
   },
+  "about": {
+    "title": "App and data",
+    "copy": "Which version of the app you are running, and which character data came with it.",
+    "appVersion": "App version",
+    "dataVersion": "Data version",
+    "dataGenerated": "Data generated",
+    "characterCount": "Characters",
+    "unknown": "Not available",
+    "faqLink": "Read the FAQ"
+  },
   "language": {
     "label": "Language"
   },

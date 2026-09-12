@@ -14,6 +14,7 @@ import { IonTitle } from '@ionic/angular/ion-title';
 import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective } from '@jsverse/transloco';
 
+import { APP_VERSION } from '../../core/data/app-version.data';
 import { type CharacterBox } from '../../core/models/optc.models';
 import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
@@ -31,6 +32,7 @@ import {
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
+import { buildDatasetSummary, type DatasetSummary } from './dataset-summary.utils';
 import {
   UserStateService,
   type AutoTeamBuilderWorkerMode,
@@ -120,6 +122,10 @@ interface CombinedImportSectionError {
   styleUrl: './settings.page.scss',
 })
 export class SettingsPage implements OnInit {
+  /** Rewritten by `scripts/bump-version.sh`; see `app-version.data.ts`. */
+  public readonly appVersion = APP_VERSION;
+  /** null until the manifest resolves, and again if it cannot be trusted. */
+  public readonly datasetSummary = signal<DatasetSummary | null>(null);
   public readonly favoriteIds;
   public readonly favoriteShipIds;
   public readonly characterBoxes;
@@ -295,7 +301,23 @@ export class SettingsPage implements OnInit {
   }
 
   public async ngOnInit(): Promise<void> {
-    await Promise.all([this.userState.ready(), this.characterOverrideState.ready()]);
+    await Promise.all([
+      this.userState.ready(),
+      this.characterOverrideState.ready(),
+      this.loadDatasetSummary(),
+    ]);
+  }
+
+  /**
+   * Never rejects: the card is informational, and a manifest that fails to
+   * load must not take the rest of Settings down with it.
+   */
+  private async loadDatasetSummary(): Promise<void> {
+    try {
+      this.datasetSummary.set(buildDatasetSummary(await this.repository.getDatasetManifest()));
+    } catch {
+      this.datasetSummary.set(null);
+    }
   }
 
   public ionViewDidEnter(): void {

@@ -12,6 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
 ANDROID_GRADLE="${PROJECT_ROOT}/android/app/build.gradle"
 IOS_PBXPROJ="${PROJECT_ROOT}/ios/App/App.xcodeproj/project.pbxproj"
+APP_VERSION_TS="${PROJECT_ROOT}/src/app/core/data/app-version.data.ts"
 
 BUMP_TYPE=""
 EXPLICIT_VERSION=""
@@ -171,13 +172,14 @@ if (( PRINT_ONLY == 0 )); then
         (cd "${PROJECT_ROOT}" && npm version "${NEXT_VERSION}" --no-git-tag-version >/dev/null)
     fi
 
-    NEXT_VERSION="${NEXT_VERSION}" NEXT_CODE="${NEXT_CODE}" ANDROID_GRADLE="${ANDROID_GRADLE}" IOS_PBXPROJ="${IOS_PBXPROJ}" node <<'NODE'
+    NEXT_VERSION="${NEXT_VERSION}" NEXT_CODE="${NEXT_CODE}" ANDROID_GRADLE="${ANDROID_GRADLE}" IOS_PBXPROJ="${IOS_PBXPROJ}" APP_VERSION_TS="${APP_VERSION_TS}" node <<'NODE'
 const fs = require('fs');
 
 const nextVersion = process.env.NEXT_VERSION;
 const nextCode = process.env.NEXT_CODE;
 const androidGradle = process.env.ANDROID_GRADLE;
 const iosPbxproj = process.env.IOS_PBXPROJ;
+const appVersionTs = process.env.APP_VERSION_TS;
 
 let android = fs.readFileSync(androidGradle, 'utf8');
 if (!/versionCode\s+\d+/.test(android) || !/versionName\s+"[^"]+"/.test(android)) {
@@ -198,6 +200,17 @@ if (currentProjectVersionMatches.length === 0 || marketingVersionMatches.length 
 ios = ios.replace(/CURRENT_PROJECT_VERSION = [^;]+;/g, `CURRENT_PROJECT_VERSION = ${nextCode};`);
 ios = ios.replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${nextVersion};`);
 fs.writeFileSync(iosPbxproj, ios);
+
+// The web app reads its own version from this constant; package.json is not
+// reachable from the bundle. Fail loudly rather than ship a stale number.
+let appVersion = fs.readFileSync(appVersionTs, 'utf8');
+const appVersionPattern = /^export const APP_VERSION = '\d+\.\d+\.\d+';$/m;
+if (!appVersionPattern.test(appVersion)) {
+  console.error(`ERROR: Failed to locate the APP_VERSION constant in ${appVersionTs}`);
+  process.exit(1);
+}
+appVersion = appVersion.replace(appVersionPattern, `export const APP_VERSION = '${nextVersion}';`);
+fs.writeFileSync(appVersionTs, appVersion);
 NODE
 fi
 

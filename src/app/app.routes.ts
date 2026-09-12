@@ -187,6 +187,10 @@ export const routes: Routes = [
             redirectTo: 'account',
           },
           {
+            path: 'faq',
+            loadComponent: () => import('./pages/faq/faq.page').then((module) => module.FaqPage),
+          },
+          {
             path: 'privacy',
             data: {
               seo: {
@@ -512,6 +516,11 @@ export const routes: Routes = [
       },
     },
     loadComponent: loadSeoContentPage,
+  },
+  {
+    path: 'faq',
+    pathMatch: 'full',
+    redirectTo: 'tabs/faq',
   },
   {
     path: 'privacy',
