@@ -238,6 +238,7 @@ describe('ci-check-routing', () => {
       'pwa-shell',
       'overlay-contrast',
       'ionic-host-property',
+      'dataset-measurements',
       'tag-picker-scoping',
       'whats-new',
       'dead-code',

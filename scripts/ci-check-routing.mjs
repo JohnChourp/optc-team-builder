@@ -129,6 +129,10 @@ export const SCRIPT_SUITES = {
     label: 'Ionic host shape property tests',
     command: 'npm run test:ionic-host-property',
   },
+  'dataset-measurements': {
+    label: 'Dataset measurement guard tests',
+    command: 'npm run test:dataset-measurements',
+  },
   'tag-picker-scoping': {
     label: 'Tag-set picker panel scoping tests',
     command: 'npm run test:tag-picker-scoping',
@@ -404,6 +408,27 @@ function isWhatsNewPath(filePath) {
  * the trap is a host selector anywhere giving an Ionic control a shape the host itself never gets,
  * and the v0.2.0 crown that motivated it lived in a page's own component stylesheet.
  */
+/*
+ * 869f127e9. What can make a quoted figure wrong: the dataset moving, the generated snapshot
+ * changing, or the guard itself changing.
+ *
+ * Deliberately NOT every `.ts` file, even though any of them could add a marker. A first version
+ * did exactly that and the routing spec caught it: it would have run this lane on every
+ * TypeScript change in the repository, for a check that reads at most a handful of files. The
+ * local gate runs every lane regardless, so a newly added marker is still verified before merge -
+ * routing only decides what the manual `Test` workflow selects.
+ */
+function isDatasetMeasurementPath(filePath) {
+  return (
+    filePath === 'src/app/core/data/dataset-measurements.json' ||
+    filePath === 'scripts/measure-dataset-facts.mjs' ||
+    filePath === 'scripts/check-dataset-measurements.mjs' ||
+    filePath === 'scripts/check-dataset-measurements.spec.ts' ||
+    filePath === 'scripts/lib/dataset-measurements.mjs' ||
+    filePath.startsWith('public/assets/data/')
+  );
+}
+
 function isIonicHostPropertyPath(filePath) {
   return (
     filePath.endsWith('.scss') ||
@@ -688,6 +713,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isIonicHostPropertyPath(filePath)) {
       categories.add('ionic-host-property');
       addScriptSuite(scriptSuites, 'ionic-host-property');
+    }
+
+    if (isDatasetMeasurementPath(filePath)) {
+      categories.add('dataset-measurements');
+      addScriptSuite(scriptSuites, 'dataset-measurements');
     }
 
     if (isTagPickerScopingPath(filePath)) {
