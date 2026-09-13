@@ -12,6 +12,9 @@ import {
   type CharacterCaptainAbilityScope,
   type CharacterDetail,
   type CharacterDetailRecord,
+  type CharacterDropSource,
+  type CharacterEvolutionBranch,
+  type CharacterProgression,
   type CharacterFacetMatchMode,
   type CharacterRecord,
   type CharacterSupportEntry,
@@ -672,6 +675,25 @@ function normalizeSuperTandemData(value: unknown): NormalizedSuperTandemData | n
   };
 }
 
+/**
+ * 869f1935z. A stored JSON array, or an empty one. A missing row is the common case - most
+ * characters have no evolution and most have no drop source - so this must not throw or return
+ * null, or every caller grows the same guard.
+ */
+function parseJsonArray<T>(value: unknown): T[] {
+  if (typeof value !== 'string' || value.length === 0) {
+    return [];
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+
+    return Array.isArray(parsed) ? (parsed as T[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 function parseNullableNumber(value: string | number | null): number | null {
   if (value === null || value === undefined || value === '') {
     return null;
@@ -1150,6 +1172,54 @@ export class OptcRepositoryService {
     const [record] = await this.decorateCharacterDetailRows(rows);
 
     return record ?? null;
+  }
+
+  /**
+   * 869f1935z. One character's progression: socket slots, special cooldown, both evolution
+   * directions and every drop source.
+   *
+   * A separate query on purpose. `getCharacterById` is also used to resolve a Rumble `basedOn`
+   * unit and runs in list contexts; these payloads are per-character arrays that nothing but the
+   * detail surface reads.
+   *
+   * A missing `character_evolutions` or `character_drops` row means the upstream graph does not
+   * mention this character - "nothing recorded", NOT "not farmable". The difference is the whole
+   * point: a confident "there is no way to get this" is as wrong as a bad stage recommendation.
+   */
+  public async getCharacterProgression(characterId: number): Promise<CharacterProgression | null> {
+    const rows = await this.selectAll(
+      `
+        SELECT
+          c.id,
+          c.max_sockets,
+          c.special_cooldown_max,
+          c.special_cooldown_min,
+          e.evolves_to_json,
+          e.evolves_from_json,
+          p.sources_json
+        FROM characters c
+        LEFT JOIN character_evolutions e ON e.character_id = c.id
+        LEFT JOIN character_drops p ON p.character_id = c.id
+        WHERE c.id = ?
+      `,
+      [characterId],
+    );
+
+    const row = rows[0];
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      characterId,
+      maxSockets: parseNullableNumber(row['max_sockets']),
+      specialCooldownMax: parseNullableNumber(row['special_cooldown_max']),
+      specialCooldownMin: parseNullableNumber(row['special_cooldown_min']),
+      evolvesTo: parseJsonArray<CharacterEvolutionBranch>(row['evolves_to_json']),
+      evolvesFrom: parseJsonArray<number>(row['evolves_from_json']),
+      dropSources: parseJsonArray<CharacterDropSource>(row['sources_json']),
+    };
   }
 
   public async getAutoBuilderCandidates(

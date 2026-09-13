@@ -315,6 +315,57 @@
               </section>
             }
 
+            <!--
+              869f1935z. Sockets, evolution chain and drop sources. Its own section rather than a
+              card inside the ability groups: those describe what the unit DOES in a team, this
+              describes what the player has to do to GET and improve it.
+            -->
+            @if (progressionCards().length) {
+              <section class="group-section">
+                <div class="group-section__head">
+                  <div class="section-label">{{ t('sections.progression') }}</div>
+                </div>
+
+                <div class="group-grid">
+                  @for (card of progressionCards(); track card.titleKey) {
+                    <article class="glass-card detail-card">
+                      <div class="detail-card__head">
+                        <h2>{{ t(card.titleKey) }}</h2>
+                      </div>
+
+                      @if (card.rows.length) {
+                        <dl class="detail-rows">
+                          @for (row of card.rows; track $index) {
+                            <div class="detail-row">
+                              <dt>{{ t(row.labelKey) }}</dt>
+                              <dd>{{ row.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      }
+
+                      @if (card.lists.length) {
+                        <div class="detail-lists">
+                          @for (list of card.lists; track $index) {
+                            <section class="detail-list-block">
+                              <span class="detail-list-block__label">
+                                {{ t(list.labelKey) }}
+                              </span>
+                              <ul>
+                                @for (item of list.items; track $index) {
+                                  <li>{{ item }}</li>
+                                }
+                              </ul>
+                            </section>
+                          }
+                        </div>
+                      }
+                    </article>
+                  }
+                </div>
+              </section>
+            }
+
             @for (group of view.groups; track group.titleKey) {
               <section class="group-section">
                 <div class="group-section__head">

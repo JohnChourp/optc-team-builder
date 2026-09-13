@@ -249,6 +249,45 @@ export interface CharacterDetailRecord extends CharacterListItem {
   detailImageUrl: string;
 }
 
+/**
+ * 869f1935z. What a player has to DO about a character, as opposed to what it does in a team:
+ * how many socket slots it has, how fast its special charges, what it evolves from and into, and
+ * where it drops.
+ *
+ * Loaded on demand for one character rather than folded into `CharacterListItem`, which is built
+ * for all 4,618 at once. The evolution and drop payloads are per-character arrays and would be
+ * dead weight in every list, picker and builder query that never asks for them.
+ */
+export interface CharacterEvolutionMaterial {
+  /** The material's character id, when it is a character. */
+  characterId: number | null;
+  /** The upstream token when it is not - `"ink"`, `"skullQCK"`. Never both, never neither. */
+  token: string | null;
+}
+
+export interface CharacterEvolutionBranch {
+  toId: number;
+  materials: CharacterEvolutionMaterial[];
+}
+
+export interface CharacterDropSource {
+  group: string;
+  stage: string;
+  dropId: string;
+  slot: string;
+  global: boolean;
+}
+
+export interface CharacterProgression {
+  characterId: number;
+  maxSockets: number | null;
+  specialCooldownMax: number | null;
+  specialCooldownMin: number | null;
+  evolvesTo: CharacterEvolutionBranch[];
+  evolvesFrom: number[];
+  dropSources: CharacterDropSource[];
+}
+
 interface LocalCharacterOverrideImages {
   thumbnailDataUrl: string | null;
   detailDataUrl: string | null;
