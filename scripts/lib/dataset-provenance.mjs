@@ -21,6 +21,8 @@
  * column arriving with no recorded origin.
  */
 
+import { PROGRESSION_UPSTREAM_SOURCES } from './optc-upstream-progression.mjs';
+
 /**
  * The positional reads of `window.units`. Upstream documents the order in its own header:
  * `[ "Name", "Type", [Classes], Stars, Cost, Combo, Sockets, maxLVL, EXPToMax, lvl1HP, lvl1ATK,
@@ -43,6 +45,14 @@ const INTERMEDIATE_READ_PATTERN = /(\w+):\s*(\w+)\.(\w+)/gu;
 
 /** The column list the seed actually ships, which is the authoritative "what reaches the app". */
 const INSERT_COLUMNS_PATTERN = /INSERT INTO characters \(\s*([\s\S]*?)\s*\) VALUES/u;
+
+/*
+ * 869f1935z. Every table's column list, because a value can now reach the app through a table other
+ * than `characters`. Without this, the evolution and drop payloads looked like upstream fields that
+ * reach nothing - the exact opposite of the truth - and `droppedBeforeShipping` would have named
+ * them as losses.
+ */
+const ANY_INSERT_COLUMNS_PATTERN = /INSERT INTO (\w+) \(\s*([\s\S]*?)\s*\)\s*VALUES/gu;
 
 /**
  * Columns with no upstream field, each with the transform that produces it.
@@ -114,7 +124,41 @@ export function extractUpstreamReads(importerSource) {
     }
   }
 
+  /*
+   * The three files the importer started reading in 869f1935z. They are not `units.js` rows, so no
+   * pattern above can see them; the module that reads them declares where each field comes from and
+   * where it lands, and its own spec binds that declaration to reality.
+   */
+  for (const [field, source] of Object.entries(PROGRESSION_UPSTREAM_SOURCES)) {
+    add(field, source.upstream, 'upstream');
+  }
+
   return byField;
+}
+
+/** table -> shipped column list, for every table the seed writes. */
+export function extractShippedColumnsByTable(datasetSource) {
+  const byTable = new Map();
+
+  ANY_INSERT_COLUMNS_PATTERN.lastIndex = 0;
+
+  let match;
+
+  while ((match = ANY_INSERT_COLUMNS_PATTERN.exec(datasetSource)) !== null) {
+    if (byTable.has(match[1])) {
+      continue;
+    }
+
+    byTable.set(
+      match[1],
+      match[2]
+        .split(',')
+        .map((column) => column.trim())
+        .filter(Boolean),
+    );
+  }
+
+  return byTable;
 }
 
 export function extractShippedColumns(datasetSource) {
@@ -158,8 +202,19 @@ export function buildProvenance({ importerSource, datasetSource, generatedAt }) 
    * document can never show, and it is the reason to generate rather than describe: `maxSockets` is
    * read from `units.js` on every import and reaches nothing, which nobody had written down.
    */
+  const shippedElsewhere = new Set();
+  const columnsByTable = extractShippedColumnsByTable(datasetSource);
+
+  for (const [field, source] of Object.entries(PROGRESSION_UPSTREAM_SOURCES)) {
+    if ((columnsByTable.get(source.table) ?? []).includes(source.column)) {
+      shippedElsewhere.add(field);
+    }
+  }
+
   const droppedBeforeShipping = [...reads.values()]
-    .filter((entry) => !columns.includes(toColumnName(entry.field)))
+    .filter(
+      (entry) => !columns.includes(toColumnName(entry.field)) && !shippedElsewhere.has(entry.field),
+    )
     .map((entry) => ({ importerField: entry.field, source: entry.upstream }))
     .sort((left, right) => left.importerField.localeCompare(right.importerField));
 

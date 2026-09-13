@@ -120,9 +120,15 @@ describe('buildProvenance', () => {
       generatedAt: 'now',
     });
 
-    expect(provenance.droppedBeforeShipping).toEqual([
-      { importerField: 'maxSockets', source: 'units.js .sockets' },
-    ]);
+    /*
+     * This fixture's own loss. The list also carries the declared progression fields, because this
+     * fixture dataset ships none of the tables they land in - which is correct for a fixture and
+     * says nothing about the real seed, asserted separately below.
+     */
+    expect(provenance.droppedBeforeShipping).toContainEqual({
+      importerField: 'maxSockets',
+      source: 'units.js .sockets',
+    });
   });
 });
 
@@ -158,15 +164,38 @@ describe('the committed map', () => {
     expect(provenance.shippedColumns).toBeGreaterThan(10);
   });
 
-  it('records that maxSockets is read from upstream and never ships', () => {
+  it('records that maxSockets now SHIPS, after 869f127eg found it being thrown away', () => {
     /*
-     * Found by generating this map, not by reading the importer: `units.js` index 6 is `Sockets`,
-     * the importer normalizes it on every run, and the seed has no column for it. Nobody had
-     * written that down anywhere.
+     * The inversion of the test this replaces, kept deliberately rather than deleted.
+     *
+     * Generating this map is what found that `units.js` index 6 is `Sockets`, that the importer
+     * normalized it on every run, and that the seed had no column for it - a loss nobody had
+     * written down. 869f1935z added the column. The assertion flips with it, so the map keeps
+     * proving the thing it was built to prove rather than quietly losing the story.
      */
-    expect(readProvenance({}).droppedBeforeShipping).toContainEqual(
-      expect.objectContaining({ importerField: 'maxSockets' }),
+    const provenance = readProvenance({});
+
+    expect(provenance.droppedBeforeShipping).toEqual([]);
+    expect(provenance.fields).toContainEqual(
+      expect.objectContaining({
+        column: 'max_sockets',
+        origin: 'upstream',
+        source: 'units.js .sockets',
+      }),
     );
+  });
+
+  it('resolves the three upstream files the importer started reading in 869f1935z', () => {
+    // A column reached through a table other than `characters` is shipped, not lost.
+    const provenance = readProvenance({});
+
+    for (const column of ['special_cooldown_max', 'special_cooldown_min']) {
+      expect(provenance.fields).toContainEqual(
+        expect.objectContaining({ column, origin: 'upstream' }),
+      );
+    }
+
+    expect(provenance.unknownColumns).toEqual([]);
   });
 
   it('keeps the generated section of the schema doc in step', () => {

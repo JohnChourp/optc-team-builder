@@ -176,6 +176,20 @@ async function loadCurrentDataset(seedPath, manifestPath) {
     'captain_average_boost',
   );
   const hasStarsLabelColumn = tableHasColumn(database, 'characters', 'stars_label');
+  /*
+   * 869f1935z. The seed is written TWICE on an import: once from the upstream data, then again
+   * here, from characters read back OUT of the seed that was just written. So every column and
+   * every table has to be named in this round trip or it is silently dropped on the second write -
+   * which is exactly what happened to `max_sockets`, the cooldowns and both new tables the first
+   * time they were added, with no error anywhere.
+   *
+   * Feature-detected like the columns above, because this same loader also reads an OLDER seed
+   * during a manual-character apply, and that seed predates these columns.
+   */
+  const hasMaxSocketsColumn = tableHasColumn(database, 'characters', 'max_sockets');
+  const hasCooldownColumns = tableHasColumn(database, 'characters', 'special_cooldown_max');
+  const hasEvolutionsTable = tableExists(database, 'character_evolutions');
+  const hasDropsTable = tableExists(database, 'character_drops');
   const characters = selectAll(
     database,
     `
@@ -205,12 +219,22 @@ async function loadCurrentDataset(seedPath, manifestPath) {
             ? 'c.captain_average_boost'
             : '0 AS captain_average_boost'
         },
+        ${hasMaxSocketsColumn ? 'c.max_sockets' : 'NULL AS max_sockets'},
+        ${
+          hasCooldownColumns
+            ? 'c.special_cooldown_max, c.special_cooldown_min'
+            : 'NULL AS special_cooldown_max, NULL AS special_cooldown_min'
+        },
+        ${hasEvolutionsTable ? 'e.evolves_to_json, e.evolves_from_json' : "NULL AS evolves_to_json, NULL AS evolves_from_json"},
+        ${hasDropsTable ? 'p.sources_json' : 'NULL AS sources_json'},
         c.region_json,
         c.assets_json,
         c.search_text,
         d.detail_json
       FROM characters c
       LEFT JOIN character_details d ON d.character_id = c.id
+      ${hasEvolutionsTable ? 'LEFT JOIN character_evolutions e ON e.character_id = c.id' : ''}
+      ${hasDropsTable ? 'LEFT JOIN character_drops p ON p.character_id = c.id' : ''}
       ORDER BY c.id ASC
     `,
   ).map((row) => hydrateCharacterRow(row));
@@ -235,6 +259,15 @@ async function loadCurrentDataset(seedPath, manifestPath) {
     ships,
     manifest,
   };
+}
+
+function tableExists(database, tableName) {
+  const rows =
+    database.exec(
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = '${tableName}' LIMIT 1`,
+    )[0]?.values ?? [];
+
+  return rows.length > 0;
 }
 
 function tableHasColumn(database, tableName, columnName) {
@@ -272,6 +305,12 @@ function hydrateCharacterRow(row) {
     captainHpBoost: parseBoostNumber(row.captain_hp_boost),
     captainAtkBoost: parseBoostNumber(row.captain_atk_boost),
     captainAverageBoost: parseBoostNumber(row.captain_average_boost),
+    maxSockets: parseNullableNumber(row.max_sockets),
+    specialCooldownMax: parseNullableNumber(row.special_cooldown_max),
+    specialCooldownMin: parseNullableNumber(row.special_cooldown_min),
+    evolvesTo: parseJson(row.evolves_to_json, []),
+    evolvesFrom: parseJson(row.evolves_from_json, []),
+    dropSources: parseJson(row.sources_json, []),
     searchText:
       typeof row.search_text === 'string' && row.search_text.length
         ? row.search_text

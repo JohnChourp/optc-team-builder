@@ -107,7 +107,7 @@ export const SCRIPT_SUITES = {
   'source-data': {
     label: 'Source data validation tests',
     command:
-      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts',
+      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts',
   },
   'perf-budget': {
     label: 'Performance budget script tests',
@@ -440,6 +440,8 @@ function isDatasetProvenancePath(filePath) {
     filePath === 'scripts/import-optc-data.mjs' ||
     filePath === 'scripts/lib/optc-dataset.mjs' ||
     filePath === 'scripts/lib/dataset-provenance.mjs' ||
+    filePath === 'scripts/lib/optc-upstream-progression.mjs' ||
+    filePath === 'scripts/lib/manual-character-apply.mjs' ||
     filePath === 'scripts/generate-dataset-provenance.mjs' ||
     filePath === 'scripts/generate-dataset-provenance.spec.ts' ||
     filePath === 'docs/dataset-provenance.json' ||
@@ -536,7 +538,16 @@ function isDatasetPath(filePath) {
 }
 
 function isSourceDataPath(filePath) {
-  return filePath.startsWith('scripts/data/');
+  return (
+    filePath.startsWith('scripts/data/') ||
+    /*
+     * 869f1935z. The normalizer for `cooldowns.js`, `evolutions.js` and `drops.js`. It belongs in
+     * this lane rather than a new one: it is the same kind of thing the lane already runs - a pure
+     * parser over upstream shapes, beside `dataset-integrity` and `manual-character-apply`.
+     */
+    filePath === 'scripts/lib/optc-upstream-progression.mjs' ||
+    filePath === 'scripts/optc-upstream-progression.spec.ts'
+  );
 }
 
 function isRuntimePath(filePath) {
