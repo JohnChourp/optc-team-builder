@@ -64,3 +64,16 @@
 .ability-visual-chip[data-tone='neutral'] {
   color: rgba(248, 251, 255, 0.76);
 }
+
+/*
+ * 869f1935z. Marks a checklist row the app worked out from an ability requirement rather than one
+ * the reader ticked. Quiet on purpose - it is a provenance note, not a warning.
+ */
+.mechanic-inferred {
+  margin-left: 0.45rem;
+  opacity: 0.7;
+  font-size: 0.82em;
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+}

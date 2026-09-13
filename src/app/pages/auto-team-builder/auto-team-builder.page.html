@@ -3431,7 +3431,14 @@
                   <div class="coverage-groups report-groups">
                     @for (entry of mechanicChecklist().entries; track entry.mechanicKey) {
                       <div class="report-row">
-                        <span>{{ resolveMechanicLabel(entry.mechanicKey) }}</span>
+                        <span>
+                          {{ resolveMechanicLabel(entry.mechanicKey) }}
+                          @if (entry.source === 'inferred') {
+                            <small class="mechanic-inferred">{{
+                              mechanicChecklistSourceLabel(entry)
+                            }}</small>
+                          }
+                        </span>
                         <div class="chip-row">
                           <small
                             class="coverage-chip report-state-chip"
