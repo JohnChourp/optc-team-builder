@@ -90,6 +90,10 @@ import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
 import {
+  resolveOccupiedPartyConflictKeys,
+  TEAM_FRIEND_CAPTAIN_SLOT_INDEX,
+} from '../../core/services/character-party-conflict-keys.utils';
+import {
   cloneAbilityFilterTagSetSelection,
   countTagSetRequirements,
   createEmptyAbilityFilterTagSetSelection,
@@ -142,7 +146,6 @@ const CAPTAIN_COVERAGE_TEAM_SLOT_COUNT = 6;
 /** Slots 0 and 1 are the two leader seats; the subs start here. */
 const CAPTAIN_COVERAGE_FIRST_SUB_SLOT_INDEX = 2;
 /** Borrowed from another crew, so it constrains nothing on this team. */
-const CAPTAIN_COVERAGE_FRIEND_CAPTAIN_SLOT_INDEX = 1;
 /** Where a leftover in-progress team is parked while the reader opens a character. */
 const CAPTAIN_COVERAGE_TEAM_DRAFT_KEY = 'optc.captainCoverage.teamDraft';
 const CAPTAIN_ABILITY_FILTER_CATEGORY: AbilityFilterRailCategory = 'captainAbility';
@@ -1754,6 +1757,13 @@ export class CaptainCoveragePage implements OnInit {
     );
   }
 
+  /**
+   * The one place this page still reads raw conflict keys, and deliberately: the key set is
+   * resolved ONCE and tested against every candidate in the result list, where calling
+   * `maySlotHoldCharacter` per candidate would re-walk the six slots each time. The set itself
+   * comes from `resolveOccupiedPartyConflictKeys`, so the leader-seat rule is still owned in one
+   * place - only the loop is here.
+   */
   private hasPartyConflict(
     character: CharacterListItem,
     selectedConflictKeys: Set<string>,
@@ -1764,24 +1774,20 @@ export class CaptainCoveragePage implements OnInit {
   }
 
   /**
-   * What the four sub slots must not collide with: the Captain and the other
-   * subs. The Friend Captain is deliberately left out.
+   * What the four sub slots must not collide with: the Captain and the other subs.
    *
-   * `resolveCharacterPartyConflictKeys` is name-derived and always includes the
-   * character's own primary key, so a character conflicts with itself. In the
-   * game the Friend Captain is borrowed from another player's crew, so it
-   * constrains nothing on your side - and the same character may hold both
-   * leader seats. Neither of these keys is consulted when filling a leader
-   * seat; this set only ever gates a sub.
+   * 869f127ej. The rule itself now lives in `character-party-conflict-keys.utils.ts` and is asked
+   * for by name. This page kept its own wording of it - filter the Friend Captain out of the key
+   * set - and was the outlier that 869eum54p had to fix, which is exactly what a rule with no
+   * single owner does.
+   *
+   * `TEAM_FRIEND_CAPTAIN_SLOT_INDEX` is passed as the slot being filled so the borrowed seat
+   * contributes nothing, which is what this set has always meant.
    */
   private resolveSelectedTeamConflictKeys(): Set<string> {
-    return new Set(
-      this.selectedTeamSlots()
-        .filter(
-          (character, index): character is CharacterListItem =>
-            index !== CAPTAIN_COVERAGE_FRIEND_CAPTAIN_SLOT_INDEX && Boolean(character),
-        )
-        .flatMap((character) => resolveCharacterPartyConflictKeys(character)),
+    return resolveOccupiedPartyConflictKeys(
+      this.selectedTeamSlots(),
+      TEAM_FRIEND_CAPTAIN_SLOT_INDEX,
     );
   }
 

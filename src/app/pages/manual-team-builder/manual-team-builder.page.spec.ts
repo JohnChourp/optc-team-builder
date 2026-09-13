@@ -397,6 +397,58 @@ describe('ManualTeamBuilderPage', () => {
     expect(page.slots()[3]).toBeNull();
   });
 
+  /*
+   * 869f127ej. The owner-confirmed rule, proved on this page: a leader seat is never blocked by a
+   * name-derived conflict. This page used to write the exemption out itself - an early return below
+   * the first sub index - and now asks `maySlotHoldCharacter` for it. The behaviour must be
+   * identical, which is what this pins.
+   */
+  it('never blocks a leader seat on a name-derived conflict', async () => {
+    const { page } = createPage();
+    const luffy = createCharacterRecord(901, 'Monkey D. Luffy');
+    const otherLuffy = createCharacterRecord(902, 'Monkey D. Luffy - Gear 2');
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    page.assignCharacter(luffy);
+
+    // Slot 1 is the Friend Captain: borrowed from another crew, so the Captain constrains nothing.
+    await page.openCharacterPicker(1);
+    page.assignCharacter(otherLuffy);
+
+    expect(page.slots()[0]?.id).toBe(901);
+    expect(page.slots()[1]?.id).toBe(902);
+  });
+
+  it('lets the very same character hold both leader seats', async () => {
+    const { page } = createPage();
+    const luffy = createCharacterRecord(903, 'Monkey D. Luffy');
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    page.assignCharacter(luffy);
+    await page.openCharacterPicker(1);
+    page.assignCharacter(luffy);
+
+    expect(page.slots()[0]?.id).toBe(903);
+    expect(page.slots()[1]?.id).toBe(903);
+  });
+
+  it('still refuses a SUB that repeats the Captain', async () => {
+    // The other half of the rule: the four subs keep the name-derived conflict.
+    const { page } = createPage();
+    const luffy = createCharacterRecord(904, 'Monkey D. Luffy');
+    const otherLuffy = createCharacterRecord(905, 'Monkey D. Luffy - Gear 2');
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    page.assignCharacter(luffy);
+    await page.openCharacterPicker(2);
+    page.assignCharacter(otherLuffy);
+
+    expect(page.slots()[2]).toBeNull();
+  });
+
   it('keeps the picker open on the next empty slot after each pick, Friend Captain last', async () => {
     const { page } = createPage();
     const [captain, sub1, sub2, sub3, sub4, friendCaptain] = [801, 802, 803, 804, 805, 806].map(
