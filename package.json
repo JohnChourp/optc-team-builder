@@ -98,6 +98,8 @@
     "dataset:measure": "node ./scripts/measure-dataset-facts.mjs",
     "dataset:measurements": "node ./scripts/check-dataset-measurements.mjs",
     "dataset:unresolved-clauses": "node ./scripts/generate-unresolved-clauses.mjs",
+    "dataset:provenance": "node ./scripts/generate-dataset-provenance.mjs",
+    "test:dataset-provenance": "vitest run scripts/generate-dataset-provenance.spec.ts && node ./scripts/generate-dataset-provenance.mjs --check",
     "test:unresolved-clauses": "vitest run scripts/generate-unresolved-clauses.spec.ts && node ./scripts/generate-unresolved-clauses.mjs --check",
     "test:dataset-measurements": "vitest run scripts/check-dataset-measurements.spec.ts && npm run dataset:measurements",
     "test:dataset-digest": "vitest run scripts/dataset-change-digest.spec.ts",

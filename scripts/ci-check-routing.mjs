@@ -137,6 +137,10 @@ export const SCRIPT_SUITES = {
     label: 'Unresolved clause record tests',
     command: 'npm run test:unresolved-clauses',
   },
+  'dataset-provenance': {
+    label: 'Dataset provenance map tests',
+    command: 'npm run test:dataset-provenance',
+  },
   'tag-picker-scoping': {
     label: 'Tag-set picker panel scoping tests',
     command: 'npm run test:tag-picker-scoping',
@@ -427,6 +431,22 @@ function isWhatsNewPath(filePath) {
  * the tier view routes here too - mapping a new clause legitimately shrinks the count, and the
  * committed record has to move with it.
  */
+/*
+ * 869f127eg. The map is extracted from the importer and the seed writer, and published into the
+ * schema doc - so all three, plus the generator's own sources, decide whether it is still true.
+ */
+function isDatasetProvenancePath(filePath) {
+  return (
+    filePath === 'scripts/import-optc-data.mjs' ||
+    filePath === 'scripts/lib/optc-dataset.mjs' ||
+    filePath === 'scripts/lib/dataset-provenance.mjs' ||
+    filePath === 'scripts/generate-dataset-provenance.mjs' ||
+    filePath === 'scripts/generate-dataset-provenance.spec.ts' ||
+    filePath === 'docs/dataset-provenance.json' ||
+    filePath === 'docs/data-schemas.md'
+  );
+}
+
 function isUnresolvedClausePath(filePath) {
   return (
     filePath === 'public/assets/data/optc-unresolved-clauses.json' ||
@@ -743,6 +763,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isUnresolvedClausePath(filePath)) {
       categories.add('unresolved-clauses');
       addScriptSuite(scriptSuites, 'unresolved-clauses');
+    }
+
+    if (isDatasetProvenancePath(filePath)) {
+      categories.add('dataset-provenance');
+      addScriptSuite(scriptSuites, 'dataset-provenance');
     }
 
     if (isTagPickerScopingPath(filePath)) {

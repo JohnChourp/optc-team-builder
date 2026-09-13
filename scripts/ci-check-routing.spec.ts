@@ -240,6 +240,7 @@ describe('ci-check-routing', () => {
       'ionic-host-property',
       'dataset-measurements',
       'unresolved-clauses',
+      'dataset-provenance',
       'tag-picker-scoping',
       'whats-new',
       'dead-code',
