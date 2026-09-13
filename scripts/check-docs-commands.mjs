@@ -192,10 +192,13 @@ export async function checkDocsCommands(options = {}, runner = runAllowedCommand
     executions.push({ command, cwd: config.cwd, expected: config.expected, status: result.status, firstSeen });
 
     if (!isExpectedExit(result.status, config.expected)) {
+      const tail = summarizeCommandFailureOutput(result.stdout, result.stderr);
+      const reason = tail.length > 0 ? `\n    ${tail.join('\n    ')}` : '';
+
       failures.push(
         formatFailure(
           firstSeen,
-          `Command exited ${result.status}; expected ${config.expected === 'nonzero' ? 'nonzero' : 'zero'}: ${command}`,
+          `Command exited ${result.status}; expected ${config.expected === 'nonzero' ? 'nonzero' : 'zero'}: ${command}${reason}`,
         ),
       );
     }
@@ -383,13 +386,23 @@ function isExpectedExit(status, expected) {
   return expected === 'nonzero' ? status !== 0 : status === 0;
 }
 
+/**
+ * 869f127cm. Piped, not inherited, so a failing command's own words can be carried into this
+ * check's failure line. Before this, a `zero`-expected command inherited stdio, its output went
+ * straight to the console, and the only thing left to report was a guide line number - which is how
+ * `FAIL docs-commands` came to point four screens below the reason.
+ *
+ * The output is still written through, immediately after the command ends. These are short checks,
+ * so losing live interleaving costs little; the alternative was re-running a failed command to
+ * capture it, which can produce a different failure than the one being reported.
+ */
 async function runAllowedCommand(command, { cwd, expected }) {
   console.log(`[docs:commands] running in ${cwd}: ${command}`);
   const result = spawnSync(command, {
     cwd,
     env: { ...process.env, CI: process.env.CI ?? 'true' },
     shell: true,
-    stdio: expected === 'nonzero' ? 'pipe' : 'inherit',
+    stdio: 'pipe',
     timeout: Number.parseInt(process.env.DOCS_COMMAND_TIMEOUT_MS ?? '180000', 10),
     encoding: 'utf8',
   });
@@ -398,16 +411,40 @@ async function runAllowedCommand(command, { cwd, expected }) {
     throw result.error;
   }
 
-  if (expected === 'nonzero' && result.status !== 0) {
-    console.log(`[docs:commands] expected nonzero command exited ${result.status}: ${command}`);
+  const stdout = result.stdout ?? '';
+  const stderr = result.stderr ?? '';
+  const status = result.status ?? 1;
+
+  // Everything is written through except the one case that was already silent before: a command
+  // documented to fail, failing. Its output is the expected noise the guide is demonstrating.
+  const isExpectedFailureDemo = expected === 'nonzero' && isExpectedExit(status, expected);
+
+  if (!isExpectedFailureDemo) {
+    process.stdout.write(stdout);
+    process.stderr.write(stderr);
   }
 
-  if (expected === 'nonzero' && result.status === 0) {
-    process.stdout.write(result.stdout ?? '');
-    process.stderr.write(result.stderr ?? '');
+  if (expected === 'nonzero' && status !== 0) {
+    console.log(`[docs:commands] expected nonzero command exited ${status}: ${command}`);
   }
 
-  return { status: result.status ?? 1 };
+  return { status, stdout, stderr };
+}
+
+/**
+ * The lines a reader needs from a failed command, taken from the END of its output because that is
+ * where a check prints its verdict. Blank lines and the npm lifecycle preamble are dropped: they
+ * are the loudest part of the tail and never the reason.
+ */
+export function summarizeCommandFailureOutput(stdout = '', stderr = '', lineCount = 6) {
+  const lines = `${stdout}\n${stderr}`
+    .split(/\r?\n/u)
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim().length > 0)
+    .filter((line) => !/^>\s/u.test(line))
+    .filter((line) => !/^npm (warn|notice)/iu.test(line));
+
+  return lines.slice(-lineCount);
 }
 
 async function directoryExists(filePath) {

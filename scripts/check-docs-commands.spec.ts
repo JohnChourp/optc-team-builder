@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { checkDocsCommands, extractShellCommands,
   APP_DOCS,
   APP_DOCS_OPT_OUT,
+  summarizeCommandFailureOutput,
 } from './check-docs-commands.mjs';
 
 let tempDirs: string[] = [];
@@ -133,6 +134,55 @@ describe('check-docs-commands', () => {
     expect(result.failures).toHaveLength(1);
     expect(result.failures[0]).toContain('--app ../optc-team-builder');
     expect(result.failures[0]).not.toContain(appRoot);
+  });
+
+  /*
+   * 869f127cm. `FAIL docs-commands` used to name a guide line number and nothing else, with the
+   * actual cause four screens up in inherited output. The failing command's own last words are
+   * carried into the failure now.
+   */
+  it("carries the failing command's own words into the failure", async () => {
+    const { appRoot, brainRoot } = await makeWorkspace({
+      'optc-team-builder/README.md': '# App',
+      'optc-team-builder-brain/README.md': [
+        '# Brain',
+        '',
+        'Command status: CI-executable.',
+        '<!-- docs-command: ci-executable -->',
+        '```bash',
+        'node scripts/audit-docs-integrity.mjs --brain . --app ../optc-team-builder',
+        '```',
+      ].join('\n'),
+    });
+
+    const result = await checkDocsCommands({ appRoot, brainRoot }, async () => ({
+      status: 1,
+      stdout: '[docs:drift] GITHUB_REPOSITORY, GITHUB_SHA are unset, so the PR body cannot be read.',
+      stderr: '',
+    }));
+
+    expect(result.failures).toHaveLength(1);
+    expect(result.failures[0]).toContain('GITHUB_REPOSITORY, GITHUB_SHA are unset');
+  });
+
+  it('still reports a failure with no output to quote', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace({
+      'optc-team-builder/README.md': '# App',
+      'optc-team-builder-brain/README.md': [
+        '# Brain',
+        '',
+        'Command status: CI-executable.',
+        '<!-- docs-command: ci-executable -->',
+        '```bash',
+        'node scripts/audit-docs-integrity.mjs --brain . --app ../optc-team-builder',
+        '```',
+      ].join('\n'),
+    });
+
+    const result = await checkDocsCommands({ appRoot, brainRoot }, async () => ({ status: 1 }));
+
+    expect(result.failures).toHaveLength(1);
+    expect(result.failures[0]).toContain('Command exited 1');
   });
 
   it('leaves a command with no sibling path untouched', async () => {
@@ -304,5 +354,39 @@ describe('APP_DOCS covers every app doc with shell fences', () => {
       expect(existsSync(doc), `${doc} is opted out but does not exist`).toBe(true);
       expect(reason.length, `${doc} is opted out with no reason`).toBeGreaterThan(20);
     }
+  });
+});
+
+describe('summarizeCommandFailureOutput', () => {
+  it('takes the END of the output, where a check prints its verdict', () => {
+    expect(summarizeCommandFailureOutput('first\nsecond\nthird', '', 2)).toEqual([
+      'second',
+      'third',
+    ]);
+  });
+
+  it('drops the npm lifecycle preamble, which is the loudest part of a tail and never the reason', () => {
+    expect(
+      summarizeCommandFailureOutput('> optc-team-builder@0.4.20 docs:drift\n> node ./x.mjs\nthe real reason', ''),
+    ).toEqual(['the real reason']);
+  });
+
+  it('drops npm warnings and notices', () => {
+    expect(summarizeCommandFailureOutput('npm warn something\nnpm notice other\nkept', '')).toEqual([
+      'kept',
+    ]);
+  });
+
+  it('drops blank lines', () => {
+    expect(summarizeCommandFailureOutput('a\n\n   \nb', '')).toEqual(['a', 'b']);
+  });
+
+  it('reads stderr as well as stdout', () => {
+    expect(summarizeCommandFailureOutput('out', 'err')).toEqual(['out', 'err']);
+  });
+
+  it('returns nothing when there is nothing to quote', () => {
+    expect(summarizeCommandFailureOutput('', '')).toEqual([]);
+    expect(summarizeCommandFailureOutput()).toEqual([]);
   });
 });
