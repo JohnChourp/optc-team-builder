@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.23',
+    date: '2026-09-13',
+    userVisible: true,
+    added: [],
+    improved: [
+      {
+        en: 'The Enemy mechanics checklist on Auto Team Builder now also works when you described the enemy with ability requirements instead of ticking mechanics. If an ability you asked for names a mechanic exactly - Remove Paralysis is Paralysis, Remove Burn is Burn - that mechanic appears on the checklist, marked "from an ability you asked for" so you can tell it apart from the ones you ticked yourself.',
+        el: 'Το Checklist μηχανισμών εχθρού στο Auto Team Builder δουλεύει πλέον και όταν περιέγραψες τον εχθρό με ability requirements αντί να τσεκάρεις μηχανισμούς. Αν μια ικανότητα που ζήτησες ονομάζει ακριβώς έναν μηχανισμό - το Remove Paralysis είναι Paralysis, το Remove Burn είναι Burn - ο μηχανισμός εμφανίζεται στο checklist, με την ένδειξη «από ικανότητα που ζήτησες» ώστε να τον ξεχωρίζεις από όσους τσέκαρες ο ίδιος.',
+      },
+      {
+        en: 'An ability that could mean two different mechanics is left off the checklist rather than guessed. Remove Damage Reduction answers both Enemy Damage Reduction and Percent Damage Reduction, so the checklist says nothing about it instead of picking one for you - it stays in the Final team report where you put it.',
+        el: 'Μια ικανότητα που μπορεί να σημαίνει δύο διαφορετικούς μηχανισμούς μένει εκτός checklist αντί να μαντευτεί. Το Remove Damage Reduction απαντά και στο Enemy Damage Reduction και στο Percent Damage Reduction, οπότε το checklist δεν λέει τίποτα γι’ αυτό αντί να διαλέξει για σένα - μένει στο Τελικό report ομάδας όπου το έβαλες.',
+      },
+    ],
+    headline: {
+      en: 'The mechanics checklist reads your ability requirements too',
+      el: 'Το checklist μηχανισμών διαβάζει και τα ability requirements σου',
+    },
+    summaryEn:
+      'There are two ways to tell the builder what an enemy does: tick the mechanics, or pick the abilities that answer them. The Enemy mechanics checklist only understood the first, so if you built your saved enemies out of ability requirements it had nothing to say. It now recognises a mechanic from an ability you asked for whenever the two name each other exactly, and marks those rows so you can still tell which mechanics you ticked yourself. Where an ability could mean more than one mechanic it stays silent rather than guessing, because a checklist that reports something you never asked about is worse than one that says less.',
+    summaryEl:
+      'Υπάρχουν δύο τρόποι να πεις στον builder τι κάνει ένας εχθρός: να τσεκάρεις τους μηχανισμούς, ή να διαλέξεις τις ικανότητες που τους απαντούν. Το Checklist μηχανισμών εχθρού καταλάβαινε μόνο τον πρώτο, οπότε αν είχες φτιάξει τους αποθηκευμένους εχθρούς σου με ability requirements δεν είχε τίποτα να πει. Τώρα αναγνωρίζει έναν μηχανισμό από μια ικανότητα που ζήτησες όποτε οι δύο ονομάζουν ακριβώς ο ένας τον άλλον, και σημειώνει αυτές τις γραμμές ώστε να ξεχωρίζεις ποιους μηχανισμούς τσέκαρες ο ίδιος. Όπου μια ικανότητα θα μπορούσε να σημαίνει περισσότερους από έναν μηχανισμούς μένει σιωπηλό αντί να μαντέψει, γιατί ένα checklist που αναφέρει κάτι που δεν ζήτησες ποτέ είναι χειρότερο από ένα που λέει λιγότερα.',
+    fixed: [],
+  },
+  {
     version: '0.4.22',
     date: '2026-09-13',
     userVisible: true,
