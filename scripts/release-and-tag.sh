@@ -262,12 +262,9 @@ ensure_branch_push_state
 commit_uncommitted_changes
 ensure_release_signing_env
 
-echo "[release] Installing npm dependencies." >&2
-npm install
-
-echo "[release] Refreshing OPTC data before version bump." >&2
-npm run data:import:all
-
+# 869f127cq. Everything that can refuse the release runs first, before npm install and before the
+# dataset import. Both of those write to the tree, and a release refused after them has already
+# spent two minutes and left files changed for a release that was never going to happen.
 PREVIOUS_TAG="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
 
 VERSION_INFO="$("${PROJECT_ROOT}/scripts/bump-version.sh" --print-only "${BUMP_ARGS[@]}")"
@@ -279,6 +276,27 @@ if git show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
     echo "ERROR: Git tag ${RELEASE_TAG} already exists." >&2
     exit 1
 fi
+
+# 869f127cq. BEFORE the bump, and fatal on purpose - unlike the generator call below.
+#
+# check-whats-new.mjs fails the moment package.json moves ahead of the entry list, so a code
+# release with a forgotten entry used to be caught only after this script had bumped, committed and
+# tagged, leaving main red until somebody noticed. Refusing here costs nothing: nothing has been
+# written yet.
+#
+# The unattended data-only chain is exempt inside the check itself, on the generator's own
+# definition - zero commits since the previous tag - so the nightly path reaches the generator
+# below exactly as before.
+node "${PROJECT_ROOT}/scripts/check-release-whats-new-ready.mjs" \
+    --app-root "${PROJECT_ROOT}" \
+    --version "${RELEASE_VERSION}" \
+    --previous-tag "${PREVIOUS_TAG}"
+
+echo "[release] Installing npm dependencies." >&2
+npm install
+
+echo "[release] Refreshing OPTC data before version bump." >&2
+npm run data:import:all
 
 "${PROJECT_ROOT}/scripts/bump-version.sh" "${BUMP_ARGS[@]}" >/dev/null
 
