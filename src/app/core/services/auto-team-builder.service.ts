@@ -79,11 +79,25 @@ import {
   type AutoTeamBuilderWorkerRequest,
   type AutoTeamBuilderWorkerResponse,
 } from './auto-team-builder.worker.models';
+import {
+  resolveNextPreviewState,
+  type AutoTeamBuildPreviewState,
+} from './auto-team-builder-preview.utils';
 
 export interface AutoTeamBuildExecutionOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
   /** Called as the build picks a path, and again if a failed worker sends it to the main thread. */
   onExecutionPath?: (path: AutoTeamBuildExecutionPath) => void;
+  /**
+   * 869f127cc. A provisional team to look at while the search is still running, replaced only by an
+   * attempt earlier in the plan - see `auto-team-builder-preview.utils.ts` for why planned order
+   * and not finishing order.
+   *
+   * A READ-ONLY side channel: nothing downstream of this callback feeds back into which result is
+   * finally resolved, so the returned team is byte-identical with and without a listener. That is
+   * the property the whole feature rests on, and it holds by construction rather than by test.
+   */
+  onPreviewResult?: (result: AutoBuildResult) => void;
   signal?: AbortSignal;
   workerCount?: number;
   getWorkerCount?: () => number;
@@ -1314,6 +1328,25 @@ export class AutoTeamBuilderService {
       // started comes after that one and can never win; starting them only takes cores from the
       // earlier attempts the build is now waiting for.
       let satisfyingFallbackFound = false;
+      /*
+       * 869f127cc. The provisional team on screen, on ONE ordering scale: the exact attempt is 0
+       * and fallback attempt n is n + 1, matching the progress line's own 1-based numbering
+       * (`sequence + 2`). Nothing below this reads it back - it exists only to feed
+       * `onPreviewResult`, so the resolved result is identical with and without a listener.
+       */
+      let previewState: AutoTeamBuildPreviewState<AutoBuildResult> | null = null;
+      const offerPreview = (sequence: number, result: AutoBuildResult | null): void => {
+        if (!executionOptions.onPreviewResult || settled) {
+          return;
+        }
+
+        const next = resolveNextPreviewState(previewState, { sequence, result });
+
+        if (next) {
+          previewState = next;
+          executionOptions.onPreviewResult(next.result);
+        }
+      };
 
       workers.forEach((worker) => {
         const state: PooledWorkerState = {
@@ -1521,6 +1554,10 @@ export class AutoTeamBuilderService {
           return;
         }
 
+        // It did not satisfy, so it cannot be the answer - but it is a team, and it is the earliest
+        // one the plan has. Nothing that follows can beat it as a preview.
+        offerPreview(0, result);
+
         if (speculativeFallbackError !== null) {
           rejectOnce(speculativeFallbackError);
           return;
@@ -1709,6 +1746,7 @@ export class AutoTeamBuilderService {
               completedAttempts.set(nextAttempt.sequence, {
                 result,
               });
+              offerPreview(nextAttempt.sequence + 1, result);
               workerState.busy = false;
 
               if (workerState.retiring) {

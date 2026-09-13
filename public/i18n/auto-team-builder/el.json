@@ -598,6 +598,10 @@
     },
     "searchPlaceholder": "Search ship by name or effect"
   },
+  "preview": {
+    "title": "Προσωρινή ομάδα",
+    "copy": "Μια ομάδα που η αναζήτηση έχει ήδη βρει. Αντικαθίσταται καθώς εμφανίζονται καλύτερες, και το τελικό αποτέλεσμα πιο κάτω είναι η απάντηση."
+  },
   "progress": {
     "attemptProgress": "Attempt {{current}} / {{total}}",
     "activeWorkers": "Ενεργοί workers: {{count}}",

@@ -598,6 +598,10 @@
     },
     "searchPlaceholder": "Search ship by name or effect"
   },
+  "preview": {
+    "title": "Provisional team",
+    "copy": "A team the search has already found. It is replaced as better ones appear, and the final result below is the answer."
+  },
   "progress": {
     "attemptProgress": "Attempt {{current}} / {{total}}",
     "activeWorkers": "Active workers: {{count}}",
