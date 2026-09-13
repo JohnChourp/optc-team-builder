@@ -239,6 +239,7 @@ describe('ci-check-routing', () => {
       'overlay-contrast',
       'ionic-host-property',
       'dataset-measurements',
+      'unresolved-clauses',
       'tag-picker-scoping',
       'whats-new',
       'dead-code',

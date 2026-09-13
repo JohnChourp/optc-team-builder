@@ -302,6 +302,18 @@ npm run data:import:all
 # than on the branch that made it. This is the first moment the new data and the specs that pin it
 # exist together, so it is the last moment the release can refuse instead of committing a tree that
 # will be red on main.
+# 869f127f6. The unresolved-clause record is a function of the dataset, so it is REGENERATED here
+# rather than checked: a release that moves the data moves this with it, in the same commit. A rise
+# in the count after an upstream release is then a signal somebody can see, which is the whole point
+# - it is never a failure, because degrading to the game's own English is the owner's rule.
+echo "[release] Recording clauses that will show in the game's own English." >&2
+node "${PROJECT_ROOT}/scripts/generate-unresolved-clauses.mjs" --app-root "${PROJECT_ROOT}"
+
+# 869f127e9. Same reason, different artifact: the measured figures move with the dataset, and the
+# comments that quote them are checked against this file by `npm run dataset:measurements`.
+echo "[release] Re-measuring the dataset figures quoted in source comments." >&2
+node "${PROJECT_ROOT}/scripts/measure-dataset-facts.mjs" --app-root "${PROJECT_ROOT}"
+
 echo "[release] Checking spec pins against the regenerated dataset." >&2
 node "${PROJECT_ROOT}/scripts/check-dataset-spec-pins.mjs" --app-root "${PROJECT_ROOT}"
 
