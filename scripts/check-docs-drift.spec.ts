@@ -10,6 +10,7 @@ import {
   formatDocsDriftResult,
   getChangedFiles,
   isSubstantiveAcknowledgement,
+  resolveAcknowledgementLookupGaps,
 } from './check-docs-drift.mjs';
 
 let tempDirs: string[] = [];
@@ -77,6 +78,64 @@ function baseMap() {
   };
 }
 
+/*
+ * 869f127cm. The check exits 1 outside GitHub Actions BY DESIGN - it reads the acknowledgement from
+ * the pull request body over the API, and the three variables that lookup needs are unset locally.
+ * What was missing is the sentence saying so, four screens below the output that caused it. These
+ * pin the sentence; nothing here weakens the check, which still fails.
+ */
+describe('resolveAcknowledgementLookupGaps', () => {
+  it('names every variable the lookup needs when none is set', () => {
+    expect(
+      resolveAcknowledgementLookupGaps({
+        githubRepository: '',
+        githubSha: '',
+        githubToken: '',
+        fetchImpl: () => Promise.resolve(),
+      }),
+    ).toEqual({
+      missing: ['GITHUB_REPOSITORY', 'GITHUB_SHA', 'GITHUB_TOKEN'],
+      unavailable: 'the PR body cannot be read',
+    });
+  });
+
+  it('reports nothing missing when the lookup can run', () => {
+    expect(
+      resolveAcknowledgementLookupGaps({
+        githubRepository: 'owner/repo',
+        githubSha: 'abc123',
+        githubToken: 'token',
+        fetchImpl: () => Promise.resolve(),
+      }),
+    ).toEqual({ missing: [], unavailable: '' });
+  });
+
+  it('does not name the token on its own, because it is optional for a public repository', () => {
+    // Naming it alone would send the reader after a variable that is not the blocker.
+    expect(
+      resolveAcknowledgementLookupGaps({
+        githubRepository: 'owner/repo',
+        githubSha: 'abc123',
+        githubToken: '',
+        fetchImpl: () => Promise.resolve(),
+      }),
+    ).toEqual({ missing: [], unavailable: '' });
+  });
+
+  it('reports a runtime with no fetch separately from an unset variable', () => {
+    // `undefined` would take the default parameter and find the real global fetch, so the absent
+    // case has to be passed explicitly - which is also how the caller would ever hit it.
+    expect(
+      resolveAcknowledgementLookupGaps({
+        githubRepository: 'owner/repo',
+        githubSha: 'abc123',
+        githubToken: 'token',
+        fetchImpl: null as unknown as undefined,
+      }),
+    ).toEqual({ missing: [], unavailable: 'this runtime has no fetch()' });
+  });
+});
+
 describe('check-docs-drift', () => {
   it('flags mapped feature changes without mapped docs changes', async () => {
     const { appRoot, brainRoot } = await makeWorkspace();
@@ -97,6 +156,43 @@ describe('check-docs-drift', () => {
       }),
     ]);
     expect(formatDocsDriftResult(result)).toContain('update one of: docs/maintainer-validation-guide.md');
+  });
+
+  it('says WHY it could not see an acknowledgement, and how to re-run, on the first screen', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+
+    const result = await checkDocsDriftForTest({
+      appRoot,
+      brainRoot,
+      map: baseMap(),
+      changedFiles: ['src/app/pages/manual-team-builder/manual-team-builder.page.ts'],
+      brainChangedFiles: [],
+    });
+    const output = formatDocsDriftResult(result);
+
+    expect(result.ok).toBe(false);
+    expect(output).toContain('GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_TOKEN are unset');
+    expect(output).toContain('an acknowledgement in the pull request body cannot be seen from here');
+    expect(output).toContain('re-run with the context the check expects');
+    expect(output).toContain('npm run docs:drift -- --base-ref origin/main --head-ref HEAD');
+  });
+
+  it('does not print the env explanation when the acknowledgement was found', async () => {
+    const { appRoot, brainRoot } = await makeWorkspace();
+
+    const result = await checkDocsDriftForTest({
+      appRoot,
+      brainRoot,
+      map: baseMap(),
+      changedFiles: ['src/app/pages/manual-team-builder/manual-team-builder.page.ts'],
+      brainChangedFiles: [],
+      prBody: 'Docs drift acknowledgement: No mapped doc covers this refactor; behaviour is unchanged.',
+    });
+    const output = formatDocsDriftResult(result);
+
+    expect(result.ok).toBe(true);
+    expect(output).not.toContain('GITHUB_REPOSITORY');
+    expect(output).not.toContain('re-run with the context');
   });
 
   it('passes when a mapped app docs path changes with the feature path', async () => {

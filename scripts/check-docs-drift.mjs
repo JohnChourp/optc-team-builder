@@ -404,6 +404,43 @@ async function readAcknowledgementFromEvent(eventPath) {
   }
 }
 
+/**
+ * 869f127cm. Which of the three variables this lookup needs are missing, in the order the
+ * documented re-run command sets them. Empty when the lookup can run.
+ *
+ * The check itself is unchanged and still exits 1 - what was missing is the SENTENCE. Outside
+ * Actions the three variables are unset, the lookup returns nothing, and the run failed with no
+ * hint that a perfectly good acknowledgement was sitting in a PR body it could not read.
+ */
+export function resolveAcknowledgementLookupGaps({
+  fetchImpl = globalThis.fetch,
+  githubRepository = process.env.GITHUB_REPOSITORY,
+  githubSha = process.env.GITHUB_SHA,
+  githubToken = process.env.GITHUB_TOKEN,
+} = {}) {
+  const missing = [];
+
+  if (!githubRepository) {
+    missing.push('GITHUB_REPOSITORY');
+  }
+
+  if (!githubSha) {
+    missing.push('GITHUB_SHA');
+  }
+
+  // A token is not strictly required for a public repository, so it is reported only alongside a
+  // real blocker - naming it on its own would send the reader after a variable that is optional.
+  if (!githubToken && missing.length > 0) {
+    missing.push('GITHUB_TOKEN');
+  }
+
+  if (typeof fetchImpl !== 'function' && missing.length === 0) {
+    return { missing: [], unavailable: 'this runtime has no fetch()' };
+  }
+
+  return { missing, unavailable: missing.length > 0 ? 'the PR body cannot be read' : '' };
+}
+
 export async function readAcknowledgementFromAssociatedPullRequest({
   fetchImpl = globalThis.fetch,
   githubRepository = process.env.GITHUB_REPOSITORY,
@@ -482,6 +519,13 @@ export async function checkDocsDrift(options = {}) {
         githubToken: options.githubToken,
       })));
   const hasAcknowledgement = isSubstantiveAcknowledgement(acknowledgement);
+  // Reported, never acted on: the gaps change what the failure SAYS, not whether it fails.
+  const acknowledgementLookup = resolveAcknowledgementLookupGaps({
+    fetchImpl: options.fetchImpl,
+    githubRepository: options.githubRepository,
+    githubSha: options.githubSha,
+    githubToken: options.githubToken,
+  });
   const findings = [];
 
   if (errors.length === 0) {
@@ -518,6 +562,7 @@ export async function checkDocsDrift(options = {}) {
     changedFiles,
     acknowledgement,
     hasAcknowledgement,
+    acknowledgementLookup,
     errors,
     findings,
     ok: errors.length === 0 && (findings.length === 0 || hasAcknowledgement),
@@ -551,8 +596,32 @@ export function formatDocsDriftResult(result) {
 
   if (result.hasAcknowledgement) {
     lines.push('[docs:drift] accepted PR acknowledgement for intentional no-doc changes.');
-  } else {
-    lines.push('[docs:drift] add a mapped docs update or a substantive `Docs drift acknowledgement:` PR-body field.');
+
+    return lines.join('\n');
+  }
+
+  lines.push('[docs:drift] add a mapped docs update or a substantive `Docs drift acknowledgement:` PR-body field.');
+
+  /*
+   * 869f127cm. The one line that was missing. The acknowledgement is read from the PR body over the
+   * GitHub API, so outside Actions there is nothing to read and the run fails even when the PR body
+   * carries a perfectly good field. Saying so - and saying how to re-run - is the whole fix; the
+   * check still exits 1, and there is deliberately no token-free fallback that would trust a local
+   * commit message instead.
+   */
+  const { missing, unavailable } = result.acknowledgementLookup ?? { missing: [], unavailable: '' };
+
+  if (missing.length > 0) {
+    lines.push(
+      `[docs:drift] ${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} unset, so ${unavailable} - an acknowledgement in the pull request body cannot be seen from here.`,
+    );
+    lines.push('[docs:drift] re-run with the context the check expects:');
+    lines.push(
+      '  GITHUB_REPOSITORY=JohnChourp/optc-team-builder GITHUB_SHA=$(git rev-parse HEAD) GITHUB_TOKEN=$(gh auth token) \\',
+    );
+    lines.push('    npm run docs:drift -- --base-ref origin/main --head-ref HEAD');
+  } else if (unavailable) {
+    lines.push(`[docs:drift] ${unavailable}, so an acknowledgement in the pull request body cannot be seen from here.`);
   }
 
   return lines.join('\n');
