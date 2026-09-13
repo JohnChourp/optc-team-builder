@@ -102,6 +102,45 @@
                 {{ t('tools.import') }}
               </button>
             </div>
+            <div class="saved-teams-view-controls" data-testid="saved-teams-view-controls">
+              <ion-searchbar
+                class="saved-teams-search"
+                data-testid="saved-teams-search"
+                [debounce]="150"
+                [placeholder]="t('search.placeholder')"
+                [value]="searchQuery()"
+                [searchIcon]="searchIcon"
+                [attr.aria-label]="t('search.label')"
+                (ionInput)="onSearchQueryChange($event)"
+              ></ion-searchbar>
+
+              <div class="saved-teams-sort">
+                <ion-select
+                  class="saved-teams-sort__select"
+                  data-testid="saved-teams-sort-key"
+                  interface="popover"
+                  [label]="t('sort.label')"
+                  labelPlacement="stacked"
+                  [value]="sortKey()"
+                  (ionChange)="onSortKeyChange($event)"
+                >
+                  @for (key of sortKeyOptions; track key) {
+                    <ion-select-option [value]="key">{{ t('sort.keys.' + key) }}</ion-select-option>
+                  }
+                </ion-select>
+                <button
+                  type="button"
+                  class="saved-team-native-button saved-teams-sort__direction"
+                  data-testid="saved-teams-sort-direction"
+                  [attr.aria-label]="t('sort.' + sortDirection())"
+                  [attr.data-direction]="sortDirection()"
+                  (click)="toggleSortDirection()"
+                >
+                  <ion-icon [icon]="sortIcon" aria-hidden="true"></ion-icon>
+                </button>
+              </div>
+            </div>
+
             @if (hasAbilityFiltersAvailable()) {
               <div class="saved-teams-ability-filter-panel" data-testid="saved-teams-ability-filter-panel">
                 <div class="saved-teams-ability-filter-panel__head">
@@ -246,11 +285,25 @@
                 </ion-button>
               </div>
             </div>
-            @if (hasAbilityFilters() && !filteredSavedTeamCards().length) {
-              <div class="saved-teams-filter-empty">
-                <strong>{{ t('abilityFilters.empty.title') }}</strong>
-                <span>{{ t('abilityFilters.empty.copy') }}</span>
-              </div>
+            @if (!filteredSavedTeamCards().length) {
+              @if (hasSearchQuery()) {
+                <div class="saved-teams-filter-empty" data-testid="saved-teams-search-empty">
+                  <strong>{{ t('search.noResults', { query: searchQuery() }) }}</strong>
+                  <button
+                    type="button"
+                    class="saved-team-native-button"
+                    data-testid="saved-teams-search-clear"
+                    (click)="clearSearchQuery()"
+                  >
+                    {{ t('search.clear') }}
+                  </button>
+                </div>
+              } @else if (hasAbilityFilters()) {
+                <div class="saved-teams-filter-empty">
+                  <strong>{{ t('abilityFilters.empty.title') }}</strong>
+                  <span>{{ t('abilityFilters.empty.copy') }}</span>
+                </div>
+              }
             }
             <div class="saved-team-list">
               @for (teamCard of filteredSavedTeamCards(); track teamCard.team.id) {

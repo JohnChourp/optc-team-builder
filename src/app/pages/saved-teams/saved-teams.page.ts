@@ -1,6 +1,15 @@
 import { Component, type ElementRef, type OnInit, ViewChild, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { IonCheckbox, IonIcon, IonInput, IonModal, IonTextarea } from '@ionic/angular';
+import {
+  IonCheckbox,
+  IonIcon,
+  IonInput,
+  IonModal,
+  IonSearchbar,
+  IonSelect,
+  IonTextarea,
+} from '@ionic/angular';
+import { IonSelectOption } from '@ionic/angular/ion-select-option';
 import { IonButton } from '@ionic/angular/ion-button';
 import { IonButtons } from '@ionic/angular/ion-buttons';
 import { IonContent } from '@ionic/angular/ion-content';
@@ -23,9 +32,11 @@ import {
   funnelOutline,
   linkOutline,
   peopleOutline,
+  searchOutline,
   shareSocialOutline,
   shieldCheckmarkOutline,
   sparklesOutline,
+  swapVerticalOutline,
 } from 'ionicons/icons';
 
 import {
@@ -41,6 +52,17 @@ import {
 } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { resolveBrowserStorageFailureDiagnostic } from '../../core/services/browser-storage-error.utils';
+import {
+  defaultSavedTeamSortDirection,
+  filterSavedTeamCardsBySearch,
+  isSavedTeamSortDirection,
+  isSavedTeamSortKey,
+  sortSavedTeamCards,
+  SAVED_TEAM_SORT_KEYS,
+  type SavedTeamSortDirection,
+  type SavedTeamSortKey,
+  type SavedTeamSortableCard,
+} from '../../core/services/saved-teams-search-sort.utils';
 import {
   resolveCaptainTeamConditionStatus,
   type CaptainTeamConditionStatus,
@@ -86,6 +108,20 @@ interface SavedTeamPreviewCard {
   slots: Array<CharacterDetailRecord | null>;
   conditionStatus: CaptainTeamConditionStatus;
 }
+
+/**
+ * A preview card with the four values ordering and matching read, resolved once. The intersection
+ * keeps every existing consumer of `SavedTeamPreviewCard` working unchanged - the list only gains
+ * fields - while letting the sort and search helpers stay pure over the small shape they declare.
+ */
+type SortableSavedTeamPreviewCard = SavedTeamPreviewCard & SavedTeamSortableCard;
+
+/**
+ * Session, not local: the search box and the order are how the reader is looking at the list right
+ * now, so they should survive a trip to a character's detail page and a reload of this tab, and
+ * should not greet them weeks later with a filter they have forgotten setting.
+ */
+const SAVED_TEAMS_VIEW_STATE_KEY = 'optc.savedTeams.viewState';
 
 interface SavedTeamsImportFeedback {
   details: string[];
@@ -208,6 +244,9 @@ const SAVED_TEAM_ABILITY_SOURCE_TOKENS: Record<AutoBuildAbilitySource, string> =
   imports: [
     IonButton,
     IonButtons,
+    IonSearchbar,
+    IonSelect,
+    IonSelectOption,
     IonCheckbox,
     IonContent,
     IonFooter,
@@ -269,9 +308,27 @@ export class SavedTeamsPage implements OnInit {
     leader: this.buildAvailableAbilityIdentities('leader'),
     crew: this.buildAvailableAbilityIdentities('crew'),
   }));
-  public readonly filteredSavedTeamCards = computed(() =>
-    this.savedTeamCards().filter((teamCard) => this.matchesSelectedAbilityFilters(teamCard)),
+  public readonly searchQuery = signal('');
+  public readonly sortKey = signal<SavedTeamSortKey>('default');
+  public readonly sortDirection = signal<SavedTeamSortDirection>(
+    defaultSavedTeamSortDirection('default'),
   );
+  public readonly sortKeyOptions = SAVED_TEAM_SORT_KEYS;
+  public readonly hasSearchQuery = computed(() => this.searchQuery().trim().length > 0);
+  public readonly filteredSavedTeamCards = computed(() => {
+    const abilityMatched = this.savedTeamCards().filter((teamCard) =>
+      this.matchesSelectedAbilityFilters(teamCard),
+    );
+
+    return sortSavedTeamCards(
+      filterSavedTeamCardsBySearch(
+        abilityMatched.map((teamCard) => this.toSortableSavedTeamCard(teamCard)),
+        this.searchQuery(),
+      ),
+      this.sortKey(),
+      this.sortDirection(),
+    );
+  });
   public readonly selectedTeamIds = signal<string[]>([]);
   public readonly selectedTeamIdSet = computed(() => new Set(this.selectedTeamIds()));
   public readonly selectedCount = computed(() => this.selectedTeamIds().length);
@@ -323,6 +380,8 @@ export class SavedTeamsPage implements OnInit {
   public readonly linkIcon = linkOutline;
   public readonly shareIcon = shareSocialOutline;
   public readonly closeIcon = closeOutline;
+  public readonly searchIcon = searchOutline;
+  public readonly sortIcon = swapVerticalOutline;
   public readonly successIcon = checkmarkCircleOutline;
   public readonly errorIcon = alertCircleOutline;
   public readonly shipIcon = boatOutline;
@@ -346,6 +405,7 @@ export class SavedTeamsPage implements OnInit {
     ]);
     this.applySavedTeamsStorageRecoveryFeedback();
     this.seedAbilityTagSetSelections();
+    this.restoreViewState();
     await this.refreshSavedTeamCards();
   }
 
@@ -731,6 +791,90 @@ export class SavedTeamsPage implements OnInit {
     }
 
     this.pruneSelection();
+  }
+
+  public onSearchQueryChange(event: Event): void {
+    const value = (event as CustomEvent<{ value?: string | null }>).detail?.value ?? '';
+
+    this.searchQuery.set(value);
+    // Selecting teams and then narrowing them away would leave a selection the reader cannot see
+    // and a bulk action that touches more than the list shows.
+    this.pruneSelection();
+    this.persistViewState();
+  }
+
+  public onSortKeyChange(event: Event): void {
+    const value = (event as CustomEvent<{ value?: unknown }>).detail?.value;
+
+    if (isSavedTeamSortKey(value)) {
+      this.sortKey.set(value);
+      // The direction follows the key rather than persisting across a change of meaning: a reader
+      // who reversed a date list did not ask for Z-A when they then pick Team name.
+      this.sortDirection.set(defaultSavedTeamSortDirection(value));
+      this.persistViewState();
+    }
+  }
+
+  public toggleSortDirection(): void {
+    this.sortDirection.update((current) => (current === 'asc' ? 'desc' : 'asc'));
+    this.persistViewState();
+  }
+
+  public clearSearchQuery(): void {
+    this.searchQuery.set('');
+    this.pruneSelection();
+    this.persistViewState();
+  }
+
+  private persistViewState(): void {
+    try {
+      sessionStorage.setItem(
+        SAVED_TEAMS_VIEW_STATE_KEY,
+        JSON.stringify({
+          searchQuery: this.searchQuery(),
+          sortKey: this.sortKey(),
+          sortDirection: this.sortDirection(),
+        }),
+      );
+    } catch {
+      // Private browsing and storage-blocked contexts throw here. A view state that cannot be
+      // parked is not a reason to break the page, which is how the team draft already degrades.
+    }
+  }
+
+  /**
+   * Each field is restored only when it is still a value this build understands. A stored key from
+   * a future or renamed option must not leave the list sorted by nothing - it falls back to the
+   * default rather than being trusted because it was in storage.
+   */
+  private restoreViewState(): void {
+    let parsed: unknown = null;
+
+    try {
+      const raw = sessionStorage.getItem(SAVED_TEAMS_VIEW_STATE_KEY);
+
+      parsed = raw ? JSON.parse(raw) : null;
+    } catch {
+      parsed = null;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return;
+    }
+
+    const state = parsed as { searchQuery?: unknown; sortKey?: unknown; sortDirection?: unknown };
+
+    if (typeof state.searchQuery === 'string') {
+      this.searchQuery.set(state.searchQuery);
+    }
+
+    if (isSavedTeamSortKey(state.sortKey)) {
+      this.sortKey.set(state.sortKey);
+    }
+
+    if (isSavedTeamSortDirection(state.sortDirection)) {
+      this.sortDirection.set(state.sortDirection);
+    }
   }
 
   private async refreshSavedTeamCards(): Promise<void> {
@@ -1176,6 +1320,22 @@ export class SavedTeamsPage implements OnInit {
 
   private resolveOriginSlotIndexes(origin: SavedTeamAbilityOrigin): number[] {
     return origin === 'leader' ? [0, 1] : [2, 3, 4, 5];
+  }
+
+  /**
+   * The leader names come from the slots, not from the team record, because the record stores ids.
+   * A slot the roster cannot resolve contributes an empty string rather than a placeholder: an
+   * unresolvable captain must not make every team match a search for the placeholder's wording.
+   */
+  private toSortableSavedTeamCard(teamCard: SavedTeamPreviewCard): SortableSavedTeamPreviewCard {
+    return {
+      ...teamCard,
+      name: teamCard.team.name,
+      captainName: teamCard.slots[0]?.name ?? '',
+      friendCaptainName: teamCard.slots[1]?.name ?? '',
+      createdAt: teamCard.team.createdAt,
+      updatedAt: teamCard.team.updatedAt,
+    };
   }
 
   private matchesSelectedAbilityFilters(teamCard: SavedTeamPreviewCard): boolean {

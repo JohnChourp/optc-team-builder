@@ -24,7 +24,11 @@ vi.mock('@ionic/angular', () => ({
   IonInput: class {},
   IonModal: class {},
   IonSearchbar: class {},
+  IonSelect: class {},
   IonTextarea: class {},
+}));
+vi.mock('@ionic/angular/ion-select-option', () => ({
+  IonSelectOption: class {},
 }));
 vi.mock('@ionic/angular/ion-button', () => ({
   IonButton: class {},
@@ -68,6 +72,9 @@ describe('SavedTeamsPage', () => {
     restoreJsonDownloadCapture();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    // The view state is session-scoped and shared across tests in this file, so a search left
+    // behind by one test would silently narrow the list another test asserts on.
+    globalThis.sessionStorage?.clear();
   });
 
   it('hydrates saved team previews and preserves empty slots', async () => {
@@ -293,6 +300,107 @@ describe('SavedTeamsPage', () => {
     page.saveAbilityTagSetSelection('leader', buildTagSetSelection('any', groups));
 
     expect(page.filteredSavedTeamCards().map((card) => card.team.id)).toEqual(['team-1', 'team-2']);
+  });
+
+  /*
+   * 869f127c4. Saved Teams could be narrowed by covered abilities and by nothing else. These cover
+   * the page wiring the pure spec cannot: that search and sort compose WITH the ability filter
+   * rather than replacing it, that the default order is still the stored one, and that the view
+   * survives a reload.
+   */
+  it('narrows the saved teams list by a typed search', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    expect(page.filteredSavedTeamCards()).toHaveLength(2);
+
+    page.onSearchQueryChange({ detail: { value: 'auto' } } as unknown as Event);
+
+    expect(page.filteredSavedTeamCards().map((card) => card.team.id)).toEqual(['team-2']);
+    expect(page.hasSearchQuery()).toBe(true);
+
+    page.clearSearchQuery();
+
+    expect(page.filteredSavedTeamCards()).toHaveLength(2);
+    expect(page.hasSearchQuery()).toBe(false);
+  });
+
+  it('leaves the stored order alone until a sort is chosen', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    // team-2 was saved later, so any date sort would move it first. The default must not.
+    expect(page.filteredSavedTeamCards().map((card) => card.team.id)).toEqual(['team-1', 'team-2']);
+    expect(page.sortKey()).toBe('default');
+  });
+
+  it('reorders on a chosen sort and flips with the direction toggle', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    page.onSortKeyChange({ detail: { value: 'name' } } as unknown as Event);
+
+    // A-Z, because picking "Team name" and landing on Z-A reads as a bug rather than a default.
+    expect(page.sortDirection()).toBe('asc');
+    expect(page.filteredSavedTeamCards().map((card) => card.team.name)).toEqual([
+      'Auto Crew',
+      'Slashers',
+    ]);
+
+    page.toggleSortDirection();
+
+    expect(page.sortDirection()).toBe('desc');
+    expect(page.filteredSavedTeamCards().map((card) => card.team.name)).toEqual([
+      'Slashers',
+      'Auto Crew',
+    ]);
+
+    // A date key starts newest-first instead, without the reader touching the toggle again.
+    page.onSortKeyChange({ detail: { value: 'updatedAt' } } as unknown as Event);
+
+    expect(page.sortDirection()).toBe('desc');
+    expect(page.filteredSavedTeamCards().map((card) => card.team.id)).toEqual(['team-2', 'team-1']);
+  });
+
+  it('ignores a sort key this build does not know', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    page.onSortKeyChange({ detail: { value: 'shipTonnage' } } as unknown as Event);
+
+    expect(page.sortKey()).toBe('default');
+  });
+
+  it('restores the search and the order on the next visit', async () => {
+    const first = createPage();
+
+    await first.page.ngOnInit();
+    first.page.onSearchQueryChange({ detail: { value: 'slash' } } as unknown as Event);
+    first.page.onSortKeyChange({ detail: { value: 'name' } } as unknown as Event);
+    first.page.toggleSortDirection();
+
+
+    const second = createPage();
+
+    await second.page.ngOnInit();
+
+    expect(second.page.searchQuery()).toBe('slash');
+    expect(second.page.sortKey()).toBe('name');
+    expect(second.page.sortDirection()).toBe('desc');
+  });
+
+  it('falls back to the defaults when the stored view state is unusable', async () => {
+    globalThis.sessionStorage?.setItem('optc.savedTeams.viewState', '{"sortKey":"shipTonnage"}');
+
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    // A key from a future or renamed option must not leave the list sorted by nothing.
+    expect(page.sortKey()).toBe('default');
+    expect(page.searchQuery()).toBe('');
   });
 
   it('keeps leader and crew ability groups independent', async () => {

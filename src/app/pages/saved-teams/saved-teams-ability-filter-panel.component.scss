@@ -148,3 +148,43 @@
 .saved-teams-filter-empty strong {
   color: #ffffff;
 }
+
+.saved-teams-view-controls {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.saved-teams-search {
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 0;
+}
+
+.saved-teams-sort {
+  align-items: flex-end;
+  display: flex;
+  flex: 0 1 auto;
+  gap: 8px;
+}
+
+.saved-teams-sort__select {
+  min-width: 150px;
+}
+
+.saved-teams-sort__direction {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  padding: 8px 10px;
+}
+
+/*
+ * The icon is one glyph for both orders, so the direction has to be readable without it. The
+ * aria-label already says which way; this flips the glyph so the same is true by eye.
+ */
+.saved-teams-sort__direction[data-direction='asc'] ion-icon {
+  transform: rotate(180deg);
+}
