@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.24',
+    date: '2026-09-13',
+    userVisible: true,
+    added: [],
+    improved: [],
+    headline: {
+      en: 'A saved enemy no longer ignores its own mechanics when it also has an ability',
+      el: 'Ένας αποθηκευμένος εχθρός δεν αγνοεί πια τους μηχανισμούς του όταν έχει και ικανότητα',
+    },
+    summaryEn:
+      'If a saved enemy had mechanics ticked AND at least one ability requirement set by hand, the builder quietly searched for the ability only. Every mechanic on that enemy was dropped, even though it stayed ticked on the enemy and visible in the mechanics panel, so the teams you got were easier to satisfy than the enemy you described. An enemy with mechanics and nothing else was never affected. Both kinds are now searched for together, and the Enemy mechanics checklist reports on all of them.',
+    summaryEl:
+      'Αν ένας αποθηκευμένος εχθρός είχε τσεκαρισμένους μηχανισμούς ΚΑΙ τουλάχιστον μία ability requirement βαλμένη στο χέρι, ο builder έψαχνε αθόρυβα μόνο την ικανότητα. Κάθε μηχανισμός εκείνου του εχθρού πεταγόταν, παρότι έμενε τσεκαρισμένος πάνω του και ορατός στο πάνελ μηχανισμών, οπότε οι ομάδες που έπαιρνες ήταν πιο εύκολο να ικανοποιηθούν από τον εχθρό που είχες περιγράψει. Εχθρός με μόνο μηχανισμούς δεν επηρεαζόταν ποτέ. Τώρα ψάχνονται και τα δύο μαζί, και το Checklist μηχανισμών εχθρού τα αναφέρει όλα.',
+    fixed: [
+      {
+        en: 'A saved enemy that mixes ticked mechanics with a hand-picked ability requirement now searches for both. Until now only the ability was searched for, and the mechanics were dropped without a word - the teams you got looked fine, they were just answering less than you had asked for.',
+        el: 'Ένας αποθηκευμένος εχθρός που συνδυάζει τσεκαρισμένους μηχανισμούς με ability requirement βαλμένη στο χέρι ψάχνει πλέον και τα δύο. Μέχρι τώρα ψαχνόταν μόνο η ικανότητα, και οι μηχανισμοί πετάγονταν χωρίς λέξη - οι ομάδες που έπαιρνες φαίνονταν μια χαρά, απλώς απαντούσαν σε λιγότερα απ’ όσα είχες ζητήσει.',
+      },
+    ],
+  },
+  {
     version: '0.4.23',
     date: '2026-09-13',
     userVisible: true,
