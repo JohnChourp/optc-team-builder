@@ -378,6 +378,9 @@ function isE2ePath(filePath) {
     filePath === 'scripts/validate-playwright-quarantine.mjs' ||
     filePath === 'scripts/summarize-playwright-failures.mjs' ||
     filePath === 'scripts/summarize-playwright-failures.spec.ts' ||
+    // The flake ledger's CLI. Its library and the ledger file already route through the two
+    // patterns below and above; this one sits in scripts/ and would otherwise be missed.
+    filePath === 'scripts/record-playwright-flakes.mjs' ||
     filePath.startsWith('scripts/lib/playwright-')
   );
 }

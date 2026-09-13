@@ -59,7 +59,7 @@
     "test:e2e:webkit": "node ./scripts/run-playwright-e2e.mjs --e2e-project=webkit",
     "test:public-entry-visual": "node ./scripts/run-playwright-e2e.mjs --e2e-project=chromium e2e/public-entry-visual.spec.ts",
     "test:post-merge-smoke": "npm run doctor:maintainer -- --profile=ci --brain-root ../optc-team-builder-brain && npm run data:check-release -- --fixture=no-change --json && npm run test:e2e:chromium -- --grep \"@post-merge-smoke\"",
-    "test:e2e-triage": "vitest run scripts/lib/playwright-quarantine.spec.ts scripts/lib/playwright-e2e-runner.spec.ts scripts/summarize-playwright-failures.spec.ts && node ./scripts/validate-playwright-quarantine.mjs",
+    "test:e2e-triage": "vitest run scripts/lib/playwright-quarantine.spec.ts scripts/lib/playwright-e2e-runner.spec.ts scripts/summarize-playwright-failures.spec.ts scripts/lib/playwright-flake-ledger.spec.ts && node ./scripts/validate-playwright-quarantine.mjs",
     "test:pwa-shell": "node ./scripts/pwa-shell-check.mjs",
     "test:overlay-contrast": "vitest run scripts/check-ionic-overlay-contrast.spec.ts && npm run theme:overlay-contrast",
     "test:tag-picker-scoping": "vitest run scripts/check-tag-picker-panel-scoping.spec.ts && npm run styles:tag-picker-scoping",
@@ -118,7 +118,8 @@
     "android:open": "npx cap open android",
     "ios:open": "npx cap open ios",
     "android:sync": "npx cap sync android",
-    "ios:sync": "npx cap sync ios"
+    "ios:sync": "npx cap sync ios",
+    "e2e:record-flakes": "node ./scripts/record-playwright-flakes.mjs"
   },
   "private": true,
   "packageManager": "npm@11.8.0",

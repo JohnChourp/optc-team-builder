@@ -355,6 +355,22 @@ jobs:
             --output-md test-results/playwright-failure-summary-${{ matrix.browser }}.md \
             --append-github-step-summary
 
+      # 869f127dh. The ledger is what makes a repeat visible as a repeat. Written to the workspace
+      # and uploaded, never committed from CI: a run that decided to amend a tracked file would be
+      # a push this repo's policy does not allow, and a repeat is evidence a human acts on.
+      - name: Record Playwright flakes (${{ matrix.browser }})
+        if: always()
+        run: node ./scripts/record-playwright-flakes.mjs --input test-results
+
+      - name: Upload flake ledger (${{ matrix.browser }})
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: playwright-flake-ledger-${{ matrix.browser }}
+          path: e2e/flake-ledger.json
+          retention-days: 14
+          if-no-files-found: warn
+
       - name: Upload Playwright summary
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -428,6 +444,9 @@ jobs:
         env:
           CI: 'true'
 
+      # 869f127dh. Deliberately NOT recorded in the flake ledger. This leg runs specs that are
+      # already quarantined, so their failures are expected; folding them in would let a handled
+      # case dominate the "seen more than once" list and push a genuine new repeat below it.
       - name: Summarize quarantined Playwright failures (${{ matrix.browser }})
         if: always()
         run: |
