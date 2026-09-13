@@ -77,6 +77,10 @@ import {
   matchesCharacterTagSets,
 } from '../../core/services/character-tag-set.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import {
+  toStoredAbilityIds,
+  toStoredTagSetSelection,
+} from './saved-teams-view-state.utils';
 import { UserStateService } from '../../core/services/user-state.service';
 import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 import { copyTextToClipboard } from '../../shared/clipboard/clipboard-copy.utils';
@@ -834,6 +838,16 @@ export class SavedTeamsPage implements OnInit {
           searchQuery: this.searchQuery(),
           sortKey: this.sortKey(),
           sortDirection: this.sortDirection(),
+          /*
+           * 869f1935z. The ability filters had no storage key at all, so a trip to a character's
+           * detail page and back cleared them while the search box and the order survived. Same
+           * session scope as those, for the same reason recorded on the key above: this is how
+           * the reader is looking at the list right now.
+           */
+          selectedLeaderAbilityIds: this.selectedLeaderAbilityIds(),
+          selectedCrewAbilityIds: this.selectedCrewAbilityIds(),
+          leaderAbilityTagSets: this.leaderAbilityTagSets(),
+          crewAbilityTagSets: this.crewAbilityTagSets(),
         }),
       );
     } catch {
@@ -862,7 +876,15 @@ export class SavedTeamsPage implements OnInit {
       return;
     }
 
-    const state = parsed as { searchQuery?: unknown; sortKey?: unknown; sortDirection?: unknown };
+    const state = parsed as {
+      searchQuery?: unknown;
+      sortKey?: unknown;
+      sortDirection?: unknown;
+      selectedLeaderAbilityIds?: unknown;
+      selectedCrewAbilityIds?: unknown;
+      leaderAbilityTagSets?: unknown;
+      crewAbilityTagSets?: unknown;
+    };
 
     if (typeof state.searchQuery === 'string') {
       this.searchQuery.set(state.searchQuery);
@@ -874,6 +896,28 @@ export class SavedTeamsPage implements OnInit {
 
     if (isSavedTeamSortDirection(state.sortDirection)) {
       this.sortDirection.set(state.sortDirection);
+    }
+
+    const leaderIds = toStoredAbilityIds(state.selectedLeaderAbilityIds);
+    const crewIds = toStoredAbilityIds(state.selectedCrewAbilityIds);
+
+    if (leaderIds) {
+      this.selectedLeaderAbilityIds.set(leaderIds);
+    }
+
+    if (crewIds) {
+      this.selectedCrewAbilityIds.set(crewIds);
+    }
+
+    const leaderTagSets = toStoredTagSetSelection(state.leaderAbilityTagSets);
+    const crewTagSets = toStoredTagSetSelection(state.crewAbilityTagSets);
+
+    if (leaderTagSets) {
+      this.leaderAbilityTagSets.set(leaderTagSets);
+    }
+
+    if (crewTagSets) {
+      this.crewAbilityTagSets.set(crewTagSets);
     }
   }
 
@@ -1372,6 +1416,11 @@ export class SavedTeamsPage implements OnInit {
     }
 
     this.setSelectedAbilityIds(origin, flattenCharacterTagSets(selection));
+    /*
+     * 869f1935z. Parked here and nowhere else, for the reason the method's own comment gives:
+     * this is the single write path, so persisting from it cannot drift from the state it saves.
+     */
+    this.persistViewState();
   }
 
   private resolveAbilityTagSets(origin: SavedTeamAbilityOrigin): CharacterTagSetSelection {

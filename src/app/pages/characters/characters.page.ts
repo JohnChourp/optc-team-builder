@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, type OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import { IonIcon, IonModal, IonSearchbar } from '@ionic/angular';
 import { IonButton } from '@ionic/angular/ion-button';
@@ -408,6 +408,7 @@ export class CharactersPage implements OnInit {
     private readonly userState: UserStateService,
     private readonly optcbxImport: OptcbxImportService,
     private readonly i18n: AppI18nService,
+    private readonly route: ActivatedRoute,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
   }
@@ -425,6 +426,15 @@ export class CharactersPage implements OnInit {
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
     await this.loadCharacters(true);
+
+    /*
+     * 869f1935z. Crew Forge links here with `?import=optcbx` so a reader who went looking for the
+     * screenshot import can reach the data one in a single press. The param is checked against a
+     * literal rather than trusted, because it comes from a URL anyone can type.
+     */
+    if (this.route.snapshot.queryParamMap.get('import') === 'optcbx') {
+      this.openImportModal();
+    }
   }
 
   public async onSearchChange(event: CustomEvent<{ value?: string | null }>): Promise<void> {

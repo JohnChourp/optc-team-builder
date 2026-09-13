@@ -7,7 +7,9 @@
     "meta": {
       "recognized": "{{count}} recognized characters",
       "limit": "Up to 50 ranked suggestions"
-    }
+    },
+    "dataImportHint": "Already have an OPTCbx export? Import it as data instead — every unit arrives exactly, with nothing to guess.",
+    "dataImportLink": "Import an OPTCbx export"
   },
   "actions": {
     "build": "Build teams"
