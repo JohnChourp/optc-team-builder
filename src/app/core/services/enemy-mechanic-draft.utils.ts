@@ -237,7 +237,19 @@ const ENEMY_MECHANIC_CATALOG: AutoBuildEnemyMechanicCatalogItem[] = [
     key: 'crew_healing_reduction',
     label: 'Healing Reduction',
     category: 'crewDebuff',
-    derivedAbilityKey: 'remove_healing_reduction',
+    /*
+     * 869f1935z. This used to read `'remove_healing_reduction'`, which the ability catalogue has
+     * never defined - so ticking Healing Reduction imposed no constraint and said nothing, which is
+     * worse than the honest `null` the other unmapped mechanics carry.
+     *
+     * `remove_no_healing` is NOT the answer, and that is the whole finding. They are two different
+     * debuffs: upstream `details.js` carries 'No Healing' 3,122 times and 'Healing Reduction' 196
+     * times, with its own Potential named "Reduce Healing Reduction duration" whose description is
+     * "Reduces Healing Reduction duration by 1 turn". The parser has no tag for that Potential, so
+     * NOTHING shipped answers this mechanic - pointing it at the No Healing tag would report
+     * coverage a team does not have, which is exactly the failure a checklist must not have.
+     */
+    derivedAbilityKey: null,
     keywords: ['healing reduction'],
   }),
   createEnemyMechanicCatalogItem({
