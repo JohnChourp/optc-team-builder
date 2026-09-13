@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.20',
+    date: '2026-09-13',
+    userVisible: true,
+    added: [
+      {
+        en: 'The results list on Auto Team Builder now groups the characters it did not pick by the reason that decided against each one, with a count per reason - so a thin result says why it was thin without you reading candidate by candidate. Tap a reason to see only those characters, and tap it again to see them all.',
+        el: 'Η λίστα αποτελεσμάτων στο Auto Team Builder ομαδοποιεί πλέον τους χαρακτήρες που δεν επέλεξε ανά τον λόγο που έκρινε τον καθένα, με μέτρημα ανά λόγο - έτσι ένα φτωχό αποτέλεσμα λέει γιατί βγήκε φτωχό χωρίς να διαβάζεις υποψήφιο-υποψήφιο. Πάτα έναν λόγο για να δεις μόνο αυτούς τους χαρακτήρες, και πάτα τον ξανά για να τους δεις όλους.',
+      },
+    ],
+    improved: [],
+    headline: {
+      en: 'Auto Team Builder says why a result came out thin',
+      el: 'Το Auto Team Builder λέει γιατί βγήκε φτωχό ένα αποτέλεσμα',
+    },
+    summaryEn:
+      'The results list on Auto Team Builder already told you, for every character it did not pick, the one reason that decided against it. What it never told you was the shape of the whole search. Open the explanation under a team slot and the characters it passed over are now grouped by that reason, each with a count - so you can see at a glance that the cost budget turned away far more of them than the crew rules did. Tap a reason to narrow the list to those characters only, and tap it again to get everyone back.',
+    summaryEl:
+      'Η λίστα αποτελεσμάτων στο Auto Team Builder σου έλεγε ήδη, για κάθε χαρακτήρα που δεν επέλεξε, τον έναν λόγο που έκρινε εναντίον του. Αυτό που δεν σου έλεγε ποτέ ήταν η συνολική εικόνα της αναζήτησης. Άνοιξε την εξήγηση κάτω από μια θέση της ομάδας και οι χαρακτήρες που προσπέρασε είναι πλέον ομαδοποιημένοι ανά αυτόν τον λόγο, ο καθένας με μέτρημα - ώστε να βλέπεις με μια ματιά ότι το όριο κόστους απέρριψε πολύ περισσότερους απ\' όσους οι κανόνες του crew. Πάτα έναν λόγο για να περιορίσεις τη λίστα μόνο σε αυτούς τους χαρακτήρες, και πάτα τον ξανά για να επιστρέψουν όλοι.',
+    fixed: [],
+  },
+  {
     version: '0.4.19',
     date: '2026-09-12',
     userVisible: true,

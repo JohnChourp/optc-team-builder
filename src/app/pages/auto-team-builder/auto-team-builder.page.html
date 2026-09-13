@@ -3851,9 +3851,48 @@
                                     data-testid="slot-explanation-rejected-list"
                                   >
                                     <strong>{{ t('results.explanations.rejectedTitle') }}</strong>
+                                    <p
+                                      class="slot-explanation__rejected-summary"
+                                      data-testid="slot-explanation-rejected-summary"
+                                    >
+                                      {{
+                                        t('results.explanations.rejectedSummary', {
+                                          count: slot.rejectedCandidateLabels.length,
+                                        })
+                                      }}
+                                    </p>
+                                    <div
+                                      class="slot-explanation__rejected-groups"
+                                      data-testid="slot-explanation-rejected-groups"
+                                    >
+                                      @for (
+                                        group of slot.rejectedCandidateGroups;
+                                        track group.code
+                                      ) {
+                                        <button
+                                          type="button"
+                                          class="slot-explanation__rejected-group"
+                                          [class.slot-explanation__rejected-group--active]="
+                                            isRejectedGroupSelected(slot.trackKey, group.code)
+                                          "
+                                          [attr.aria-pressed]="
+                                            isRejectedGroupSelected(slot.trackKey, group.code)
+                                          "
+                                          [attr.data-testid]="
+                                            'slot-explanation-rejected-group-' + group.code
+                                          "
+                                          (click)="onRejectedGroupToggle(slot.trackKey, group.code)"
+                                        >
+                                          <span class="slot-explanation__rejected-group-count">{{
+                                            group.count
+                                          }}</span>
+                                          <span>{{ group.label }}</span>
+                                        </button>
+                                      }
+                                    </div>
                                     <ul>
                                       @for (
-                                        rejectedCandidate of slot.rejectedCandidateLabels;
+                                        rejectedCandidate of visibleRejectedCandidates(slot);
                                         track rejectedCandidate.title
                                       ) {
                                         <li>

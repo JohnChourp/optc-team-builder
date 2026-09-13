@@ -113,6 +113,12 @@ import { matchesAnyAbilityRequirement } from '../../core/services/auto-team-buil
 import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import { resolveAutoBuildShipSelection } from '../../core/services/auto-team-builder-ship.utils';
 import {
+  filterByRejectedGroupCode,
+  groupRejectedCandidatesByDecisiveReason,
+  resolveRejectedCandidateGroupCode,
+  type RejectedCandidateGroupCode,
+} from '../../core/services/auto-team-builder-rejected-candidate-groups.utils';
+import {
   resolveCaptainTeamConditionStatus,
   type CaptainTeamConditionStatus,
 } from '../../core/services/captain-team-condition-status.utils';
@@ -541,6 +547,7 @@ type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   explanationSummaryLabel: string;
   explanationDetailLabels: string[];
   rejectedCandidateLabels: RejectedCandidateExplanationView[];
+  rejectedCandidateGroups: RejectedCandidateGroupView[];
   hasStructuredExplanation: boolean;
   /** The character carries a local edit on this device, which changes what the builder sees. */
   hasLocalOverride: boolean;
@@ -557,6 +564,15 @@ interface AutoTeamDebugReportFeedback {
 interface RejectedCandidateExplanationView {
   title: string;
   reasonLabels: string[];
+  /** The reason that decided, which is what this candidate is grouped and filtered by. */
+  groupCode: RejectedCandidateGroupCode;
+}
+
+/** One decisive-reason group in the rejected pool, with the count the reader actually reads. */
+interface RejectedCandidateGroupView {
+  code: RejectedCandidateGroupCode;
+  count: number;
+  label: string;
 }
 
 interface AppliedManualCharacterFilters {
@@ -1055,6 +1071,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly manualSimilarPickFeedback = signal('');
   public readonly loadedEnemyPresetName = signal<string | null>(null);
   public readonly openExplanationSlotKeys = signal<ReadonlySet<string>>(new Set());
+  /**
+   * Which decisive-reason group each slot's rejected list is narrowed to, keyed by the slot's
+   * track key. Absent means the whole pool, which is the state every slot starts in - a filter
+   * nobody asked for would hide candidates the reader opened the panel to see.
+   */
+  public readonly selectedRejectedGroupBySlotKey = signal<
+    ReadonlyMap<string, RejectedCandidateGroupCode>
+  >(new Map());
   public readonly compareModeOpen = signal(false);
   public readonly compareSides = AUTO_TEAM_COMPARE_SIDES;
   public readonly compareSidePayloads = signal<
@@ -3094,6 +3118,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           explanationSummaryLabel: explanationView.summaryLabel,
           explanationDetailLabels: explanationView.detailLabels,
           rejectedCandidateLabels: explanationView.rejectedCandidateLabels,
+          rejectedCandidateGroups: explanationView.rejectedCandidateGroups,
           hasStructuredExplanation: explanationView.hasStructuredExplanation,
           hasLocalOverride: this.characterOverrides.overridesByCharacterId().has(slot.character.id),
         };
@@ -3105,6 +3130,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     detailLabels: string[];
     hasStructuredExplanation: boolean;
     rejectedCandidateLabels: RejectedCandidateExplanationView[];
+    rejectedCandidateGroups: RejectedCandidateGroupView[];
     summaryLabel: string;
   } {
     const explanation = slot.explanation;
@@ -3114,6 +3140,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         summaryLabel: this.t('results.explanations.missing'),
         detailLabels: [],
         rejectedCandidateLabels: [],
+        rejectedCandidateGroups: [],
         hasStructuredExplanation: false,
       };
     }
@@ -3133,13 +3160,29 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         reasonLabels: candidate.reasons.map((reason) =>
           this.formatRejectedCandidateReason(reason),
         ),
+        groupCode: resolveRejectedCandidateGroupCode(candidate),
+      })),
+      rejectedCandidateGroups: groupRejectedCandidatesByDecisiveReason(
+        explanation.rejectedCandidates,
+      ).map((group) => ({
+        ...group,
+        label: this.formatRejectedCandidateReasonCode(group.code),
       })),
       hasStructuredExplanation: true,
     };
   }
 
   private formatRejectedCandidateReason(reason: AutoBuildRejectedCandidateReason): string {
-    switch (reason.code) {
+    return this.formatRejectedCandidateReasonCode(reason.code);
+  }
+
+  /**
+   * The same labels, addressed by code alone. A group header has a count and a reason and no
+   * candidate behind it, so it has no `params` to interpolate - splitting the switch out is what
+   * lets the chip and the line under it be worded by one place instead of two.
+   */
+  private formatRejectedCandidateReasonCode(code: RejectedCandidateGroupCode): string {
+    switch (code) {
       case 'manualSlotLocked':
         return this.t('results.explanations.rejectedReasons.manualSlotLocked');
       case 'alreadySelected':
@@ -3945,6 +3988,34 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public isSlotExplanationOpen(trackKey: string): boolean {
     return this.openExplanationSlotKeys().has(trackKey);
+  }
+
+  public isRejectedGroupSelected(trackKey: string, code: RejectedCandidateGroupCode): boolean {
+    return this.selectedRejectedGroupBySlotKey().get(trackKey) === code;
+  }
+
+  /**
+   * Clicking the selected group clears it. A chip that only ever narrows leaves the reader stuck
+   * inside one reason with no way back to the pool they started from.
+   */
+  public onRejectedGroupToggle(trackKey: string, code: RejectedCandidateGroupCode): void {
+    this.selectedRejectedGroupBySlotKey.update((current) => {
+      const next = new Map(current);
+
+      if (next.get(trackKey) === code) {
+        next.delete(trackKey);
+      } else {
+        next.set(trackKey, code);
+      }
+
+      return next;
+    });
+  }
+
+  public visibleRejectedCandidates(slot: TeamSlotViewModel): RejectedCandidateExplanationView[] {
+    const selectedCode = this.selectedRejectedGroupBySlotKey().get(slot.trackKey) ?? null;
+
+    return filterByRejectedGroupCode(slot.rejectedCandidateLabels, selectedCode);
   }
 
   public onSlotExplanationToggle(trackKey: string, event: Event): void {
