@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { type AutoBuildEnemyMechanicRequirement } from '../models/auto-team-builder-ability.models';
 import { type AutoBuildSlot } from '../models/auto-team-builder.models';
-import { buildMechanicChecklist } from './auto-team-builder-mechanic-checklist.utils';
+import {
+  buildMechanicChecklist,
+  inferMechanicsFromAbilityRequirements,
+} from './auto-team-builder-mechanic-checklist.utils';
 
 /*
  * 869f1935z. `869f127g5`'s gate: "a checklist that reports false coverage is worse than none."
@@ -146,5 +149,106 @@ describe('buildMechanicChecklist', () => {
       'crew_bind',
       'crew_despair',
     ]);
+  });
+});
+
+describe('inferMechanicsFromAbilityRequirements', () => {
+  /*
+   * 869f1935z. Readers describe the same enemy two ways. A real Saved Enemy that prompted this
+   * carried SIX ability requirements and ZERO mechanics, five of which named a catalogue mechanic
+   * exactly - and the checklist saw none of it.
+   */
+  const ability = (abilityKey: string, overrides = {}) =>
+    ({ abilityKey, minTurns: null, slotTokens: [], requiredCharacterCount: 1, ...overrides }) as never;
+
+  it('recognises a mechanic from the ability that answers it', () => {
+    const inferred = inferMechanicsFromAbilityRequirements([ability('remove_paralysis')], []);
+
+    expect(inferred.map((entry) => entry.mechanicKey)).toEqual(['crew_paralysis']);
+    expect(inferred[0]?.derivedAbilityKey).toBe('remove_paralysis');
+  });
+
+  it('REFUSES an ability key that two mechanics produce, rather than guessing which was meant', () => {
+    /*
+     * `remove_damage_reduction` is produced by Enemy Damage Reduction AND Percent Damage Reduction.
+     * Picking one would put a mechanic on the checklist the reader never asked about - the same
+     * class of false report the three states exist to prevent.
+     */
+    expect(inferMechanicsFromAbilityRequirements([ability('remove_damage_reduction')], [])).toEqual(
+      [],
+    );
+  });
+
+  it('ignores an ability that names no mechanic at all', () => {
+    expect(
+      inferMechanicsFromAbilityRequirements([ability('ignore_normal_attack_only')], []),
+    ).toEqual([]);
+  });
+
+  it('does not duplicate a mechanic the reader already ticked', () => {
+    const ticked = [mechanic({ mechanicKey: 'crew_despair', derivedAbilityKey: 'remove_despair' })];
+
+    expect(inferMechanicsFromAbilityRequirements([ability('remove_despair')], ticked)).toEqual([]);
+  });
+
+  it('carries the requirement own turns and count, not the mechanic defaults', () => {
+    const inferred = inferMechanicsFromAbilityRequirements(
+      [ability('remove_bind', { minTurns: 5, requiredCharacterCount: 2 })],
+      [],
+    );
+
+    expect(inferred[0]).toMatchObject({ minTurns: 5, requiredCharacterCount: 2 });
+  });
+
+  it('recognises each mechanic once, however many requirements name it', () => {
+    const inferred = inferMechanicsFromAbilityRequirements(
+      [ability('remove_burn'), ability('remove_burn', { minTurns: 3 })],
+      [],
+    );
+
+    expect(inferred).toHaveLength(1);
+  });
+});
+
+describe('buildMechanicChecklist with ability requirements', () => {
+  const ability = (abilityKey: string) =>
+    ({ abilityKey, minTurns: null, slotTokens: [], requiredCharacterCount: 1 }) as never;
+
+  it('builds a checklist for an enemy that has NO ticked mechanics at all', () => {
+    // The exact shape of the Saved Enemy that prompted this: abilities only, no mechanics.
+    const summary = buildMechanicChecklist(
+      [],
+      [slot('Hancock', ['remove_despair'])],
+      [ability('remove_despair'), ability('remove_burn')],
+    );
+
+    expect(summary.entries.map((entry) => [entry.mechanicKey, entry.state, entry.source])).toEqual([
+      ['crew_despair', 'covered', 'inferred'],
+      ['crew_burn', 'notCovered', 'inferred'],
+    ]);
+  });
+
+  it('keeps ticked mechanics first and marks each row source', () => {
+    const summary = buildMechanicChecklist(
+      [mechanic({ mechanicKey: 'crew_bind', derivedAbilityKey: 'remove_bind' })],
+      [slot('Nobody', [])],
+      [ability('remove_burn')],
+    );
+
+    expect(summary.entries.map((entry) => [entry.mechanicKey, entry.source])).toEqual([
+      ['crew_bind', 'ticked'],
+      ['crew_burn', 'inferred'],
+    ]);
+  });
+
+  it('changes nothing when no ability requirement names a mechanic', () => {
+    const summary = buildMechanicChecklist(
+      [mechanic()],
+      [slot('Hancock', ['remove_despair'])],
+      [ability('ignore_normal_attack_only')],
+    );
+
+    expect(summary.entries).toHaveLength(1);
+    expect(summary.entries[0]?.source).toBe('ticked');
   });
 });

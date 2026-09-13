@@ -1209,6 +1209,7 @@
       "notCovered": "No character in this team answers it",
       "partial": "{{have}} of {{need}} characters — partial cover does not count",
       "unanswerable": "No shipped ability tag answers this mechanic, so the builder cannot check it"
-    }
+    },
+    "inferred": "from an ability you asked for"
   }
 }

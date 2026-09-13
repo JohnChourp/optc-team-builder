@@ -135,6 +135,7 @@ import {
 import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
 import {
   buildMechanicChecklist,
+  collectRequestedAbilityRequirements,
   type MechanicChecklistEntry,
 } from '../../core/services/auto-team-builder-mechanic-checklist.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
@@ -2804,7 +2805,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return { entries: [], coveredCount: 0, notCoveredCount: 0, unanswerableCount: 0 };
     }
 
-    return buildMechanicChecklist(current.input.enemyMechanics ?? [], current.slots);
+    /*
+     * 869f1935z. The requested ability requirements are passed too, so a reader who described the
+     * enemy through the ability picker instead of the mechanics panel still gets a checklist. Only
+     * requirements naming exactly one catalogue mechanic are recognised, and they are marked as
+     * inferred rather than presented as the reader's own selection.
+     */
+    return buildMechanicChecklist(
+      current.input.enemyMechanics ?? [],
+      current.slots,
+      collectRequestedAbilityRequirements(current.input),
+    );
   });
   public readonly mechanicChecklistSummaryLabel = computed(() => {
     const summary = this.mechanicChecklist();
@@ -9118,6 +9129,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   /** The catalogue's own English label - the game's term, which is how players say it. */
   public resolveMechanicLabel(mechanicKey: string): string {
     return this.enemyMechanicCatalogMap().get(mechanicKey)?.label ?? mechanicKey;
+  }
+
+  /** Inferred rows say so, so nothing claims the reader ticked something they did not. */
+  public mechanicChecklistSourceLabel(entry: MechanicChecklistEntry): string {
+    return entry.source === 'inferred' ? this.t('mechanicChecklist.inferred') : '';
   }
 
   public mechanicChecklistDetail(entry: MechanicChecklistEntry): string {

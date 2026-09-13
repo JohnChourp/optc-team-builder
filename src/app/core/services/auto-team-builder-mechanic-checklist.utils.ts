@@ -1,9 +1,12 @@
 import {
   type AutoBuildAbilityRequirement,
+  type AutoBuildBattleRequirement,
   type AutoBuildEnemyMechanicRequirement,
 } from '../models/auto-team-builder-ability.models';
 import { type AutoBuildSlot } from '../models/auto-team-builder.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
+import { flattenBattleRequiredCharacterGroups } from './auto-team-builder-battle.utils';
+import { getEnemyMechanicCatalogItems } from './enemy-mechanic-draft.utils';
 
 /**
  * 869f1935z. The checklist every beginner guide describes and this app never rendered: bind,
@@ -29,9 +32,19 @@ import { matchesAbilityRequirement } from './auto-team-builder-ability-match.uti
 
 export type MechanicCoverageState = 'covered' | 'notCovered' | 'unanswerable';
 
+/**
+ * Where the row came from. `ticked` is a mechanic the reader selected in the mechanics panel;
+ * `inferred` is one recognised from a plain ability requirement they set instead.
+ *
+ * Kept distinct and shown as such, because a checklist that silently presents an inference as the
+ * reader's own selection is claiming they asked for something they did not.
+ */
+export type MechanicChecklistSource = 'ticked' | 'inferred';
+
 export interface MechanicChecklistEntry {
   mechanicKey: string;
   category: string;
+  source: MechanicChecklistSource;
   state: MechanicCoverageState;
   /** Player-facing slot numbers (1-based) whose character answers this mechanic. */
   coveringSlots: number[];
@@ -74,11 +87,120 @@ function slotAnswers(slot: AutoBuildSlot, requirement: AutoBuildAbilityRequireme
   );
 }
 
+/**
+ * `derivedAbilityKey` -> the ONE mechanic that produces it.
+ *
+ * Deliberately one, not a list. `remove_damage_reduction` is produced by two catalogue mechanics -
+ * Enemy Damage Reduction and Percent Damage Reduction - so an ability requirement for it cannot say
+ * which the reader meant. Guessing would put a mechanic on the checklist they never asked about,
+ * which is the same class of false report the three states exist to prevent, so an ambiguous key
+ * maps to nothing and stays with the Final team report where it came from.
+ */
+function buildUnambiguousMechanicIndex(): Map<string, { key: string; category: string }> {
+  const byAbilityKey = new Map<string, { key: string; category: string } | null>();
+
+  for (const item of getEnemyMechanicCatalogItems()) {
+    if (!item.derivedAbilityKey) {
+      continue;
+    }
+
+    // Second sighting of a key marks it ambiguous; it never becomes unambiguous again.
+    byAbilityKey.set(
+      item.derivedAbilityKey,
+      byAbilityKey.has(item.derivedAbilityKey)
+        ? null
+        : { key: item.key, category: item.category },
+    );
+  }
+
+  const resolved = new Map<string, { key: string; category: string }>();
+
+  for (const [abilityKey, mechanic] of byAbilityKey) {
+    if (mechanic) {
+      resolved.set(abilityKey, mechanic);
+    }
+  }
+
+  return resolved;
+}
+
+/**
+ * Mechanics recognised from plain ability requirements.
+ *
+ * Readers describe the same enemy two ways: by ticking a mechanic, or by picking the ability that
+ * answers it. The second is common - a real Saved Enemy that prompted this carried six ability
+ * requirements and zero mechanics, five of which named a catalogue mechanic exactly - and the
+ * checklist saw none of it.
+ *
+ * The requirement's own `minTurns` and `requiredCharacterCount` are carried across, so an inferred
+ * row is judged by exactly what the reader asked for rather than by the mechanic's defaults.
+ */
+export function inferMechanicsFromAbilityRequirements(
+  requiredAbilities: readonly AutoBuildAbilityRequirement[],
+  alreadyTicked: readonly AutoBuildEnemyMechanicRequirement[],
+): AutoBuildEnemyMechanicRequirement[] {
+  const index = buildUnambiguousMechanicIndex();
+  const tickedKeys = new Set(alreadyTicked.map((mechanic) => mechanic.mechanicKey));
+  const seen = new Set<string>();
+  const inferred: AutoBuildEnemyMechanicRequirement[] = [];
+
+  for (const requirement of requiredAbilities) {
+    const mechanic = index.get(requirement.abilityKey);
+
+    // A mechanic the reader ticked outright wins: their own row must not be duplicated by an
+    // inference of the same thing.
+    if (!mechanic || tickedKeys.has(mechanic.key) || seen.has(mechanic.key)) {
+      continue;
+    }
+
+    seen.add(mechanic.key);
+    inferred.push({
+      mechanicKey: mechanic.key,
+      category: mechanic.category,
+      minTurns: requirement.minTurns ?? null,
+      requiredCharacterCount: requirement.requiredCharacterCount ?? 1,
+      triggerTags: [],
+      responseTags: [],
+      conditionTags: [],
+      derivedAbilityKey: requirement.abilityKey,
+    } as AutoBuildEnemyMechanicRequirement);
+  }
+
+  return inferred;
+}
+
+/**
+ * Every ability the reader asked for, wherever the input happens to carry it.
+ *
+ * `requiredAbilities` is only one of two places. A Saved Enemy loaded as a preset arrives with its
+ * abilities already expanded into battle requirement groups and `requiredAbilities` EMPTY - which
+ * is exactly the enemy that prompted this, so reading the obvious field alone would have missed
+ * the whole case.
+ */
+export function collectRequestedAbilityRequirements(input: {
+  requiredAbilities?: readonly AutoBuildAbilityRequirement[];
+  battleRequirements?: readonly AutoBuildBattleRequirement[];
+}): AutoBuildAbilityRequirement[] {
+  return [
+    ...(input.requiredAbilities ?? []),
+    ...flattenBattleRequiredCharacterGroups(input.battleRequirements ?? []).flatMap(
+      (group) => group.abilities,
+    ),
+  ];
+}
+
 export function buildMechanicChecklist(
   mechanics: readonly AutoBuildEnemyMechanicRequirement[],
   slots: readonly AutoBuildSlot[],
+  requiredAbilities: readonly AutoBuildAbilityRequirement[] = [],
 ): MechanicChecklistSummary {
-  const entries: MechanicChecklistEntry[] = mechanics.map((mechanic) => {
+  const inferred = inferMechanicsFromAbilityRequirements(requiredAbilities, mechanics);
+  const inferredKeys = new Set(inferred.map((mechanic) => mechanic.mechanicKey));
+  /*
+   * Ticked first, inferred after. The reader's own list stays where they put it, and everything
+   * the app worked out for them sits below it rather than interleaved.
+   */
+  const entries: MechanicChecklistEntry[] = [...mechanics, ...inferred].map((mechanic) => {
     const requirement = toRequirement(mechanic);
     const requiredCharacterCount = mechanic.requiredCharacterCount ?? 1;
 
@@ -86,6 +208,9 @@ export function buildMechanicChecklist(
       return {
         mechanicKey: mechanic.mechanicKey,
         category: mechanic.category,
+        source: inferredKeys.has(mechanic.mechanicKey)
+          ? ('inferred' as const)
+          : ('ticked' as const),
         state: 'unanswerable' as const,
         coveringSlots: [],
         coveringCharacterNames: [],
@@ -114,6 +239,7 @@ export function buildMechanicChecklist(
     return {
       mechanicKey: mechanic.mechanicKey,
       category: mechanic.category,
+      source: inferredKeys.has(mechanic.mechanicKey) ? ('inferred' as const) : ('ticked' as const),
       state,
       coveringSlots,
       coveringCharacterNames,
