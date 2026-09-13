@@ -31,6 +31,49 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.21',
+    date: '2026-09-13',
+    userVisible: true,
+    added: [
+      {
+        en: 'The character screen now has a "Getting and improving this unit" section. It says how many socket slots the unit has and how fast its special charges, what it evolves from and into with the materials each step costs, and which stages it drops from. If a unit has no recorded drop stage the section simply says nothing about drops - that means we have no source recorded, not that the unit cannot be obtained.',
+        el: 'Η οθόνη χαρακτήρα έχει πλέον ενότητα «Πώς τον αποκτάς και πώς τον ανεβάζεις». Λέει πόσες θέσεις για sockets έχει ο χαρακτήρας και πόσο γρήγορα γεμίζει το special του, από τι προέρχεται και σε τι εξελίσσεται με τα υλικά που κοστίζει κάθε βήμα, και από ποια στάδια πέφτει. Αν ένας χαρακτήρας δεν έχει καταγεγραμμένο στάδιο, η ενότητα απλώς δεν λέει τίποτα για drops - αυτό σημαίνει ότι δεν έχουμε καταγεγραμμένη πηγή, όχι ότι δεν αποκτάται.',
+      },
+      {
+        en: 'A "Enemy mechanics checklist" card on Auto Team Builder, right under the Final team report. For every enemy mechanic you ticked, it says covered - naming the team slots that answer it - or not covered. A few mechanics say "cannot be answered" instead: no character ability in the game data answers them, so the builder has no way to check, and saying that plainly is better than sending you looking for a character that does not exist.',
+        el: 'Κάρτα «Checklist μηχανισμών εχθρού» στο Auto Team Builder, ακριβώς κάτω από το Τελικό report ομάδας. Για κάθε μηχανισμό εχθρού που τσέκαρες, λέει καλυμμένο - ονομάζοντας τις θέσεις της ομάδας που τον απαντούν - ή ακάλυπτο. Λίγοι μηχανισμοί λένε «δεν απαντιέται»: καμία ικανότητα χαρακτήρα στα δεδομένα του παιχνιδιού δεν τους απαντά, οπότε ο builder δεν μπορεί να ελέγξει, και το να το λέμε καθαρά είναι καλύτερο από το να ψάχνεις χαρακτήρα που δεν υπάρχει.',
+      },
+    ],
+    improved: [
+      {
+        en: 'The filter bar on Auto Team Builder now remembers your types, classes, character tags and character names. Leave the screen to look up a character and come back and they are as you left them. Opening a saved team or a saved enemy still replaces them, as it always did.',
+        el: 'Η μπάρα φίλτρων στο Auto Team Builder θυμάται πλέον τα types, τα classes, τα character tags και τα ονόματα χαρακτήρων που έβαλες. Φύγε από την οθόνη για να δεις έναν χαρακτήρα και γύρνα πίσω και είναι όπως τα άφησες. Το άνοιγμα αποθηκευμένης ομάδας ή αποθηκευμένου εχθρού εξακολουθεί να τα αντικαθιστά, όπως πάντα.',
+      },
+      {
+        en: 'The ability filters on the saved teams list are remembered the same way. Until now the search box and the sort order survived a trip to a character screen and the ability filters did not.',
+        el: 'Τα φίλτρα ικανοτήτων στη λίστα αποθηκευμένων ομάδων θυμούνται με τον ίδιο τρόπο. Μέχρι τώρα το πεδίο αναζήτησης και η ταξινόμηση επιβίωναν μιας επίσκεψης σε οθόνη χαρακτήρα και τα φίλτρα ικανοτήτων όχι.',
+      },
+      {
+        en: 'Crew Forge now points at the other way in: if you already have an OPTCbx export, the screen links straight to the import on the Characters screen. That path reads your units as data instead of guessing them from a screenshot.',
+        el: 'Το Crew Forge δείχνει πλέον και τον άλλο δρόμο: αν έχεις ήδη OPTCbx export, η οθόνη συνδέει κατευθείαν με το import στην οθόνη Χαρακτήρες. Αυτός ο δρόμος διαβάζει τα units σου ως δεδομένα, αντί να τα μαντεύει από screenshot.',
+      },
+    ],
+    headline: {
+      en: 'Where a character comes from, and whether your team answers the stage',
+      el: 'Από πού βγαίνει ένας χαρακτήρας, και αν η ομάδα σου απαντά στο στάδιο',
+    },
+    summaryEn:
+      'Until now the builders would recommend a character you do not own and stop there. The character screen now carries a "Getting and improving this unit" section that answers the next question: what it evolves from - you often already own the base form - what it evolves into and what each step costs, which stages it drops from, how many socket slots it has, and how fast its special charges. Where we have no drop stage recorded the section says nothing about drops rather than claiming the unit cannot be farmed. On Auto Team Builder there is a new Enemy mechanics checklist under the Final team report: for each enemy mechanic you ticked it says covered and names the team slots that answer it, or not covered - and for a handful it says plainly that no character ability in the game data answers them at all, so the builder cannot check. The filter bar on Auto Team Builder and the ability filters on the saved teams list are now remembered while the app stays open, and Crew Forge links to the OPTCbx import for anyone who has an export and would rather not import from a screenshot.',
+    summaryEl:
+      'Μέχρι τώρα οι builders σου πρότειναν έναν χαρακτήρα που δεν έχεις και σταματούσαν εκεί. Η οθόνη χαρακτήρα έχει πλέον ενότητα «Πώς τον αποκτάς και πώς τον ανεβάζεις» που απαντά στο επόμενο ερώτημα: από τι προέρχεται - συχνά έχεις ήδη τη βασική μορφή - σε τι εξελίσσεται και τι κοστίζει κάθε βήμα, από ποια στάδια πέφτει, πόσες θέσεις για sockets έχει, και πόσο γρήγορα γεμίζει το special του. Όπου δεν έχουμε καταγεγραμμένο στάδιο, η ενότητα δεν λέει τίποτα για drops αντί να ισχυρίζεται ότι ο χαρακτήρας δεν farmάρεται. Στο Auto Team Builder υπάρχει νέο Checklist μηχανισμών εχθρού κάτω από το Τελικό report ομάδας: για κάθε μηχανισμό που τσέκαρες λέει καλυμμένο και ονομάζει τις θέσεις της ομάδας που τον απαντούν, ή ακάλυπτο - και για λίγους λέει καθαρά ότι καμία ικανότητα χαρακτήρα στα δεδομένα του παιχνιδιού δεν τους απαντά, οπότε ο builder δεν μπορεί να ελέγξει. Η μπάρα φίλτρων στο Auto Team Builder και τα φίλτρα ικανοτήτων στη λίστα αποθηκευμένων ομάδων θυμούνται πλέον όσο η εφαρμογή είναι ανοιχτή, και το Crew Forge συνδέει με το import OPTCbx για όποιον έχει export και προτιμά να μην περάσει από screenshot.',
+    fixed: [
+      {
+        en: 'Ticking "Healing Reduction" as an enemy mechanic on Auto Team Builder used to do nothing at all, silently - the builder had no ability to match it against, so it imposed no requirement and never said so. It is now listed honestly in the new checklist as a mechanic that cannot be answered.',
+        el: 'Το να τσεκάρεις «Healing Reduction» ως μηχανισμό εχθρού στο Auto Team Builder δεν έκανε απολύτως τίποτα, σιωπηλά - ο builder δεν είχε ικανότητα να το αντιστοιχίσει, οπότε δεν έβαζε καμία απαίτηση και δεν το έλεγε ποτέ. Τώρα εμφανίζεται τίμια στο νέο checklist ως μηχανισμός που δεν απαντιέται.',
+      },
+    ],
+  },
+  {
     version: '0.4.20',
     date: '2026-09-13',
     userVisible: true,
