@@ -18,6 +18,7 @@ import { type CharacterDetailRecord, type DatasetManifest } from '../../core/mod
 import { AutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import { AutoTeamBuildSearchTooLargeError } from '../../core/services/auto-team-builder.service';
 import type { AutoTeamBuilderPage } from './auto-team-builder.page';
+import { buildAutoTeamBuilderStateFromSavedEnemy } from './auto-team-builder-enemy-preset.utils';
 import {
   parseAutoTeamSelectionImportPayload,
   sanitizeAutoTeamSelectionImportPayload,
@@ -8971,6 +8972,167 @@ describe('AutoTeamBuilder preset import helpers', () => {
     );
   });
 
+  it('keeps the enemy mechanics a Saved Enemy carries, instead of clearing them', async () => {
+    /*
+     * 869f1935z. `applySelectionPresetState` used to do `enemyMechanicDrafts.set([])`, so opening a
+     * Saved Enemy in the builder threw away the mechanics the reader had ticked on it.
+     *
+     * The mapped ones survived as CONSTRAINTS - the manual/derived split keeps them out of the
+     * manual list precisely because the drafts are meant to carry them - but they arrived
+     * anonymous, with nothing saying which mechanic they came from. The unmapped ones derive no
+     * requirement at all, so they vanished completely: tick Block Orbs on a Saved Enemy, open it
+     * here, build, and there was no mention of it anywhere. That is the exact silence the mechanic
+     * checklist exists to break, defeated by the main path an enemy takes to this page.
+     *
+     * Driven through the real state builder rather than a hand-made state, because the bug was in
+     * the seam between the two.
+     */
+    const { page } = await createPage();
+
+    await page['applySelectionPresetState'](
+      buildAutoTeamBuilderStateFromSavedEnemy({
+        id: 'enemy-1',
+        name: 'Forest Boss',
+        notes: '',
+        rawEnemyText: '',
+        imageDataUrl: null,
+        selectedTypes: [],
+        selectedClasses: [],
+        requiredAbilities: [],
+        enemyMechanics: [
+          {
+            mechanicKey: 'crew_despair',
+            category: 'crewDebuff',
+            minTurns: null,
+            requiredCharacterCount: 1,
+            triggerTags: [],
+            responseTags: [],
+            conditionTags: [],
+            derivedAbilityKey: 'remove_despair',
+          },
+          {
+            mechanicKey: 'orb_block',
+            category: 'orbControl',
+            minTurns: null,
+            requiredCharacterCount: 1,
+            triggerTags: [],
+            responseTags: [],
+            conditionTags: [],
+            derivedAbilityKey: null,
+          },
+        ],
+        requireAllSelectedTypesInTeam: false,
+        requireAllSelectedClassesPerCharacter: false,
+        createdAt: '2026-09-13T00:00:00.000Z',
+        updatedAt: '2026-09-13T00:00:00.000Z',
+      } as never),
+      [],
+    );
+
+    expect(page.pageEnemyMechanics().map((mechanic) => mechanic.mechanicKey)).toEqual([
+      'crew_despair',
+      'orb_block',
+    ]);
+  });
+
+  it('carries an UNMAPPED mechanic through, which is the half that used to vanish entirely', async () => {
+    // It derives no ability requirement, so the drafts are the only thing that can carry it.
+    const { page } = await createPage();
+
+    await page['applySelectionPresetState'](
+      buildAutoTeamBuilderStateFromSavedEnemy({
+        id: 'enemy-1',
+        name: 'Forest Boss',
+        notes: '',
+        rawEnemyText: '',
+        imageDataUrl: null,
+        selectedTypes: [],
+        selectedClasses: [],
+        requiredAbilities: [],
+        enemyMechanics: [
+          {
+            mechanicKey: 'interrupt_special',
+            category: 'interrupt',
+            minTurns: null,
+            requiredCharacterCount: 1,
+            triggerTags: [],
+            responseTags: [],
+            conditionTags: [],
+            derivedAbilityKey: null,
+          },
+        ],
+        requireAllSelectedTypesInTeam: false,
+        requireAllSelectedClassesPerCharacter: false,
+        createdAt: '2026-09-13T00:00:00.000Z',
+        updatedAt: '2026-09-13T00:00:00.000Z',
+      } as never),
+      [],
+    );
+
+    expect(page.derivedRequiredAbilities()).toEqual([]);
+    expect(page.pageEnemyMechanics().map((mechanic) => mechanic.mechanicKey)).toEqual([
+      'interrupt_special',
+    ]);
+  });
+
+  it('clears the mechanics a preset does NOT carry, so one enemy cannot leak into the next', async () => {
+    const { page } = await createPage();
+
+    await page['applySelectionPresetState'](
+      buildAutoTeamBuilderStateFromSavedEnemy({
+        id: 'enemy-1',
+        name: 'Forest Boss',
+        notes: '',
+        rawEnemyText: '',
+        imageDataUrl: null,
+        selectedTypes: [],
+        selectedClasses: [],
+        requiredAbilities: [],
+        enemyMechanics: [
+          {
+            mechanicKey: 'crew_bind',
+            category: 'crewDebuff',
+            minTurns: null,
+            requiredCharacterCount: 1,
+            triggerTags: [],
+            responseTags: [],
+            conditionTags: [],
+            derivedAbilityKey: 'remove_bind',
+          },
+        ],
+        requireAllSelectedTypesInTeam: false,
+        requireAllSelectedClassesPerCharacter: false,
+        createdAt: '2026-09-13T00:00:00.000Z',
+        updatedAt: '2026-09-13T00:00:00.000Z',
+      } as never),
+      [],
+    );
+    expect(page.pageEnemyMechanics()).toHaveLength(1);
+
+    await page['applySelectionPresetState'](
+      buildAutoTeamBuilderStateFromSavedEnemy({
+        id: 'enemy-1',
+        name: 'Forest Boss',
+        notes: '',
+        rawEnemyText: '',
+        imageDataUrl: null,
+        selectedTypes: [],
+        selectedClasses: [],
+        requiredAbilities: [],
+        enemyMechanics: [
+
+        ],
+        requireAllSelectedTypesInTeam: false,
+        requireAllSelectedClassesPerCharacter: false,
+        createdAt: '2026-09-13T00:00:00.000Z',
+        updatedAt: '2026-09-13T00:00:00.000Z',
+      } as never),
+      [],
+    );
+
+    expect(page.pageEnemyMechanics()).toEqual([]);
+  });
+
   it('restores leader-scoped captain ability requirements without import warnings', async () => {
     const { page } = await createPage();
 
@@ -9754,7 +9916,24 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
 
     expect(page.selectedTypes()).toEqual(['DEX', 'PSY']);
     expect(page.selectedClasses()).toEqual(['Fighter']);
-    expect(page.pageEnemyMechanics()).toEqual([]);
+    /*
+     * 869f1935z. This asserted `[]` and was pinning a defect: the preset applier cleared the
+     * mechanic drafts, so the barrier mechanic this fixture enemy carries arrived as an anonymous
+     * ability requirement with nothing saying which mechanic produced it - and an UNMAPPED
+     * mechanic would have vanished outright. The required abilities below are unchanged, which is
+     * the point: only the mechanic's identity was being lost, never the constraint.
+     */
+    expect(page.pageEnemyMechanics()).toEqual([
+      {
+        mechanicKey: 'enemy_barrier',
+        category: 'enemyDefense',
+        minTurns: 3,
+        triggerTags: [],
+        responseTags: [],
+        conditionTags: [],
+        derivedAbilityKey: 'remove_enemy_barrier',
+      },
+    ]);
     expect(page.pageRequiredAbilities()).toEqual([
       {
         abilityKey: 'remove_enemy_barrier',
@@ -9809,7 +9988,23 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
       ['Fighter'],
       ['DEX', 'PSY'],
       expect.objectContaining({
-        enemyMechanics: [],
+        /*
+         * 869f1935z. Was `[]`, pinning the same defect as the test above: the mechanic reached the
+         * engine only as an anonymous requirement. The `requiredAbilities` below are byte-identical
+         * either way, so the search this produces is unchanged - what the engine now also receives
+         * is WHICH mechanic asked for it, which is what the checklist reports against.
+         */
+        enemyMechanics: [
+          {
+            mechanicKey: 'enemy_barrier',
+            category: 'enemyDefense',
+            minTurns: 3,
+            triggerTags: [],
+            responseTags: [],
+            conditionTags: [],
+            derivedAbilityKey: 'remove_enemy_barrier',
+          },
+        ],
         requiredAbilities: [
           {
             abilityKey: 'remove_enemy_barrier',
