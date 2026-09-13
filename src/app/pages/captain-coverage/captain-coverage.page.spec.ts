@@ -3173,6 +3173,96 @@ describe('CaptainCoveragePage', () => {
   });
 
   /*
+   * 869f127c9. The team survived the trip to a character's detail page and the filter set did not,
+   * on the page whose filter pass was expensive enough to earn its own Web Worker.
+   */
+  it('parks the filter set in the same key as the team and restores it', async () => {
+    const leader = createCharacter({
+      id: 7101,
+      name: 'Filter Draft Leader',
+      captainAbility: 'Boosts ATK of [DEX] characters by 2x.',
+    });
+    const { page } = createPage({ captains: [leader], characters: [leader] });
+
+    await page.ngOnInit();
+    await page.onTypeFacetChange({ values: ['STR'], matchMode: 'any' });
+    await page.onFavoritesOnlyFilterChange(true);
+
+    const raw = globalThis.sessionStorage?.getItem('optc.captainCoverage.teamDraft');
+
+    expect(raw).toBeTruthy();
+    expect(JSON.parse(raw ?? '{}').filters).toMatchObject({
+      typeFacet: { values: ['STR'], matchMode: 'any' },
+      favoritesOnly: true,
+    });
+
+    const { page: reopened } = createPage({ captains: [leader], characters: [leader] });
+
+    await reopened.ngOnInit();
+
+    expect(reopened.typeFacet()).toEqual({ values: ['STR'], matchMode: 'any' });
+    expect(reopened.favoritesOnly()).toBe(true);
+  });
+
+  it('restores the filters even when the draft carries no team', async () => {
+    // The early returns below used to be about the team and threw the filters away with them.
+    globalThis.sessionStorage?.setItem(
+      'optc.captainCoverage.teamDraft',
+      JSON.stringify({ filters: { favoritesOnly: true, searchTerm: 'zoro' } }),
+    );
+
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    expect(page.favoritesOnly()).toBe(true);
+    expect(page.searchTerm()).toBe('zoro');
+  });
+
+  it('keeps the readable half of a draft one of whose filters it cannot read', async () => {
+    globalThis.sessionStorage?.setItem(
+      'optc.captainCoverage.teamDraft',
+      JSON.stringify({
+        filters: {
+          searchTerm: 'nami',
+          typeFacet: { values: ['QCK'], matchMode: 'all' },
+          // Written by a build this one does not share.
+          characterTagSetSelection: { sets: [{ id: 'x' }], operator: 'all' },
+        },
+      }),
+    );
+
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    expect(page.searchTerm()).toBe('nami');
+    expect(page.typeFacet()).toEqual({ values: ['QCK'], matchMode: 'all' });
+    expect(page.characterTagSetSelection().sets).toEqual([]);
+  });
+
+  it('parks nothing for a page nobody has touched', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    expect(globalThis.sessionStorage?.getItem('optc.captainCoverage.teamDraft')).toBeNull();
+  });
+
+  it('clears the parked filters when the reader clears them all', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.onFavoritesOnlyFilterChange(true);
+
+    expect(globalThis.sessionStorage?.getItem('optc.captainCoverage.teamDraft')).toBeTruthy();
+
+    await page.clearAllFilters();
+
+    expect(globalThis.sessionStorage?.getItem('optc.captainCoverage.teamDraft')).toBeNull();
+  });
+
+  /*
    * The crown alert has always explained its refusal; the sub button just went
    * grey for three different reasons at once.
    */

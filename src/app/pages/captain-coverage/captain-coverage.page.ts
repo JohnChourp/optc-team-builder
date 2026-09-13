@@ -1,4 +1,9 @@
 import {
+  isEmptyCharacterFilterDraft,
+  parseCharacterFilterDraft,
+  type CharacterFilterDraft,
+} from '../../core/services/character-filter-draft.utils';
+import {
   Component,
   type ElementRef,
   type OnInit,
@@ -934,6 +939,9 @@ export class CaptainCoveragePage implements OnInit {
       this.clearMissingSelectedCharacterBox();
       await this.applySavedTeamFromRoute();
       this.restoreTeamDraft();
+      // Again, after the restore: a parked box id can name a box deleted since, and filtering
+      // against a box that no longer exists would return nothing with no control showing why.
+      this.clearMissingSelectedCharacterBox();
       await this.runResultPass(null);
     } finally {
       this.loading.set(false);
@@ -1308,6 +1316,10 @@ export class CaptainCoveragePage implements OnInit {
    * list back instead of stranding the reader on a spinner.
    */
   private async runResultPass(reason: CaptainCoveragePendingReason | null): Promise<void> {
+    // 869f127c9. Every filter handler on this page ends here, which makes this the one write path
+    // for the filter half of the draft - the alternative was a persist call in each of a dozen
+    // handlers, and the one that got forgotten would be the filter nobody could keep.
+    this.persistTeamDraft();
     this.resultPassGeneration += 1;
 
     const generation = this.resultPassGeneration;
@@ -1971,13 +1983,18 @@ export class CaptainCoveragePage implements OnInit {
   private persistTeamDraft(): void {
     const slots = this.selectedTeamSlots().map((slot) => slot?.id ?? null);
     const maxTotalCost = this.maxTotalCost();
+    const filterDraft = this.buildFilterDraft();
 
     try {
       // An empty team is only worth forgetting when there is no cap either. The
       // budget panel sits ABOVE the results, so typing a cap before picking
       // anyone is the natural order - and dropping the draft here was silently
       // throwing that cap away on the trip to a character's detail page.
-      if (slots.every((id) => id === null) && maxTotalCost === null) {
+      if (
+        slots.every((id) => id === null) &&
+        maxTotalCost === null &&
+        isEmptyCharacterFilterDraft(filterDraft)
+      ) {
         sessionStorage.removeItem(CAPTAIN_COVERAGE_TEAM_DRAFT_KEY);
         return;
       }
@@ -1991,6 +2008,10 @@ export class CaptainCoveragePage implements OnInit {
           // without it restores a team whose slots start refusing characters
           // for a reason the reader can no longer see.
           maxTotalCost,
+          // 869f127c9. In the same key as the team, not a second one: two keys
+          // means two write paths and a state where the team comes back under
+          // filters that did not, which reads as the page losing the team.
+          filters: filterDraft,
         }),
       );
     } catch {
@@ -1999,16 +2020,100 @@ export class CaptainCoveragePage implements OnInit {
     }
   }
 
-  /** Only runs when nothing was loaded from `?teamId=`, which always wins. */
-  private restoreTeamDraft(): void {
-    if (this.selectedTeamSlots().some(Boolean)) {
-      return;
+  /** Every filter the page can restore, read once so the write path has one source. */
+  private buildFilterDraft(): CharacterFilterDraft {
+    return {
+      searchTerm: this.searchTerm(),
+      typeFacet: this.typeFacet(),
+      classFacet: this.classFacet(),
+      coverageCostRange: this.coverageCostRange(),
+      sortMode: this.selectedSortMode(),
+      idOrder: this.selectedIdOrder(),
+      favoritesOnly: this.favoritesOnly(),
+      hideFavorites: this.hideFavorites(),
+      requireSuperTandemPresence: this.requireSuperTandemPresence(),
+      requireSuperTypesClassesPresence: this.requireSuperTypesClassesPresence(),
+      requiredTierNumbers: this.requiredTierNumbers(),
+      characterTagSetSelection: this.characterTagSetSelection(),
+      abilityTagSetSelection: this.tagSetSelection(),
+      selectedCharacterBoxId: this.selectedCharacterBoxId(),
+    };
+  }
+
+  /**
+   * Applies exactly the fields the stored draft held a usable value for, leaving this build's own
+   * defaults standing everywhere else. Runs BEFORE the first result pass, so the reader never sees
+   * an unfiltered list flash into a filtered one.
+   */
+  private applyFilterDraft(value: unknown): void {
+    const draft = parseCharacterFilterDraft(value);
+
+    if (draft.searchTerm !== undefined) {
+      this.searchTerm.set(draft.searchTerm);
     }
 
+    if (draft.typeFacet) {
+      this.typeFacet.set(draft.typeFacet);
+    }
+
+    if (draft.classFacet) {
+      this.classFacet.set(draft.classFacet);
+    }
+
+    if (draft.coverageCostRange) {
+      this.coverageCostRange.set(draft.coverageCostRange);
+    }
+
+    if (draft.sortMode) {
+      this.selectedSortMode.set(draft.sortMode);
+    }
+
+    if (draft.idOrder) {
+      this.selectedIdOrder.set(draft.idOrder);
+    }
+
+    if (draft.favoritesOnly !== undefined) {
+      this.favoritesOnly.set(draft.favoritesOnly);
+    }
+
+    if (draft.hideFavorites !== undefined) {
+      this.hideFavorites.set(draft.hideFavorites);
+    }
+
+    if (draft.requireSuperTandemPresence !== undefined) {
+      this.requireSuperTandemPresence.set(draft.requireSuperTandemPresence);
+    }
+
+    if (draft.requireSuperTypesClassesPresence !== undefined) {
+      this.requireSuperTypesClassesPresence.set(draft.requireSuperTypesClassesPresence);
+    }
+
+    if (draft.requiredTierNumbers) {
+      this.requiredTierNumbers.set(draft.requiredTierNumbers);
+    }
+
+    if (draft.characterTagSetSelection) {
+      // Through the apply path, not the signal: the flat `selectedCharacterTags` mirror is
+      // re-derived there, and setting the signal alone would leave the two disagreeing.
+      this.applyCharacterTagSetSelection(draft.characterTagSetSelection);
+    }
+
+    if (draft.abilityTagSetSelection) {
+      this.tagSetSelection.set(draft.abilityTagSetSelection);
+    }
+
+    if (draft.selectedCharacterBoxId !== undefined) {
+      this.selectedCharacterBoxId.set(draft.selectedCharacterBoxId);
+    }
+  }
+
+  /** Only runs when nothing was loaded from `?teamId=`, which always wins. */
+  private restoreTeamDraft(): void {
     let parsed: {
       slots?: Array<number | null>;
       teamName?: string;
       maxTotalCost?: number | null;
+      filters?: unknown;
     } | null = null;
 
     try {
@@ -2018,7 +2123,23 @@ export class CaptainCoveragePage implements OnInit {
       parsed = null;
     }
 
-    if (!parsed || !Array.isArray(parsed.slots)) {
+    if (!parsed) {
+      return;
+    }
+
+    /*
+     * 869f127c9. Filters are restored INDEPENDENTLY of the team, and before the team's own guards.
+     * A reader who arrived with `?teamId=` - or who already has a half-built team on screen - kept
+     * assembling the same expensive filter set, and every early return below would have thrown it
+     * away while claiming to be about the team.
+     */
+    this.applyFilterDraft(parsed.filters);
+
+    if (this.selectedTeamSlots().some(Boolean)) {
+      return;
+    }
+
+    if (!Array.isArray(parsed.slots)) {
       return;
     }
 
