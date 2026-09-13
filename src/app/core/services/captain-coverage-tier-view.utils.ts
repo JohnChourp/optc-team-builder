@@ -278,9 +278,13 @@ function collectCaptainCoverageTierConditionLines(
  *
  * These are not a parser change and not a guess: each is a single distinct
  * string measured across the shipped dataset - `this character is your Captain`
- * (52 instances), `performs EXCELLENT with their Action Special` (52),
- * `if they have a beneficial orb` (291, a quarter of every condition line in the
- * app) and `if they have the applicable tag` (45). Matching the exact string is
+ * (52 [@dataset teamConditionsByKind.requires-captain] instances),
+ * `performs EXCELLENT with their Action Special`
+ * (52 [@dataset triggerClauseInstances.performsExcellentActionSpecial]),
+ * `if they have a beneficial orb`
+ * (292 [@dataset triggerClauseInstances.beneficialOrb], a quarter of every condition line in the
+ * app) and `if they have the applicable tag`
+ * (45 [@dataset triggerClauseInstances.applicableTag]). Matching the exact string is
  * deliberate: anything else falls through to the raw clause unchanged, so an
  * upstream rewording degrades to today's English instead of breaking.
  */

@@ -5,10 +5,17 @@ import {
 } from '../models/optc.models';
 
 /**
- * Verified over all 4588 rows of public/assets/data/optc-seed.sql:
- * 189 characters carry two types (4399 carry one) and 4086 carry two classes
- * (484 carry one, 18 carry none). No row carries three of either. `all` across
+ * Verified over all 4618 [@dataset characterRows] rows of public/assets/data/optc-seed.sql:
+ * 190 [@dataset charactersWithTwoTypes] characters carry two types
+ * (4428 [@dataset charactersWithOneType] carry one) and
+ * 4116 [@dataset charactersWithTwoClasses] carry two classes
+ * (484 [@dataset charactersWithOneClass] carry one,
+ * 18 [@dataset charactersWithNoClasses] carry none). No row carries three of either. `all` across
  * more than this can never match, so the normalizer refuses to represent it.
+ *
+ * The `[@dataset ...]` markers are not decoration. Four of these six figures had already drifted -
+ * the comment said 4588 rows, 189 two-type, 4399 one-type and 4086 two-class - because the dataset
+ * moves at release and prose does not. `npm run dataset:measurements` now fails when they part.
  */
 export const MAX_HELD_CHARACTER_FACET_VALUES: Readonly<Record<CharacterFacetKind, number>> = {
   type: 2,
