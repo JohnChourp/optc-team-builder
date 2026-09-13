@@ -97,6 +97,8 @@
     "dataset:spec-pins": "node ./scripts/check-dataset-spec-pins.mjs",
     "dataset:measure": "node ./scripts/measure-dataset-facts.mjs",
     "dataset:measurements": "node ./scripts/check-dataset-measurements.mjs",
+    "dataset:unresolved-clauses": "node ./scripts/generate-unresolved-clauses.mjs",
+    "test:unresolved-clauses": "vitest run scripts/generate-unresolved-clauses.spec.ts && node ./scripts/generate-unresolved-clauses.mjs --check",
     "test:dataset-measurements": "vitest run scripts/check-dataset-measurements.spec.ts && npm run dataset:measurements",
     "test:dataset-digest": "vitest run scripts/dataset-change-digest.spec.ts",
     "test:docs-integrity": "vitest run scripts/check-docs-integrity.spec.ts && npm run docs:integrity -- --app-only",

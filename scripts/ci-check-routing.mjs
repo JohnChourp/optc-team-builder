@@ -133,6 +133,10 @@ export const SCRIPT_SUITES = {
     label: 'Dataset measurement guard tests',
     command: 'npm run test:dataset-measurements',
   },
+  'unresolved-clauses': {
+    label: 'Unresolved clause record tests',
+    command: 'npm run test:unresolved-clauses',
+  },
   'tag-picker-scoping': {
     label: 'Tag-set picker panel scoping tests',
     command: 'npm run test:tag-picker-scoping',
@@ -418,6 +422,22 @@ function isWhatsNewPath(filePath) {
  * local gate runs every lane regardless, so a newly added marker is still verified before merge -
  * routing only decides what the manual `Test` workflow selects.
  */
+/*
+ * 869f127f6. The record is a function of the dataset and of which clauses the catalogue maps, so
+ * the tier view routes here too - mapping a new clause legitimately shrinks the count, and the
+ * committed record has to move with it.
+ */
+function isUnresolvedClausePath(filePath) {
+  return (
+    filePath === 'public/assets/data/optc-unresolved-clauses.json' ||
+    filePath === 'scripts/generate-unresolved-clauses.mjs' ||
+    filePath === 'scripts/generate-unresolved-clauses.spec.ts' ||
+    filePath === 'scripts/lib/unresolved-clauses.mjs' ||
+    filePath === 'src/app/core/services/captain-coverage-tier-view.utils.ts' ||
+    filePath.startsWith('public/assets/data/')
+  );
+}
+
 function isDatasetMeasurementPath(filePath) {
   return (
     filePath === 'src/app/core/data/dataset-measurements.json' ||
@@ -718,6 +738,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isDatasetMeasurementPath(filePath)) {
       categories.add('dataset-measurements');
       addScriptSuite(scriptSuites, 'dataset-measurements');
+    }
+
+    if (isUnresolvedClausePath(filePath)) {
+      categories.add('unresolved-clauses');
+      addScriptSuite(scriptSuites, 'unresolved-clauses');
     }
 
     if (isTagPickerScopingPath(filePath)) {

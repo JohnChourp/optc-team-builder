@@ -1,0 +1,1032 @@
+{
+  "generatedAt": "2026-09-13T12:02:53.291Z",
+  "sourceVersion": "36",
+  "total": 586,
+  "distinctClauses": 108,
+  "byKind": {
+    "teamConditionRawOnly": 67,
+    "triggerClause": 519
+  },
+  "items": [
+    {
+      "kind": "triggerClause",
+      "clause": "HP is above 99%",
+      "instances": 73,
+      "characterIds": [
+        250,
+        251,
+        358,
+        359,
+        359
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is below 30%",
+      "instances": 63,
+      "characterIds": [
+        260,
+        261,
+        360,
+        361,
+        553
+      ]
+    },
+    {
+      "kind": "teamConditionRawOnly",
+      "clause": "this character is your Captain",
+      "instances": 52,
+      "characterIds": [
+        4149,
+        4150,
+        4152,
+        4153,
+        4154
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "performs EXCELLENT with their Action Special",
+      "instances": 52,
+      "characterIds": [
+        4149,
+        4150,
+        4152,
+        4153,
+        4154
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is below 50%",
+      "instances": 36,
+      "characterIds": [
+        541,
+        1257,
+        1258,
+        1531,
+        1532
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is above 50%",
+      "instances": 22,
+      "characterIds": [
+        444,
+        445,
+        513,
+        606,
+        607
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is above 70%",
+      "instances": 21,
+      "characterIds": [
+        415,
+        416,
+        648,
+        649,
+        934
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [WANO] orb",
+      "instances": 15,
+      "characterIds": [
+        3429,
+        3675,
+        3676,
+        3879,
+        3879
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "when they are rewinded",
+      "instances": 14,
+      "characterIds": [
+        2690,
+        3060,
+        3060,
+        3060,
+        3115
+      ]
+    },
+    {
+      "kind": "teamConditionRawOnly",
+      "clause": "your crew has 4 or more characters of the same Type",
+      "instances": 13,
+      "characterIds": [
+        2006,
+        2007,
+        2007,
+        2768,
+        2769
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] orb",
+      "instances": 9,
+      "characterIds": [
+        2012,
+        2013,
+        3306,
+        3307,
+        3860
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is above 80%",
+      "instances": 6,
+      "characterIds": [
+        4097,
+        4107,
+        4108,
+        4140,
+        4140
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if the character has 2 matching Classes",
+      "instances": 6,
+      "characterIds": [
+        4061,
+        4061,
+        4061,
+        4062,
+        4062
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [G] orb",
+      "instances": 6,
+      "characterIds": [
+        4002,
+        4002,
+        4002,
+        4003,
+        4003
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] [TND], [EMPTY], [BOMB] or [SUPERBOMB] orb",
+      "instances": 6,
+      "characterIds": [
+        4307,
+        4307,
+        4307,
+        4522,
+        4522
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [TND] [BOMB] or [SUPERBOMB] orb",
+      "instances": 6,
+      "characterIds": [
+        4141,
+        4141,
+        4142,
+        4142,
+        4317
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have an [EMPTY] [G] or beneficial orb",
+      "instances": 6,
+      "characterIds": [
+        4121,
+        4121,
+        4121,
+        4122,
+        4122
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have Matching orbs",
+      "instances": 6,
+      "characterIds": [
+        652,
+        653,
+        654,
+        1535,
+        1536
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] [TND] or [WANO] orb",
+      "instances": 5,
+      "characterIds": [
+        3890,
+        3891,
+        3947,
+        3948,
+        3950
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR], [QCK], [DEX], [INT], [PSY] or [RAINBOW] orb",
+      "instances": 5,
+      "characterIds": [
+        1651,
+        1652,
+        1652,
+        2373,
+        2373
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have an [EMPTY] orb",
+      "instances": 5,
+      "characterIds": [
+        3740,
+        3741,
+        3940,
+        3940,
+        3940
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is below 25%",
+      "instances": 4,
+      "characterIds": [
+        4230,
+        4231,
+        4328,
+        4426
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if there is a Marked enemy",
+      "instances": 4,
+      "characterIds": [
+        3673,
+        3674,
+        3871,
+        3873
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [PSY] or [TND] orb",
+      "instances": 4,
+      "characterIds": [
+        3992,
+        3993,
+        3994,
+        3995
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] [TND], [WANO], [SEMLA], [G] or [RAINBOW] orb",
+      "instances": 4,
+      "characterIds": [
+        3888,
+        3889,
+        3966,
+        3967
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR]",
+      "instances": 4,
+      "characterIds": [
+        4002,
+        4002,
+        4003,
+        4003
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] and [QCK], [DEX], [INT] or [PSY] orb,",
+      "instances": 4,
+      "characterIds": [
+        2894,
+        2894,
+        2895,
+        2895
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [TND] or [WANO] orb",
+      "instances": 4,
+      "characterIds": [
+        4042,
+        4043,
+        4163,
+        4164
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [TND] orb",
+      "instances": 4,
+      "characterIds": [
+        3996,
+        4162,
+        4335,
+        4335
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "Powered Up Captain:",
+      "instances": 4,
+      "characterIds": [
+        2233,
+        2234,
+        2500,
+        2500
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "Rampage Captain:",
+      "instances": 4,
+      "characterIds": [
+        2233,
+        2234,
+        2500,
+        2500
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is above 90%",
+      "instances": 3,
+      "characterIds": [
+        3851,
+        3852,
+        3936
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [QCK]",
+      "instances": 3,
+      "characterIds": [
+        4002,
+        4003,
+        4472
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] or [TND] orb",
+      "instances": 3,
+      "characterIds": [
+        3763,
+        3764,
+        4392
+      ]
+    },
+    {
+      "kind": "teamConditionRawOnly",
+      "clause": "your crew has 4+ characters of the same Type",
+      "instances": 2,
+      "characterIds": [
+        4574,
+        4575
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "after 2 consecutive PERFECTs",
+      "instances": 2,
+      "characterIds": [
+        2073,
+        2074
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "Gear 2 Captain:",
+      "instances": 2,
+      "characterIds": [
+        2073,
+        2074
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "Gear 3 Captain:",
+      "instances": 2,
+      "characterIds": [
+        2073,
+        2074
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "Gear 4 - Boundman Captain:",
+      "instances": 2,
+      "characterIds": [
+        2073,
+        2074
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "Gear 4 - Tankman Captain:",
+      "instances": 2,
+      "characterIds": [
+        2073,
+        2074
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "Gear 5 Captain:",
+      "instances": 2,
+      "characterIds": [
+        3955,
+        3956
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is 50% or below",
+      "instances": 2,
+      "characterIds": [
+        2262,
+        2263
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is below 20%",
+      "instances": 2,
+      "characterIds": [
+        4254,
+        4402
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if character has both type and class",
+      "instances": 2,
+      "characterIds": [
+        4276,
+        4276
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if crew is inflicted with 10+ status effects",
+      "instances": 2,
+      "characterIds": [
+        4291,
+        4292
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if HP is above ?% at the start of the turn",
+      "instances": 2,
+      "characterIds": [
+        1964,
+        1982
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if HP is below ?% at the start of the turn",
+      "instances": 2,
+      "characterIds": [
+        2439,
+        2956
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they do not have a [STR] [DEX], [QCK], [PSY], or [INT] orb",
+      "instances": 2,
+      "characterIds": [
+        4267,
+        4267
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [DEX] [TND] or [WANO] orb",
+      "instances": 2,
+      "characterIds": [
+        4513,
+        4514
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [DEX] or [INT] orb",
+      "instances": 2,
+      "characterIds": [
+        4620,
+        4621
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [EMPTY] orb",
+      "instances": 2,
+      "characterIds": [
+        4480,
+        4481
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [INT] or [TND] orb",
+      "instances": 2,
+      "characterIds": [
+        3994,
+        3995
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [PSY] [INT] or [TND] orb",
+      "instances": 2,
+      "characterIds": [
+        3994,
+        3995
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] [SEMLA] or [WANO] orb",
+      "instances": 2,
+      "characterIds": [
+        3972,
+        3973
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] [TND], [WANO] or [RAINBOW] orb",
+      "instances": 2,
+      "characterIds": [
+        4028,
+        4029
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] [TND], [WANO], [EMPTY], [G] or [RAINBOW] orb",
+      "instances": 2,
+      "characterIds": [
+        3904,
+        3905
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [SEMLA] orb",
+      "instances": 2,
+      "characterIds": [
+        3596,
+        3597
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] [RCV], [TND], [RAINBOW] or [WANO] orb",
+      "instances": 2,
+      "characterIds": [
+        4529,
+        4529
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] [TND], [BOMB] or [SUPERBOMB] orb",
+      "instances": 2,
+      "characterIds": [
+        4487,
+        4487
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] orb",
+      "instances": 2,
+      "characterIds": [
+        3489,
+        3490
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a beneficial orb and their HP and RCV by 1.3x",
+      "instances": 2,
+      "characterIds": [
+        3522,
+        3523
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a Cost 40 or less",
+      "instances": 2,
+      "characterIds": [
+        4473,
+        4474
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have an [DEX]",
+      "instances": 2,
+      "characterIds": [
+        3940,
+        3940
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have an [INT] [RCV] or [TND] orb",
+      "instances": 2,
+      "characterIds": [
+        4083,
+        4084
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have an [TND] or [WANO] orb",
+      "instances": 2,
+      "characterIds": [
+        4114,
+        4115
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if total Damage Taken is 20,000 or more",
+      "instances": 2,
+      "characterIds": [
+        3224,
+        3225
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if you use \"Amplified Strike\" in this turn",
+      "instances": 2,
+      "characterIds": [
+        3581,
+        3582
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if you use \"Clearing X Calibur\" in this turn",
+      "instances": 2,
+      "characterIds": [
+        4119,
+        4120
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if you use \"Glorious Death of the Kurozumi Clan Kazenbo\" in this turn",
+      "instances": 2,
+      "characterIds": [
+        3985,
+        3986
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "If you use \"Scorching Onslaught of Power\" in this turn instead",
+      "instances": 2,
+      "characterIds": [
+        4019,
+        4020
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is 10% or below",
+      "instances": 1,
+      "characterIds": [
+        2197
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "HP is below 10%",
+      "instances": 1,
+      "characterIds": [
+        1245
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if any enemies were defeated in the previous turn",
+      "instances": 1,
+      "characterIds": [
+        2531
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if crew meets tag conditions",
+      "instances": 1,
+      "characterIds": [
+        4498
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if the enemy has Increased Defense, Percent Damage Reduction or Threshold Damage Reduction status",
+      "instances": 1,
+      "characterIds": [
+        4227
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they are a Powerhouse or Fighter character",
+      "instances": 1,
+      "characterIds": [
+        4466
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they are an [INT] Powerhouse or Driven character",
+      "instances": 1,
+      "characterIds": [
+        4459
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they are an [INT] Powerhouse or Shooter character",
+      "instances": 1,
+      "characterIds": [
+        4460
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they do not have a [STR] [DEX], [QCK], [PSY] or [INT] orb",
+      "instances": 1,
+      "characterIds": [
+        3814
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [BOMB] or [SUPERBOMB] orb",
+      "instances": 1,
+      "characterIds": [
+        3762
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [DEX] [RCV], [TND] or [WANO] orb",
+      "instances": 1,
+      "characterIds": [
+        4336
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [DEX] [RCV], [TND], [RAINBOW] or [WANO] orb",
+      "instances": 1,
+      "characterIds": [
+        4529
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [DEX] [RCV], [TND], [RAINBOW] or [WANO] orb, and restores Special Cooldown of all characters by 10 turns when they are rewinded",
+      "instances": 1,
+      "characterIds": [
+        4529
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [EMPTY] or [G] orb",
+      "instances": 1,
+      "characterIds": [
+        4472
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [INT] [RCV] or [RAINBOW] orb",
+      "instances": 1,
+      "characterIds": [
+        4576
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [INT] [TND] or [RAINBOW] orb",
+      "instances": 1,
+      "characterIds": [
+        4577
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] [TND], [SEMLA] or [RAINBOW] orb",
+      "instances": 1,
+      "characterIds": [
+        4468
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] [TND], [WANO] or [SEMLA] orb",
+      "instances": 1,
+      "characterIds": [
+        4054
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [RCV] or [SEMLA] orb",
+      "instances": 1,
+      "characterIds": [
+        4467
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] [DEX], [INT] or [TND] orb",
+      "instances": 1,
+      "characterIds": [
+        4050
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] [DEX], [QCK], [PSY] or [INT] orb",
+      "instances": 1,
+      "characterIds": [
+        4408
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] [INT], [RCV] or [RAINBOW] orb",
+      "instances": 1,
+      "characterIds": [
+        4576
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] [INT], [TND] or [RAINBOW] orb",
+      "instances": 1,
+      "characterIds": [
+        4577
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] [RCV] or [RAINBOW] orb",
+      "instances": 1,
+      "characterIds": [
+        4576
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] [TND] or [RAINBOW] orb",
+      "instances": 1,
+      "characterIds": [
+        4577
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] or [INT] orb",
+      "instances": 1,
+      "characterIds": [
+        2934
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [STR] orb and their HP and RCV by 1.2x",
+      "instances": 1,
+      "characterIds": [
+        1941
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [WANO] orbs",
+      "instances": 1,
+      "characterIds": [
+        3519
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a beneficial [TND] or [RAINBOW] orb",
+      "instances": 1,
+      "characterIds": [
+        4071
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a beneficial orb if they have a beneficial orb",
+      "instances": 1,
+      "characterIds": [
+        4140
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a non-type orb",
+      "instances": 1,
+      "characterIds": [
+        4591
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have an orb that isn't [STR] [DEX], [QCK], [PSY] or [INT]",
+      "instances": 1,
+      "characterIds": [
+        3934
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have the applicable tag, and allows effects that inflict Increase Damage Taken and Weaken to ignore Debuff Protection",
+      "instances": 1,
+      "characterIds": [
+        4490
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if you use \"A Broad Smile of Life and Death\" this turn",
+      "instances": 1,
+      "characterIds": [
+        1963
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if you use \"Ground-Shaking Thunder Bagua\" in this turn otherwise",
+      "instances": 1,
+      "characterIds": [
+        4080
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if you use \"Roars and Swords\" in this turn",
+      "instances": 1,
+      "characterIds": [
+        3997
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if you use \"Tears of Attraction\" this turn",
+      "instances": 1,
+      "characterIds": [
+        1961
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "when HP is below ?%",
+      "instances": 1,
+      "characterIds": [
+        2318
+      ]
+    }
+  ]
+}
