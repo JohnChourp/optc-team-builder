@@ -6253,6 +6253,21 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       favoriteShipIds: this.favoriteShipIds(),
       leaderBoostFilters: this.leaderBoostFilters(),
       leaderBoostRanges: this.cloneLeaderBoostRanges(this.leaderBoostRanges()),
+      /*
+       * 869f1935z. These five are written as constants on purpose, and the applier reads them back
+       * as the same constants, so the pair round-trips a fixed value rather than the reader's.
+       *
+       * That is correct TODAY only because this screen exposes none of them: `maxTotalCost`, the
+       * two cost ranges, `requireAllSelectedClassesPerCharacter` and `requireUniqueBaseCharacterNames`
+       * have zero template references here, so there is no reader value to lose. Captain Coverage
+       * does have a cost cap, which is why the fields exist on the shared payload at all.
+       *
+       * **Wire any of them to a control on this page and this becomes a silent data loss** - the
+       * export writes the default, the import restores the default, and the reader's setting
+       * disappears between the two with nothing on screen to explain it. That is exactly the shape
+       * of the `enemyMechanicDrafts.set([])` defect this batch already fixed twice. Read the signal
+       * here and in `applySelectionPresetState` in the same change.
+       */
       leaderCostRange: createEmptyAutoBuildCostRange(),
       subCostRange: createEmptyAutoBuildCostRange(),
       maxTotalCost: null,
@@ -7207,6 +7222,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.mergeSelectedCharacterNames(state.selectedCharacterNames ?? []);
     this.leaderBoostFilters.set([...state.leaderBoostFilters]);
     this.leaderBoostRanges.set(this.cloneLeaderBoostRanges(state.leaderBoostRanges));
+    /*
+     * 869f1935z. The other half of the constant pair documented in `buildSelectionExportPayload`.
+     * These read a constant because the exporter writes one; if either side starts carrying the
+     * reader's value, BOTH must, or a preset silently resets a setting they chose.
+     */
     this.leaderCostRange.set(createEmptyAutoBuildCostRange());
     this.subCostRange.set(createEmptyAutoBuildCostRange());
     this.maxTotalCost.set(null);

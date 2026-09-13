@@ -316,25 +316,49 @@ function scanTemplateFiles(rootDir, rootTranslationTree, scopeTranslationTrees) 
   return findings;
 }
 
+/**
+ * Every scoped `translate` helper in a file, found by locating the CALL and reading backwards to
+ * the method that owns it.
+ *
+ * 869f1935z. The previous pattern went the other way - signature first, then an unbounded
+ * `[\s\S]*?` to the `return` - and a global regex over a 9,000 line page locks onto one span and
+ * stops. Measured: it detected exactly ONE helper in `auto-team-builder.page.ts`, and that one was
+ * `buildSelectedFilterReportRow`, which is not a translate helper at all. The page's real `t()` was
+ * never found, so every `this.t('...')` call in the largest page in the app went unscanned.
+ *
+ * Reading backwards cannot run away like that: the call is the anchor, and the owning signature is
+ * the nearest one above it.
+ */
 function findScopedTranslateHelpers(source) {
-  const helpers = [];
-  const methodHelperPattern =
-    /(?:private|public|protected)\s+([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)[\s\S]*?\)\s*:\s*string\s*\{[\s\S]*?return this\.i18n\.translate\(\s*\2\s*,[\s\S]*?,\s*["']([^"']+)["']\s*\);[\s\S]*?\}/g;
-  const propertyHelperPattern =
-    /(?:private|public|protected)\s+(?:readonly\s+)?([A-Za-z_$][\w$]*)\s*=\s*\(\s*([A-Za-z_$][\w$]*)[\s\S]*?\)\s*:\s*string\s*=>\s*this\.i18n\.translate\(\s*\2\s*,[\s\S]*?,\s*["']([^"']+)["']\s*\)/g;
+  const helpers = new Map();
+  const callPattern =
+    /return this\.i18n\.translate\(\s*([A-Za-z_$][\w$]*)\s*,[\s\S]{0,200}?,\s*["']([^"']+)["']\s*\)/g;
 
-  for (const match of source.matchAll(methodHelperPattern)) {
-    const [, name, , scope] = match;
-    helpers.push({ name, scope });
+  for (const match of source.matchAll(callPattern)) {
+    const [, parameterName, scope] = match;
+    const before = source.slice(0, match.index);
+    const signature = [
+      ...before.matchAll(
+        /(?:private|public|protected)\s+(?:readonly\s+)?([A-Za-z_$][\w$]*)\s*(?:=\s*)?\(\s*([A-Za-z_$][\w$]*)/g,
+      ),
+    ].pop();
+
+    if (!signature) {
+      continue;
+    }
+
+    const [, name, firstParameter] = signature;
+
+    // The helper must pass its OWN first parameter through; anything else is a different method
+    // that happens to call translate with a local variable.
+    if (firstParameter === parameterName) {
+      helpers.set(name, { name, scope });
+    }
   }
 
-  for (const match of source.matchAll(propertyHelperPattern)) {
-    const [, name, , scope] = match;
-    helpers.push({ name, scope });
-  }
-
-  return helpers;
+  return [...helpers.values()];
 }
+
 
 function findDirectScopedTranslateCalls(source) {
   const calls = [];
@@ -417,6 +441,31 @@ function resolveScopedKeyIssue(key, scope, rootTranslationTree, scopeTranslation
     return "Another scope's translation key is being resolved through the wrong scoped lookup";
   }
 
+  /*
+   * 869f1935z. The hole this function had: every branch above reports a key resolved through the
+   * WRONG lookup, and a key that resolves through NO lookup fell out here as "no issue".
+   *
+   * So a translation key called from TypeScript that exists nowhere was reported by nothing -
+   * measured by planting one and watching `i18n:validate`, `i18n:regression` and all 288 tests of
+   * the page pass. The reader would get the raw key on screen. Templates were never exposed to
+   * this: the template scanner shares this resolver, and the same silence applied there.
+   *
+   * Only complete literal keys reach here - an interpolated `report.rules.${key}.passed` is never
+   * collected - so this cannot fire on a key assembled at runtime.
+   */
+  if (scopeTranslationTree && isCheckableTranslationKey(key)) {
+    /*
+     * A key ending in `.` is the literal PREFIX of an interpolated lookup - the scanner sees
+     * `t('mechanicChecklist.states.' + state)` as `mechanicChecklist.states.`. Resolve the branch
+     * it names instead of the impossible leaf, or this reports six real, working call sites.
+     */
+    const branchKey = key.endsWith(".") ? key.slice(0, -1) : key;
+
+    if (!hasTranslationKey(scopeTranslationTree, branchKey)) {
+      return "Translation key does not exist in this scope, or in any other bundle";
+    }
+  }
+
   return null;
 }
 
@@ -447,6 +496,28 @@ function walkFiles(rootDir, extensions) {
 
 function resolveLineNumber(source, index) {
   return source.slice(0, index).split("\n").length;
+}
+
+/**
+ * 869f1935z. Which literals the missing-key check may judge.
+ *
+ * Two kinds reach the scanner that are not translation keys at all, and both were harmless while
+ * the resolver only reported cross-scope misuse:
+ *
+ *  - **a template-literal fragment.** `translate(\`management.counts.${key}\`)` is captured with the
+ *    `${...}` still in it; the real key only exists at runtime.
+ *  - **a bare word.** `findScopedTranslateHelpers` matches any method whose first parameter reaches
+ *    `i18n.translate`, so `buildSelectedFilterReportRow('characterTags', ...)` - which takes a
+ *    REPORT ROW key, not a translation key - is read as a translate helper. Every real key in this
+ *    repository is dotted, so requiring a dot separates the two without loosening the detector for
+ *    the checks that already work.
+ *
+ * The cost is stated rather than hidden: a genuinely missing single-segment key goes unreported.
+ * That is a narrow gap against the class this closes, and widening the check would mean fixing the
+ * helper detector, which the existing findings depend on.
+ */
+function isCheckableTranslationKey(key) {
+  return !key.includes("${") && key.includes(".");
 }
 
 function hasTranslationKey(tree, key) {
