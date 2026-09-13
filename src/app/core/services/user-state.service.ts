@@ -47,7 +47,10 @@ import { AppI18nService } from './app-i18n.service';
 import { toBrowserStoragePersistenceError } from './browser-storage-error.utils';
 import { DriveSyncStateService } from './drive-sync-state.service';
 import { PreferencesAdapterService } from './preferences-adapter.service';
-import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
+import {
+  deriveAbilityRequirementsFromEnemyMechanics,
+  normalizeEnemyMechanicRequirements,
+} from './enemy-mechanic-draft.utils';
 
 const FAVORITES_KEY = 'favoriteCharacterIds';
 const FAVORITE_SHIPS_KEY = 'favoriteShipIds';
@@ -2085,9 +2088,24 @@ export class UserStateService {
       return groups;
     }
 
-    return expandRequiredAbilitiesToCharacterGroups(
-      this.normalizeRequiredAbilities(enemy.requiredAbilities),
-    ).groups;
+    /*
+     * 869f1935z. The mechanics have to be expanded here too, not just the manual abilities.
+     *
+     * These groups are what `normalizeBattleRequirementsWithLegacyFallback` then treats as already
+     * resolved - it merges the mechanic-derived requirements only when it has NO groups to work
+     * from. So an enemy carrying mechanics AND at least one manual ability produced exactly one
+     * group, from the manual ability, and every mechanic requirement was dropped on the floor:
+     * silently, with the mechanics still stored on the enemy and still shown in the panel.
+     *
+     * An enemy with mechanics and no manual ability was fine, which is why it went unnoticed - the
+     * fallback had nothing to short-circuit on.
+     */
+    return expandRequiredAbilitiesToCharacterGroups([
+      ...deriveAbilityRequirementsFromEnemyMechanics(
+        normalizeEnemyMechanicRequirements(enemy.enemyMechanics ?? []),
+      ),
+      ...this.normalizeRequiredAbilities(enemy.requiredAbilities),
+    ]).groups;
   }
 
   private normalizeRequiredAbilities(
