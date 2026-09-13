@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-13T10:07:19.385Z",
+  "generatedAt": "2026-09-13T13:46:36.762Z",
   "characters": [
     {
       "id": 1,
@@ -25,6 +25,51 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 0,
       "captainAverageBoost": 0,
+      "maxSockets": 0,
+      "specialCooldownMax": 3,
+      "specialCooldownMin": 2,
+      "evolvesTo": [
+        {
+          "toId": 2,
+          "materials": [
+            {
+              "characterId": 78,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [],
+      "dropSources": [
+        {
+          "group": "Fortnight",
+          "stage": "Smoker's Great Pursuit",
+          "dropId": "event9",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Adrift!? Humming Brook",
+          "dropId": "event19",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Supersonic Duck Squadron!",
+          "dropId": "event21",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Wapol's Revenge",
+          "dropId": "event42",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "monkey d. luffy str fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -123,6 +168,92 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 0,
+      "specialCooldownMax": 12,
+      "specialCooldownMin": 9,
+      "evolvesTo": [
+        {
+          "toId": 3,
+          "materials": [
+            {
+              "characterId": 115,
+              "token": null
+            },
+            {
+              "characterId": 78,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        1
+      ],
+      "dropSources": [
+        {
+          "group": "Story Island",
+          "stage": "Whiskey Peak",
+          "dropId": "story10",
+          "slot": "15",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Candy the Maiden-Hearted",
+          "dropId": "event20",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Crocodile: Life on the Inside",
+          "dropId": "event23",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Domino's Special Security",
+          "dropId": "event24",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Chief Jailer Sadie",
+          "dropId": "event25",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Sky Night Ganfor",
+          "dropId": "event34",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Tom's Workers",
+          "dropId": "event41",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Pirates!",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Day Anniversary Island",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        }
+      ],
       "searchText": "monkey d. luffy - gum-gum pistol str fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -254,6 +385,72 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 2,
+      "specialCooldownMax": 23,
+      "specialCooldownMin": 15,
+      "evolvesTo": [
+        {
+          "toId": 4,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            },
+            {
+              "characterId": 84,
+              "token": null
+            },
+            {
+              "characterId": 95,
+              "token": null
+            },
+            {
+              "characterId": 100,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        2
+      ],
+      "dropSources": [
+        {
+          "group": "Fortnight",
+          "stage": "Smoker's Great Pursuit",
+          "dropId": "event9",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Perona's Wonder Garden",
+          "dropId": "event16",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Adrift!? Humming Brook",
+          "dropId": "event19",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Supersonic Duck Squadron!",
+          "dropId": "event21",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Brother Soul! Afro Luffy!",
+          "dropId": "event26",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "monkey d. luffy - gum-gum bazooka str fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -386,6 +583,57 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 2,
       "captainAverageBoost": 1,
+      "maxSockets": 3,
+      "specialCooldownMax": 25,
+      "specialCooldownMin": 18,
+      "evolvesTo": [
+        {
+          "toId": 1387,
+          "materials": [
+            {
+              "characterId": 1387,
+              "token": null
+            },
+            {
+              "characterId": 267,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        3
+      ],
+      "dropSources": [
+        {
+          "group": "Fortnight",
+          "stage": "Shandia - Dreams of a Homeland!",
+          "dropId": "event27",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Camie and Hachi's Takoyaki Stand!",
+          "dropId": "event30",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Wapol's Revenge",
+          "dropId": "event42",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Lightning Speed! Strawhat Crew's Surprise Visit",
+          "dropId": "event43",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "monkey d. luffy - gear 2 str fighter free spirit",
       "regionAvailability": {
         "exactLocal": false,
@@ -577,6 +825,93 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 0,
+      "specialCooldownMax": 12,
+      "specialCooldownMin": 9,
+      "evolvesTo": [
+        {
+          "toId": 6,
+          "materials": [
+            {
+              "characterId": 115,
+              "token": null
+            },
+            {
+              "characterId": 80,
+              "token": null
+            }
+          ]
+        },
+        {
+          "toId": 7,
+          "materials": [
+            {
+              "characterId": 116,
+              "token": null
+            },
+            {
+              "characterId": 80,
+              "token": null
+            },
+            {
+              "characterId": 97,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [],
+      "dropSources": [
+        {
+          "group": "Story Island",
+          "stage": "Shells Town",
+          "dropId": "story3",
+          "slot": "Completion Units",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Cobymeppo's Proving Ground!",
+          "dropId": "event8",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Domino's Special Security",
+          "dropId": "event24",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Chief Jailer Sadie",
+          "dropId": "event25",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Sky Night Ganfor",
+          "dropId": "event34",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Pirates!",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Day Anniversary Island",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        }
+      ],
       "searchText": "roronoa zoro dex slasher",
       "regionAvailability": {
         "exactLocal": false,
@@ -711,6 +1046,44 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 2,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 10,
+      "evolvesTo": [
+        {
+          "toId": 8,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            },
+            {
+              "characterId": 86,
+              "token": null
+            },
+            {
+              "characterId": 97,
+              "token": null
+            },
+            {
+              "characterId": 102,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        5
+      ],
+      "dropSources": [
+        {
+          "group": "Special",
+          "stage": "Battle Royale! Oars",
+          "dropId": "",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "roronoa zoro - three thousand worlds dex slasher driven",
       "regionAvailability": {
         "exactLocal": false,
@@ -845,6 +1218,32 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 2,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 10,
+      "evolvesTo": [
+        {
+          "toId": 8,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            },
+            {
+              "characterId": 80,
+              "token": null
+            },
+            {
+              "characterId": 102,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        5
+      ],
+      "dropSources": [],
       "searchText": "roronoa zoro - pound phoenix dex slasher driven",
       "regionAvailability": {
         "exactLocal": false,
@@ -979,6 +1378,37 @@
       "captainHpBoost": 2,
       "captainAtkBoost": 2,
       "captainAverageBoost": 2,
+      "maxSockets": 3,
+      "specialCooldownMax": 25,
+      "specialCooldownMin": 20,
+      "evolvesTo": [
+        {
+          "toId": 1388,
+          "materials": [
+            {
+              "characterId": 1388,
+              "token": null
+            },
+            {
+              "characterId": 267,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        6,
+        7
+      ],
+      "dropSources": [
+        {
+          "group": "Fortnight",
+          "stage": "Camie and Hachi's Takoyaki Stand!",
+          "dropId": "event30",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "roronoa zoro - ashura ichibugin dex slasher driven",
       "regionAvailability": {
         "exactLocal": false,
@@ -1180,6 +1610,72 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 0,
       "captainAverageBoost": 0,
+      "maxSockets": 0,
+      "specialCooldownMax": 12,
+      "specialCooldownMin": 7,
+      "evolvesTo": [
+        {
+          "toId": 10,
+          "materials": [
+            {
+              "characterId": 115,
+              "token": null
+            },
+            {
+              "characterId": 82,
+              "token": null
+            }
+          ]
+        },
+        {
+          "toId": 11,
+          "materials": [
+            {
+              "characterId": 116,
+              "token": null
+            },
+            {
+              "characterId": 82,
+              "token": null
+            },
+            {
+              "characterId": 99,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [],
+      "dropSources": [
+        {
+          "group": "Story Island",
+          "stage": "Arlong Park",
+          "dropId": "story7",
+          "slot": "Completion Units",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Lightning Speed! Strawhat Crew's Surprise Visit",
+          "dropId": "event43",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Pirates!",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Day Anniversary Island",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        }
+      ],
       "searchText": "nami int striker",
       "regionAvailability": {
         "exactLocal": false,
@@ -1301,6 +1797,58 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 2,
+      "specialCooldownMax": 23,
+      "specialCooldownMin": 15,
+      "evolvesTo": [
+        {
+          "toId": 12,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            },
+            {
+              "characterId": 88,
+              "token": null
+            },
+            {
+              "characterId": 99,
+              "token": null
+            },
+            {
+              "characterId": 104,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        9
+      ],
+      "dropSources": [
+        {
+          "group": "Fortnight",
+          "stage": "Dr. Hogback's Lab of the Dead",
+          "dropId": "event15",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Girls of Summer Paradise",
+          "dropId": "",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Girls of Summer Paradise",
+          "dropId": "",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "nami - tornado tempo int striker cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -1434,6 +1982,32 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 2,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 8,
+      "evolvesTo": [
+        {
+          "toId": 12,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            },
+            {
+              "characterId": 82,
+              "token": null
+            },
+            {
+              "characterId": 104,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        9
+      ],
+      "dropSources": [],
       "searchText": "nami - mirage tempo int striker cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -1576,6 +2150,44 @@
       "captainHpBoost": 1.5,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 1.5,
+      "maxSockets": 3,
+      "specialCooldownMax": 25,
+      "specialCooldownMin": 20,
+      "evolvesTo": [
+        {
+          "toId": 1389,
+          "materials": [
+            {
+              "characterId": 1389,
+              "token": null
+            },
+            {
+              "characterId": 267,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        10,
+        11
+      ],
+      "dropSources": [
+        {
+          "group": "Fortnight",
+          "stage": "Perona's Wonder Garden",
+          "dropId": "event16",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Brother Soul! Afro Luffy!",
+          "dropId": "event26",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "nami - thunderbolt tempo int striker cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -1803,6 +2415,72 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.2,
       "captainAverageBoost": 0.6,
+      "maxSockets": 0,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 10,
+      "evolvesTo": [
+        {
+          "toId": 14,
+          "materials": [
+            {
+              "characterId": 115,
+              "token": null
+            },
+            {
+              "characterId": 81,
+              "token": null
+            }
+          ]
+        },
+        {
+          "toId": 15,
+          "materials": [
+            {
+              "characterId": 115,
+              "token": null
+            },
+            {
+              "characterId": 81,
+              "token": null
+            },
+            {
+              "characterId": 98,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [],
+      "dropSources": [
+        {
+          "group": "Story Island",
+          "stage": "Syrup Village",
+          "dropId": "story5",
+          "slot": "1",
+          "global": true
+        },
+        {
+          "group": "Story Island",
+          "stage": "Syrup Village",
+          "dropId": "story5",
+          "slot": "Completion Units",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Pirates!",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Day Anniversary Island",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        }
+      ],
       "searchText": "usopp psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2003,6 +2681,53 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 2,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 10,
+      "evolvesTo": [
+        {
+          "toId": 15,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            }
+          ]
+        },
+        {
+          "toId": 16,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            },
+            {
+              "characterId": 87,
+              "token": null
+            },
+            {
+              "characterId": 98,
+              "token": null
+            },
+            {
+              "characterId": 103,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        13
+      ],
+      "dropSources": [
+        {
+          "group": "Special",
+          "stage": "Battle Royale! Oars",
+          "dropId": "",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "usopp - tabasco star psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2203,6 +2928,55 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 2,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 10,
+      "evolvesTo": [
+        {
+          "toId": 16,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            },
+            {
+              "characterId": 81,
+              "token": null
+            },
+            {
+              "characterId": 103,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        13,
+        14
+      ],
+      "dropSources": [
+        {
+          "group": "Rookie Mission",
+          "stage": "Character Acquirement Quest: Shooter",
+          "dropId": "rookie4",
+          "slot": "Usopp",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Cobymeppo's Proving Ground!",
+          "dropId": "event8",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Proof of \"The World's Strongest\"",
+          "dropId": "",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "usopp - usopp golden pound psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2403,6 +3177,37 @@
       "captainHpBoost": 1.5,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 1.5,
+      "maxSockets": 3,
+      "specialCooldownMax": 20,
+      "specialCooldownMin": 15,
+      "evolvesTo": [
+        {
+          "toId": 1446,
+          "materials": [
+            {
+              "characterId": 1446,
+              "token": null
+            },
+            {
+              "characterId": 267,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        14,
+        15
+      ],
+      "dropSources": [
+        {
+          "group": "Fortnight",
+          "stage": "Shandia - Dreams of a Homeland!",
+          "dropId": "event27",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "sogeking psy shooter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2744,6 +3549,79 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 0,
+      "specialCooldownMax": 23,
+      "specialCooldownMin": 15,
+      "evolvesTo": [
+        {
+          "toId": 18,
+          "materials": [
+            {
+              "characterId": 115,
+              "token": null
+            },
+            {
+              "characterId": 79,
+              "token": null
+            }
+          ]
+        },
+        {
+          "toId": 19,
+          "materials": [
+            {
+              "characterId": 116,
+              "token": null
+            },
+            {
+              "characterId": 79,
+              "token": null
+            },
+            {
+              "characterId": 96,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [],
+      "dropSources": [
+        {
+          "group": "Story Island",
+          "stage": "Baratie",
+          "dropId": "story6",
+          "slot": "Completion Units",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Operation: Proposal!",
+          "dropId": "event40",
+          "slot": "Japan",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Operation: Proposal!",
+          "dropId": "event40",
+          "slot": "Global",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Pirates!",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Day Anniversary Island",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        }
+      ],
       "searchText": "sanji qck fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -2877,6 +3755,36 @@
       "captainHpBoost": 1.5,
       "captainAtkBoost": 0,
       "captainAverageBoost": 0.75,
+      "maxSockets": 2,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 10,
+      "evolvesTo": [
+        {
+          "toId": 20,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            },
+            {
+              "characterId": 85,
+              "token": null
+            },
+            {
+              "characterId": 96,
+              "token": null
+            },
+            {
+              "characterId": 101,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        17
+      ],
+      "dropSources": [],
       "searchText": "sanji - plastic surgery shot qck fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
@@ -3010,6 +3918,32 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 0.75,
+      "maxSockets": 2,
+      "specialCooldownMax": 23,
+      "specialCooldownMin": 15,
+      "evolvesTo": [
+        {
+          "toId": 20,
+          "materials": [
+            {
+              "characterId": 117,
+              "token": null
+            },
+            {
+              "characterId": 79,
+              "token": null
+            },
+            {
+              "characterId": 101,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        17
+      ],
+      "dropSources": [],
       "searchText": "chef sanji - hot rock stew qck fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
@@ -3144,6 +4078,29 @@
       "captainHpBoost": 1.5,
       "captainAtkBoost": 1.5,
       "captainAverageBoost": 1.5,
+      "maxSockets": 3,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 10,
+      "evolvesTo": [
+        {
+          "toId": 1447,
+          "materials": [
+            {
+              "characterId": 1447,
+              "token": null
+            },
+            {
+              "characterId": 267,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        18,
+        19
+      ],
+      "dropSources": [],
       "searchText": "sanji - diable jambe qck fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,
@@ -3380,6 +4337,127 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 0,
       "captainAverageBoost": 0,
+      "maxSockets": 0,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 8,
+      "evolvesTo": [
+        {
+          "toId": 22,
+          "materials": [
+            {
+              "characterId": 116,
+              "token": null
+            },
+            {
+              "characterId": 81,
+              "token": null
+            },
+            {
+              "characterId": 98,
+              "token": null
+            }
+          ]
+        },
+        {
+          "toId": 23,
+          "materials": [
+            {
+              "characterId": 116,
+              "token": null
+            },
+            {
+              "characterId": 82,
+              "token": null
+            },
+            {
+              "characterId": 99,
+              "token": null
+            }
+          ]
+        },
+        {
+          "toId": 24,
+          "materials": [
+            {
+              "characterId": 116,
+              "token": null
+            },
+            {
+              "characterId": 78,
+              "token": null
+            },
+            {
+              "characterId": 95,
+              "token": null
+            }
+          ]
+        },
+        {
+          "toId": 25,
+          "materials": [
+            {
+              "characterId": 116,
+              "token": null
+            },
+            {
+              "characterId": 79,
+              "token": null
+            },
+            {
+              "characterId": 96,
+              "token": null
+            }
+          ]
+        },
+        {
+          "toId": 26,
+          "materials": [
+            {
+              "characterId": 116,
+              "token": null
+            },
+            {
+              "characterId": 80,
+              "token": null
+            },
+            {
+              "characterId": 97,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [],
+      "dropSources": [
+        {
+          "group": "Story Island",
+          "stage": "Drum Island",
+          "dropId": "story12",
+          "slot": "7",
+          "global": true
+        },
+        {
+          "group": "Story Island",
+          "stage": "Drum Island",
+          "dropId": "story12",
+          "slot": "Completion Units",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Pirates!",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        },
+        {
+          "group": "Special",
+          "stage": "Straw Hat Day Anniversary Island",
+          "dropId": "",
+          "slot": "All Difficulties",
+          "global": true
+        }
+      ],
       "searchText": "tony tony chopper psy fighter",
       "regionAvailability": {
         "exactLocal": false,
@@ -3491,6 +4569,43 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 0,
       "captainAverageBoost": 0,
+      "maxSockets": 2,
+      "specialCooldownMax": 23,
+      "specialCooldownMin": 15,
+      "evolvesTo": [
+        {
+          "toId": 1448,
+          "materials": [
+            {
+              "characterId": 1448,
+              "token": null
+            },
+            {
+              "characterId": 267,
+              "token": null
+            }
+          ]
+        }
+      ],
+      "evolvesFrom": [
+        21
+      ],
+      "dropSources": [
+        {
+          "group": "Fortnight",
+          "stage": "Camie and Hachi's Takoyaki Stand!",
+          "dropId": "event30",
+          "slot": "challengeData",
+          "global": true
+        },
+        {
+          "group": "Fortnight",
+          "stage": "Lightning Speed! Strawhat Crew's Surprise Visit",
+          "dropId": "event43",
+          "slot": "challengeData",
+          "global": true
+        }
+      ],
       "searchText": "tony tony chopper - heavy point psy fighter free spirit",
       "regionAvailability": {
         "exactLocal": false,
@@ -3696,6 +4811,14 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 0,
       "captainAverageBoost": 0,
+      "maxSockets": 2,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 8,
+      "evolvesTo": [],
+      "evolvesFrom": [
+        21
+      ],
+      "dropSources": [],
       "searchText": "tony tony chopper - brain point int fighter cerebral",
       "regionAvailability": {
         "exactLocal": false,
@@ -3807,6 +4930,22 @@
       "captainHpBoost": 0,
       "captainAtkBoost": 0,
       "captainAverageBoost": 0,
+      "maxSockets": 2,
+      "specialCooldownMax": 15,
+      "specialCooldownMin": 10,
+      "evolvesTo": [],
+      "evolvesFrom": [
+        21
+      ],
+      "dropSources": [
+        {
+          "group": "Story Island",
+          "stage": "Drum Island",
+          "dropId": "story12",
+          "slot": "7",
+          "global": true
+        }
+      ],
       "searchText": "tony tony chopper - arm point str fighter powerhouse",
       "regionAvailability": {
         "exactLocal": false,

@@ -421,6 +421,8 @@ export function createSqlSeed(characters, ships, manifest) {
     'PRAGMA foreign_keys = OFF;',
     'DROP TABLE IF EXISTS characters;',
     'DROP TABLE IF EXISTS character_details;',
+    'DROP TABLE IF EXISTS character_evolutions;',
+    'DROP TABLE IF EXISTS character_drops;',
     'DROP TABLE IF EXISTS ships;',
     'DROP TABLE IF EXISTS meta;',
     `
@@ -446,6 +448,9 @@ export function createSqlSeed(characters, ships, manifest) {
         captain_hp_boost REAL NOT NULL DEFAULT 0,
         captain_atk_boost REAL NOT NULL DEFAULT 0,
         captain_average_boost REAL NOT NULL DEFAULT 0,
+        max_sockets INTEGER,
+        special_cooldown_max INTEGER,
+        special_cooldown_min INTEGER,
         region_json TEXT NOT NULL,
         assets_json TEXT NOT NULL,
         search_text TEXT NOT NULL
@@ -455,6 +460,24 @@ export function createSqlSeed(characters, ships, manifest) {
       CREATE TABLE character_details (
         character_id INTEGER PRIMARY KEY,
         detail_json TEXT NOT NULL
+      );
+    `,
+    /*
+     * 869f1935z. Both directions of the evolution graph. `evolves_from_json` is the one a player
+     * asks for - *"you already own its base form"* turns a blocker into a task - and it cannot be
+     * derived from the forward edge without scanning every row.
+     */
+    `
+      CREATE TABLE character_evolutions (
+        character_id INTEGER PRIMARY KEY,
+        evolves_to_json TEXT NOT NULL,
+        evolves_from_json TEXT NOT NULL
+      );
+    `,
+    `
+      CREATE TABLE character_drops (
+        character_id INTEGER PRIMARY KEY,
+        sources_json TEXT NOT NULL
       );
     `,
     `
@@ -494,7 +517,8 @@ export function createSqlSeed(characters, ships, manifest) {
       INSERT INTO characters (
         id, name, is_incomplete, type, primary_class, secondary_class, classes_json, stars, stars_label, cost, combo,
         min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth,
-        captain_hp_boost, captain_atk_boost, captain_average_boost, region_json,
+        captain_hp_boost, captain_atk_boost, captain_average_boost,
+        max_sockets, special_cooldown_max, special_cooldown_min, region_json,
         assets_json, search_text
       ) VALUES (
         ${sqlValue(character.id)},
@@ -518,6 +542,9 @@ export function createSqlSeed(characters, ships, manifest) {
         ${sqlValue(captainBoosts.captainHpBoost)},
         ${sqlValue(captainBoosts.captainAtkBoost)},
         ${sqlValue(captainBoosts.captainAverageBoost)},
+        ${sqlValue(character.maxSockets ?? null)},
+        ${sqlValue(character.specialCooldownMax ?? null)},
+        ${sqlValue(character.specialCooldownMin ?? null)},
         ${sqlValue(JSON.stringify(character.regionAvailability))},
         ${sqlValue(JSON.stringify(character.assets))},
         ${sqlValue(character.searchText)}
@@ -528,6 +555,35 @@ export function createSqlSeed(characters, ships, manifest) {
       INSERT INTO character_details (character_id, detail_json)
       VALUES (${sqlValue(character.id)}, ${sqlValue(JSON.stringify(character.detail))});
     `);
+
+    /*
+     * Only rows that carry something. A manually added character - and any unit the upstream graph
+     * does not mention - simply has no row, which the repository reads as "nothing recorded" rather
+     * than as "not farmable". The distinction matters: a wrong "farm this stage" costs real stamina,
+     * and so does a confident "there is no way to get this".
+     */
+    const evolvesTo = character.evolvesTo ?? [];
+    const evolvesFrom = character.evolvesFrom ?? [];
+
+    if (evolvesTo.length > 0 || evolvesFrom.length > 0) {
+      statements.push(`
+        INSERT INTO character_evolutions (character_id, evolves_to_json, evolves_from_json)
+        VALUES (
+          ${sqlValue(character.id)},
+          ${sqlValue(JSON.stringify(evolvesTo))},
+          ${sqlValue(JSON.stringify(evolvesFrom))}
+        );
+      `);
+    }
+
+    const dropSources = character.dropSources ?? [];
+
+    if (dropSources.length > 0) {
+      statements.push(`
+        INSERT INTO character_drops (character_id, sources_json)
+        VALUES (${sqlValue(character.id)}, ${sqlValue(JSON.stringify(dropSources))});
+      `);
+    }
   }
 
   for (const ship of ships) {

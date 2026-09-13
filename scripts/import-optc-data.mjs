@@ -37,6 +37,12 @@ import {
   normalizePartyConflictOverrideMap,
 } from './lib/party-conflict-keys.mjs';
 import { normalizeRumbleUnits } from './lib/rumble-data-normalizer.mjs';
+import {
+  attachProgressionData,
+  normalizeDropSources,
+  normalizeEvolutions,
+  normalizeSpecialCooldowns,
+} from './lib/optc-upstream-progression.mjs';
 import { parseSuperSpecialCriteria } from './lib/super-special-criteria.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1564,6 +1570,9 @@ async function main() {
     tagsWindow,
     shipsWindow,
     utilsWindow,
+    cooldownsWindow,
+    evolutionsWindow,
+    dropsWindow,
     rumble,
     sourceVersion,
     imageOverrides,
@@ -1575,6 +1584,14 @@ async function main() {
     evaluateLegacyFile('common/data/tags.js', selectedSource),
     evaluateLegacyFile('common/data/ships.js', selectedSource),
     evaluateLegacyFile('common/js/utils.js', selectedSource),
+    /*
+     * 869f1935z. Three files the importer read for the first time. They are plain data - unlike
+     * `captains.js` and `events.js`, which are executable functions over the reference app's own
+     * battle context and are deliberately still unread.
+     */
+    evaluateLegacyFile('common/data/cooldowns.js', selectedSource),
+    evaluateLegacyFile('common/data/evolutions.js', selectedSource),
+    evaluateLegacyFile('common/data/drops.js', selectedSource),
     fetchJson(buildSourceFileUrl(selectedSource, 'common/data/rumble.json'), selectedSource),
     fetchVersion(selectedSource),
     loadCharacterImageOverrides(),
@@ -1624,18 +1641,25 @@ async function main() {
       clearDir: true,
     },
   );
-  const characters = applyPartyConflictKeys(
-    applyExactLocalAssets(
-      normalizeCharacters(
-        unitsWindow.units,
-        detailsWindow.details,
-        rumble.units ?? [],
-        assetsById,
-        tagsWindow.tags ?? {},
+  const characters = attachProgressionData(
+    applyPartyConflictKeys(
+      applyExactLocalAssets(
+        normalizeCharacters(
+          unitsWindow.units,
+          detailsWindow.details,
+          rumble.units ?? [],
+          assetsById,
+          tagsWindow.tags ?? {},
+        ),
+        manualExactLocalPaths,
       ),
-      manualExactLocalPaths,
+      partyConflictOverrides,
     ),
-    partyConflictOverrides,
+    {
+      cooldowns: normalizeSpecialCooldowns(cooldownsWindow.cooldowns),
+      evolutions: normalizeEvolutions(evolutionsWindow.evolutions),
+      dropSources: normalizeDropSources(dropsWindow.drops),
+    },
   );
   const abilityCorrections = await loadBuilderAbilityCorrections(builderAbilityCorrectionsPath);
   const autoBuilderAbilities = await enrichCharactersWithBuilderAbilities(characters, {
