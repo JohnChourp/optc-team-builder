@@ -1,7 +1,15 @@
 ion-select {
   --background: rgba(255, 255, 255, 0.06);
   --border-color: rgba(255, 255, 255, 0.14);
+  /*
+   * BOTH, and adjacent. `--border-radius` is consumed inside the component's shadow DOM, so the
+   * host's own `border-radius` stays 0 - and the `overflow: hidden` below then clips to a SQUARE
+   * while the control renders rounded. Latent here rather than visible, because nothing paints
+   * into the corners today; it is the same defect that shipped as the v0.2.0 crown, and
+   * `npm run ionic:host-property` now refuses it.
+   */
   --border-radius: 18px;
+  border-radius: 18px;
   --color: #f8fbff;
   --highlight-color-focused: rgba(245, 200, 76, 0.8);
   display: block;

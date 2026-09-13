@@ -125,6 +125,10 @@ export const SCRIPT_SUITES = {
     label: 'Ionic overlay contrast tests',
     command: 'npm run test:overlay-contrast',
   },
+  'ionic-host-property': {
+    label: 'Ionic host shape property tests',
+    command: 'npm run test:ionic-host-property',
+  },
   'tag-picker-scoping': {
     label: 'Tag-set picker panel scoping tests',
     command: 'npm run test:tag-picker-scoping',
@@ -389,6 +393,20 @@ function isWhatsNewPath(filePath) {
     filePath === 'scripts/check-whats-new.mjs' ||
     filePath === 'scripts/check-whats-new.spec.ts' ||
     filePath.startsWith('src/app/shared/whats-new/')
+  );
+}
+
+/*
+ * 869f127db. Every stylesheet routes here, not only the two theme files the overlay guard watches:
+ * the trap is a host selector anywhere giving an Ionic control a shape the host itself never gets,
+ * and the v0.2.0 crown that motivated it lived in a page's own component stylesheet.
+ */
+function isIonicHostPropertyPath(filePath) {
+  return (
+    filePath.endsWith('.scss') ||
+    filePath === 'scripts/check-ionic-host-property.mjs' ||
+    filePath === 'scripts/check-ionic-host-property.spec.ts' ||
+    filePath === 'scripts/check-ionic-overlay-contrast.mjs'
   );
 }
 
@@ -662,6 +680,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isOverlayContrastPath(filePath)) {
       categories.add('overlay-contrast');
       addScriptSuite(scriptSuites, 'overlay-contrast');
+    }
+
+    if (isIonicHostPropertyPath(filePath)) {
+      categories.add('ionic-host-property');
+      addScriptSuite(scriptSuites, 'ionic-host-property');
     }
 
     if (isTagPickerScopingPath(filePath)) {

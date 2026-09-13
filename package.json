@@ -65,6 +65,8 @@
     "test:tag-picker-scoping": "vitest run scripts/check-tag-picker-panel-scoping.spec.ts && npm run styles:tag-picker-scoping",
     "styles:tag-picker-scoping": "node ./scripts/check-tag-picker-panel-scoping.mjs",
     "theme:overlay-contrast": "node ./scripts/check-ionic-overlay-contrast.mjs",
+    "test:ionic-host-property": "vitest run scripts/check-ionic-host-property.spec.ts && npm run ionic:host-property",
+    "ionic:host-property": "node ./scripts/check-ionic-host-property.mjs",
     "test:whats-new": "vitest run scripts/check-whats-new.spec.ts scripts/check-release-whats-new-ready.spec.ts scripts/generate-whats-new-entry.spec.ts && npm run whats-new:check",
     "whats-new:check": "node ./scripts/check-whats-new.mjs",
     "audit:dead-code": "npx tsc -p tsconfig.app.json --noEmit --noUnusedLocals --noUnusedParameters --pretty false && npx knip --include files,exports,types",
