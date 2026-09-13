@@ -683,6 +683,148 @@ describe('UserStateService saved teams', () => {
     expect(service.getSavedTeamById('missing-team')).toBeNull();
   });
 
+  it('expands ticked mechanics into the required groups, alongside any manual ability', async () => {
+    /*
+     * 869f1935z. An enemy carrying mechanics AND at least one manual ability used to produce ONE
+     * group - from the manual ability - and drop every mechanic requirement on the floor.
+     *
+     * The groups computed here are what `normalizeBattleRequirementsWithLegacyFallback` treats as
+     * already resolved: it merges the mechanic-derived requirements only when it has no groups to
+     * work from. So a non-empty group list built from the manual ability alone short-circuited the
+     * merge, silently, with the mechanics still stored on the enemy and still shown in the panel.
+     *
+     * An enemy with mechanics and NO manual ability was fine, which is why it went unnoticed - the
+     * fallback had nothing to short-circuit on. The test below covers that case too.
+     */
+    const { service } = await createService([], []);
+
+    const result = await service.saveEnemy({
+      name: 'Mixed enemy',
+      notes: '',
+      rawEnemyText: '',
+      imageDataUrl: null,
+      selectedTypes: [],
+      selectedClasses: [],
+      requiredAbilities: [
+        {
+          abilityKey: 'ignore_normal_attack_only',
+          minTurns: null,
+          slotTokens: [],
+          requiredCharacterCount: 1,
+        },
+      ],
+      enemyMechanics: [
+        {
+          mechanicKey: 'crew_paralysis',
+          category: 'crewDebuff',
+          minTurns: null,
+          requiredCharacterCount: 1,
+          triggerTags: [],
+          responseTags: [],
+          conditionTags: [],
+          derivedAbilityKey: 'remove_paralysis',
+        },
+      ] as never,
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+    });
+
+    const groupKeys = (result.requiredCharacterGroups ?? []).flatMap((group) =>
+      group.abilities.map((ability) => ability.abilityKey),
+    );
+
+    expect(groupKeys).toEqual(['remove_paralysis', 'ignore_normal_attack_only']);
+    expect(
+      (result.battleRequirements ?? []).flatMap((battle) =>
+        battle.requiredCharacterGroups.flatMap((group) =>
+          group.abilities.map((ability) => ability.abilityKey),
+        ),
+      ),
+    ).toEqual(['remove_paralysis', 'ignore_normal_attack_only']);
+  });
+
+  it('still expands mechanics when the enemy has no manual ability at all', async () => {
+    const { service } = await createService([], []);
+
+    const result = await service.saveEnemy({
+      name: 'Mechanics only',
+      notes: '',
+      rawEnemyText: '',
+      imageDataUrl: null,
+      selectedTypes: [],
+      selectedClasses: [],
+      requiredAbilities: [],
+      enemyMechanics: [
+        {
+          mechanicKey: 'crew_burn',
+          category: 'crewDebuff',
+          minTurns: null,
+          requiredCharacterCount: 1,
+          triggerTags: [],
+          responseTags: [],
+          conditionTags: [],
+          derivedAbilityKey: 'remove_burn',
+        },
+      ] as never,
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+    });
+
+    expect(
+      (result.requiredCharacterGroups ?? []).flatMap((group) =>
+        group.abilities.map((ability) => ability.abilityKey),
+      ),
+    ).toEqual(['remove_burn']);
+  });
+
+  it('leaves an enemy with EXPLICIT groups alone, mechanics or not', async () => {
+    // Explicit groups are the reader's own arrangement and must not be rebuilt underneath them.
+    const { service } = await createService([], []);
+
+    const result = await service.saveEnemy({
+      name: 'Explicit groups',
+      notes: '',
+      rawEnemyText: '',
+      imageDataUrl: null,
+      selectedTypes: [],
+      selectedClasses: [],
+      requiredAbilities: [],
+      requiredCharacterGroups: [
+        {
+          id: 'group-1',
+          abilities: [
+            {
+              abilityKey: 'remove_bind',
+              minTurns: null,
+              slotTokens: [],
+              requiredCharacterCount: 1,
+            },
+          ],
+        },
+      ],
+      enemyMechanics: [
+        {
+          mechanicKey: 'crew_burn',
+          category: 'crewDebuff',
+          minTurns: null,
+          requiredCharacterCount: 1,
+          triggerTags: [],
+          responseTags: [],
+          conditionTags: [],
+          derivedAbilityKey: 'remove_burn',
+        },
+      ] as never,
+      requireAllSelectedTypesInTeam: false,
+      requireAllSelectedClassesPerCharacter: false,
+    });
+
+    expect(
+      (result.requiredCharacterGroups ?? []).flatMap((group) =>
+        group.abilities.map((ability) => ability.abilityKey),
+      ),
+    ).toEqual(['remove_bind']);
+  });
+
   it('saves a normalized enemy preset and persists it in front of older enemies', async () => {
     const { service, setCalls } = await createService([], [createEnemy('enemy-1', 'Old enemy')]);
 
