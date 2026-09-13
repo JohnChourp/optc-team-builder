@@ -1,5 +1,8 @@
 import '@angular/compiler';
 import { JSDOM } from 'jsdom';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import { type FavoriteShipsTransferPayload } from './favorite-ships-transfer.utils';
@@ -10,6 +13,7 @@ import { type SavedTeamsTransferPayload } from '../saved-teams/saved-teams-trans
 import {
   AllDataImportError,
   buildAllDataExportFilename,
+  ALL_DATA_TRANSFER_SCOPES,
   buildAllDataTransferPayload,
   downloadAllDataExport,
   parseAllDataImportCandidate,
@@ -387,6 +391,74 @@ describe('All data transfer helpers', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(AllDataImportError);
       expect(error).toMatchObject({ key: 'management.allData.errors.unsupportedSchema' });
+    }
+  });
+});
+
+describe('every scope survives the round trip', () => {
+  /*
+   * 869f1935z. This file had 14 tests and none of them noticed a whole scope going missing.
+   * Measured, not supposed: deleting `savedRumbleTeams` from the builder's returned object left
+   * `tsc --noEmit` at exit 0 and all 14 passing, and produced a "full backup" with an entire
+   * category of the reader's data absent. They would find out at restore time.
+   *
+   * The fields on `AllDataTransferPayload` stay optional - the same type parses a file, and an
+   * older export legitimately lacks scopes - so the completeness guarantee cannot live there.
+   * It lives in `SCOPE_CLONERS`, which is typed as a complete record, and in these tests.
+   */
+  it('names every scope on a payload built from nothing', () => {
+    const payload = buildAllDataTransferPayload({}, '2026-09-13T00:00:00.000Z') as unknown as Record<
+      string,
+      unknown
+    >;
+
+    for (const scope of ALL_DATA_TRANSFER_SCOPES) {
+      expect(Object.keys(payload), `payload names ${scope}`).toContain(scope);
+    }
+  });
+
+  it('round-trips a real section through to the payload', () => {
+    /*
+     * One scope with its genuine shape rather than seven with a fake marker: the clones validate
+     * what they are given and return undefined for anything else, so a synthetic payload would
+     * have tested the validator, not the wiring.
+     */
+    const payload = buildAllDataTransferPayload(
+      {
+        savedRumbleTeams: {
+          schemaVersion: 1,
+          source: 'saved-rumble-teams',
+          rumbleTeams: [{ id: 'rumble-1' }],
+        } as never,
+      },
+      '2026-09-13T00:00:00.000Z',
+    );
+
+    expect(payload.savedRumbleTeams?.rumbleTeams).toEqual([{ id: 'rumble-1' }]);
+  });
+
+  it('guards against the list itself shrinking', () => {
+    // A guard that reads an empty list passes for the wrong reason; this is how that would rot.
+    expect(ALL_DATA_TRANSFER_SCOPES).toHaveLength(7);
+    expect(new Set(ALL_DATA_TRANSFER_SCOPES).size).toBe(ALL_DATA_TRANSFER_SCOPES.length);
+  });
+
+  it('IMPORTS every scope it exports', () => {
+    /*
+     * The same hole in the opposite direction, and the one no type can close: the import path is
+     * seven hand-written `if (payload.<scope> !== undefined)` blocks, so deleting one silently
+     * stops that scope ever being restored. Bound by reading the page source, the way the dataset
+     * provenance map is bound to the importer.
+     */
+    const page = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/settings/settings.page.ts'),
+      'utf8',
+    );
+    const applier = page.slice(page.indexOf('private async importAllDataBundle'));
+    const body = applier.slice(0, applier.indexOf('\n  private '));
+
+    for (const scope of ALL_DATA_TRANSFER_SCOPES) {
+      expect(body, `importAllDataBundle restores ${scope}`).toContain(`payload.${scope} !== undefined`);
     }
   });
 });

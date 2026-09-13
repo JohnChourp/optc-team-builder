@@ -24,6 +24,37 @@ export interface AllDataTransferPayload {
   characterOverrides?: CharacterOverridesTransferPayload;
 }
 
+/**
+ * 869f1935z. Every scope a full export carries, declared ONCE.
+ *
+ * The fields above stay optional, and must: this same type parses a file, and an older or partial
+ * export legitimately lacks scopes. That is exactly what made the builder unguarded - deleting
+ * `savedRumbleTeams` from the returned object compiled cleanly, passed all 14 tests of this file,
+ * and produced a "full backup" missing an entire category of the reader's data. Measured, not
+ * supposed: `tsc --noEmit` exited 0.
+ *
+ * So the completeness guarantee lives here instead. `SCOPE_CLONERS` below is typed against this
+ * list, so a scope missing from the builder is a COMPILE error rather than a silent hole, and the
+ * spec binds the same list to the import side, which is seven hand-written blocks with the same
+ * failure mode in the opposite direction.
+ */
+export const ALL_DATA_TRANSFER_SCOPES = [
+  'favorites',
+  'favoriteShips',
+  'savedTeams',
+  'savedRumbleTeams',
+  'savedEnemies',
+  'characterBoxes',
+  'characterOverrides',
+] as const;
+
+export type AllDataTransferScope = (typeof ALL_DATA_TRANSFER_SCOPES)[number];
+
+/** The sections a caller may hand the builder - one optional value per scope. */
+export type AllDataTransferSections = {
+  [Scope in AllDataTransferScope]?: NonNullable<AllDataTransferPayload[Scope]>;
+};
+
 export type AllDataImportCandidate =
   | { kind: 'all-data'; payload: AllDataTransferPayload }
   | { kind: 'favorites'; payload: unknown }
@@ -179,30 +210,46 @@ function cloneCharacterOverridesPayload(
   };
 }
 
+/**
+ * One cloner per scope. Typed as a complete record on purpose: **drop a scope here and the build
+ * fails**, which is the guarantee the hand-written object literal could not give.
+ */
+const SCOPE_CLONERS: {
+  [Scope in AllDataTransferScope]: (
+    payload: NonNullable<AllDataTransferPayload[Scope]> | undefined,
+  ) => AllDataTransferPayload[Scope];
+} = {
+  favorites: cloneFavoritesPayload,
+  favoriteShips: cloneFavoriteShipsPayload,
+  savedTeams: cloneSavedTeamsPayload,
+  savedRumbleTeams: cloneSavedRumbleTeamsPayload,
+  savedEnemies: cloneSavedEnemiesPayload,
+  characterBoxes: cloneCharacterBoxesPayload,
+  characterOverrides: cloneCharacterOverridesPayload,
+};
+
 export function buildAllDataTransferPayload(
-  sections: {
-    favorites?: OptcbxFavoritesExportPayload;
-    favoriteShips?: FavoriteShipsTransferPayload;
-    savedTeams?: SavedTeamsTransferPayload;
-    savedRumbleTeams?: SavedRumbleTeamsTransferPayload;
-    savedEnemies?: SavedEnemiesTransferPayload;
-    characterBoxes?: CharacterBoxesTransferPayload;
-    characterOverrides?: CharacterOverridesTransferPayload;
-  },
+  sections: AllDataTransferSections,
   exportedAt = new Date().toISOString(),
 ): AllDataTransferPayload {
-  return {
+  const payload: AllDataTransferPayload = {
     schemaVersion: 1,
     source: 'all-data',
     exportedAt,
-    favorites: cloneFavoritesPayload(sections.favorites),
-    favoriteShips: cloneFavoriteShipsPayload(sections.favoriteShips),
-    savedTeams: cloneSavedTeamsPayload(sections.savedTeams),
-    savedRumbleTeams: cloneSavedRumbleTeamsPayload(sections.savedRumbleTeams),
-    savedEnemies: cloneSavedEnemiesPayload(sections.savedEnemies),
-    characterBoxes: cloneCharacterBoxesPayload(sections.characterBoxes),
-    characterOverrides: cloneCharacterOverridesPayload(sections.characterOverrides),
   };
+
+  for (const scope of ALL_DATA_TRANSFER_SCOPES) {
+    /*
+     * The cast is confined to this one line and buys the guarantee above. TypeScript cannot
+     * correlate `scope` with its own cloner across an iteration, so the alternative is the
+     * seven-line literal this replaced - the one where a deletion compiled.
+     */
+    const clone = SCOPE_CLONERS[scope] as (payload: unknown) => unknown;
+
+    (payload as unknown as Record<string, unknown>)[scope] = clone(sections[scope]);
+  }
+
+  return payload;
 }
 
 export function buildAllDataExportFilename(exportedAt: string): string {
