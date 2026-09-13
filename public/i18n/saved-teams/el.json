@@ -47,6 +47,24 @@
     "deleteSelected": "Να διαγραφούν {{count}} επιλεγμένες ομάδες;",
     "deleteSingle": "Να διαγραφεί η ομάδα \"{{name}}\";"
   },
+  "search": {
+    "placeholder": "Αναζήτηση με ομάδα, Captain ή Friend Captain",
+    "label": "Αναζήτηση αποθηκευμένων ομάδων",
+    "clear": "Καθαρισμός αναζήτησης",
+    "noResults": "Καμία αποθηκευμένη ομάδα δεν ταιριάζει με «{{query}}»."
+  },
+  "sort": {
+    "label": "Ταξινόμηση κατά",
+    "asc": "Αύξουσα ταξινόμηση",
+    "desc": "Φθίνουσα ταξινόμηση",
+    "keys": {
+      "default": "Όπως αποθηκεύτηκαν",
+      "updatedAt": "Τελευταία αποθήκευση",
+      "createdAt": "Πρώτη αποθήκευση",
+      "name": "Όνομα ομάδας",
+      "captain": "Captain"
+    }
+  },
   "condition": {
     "roles": {
       "captain": "Captain",

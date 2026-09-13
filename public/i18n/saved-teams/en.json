@@ -47,6 +47,24 @@
     "deleteSelected": "Delete {{count}} selected teams?",
     "deleteSingle": "Delete team \"{{name}}\"?"
   },
+  "search": {
+    "placeholder": "Search by team, Captain or Friend Captain",
+    "label": "Search saved teams",
+    "clear": "Clear search",
+    "noResults": "No saved team matches \u201c{{query}}\u201d."
+  },
+  "sort": {
+    "label": "Sort by",
+    "asc": "Sort ascending",
+    "desc": "Sort descending",
+    "keys": {
+      "default": "As saved",
+      "updatedAt": "Last saved",
+      "createdAt": "First saved",
+      "name": "Team name",
+      "captain": "Captain"
+    }
+  },
   "condition": {
     "roles": {
       "captain": "Captain",
