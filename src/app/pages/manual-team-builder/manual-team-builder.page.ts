@@ -13,6 +13,11 @@ import { IonTitle } from '@ionic/angular/ion-title';
 import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
+  isEmptyCharacterFilterDraft,
+  parseCharacterFilterDraft,
+  type CharacterFilterDraft,
+} from '../../core/services/character-filter-draft.utils';
+import {
   alertCircleOutline,
   boatOutline,
   checkmarkCircleOutline,
@@ -135,6 +140,13 @@ export function resolveNextManualTeamSlotIndex(
  * in-memory halves of one ordering, owned by the repository.
  */
 const MANUAL_TEAM_CANDIDATE_SORT_MODE = 'powerFirst' as const;
+
+/**
+ * 869f127c9. The picker's filters are as expensive to assemble as Captain Coverage's and were
+ * thrown away just as completely - this page persisted nothing at all. Session-scoped for the same
+ * reason: this is how the reader is looking at the candidate list right now.
+ */
+const MANUAL_TEAM_FILTER_DRAFT_KEY = 'optc.manualTeamBuilder.filterDraft';
 const MANUAL_TEAM_CANDIDATE_LIMIT = 48;
 type ManualTeamAbilityFilterCategory = AbilityFilterRailCategory;
 
@@ -744,6 +756,9 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     this.summary.set(summary);
     this.abilityCatalog.set(abilityCatalog);
     this.availableCharacterTags.set(availableCharacterTags);
+    // After the catalogue, before the picker's first pass: restoring earlier would apply a tag
+    // filter against tags the page has not loaded yet.
+    this.restoreFilterDraft();
     this.loading.set(false);
   }
 
@@ -1448,7 +1463,91 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     });
   }
 
+  /**
+   * The picker's filters, in the shared draft shape. The fields this page has no control for are
+   * supplied at their defaults so the codec's emptiness check has a whole object to read; the
+   * reader never writes a key back that this page cannot use.
+   */
+  private buildFilterDraft(): CharacterFilterDraft {
+    return {
+      searchTerm: this.searchTerm(),
+      typeFacet: this.typeFacet(),
+      classFacet: this.classFacet(),
+      coverageCostRange: { min: this.candidateMinCost(), max: this.candidateMaxCost() },
+      sortMode: 'catalog',
+      idOrder: 'newest',
+      favoritesOnly: false,
+      hideFavorites: false,
+      requireSuperTandemPresence: false,
+      requireSuperTypesClassesPresence: false,
+      requiredTierNumbers: [],
+      characterTagSetSelection: this.characterTagSetSelection(),
+      abilityTagSetSelection: this.tagSetSelection(),
+      selectedCharacterBoxId: null,
+    };
+  }
+
+  private persistFilterDraft(): void {
+    const draft = this.buildFilterDraft();
+
+    try {
+      if (isEmptyCharacterFilterDraft(draft)) {
+        sessionStorage.removeItem(MANUAL_TEAM_FILTER_DRAFT_KEY);
+        return;
+      }
+
+      sessionStorage.setItem(MANUAL_TEAM_FILTER_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      // Private browsing and storage-blocked contexts throw here. A filter set that cannot be
+      // parked is not a reason to break the picker.
+    }
+  }
+
+  private restoreFilterDraft(): void {
+    let parsed: unknown = null;
+
+    try {
+      const raw = sessionStorage.getItem(MANUAL_TEAM_FILTER_DRAFT_KEY);
+
+      parsed = raw ? JSON.parse(raw) : null;
+    } catch {
+      parsed = null;
+    }
+
+    const draft = parseCharacterFilterDraft(parsed);
+
+    if (draft.searchTerm !== undefined) {
+      this.searchTerm.set(draft.searchTerm);
+    }
+
+    if (draft.typeFacet) {
+      this.typeFacet.set(draft.typeFacet);
+    }
+
+    if (draft.classFacet) {
+      this.classFacet.set(draft.classFacet);
+    }
+
+    if (draft.coverageCostRange) {
+      this.candidateMinCost.set(draft.coverageCostRange.min);
+      this.candidateMaxCost.set(draft.coverageCostRange.max);
+    }
+
+    if (draft.characterTagSetSelection) {
+      this.characterTagSetSelection.set(draft.characterTagSetSelection);
+    }
+
+    if (draft.abilityTagSetSelection) {
+      this.tagSetSelection.set(draft.abilityTagSetSelection);
+    }
+  }
+
   private async refreshCandidates(): Promise<void> {
+    // Every filter handler on this page ends here, which makes this the one write path - the
+    // alternative was a persist call in each of ten handlers, and the forgotten one would be the
+    // filter nobody could keep.
+    this.persistFilterDraft();
+
     if (this.candidateFilterErrorLabel()) {
       this.candidates.set([]);
       return;

@@ -65,6 +65,9 @@ import { ManualTeamBuilderPage, resolveNextManualTeamSlotIndex } from './manual-
 describe('ManualTeamBuilderPage', () => {
   afterEach(() => {
     vi.clearAllMocks();
+    // The picker's filter draft is session-scoped and shared across tests in this file, so one
+    // test's filters would silently narrow the candidate list another test asserts on.
+    globalThis.sessionStorage?.clear();
   });
 
   it('renders as a standalone manual team page with ship and condition components', () => {
@@ -878,6 +881,57 @@ describe('ManualTeamBuilderPage', () => {
         limit: 48,
       }),
     );
+  });
+
+  /*
+   * 869f127c9. Captain Coverage parked its team and threw its filters away; this page parked
+   * nothing at all, so the same expensive picker filter set went every time the reader left.
+   */
+  it('parks the picker filters and restores them on the next visit', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+    await page.onTypeFacetChange(createFacetSelection(['STR']));
+    await page.onCandidateMinCostChange(createValueEvent('20'));
+
+    expect(globalThis.sessionStorage?.getItem('optc.manualTeamBuilder.filterDraft')).toBeTruthy();
+
+    const { page: reopened } = createPage();
+
+    await reopened.ngOnInit();
+
+    expect(reopened.typeFacet()).toEqual(expect.objectContaining({ values: ['STR'] }));
+    expect(reopened.candidateMinCost()).toBe(20);
+  });
+
+  it('parks nothing for a picker nobody has filtered', async () => {
+    const { page } = createPage();
+
+    await page.ngOnInit();
+    await page.openCharacterPicker(0);
+
+    expect(globalThis.sessionStorage?.getItem('optc.manualTeamBuilder.filterDraft')).toBeNull();
+  });
+
+  it('keeps the readable half of a picker draft it cannot fully read', async () => {
+    globalThis.sessionStorage?.setItem(
+      'optc.manualTeamBuilder.filterDraft',
+      JSON.stringify({
+        searchTerm: 'zoro',
+        typeFacet: { values: ['QCK'], matchMode: 'any' },
+        coverageCostRange: { min: 'twenty', max: null },
+      }),
+    );
+
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    expect(page.searchTerm()).toBe('zoro');
+    expect(page.typeFacet()).toEqual({ values: ['QCK'], matchMode: 'any' });
+    // The unreadable bound takes only itself down, not the facet beside it.
+    expect(page.candidateMinCost()).toBeNull();
   });
 
   it('sends a two-value all-mode facet pair on the repository candidate path', async () => {
