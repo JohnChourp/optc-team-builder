@@ -652,6 +652,14 @@
   },
   "report": {
     "copy": "Δείχνει ποια synergy rules ακολουθεί η τελική ομάδα και ποια έγιναν relaxed αφού απέτυχε το exact search.",
+    "remedies": {
+      "label": "Για να επανέλθει:",
+      "reduceSelectionBy": "Ζήτησες περισσότερα απ' όσα χωρούν οι ελεύθερες θέσεις της ομάδας. Αφαίρεσε τουλάχιστον {{count}} - η αναζήτηση παράτησε ήδη {{values}}.",
+      "deselectValues": "Αφαίρεσε {{values}} από την επιλογή σου, ή διάλεξε χαρακτήρες που το έχουν.",
+      "allowAnyFriendCaptain": "Ενεργοποίησε το Allow any Friend Captain, ώστε η αναζήτηση να ανοίξει το ζευγάρι των leader.",
+      "coverCaptainAbilitySlots": "Διάλεξε Captain ή Friend Captain που η ability του καλύπτει τα {{count}} κενά που αναφέρονται πιο πάνω.",
+      "meetActivationCriteria": "Κάλυψε τα κριτήρια ενεργοποίησης για {{names}}, ή αφαίρεσέ τους από την επιλογή σου."
+    },
     "rules": {
       "captainAbility": {
         "notApplicable": "Δεν ζητήθηκε Captain Ability tier coverage.",

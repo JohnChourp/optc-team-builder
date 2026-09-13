@@ -2095,6 +2095,49 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       state: 'relaxed',
       detail: 'Super Tandem will not activate for: Zoro',
     });
+
+    /*
+     * 869f127c1. Every relaxed rule either says what would un-relax it or declines in the open.
+     * This result relaxes all eight, so it is the one place that proves no family was forgotten.
+     */
+    expect(byKey.get('types')?.remedy).toBe(
+      'Remove INT from your selection, or pick characters that carry it.',
+    );
+    expect(byKey.get('classes')?.remedy).toBe(
+      'Remove Shooter from your selection, or pick characters that carry it.',
+    );
+    expect(byKey.get('characterTags')?.remedy).toBe(
+      'Remove Minks from your selection, or pick characters that carry it.',
+    );
+    expect(byKey.get('characterNames')?.remedy).toBe(
+      'Remove zoro from your selection, or pick characters that carry it.',
+    );
+    expect(byKey.get('leaderSuperScope')?.remedy).toBe(
+      'Turn on Allow any Friend Captain, so the search can widen the leader pair.',
+    );
+    expect(byKey.get('superSpecial')?.remedy).toBe(
+      'Meet the activation criteria for Luffy, or remove them from your selection.',
+    );
+    expect(byKey.get('superTandem')?.remedy).toBe(
+      'Meet the activation criteria for Zoro, or remove them from your selection.',
+    );
+    // Points at the leader pair and counts the gaps, rather than repeating the whole sentences the
+    // relaxed detail above it already prints.
+    expect(byKey.get('captainAbility')?.remedy).toBe(
+      'Pick a Captain or Friend Captain whose ability covers the 2 gap(s) named above.',
+    );
+  });
+
+  it('prints no remedy on a rule the team kept', async () => {
+    const { page } = await createPage();
+
+    page.result.set(createAutoBuildResult());
+
+    for (const row of page.finalReportRows()) {
+      if (row.state !== 'relaxed') {
+        expect(row.remedy).toBeNull();
+      }
+    }
   });
 
   it('disables builds when a leader boost range minimum is greater than maximum', async () => {

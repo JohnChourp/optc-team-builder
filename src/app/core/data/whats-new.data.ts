@@ -40,15 +40,20 @@ export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
         el: 'Η λίστα αποτελεσμάτων στο Auto Team Builder ομαδοποιεί πλέον τους χαρακτήρες που δεν επέλεξε ανά τον λόγο που έκρινε τον καθένα, με μέτρημα ανά λόγο - έτσι ένα φτωχό αποτέλεσμα λέει γιατί βγήκε φτωχό χωρίς να διαβάζεις υποψήφιο-υποψήφιο. Πάτα έναν λόγο για να δεις μόνο αυτούς τους χαρακτήρες, και πάτα τον ξανά για να τους δεις όλους.',
       },
     ],
-    improved: [],
+    improved: [
+      {
+        en: 'Every rule marked Relaxed in the Final team report on Auto Team Builder now carries a line saying what would restore it - which selection to shorten, which Captain gap to cover, or the Friend Captain setting to turn on. A rule with nothing concrete to suggest says nothing rather than guessing.',
+        el: 'Κάθε κανόνας που είναι σημειωμένος ως Relaxed στο Τελικό report ομάδας στο Auto Team Builder έχει πλέον μια γραμμή που λέει τι θα τον επανέφερε - ποια επιλογή να μικρύνεις, ποιο κενό του Captain να καλύψεις, ή ποια ρύθμιση Friend Captain να ανοίξεις. Ένας κανόνας που δεν έχει κάτι συγκεκριμένο να προτείνει δεν λέει τίποτα, αντί να μαντεύει.',
+      },
+    ],
     headline: {
-      en: 'Auto Team Builder says why a result came out thin',
-      el: 'Το Auto Team Builder λέει γιατί βγήκε φτωχό ένα αποτέλεσμα',
+      en: 'Auto Team Builder says why a result came out thin, and what to change',
+      el: 'Το Auto Team Builder λέει γιατί βγήκε φτωχό ένα αποτέλεσμα, και τι να αλλάξεις',
     },
     summaryEn:
-      'The results list on Auto Team Builder already told you, for every character it did not pick, the one reason that decided against it. What it never told you was the shape of the whole search. Open the explanation under a team slot and the characters it passed over are now grouped by that reason, each with a count - so you can see at a glance that the cost budget turned away far more of them than the crew rules did. Tap a reason to narrow the list to those characters only, and tap it again to get everyone back.',
+      'The results list on Auto Team Builder already told you, for every character it did not pick, the one reason that decided against it. What it never told you was the shape of the whole search. Open the explanation under a team slot and the characters it passed over are now grouped by that reason, each with a count - so you can see at a glance that the cost budget turned away far more of them than the crew rules did. Tap a reason to narrow the list to those characters only, and tap it again to get everyone back. And in the Final team report on the same screen, every rule marked Relaxed now says what would restore it instead of only that it bent.',
     summaryEl:
-      'Η λίστα αποτελεσμάτων στο Auto Team Builder σου έλεγε ήδη, για κάθε χαρακτήρα που δεν επέλεξε, τον έναν λόγο που έκρινε εναντίον του. Αυτό που δεν σου έλεγε ποτέ ήταν η συνολική εικόνα της αναζήτησης. Άνοιξε την εξήγηση κάτω από μια θέση της ομάδας και οι χαρακτήρες που προσπέρασε είναι πλέον ομαδοποιημένοι ανά αυτόν τον λόγο, ο καθένας με μέτρημα - ώστε να βλέπεις με μια ματιά ότι το όριο κόστους απέρριψε πολύ περισσότερους απ\' όσους οι κανόνες του crew. Πάτα έναν λόγο για να περιορίσεις τη λίστα μόνο σε αυτούς τους χαρακτήρες, και πάτα τον ξανά για να επιστρέψουν όλοι.',
+      'Η λίστα αποτελεσμάτων στο Auto Team Builder σου έλεγε ήδη, για κάθε χαρακτήρα που δεν επέλεξε, τον έναν λόγο που έκρινε εναντίον του. Αυτό που δεν σου έλεγε ποτέ ήταν η συνολική εικόνα της αναζήτησης. Άνοιξε την εξήγηση κάτω από μια θέση της ομάδας και οι χαρακτήρες που προσπέρασε είναι πλέον ομαδοποιημένοι ανά αυτόν τον λόγο, ο καθένας με μέτρημα - ώστε να βλέπεις με μια ματιά ότι το όριο κόστους απέρριψε πολύ περισσότερους απ\' όσους οι κανόνες του crew. Πάτα έναν λόγο για να περιορίσεις τη λίστα μόνο σε αυτούς τους χαρακτήρες, και πάτα τον ξανά για να επιστρέψουν όλοι. Και στο Τελικό report ομάδας στην ίδια οθόνη, κάθε κανόνας σημειωμένος ως Relaxed λέει πλέον τι θα τον επανέφερε, αντί μόνο ότι λύγισε.',
     fixed: [],
   },
   {

@@ -32,6 +32,19 @@
   white-space: normal;
 }
 
+.report-remedy {
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+
+.report-remedy__label {
+  color: #f7a7ce;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
 .report-local-override {
   margin: 14px 0 0;
   color: #7dd8f5;

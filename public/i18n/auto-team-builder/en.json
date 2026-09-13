@@ -652,6 +652,14 @@
   },
   "report": {
     "copy": "Shows which synergy rules the generated team follows and which ones were relaxed after exact search failed.",
+    "remedies": {
+      "label": "To restore it:",
+      "reduceSelectionBy": "You asked for more than the free team slots can hold. Remove at least {{count}} - the search already gave up {{values}}.",
+      "deselectValues": "Remove {{values}} from your selection, or pick characters that carry it.",
+      "allowAnyFriendCaptain": "Turn on Allow any Friend Captain, so the search can widen the leader pair.",
+      "coverCaptainAbilitySlots": "Pick a Captain or Friend Captain whose ability covers the {{count}} gap(s) named above.",
+      "meetActivationCriteria": "Meet the activation criteria for {{names}}, or remove them from your selection."
+    },
     "rules": {
       "captainAbility": {
         "notApplicable": "No Captain Ability tier coverage was requested.",

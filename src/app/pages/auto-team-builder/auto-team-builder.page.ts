@@ -113,6 +113,11 @@ import { matchesAnyAbilityRequirement } from '../../core/services/auto-team-buil
 import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import { resolveAutoBuildShipSelection } from '../../core/services/auto-team-builder-ship.utils';
 import {
+  resolveFinalReportRemedy,
+  type FinalReportRemedy,
+  type FinalReportRemedyContext,
+} from '../../core/services/auto-team-builder-final-report-remedy.utils';
+import {
   filterByRejectedGroupCode,
   groupRejectedCandidatesByDecisiveReason,
   resolveRejectedCandidateGroupCode,
@@ -291,6 +296,8 @@ interface AutoBuildFinalReportRow {
   detail: string;
   state: AutoBuildFinalReportState;
   stateLabel: string;
+  /** What would un-relax this rule, or null when nothing is derivable - see the remedy utils. */
+  remedy: string | null;
 }
 
 const AUTO_TEAM_COMPARE_SESSION_KEY = 'autoTeamBuilder.compareState.v1';
@@ -8982,6 +8989,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private buildFinalReportRows(result: AutoBuildResult): AutoBuildFinalReportRow[] {
+    const teamSlotCount = this.countTeamSlots(result);
+
     return [
       this.buildSelectedFilterReportRow(
         'types',
@@ -8992,6 +9001,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           !result.requestedInput.requireAllSelectedTypesInTeam &&
           this.sameUnorderedValues(result.requestedInput.types, AUTO_TEAM_BUILDER_TYPES)
         ),
+        teamSlotCount,
       ),
       this.buildSelectedClassReportRow(result),
       this.buildSelectedFilterReportRow(
@@ -9000,6 +9010,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         result.input.selectedCharacterTags ?? [],
         result.relaxation.droppedCharacterTags,
         (result.requestedInput.selectedCharacterTags ?? []).length > 0,
+        teamSlotCount,
       ),
       this.buildSelectedFilterReportRow(
         'characterNames',
@@ -9007,6 +9018,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         result.input.selectedCharacterNames ?? [],
         result.relaxation.droppedCharacterNames,
         (result.requestedInput.selectedCharacterNames ?? []).length > 0,
+        teamSlotCount,
       ),
       this.buildLeaderSuperScopeReportRow(result),
       this.buildCaptainAbilityReportRow(result),
@@ -9021,6 +9033,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     effectiveValues: readonly string[],
     droppedValues: readonly string[],
     applicable: boolean,
+    teamSlotCount?: number,
   ): AutoBuildFinalReportRow {
     if (!applicable) {
       return this.buildFinalReportRow(
@@ -9039,6 +9052,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           effective: this.formatResultValues(effectiveValues),
           relaxed: this.formatResultValues(droppedValues),
         }),
+        { requestedValues, droppedValues, teamSlotCount },
       );
     }
 
@@ -9102,6 +9116,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         'leaderSuperScope',
         'relaxed',
         this.t('report.rules.leaderSuperScope.relaxed'),
+        {
+          canAllowAnyFriendCaptain: !result.requestedInput.allowAnyFriendCaptainAutoFill,
+        },
       );
     }
 
@@ -9140,6 +9157,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
               missing: missingLabels.join(', '),
             })
           : this.t('report.rules.captainAbility.relaxed'),
+        { missingCaptainAbilityLabels: missingLabels },
       );
     }
 
@@ -9164,6 +9182,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         'superSpecial',
         'relaxed',
         this.ignoredSuperSpecialCriteriaLabel(),
+        {
+          criteriaCharacterNames: result.relaxation.ignoredSuperSpecialCriteriaCharacterNames ?? [],
+        },
       );
     }
 
@@ -9188,6 +9209,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         'superTandem',
         'relaxed',
         this.ignoredSuperTandemCriteriaLabel(),
+        {
+          criteriaCharacterNames: result.relaxation.ignoredSuperTandemCriteriaCharacterNames ?? [],
+        },
       );
     }
 
@@ -9210,6 +9234,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     key: string,
     state: AutoBuildFinalReportState,
     detail: string,
+    remedyContext?: Omit<FinalReportRemedyContext, 'ruleKey'>,
   ): AutoBuildFinalReportRow {
     return {
       key,
@@ -9217,7 +9242,61 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       detail,
       state,
       stateLabel: this.t(`report.states.${state}`),
+      // Only a relaxed rule has anything to un-relax. A passed row with a remedy line would be
+      // telling the reader to change a rule their team already kept.
+      remedy:
+        state === 'relaxed'
+          ? this.formatFinalReportRemedy(
+              resolveFinalReportRemedy({ ruleKey: key, ...(remedyContext ?? {}) }),
+            )
+          : null,
     };
+  }
+
+  /**
+   * The remedy kinds, worded. Kept next to the row builder rather than inside the resolver so the
+   * resolver stays a pure function over the relaxation record - it is the half that has to be
+   * testable without a page, a DOM or a translation loader.
+   */
+  private formatFinalReportRemedy(remedy: FinalReportRemedy | null): string | null {
+    if (!remedy) {
+      return null;
+    }
+
+    switch (remedy.kind) {
+      case 'reduceSelectionBy':
+        return this.t('report.remedies.reduceSelectionBy', {
+          count: remedy.count,
+          values: this.formatResultValues(remedy.values),
+        });
+      case 'deselectValues':
+        return this.t('report.remedies.deselectValues', {
+          values: this.formatResultValues(remedy.values),
+        });
+      case 'allowAnyFriendCaptain':
+        return this.t('report.remedies.allowAnyFriendCaptain');
+      case 'coverCaptainAbilitySlots':
+        return this.t('report.remedies.coverCaptainAbilitySlots', {
+          count: remedy.missingCount,
+        });
+      case 'meetActivationCriteria':
+        return this.t('report.remedies.meetActivationCriteria', {
+          names: this.formatResultValues(remedy.characterNames),
+        });
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Seats on the built team, which is what a selected-filter rule can spread its values across.
+   *
+   * The team, not the free seats: a manually locked sub still carries its character's type, class
+   * and tags, so it can satisfy a value the search never picked it for. `result.slots` rather than
+   * the constant, so a team the search returned short is counted as it actually is.
+   */
+  private countTeamSlots(result: AutoBuildResult): number {
+    return result.slots.length || AUTO_BUILD_MANUAL_SLOT_ROLES.length;
   }
 
   private formatSelectedValues(values: readonly string[]): string {
