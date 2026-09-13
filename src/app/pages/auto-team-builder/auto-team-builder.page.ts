@@ -7206,7 +7206,21 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const nonCaptainRequiredAbilities = manualRequiredAbilities.filter(
       (requirement) => !isCaptainAbilityRequirement(requirement),
     );
-    this.enemyMechanicDrafts.set([]);
+    /*
+     * 869f1935z. These used to be cleared, so loading a Saved Enemy threw away the mechanics the
+     * reader had ticked on it.
+     *
+     * The five that map to an ability survived as CONSTRAINTS - `splitManualAbilityRequirements…`
+     * above keeps them out of the manual list precisely because the drafts are meant to carry them
+     * - but they arrived anonymous, so nothing on screen said which mechanic they came from. The
+     * unmapped ones were worse: they derive no requirement at all, so with the drafts cleared they
+     * vanished entirely. Tick "Block Orbs" on a Saved Enemy, open it here, build, and there was no
+     * mention of it anywhere.
+     *
+     * That is the exact silence the mechanic checklist exists to break, and the preset path - the
+     * main way an enemy reaches this page - defeated it.
+     */
+    this.enemyMechanicDrafts.set(createEnemyMechanicDrafts(state.enemyMechanics));
     this.captainAbilityDrafts.set(
       createCaptainAbilityDrafts(
         manualRequiredAbilities,
