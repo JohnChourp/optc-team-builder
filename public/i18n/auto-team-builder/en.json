@@ -1195,5 +1195,20 @@
     "title": "Support Ability filters",
     "copy": "Pick Support effects. Results must cover every selected effect.",
     "empty": "No Support Ability effects selected"
+  },
+  "mechanicChecklist": {
+    "title": "Enemy mechanics checklist",
+    "summary": "{{covered}} covered · {{notCovered}} not covered · {{unanswerable}} cannot be answered",
+    "states": {
+      "covered": "Covered",
+      "notCovered": "Not covered",
+      "unanswerable": "Cannot be answered"
+    },
+    "details": {
+      "covered": "Slot {{slots}} — {{names}}",
+      "notCovered": "No character in this team answers it",
+      "partial": "{{have}} of {{need}} characters — partial cover does not count",
+      "unanswerable": "No shipped ability tag answers this mechanic, so the builder cannot check it"
+    }
   }
 }

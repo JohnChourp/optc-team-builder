@@ -3414,6 +3414,45 @@
                   </p>
                 }
               </section>
+
+              <!--
+                869f1935z. The mechanic checklist. Its own card, directly after the Final team
+                report, because it answers a different question: the report says which of YOUR
+                rules bent, this says which of the GAME'S mechanics went unanswered. Fourteen of
+                the 38 catalogue mechanics derive no ability requirement at all, so the report has
+                no row it could ever render for them.
+              -->
+              @if (mechanicChecklist().entries.length) {
+                <section class="glass-card report-card" data-testid="auto-build-mechanic-checklist">
+                  <div class="slot-grid__header">
+                    <h2>{{ t('mechanicChecklist.title') }}</h2>
+                    <p>{{ mechanicChecklistSummaryLabel() }}</p>
+                  </div>
+                  <div class="coverage-groups report-groups">
+                    @for (entry of mechanicChecklist().entries; track entry.mechanicKey) {
+                      <div class="report-row">
+                        <span>{{ resolveMechanicLabel(entry.mechanicKey) }}</span>
+                        <div class="chip-row">
+                          <small
+                            class="coverage-chip report-state-chip"
+                            [class.report-state-chip--passed]="entry.state === 'covered'"
+                            [class.report-state-chip--relaxed]="entry.state === 'notCovered'"
+                            [class.report-state-chip--not-applicable]="
+                              entry.state === 'unanswerable'
+                            "
+                            [attr.data-testid]="'mechanic-state-' + entry.mechanicKey"
+                          >
+                            {{ t('mechanicChecklist.states.' + entry.state) }}
+                          </small>
+                          <small class="coverage-chip report-detail-chip">
+                            {{ mechanicChecklistDetail(entry) }}
+                          </small>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </section>
+              }
               <section class="summary-grid">
                 <article class="glass-card summary-card">
                   <span>{{ t('summary.requestedClasses') }}</span>
