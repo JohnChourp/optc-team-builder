@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.22',
+    date: '2026-09-13',
+    userVisible: true,
+    added: [],
+    improved: [],
+    headline: {
+      en: 'Opening a saved enemy keeps the mechanics you ticked on it',
+      el: 'Το άνοιγμα αποθηκευμένου εχθρού κρατά τους μηχανισμούς που του έβαλες',
+    },
+    summaryEn:
+      "The Enemy mechanics checklist arrived in the last version, and it was empty for the one thing you would most want to use it on. Opening a saved enemy in Auto Team Builder dropped every enemy mechanic you had ticked on that enemy. The ones the builder can search for still shaped the team, so your results were never wrong - but the checklist had nothing to report, and a mechanic the builder cannot search for, like Block Orbs, disappeared without a word. Open a saved enemy now and every mechanic on it comes with you, and the checklist says covered, not covered, or cannot be answered for each one.",
+    summaryEl:
+      'Το Checklist μηχανισμών εχθρού ήρθε στην προηγούμενη έκδοση, και ήταν κενό ακριβώς εκεί που θα το ήθελες περισσότερο. Το άνοιγμα αποθηκευμένου εχθρού στο Auto Team Builder πετούσε κάθε μηχανισμό που είχες τσεκάρει πάνω του. Όσοι μπορεί να τους ψάξει ο builder συνέχιζαν να διαμορφώνουν την ομάδα, οπότε τα αποτελέσματά σου δεν ήταν ποτέ λάθος - αλλά το checklist δεν είχε τίποτα να πει, και ένας μηχανισμός που ο builder δεν μπορεί να ψάξει, όπως το Block Orbs, εξαφανιζόταν χωρίς λέξη. Άνοιξε τώρα έναν αποθηκευμένο εχθρό και κάθε μηχανισμός του έρχεται μαζί, και το checklist λέει για τον καθένα καλυμμένο, ακάλυπτο, ή δεν απαντιέται.',
+    fixed: [
+      {
+        en: 'Sending a saved enemy to Auto Team Builder no longer loses the enemy mechanics saved on it. The Enemy mechanics checklist under the Final team report now lists every one of them, instead of coming up empty.',
+        el: 'Η αποστολή αποθηκευμένου εχθρού στο Auto Team Builder δεν χάνει πια τους μηχανισμούς εχθρού που είναι αποθηκευμένοι πάνω του. Το Checklist μηχανισμών εχθρού κάτω από το Τελικό report ομάδας τους δείχνει πλέον όλους, αντί να βγαίνει κενό.',
+      },
+      {
+        en: 'A mechanic the builder has no ability to search for - Block Orbs, Orb Shuffle, the interrupts - used to vanish completely when you opened the enemy. It is now carried through and shown as one it cannot answer, so you can see it was asked for.',
+        el: 'Ένας μηχανισμός που ο builder δεν έχει ικανότητα να ψάξει - Block Orbs, Orb Shuffle, τα interrupts - εξαφανιζόταν τελείως όταν άνοιγες τον εχθρό. Τώρα μεταφέρεται και εμφανίζεται ως μηχανισμός που δεν απαντιέται, ώστε να βλέπεις ότι ζητήθηκε.',
+      },
+    ],
+  },
+  {
     version: '0.4.21',
     date: '2026-09-13',
     userVisible: true,
