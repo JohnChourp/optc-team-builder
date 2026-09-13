@@ -133,6 +133,10 @@ import {
   resolveCaptainCoverageBranchOptions,
 } from '../../core/services/captain-coverage.utils';
 import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
+import {
+  buildMechanicChecklist,
+  type MechanicChecklistEntry,
+} from '../../core/services/auto-team-builder-mechanic-checklist.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
   UserStateService,
@@ -2777,6 +2781,33 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     return this.buildFinalReportRows(current);
+  });
+  /**
+   * 869f1935z. Covered / not covered / cannot be answered, for every enemy mechanic the reader
+   * ticked - against the team that was actually built.
+   *
+   * Deliberately NOT folded into `finalReportRows`. That list is keyed on the rules the search
+   * used, and fourteen of the catalogue's mechanics derive no rule at all, so they could never
+   * appear there. Merging the two would also make a mechanic look like a search constraint the
+   * reader could relax, which it is not.
+   */
+  public readonly mechanicChecklist = computed(() => {
+    const current = this.result();
+
+    if (!current) {
+      return { entries: [], coveredCount: 0, notCoveredCount: 0, unanswerableCount: 0 };
+    }
+
+    return buildMechanicChecklist(current.input.enemyMechanics ?? [], current.slots);
+  });
+  public readonly mechanicChecklistSummaryLabel = computed(() => {
+    const summary = this.mechanicChecklist();
+
+    return this.t('mechanicChecklist.summary', {
+      covered: summary.coveredCount,
+      notCovered: summary.notCoveredCount,
+      unanswerable: summary.unanswerableCount,
+    });
   });
   /** A report exists to copy once a build has answered: with a team, or with why there is none. */
   public readonly canCopyDebugReport = computed(
@@ -8965,6 +8996,39 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       ability.source === 'captainAbility' ? ` • ${this.t('abilities.captainSource')}` : '';
 
     return `${this.formatCharacterAbilityLabel(ability)}${metadataSuffix}${sourceSuffix}`;
+  }
+
+  /** The catalogue's own English label - the game's term, which is how players say it. */
+  public resolveMechanicLabel(mechanicKey: string): string {
+    return this.enemyMechanicCatalogMap().get(mechanicKey)?.label ?? mechanicKey;
+  }
+
+  public mechanicChecklistDetail(entry: MechanicChecklistEntry): string {
+    if (entry.state === 'unanswerable') {
+      // Said plainly, because "not covered" would send the reader hunting for a unit that does
+      // not exist. No shipped ability answers these fourteen.
+      return this.t('mechanicChecklist.details.unanswerable');
+    }
+
+    if (entry.state === 'covered') {
+      return this.t('mechanicChecklist.details.covered', {
+        slots: entry.coveringSlots.join(', '),
+        names: entry.coveringCharacterNames.join(', '),
+      });
+    }
+
+    /*
+     * Partial coverage is not coverage, and saying only "not covered" would hide that the team is
+     * one unit short rather than empty-handed.
+     */
+    if (entry.coveringSlots.length > 0) {
+      return this.t('mechanicChecklist.details.partial', {
+        have: entry.coveringSlots.length,
+        need: entry.requiredCharacterCount,
+      });
+    }
+
+    return this.t('mechanicChecklist.details.notCovered');
   }
 
   public formatAbilityCatalogItemLabel(item: AutoBuildAbilityCatalogItem): string {

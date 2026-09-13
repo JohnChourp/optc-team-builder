@@ -1195,5 +1195,20 @@
     "title": "Support Ability filters",
     "copy": "Επίλεξε Support effects. Τα αποτελέσματα πρέπει να καλύπτουν κάθε επιλεγμένο effect.",
     "empty": "Δεν έχουν επιλεγεί Support Ability effects"
+  },
+  "mechanicChecklist": {
+    "title": "Checklist μηχανισμών εχθρού",
+    "summary": "{{covered}} καλυμμένα · {{notCovered}} ακάλυπτα · {{unanswerable}} δεν απαντώνται",
+    "states": {
+      "covered": "Καλυμμένο",
+      "notCovered": "Ακάλυπτο",
+      "unanswerable": "Δεν απαντιέται"
+    },
+    "details": {
+      "covered": "Θέση {{slots}} — {{names}}",
+      "notCovered": "Κανένας χαρακτήρας της ομάδας δεν το απαντά",
+      "partial": "{{have}} από {{need}} χαρακτήρες — η μερική κάλυψη δεν μετράει",
+      "unanswerable": "Κανένα ability tag δεν απαντά αυτόν τον μηχανισμό, οπότε ο builder δεν μπορεί να τον ελέγξει"
+    }
   }
 }
