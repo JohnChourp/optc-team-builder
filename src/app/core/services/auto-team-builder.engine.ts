@@ -568,7 +568,11 @@ export function runAutoTeamBuildAttempt(
     : [];
   const ignoredSuperTandemCriteria =
     superTandemCriteriaRelaxationPermitted && ignoredSuperTandemCriteriaCharacterNames.length > 0;
-  // Axis 7, same shape as axes 6, 9 and 10: `input.allowPartialCaptainAbilityCoverage` records
+  // Axis 7, same shape as axes 6, 9 and 10 - all four listed, with what they read and which report
+  // row speaks for them, in `auto-team-builder-axes.registry.ts` (869f127ec). That numbering used
+  // to exist only in this sentence, so a reader who wanted axis 6 had nowhere to go.
+  //
+  // `input.allowPartialCaptainAbilityCoverage` records
   // that the attempt was ALLOWED to concede coverage, not that the team did. The requested
   // constraint, in outcome terms, is exactly what `shouldEnforceCaptainAbilityCoverage` and
   // `shouldRequireAllLeaderTiersCovered` gate on - every slot inside the leader criteria and
