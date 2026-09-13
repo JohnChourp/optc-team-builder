@@ -103,6 +103,37 @@ describe('CharactersPage favorites tools', () => {
     expect(page.importFileName()).toBe('');
   });
 
+  it('opens the import modal when Crew Forge links here with ?import=optcbx', async () => {
+    /*
+     * 869f1935z, the `869f127ga` finding. A data import already shipped and the proposal to build
+     * one was written as though it had not - a discoverability problem, not a missing feature.
+     * Crew Forge is where a reader looking for "get my box in" actually lands, so it names the
+     * other route and this is what makes that link land somewhere useful.
+     */
+    const { page } = createPage({ importParam: 'optcbx' });
+
+    await page.ngOnInit();
+
+    expect(page.importModalOpen()).toBe(true);
+  });
+
+  it('does NOT open the import modal on a normal visit', async () => {
+    // The default for every other test, asserted once so it cannot regress silently.
+    const { page } = createPage();
+
+    await page.ngOnInit();
+
+    expect(page.importModalOpen()).toBe(false);
+  });
+
+  it('ignores an import param it does not recognise, because the URL is anyone to type', async () => {
+    const { page } = createPage({ importParam: 'something-else' });
+
+    await page.ngOnInit();
+
+    expect(page.importModalOpen()).toBe(false);
+  });
+
   it('imports favorites into user state', async () => {
     const parsedImport: OptcbxParsedImport = {
       importedNumbers: [1001, 1002],
@@ -1015,7 +1046,8 @@ function buildCharacterTagSelection(
   };
 }
 
-function createPage(overrides: { favoriteIds?: number[] } = {}) {
+function createPage(overrides: { favoriteIds?: number[]; importParam?: string | null } = {}) {
+  const importParam = overrides.importParam ?? null;
   const favoriteIds = signal(overrides.favoriteIds ?? []);
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
@@ -1084,13 +1116,22 @@ function createPage(overrides: { favoriteIds?: number[] } = {}) {
       return key;
     }),
   };
+  /*
+   * 869f1935z. Crew Forge links here with `?import=optcbx`, so the page reads the route. Default
+   * is NO param, which is every existing test: they must keep seeing a page that does not open
+   * the import modal on load.
+   */
+  const route = {
+    snapshot: { queryParamMap: { get: (key: string) => (key === 'import' ? importParam : null) } },
+  };
   const page = new CharactersPage(
     repository as never,
     characterCatalogCache as never,
     userState as never,
     optcbxImport as never,
     i18n as never,
+    route as never,
   );
 
-  return { page, repository, characterCatalogCache, userState, optcbxImport, i18n };
+  return { page, repository, characterCatalogCache, userState, optcbxImport, i18n, route };
 }

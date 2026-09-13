@@ -139,6 +139,12 @@ import {
 } from '../../core/services/auto-team-builder-mechanic-checklist.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
+  AUTO_TEAM_BUILDER_SELECTION_SESSION_KEY,
+  isDefaultSelectionState,
+  narrowToAvailable,
+  parseSelectionState,
+} from './auto-team-builder-selection-state.utils';
+import {
   UserStateService,
   type AutoTeamBuilderWorkerMode,
 } from '../../core/services/user-state.service';
@@ -3447,6 +3453,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         (_, index) => index + 1,
       ),
     );
+
     this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
   }
 
@@ -3495,6 +3502,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.ships.set(ships);
     void this.loadAvailableCharacterTags();
     await this.resetPageState();
+    this.restoreSelectionState();
     await this.refreshAllCompareSnapshots();
 
     this.pageReady.set(true);
@@ -3545,6 +3553,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
      * If `resetPageState()` ever grows an await, this reasoning expires.
      */
     await this.resetPageState();
+    /*
+     * 869f1935z. Restored BEFORE `pageReady`, so the persisting effect below never sees the
+     * defaults this reset just wrote - and BEFORE the route preset, so an explicit preset link
+     * still wins over what the reader was doing last time.
+     */
+    this.restoreSelectionState();
 
     this.pageReady.set(true);
 
@@ -3598,6 +3612,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedClasses.set(this.resolveSelectedClasses(event.detail.value));
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
+    this.persistSelectionState();
   }
 
   public async onTypeChange(
@@ -3611,6 +3626,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedTypes.set(this.resolveSelectedTypes(event.detail.value));
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
+    this.persistSelectionState();
   }
 
   public openCharacterTagSetPicker(): void {
@@ -3625,6 +3641,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.characterTagSetPickerOpen.set(false);
     this.characterTagSets.set(this.resolveCharacterTagSetSelection(selection));
     this.resetBuildState();
+    this.persistSelectionState();
   }
 
   public onCharacterNameDraftChange(event: CustomEvent<{ value?: string | null }>): void {
@@ -3652,6 +3669,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.selectedCharacterNames().filter((selectedName) => selectedName !== characterName),
     );
     this.resetBuildState();
+    this.persistSelectionState();
   }
 
   public onLeaderBoostFilterChange(
@@ -4703,6 +4721,87 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           titleKey: 'compare.storage.persistenceTitle',
         }),
       );
+    }
+  }
+
+  /**
+   * The four filters, and nothing else. See `auto-team-builder-selection-state.utils.ts`.
+   *
+   * Called from the reader-facing handlers rather than from an `effect`, which is how Saved Teams
+   * already parks its own view state. An `effect` was the first attempt and cannot work here: the
+   * page specs construct this class with `new`, so there is no injection context and `effect()`
+   * throws NG0203 before a single test runs. Calling it from the handlers also keeps `restore`,
+   * `reset` and the preset paths OUT of the write path, which is what they should be - none of
+   * those is the reader choosing a filter.
+   */
+  private persistSelectionState(): void {
+    const state = {
+      selectedTypes: [...this.selectedTypes()],
+      selectedClasses: [...this.selectedClasses()],
+      selectedCharacterNames: [...this.selectedCharacterNames()],
+      characterTagSets: this.characterTagSets(),
+    };
+
+    try {
+      if (isDefaultSelectionState(state)) {
+        globalThis.sessionStorage?.removeItem(AUTO_TEAM_BUILDER_SELECTION_SESSION_KEY);
+        return;
+      }
+
+      globalThis.sessionStorage?.setItem(
+        AUTO_TEAM_BUILDER_SELECTION_SESSION_KEY,
+        JSON.stringify(state),
+      );
+    } catch {
+      // Private browsing and storage-blocked contexts throw. A selection that cannot be parked is
+      // not a reason to break the page, which is how the compare state above already degrades.
+    }
+  }
+
+  private restoreSelectionState(): void {
+    let raw: string | null = null;
+
+    try {
+      raw = globalThis.sessionStorage?.getItem(AUTO_TEAM_BUILDER_SELECTION_SESSION_KEY) ?? null;
+    } catch {
+      return;
+    }
+
+    if (!raw) {
+      return;
+    }
+
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    const state = parseSelectionState(parsed);
+
+    /*
+     * Narrowed to what this build still offers. A type or class upstream renamed away would
+     * otherwise sit in the filter bar as a chip matching nothing, which reads as the builder being
+     * broken rather than as a stale filter.
+     */
+    if (state.selectedTypes) {
+      this.selectedTypes.set(
+        narrowToAvailable(state.selectedTypes, this.availableTypes) as AutoTeamBuilderType[],
+      );
+    }
+
+    if (state.selectedClasses) {
+      this.selectedClasses.set(narrowToAvailable(state.selectedClasses, this.availableClasses()));
+    }
+
+    if (state.selectedCharacterNames) {
+      this.selectedCharacterNames.set(state.selectedCharacterNames);
+    }
+
+    if (state.characterTagSets) {
+      this.characterTagSets.set(state.characterTagSets);
     }
   }
 
@@ -5889,6 +5988,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedTypes.set([...this.availableTypes]);
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
+    this.persistSelectionState();
   }
 
   public async selectAllClasses(): Promise<void> {
@@ -5903,6 +6003,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedClasses.set([...this.availableClasses()]);
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
+    this.persistSelectionState();
   }
 
   /**
@@ -5929,6 +6030,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedTypes.set(this.selectedTypes().filter((selectedType) => selectedType !== type));
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
+    this.persistSelectionState();
   }
 
   public async removeSelectedClass(characterClass: string): Promise<void> {
@@ -5937,6 +6039,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     );
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
+    this.persistSelectionState();
   }
 
   public async toggleFavorite(characterId: number): Promise<void> {

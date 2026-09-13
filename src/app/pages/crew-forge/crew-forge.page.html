@@ -20,6 +20,19 @@
             <div>
               <h1 class="section-title">{{ t('hero.title') }}</h1>
               <p class="section-copy">{{ t('hero.copy') }}</p>
+              <!--
+                869f1935z. The `869f127ga` finding: a data import already ships and the proposal
+                to build one was written as though it did not, which is a discoverability problem
+                rather than a missing feature. This is the one place a reader looking for "get my
+                box in" actually lands, and OCR is the lossier of the two paths - so it is the
+                place that has to name the other one.
+              -->
+              <p class="section-copy crew-forge-hero__alternative">
+                {{ t('hero.dataImportHint') }}
+                <a routerLink="/tabs/characters" [queryParams]="{ import: 'optcbx' }">{{
+                  t('hero.dataImportLink')
+                }}</a>
+              </p>
             </div>
 
             <div class="hero-meta">

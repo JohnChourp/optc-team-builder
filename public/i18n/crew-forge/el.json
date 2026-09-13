@@ -7,7 +7,9 @@
     "meta": {
       "recognized": "{{count}} αναγνωρισμένοι χαρακτήρες",
       "limit": "Έως 50 ranked προτάσεις"
-    }
+    },
+    "dataImportHint": "Έχεις ήδη OPTCbx export; Κάνε import τα δεδομένα — κάθε unit έρχεται ακριβώς, χωρίς να μαντεύει τίποτα.",
+    "dataImportLink": "Import από OPTCbx export"
   },
   "actions": {
     "build": "Δημιουργία ομάδων"
