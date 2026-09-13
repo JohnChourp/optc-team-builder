@@ -97,6 +97,31 @@ in a state a user could hit. Treat it as a flake candidate only after the failur
 is isolated to timing, browser infrastructure, or an interaction helper and a
 fresh rerun on the same commit passes without code changes.
 
+### The flake ledger: what makes a repeat visible as a repeat
+
+The failure summary is an artifact of one run, and `quarantine.json` holds only
+what a human decided to quarantine. Neither remembers, so a browser failure used
+to re-open the same question every time and the answer was re-derived by hand.
+
+`e2e/flake-ledger.json` is the committed memory. `scripts/record-playwright-flakes.mjs`
+folds a run's Playwright JSON report into it, keyed by
+`project + spec + normalized error signature` - the same signature the failure
+summary uses, so one place decides when two failures are the same failure. The
+record carries `firstSeen`, `lastSeen`, a `count`, and the last 20 occurrences.
+
+Two rules it follows that are easy to get wrong by hand:
+
+- retries **within one run** are one flake, not three. A spec that failed three
+  retries in a single run flaked once, and counting retries makes one bad run
+  look like a standing pattern;
+- a **renamed test** is the same flake. The key does not include the title, and
+  the newest title wins.
+
+**The ledger never quarantines anything.** It does not write `quarantine.json`
+and it does not exclude a spec from a run. A repeat is evidence for the decision
+below, never the decision itself - a ledger that could quarantine on its own
+would hide the regressions it exists to help tell apart from flakes.
+
 Quarantine is a temporary, explicit exception for repeated unstable cases. To
 quarantine a test, add an `@quarantined:<case-id>` tag to the test title and add
 the same tag to `quarantine.json` with the affected browser list, reason,
