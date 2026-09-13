@@ -3377,6 +3377,15 @@
                           {{ row.detail }}
                         </small>
                       </div>
+                      @if (row.remedy) {
+                        <p
+                          class="report-remedy"
+                          [attr.data-testid]="'report-remedy-' + row.key"
+                        >
+                          <span class="report-remedy__label">{{ t('report.remedies.label') }}</span>
+                          {{ row.remedy }}
+                        </p>
+                      }
                     </div>
                   }
                 </div>
