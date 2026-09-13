@@ -20,6 +20,11 @@ import { CharacterOverridesService } from '../../core/services/character-overrid
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { createLocalCharacterOverrideFromRecord } from '../../core/services/character-overrides.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import {
+  buildProgressionCards,
+  collectProgressionCharacterIds,
+  type ProgressionDisplayCard,
+} from './character-progression.presenter';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
   buildCharacterOverridesTransferPayload,
@@ -77,6 +82,8 @@ export class CharacterDetailPage implements OnInit {
   public readonly character = signal<CharacterDetailRecord | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly rumbleBasedOnName = signal<string | null>(null);
+  /** 869f1935z. Sockets, cooldown, evolution chain and drop sources for the character on screen. */
+  public readonly progressionCards = signal<ProgressionDisplayCard[]>([]);
   public readonly loading = signal(true);
   public readonly transferFeedback = signal<{ tone: 'error' | 'success'; message: string } | null>(
     null,
@@ -234,10 +241,40 @@ export class CharacterDetailPage implements OnInit {
 
     this.character.set(character);
     await this.loadRumbleReferenceName(character);
+    await this.loadProgression(character);
 
     if (markRecent) {
       await this.userState.markRecent(characterId);
     }
+  }
+
+  /**
+   * 869f1935z. The evolution chain names other characters, so their names are resolved in ONE
+   * query rather than per entry - a branching evolution with materials can reference five units,
+   * and the detail page already pays for two round trips before this one.
+   */
+  private async loadProgression(character: CharacterDetailRecord | null): Promise<void> {
+    this.progressionCards.set([]);
+
+    if (!character) {
+      return;
+    }
+
+    const progression = await this.repository.getCharacterProgression(character.id);
+
+    if (!progression) {
+      return;
+    }
+
+    const relatedIds = collectProgressionCharacterIds(progression);
+    const related = relatedIds.length
+      ? await this.repository.getCharactersByIds(relatedIds)
+      : [];
+    const namesById = new Map(related.map((entry) => [entry.id, entry.name]));
+
+    this.progressionCards.set(
+      buildProgressionCards(progression, (characterId) => namesById.get(characterId) ?? null),
+    );
   }
 
   private async loadRumbleReferenceName(character: CharacterDetailRecord | null): Promise<void> {

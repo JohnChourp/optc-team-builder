@@ -62,7 +62,11 @@
     "superType": "Super Type",
     "switchEffectData": "Switch Effect",
     "swapData": "Swap Data",
-    "vsSpecial": "VS Special"
+    "vsSpecial": "VS Special",
+    "progression": "Getting and improving this unit",
+    "investment": "Investment",
+    "evolution": "Evolution",
+    "dropSources": "Where it drops"
   },
   "superSpecial": {
     "criteriaLabel": "Criteria",
@@ -93,5 +97,12 @@
       "characterMismatch": "The selected override file does not match this character.",
       "importFailed": "Character override import failed."
     }
+  },
+  "progression": {
+    "socketSlots": "Socket slots",
+    "specialCooldown": "Special cooldown (base to max)",
+    "evolvesFrom": "Evolves from",
+    "evolvesInto": "Evolves into, and what it costs",
+    "dropsFrom": "Drops from"
   }
 }

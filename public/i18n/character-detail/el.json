@@ -62,7 +62,11 @@
     "superType": "Super Type",
     "switchEffectData": "Switch Effect",
     "swapData": "Swap Data",
-    "vsSpecial": "VS Special"
+    "vsSpecial": "VS Special",
+    "progression": "Πώς τον αποκτάς και πώς τον ανεβάζεις",
+    "investment": "Επένδυση",
+    "evolution": "Evolution",
+    "dropSources": "Πού πέφτει"
   },
   "superSpecial": {
     "criteriaLabel": "Criteria",
@@ -93,5 +97,12 @@
       "characterMismatch": "Το επιλεγμένο αρχείο override δεν αντιστοιχεί σε αυτόν τον χαρακτήρα.",
       "importFailed": "Το import του override χαρακτήρα απέτυχε."
     }
+  },
+  "progression": {
+    "socketSlots": "Θέσεις για sockets",
+    "specialCooldown": "Cooldown του special (από βασικό σε max)",
+    "evolvesFrom": "Προέρχεται από",
+    "evolvesInto": "Εξελίσσεται σε, και τι κοστίζει",
+    "dropsFrom": "Πέφτει από"
   }
 }
