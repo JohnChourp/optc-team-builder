@@ -1051,6 +1051,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly teamName = signal('');
   public readonly notes = signal('');
   public readonly building = signal(false);
+  /**
+   * 869f127cc. A provisional team to look at while a long search runs. Replaced only by an attempt
+   * earlier in the plan, and dropped the moment the real result lands - it is never the answer, and
+   * nothing reads it back into the search.
+   */
+  public readonly previewResult = signal<AutoBuildResult | null>(null);
+  public readonly previewSlotNames = computed(() =>
+    (this.previewResult()?.slots ?? []).map((slot) => slot.character.name),
+  );
   public readonly buildPaused = signal(false);
   public readonly buildProgress = signal<AutoBuildProgressSnapshot | null>(null);
   public readonly result = signal<AutoBuildResult | null>(null);
@@ -5935,6 +5944,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.buildPaused.set(false);
     this.pauseAfterBuildCancellation = false;
     this.building.set(true);
+    this.previewResult.set(null);
     this.resetBuildState();
     this.buildStartedAtMs = Date.now();
     const constraints = this.buildCurrentAutoTeamBuildConstraints();
@@ -5957,6 +5967,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         onExecutionPath: (path) => {
           if (buildInputRevision === this.buildInputRevision) {
             this.lastExecutionPath = path;
+          }
+        },
+        onPreviewResult: (preview) => {
+          // A preview from a search the reader has already replaced is not a preview of anything.
+          if (buildInputRevision === this.buildInputRevision) {
+            this.previewResult.set(preview);
           }
         },
         workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
@@ -6039,6 +6055,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       this.activeBuildInputRevision = null;
       this.buildProgress.set(null);
       this.stopBuildProgressTicker();
+      // In the `finally`, so a cancelled or failed search drops it too. A provisional team left on
+      // screen after the search that produced it has stopped is worse than never showing one.
+      this.previewResult.set(null);
       this.building.set(false);
     }
   }

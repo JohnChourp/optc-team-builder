@@ -1732,6 +1732,26 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  /*
+   * 869f127cc. The provisional team is shown only while a search is running, and is dropped on
+   * every exit - including a cancelled or failed one. A team left on screen after the search that
+   * produced it has stopped is worse than never showing one.
+   */
+  it('shows nothing provisional before a search has run', async () => {
+    const { page } = await createPage();
+
+    expect(page.previewResult()).toBeNull();
+    expect(page.previewSlotNames()).toEqual([]);
+  });
+
+  it('names the provisional team slots while one is held', async () => {
+    const { page } = await createPage();
+
+    page.previewResult.set(createAutoBuildResult());
+
+    expect(page.previewSlotNames().length).toBeGreaterThan(0);
+  });
+
   it('tracks open explanation details separately from collapsed summaries', async () => {
     const { page } = await createPage();
 

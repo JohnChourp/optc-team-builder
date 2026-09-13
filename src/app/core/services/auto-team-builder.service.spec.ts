@@ -37728,6 +37728,82 @@ describe('Auto team builder', () => {
     );
   });
 
+  /*
+   * 869f127cc. The provisional team is a READ-ONLY side channel. This is the twin of the test
+   * below - the same scenario, with a listener attached - and it asserts both halves: the reader
+   * is shown the fallback that finished first, AND the resolved team is still the exact attempt,
+   * unchanged by the listener's presence.
+   */
+  it('shows a fallback that finished first as provisional, and still resolves the exact attempt', async () => {
+    const repository = {
+      getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),
+      getShips: vi.fn().mockResolvedValue([]),
+    };
+    const service = new AutoTeamBuilderService(repository as never);
+    let exactRunId: string | null = null;
+    const fallbackResult = buildWorkerResult(createInput(['DEX'], ['Fighter']));
+    const exactResult = buildWorkerResult(createInput(['DEX', 'INT'], ['Fighter']));
+    const workerA = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerA.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        exactRunId = request.runId;
+      }
+    });
+    const workerB = new PooledFakeWorker((request) => {
+      if (request.type === 'init') {
+        workerB.emitMessage({ type: 'ready' });
+        return;
+      }
+
+      if (request.type === 'runAttempt') {
+        workerB.emitMessage({
+          type: 'result',
+          runId: request.runId,
+          result: fallbackResult,
+        });
+      }
+    });
+    const createWorkerSpy = vi.spyOn(
+      service as unknown as AutoTeamBuilderServiceWithWorkerFactory,
+      'createWorker',
+    );
+    createWorkerSpy.mockReturnValueOnce(workerA as never).mockReturnValueOnce(workerB as never);
+
+    const onPreviewResult = vi.fn();
+    const buildPromise = service.buildTeam(
+      ['Fighter'],
+      ['DEX', 'INT'],
+      {
+        requireFullCaptainAbilityCoverage: false,
+        requireLeaderSuperSpecialCriteria: false,
+        requireSuperTandemCriteria: false,
+      },
+      { workerCount: 2, onPreviewResult },
+    );
+
+    await flushMicrotasks();
+
+    // Something to look at, before the search has finished.
+    expect(onPreviewResult).toHaveBeenCalled();
+    expect(onPreviewResult.mock.calls[0]?.[0]?.input).toEqual(fallbackResult.input);
+
+    workerA.emitMessage({
+      type: 'result',
+      runId: exactRunId,
+      result: exactResult,
+    });
+
+    const result = await buildPromise;
+
+    // ...and the answer is still the exact attempt, exactly as in the twin test below.
+    expect(result?.input).toEqual(exactResult.input);
+    expect(result?.input).not.toEqual(fallbackResult.input);
+  });
+
   it('keeps exact result priority when a speculative fallback finishes first', async () => {
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createSingleTypeRecords()),

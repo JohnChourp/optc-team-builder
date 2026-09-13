@@ -3278,6 +3278,25 @@
                 </section>
               }
 
+              @if (building() && previewSlotNames().length) {
+                <section
+                  class="glass-card preview-card"
+                  data-testid="auto-build-preview"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div class="slot-grid__header">
+                    <h2>{{ t('preview.title') }}</h2>
+                    <p>{{ t('preview.copy') }}</p>
+                  </div>
+                  <div class="chip-row">
+                    @for (name of previewSlotNames(); track $index) {
+                      <small class="coverage-chip preview-chip">{{ name }}</small>
+                    }
+                  </div>
+                </section>
+              }
+
               @if (result(); as current) {
               @if (resultUsesFallback()) {
                 <section class="glass-card fallback-card">
