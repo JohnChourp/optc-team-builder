@@ -298,6 +298,13 @@ npm install
 echo "[release] Refreshing OPTC data before version bump." >&2
 npm run data:import:all
 
+# 869f127dr. The dataset only moves here, which is why an importer change goes red on main rather
+# than on the branch that made it. This is the first moment the new data and the specs that pin it
+# exist together, so it is the last moment the release can refuse instead of committing a tree that
+# will be red on main.
+echo "[release] Checking spec pins against the regenerated dataset." >&2
+node "${PROJECT_ROOT}/scripts/check-dataset-spec-pins.mjs" --app-root "${PROJECT_ROOT}"
+
 "${PROJECT_ROOT}/scripts/bump-version.sh" "${BUMP_ARGS[@]}" >/dev/null
 
 # The nightly release chain has no human to write the What's New entry, and

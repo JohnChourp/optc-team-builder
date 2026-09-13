@@ -94,6 +94,7 @@
     "test:maintainer-doctor": "vitest run scripts/maintainer-environment-doctor.spec.ts",
     "test:branch-cleanup": "vitest run scripts/branch-cleanup-report.spec.ts",
     "dataset:digest": "node ./scripts/dataset-change-digest.mjs",
+    "dataset:spec-pins": "node ./scripts/check-dataset-spec-pins.mjs",
     "test:dataset-digest": "vitest run scripts/dataset-change-digest.spec.ts",
     "test:docs-integrity": "vitest run scripts/check-docs-integrity.spec.ts && npm run docs:integrity -- --app-only",
     "docs:integrity": "node ./scripts/check-docs-integrity.mjs",
